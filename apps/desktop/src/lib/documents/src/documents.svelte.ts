@@ -300,6 +300,8 @@ export class Tab {
 
   apart = $state<string | null>(null)
 
+  behind = $state<string | null>(null)
+
   inPrivate = false
 
   page = $state<number | undefined>(undefined)

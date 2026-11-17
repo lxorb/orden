@@ -281,9 +281,11 @@ async function wrappedToEveryone(
   members: readonly Member[],
   owners: readonly string[],
   next: Uint8Array<ArrayBuffer>,
+  gone: string | null,
 ): Promise<Record<string, string>> {
   const keys: Record<string, string> = {}
   for (const member of members) {
+    if (gone !== null && emailOf(member.email) === gone) continue
     if (member.email === sharing.email) {
       keys[member.email] = await wrapVaultKey(next, sharing.held.opened.pair.pub, vault)
       continue
@@ -331,6 +333,7 @@ async function rotationOf(
   vault: string,
   from: KeyAt,
   next: Uint8Array<ArrayBuffer>,
+  gone: string | null,
 ): Promise<{ sent: Rotation; renewed: Map<string, Renewed> }> {
   const [members, rows] = await Promise.all([
     sharing.api.members(vault),
@@ -356,7 +359,7 @@ async function rotationOf(
       rev: from.rev,
       keyVersion,
       meta,
-      members: await wrappedToEveryone(sharing, vault, members, owners, next),
+      members: await wrappedToEveryone(sharing, vault, members, owners, next, gone),
       items,
       proof: await keyProofOf(signer, vault, keyVersion, next, vouch),
     },
@@ -463,11 +466,15 @@ async function rekeyedLocally(
   }
 }
 
-async function rotatedVault(sharing: Sharing, vault: string): Promise<number> {
+async function rotatedVault(
+  sharing: Sharing,
+  vault: string,
+  gone: string | null = null,
+): Promise<number> {
   let from = await startOf(sharing, vault)
   for (let tries = 0; tries < TRIES; tries++) {
     const next = newKey()
-    const { sent, renewed } = await rotationOf(sharing, vault, from, next)
+    const { sent, renewed } = await rotationOf(sharing, vault, from, next, gone)
     const wrapped = await wrapVaultKey(next, sharing.held.opened.pair.pub, vault)
     try {
       const done = await sharing.api.rotate(vault, sent)
@@ -505,7 +512,7 @@ export async function removedMember(
   } catch (error) {
     if (refusalOf(error)?.error !== 'no such member') throw error
   }
-  return await rotatedVault(sharing, vault)
+  return await rotatedVault(sharing, vault, emailOf(email))
 }
 
 async function ownerOfMembers(sharing: Sharing, vault: string): Promise<string | null> {

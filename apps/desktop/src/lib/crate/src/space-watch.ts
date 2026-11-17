@@ -160,3 +160,16 @@ export function listingOf(value: unknown): { listed: Listed[]; done: boolean } |
   if (listed.some((one) => one === null)) return null
   return { listed: listed as Listed[], done: value.done }
 }
+
+export function landedElsewhere(changes: readonly SpaceChange[]): Map<string, string> {
+  const landed = new Map<string, string>()
+  for (const one of changes) {
+    if (one.kind !== 'removed' && one.id) landed.set(one.id, one.path)
+  }
+  const pairs = new Map<string, string>()
+  for (const one of changes) {
+    const to = one.kind === 'removed' && one.id ? landed.get(one.id) : undefined
+    if (to !== undefined && to !== one.path) pairs.set(one.path, to)
+  }
+  return pairs
+}

@@ -140,6 +140,7 @@ export function transfer(
   how: 'copy' | 'move',
   clash: Clash,
   staying: readonly string[] = [],
+  fenced = false,
 ): Promise<Transferred> {
   return invoke<Transferred>('explorer_transfer', {
     job,
@@ -148,6 +149,7 @@ export function transfer(
     how,
     clash,
     staying,
+    ...(fenced ? { fenced } : {}),
   }).then((done) => carried(done, how))
 }
 

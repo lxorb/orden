@@ -25,10 +25,10 @@ const ROOT = '/space'
 const PAIRS = [{ root: ROOT, spaceId: 's1' }]
 const HASH = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'aGFzaA==', at: Date.now() + 60_000 }
 
-beforeEach(() => {
+beforeEach(async () => {
   server.answer = undefined
   server.sent = []
-  protection.forget(ROOT)
+  await protection.forget(ROOT)
 })
 
 describe('protection on the account', () => {

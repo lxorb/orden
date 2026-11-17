@@ -44,7 +44,6 @@ export {
 export { failed, note } from './failed'
 export {
   claimGuest,
-  claimGuestsAt,
   expireGuests,
   forgetEmptyGuest,
   guestForToken,

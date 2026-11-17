@@ -165,6 +165,10 @@ fn same(one: &Path, other: &Path) -> bool {
             ))
 }
 
+#[allow(
+    clippy::too_many_arguments,
+    reason = "a command's arguments are what the window names, one each"
+)]
 #[tauri::command]
 pub async fn explorer_transfer(
     app: AppHandle,
@@ -174,6 +178,7 @@ pub async fn explorer_transfer(
     how: How,
     clash: Clash,
     staying: Option<Vec<String>>,
+    fenced: Option<bool>,
 ) -> Result<Transferred, String> {
     crate::lane::off_the_runtime(move || -> Result<Transferred, String> {
         let folder = asked(&app, &folder, Use::Into)?;
@@ -189,7 +194,7 @@ pub async fn explorer_transfer(
         let mut froms = Vec::new();
         for one in &sources {
             let item = how_of(one);
-            let using = if item == How::Move {
+            let using = if item == How::Move || fenced == Some(true) {
                 Use::Change
             } else {
                 Use::Look

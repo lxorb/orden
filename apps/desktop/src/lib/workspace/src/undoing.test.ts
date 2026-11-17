@@ -36,6 +36,7 @@ vi.mock('../../platform/src/tauri', () => ({
 }))
 
 const told: string[] = []
+const backs: (string | undefined)[] = []
 
 vi.mock('../../link-index/src/api', () => ({
   links: {
@@ -61,8 +62,9 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
       told.push(`moved ${from} -> ${to}`)
       return Promise.resolve()
     },
-    fileGone: (path: string) => {
+    fileGone: (path: string, _kind: string, back?: string) => {
       told.push(`gone ${path}`)
+      backs.push(back)
       return Promise.resolve()
     },
     fileCame: (path: string) => {
@@ -100,6 +102,7 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
 beforeEach(() => {
   sent.length = 0
   told.length = 0
+  backs.length = 0
   refused.clear()
   disk.clear()
   restores.clear()
@@ -254,6 +257,7 @@ describe('an import taken back', () => {
 
     expect(sent.filter((one) => one.command === 'delete_note')).toEqual([])
     expect(told).toEqual(['binned /s/paper.pdf', 'gone /s/paper.pdf'])
+    expect(backs).toEqual(['t-/s/paper.pdf'])
   })
 })
 
@@ -275,6 +279,7 @@ describe('a copy taken back', () => {
       'binned folder /s/Trip copy',
       'gone /s/Trip copy',
     ])
+    expect(backs).toEqual(['t-/s/a copy.md', 't-/s/Trip copy'])
     expect(ws.undone.next?.kind).toBe('copy')
   })
 
@@ -449,6 +454,14 @@ describe('a merge and a carve put back', () => {
       'reloaded /s/b.md',
       'retargeted /s/b.md -> /s/a.md',
     ])
+  })
+
+  test('a merge put back hands the note back under the id it left with, so what it kept returns', async () => {
+    disk.set('/s/b.md', MERGE.intoAfter)
+    const ws = store({ ...MERGE, back: 'merged-1' })
+    await undoLastFileAction(ws)
+
+    expect(told).toContain('back /s/a.md')
   })
 
   test('and leaves a merge alone whose note has been written in since', async () => {

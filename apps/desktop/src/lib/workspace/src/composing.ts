@@ -18,7 +18,7 @@ export interface Composes {
   readonly undone: FileActions
   flush(): void
   reload(path: string, content: string): void
-  fileGone(path: string, kind: 'file'): Promise<void>
+  fileGone(path: string, kind: 'file', back?: string): Promise<void>
   retarget(from: string, to: string, how?: Retargeting): Promise<number>
   open(path: string): Promise<void>
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
@@ -72,7 +72,8 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
 
   await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
   await invoke('delete_note', { path: from })
-  await ws.fileGone(from, 'file')
+  const back = crypto.randomUUID()
+  await ws.fileGone(from, 'file', back)
 
   ws.undone.record({
     kind: 'merge',
@@ -82,6 +83,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
     intoContent,
     intoAfter,
     relinked,
+    back,
   })
   await ws.loadTree()
   await ws.open(into)

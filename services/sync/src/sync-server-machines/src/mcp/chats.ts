@@ -1,5 +1,12 @@
 import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden/chats'
-import { chatsText, hitsText, type Listed, messagesText, type Reading } from '@orden/chats/agent'
+import {
+  chatsText,
+  hitsText,
+  type Listed,
+  messagesText,
+  oneLine,
+  type Reading,
+} from '@orden/chats/agent'
 import { EVENTS_A_MINUTE, LONGEST_SEARCH, MOST_BODY } from '@orden/chats/limits'
 import { postEventsOf } from '@orden/chats/wire'
 import {
@@ -123,14 +130,14 @@ async function chatsOf(
   const me = whoOf(who)
   return rows.flatMap((row): Known[] => {
     const chat = named.get(row.id)
-    const name = (chat?.path?.split('/').pop() ?? '').replace(/\.chat$/i, '')
-    if (!chat || !name) return []
+    const name = oneLine((chat?.path?.split('/').pop() ?? '').replace(/\.chat$/i, ''))
+    if (!chat || !name.trim()) return []
     const behind = row.lastSeq > row.readSeq && row.lastBy !== me
     return [
       {
         id: row.id,
         name,
-        space: chat.space,
+        space: oneLine(chat.space),
         members: row.members,
         unread: behind ? 'some' : 0,
         mentions: row.mentions,

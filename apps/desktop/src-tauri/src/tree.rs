@@ -5,8 +5,8 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, held_paper, in_spaces, inside, is_application, is_base, is_canvas, is_chat,
-    is_markdown, is_pages, is_pdf, is_shortcut, is_term, paper_of, space_root, spaces_dir, Seen,
+    cannot, held_paper, inside, is_application, is_base, is_canvas, is_chat, is_markdown, is_pages,
+    is_pdf, is_shortcut, is_term, paper_of, space_root, spaces_dir, walked_in_spaces, Seen,
     MAX_DEPTH,
 };
 
@@ -47,7 +47,7 @@ pub fn read_tree(
     options: Option<TreeOptions>,
 ) -> Result<Entry, String> {
     let spaces = spaces_dir(&app)?;
-    let path = in_spaces(&app, &root)?;
+    let path = walked_in_spaces(&app, &root)?;
     if !path.is_dir() {
         return Err("root is not a directory".into());
     }

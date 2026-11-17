@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { objectBody, objectIn } from './body'
 import { byteLength } from './crypto'
 import { NOT_AN_OBJECT } from './refused'
-import { LONGEST_PATH, staysInside } from './paths'
+import { LONGEST_PATH, lockable } from './paths'
 import type { Env, Variables, Whoever } from './types'
 
 type Way = 'password' | 'device'
@@ -42,12 +42,16 @@ function passwordOf(value: unknown): Password | null {
   return { n, r, p, salt, hash, at }
 }
 
+const fitted = (key: string) =>
+  key.length > LONGEST_PATH ? key.slice(0, LONGEST_PATH).replace(/\/?[^/]*$/, '') : key
+
 function waysOf(value: unknown): Record<string, Way> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
   const out: Record<string, Way> = {}
-  for (const [key, way] of Object.entries(value as Record<string, unknown>)) {
+  for (const [given, way] of Object.entries(value as Record<string, unknown>)) {
+    const key = fitted(given)
     if (Object.keys(out).length >= MOST_PER_SPACE) break
-    const path = key === '' || (key.length <= LONGEST_PATH && staysInside(key))
+    const path = key === '' || (key.length <= LONGEST_PATH && lockable(key))
     if (path && isWay(way)) out[key] = way
   }
   return out
@@ -187,6 +191,20 @@ export async function protectLikewise(
   return 'error' in next ? 0 : added
 }
 
+function mergedWays(
+  held: Record<string, Way>,
+  base: Record<string, Way>,
+  sent: Record<string, Way>,
+): Record<string, Way> {
+  const out = Object.fromEntries(
+    Object.entries(held).filter(([key]) => !(key in base) || key in sent),
+  )
+  for (const [key, way] of Object.entries(sent)) {
+    if (base[key] !== way) out[key] = way
+  }
+  return waysOf(out)
+}
+
 export const protectedRoutes = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 protectedRoutes.get('/', async (context) => {
@@ -219,8 +237,10 @@ protectedRoutes.put('/spaces/:id', async (context) => {
     return context.json({ error: 'protected must be an object' }, 400)
   }
 
-  const ways = waysOf(body.protected)
+  const sent = waysOf(body.protected)
+  const base = body.base === undefined ? null : waysOf(body.base)
   const next = await rewrite(context.env, context.get('user').id, (held) => {
+    const ways = base ? mergedWays(held.spaces[id] ?? {}, base, sent) : sent
     const spaces = Object.fromEntries(Object.entries(held.spaces).filter(([one]) => one !== id))
     if (Object.keys(ways).length) {
       if (Object.keys(spaces).length >= MOST_SPACES) return { error: TOO_MANY_SPACES, status: 413 }

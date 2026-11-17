@@ -5,11 +5,33 @@ import { notePicture } from '../../link-index/src/api'
 
 type LinkResolver = NonNullable<RenderOptions['resolveLink']>
 
-const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed)\b[^>]*>/gi
+const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed|image)\b[^>]*>/gi
+
+const REACHES_OUT =
+  /\/\/|\\|\b(?:https?|wss?|ftp)\s*:|\bimg\b|\bimage\b|\bsrc\b|\bhref\b|url\s*\(|@import|[#&]#?\w+;|<(?!br\b)[a-z]/i
+
+function drawsHere(code: string): boolean {
+  return !REACHES_OUT.test(code)
+}
 
 const PICTURE = /<img\b([^>]*)>/gi
 
-const ELSEWHERE = /^(?:[a-z][a-z\d+.-]*:)?\/\//i
+const HERE = [new URL('http://here.invalid/'), new URL('here-only://here.invalid/')]
+
+const DRIVE = /^[a-z]:[\\/]/i
+
+function placeOf(src: string): { here: boolean; host: string } {
+  if (DRIVE.test(src)) return { here: true, host: '' }
+  try {
+    const read = HERE.map((base) => ({ base, at: new URL(src, base) }))
+    const here = read.every(
+      ({ base, at }) => at.protocol === base.protocol && at.host === base.host,
+    )
+    return { here, host: read[1]?.at.host ?? '' }
+  } catch {
+    return { here: false, host: '' }
+  }
+}
 
 const BLOCK = /<pre><code(?: class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/g
 
@@ -49,16 +71,16 @@ function pictures(html: string, from: string | null, shown: ReadonlySet<string>)
     const written = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
     const src = unwritten(written)
     if (!src) return ''
-    if (!ELSEWHERE.test(src)) {
-      if (/^data:/i.test(src)) return whole
+    if (/^data:/i.test(src)) return whole
+    const { here, host } = placeOf(src)
+    if (here) {
       return `<img${attributes.replace(`src="${written}"`, () => `src="${escapeAll(notePicture(src, from, ''))}"`)}>`
     }
     if (shown.has(src)) return whole
     const alt = /\balt="([^"]*)"/.exec(attributes)?.[1] ?? ''
-    const host = escapeAll(/^(?:[a-z][a-z\d+.-]*:)?\/\/([^/?#]+)/i.exec(src)?.[1] ?? src)
     return (
       `<button type="button" class="picture-held" data-picture="${written}" title="${written}">` +
-      `<svg viewBox="0 0 13 13"><path d="${PICTURE_PATH}"/></svg><span>${alt || host}</span></button>`
+      `<svg viewBox="0 0 13 13"><path d="${PICTURE_PATH}"/></svg><span>${alt || escapeAll(host || src)}</span></button>`
     )
   })
 }
@@ -115,7 +137,10 @@ export function answerHtml(markdown: string, options: AnswerOptions = {}): strin
   const render: RenderOptions = { escapeHtml: true }
   if (options.resolveLink) render.resolveLink = options.resolveLink
   const drawn = pictures(
-    viewHtml(markdown, render, { live: options.live === true }).replace(MEDIA, ''),
+    viewHtml(markdown, render, { live: options.live === true, draws: drawsHere }).replace(
+      MEDIA,
+      '',
+    ),
     options.from ?? null,
     options.shown ?? new Set(),
   )

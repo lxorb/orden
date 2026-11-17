@@ -286,6 +286,37 @@ describe('a rewind', () => {
     expect(fake.removed).toEqual([])
   })
 
+  test('a summary from here of turns that read others’ words still counts as having read them', async () => {
+    fake.desk = deskWith({ 'A.md': 'a' })
+    fake.documents = []
+    const thread = aThread()
+    await message(thread, 'first', [], [])
+    await message(
+      thread,
+      'second',
+      [],
+      [
+        {
+          kind: 'tool',
+          id: 't1',
+          verb: 'read_note',
+          args: {},
+          state: 'ok',
+          result: {
+            text: '<untrusted source="shared space Team">\nhi\n</untrusted>',
+            images: [],
+            error: false,
+          },
+        },
+      ],
+    )
+    const { readOutside } = await import('../chat/transcript')
+    expect(readOutside(thread.turns)).toBe(true)
+    await review.rewind(thread, 'second', 'summarize-from', null)
+    expect(thread.turns.some((one) => one.id === 'second-answer')).toBe(false)
+    expect(readOutside(thread.turns)).toBe(true)
+  })
+
   test('Redo brings back the compaction the turns it brings back held up', async () => {
     fake.desk = deskWith({ 'A.md': 'a' })
     fake.documents = []

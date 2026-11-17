@@ -115,6 +115,20 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 app.onError(failed)
 
+const ACCOUNT_ONLY = /^\/(?:v1|v2|oauth|\.well-known|mcp|rooms|even)(?:\/|$)/
+
+app.use('*', async (context, next) => {
+  if (
+    ACCOUNT_ONLY.test(context.req.path) &&
+    !isAppHost(context.env, context.req.url) &&
+    (await spaceForHost(context.env, new URL(context.req.url).host))
+  ) {
+    return context.text('Not found', 404)
+  }
+  await next()
+  return undefined
+})
+
 const appOrigins = cors({
   origin: (origin, context: Context<{ Bindings: Env }>) =>
     /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/.test(

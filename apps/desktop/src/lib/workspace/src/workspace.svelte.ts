@@ -143,7 +143,7 @@ import {
   madeFirst,
   type Side,
 } from '../../panes/src/api'
-import { FileOps, inFlight, keeping, type Kind } from '../../file-ops/src/api'
+import { FileOps, inFlight, keeping, keepingShared, type Kind } from '../../file-ops/src/api'
 import * as composing from './composing'
 import { type Filling, fills } from './panel-fills'
 import * as spaces from './spaces'
@@ -314,6 +314,7 @@ class Workspace {
     const pages = webPages()
     const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
     tab.apart = apartOf(keeper)
+    tab.behind = keeper.path ?? keeper.behind
     tab.note = this.document({
       kind: 'web',
       path: null,
@@ -429,11 +430,12 @@ class Workspace {
       this.protection,
       unlocks,
     ]) {
-      this.fileOps.follow(keeping(store))
+      this.fileOps.follow(store === this.protection ? keepingShared(store) : keeping(store))
     }
     this.fileOps.follow((op) => links.follow(op))
     this.fileOps.follow((op) => {
       if (op.op === 'moved') {
+        void invoke('rehome_snapshots', { from: op.from, to: op.to }).catch(() => 0)
         void papers().then(({ paperMoved }) => paperMoved(op.from, op.to), unfetched)
       } else if (op.op === 'removed') {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
@@ -1006,6 +1008,7 @@ class Workspace {
     tab.zoom = draft.zoom
     tab.address = draft.address
     tab.apart = draft.apart ?? null
+    tab.behind = draft.behind ?? null
     return tab
   }
 
@@ -1158,6 +1161,7 @@ class Workspace {
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
       ...(tab.address === undefined ? {} : { address: tab.address }),
       ...(tab.path === null && tab.apart !== null ? { apart: tab.apart } : {}),
+      ...(tab.path === null && tab.behind !== null ? { behind: tab.behind } : {}),
       ...(tab.path === null && tab.note.home !== null ? { space: tab.note.home } : {}),
     }
   }
@@ -1587,6 +1591,7 @@ class Workspace {
     const path = this.spelled(asked)
     const held = isPagesTarget(path) ? path : await this.heldBy(path)
     if (held) {
+      if (held !== path) this.lockedLikeItsPaper(held, path)
       await this.openPages(held, page, how)
       return
     }
@@ -1645,6 +1650,7 @@ class Workspace {
 
     const making = this.turning(path)
       .then(({ pdf, root, move }) => pdf.asPageNote(path, root, move))
+      .then((note) => this.lockedLikeItsPaper(note, path))
       .catch((error: unknown) => {
         log('error', `open PDF as page note: ${path} - ${String(error)}`)
         return null
@@ -1652,6 +1658,12 @@ class Workspace {
     this.pdfPageNotes.set(path, making)
     void making.finally(() => this.pdfPageNotes.delete(path))
     return making
+  }
+
+  private lockedLikeItsPaper(note: string, pdf: string): string {
+    const root = this.rootHolding(note)
+    for (const paper of [pdf, `${note}.pdf`]) this.protection.copied(paper, note, root, root)
+    return note
   }
 
   private async turning(path: string) {
@@ -1880,6 +1892,7 @@ class Workspace {
     tab.inPrivate = from?.inPrivate === true
     pages.privately(tab.id, tab.inPrivate)
     tab.apart = from ? apartOf(from) : null
+    tab.behind = from ? (from.path ?? from.behind) : null
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
@@ -1948,6 +1961,14 @@ class Workspace {
           : tab.kind === 'terminal'
             ? await import('./placing').then((one) => one.keepTerm(this, claim, tab, dir, file))
             : await this.saving.place(tab.note, dir, file ?? draftFile(tab.note))
+      if (saved !== null && tab.behind !== null) {
+        this.protection.copied(
+          tab.behind,
+          saved,
+          this.rootHolding(tab.behind),
+          this.rootHolding(saved),
+        )
+      }
       this.persist()
       return saved
     } catch (error) {
@@ -1977,6 +1998,7 @@ class Workspace {
 
     await this.turning(path)
       .then(({ pdf, root, move }) => pdf.adoptBeside(path, root, move))
+      .then((adopted) => adopted && this.lockedLikeItsPaper(path, `${path}.pdf`))
       .catch((error: unknown) => {
         log('warn', `page note beside its PDF: ${path} - ${String(error)}`)
       })
@@ -3586,7 +3608,8 @@ class Workspace {
     } as const
     try {
       if (toAccount) {
-        const back = crypto.randomUUID()
+        const { sync } = await import('../../sync-store/src/api')
+        const back = sync.tracked(path)?.id ?? crypto.randomUUID()
         await this.fileOps.doing({ ...gone, back }, () =>
           oneWriteAt(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path })),
         )
@@ -4006,6 +4029,12 @@ class Workspace {
   }
 
   copyOf(tab: Tab, paneId: string): Tab {
+    const copy = this.plainCopyOf(tab, paneId)
+    copy.behind = tab.behind
+    return copy
+  }
+
+  private plainCopyOf(tab: Tab, paneId: string): Tab {
     const words =
       !__EVEN_PLUGIN__ && tab.kind === 'terminal' && tab.path === null ? shellWords(tab.doc) : null
     if (!words) return new Tab(tab.note, paneId)

@@ -417,6 +417,37 @@ fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
     !theirs.any(|(_, part)| unspoken(naming, part))
 }
 
+pub fn stays_in_space(spaces: &Path, target: &Path) -> Result<(), String> {
+    let Some(space) = space_root(spaces, target) else {
+        return Ok(());
+    };
+    let target = folded(target);
+    match target.parent() {
+        Some(folder) => really_under(&space, folder),
+        None => Ok(()),
+    }
+}
+
+pub fn really_under(space: &Path, folder: &Path) -> Result<(), String> {
+    let Some(there) = folder
+        .ancestors()
+        .find(|one| one.symlink_metadata().is_ok())
+    else {
+        return Ok(());
+    };
+    if there == space || !inside(space, there) {
+        return Ok(());
+    }
+    let out = || format!("{} goes through a link out of its space", folder.display());
+    let real_space = fs::canonicalize(space).map_err(|_| out())?;
+    let real = fs::canonicalize(there).map_err(|_| out())?;
+    if real.starts_with(&real_space) {
+        Ok(())
+    } else {
+        Err(out())
+    }
+}
+
 pub fn space_root(spaces: &Path, path: &Path) -> Option<PathBuf> {
     let spaces = folded(spaces);
     let path = folded(path);
@@ -534,8 +565,22 @@ pub fn in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
     judged(&spaces_dir(app)?, path)
 }
 
+pub fn walked_in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
+    walked(&spaces_dir(app)?, path)
+}
+
+fn walked(root: &Path, path: &str) -> Result<PathBuf, String> {
+    let target = judged(root, path)?;
+    match space_root(root, &target) {
+        Some(space) => really_under(&space, &target).map(|()| target),
+        None => Ok(target),
+    }
+}
+
 fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
-    judged_as(NAMING, root, path)
+    let target = judged_as(NAMING, root, path)?;
+    stays_in_space(root, &target)?;
+    Ok(target)
 }
 
 pub fn below_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
@@ -700,7 +745,15 @@ impl Seen {
 pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
     let mut notes = Vec::new();
     let mut others = Vec::new();
-    gather(dir, 0, &mut Seen::default(), &mut notes, &mut others);
+    let limit = fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    gather(
+        dir,
+        &limit,
+        0,
+        &mut Seen::default(),
+        &mut notes,
+        &mut others,
+    );
     notes.sort();
     others.sort();
     (notes, others)
@@ -708,6 +761,7 @@ pub fn files_in(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
 
 fn gather(
     dir: &Path,
+    limit: &Path,
     depth: usize,
     seen: &mut Seen,
     notes: &mut Vec<PathBuf>,
@@ -728,7 +782,9 @@ fn gather(
         }
 
         if path.is_dir() {
-            gather(&path, depth + 1, seen, notes, others);
+            if fs::canonicalize(&path).is_ok_and(|real| inside(limit, &real)) {
+                gather(&path, limit, depth + 1, seen, notes, others);
+            }
         } else if is_markdown(&path) {
             notes.push(path);
         } else if !entry.file_name().to_string_lossy().ends_with(HIGHLIGHTS) {
@@ -1003,8 +1059,8 @@ mod tests {
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
         judged_below, judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of,
-        path_key_as, same_path, space_root, unspoken, upcased, write_atomically, Naming, Picked,
-        ORIGIN,
+        path_key_as, same_path, space_root, stays_in_space, unspoken, upcased, walked, write_atomically,
+        Naming, Picked, ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -2110,6 +2166,44 @@ mod tests {
         assert_eq!(names(&others), ["notes.txt", "pic.png"]);
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn a_walk_never_starts_at_a_link_out_of_its_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let spaces = dir.path().join("Orden");
+        let elsewhere = dir.path().join("Private");
+        std::fs::create_dir_all(spaces.join("Work/Notes")).expect("a space");
+        std::fs::create_dir_all(&elsewhere).expect("a folder outside");
+        assert!(link_to(&elsewhere, &spaces.join("Work/Refs")));
+        assert!(link_to(
+            &spaces.join("Work/Notes"),
+            &spaces.join("Work/Same")
+        ));
+
+        let at = |one: &str| spaces.join(one).to_string_lossy().into_owned();
+        assert!(judged(&spaces, &at("Work/Refs")).is_ok());
+        assert!(walked(&spaces, &at("Work/Refs")).is_err());
+        assert!(walked(&spaces, &at("Work/Same")).is_ok());
+        assert!(walked(&spaces, &at("Work/Notes")).is_ok());
+        assert!(walked(&spaces, &at("Work")).is_ok());
+    }
+
+    #[test]
+    fn the_files_of_a_space_leave_out_a_folder_linked_in_from_outside() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path().join("Work");
+        let elsewhere = dir.path().join("Private");
+        std::fs::create_dir_all(here.join("Notes")).expect("a space");
+        std::fs::create_dir_all(&elsewhere).expect("a folder outside");
+        std::fs::write(here.join("Notes/Plan.md"), "").expect("a note");
+        std::fs::write(elsewhere.join("Diary.md"), "").expect("a note outside");
+        assert!(link_to(&elsewhere, &here.join("Refs")));
+        assert!(link_to(&here.join("Notes"), &here.join("Same")));
+
+        let (notes, _others) = files_in(&here);
+        assert_eq!(names(&notes), ["Plan.md"]);
+    }
+
     #[test]
     fn stops_before_it_runs_out_of_stack() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -2207,5 +2301,37 @@ mod tests {
         let name = folder_key(r"C:\notes\a b.md");
         assert_eq!(name.len(), 16);
         assert!(name.chars().all(|letter| letter.is_ascii_hexdigit()));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_write_never_goes_through_a_link_out_of_its_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let spaces = dir.path().join("spaces");
+        let outside = dir.path().join("outside");
+        let vault = dir.path().join("vault");
+        for folder in [spaces.join("Work/Notes"), outside.clone(), vault.clone()] {
+            std::fs::create_dir_all(folder).expect("a folder");
+        }
+        std::os::unix::fs::symlink(&outside, spaces.join("Work/Refs")).expect("a link out");
+        std::os::unix::fs::symlink(&vault, spaces.join("Vault")).expect("a linked space");
+
+        assert!(stays_in_space(&spaces, &spaces.join("Work/Refs/Planted.md")).is_err());
+        assert!(stays_in_space(&spaces, &spaces.join("Work/Refs/Deep/Planted.md")).is_err());
+        assert!(stays_in_space(&spaces, &spaces.join("Work/Notes/Plan.md")).is_ok());
+        assert!(stays_in_space(&spaces, &spaces.join("Work/New/Plan.md")).is_ok());
+        assert!(stays_in_space(&spaces, &spaces.join("Vault/Plan.md")).is_ok());
+        std::os::unix::fs::symlink(outside.join("todo.md"), spaces.join("Work/todo.md"))
+            .expect("a note that is a link");
+        assert!(stays_in_space(&spaces, &spaces.join("Work/todo.md")).is_ok());
+        std::fs::write(outside.join("README.md"), "theirs too").expect("a file behind the link");
+        let through = spaces.join("Work/Refs/README.md");
+        assert!(judged(&spaces, &through.to_string_lossy()).is_err());
+        assert!(judged(&spaces, &spaces.join("Work/Refs").to_string_lossy()).is_ok());
+        assert!(judged(
+            &spaces,
+            &spaces.join("Work/Notes/Plan.md").to_string_lossy()
+        )
+        .is_ok());
     }
 }

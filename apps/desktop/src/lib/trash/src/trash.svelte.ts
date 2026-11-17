@@ -4,6 +4,7 @@ import { canWriteAt } from '../../sharing/src/api'
 import { sync } from '../../sync-store/src/api'
 import { folderOf, insideSpace, samePath, within, invoke } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
+import { protection } from '../../protect/src/api'
 
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
 
@@ -17,6 +18,7 @@ export interface TrashItem {
   source: 'account' | 'device'
   ref: string
   from?: string
+  note?: { spaceId: string; path: string }
   arrived?: boolean
 }
 
@@ -115,6 +117,7 @@ class Trash {
       deletedAt: note.deletedAt,
       purgeAt: note.purgeAt,
       source: 'account' as const,
+      note: { spaceId: note.spaceId, path: note.path },
     }))
 
     return [...spaces, ...notes]
@@ -134,7 +137,8 @@ class Trash {
         workspace.undone.forget(item.ref)
         await workspace.loadSpaces()
         await workspace.loadTree()
-        if (item.kind !== 'space') {
+        if (item.kind === 'space') await protection.unbury(item.ref, at, '')
+        else {
           await workspace.fileCame(
             at,
             item.kind === 'folder' ? 'folder' : 'file',
@@ -147,12 +151,17 @@ class Trash {
 
       const token = account.accountToken
       if (!token) return
+      const was = item.note?.path ?? ''
+      let landed = was
       if (item.kind === 'space') {
         await api.restoreSpace(token, item.ref)
         await account.loadSpaces()
       } else {
-        await api.restoreNote(token, item.ref)
+        landed = (await api.restoreNote(token, item.ref)).note.path || was
       }
+      const spaceId = item.note?.spaceId ?? item.ref
+      const space = workspace.spaces.find((one) => sync.remoteIdFor(one.root) === spaceId)
+      if (space) await protection.unbury(item.ref, space.root, landed, was)
       sync.nudge()
     })
   }

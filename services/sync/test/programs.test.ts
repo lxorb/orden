@@ -209,6 +209,11 @@ describe('a token acting for somebody', () => {
     expect(me.status).toBe(403)
     expect(me.json.error).toBe('that is not something a token can do')
 
+    const spelled = await call<ProgramView>(env, '/v1/spaces/%61vailable/changes', {
+      token: program,
+    })
+    expect(spelled.status).toBe(403)
+
     const gone = await call<ProgramView>(env, `/v1/notes/${note}`, {
       method: 'DELETE',
       token: program,

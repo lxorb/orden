@@ -27,6 +27,7 @@
     "notify",
     "undo-toast",
     "left-spaces",
-    "space-owed"
+    "space-owed",
+    "protect"
   ]
 }

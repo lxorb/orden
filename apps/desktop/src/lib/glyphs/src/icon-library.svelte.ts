@@ -43,7 +43,7 @@ class IconLibrary {
   }
 
   loading(id: string): boolean {
-    return this.asked.has(id) && !this.loaded[id] && !this.absent[id]
+    return this.asked.has(id) && !Object.hasOwn(this.loaded, id) && !Object.hasOwn(this.absent, id)
   }
 
   spaceShape(chosen: string | null): IconNode | null {
@@ -63,7 +63,9 @@ class IconLibrary {
       return found ? { kind: 'stroked', icon: found } : null
     }
 
-    return this.loaded[icon.set]?.shape(icon.name) ?? null
+    return Object.hasOwn(this.loaded, icon.set)
+      ? (this.loaded[icon.set]?.shape(icon.name) ?? null)
+      : null
   }
 
   setFor(icon: WrittenIcon | null): string | null {

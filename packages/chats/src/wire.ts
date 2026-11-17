@@ -288,7 +288,8 @@ function pollOf(value: unknown): Poll | null {
 }
 
 function viaOf(value: unknown): { agent: string } | null {
-  return isRecord(value) && isLine(value.agent, LONGEST_AGENT) ? { agent: value.agent } : null
+  if (!isRecord(value) || !isLine(value.agent, LONGEST_AGENT)) return null
+  return /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(value.agent) ? null : { agent: value.agent }
 }
 
 function postOf(value: Fields): Post | null {

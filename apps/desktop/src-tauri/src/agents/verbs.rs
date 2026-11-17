@@ -1163,6 +1163,23 @@ pub mod window {
 
     pub const MARKDOWN: &str = "agent.markdown";
 
+    pub const MAY_HAND: &str = "agent.may_hand";
+
+    pub const PROGRAM_FREE: &str = "agent.program_free";
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    pub struct ProgramAsk {
+        pub program: String,
+        pub args: Vec<String>,
+        pub programs: Vec<String>,
+        pub cwd: String,
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+    pub struct HandAsk {
+        pub path: String,
+    }
+
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct StoreAsk {
         #[serde(default, skip_serializing_if = "Option::is_none")]

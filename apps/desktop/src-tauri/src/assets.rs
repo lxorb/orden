@@ -7,7 +7,7 @@ use tauri::AppHandle;
 
 use crate::paths::{
     at_most, cannot, first_spot, folded, held_paper, in_spaces, inside, is_reserved, made,
-    space_root, spaces_dir, taken,
+    really_under, space_root, spaces_dir, taken,
 };
 
 const LIMIT: u64 = LIMIT_MB * 1024 * 1024;
@@ -152,6 +152,7 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
     if !inside(limit, &target) {
         return Err(format!("{folder} is not a folder inside the space"));
     }
+    really_under(limit, &target)?;
 
     Ok(target)
 }
@@ -360,6 +361,23 @@ mod tests {
         if cfg!(windows) {
             assert!(asset_dir(&space, r"C:\Windows", &space).is_err());
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_picture_is_never_put_through_a_link_out_of_its_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let space = dir.path().join("Work");
+        let elsewhere = dir.path().join("Private");
+        std::fs::create_dir_all(space.join("Notes")).expect("a space");
+        std::fs::create_dir_all(&elsewhere).expect("a folder outside");
+        std::os::unix::fs::symlink(&elsewhere, space.join("attachments")).expect("a link out");
+        std::os::unix::fs::symlink(space.join("Notes"), space.join("Same")).expect("a link in");
+
+        assert!(asset_dir(&space, "attachments", &space).is_err());
+        assert!(asset_dir(&space, "attachments/2026", &space).is_err());
+        assert!(asset_dir(&space, "Same/assets", &space).is_ok());
+        assert!(asset_dir(&space, "assets", &space).is_ok());
     }
 
     #[test]
