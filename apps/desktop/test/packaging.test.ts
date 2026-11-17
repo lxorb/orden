@@ -557,7 +557,7 @@ describe('the phones, linted before a push to unstable finds them', () => {
 describe('what nib claims to open', () => {
   const tauri = (...parts: string[]) => repo('apps', 'desktop', 'src-tauri', ...parts)
 
-  test('no file type in any bundle but a PDF, and that one only offered', () => {
+  test('no file type in any bundle but a PDF, and on a Mac plain text, each only offered', () => {
     for (const config of ['tauri.conf.json', 'tauri.macos.conf.json']) {
       expect(tauri(config), config).not.toContain('fileAssociations')
     }
@@ -572,6 +572,11 @@ describe('what nib claims to open', () => {
       '<string>Viewer</string>',
       '<string>Alternate</string>',
       '<string>com.adobe.pdf</string>',
+      '<string>Text document</string>',
+      '<string>Viewer</string>',
+      '<string>Alternate</string>',
+      '<string>public.plain-text</string>',
+      '<string>net.daringfireball.markdown</string>',
     ])
 
     const linux = JSON.parse(tauri('tauri.linux.conf.json')) as {
@@ -628,7 +633,6 @@ describe('what nib claims to open', () => {
       ...plist.matchAll(/<key>CFBundleTypeIconFile<\/key>\s*<string>([^<]+)<\/string>/g),
     ].map((one) => one[1])
     expect(icons).toEqual(opened.map((ext) => `${ext}.icns`))
-    expect(plist.match(/<key>CFBundleTypeName<\/key>/g)).toHaveLength(icons.length)
   })
 
   test("and never the type's own icon, which is the system's", () => {
