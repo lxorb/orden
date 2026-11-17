@@ -69,7 +69,6 @@
   import WebExtensionPopup from './WebExtensionPopup.svelte'
   import WebExtensions from './WebExtensions.svelte'
   import { extensions, type Extension } from './extensions.svelte'
-  import { runsExtensions } from './shell-parts'
   import WebSite from './WebSite.svelte'
   import { NewHere } from '../../new-here/src/api'
 
@@ -434,7 +433,7 @@
 
   let showingDownloads = $state(false)
 
-  const extending = runsExtensions
+  const extending = isDesktop
 
   let showingExtensions = $state(false)
 
