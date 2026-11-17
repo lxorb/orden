@@ -43,6 +43,62 @@ describe('wikilinks turned into real links', () => {
   })
 
   test('a block inside the link comes along as a fragment', () => {
+    const text = toMarkdown('See [[Note#^b1]].\n', { link: () => 'sub/Note.md' })
+    expect(text).toBe('See [Note#^b1](sub/Note.md#^b1).\n')
+  })
+
+  test('a link within the note stays a link to its heading or block', () => {
+    const text = toMarkdown('See [[#Goals]], [[#Goals|the goals]] and [[#^b1]].\n', {
+      link: () => null,
+    })
+    expect(text).toBe('See [#Goals](#Goals), [the goals](#Goals) and [#^b1](#^b1).\n')
+  })
+
+  test('a picture or a clip nothing names as a note stays as it was written', () => {
+    const source = 'See ![[shot.png|200]], ![[clip.mp4]] and ![[a cat.png|a cat]].\n'
+    expect(toMarkdown(source, { link: () => null })).toBe(source)
+  })
+
+  test('a link in front matter stays a value YAML can read', () => {
+    const source = [
+      '---',
+      'up: [[Plan]]',
+      'related:',
+      '  - [[Plan]]',
+      'quoted: "[[Plan]] and more"',
+      "single: '[[Plan]]'",
+      'flow: [[[Plan]], [[Plan]]]',
+      'with: [[Plan]] # parent',
+      '---',
+      'body [[Plan]]',
+      '',
+    ].join('\n')
+    expect(toMarkdown(source, { link: () => 'Plan.md' })).toBe(
+      [
+        '---',
+        'up: "[Plan](Plan.md)"',
+        'related:',
+        '  - "[Plan](Plan.md)"',
+        'quoted: "[Plan](Plan.md) and more"',
+        "single: '[Plan](Plan.md)'",
+        'flow: [[[Plan]], [[Plan]]]',
+        'with: "[Plan](Plan.md)" # parent',
+        '---',
+        'body [Plan](Plan.md)',
+        '',
+      ].join('\n'),
+    )
+  })
+
+  test('a link in a quoted front matter value keeps the quotes it sits in apart', () => {
+    const source =
+      '---\na: "[[Plan|say \\"hi\\"]]"\nb: \'[[Plan|it\'\'s]]\'\nc: [[Plan|it\'s "x"]]\n---\n'
+    expect(toMarkdown(source, { link: () => 'Plan.md' })).toBe(
+      "---\na: \"[say \\\"hi\\\"](Plan.md)\"\nb: '[it''s](Plan.md)'\nc: '[it''s \"x\"](Plan.md)'\n---\n",
+    )
+  })
+
+  test('a block inside the link reads back as that block', () => {
     const text = toMarkdown('See [[Note#^abc]].\n', { link: () => 'sub/Note.md' })
     expect(findLinks(text)[0]).toMatchObject({ target: 'sub/Note.md', block: 'abc' })
   })

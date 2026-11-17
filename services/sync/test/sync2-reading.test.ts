@@ -81,7 +81,7 @@ describe('the index', () => {
     const site = await made('Svelte.url', '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n')
     const items = indexAnswerOf((await index([plane, site])).json) ?? []
     const scans = new Map(items.map((one) => [one.id, 'scan' in one ? one.scan : null]))
-    expect(scans.get(plane)?.links.map((one) => one.target)).toEqual(['Plans.md'])
+    expect(scans.get(plane)?.links.map((one) => one.target)).toEqual(['/Plans.md'])
     expect(scans.get(site)?.address).toBe('https://svelte.dev/')
   })
 

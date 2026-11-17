@@ -3,7 +3,7 @@ import { decodeTarget } from '@orden/markdown/links'
 import { folderOf } from './space-paths'
 import { assetUrl, joinPath } from './tauri'
 
-function isRemote(src: string): boolean {
+export function isRemote(src: string): boolean {
   return /^([a-z]+:)?\/\//i.test(src) || src.startsWith('data:')
 }
 
@@ -24,19 +24,28 @@ function foldedPath(path: string): string {
   return out.join(separator)
 }
 
-export function imagePath(src: string, notePath?: string | null, source = ''): string | null {
+export function imagePath(
+  src: string,
+  notePath?: string | null,
+  source = '',
+  top: string | null = null,
+): string | null {
   if (isRemote(src) || !notePath) return null
 
   const path = written(src)
   const root = /^\s*typora-root-url\s*:\s*(.+)$/m.exec(frontMatter(source) ?? '')?.[1]
-  if (root && path.startsWith('/')) {
-    return foldedPath(joinPath(root.trim().replace(/["']/g, ''), path.slice(1)))
-  }
+  const from = root ? root.trim().replace(/["']/g, '') : top
+  if (from && path.startsWith('/')) return foldedPath(joinPath(from, path.slice(1)))
 
   return foldedPath(joinPath(folderOf(notePath), path))
 }
 
-export function imageUrl(src: string, notePath?: string | null, source = ''): string {
-  const path = imagePath(src, notePath, source)
+export function imageUrl(
+  src: string,
+  notePath?: string | null,
+  source = '',
+  top: string | null = null,
+): string {
+  const path = imagePath(src, notePath, source, top)
   return path ? assetUrl(path) : src
 }

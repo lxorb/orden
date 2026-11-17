@@ -29,7 +29,7 @@ export function planeMarks(content: string): PlaneMarks {
       .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
       .map((node) => ({
         kind: 'wikilink' as const,
-        target: node.file,
+        target: node.file.startsWith('/') ? node.file : `/${node.file}`,
         heading: node.subpath?.startsWith('#^') === false ? node.subpath.slice(1) : null,
         block: node.subpath?.startsWith('#^') === true ? node.subpath.slice(2) : null,
         alias: null,
@@ -59,6 +59,8 @@ export function markedPlane(path: string, marks: PlaneMarks): ScannedNote {
     address: null,
     cover: null,
     bare: false,
-    links: marks.links,
+    links: marks.links.map((link) =>
+      link.target.startsWith('/') ? link : { ...link, target: `/${link.target}` },
+    ),
   }
 }

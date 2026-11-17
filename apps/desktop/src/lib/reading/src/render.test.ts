@@ -14,7 +14,7 @@ const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from:
 vi.mock('../../link-index/src/api', () => ({
   links: {
     spaceOf: () => null,
-    targetOf: (from: string | null, link: { target: string }) => {
+    reachedOf: (from: string | null, link: { target: string }) => {
       asked.from.push(from)
       const wanted = link.target.toLowerCase().replace(/\.md$/, '')
       const found = NOTES.find((note) => {
@@ -33,6 +33,9 @@ vi.mock('../../link-index/src/api', () => ({
     },
   },
   notePicture: (src: string) => `asset://${src}`,
+  picturesOf:
+    (_path: string | null, _source: string, finish: (path: string) => string) =>
+    (src: string, wikilink: boolean) => (wikilink ? finish(`/space/att/${src}`) : null),
 }))
 
 const { readingHtml, unreadableHtml } = await import('./render')
@@ -228,5 +231,14 @@ describe('a note the renderer cannot read', () => {
     const html = unreadableHtml('> [!note] <b>x</b> & y\n')
 
     expect(html).toBe('<pre class="unreadable">&gt; [!note] &lt;b&gt;x&lt;/b&gt; &amp; y\n</pre>')
+  })
+})
+
+describe('a picture the first pass found', () => {
+  test('is drawn once, not looked up again', async () => {
+    const html = await readingHtml(note('![[x.png]]\n'), 'light', true)
+
+    expect(html).toContain('src="/asset/space/att/x.png"')
+    expect(html).not.toContain('asset:///asset')
   })
 })

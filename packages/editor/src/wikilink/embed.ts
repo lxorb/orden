@@ -183,7 +183,7 @@ export class EmbedImageWidget extends OrdenWidget {
       openLightbox(view, picture.src, picture.alt)
     })
 
-    picture.src = view.state.facet(imageResolver)(this.link.target)
+    picture.src = view.state.facet(imageResolver)(this.link.target, true)
     return picture
   }
 
@@ -224,7 +224,7 @@ export class EmbedMediaWidget extends OrdenWidget {
     }
 
     player.addEventListener('dragstart', (event) => event.preventDefault())
-    player.src = view.state.facet(imageResolver)(this.link.target)
+    player.src = view.state.facet(imageResolver)(this.link.target, true)
 
     this.onDestroy(player, () => {
       player.pause()

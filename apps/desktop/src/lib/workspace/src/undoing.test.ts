@@ -412,6 +412,26 @@ describe('a name put back', () => {
     expect(told).toEqual(['retargeted /s/b.md -> /s/a.md', 'moved /s/b.md -> /s/a.md'])
   })
 
+  test('puts back the title the rename wrote at the top of the note', async () => {
+    disk.set('/s/Plan.md', '# Road\n\nwords\n')
+    const ws = store({ kind: 'rename', from: '/s/Plan.md', to: '/s/Road.md', retitled: true })
+    await undoLastFileAction(ws)
+
+    expect(sent).toContainEqual({
+      command: 'write_note',
+      path: '/s/Plan.md',
+      content: '# Plan\n\nwords\n',
+    })
+  })
+
+  test('and leaves a title written since the rename as it is', async () => {
+    disk.set('/s/Plan.md', '# Something else\n')
+    const ws = store({ kind: 'rename', from: '/s/Plan.md', to: '/s/Road.md', retitled: true })
+    await undoLastFileAction(ws)
+
+    expect(sent.some((one) => one.command === 'write_note')).toBe(false)
+  })
+
   test('and leaves the links alone where the rename did not touch them', async () => {
     const ws = store({ kind: 'move', from: '/s/a.md', to: '/s/f/a.md' })
     await undoLastFileAction(ws)
@@ -454,6 +474,34 @@ describe('a merge and a carve put back', () => {
       'reloaded /s/b.md',
       'retargeted /s/b.md -> /s/a.md',
     ])
+  })
+
+  test('a merge puts back the very words it relinked, so a link that was always to the note it went into stays', async () => {
+    const relinks = [
+      { path: '/s/c.md', before: 'see [[a]] and [[b]]', after: 'see [[b]] and [[b]]' },
+    ]
+    disk.set('/s/b.md', MERGE.intoAfter)
+    disk.set('/s/c.md', 'see [[b]] and [[b]]')
+    const ws = store({ ...MERGE, relinked: ['/s/c.md'], relinks })
+    await undoLastFileAction(ws)
+
+    const written = sent.filter((one) => one.command === 'write_note')
+    expect(written.map((one) => [one.path, one.content])).toContainEqual([
+      '/s/c.md',
+      'see [[a]] and [[b]]',
+    ])
+    expect(told.filter((one) => one.startsWith('retargeted'))).toEqual([])
+  })
+
+  test('and points the links back in a relinked note written in since', async () => {
+    const relinks = [{ path: '/s/c.md', before: 'see [[a]]', after: 'see [[b]]' }]
+    disk.set('/s/b.md', MERGE.intoAfter)
+    disk.set('/s/c.md', 'see [[b]], typed since')
+    const ws = store({ ...MERGE, relinked: ['/s/c.md'], relinks })
+    await undoLastFileAction(ws)
+
+    expect(sent.filter((one) => one.path === '/s/c.md' && one.command === 'write_note')).toEqual([])
+    expect(told).toContain('retargeted /s/b.md -> /s/a.md')
   })
 
   test('a merge put back hands the note back under the id it left with, so what it kept returns', async () => {

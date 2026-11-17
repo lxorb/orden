@@ -159,6 +159,16 @@ describe('a picture however it was written', () => {
     expect(asked('![[photo.png|300]]\n', 'photo.png', 'photo.png')).toBe('![](assets/photo.png)\n')
   })
 
+  test('a name with a hash, a question mark or a percent sign is written so a reader finds it', () => {
+    expect(asked('![](<Invoice #2.png>)\n', 'Invoice #2.png', 'Invoice #2.png')).toBe(
+      '![](<assets/Invoice %232.png>)\n',
+    )
+    expect(asked('![[q?.png]]\n', 'q?.png', 'q?.png')).toBe('![](assets/q%3F.png)\n')
+    expect(asked('![](lit%2520.png)\n', 'lit%2520.png', 'lit%20.png')).toBe(
+      '![](assets/lit%2520.png)\n',
+    )
+  })
+
   test('an embed stays a picture when links are resolved too', () => {
     const resolved = bundleFiles(
       '![[photo.png]] and [[Note]]\n',

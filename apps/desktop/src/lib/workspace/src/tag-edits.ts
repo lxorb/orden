@@ -14,9 +14,20 @@ export function tagChange(
   let reached = 0
 
   for (const span of spans) {
-    if (span.from < reached) continue
+    const last = edits.at(-1)
+    if (span.from < reached) {
+      if (to === null && last && span.to > last.to) {
+        last.to = span.to
+        reached = span.to
+      }
+      continue
+    }
 
-    edits.push({ from: span.from, to: span.to, insert: to ?? '' })
+    edits.push({
+      from: span.from,
+      to: span.to,
+      insert: to === null ? '' : keptCase(before.slice(span.from, span.to), to),
+    })
     reached = span.to
   }
 
@@ -43,4 +54,12 @@ export async function tagChanges(
   }
 
   return out
+}
+
+function keptCase(written: string, to: string): string {
+  const had = written.split('/')
+  const wanted = to.split('/')
+  for (let at = 0; at < wanted.length && had[at]?.toLowerCase() === wanted[at]?.toLowerCase(); at++)
+    wanted[at] = had[at] ?? ''
+  return wanted.join('/')
 }

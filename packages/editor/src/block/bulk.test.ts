@@ -227,6 +227,38 @@ describe('a link to several blocks', () => {
     expect(said()).toContain('Third words. ')
   })
 
+  test('on code nested in a list item names the item, and keeps the list whole', () => {
+    const doc = '1. Install:\n   ```bash\n   npm i\n   ```\n2. Run it\n'
+    const at = doc.indexOf('   ```bash')
+    const { view, said } = viewOf(doc, at, at)
+
+    const [target] = blockTargets(view, at)
+    expect(said()).toBe(doc.replace('1. Install:', `1. Install: ${target?.slice(1) ?? ''}`))
+  })
+
+  test('on maths or a table nested in a list item keeps the list whole', () => {
+    const maths = '- Formula:\n  $$\n  x^2\n  $$\n- Next\n'
+    const on = maths.indexOf('  $$')
+    const first = viewOf(maths, on, on)
+    const [target] = blockTargets(first.view, on)
+    expect(first.said()).toBe(maths.replace('- Formula:', `- Formula: ${target?.slice(1) ?? ''}`))
+
+    const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
+    const at = table.indexOf('  | a')
+    const second = viewOf(table, at, at)
+    const [named] = blockTargets(second.view, at)
+    expect(second.said()).toBe(
+      table.replace('2 |\n- Next', `2 |\n\n  ^${named?.slice(2) ?? ''}\n\n- Next`),
+    )
+    expect(named).toMatch(/^#\^\w+$/)
+  })
+
+  test('on indented code takes no name from a fence after it', () => {
+    const doc = '    a\n\n```\nb\n``` ^abc\n'
+    const { view } = viewOf(doc, 0, 0)
+    expect(blockTargets(view, 0)).not.toContain('#^abc')
+  })
+
   test('names a heading by its words rather than writing one in', () => {
     const doc = '# One\n\nwords\n'
     const { view, said } = viewOf(doc, 0, 0)

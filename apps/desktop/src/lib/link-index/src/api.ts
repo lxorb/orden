@@ -7,7 +7,13 @@ export {
   spaceLinks,
 } from './links.svelte'
 export { rewriteLinks } from './link-rewrite'
-export { notePicture } from './note-images'
+export {
+  notePicture,
+  pictureBeside,
+  picturePath,
+  picturesOf,
+  picturesWrittenOut,
+} from './note-images'
 export { elsewhere } from './marks-elsewhere.svelte'
 export { serveLinks } from './services'
 export { pressQueryRow, queryRowsHtml } from './query-door'

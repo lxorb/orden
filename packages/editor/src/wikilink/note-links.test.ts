@@ -56,6 +56,26 @@ describe('noteLinks', () => {
     expect(noteLinks(index, ['Board.canvas'], wikilink)).toBe('[[Board.canvas]]')
   })
 
+  test('a markdown link is given a path that reaches the same file read from the note first', () => {
+    const shortest = (target: LinkWrite) => target.markdown ?? ''
+    const here = { ...index, files: ['image.png', 'a/b/image.png'], path: 'a/b/c.md' }
+    expect(noteLinks(here, ['image.png'], shortest)).toBe('!/image.png')
+    expect(noteLinks(here, ['a/b/image.png'], shortest)).toBe('!image.png')
+
+    const three = [note('c.md'), note('a/b/c.md'), note('b/c.md')]
+    const notes = { ...index, notes: three, path: 'a/new.md' }
+    expect(noteLinks(notes, ['b/c.md'], shortest)).toBe('/b/c.md')
+    expect(noteLinks(notes, ['a/b/c.md'], shortest)).toBe('b/c.md')
+    expect(noteLinks(notes, ['c.md'], shortest)).toBe('c.md')
+  })
+
+  test('a file two folders share a name in is linked by enough of the path to reach it', () => {
+    const files = { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] }
+    expect(noteLinks(files, ['a/b/pic.png'], wikilink)).toBe('![[a/b/pic.png]]')
+    expect(noteLinks(files, ['b/pic.png'], wikilink)).toBe('![[b/pic.png]]')
+    expect(noteLinks(files, ['c/d.png'], wikilink)).toBe('![[d.png]]')
+  })
+
   test('a note not written yet is linked by the name that will find it', () => {
     expect(noteLinks(index, ['Trips/Trips.md'], wikilink)).toBe('[[Trips]]')
   })

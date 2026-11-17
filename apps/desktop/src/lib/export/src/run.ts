@@ -44,6 +44,7 @@ export interface Note {
 
 export interface RunOptions extends HtmlOptions {
   link?: (link: FoundLink) => string | null
+  picturesWritten?: (source: string) => string
   background?: string
   now?: string
 }
@@ -258,6 +259,13 @@ async function withKept(note: Note): Promise<Note> {
   return source === note.source ? note : { ...note, source }
 }
 
+const WRITES_PICTURES = new Set<Exportable>(['md', 'textbundle', 'md-assets', 'docx', 'rtf'])
+
+function picturesWrittenIn(note: Note, options: RunOptions): Note {
+  const source = options.picturesWritten?.(note.source) ?? note.source
+  return source === note.source ? note : { ...note, source }
+}
+
 export async function runExport(
   id: Exportable,
   given: Note,
@@ -268,9 +276,10 @@ export async function runExport(
 
   if (id === 'pdf') return exportPdf(note, options)
   if (id === 'jpg' || id === 'png') return exportPicture(id, note, options)
-  if (id === 'textbundle') return exportBundle(note, options)
-  if (id === 'md-assets') return exportMarkdownWithPictures(note, options)
+  const written = WRITES_PICTURES.has(id) ? picturesWrittenIn(note, options) : note
+  if (id === 'textbundle') return exportBundle(written, options)
+  if (id === 'md-assets') return exportMarkdownWithPictures(written, options)
 
-  const payload = await payloadFor(id, note, options)
+  const payload = await payloadFor(id, written, options)
   return deliver(note.name, extensionFor(id), labelFor(id), payload)
 }

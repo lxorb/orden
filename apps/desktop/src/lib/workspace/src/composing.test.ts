@@ -24,9 +24,14 @@ vi.mock('../../platform/src/tauri', () => ({
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
 }))
 
+const taking = new Set<string>()
+
 vi.mock('../../link-index/src/api', () => ({
   links: {
+    takesOver: (path: string) => taking.has(path),
     noteSaved: (path: string) => void told.push(`saved ${path}`),
+    rebased: (text: string) =>
+      text.includes('[[x/Plan]]') ? text.replace('[[x/Plan]]', '[[a/x/Plan]]') : null,
   },
 }))
 
@@ -55,6 +60,7 @@ function space(notes: Record<string, string>, openAt?: string) {
     tabs: tab ? [tab] : [],
     undone: new FileActions(),
     flush: () => undefined,
+    documentAt: (path: string) => (tab?.path === path ? { text: tab.doc } : null),
     fileGone: (path: string, _kind: string, back?: string) => {
       told.push(`gone ${path}`)
       if (back) buried.push(back)
@@ -120,6 +126,21 @@ describe('a note merged into another', () => {
     ])
   })
 
+  test('takes the words of an open note as they stand, typing not yet written included', async () => {
+    const ws = space({ [A]: '# a\n\nfirst\n', [B]: '# b\n\nsecond\n' }, A)
+    const typed = { text: '# a\n\nfirst\ntyped not saved\n' }
+    await mergeInto({ ...ws, documentAt: (path) => (path === A ? typed : null) }, A, B)
+
+    expect(disk.get(B)).toContain('typed not saved')
+  })
+
+  test('pastes the words relinked for the folder they arrive in', async () => {
+    const ws = space({ [A]: 'see [[x/Plan]]\n', [B]: '# b\n' })
+    await mergeInto(ws, A, B)
+
+    expect(disk.get(B)).toContain('see [[a/x/Plan]]')
+  })
+
   test('is one thing to undo, holding both notes as they were', async () => {
     const ws = space({ [A]: '# a\n', [B]: '# b\n' })
     await mergeInto(ws, A, B)
@@ -133,6 +154,7 @@ describe('a note merged into another', () => {
         intoContent: '# b\n',
         intoAfter: disk.get(B),
         relinked: [],
+        relinks: [],
         back: buried[0],
       },
     ])
@@ -244,6 +266,17 @@ describe('a note split at the caret', () => {
 
     expect(ws.undone.stack).toHaveLength(1)
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'split', from: NOTE, fromContent: DOC })
+  })
+
+  test('and steps the new name aside from one that would take over links to a namesake', async () => {
+    const ws = space({ [NOTE]: DOC }, NOTE)
+    taking.add(`${SPACE}/Later.md`)
+    await splitAtCaret(ws, DOC.indexOf('## Later'))
+    taking.clear()
+
+    expect(disk.has(`${SPACE}/Later.md`)).toBe(false)
+    expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
+    expect(disk.get(NOTE)).toContain('[[Later 2]]')
   })
 
   test('and steps the new name aside from one the folder already has', async () => {

@@ -1,7 +1,8 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { MapMode, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { blocksOf, foldName } from '@orden/markdown/links'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { blocksOf, foldName, headingText, isHeading, type Row, rowsOf } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -12,6 +13,8 @@ import {
   noteIndex,
   type NoteRef,
   resolveNote,
+  resolveRelative,
+  shortestReaching,
   type SpaceBlock,
 } from './notes'
 
@@ -33,57 +36,70 @@ function typing(context: CompletionContext) {
   return context.matchBefore(/\[\[[^[\]\n]*/)
 }
 
-const WRITTEN_REST = /^([^[\]\n]*?)\]\]/
-
-interface Rest {
-  end: number
-  fragment: string | null
-  shown: string | null
-}
-
-function restOf(view: EditorView, to: number): Rest | null {
-  const line = view.state.doc.lineAt(to)
-  const written = WRITTEN_REST.exec(view.state.doc.sliceString(to, line.to))
-  if (!written) return null
-
-  const words = written[1] ?? ''
-  const bar = /\\?\|/.exec(words)
-  const before = bar ? words.slice(0, bar.index) : words
-  const hash = before.indexOf('#')
-  return {
-    end: to + written[0].length,
-    fragment: hash === -1 ? null : before.slice(hash + 1),
-    shown: bar ? words.slice(bar.index + bar[0].length) : null,
-  }
-}
-
-function kept(target: LinkWrite, rest: Rest | null): LinkWrite {
-  if (!rest) return target
-  const fragment = target.fragment ?? rest.fragment
-  const shown = target.shown ?? rest.shown
-  return {
-    ...target,
-    ...(fragment ? { fragment } : {}),
-    ...(shown ? { shown } : {}),
-  }
-}
+const REST_OF_LINK = /^([^[\]\n]*)\]\]/
 
 function insert(target: LinkWrite) {
   return (view: EditorView, _completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
-    const rest = restOf(view, to)
-    const text = view.state.facet(linkWriter)(kept(target, rest))
+    const line = view.state.doc.lineAt(to)
+    const rest = REST_OF_LINK.exec(view.state.doc.sliceString(to, line.to))?.[1] ?? null
+    const kept = rest === null ? '' : keptOf(rest, !!target.fragment)
+    const fragment = target.fragment ?? (kept.startsWith('#') ? headingOf(kept) : null)
+    const shown = target.shown ?? shownOf(kept)
+    const linked = view.state.facet(linkWriter)({
+      ...target,
+      fragment,
+      ...(shown ? { shown } : {}),
+    })
+    const wiki = linked.startsWith('[[') && linked.endsWith(']]')
+    const end = rest === null ? to : to + rest.length + 2
+    const text = !wiki && plainInMatter(view, start, end) ? JSON.stringify(linked) : linked
 
     view.dispatch({
-      changes: { from: start, to: rest?.end ?? to, insert: text },
+      changes: { from: start, to: end, insert: text },
       selection: { anchor: start + text.length },
       userEvent: 'input.complete',
     })
   }
 }
 
+const OPENS_VALUE = /^[ \t]*(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)$/
+
+function plainInMatter(view: EditorView, from: number, to: number): boolean {
+  const doc = view.state.doc
+  if (doc.sliceString(0, 3) !== '---') return false
+  const block = frontMatterBlock(doc.toString())
+  if (!block || from < block.body.from || to > block.body.to) return false
+  const line = doc.lineAt(from)
+  return OPENS_VALUE.test(doc.sliceString(line.from, from)) && !doc.sliceString(to, line.to).trim()
+}
+
+function keptOf(rest: string, fragmentChosen: boolean): string {
+  const marks = fragmentChosen ? ['|'] : ['#', '|']
+  const at = marks
+    .map((mark) => rest.indexOf(mark))
+    .filter((one) => one !== -1)
+    .reduce((first, one) => Math.min(first, one), rest.length)
+  return rest.slice(at)
+}
+
+function headingOf(kept: string): string | null {
+  const bar = kept.indexOf('|')
+  const heading = (bar === -1 ? kept : kept.slice(0, bar)).slice(1)
+  return heading || null
+}
+
+function shownOf(kept: string): string | null {
+  const bar = kept.indexOf('|')
+  return bar === -1 ? null : kept.slice(bar + 1) || null
+}
+
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
-  return { name: nameFor(index, note), path: note.path, from: index.path }
+  const markdown = shortestReaching(
+    note.path,
+    (written) => resolveRelative(index, written)?.path === note.path,
+  )
+  return { name: nameFor(index, note), markdown, path: note.path, from: index.path }
 }
 
 function folderOf(path: string): string | undefined {
@@ -170,6 +186,7 @@ async function blockOptions(
   if (source === null) return []
 
   const needle = foldName(typed.trim())
+  const rows = rowsOf(source)
 
   return blocksOf(source)
     .filter((block) => block.text !== '')
@@ -177,12 +194,25 @@ async function blockOptions(
     .slice(0, MOST_SHOWN)
     .map((block) => ({
       label: block.text,
-      apply:
-        block.id === null
-          ? name(note.path, block.line, target)
-          : insert({ ...target, fragment: `^${block.id}` }),
+      apply: linked(note.path, block.line, headingRow(rows[block.line]), block.id, target),
       type: 'property',
     }))
+}
+
+function headingRow(row: Pick<Row, 'text' | 'code' | 'matter'> | undefined): string | null {
+  return row && !row.code && !row.matter && isHeading(row.text) ? headingText(row.text) : null
+}
+
+function linked(
+  path: string,
+  line: number,
+  heading: string | null,
+  id: string | null,
+  target: LinkWrite,
+) {
+  if (id) return insert({ ...target, fragment: `^${id}` })
+  if (heading !== null) return insert({ ...target, fragment: heading })
+  return name(path, line, target)
 }
 
 interface Held {
@@ -292,7 +322,15 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
   return rows
 }
 
-function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
+async function foundHeading(index: NoteIndex, block: SpaceBlock): Promise<string | null> {
+  if (!isHeading(block.text)) return null
+  const source = await index.read(block.path).catch(() => null)
+  return source === null
+    ? headingText(block.text)
+    : headingRow(rowsOf(source)[block.line] ?? { text: block.text, code: false, matter: false })
+}
+
+function foundBlock(index: NoteIndex, block: SpaceBlock, heading: string | null): Completion {
   const note = index.notes.find((one) => one.path === block.path)
   const target: LinkWrite = note
     ? about(index, note)
@@ -301,9 +339,7 @@ function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
   return {
     label: block.text,
     ...(note ? { detail: note.name } : {}),
-    apply: block.id
-      ? insert({ ...target, fragment: `^${block.id}` })
-      : name(block.path, block.line, target),
+    apply: linked(block.path, block.line, heading, block.id, target),
     type: 'property',
   }
 }
@@ -322,7 +358,7 @@ async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[
     if (block.path === index.path) continue
     if (block.id && named.has(`^${block.id}`)) continue
 
-    rows.push(foundBlock(index, block))
+    rows.push(foundBlock(index, block, await foundHeading(index, block)))
     if (rows.length >= MOST_SHOWN) break
   }
 

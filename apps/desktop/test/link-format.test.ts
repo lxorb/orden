@@ -36,6 +36,14 @@ describe('a link to a note', () => {
     expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'wikilink')).toBe('[[Plan#^a1b2c3]]')
   })
 
+  test('is a markdown link when a heading or its words hold a backtick a code span would take', () => {
+    const toHeading = formatLink({ ...PLAN, fragment: 'Using `git` well' }, 'wikilink')
+    expect(toHeading.startsWith('[[')).toBe(false)
+    expect(findLinks(`${toHeading} and \`x\``).map((one) => one.target)).toHaveLength(1)
+    const shown = formatLink({ ...PLAN, shown: 'it`s' }, 'wikilink')
+    expect(findLinks(`${shown} then \`x\``).map((one) => one.target)).toHaveLength(1)
+  })
+
   test('is an embed where it was asked for as one', () => {
     expect(formatLink({ ...PLAN, embed: true }, 'wikilink')).toBe('![[Plan]]')
     expect(formatLink({ ...PLAN, embed: true }, 'shortest')).toBe('![Plan](Plan.md)')
@@ -47,6 +55,24 @@ describe('the three markdown spellings', () => {
     expect(formatLink(PLAN, 'shortest')).toBe('[Plan](Plan.md)')
     expect(formatLink(PLAN, 'relative')).toBe('[Plan](../ideas/Plan.md)')
     expect(formatLink(PLAN, 'absolute')).toBe('[Plan](ideas/Plan.md)')
+  })
+
+  test('take the path the picker found to reach the note read from the linking note', () => {
+    expect(
+      formatLink(
+        { name: 'b/c', markdown: '/b/c.md', path: 'b/c.md', from: 'a/new.md' },
+        'shortest',
+      ),
+    ).toBe('[b/c](/b/c.md)')
+  })
+
+  test('write the path from the top, slash and all, when only that says which', () => {
+    expect(formatLink({ ...PLAN, name: '/ideas/Plan' }, 'shortest')).toBe(
+      '[ideas/Plan](/ideas/Plan.md)',
+    )
+    expect(formatLink({ name: '/Plan', path: 'Plan.md', from: 'b/n.md' }, 'shortest')).toBe(
+      '[Plan](/Plan.md)',
+    )
   })
 
   test('write the folder in the shortest name when the name needs it to say which', () => {
@@ -64,7 +90,7 @@ describe('the three markdown spellings', () => {
   test('write a name said from the top as a path from the top', () => {
     expect(
       formatLink({ name: '/Plan', path: 'Plan.md', from: 'Work/Journal.md' }, 'shortest'),
-    ).toBe('[/Plan](/Plan.md)')
+    ).toBe('[Plan](/Plan.md)')
   })
 
   test('always show something, since a markdown link with no words shows none', () => {

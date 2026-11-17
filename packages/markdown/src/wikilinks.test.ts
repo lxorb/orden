@@ -330,3 +330,113 @@ describe('a file embedded in a note', () => {
     expect(html).not.toContain('onerror="alert(1)"')
   })
 })
+
+describe('a picture a page shows', () => {
+  const asked: [string, boolean, string | null][] = []
+  const resolvePicture = (src: string, wikilink: boolean, from: { path?: string } | null) => {
+    asked.push([src, wikilink, from?.path ?? null])
+    return `found/${src}`
+  }
+
+  test('is looked up knowing whether a wikilink or a markdown link named it', () => {
+    asked.length = 0
+    const html = renderMarkdown('![[shot.png]]\n\n![](pic.png)\n', { resolvePicture })
+
+    expect(asked).toEqual([
+      ['shot.png', true, null],
+      ['pic.png', false, null],
+    ])
+    expect(html).toContain('<img src="found/shot.png"')
+    expect(html).toContain('<img src="found/pic.png"')
+  })
+
+  test('inside an embedded note is looked up from that note', () => {
+    asked.length = 0
+    renderMarkdown('![[Plan]]\n', {
+      resolvePicture,
+      resolveEmbed: () => ({
+        text: '![](../../assets/abc.png)\n',
+        escapeHtml: false,
+        path: '/Work/Projects/Q1/Plan.md',
+      }),
+    })
+
+    expect(asked).toEqual([['../../assets/abc.png', false, '/Work/Projects/Q1/Plan.md']])
+  })
+})
+
+describe('a link inside an embedded note', () => {
+  const plan = {
+    text: 'see [[Budget]] and [b](Budget.md)\n',
+    escapeHtml: false,
+    path: '/W/Q1/Plan.md',
+  }
+
+  test('is resolved from the note it was written in', () => {
+    const asked: (string | null)[] = []
+    const html = renderMarkdown('[[Budget]]\n\n![[Plan]]\n', {
+      resolveEmbed: () => plan,
+      resolveLink: (link, from) => {
+        asked.push(from?.path ?? null)
+        return { href: from ? `Q1/${link.target}.md` : `${link.target}.md` }
+      },
+      resolveNoteFrom: (target, from) => (from.path === plan.path ? `Q1/${target}` : null),
+    })
+
+    expect(asked).toEqual([null, '/W/Q1/Plan.md'])
+    expect(html).toContain('<a class="wikilink" href="Budget.md">Budget</a>')
+    expect(html).toContain('<a class="wikilink" href="Q1/Budget.md">Budget</a>')
+    expect(html).toContain('<a class="wikilink" href="Q1/Budget.md">b</a>')
+  })
+
+  test('without an ending, or with a title, is resolved from that note too', () => {
+    const html = renderMarkdown('![[Plan]]\n', {
+      resolveEmbed: () => ({ ...plan, text: '[b](Budget "tip") and [v](<Version 2.0>)\n' }),
+      resolveNoteFrom: (target) => `Q1/${decodeURI(target)}.md`,
+    })
+    expect(html).toContain('<a class="wikilink" href="Q1/Budget.md" title="tip">b</a>')
+    expect(html).toContain('<a class="wikilink" href="Q1/Version%202.0.md">v</a>')
+  })
+
+  test('to nothing that note can reach stays the link it was', () => {
+    const html = renderMarkdown('![[Plan]]\n', {
+      resolveEmbed: () => plan,
+      resolveNoteFrom: () => null,
+    })
+    expect(html).toContain('<a href="Budget.md">b</a>')
+  })
+})
+
+describe('footnotes inside an embedded note', () => {
+  test('have ids of their own, and are gathered once', () => {
+    const html = renderMarkdown('Host says[^1].\n\n![[E]]\n\n[^1]: Host note.\n', {
+      footnotes: true,
+      resolveEmbed: () => 'Embed says[^1].\n\n[^1]: Embed note.\n',
+    })
+
+    expect(html.match(/id="fn-1"/g)).toHaveLength(1)
+    expect(html.match(/id="fnref-1"/g)).toHaveLength(1)
+    expect(html).toContain('<li id="e0-fn-1"><a class="footnote-back" href="#e0-fnref-1">')
+    expect(html).not.toContain('<section class="footnotes"><ol><section class="footnotes">')
+  })
+
+  test('leave a link to a note named like a footnote as it was', () => {
+    const html = renderMarkdown('![[E]]\n', {
+      footnotes: true,
+      resolveEmbed: () => 'See [[fn-plan]] and [m](fnref-x.md).\n',
+      resolveLink: (link) => ({ href: `${link.target}.md` }),
+    })
+    expect(html).toContain('href="fn-plan.md"')
+    expect(html).toContain('href="fnref-x.md"')
+  })
+})
+
+describe('a cover', () => {
+  test('is looked up as the note names it', () => {
+    const html = renderMarkdown('---\ncover: photo.png\n---\n\nWords\n', {
+      cover: true,
+      resolvePicture: (src) => `../attachments/${src}`,
+    })
+    expect(html).toContain('<img src="../attachments/photo.png"')
+  })
+})

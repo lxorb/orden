@@ -76,7 +76,7 @@ describe('reading a canvas for the index', () => {
   test('reads each file node as one link out of it', () => {
     const links = scanCanvas('Board.canvas', canvas).links
 
-    expect(links.map((link) => link.target)).toEqual(['ideas/Plan.md', 'Notes.md', 'x.md'])
+    expect(links.map((link) => link.target)).toEqual(['/ideas/Plan.md', '/Notes.md', '/x.md'])
     expect(links.every((link) => link.kind === 'wikilink')).toBe(true)
   })
 
@@ -159,7 +159,7 @@ describe('reading a canvas for the index', () => {
     const whole = readCanvas(plane)
     expect(read.icon).toBe(whole.icon)
     expect(read.iconColor).toBe(whole.iconColor)
-    expect(read.links.map((link) => [link.target, link.heading])).toEqual([['Plan.md', 'Later']])
+    expect(read.links.map((link) => [link.target, link.heading])).toEqual([['/Plan.md', 'Later']])
   })
 
   test('stops at the icon of a plane in the order this app writes one', () => {
@@ -170,7 +170,7 @@ describe('reading a canvas for the index', () => {
 
     expect(read.icon).toBe('rocket')
     expect(read.iconColor).toBe('violet')
-    expect(read.links.map((link) => link.target)).toEqual(['Plan.md'])
+    expect(read.links.map((link) => link.target)).toEqual(['/Plan.md'])
   })
 
   test('and walks the whole of one in any other order', () => {

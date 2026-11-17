@@ -28,10 +28,12 @@ import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref, WORTH_REMEMBERING } from './tags'
 import { iframeCard, iframesAhead, webCard } from './web-embed'
 import {
+  type EmbeddedNote,
   type EmbedResolver,
   type Embeds,
   embedSink,
   type LinkResolver,
+  type PictureResolver,
   wikilinks,
 } from './wikilinks'
 import {
@@ -57,8 +59,11 @@ export interface RenderOptions {
   blockAnchors?: boolean
   resolveLink?: LinkResolver
   resolveNoteHref?: (target: string) => string | null
+  resolveNoteFrom?: (target: string, from: EmbeddedNote) => string | null
+  from?: EmbeddedNote
   tagHref?: TagHref
   resolveEmbed?: EmbedResolver
+  resolvePicture?: PictureResolver
   breaks?: boolean
   locale?: string
   headings?: Heading[]
@@ -125,6 +130,16 @@ function noteLink(href: string): { target: string; fragment: string } | null {
   const target = hash === -1 ? written : written.slice(0, hash)
   if (!target || !NOTE_LINK.test(target)) return null
 
+  return { target, fragment: hash === -1 ? '' : attributeUrl(written.slice(hash)) }
+}
+
+function localLink(href: string): { target: string; fragment: string } | null {
+  const written = href.trim()
+  if (!written || written.startsWith('#') || written.startsWith('//')) return null
+  if (/^[a-z][a-z\d+.-]*:/i.test(written)) return null
+
+  const hash = written.indexOf('#')
+  const target = hash === -1 ? written : written.slice(0, hash)
   return { target, fragment: hash === -1 ? '' : attributeUrl(written.slice(hash)) }
 }
 
@@ -196,6 +211,10 @@ function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Lin
   }
 }
 
+function linksFrom(resolve: LinkResolver, from: EmbeddedNote | undefined): LinkResolver {
+  return from ? (link) => resolve(link, from) : resolve
+}
+
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(
@@ -212,8 +231,9 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   marked.use(
     wikilinks({
       embeds,
-      ...(options.resolveLink ? { resolveLink: options.resolveLink } : {}),
+      ...(options.resolveLink ? { resolveLink: linksFrom(options.resolveLink, options.from) } : {}),
       ...(options.resolveEmbed ? { resolveEmbed: options.resolveEmbed } : {}),
+      ...(options.resolvePicture ? { resolvePicture: options.resolvePicture } : {}),
     }),
   )
   marked.use(hashtags(options.tagHref))
@@ -233,6 +253,15 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
       link(token: Tokens.Link) {
         const body = this.parser.parseInline(token.tokens)
+
+        const from = options.from
+        const nested = from && options.resolveNoteFrom ? localLink(token.href) : null
+        const there =
+          nested && from ? (options.resolveNoteFrom?.(nested.target, from) ?? null) : null
+        if (nested && there !== null && safeHref(there)) {
+          const title = token.title ? ` title="${escape(token.title)}"` : ''
+          return `<a class="wikilink" href="${attributeUrl(there)}${nested.fragment}"${title}>${body}</a>`
+        }
 
         const resolve = options.resolveNoteHref
         const written = resolve ? noteLink(token.href) : null
@@ -259,7 +288,8 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const { alt, size } = sizedAlt(
           this.parser.parseInline(token.tokens, this.parser.textRenderer),
         )
-        const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
+        const found = options.resolvePicture?.(token.href, false, null) ?? token.href
+        const src = safeSrc(token.href) ? attributeUrl(found) : ''
         if (!src) return escape(alt)
 
         const attributes = [` src="${src}"`, ` alt="${escape(alt)}"`]
@@ -359,8 +389,10 @@ function needsOwn(options: RenderOptions): boolean {
     options.code !== undefined ||
     options.resolveLink !== undefined ||
     options.resolveNoteHref !== undefined ||
+    options.resolveNoteFrom !== undefined ||
     options.tagHref !== undefined ||
     options.resolveEmbed !== undefined ||
+    options.resolvePicture !== undefined ||
     options.headings !== undefined ||
     options.locale !== undefined
   )
@@ -468,12 +500,19 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = html.replace(TOC_MARK, () => contents)
   }
 
+  const outer = options.resolvePicture
   embeds.sections.forEach((section, at) => {
     const embedded = renderMarkdown(section.text, {
       ...inside(options),
       ...(section.escapeHtml ? { escapeHtml: true } : {}),
+      from: section.from,
+      ...(outer
+        ? {
+            resolvePicture: (src: string, wikilink: boolean) => outer(src, wikilink, section.from),
+          }
+        : {}),
     })
-    html = html.replace(embeds.marker(at), () => embedded)
+    html = html.replace(embeds.marker(at), () => notesApart(embedded, at))
   })
 
   if (options.footnotes) {
@@ -491,7 +530,24 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   }
 
   if (!options.cover) return html
-  return coverFigure(options.cover === true ? coverOf(source) : options.cover) + html
+  return coverFigure(options.cover === true ? coverFound(source, options) : options.cover) + html
+}
+
+function coverFound(source: string, options: RenderOptions): Cover | null {
+  const cover = coverOf(source)
+  const found = cover && options.resolvePicture?.(cover.src, false, null)
+  return cover && found ? { ...cover, src: found } : cover
+}
+
+function notesApart(html: string, at: number): string {
+  const own = `e${at}-`
+  return html
+    .replace(/<li id="fn-/g, `<li id="${own}fn-`)
+    .replace(/(<a class="footnote-back" href="#)fnref-/g, `$1${own}fnref-`)
+    .replace(
+      /(<sup class="footnote-ref" id=")fnref-([^"]*"><a href="#)fn-/g,
+      `$1${own}fnref-$2${own}fn-`,
+    )
 }
 
 export function tableOfContents(headings: Heading[]): string {
@@ -568,4 +624,4 @@ export { noteWithoutComments, withoutComments } from './comments'
 export { MOST_EMS } from './engines'
 
 export { findLinks, type FoundLink, type Wikilink } from './links'
-export type { EmbeddedNote } from './wikilinks'
+export type { EmbeddedNote, PictureResolver } from './wikilinks'

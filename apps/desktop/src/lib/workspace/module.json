@@ -9,6 +9,7 @@
     "documents",
     "editor",
     "file-ops",
+    "files-out",
     "file-undo",
     "file-writes",
     "first-screen",

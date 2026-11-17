@@ -126,3 +126,71 @@ export function flowItem(value: string): string {
   const said = oneLine(value)
   return /[,[\]{}]/.test(said) || ambiguous(said) ? quoted(said) : said
 }
+
+const SCALAR_OPENS = /(?:^\s*(?:-\s+)?|[:[,]\s*)$/
+
+export interface ReadLine {
+  text: string
+  at: number[]
+}
+
+export function readInQuotes(line: string): ReadLine {
+  let text = ''
+  const at: number[] = []
+  let quote: "'" | '"' | null = null
+  let open = -1
+  let held = ''
+  let heldAt: number[] = []
+
+  for (let index = 0; index < line.length; index++) {
+    const character = line.charAt(index)
+
+    if (quote === null) {
+      if (character === '#' && (index === 0 || /\s/.test(line.charAt(index - 1)))) {
+        for (let rest = index; rest < line.length; rest++) at.push(rest)
+        text += line.slice(index)
+        break
+      }
+      text += character
+      at.push(index)
+      if ((character === "'" || character === '"') && SCALAR_OPENS.test(line.slice(0, index))) {
+        quote = character
+        open = index
+        held = ''
+        heldAt = []
+      }
+      continue
+    }
+
+    const next = line.charAt(index + 1)
+    if (quote === '"' && character === '\\' && next) {
+      const plain = next === '"' || next === '\\' || next === '/'
+      held += plain ? next : character + next
+      heldAt.push(...(plain ? [index] : [index, index + 1]))
+      index++
+      continue
+    }
+    if (quote === "'" && character === "'" && next === "'") {
+      held += "'"
+      heldAt.push(index)
+      index++
+      continue
+    }
+    if (character === quote) {
+      text += held + character
+      at.push(...heldAt, index)
+      quote = null
+      continue
+    }
+    held += character
+    heldAt.push(index)
+  }
+
+  if (quote !== null) {
+    for (let rest = open + 1; rest < line.length; rest++) at.push(rest)
+    text += line.slice(open + 1)
+  }
+
+  at.push(line.length)
+  return { text, at }
+}

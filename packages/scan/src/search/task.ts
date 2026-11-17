@@ -1,5 +1,6 @@
+import { readTask } from '@orden/markdown/task-line'
 import { taskAt } from '@orden/markdown/tasks'
-import type { Hit, Range } from './match'
+import { type Hit, type Range, shownWhole } from './match'
 
 export function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[] } | null {
   const task = taskAt(hit.text)
@@ -13,4 +14,8 @@ export function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[]
       .filter((range) => range.to > 0)
       .map((range) => ({ from: Math.max(range.from, 0), to: range.to })),
   }
+}
+
+export function taskWordsOf(hit: Hit): string | null {
+  return shownWhole(hit.text) ? (readTask(hit.text)?.text ?? null) : null
 }

@@ -7,6 +7,7 @@ export type FileAction =
       from: string
       to: string
       rewrote?: boolean
+      retitled?: boolean
       follows?: boolean
       nests?: boolean
       carries?: boolean
@@ -33,6 +34,7 @@ export type FileAction =
       intoContent: string
       intoAfter: string
       relinked?: string[]
+      relinks?: { path: string; before: string; after: string }[]
       back?: string
     }
   | {

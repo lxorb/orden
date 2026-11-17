@@ -29,6 +29,8 @@ describe('what closes a fence', () => {
   test('the same character, at least as many of them', () => {
     expect(closesFence('```', '```')).toBe(true)
     expect(closesFence('````', '```')).toBe(true)
+    expect(closesFence('```~~', '```')).toBe(false)
+    expect(closesFence('~~~``', '~~~')).toBe(false)
     expect(closesFence('```', '````')).toBe(false)
   })
 

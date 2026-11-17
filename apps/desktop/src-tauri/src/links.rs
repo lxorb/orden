@@ -7,7 +7,7 @@ use tauri::AppHandle;
 use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use crate::notes::{words_of, words_stamped};
-use crate::paths::{files_in, is_canvas, is_shortcut, relative_to, walked_in_spaces};
+use crate::paths::{files_in, is_canvas, is_pages, is_shortcut, relative_to, walked_in_spaces};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -165,7 +165,10 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
         out.push(note);
     }
 
-    for path in others.iter().filter(|path| is_canvas(path)) {
+    for path in others
+        .iter()
+        .filter(|path| is_canvas(path) || is_pages(path))
+    {
         let Ok(body) = words_of(path) else {
             continue;
         };
@@ -237,7 +240,7 @@ fn note_at(relative: String, body: &str) -> Note {
 #[derive(Default, Deserialize)]
 struct CanvasFile {
     #[serde(default)]
-    nodes: Vec<CanvasCard>,
+    nodes: Vec<serde_json::Value>,
     #[serde(default)]
     orden: Option<CanvasOwn>,
     #[serde(default)]
@@ -252,12 +255,35 @@ struct CanvasOwn {
     icon_color: Option<String>,
 }
 
-#[derive(Deserialize)]
-struct CanvasCard {
-    #[serde(rename = "type")]
-    kind: Option<String>,
-    file: Option<String>,
-    subpath: Option<String>,
+fn card_field<'a>(card: &'a serde_json::Value, key: &str) -> Option<&'a str> {
+    card.get(key).and_then(serde_json::Value::as_str)
+}
+
+fn card_link(card: &serde_json::Value) -> Option<Link> {
+    card_field(card, "id").filter(|id| !id.is_empty())?;
+    if card_field(card, "type") != Some("file") {
+        return None;
+    }
+    let file = card_field(card, "file").filter(|file| !file.is_empty())?;
+    let subpath = card_field(card, "subpath").unwrap_or_default();
+
+    Some(Link {
+        kind: "wikilink",
+        target: if file.starts_with('/') {
+            file.to_string()
+        } else {
+            format!("/{file}")
+        },
+        heading: subpath
+            .strip_prefix('#')
+            .filter(|_| !subpath.starts_with("#^"))
+            .map(str::to_string),
+        block: subpath.strip_prefix("#^").map(str::to_string),
+        alias: None,
+        embed: false,
+        line: 0,
+        text: file.to_string(),
+    })
 }
 
 fn said(value: Option<String>) -> Option<String> {
@@ -272,29 +298,7 @@ fn canvas_note(relative: String, body: &str) -> Note {
 
     let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
 
-    let links: Vec<Link> = read
-        .nodes
-        .iter()
-        .filter(|card| card.kind.as_deref() == Some("file"))
-        .filter_map(|card| {
-            let file = card.file.clone()?;
-            let subpath = card.subpath.as_deref().unwrap_or_default();
-
-            Some(Link {
-                kind: "wikilink",
-                target: file.clone(),
-                heading: subpath
-                    .strip_prefix('#')
-                    .filter(|_| !subpath.starts_with("#^"))
-                    .map(str::to_string),
-                block: subpath.strip_prefix("#^").map(str::to_string),
-                alias: None,
-                embed: false,
-                line: 0,
-                text: file,
-            })
-        })
-        .collect();
+    let links: Vec<Link> = read.nodes.iter().filter_map(card_link).collect();
 
     Note {
         name,
@@ -347,19 +351,62 @@ fn favicon_of(content: &str) -> Option<String> {
 }
 
 fn address_of(content: &str) -> Option<String> {
-    key_of(content, "url").or_else(|| {
-        let (_, after) = content.split_once("<key>URL</key>")?;
-        let (_, after) = after.split_once("<string>")?;
-        let (said, _) = after.split_once("</string>")?;
-        let said = said
-            .trim()
-            .replace("&lt;", "<")
-            .replace("&gt;", ">")
-            .replace("&quot;", "\"")
-            .replace("&apos;", "'")
-            .replace("&amp;", "&");
-        (!said.is_empty()).then_some(said)
+    let said = if content.contains("<key>URL</key>") {
+        webloc_address(content)
+    } else {
+        shortcut_url(content)
+    };
+    said.filter(|one| is_web_address(one))
+}
+
+fn shortcut_url(content: &str) -> Option<String> {
+    let mut section = String::new();
+    content.lines().find_map(|line| {
+        let line = line.trim();
+        if let Some(named) = line.strip_prefix('[').and_then(|one| one.strip_suffix(']')) {
+            section = named.trim().to_ascii_lowercase();
+            return None;
+        }
+        if section != "internetshortcut" {
+            return None;
+        }
+        let (key, value) = line.split_once('=')?;
+        let value = value.trim();
+        (key.trim().eq_ignore_ascii_case("url") && !value.is_empty()).then(|| value.to_string())
     })
+}
+
+fn is_web_address(url: &str) -> bool {
+    let inner = url
+        .get(..12)
+        .filter(|one| one.eq_ignore_ascii_case("view-source:"))
+        .map_or(url, |_| &url[12..]);
+    let lower = inner.to_ascii_lowercase();
+    let Some(rest) = lower
+        .strip_prefix("https://")
+        .or_else(|| lower.strip_prefix("http://"))
+    else {
+        return false;
+    };
+    let host_end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+    let authority = &rest[..host_end];
+    let host = authority.rsplit('@').next().unwrap_or(authority);
+    let host = host.split(':').next().unwrap_or(host).trim_end_matches('.');
+    !host.is_empty() && !crate::web_tabs::app_host(host)
+}
+
+fn webloc_address(content: &str) -> Option<String> {
+    let (_, after) = content.split_once("<key>URL</key>")?;
+    let (_, after) = after.split_once("<string>")?;
+    let (said, _) = after.split_once("</string>")?;
+    let said = said
+        .trim()
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&amp;", "&");
+    (!said.is_empty()).then_some(said)
 }
 
 fn key_of(content: &str, wanted: &str) -> Option<String> {
@@ -461,7 +508,12 @@ fn prose(body: &str, words_from: usize) -> Prose {
             return;
         }
 
-        let mut found = links_on(&without_code(line), MOST_LINKS - links.len());
+        let read = if index < words_from {
+            front_matter::read_in_quotes(line)
+        } else {
+            Cow::Borrowed(line)
+        };
+        let mut found = links_on(&without_code(&read), MOST_LINKS - links.len());
         if found.is_empty() {
             return;
         }
@@ -550,7 +602,17 @@ fn heading_of(line: &str) -> Option<(usize, String)> {
         return None;
     }
 
-    Some((hashes, rest.trim().trim_end_matches('#').trim().to_string()))
+    Some((hashes, without_closing_hashes(rest).trim().to_string()))
+}
+
+fn without_closing_hashes(rest: &str) -> &str {
+    let text = rest.trim_end_matches([' ', '\t']);
+    let run = text.trim_end_matches('#');
+    if run.len() < text.len() && run.ends_with([' ', '\t']) {
+        run
+    } else {
+        text
+    }
 }
 
 fn block_id_of(line: &str) -> Option<String> {
@@ -586,10 +648,22 @@ fn without_code(line: &str) -> Cow<'_, str> {
     let letters: Vec<char> = line.chars().collect();
     let mut out = String::with_capacity(line.len());
     let mut at = 0;
+    let mut plain_from = 0;
 
     while at < letters.len() {
         if letters[at] != '`' {
             out.push(letters[at]);
+            at += 1;
+            continue;
+        }
+
+        let slashes = letters[plain_from..at]
+            .iter()
+            .rev()
+            .take_while(|one| **one == '\\')
+            .count();
+        if slashes % 2 == 1 {
+            out.push('`');
             at += 1;
             continue;
         }
@@ -620,16 +694,17 @@ fn without_code(line: &str) -> Cow<'_, str> {
 
         match close {
             None => {
-                for one in &letters[at..] {
+                for one in &letters[at..open_end] {
                     out.push(*one);
                 }
-                break;
+                at = open_end;
             }
             Some(end) => {
                 for _ in at..end + marks {
                     out.push(' ');
                 }
                 at = end + marks;
+                plain_from = at;
             }
         }
     }
@@ -855,7 +930,7 @@ fn wikilink(inner: &str, embed: bool) -> Option<Link> {
     };
 
     let (target, heading, block) = split_target(named);
-    if target.is_empty() && heading.is_none() && block.is_none() {
+    if target.is_empty() && heading.is_none() && block.as_deref().is_none_or(str::is_empty) {
         return None;
     }
 
@@ -1216,6 +1291,35 @@ mod tests {
     }
 
     #[test]
+    fn a_link_in_a_quoted_front_matter_value_is_read_the_way_the_value_means_it() {
+        let read = note_at(
+            "Quoted.md".to_string(),
+            "---\nup: '[[Bob''s plan#It''s|Bob''s]] \"x\"'\nby: \"[[A \\\"B\\\"]] [x](C%20\\\\D.md)\"\nnot: '[[open''s]]\n---\n[[Bob''s]]\n",
+        );
+        let said: Vec<(&str, Option<&str>, Option<&str>)> = read
+            .links
+            .iter()
+            .map(|one| {
+                (
+                    one.target.as_str(),
+                    one.heading.as_deref(),
+                    one.alias.as_deref(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            said,
+            [
+                ("Bob's plan", Some("It's"), Some("Bob's")),
+                ("A \"B\"", None, None),
+                ("C \\D.md", None, Some("x")),
+                ("open''s", None, None),
+                ("Bob''s", None, None),
+            ]
+        );
+    }
+
+    #[test]
     fn code_in_quotes_items_and_indents_holds_nothing() {
         let quoted = "> ```\n> [[Example]]\n> - [ ] example\n> ```\n\n[[Real]]\n";
         assert_eq!(targets(quoted), vec!["Real"]);
@@ -1237,6 +1341,19 @@ mod tests {
         .tasks;
         let texts: Vec<&str> = tasks.iter().map(|task| task.text.as_str()).collect();
         assert_eq!(texts, ["one", "two", "three", "four", "five"]);
+    }
+
+    #[test]
+    fn an_escaped_backtick_opens_no_code_span() {
+        assert_eq!(targets("\\` [[Note]] `b`"), vec!["Note"]);
+        assert!(targets("\\\\` [[Note]] `b`").is_empty());
+        assert_eq!(targets("`a\\` [[Note]] `b`"), vec!["Note"]);
+    }
+
+    #[test]
+    fn a_run_that_never_closes_still_lets_a_later_span_hide_a_link() {
+        assert!(targets("`` `[[Plan]]`").is_empty());
+        assert_eq!(targets("`` [[Plan]]"), vec!["Plan"]);
     }
 
     #[test]
@@ -1415,6 +1532,59 @@ mod tests {
     }
 
     #[test]
+    fn a_hash_that_ends_a_heading_word_stays_in_the_heading() {
+        assert_eq!(heading_of("# C#"), Some((1, "C#".to_string())));
+        assert_eq!(
+            heading_of("## Notes on F#"),
+            Some((2, "Notes on F#".to_string()))
+        );
+        assert_eq!(heading_of("## Closed ##"), Some((2, "Closed".to_string())));
+        assert_eq!(heading_of("# #"), Some((1, String::new())));
+    }
+
+    #[test]
+    fn a_comment_in_the_front_matter_is_no_heading() {
+        let read = note_at(
+            "A.md".to_string(),
+            "---\n# my comment\ntitle: x\n---\n# Real\n",
+        );
+        assert_eq!(read.headings, vec!["Real".to_string()]);
+    }
+
+    #[test]
+    fn a_link_to_an_empty_block_of_nothing_is_no_link() {
+        assert!(links_in("[[#^]]").is_empty());
+    }
+
+    #[test]
+    fn a_shortcut_to_an_address_that_is_not_a_web_page_points_nowhere() {
+        for url in [
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+            "http://tauri.localhost/x",
+        ] {
+            let read = shortcut_note(
+                "A.url".to_string(),
+                &format!("[InternetShortcut]\nURL={url}\n"),
+            );
+            assert!(read.address.is_none(), "{url}");
+        }
+        let other = shortcut_note(
+            "A.url".to_string(),
+            "[Other]\nURL=https://b.example/\n[InternetShortcut]\nURL=https://a.example/\n",
+        );
+        assert_eq!(other.address.as_deref(), Some("https://a.example/"));
+        let source = shortcut_note(
+            "A.url".to_string(),
+            "[InternetShortcut]\nURL=view-source:https://a.example/\n",
+        );
+        assert_eq!(
+            source.address.as_deref(),
+            Some("view-source:https://a.example/")
+        );
+    }
+
+    #[test]
     fn a_heading_may_be_indented_up_to_three_spaces() {
         assert_eq!(heading_of("   # Three"), Some((1, "Three".to_string())));
         assert_eq!(heading_of("    # Four"), None);
@@ -1499,11 +1669,31 @@ mod tests {
         );
 
         let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
-        assert_eq!(targets, vec!["Plan.md", "Plan.md", "Plan.md"]);
+        assert_eq!(targets, vec!["/Plan.md", "/Plan.md", "/Plan.md"]);
         assert_eq!(read.links[0].heading, None);
         assert_eq!(read.links[1].heading.as_deref(), Some("Later"));
         assert_eq!(read.links[2].block.as_deref(), Some("abc123"));
         assert!(read.headings.is_empty());
+    }
+
+    #[test]
+    fn a_card_without_its_own_name_or_a_file_links_nowhere_and_spoils_no_other_card() {
+        let read = canvas_note(
+            "Board.canvas".to_string(),
+            concat!(
+                r##"{"nodes":["##,
+                r##"{"type":"file","file":"Unnamed.md"},"##,
+                r##"{"id":"","type":"file","file":"Blank.md"},"##,
+                r##"{"id":"b","type":"file","file":"","subpath":"#x"},"##,
+                r##"{"id":"c","type":"file","file":"Plan.md","subpath":5},"##,
+                r##"{"id":"d","type":"file","file":"Goal.md","x":"far"}"##,
+                r##"],"edges":[]}"##
+            ),
+        );
+
+        let targets: Vec<&str> = read.links.iter().map(|link| link.target.as_str()).collect();
+        assert_eq!(targets, vec!["/Plan.md", "/Goal.md"]);
+        assert_eq!(read.links[0].heading, None);
     }
 
     #[test]

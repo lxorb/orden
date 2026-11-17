@@ -57,6 +57,8 @@ export async function searchSpace(
     if (await searchInternal(root, query, terms, limit, onFound, excluded)) return
   }
 
+  const { searchBacktracksWildly } = await import('@orden/markdown/pattern-cost')
+  const judged = judging(searchBacktracksWildly)
   const id = ++asked
   const { hearHere } = await import('../../windows/src/api')
   const stop = await hearHere<{ id: number; hits?: Hit[]; loose?: FuzzyHit[] }>(HITS, (event) => {
@@ -67,8 +69,31 @@ export async function searchSpace(
   })
 
   try {
-    await invoke('search_space', { root, query, terms, limit, id, excluded })
+    await invoke('search_space', { root, query: judged(query), terms, limit, id, excluded })
   } finally {
     stop()
   }
+}
+
+function judging(wild: (source: string, fold: boolean) => boolean) {
+  const judged = (query: Query): Query => {
+    switch (query.kind) {
+      case 'all':
+      case 'any':
+        return { ...query, of: query.of.map(judged) }
+      case 'not':
+      case 'scope':
+        return { ...query, of: judged(query.of) }
+      case 'regex':
+        return wild(query.source, query.fold) ? { ...query, refused: true } : query
+      case 'text':
+      case 'content':
+      case 'path':
+      case 'file':
+      case 'tag':
+      case 'property':
+        return query
+    }
+  }
+  return judged
 }

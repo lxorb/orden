@@ -241,6 +241,15 @@ describe('a space shared to be read', () => {
     expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 0, taskHash('gone'))).toBe(false)
   })
 
+  test('a box inside a code fence is an example, never ticked', async () => {
+    const path = `${SPACE}/syntax.md`
+    const body = '# Syntax\n```md\n- [ ] example\n```\n~~~\n- [ ] also\n~~~\n'
+    const { ws } = space({ [path]: body })
+    expect(await toggleTaskAt(ws, path, 2)).toBe(false)
+    expect(await toggleTaskAt(ws, path, 5)).toBe(false)
+    expect(await noteText(ws, path)).toBe(body)
+  })
+
   test('two boxes pressed at once are both ticked', async () => {
     const { taskHash } = await import('@orden/bases')
     const path = `${SPACE}/todo.md`

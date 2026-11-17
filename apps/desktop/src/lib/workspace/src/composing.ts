@@ -1,5 +1,5 @@
 import { extracted, merged, type Split, splitAt } from '../../link-format/src/api'
-import type { Retargeting } from '../../link-index/src/api'
+import { links, type Retargeting } from '../../link-index/src/api'
 import {
   folderOf,
   isMarkdownPath,
@@ -17,6 +17,7 @@ export interface Composes {
   readonly active: Tab | null
   readonly undone: FileActions
   flush(): void
+  documentAt(path: string): { readonly text: string } | null
   reload(path: string, content: string): void
   fileGone(path: string, kind: 'file', back?: string): Promise<void>
   retarget(from: string, to: string, how?: Retargeting): Promise<number>
@@ -53,13 +54,13 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   const { canWriteAt } = await import('../../sharing/src/api')
   if (!mergeable(root, from, canWriteAt) || !mergeable(root, into, canWriteAt)) return
 
-  const [fromContent, intoContent] = await Promise.all([
-    invoke<string>('read_note', { path: from }).catch(() => null),
-    invoke<string>('read_note', { path: into }).catch(() => null),
-  ])
+  ws.flush()
+  const words = (path: string) =>
+    ws.documentAt(path)?.text ?? invoke<string>('read_note', { path }).catch(() => null)
+  const [fromContent, intoContent] = await Promise.all([words(from), words(into)])
   if (fromContent === null || intoContent === null) return
 
-  const joined = merged(intoContent, fromContent)
+  const joined = merged(intoContent, links.rebased(fromContent, from, into) ?? fromContent)
 
   await invoke('snapshot_note', { path: into, content: intoContent }).catch(() => undefined)
   await writeFile(into, joined)
@@ -67,7 +68,8 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   ws.reload(into, joined)
 
   const relinked: string[] = []
-  await ws.retarget(from, into, { touched: relinked })
+  const relinks: { path: string; before: string; after: string }[] = []
+  await ws.retarget(from, into, { touched: relinked, wrote: relinks })
   const intoAfter = await invoke<string>('read_note', { path: into }).catch(() => joined)
 
   await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
@@ -83,6 +85,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
     intoContent,
     intoAfter,
     relinked,
+    relinks,
     back,
   })
   await ws.loadTree()
@@ -121,7 +124,10 @@ async function carve(
   if (!wanted) return
 
   const folder = folderOf(path)
-  const file = await ws.freeNameOnDisk(folder, `${wanted.name}.md`)
+  let file = await ws.freeNameOnDisk(folder, `${wanted.name}.md`)
+  for (let other = 2; links.takesOver(joinPath(folder, file)) && other < 100; other++) {
+    file = await ws.freeNameOnDisk(folder, `${wanted.name} ${other}.md`)
+  }
   const created = joinPath(folder, file)
   const carved = cut(file.replace(/\.md$/, '')) ?? wanted
 

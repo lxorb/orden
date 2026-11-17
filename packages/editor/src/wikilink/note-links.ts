@@ -1,6 +1,6 @@
-import { foldName, isAudioTarget, isImageTarget, isVideoTarget } from '@orden/markdown/links'
+import { isAudioTarget, isImageTarget, isVideoTarget } from '@orden/markdown/links'
 import { about } from './complete'
-import { fromTheTop, type LinkWrite, type NoteIndex } from './notes'
+import { type LinkWrite, type NoteIndex, resolveFile, shortestReaching } from './notes'
 
 export function noteLinks(
   index: NoteIndex,
@@ -16,15 +16,21 @@ function linkFor(index: NoteIndex, path: string, write: (target: LinkWrite) => s
 
   const file = index.files.includes(path)
   const name = path.slice(path.lastIndexOf('/') + 1)
-  const folded = foldName(name)
-  const twin = file && index.files.some((one) => one !== path && foldName(nameOf(one)) === folded)
-  const said = twin ? fromTheTop(path) : file ? name : name.replace(/\.[^.]+$/, '')
-  const link = write({ name: said, path, from: index.path })
+  const said = file ? fileNameFor(index, path) : name.replace(/\.[^.]+$/, '')
+  const markdown = file
+    ? shortestReaching(path, (written) => resolveFile(index, written, 'markdown') === path)
+    : null
+  const link = write({ name: said, markdown, path, from: index.path })
   const shown = isImageTarget(path) || isAudioTarget(path) || isVideoTarget(path)
 
   return file && shown ? `!${link}` : link
 }
 
-function nameOf(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1)
+function fileNameFor(index: NoteIndex, path: string): string {
+  const parts = path.split('/')
+  for (let from = parts.length - 1; from >= 0; from--) {
+    const written = parts.slice(from).join('/')
+    if (resolveFile(index, written, 'wikilink') === path) return written
+  }
+  return `/${path}`
 }

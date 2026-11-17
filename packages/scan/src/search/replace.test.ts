@@ -81,6 +81,10 @@ describe('groups', () => {
     expect(rewrite('alpha\n', 'alpha', '$1')?.text).toBe('$1\n')
   })
 
+  test('take a character outside the basic plane whole', () => {
+    expect(rewrite('x😀 end\n', '/x./', 'y')?.text).toBe('y end\n')
+  })
+
   test('run down a whole note', () => {
     const body = 'a-1\nb-2\n'
     expect(rewrite(body, '/(\\w)-(\\d)/', '$2$1')?.text).toBe('1a\n2b\n')

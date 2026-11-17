@@ -1,4 +1,18 @@
-import { blockIdOf, ownLine, type Row, rowsOf } from './links'
+import {
+  blockIdOf,
+  heldBlocks,
+  isHeading,
+  nameIndent,
+  itemLines,
+  layoutOf,
+  LIST_ITEM,
+  openFenceIn,
+  ownLine,
+  quoteAround,
+  quotedRows,
+  type Row,
+  rowsOf,
+} from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
 
@@ -13,26 +27,34 @@ function nameStandsApart(run: readonly Row[]): boolean {
   return run.some((row) => row.text.includes('|') && TABLE_RULE.test(row.text))
 }
 
-const CLOSERS: readonly (readonly [RegExp, string])[] = [
-  [/^ {0,3}\$\$\s*$/u, '$$'],
-  [/^ {0,3}<!--/u, '-->'],
-  [/^ {0,3}<(?:pre|script|style)\b/iu, '</'],
-]
+function listed(row: Row | undefined): boolean {
+  return !!row && !row.code && LIST_ITEM.test(row.text)
+}
 
 function endOf(rows: readonly Row[], line: number): number {
-  const first = rows[line]?.text ?? ''
-  const closer = CLOSERS.find(([opens]) => opens.test(first))?.[1]
-  if (closer !== undefined && !first.slice(first.indexOf(closer) + 1).includes(closer)) {
-    for (let at = line + 1; at < rows.length; at++) {
-      if (rows[at]?.text.includes(closer)) return at
-    }
-  }
+  const { held: blocks, goesOn, runOf } = layoutOf(rows)
+  const quoted = quotedRows(rows)
+  const held = blocks.get(line)
+  if (held?.first === line) return held.last
+  const quote = quoteAround(rows, line)
+  if (quote) return quote.last
 
   let end = line
   for (;;) {
     const next = rows[end + 1]
     if (!next) return end
-    if (rows[end]?.code ? !next.code : !next.text.trim()) return end
+    if (rows[end]?.code) {
+      if (!next.code || runOf[end + 1] !== runOf[end] || !goesOn[end + 1]) return end
+    } else if (
+      blocks.has(end + 1) ||
+      (!quoted[end] && quoted[end + 1]) ||
+      next.code ||
+      !next.text.trim() ||
+      listed(next) ||
+      isHeading(next.text)
+    ) {
+      return end
+    }
     end++
   }
 }
@@ -45,8 +67,15 @@ export function namedBlock(
   const rows = rowsOf(source)
   const row = rows[line]
   if (!row || row.matter) return null
-
-  const end = endOf(rows, line)
+  const blocks = heldBlocks(rows)
+  const plain = !row.code && !blocks.has(line)
+  if (plain && isHeading(row.text)) return null
+  if (plain && listed(row)) return namedItem(rows, source, line, id)
+  const item = itemLines(rows, line)
+  if (item && item.first !== line) return namedItem(rows, source, item.first, id)
+  const from = blocks.get(line)?.first ?? quoteAround(rows, line)?.first ?? line
+  const end = endOf(rows, from)
+  if (openFenceIn(rows, from, end)) return null
   const lines = source.split('\n')
   const last = lines[end] ?? ''
   const ending = last.endsWith('\r') ? '\r' : ''
@@ -54,15 +83,52 @@ export function namedBlock(
   const under = rows.slice(end + 1).find((one) => one.text.trim())
   const had =
     (under && !under.code && ownLine(under.text) ? blockIdOf(under.text) : null) ??
-    (rows[end]?.code ? null : blockIdOf(last))
+    (rows[end]?.code ? (rows[end].fenceName ?? null) : blockIdOf(last))
   if (had) return { id: had, source }
 
   const name = id()
-  if (nameStandsApart(rows.slice(line, end + 1))) {
-    const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
-    lines.splice(end + 1, 0, ending, `^${name}${ending}`, ...beneath)
+  if (nameStandsApart(rows.slice(from, end + 1))) {
+    const below = rows[end + 1]
+    const indent = nameIndent(rows, from)
+    const joins = (below?.text.trim() ?? '') === '' || (indent !== '' && listed(below))
+    lines.splice(end + 1, 0, ending, `${indent}^${name}${ending}`, ...(joins ? [] : [ending]))
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`
   }
+  return { id: name, source: lines.join('\n') }
+}
+
+function namedItem(
+  rows: readonly Row[],
+  source: string,
+  line: number,
+  id: () => string,
+): { id: string; source: string } {
+  const lines = source.split('\n')
+  const item = itemLines(rows, line)
+  const blocks = heldBlocks(rows)
+  let end = line
+  while (
+    item &&
+    end < item.last &&
+    !listed(rows[end + 1]) &&
+    !rows[end + 1]?.code &&
+    !blocks.has(end + 1) &&
+    !isHeading((rows[end + 1]?.text ?? '').trim()) &&
+    rows[end + 1]?.text.trim() &&
+    !/^\s*[|>]/u.test(rows[end + 1]?.text ?? '') &&
+    !RULE.test((rows[end + 1]?.text ?? '').trim())
+  ) {
+    end++
+  }
+
+  for (let at = line; at <= end; at++) {
+    const had = blockIdOf(lines[at] ?? '')
+    if (had) return { id: had, source }
+  }
+
+  const name = id()
+  const last = lines[end] ?? ''
+  lines[end] = `${last.trimEnd()} ^${name}${last.endsWith('\r') ? '\r' : ''}`
   return { id: name, source: lines.join('\n') }
 }

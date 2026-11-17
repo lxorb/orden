@@ -59,3 +59,9 @@ export function fragment(name: string): string {
     return ''
   }
 }
+
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
+
+export function attributeText(value: string): string {
+  return value.replace(/&(amp|lt|gt|quot|#39);/g, (whole, name: string) => ENTITIES[name] ?? whole)
+}

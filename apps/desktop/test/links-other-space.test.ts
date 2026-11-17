@@ -152,11 +152,13 @@ test("a file kept beside a note of another space goes in that space's assets fol
 })
 
 test("a block named for a link in a note of another space is named in that space's note", async () => {
-  const id = await links.nameBlock('Plan.md', 0, '/home/me/A/Note.md')
+  disk.set('/home/me/A/Plan.md', '# Plan of A\n\nthe plan here\n')
+  const id = await links.nameBlock('Plan.md', 2, '/home/me/A/Note.md')
 
   expect(id).not.toBeNull()
-  expect(disk.get('/home/me/A/Plan.md')).toBe(`# Plan of A ^${id ?? ''}\n`)
+  expect(disk.get('/home/me/A/Plan.md')).toBe(`# Plan of A\n\nthe plan here ^${id ?? ''}\n`)
   expect(disk.get('/home/me/B/Plan.md')).toBe('# Plan of B\n')
+  disk.set('/home/me/A/Plan.md', '# Plan of A\n')
 })
 
 test("the blocks a note of another space is offered are that space's", async () => {
@@ -177,6 +179,13 @@ test('a link drawn in the reading view of another space resolves in that space',
   await vi.waitFor(() => expect(link('Only A')).toBe('Only A.md'))
   expect(link('Plan')).toBe('Plan.md')
   expect(link('Thing')).toBeNull()
+})
+
+test('a link in another space to a file that is not a note reaches it there', async () => {
+  const link = { kind: 'wikilink' as const, target: 'photo.png' }
+  links.index('/home/me/A/Note.md')
+  await vi.waitFor(() => expect(links.reachedOf('/home/me/A/Note.md', link)).toBe('pics/photo.png'))
+  expect(links.targetOf('/home/me/A/Note.md', link)).toBeNull()
 })
 
 test('a link followed before that space is read opens its note rather than making one', async () => {

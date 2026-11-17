@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 pub struct Block {
     pub from: usize,
     pub close: usize,
@@ -395,41 +397,37 @@ fn closing_fence(body: &str, from: usize) -> Option<usize> {
 }
 
 pub fn value(body: &str, block: &Block, key: &str) -> Option<String> {
-    lines_of(body, block).find_map(|line| value_of(line, key))
+    let line = key_line(body, block, key)?;
+    unquoted(uncommented(key_of(lines_of(body, block).nth(line)?)?.1))
 }
 
 pub fn list(body: &str, block: &Block, key: &str) -> Vec<String> {
-    let mut lines = lines_of(body, block);
-    while let Some(line) = lines.next() {
-        let Some(said) = named(line, key) else {
-            continue;
-        };
+    let Some(at) = key_line(body, block, key) else {
+        return Vec::new();
+    };
+    let mut lines = lines_of(body, block).skip(at);
+    let Some(line) = lines.next() else {
+        return Vec::new();
+    };
+    let Some((_, said)) = key_of(line) else {
+        return Vec::new();
+    };
 
-        let from = line.as_ptr() as usize - body.as_ptr() as usize;
-        let past = line.find(':').map_or(0, |one| one + 1);
-        if let Some(close) = value_closes_at(body, from + past, block.close) {
-            let joined: Vec<&str> = body[from + past..close]
-                .lines()
-                .map(|one| {
-                    let line = one.trim();
-                    if line.starts_with('#') {
-                        ""
-                    } else {
-                        line.split(" #").next().unwrap_or_default().trim()
-                    }
-                })
-                .collect();
-            return flow_items(&joined.join(" "));
-        }
-
-        return if said.is_empty() {
-            dash_items(lines)
-        } else {
-            flow_items(said)
-        };
+    let from = line.as_ptr() as usize - body.as_ptr() as usize;
+    let past = said.as_ptr() as usize - line.as_ptr() as usize;
+    if let Some(close) = value_closes_at(body, from + past, block.close) {
+        let joined: Vec<&str> = body[from + past..close]
+            .lines()
+            .map(|one| uncommented(one.trim()))
+            .collect();
+        return flow_items(&joined.join(" "));
     }
 
-    Vec::new()
+    if uncommented(said).is_empty() {
+        dash_items(lines)
+    } else {
+        flow_items(said)
+    }
 }
 
 fn lines_of<'a>(body: &'a str, block: &Block) -> std::str::Lines<'a> {
@@ -438,17 +436,73 @@ fn lines_of<'a>(body: &'a str, block: &Block) -> std::str::Lines<'a> {
         .lines()
 }
 
-fn named<'a>(line: &'a str, key: &str) -> Option<&'a str> {
-    let (name, said) = line.split_once(':')?;
-    if name.starts_with(char::is_whitespace) || !name.trim_end().eq_ignore_ascii_case(key) {
-        return None;
+fn key_line(body: &str, block: &Block, key: &str) -> Option<usize> {
+    let mut other = None;
+    for (at, line) in lines_of(body, block).enumerate() {
+        let Some((name, _)) = key_of(line) else {
+            continue;
+        };
+        if name == key {
+            return Some(at);
+        }
+        if other.is_none() && name.to_lowercase() == key.to_lowercase() {
+            other = Some(at);
+        }
     }
-
-    Some(said.trim())
+    other
 }
 
-fn value_of(line: &str, key: &str) -> Option<String> {
-    unquoted(named(line, key)?)
+pub fn key_of(line: &str) -> Option<(String, &str)> {
+    let (name, rest) = match line.chars().next()? {
+        quote @ ('"' | '\'') => {
+            let close = closing_quote(line, quote)?;
+            (
+                unquoted(&line[..=close]).unwrap_or_default(),
+                &line[close + 1..],
+            )
+        }
+        first if first.is_whitespace() || first == '#' || first == '-' => return None,
+        _ => {
+            let colon = line
+                .char_indices()
+                .find(|&(at, one)| one == ':' && said_after(&line[at + 1..]))?
+                .0;
+            return Some((
+                line[..colon].trim_end_matches([' ', '\t']).to_string(),
+                line[colon + 1..].trim(),
+            ));
+        }
+    };
+
+    let rest = rest.trim_start_matches([' ', '\t']);
+    let said = rest.strip_prefix(':')?;
+    said_after(said).then(|| (name, said.trim()))
+}
+
+fn said_after(rest: &str) -> bool {
+    rest.chars().next().is_none_or(char::is_whitespace)
+}
+
+fn closing_quote(line: &str, quote: char) -> Option<usize> {
+    let bytes = line.as_bytes();
+    let mark = quote as u8;
+    let mut at = 1;
+    while at < bytes.len() {
+        let byte = bytes[at];
+        if mark == b'"' && byte == b'\\' {
+            at += 2;
+            continue;
+        }
+        if byte == mark {
+            if mark == b'\'' && bytes.get(at + 1) == Some(&b'\'') {
+                at += 2;
+                continue;
+            }
+            return Some(at);
+        }
+        at += 1;
+    }
+    None
 }
 
 fn uncommented(value: &str) -> &str {
@@ -481,14 +535,78 @@ fn opens_quote(before: &str) -> bool {
     before.is_empty() || before.ends_with('[') || before.ends_with(',')
 }
 
+fn opens_scalar(before: &str) -> bool {
+    let trimmed = before.trim_end();
+    if trimmed.ends_with([':', '[', ',']) {
+        return true;
+    }
+    let lead = trimmed.trim_start();
+    lead.is_empty() || (lead == "-" && trimmed.len() < before.len())
+}
+
+pub fn read_in_quotes(line: &str) -> Cow<'_, str> {
+    if !line.contains(['\'', '"']) {
+        return Cow::Borrowed(line);
+    }
+
+    let mut text = String::with_capacity(line.len());
+    let mut quote: Option<char> = None;
+    let mut open = 0;
+    let mut held = String::new();
+    let mut before: Option<char> = None;
+    let mut letters = line.char_indices().peekable();
+
+    while let Some((at, one)) = letters.next() {
+        let next = letters.peek().map(|&(_, letter)| letter);
+        match (quote, one, next) {
+            (None, '#', _) if before.is_none_or(char::is_whitespace) => {
+                text.push_str(&line[at..]);
+                return Cow::Owned(text);
+            }
+            (None, _, _) => {
+                text.push(one);
+                if matches!(one, '\'' | '"') && opens_scalar(&line[..at]) {
+                    quote = Some(one);
+                    open = at;
+                    held.clear();
+                }
+            }
+            (Some('"'), '\\', Some(escaped)) => {
+                letters.next();
+                if !matches!(escaped, '"' | '\\' | '/') {
+                    held.push(one);
+                }
+                held.push(escaped);
+            }
+            (Some('\''), '\'', Some('\'')) => {
+                letters.next();
+                held.push('\'');
+            }
+            (Some(mark), _, _) if one == mark => {
+                text.push_str(&held);
+                text.push(one);
+                quote = None;
+            }
+            (Some(_), _, _) => held.push(one),
+        }
+        before = Some(one);
+    }
+
+    if quote.is_some() {
+        text.push_str(&line[open + 1..]);
+    }
+    Cow::Owned(text)
+}
+
 fn flow_items(value: &str) -> Vec<String> {
     let value = uncommented(value);
     if let Some(list) = value
+        .trim()
         .strip_prefix('[')
         .and_then(|one| one.strip_suffix(']'))
     {
-        return list
-            .split(',')
+        return members(list)
+            .into_iter()
             .filter_map(|one| unquoted(one.trim()))
             .collect();
     }
@@ -496,19 +614,50 @@ fn flow_items(value: &str) -> Vec<String> {
     unquoted(value).into_iter().collect()
 }
 
-fn dash_items(lines: std::str::Lines<'_>) -> Vec<String> {
+fn members(inside: &str) -> Vec<&str> {
+    let bytes = inside.as_bytes();
+    let mut out = Vec::new();
+    let mut start = 0;
+    let mut quote: Option<u8> = None;
+    let mut at = 0;
+
+    while at < bytes.len() {
+        let byte = bytes[at];
+        match quote {
+            Some(b'"') if byte == b'\\' => at += 1,
+            Some(b'\'') if byte == b'\'' && bytes.get(at + 1) == Some(&b'\'') => at += 1,
+            Some(open) if byte == open => quote = None,
+            None if byte == b',' => {
+                out.push(&inside[start..at]);
+                start = at + 1;
+            }
+            None if matches!(byte, b'"' | b'\'') && inside[start..at].trim().is_empty() => {
+                quote = Some(byte);
+            }
+            Some(_) | None => {}
+        }
+        at += 1;
+    }
+
+    if out.is_empty() || !inside[start..].trim().is_empty() {
+        out.push(&inside[start..]);
+    }
+    out
+}
+
+fn dash_items<'a>(lines: impl Iterator<Item = &'a str>) -> Vec<String> {
     let mut out = Vec::new();
 
     for line in lines {
         let line = line.trim();
-        if line.is_empty() {
+        if line.is_empty() || line.starts_with('#') {
             continue;
         }
 
         let Some(item) = line.strip_prefix('-') else {
             break;
         };
-        if !item.starts_with(char::is_whitespace) {
+        if !said_after(item) {
             break;
         }
         if let Some(said) = unquoted(uncommented(item.trim())) {
@@ -520,21 +669,26 @@ fn dash_items(lines: std::str::Lines<'_>) -> Vec<String> {
 }
 
 fn unquoted(value: &str) -> Option<String> {
-    let bare = value
-        .strip_prefix('"')
-        .and_then(|one| one.strip_suffix('"'))
-        .or_else(|| {
-            value
-                .strip_prefix('\'')
-                .and_then(|one| one.strip_suffix('\''))
-        })
-        .unwrap_or(value);
+    let value = value.trim();
+    let bare = if let Some(inside) = within(value, '\'') {
+        inside.replace("''", "'")
+    } else if let Some(inside) = within(value, '"') {
+        serde_json::from_str::<String>(value).unwrap_or_else(|_| inside.to_string())
+    } else {
+        value.to_string()
+    };
 
     if bare.is_empty() {
         None
     } else {
-        Some(bare.to_string())
+        Some(bare)
     }
+}
+
+fn within(value: &str, quote: char) -> Option<&str> {
+    value
+        .strip_prefix(quote)
+        .and_then(|one| one.strip_suffix(quote))
 }
 
 #[cfg(test)]
@@ -547,6 +701,35 @@ mod tests {
 
     fn aliases(body: &str) -> Vec<String> {
         block(body).map_or_else(Vec::new, |one| list(body, &one, "aliases"))
+    }
+
+    #[test]
+    fn a_list_reads_past_a_comment_on_its_key_and_a_space_at_the_end_of_its_first_line() {
+        let read = |text: &str, key: &str| {
+            let block = super::block(text);
+            block
+                .map(|block| super::list(text, &block, key))
+                .unwrap_or_default()
+        };
+        assert_eq!(
+            read(
+                "---\naliases: # other names\n  - a\n  - b\n---\n",
+                "aliases"
+            ),
+            vec!["a", "b"]
+        );
+        assert_eq!(
+            read("---\naliases: [Alpha, \n  Beta]\n---\n", "aliases"),
+            vec!["Alpha", "Beta"]
+        );
+        assert_eq!(
+            read("---\r\naliases: [Alpha, \r\n  Beta]\r\n---\r\n", "aliases"),
+            vec!["Alpha", "Beta"]
+        );
+        assert_eq!(
+            read("---\ntitle: \"one \n  two\"\n---\n", "title"),
+            vec!["one two"]
+        );
     }
 
     #[test]
@@ -728,5 +911,73 @@ mod tests {
         assert!(aliases("---\naliases:\n---\n").is_empty());
         assert!(aliases("---\naliases: []\n---\n").is_empty());
         assert!(aliases("---\nexport:\n  aliases: [One]\n---\n").is_empty());
+    }
+
+    #[test]
+    fn a_flow_list_member_keeps_a_comma_inside_its_quotes() {
+        assert_eq!(
+            aliases("---\naliases: ['Doe, Jane', Other]\n---\n"),
+            vec!["Doe, Jane", "Other"]
+        );
+        assert_eq!(
+            aliases("---\naliases: [\"Doe, Jane\", Other]\n---\n"),
+            vec!["Doe, Jane", "Other"]
+        );
+        assert_eq!(
+            aliases("---\naliases: ['Doe, Jane',\n  Other]\n---\n"),
+            vec!["Doe, Jane", "Other"]
+        );
+    }
+
+    #[test]
+    fn a_quoted_value_reads_as_the_words_its_quotes_spell() {
+        assert_eq!(
+            aliases("---\naliases: ['Rock ''n'' Roll']\n---\n"),
+            vec!["Rock 'n' Roll"]
+        );
+        assert_eq!(
+            aliases("---\naliases: \"Say \\\"hi\\\"\"\n---\n"),
+            vec!["Say \"hi\""]
+        );
+        assert_eq!(aliases("---\naliases:\n  - 'it''s'\n---\n"), vec!["it's"]);
+        assert_eq!(
+            icon("---\nicon: \"a\\\\b\"\n---\n").as_deref(),
+            Some("a\\b")
+        );
+    }
+
+    #[test]
+    fn a_key_in_quotes_is_the_key_it_spells() {
+        assert_eq!(aliases("---\n\"aliases\": [A]\n---\n"), vec!["A"]);
+        assert_eq!(
+            icon("---\n'icon': rocket\n---\n").as_deref(),
+            Some("rocket")
+        );
+    }
+
+    #[test]
+    fn a_comment_after_a_value_is_not_part_of_it() {
+        assert_eq!(
+            icon("---\nicon: rocket # was star\n---\n").as_deref(),
+            Some("rocket")
+        );
+        assert_eq!(icon("---\nicon: 'a # b'\n---\n").as_deref(), Some("a # b"));
+    }
+
+    #[test]
+    fn a_colon_with_no_space_after_it_makes_no_key() {
+        assert_eq!(icon("---\nicon:rocket\n---\n"), None);
+        assert_eq!(icon("---\nicon:\n---\n"), None);
+    }
+
+    #[test]
+    fn of_two_keys_that_differ_in_case_the_one_asked_for_wins() {
+        assert_eq!(aliases("---\nAliases: [X]\naliases: [Y]\n---\n"), vec!["Y"]);
+        assert_eq!(aliases("---\nAliases: [X]\n---\n"), vec!["X"]);
+    }
+
+    #[test]
+    fn an_empty_dash_is_passed_over_and_the_list_goes_on() {
+        assert_eq!(aliases("---\naliases:\n  -\n  - Foo\n---\n"), vec!["Foo"]);
     }
 }

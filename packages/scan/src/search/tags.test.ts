@@ -150,6 +150,25 @@ describe('the tags in the front matter', () => {
     expect(tagsIn('---\r\ntags:\r\n  - project # active\r\n---\r\n')).toEqual(['#project'])
   })
 
+  test('and from items past a blank line or a comment between them', () => {
+    expect(front('tags:\n  - a\n\n  - b')).toEqual(['#a', '#b'])
+    expect(front('tags:\n  - a\n  # c\n  - b\nother: x')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n')).toEqual(['#a', '#b'])
+  })
+
+  test('and in the body a cut before the next tag leaves one space', () => {
+    const note = 'Tags: #work, #home\n'
+    const [cut] = tagCuts(note, 'work')
+    expect(cut ? note.slice(0, cut.from) + note.slice(cut.to) : note).toBe('Tags: #home\n')
+  })
+
+  test('and a tag cut from before a comment keeps the comment a comment', () => {
+    const note = '---\ntags: [a, # c\n  b]\n---\n'
+    const [cut] = tagCuts(note, 'a')
+    const after = cut ? note.slice(0, cut.from) + note.slice(cut.to) : note
+    expect(after).toBe('---\ntags: [ # c\n  b]\n---\n')
+  })
+
   test('and both halves of a note count', () => {
     expect(tagsIn('---\ntags: [work]\n---\n\nwords #orden\n')).toEqual(['#work', '#orden'])
   })
@@ -192,6 +211,20 @@ describe('where a tag sits', () => {
 
   test('folded, because the operator is', () => {
     expect(tagSpans('#Work/Orden', 'work/orden')).toEqual([{ from: 1, to: 11 }])
+  })
+
+  test('and a slash nobody meant is read the way the tag tree reads it', () => {
+    const body = '#a//b and #a//b/c'
+    expect(tagSpans(body, 'a/b').map((span) => body.slice(span.from, span.to))).toEqual([
+      'a//b',
+      'a//b',
+    ])
+  })
+
+  test('as long as the name is written, even where folding makes it longer', () => {
+    const body = '#İstanbul trip and #İstanbul/old'
+    const spans = tagSpans(body, 'İstanbul')
+    expect(spans.map((span) => body.slice(span.from, span.to))).toEqual(['İstanbul', 'İstanbul'])
   })
 })
 
@@ -236,6 +269,12 @@ describe('what taking a tag away has to cut', () => {
     const note = '> ```css\n> .button { color: #fff; }\n> ```\n'
     expect(without(note, 'fff')).toBe(note)
     expect(tagSpans('    #include <stdio.h>\n', 'include')).toEqual([])
+  })
+
+  test('and the quotes a tag was written in', () => {
+    expect(without('---\ntags: ["a", "b"]\n---\n', 'a')).toBe('---\ntags: ["b"]\n---\n')
+    expect(without("---\ntags: ['a']\n---\n", 'a')).toBe('---\ntags: []\n---\n')
+    expect(without('---\ntags:\n  - "a"\n  - b\n---\n', 'a')).toBe('---\ntags:\n  - b\n---\n')
   })
 
   test('while one of several on a line leaves the line', () => {

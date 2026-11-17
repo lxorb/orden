@@ -41,6 +41,7 @@ self.onmessage = (event: MessageEvent<unknown>) => {
       post({ kind: 'found', id: told.id, ...found })
     },
     told.excluded,
+    (relative) => post({ kind: 'at', id: told.id, relative }),
   )
     .then(() => {
       post({ kind: 'done', id: told.id })

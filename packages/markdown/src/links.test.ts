@@ -395,6 +395,26 @@ describe('finding the links in a note', () => {
     expect(findLinks(note).map((one) => one.target)).toEqual(['Up', 'L'])
   })
 
+  test('a link in a quoted front matter value is read the way the value means it', () => {
+    const note = `---\nup: '[[Bob''s plan#It''s|Bob''s]] "x"'\nby: "[[A \\"B\\"]] [x](C%20\\\\D.md)"\nnot: '[[open''s]]\n---\n[[Bob''s]]\n`
+    const found = findLinks(note)
+    expect(found.map((one) => [one.target, one.heading, one.alias])).toEqual([
+      ["Bob's plan", "It's", "Bob's"],
+      ['A "B"', null, null],
+      ['C \\D.md', null, 'x'],
+      ["open''s", null, null],
+      ["Bob''s", null, null],
+    ])
+    expect(found.map((one) => note.slice(one.targetFrom, one.targetTo))).toEqual([
+      "Bob''s plan",
+      'A \\"B\\"',
+      'C%20\\\\D.md',
+      "open''s",
+      "Bob''s",
+    ])
+    expect(note.slice(found[0]!.from, found[0]!.to)).toBe("[[Bob''s plan#It''s|Bob''s]]")
+  })
+
   test('a shorter fence or one with a backtick in its info string closes nothing', () => {
     const targets = (text: string) => findLinks(text).map((one) => one.target)
     expect(targets('````md\n```\n````\n[[Plan]]')).toEqual(['Plan'])
@@ -405,6 +425,17 @@ describe('finding the links in a note', () => {
   test('inline code holds no links', () => {
     expect(findLinks('write `[[Note]]` to link').map((one) => one.target)).toEqual([])
     expect(findLinks('`a` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
+  })
+
+  test('an escaped backtick opens no code span', () => {
+    expect(findLinks('\\` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
+    expect(findLinks('\\\\` [[Note]] `b`').map((one) => one.target)).toEqual([])
+    expect(findLinks('`a\\` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
+  })
+
+  test('a run that never closes still lets a later span hide a link', () => {
+    expect(findLinks('`` `[[Plan]]`').map((one) => one.target)).toEqual([])
+    expect(findLinks('`` [[Plan]]').map((one) => one.target)).toEqual(['Plan'])
   })
 
   test('a code span that never closes is text', () => {
@@ -545,6 +576,16 @@ describe('the headings a note holds', () => {
     expect(headingsOf('```\n# Not one\n```\n# One\n')).toEqual(['One'])
   })
 
+  test('and none from a comment in the front matter', () => {
+    expect(headingsOf('---\n# my comment\ntitle: x\n---\n# Real\n')).toEqual(['Real'])
+  })
+
+  test('and none from a lone hash or one with a space that does not break the line', () => {
+    expect(headingsOf('a\r\n#\r\nb\r\n')).toEqual([])
+    expect(headingsOf('#\u00a0Title\n')).toEqual([])
+    expect(headingsOf('# One\r\n')).toEqual(['One'])
+  })
+
   test('and none from a fence inside a list item', () => {
     const note = '- a\n  ```\n  # Not one\n  ```\n\n# One\n\nwords\n'
     expect(headingsOf(note)).toEqual(['One'])
@@ -556,6 +597,15 @@ describe('the headings a note holds', () => {
 })
 
 describe('the part of a note a link points into', () => {
+  test('a block named on a list item is that item, with what is nested under it', () => {
+    const note = '# Plan\n\n- one\n- two ^b1\n  - two a\n- three\n\nafter\n'
+    expect(sectionOf(note, { heading: null, block: 'b1' })).toBe('- two\n  - two a')
+    const tasks = '- [ ] buy milk ^t1\n- [ ] call mom\n- [x] pay rent\n'
+    expect(sectionOf(tasks, { heading: null, block: 't1' })).toBe('- [ ] buy milk')
+    const nested = '- a\n  - a1 ^n1\n  - a2\n- b\n'
+    expect(sectionOf(nested, { heading: null, block: 'n1' })).toBe('- a1')
+  })
+
   test('a heading names the section under it', () => {
     const note = '# One\n\nfirst\n\n# Two\n\nsecond\n'
     expect(sectionOf(note, { heading: 'Two', block: null })).toBe('# Two\n\nsecond')
@@ -837,6 +887,141 @@ describe('a block name on a line of its own', () => {
     ])
   })
 
+  test('naming a list item names that item, and a paragraph above a list names the paragraph', () => {
+    const id = () => 'new123'
+    const LIST = 'Steps:\n\n- Buy milk\n- Pay rent\n- Call mum\n\nAfter.\n'
+
+    const rent = namedBlock(LIST, 3, id)?.source ?? ''
+    expect(rent).toBe('Steps:\n\n- Buy milk\n- Pay rent ^new123\n- Call mum\n\nAfter.\n')
+    expect(sectionOf(rent, { heading: null, block: 'new123' })).toBe('- Pay rent')
+    expect(namedBlock('- a\r\n  - b\r\n- c', 0, id)?.source).toBe('- a ^new123\r\n  - b\r\n- c')
+    expect(namedBlock('- a ^old\n- b', 0, id)).toEqual({ id: 'old', source: '- a ^old\n- b' })
+
+    const packing = namedBlock('Packing list:\n- passport\n- socks', 0, id)?.source ?? ''
+    expect(packing).toBe('Packing list: ^new123\n- passport\n- socks')
+    expect(sectionOf(packing, { heading: null, block: 'new123' })).toBe('Packing list:')
+  })
+
+  test('a list item named on its last line is that item, nested or not', () => {
+    expect(sectionOf('- Pay rent\n  by Friday ^x\n- Buy milk', { heading: null, block: 'x' })).toBe(
+      '- Pay rent\n  by Friday',
+    )
+    expect(sectionOf('- a\n  - b\n    more ^y\n- c', { heading: null, block: 'y' })).toBe(
+      '- b\n  more',
+    )
+    expect(namedBlock('- Pay rent\n  by Friday\n- Buy milk', 0, () => 'new123')?.source).toBe(
+      '- Pay rent\n  by Friday ^new123\n- Buy milk',
+    )
+    expect(namedBlock('- a\n  by ^old\n- b', 0, () => 'new123')?.id).toBe('old')
+  })
+
+  test('a list item with code nested under it is named on its own words, and holds that code', () => {
+    const note = '1. Install:\n   ```bash\n   npm i\n\n   npm run build\n   ```\n2. Run it\n'
+    const named = namedBlock(note, 0, () => 'new123')?.source ?? ''
+    expect(named).toBe(note.replace('1. Install:', '1. Install: ^new123'))
+    expect(sectionOf(named, { heading: null, block: 'new123' })).toBe(
+      '1. Install:\n   ```bash\n   npm i\n\n   npm run build\n   ```',
+    )
+  })
+
+  test('a paragraph named next to a list or under a heading is that paragraph alone', () => {
+    const block = (text: string) => sectionOf(text, { heading: null, block: 'x' })
+    expect(block('Shopping: ^x\n- milk\n- eggs\n\nAfter.\n')).toBe('Shopping:')
+    expect(block('- Pay rent\n\n  more about rent ^x\n- Buy milk\n')).toBe('  more about rent')
+    expect(block('## Tasks\nPay rent by Friday ^x')).toBe('Pay rent by Friday')
+    expect(block('- a\n- b\n^x')).toBe('- a\n- b')
+
+    const named = namedBlock('Pay rent\n## Later\nmore', 0, () => 'new123')?.source ?? ''
+    expect(named).toBe('Pay rent ^new123\n## Later\nmore')
+    expect(blocksOf('## Later\nAn idea ^idea').map((one) => [one.line, one.text, one.id])).toEqual([
+      [0, 'Later', null],
+      [1, 'An idea', 'idea'],
+    ])
+  })
+
+  test('a block next to front matter, code, maths or a heading is that block alone', () => {
+    const block = (text: string, id: string) => sectionOf(text, { heading: null, block: id })
+    expect(block('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', 'p')).toBe('First para')
+    expect(block('a\n\n```\nx\n``` ^abc123\n\n# After\n\nb\n', 'abc123')).toBe('```\nx\n```')
+    expect(block('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n', 'm')).toBe('$$\na\n\nb\n$$')
+    expect(block('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n', 't')).toBe(
+      '| a | b |\n|---|---|',
+    )
+    expect(block('Intro\n## Goals ^g\nShip it.\n', 'g')).toBe('## Goals')
+    expect(block('Run:\n```\na\n\nb\n```\n^x', 'x')).toBe('Run:\n```\na\n\nb\n```')
+  })
+
+  test('a block named apart reaches back only to an opener its own closing line closes', () => {
+    const note =
+      '<!-- weekly template -->\n\n# Week 46\n\nMonday notes.\n\n| Step | Path |\n| --- | --- |\n| 1 | Login --> Home |\n\nAfter.\n'
+    const named = namedBlock(note, 8, () => 'flow')?.source ?? ''
+    expect(named).toContain('| 1 | Login --> Home |\n\n^flow\n')
+    expect(sectionOf(named, { heading: null, block: 'flow' })).toBe(
+      '| Step | Path |\n| --- | --- |\n| 1 | Login --> Home |',
+    )
+    const list = '```html\n<!-- nav -->\n```\n\n- Login --> Home\n\n^l\n'
+    expect(sectionOf(list, { heading: null, block: 'l' })).toBe('- Login --> Home')
+  })
+
+  test('a line inside maths or a fence under a list is named with its whole block', () => {
+    const maths = 'Intro\n\n$$\na\n\nb\n$$\n\nAfter\n'
+    const named = namedBlock(maths, 3, () => 'new123')?.source ?? ''
+    expect(named).toBe('Intro\n\n$$\na\n\nb\n$$\n\n^new123\n\nAfter\n')
+    expect(blocksOf(maths).map((one) => one.line)).toEqual([0, 2, 8])
+    const fence = '- Set the config:\n```json\n{\n  "port": 8080\n}\n```\n\nAfter.\n'
+    const config = namedBlock(fence, 3, () => 'new123')?.source ?? ''
+    expect(config).toBe(fence.replace('```\n\nAfter.', '```\n\n^new123\n\nAfter.'))
+  })
+
+  test('the block list leaves front matter out, and reads a name on a closing fence', () => {
+    const listed = (text: string) => blocksOf(text).map((one) => [one.line, one.text, one.id])
+    expect(listed('---\ntags:\n  - work\n---\nFirst para\n')).toEqual([[4, 'First para', null]])
+    expect(listed('    code line\n\nAfter para\n')).toEqual([
+      [0, 'code line', null],
+      [2, 'After para', null],
+    ])
+    expect(listed('a\n\n```\nx\n``` ^abc123\n')).toEqual([
+      [0, 'a', null],
+      [2, '```', 'abc123'],
+    ])
+  })
+
+  test('naming a code block keeps the name its closing fence has, and code in an item names the item', () => {
+    const fenced = 'a\n\n```\nx\n``` ^abc123\n\n# After\n'
+    expect(namedBlock(fenced, 2, () => 'new123')).toEqual({ id: 'abc123', source: fenced })
+    const note = '1. Install:\n   ```bash\n   npm i\n   ```\n2. Next\n'
+    expect(namedBlock(note, 2, () => 'new123')?.source).toBe(
+      note.replace('1. Install:', '1. Install: ^new123'),
+    )
+  })
+
+  test('a heading is not given a block name, it is linked as a heading', () => {
+    expect(namedBlock('# Plan\n\n## Tasks\n- Buy milk', 2, () => 'new123')).toBeNull()
+    expect(blocksOf('## Tasks\n- Buy milk').map((one) => [one.line, one.text])).toEqual([
+      [0, 'Tasks'],
+      [1, 'Buy milk'],
+    ])
+  })
+
+  test('each list item is a block of its own in the list of blocks', () => {
+    expect(
+      blocksOf('Steps:\n\n- Buy milk\n- Pay rent ^p\n- Call mum').map((one) => [
+        one.line,
+        one.text,
+        one.id,
+      ]),
+    ).toEqual([
+      [0, 'Steps:', null],
+      [2, 'Buy milk', null],
+      [3, 'Pay rent', 'p'],
+      [4, 'Call mum', null],
+    ])
+    expect(blocksOf('- a\n- b\n^all').map((one) => [one.line, one.id])).toEqual([
+      [0, 'all'],
+      [1, null],
+    ])
+  })
+
   test('naming one writes it where it can be read', () => {
     const id = () => 'new123'
 
@@ -870,7 +1055,7 @@ describe('naming a block by where it ends', () => {
   const id = () => 'new123'
 
   test.each([
-    ['a fence under words', 'para\n```\nx\n```\n\nafter', 'para\n```\nx\n```\n\n^new123\n\nafter'],
+    ['words over a fence', 'para\n```\nx\n```\n\nafter', 'para ^new123\n```\nx\n```\n\nafter'],
     [
       'a table under words',
       'para\n\n| a |\n| - |\n| 1 |',
@@ -982,5 +1167,270 @@ describe('a line of links nothing closes', () => {
     expect(renderMarkdown('[a](b( "t")')).not.toContain('<a ')
     expect(renderMarkdown(`[a](${'('.repeat(33)}b${')'.repeat(33)})`)).not.toContain('<a ')
     expect(renderMarkdown(`[a](${'('.repeat(32)}b${')'.repeat(32)})`)).toContain('<a ')
+  })
+})
+
+describe('a block beside maths, a comment or a pre', () => {
+  const id = () => 'new123'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a paragraph over maths with a blank line in it is named alone', () => {
+    const note = 'Intro\n$$\na\n\nb\n$$\n\n# Next\n\ntext\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe(note.replace('Intro', 'Intro ^new123'))
+    expect(block(named, 'new123')).toBe('Intro')
+    const maths = namedBlock(note, 1, id)?.source ?? ''
+    expect(maths).toBe(note.replace('$$\n\n#', () => '$$\n\n^new123\n\n#'))
+    expect(block(maths, 'new123')).toBe('$$\na\n\nb\n$$')
+    expect(blocksOf(note).map((one) => one.line)).toEqual([0, 1, 7, 9])
+  })
+
+  test('words under maths are a block of their own', () => {
+    const note = '$$\nx\n$$\nmore\n\n^m\n'
+    expect(block(note, 'm')).toBe('more')
+    expect(block('Intro\n$$\nx\n$$\n^m\n', 'm')).toBe('$$\nx\n$$')
+  })
+
+  test('a pre closes at its own end tag, not at any closing tag', () => {
+    const note = '<pre>\nline one <b>x</b>\n\nline two\n</pre>\n\n^p\n'
+    expect(block(note, 'p')).toBe('<pre>\nline one <b>x</b>\n\nline two\n</pre>')
+    expect(namedBlock('<pre>\nline one <b>x</b>\n\nline two\n</pre>\n', 1, id)?.source).toBe(
+      '<pre>\nline one <b>x</b>\n\nline two\n</pre>\n\n^new123\n',
+    )
+    expect(blocksOf(note).map((one) => [one.line, one.id])).toEqual([[0, 'p']])
+  })
+
+  test('a fence after indented code names only the fence', () => {
+    const note = 'Intro\n\n    old code\n\n```js\nx\n``` ^c\n\nAfter\n'
+    expect(block(note, 'c')).toBe('```js\nx\n```')
+  })
+
+  test('maths in a list item names the item', () => {
+    const note = '- item\n  $$\n  x\n  $$\n- next\n'
+    expect(namedBlock(note, 2, id)?.source).toBe(note.replace('- item', '- item ^new123'))
+    expect(block('- item ^x\n  $$\n  a\n\n  b\n  $$\n- next\n\nAfter\n', 'x')).toBe(
+      '- item\n  $$\n  a\n\n  b\n  $$',
+    )
+  })
+
+  test('code in a loose list item names the item', () => {
+    const note = '1. Install:\n\n   ```bash\n   npm i\n   ```\n2. Run it\n'
+    expect(namedBlock(note, 3, id)?.source).toBe(note.replace('Install:', 'Install: ^new123'))
+    expect(block(note.replace('Install:', 'Install: ^i'), 'i')).toBe(
+      '1. Install:\n\n   ```bash\n   npm i\n   ```',
+    )
+  })
+
+  test('an opener nothing closes holds nothing, however many there are', () => {
+    const note = `${'$$\nx\n\n'.repeat(3000)}end\n`
+    const started = performance.now()
+    expect(blocksOf(note)).toHaveLength(3001)
+    expect(performance.now() - started).toBeLessThan(2000)
+  })
+})
+
+describe('a block in a list, a fence in a fence, and code after code', () => {
+  const id = () => 'new123'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a fence holding a shorter fence is one block', () => {
+    const note = 'Example:\n\n````md\n```js\nx\n```\n```` ^abc\n\nafter\n'
+    expect(block(note, 'abc')).toBe('````md\n```js\nx\n```\n````')
+    expect(block(note.replace(/`{4}/g, '~~~'), 'abc')).toBe('~~~md\n```js\nx\n```\n~~~')
+    const blank = '````md\n```js\nx\n\n```\n````\n\nafter\n'
+    const named = namedBlock(blank, 0, id)?.source ?? ''
+    expect(block(named, 'new123')).toBe('````md\n```js\nx\n\n```\n````')
+    expect(blocksOf(named).map((one) => [one.line, one.id])).toEqual([
+      [0, 'new123'],
+      [9, null],
+    ])
+  })
+
+  test('a block named apart inside a list item keeps the list whole', () => {
+    const more = '- a\n\n  more about a\n  ```\n  x\n  ```\n- b\n'
+    expect(namedBlock(more, 2, id)?.source).toBe(more.replace('about a', 'about a ^new123'))
+    const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
+    const named = namedBlock(table, 2, id)?.source ?? ''
+    expect(named).toBe(table.replace('2 |\n- Next', '2 |\n\n  ^new123\n- Next'))
+    expect(block(named, 'new123')).toBe('  | a | b |\n  | - | - |\n  | 1 | 2 |')
+    const rule = '1. Step one\n\n   ---\n\n2. Step two\n'
+    expect(namedBlock(rule, 2, id)?.source).toBe(
+      rule.replace('---\n\n2.', '---\n\n   ^new123\n\n2.'),
+    )
+  })
+
+  test('a list-looking line inside maths, a pre or a comment names the whole block', () => {
+    expect(namedBlock('$$\n- x + y\n$$\n', 1, id)?.source).toBe('$$\n- x + y\n$$\n\n^new123\n')
+    expect(namedBlock('<pre>\n- item\n</pre>\n', 1, id)?.source).toBe(
+      '<pre>\n- item\n</pre>\n\n^new123\n',
+    )
+    expect(namedBlock('<!--\n# Draft\n-->\n', 1, id)?.source).toBe(
+      '<!--\n# Draft\n-->\n\n^new123\n',
+    )
+  })
+
+  test('indented code and the fence after it are two blocks', () => {
+    const note = '    a\n\n```\nb\n```\n\nafter\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe('    a\n\n^new123\n\n```\nb\n```\n\nafter\n')
+    expect(block(named, 'new123')).toBe('    a')
+  })
+})
+
+describe('a block in a quote, a loose item, or under an item', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+  const quotes = (text: string) => renderMarkdown(text).split('<blockquote').length - 1
+
+  test('a name for an indented line of a paragraph is no code', () => {
+    const note = 'Docs are at\n    <https://example.com>\n'
+    const named = namedBlock(note, 1, id)?.source ?? ''
+    expect(named).not.toContain('    ^n')
+    expect(block(named, 'n')).toBe('Docs are at\n    <https://example.com>')
+  })
+
+  test('a quote holding a fence is one block', () => {
+    const note = '> Run:\n> ```\n> npm i\n> ```\n> then restart\n'
+    const named = namedBlock(note, 1, id)?.source ?? ''
+    expect(quotes(named)).toBe(1)
+    expect(block(named, 'n')).toBe(note.trimEnd())
+    expect(block(note.replace('restart', 'restart ^q'), 'q')).toBe(note.trimEnd())
+  })
+
+  test('code after a paragraph in a loose item is in the item it names', () => {
+    const note = '1. Install:\n\n   Run this:\n\n   ```bash\n   npm i\n   ```\n2. Next\n'
+    const named = namedBlock(note, 5, id)?.source ?? ''
+    expect(named).toBe(note.replace('Install:', 'Install: ^n'))
+    expect(block(named, 'n')).toContain('npm i')
+  })
+
+  test('code indented less than an item is no part of it', () => {
+    const note = '1. Install\n\n  ```bash\n  npm i\n  ```\n\nAfter\n'
+    expect(namedBlock(note, 3, id)?.source).toBe(note.replace('```\n\nAfter', '```\n\n^n\n\nAfter'))
+  })
+
+  test('a line of an item over code or a table names the item and keeps the list tight', () => {
+    const code = '- Install\n  with npm:\n  ```bash\n  npm i\n  ```\n- Run it\n'
+    const named = namedBlock(code, 1, id)?.source ?? ''
+    expect(named).toBe(code.replace('with npm:', 'with npm: ^n'))
+    expect(renderMarkdown(named)).not.toContain('<p>')
+    const table = '- a\n  | x | y |\n  | - | - |\n  | 1 | 2 |\n- b\n'
+    expect(namedBlock(table, 2, id)?.source).toBe(table.replace('- a', '- a ^n'))
+  })
+
+  test('code a fence never closes takes no name', () => {
+    expect(namedBlock('Intro\n\n```js\nlet a = 1\n', 3, id)).toBeNull()
+  })
+})
+
+describe('a paragraph right over a quote, and a name before a later step', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('the paragraph and the callout under it are two blocks', () => {
+    const note =
+      'Before you start:\n> [!warning] Back up first\n> It wipes the disk.\n\nNext para\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe(note.replace('start:', 'start: ^n'))
+    expect(block(named, 'n')).toBe('Before you start:')
+    expect(blocksOf(note).map((one) => one.line)).toEqual([0, 1, 4])
+    expect(block(namedBlock(note, 2, id)?.source ?? '', 'n')).toBe(
+      '> [!warning] Back up first\n> It wipes the disk.',
+    )
+  })
+
+  test('a name written apart before a step numbered past one keeps the step a list item', () => {
+    const note = '1. Install:\n```bash\nnpm i\n```\n2. Run:\n```bash\nnpm start\n```\n'
+    expect(namedBlock(note, 2, id)?.source).toBe(note.replace('```\n2.', '```\n\n^n\n\n2.'))
+  })
+})
+
+describe('a block beside a heading, a quote line in a comment, and a comment under a quote', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a comment holding a line that starts with > is one block', () => {
+    const note = 'Intro\n\n<!--\nDraft quote:\n> Old wording here\nmore notes\n-->\n\nAfter\n'
+    const named = namedBlock(note, 2, id)?.source ?? ''
+    expect(block(named, 'n')).toBe('<!--\nDraft quote:\n> Old wording here\nmore notes\n-->')
+    expect(blocksOf(note).map((one) => one.line)).toEqual([0, 2, 8])
+  })
+
+  test('code straight under a heading or a step is named without them', () => {
+    const note = '## Install\n```bash\nnpm i\n```\n\nThen run it.\n'
+    expect(block(namedBlock(note, 2, id)?.source ?? '', 'n')).toBe('```bash\nnpm i\n```')
+    const steps = '1. Install:\n```bash\nnpm i\n```\n2. Run:\n'
+    expect(block(namedBlock(steps, 2, id)?.source ?? '', 'n')).toBe('```bash\nnpm i\n```')
+  })
+
+  test('a comment straight under a quote is not part of it', () => {
+    const note = 'Intro\n> quote here\n<!--\n- x\n-->\n\nAfter\n'
+    const named = namedBlock(note, 1, id)?.source ?? ''
+    expect(named).toBe(note.replace('quote here', 'quote here ^n'))
+    expect(block(named, 'n')).toBe('> quote here')
+  })
+})
+
+describe('a name under a list holding code, and code right under words', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('a name written under a list whose item holds code is the whole list', () => {
+    const note = '- one\n- Install:\n  ```bash\n  npm i\n  ```\n\n^x\n'
+    expect(block(note, 'x')).toBe('- one\n- Install:\n  ```bash\n  npm i\n  ```')
+    const sub = '- a\n  ## Sub\n  text\n\n^x\n'
+    expect(block(sub, 'x')).toBe('- a\n  ## Sub\n  text')
+  })
+
+  test('code right under words is a block of its own', () => {
+    const note = 'Run this:\n```bash\nnpm i\n```\n\nAfter\n'
+    expect(namedBlock(note, 0, id)?.source).toBe(note.replace('this:', 'this: ^n'))
+    const code = namedBlock(note, 2, id)?.source ?? ''
+    expect(block(code, 'n')).toBe('```bash\nnpm i\n```')
+  })
+})
+
+describe('blocks that touch: code, tables, lists and their neighbours', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+  const listed = (text: string) => blocksOf(text).map((one) => [one.line, one.id])
+
+  test('the block list gives code right under words an entry of its own', () => {
+    const note = 'Run this:\n```bash\nnpm i\n```\n\nAfter\n'
+    const named = namedBlock(note, 2, id)?.source ?? ''
+    expect(listed(named)).toEqual([
+      [0, null],
+      [1, 'n'],
+      [7, null],
+    ])
+    expect(listed('para ^a\n```\nx\n```\n\n^b\n\nAfter\n')).toEqual([
+      [0, 'a'],
+      [1, 'b'],
+      [7, null],
+    ])
+  })
+
+  test('a table right under code is a block of its own', () => {
+    const note = '```bash\nnpm i\n```\n| a | b |\n|---|---|\n| 1 | 2 |\n\nEnd\n'
+    const named = namedBlock(note, 3, id)?.source ?? ''
+    expect(block(named, 'n')).toBe('| a | b |\n|---|---|\n| 1 | 2 |')
+  })
+
+  test('naming an item whose words end in a heading names the item', () => {
+    const note = '1. Install\n   ## Notes\n   ```\n   x\n   ```\n2. Next\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe(note.replace('1. Install', '1. Install ^n'))
+    expect(block(named, 'n')).toContain('x')
+  })
+
+  test('a name under a list ending in a nested quote is the list', () => {
+    expect(block('- a\n  > q\n\n^x\n', 'x')).toBe('- a\n  > q')
+  })
+
+  test('a name under a list right under words leaves the words out', () => {
+    expect(block('Intro\n- a\n- b\n\n^x\n', 'x')).toBe('- a\n- b')
+    expect(block('Steps:\n1. a\n2. Run:\n   ```\n   x\n   ```\n\n^x\n', 'x')).toBe(
+      '1. a\n2. Run:\n   ```\n   x\n   ```',
+    )
   })
 })

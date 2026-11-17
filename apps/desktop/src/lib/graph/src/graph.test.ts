@@ -48,6 +48,16 @@ describe('the space as a graph', () => {
     expect(joins(graph)).toEqual(['Ideas - Plan', 'Notes - Plan'])
   })
 
+  test('an edge for a wikilink to a note whose name holds a dot', () => {
+    const graph = space({
+      '16.11.2026.md': '# Monday',
+      'Version 2.0.md': '# Release',
+      'One.md': 'see [[16.11.2026]] and [[Version 2.0]]',
+    })
+
+    expect(joins(graph)).toEqual(['16.11.2026 - One', 'One - Version 2.0'])
+  })
+
   test('one edge for a pair that links both ways, marked as both', () => {
     const graph = space({ 'One.md': 'see [[Two]]', 'Two.md': 'see [[One]]' })
 

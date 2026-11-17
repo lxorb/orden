@@ -116,7 +116,7 @@ export function frontMatterList(source: string, key: string): string[] {
     const stop = end === -1 || end > block.body.to ? block.body.to : end
     const text = source.slice(at, stop)
 
-    if (text.trim()) {
+    if (text.trim() && !text.trim().startsWith('#')) {
       const item = writtenListItem(text)
       if (item === null) break
       out.push(unquoted(uncommented(item)))
@@ -197,6 +197,15 @@ export function frontMatterEdits(
   }
 
   return oneEdit(source, after)
+}
+
+export function frontMatterEntry(source: string, key: string): string | null {
+  const block = frontMatterBlock(source)
+  const found = block && keyLine(source, block, key)
+  if (!block || !found) return null
+
+  const line = withUnder(source, block, found)
+  return source.slice(line.from, cutTo(source, line))
 }
 
 export function frontMatterEdit(
