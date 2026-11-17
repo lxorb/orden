@@ -1445,6 +1445,9 @@ first.
 | EC321 | Medium | A paragraph inside a named quote or list item took the container's own-line id, so Delete, Move and Turn into removed, carried off or rewrote the id (forty-fifth re-audit, regression from EC314) | Fixed | `block/span.ts` extended every non-list span over an own-line id, nested ones too, and Turn into shaped the id line | Only top-level blocks take the id under them, and Turn into leaves an own-line id as it is | `block-container-id.test.ts` (fails before) |
 | EC322 | Medium | Move up, and a drop on the id line, landed a block between a named table, fence or paragraph and its id (forty-fifth re-audit, gap in EC314) | Fixed | `blockAt` on an own-line id returned the id as a block of its own | An own-line id resolves to the block it names | `block-id-line-landing.test.ts` (fails before) |
 | EC323 | Medium | Copy link on a list's last item reused the id under the list and linked the whole list (forty-fifth re-audit) | Fixed | `blockTarget` took an own-line id under the item's last line as the item's | A list item never reuses the list's own-line id | `block-copy-link-item.test.ts` (fails before) |
+| EC324 | Medium | A heading ending in a comment (`# Plans %%draft%%`) was offered, linked and listed in the table of contents with its comment, so links to the name the reading view shows found nothing (forty-sixth re-audit) | Fixed | `links.ts` `headingText` read the raw line | Heading names drop inline comments, as the reading view does | `heading-trailing-comment.test.ts` (fails before) |
+| EC325 | Medium | A code block inside a `%%` or HTML comment was offered in the `[[Note#^` block list (forty-sixth re-audit, gap in EC320) | Fixed | `hiddenLines` skipped code rows before checking whether a comment was open | Rows inside an open comment are hidden, code or not | `wikilink/comment-code-blocks.test.ts` (fails before) |
+| EC326 | Medium | Move, Delete, drag and Turn into left a list's own-line id behind or turned it into an item, so the link then named another block (forty-sixth re-audit, gaps in EC314, EC321 and EC322 for lists) | Fixed | List item spans never took the id, `blockAt` on a list's id line found no owner, and a picked id line was shaped as prose | Picking a whole list takes its id along, the id line resolves to the whole list, and it is never listed as a block of its own | `block-list-own-id.test.ts` (fails before) |
 
 ### Editor core: open Lows
 
@@ -1619,6 +1622,14 @@ Seen, judged minor, left as they are:
 - A `$$` block holding a LaTeX `%%` line, `<!-->` and `%%%` lines, or an odd number of fence lines inside an HTML comment can hide later headings from heading links (forty-fifth re-audit).
 - Insert footnote with two carets writes one footnote; Enter after a bare `$$` adds no closing `$$` (forty-fifth re-audit).
 - Under a heading, an own-line list id gets no block handle (forty-fifth re-audit).
+- Duplicate copies ids as written, so the copy carries the same `^id` (forty-sixth re-audit).
+- Turn into Bullet over separate paragraphs makes one loose list, so a paragraph's own-line id then names the whole list (forty-sixth re-audit).
+- Move down on a paragraph right above a list moves it past one item, splitting the list (forty-sixth re-audit).
+- `%% one\n%% # Shown` hides the heading "Shown" from heading links, though the reading view draws it (forty-sixth re-audit).
+- In the reading view a highlight is cut by inline code or a link holding `==` (forty-sixth re-audit).
+- `#a/b/` keeps the trailing slash in the tag; a callout title keeps `**bold**` as typed in the reading view (forty-sixth re-audit).
+- An indented code block whose first line looks like a folded callout is folded on load (forty-sixth re-audit).
+- In right-to-left notes, a line led by a footnote definition or an English image alt is drawn left to right (forty-sixth re-audit).
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

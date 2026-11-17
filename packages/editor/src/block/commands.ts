@@ -9,19 +9,20 @@ import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
 import { verbatimLines } from './verbatim'
 import { type BlockShape, shaped, wordsOf } from './shape'
-import { blockAt, type BlockKind, blocksIn, type BlockSpan, writtenLine } from './span'
+import { blockAt, type BlockKind, blocksIn, type BlockSpan, withListIds, writtenLine } from './span'
 
 export function blocksFor(view: EditorView, pos: number): BlockSpan[] {
   const range = view.state.selection.main
   const pressed = blockAt(view.state, pos)
 
-  if (range.empty || pos < range.from || pos > range.to) return pressed ? [pressed] : []
+  const picked = pressed ? [pressed] : []
+  if (range.empty || pos < range.from || pos > range.to) return withListIds(view.state, picked)
 
   const covered = blocksIn(view.state, range.from, range.to).filter(
     (span) => span.to >= range.from && span.from <= range.to,
   )
 
-  return covered.length ? covered : pressed ? [pressed] : []
+  return withListIds(view.state, covered.length ? covered : picked)
 }
 
 function runOf(spans: BlockSpan[]): BlockSpan | null {

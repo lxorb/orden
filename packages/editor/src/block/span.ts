@@ -80,8 +80,12 @@ export function blocksIn(state: EditorState, from: number, to: number): BlockSpa
 
       const span = spanOf(state, node.node, kind)
       const line = doc.lineAt(span.from).from
-      const named = found.some((one) => one.from < span.from && one.to >= span.to)
-      if (named && kind === 'paragraph' && ownLine(doc.lineAt(span.from).text)) return false
+      const id = kind === 'paragraph' && ownLine(doc.lineAt(span.from).text)
+      const named =
+        id &&
+        (found.some((one) => one.from < span.from && one.to >= span.to) ||
+          namedAbove(state, doc.lineAt(span.from)) !== null)
+      if (named) return false
       if (!taken.has(line)) {
         taken.add(line)
         found.push(span)
@@ -112,10 +116,34 @@ function namedAbove(state: EditorState, line: Line): BlockSpan | null {
     if (node.parent?.name === 'Document') top = node
     node = node.parent
   }
-  const kind = top && kindOf(top.name)
-  if (!top || !kind || kind === 'heading') return null
+  if (!top) return null
+  if (LISTS.has(top.name)) {
+    const doc = state.doc
+    const to = ownIdEnd(doc, doc.lineAt(Math.min(top.to, doc.length)).to)
+    return to >= line.to ? { from: doc.lineAt(top.from).from, to, kind: 'list' } : null
+  }
+  const kind = kindOf(top.name)
+  if (!kind || kind === 'heading' || kind === 'front-matter') return null
   const span = spanOf(state, top, kind)
   return span.to >= line.to ? span : null
+}
+
+const LISTS = new Set(['BulletList', 'OrderedList'])
+
+export function withListIds(state: EditorState, spans: readonly BlockSpan[]): BlockSpan[] {
+  const last = spans.at(-1)
+  if (last?.kind !== 'list') return [...spans]
+  const doc = state.doc
+  let list: SyntaxNode | null = null
+  for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(last.from, 1); node;) {
+    if (node.parent?.name === 'Document') list = node
+    node = node.parent
+  }
+  if (!list || !LISTS.has(list.name)) return [...spans]
+  const start = doc.lineAt(list.from).from
+  const end = doc.lineAt(Math.min(list.to, doc.length)).to
+  const whole = last.to === end && spans.some((span) => span.from === start)
+  return whole ? [...spans.slice(0, -1), { ...last, to: ownIdEnd(doc, end) }] : [...spans]
 }
 
 export function blockAt(state: EditorState, pos: number): BlockSpan | null {

@@ -503,7 +503,9 @@ const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
 
 const CLOSING_HASHES = /[ \t]+#+[ \t]*$/
 
-export function headingText(line: string): string {
+export function headingText(written: string): string {
+  const line =
+    written.includes('%%') || written.includes('<!--') ? stripLine(written, null).text : written
   const found = HEADING_LINE.exec(line)
   if (found === null) return line.trim()
 
@@ -516,7 +518,7 @@ function hiddenLines(text: string, rows: readonly Row[]): Set<number> {
 
   let inside: string | null = null
   for (const row of rows) {
-    if (row.code || row.matter) continue
+    if (row.matter || (row.code && inside === null)) continue
     const before = inside
     const stripped = stripLine(row.text, inside)
     inside = stripped.inside
