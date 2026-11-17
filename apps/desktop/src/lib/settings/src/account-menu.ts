@@ -1,5 +1,5 @@
 import { account } from '../../accounts/src/api'
-import { DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
+import { DIVIDER, menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import { settingsWindow } from '@orden/contracts'
 import { shortcuts } from '../../shortcuts/src/api'
 
@@ -18,6 +18,14 @@ export function showAccount(event: MouseEvent, more: MenuEntry[] = [], up = true
         hint: shortcuts.hint('app.settings'),
         run: () => settingsWindow().show(),
       },
+      ...(viewport.touch
+        ? []
+        : [
+            {
+              label: 'Themes',
+              run: () => void import('../../theme-looks/src/api').then((one) => one.pickTheme(at)),
+            },
+          ]),
       ...more,
       DIVIDER,
       account.user
