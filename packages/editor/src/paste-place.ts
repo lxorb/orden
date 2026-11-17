@@ -96,6 +96,8 @@ export function placed(state: EditorState, written: string): TransactionSpec {
   return everywhere(state, (range) => placedAt(state, keptBreak(state, range, text), text))
 }
 
+const ITEM_LEAD = /^((?:[ \t]*>)*[ \t]*)(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
+
 function placedAt(state: EditorState, range: SelectionRange, text: string): Landing {
   const special = intoEmptyItem(state, range, text)
   if (special) return special
@@ -111,6 +113,18 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
 
   const inFront = before.length === prefix.length
   const first = text.slice(0, text.indexOf('\n') + 1 || text.length).trimEnd()
+  const marked = inFront && text.endsWith('\n') ? ITEM_LEAD.exec(prefix) : null
+  if (marked && OPENS_BLOCK.test(first)) {
+    const outer = marked[1] ?? ''
+    const insert = text
+      .split('\n')
+      .map((one) => (one ? outer + one : one))
+      .join('\n')
+    return {
+      changes: { from: line.from, insert },
+      range: EditorSelection.cursor(range.from + insert.length),
+    }
+  }
   const kind = inFront && !OPENS_BLOCK.test(first) ? sameKind(prefix) : null
   const held = (pasted: string) => {
     const [head = '', ...rest] = pasted.split('\n')

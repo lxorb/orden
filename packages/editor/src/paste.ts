@@ -155,8 +155,11 @@ const LIST_HTML = /mso-list|<(?:ul|ol)\b/i
 
 const TABLE_HTML = /<table\b/i
 
+const LINKED_CELLS = /<t[dh]\b[^>]*>(?:(?!<\/t[dh]>)[\s\S])*<(?:a|code)\b/i
+
 function tablePaste(html: string, text: string): string | null {
-  return LIST_HTML.test(html) && !TABLE_HTML.test(html) ? null : delimitedToTable(text)
+  if (TABLE_HTML.test(html) ? LINKED_CELLS.test(html) : LIST_HTML.test(html)) return null
+  return delimitedToTable(text)
 }
 
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {

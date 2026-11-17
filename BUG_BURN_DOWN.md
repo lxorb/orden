@@ -1454,6 +1454,11 @@ first.
 | EC330 | Medium | A pasted or clipped superscript or subscript holding a space (`2<sup>n - 1</sup>`, Wikipedia note marks) showed raw `^` or `~` in every view (forty-eighth re-audit, regression from EC329) | Fixed | `from-html.ts` wrote `^a b^`, which no longer reads as a script | A script holding any space is kept as its HTML tag; an escaped space inside a script reads as a space in the reading view | `paste-spaced-scripts.test.ts` (fails before) |
 | EC331 | Medium | Turn into Text or Quote on the first item of a numbered list turned the rest of the list into text or quote lines (forty-eighth re-audit) | Fixed | `turnBlocksInto` left the following items numbered from 2, which cannot start a list under a paragraph | The items after it are renumbered from 1, as the list toggle does (EC79) | `block/turn-first-numbered.test.ts` (fails before) |
 | EC332 | Medium | On mac, Cmd-Backspace in a bullet or task deleted the hidden marker or box along with the words (forty-eighth re-audit) | Fixed | CodeMirror's delete to line start ignored the hidden lead that Home stops at (EC135) | Deleting to the line start keeps an item's marker, box and quote marks | `live-preview/line-start-delete.test.ts` (fails before) |
+| EC333 | Medium | Turn into Text on the first item of a numbered list inside a quote or callout still turned the rest of the list into text (forty-ninth re-audit, gap in EC331) | Fixed | `restartedAfter` only looked at list spans and stopped at the quote marks between items | Any picked line that starts an item is seen, and quote marks between items are skipped | `block/turn-numbered-in-quote.test.ts` (fails before) |
+| EC334 | Medium | Pasting a whole copied item line at the start of another item's words nested it under an empty bullet and stripped the item's marker (forty-ninth re-audit) | Fixed | `paste-place.ts` `placedAt` inserted after the hidden marker, where the caret always sits | Whole item lines pasted at an item's start land above it as items of their own | `paste-item-at-item-start.test.ts` (fails before) |
+| EC335 | Medium | Strikethrough, superscript and subscript pasted from Google Docs were lost (`10` with a raised `6` became `106`) (forty-ninth re-audit) | Fixed | `from-html.ts` read only weight and style off spans | `text-decoration: line-through` and `vertical-align: super/sub` become `~~`, `^` and `~` | `paste-docs-styles.test.ts` (fails before) |
+| EC336 | Medium | A table copied from a web page lost its links and code, and `__all__` turned bold (forty-ninth re-audit) | Fixed | `paste.ts` built every HTML table from its tab-separated plain text | A table whose cells hold links or code is converted from its HTML | `paste-web-table.test.ts` (fails before) |
+| EC337 | Medium | Notion lists, one list element per item, became loose lists on paste and import (forty-ninth re-audit) | Fixed | `from-html.ts` set each adjacent list apart with a blank line | Adjacent lists of the same kind join into one tight list | `paste-split-lists.test.ts` (fails before) |
 
 ### Editor core: open Lows
 
@@ -1648,6 +1653,12 @@ Seen, judged minor, left as they are:
 - Move down on the last item of a named list steps only over the id line (forty-eighth re-audit).
 - Upper case turns `:smile:` into `:SMILE:`; Sort lines puts `**bold**` items first and moves a trailing ` ^id` (forty-eighth re-audit).
 - A backslash hard break leaves the `\` visible in the editor (forty-eighth re-audit).
+- A `<sup>`, `<sub>` or `<u>` written by paste shows as characters in the reading view of a pasted note, because pasted notes are untrusted and their HTML is escaped by design (`reading/src/render.test.ts`); left as designed (forty-ninth re-audit).
+- `restartedAfter` renumbers oddly when the first item has children, for middle items, and for all-ones lists (forty-ninth re-audit).
+- Cmd-Backspace keeps the lead with several cursors only for the main one, keeps `- ` on code lines, and on a callout title keeps `> ` but drops `[!note]` (forty-ninth re-audit).
+- A list pasted in front of an item's words without a trailing line break still nests; dropped text drags get none of the paste handling (forty-ninth re-audit).
+- Bold and struck Google Docs spans keep only one of the two (forty-ninth re-audit).
+- GitHub heading anchors and Wikipedia `[edit]` links come along on paste; lazy-loaded images keep their placeholder; lists and `<br>` in table cells flatten (forty-ninth re-audit).
 - Checked and safe: a peer caret colour is written into a style attribute, but every colour comes from Orden's fixed accent palette.
 - Folds restored from a session by line number are not checked against a changed file.
 - A typed `\\|` in a table cell splits the cell on read-back.

@@ -361,6 +361,26 @@ const LIGHT = /(?:^|;)\s*font-weight\s*:\s*(?:normal|lighter|[1-5]00)\b/iu
 const SLANTED = /(?:^|;)\s*font-style\s*:\s*(?:italic|oblique)\b/iu
 const UPRIGHT = /(?:^|;)\s*font-style\s*:\s*normal\b/iu
 
+const STRUCK = /(?:^|;)\s*text-decoration(?:-line)?\s*:[^;]*\bline-through\b/iu
+const RAISED = /(?:^|;)\s*vertical-align\s*:\s*(super|sub)\b/iu
+
+function styledAs(node: Element): 'del' | 'sup' | 'sub' | null {
+  const style = node.getAttribute('style') ?? ''
+  const raised = RAISED.exec(style)?.[1]?.toLowerCase()
+  if (raised === 'super') return 'sup'
+  if (raised === 'sub') return 'sub'
+  return STRUCK.test(style) ? 'del' : null
+}
+
+function joined(node: Element, side: -1 | 1): boolean {
+  for (let next = side < 0 ? node.previousSibling : node.nextSibling; next;) {
+    if (next.nodeType === 1) return true
+    if (next.textContent?.trim()) return false
+    next = side < 0 ? next.previousSibling : next.nextSibling
+  }
+  return false
+}
+
 function marksFor(node: Element): string | null {
   const style = node.getAttribute('style') ?? ''
   const name = node.nodeName
@@ -574,6 +594,26 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
+  service.addRule('styled', {
+    filter: (node) =>
+      node.nodeName === 'SPAN' &&
+      marksFor(node) === null &&
+      styledAs(node) !== null &&
+      !node.closest('code,pre'),
+    replacement: (content, node) => {
+      const words = /^(\s*)([\s\S]*?)(\s*)$/u.exec(content)
+      const core = words?.[2] ?? ''
+      if (!core) return content
+      const styled = styledAs(node)
+      const marker = styled === 'sup' ? '^' : styled === 'sub' ? '~' : '~~'
+      const marked = styled === 'del' || (!core.includes(marker) && !/\s/u.test(core))
+      const written = marked
+        ? `${marker}${core}${marker}`
+        : `<${styled ?? ''}>${core}</${styled ?? ''}>`
+      return `${words?.[1] ?? ''}${written}${words?.[3] ?? ''}`
+    },
+  })
+
   service.addRule('heading', {
     filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
     replacement: (content, node) => {
@@ -594,6 +634,17 @@ function converter(options: FromHtmlOptions): TurndownService {
       )
     },
     replacement: (_content, node) => ((node as HTMLInputElement).checked ? '[x] ' : '[ ] '),
+  })
+
+  service.addRule('list', {
+    filter: ['ul', 'ol'],
+    replacement: (content, node) => {
+      const parent = node.parentNode
+      if (parent?.nodeName === 'LI' && parent.lastElementChild === node) return `\n${content}`
+      const above = node.previousElementSibling?.nodeName === node.nodeName && joined(node, -1)
+      const below = node.nextElementSibling?.nodeName === node.nodeName && joined(node, 1)
+      return `${above ? '\n' : '\n\n'}${content}${below ? '\n' : '\n\n'}`
+    },
   })
 
   service.addRule('listItem', {

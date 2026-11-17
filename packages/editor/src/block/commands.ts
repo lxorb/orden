@@ -314,6 +314,14 @@ function itemAt(state: EditorState, from: number): SyntaxNode | null {
   return null
 }
 
+function siblingItem(node: SyntaxNode, side: -1 | 1): SyntaxNode | null {
+  for (let next = side < 0 ? node.prevSibling : node.nextSibling; next;) {
+    if (next.name === 'ListItem') return next
+    next = side < 0 ? next.prevSibling : next.nextSibling
+  }
+  return null
+}
+
 function restartedAfter(state: EditorState, spans: readonly BlockSpan[]): ChangeSpec[] {
   const picked = new Set(spans.map((span) => span.from))
   const starts = (node: SyntaxNode) => state.doc.lineAt(node.from).from
@@ -321,13 +329,14 @@ function restartedAfter(state: EditorState, spans: readonly BlockSpan[]): Change
   const done = new Set<number>()
 
   for (const span of spans) {
-    const item = span.kind === 'list' ? itemAt(state, span.from) : null
+    const item = itemAt(state, span.from)
     if (item?.parent?.name !== 'OrderedList' || done.has(item.parent.from)) continue
-    if (item.prevSibling?.name === 'ListItem' && !picked.has(starts(item.prevSibling))) continue
+    const above = siblingItem(item, -1)
+    if (above && !picked.has(starts(above))) continue
     done.add(item.parent.from)
 
     let count = 0
-    for (let next = item.nextSibling; next?.name === 'ListItem'; next = next.nextSibling) {
+    for (let next = siblingItem(item, 1); next; next = siblingItem(next, 1)) {
       if (count === 0 && picked.has(starts(next))) continue
       const mark = next.getChild('ListMark')
       if (!mark) break
