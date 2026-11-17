@@ -178,3 +178,17 @@ describe('a long block of code while it arrives', () => {
     expect(grouped.replace(/<[^>]+>/g, '')).toBe(code.replace(/<[^>]+>/g, ''))
   })
 })
+
+describe('subscript and superscript in an answer (#2088)', () => {
+  test('come out as sub and sup whichever way the model writes them', () => {
+    const tagged = answerHtml(
+      'MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)',
+    )
+    expect(tagged).toContain('P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)')
+
+    const marked = answerHtml('P~diast~ and x^2^')
+    expect(marked).toContain('P<sub>diast</sub> and x<sup>2</sup>')
+
+    expect(answerHtml('$P_{diast}$')).toContain('class="math-inline"')
+  })
+})
