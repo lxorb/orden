@@ -550,6 +550,29 @@ describe('a file the app reads as words, written as bytes', () => {
 })
 
 describe('the trash', () => {
+  test('two deletes at once both land in Recently deleted, and both come back', async () => {
+    await write('/Notes/One.md', 'one')
+    await write('/Notes/Two.md', 'two')
+
+    const [one, two] = await Promise.all([
+      webInvoke<{ id: string }>('trash_item', { path: '/Notes/One.md', kind: 'note' }),
+      webInvoke<{ id: string }>('trash_item', { path: '/Notes/Two.md', kind: 'note' }),
+    ])
+
+    expect(one.id).not.toBe(two.id)
+    expect((await webInvoke<{ name: string }[]>('list_trash')).map((e) => e.name).sort()).toEqual([
+      'One.md',
+      'Two.md',
+    ])
+    await Promise.all([
+      webInvoke('restore_trash', { id: one.id }),
+      webInvoke('restore_trash', { id: two.id }),
+    ])
+    expect(await webInvoke('list_trash')).toEqual([])
+    expect(disk.files.get('/Notes/One.md')?.content).toBe('one')
+    expect(disk.files.get('/Notes/Two.md')?.content).toBe('two')
+  })
+
   test('a note deleted before its space stays out of a new space of that name', async () => {
     await webInvoke('create_folder', { path: '/Notes' })
     await webInvoke('write_note', { path: '/Notes/Idea.md', content: 'words' })

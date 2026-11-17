@@ -588,7 +588,7 @@
   }
 
   function land(on: EditorView, line: number) {
-    if (viewport.drawer) workspace.closePanel()
+    workspace.showNote()
 
     const target = on.state.doc.line(Math.min(line + 1, on.state.doc.lines))
     on.dispatch({

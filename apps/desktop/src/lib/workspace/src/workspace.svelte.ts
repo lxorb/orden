@@ -2292,8 +2292,10 @@ class Workspace {
     await this.loadTree()
   }
 
-  private showNote() {
-    if (!viewport.drawer || !this.panel) return
+  showNote() {
+    if (!viewport.drawer) return
+    if (this.rightShows !== null) this.closeRight()
+    if (!this.panel) return
 
     this.panel = null
     this.persist()

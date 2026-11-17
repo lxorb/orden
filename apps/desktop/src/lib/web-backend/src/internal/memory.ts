@@ -49,8 +49,9 @@ export class MemoryBytes implements InternalBytes {
   }
 }
 
-export function sharedWindows() {
+export function sharedWindows(late = false) {
   let lock: Promise<unknown> = Promise.resolve()
+  let newest = 0
   const listeners = new Set<(message: unknown) => void>()
   const flying = new Set<Promise<void>>()
   let keys = 0
@@ -65,6 +66,12 @@ export function sharedWindows() {
           lock = turn.catch(() => undefined)
           return turn
         },
+        newest: {
+          read: () => newest,
+          write: (gen) => {
+            newest = Math.max(newest, gen)
+          },
+        },
         channel(_name, heard) {
           const own = (message: unknown) => {
             heard(message)
@@ -74,7 +81,10 @@ export function sharedWindows() {
             post(message) {
               for (const one of listeners) {
                 if (one === own) continue
-                const delivery = Promise.resolve().then(() => {
+                const sent = late
+                  ? new Promise<void>((after) => setTimeout(after, 5))
+                  : Promise.resolve()
+                const delivery = sent.then(() => {
                   one(message)
                 })
                 flying.add(delivery)
@@ -90,7 +100,7 @@ export function sharedWindows() {
     },
     async settled() {
       while (flying.size) await Promise.all([...flying])
-      await new Promise((resolve) => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, late ? 10 : 0))
     },
   }
 }
