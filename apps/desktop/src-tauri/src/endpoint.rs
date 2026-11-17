@@ -1102,7 +1102,7 @@ mod tests {
         let start = include_str!("../../src/lib/automation/src/start.ts");
         assert!(start.contains("dueWithin(asked.within_ms)"));
         let due = include_str!("../../src/lib/automation/src/due.ts");
-        assert!(due.contains("export const LAST_WORD = 1000\n"));
+        assert!(due.contains("\nconst LAST_WORD = 1000\n"));
         let last_word = Duration::from_secs(1);
         assert!(last_word < DELIVERY / 2);
         assert_eq!(DELIVERY, Duration::from_secs(5));

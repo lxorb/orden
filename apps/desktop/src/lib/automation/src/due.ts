@@ -1,6 +1,6 @@
 import { type AgentAnswer, agentRefusal } from '@orden/contracts'
 
-export const LAST_WORD = 1000
+const LAST_WORD = 1000
 
 const STILL_GOING =
   'the time to answer ran out while this was still being done, and it may yet be done: look before asking for it again'
