@@ -4,9 +4,9 @@ import { EditorView } from '@codemirror/view'
 import { enclosingNamed } from './nodes'
 
 const RULES: { pattern: RegExp; insert: string; dash?: boolean }[] = [
-  { pattern: /(?:^|[\s([{"'])(")$/, insert: '“' },
+  { pattern: /(?:^|[\s([{"'])(?:[*_]{1,3}|~~|==)?(")$/, insert: '“' },
   { pattern: /(")$/, insert: '”' },
-  { pattern: /(?:^|[\s([{"“])(')$/, insert: '‘' },
+  { pattern: /(?:^|[\s([{"“])(?:[*_]{1,3}|~~|==)?(')$/, insert: '‘' },
   { pattern: /(')$/, insert: '’' },
   { pattern: /(–-)$/, insert: '—', dash: true },
   { pattern: /(--)$/, insert: '–', dash: true },

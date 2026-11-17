@@ -70,6 +70,7 @@ const RUNS = new Set([
   'Link',
   'Strikethrough',
   'Highlight',
+  'Wikilink',
 ])
 
 function marksOf(node: SyntaxNode): SyntaxNode[] {
@@ -87,10 +88,9 @@ function closedRuns(state: EditorState, from: number, to: number): string {
 
   for (let node: SyntaxNode | null = tree.resolveInner(from, 1); node; node = node.parent) {
     if (!RUNS.has(node.name) || node.from >= from || node.to > to) continue
-    const opener = marksOf(node)
-      .reverse()
-      .find((mark) => mark.to <= from)
-    if (opener) before = state.doc.sliceString(node.from, opener.to) + before
+    const [opener, next] = marksOf(node)
+    if (opener && opener.to <= from && (!next || next.from >= from))
+      before = state.doc.sliceString(node.from, opener.to) + before
   }
 
   for (let node: SyntaxNode | null = tree.resolveInner(to, -1); node; node = node.parent) {

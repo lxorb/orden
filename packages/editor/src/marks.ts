@@ -125,29 +125,51 @@ export function marksAcross(mark: string, adding = false): StateCommand {
 
 const HIGHLIGHT = '=='
 
+function litOf(state: EditorState, part: Part): { from: number; to: number; close: number } | null {
+  const size = HIGHLIGHT.length
+  const doc = state.doc
+  const words = doc.sliceString(part.from, part.to)
+  const line = doc.lineAt(part.from)
+  const head = line.text.slice(0, part.from - line.from)
+  const mark = head.lastIndexOf(HIGHLIGHT)
+  const between = mark < 0 ? '' : head.slice(mark + size)
+  const open = words.startsWith(HIGHLIGHT)
+    ? part.from
+    : mark >= 0 && (!between || readHighlight(`${between}x`).from === between.length)
+      ? line.from + mark
+      : null
+  const close =
+    words.endsWith(HIGHLIGHT) && words.length >= (open === part.from ? size * 2 : size)
+      ? part.to - size
+      : doc.sliceString(part.to, part.to + size) === HIGHLIGHT
+        ? part.to
+        : null
+  if (open === null || close === null) return null
+  const colour = readHighlight(doc.sliceString(open + size, close)).from
+  return { from: open, to: open + size + colour, close }
+}
+
 export function highlightAcross(colour: HighlightColour): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
       const held = inside(state, range.from, range.to)
       const parts = partsOf(state, held.from, held.to)
-      const words = parts.map((part) => state.doc.sliceString(part.from, part.to))
-      const size = HIGHLIGHT.length
-      const lit = words.every(
-        (text) => text.length >= size * 2 && text.startsWith(HIGHLIGHT) && text.endsWith(HIGHLIGHT),
-      )
+      const found = parts.map((part) => litOf(state, part))
+      const lit = found.every(Boolean)
 
       const changes = state.changes(
         parts.flatMap((part, at): ChangeSpec[] => {
-          if (!lit) {
+          const marks = found[at]
+          if (lit && marks) {
             return [
-              { from: part.from, insert: HIGHLIGHT + writeHighlight('', colour) },
-              { from: part.to, insert: HIGHLIGHT },
+              { from: marks.from, to: marks.to },
+              { from: marks.close, to: marks.close + HIGHLIGHT.length },
             ]
           }
-          const inner = (words[at] ?? '').slice(size, -size)
+          if (marks) return []
           return [
-            { from: part.from, to: part.from + size + readHighlight(inner).from },
-            { from: part.to - size, to: part.to },
+            { from: part.from, insert: HIGHLIGHT + writeHighlight('', colour) },
+            { from: part.to, insert: HIGHLIGHT },
           ]
         }),
       )

@@ -81,58 +81,48 @@ function keptInQuote(line: string, text: string, quoted: string): string {
 
 export function withoutComments(source: string): string {
   if (!COMMENTS.some((one) => source.includes(one.open))) return source
-  return strippedLines(source).lines.join('\n')
+  return strippedLines(source).join('\n')
 }
 
-export function openCommentAfter(source: string): string | null {
-  if (!COMMENTS.some((one) => source.includes(one.open))) return null
-  return strippedLines(source).inside
-}
+export class CommentLines {
+  private code = new CodeBlocks()
+  private quoted = ''
+  inside: string | null = null
 
-function strippedLines(source: string): { lines: string[]; inside: string | null } {
-  const lines = source.split('\n')
-  const out: string[] = []
-  let code = new CodeBlocks()
-  let inside: string | null = null
-
-  let quoted = ''
-
-  for (const line of lines) {
-    if (inside) {
-      const stripped = stripLine(line, inside)
-      inside = stripped.inside
-      const text = keptInQuote(line, stripped.text, quoted)
-      out.push(text)
-      code.line(text)
-      continue
+  line(line: string): string {
+    if (this.inside) {
+      const stripped = stripLine(line, this.inside)
+      this.inside = stripped.inside
+      const text = keptInQuote(line, stripped.text, this.quoted)
+      this.code.line(text)
+      return text
     }
 
-    const before = code.copy()
-    const kind = code.line(line)
-    if (kind === CODE) {
-      out.push(line)
-      continue
-    }
+    const before = this.code.copy()
+    const kind = this.code.line(line)
+    if (kind === CODE) return line
 
     if (kind === OPENS) {
-      const mark = code.fence ?? ''
+      const mark = this.code.fence ?? ''
       const opens = line.indexOf(mark) + mark.length
-      out.push(line.slice(0, opens) + stripLine(line.slice(opens), null).text)
-      continue
+      return line.slice(0, opens) + stripLine(line.slice(opens), null).text
     }
 
-    const stripped = stripLine(line, inside)
-    inside = stripped.inside
-    if (inside) quoted = QUOTE_LEAD.exec(line)?.[0] ?? ''
-    out.push(stripped.text)
+    const stripped = stripLine(line, null)
+    this.inside = stripped.inside
+    if (this.inside) this.quoted = QUOTE_LEAD.exec(line)?.[0] ?? ''
 
     if (stripped.text !== line) {
-      code = before
-      code.line(stripped.text)
+      this.code = before
+      this.code.line(stripped.text)
     }
+    return stripped.text
   }
+}
 
-  return { lines: out, inside }
+function strippedLines(source: string): string[] {
+  const reader = new CommentLines()
+  return source.split('\n').map((line) => reader.line(line))
 }
 
 export function noteWithoutComments(source: string): string {

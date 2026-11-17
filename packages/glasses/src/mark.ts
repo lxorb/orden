@@ -454,6 +454,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
   switch (token.type) {
     case 'space': {
+      if (nest.quote > 0) break
       const from = where.take(raw)
       if (sheet.compaction !== 'none') break
 
