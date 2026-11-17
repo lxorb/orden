@@ -1,16 +1,20 @@
 import { protection } from '../../protect/src/api'
 import type { TextEdit } from '@orden/markdown/edits'
+import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { typedItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { isQuoted, unquoted, writtenFlowItems } from '@orden/markdown/yaml'
 import { LONGEST_META_VALUE } from '@orden/sync-core'
 import { commandRowsLoaded, searching } from '@orden/contracts'
 import { appCommands } from '../../commands/src/api'
 import { links } from '../../link-index/src/api'
+import { writeIfAbsent } from '../../file-writes/src/api'
 import {
+  extensionOf,
   folderOf,
   insideSpace,
   isMarkdownPath,
   nameOf,
+  nameToWrite,
   relativeTo,
   waited,
 } from '../../platform/src/api'
@@ -19,8 +23,9 @@ import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
+import { keptFromAgents } from './front'
 import { movedIn, movedPath, withExtension } from './moving'
-import { insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
+import { agentsMayAll, insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
 
 const SEARCH_PATIENCE = 8000
 
@@ -64,23 +69,28 @@ export async function newNote(args: Said): Promise<unknown> {
 
   const relative = wanted(args)
   const path = insideSpace(space.root, relative)
+  agentsMayAll(path, relative)
   const before = await workspace.noteText(path)
 
   if (before !== null) {
     if (!append && !prepend) {
       throw new Error(`${relative} is already there: say append or prepend to add to it`)
     }
+    agentsMayAll(path, relative)
 
-    const after = append ? joined(before, content) : joined(content, before)
-    await workspace.replaceInNotes([
-      {
-        path,
-        before,
-        after,
-        edits: [{ from: 0, to: before.length, insert: after }],
-        back: [{ from: 0, to: after.length, insert: before }],
-      },
-    ])
+    const after = append ? joined(before, content) : prepended(before, content)
+    wroteTo(
+      relative,
+      await workspace.replaceInNotes([
+        {
+          path,
+          before,
+          after,
+          edits: [{ from: 0, to: before.length, insert: after }],
+          back: [{ from: 0, to: after.length, insert: before }],
+        },
+      ]),
+    )
 
     if (!silent) await workspace.open(path)
     return { path: relative, added: true }
@@ -119,11 +129,23 @@ export function appendNote(args: Said): Promise<unknown> {
   return newNote({ ...args, append: true, prepend: false })
 }
 
+function wroteTo(relative: string, count: number) {
+  if (count === 0) throw new Error(`nothing was written to ${relative}`)
+}
+
 function joined(first: string, second: string): string {
   if (!first.trim()) return second
   if (!second.trim()) return first
 
-  return `${first.replace(/\s+$/, '')}\n\n${second.replace(/^\s+/, '')}\n`
+  const rest = second.replace(/^\s+/, '')
+  return `${first.replace(/\s+$/, '')}\n\n${rest}${rest.endsWith('\n') ? '' : '\n'}`
+}
+
+function prepended(before: string, content: string): string {
+  const at = frontMatterBlock(before)?.to ?? 0
+  const head = before.slice(0, at)
+
+  return `${head}${head && !head.endsWith('\n') ? '\n' : ''}${joined(content, before.slice(at))}`
 }
 
 function wanted(args: Said): string {
@@ -176,6 +198,12 @@ export async function runCommand(args: Said, road: Road = 'here'): Promise<unkno
   const found = appCommands(views.of(workspace.panes.focusedId)).find((one) => one.id === id)
   if (!found) throw new Error(`there is no command called ${id}`)
   if (found.disabled === true) throw new Error(`${id} cannot run just now`)
+  const kept = keptFromAgents(id, {
+    front: protection.agentsMay(workspace.active?.path),
+    space: protection.agentsMayAllOf(workspace.activeSpace?.root ?? ''),
+    everywhere: protection.agentsMayAllOf(),
+  })
+  if (kept) throw new Error(kept)
   if (found.ownWindow === true) throw new Error(`${id} is not something the command line may run`)
   if (found.byHand === true && road === 'link') {
     throw new Error(`${id} is not something a link may run`)
@@ -189,47 +217,75 @@ export async function writeFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
+  agentsMayAll(path, relative)
   const content = words(args, 'content')
   if (content === null) throw new Error('say the content')
+  agentsMayAll(path, relative)
 
   const before = await workspace.noteText(path)
-  if (before === null) {
-    await newNote({ ...args, path: relative, content })
-    return { path: relative, written: content.length }
-  }
+  if (before === null)
+    return { path: await madeFile(args, relative, content), written: content.length }
 
-  await workspace.replaceInNotes(
-    [
-      {
-        path,
-        before,
-        after: content,
-        edits: [{ from: 0, to: before.length, insert: content }],
-        back: [{ from: 0, to: content.length, insert: before }],
-      },
-    ],
-    { anyFile: true },
+  wroteTo(
+    relative,
+    await workspace.replaceInNotes(
+      [
+        {
+          path,
+          before,
+          after: content,
+          edits: [{ from: 0, to: before.length, insert: content }],
+          back: [{ from: 0, to: content.length, insert: before }],
+        },
+      ],
+      { anyFile: true },
+    ),
   )
 
   return { path: relative, written: content.length }
 }
 
+async function madeFile(args: Said, relative: string, content: string): Promise<string> {
+  const folder = folderOf(relative)
+  const name = nameToWrite(nameOf(relative), extensionOf(nameOf(relative), false))
+  const named = folder ? `${folder}/${name}` : name
+
+  if (isMarkdownPath(named)) {
+    const made = (await newNote({ ...args, path: named, content })) as { path: string }
+    return made.path
+  }
+
+  const space = await spaceToWrite(args)
+  agentsMayAll(insideSpace(space.root, named), named)
+  if (!(await writeIfAbsent(insideSpace(space.root, named), content))) {
+    throw new Error(`${named} is already there`)
+  }
+  await workspace.loadTree()
+  const { sync } = await import('../../sync-store/src/api')
+  sync.nudge()
+
+  return named
+}
+
 export async function moveFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const from = relativeIn(args, 'path')
-  const to = relativeIn(args, 'to')
+  const to = movedPath(from, relativeIn(args, 'to'))
+  agentsMayAll(insideSpace(space.root, from), from)
+  agentsMayAll(insideSpace(space.root, to), to)
 
   if ((await workspace.noteText(insideSpace(space.root, from))) === null) {
     throw new Error(`there is no note at ${from}`)
   }
 
-  return { from, to: await movedIn(space.root, from, movedPath(from, to)) }
+  return { from, to: await movedIn(space.root, from, to) }
 }
 
 export async function deleteFile(args: Said): Promise<unknown> {
   const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
+  agentsMayAll(path, relative)
 
   if ((await workspace.noteText(path)) === null) {
     throw new Error(`there is no note at ${relative}`)
@@ -281,21 +337,24 @@ export async function setProperty(args: Said): Promise<unknown> {
   if (!edit) return { path: note.relative, key, value, changed: false }
 
   const after = note.text.slice(0, edit.from) + edit.insert + note.text.slice(edit.to)
-  await workspace.replaceInNotes([
-    {
-      path: note.path,
-      before: note.text,
-      after,
-      edits: [{ from: edit.from, to: edit.to, insert: edit.insert }],
-      back: [
-        {
-          from: edit.from,
-          to: edit.from + edit.insert.length,
-          insert: note.text.slice(edit.from, edit.to),
-        },
-      ],
-    },
-  ])
+  wroteTo(
+    note.relative,
+    await workspace.replaceInNotes([
+      {
+        path: note.path,
+        before: note.text,
+        after,
+        edits: [{ from: edit.from, to: edit.to, insert: edit.insert }],
+        back: [
+          {
+            from: edit.from,
+            to: edit.from + edit.insert.length,
+            insert: note.text.slice(edit.from, edit.to),
+          },
+        ],
+      },
+    ]),
+  )
 
   return { path: note.relative, key, value, changed: true }
 }

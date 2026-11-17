@@ -61,4 +61,21 @@ describe('the change a write that asked would make', () => {
     ).toBeNull()
     expect(await previewOf('edit_note', { tab: 't1', path: 'x' }, spaces, 's1', said)).toBeNull()
   })
+
+  test('is nothing for a note shut to agents, and reads none of it', async () => {
+    const { protection } = await import('../../../protect/src/api')
+    const read: string[] = []
+    const said = (path: string) => {
+      read.push(path)
+      return Promise.resolve('secret')
+    }
+    protection.set('/work', '/work/Diary.md', 'password')
+    try {
+      const args = { path: 'Diary', content: 'new words' }
+      expect(await previewOf('write_note', args, spaces, 's1', said)).toBeNull()
+      expect(read).toEqual([])
+    } finally {
+      protection.set('/work', '/work/Diary.md', null)
+    }
+  })
 })

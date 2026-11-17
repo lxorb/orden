@@ -1,8 +1,11 @@
 import { commandRowsLoaded } from '@orden/contracts'
 import { appCommands, type Command } from '../../commands/src/api'
-import { invoke, answerNextDialog } from '../../platform/src/api'
-import type { AgentAnswer } from '../../automation/src/api'
+import { invoke, answerNextDialog, relativeTo } from '../../platform/src/api'
+import { type AgentAnswer, keptFromAgents, NOTE_TREE, NOTE_WRITES } from '../../automation/src/api'
+import { readable, readableAll, seen } from './guarded'
+import { protection } from '../../protect/src/api'
 import { views } from '../../panes/src/api'
+import { nothingLockedWaits } from './deleted'
 import { workspace } from '../../workspace/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
 import type { Category } from '../../agent-protocol/src/api'
@@ -105,28 +108,6 @@ const MAKES_NOTE = new Set([
 
 const MAKES_SPACE = new Set(['new-space', 'space'])
 
-const WRITES = new Set([
-  'ai-block',
-  'convert-syntax',
-  'extract-selection',
-  'merge-into',
-  'page-break',
-  'picture',
-  'reformat',
-  'save',
-  'split-at-caret',
-])
-
-const TREE = new Set([
-  'archive',
-  'convert-website-notes',
-  'move-note',
-  'move-to-space',
-  'redo-file',
-  'rename',
-  'undo-file',
-])
-
 const PANELS = new Set([
   'ask-panel',
   'files',
@@ -152,8 +133,8 @@ function scopesOf(id: string): readonly Scope[] | null {
   if (SCREEN.has(id) || id.startsWith('space:') || id.startsWith('layout:')) {
     return ['workspace.focus']
   }
-  if (TREE.has(id)) return ['tree']
-  if (WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
+  if (NOTE_TREE.has(id)) return ['tree']
+  if (NOTE_WRITES.has(id) || /^(edit|format|paragraph)\./.test(id)) return ['notes.write']
   return null
 }
 
@@ -163,6 +144,15 @@ function opensADialog(id: string): boolean {
 
 function asksOfSetting(id: string): boolean {
   return /^(theme|scheme|accent|properties|code-theme):/.test(id) || id === 'read-only'
+}
+
+function exportsOnlyWhatAgentsMay(id: string): void {
+  const space = workspace.activeSpace
+  const front = workspace.active?.path
+  if (id !== 'export-space' && front) {
+    readable(front, space ? relativeTo(space.root, front) : front)
+  }
+  for (const one of workspace.spaces) readableAll(one.root, one.name)
 }
 
 export async function runCommand(call: Call): Promise<AgentAnswer> {
@@ -175,13 +165,32 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
   )
   if (!found) throw new Refused('no_such_command', `there is no command called ${id}`)
   if (found.disabled === true) throw new Refused('failed', `${id} cannot run just now`)
+  if (id.startsWith('protect.')) {
+    throw new Refused('by_hand', `${id} is the reader's to press, whatever the agent may do`)
+  }
+  const kept = keptFromAgents(id, {
+    front: seen(workspace.active?.path ?? ''),
+    space: protection.agentsMayAllOf(workspace.activeSpace?.root ?? ''),
+    everywhere: protection.agentsMayAllOf(),
+  })
+  if (kept) throw new Refused('protected', kept)
   if (found.ownWindow === true || found.byHand === true || WINDOW.has(id)) {
     readersOwn(call, `${id} is the reader's to press`)
   }
   const path = maybe(call, 'path')
+  if (id.startsWith('export-')) exportsOnlyWhatAgentsMay(id)
   const scopes = path !== null && opensADialog(id) ? [] : scopesOf(id)
   if (scopes === null) readersOwn(call, `${id} is the reader's to press`)
   for (const scope of scopes ?? []) needScope(call, scope, id)
+
+  reachesNothingShut(id, scopes ?? [])
+  if (id === 'undo-file' || id === 'redo-file') {
+    const agent = call.caller.agent
+    if (agent !== null && agent.spaces !== 'all') {
+      throw new Refused('no_such_space', `${id} reaches every space, and you reach only some`)
+    }
+    await nothingLockedWaits(null)
+  }
 
   const category = ASKS[id] ?? (asksOfSetting(id) ? 'settings' : null)
   const question = await asked(call, category, found.label)
@@ -192,6 +201,12 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
     return done({ id, label: found.label })
   }
   return withPath(call, found, path)
+}
+
+function reachesNothingShut(id: string, scopes: readonly Scope[]): void {
+  const note = workspace.active?.path
+  const touches = id.startsWith('export-') || scopes.includes('notes.write')
+  if (note && touches) readable(note, 'The note in front')
 }
 
 const DIALOG_WITHIN = 15_000

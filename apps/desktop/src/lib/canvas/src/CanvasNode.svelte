@@ -170,6 +170,7 @@
       notes: links.index(canvasPath, canvasPath === null && !trusted),
       writeLink: pickedLink,
       trustedMarkup: trusted,
+      ...(canvasPath ? { place: canvasPath } : {}),
       ...(onfollow
         ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) }
         : {}),

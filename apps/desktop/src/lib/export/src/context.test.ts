@@ -34,7 +34,10 @@ vi.mock('../../link-index/src/api', () => ({
   picturesOf: () => () => null,
   pictureBeside: () => (path: string) => path,
   picturesWrittenOut: (source: string) => source,
-  picturePath: (src: string) => (src === 'R&D.png' ? '/space/Notes/R&D.png' : null),
+  picturePath: (src: string) =>
+    ({ 'R&D.png': '/space/Notes/R&D.png', 'attachments/cat.png': '/space/attachments/cat.png' })[
+      src
+    ] ?? null,
 }))
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
@@ -63,6 +66,14 @@ describe('the render options for the open note', () => {
     world.trusts = false
 
     expect((await renderOptions(openTarget())).escapeHtml).toBe(true)
+  })
+
+  test('find a picture where the note shows it, and leave one nowhere as written', async () => {
+    world.active = open('/space/Notes/Day/plan.md')
+    const { resolveImage } = await renderOptions(openTarget())
+
+    expect(resolveImage?.('attachments/cat.png')).toBe('/space/attachments/cat.png')
+    expect(resolveImage?.('gone.png')).toBe('gone.png')
   })
 
   test('leave it markup when it is the reader’s own', async () => {

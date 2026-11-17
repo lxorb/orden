@@ -476,6 +476,12 @@ describe('footnotes', () => {
 })
 
 describe('pictures', () => {
+  test('a linked picture is a link', () => {
+    const linked = documentOf('[![CI](badge.png)](https://ci.org)\n', 'N.md')
+
+    expect(toRtf(linked, [], PAPER)).toMatch(/HYPERLINK "https:\/\/ci\.org"[^\n]*\[CI\]/)
+  })
+
   test('embeds a PNG at the pixel size in its own bytes', () => {
     expect(RTF).toContain('{\\pict\\pngblip\\picw24\\pich24\\picwgoal360\\pichgoal360\n')
   })

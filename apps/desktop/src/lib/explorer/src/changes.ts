@@ -8,6 +8,7 @@ import {
   type Clash,
   clashesIn,
   deleteForGood,
+  type Failed,
   listFolder,
   makeIn,
   peekAt,
@@ -96,6 +97,10 @@ export async function renamePath(view: ExplorerView, from: string, name: string)
   }
 }
 
+function stayedSaid(failed: readonly Failed[] | undefined): string | null {
+  return failed?.length ? failed.map((one) => one.why).join('; ') : null
+}
+
 export async function trash(view: ExplorerView, paths: readonly string[]) {
   if (!paths.length || !changeable(view)) return
   const { inside, outside } = split(paths)
@@ -107,7 +112,7 @@ export async function trash(view: ExplorerView, paths: readonly string[]) {
     } catch (error) {
       const stopped = error as Partial<Trashing>
       if (stopped.went?.length) record([{ op: 'trashed', tickets: stopped.went }])
-      view.tell(message(stopped.why ?? error, 'could not move this to the trash'))
+      view.tell(stayedSaid(stopped.failed) ?? message(error, 'could not move this to the trash'))
     }
   })
   await view.reload()
@@ -129,7 +134,8 @@ export async function removeForGood(view: ExplorerView, paths: readonly string[]
   try {
     await deleteForGood(outside)
   } catch (error) {
-    view.tell(message(error, 'could not delete this'))
+    const stayed = Array.isArray(error) ? (error as Failed[]) : undefined
+    view.tell(stayedSaid(stayed) ?? message(error, 'could not delete this'))
   }
   await view.reload()
 }
@@ -163,6 +169,7 @@ export async function carry(
   sources: readonly string[],
   folder: string,
   how: 'copy' | 'move',
+  fenced = false,
 ) {
   const { inside, outside } = split(sources)
   const tell = (said: string) => view?.tell(said)
@@ -178,19 +185,29 @@ export async function carry(
     const clash = await clashFor([...inside, ...outside], folder)
     if (clash === null) return
     const staying = how === 'move' ? inside : []
-    const stayed = await across([...outside, ...inside], folder, how, clash, tell, staying)
+    const stayed = await across(
+      [...outside, ...inside],
+      folder,
+      { how, clash, staying, fenced },
+      tell,
+    )
     if (stayed.length) await workspace.removeMany(stayed)
   })
   await view?.reload()
 }
 
+interface Carrying {
+  how: 'copy' | 'move'
+  clash: Clash
+  staying: readonly string[]
+  fenced: boolean
+}
+
 async function across(
   sources: readonly string[],
   folder: string,
-  how: 'copy' | 'move',
-  clash: Clash,
+  { how, clash, staying, fenced }: Carrying,
   tell: (said: string) => void,
-  staying: readonly string[],
 ): Promise<string[]> {
   const label =
     how === 'move'
@@ -202,7 +219,7 @@ async function across(
         : `Copying ${sources.length} items`
   let done: Transferred
   try {
-    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying))
+    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying, fenced))
   } catch (error) {
     tell(message(error, 'could not copy this'))
     return []

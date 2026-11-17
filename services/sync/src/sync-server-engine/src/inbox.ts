@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import {
   INBOX_PAGE,
   inboxChangesOf,
+  inboxFits,
   mergedInbox,
   MOST_INBOX_ITEMS,
   type InboxChange,
@@ -71,6 +72,10 @@ async function heldOf(
     .bind(userId, JSON.stringify(ids))
     .all<Stored>()
   return new Map(results.map((row) => [row.id, itemOf(row)]))
+}
+
+export async function heldInbox(env: Env, userId: string, id: string): Promise<InboxHeld | null> {
+  return (await heldOf(env, userId, [id])).get(id) ?? null
 }
 
 function roomFor(user: string, sent: string, most: string): string {
@@ -171,7 +176,7 @@ export async function writeInbox(
     for (const change of changes) {
       const was = held.get(change.id) ?? null
       const merged = mergedInbox(was, change)
-      if (!merged.changed) continue
+      if (!merged.changed || !inboxFits({ id: change.id, ...merged })) continue
       plans.push({
         id: change.id,
         fields: JSON.stringify(merged.fields),

@@ -1,24 +1,17 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
+import { MapMode, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import {
-  blocksOf,
-  foldName,
-  headingText,
-  isHeading,
-  isTabFile,
-  type Row,
-  rowsOf,
-} from '@orden/markdown/links'
+import { blocksOf, foldName, headingText, isHeading, type Row, rowsOf } from '@orden/markdown/links'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
   type LinkWrite,
   linkWriter,
   type NoteIndex,
+  nameFor,
   noteIndex,
   type NoteRef,
-  resolveFile,
   resolveNote,
   resolveRelative,
   shortestReaching,
@@ -52,9 +45,13 @@ function insert(target: LinkWrite) {
     const rest = REST_OF_LINK.exec(view.state.doc.sliceString(to, line.to))?.[1] ?? null
     const kept = rest === null ? '' : keptOf(rest, !!target.fragment)
     const fragment = target.fragment ?? (kept.startsWith('#') ? headingOf(kept) : null)
-    const written = view.state.facet(linkWriter)({ ...target, fragment })
-    const wiki = written.startsWith('[[') && written.endsWith(']]')
-    const linked = wiki && kept ? `${written.slice(0, -2)}${tailOf(kept, fragment)}]]` : written
+    const shown = target.shown ?? shownOf(kept)
+    const linked = view.state.facet(linkWriter)({
+      ...target,
+      fragment,
+      ...(shown ? { shown } : {}),
+    })
+    const wiki = linked.startsWith('[[') && linked.endsWith(']]')
     const end = rest === null ? to : to + rest.length + 2
     const text = !wiki && plainInMatter(view, start, end) ? JSON.stringify(linked) : linked
 
@@ -92,10 +89,9 @@ function headingOf(kept: string): string | null {
   return heading || null
 }
 
-function tailOf(kept: string, fragment: string | null): string {
-  if (!kept.startsWith('#') || fragment === null) return kept
+function shownOf(kept: string): string | null {
   const bar = kept.indexOf('|')
-  return bar === -1 ? '' : kept.slice(bar)
+  return bar === -1 ? null : kept.slice(bar + 1) || null
 }
 
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
@@ -104,26 +100,6 @@ export function about(index: NoteIndex, note: NoteRef): LinkWrite {
     (written) => resolveRelative(index, written)?.path === note.path,
   )
   return { name: nameFor(index, note), markdown, path: note.path, from: index.path }
-}
-
-function nameFor(index: NoteIndex, note: NoteRef): string {
-  const own = MARKDOWN.exec(note.path)?.[0] ?? ''
-  const spelled = (written: string) => (isTabFile(written) ? `${written}${own}` : written)
-  const opened = index.files.includes(note.path)
-  const reaches = (written: string) =>
-    (opened && isTabFile(written)
-      ? resolveFile(index, written, 'wikilink')
-      : resolveNote(index, written)?.path) === note.path
-  const name = spelled(note.name)
-  if (reaches(name)) return name.normalize('NFC')
-
-  const parts = note.path.replace(MARKDOWN, '').split('/')
-  for (let from = parts.length - 1; from >= 0; from--) {
-    const written = spelled(parts.slice(from).join('/'))
-    if (reaches(written)) return written.normalize('NFC')
-  }
-  const fromTop = spelled(`/${parts.join('/')}`)
-  return (reaches(fromTop) ? fromTop : name).normalize('NFC')
 }
 
 function folderOf(path: string): string | undefined {
@@ -155,7 +131,11 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
     rows.push({
       label: alias,
       detail: note.name,
-      apply: insert({ ...about(index, note), name: alias }),
+      apply: insert(
+        resolveNote(index, alias)?.path === note.path
+          ? { ...about(index, note), name: alias, file: nameFor(index, note) }
+          : { ...about(index, note), shown: alias },
+      ),
       type: 'text',
     })
   }
@@ -235,19 +215,62 @@ function linked(
   return name(path, line, target)
 }
 
+interface Held {
+  key: object
+  from: number
+  to: number
+}
+
+const holdTyped = StateEffect.define<Held>()
+
+const dropTyped = StateEffect.define<object>()
+
+const heldTyped = StateField.define<readonly Held[]>({
+  create: () => [],
+  update(held, transaction) {
+    let kept: readonly Held[] = held
+    if (transaction.docChanged) {
+      kept = held.flatMap((one) => {
+        const from = transaction.changes.mapPos(one.from, 1, MapMode.TrackDel)
+        const to = transaction.changes.mapPos(one.to, -1, MapMode.TrackDel)
+        return from === null || to === null ? [] : [{ ...one, from, to }]
+      })
+    }
+    for (const effect of transaction.effects) {
+      if (effect.is(holdTyped)) kept = [...kept, effect.value]
+      else if (effect.is(dropTyped)) kept = kept.filter((one) => one.key !== effect.value)
+    }
+    return kept
+  },
+})
+
+function held(view: EditorView, from: number, to: number): object {
+  if (view.state.field(heldTyped, false) === undefined) {
+    view.dispatch({ effects: StateEffect.appendConfig.of(heldTyped) })
+  }
+  const key = {}
+  view.dispatch({ effects: holdTyped.of({ key, from, to }) })
+  return key
+}
+
+function released(view: EditorView, key: object): Held | null {
+  const found = view.state.field(heldTyped, false)?.find((one) => one.key === key) ?? null
+  view.dispatch({ effects: dropTyped.of(key) })
+  return found
+}
+
 function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
     const typed = view.state.doc.sliceString(start, to)
-    const head = view.state.selection.main.head
+    const key = held(view, start, to)
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (!id) return
-        const moved = view.state.selection.main.head - head
-        const now = view.state.doc.sliceString(start + moved, to + moved)
-        if (now !== typed) return
-        insert({ ...target, fragment: `^${id}` })(view, completion, from + moved, to + moved)
+        const now = released(view, key)
+        if (!id || !now || view.state.doc.sliceString(now.from, now.to) !== typed) return
+        const shift = now.from - start
+        insert({ ...target, fragment: `^${id}` })(view, completion, from + shift, to + shift)
       })
       .catch(() => undefined)
   }
@@ -378,7 +401,12 @@ export function wikilinkCompletions(
 
   const after = inner.slice(hash + 1)
   const from = typed.from + 2 + hash + 1
-  const target: LinkWrite = { name: named, path: note.path, from: index.path }
+  const target: LinkWrite = {
+    name: named,
+    path: note.path,
+    from: index.path,
+    file: nameFor(index, note),
+  }
 
   if (!after.startsWith('^')) {
     const options = headingOptions(target, note, after)

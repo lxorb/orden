@@ -45,7 +45,7 @@ vi.mock('../../platform/src/tauri', () => ({
       notes.delete(path)
       if (path.endsWith('.pdf') && (args as { alone?: boolean }).alone !== true)
         notes.delete(`${path}.highlights.json`)
-      return Promise.resolve({})
+      return Promise.resolve({ id: `trash:${path}` })
     }
     if (command === 'file_stamp') return Promise.resolve(null)
     if (command === 'path_exists') return Promise.resolve(notes.has(path))
@@ -231,7 +231,22 @@ describe('a highlighted PDF another device turned into its page note', () => {
     await disk.remove('/s/T.pdf', 'file')
     await disk.move('/s/T.pdf.highlights.json', '/s/T.pages.pdf.highlights.json', 'file')
 
-    expect(trashed.at(-1)).toEqual({ path: '/s/T.pdf', kind: 'note', alone: true })
+    expect(trashed.at(-1)).toEqual({ path: '/s/T.pdf', kind: 'note', alone: true, arrived: true })
     expect(notes.get('/s/T.pages.pdf.highlights.json')).toBe('{"version":1}')
+  })
+})
+
+describe('a file another device deleted', () => {
+  test('tells which trash entry holds it, so a lock it had can come back with it', async () => {
+    notes.set('/s/Scan.pdf', '%PDF')
+    const gone: unknown[] = []
+    const telling = {
+      gone: (...told: unknown[]) => {
+        gone.push(told)
+        return Promise.resolve()
+      },
+    } as unknown as Parameters<typeof appWorld>[1]
+    await appWorld(() => null, telling).disk.remove('/s/Scan.pdf', 'file')
+    expect(gone).toEqual([['/s/Scan.pdf', 'file', 'trash:/s/Scan.pdf']])
   })
 })

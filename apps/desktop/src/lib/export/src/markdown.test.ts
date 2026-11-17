@@ -1,4 +1,4 @@
-import type { FoundLink } from '@orden/markdown/links'
+import { findLinks, type FoundLink } from '@orden/markdown/links'
 import { describe, expect, test } from 'vitest'
 import { CORPUS } from './corpus'
 import { toMarkdown } from './markdown'
@@ -39,6 +39,7 @@ describe('wikilinks turned into real links', () => {
   test('a heading inside the link comes along as a fragment', () => {
     const text = toMarkdown('See [[Note#The heading]].\n', { link: () => 'sub/Note.md' })
     expect(text).toBe('See [Note#The heading](sub/Note.md#The%20heading).\n')
+    expect(findLinks(text)[0]).toMatchObject({ target: 'sub/Note.md', heading: 'The heading' })
   })
 
   test('a block inside the link comes along as a fragment', () => {
@@ -95,6 +96,19 @@ describe('wikilinks turned into real links', () => {
     expect(toMarkdown(source, { link: () => 'Plan.md' })).toBe(
       "---\na: \"[say \\\"hi\\\"](Plan.md)\"\nb: '[it''s](Plan.md)'\nc: '[it''s \"x\"](Plan.md)'\n---\n",
     )
+  })
+
+  test('a block inside the link reads back as that block', () => {
+    const text = toMarkdown('See [[Note#^abc]].\n', { link: () => 'sub/Note.md' })
+    expect(findLinks(text)[0]).toMatchObject({ target: 'sub/Note.md', block: 'abc' })
+  })
+
+  test('a link to a heading or block of the same note stays a link within it', () => {
+    const text = toMarkdown('See [[#Local part]] and [[#^abc|that]].\n', { link: () => null })
+    expect(findLinks(text)).toMatchObject([
+      { target: '', heading: 'Local part' },
+      { target: '', block: 'abc' },
+    ])
   })
 
   test('an embed becomes a plain link, since no reader can inline a note', () => {

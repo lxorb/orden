@@ -87,6 +87,12 @@ describe('the note in front of the sitting', () => {
     expect(frontOf(lone(draft()))?.path).toBe(PATH)
   })
 
+  test('is nothing when the tab in front was not one the pane keeps', () => {
+    const kept = lone(draft())
+    if (kept.layout?.frame.kind === 'pane') kept.layout.frame.pane.active = -1
+    expect(frontOf(kept)).toBeNull()
+  })
+
   test('is nothing for a split, a stack, a canvas or a note being read', () => {
     const split: Session = {
       ...lone(draft()),

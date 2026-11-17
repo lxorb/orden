@@ -122,3 +122,11 @@ test('a row goes back to the crate by id, never by a path', async () => {
   ])
   expect(revealed).toEqual(['/home/me/Downloads/slides (4).pdf'])
 })
+
+test('a report on its way when the reader stopped a download does not bring it back', () => {
+  downloads.heard(one(20))
+  downloads.heard(one(20, { state: 'cancelled' }))
+
+  expect(downloads.heard(one(20, { received: 5 }))).toBe(false)
+  expect(downloads.list.some((each) => each.id === 20)).toBe(false)
+})

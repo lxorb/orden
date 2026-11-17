@@ -19,6 +19,7 @@ import {
   assetType,
   isReserved,
   breathe,
+  inTurn,
 } from '../../../platform/src/api'
 import { holderOf, paperOf } from '@orden/markdown/pages'
 import { staleSnapshots } from '../../../snapshots/src/api'
@@ -299,7 +300,7 @@ async function renameNote(from: string, to: string, hold = false, alone = false,
     throw new Error(NOT_HERE)
   }
 
-  if (await occupied(target, raw)) throw new Error('something already lives there')
+  if (await holds(target, raw)) throw new Error('something already lives there')
 
   const pictures = await moveAssets(source, target)
 
@@ -392,9 +393,7 @@ async function copyPath(from: string, to: string) {
   if (target === source || target.startsWith(`${source}/`)) {
     throw new Error(`${source} cannot be copied into itself`)
   }
-  if ((await occupied(target)) || (await assets.get(target))) {
-    throw new Error('something already lives there')
-  }
+  if (await holds(target)) throw new Error('something already lives there')
   const there = await paperInTheWay(source, target)
   if (there) throw new Error(`${there} is already there`)
 
@@ -483,18 +482,25 @@ interface TrashEntry {
   from: string
   trashedAt: number
   apart?: boolean
+  arrived?: boolean
 }
-
-let trashCounter = 0
 
 function entryOf(value: unknown): TrashEntry | null {
   if (!isRecord(value)) return null
 
-  const { id, kind, name, from, trashedAt, apart } = value
+  const { id, kind, name, from, trashedAt, apart, arrived } = value
   if (!isString(id) || !isString(kind) || !isString(name)) return null
   if (!isString(from) || !isNumber(trashedAt)) return null
 
-  return { id, kind, name, from, trashedAt, ...(apart === true ? { apart } : {}) }
+  return {
+    id,
+    kind,
+    name,
+    from,
+    trashedAt,
+    ...(apart === true ? { apart } : {}),
+    ...(arrived === true ? { arrived } : {}),
+  }
 }
 
 async function trashEntries(): Promise<TrashEntry[]> {
@@ -517,6 +523,28 @@ async function ownTrash(): Promise<TrashEntry[]> {
   return held.map(entryOf).filter((one): one is TrashEntry => one !== null)
 }
 
+const TRASH_LOCK = 'orden:web-trash'
+
+const TRASH_PATIENCE = 10_000
+
+let trashTurn: Promise<unknown> = Promise.resolve()
+
+function changeTrash(change: (entries: TrashEntry[]) => TrashEntry[]): Promise<void> {
+  const run = () =>
+    inTurn(
+      () => TRASH_LOCK,
+      async () => saveTrash(change(await trashEntries())),
+      TRASH_PATIENCE,
+    )
+  const mine = trashTurn.then(run, run)
+  trashTurn = mine.catch(() => undefined)
+  return mine
+}
+
+function trashId(): string {
+  return `${now()}-${crypto.randomUUID().slice(0, 8)}`
+}
+
 async function saveTrash(entries: TrashEntry[]) {
   const kept = new Set(
     (await Promise.all(trees().map((tree) => tree.trash.list()))).flat().map((one) => one.id),
@@ -530,8 +558,8 @@ async function occupied(path: string, raw = false): Promise<boolean> {
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
-async function holds(path: string): Promise<boolean> {
-  if ((await occupied(path)) || (await assets.get(path))) return true
+async function holds(path: string, raw = false): Promise<boolean> {
+  if ((await occupied(path, raw)) || (await assets.get(path))) return true
   return (await assets.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
@@ -569,15 +597,20 @@ async function pairedTaken(path: string): Promise<boolean> {
   return false
 }
 
-async function trashItem(path: string, kind: string, alone = false): Promise<TrashEntry> {
+async function trashItem(
+  path: string,
+  kind: string,
+  alone = false,
+  arrived = false,
+): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
   if (!(await holds(source))) throw new Error('nothing is there')
 
-  const id = `${now()}-${trashCounter++}`
+  const id = trashId()
   const name = basename(source)
   const tree = treeAt(source)
-  if (tree) return trashInTree(tree, source, { id: `internal-${id}`, kind, name, alone })
+  if (tree) return trashInTree(tree, source, { id: `internal-${id}`, kind, name, alone, arrived })
   await bringBackUnder(source)
   await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
 
@@ -588,15 +621,16 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
     from: source,
     trashedAt: now(),
     ...(alone ? { apart: true } : {}),
+    ...(arrived ? { arrived: true } : {}),
   }
-  await saveTrash([...(await trashEntries()), entry])
+  await changeTrash((entries) => [...entries, entry])
   return entry
 }
 
 async function trashInTree(
   tree: TreeRows,
   source: string,
-  item: { id: string; kind: string; name: string; alone: boolean },
+  item: { id: string; kind: string; name: string; alone: boolean; arrived: boolean },
 ): Promise<TrashEntry> {
   const beside: string[] = []
   if (isPdf(source) && !item.alone) beside.push(sidecarOf(source))
@@ -608,6 +642,7 @@ async function trashInTree(
     name: item.name,
     trashedAt: now(),
     ...(item.alone ? { apart: true } : {}),
+    ...(item.arrived ? { arrived: true } : {}),
   }
   if (!(await tree.trash.take(source, entry, beside))) throw new Error('nothing is there')
   return { ...entry, from: source }
@@ -617,7 +652,7 @@ async function trashWords(path: string, content: string): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
 
-  const id = `${now()}-${trashCounter++}`
+  const id = trashId()
   const name = basename(source)
   const tree = treeAt(source)
   if (tree) {
@@ -628,7 +663,7 @@ async function trashWords(path: string, content: string): Promise<TrashEntry> {
   await writeNote(`${TRASH}/${id}/${name}`, content)
 
   const entry = { id, kind: 'note', name, from: source, trashedAt: now() }
-  await saveTrash([...(await trashEntries()), entry])
+  await changeTrash((entries) => [...entries, entry])
   return entry
 }
 
@@ -648,9 +683,9 @@ async function restoreTrash(id: string): Promise<string> {
   }
 
   const held = `${TRASH}/${entry.id}/${entry.name}`
-  const rest = entries.filter((one) => one.id !== id)
+  const forget = () => changeTrash((now) => now.filter((one) => one.id !== id))
   if (!(await holds(held))) {
-    await saveTrash(rest)
+    await forget()
     throw new Error('it is already gone')
   }
 
@@ -659,7 +694,7 @@ async function restoreTrash(id: string): Promise<string> {
       ? entry.from
       : await freeSpot(entry.from, entry.kind === 'note')
   await renameNote(held, target)
-  await saveTrash(rest)
+  await forget()
   return target
 }
 
@@ -675,7 +710,7 @@ async function purgeTrash(id: string) {
     return
   }
   await removeFolder(`${TRASH}/${id}`)
-  await saveTrash((await trashEntries()).filter((one) => one.id !== id))
+  await changeTrash((entries) => entries.filter((one) => one.id !== id))
 }
 
 async function spaceList() {
@@ -1074,19 +1109,17 @@ export async function webInvoke<T>(
       const from = normalise(args.from as string)
       if (from !== target) {
         await renameNote(args.from as string, target)
-        const entries = await trashEntries()
-        const gone = entries
-          .filter((one) => one.kind === 'space' && one.from === from)
-          .map((one) => one.trashedAt)
-          .reduce((high, one) => Math.max(high, one), -Infinity)
-        const follows = (one: TrashEntry) => one.from.startsWith(`${from}/`) && one.trashedAt > gone
-        if (entries.some(follows)) {
-          await saveTrash(
-            entries.map((one) =>
-              follows(one) ? { ...one, from: `${target}${one.from.slice(from.length)}` } : one,
-            ),
+        await changeTrash((entries) => {
+          const gone = entries
+            .filter((one) => one.kind === 'space' && one.from === from)
+            .map((one) => one.trashedAt)
+            .reduce((high, one) => Math.max(high, one), -Infinity)
+          const follows = (one: TrashEntry) =>
+            one.from.startsWith(`${from}/`) && one.trashedAt > gone
+          return entries.map((one) =>
+            follows(one) ? { ...one, from: `${target}${one.from.slice(from.length)}` } : one,
           )
-        }
+        })
       }
       return { name: wanted, path: target } as T
     }
@@ -1096,7 +1129,12 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'trash_item':
-      return (await trashItem(path, args.kind as string, args.alone === true)) as T
+      return (await trashItem(
+        path,
+        args.kind as string,
+        args.alone === true,
+        args.arrived === true,
+      )) as T
 
     case 'trash_words':
       return (await trashWords(path, args.content as string)) as T

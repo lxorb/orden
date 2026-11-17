@@ -18,7 +18,16 @@ export {
   WHEN_ASIDE,
   WHEN_GROUPS,
 } from './builtins'
-export { addDays, addMonths, dayNumber, daysInMonth, todayOf, weekday } from './dates'
+export {
+  addDays,
+  addMonths,
+  dayNumber,
+  daysInMonth,
+  onClock,
+  rewritten,
+  todayOf,
+  weekday,
+} from './dates'
 export { nextDate, parseRule, ruleText } from './recurrence'
 export { DEFAULT_SUMMARIES } from './summaries'
 export { fromTodoist } from './todoist'
@@ -56,4 +65,4 @@ export {
 export { csvText, csvValue, sheetSafe } from './csv'
 export { compile } from './expr/compile'
 export { GLOBALS } from './expr/globals'
-export { renamedLiteral } from './expr/rename'
+export { baseUnder, placedUnder, renamedLiteral } from './expr/rename'

@@ -266,7 +266,10 @@ function pictureRun(span: Span, sheet: Sheet): string {
 }
 
 function runOf(span: Span, sheet: Sheet): string {
-  if (span.picture !== undefined) return pictureRun(span, sheet)
+  if (span.picture !== undefined) {
+    const drawn = pictureRun(span, sheet)
+    return span.href === undefined ? drawn : hyperlink(span.href, drawn)
+  }
   if (span.note !== undefined) return footnote(span.note, sheet)
 
   const words = marked(span, escaped(span.text))

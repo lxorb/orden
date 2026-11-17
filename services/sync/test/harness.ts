@@ -94,6 +94,7 @@ export interface Reply {
   token: string
   user: UserView
   resendIn: number
+  code: boolean
   settings: Record<string, unknown>
   password: { hash: string } | null
 

@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
-use super::walk::{found, ignored_path, present, walk, Found};
+use super::walk::{found, found_hidden, ignored_path, present, walk, Found};
 use crate::tree::MAX_ENTRIES;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -111,6 +111,45 @@ impl Space {
             .cloned()
     }
 
+    pub fn moves_into(&self, now: &Space, root: &Path) -> Vec<Seen> {
+        let mut moves: Vec<(&PathBuf, &PathBuf)> = now
+            .ids
+            .iter()
+            .filter_map(|(id, to)| {
+                let from = self.ids.get(id)?;
+                let left = now
+                    .paths
+                    .get(from)
+                    .is_none_or(|there| there.id.as_ref() != Some(id));
+                (from != to && left).then_some((from, to))
+            })
+            .collect();
+        moves.sort_by_key(|(from, _)| (from.components().count(), (*from).clone()));
+
+        let mut taken: Vec<(&PathBuf, &PathBuf)> = Vec::new();
+        let mut seen = Vec::new();
+        for (from, to) in moves {
+            let mut now_at = from.clone();
+            for (above, there) in taken.iter().rev() {
+                if let Ok(rest) = now_at.strip_prefix(above) {
+                    now_at = there.join(rest);
+                    break;
+                }
+            }
+            if now_at == *to {
+                continue;
+            }
+            if let Some(found) = found(root, to) {
+                taken.push((from, to));
+                seen.push(Seen::Renamed {
+                    from: now_at,
+                    to: found,
+                });
+            }
+        }
+        seen
+    }
+
     pub fn settle(
         &mut self,
         root: &Path,
@@ -127,12 +166,17 @@ impl Space {
         let mut seen = Vec::new();
         let mut waiting = Vec::new();
 
-        for _ in 0..2 {
+        for _ in 0..=order.len() {
+            let before = seen.len();
             for rel in &order {
                 self.arrived(root, rel, &mut seen);
             }
+            if seen.len() == before {
+                break;
+            }
         }
 
+        let mut hidden: Option<Vec<Found>> = None;
         for rel in &order {
             if !self.paths.contains_key(*rel) || present(root, rel) {
                 continue;
@@ -142,10 +186,23 @@ impl Space {
                 continue;
             }
             if let Some(was) = self.remove_tree(rel) {
-                seen.push(Seen::Removed {
-                    rel: (*rel).clone(),
-                    dir: was.dir,
-                    id: was.id,
+                let landed = was.id.as_ref().and_then(|id| {
+                    hidden
+                        .get_or_insert_with(|| hidden_arrivals(root, touched))
+                        .iter()
+                        .find(|one| one.id.as_ref() == Some(id))
+                        .cloned()
+                });
+                seen.push(match landed {
+                    Some(to) => Seen::Renamed {
+                        from: (*rel).clone(),
+                        to,
+                    },
+                    None => Seen::Removed {
+                        rel: (*rel).clone(),
+                        dir: was.dir,
+                        id: was.id,
+                    },
                 });
             }
         }
@@ -250,6 +307,14 @@ impl Space {
     }
 }
 
+fn hidden_arrivals(root: &Path, touched: &BTreeSet<PathBuf>) -> Vec<Found> {
+    touched
+        .iter()
+        .filter(|rel| ignored_path(rel))
+        .filter_map(|rel| found_hidden(root, rel))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Seen, Space};
@@ -328,6 +393,24 @@ mod tests {
     }
 
     #[test]
+    fn a_chain_of_renames_in_one_batch_is_every_rename_and_nothing_removed() {
+        let (dir, mut space) = space_with(&["a.md", "b.md", "c.md"]);
+        let root = dir.path();
+        for (from, to) in [("c.md", "d.md"), ("b.md", "c.md"), ("a.md", "b.md")] {
+            fs::rename(root.join(from), root.join(to)).expect("renamed");
+        }
+
+        assert_eq!(
+            said(&settle(&mut space, root, &["a.md", "b.md", "c.md", "d.md"])),
+            [
+                "renamed c.md d.md",
+                "renamed b.md c.md",
+                "renamed a.md b.md"
+            ]
+        );
+    }
+
+    #[test]
     fn a_rename_and_a_move_into_a_folder_keep_their_identity() {
         let (dir, mut space) = space_with(&["Plan.md", "Idea.md", "Projects/Keep.md"]);
         let root = dir.path();
@@ -398,6 +481,65 @@ mod tests {
             ["removed Old"]
         );
         assert_eq!(space.len(), 1);
+    }
+
+    #[test]
+    fn a_note_and_a_folder_moved_somewhere_hidden_are_renamed_there() {
+        let (dir, mut space) = space_with(&["Diary.md", "Private/One.md", "Keep.md"]);
+        let root = dir.path();
+        fs::create_dir_all(root.join(".trash")).expect("a hidden folder");
+        fs::rename(root.join("Diary.md"), root.join(".trash").join("Diary.md")).expect("moved");
+        fs::rename(root.join("Private"), root.join(".trash").join("Private")).expect("moved");
+
+        assert_eq!(
+            said(&settle(
+                &mut space,
+                root,
+                &["Diary.md", ".trash/Diary.md", "Private", ".trash/Private"]
+            )),
+            [
+                "renamed Diary.md .trash/Diary.md",
+                "renamed Private .trash/Private"
+            ]
+        );
+        assert_eq!(space.len(), 1, "nothing hidden is known");
+
+        fs::remove_file(root.join("Keep.md")).expect("removed");
+        assert_eq!(
+            said(&settle(&mut space, root, &["Keep.md", ".trash/Diary.md"])),
+            ["removed Keep.md"]
+        );
+    }
+
+    #[test]
+    fn a_space_read_again_names_what_moved_since_and_not_what_moved_with_it() {
+        let (dir, space) =
+            space_with(&["Private/One.md", "Private/Deep/Two.md", "Plan.md", "Old.md"]);
+        let root = dir.path();
+        fs::rename(root.join("Private"), root.join("Archive")).expect("renamed");
+        fs::rename(
+            root.join("Archive").join("Deep").join("Two.md"),
+            root.join("Two.md"),
+        )
+        .expect("moved out");
+        fs::rename(
+            root.join("Archive").join("One.md"),
+            root.join("Archive").join("Uno.md"),
+        )
+        .expect("renamed inside");
+        fs::rename(root.join("Plan.md"), root.join("Roadmap.md")).expect("renamed");
+        fs::remove_file(root.join("Old.md")).expect("removed");
+
+        let now = Space::read(root).expect("read");
+        assert_eq!(
+            said(&space.moves_into(&now, root)),
+            [
+                "renamed Plan.md Roadmap.md",
+                "renamed Private Archive",
+                "renamed Archive/One.md Archive/Uno.md",
+                "renamed Archive/Deep/Two.md Two.md"
+            ]
+        );
     }
 
     #[test]

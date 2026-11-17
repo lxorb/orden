@@ -112,13 +112,6 @@
     <span class="orden-row-label">Add</span>
   </button>
 
-  <input
-    class="orden-field"
-    value={button.task ?? ''}
-    aria-label="Add task"
-    placeholder="Add task"
-    onchange={(event) => write({ task: event.currentTarget.value })}
-  />
   <Select
     label="Command"
     value={button.command ?? ''}

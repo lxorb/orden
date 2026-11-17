@@ -52,6 +52,26 @@ describe('headings', () => {
 })
 
 describe('prose', () => {
+  test('names a link’s address once, whatever is marked inside its words', () => {
+    expect(
+      toPlainText(
+        documentOf(
+          'Read [the **docs** page](https://orden.so/docs) and [snake\\_case rules](https://x.org).\n',
+          'Note.md',
+        ),
+      ),
+    ).toBe('Read the docs page (https://orden.so/docs) and snake_case rules (https://x.org).\n')
+  })
+
+  test('names a link’s address once around a picture or footnote mark in it, and for a linked picture', () => {
+    const plain = (source: string) => toPlainText(documentOf(source, 'Note.md'))
+
+    expect(plain('[see ![pic](p.png) here](https://x.org)\n')).toBe(
+      'see [pic] here (https://x.org)\n',
+    )
+    expect(plain('[![CI](badge.png)](https://ci.org)\n')).toBe('[CI] (https://ci.org)\n')
+  })
+
   test('keeps the words and drops the emphasis', () => {
     expect(lineWith('Prose with')).toContain('Prose with bold, italic, struck, marked, inline code')
   })

@@ -145,6 +145,16 @@ describe('reading one tab', () => {
     ).not.toHaveProperty('apart')
   })
 
+  test('keeps the note a tab with no file was copied from, so its lock still covers it', () => {
+    const behind = '/s/Finance/Bank.url'
+    expect(readDraft({ kind: 'web', path: null, name: 'a', doc: '', behind })).toMatchObject({
+      behind,
+    })
+    expect(
+      readDraft({ kind: 'web', path: '/s/a.url', name: 'a', doc: '', behind }),
+    ).not.toHaveProperty('behind')
+  })
+
   test('is being written in unless it says otherwise', () => {
     expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('reading')
     expect(readDraft({ path: null, name: 'a', doc: '', reading: 'yes' })).not.toHaveProperty(

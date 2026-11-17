@@ -21,7 +21,8 @@ vi.doMock('../../platform/src/tauri', async (actual) => ({
 await import('../../web-tab/src/api')
 const { declarations } = await import('./declarations')
 const { schemaOf } = await import('./schema')
-const schema = schemaOf(await declarations())
+const fields = await declarations()
+const schema = schemaOf(fields)
 
 describe('the settings’ schema', () => {
   test('has what an agent would set, a list where the app keeps one', () => {
@@ -48,5 +49,23 @@ describe('the settings’ schema', () => {
   test('describes every setting', () => {
     for (const [key, setting] of Object.entries(schema))
       expect(setting.description, key).not.toBe('')
+  })
+})
+
+describe('a shortcut an agent writes', () => {
+  test('is turned down where another command already runs that key', () => {
+    const italic = fields.find((one) => one.key === 'shortcuts.format-italic')
+    if (italic?.kind !== 'text') throw new Error('no italic shortcut')
+    expect(italic.check?.('Mod-b')).toContain('already runs')
+    expect(italic.check?.('Mod-Alt-F9')).toBeNull()
+    expect(italic.check?.('')).toBeNull()
+  })
+})
+
+describe('a switch of a theme not worn', () => {
+  test('reads as its default until something is kept for it', () => {
+    const follow = fields.find((one) => one.key === 'themes.glass.follow')
+    if (follow?.kind !== 'switch') throw new Error('no glass follow switch')
+    expect(follow.get()).toBe(true)
   })
 })

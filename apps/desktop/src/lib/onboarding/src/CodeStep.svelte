@@ -15,12 +15,12 @@
     modes.setDeveloper(picked === 'yes')
     await settleMarkdown(setup.answers.notes)
     setup.answer({ code: picked })
-    setup.next()
+    setup.next('code')
   }
 
   function skip() {
     setup.answer({ code: null })
-    setup.next()
+    setup.next('code')
   }
 </script>
 

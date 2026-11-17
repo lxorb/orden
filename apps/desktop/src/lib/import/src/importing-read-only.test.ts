@@ -71,6 +71,14 @@ vi.mock('./document', () => ({
 
 const storedFor = vi.hoisted((): string[] => [])
 
+const landedIn = vi.hoisted((): { root: string; folder: string }[] => [])
+vi.mock('./apply', () => ({
+  applyImport: (_: unknown, target: { root: string; folder: string }) => {
+    landedIn.push(target)
+    return Promise.resolve({ paths: [], stepped: 0 })
+  },
+}))
+
 const { importing } = await import('./importing.svelte')
 
 beforeEach(() => {
@@ -81,6 +89,7 @@ beforeEach(() => {
   held.spaces = [THEIRS, MINE]
   opened.length = 0
   storedFor.length = 0
+  landedIn.length = 0
   held.active = THEIRS
   importing.root = null
   importing.forget()
@@ -149,5 +158,28 @@ describe('a document read by pandoc while a space shared to be read is open', ()
     expect(storedFor).toEqual([`${NOTES.root}/Report.md`])
     expect(opened[0]![2]).toBe(NOTES.id)
     expect(failed).toEqual([])
+  })
+})
+
+describe('an import with no folder of its own', () => {
+  test('lands where it was sent, not in a folder called Untitled', async () => {
+    for (const [under, folder] of [
+      ['', ''],
+      ['Plans', ''],
+      ['Plans', 'Notion'],
+    ]) {
+      importing.plan = { format: 'todoist', files: [], lost: [] }
+      importing.stage = 'ready'
+      importing.root = MINE.root
+      importing.under = under ?? ''
+      importing.folder = folder ?? ''
+      await importing.run()
+    }
+
+    expect(landedIn).toEqual([
+      { root: MINE.root, folder: '' },
+      { root: MINE.root, folder: 'Plans' },
+      { root: MINE.root, folder: 'Plans/Notion' },
+    ])
   })
 })

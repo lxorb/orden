@@ -3,7 +3,12 @@ import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('../../platform/src/tauri', () => ({ isDesktop: false, isMobile: false }))
 vi.mock('../../workspace/src/api', () => ({
-  workspace: { tabs: [], goBack: () => undefined, goForward: () => undefined },
+  workspace: {
+    tabs: [],
+    showing: () => ({ id: 't' }),
+    goBack: () => undefined,
+    goForward: () => undefined,
+  },
 }))
 
 const { heard } = await import('./swipes')

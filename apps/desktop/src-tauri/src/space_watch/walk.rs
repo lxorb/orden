@@ -43,8 +43,19 @@ pub fn found(root: &Path, rel: &Path) -> Option<Found> {
     looked(root, rel).ok().flatten()
 }
 
+pub fn found_hidden(root: &Path, rel: &Path) -> Option<Found> {
+    measured(root, rel).ok().flatten()
+}
+
 fn looked(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
-    if rel.as_os_str().is_empty() || ignored_path(rel) {
+    if ignored_path(rel) {
+        return Ok(None);
+    }
+    measured(root, rel)
+}
+
+fn measured(root: &Path, rel: &Path) -> std::io::Result<Option<Found>> {
+    if rel.as_os_str().is_empty() {
         return Ok(None);
     }
     let path = root.join(rel);

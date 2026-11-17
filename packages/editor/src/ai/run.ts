@@ -2,20 +2,28 @@ import { syntaxTree } from '@codemirror/language'
 import {
   type EditorState,
   type Extension,
+  Facet,
   StateEffect,
   StateField,
   type TransactionSpec,
 } from '@codemirror/state'
 import { fenceCode, fenceLanguage } from '../fence'
+import { documentOf, type SharedDoc } from '../shared'
 import { enclosingNamed } from '../nodes'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
 export interface AiAsk {
   prompt: string
   note: string | null
+  shows: SharedDoc | null
+  place?: string | null
   started: (model: string) => void
   wrote: (text: string) => void
 }
+
+export const aiPlace = Facet.define<string, string | null>({
+  combine: (values) => values[0] ?? null,
+})
 
 export type AiRunner = (ask: AiAsk, signal: AbortSignal) => Promise<void>
 
@@ -151,6 +159,8 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
     {
       prompt,
       note: mentionsNote(prompt) ? view.state.doc.toString() : null,
+      shows: documentOf(view),
+      place: view.state.facet(aiPlace),
       started: (model) => beginAnswer(view, id, model),
       wrote: (text) => writeAnswer(view, id, text),
     },

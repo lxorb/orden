@@ -404,8 +404,8 @@ function opResultOf(value: unknown): OpResult | null {
 
   if (value.ok === true) {
     if (value.id === undefined) return { op, ok: true }
-    if (!isId(value.id) || !isParent(value.parent) || !isName(value.name)) return null
-    return { op, ok: true, id: value.id, parent: value.parent, name: value.name }
+    if (!isId(value.id) || !isParent(value.parent) || typeof value.name !== 'string') return null
+    return { op, ok: true, id: value.id, parent: value.parent, name: heldName(value.name) }
   }
   if (isId(value.merged)) return { op, merged: value.merged }
   const refused = REFUSALS.find((one) => one === value.refused)

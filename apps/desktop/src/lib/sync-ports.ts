@@ -2,6 +2,7 @@ import { protection } from './protect/src/api'
 import { providePort } from '@orden/contracts'
 import { account, api, ApiError, BASE, fromServer, request } from './accounts/src/api'
 import {
+  folderOf,
   forget,
   keep,
   keepJson,
@@ -15,6 +16,7 @@ import {
   joinPath,
   platform,
   waited,
+  within,
 } from './platform/src/api'
 import { workspace, howFor } from './workspace/src/api'
 import { ROOTS_MOVED, rootsMoved } from './workspace/src/roots-moved'
@@ -81,6 +83,10 @@ providePort('sync.api', {
   statusOf: (error) => (error instanceof ApiError ? error.status : null),
   saidByServer: (error) => fromServer(error),
 })
+
+protection.seesFiles((path) =>
+  workspace.files.filter((one) => within(folderOf(path), one.path) !== null).map((one) => one.path),
+)
 
 providePort('sync.workspace', {
   get spaces() {

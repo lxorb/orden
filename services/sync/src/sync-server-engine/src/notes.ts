@@ -5,6 +5,7 @@ import {
   deviceIn,
   type Env,
   fits,
+  followOnlyNote,
   FRONT_REV,
   holdVersion,
   hooks,
@@ -21,6 +22,8 @@ import {
   OUT_OF_SPACE,
   pokeSpace,
   presentVersion,
+  programShut,
+  PROTECTED,
   type Reached,
   readBody,
   readFront,
@@ -37,7 +40,6 @@ import {
   versionKey,
   versionsAt,
   versionsOf,
-  type Whoever,
   writeFront,
 } from '../../sync-server/src/api'
 import { mergeCanvasFiles } from '@orden/markdown/canvas-merge'
@@ -348,6 +350,9 @@ export async function saveNote(
   )
 
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
+  await followOnlyNote(env, note.space_id, [{ from: note.path, to: path }], []).catch(
+    () => undefined,
+  )
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
   await keepPictures(env, updated, content)
   await hooks()
@@ -385,8 +390,11 @@ notes.get('/spaces/:spaceId/changes', atLeast('read', 'spaceId'), async (context
     .bind(space.id, since)
     .all<Note>()
 
+  const shut = await programShut(context.env, context.get('who'))
+  const told = shut ? results.filter((note) => !shut(note.space_id, note.path)) : results
+
   const cursor = results.at(-1)?.seq ?? since
-  return context.json({ notes: results.map(presentNote), cursor, more: results.length === 1000 })
+  return context.json({ notes: told.map(presentNote), cursor, more: results.length === 1000 })
 })
 
 notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context) => {
@@ -403,9 +411,15 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
 
   if (!path) return context.json({ error: NOT_A_PATH }, 400)
   if (size > MAX_NOTE_BYTES) return context.json({ error: TOO_LARGE }, 413)
+  const shut = await programShut(context.env, context.get('who'))
+  if (shut?.(space.id, path)) return context.json({ error: PROTECTED(path) }, 403)
+  const there = async (note: Note) =>
+    shut?.(note.space_id, note.path)
+      ? context.json({ error: PROTECTED(path) }, 403)
+      : await alreadyThere(context, note)
 
   const taken = await noteAt(context.env, space.id, path)
-  if (taken) return await alreadyThere(context, taken)
+  if (taken) return await there(taken)
 
   if (!(await fits(context.env, space.user_id, size))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
@@ -429,7 +443,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
         : await noteAt(context.env, space.id, path)
     if (!won) throw error
 
-    return await alreadyThere(context, won)
+    return await there(won)
   }
 
   await pokeSpace(context.env, laterOf(context), space.id, note.seq, device)
@@ -453,12 +467,13 @@ async function alreadyThere(
 
 async function reachedNote(
   env: Env,
-  who: Whoever,
+  who: Variables['who'],
   noteId: string,
 ): Promise<{ note: Note; space: Reached; only: boolean } | null> {
   const note = await noteById(env, noteId)
 
   if (!note || HIDDEN_FROM_V1.has(note.kind ?? 'note')) return null
+  if ((await programShut(env, who))?.(note.space_id, note.path)) return null
 
   if (note.deleted && note.deleted_at === null) return null
 
@@ -600,7 +615,14 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   if (at === undefined || at <= 0) return context.json({ error: 'when to go back to' }, 400)
 
   const folder = under.replace(/^\/+/, '')
-  const changed = await versionsAt(context.env, space.id, folder, at)
+  const shut = await programShut(context.env, context.get('who'))
+  const changed = await versionsAt(
+    context.env,
+    space.id,
+    folder,
+    at,
+    (path) => !shut?.(space.id, path),
+  )
 
   const cut = changed.length >= ROLLBACK_AT_ONCE
   const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
@@ -676,6 +698,12 @@ notes.put('/notes/:id', async (context) => {
 
   if (found.only && path !== note.path) {
     return context.json({ error: 'this note was shared with you, not its folder' }, 403)
+  }
+  if (
+    path !== note.path &&
+    (await programShut(context.env, context.get('who')))?.(note.space_id, path)
+  ) {
+    return context.json({ error: PROTECTED(path) }, 403)
   }
 
   const lands = note.name_key ? note.path : path
@@ -783,6 +811,7 @@ notes.delete('/notes/:id', async (context) => {
         where id = ?3`,
     ).bind(note.space_id, at, note.id),
   )
+  await followOnlyNote(context.env, note.space_id, [], [note.path]).catch(() => undefined)
 
   return context.json({ ok: true })
 })

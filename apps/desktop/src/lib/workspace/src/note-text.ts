@@ -154,11 +154,13 @@ export async function writeNoteText(
   before: string,
   after: string,
   keeping: Keeping = {},
-): Promise<void> {
+): Promise<boolean> {
   const edit = oneEdit(before, after)
-  if (!edit) return
+  if (!edit) return true
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })
+  return (
+    (await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })) > 0
+  )
 }
 
 type Undone = Extract<FileAction, { kind: 'replace' }>['notes'][number]

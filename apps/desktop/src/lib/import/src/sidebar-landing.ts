@@ -1,5 +1,5 @@
 import { busy } from '../../ui-kit/src/api'
-import { relativeTo, invoke, joinPath } from '../../platform/src/api'
+import { folderOf, relativeTo, invoke, joinPath, withinSpace } from '../../platform/src/api'
 import { readShortcut } from '@orden/scan/shortcut'
 import { type Space, workspace } from '../../workspace/src/api'
 import { applyImport } from './apply'
@@ -85,16 +85,52 @@ async function unseen(root: string, files: readonly Planned[]): Promise<Planned[
       invoke<string>('read_note', { path: joinPath(root, file.path) }).catch(() => null),
     ),
   )
+  const beside = await pagesBeside(root, files)
 
   return files.filter((file, at) => {
+    if (file.kind !== 'note') return true
+    const mine = readShortcut(file.text)
+    const pages = beside.get(nameKey(folderOf(file.path)))
+    if (mine && pages && (pages.has(mine.url) || (mine.home && pages.has(mine.home)))) return false
+
     const held = there[at]
-    if (held === null || held === undefined || file.kind !== 'note') return true
+    if (held === null || held === undefined) return true
     if (!file.text) return false
 
     const theirs = readShortcut(held)
-    const mine = readShortcut(file.text)
     if (!theirs || !mine) return true
-    const pages = new Set([theirs.url, theirs.home].filter(Boolean))
-    return !pages.has(mine.url) && !(mine.home && pages.has(mine.home))
+    const kept = new Set([theirs.url, theirs.home].filter(Boolean))
+    return !kept.has(mine.url) && !(mine.home && kept.has(mine.home))
   })
 }
+
+async function pagesBeside(
+  root: string,
+  files: readonly Planned[],
+): Promise<Map<string, Set<string>>> {
+  const folders = new Set(
+    files.filter((file) => SHORTCUT.test(file.path)).map((file) => nameKey(folderOf(file.path))),
+  )
+  const held = workspace.files
+    .map((entry) => withinSpace(root, entry.path))
+    .filter((path): path is string => !!path && SHORTCUT.test(path))
+    .filter((path) => folders.has(nameKey(folderOf(path))))
+  const read = await Promise.all(
+    held.map((path) =>
+      invoke<string>('read_note', { path: joinPath(root, path) }).catch(() => null),
+    ),
+  )
+
+  const pages = new Map<string, Set<string>>()
+  held.forEach((path, at) => {
+    const shortcut = readShortcut(read[at])
+    if (!shortcut) return
+    const folder = nameKey(folderOf(path))
+    const seen = pages.get(folder) ?? new Set<string>()
+    for (const page of [shortcut.url, shortcut.home]) if (page) seen.add(page)
+    pages.set(folder, seen)
+  })
+  return pages
+}
+
+const SHORTCUT = /\.url$/i

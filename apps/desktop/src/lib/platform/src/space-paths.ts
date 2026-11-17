@@ -15,12 +15,38 @@ function steps(path: string): string[] {
   return out
 }
 
-function sameName(one: string, other: string, folds: () => boolean): boolean {
+function caseless(name: string): string {
+  let out = ''
+  for (const one of name) {
+    const upper = one.toUpperCase()
+    if (Array.from(upper).length !== 1) {
+      out += one
+      continue
+    }
+    const lower = upper.toLowerCase()
+    out += Array.from(lower).length === 1 ? lower : upper
+  }
+  return out
+}
+
+function win32Name(name: string, last: boolean): string {
+  if (/^\.*$/.test(name)) return name
+  return last ? name.replace(/[. ]+$/, '') : name.replace(/\.$/, '')
+}
+
+const DROPPED = /[. ]$/
+
+function spelled(name: string, last: boolean): string {
+  const one = name.normalize('NFC')
+  return DROPPED.test(one) && platform() === 'windows' ? win32Name(one, last) : one
+}
+
+function sameName(one: string, other: string, folds: () => boolean, last: boolean): boolean {
   if (one === other) return true
 
-  const a = one.normalize('NFC')
-  const b = other.normalize('NFC')
-  return a === b || (a.toLowerCase() === b.toLowerCase() && folds())
+  const a = spelled(one, last)
+  const b = spelled(other, last)
+  return a === b || (caseless(a) === caseless(b) && folds())
 }
 
 function foldsAt(path: string): boolean {
@@ -32,7 +58,10 @@ function foldsAt(path: string): boolean {
 }
 
 function holds(head: readonly string[], file: readonly string[], folds: () => boolean): boolean {
-  return head.length <= file.length && head.every((one, at) => sameName(one, file[at] ?? '', folds))
+  return (
+    head.length <= file.length &&
+    head.every((one, at) => sameName(one, file[at] ?? '', folds, at === file.length - 1))
+  )
 }
 
 export function samePath(
@@ -59,10 +88,9 @@ export function rootedAt<T extends { readonly root: string }>(
 }
 
 export function pathKeyAs(path: string, folds: boolean): string {
-  const key = steps(path)
-    .map((one) => one.normalize('NFC'))
-    .join('/')
-  return folds ? key.toLowerCase() : key
+  const parts = steps(path)
+  const key = parts.map((one, at) => spelled(one, at === parts.length - 1)).join('/')
+  return folds ? caseless(key) : key
 }
 
 export function pathKey(path: string, root?: string): string {
@@ -79,21 +107,21 @@ export function sameSpelling(one: string, other: string): boolean {
   return a.length === b.length && holds(a, b, () => false)
 }
 
+function inward(parts: readonly string[]): string | null {
+  return parts.includes('..') ? null : parts.join('/')
+}
+
 export function within(folder: string, path: string, root?: string): string | null {
   if (!folder) return path.replace(/\\/g, '/')
 
   if (path.startsWith(folder) && !/[\\/]$/.test(folder)) {
     const rest = path.slice(folder.length)
-    if (!rest || /^[\\/]/.test(rest))
-      return rest
-        .split(/[\\/]+/)
-        .filter(Boolean)
-        .join('/')
+    if (!rest || /^[\\/]/.test(rest)) return inward(rest.split(/[\\/]+/).filter(Boolean))
   }
 
   const head = steps(folder)
   const file = steps(path)
-  return holds(head, file, () => foldsAt(root ?? folder)) ? file.slice(head.length).join('/') : null
+  return holds(head, file, () => foldsAt(root ?? folder)) ? inward(file.slice(head.length)) : null
 }
 
 export function movedTo(path: string, from: string, to: string, root?: string): string | null {

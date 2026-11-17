@@ -373,6 +373,50 @@ describe('which note a name means', () => {
     )
   })
 
+  test('a path written from the top of the space, as Obsidian writes one, still names it', () => {
+    const here = index([note('Projects/Plan.md'), note('Notes/Plan.md')], 'Notes/Day/x.md')
+    expect(resolveRelative(here, 'Projects/Plan.md')?.path).toBe('Projects/Plan.md')
+    expect(resolveRelative(here, '../Plan.md')?.path).toBe('Notes/Plan.md')
+
+    const beside = index([note('Projects/Plan.md'), note('Notes/Projects/Plan.md')], 'Notes/x.md')
+    expect(resolveRelative(beside, 'Projects/Plan.md')?.path).toBe('Notes/Projects/Plan.md')
+  })
+
+  test('a name alone, as the shortest link is written, names the note of that name', () => {
+    const here = index([note('Projects/Plan.md'), note('Inbox/Vault/Trips/Kit.md')], 'Notes/x.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('Projects/Plan.md')
+    expect(resolveRelative(here, 'Trips/Kit.md')?.path).toBe('Inbox/Vault/Trips/Kit.md')
+    expect(resolveRelative(here, 'Nothing.md')).toBeNull()
+  })
+
+  test('a file named by its name alone is the one beside the note first', () => {
+    const files = ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']
+    expect(resolveFile(index([], 'Trips/Paris.md', {}, files), 'cover.jpg', 'wikilink')).toBe(
+      'Trips/cover.jpg',
+    )
+    expect(resolveFile(index([], 'Notes/x.md', {}, files), 'cover.jpg', 'wikilink')).toBe(
+      'Home/cover.jpg',
+    )
+  })
+
+  test('a file a markdown link names from the top of the space or by name alone', () => {
+    const here = index([], 'Notes/Day/x.md', {}, ['attachments/report.pdf', 'Notes/report.pdf'])
+    expect(resolveFile(here, 'attachments/report.pdf', 'markdown')).toBe('attachments/report.pdf')
+    expect(resolveFile(here, 'report.pdf', 'markdown')).toBe('Notes/report.pdf')
+    expect(resolveFile(here, '../report.pdf', 'markdown')).toBe('Notes/report.pdf')
+    expect(resolveFile(here, './report.pdf', 'markdown')).toBeNull()
+    expect(resolveFile(here, '/report.pdf', 'markdown')).toBeNull()
+    expect(resolveFile(here, '../attachments/report.pdf', 'markdown')).toBeNull()
+  })
+
+  test('a link written as relative names only what is there, never a namesake elsewhere', () => {
+    const here = index([note('Archive/Plan.md'), note('Projects/Plan.md')], 'Notes/Day/x.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Projects/Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../../Projects/Plan.md')?.path).toBe('Projects/Plan.md')
+  })
+
   test('a path from the top names that path or nothing', () => {
     const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
     expect(resolveRelative(here, '/about')).toBeNull()

@@ -141,28 +141,56 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
   const to = String(args.to)
   const going = (await what(from)).sort((a, b) => a.rest.length - b.rest.length)
   if (!going.length) throw new Error(`nothing is at ${from}`)
-  if ((await what(to)).length) throw new Error('something already lives there')
+  if ((await what(to)).length || (await keptHolds(to))) {
+    throw new Error('something already lives there')
+  }
 
   const source = addressed(from)
   const target = addressed(to)
   const join = (base: string, rest: string, kept: boolean) =>
     !rest ? base : kept || !rest.startsWith('/') ? `${base}${rest}` : joinPath(base, rest.slice(1))
+  const read = (one: { rest: string }) =>
+    source.kept
+      ? keptBytes(from, one.rest)
+      : crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }).then(
+          (bytes) => new Uint8Array(bytes),
+        )
+  const words = new Map<string, Uint8Array>()
+  if (target.kept) {
+    const { readsAsText } = await import('../web/commands')
+    for (const one of going) {
+      if (one.dir || !readsAsText(`${to}${one.rest}`)) continue
+      const bytes = await read(one)
+      if (!isUtf8(bytes)) throw new Error(`${from}${one.rest} is not UTF-8 text`)
+      words.set(one.rest, bytes)
+    }
+  }
   for (const one of going) {
     const into = join(target.at, one.rest, target.kept)
     if (one.dir) {
       await (target.kept ? web : crate)('create_folder', { path: into })
       continue
     }
-    const bytes = source.kept
-      ? await keptBytes(from, one.rest)
-      : new Uint8Array(await crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }))
+    const bytes = words.get(one.rest) ?? (await read(one))
     await (target.kept ? web : crate)('write_bytes', { path: into, bytes })
   }
   if (command === 'copy_path') return undefined as T
 
   const remove = (call: string, path: string) => (source.kept ? web : crate)(call, { path })
-  if (going[0]?.dir) {
+  if (going[0]?.dir && source.kept) {
     await remove('delete_folder', source.at)
+    return undefined as T
+  }
+  if (going[0]?.dir) {
+    for (const one of going.filter((each) => !each.dir)) {
+      await crate('delete_note', { path: join(from, one.rest, false) })
+    }
+    const folders = going.filter((each) => each.dir).reverse()
+    for (const one of folders) {
+      await crate('remove_empty_folder', { path: join(from, one.rest, false) }).catch(
+        () => undefined,
+      )
+    }
     return undefined as T
   }
   await remove('delete_note', source.at)
@@ -170,6 +198,26 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
     await remove('delete_note', join(source.at, one.rest, source.kept)).catch(() => undefined)
   }
   return undefined as T
+}
+
+const strict = new TextDecoder('utf-8', { fatal: true })
+
+function isUtf8(bytes: Uint8Array): boolean {
+  try {
+    strict.decode(bytes)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function keptHolds(path: string): Promise<boolean> {
+  const found = mountOf(path)
+  if (!found) return false
+  for (const end of ['', PDF_SIDECAR, '.pdf', `.pdf${PDF_SIDECAR}`]) {
+    if (await found.mount.folder.holds(`${found.inside}${end}`)) return true
+  }
+  return false
 }
 
 async function keptBytes(path: string, rest: string): Promise<Uint8Array> {

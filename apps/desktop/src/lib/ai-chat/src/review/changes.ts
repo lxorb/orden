@@ -1,4 +1,4 @@
-import type { Thread, Turn } from '../../../ai-providers/src/api'
+import { rightsHolder, rightsKey, type Thread, type Turn } from '../../../ai-providers/src/api'
 
 interface Spot {
   from: number
@@ -34,16 +34,17 @@ const AGENT = 'orden-'
 const FORMER_AGENT = 'nib-'
 
 export function agentOf(provider: string): string {
-  return `${AGENT}${provider}`
+  return `${AGENT}${rightsKey(provider)}`
 }
 
 export function agentsOf(provider: string): string[] {
-  return [agentOf(provider), `${FORMER_AGENT}${provider}`]
+  const key = rightsKey(provider)
+  return [`${AGENT}${key}`, `${FORMER_AGENT}${key}`]
 }
 
 export function providerOf(agent: string): string | null {
   const prefix = [AGENT, FORMER_AGENT].find((one) => agent.startsWith(one))
-  return prefix ? agent.slice(prefix.length) : null
+  return prefix ? rightsHolder(agent.slice(prefix.length)) : null
 }
 
 export function linesOf(words: string): number {

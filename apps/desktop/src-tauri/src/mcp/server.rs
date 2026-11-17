@@ -278,7 +278,7 @@ fn names(seen: &Seen) -> Vec<String> {
 }
 
 pub(super) fn defaults(tool: &str, mut args: Value) -> Value {
-    if tool == "browser_read" && args.get("max_chars").is_none() {
+    if tool == "browser_read" && args.get("max_chars").is_none_or(Value::is_null) {
         args["max_chars"] = json!(40_000);
     }
     args
@@ -318,6 +318,10 @@ mod tests {
         assert_eq!(
             defaults("browser_read", json!({ "tab": "a1", "max_chars": 5 }))["max_chars"],
             5
+        );
+        assert_eq!(
+            defaults("browser_read", json!({ "tab": "a1", "max_chars": null }))["max_chars"],
+            40_000
         );
         assert!(defaults("browser_click", json!({}))
             .get("max_chars")

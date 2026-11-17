@@ -156,9 +156,19 @@ pub async fn explorer_clashes(
 }
 
 fn same(one: &Path, other: &Path) -> bool {
-    inside(one, other) && inside(other, one)
+    (inside(one, other) && inside(other, one))
+        || crate::notes::same_entry(one, other)
+        || (!fs::symlink_metadata(other).is_ok_and(|meta| meta.file_type().is_symlink())
+            && matches!(
+                (fs::canonicalize(one), fs::canonicalize(other)),
+                (Ok(one), Ok(other)) if one == other
+            ))
 }
 
+#[allow(
+    clippy::too_many_arguments,
+    reason = "a command's arguments are what the window names, one each"
+)]
 #[tauri::command]
 pub async fn explorer_transfer(
     app: AppHandle,
@@ -168,6 +178,7 @@ pub async fn explorer_transfer(
     how: How,
     clash: Clash,
     staying: Option<Vec<String>>,
+    fenced: Option<bool>,
 ) -> Result<Transferred, String> {
     crate::lane::off_the_runtime(move || -> Result<Transferred, String> {
         let folder = asked(&app, &folder, Use::Into)?;
@@ -183,7 +194,7 @@ pub async fn explorer_transfer(
         let mut froms = Vec::new();
         for one in &sources {
             let item = how_of(one);
-            let using = if item == How::Move {
+            let using = if item == How::Move || fenced == Some(true) {
                 Use::Change
             } else {
                 Use::Look
@@ -764,6 +775,43 @@ mod tests {
             [(dir.path().join("a.txt"), dir.path().join("a 2.txt"))]
         );
         assert!(planned(&from, dir.path(), How::Move, Clash::Skip, &mut out).is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_carried_into_its_own_folder_by_another_way_is_never_replaced_by_itself() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let real = dir.path().join("real");
+        fs::create_dir(&real).expect("real");
+        fs::write(real.join("a.txt"), "a").expect("a");
+        let link = dir.path().join("link");
+        std::os::unix::fs::symlink(&real, &link).expect("link");
+        let from = vec![real.join("a.txt")];
+        let mut out = Transferred::default();
+        let plan = planned(&from, &link, How::Copy, Clash::Replace, &mut out);
+        assert_eq!(plan, [(real.join("a.txt"), link.join("a 2.txt"))]);
+        assert!(planned(&from, &link, How::Move, Clash::Replace, &mut out).is_empty());
+        assert!(out.failed.is_empty());
+        let docs = real.join("docs");
+        fs::create_dir(&docs).expect("docs");
+        let elsewhere = dir.path().join("elsewhere");
+        fs::create_dir(&elsewhere).expect("elsewhere");
+        std::os::unix::fs::symlink(&docs, elsewhere.join("docs")).expect("a link to docs");
+        let linked = vec![elsewhere.join("docs")];
+        let plan = planned(&linked, &real, How::Copy, Clash::Replace, &mut out);
+        assert_eq!(plan, [(elsewhere.join("docs"), real.join("docs 2"))]);
+        assert!(out.failed.is_empty());
+        let into = dir.path().join("into");
+        fs::create_dir(&into).expect("into");
+        std::os::unix::fs::symlink(&docs, into.join("docs")).expect("a link where it goes");
+        let plan = planned(
+            std::slice::from_ref(&docs),
+            &into,
+            How::Move,
+            Clash::Replace,
+            &mut out,
+        );
+        assert_eq!(plan, [(docs.clone(), into.join("docs"))]);
     }
 
     #[test]

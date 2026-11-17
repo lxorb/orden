@@ -67,11 +67,12 @@ export function linkTo(
 }
 
 export function pickedLink(target: LinkWrite): string {
-  return linkTo(target.name, null, {
+  return linkTo(target.name, target.shown ?? null, {
     markdown: target.markdown ?? null,
     path: target.path ?? null,
     from: target.from ?? null,
     fragment: target.fragment ?? null,
+    file: target.file ?? null,
   })
 }
 

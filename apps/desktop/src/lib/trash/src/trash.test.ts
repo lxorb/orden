@@ -95,6 +95,7 @@ vi.mock('../../sharing/src/api', async (importOriginal) => ({
 }))
 
 const remote = {
+  landsAt: null as string | null,
   spaces: [] as { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[],
   notes: [] as {
     id: string
@@ -115,7 +116,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
     restoreNote: async (_token: string, id: string) => {
       apiCalls.push(`restoreNote ${id}`)
       remote.notes = remote.notes.filter((one) => one.id !== id)
-      return { note: {} }
+      return { note: remote.landsAt ? { path: remote.landsAt } : {} }
     },
     restoreSpace: async (_token: string, id: string) => {
       apiCalls.push(`restoreSpace ${id}`)
@@ -130,6 +131,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
     emptyTrash: async () => {
       apiCalls.push('emptyTrash')
       remote.notes = []
+      remote.landsAt = null
       remote.spaces = []
       return { ok: true }
     },
@@ -160,6 +162,7 @@ const { trash } = await import('./trash.svelte')
 const { prompt } = await import('../../ui-kit/src/api')
 const { sync } = await import('../../sync-store/src/api')
 const { keptAway } = await import('../../away/src/api')
+const { protection } = await import('../../protect/src/api')
 
 beforeEach(() => {
   notes.clear()
@@ -218,6 +221,21 @@ describe('signed out', () => {
     expect(trash.items).toEqual([])
   })
 
+  test('a protected note is protected again once it is put back, or the deletion undone', async () => {
+    protection.set('/space', '/space/Idea.md', 'password')
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+    await trash.restore(only)
+    expect(protection.own('/space', '/space/Idea.md')?.way).toBe('password')
+
+    await workspace.remove('/space/Idea.md', false)
+    await workspace.undoFileAction()
+    expect(protection.own('/space', '/space/Idea.md')?.way).toBe('password')
+    protection.set('/space', '/space/Idea.md', null)
+  })
+
   test('undoing the deletion restores from the trash rather than writing a copy', async () => {
     await workspace.remove('/space/Idea.md', false)
     calls.length = 0
@@ -235,6 +253,18 @@ describe('signed out', () => {
     expect(calls).toContain('trash_item')
     expect(calls).not.toContain('delete_space')
     expect(onlyTrashed()).toMatchObject({ kind: 'space', from: '/space' })
+  })
+
+  test('a protected space is protected again once it is put back', async () => {
+    protection.set('/space', '/space', 'password')
+    protection.set('/space', '/space/Idea.md', 'device')
+    await workspace.deleteSpace('s')
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted space is not in the list')
+    await trash.restore(only)
+    expect(protection.ways('/space')).toEqual({ '': 'password', 'Idea.md': 'device' })
+    await protection.forget('/space')
   })
 
   test('undoing a deletion the trash no longer holds falls back to the snapshot', async () => {
@@ -487,6 +517,74 @@ describe('signed in', () => {
     await trash.restore(trash.items.find((item) => item.id === 'space:s2')!)
     expect(apiCalls).toEqual(['restoreNote n1', 'restoreSpace s2'])
     expect(trash.items).toEqual([])
+  })
+
+  test('a protected note the account put back is protected again', async () => {
+    vi.spyOn(sync, 'tracked').mockImplementation(() =>
+      calls.includes('delete_note') ? null : { id: 'n1', version: 1, hash: '' },
+    )
+    protection.set('/space', '/space/Idea.md', 'password')
+    await workspace.remove('/space/Idea.md', false)
+    expect(protection.own('/space', '/space/Idea.md')).toBeNull()
+    const at = Date.now()
+    remote.notes = [
+      {
+        id: 'n1',
+        spaceId: 'remote',
+        spaceName: 'space',
+        path: 'Idea.md',
+        deletedAt: at,
+        purgeAt: at,
+      },
+    ]
+    await trash.load()
+    await trash.restore(trash.items.find((item) => item.id === 'note:n1')!)
+    expect(protection.own('/space', '/space/Idea.md')?.way).toBe('password')
+    protection.set('/space', '/space/Idea.md', null)
+  })
+
+  test('a protected note the account put back from a deleted folder is protected again', async () => {
+    protection.set('/space', '/space/Private', 'password')
+    await protection.gone('/space/Private', '/space')
+    const at = Date.now()
+    remote.notes = [
+      {
+        id: 'n2',
+        spaceId: 'remote',
+        spaceName: 'space',
+        path: 'Private/Diary.md',
+        deletedAt: at,
+        purgeAt: at,
+      },
+    ]
+    await trash.load()
+    await trash.restore(trash.items.find((item) => item.id === 'note:n2')!)
+    expect(protection.own('/space', '/space/Private')?.way).toBe('password')
+    await protection.forget('/space')
+  })
+
+  test('a protected note the account puts back under another name is protected there', async () => {
+    vi.spyOn(sync, 'tracked').mockImplementation(() =>
+      calls.includes('delete_note') ? null : { id: 'n3', version: 1, hash: '' },
+    )
+    protection.set('/space', '/space/Idea.md', 'password')
+    await workspace.remove('/space/Idea.md', false)
+    const at = Date.now()
+    remote.notes = [
+      {
+        id: 'n3',
+        spaceId: 'remote',
+        spaceName: 'space',
+        path: 'Idea.md',
+        deletedAt: at,
+        purgeAt: at,
+      },
+    ]
+    remote.landsAt = 'Idea 2.md'
+    await trash.load()
+    await trash.restore(trash.items.find((item) => item.id === 'note:n3')!)
+    expect(protection.own('/space', '/space/Idea 2.md')?.way).toBe('password')
+    await protection.forget('/space')
   })
 
   test('purging a note asks the account to forget it', async () => {

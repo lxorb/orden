@@ -8,7 +8,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::fuzzy::{without_words, Fuzzy, FuzzyHit};
 use crate::matcher::{Hit, Matcher, Note};
 use crate::notes::{stamp_of, words_of, Stamp};
-use crate::paths::{files_in, in_spaces, is_shortcut, relative_to};
+use crate::paths::{files_in, is_shortcut, relative_to, walked_in_spaces};
 use crate::query::Query;
 use crate::tags::tags_in;
 
@@ -132,7 +132,7 @@ fn body_of(path: &Path) -> Option<Arc<str>> {
 
 #[tauri::command(async)]
 pub fn warm_search(app: AppHandle, root: String) -> Result<Warmth, String> {
-    let dir = in_spaces(&app, &root)?;
+    let dir = walked_in_spaces(&app, &root)?;
     let paths = notes_in(&dir);
 
     {
@@ -182,7 +182,7 @@ pub fn search_space(
     excluded: Vec<String>,
 ) -> Result<(), String> {
     let app = window.app_handle();
-    let dir = in_spaces(app, &root)?;
+    let dir = walked_in_spaces(app, &root)?;
     let left: HashSet<&str> = excluded.iter().map(String::as_str).collect();
     let fuzzy = Fuzzy::new(&terms);
     let narrowed = fuzzy.asks().then(|| Matcher::new(without_words(&query)));
@@ -268,7 +268,7 @@ fn send(window: &tauri::Window, id: u32, pending: &mut Vec<Hit>, loose: Vec<Fuzz
 
 #[tauri::command(async)]
 pub fn space_tags(app: AppHandle, root: String) -> Result<Vec<Tag>, String> {
-    let dir = in_spaces(&app, &root)?;
+    let dir = walked_in_spaces(&app, &root)?;
     let mut counts: HashMap<String, usize> = HashMap::new();
 
     for path in notes_in(&dir) {

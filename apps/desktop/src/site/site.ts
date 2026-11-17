@@ -148,7 +148,7 @@ function hoverCards() {
 
   document.addEventListener('pointerover', (event) => {
     const link = inside(event.target)
-    if (!link) return
+    if (!link || event.pointerType === 'touch') return
 
     clearTimeout(leaving)
     clearTimeout(going)
@@ -156,7 +156,13 @@ function hoverCards() {
   })
 
   document.addEventListener('pointerout', (event) => {
-    if (inside(event.target)) hide()
+    if (event.pointerType !== 'touch' && inside(event.target)) hide()
+  })
+
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch' && !card.contains(event.target as Node | null)) {
+      card.hidden = true
+    }
   })
 
   document.addEventListener(
@@ -281,9 +287,9 @@ function graphs() {
       { passive: true },
     )
 
-    canvas.addEventListener('pointermove', (event) => {
+    const nodeUnder = (event: MouseEvent) => {
       const box = canvas.getBoundingClientRect()
-      const at = nodeAt(
+      return nodeAt(
         layout.x,
         layout.y,
         radii,
@@ -293,7 +299,10 @@ function graphs() {
         event.clientX - box.left,
         event.clientY - box.top,
       )
+    }
 
+    canvas.addEventListener('pointermove', (event) => {
+      const at = nodeUnder(event)
       if (at === hovered) return
       hovered = at
 
@@ -313,8 +322,9 @@ function graphs() {
       draw()
     })
 
-    canvas.addEventListener('click', () => {
-      const where = hovered >= 0 ? graph.nodes[hovered]?.path : null
+    canvas.addEventListener('click', (event) => {
+      const at = nodeUnder(event)
+      const where = at >= 0 ? graph.nodes[at]?.path : null
       if (where) location.assign(where)
     })
   }

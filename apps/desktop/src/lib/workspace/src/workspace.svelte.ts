@@ -144,7 +144,7 @@ import {
   madeFirst,
   type Side,
 } from '../../panes/src/api'
-import { FileOps, inFlight, keeping, type Kind } from '../../file-ops/src/api'
+import { FileOps, inFlight, keeping, keepingShared, type Kind } from '../../file-ops/src/api'
 import * as composing from './composing'
 import { type Filling, fills } from './panel-fills'
 import * as spaces from './spaces'
@@ -278,9 +278,7 @@ function papers() {
   return paperIndex
 }
 
-function unfetched(): void {
-  // Answered by reloading.svelte.ts.
-}
+const unfetched = () => undefined
 
 function worthReopening(tab: Tab): boolean {
   return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
@@ -328,6 +326,7 @@ class Workspace {
     const pages = webPages()
     const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
     tab.apart = apartOf(keeper)
+    tab.behind = keeper.path ?? keeper.behind
     tab.note = this.document({
       kind: 'web',
       path: null,
@@ -443,11 +442,12 @@ class Workspace {
       this.protection,
       unlocks,
     ]) {
-      this.fileOps.follow(keeping(store))
+      this.fileOps.follow(store === this.protection ? keepingShared(store) : keeping(store))
     }
     this.fileOps.follow((op) => links.follow(op))
     this.fileOps.follow((op) => {
       if (op.op === 'moved') {
+        void invoke('rehome_snapshots', { from: op.from, to: op.to }).catch(() => 0)
         void papers().then(({ paperMoved }) => paperMoved(op.from, op.to), unfetched)
       } else if (op.op === 'removed') {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
@@ -1020,6 +1020,7 @@ class Workspace {
     tab.zoom = draft.zoom
     tab.address = draft.address
     tab.apart = draft.apart ?? null
+    tab.behind = draft.behind ?? null
     return tab
   }
 
@@ -1142,10 +1143,7 @@ class Workspace {
             const at = ids.indexOf(id)
             return at < 0 ? [] : [at]
           }),
-          active: Math.max(
-            0,
-            tabs.findIndex((tab) => tab.id === shown),
-          ),
+          active: tabs.findIndex((tab) => tab.id === shown),
         }
       }),
       focused,
@@ -1175,6 +1173,7 @@ class Workspace {
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
       ...(tab.address === undefined ? {} : { address: tab.address }),
       ...(tab.path === null && tab.apart !== null ? { apart: tab.apart } : {}),
+      ...(tab.path === null && tab.behind !== null ? { behind: tab.behind } : {}),
       ...(tab.path === null && tab.note.home !== null ? { space: tab.note.home } : {}),
     }
   }
@@ -1604,6 +1603,7 @@ class Workspace {
     const path = this.spelled(asked)
     const held = isPagesTarget(path) ? path : await this.heldBy(path)
     if (held) {
+      if (held !== path) this.lockedLikeItsPaper(held, path)
       await this.openPages(held, page, how)
       return
     }
@@ -1662,6 +1662,7 @@ class Workspace {
 
     const making = this.turning(path)
       .then(({ pdf, root, move }) => pdf.asPageNote(path, root, move))
+      .then((note) => this.lockedLikeItsPaper(note, path))
       .catch((error: unknown) => {
         log('error', `open PDF as page note: ${path} - ${String(error)}`)
         return null
@@ -1669,6 +1670,12 @@ class Workspace {
     this.pdfPageNotes.set(path, making)
     void making.finally(() => this.pdfPageNotes.delete(path))
     return making
+  }
+
+  private lockedLikeItsPaper(note: string, pdf: string): string {
+    const root = this.rootHolding(note)
+    for (const paper of [pdf, `${note}.pdf`]) this.protection.copied(paper, note, root, root)
+    return note
   }
 
   private async turning(path: string) {
@@ -1897,6 +1904,7 @@ class Workspace {
     tab.inPrivate = from?.inPrivate === true
     pages.privately(tab.id, tab.inPrivate)
     tab.apart = from ? apartOf(from) : null
+    tab.behind = from ? (from.path ?? from.behind) : null
 
     this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
@@ -1965,6 +1973,14 @@ class Workspace {
           : tab.kind === 'terminal'
             ? await import('./placing').then((one) => one.keepTerm(this, claim, tab, dir, file))
             : await this.saving.place(tab.note, dir, file ?? draftFile(tab.note))
+      if (saved !== null && tab.behind !== null) {
+        this.protection.copied(
+          tab.behind,
+          saved,
+          this.rootHolding(tab.behind),
+          this.rootHolding(saved),
+        )
+      }
       this.persist()
       return saved
     } catch (error) {
@@ -1994,6 +2010,7 @@ class Workspace {
 
     await this.turning(path)
       .then(({ pdf, root, move }) => pdf.adoptBeside(path, root, move))
+      .then((adopted) => adopted && this.lockedLikeItsPaper(path, `${path}.pdf`))
       .catch((error: unknown) => {
         log('warn', `page note beside its PDF: ${path} - ${String(error)}`)
       })
@@ -2309,8 +2326,10 @@ class Workspace {
     await this.loadTree()
   }
 
-  private showNote() {
-    if (!viewport.drawer || !this.panel) return
+  showNote() {
+    if (!viewport.drawer) return
+    if (this.rightShows !== null) this.closeRight()
+    if (!this.panel) return
 
     this.panel = null
     this.persist()
@@ -2479,8 +2498,9 @@ class Workspace {
     this.flush()
     const note = await this.opened.opening(path, () => this.stepped(tab, path))
     if (!note) {
+      const behind = tab.trail.slice(0, tab.at).filter((one) => samePath(one, path)).length
       tab.trail = tab.trail.filter((one) => !samePath(one, path))
-      tab.at = Math.min(tab.at, Math.max(tab.trail.length - 1, 0))
+      tab.at = Math.max(Math.min(tab.at - behind, tab.trail.length - 1), 0)
       return
     }
 
@@ -2555,7 +2575,7 @@ class Workspace {
 
   async closeAsking(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
-    if (tab && (await this.mayClose([tab]))) this.close(id)
+    if (tab && (await this.mayClose([tab], () => void this.closeAsking(id)))) this.close(id)
   }
 
   async closeActive() {
@@ -2571,7 +2591,7 @@ class Workspace {
 
   async closeMany(ids: readonly string[]) {
     const going = this.tabs.filter((one) => ids.includes(one.id))
-    if (!(await this.mayClose(going))) return
+    if (!(await this.mayClose(going, () => void this.closeMany(ids)))) return
 
     this.closeEach(
       going.map((one) => one.id),
@@ -2580,16 +2600,24 @@ class Workspace {
     )
   }
 
+  async closeAllIn(paneId: string) {
+    await this.closeMany(this.tabsIn(paneId).map((one) => one.id))
+  }
+
+  closesAllIn(paneId: string): number {
+    return this.tabsIn(paneId).length
+  }
+
   closesAround(id: string, which: Around): number {
     const tab = this.tabs.find((one) => one.id === id)
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
-  private async mayClose(closing: readonly Tab[]): Promise<boolean> {
+  private async mayClose(closing: readonly Tab[], again: () => void): Promise<boolean> {
     if (__EVEN_PLUGIN__) return true
     if (closing.some(unsaved)) {
       const { mayLose } = await import('./closing-unsaved')
-      if (!(await mayLose(this, closing))) return false
+      if (!(await mayLose(this, closing, again))) return false
     }
     if (!closing.some((tab) => tab.kind === 'terminal')) return true
     return services().mayEnd(closing, this.tabs)
@@ -2674,6 +2702,7 @@ class Workspace {
   async reopenClosed() {
     for (let batch = this.closed.take(); batch.length; batch = this.closed.take()) {
       let back: { tab: Tab; paneId: string } | null = null
+      const after: Record<string, number> = {}
       for (const closed of batch) {
         const trashed = closed.trashed
         if (trashed !== undefined) {
@@ -2685,7 +2714,9 @@ class Workspace {
         const draft = await reopening(closed.draft)
         if (!draft) continue
 
-        const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
+        const stays = this.panes.at(closed.paneId) !== null
+        const paneId = stays ? closed.paneId : this.panes.focusedId
+        if (!stays) after[closed.paneId] ??= this.tabsIn(paneId).length
         const [tab] = await this.tabsFrom([draft], paneId)
         if (!tab) continue
 
@@ -2696,7 +2727,8 @@ class Workspace {
           continue
         }
 
-        this.tabs = this.placed(tab, tab.paneId, tab.paneId === paneId ? closed.at : null)
+        const at = tab.paneId !== paneId ? null : (after[closed.paneId] ?? 0) + closed.at
+        this.tabs = this.placed(tab, tab.paneId, at)
         back = { tab, paneId: tab.paneId }
       }
       if (!back) continue
@@ -3023,9 +3055,21 @@ class Workspace {
     return root !== undefined && this.archive.holdsIn(root, path)
   }
 
+  private readonly elsewhere = new Map<string, Entry>()
+
   entryAt(path: string): Entry | null {
     const found = entryAt(this.tree, path)
-    return found && !samePath(found.path, this.tree?.path) ? found : null
+    if (found && !samePath(found.path, this.tree?.path)) return found
+    return this.elsewhere.get(path) ?? null
+  }
+
+  async carrying<T>(entries: readonly Entry[], run: () => Promise<T>): Promise<T> {
+    for (const one of entries) this.elsewhere.set(one.path, one)
+    try {
+      return await run()
+    } finally {
+      for (const one of entries) this.elsewhere.delete(one.path)
+    }
   }
 
   showEntry(entry: Entry) {
@@ -3580,7 +3624,8 @@ class Workspace {
     } as const
     try {
       if (toAccount) {
-        const back = crypto.randomUUID()
+        const { sync } = await import('../../sync-store/src/api')
+        const back = sync.tracked(path)?.id ?? crypto.randomUUID()
         await this.fileOps.doing({ ...gone, back }, () =>
           oneWriteAt(path, () => invoke(isFolder ? 'delete_folder' : 'delete_note', { path })),
         )
@@ -4047,6 +4092,12 @@ class Workspace {
   }
 
   copyOf(tab: Tab, paneId: string): Tab {
+    const copy = this.plainCopyOf(tab, paneId)
+    copy.behind = tab.behind
+    return copy
+  }
+
+  private plainCopyOf(tab: Tab, paneId: string): Tab {
     const words =
       !__EVEN_PLUGIN__ && tab.kind === 'terminal' && tab.path === null ? shellWords(tab.doc) : null
     if (!words) return new Tab(tab.note, paneId)
@@ -4186,7 +4237,7 @@ class Workspace {
     if (this.panes.count < 2) return
 
     const tabs = this.heldIn(paneId)
-    if (!(await this.mayClose(tabs))) return
+    if (!(await this.mayClose(tabs, () => void this.closePane(paneId)))) return
 
     this.closeEach(
       tabs.map((tab) => tab.id),
@@ -4248,7 +4299,7 @@ class Workspace {
         !tab.dirty &&
         (tab.path === null || !kept.some((path) => samePath(path, tab.path))),
     )
-    if (!(await this.mayClose(going))) return
+    if (!(await this.mayClose(going, () => void this.useLayout(name)))) return
     await this.applyLayout(layout)
   }
 }

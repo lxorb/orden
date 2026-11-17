@@ -350,6 +350,13 @@ describe('an embed on a line of its own', () => {
     expect(picturesIn(documentOf('![[shot.png]]\n', 'Note'))).toEqual(['shot.png'])
   })
 
+  test('an embedded picture beside words or another picture, or in a table, is a picture too', () => {
+    expect(picturesIn(documentOf('![[a.png]] ![[b.png]]\n', 'Note'))).toEqual(['a.png', 'b.png'])
+    expect(picturesIn(documentOf('See ![[a.png|the map]] here\n', 'Note'))).toEqual(['a.png'])
+    expect(picturesIn(documentOf('| a |\n|---|\n| ![[cat.png]] |\n', 'Note'))).toEqual(['cat.png'])
+    expect(picturesIn(documentOf('See ![[Plan]] here\n', 'Note'))).toEqual([])
+  })
+
   test('and the words after the bar are what it is of', () => {
     expect(blocks('![[shot.png|the sketch]]\n')).toEqual([
       { kind: 'paragraph', spans: [{ text: 'the sketch', picture: 'shot.png' }] },

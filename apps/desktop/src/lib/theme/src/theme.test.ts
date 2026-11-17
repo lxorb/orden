@@ -20,6 +20,13 @@ function memoryStorage(): Storage {
 
 let kept = memoryStorage()
 
+const storageHeard: ((event: { key: string | null }) => void)[] = []
+
+function anotherWindowWrote(key: string, value: string) {
+  kept.setItem(key, value)
+  for (const listener of storageHeard) listener({ key })
+}
+
 const media = {
   light: false,
   contrast: false,
@@ -34,7 +41,7 @@ let hearing: ((event: { key: string | null }) => void)[] = []
 
 function writtenElsewhere(values: Record<string, string>) {
   for (const [key, value] of Object.entries(values)) kept.setItem(key, value)
-  for (const heard of hearing) heard({ key: Object.keys(values)[0] ?? null })
+  for (const key of Object.keys(values)) for (const heard of hearing) heard({ key })
 }
 
 function systemPrefers(light: boolean) {
@@ -56,7 +63,10 @@ function stubs() {
   vi.stubGlobal('localStorage', kept)
   vi.stubGlobal('window', {
     addEventListener: (name: string, listener: (event: { key: string | null }) => void) => {
-      if (name === 'storage') hearing.push(listener)
+      if (name === 'storage') {
+        hearing.push(listener)
+        storageHeard.push(listener)
+      }
     },
     matchMedia: (query: string) => ({
       get matches() {
@@ -256,6 +266,52 @@ describe('what the dropdown offers', () => {
   test('the built-in carries both schemes, so it is one theme and not two', () => {
     expect(theme.active.variants).toEqual(['dark', 'light'])
     expect(theme.switchable).toBe(true)
+  })
+})
+
+describe('a second window', () => {
+  test('is heard over a preview that has ended', () => {
+    theme.init()
+    const [first, second] = theme.accents.slice(-2).map((one) => one.id)
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent: first } }))
+    theme.preview('contrast', theme.kept.scheme, second ?? '')
+    theme.preview(theme.kept.id, theme.kept.scheme, theme.kept.accent)
+
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent: second } }))
+    expect(theme.accent).toBe(second)
+  })
+
+  test('reads the folder again for a theme it has not listed', async () => {
+    theme.init()
+    await settled()
+    installed('rose', 'Rose', '[data-theme="dark"] { --bg: #200; }')
+    anotherWindowWrote('orden:theme', 'file:rose')
+    await settled(() => theme.active.id === 'file:rose')
+    expect(theme.active.id).toBe('file:rose')
+  })
+
+  test('is heard when it changes the theme or the scheme', () => {
+    theme.init()
+    anotherWindowWrote('orden:theme', 'contrast')
+    expect(theme.id).toBe('contrast')
+    expect(theme.kept.id).toBe('contrast')
+
+    anotherWindowWrote('orden:theme-scheme', 'light')
+    expect(theme.scheme).toBe('light')
+  })
+
+  test('keeps a theme setting it chose when this one changes another', () => {
+    theme.init()
+    const accent = theme.accents.at(-1)?.id ?? ''
+    anotherWindowWrote('orden:theme-settings', JSON.stringify({ '*': { accent } }))
+    expect(theme.kept.accent).toBe(accent)
+
+    theme.setFor('somewhere', 'dial', 3)
+    const written = JSON.parse(kept.getItem('orden:theme-settings') ?? '{}') as Record<
+      string,
+      { accent?: string }
+    >
+    expect(written['*']?.accent).toBe(accent)
   })
 })
 

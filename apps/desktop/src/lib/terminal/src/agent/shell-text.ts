@@ -443,6 +443,15 @@ function gitOptionFree(word: string, free: Free): boolean {
   return word.length > 1
 }
 
+const OUTSIDE = /(^|[=@])([\\/~]|[A-Za-z]:)|(file|link|portal):/i
+
+function reachesOut(word: string): boolean {
+  return OUTSIDE.test(word) || word.split(/[\\/=@:]/).includes('..')
+}
+
+const anyReachesOut = (words: readonly string[]) =>
+  words.some((word) => !word.startsWith('-') && reachesOut(word))
+
 function gitStays(plain: readonly string[]): boolean {
   const at = plain.findIndex((word) => !word.startsWith('-'))
   const leading = at === -1 ? plain : plain.slice(0, at)
@@ -452,6 +461,7 @@ function gitStays(plain: readonly string[]): boolean {
   if (command === undefined) return true
   const free = Object.hasOwn(GIT, command) ? GIT[command] : undefined
   if (!free) return false
+  if (anyReachesOut(plain.slice(at + 1))) return false
 
   for (const word of plain.slice(at + 1)) {
     if (word === '--') return true
@@ -512,13 +522,17 @@ function positional(plain: readonly string[], from: number): boolean {
   return plain.slice(from, end === -1 ? undefined : end).some((word) => !word.startsWith('-'))
 }
 
+function optionReachesOut(word: string): boolean {
+  return word.startsWith('-') && (/[\\/~:]/.test(word) || word.includes('..'))
+}
+
 function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
 
   if (program === 'git') return gitStays(plain)
 
   const reach = REACH[program]
-  if (!reach) return true
+  if (!reach) return !anyReachesOut(plain) && !plain.some(optionReachesOut)
 
   let at = 0
   for (; at < plain.length; at++) {
@@ -531,6 +545,8 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
         if (at === plain.length) return false
       }
       if (/\s/.test(word) || /\s/.test(plain[at] ?? '')) return false
+      const value = word.includes('=') ? word.slice(word.indexOf('=') + 1) : (plain[at] ?? '')
+      if (reachesOut(value)) return false
       continue
     }
     return false
@@ -544,6 +560,8 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (command !== undefined) {
     if (!reach.commands.includes(command) && !bareNameStays(program, plain, at)) return false
   }
+
+  if (anyReachesOut(plain.slice(at + 1))) return false
 
   const end = plain.indexOf('--', at)
   for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {
@@ -563,10 +581,38 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   const program = programOf(command, os)
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
-  if (/(?! )\p{Zs}/u.test(command)) return false
+  if (!readAlikeEverywhere(command, os)) return false
 
   const words = wordsOf(command.trim())
-  return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
+  if (words === null || !argumentsStay(program.toLowerCase(), words.slice(1))) return false
+  return os !== 'windows' || argumentsStay(program.toLowerCase(), asCommandPromptReads(command))
+}
+
+function asCommandPromptReads(command: string): string[] {
+  const words = command.trim().match(/"[^"]*"|[^ ]+/g) ?? []
+  return words.slice(1).map((one) => one.replace(/"/g, ''))
+}
+
+export function runsOnTheList(
+  program: string,
+  args: readonly string[],
+  programs: readonly string[],
+  os: Os,
+): boolean {
+  const name = programOf(program, os)
+  if (name === '' || !programs.some((one) => programOf(one, os) === name)) return false
+  if (args.some((one) => /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one))) return false
+  return argumentsStay(name.toLowerCase(), args)
+}
+
+const READ_ALIKE = /^[\p{L}\p{M}0-9 _\-./:=+@%~,^'"]*$/u
+
+function readAlikeEverywhere(command: string, os: Os): boolean {
+  if (!READ_ALIKE.test(command) || /,['"]*-/.test(command)) return false
+  if (os !== 'windows') return true
+  if (/[\^]|%[^%\s]*%/.test(command)) return false
+  if (/""|''/.test(command) || (command.includes("'") && command.includes('"'))) return false
+  return !/'[^']*\s-[^']*'/.test(command)
 }
 
 export function startsOnlyOne(command: string): boolean {

@@ -13,6 +13,7 @@ import { oneEdit } from '@orden/markdown/edits'
 import {
   blockIdOf,
   blockIds,
+  decodeTarget,
   foldName,
   type FoundLink,
   freeBlockId,
@@ -172,7 +173,11 @@ interface FilesNamed {
   last: ReadonlyMap<string, readonly string[]>
 }
 
+const byFiles = new WeakMap<readonly string[], FilesNamed>()
+
 function filesByName(files: readonly string[]): FilesNamed {
+  const known = byFiles.get(files)
+  if (known) return known
   const whole = new Map<string, string[]>()
   const last = new Map<string, string[]>()
   const add = (map: Map<string, string[]>, key: string, path: string) => {
@@ -184,32 +189,32 @@ function filesByName(files: readonly string[]): FilesNamed {
     add(whole, foldName(path), path)
     add(last, foldName(nameOf(path)), path)
   }
+  byFiles.set(files, { whole, last })
   return { whole, last }
 }
 
 function fileNamed(
-  named: FilesNamed,
-  source: string,
+  all: readonly string[],
+  source: string | null,
   link: { kind: LinkKind; target: string },
 ): string | null {
-  let files: readonly string[] | undefined
-  if (link.kind === 'markdown') {
-    const target = link.target.replace(/\\/g, '/')
-    const parts = target.startsWith('/') ? [] : folderOf(source).split('/').filter(Boolean)
-    for (const part of target.split('/')) {
-      if (part === '' || part === '.') continue
+  const named = filesByName(all)
+  const slashed = link.target.replace(/\\/g, '/')
+  const written = slashed.trim()
+  const whole = (from: string) => {
+    const parts = from.split('/').filter(Boolean)
+    for (const part of slashed.split('/')) {
       if (part === '..') parts.pop()
-      else parts.push(part)
+      else if (!/^\.?$/.test(part)) parts.push(part)
     }
-    files = named.whole.get(foldName(parts.join('/')))
-    if (!files && !/^(?:\.{1,2}(?:\/|$)|\/)/.test(target.trim())) {
-      const last = target.trim().split('/').pop() ?? ''
-      files = named.whole.get(foldName(target.trim())) ?? named.last.get(foldName(last))
-    }
-  } else {
-    const last = link.target.trim().replace(/\\/g, '/').split('/').pop() ?? ''
-    files = named.last.get(foldName(last))
+    return named.whole.get(foldName(parts.join('/')))
   }
+  const last = named.last.get(foldName(written.split('/').pop() ?? ''))
+  const files =
+    link.kind !== 'markdown'
+      ? last
+      : (whole(slashed.startsWith('/') ? '' : folderOf(source ?? '')) ??
+        (/^\.{0,2}\//.test(written) ? undefined : (whole('') ?? last)))
   if (!files) return null
   return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
 }
@@ -925,15 +930,13 @@ class Links {
     () => new Map(this.notes.map((one) => [one.path, one])),
   )
 
-  private readonly filesNamed = $derived.by(() => filesByName(this.files))
-
   rebased(text: string, from: string, to: string): string | null {
     const was = this.otherHolding(from) === null ? this.relative(from) : null
     const now = this.otherHolding(to) === null ? this.relative(to) : null
     if (!was || !now || folderOf(was) === folderOf(now)) return null
 
     const read = (source: string, link: { kind: LinkKind; target: string }) =>
-      this.resolveFrom(source, link, false) ?? fileNamed(this.filesNamed, source, link)
+      this.resolveFrom(source, link, false) ?? fileNamed(this.files, source, link)
     return retargetLinks(text, now, (link) => {
       const there = read(was, link)
       if (there === null) return null
@@ -953,7 +956,7 @@ class Links {
     source: string | null,
     link: { kind: LinkKind; target: string },
   ): string | null {
-    return this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source ?? '', link)
+    return this.resolveFrom(source, link) ?? fileNamed(this.files, source ?? '', link)
   }
 
   targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
@@ -1226,7 +1229,7 @@ class Links {
       const touched = await this.retargetIn(
         this.notes,
         (source, link) =>
-          this.resolveFrom(source, link, false) ?? fileNamed(this.filesNamed, source, link),
+          this.resolveFrom(source, link, false) ?? fileNamed(this.files, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
         {
           was,
@@ -1268,11 +1271,10 @@ class Links {
       path: null,
       read: nothing,
     }
-    const named = filesByName(index.files)
     const touched = await this.retargetIn(
       notes,
       (source, link) =>
-        resolvedIn({ ...index, path: source }, link) ?? fileNamed(named, source, link),
+        resolvedIn({ ...index, path: source }, link) ?? fileNamed(index.files, source, link),
       () => undefined,
       { was, now, root, open, how, files: index.files },
     )
@@ -1681,14 +1683,13 @@ class Links {
     return files.some((one) => samePath(one, at))
   }
 
-  fileFor(name: string, notePath: string | null): string | null {
+  fileFor(name: string, notePath: string | null, kind: LinkKind = 'wikilink'): string | null {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null
-    const found =
-      other !== null && notePath !== null
-        ? resolveFile(this.otherIndex(other, notePath), name, 'wikilink')
-        : this.fileNamed(name)
+    const { files, path } = this.index(notePath)
+    const target = kind === 'markdown' ? decodeTarget(name) : name
+    const found = fileNamed(files, path, { kind, target })
     return found === null ? null : insideSpace(root, found)
   }
 

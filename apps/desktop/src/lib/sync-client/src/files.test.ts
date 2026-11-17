@@ -106,3 +106,39 @@ describe('a file at the place its own entry wants, with no entry holding it', ()
     expect(space.awaitedAt('Other.application')).toBeNull()
   })
 })
+
+describe('a file changed on another device', () => {
+  test('is not written over a change made here while its bytes come down', async () => {
+    const { disk, entry, space, core, held } = fixture('old')
+    entry.local_path = 'App.application'
+    entry.written_hash = 'hash:old'
+    entry.file_key = 'hash:new'
+    const down = core.world.blobs.down
+    core.world.blobs.down = async (spaceId: string, id: string) => {
+      await disk.writeBytes(`${ROOT}/App.application`, new TextEncoder().encode('edited here'))
+      return down(spaceId, id)
+    }
+
+    expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
+
+    const kept = await disk.readBytes(`${ROOT}/App.application`)
+    expect(new TextDecoder().decode(kept ?? new Uint8Array())).toBe('edited here')
+    expect(held.has('a')).toBe(true)
+  })
+
+  test('nor over a file another program puts at its place while its bytes come down', async () => {
+    const { disk, entry, space, core } = fixture('old')
+    await disk.remove(`${ROOT}/App.application`)
+    const down = core.world.blobs.down
+    core.world.blobs.down = async (spaceId: string, id: string) => {
+      await disk.writeBytes(`${ROOT}/App.application`, new TextEncoder().encode('made here'))
+      return down(spaceId, id)
+    }
+
+    expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
+
+    const kept = await disk.readBytes(`${ROOT}/App.application`)
+    expect(new TextDecoder().decode(kept ?? new Uint8Array())).toBe('made here')
+    expect(entry.written_hash).not.toBe('hash:from the account')
+  })
+})

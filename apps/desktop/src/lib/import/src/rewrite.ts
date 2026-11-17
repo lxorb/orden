@@ -1,5 +1,6 @@
+import { baseUnder } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { foldName } from '@orden/markdown/links'
+import { foldName, isWebTarget } from '@orden/markdown/links'
 
 import { linkTo } from '../../link-format/src/api'
 import { folderOf, isMarkdownPath, relativePath } from '../../platform/src/api'
@@ -170,7 +171,11 @@ function definitionsFollowed(text: string, follow: (path: string) => string | nu
   )
 }
 
-export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, string>): Uint8Array {
+export function canvasFollowed(
+  bytes: Uint8Array,
+  moved: ReadonlyMap<string, string>,
+  under = '',
+): Uint8Array {
   let text: string
   try {
     text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
@@ -181,8 +186,9 @@ export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, str
   const followed = text.replace(
     /("(?:file|background)"\s*:\s*)("(?:[^"\\]|\\.)*")/g,
     (whole, key: string, said: string) => {
-      const now = moved.get(jsonString(said) ?? '')
-      return now === undefined ? whole : `${key}${JSON.stringify(now)}`
+      const was = jsonString(said) ?? ''
+      const now = moved.get(was) ?? (under && isSpacePath(was) ? was : undefined)
+      return now === undefined ? whole : `${key}${JSON.stringify(under ? `${under}/${now}` : now)}`
     },
   )
   return followed === text ? bytes : new TextEncoder().encode(followed)
@@ -193,11 +199,61 @@ export function linksFollowed(
   was: string,
   moved: ReadonlyMap<string, string>,
   paths: readonly string[],
+  under = '',
+  space: ReadonlyMap<string, string[]> = new Map(),
 ): string {
   const here = folderOf(was)
   const movedFolded = new Map([...moved].map(([from, to]) => [foldName(from), to] as const))
   const called = calledBy(paths)
   const code = withMath(text, codeRanges(text))
+  const known = new Set(paths.map(foldName))
+  const movedTo = (path: string) => moved.get(path) ?? movedFolded.get(foldName(path))
+  const landed = (path: string) => `${under ? `${under}/` : ''}${movedTo(path) ?? path}`
+
+  let notesCalled: ReadonlyMap<string, string[]> | null = null
+  const alongFolder = (said: string) => {
+    notesCalled ??= calledBy(paths.filter(namesNote))
+    return nearest(joined(here, said), was, notesCalled)
+  }
+
+  const byName = (said: string): string | null => {
+    const meant = alongFolder(said) ?? nearest(said, was, called)
+    if (meant === undefined) return null
+    const landing = landed(meant)
+    const from = landed(was)
+    const held = (path: string) => path !== landing && holds(path, space)
+    const along = fitting(joined(folderOf(from), said), space)
+    const reachedAlong = namesNote(landing) && along.includes(landing)
+    const taken =
+      movedTo(meant) !== undefined ||
+      along.some((path) => path !== landing) ||
+      held(said) ||
+      (!reachedAlong && captured(said, landing, from, space))
+    return taken ? relativePath(folderOf(from), landing) : null
+  }
+
+  const follow = (path: string): string | null => {
+    const top = path.replace(/^\/+/, '')
+    const beside = joined(here, path)
+    const dotted = /^\.{1,2}(\/|$)/.test(path)
+    const fromTop =
+      path.startsWith('/') || (!dotted && !known.has(foldName(beside)) && known.has(foldName(top)))
+    if (!fromTop) {
+      const now = movedTo(beside)
+      if (now !== undefined) return relativePath(here, now)
+      return dotted || known.has(foldName(beside)) ? null : byName(path)
+    }
+    if (!path.startsWith('/')) {
+      const landing = landed(top)
+      const from = folderOf(landed(was))
+      const near = joined(from, landing)
+      if (near !== landing && holds(near, space)) return relativePath(from, landing)
+    }
+    const now = movedTo(top) ?? (under && known.has(foldName(top)) ? top : undefined)
+    if (now === undefined) return null
+    if (path.startsWith('/') && !under) return relativePath(here, now)
+    return `${path.startsWith('/') ? '/' : ''}${under ? `${under}/` : ''}${now}`
+  }
 
   function markdownLink(
     whole: string,
@@ -216,17 +272,16 @@ export function linksFollowed(
     const { target, title } = splitTarget(inside)
     if (!target || isAddress(target)) return kept
     const { path: written, fragment } = splitFragment(target)
-    const path = decoded(written)
-    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
-    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
-    if (now === undefined) return kept
+    const now = follow(decoded(written))
+    if (now === null) return kept
 
     const anchor = fragment === null ? '' : `#${fragment}`
-    return `${bang}[${words}](${encodeTarget(relativePath(here, now))}${anchor}${title})`
+    return `${bang}[${words}](${encodeTarget(now)}${anchor}${title})`
   }
 
   const linked = text.replace(LINK, markdownLink)
   const stillCode = withMath(linked, codeRanges(linked))
+  const stillTables = tableRanges(linked)
 
   const wikilinked = linked.replace(
     WIKILINK,
@@ -238,29 +293,39 @@ export function linksFollowed(
       const { path, fragment } = splitFragment(named)
       const said = path.trim()
       const meant = nearest(said, was, called)
-      const now = meant === undefined ? undefined : moved.get(meant)
-      if (meant === undefined || now === undefined) return whole
+      if (meant === undefined) return whole
+      const now = moved.get(meant)
+      const respelt = now === undefined ? said : respelled(said, meant, now)
+      if (respelt === null) return whole
 
-      const renamed = respelled(said, meant, now)
-      if (renamed === null) return whole
+      const renamed =
+        under && said.startsWith('/') ? `/${under}/${respelt.replace(/^\/+/, '')}` : respelt
+      const landing = landed(meant)
+      const top = isMarkdownPath(landing) ? withoutExtension(landing) : landing
+      const from = landed(was)
+      const reached = !captured(renamed, landing, from, space)
+        ? renamed
+        : captured(top, landing, from, space)
+          ? `/${top}`
+          : top
+      if (reached === said) return whole
       const bang = whole.startsWith('!') ? '!' : ''
       const anchor = fragment === null ? '' : `#${fragment}`
-      return `${bang}[[${path.replace(said, renamed)}${anchor}${cell ? '\\' : ''}${shown ?? ''}]]`
+      const pipe = inCode(stillTables, offset) ? '\\|' : '|'
+      const words =
+        shown ?? (reached === renamed || bang || fragment !== null ? '' : `${pipe}${renamed}`)
+      return `${bang}[[${path.replace(said, () => reached)}${anchor}${cell ? '\\' : ''}${words}]]`
     },
   )
 
-  return definitionsFollowed(wikilinked, (path) => {
-    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
-    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
-    return now === undefined ? null : relativePath(here, now)
-  })
+  return definitionsFollowed(wikilinked, follow)
 }
 
-function calledBy(paths: readonly string[]): Map<string, string[]> {
+export function calledBy(paths: readonly string[]): Map<string, string[]> {
   const called = new Map<string, string[]>()
   for (const path of paths) {
     const name = path.split('/').pop() ?? path
-    const names = isMarkdownPath(path) ? [name, withoutExtension(name)] : [name]
+    const names = namesNote(path) ? [name, withoutExtension(name)] : [name]
     for (const one of names) {
       const key = foldName(one)
       const gathered = called.get(key)
@@ -271,18 +336,51 @@ function calledBy(paths: readonly string[]): Map<string, string[]> {
   return called
 }
 
+function fitting(said: string, called: ReadonlyMap<string, string[]>): string[] {
+  const wanted = foldName(said.replace(/^\/+/, ''))
+  return (called.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {
+    const whole = foldName(path)
+    const bare = namesNote(path) ? foldName(withoutExtension(path)) : whole
+    return [whole, bare].some((one) => one === wanted || one.endsWith(`/${wanted}`))
+  })
+}
+
+function holds(path: string, space: ReadonlyMap<string, string[]>): boolean {
+  const wanted = foldName(path)
+  return fitting(path, space).some(
+    (one) =>
+      foldName(namesNote(one) ? withoutExtension(one) : one) === wanted || foldName(one) === wanted,
+  )
+}
+
+function captured(
+  said: string,
+  meant: string,
+  from: string,
+  space: ReadonlyMap<string, string[]>,
+): boolean {
+  if (said.startsWith('/')) return false
+  const note = namesNote(meant)
+  const here = foldName(folderOf(from))
+  const depth = (path: string) => path.split('/').length
+  const beside = (path: string) => (foldName(folderOf(path)) === here ? 0 : 1)
+  return fitting(said, space).some(
+    (path) =>
+      namesNote(path) === note &&
+      (beside(path) - beside(meant) || depth(path) - depth(meant) || (path < meant ? -1 : 1)) < 0,
+  )
+}
+
+function namesNote(path: string): boolean {
+  return isMarkdownPath(path) || isWebTarget(path)
+}
+
 function nearest(
   said: string,
   from: string,
   called: ReadonlyMap<string, string[]>,
 ): string | undefined {
-  const wanted = foldName(said.replace(/^\/+/, ''))
-  const fits = (called.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {
-    const whole = foldName(path)
-    const bare = isMarkdownPath(path) ? foldName(withoutExtension(path)) : whole
-    return [whole, bare].some((one) => one === wanted || one.endsWith(`/${wanted}`))
-  })
-
+  const fits = fitting(said, called)
   const here = folderOf(from)
   const depth = (path: string) => path.split('/').length
   const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
@@ -293,7 +391,8 @@ function nearest(
 }
 
 function respelled(said: string, from: string, to: string): string | null {
-  const parts = said.split('/')
+  const lead = /^\/*/.exec(said)?.[0] ?? ''
+  const parts = said.slice(lead.length).split('/')
   const last = parts.pop() ?? said
   const whole = from.split('/').pop() ?? from
   const name = [whole, withoutExtension(whole)].find((one) => foldName(one) === foldName(last))
@@ -302,7 +401,54 @@ function respelled(said: string, from: string, to: string): string | null {
   const fresh = to.split('/').pop() ?? to
   const after = name === whole ? fresh : withoutExtension(fresh)
   const spelled = after.startsWith(name) ? last + after.slice(name.length) : after
-  return [...parts, spelled].join('/')
+  const was = from.split('/').slice(0, -1)
+  const now = to.split('/').slice(0, -1)
+  const folders = parts.map((part, at) => {
+    const back = parts.length - at
+    const before = was[was.length - back]
+    const moved = now[now.length - back]
+    return moved === undefined || foldName(before ?? '') === foldName(moved) ? part : moved
+  })
+  return `${lead}${[...folders, spelled].join('/')}`
+}
+
+export function baseFollowed(
+  bytes: Uint8Array,
+  under: string,
+  moved?: (path: string) => string,
+): Uint8Array {
+  let text: string
+  try {
+    text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
+  } catch {
+    return bytes
+  }
+
+  const followed = baseUnder(text, under, moved)
+  return followed === text ? bytes : new TextEncoder().encode(followed)
+}
+
+const BASE_FENCE = /^(`{3,}|~{3,})[ \t]*base(?:[ \t][^\r\n]*)?\r?\n([\s\S]*?)^\1[`~]*[ \t]*\r?$/gm
+
+export function basesFollowed(
+  text: string,
+  under: string,
+  moved?: (path: string) => string,
+): string {
+  return text.replace(BASE_FENCE, (whole, _fence: string, yaml: string) => {
+    const lines = yaml.replace(/\r\n/g, '\n')
+    const followed = baseUnder(lines, under, moved)
+    if (followed === lines) return whole
+    return whole.replace(yaml, () => (lines === yaml ? followed : followed.replace(/\n/g, '\r\n')))
+  })
+}
+
+export function isBase(path: string): boolean {
+  return /\.base$/i.test(path)
+}
+
+function isSpacePath(path: string): boolean {
+  return path !== '' && !/^[/\\]/.test(path) && !/^[a-z][a-z0-9+.-]*:/i.test(path)
 }
 
 function jsonString(said: string): string | null {
@@ -441,17 +587,17 @@ function codeOnly(text: string): [number, number][] {
         indented = null
       }
 
-      if (indented) {
-        // Still in the block.
-      } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
-        spans(text, prose, at, ranges)
-        fence = { mark, from: at, loose, depth }
-        if (!INDENTED.test(line)) listed = item !== null
-      } else if (!empty && INDENTED.test(line) && blank && !listed) {
-        spans(text, prose, at, ranges)
-        indented = { from: at, to: at + whole.length }
-      } else if (!empty && !INDENTED.test(line)) {
-        listed = LIST_ITEM.test(line)
+      if (!indented) {
+        if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
+          spans(text, prose, at, ranges)
+          fence = { mark, from: at, loose, depth }
+          if (!INDENTED.test(line)) listed = item !== null
+        } else if (!empty && INDENTED.test(line) && blank && !listed) {
+          spans(text, prose, at, ranges)
+          indented = { from: at, to: at + whole.length }
+        } else if (!empty && !INDENTED.test(line)) {
+          listed = LIST_ITEM.test(line)
+        }
       }
     }
 
@@ -570,6 +716,7 @@ export function encodeTarget(path: string): string {
     .replace(/ /g, '%20')
     .replace(/\(/g, '%28')
     .replace(/\)/g, '%29')
+    .replace(/\s/gu, (blank) => encodeURIComponent(blank))
 }
 
 export class ExportFiles {

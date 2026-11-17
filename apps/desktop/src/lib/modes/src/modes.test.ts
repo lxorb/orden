@@ -653,6 +653,133 @@ describe('taking over what the account holds', () => {
     return { release, settingsCall }
   }
 
+  test('a change the account was not told of before a restart is sent first, not undone', async () => {
+    const sent: Held[] = []
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    api.saveSettings = async (_token, patch) => {
+      sent.push(patch)
+      return { settings: {} }
+    }
+    api.settings = async () => ({ settings: { silent: false } })
+    modes.toggleSilent()
+    expect(modes.silent).toBe(true)
+
+    modes = await restarted()
+    await modes.adopt('token')
+
+    expect(sent).toEqual([expect.objectContaining({ silent: true })])
+    Object.assign(api, was)
+  })
+
+  test('keeps a change the account never heard across a restart, and sends it before reading', async () => {
+    const sent: Held[] = []
+    let server: Held = { ligatures: 'all' }
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    const accounts = await import('../../accounts/src/api')
+    accounts.account.token = 'token'
+    modes.setLigatures('code')
+
+    const store = await restarted()
+    ;(await import('../../accounts/src/api')).account.token = 'token'
+    api.saveSettings = async (_token: string, patch: Held) => {
+      sent.push(patch)
+      server = { ...server, ...patch }
+      return { settings: server }
+    }
+    api.settings = async () => ({ settings: server })
+    await store.adopt('token')
+
+    expect(sent).toEqual([{ ligatures: 'code' }])
+    expect(store.ligatures).toBe('code')
+
+    sent.length = 0
+    await (await restarted()).adopt('token')
+    expect(sent).toEqual([])
+    Object.assign(api, was)
+  })
+
+  test('keeps what is owed to an account through a launch that does not know the account yet', async () => {
+    const sent: Held[] = []
+    let server: Held = { vim: false, ligatures: 'all' }
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    const signedIn = async (id: string | null) => {
+      const { account } = await import('../../accounts/src/api')
+      account.token = 'token'
+      account.user = id === null ? null : ({ id } as typeof account.user)
+    }
+
+    await signedIn('u1')
+    api.saveSettings = async () => {
+      throw new Error('offline')
+    }
+    modes.setVimKeys(true)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const store = await restarted()
+    await signedIn(null)
+    store.setLigatures('code')
+    await signedIn('u1')
+    api.saveSettings = async (_token: string, patch: Held) => {
+      sent.push(patch)
+      server = { ...server, ...patch }
+      return { settings: server }
+    }
+    api.settings = async () => ({ settings: server })
+    await store.adopt('token')
+
+    expect(sent).toEqual([{ vim: true, ligatures: 'code' }])
+    expect(store.vim).toBe(true)
+    expect(store.ligatures).toBe('code')
+    const { account } = await import('../../accounts/src/api')
+    account.token = null
+    account.user = null
+    Object.assign(api, was)
+  })
+
+  test('keeps a change made while signed out on this device, and takes the account’s at sign-in', async () => {
+    const sent: Held[] = []
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    const { account } = await import('../../accounts/src/api')
+    await account.restore()
+    modes.setLigatures('code')
+
+    const store = await restarted()
+    api.saveSettings = async (_token: string, patch: Held) => {
+      sent.push(patch)
+      return { settings: {} }
+    }
+    api.settings = async () => ({ settings: { ligatures: 'all' } })
+    await store.adopt('token')
+
+    expect(sent).toEqual([])
+    expect(store.ligatures).toBe('all')
+    Object.assign(api, was)
+  })
+
+  test('lets go of a change the account turned down, and hears the account again', async () => {
+    const { ApiError } = await import('../../accounts/src/client')
+    let server: Held = { vim: false }
+    const was = { settings: api.settings, saveSettings: api.saveSettings }
+    api.saveSettings = async (_token: string, patch: Held) => {
+      if (patch.ligatures === 'code') throw new ApiError(400, 'refused')
+      server = { ...server, ...patch }
+      return { settings: server }
+    }
+    api.settings = async () => ({ settings: server })
+
+    const { account } = await import('../../accounts/src/api')
+    account.token = 'token'
+    modes.setLigatures('code')
+    await modes.adopt('token')
+    account.token = null
+
+    server = { ...server, vim: true }
+    const store = await restarted()
+    await store.adopt('token')
+    expect(store.vim).toBe(true)
+    Object.assign(api, was)
+  })
+
   test('brings the formatting marks kept quiet', async () => {
     const { release, settingsCall } = heldAnswer({ quietMarks: true })
     api.settings = settingsCall

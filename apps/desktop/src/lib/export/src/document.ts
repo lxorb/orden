@@ -151,6 +151,10 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'wikilink':
     case 'embed': {
       const link = token.link as Wikilink | undefined
+      if (link?.embed === true && embedKind(link.target) === 'image') {
+        const named = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+        return [{ ...marks, text: named, picture: link.target }]
+      }
       return [{ ...marks, text: link ? shownText(link) : token.raw }]
     }
 

@@ -155,11 +155,8 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
   for (const path of action.paths) {
     const wrote = action.wrote[path]
     if (wrote === undefined) {
-      const gone = await ws
-        .bin(path, false, { madeHere: true })
-        .then(() => true)
-        .catch(() => false)
-      if (gone) await ws.fileGone(path, 'file')
+      const kept = await ws.bin(path, false, { madeHere: true }).catch(() => false as const)
+      if (kept !== false) await ws.fileGone(path, 'file', kept?.trashId ?? kept?.back)
       continue
     }
 
@@ -175,8 +172,8 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
 
 async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
   for (const { path, folder } of action.made) {
-    await ws.bin(path, folder, { madeHere: true })
-    await ws.fileGone(path, folder ? 'folder' : 'file')
+    const kept = await ws.bin(path, folder, { madeHere: true })
+    await ws.fileGone(path, folder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
   }
 }
 
@@ -415,6 +412,7 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   await writeFile(action.into, action.intoContent)
   const from = await freeBeside(action.from)
   await writeFile(from, action.fromContent)
+  if (action.back) await ws.fileCame(from, 'file', undefined, action.back)
   ws.reload(action.into, action.intoContent)
 
   const others = (path: string) => !samePath(path, action.into) && !samePath(path, action.from)

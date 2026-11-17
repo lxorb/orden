@@ -52,7 +52,7 @@ impl Default for Words {
 
 #[derive(Default)]
 struct Shell {
-    last: HashMap<String, Instant>,
+    last: HashMap<(String, String), Instant>,
     said: Vec<String>,
     words: Words,
     key: Option<String>,
@@ -103,24 +103,34 @@ pub fn start(app: &AppHandle) {
     });
 }
 
-pub fn heard(app: &AppHandle, agent: &str) {
+pub fn heard(app: &AppHandle, agent: &str, session: &str) {
     start(app);
-    let fresh = with(|shell| {
-        shell
-            .last
-            .insert(agent.to_string(), Instant::now())
-            .is_none_or(|at| at.elapsed() >= CONNECTED_FOR)
-    });
+    let fresh = with(|shell| heard_in(shell, agent, session, Instant::now()));
     if fresh {
         changed(app);
     }
 }
 
-pub fn bye(app: &AppHandle, agent: &str) {
-    with(|shell| {
-        shell.last.remove(agent);
-    });
+fn heard_in(shell: &mut Shell, agent: &str, session: &str, now: Instant) -> bool {
+    shell
+        .last
+        .retain(|_, at| now.saturating_duration_since(*at) < CONNECTED_FOR);
+    let before = connected_in(shell, now);
+    shell
+        .last
+        .insert((agent.to_owned(), session.to_owned()), now);
+    connected_in(shell, now) != before
+}
+
+pub fn bye(app: &AppHandle, agent: &str, session: &str) -> bool {
+    let last = with(|shell| left_in(shell, agent, session, Instant::now()));
     changed(app);
+    last
+}
+
+fn left_in(shell: &mut Shell, agent: &str, session: &str, now: Instant) -> bool {
+    shell.last.remove(&(agent.to_owned(), session.to_owned()));
+    !connected_in(shell, now).iter().any(|one| one == agent)
 }
 
 pub fn connected() -> Vec<String> {
@@ -132,9 +142,10 @@ fn connected_in(shell: &Shell, now: Instant) -> Vec<String> {
         .last
         .iter()
         .filter(|(_, at)| now.saturating_duration_since(**at) < CONNECTED_FOR)
-        .map(|(id, _)| id.clone())
+        .map(|((id, _), _)| id.clone())
         .collect();
     connected.sort();
+    connected.dedup();
     connected
 }
 
@@ -444,13 +455,29 @@ mod tests {
     fn an_agent_is_connected_for_ten_minutes_after_its_last_call() {
         let now = Instant::now();
         let mut shell = Shell::default();
-        shell.last.insert("claude".into(), now);
-        shell.last.insert("codex".into(), now);
+        assert!(heard_in(&mut shell, "claude", "s1", now));
+        assert!(heard_in(&mut shell, "codex", "s1", now));
+        assert!(!heard_in(&mut shell, "claude", "s2", now));
         assert_eq!(connected_in(&shell, now), ["claude", "codex"]);
 
         let later = now + CONNECTED_FOR;
-        shell.last.insert("codex".into(), later);
+        assert!(heard_in(&mut shell, "codex", "s1", later));
         assert_eq!(connected_in(&shell, later), ["codex"]);
+        assert_eq!(shell.last.len(), 1, "the sessions gone quiet are let go");
+    }
+
+    #[test]
+    fn a_session_that_leaves_leaves_the_others_of_its_agent_connected() {
+        let now = Instant::now();
+        let mut shell = Shell::default();
+        heard_in(&mut shell, "claude", "s1", now);
+        heard_in(&mut shell, "claude", "s2", now);
+        heard_in(&mut shell, "codex", "s1", now);
+
+        assert!(!left_in(&mut shell, "claude", "s2", now));
+        assert_eq!(connected_in(&shell, now), ["claude", "codex"]);
+        assert!(left_in(&mut shell, "claude", "s1", now));
+        assert_eq!(connected_in(&shell, now), ["codex"]);
     }
 
     #[test]

@@ -13,6 +13,11 @@ const fake = vi.hoisted(() => ({
   moves: [] as string[][],
   undone: { stack: [] as { kind: string; path: string; content: string }[] },
   unwritable: new Set<string>(),
+  rewound: [] as string[],
+}))
+
+vi.mock('../store/setup', () => ({
+  engineOf: () => Promise.resolve({ rewound: (thread: Thread) => fake.rewound.push(thread.id) }),
 }))
 
 vi.mock('../../../automation/src/api', async (importOriginal) => {
@@ -133,8 +138,9 @@ vi.mock('../../../file-writes/src/api', async (original) => ({
 
 const { deskWith } = await import('../../../agent-docs/src/test-desk')
 const { editNote } = await import('../../../agent-docs/src/edit')
-const { review } = await import('./review.svelte')
+const { review, switchBranch } = await import('./review.svelte')
 const { busy } = await import('../../../ui-kit/src/busy.svelte')
+const { ai } = await import('../../../ai-providers/src/api')
 
 class Viewer {
   state: EditorState
@@ -280,6 +286,37 @@ describe('a rewind', () => {
     expect(fake.removed).toEqual([])
   })
 
+  test('a summary from here of turns that read others’ words still counts as having read them', async () => {
+    fake.desk = deskWith({ 'A.md': 'a' })
+    fake.documents = []
+    const thread = aThread()
+    await message(thread, 'first', [], [])
+    await message(
+      thread,
+      'second',
+      [],
+      [
+        {
+          kind: 'tool',
+          id: 't1',
+          verb: 'read_note',
+          args: {},
+          state: 'ok',
+          result: {
+            text: '<untrusted source="shared space Team">\nhi\n</untrusted>',
+            images: [],
+            error: false,
+          },
+        },
+      ],
+    )
+    const { readOutside } = await import('../chat/transcript')
+    expect(readOutside(thread.turns)).toBe(true)
+    await review.rewind(thread, 'second', 'summarize-from', null)
+    expect(thread.turns.some((one) => one.id === 'second-answer')).toBe(false)
+    expect(readOutside(thread.turns)).toBe(true)
+  })
+
   test('Redo brings back the compaction the turns it brings back held up', async () => {
     fake.desk = deskWith({ 'A.md': 'a' })
     fake.documents = []
@@ -380,6 +417,56 @@ describe('a rewind', () => {
     await review.rewind(thread, 'make', 'both', null)
     expect(fake.removed).toEqual([])
     expect(fake.desk.fileOf('Projects.md')).toBe('my own words')
+  })
+})
+
+describe('a local session', () => {
+  beforeEach(() => {
+    fake.desk = deskWith({})
+    fake.documents = []
+    fake.rewound = []
+    vi.spyOn(ai, 'provider').mockReturnValue({
+      id: 'p',
+      kind: 'claude-code',
+    } as unknown as ReturnType<typeof ai.provider>)
+  })
+
+  test('is told of a rewind, so it forgets the turns cut', async () => {
+    const thread = aThread()
+    await message(thread, 'first', [])
+    await message(thread, 'second', [])
+    await review.rewind(thread, 'second', 'conversation', null)
+    await vi.waitFor(() => expect(fake.rewound).toEqual([thread.id]))
+  })
+
+  test('is told of an edit and a Redo', async () => {
+    const thread = aThread()
+    await message(thread, 'first', [])
+    await message(thread, 'second', [])
+    await review.edit(thread, 'second', 'again', { send: vi.fn(), text: '' })
+    expect(fake.rewound).toEqual([thread.id])
+
+    await message(thread, 'third', [])
+    await review.rewind(thread, 'third', 'conversation', null)
+    await review.putBack(thread, null)
+    await vi.waitFor(() => expect(fake.rewound).toEqual([thread.id, thread.id, thread.id]))
+  })
+
+  test('is told of a switch to another branch', async () => {
+    const thread = aThread()
+    await message(thread, 'first', [])
+    await message(thread, 'second', [])
+    await review.edit(thread, 'second', 'again', { send: vi.fn(), text: '' })
+    await message(thread, 'other', [])
+    fake.rewound = []
+    expect(switchBranch(thread, 'other', -1)).toBe(true)
+    expect(thread.turns.map((one) => one.id)).toEqual([
+      'first',
+      'first-answer',
+      'second',
+      'second-answer',
+    ])
+    await vi.waitFor(() => expect(fake.rewound).toEqual([thread.id]))
   })
 })
 

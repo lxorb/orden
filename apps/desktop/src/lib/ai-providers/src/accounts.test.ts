@@ -189,6 +189,8 @@ describe('kept and read back', () => {
         { id: 'anthropic', kind: 'anthropic', name: 'twice', model: '' },
         { id: '../etc', kind: 'openai', name: '' },
         { id: 'x', kind: 'mistral', name: '' },
+        { id: 'y', kind: 'toString', name: '' },
+        { id: 'z', kind: 'constructor', name: '' },
         { id: 'openai', kind: 'openai', name: '', own: true },
         'nonsense',
       ],

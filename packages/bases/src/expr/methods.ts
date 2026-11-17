@@ -1,4 +1,4 @@
-import { formatDate, msOf, readDate, relative } from '../dates'
+import { formatDate, msOf, onClock, readDate, relative } from '../dates'
 import { BasesError } from '../errors'
 import type { DateValue, Row, Value } from '../types'
 import { readPattern, spend, stepsOfText } from './pattern'
@@ -80,8 +80,8 @@ function fileMethod(
       return {
         value:
           display === undefined || display === null
-            ? { kind: 'link', target: row.file.path }
-            : { kind: 'link', target: row.file.path, display: text(display) },
+            ? { kind: 'link', target: row.file.path, exact: true }
+            : { kind: 'link', target: row.file.path, display: text(display), exact: true },
       }
     }
     case 'hasLink':
@@ -247,7 +247,9 @@ function listMethod(
     case 'reverse':
       return { value: [...list].reverse() as Value[] }
     case 'sort':
-      return { value: [...list].sort(sortCompare) as Value[] }
+      return {
+        value: [...list].sort((a, b) => sortCompare(a, b, scope.context.zone)) as Value[],
+      }
     case 'unique':
       spend((list.length * list.length) / 64)
       return {
@@ -287,7 +289,7 @@ function listMethod(
     case 'max': {
       const present = list.filter((one) => one !== null)
       if (!present.length) return { value: null }
-      const sorted = [...present].sort(sortCompare)
+      const sorted = [...present].sort((a, b) => sortCompare(a, b, scope.context.zone))
       return { value: (name === 'min' ? sorted[0] : sorted.at(-1)) ?? null }
     }
     default:
@@ -296,11 +298,12 @@ function listMethod(
 }
 
 function dateMethod(
-  date: DateValue,
+  written: DateValue,
   name: string,
   args: readonly Arg[],
   scope: Scope,
 ): { value: Val } | null {
+  const date = onClock(written, scope.context.zone)
   switch (name) {
     case 'date':
       return { value: { kind: 'date', iso: date.iso } }

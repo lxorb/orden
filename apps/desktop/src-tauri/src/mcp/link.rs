@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant, SystemTime};
@@ -58,6 +59,7 @@ struct Held {
 pub struct Link {
     dir: Option<PathBuf>,
     pub client: Client,
+    session: String,
     held: Mutex<Held>,
     changed: Condvar,
     heard: Box<dyn Fn() + Send + Sync>,
@@ -68,6 +70,7 @@ impl Link {
         let link = Arc::new(Link {
             dir: super::home::config_dir(),
             client,
+            session: fresh_session(),
             held: Mutex::new(Held::default()),
             changed: Condvar::new(),
             heard: Box::new(heard),
@@ -157,7 +160,7 @@ impl Link {
         }
         loop {
             if let Some(kept) = pairing::kept(dir, &self.client) {
-                match grant_of(endpoint, &kept.token) {
+                match grant_of(endpoint, &kept.token, &self.session) {
                     Ok(grant) => {
                         self.change(|held| {
                             held.kept = Some(kept);
@@ -220,7 +223,7 @@ impl Link {
     }
 
     fn prove_handed(&self, endpoint: &Endpoint, token: String) -> bool {
-        match grant_of(endpoint, &token) {
+        match grant_of(endpoint, &token, &self.session) {
             Ok(grant) => {
                 self.change(|held| {
                     held.kept = Some(Kept {
@@ -315,7 +318,7 @@ impl Link {
         let (Some(endpoint), Some(kept)) = (endpoint, kept) else {
             return;
         };
-        match grant_of(&endpoint, &kept.token) {
+        match grant_of(&endpoint, &kept.token, &self.session) {
             Ok(grant) => {
                 if self.held().grant.as_ref() != Some(&grant) {
                     self.change(|held| held.grant = Some(grant));
@@ -391,11 +394,12 @@ impl Link {
         let (Some(endpoint), Some(kept)) = (endpoint, kept) else {
             return Outcome::failed("not_paired", self.sentence());
         };
-        let mut asked = json!({ "verb": verb, "args": args, "rest": [] });
+        let mut asked = json!({ "verb": verb, "args": args, "rest": [], "session": self.session });
         if let (Some(thread), Some(_)) = (thread_handed(), handed()) {
             asked["thread"] = json!(thread);
         }
-        let said = match app::post(&endpoint, Some(&kept.token), &asked, PATIENCE) {
+        let patience = patience_for(verb, args);
+        let said = match app::post(&endpoint, Some(&kept.token), &asked, patience) {
             Ok(said) => said,
             Err(first) => {
                 let again = self
@@ -407,7 +411,7 @@ impl Link {
                     return Outcome::failed("unavailable", unreachable(&first));
                 };
                 self.change(|held| held.endpoint = Some(now.clone()));
-                match app::post(&now, Some(&kept.token), &asked, PATIENCE) {
+                match app::post(&now, Some(&kept.token), &asked, patience) {
                     Ok(said) => said,
                     Err(second) => return Outcome::failed("unavailable", unreachable(&second)),
                 }
@@ -426,7 +430,7 @@ impl Link {
             (held.endpoint.clone(), held.kept.clone())
         };
         if let (Some(endpoint), Some(kept)) = (endpoint, kept) {
-            let asked = json!({ "verb": "agent_bye", "args": {} });
+            let asked = json!({ "verb": "agent_bye", "args": {}, "session": self.session });
             let _ = app::post(&endpoint, Some(&kept.token), &asked, Duration::from_secs(3));
         }
     }
@@ -450,6 +454,22 @@ impl Link {
     }
 }
 
+fn fresh_session() -> String {
+    let mut bytes = [0_u8; 16];
+    if getrandom::fill(&mut bytes).is_err() {
+        return format!("p{}", std::process::id());
+    }
+    let mut hex = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        let _ = write!(hex, "{byte:02x}");
+    }
+    hex
+}
+
+fn patience_for(verb: &str, args: &Value) -> Duration {
+    PATIENCE + crate::endpoint::declared_wait(verb, args)
+}
+
 fn handed() -> Option<String> {
     std::env::var("ORDEN_MCP_TOKEN")
         .ok()
@@ -468,8 +488,8 @@ fn thread_handed() -> Option<String> {
 
 const THREAD_VAR: &str = "ORDEN_MCP_THREAD";
 
-fn grant_of(endpoint: &Endpoint, token: &str) -> Result<Grant, Refusal> {
-    let asked = json!({ "verb": "agent_status", "args": {} });
+fn grant_of(endpoint: &Endpoint, token: &str, session: &str) -> Result<Grant, Refusal> {
+    let asked = json!({ "verb": "agent_status", "args": {}, "session": session });
     let said = app::post(endpoint, Some(token), &asked, Duration::from_secs(10))
         .map_err(|error| Refusal::Unreachable(unreachable(&error)))?;
     if said.status == 401 {
@@ -492,4 +512,34 @@ fn unreachable(error: &std::io::Error) -> String {
 
 fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|one| one.modified()).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn each_session_is_told_apart_as_the_app_reads_it() {
+        let one = fresh_session();
+        assert_ne!(one, fresh_session());
+        let asked = json!({ "verb": "agent_bye", "session": one });
+        assert_eq!(crate::agents::session_of(&asked), one);
+    }
+
+    #[test]
+    fn a_call_waits_on_orden_longer_than_orden_waits_on_its_window() {
+        for (verb, args) in [
+            ("read_note", json!({})),
+            ("ask_reader", json!({ "wait_ms": 120_000 })),
+            ("run_terminal", json!({ "timeout_ms": 600_000 })),
+            ("type_terminal", json!({ "tab": "t1" })),
+            ("read_terminal", json!({ "tab": "t1" })),
+        ] {
+            let window = crate::endpoint::window_patience(verb, &args);
+            assert!(
+                patience_for(verb, &args) >= window + Duration::from_secs(60),
+                "{verb}"
+            );
+        }
+    }
 }

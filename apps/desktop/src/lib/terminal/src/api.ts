@@ -20,6 +20,8 @@ export { type Destination, destinationOf, type Host, hostFor, said } from './rem
 
 const refused = () => Promise.reject(new Error('no terminal in the Even Realities plugin'))
 
+export const programJudge = () => (__EVEN_PLUGIN__ ? refused() : import('./agent/free'))
+
 export const sessions = () => (__EVEN_PLUGIN__ ? refused() : import('./sessions.svelte'))
 
 export const onlineCalls = () => (__EVEN_PLUGIN__ ? refused() : import('./online/calls'))

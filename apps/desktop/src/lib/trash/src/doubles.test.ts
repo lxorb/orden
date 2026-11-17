@@ -24,6 +24,7 @@ describe('a device’s trash entry the account holds too', () => {
     from: string,
     deletedAt: number,
     kind: Item['kind'] = 'note',
+    arrived = true,
   ): Item => ({
     id,
     ref: id,
@@ -34,6 +35,7 @@ describe('a device’s trash entry the account holds too', () => {
     purgeAt: deletedAt + 1,
     source: 'device',
     from,
+    ...(arrived ? { arrived } : {}),
   })
   const account = [{ spaceId: 'sp1', path: 'Journal/2026-10-20.md', deletedAt: 1000 }]
   const folderOf = (id: string) => (id === 'sp1' ? 'Notes' : null)
@@ -48,6 +50,16 @@ describe('a device’s trash entry the account holds too', () => {
     expect(doublesOf([item('d1', 'Notes/Journal/2026-10-20.md', 500)], account, folderOf)).toEqual(
       [],
     )
+  })
+
+  test('is not a note the reader deleted here, even at the same place after the account’s went', () => {
+    expect(
+      doublesOf(
+        [item('d1', 'Notes/Journal/2026-10-20.md', 5000, 'note', false)],
+        account,
+        folderOf,
+      ),
+    ).toEqual([])
   })
 
   test('is not anything at another place, a folder, or a space this device does not hold', () => {

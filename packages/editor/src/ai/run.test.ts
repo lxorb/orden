@@ -3,6 +3,7 @@ import { EditorState, type TransactionSpec } from '@codemirror/state'
 import { afterEach, describe, expect, test } from 'vitest'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
+import { SharedDoc } from '../shared'
 import { ANSWER_CLOSE, ANSWER_OPEN } from './block'
 import {
   aiExtension,
@@ -122,6 +123,15 @@ describe('asking', () => {
     const plain = new Fake(PLAIN)
     askAiFence(plain, aiFenceAt(plain.state, PLAIN.indexOf('Just'))!)
     expect(runner.ask.note).toBeNull()
+  })
+
+  test('names the document the question was asked in', () => {
+    const runner = held()
+    const view = new Fake(PLAIN)
+    const live = new SharedDoc(PLAIN)
+    live.join(view)
+    askAiFence(view, aiFenceAt(view.state, PLAIN.indexOf('Just'))!)
+    expect(runner.ask.shows).toBe(live)
   })
 
   test('writes nothing until the model is known', () => {

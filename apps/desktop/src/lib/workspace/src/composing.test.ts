@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const sent: string[] = []
 const told: string[] = []
 const kept: string[] = []
+const buried: string[] = []
 const disk = new Map<string, string>()
 
 vi.mock('../../platform/src/tauri', () => ({
@@ -60,8 +61,9 @@ function space(notes: Record<string, string>, openAt?: string) {
     undone: new FileActions(),
     flush: () => undefined,
     documentAt: (path: string) => (tab?.path === path ? { text: tab.doc } : null),
-    fileGone: (path: string) => {
+    fileGone: (path: string, _kind: string, back?: string) => {
       told.push(`gone ${path}`)
+      if (back) buried.push(back)
       return Promise.resolve()
     },
     reload: (path: string) => void told.push(`reloaded ${path}`),
@@ -92,6 +94,7 @@ beforeEach(() => {
   sent.length = 0
   told.length = 0
   kept.length = 0
+  buried.length = 0
   readOnly.clear()
 })
 
@@ -152,8 +155,10 @@ describe('a note merged into another', () => {
         intoAfter: disk.get(B),
         relinked: [],
         relinks: [],
+        back: buried[0],
       },
     ])
+    expect(buried).toEqual([expect.any(String)])
   })
 
   test('and a note merged into itself does nothing at all', async () => {

@@ -1,5 +1,14 @@
 {
   "name": "trash",
   "layer": "shell",
-  "dependsOn": ["contracts", "accounts", "platform", "sharing", "ui-kit", "workspace", "sync-store"]
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "platform",
+    "sharing",
+    "ui-kit",
+    "workspace",
+    "sync-store",
+    "protect"
+  ]
 }

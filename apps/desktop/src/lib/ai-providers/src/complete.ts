@@ -125,9 +125,8 @@ async function streamed(
   try {
     for (;;) {
       const { done, value } = await reader.read()
-      if (done) break
-
-      const { payloads, rest } = sseLines(held, decoder.decode(value, { stream: true }))
+      const chunk = done ? decoder.decode() + '\n' : decoder.decode(value, { stream: true })
+      const { payloads, rest } = sseLines(held, chunk)
       held = rest
 
       for (const payload of payloads) {
@@ -143,6 +142,7 @@ async function streamed(
         answer += piece
         wrote?.(piece)
       }
+      if (done) break
     }
   } finally {
     reader.cancel().catch(() => undefined)

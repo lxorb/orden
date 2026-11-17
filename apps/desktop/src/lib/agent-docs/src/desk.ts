@@ -1,5 +1,5 @@
 import type { EditorView } from '@orden/editor'
-import { insideOnly, insideSpace, nameOf, notePath } from '../../platform/src/api'
+import { insideOnly, insideSpace, namesByShortName, nameOf, notePath } from '../../platform/src/api'
 import type { Change, Edit } from '@orden/scan/search/replace'
 import type { NoteDoc } from '../../documents/src/api'
 import type { Keeping } from '../../workspace/src/api'
@@ -77,7 +77,7 @@ export function located(desk: Desk, at: NoteAt): Located {
   }
 
   const judged = insideOnly(at.path)
-  if (judged === null) {
+  if (judged === null || namesByShortName(judged)) {
     throw new DocError('no_such_note', at.path, `${at.path} is not a path inside the space`)
   }
 

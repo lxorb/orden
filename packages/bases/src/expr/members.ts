@@ -1,6 +1,6 @@
 import { dayOf, deadlineOf, hasStarted, startOf } from '@orden/markdown/task-dates'
 import { writeRemind } from '@orden/markdown/task-line'
-import { dateAt, wallClock } from '../dates'
+import { dateAt, onClock, wallOf } from '../dates'
 import type { DateValue, Row, Value } from '../types'
 import {
   FileRef,
@@ -37,9 +37,9 @@ export function fileField(row: Row, name: string, scope: Scope): Val {
     case 'size':
       return file.size
     case 'ctime':
-      return dateAt(wallClock(file.ctime))
+      return dateAt(wallOf(file.ctime, scope.context.zone))
     case 'mtime':
-      return dateAt(wallClock(file.mtime))
+      return dateAt(wallOf(file.mtime, scope.context.zone))
     case 'properties':
       return new NoteRef(row)
     case 'tags':
@@ -52,6 +52,7 @@ export function fileField(row: Row, name: string, scope: Scope): Val {
       return (scope.context.backlinks?.(row) ?? []).map((target): Value => ({
         kind: 'link',
         target,
+        exact: true,
       }))
     case 'file':
       return new FileRef(row)
@@ -205,7 +206,7 @@ export function member(object: Val, name: string, scope: Scope): Val {
   if (object instanceof TaskRef) return taskField(object.row, name, scope)
   if (typeof object === 'string' || Array.isArray(object))
     return name === 'length' ? object.length : null
-  if (isDate(object)) return dateField(object, name)
+  if (isDate(object)) return dateField(onClock(object, scope.context.zone), name)
   if (isDuration(object)) return durationField(object.ms, object.months, name)
   if (isLink(object))
     return name === 'target' ? object.target : name === 'display' ? (object.display ?? null) : null

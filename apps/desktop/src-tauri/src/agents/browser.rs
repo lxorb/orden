@@ -73,7 +73,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
 
 fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let reader = match caller {
-        Caller::Reader => super::reader::tabs(app, &Spaces::All(super::grants::Every::All)),
+        Caller::Reader => super::reader::every_tab(app),
         Caller::Agent(grant) if grant.holds(Scope::BrowserReader) => {
             super::reader::tabs(app, &grant.spaces)
         }
@@ -191,10 +191,9 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
         return Err(not_found());
     }
     if let Caller::Agent(grant) = caller {
-        if !matches!(grant.spaces, Spaces::All(_))
-            && !super::reader::tabs(app, &grant.spaces)
-                .iter()
-                .any(|one| one.id == tab)
+        if !super::reader::tabs(app, &grant.spaces)
+            .iter()
+            .any(|one| one.id == tab)
         {
             return Err(not_found());
         }
@@ -973,9 +972,18 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Upload(upload) => {
                 let target = element(page, &upload.element)?;
                 let files = files_of(app, caller, &upload.files)?;
+                for (_, inside) in &files {
+                    handing_granted(caller, *inside)?;
+                }
                 if let Caller::Agent(grant) = caller {
                     let outside: Vec<&(PathBuf, bool)> =
                         files.iter().filter(|(_, inside)| !inside).collect();
+                    if let Some(no) = outside
+                        .iter()
+                        .find_map(|(path, _)| super::files::fenced_out(app, path))
+                    {
+                        return Err(no);
+                    }
                     let key = approvals::on_page(
                         &approvals::key(
                             "browser_upload",
@@ -989,9 +997,13 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         && grant.asks(Category::Files)
                         && !approvals::is_allowed(&grant.id, &key)
                     {
+                        let named: Vec<String> = outside
+                            .iter()
+                            .map(|(path, _)| path.display().to_string())
+                            .collect();
                         let summary = format!(
                             "Hand {} to {}",
-                            outside[0].0.display(),
+                            named.join(", "),
                             policy::host_of(&page.url()).unwrap_or_default()
                         );
                         return Err(ask(
@@ -1241,6 +1253,25 @@ fn modifiers(held: &[super::verbs::Modifier]) -> u8 {
     })
 }
 
+fn handing_granted(caller: &Caller, inside: bool) -> Result<(), Answer> {
+    let (scope, why) = if inside {
+        (
+            Scope::NotesRead,
+            "handing a note to a page needs notes.read, which the reader grants in Settings > Agents",
+        )
+    } else {
+        (
+            Scope::Files,
+            "handing a file from outside the spaces to a page needs the files scope, which the reader grants in Settings > Agents",
+        )
+    };
+    if caller.holds(scope) {
+        Ok(())
+    } else {
+        Err(Answer::error(Code::NotGranted, why))
+    }
+}
+
 fn files_of(
     app: &AppHandle,
     caller: &Caller,
@@ -1278,11 +1309,15 @@ fn files_of(
             if !path.is_file() {
                 return Err(absent());
             }
+            if matches!(caller, Caller::Agent(_)) && twin.is_none() {
+                handed_from_own(root.as_deref(), &super::files::own_folders(app), &path)?;
+            }
             let mut inside = crate::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
             if let (Caller::Agent(grant), Some(root)) = (caller, &root) {
                 if inside && beyond_the_grant(root, &logical, &grant.spaces) {
                     return Err(absent());
                 }
+                kept_from_agents(app, inside.then_some(root.as_path()), &logical)?;
                 if twin.is_some() {
                     return Ok((path, inside));
                 }
@@ -1294,10 +1329,55 @@ fn files_of(
                 if inside && beyond_the_grant(&root, &real, &grant.spaces) {
                     return Err(absent());
                 }
+                if real != logical {
+                    kept_from_agents(app, inside.then_some(root.as_path()), &real)?;
+                }
             }
             Ok((path, inside))
         })
         .collect()
+}
+
+fn kept_from_agents(app: &AppHandle, root: Option<&Path>, path: &Path) -> Result<(), Answer> {
+    if root.is_some_and(|root| hidden_within(root, path)) || !may_hand(app, path) {
+        return Err(Answer::error(
+            Code::Denied,
+            format!("{} is locked away from agents", path.display()),
+        ));
+    }
+    Ok(())
+}
+
+pub(super) fn hidden_within(root: &Path, path: &Path) -> bool {
+    path.strip_prefix(root).map_or(true, |rest| {
+        rest.components()
+            .any(|step| step.as_os_str().to_string_lossy().starts_with('.'))
+    })
+}
+
+fn plainly(path: &Path) -> String {
+    let spelled = path.to_string_lossy();
+    if let Some(share) = spelled.strip_prefix(r"\\?\UNC\") {
+        return format!(r"\\{share}");
+    }
+    spelled.strip_prefix(r"\\?\").unwrap_or(&spelled).to_owned()
+}
+
+fn may_hand(app: &AppHandle, path: &Path) -> bool {
+    let asked = super::verbs::window::HandAsk {
+        path: plainly(path),
+    };
+    crate::endpoint::ask(
+        app,
+        super::verbs::window::MAY_HAND,
+        serde_json::to_value(asked).unwrap_or_default(),
+        Duration::from_millis(800),
+    )
+    .is_ok_and(|value| value.as_bool() == Some(true))
+}
+
+fn handed_from_own(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Result<(), Answer> {
+    super::files::behind_but_spaces(spaces, own, path).map_or(Ok(()), Err)
 }
 
 fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
@@ -1315,10 +1395,53 @@ fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{beyond_the_grant, modifiers, policy, question_key, seen, Act, Facts, Grant};
+    use super::{
+        beyond_the_grant, handed_from_own, handing_granted, hidden_within, modifiers, plainly,
+        policy, question_key, seen, Act, Caller, Facts, Grant, Scope,
+    };
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_of_ordens_own_folder_is_never_handed_to_a_page() {
+        let dir = tempfile::tempdir().unwrap();
+        let own = dir.path().join("config");
+        std::fs::create_dir_all(&own).unwrap();
+        let secret = own.join("automation.json");
+        std::fs::write(&secret, "{}").unwrap();
+        let alias = dir.path().join("alias");
+        std::os::unix::fs::symlink(&own, &alias).unwrap();
+        let free = dir.path().join("free.txt");
+        std::fs::write(&free, "x").unwrap();
+        let spaces = own.join("Spaces");
+        std::fs::create_dir_all(spaces.join("Work")).unwrap();
+        let report = spaces.join("Work").join("report.pdf");
+        std::fs::write(&report, "pdf").unwrap();
+        let sneaking = spaces.join("Work").join("sneaking.json");
+        std::os::unix::fs::symlink(&secret, &sneaking).unwrap();
+        let fenced = [own.clone()];
+        let handed = |path: &Path| handed_from_own(Some(&spaces), &fenced, path);
+        assert!(handed(&secret).is_err());
+        assert!(handed(&alias.join("automation.json")).is_err());
+        assert!(handed(&free).is_ok());
+        assert!(handed(&report).is_ok());
+        assert!(handed(&sneaking).is_err());
+    }
     use crate::agents::grants::{Every, SiteRule, Spaces};
     use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
     use std::path::Path;
+
+    #[test]
+    fn a_file_is_asked_about_as_the_window_spells_it() {
+        assert_eq!(
+            plainly(Path::new(r"\\?\C:\Users\me\Private\Diary.md")),
+            r"C:\Users\me\Private\Diary.md"
+        );
+        assert_eq!(
+            plainly(Path::new(r"\\?\UNC\server\share\Diary.md")),
+            r"\\server\share\Diary.md"
+        );
+        assert_eq!(plainly(Path::new("/home/me/Diary.md")), "/home/me/Diary.md");
+    }
 
     fn key_of(name: &str, dialog: &str) -> String {
         let facts = Facts {
@@ -1412,6 +1535,37 @@ mod tests {
             Path::new("/data/Spaces/Beta/secret.md"),
             &Spaces::All(Every::All)
         ));
+    }
+
+    #[test]
+    fn a_hidden_step_inside_the_spaces_is_kept_from_an_upload() {
+        let root = Path::new("/data/Spaces");
+        assert!(hidden_within(
+            root,
+            Path::new("/data/Spaces/.orden/A/A/a.md")
+        ));
+        assert!(hidden_within(root, Path::new("/data/Spaces/A/.trash/a.md")));
+        assert!(hidden_within(root, Path::new("/data/Spaces/A/.env")));
+        assert!(hidden_within(root, Path::new("/elsewhere/a.md")));
+        assert!(!hidden_within(root, Path::new("/data/Spaces/A/deep/a.md")));
+    }
+
+    #[test]
+    fn an_upload_hands_notes_only_with_notes_read_and_outside_files_only_with_files() {
+        let mut grant = Grant::own("a".into(), "A");
+        grant
+            .scopes
+            .retain(|one| !matches!(one, Scope::NotesRead | Scope::Files));
+        let narrow = Caller::Agent(Box::new(grant.clone()));
+        assert!(handing_granted(&narrow, true).is_err());
+        assert!(handing_granted(&narrow, false).is_err());
+        grant.scopes.push(Scope::NotesRead);
+        let notes = Caller::Agent(Box::new(grant.clone()));
+        assert!(handing_granted(&notes, true).is_ok());
+        assert!(handing_granted(&notes, false).is_err());
+        grant.scopes.push(Scope::Files);
+        assert!(handing_granted(&Caller::Agent(Box::new(grant)), false).is_ok());
+        assert!(handing_granted(&Caller::Reader, false).is_ok());
     }
 
     #[test]

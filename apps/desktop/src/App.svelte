@@ -65,7 +65,7 @@
   import { paintCodePalette } from './lib/highlight/src/api'
   import { recovery } from './lib/history/src/api'
   import { pages } from './lib/pages/src/api'
-  import { inRooms, rooms } from './lib/collab/src/api'
+  import { inRooms, personFace, rooms } from './lib/collab/src/api'
   import { search } from './lib/search/src/api'
   import { settings } from './lib/settings/src/api'
   import { paletteDoor } from './lib/palette/src/api'
@@ -402,7 +402,7 @@
     }
   })
 
-  $effect(() => rooms.rename(account.name ?? undefined))
+  $effect(() => rooms.rename(account.name ?? undefined, personFace()))
 
   $effect(() => {
     const open = account.syncable && startup.reached('rooms') ? workspace.openNotes : []
@@ -588,7 +588,7 @@
   }
 
   function land(on: EditorView, line: number) {
-    if (viewport.drawer) workspace.closePanel()
+    workspace.showNote()
 
     const target = on.state.doc.line(Math.min(line + 1, on.state.doc.lines))
     on.dispatch({

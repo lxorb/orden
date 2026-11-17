@@ -90,7 +90,7 @@ fn as_written(target: &Path, content: &str) -> String {
 }
 
 fn marked(target: &Path) -> bool {
-    let Ok(mut file) = fs::File::open(target) else {
+    let Ok(mut file) = crate::paths::opened_file(target) else {
         return false;
     };
     let mut head = [0_u8; 3];
@@ -98,7 +98,7 @@ fn marked(target: &Path) -> bool {
 }
 
 fn crlf(target: &Path) -> bool {
-    let Ok(file) = fs::File::open(target) else {
+    let Ok(file) = crate::paths::opened_file(target) else {
         return false;
     };
 
@@ -133,7 +133,8 @@ pub fn write_bytes(app: AppHandle, request: Request<'_>) -> Result<(), String> {
             .get("base64")
             .and_then(serde_json::Value::as_str)
             .ok_or_else(|| format!("{path} was handed nothing to write"))?;
-        return bytes_written(&chosen(&app, path)?, path, base64);
+        let target = chosen(&app, path)?;
+        return bytes_written(&target, path, base64);
     }
     let (Written { path }, bytes) = raw_sent(request.headers(), request.body())?;
     write_file(&chosen(&app, &path)?, &path, &bytes)
@@ -356,13 +357,13 @@ fn folder_made(target: &Path) -> Result<(), String> {
 
 #[tauri::command(async)]
 pub fn delete_folder(app: AppHandle, path: String) -> Result<(), String> {
-    let target = in_spaces(&app, &path)?;
+    let target = crate::paths::below_spaces(&app, &path)?;
     fs::remove_dir_all(&target).map_err(|error| cannot("delete", &target, &error))
 }
 
 #[tauri::command(async)]
 pub fn remove_empty_folder(app: AppHandle, path: String) -> Result<(), String> {
-    let target = in_spaces(&app, &path)?;
+    let target = crate::paths::below_spaces(&app, &path)?;
     fs::remove_dir(&target).map_err(|error| cannot("delete", &target, &error))
 }
 

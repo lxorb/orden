@@ -1,3 +1,4 @@
+import { pageLink } from './names'
 import { roamText } from './roam'
 
 const CLOSED_TAG = /(^|[\s(])#([^\s#`[\]\n]|[^\s#`[\]\n][^#`[\]\n]{0,58}[^\s#`[\]\n])#(?![\w#])/g
@@ -90,13 +91,15 @@ export function convertIdLinks(text: string, ids: ReadonlyMap<string, string>): 
   if (!ids.size) return { text, changes: 0 }
 
   let changes = 0
-  const said = text.replace(ID_LINK, (whole, id: string, shown: string) => {
-    const name = ids.get(id)
-    if (!name || name === id) return whole
+  const said = outsideCode(text, (words) =>
+    words.replace(ID_LINK, (whole, id: string, shown: string) => {
+      const name = ids.get(id)
+      if (!name || name === id) return whole
 
-    changes += 1
-    return `[[${name}${shown}]]`
-  })
+      changes += 1
+      return pageLink(name, shown ? shown.slice(1) : null)
+    }),
+  )
 
   return { text: said, changes }
 }

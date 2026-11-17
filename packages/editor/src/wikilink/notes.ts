@@ -1,4 +1,4 @@
-import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
+import { type EditorState, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { TextEdit } from '@orden/markdown/edits'
 import type { TaskChange } from '@orden/markdown/task-edits'
 import type { TaskFields } from '@orden/markdown/task-line'
@@ -129,6 +129,8 @@ export interface LinkWrite {
   path?: string | null
   from?: string | null
   fragment?: string | null
+  shown?: string | null
+  file?: string | null
 }
 
 export const linkWriter = Facet.define<
@@ -137,7 +139,8 @@ export const linkWriter = Facet.define<
 >({ combine: (values) => values[0] ?? wikilinkFor })
 
 function wikilinkFor(target: LinkWrite): string {
-  return `[[${target.fragment ? `${target.name}#${target.fragment}` : target.name}]]`
+  const inner = target.fragment ? `${target.name}#${target.fragment}` : target.name
+  return `[[${inner}${target.shown ? `|${target.shown}` : ''}]]`
 }
 
 export function fuzzy(text: string, needle: string): boolean {
@@ -287,27 +290,33 @@ function relativeParts(index: NoteIndex, target: string): string[] {
 }
 
 export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
-  const { wanted, anchored } = targetOf(
-    foldName(
-      kind === 'markdown'
-        ? relativeParts(index, target).join('/')
-        : target.trim().replace(/\\/g, '/'),
-    ),
+  const written = target.trim().replace(/\\/g, '/')
+  if (kind !== 'markdown') return fileAt(index, written)
+  return (
+    fileAt(index, `/${relativeParts(index, target).join('/')}`) ??
+    (/^\.{0,2}\//.test(written) ? null : (fileAt(index, `/${written}`) ?? fileAt(index, written)))
   )
+}
+
+function fileAt(index: NoteIndex, target: string): string | null {
+  const { wanted, anchored } = targetOf(foldName(target))
   if (!wanted) return null
 
-  const whole = kind === 'markdown' || anchored
+  const here = index.path === null ? null : folderOf(index.path)
   const found = index.files.filter((path) => {
     const held = foldName(path)
-    return held === wanted || (!whole && held.endsWith(`/${wanted}`))
+    return held === wanted || (!anchored && held.endsWith(`/${wanted}`))
   })
 
-  const picked =
+  const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
+  return (
     [...found].sort(
-      (one, other) => one.split('/').length - other.split('/').length || (one < other ? -1 : 1),
+      (one, other) =>
+        beside(one) - beside(other) ||
+        one.split('/').length - other.split('/').length ||
+        (one < other ? -1 : 1),
     )[0] ?? null
-  if (picked || kind !== 'markdown' || !freelyWritten(target)) return picked
-  return resolveFile(index, target, 'wikilink')
+  )
 }
 
 export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteRef | null {
@@ -359,4 +368,32 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
     page: null,
     kind,
   }
+}
+
+const MARKDOWN_NAME = /\.(md|markdown|mdown|mkd)$/i
+
+export function nameFor(index: NoteIndex, note: NoteRef): string {
+  const own = MARKDOWN_NAME.exec(note.path)?.[0] ?? ''
+  const spelled = (written: string) => (isTabFile(written) ? `${written}${own}` : written)
+  const opened = index.files.includes(note.path)
+  const reaches = (written: string) =>
+    (opened && isTabFile(written)
+      ? resolveFile(index, written, 'wikilink')
+      : resolveNote(index, written)?.path) === note.path
+  const name = spelled(note.name)
+  if (reaches(name)) return name.normalize('NFC')
+
+  const parts = note.path.replace(MARKDOWN_NAME, '').split('/')
+  for (let from = parts.length - 1; from >= 0; from--) {
+    const written = spelled(parts.slice(from).join('/'))
+    if (reaches(written)) return written.normalize('NFC')
+  }
+  const fromTop = spelled(`/${parts.join('/')}`)
+  return (reaches(fromTop) ? fromTop : name).normalize('NFC')
+}
+
+export function linkNameAt(state: EditorState, path: string): string | null {
+  const index = state.facet(noteIndex)
+  const note = index.notes.find((one) => one.path === path)
+  return note ? nameFor(index, note) : null
 }

@@ -282,6 +282,14 @@ async function opened(
   throw last instanceof Error ? last : new Error(String(last))
 }
 
+export async function paperBytesOf(at: PaperAt): Promise<Uint8Array | null> {
+  for (const path of paperPlaces(at.file, at.note, at.root)) {
+    const bytes = await fileBytes(path).catch(() => null)
+    if (bytes) return bytes
+  }
+  return fromAccount(at).catch(() => null)
+}
+
 async function fromAccount(at: PaperAt): Promise<Uint8Array | null> {
   const id = at.shared ?? (at.note && isPagesTarget(at.note) ? await accountIdOf(at.note) : null)
   if (!id) return null

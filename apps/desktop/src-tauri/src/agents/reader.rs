@@ -11,12 +11,19 @@ const ASKING: Duration = Duration::from_millis(800);
 
 const LENDING: Duration = Duration::from_secs(15);
 
-pub fn tabs(app: &AppHandle, spaces: &Spaces) -> Vec<ReaderTab> {
-    let listed: Vec<ReaderTab> = crate::endpoint::ask(app, window::READER_TABS, json!({}), ASKING)
+fn listed(app: &AppHandle) -> Option<Vec<ReaderTab>> {
+    crate::endpoint::ask(app, window::READER_TABS, json!({}), ASKING)
         .ok()
         .and_then(|value| serde_json::from_value(value).ok())
-        .unwrap_or_else(|| pages(app));
-    listed
+}
+
+pub fn every_tab(app: &AppHandle) -> Vec<ReaderTab> {
+    listed(app).unwrap_or_else(|| pages(app))
+}
+
+pub fn tabs(app: &AppHandle, spaces: &Spaces) -> Vec<ReaderTab> {
+    listed(app)
+        .unwrap_or_default()
         .into_iter()
         .filter(|tab| match (spaces, &tab.space) {
             (Spaces::All(_), _) => true,

@@ -102,6 +102,7 @@ export type SyncFileOp = (
     }
 ) & {
   heard?: true
+  watched?: true
 }
 
 export type SyncFileDoer = (op: SyncFileOp, run: () => Promise<unknown>) => Promise<void>

@@ -66,6 +66,13 @@ describe('a Mac build and the keychain', () => {
     }
   })
 
+  test('the web engine keeps its cookie key out of a Mac’s keychain', () => {
+    const engine = readFileSync(join(TAURI, 'src/engine.rs'), 'utf8')
+    expect(engine).toMatch(
+      /if cfg!\(target_os = "macos"\) \{\n\s*engine = engine\.secret_storage\(SecretStorage::Mock\);/,
+    )
+  })
+
   test('a Codex home of Orden’s keeps its login in a file on a Mac', () => {
     const home = readFileSync(join(TAURI, 'src/ai_cli/home.rs'), 'utf8')
     expect(home).toMatch(

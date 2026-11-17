@@ -209,7 +209,7 @@ pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<()
         return Ok(());
     };
     let placed = at.iter().any(|one| {
-        tauri::Url::parse(one)
+        tauri::Url::parse(&super::policy::made_by(one))
             .is_ok_and(|url| matches!(url.scheme(), "http" | "https") && url.host().is_some())
     });
     if !placed && limits_sites(limits) {

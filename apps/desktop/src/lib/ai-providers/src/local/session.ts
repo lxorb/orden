@@ -1,6 +1,7 @@
 import { identifier, invoke } from '../../../platform/src/api'
 import { Channel } from '../../../crate/src/api'
 import { READER_TABS } from '../chat/choices'
+import { rightsKey } from '../moves'
 import type { Mode } from '../modes'
 import type { LocalKind } from '../providers'
 import type { Ending } from './trouble'
@@ -96,7 +97,7 @@ export async function openSession(
     id,
     opening: {
       tool: opening.tool,
-      agent: { ...opening.agent, readerTabs: READER_TABS },
+      agent: { ...opening.agent, id: rightsKey(opening.agent.id), readerTabs: READER_TABS },
       mode: opening.mode,
       model: opening.model,
       effort: opening.effort,

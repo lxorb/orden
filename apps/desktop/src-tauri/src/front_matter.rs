@@ -598,6 +598,36 @@ pub fn read_in_quotes(line: &str) -> Cow<'_, str> {
     Cow::Owned(text)
 }
 
+fn uncommented(value: &str) -> &str {
+    let bytes = value.as_bytes();
+    let mut quote: Option<u8> = None;
+    let mut at = 0;
+
+    while at < bytes.len() {
+        let byte = bytes[at];
+        match quote {
+            Some(b'"') if byte == b'\\' => at += 1,
+            Some(b'\'') if byte == b'\'' && bytes.get(at + 1) == Some(&b'\'') => at += 1,
+            Some(open) if byte == open => quote = None,
+            None if byte == b'#' && (at == 0 || bytes[at - 1].is_ascii_whitespace()) => {
+                return value[..at].trim_end();
+            }
+            None if matches!(byte, b'"' | b'\'') && opens_quote(&value[..at]) => {
+                quote = Some(byte);
+            }
+            Some(_) | None => {}
+        }
+        at += 1;
+    }
+
+    value
+}
+
+fn opens_quote(before: &str) -> bool {
+    let before = before.trim_end();
+    before.is_empty() || before.ends_with('[') || before.ends_with(',')
+}
+
 fn flow_items(value: &str) -> Vec<String> {
     let value = uncommented(value);
     if let Some(list) = value

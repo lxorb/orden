@@ -14,6 +14,7 @@ import {
   type Call,
   done,
   flag,
+  inTime,
   maybe,
   need,
   needScope,
@@ -29,6 +30,8 @@ import {
 } from '../../agent-verbs/src/api'
 import { made, madeOrChanged } from './notes'
 import { treeOf } from './tree'
+import { readable } from './guarded'
+import { noteBehind } from '../../protect/src/api'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
 type Shape = (typeof SHAPES)[number]
@@ -57,6 +60,8 @@ async function pageIn(call: Call, tab: string, shape: Shape): Promise<Page> {
     if (!tabsInReach(call).includes(reader)) {
       throw new Refused('no_such_tab', `there is no tab ${tab}: browser_tabs lists them`)
     }
+    const behind = noteBehind(reader)
+    if (behind !== null) readable(behind, reader.shown)
     const known: Page = {
       url: webPages().addressOf(tab) ?? workspace.webAddressOf(reader) ?? '',
       title: reader.shown,
@@ -169,6 +174,7 @@ async function freshPath(place: Place, folder: string | null, title: string): Pr
     title
       .replace(/[\\/:*?"<>|#^[\]]+/g, ' ')
       .replace(/\s+/g, ' ')
+      .replace(/^[\s.]+/, '')
       .trim()
       .slice(0, 80) || 'Untitled'
   const inside = (name: string) => (folder ? `${folder}/${name}` : name)
@@ -180,15 +186,15 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   if (!isShape(shape)) throw new Refused('bad_arguments', `as is one of ${SHAPES.join(', ')}`)
 
   const place = placeOf(call)
+  const folder = maybe(call, 'folder')
+  const within = folder === null ? null : judgedForWriting(folder)
   const page = await pageIn(call, need(call, 'tab'), shape)
   if (!page.url) throw new Refused('failed', 'that tab has no page to capture')
 
   const named = maybe(call, 'note')
   const target = named === null ? null : judgedForWriting(named)
   const relative =
-    target === null
-      ? await freshPath(place, maybe(call, 'folder'), page.title || page.url)
-      : notePath(target)
+    target === null ? await freshPath(place, within, page.title || page.url) : notePath(target)
   if (relative === null) throw new Refused('bad_arguments', `${target} is not a markdown note`)
 
   const path = onDisk(place, relative)
@@ -197,6 +203,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Capture ${page.url} into ${relative}`)
   if (question) return question
 
+  inTime(call, 'the page was kept')
   const embed = page.file ? await attachment(place, path, page.file) : null
   const words = await wordsFor(page, shape, embed)
 
@@ -211,11 +218,16 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
       return true
     },
     async () => {
-      await notes.editNote(writerOf(call), { path: relative, space: place.space.id }, [
-        { at: under === null ? { end: true } : { heading: under }, insert_after: section },
-      ])
+      await notes.editNote(
+        writerOf(call),
+        { path: relative, space: place.space.id },
+        [{ at: under === null ? { end: true } : { heading: under }, insert_after: section }],
+        undefined,
+        call.deadline,
+      )
       return false
     },
+    call.deadline,
   )
 
   return done({ path: relative, space: place.space.id, source: page.url, created }, page.url)

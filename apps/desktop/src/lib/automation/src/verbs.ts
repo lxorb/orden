@@ -33,6 +33,7 @@ import { type AgentAnswer, type Caller, holds, READER, refusal } from './caller'
 
 interface Verb {
   takes?: readonly string[]
+  oneWordEach?: boolean
   byLink?: 'quiet' | 'back'
   confirms?: boolean
   run?: (args: Said, road: Road) => unknown
@@ -50,7 +51,10 @@ const VERBS: Record<string, Verb> = {
   search: { takes: ['query'], byLink: 'quiet', run: searchSpace },
   'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
 
-  'tasks.list': { takes: ['filter'], run: (args) => asReader('list_tasks', args) },
+  'tasks.list': {
+    takes: ['filter'],
+    run: (args) => asReader('list_tasks', unheard(args, 'tasks.list', ['filter', 'view'])),
+  },
   'tasks.add': { takes: ['text'], byLink: 'back', run: addTask },
   'tasks.done': {
     takes: ['at'],
@@ -79,7 +83,7 @@ const VERBS: Record<string, Verb> = {
   verbs: { run: () => ({ verbs: verbNames() }) },
 
   'files.write': { takes: ['path', 'content'], confirms: true, run: writeFile },
-  'files.move': { takes: ['path', 'to'], confirms: true, run: moveFile },
+  'files.move': { takes: ['path', 'to'], oneWordEach: true, confirms: true, run: moveFile },
   'files.delete': { takes: ['path'], confirms: true, run: deleteFile },
   'properties.set': { takes: ['key', 'value'], confirms: true, run: setProperty },
 
@@ -141,6 +145,8 @@ const VERBS: Record<string, Verb> = {
   'agent.lend': { run: (args) => fromTheCrate('agent.lend', args) },
   'agent.store_for': { run: (args) => fromTheCrate('agent.store_for', args) },
   'agent.markdown': { run: (args) => fromTheCrate('agent.markdown', args) },
+  'agent.may_hand': { run: (args) => fromTheCrate('agent.may_hand', args) },
+  'agent.program_free': { run: (args) => fromTheCrate('agent.program_free', args) },
   'agent.working_folder': { run: (args) => fromTheCrate('agent.working_folder', args) },
 }
 
@@ -181,6 +187,7 @@ export async function dispatch(
   rest: readonly string[],
   road: Road,
   caller: Caller,
+  deadline?: AbortSignal,
 ): Promise<Answered>
 export async function dispatch(
   verb: string,
@@ -188,6 +195,7 @@ export async function dispatch(
   rest: readonly string[] = [],
   road: Road = 'here',
   caller: Caller = READER,
+  deadline?: AbortSignal,
 ): Promise<Answered> {
   const [name, words] = twoWords(verb, rest)
 
@@ -196,13 +204,21 @@ export async function dispatch(
 
   const run = found.run
   if (found.agent !== undefined && (caller.agent !== null || run === undefined)) {
-    return agentVerb(name, found.agent, args, caller)
+    return agentVerb(name, found.agent, args, caller, deadline)
   }
   if (caller.agent !== null || run === undefined) {
     return refusal('not_granted', `${name} is not a verb an agent may call`)
   }
 
-  const said = { ...withPositions(found, words), ...args }
+  const takes = found.takes ?? []
+  if (found.oneWordEach === true && words.length > takes.length) {
+    return {
+      ok: false,
+      error: `${name} takes ${takes.join(' and ')}, one word each: quote a path with spaces in it`,
+    }
+  }
+
+  const said = { ...withPositions(takes, words), ...args }
 
   if (found.confirms === true && !yes(said, 'yes')) {
     return { ok: false, error: `${name} changes something: say yes to go ahead` }
@@ -220,12 +236,13 @@ async function agentVerb(
   scope: Scope | null,
   args: Said,
   caller: Caller,
+  deadline: AbortSignal | undefined,
 ): Promise<Answered> {
   if (scope !== null && !holds(caller, scope)) {
     return refusal('not_granted', `${name} needs ${scope}, which this agent was not granted`)
   }
 
-  const answer = await runAgentVerb(name, args, caller)
+  const answer = await runAgentVerb(name, args, caller, deadline)
   if (caller.agent !== null) return answer
 
   if (answer.status === 'ok') return { ok: true, value: answer.result }
@@ -238,8 +255,15 @@ async function asReader(name: string, args: Said): Promise<unknown> {
   throw new Error(answer.status === 'error' ? answer.message : answer.summary)
 }
 
+function unheard(args: Said, verb: string, names: readonly string[]): Said {
+  const found = names.find((name) => name in args)
+  if (found !== undefined) throw new Error(`${verb} takes no ${found}`)
+
+  return args
+}
+
 function addTask(args: Said, road: Road): Promise<unknown> {
-  if (road !== 'link') return asReader('add_task', args)
+  if (road !== 'link') return asReader('add_task', unheard(args, 'tasks.add', ['note', 'under']))
   const space = wordsOf(args, 'space')
   return asReader('add_task', { text: args.text, ...(space === null ? {} : { space }) })
 }
@@ -257,11 +281,11 @@ function twoWords(verb: string, rest: readonly string[]): [string, readonly stri
   return `${verb}.${next}` in VERBS ? [`${verb}.${next}`, after] : [verb, rest]
 }
 
-function withPositions(verb: Verb, rest: readonly string[]): Said {
+function withPositions(takes: readonly string[], rest: readonly string[]): Said {
   const out: Said = {}
-  for (const [at, name] of (verb.takes ?? []).entries()) {
-    const value = rest[at]
-    if (value !== undefined) out[name] = value
+  for (const [at, name] of takes.entries()) {
+    if (at >= rest.length) break
+    out[name] = at === takes.length - 1 ? rest.slice(at).join(' ') : rest[at]
   }
 
   return out

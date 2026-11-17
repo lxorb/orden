@@ -103,6 +103,7 @@
   import { pages as pagesState } from './showing.svelte'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'
+  import { pans } from './starts'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -696,7 +697,7 @@
     const asked = eraser ? 'erase' : tools.which
     const tool = drawing || !INKING.has(asked) ? asked : 'select'
 
-    if (tool === 'hand' || !page) {
+    if (pans(tool, !!page, writable) || !page) {
       gesture = {
         kind: 'pan',
         id: event.pointerId,
@@ -708,8 +709,6 @@
       pull = began(pull, startedNearEnd(store.viewBottom, store.last), Date.now())
       return
     }
-
-    if (!writable) return
 
     if (tool === 'words') {
       event.preventDefault()

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { noteLinks } from './note-links'
-import type { LinkWrite, NoteIndex, NoteRef } from './notes'
+import { type LinkWrite, type NoteIndex, type NoteRef, resolveFile, resolveNote } from './notes'
 
 function note(path: string): NoteRef {
   const name = (path.split('/').pop() ?? path).replace(/\.[^.]+$/, '')
@@ -25,6 +25,26 @@ describe('noteLinks', () => {
 
   test('a name two notes share is linked by enough of the path to tell them apart', () => {
     expect(noteLinks(index, ['work/Plan.md'], wikilink)).toBe('[[work/Plan]]')
+  })
+
+  test('a file whose name another file shares is linked by its path', () => {
+    const twins = { ...index, files: ['image.png', 'Trips/image.png'] }
+    expect(noteLinks(twins, ['Trips/image.png'], wikilink)).toBe('![[Trips/image.png]]')
+    expect(noteLinks(index, ['pics/cat.png'], wikilink)).toBe('![[cat.png]]')
+  })
+
+  test('a note or file at the top whose name one beside the note shares is linked from the top', () => {
+    const asked: NoteIndex = {
+      notes: [note('Plan.md'), note('Work/Plan.md'), note('Work/Journal.md')],
+      files: ['image.png', 'Work/image.png'],
+      path: 'Work/Journal.md',
+      read: () => Promise.resolve(null),
+    }
+    const top = noteLinks(asked, ['Plan.md'], wikilink)
+    expect(top).toBe('[[/Plan]]')
+    expect(resolveNote(asked, '/Plan')?.path).toBe('Plan.md')
+    expect(noteLinks(asked, ['image.png'], wikilink)).toBe('![[/image.png]]')
+    expect(resolveFile(asked, '/image.png', 'wikilink')).toBe('image.png')
   })
 
   test('several notes are a line each, in the order they were carried', () => {

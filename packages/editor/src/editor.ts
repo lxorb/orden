@@ -53,6 +53,7 @@ import { richPaste } from './paste'
 import { ordenSelection } from './selection/layer'
 import { steppingKeymap } from './live-preview/stepping'
 import { openTail, openTailDown } from './tail'
+import { aiPlace } from './ai/run'
 import { modeExtensions } from './modes'
 import { parseAhead } from './parse-ahead'
 import { documentOf, fromInput, type SharedDoc, sharing } from './shared'
@@ -82,6 +83,7 @@ export interface StateOptions {
   onFind?: (ask: FindAsk | null) => void
   onFindSlow?: (view: EditorView) => void
   trustedMarkup?: boolean
+  place?: string
   cover?: Cover | null
   moveCover?: (position: number) => void
   editPreview?: PreviewMount
@@ -157,6 +159,7 @@ export function editorState(options: StateOptions): EditorState {
       wikilinks(),
       noteIndexExtension(options.notes),
       trustedMarkup(options.trustedMarkup),
+      ...(options.place ? [aiPlace.of(options.place)] : []),
       keptCoverExtension(options.cover),
       ...(options.moveCover ? [coverMover.of(options.moveCover)] : []),
       ...(openNote ? [noteOpener.of(openNote)] : []),

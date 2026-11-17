@@ -7,7 +7,7 @@ use tauri::AppHandle;
 use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use crate::notes::{words_of, words_stamped};
-use crate::paths::{files_in, in_spaces, is_canvas, is_pages, is_shortcut, relative_to};
+use crate::paths::{files_in, is_canvas, is_pages, is_shortcut, relative_to, walked_in_spaces};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -151,7 +151,7 @@ pub struct SpaceLinks {
 
 #[tauri::command(async)]
 pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
-    let dir = in_spaces(&app, &root)?;
+    let dir = walked_in_spaces(&app, &root)?;
     let (notes, others) = files_in(&dir);
 
     let mut out = Vec::with_capacity(notes.len());
@@ -475,8 +475,6 @@ fn prose(body: &str, words_from: usize) -> Prose {
                 }
                 section.push((level, text.clone()));
                 open.clear();
-            }
-            if index >= words_from {
                 headings.push(text);
             }
         } else if index >= words_from {
@@ -498,7 +496,7 @@ fn prose(body: &str, words_from: usize) -> Prose {
             }
             under(&mut open, &mut tasks, line, task, item.is_some());
         }
-        if let Some(id) = block_id_of(line) {
+        if let Some(id) = block_id_of(line).filter(|_| index >= words_from) {
             blocks.push(id);
         }
 
@@ -1751,6 +1749,17 @@ mod tests {
                 (5, 0, 'x', "Call ✅ 2026-10-01", "Bank".to_string()),
             ]
         );
+    }
+
+    #[test]
+    fn front_matter_holds_no_headings_or_block_names() {
+        let read = note_at(
+            "Bug.md".to_string(),
+            "---\nstatus: open\n# a comment\nnote: Later ^idea\n---\n# Real\nLater ^idea\n",
+        );
+
+        assert_eq!(read.headings, vec!["Real".to_string()]);
+        assert_eq!(read.blocks, vec!["idea".to_string()]);
     }
 
     #[test]

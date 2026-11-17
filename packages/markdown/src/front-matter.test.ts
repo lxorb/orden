@@ -192,6 +192,11 @@ describe('reading a key as a list', () => {
     expect(frontMatterList(front('aliases:\n- One\n- Two'), 'aliases')).toEqual(['One', 'Two'])
   })
 
+  test('reads the lines under the key of a note written with carriage returns', () => {
+    const note = '---\r\naliases:\r\n  - Foo\r\n  - Bar\r\n---\r\nbody\r\n'
+    expect(frontMatterList(note, 'aliases')).toEqual(['Foo', 'Bar'])
+  })
+
   test('reads a single value as a list of one', () => {
     expect(frontMatterList(front('aliases: One'), 'aliases')).toEqual(['One'])
   })

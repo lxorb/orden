@@ -20,6 +20,7 @@ export interface LinkValue {
   kind: 'link'
   target: string
   display?: string
+  exact?: true
 }
 
 export type RenderedValue =
@@ -91,6 +92,7 @@ export interface SelectOption {
   value: string
   group?: 'todo' | 'doing' | 'done'
   tone?: string
+  kept?: Record<string, unknown>
 }
 
 export interface OrdenProperty {
@@ -102,7 +104,7 @@ export interface OrdenProperty {
 
 export interface OrdenBase {
   template?: string
-  id?: { property: string; prefix: string }
+  id?: { property: string; prefix: string; kept?: Record<string, unknown> }
   properties: Record<string, OrdenProperty>
   locked?: boolean
   kept: Record<string, unknown>
@@ -162,6 +164,7 @@ export interface Base {
 export interface Context {
   today: string
   now: string
+  zone?: string
   this?: Row
   resolve?: (target: string, from: Row) => string | null
   row?: (path: string, space: string) => Row | undefined
@@ -180,6 +183,7 @@ export interface Group {
 
 export interface Answer {
   groups: Group[]
+  lanes?: Value[]
   total: number
   summaries: Record<string, Value>
   partial?: boolean

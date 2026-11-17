@@ -9,7 +9,8 @@ use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
     folded, free_spot, in_spaces, inside, is_reserved, made, move_held, move_paper,
-    rejoins_highlights, restore_held, spaces_dir, write_atomically, HIGHLIGHTS, TRASH,
+    rejoins_highlights, restore_held, spaces_dir, stays_in_space, write_atomically, HIGHLIGHTS,
+    TRASH,
 };
 
 const MANIFEST: &str = "manifest.json";
@@ -30,6 +31,8 @@ pub struct TrashEntry {
     pub trashed_at: u64,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub apart: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub arrived: bool,
 }
 
 #[tauri::command(async)]
@@ -38,6 +41,7 @@ pub fn trash_item(
     path: String,
     kind: String,
     alone: Option<bool>,
+    arrived: Option<bool>,
 ) -> Result<TrashEntry, String> {
     if !KINDS.contains(&kind.as_str()) {
         return Err(format!("{kind} is not something Orden can delete"));
@@ -50,7 +54,15 @@ pub fn trash_item(
 
     let _guard = locked();
     let dir = trash_dir(&app)?;
-    trashed(&dir, &source, from, name, kind, alone == Some(true))
+    trashed(
+        &dir,
+        &source,
+        from,
+        name,
+        kind,
+        alone == Some(true),
+        arrived == Some(true),
+    )
 }
 
 fn trashed(
@@ -60,6 +72,7 @@ fn trashed(
     name: String,
     kind: String,
     alone: bool,
+    arrived: bool,
 ) -> Result<TrashEntry, String> {
     let id = new_id();
     let slot = dir.join(&id);
@@ -84,6 +97,7 @@ fn trashed(
         from,
         trashed_at: clock::now(),
         apart: alone,
+        arrived,
     };
 
     recorded(dir, entry, || {
@@ -119,6 +133,7 @@ pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<Tras
         from,
         trashed_at: clock::now(),
         apart: false,
+        arrived: false,
     };
     recorded(&dir, entry, || {
         let _ = fs::remove_dir_all(&slot);
@@ -235,6 +250,7 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     let slot = dir.join(&entry.id);
     let held = slot.join(&entry.name);
     let target = restore_target(base, &entry)?;
+    stays_in_space(base, &target)?;
     if !held.exists() {
         entries.remove(position);
         write_manifest(dir, &entries)?;
@@ -407,7 +423,7 @@ fn is_name(name: &str) -> bool {
 mod tests {
     use super::{
         follows, is_name, is_slot, manifest_place, purge, read_manifest, recorded, restore_target,
-        write_manifest, TrashEntry, MANIFEST,
+        trashed, write_manifest, TrashEntry, MANIFEST,
     };
     use std::path::{Path, PathBuf};
 
@@ -419,11 +435,68 @@ mod tests {
             from: from.into(),
             trashed_at: 1_700_000_000_000,
             apart: false,
+            arrived: false,
         }
     }
 
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
+    }
+
+    #[test]
+    fn the_trash_knows_which_notes_sync_put_there_and_which_the_reader_did() {
+        let dir = tempfile::tempdir().expect("a folder");
+        let trash = dir.path().join(".trash");
+        std::fs::create_dir_all(&trash).expect("the trash");
+        let note = |name: &str| {
+            let at = dir.path().join(name);
+            std::fs::write(&at, "words").expect("a note");
+            at
+        };
+
+        let by_sync = trashed(
+            &trash,
+            &note("Gone elsewhere.md"),
+            "Notes/Gone elsewhere.md".into(),
+            "Gone elsewhere.md".into(),
+            "note".into(),
+            true,
+            true,
+        )
+        .expect("trashed by sync");
+        let by_reader = trashed(
+            &trash,
+            &note("Mine.md"),
+            "Notes/Mine.md".into(),
+            "Mine.md".into(),
+            "note".into(),
+            false,
+            false,
+        )
+        .expect("trashed by the reader");
+
+        let arrived = |id: &str| {
+            read_manifest(&trash)
+                .into_iter()
+                .find(|one| one.id == id)
+                .map(|one| one.arrived)
+        };
+        assert_eq!(arrived(&by_sync.id), Some(true));
+        assert_eq!(arrived(&by_reader.id), Some(false));
+    }
+
+    #[test]
+    fn an_entry_written_before_the_trash_knew_who_put_it_there_is_the_reader_s() {
+        let dir = tempfile::tempdir().expect("a folder");
+        std::fs::write(
+            dir.path().join(MANIFEST),
+            r#"[{"id":"1-0","kind":"note","name":"a.md","from":"Notes/a.md","trashedAt":1}]"#,
+        )
+        .expect("an old manifest");
+
+        let entries = read_manifest(dir.path());
+        assert_eq!(entries.len(), 1);
+        assert!(!entries[0].arrived);
     }
 
     #[test]
@@ -720,6 +793,34 @@ mod tests {
         assert!(dir.path().join("manifest.json.unreadable").exists());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn a_restore_never_lands_through_a_link_out_of_its_space() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path().join("Orden");
+        let elsewhere = dir.path().join("Private");
+        std::fs::create_dir_all(base.join("Work/Drop")).expect("a space");
+        std::fs::create_dir_all(base.join(".trash")).expect("the trash");
+        std::fs::create_dir_all(&elsewhere).expect("a folder outside");
+        std::fs::write(base.join("Work/Drop/x.md"), "planted").expect("a note");
+        let id = super::trashed(
+            &base.join(".trash"),
+            &base.join("Work/Drop/x.md"),
+            "Work/Drop/x.md".into(),
+            "x.md".into(),
+            "note".into(),
+            true,
+            false,
+        )
+        .expect("deleted")
+        .id;
+        std::fs::remove_dir(base.join("Work/Drop")).expect("its folder gone");
+        std::os::unix::fs::symlink(&elsewhere, base.join("Work/Drop")).expect("a link out");
+
+        assert!(super::restored(&base, &base.join(".trash"), &id).is_err());
+        assert!(!elsewhere.join("x.md").exists());
+    }
+
     fn a_space() -> tempfile::TempDir {
         let dir = tempfile::tempdir().expect("a temp folder");
         for (name, words) in [
@@ -743,6 +844,7 @@ mod tests {
             name.into(),
             "note".into(),
             alone,
+            false,
         )
         .expect("deleted")
         .id

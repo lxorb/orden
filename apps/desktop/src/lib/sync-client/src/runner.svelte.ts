@@ -15,6 +15,7 @@ import {
 import { notePass, readMirror, type Mirror } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
 import { isRecord } from './shape'
+import { calledAlso, revived } from './revived'
 import {
   type SyncFileDoer,
   type SyncFileOp,
@@ -1007,19 +1008,23 @@ class Runner {
         this.own.delete(`moved:${from}`)
       }
     },
-    gone: async (path, kind) => {
+    gone: async (path, kind, back) => {
       this.own.add(`removed:${path}`)
       try {
-        await workspace().fileGone(path, kind)
+        await workspace().fileGone(path, kind, back)
         workspace().heardGone(path)
         this.treeStale()
       } finally {
         this.own.delete(`removed:${path}`)
       }
     },
-    written: (path) => {
+    written: (path, fresh) => {
       this.treeStale()
       workspace().fileWritten(path)
+      if (fresh) {
+        const roots = workspace().spaces.map((one) => one.root)
+        void revived(path, (one) => this.tracked(one)?.id, roots).catch(() => undefined)
+      }
     },
     writing: async (path, text, write) => {
       if (windows.alone) {
@@ -1052,8 +1057,11 @@ class Runner {
         })
       } else {
         await engine.removing(op.path, async () => {
-          const back = await run()
-          return typeof back === 'string' && back ? back : op.back
+          const id = this.tracked(op.path)?.id
+          const ran = await run()
+          const back = typeof ran === 'string' && ran ? ran : op.back
+          if (id && back) await calledAlso(back, id)
+          return back
         })
       }
     } finally {

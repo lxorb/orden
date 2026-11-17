@@ -205,6 +205,27 @@ describe('groups', () => {
     ])
   })
 
+  test('the lanes across every column come in the sub-group order, with no value last', () => {
+    const cards = [
+      noteRow('a.md', 'status: Doing\npriority: 1'),
+      noteRow('b.md', 'status: Doing\npriority: 3'),
+      noteRow('c.md', 'status: Doing'),
+      noteRow('d.md', 'status: Todo\npriority: 2'),
+    ]
+    const view = readBase(`views:
+  - type: kanban
+    name: K
+    groupBy:
+      property: status
+      direction: ASC
+    orden:
+      subGroupBy:
+        property: priority
+        direction: ASC
+`)
+    expect(answer(view, 'K', cards, context).lanes).toEqual([1, 2, 3, null])
+  })
+
   test("a lane keeps its column's order, not the order of a column of its name", () => {
     const cards = [noteRow('a.md', 'status: Doing'), noteRow('b.md', 'status: Doing')]
     const view = readBase(`views:

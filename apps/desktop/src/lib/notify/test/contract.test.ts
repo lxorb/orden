@@ -6,7 +6,8 @@ const world = vi.hoisted(() => ({
   refuses: false,
   made: [] as { title: string; options: NotificationOptions; onclick: (() => void) | null }[],
   byWorker: [] as { title: string; options: NotificationOptions & { data?: unknown } }[],
-  heard: null as ((event: { data: unknown }) => void) | null,
+  heard: null as
+    ((event: { data: unknown; ports?: { postMessage(said: unknown): void }[] }) => void) | null,
 }))
 
 class Paged {
@@ -41,7 +42,7 @@ vi.stubGlobal('navigator', {
   serviceWorker: {
     ready: Promise.resolve(registration),
     getRegistration: () => Promise.resolve(registration),
-    addEventListener: (_kind: string, heard: (event: { data: unknown }) => void) => {
+    addEventListener: (_kind: string, heard: NonNullable<typeof world.heard>) => {
       world.heard = heard
     },
     startMessages: () => undefined,
@@ -92,6 +93,18 @@ describe('notices in a browser', () => {
     world.heard?.({ data: { ordenNotice: 'someone else' } })
     world.heard?.({ data: 'c_2' })
     expect(opened).toHaveBeenCalledOnce()
+  })
+
+  it('tell the worker which window showed them, so a press comes back to it', async () => {
+    world.refuses = true
+    show({ title: 'Lucile', body: 'The figures are in', tag: 'c_9', opened: vi.fn() })
+    await settled()
+
+    const answers: unknown[] = []
+    const port = { postMessage: (said: unknown) => answers.push(said) }
+    world.heard?.({ data: { ordenHolds: 'c_9' }, ports: [port] })
+    world.heard?.({ data: { ordenHolds: 'someone else' }, ports: [port] })
+    expect(answers).toEqual([true, false])
   })
 
   it('without a tag still get one, so a press finds its way back', async () => {

@@ -62,6 +62,23 @@ describe('the issue a group becomes', () => {
     )
   })
 
+  test('carries no link, mention or terminal escape a report wrote into its version or platform', () => {
+    const body = tool.issueBody(
+      {
+        ...GROUP,
+        versions: ['[Get the fixed build](https://evil.example/orden.deb) @someone'],
+        platforms: ['linux\u001b]8;;https://evil.example\u0007'],
+      },
+      REPORT.id,
+      REPORT,
+    )
+    const head = body.slice(0, body.indexOf('### Report'))
+    expect(head).not.toContain('](')
+    expect(head).not.toContain('@someone')
+    expect(head).not.toContain('\u001b')
+    expect(head).toContain('Get the fixed build')
+  })
+
   test('counts, versions, the stuck thread first, crumbs and the end of the log, all fenced', () => {
     const body = tool.issueBody(GROUP, REPORT.id, REPORT)
 

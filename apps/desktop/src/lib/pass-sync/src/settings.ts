@@ -29,7 +29,7 @@ export interface PassSettings {
   paused: Record<string, Paused>
 }
 
-const SETTINGS_KEY = 'orden:pass-settings'
+export const SETTINGS_KEY = 'orden:pass-settings'
 
 const DEFAULT_SETTINGS: PassSettings = {
   lock: 'password',

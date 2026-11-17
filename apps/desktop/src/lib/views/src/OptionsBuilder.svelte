@@ -71,7 +71,7 @@
     if (!base || !id) return
     const next = words.trim().replace(/\s+/g, '-')
     if (next === id.prefix) return
-    kit.change((one) => setBaseOrden(one, 'id', { property: id.property, prefix: next }))
+    kit.change((one) => setBaseOrden(one, 'id', { ...id, prefix: next }))
     const own = live.rows.filter((row) => inBase(base, row, live.context))
     void writeEach(reprefixed(own, id.property, id.prefix, next))
   }
@@ -95,9 +95,9 @@
         <ToneDot
           tone={option.tone}
           ontone={(tone: string | null) => {
-            const next: SelectOption = { value: option.value }
-            if (option.group) next.group = option.group
-            if (tone !== null) next.tone = tone
+            const next: SelectOption = { ...option }
+            if (tone === null) delete next.tone
+            else next.tone = tone
             change(at, next)
           }}
         />
@@ -112,9 +112,9 @@
           value={option.group ?? ''}
           options={GROUPS}
           onchange={(group: string) => {
-            const next: SelectOption = { value: option.value }
-            if (option.tone) next.tone = option.tone
+            const next: SelectOption = { ...option }
             if (group === 'todo' || group === 'doing' || group === 'done') next.group = group
+            else delete next.group
             change(at, next)
           }}
         />

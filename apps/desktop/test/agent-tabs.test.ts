@@ -167,10 +167,11 @@ vi.mock('../src/lib/sharing/src/api', () => ({
   isShared: () => false,
   reachedByOthers: (path: string | null) => path !== null && othersWrite.has(path),
   reachedAs: (path: string | null) => (path !== null && othersWrite.has(path) ? 'space' : null),
-  reachedByOthersIn: () => false,
+  reachedByOthersIn: (root: string) => sharedRoots.has(root),
   canWriteAt: () => !readOnly,
 }))
 const othersWrite = new Set<string>()
+const sharedRoots = new Set<string>()
 providePort('web.pages', { ...webPages(), addressOf: () => null })
 vi.mock('../src/lib/panes/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/panes/src/api')>()),
@@ -734,6 +735,7 @@ describe('a note and a canvas, by their tab', () => {
       { path: 'Scratchpad.md', space: 'work', tab: 'scratchpad' },
       'jotted',
       undefined,
+      undefined,
     )
     expect(workspace.open).not.toHaveBeenCalled()
   })
@@ -816,6 +818,21 @@ describe('a PDF, Settings and Recently deleted', () => {
     expect(trash.restore).toHaveBeenCalledWith(trash.items[0])
   })
 
+  test('what was deleted in a shared space is read as data', async () => {
+    const only = agent(EVERY, { spaces: ['Work'] })
+    expect(await call('recently_deleted', { op: 'list' }, only)).not.toHaveProperty('untrusted')
+
+    sharedRoots.add('/s/Work')
+    try {
+      expect(await call('recently_deleted', { op: 'list' }, only)).toMatchObject({
+        result: [{ id: 'device:1', name: 'Old.md' }],
+        untrusted: 'shared space Work',
+      })
+    } finally {
+      sharedRoots.clear()
+    }
+  })
+
   test('nothing is put back into a space shared to be read', async () => {
     trash.restorable.mockReturnValueOnce(false)
     trash.restore.mockClear()
@@ -858,6 +875,19 @@ describe('tabs moved and panes arranged (#1078)', () => {
       await call('workspace_tabs', { op: 'arrange', layout: 'grid' }, agent(focusing)),
     ).toMatchObject({ code: 'bad_arguments' })
   })
+
+  test('a move or an arrange answers only the tabs of the spaces granted', async () => {
+    tabs.push(tab('h1', 'note', '/s/Home/Diary.md', { shown: 'Diary' }))
+    tabs[5]!.note.home = 'home'
+    const only = agent(focusing, { spaces: ['Work'] })
+    const idsOf = (said: unknown) =>
+      (said as { result: { id: string }[] }).result.map((one) => one.id)
+
+    const moved = await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2' }, only)
+    expect(idsOf(moved)).toEqual(['n1', 'd1', 'c1', 't1', 's1'])
+    const arranged = await call('workspace_tabs', { op: 'arrange', layout: 'even' }, only)
+    expect(idsOf(arranged)).toEqual(['n1', 'd1', 'c1', 't1', 's1'])
+  })
 })
 
 describe('the reader terminals', () => {
@@ -877,7 +907,7 @@ describe('the reader terminals', () => {
     expect(await call('read_terminal', { tab: 'n1' })).toMatchObject({ code: 'bad_arguments' })
   })
 
-  test('type: an allowed program with Enter goes, and answers what it printed', async () => {
+  test('type: even a listed program with Enter is asked first, then answers what it printed', async () => {
     running.add('t1')
     const said = await call('type_terminal', { tab: 't1', text: 'git log', wait_ms: 1 })
     expect(screen.typed).toEqual(['git log\r'])
@@ -885,7 +915,9 @@ describe('the reader terminals', () => {
       result: { typed: 'git log + Enter' },
       untrusted: 'terminal output',
     })
-    expect(asked.some((one) => one.command === 'agents_ask')).toBe(false)
+    expect(asked.find((one) => one.command === 'agents_ask')?.args).toMatchObject({
+      category: 'terminal',
+    })
   })
 
   test('type: at most 100 keys and a line of 10000 characters, refused before anything is typed', async () => {

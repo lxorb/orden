@@ -50,6 +50,7 @@ export function mathsWaiting(html: string): boolean {
 
 export interface ViewOptions {
   live?: boolean
+  draws?: (code: string, language: string) => boolean
 }
 
 export function viewHtml(
@@ -68,6 +69,7 @@ export function viewHtml(
   const draws: { code: string; language: string; key: string }[] = []
   const fence = (code: string, language: string) => {
     if (DIAGRAM_LANGUAGES.has(language)) {
+      if (how.draws && !how.draws(code, language)) return null
       const key = `${language}\n${code}`
       if (!how.live && !drawn.has(key) && !drawingNow.has(`${scheme}\n${key}`))
         draws.push({ code, language, key })
