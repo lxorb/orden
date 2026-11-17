@@ -940,6 +940,7 @@ fn ready(
                 #[cfg(target_os = "macos")]
                 lights::hold(&window);
                 window.show()?;
+                placement::raised(&window.as_ref().window());
             }
         }
         first_window(handle);

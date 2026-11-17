@@ -126,7 +126,13 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => launch::reopen(app),
 
-        RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
+        RunEvent::ExitRequested { code, api, .. } => {
+            #[cfg(target_os = "macos")]
+            if code == Some(tauri::RESTART_EXIT_CODE) {
+                front_to_the_next();
+            }
+            exit_requested(app, code, &api);
+        }
 
         RunEvent::Exit => {
             crate::crashes::ended_well();
@@ -339,6 +345,26 @@ pub fn keep_running(app: AppHandle) {
     }
     #[cfg(target_os = "macos")]
     asked_to_quit::answer(&app, false);
+}
+
+#[cfg(target_os = "macos")]
+fn front_to_the_next() {
+    use objc2::sel;
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::NSApplication;
+    use objc2_foundation::{NSBundle, NSObjectProtocol};
+
+    let Some(main) = MainThreadMarker::new() else {
+        return;
+    };
+    let app = NSApplication::sharedApplication(main);
+    let yields = app.respondsToSelector(sel!(yieldActivationToApplicationWithBundleIdentifier:));
+    if !yields || !app.isActive() {
+        return;
+    }
+    if let Some(ours) = NSBundle::mainBundle().bundleIdentifier() {
+        app.yieldActivationToApplicationWithBundleIdentifier(&ours);
+    }
 }
 
 #[cfg(target_os = "macos")]
