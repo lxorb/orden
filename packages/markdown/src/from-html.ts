@@ -164,6 +164,11 @@ function headed(table: HTMLTableElement): boolean {
   )
 }
 
+function alone(table: HTMLTableElement): boolean {
+  const cells = table.rows[0]?.cells
+  return table.rows.length === 1 && cells?.length === 1 && cells[0]?.nodeName === 'TD'
+}
+
 function spanOf(cell: Element): number {
   const said = Number(cell.getAttribute('colspan'))
   return Number.isInteger(said) && said > 1 ? Math.min(said, MOST_COLUMNS) : 1
@@ -764,6 +769,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
         .trim()
       const first = (node as Element).previousElementSibling === null
       const table = (node as Element).closest('table')
+      if (table && alone(table)) return content.trim()
       const held = table ? (gapsOf(table).before.get(node) ?? 0) : 0
 
       return `${first ? '|' : ''}${'  |'.repeat(held)} ${said} |${'  |'.repeat(spanOf(node) - 1)}`
@@ -777,7 +783,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       const table = row.closest('table')
       const heading = table !== null && table.rows[0] === row && heads(table)
       const after = table ? (gapsOf(table).after.get(row) ?? 0) : 0
-      if (!heading) return `\n${content}${'  |'.repeat(after)}`
+      if (!heading || alone(table)) return `\n${content}${'  |'.repeat(after)}`
 
       const borders = [...row.cells].flatMap((one) => {
         const align = (one.getAttribute('align') ?? '').toLowerCase()
@@ -793,6 +799,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
     replacement: (content, node) => {
       const rows = content.replace(/^\n+/, '').trimEnd()
       if (!rows) return ''
+      if (alone(node as HTMLTableElement)) return `\n\n${rows}\n\n`
       if (heads(node as HTMLTableElement)) return `\n\n${rows}\n\n`
 
       return `\n\n${emptyHeading(node as HTMLTableElement)}\n${rows}\n\n`

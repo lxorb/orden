@@ -16,7 +16,7 @@ import { enclosingNamed } from './nodes'
 
 const AN_ITEM = /^((?:[ \t]*>)+[ \t]?|)( *)(?:(\d+)([.)])|([-*+]))( +)/u
 
-const QUOTE = /^(?:[ \t]*>[ \t]?)*/u
+const QUOTE_MARK = /^[ \t]*>[ \t]?/u
 
 interface Item {
   quote: number
@@ -40,14 +40,24 @@ function itemOf(text: string): Item | null {
   }
 }
 
-function quoteOf(text: string): number {
-  return QUOTE.exec(text)?.[0].length ?? 0
+function quoteOf(text: string, marks = Infinity): number | null {
+  let at = 0
+  for (let left = marks; left > 0; left--) {
+    const mark = QUOTE_MARK.exec(text.slice(at))
+    if (!mark) return marks === Infinity ? at : null
+    at += mark[0].length
+  }
+  return at
+}
+
+function marksOf(item: Item, line: Line): number {
+  return line.text.slice(0, item.quote).split('>').length - 1
 }
 
 function itemAbove(state: EditorState, number: number, depth: number): Item | null {
   for (let at = number - 1; at >= 1; at--) {
     const text = state.doc.line(at).text
-    const words = text.slice(quoteOf(text))
+    const words = text.slice(quoteOf(text) ?? 0)
     if (!words.trim()) continue
 
     const item = itemOf(text)
@@ -67,9 +77,12 @@ function itemLines(state: EditorState): boolean {
 function hanging(state: EditorState, line: Line, item: Item): Line[] {
   const held: Line[] = []
   let blanks: Line[] = []
+  const marks = marksOf(item, line)
   for (let at = line.number + 1; at <= state.doc.lines; at++) {
     const below = state.doc.line(at)
-    const words = below.text.slice(quoteOf(below.text))
+    const quote = quoteOf(below.text, marks)
+    if (quote === null) break
+    const words = below.text.slice(quote)
     if (!words.trim()) {
       blanks.push(below)
       continue
@@ -82,8 +95,8 @@ function hanging(state: EditorState, line: Line, item: Item): Line[] {
   return held
 }
 
-function shifted(line: Line, by: number): ChangeSpec[] {
-  const quote = quoteOf(line.text)
+function shifted(line: Line, by: number, marks = Infinity): ChangeSpec[] {
+  const quote = quoteOf(line.text, marks) ?? 0
   const words = line.text.slice(quote)
   if (!words.trim() || by === 0) return []
   if (by > 0) return [{ from: line.from + quote, insert: ' '.repeat(by) }]
@@ -132,7 +145,7 @@ function placeLines(
 
     for (const held of hanging(state, line, item)) {
       done.add(held.number)
-      changes.push(...shifted(held, landing - item.indent + wider))
+      changes.push(...shifted(held, landing - item.indent + wider, marksOf(item, line)))
     }
   }
 

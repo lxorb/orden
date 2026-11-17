@@ -1,5 +1,4 @@
 import { ensureSyntaxTree, foldedRanges, syntaxTree } from '@codemirror/language'
-import { insertNewlineAndIndent } from '@codemirror/commands'
 import type { SyntaxNode, Tree } from '@lezer/common'
 import { insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
 import {
@@ -1265,7 +1264,33 @@ export const continueLists: StateCommand = (target) => {
     state: target.state,
     dispatch: (made: Transaction) => target.dispatch(pastFold(made, fold)),
   }
-  return continueListsAt(past) || insertNewlineAndIndent(past)
+  if (continueListsAt(past)) return true
+  const below = belowFold(target.state, fold)
+  if (!below) return false
+  target.dispatch(target.state.update(below))
+  return true
+}
+
+const FOLD_OPENER = /^([ \t>]*)(?:(#{1,6})(?:[ \t]|$)|`{3,}|~{3,})/
+
+function belowFold(state: EditorState, fold: { from: number; to: number }): TransactionSpec | null {
+  const opener = FOLD_OPENER.exec(state.doc.lineAt(fold.from).text)
+  if (!opener) return null
+  const lead = opener[1] ?? ''
+  const words = (line: Line | null) => !!line?.text.replace(/^[ \t>]*/, '').trim()
+  const last = state.doc.lineAt(fold.to)
+  const next = last.number < state.doc.lines ? state.doc.line(last.number + 1) : null
+  const heading = opener[2] !== undefined
+  const blank = `\n${lead.trimEnd()}`
+  const above = heading && words(last) ? blank : ''
+  const under = heading && words(next) ? blank : ''
+  const opened = `${above}\n${lead}`
+  return {
+    changes: { from: fold.to, insert: opened + under },
+    selection: EditorSelection.cursor(fold.to + opened.length),
+    scrollIntoView: true,
+    userEvent: 'input',
+  }
 }
 
 const continueListsAt: StateCommand = ({ state, dispatch }) => {

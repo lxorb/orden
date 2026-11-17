@@ -96,6 +96,12 @@ export function placed(state: EditorState, written: string): TransactionSpec {
   return everywhere(state, (range) => placedAt(state, keptBreak(state, range, text), text))
 }
 
+const QUOTE_LEAD = /^(?:[ \t]*>)+[ \t]?/
+
+function quoteDepth(text: string): number {
+  return (/^(?:[ \t]*>)*/.exec(text)?.[0] ?? '').split('>').length - 1
+}
+
 const ITEM_LEAD = /^((?:[ \t]*>)*[ \t]*)(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
 
 function placedAt(state: EditorState, range: SelectionRange, text: string): Landing {
@@ -117,9 +123,10 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   const marked = inFront && whole && text.endsWith('\n') ? ITEM_LEAD.exec(prefix) : null
   if (marked && OPENS_BLOCK.test(first)) {
     const outer = marked[1] ?? ''
+    const carried = quoteDepth(outer) > 0 && quoteDepth(text) === quoteDepth(outer)
     const insert = (range.empty ? text : text.slice(0, -1))
       .split('\n')
-      .map((one) => (one ? outer + one : one))
+      .map((one) => (one ? outer + (carried ? one.replace(QUOTE_LEAD, '') : one) : one))
       .join('\n')
     return {
       changes: { from: line.from, to: range.empty ? line.from : range.to, insert },
