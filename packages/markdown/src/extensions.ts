@@ -115,6 +115,21 @@ export const scripts: MarkedExtension = remembering({
         return `<sup>${this.parser.parseInline(token.tokens ?? [])}</sup>`
       },
     },
+    {
+      name: 'taggedScript',
+      level: 'inline',
+      start: (src: string) => src.search(/<su[bp]>/i),
+      tokenizer(src: string) {
+        const inner = /^<(su[bp])>([^<>\n]+)<\/\1>/i.exec(src)
+        if (!inner?.[1] || !inner[2]) return undefined
+        return {
+          type: inner[1].toLowerCase() === 'sup' ? 'superscript' : 'subscript',
+          raw: inner[0],
+          text: inner[2],
+          tokens: this.lexer.inlineTokens(inner[2]),
+        }
+      },
+    },
   ],
 })
 
