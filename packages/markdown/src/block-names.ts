@@ -114,6 +114,7 @@ function namedItem(
     !listed(rows[end + 1]) &&
     !rows[end + 1]?.code &&
     !blocks.has(end + 1) &&
+    !isHeading((rows[end + 1]?.text ?? '').trim()) &&
     rows[end + 1]?.text.trim() &&
     !/^\s*[|>]/u.test(rows[end + 1]?.text ?? '') &&
     !RULE.test((rows[end + 1]?.text ?? '').trim())

@@ -742,7 +742,11 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
     for (; first > 0 && held(first - 1) && blocks.get(first - 1) === blocks.get(first); first--) {
       const above = first - 1
       if (plain(above) && HEADING.test(text(above)) && !itemLines(rows, above, blocks)) break
-      if (apart && rows[first]?.code && plain(above) && !itemLines(rows, first, blocks)) break
+      const loose = (line: number) => !itemLines(rows, line, blocks)
+      if (apart && rows[first]?.code && plain(above) && loose(first)) break
+      if (apart && plain(first) && rows[above]?.code && loose(first)) break
+      const opens = plain(first) && LIST_ITEM.test(text(first))
+      if (opens && plain(above) && !LIST_ITEM.test(text(above)) && loose(above)) break
     }
     return first
   }
@@ -751,7 +755,8 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
     if (at > 0 && !held(at - 1)) {
       let last = at - 1
       while (last > 0 && !held(last)) last--
-      const first = quoteAround(rows, last)?.first ?? reach(last, true)
+      const quote = quoteAround(rows, last)
+      const first = quote && !itemLines(rows, quote.first, blocks) ? quote.first : reach(last, true)
       return { first, last, indent: 0, apart: true }
     }
     return {
@@ -960,9 +965,12 @@ export function blocksOf(text: string): NoteBlock[] {
     const closed = blocks.get(row.line - 1)
     const bound =
       holding?.first === row.line ? holding : closed?.last === row.line - 1 ? closed : null
+    const before = rows[row.line - 1]
     const turns = row.line > 0 && quoted[row.line] !== quoted[row.line - 1]
+    const coded = !!before && !inside && row.code !== before.code
     const nested = listing && depthOf((bound ? rows[bound.first] : row)?.text ?? '') > 0
-    const edge = (!!bound || turns) && !nested
+    const codeNested = listing && depthOf((row.code ? row : before)?.text ?? '') > 0
+    const edge = ((!!bound || turns) && !nested) || (coded && !codeNested)
     if (row.matter || (row.text.trim() === '' && goesOn[row.line] !== true && !inside)) {
       current = null
       run = null

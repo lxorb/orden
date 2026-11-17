@@ -1346,3 +1346,48 @@ describe('a name under a list holding code, and code right under words', () => {
     expect(block(code, 'n')).toBe('```bash\nnpm i\n```')
   })
 })
+
+describe('blocks that touch: code, tables, lists and their neighbours', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+  const listed = (text: string) => blocksOf(text).map((one) => [one.line, one.id])
+
+  test('the block list gives code right under words an entry of its own', () => {
+    const note = 'Run this:\n```bash\nnpm i\n```\n\nAfter\n'
+    const named = namedBlock(note, 2, id)?.source ?? ''
+    expect(listed(named)).toEqual([
+      [0, null],
+      [1, 'n'],
+      [7, null],
+    ])
+    expect(listed('para ^a\n```\nx\n```\n\n^b\n\nAfter\n')).toEqual([
+      [0, 'a'],
+      [1, 'b'],
+      [7, null],
+    ])
+  })
+
+  test('a table right under code is a block of its own', () => {
+    const note = '```bash\nnpm i\n```\n| a | b |\n|---|---|\n| 1 | 2 |\n\nEnd\n'
+    const named = namedBlock(note, 3, id)?.source ?? ''
+    expect(block(named, 'n')).toBe('| a | b |\n|---|---|\n| 1 | 2 |')
+  })
+
+  test('naming an item whose words end in a heading names the item', () => {
+    const note = '1. Install\n   ## Notes\n   ```\n   x\n   ```\n2. Next\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe(note.replace('1. Install', '1. Install ^n'))
+    expect(block(named, 'n')).toContain('x')
+  })
+
+  test('a name under a list ending in a nested quote is the list', () => {
+    expect(block('- a\n  > q\n\n^x\n', 'x')).toBe('- a\n  > q')
+  })
+
+  test('a name under a list right under words leaves the words out', () => {
+    expect(block('Intro\n- a\n- b\n\n^x\n', 'x')).toBe('- a\n- b')
+    expect(block('Steps:\n1. a\n2. Run:\n   ```\n   x\n   ```\n\n^x\n', 'x')).toBe(
+      '1. a\n2. Run:\n   ```\n   x\n   ```',
+    )
+  })
+})
