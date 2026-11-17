@@ -168,6 +168,9 @@ fn hidden(app: &AppHandle, label: &str, address: &str) -> Option<Webview> {
             LogicalPosition::new(-10_000.0, -10_000.0),
             LogicalSize::new(400.0, 300.0),
         );
+        if let Ok(view) = &built {
+            let _ = view.hide();
+        }
         let _ = made.try_send(built.ok());
     })
     .ok()?;

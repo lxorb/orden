@@ -5,5 +5,8 @@
 mod event_loop;
 mod icon;
 mod monitor;
+mod unhosted;
 mod webview;
 mod window;
+
+pub(crate) use unhosted::put_out_of_sight;

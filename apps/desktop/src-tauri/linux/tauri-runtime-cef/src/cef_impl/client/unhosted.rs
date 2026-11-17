@@ -21,24 +21,9 @@ wrap_life_span_handler! {
 
   impl LifeSpanHandler {
     fn on_after_created(&self, browser: Option<&mut Browser>) {
-      #[cfg(any(
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
-      ))]
       if let Some(host) = browser.and_then(|browser| browser.host()) {
-        crate::platform::linux::put_out_of_sight(host.window_handle());
+        crate::platform::put_out_of_sight(host.window_handle());
       }
-      #[cfg(not(any(
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
-      )))]
-      let _ = browser;
     }
   }
 }

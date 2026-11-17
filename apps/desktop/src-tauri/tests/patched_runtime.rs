@@ -127,7 +127,17 @@ fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
         .find("host.close_browser(1);")
         .expect("the browser is closed");
     assert!(browsing < handing && handing < closing);
-    assert!(unhosted.contains("crate::platform::linux::put_out_of_sight(host.window_handle());"));
+    assert!(unhosted.contains("crate::platform::put_out_of_sight(host.window_handle());"));
+    assert!(!unhosted.contains("#[cfg("));
+    let platform = read(&root().join("src/platform/mod.rs"));
+    for (system, at) in [
+        ("windows", "src/platform/windows/unhosted.rs"),
+        ("macos", "src/platform/macos/unhosted.rs"),
+        ("linux", "src/platform/linux/unhosted.rs"),
+    ] {
+        assert!(platform.contains(&format!("pub(crate) use {system}::put_out_of_sight;")));
+        assert!(read(&root().join(at)).contains("pub(crate) fn put_out_of_sight("));
+    }
     let runtime = read(&root().join("src/runtime.rs"));
     assert!(runtime.contains("pub fn on_unhosted_tab<F>(mut self, handler: F) -> Self"));
     let engine = read(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src/engine.rs"));
