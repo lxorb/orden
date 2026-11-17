@@ -141,6 +141,35 @@ describe('what goes in beside a line or a paragraph', () => {
     expect(edited(note, [{ at: { block: 'tbl' }, delete: true }])).not.toContain('| 1 | 2 |')
   })
 
+  test('a block next to front matter, maths, indented code or a heading is that block alone', () => {
+    expect(
+      edited('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', [
+        { at: { block: 'p' }, replace: 'New first' },
+      ]),
+    ).toBe('---\ntitle: Plan\n---\nNew first ^p\n\nMore\n')
+    expect(
+      edited('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n\ntext\n', [
+        { at: { block: 'm' }, replace: '$$\nc\n$$' },
+      ]),
+    ).toBe('Intro\n\n$$\nc\n$$\n\n^m\n\n# Next\n\ntext\n')
+    expect(
+      edited('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n\nAfter\n', [
+        { at: { block: 't' }, delete: true },
+      ]),
+    ).toContain('    code line')
+    expect(
+      edited('Intro\n## Goals ^g\nShip it.\n\nAfter\n', [{ at: { block: 'g' }, delete: true }]),
+    ).toContain('Intro')
+  })
+
+  test('a code block named on its closing fence is found and replaced whole', () => {
+    expect(
+      edited('a\n\n```\nx\n``` ^abc123\n\nb\n', [
+        { at: { block: 'abc123' }, replace: '```\ny\n```' },
+      ]),
+    ).toBe('a\n\n```\ny\n``` ^abc123\n\nb\n')
+  })
+
   test('a deleted task takes its line with it', () => {
     expect(edited('- [ ] a\n- [ ] b\n', [{ at: { task: 'a' }, delete: true }])).toBe('- [ ] b\n')
     expect(edited('- [ ] a\n- [ ] b\n', [{ at: { task: 'b' }, delete: true }])).toBe('- [ ] a\n')

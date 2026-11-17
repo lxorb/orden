@@ -52,6 +52,8 @@ export function namedBlock(
   const row = rows[line]
   if (!row || row.matter || (!row.code && isHeading(row.text))) return null
   if (listed(row)) return namedItem(rows, source, line, id)
+  const item = row.code ? itemLines(rows, line) : null
+  if (item) return namedItem(rows, source, item.first, id)
 
   const end = endOf(rows, line)
   const lines = source.split('\n')
@@ -61,7 +63,7 @@ export function namedBlock(
   const under = rows.slice(end + 1).find((one) => one.text.trim())
   const had =
     (under && !under.code && ownLine(under.text) ? blockIdOf(under.text) : null) ??
-    (rows[end]?.code ? null : blockIdOf(last))
+    (rows[end]?.code ? (rows[end].fenceName ?? null) : blockIdOf(last))
   if (had) return { id: had, source }
 
   const name = id()

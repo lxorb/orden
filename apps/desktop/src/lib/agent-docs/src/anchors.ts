@@ -238,7 +238,9 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
 
 function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): Place {
   const rows = [...lines(text)]
-  const marked = rows.filter((row) => !row.code && blockIdOf(row.text) === anchor.block)
+  const marked = rows.filter(
+    (row) => (row.code ? row.fenceName : blockIdOf(row.text)) === anchor.block,
+  )
   const row = one(marked, anchor, undefined)
 
   const span = blockSpan(rows, row.line)

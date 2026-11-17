@@ -610,7 +610,37 @@ function blockSection(source: string, wanted: string): string | null {
     .trimEnd()
 }
 
-type Lined = Pick<Row, 'text' | 'code'>
+type Lined = Pick<Row, 'text' | 'code' | 'matter' | 'fenceName'>
+
+const CLOSED_BY: readonly (readonly [RegExp, RegExp])[] = [
+  [/^ {0,3}\$\$\s*$/u, /^ {0,3}\$\$\s*$/u],
+  [/-->/u, /^ {0,3}<!--/u],
+  [/<\/(?:pre|script|style)\b/iu, /^ {0,3}<(?:pre|script|style)\b/iu],
+]
+
+function codeGoesOn(rows: readonly Lined[], at: number): boolean {
+  if (!rows[at]?.code) return false
+  if (rows[at].text.trim() !== '') return true
+  for (let next = at + 1; next < rows.length; next++) {
+    const row = rows[next]
+    if (row?.text.trim() !== '') return row?.code === true
+  }
+  return false
+}
+
+function openerOf(rows: readonly Lined[], last: number): number {
+  const closing = rows[last]?.text ?? ''
+  const pair = CLOSED_BY.find(([closes]) => closes.test(closing))
+  if (!pair) return last
+  const [closes, opens] = pair
+  const from = closes.source === opens.source ? last - 1 : last
+  for (let up = from; up >= 0; up--) {
+    const row = rows[up]
+    if (!row || row.matter) return last
+    if (opens.test(row.text)) return up
+  }
+  return last
+}
 
 export interface BlockSpan {
   first: number
@@ -621,27 +651,38 @@ export interface BlockSpan {
 
 export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
   const text = (line: number) => rows[line]?.text ?? ''
-  const filled = (line: number) => text(line).trim() !== ''
+  const filled = (line: number) => text(line).trim() !== '' && rows[line]?.matter !== true
+  const held = (line: number) => filled(line) || codeGoesOn(rows, line)
+  const row = rows[at]
 
-  if (ownLine(text(at)) && !rows[at]?.code) {
-    if (at > 0 && !filled(at - 1)) {
+  if (row?.code && row.fenceName) {
+    let first = at
+    while (first > 0 && rows[first - 1]?.code) first--
+    return { first, last: at, indent: 0, apart: false }
+  }
+
+  if (ownLine(text(at)) && !row?.code) {
+    if (at > 0 && !held(at - 1)) {
       let last = at - 1
-      while (last > 0 && !filled(last)) last--
-      let first = last
-      while (first > 0 && (filled(first - 1) || rows[first - 1]?.code)) first--
+      while (last > 0 && !held(last)) last--
+      let first = openerOf(rows, last)
+      while (first > 0 && held(first - 1)) first--
       return { first, last, indent: 0, apart: true }
     }
     let first = at
-    while (first > 0 && filled(first - 1)) first--
+    while (first > 0 && held(first - 1)) first--
     return { first, last: at, indent: 0, apart: false }
   }
+
+  if (row && !row.code && HEADING.test(row.text))
+    return { first: at, last: at, indent: 0, apart: false }
 
   const item = itemLines(rows, at)
   if (item) return { ...item, apart: false }
 
   const stops = (line: number) => {
-    const row = rows[line]
-    return !filled(line) || !row || row.code || LIST_ITEM.test(row.text) || HEADING.test(row.text)
+    const one = rows[line]
+    return !filled(line) || !one || one.code || LIST_ITEM.test(one.text) || HEADING.test(one.text)
   }
   let first = at
   let last = at
@@ -679,7 +720,7 @@ function itemStart(rows: readonly Lined[], at: number): number | null {
   if (depth === 0) return null
   for (let up = at - 1; up >= 0; up--) {
     const above = rows[up]
-    if (!above || (!above.code && !above.text.trim())) return null
+    if (!above || above.matter || (!above.code && !above.text.trim())) return null
     const marker = above.code ? null : LIST_ITEM.exec(above.text)
     if (marker && (marker[1]?.length ?? 0) < depth) return up
   }
@@ -727,8 +768,9 @@ export function blocksOf(text: string): NoteBlock[] {
   let run: NoteBlock | null = null
   let after = false
 
-  for (const row of lines(text)) {
-    if (!row.code && row.text.trim() === '') {
+  const rows = rowsOf(text)
+  for (const row of rows) {
+    if (row.matter || (row.text.trim() === '' && !codeGoesOn(rows, row.line))) {
       current = null
       run = null
       after = false
@@ -749,8 +791,7 @@ export function blocksOf(text: string): NoteBlock[] {
     }
 
     after = heading
-    if (row.code) continue
-    const id = blockIdOf(row.text)
+    const id = row.code ? row.fenceName : blockIdOf(row.text)
     if (id) current.id = id
   }
 

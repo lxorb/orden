@@ -896,6 +896,40 @@ describe('a block name on a line of its own', () => {
     ])
   })
 
+  test('a block next to front matter, code, maths or a heading is that block alone', () => {
+    const block = (text: string, id: string) => sectionOf(text, { heading: null, block: id })
+    expect(block('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', 'p')).toBe('First para')
+    expect(block('a\n\n```\nx\n``` ^abc123\n\n# After\n\nb\n', 'abc123')).toBe('```\nx\n```')
+    expect(block('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n', 'm')).toBe('$$\na\n\nb\n$$')
+    expect(block('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n', 't')).toBe(
+      '| a | b |\n|---|---|',
+    )
+    expect(block('Intro\n## Goals ^g\nShip it.\n', 'g')).toBe('## Goals')
+    expect(block('Run:\n```\na\n\nb\n```\n^x', 'x')).toBe('Run:\n```\na\n\nb\n```')
+  })
+
+  test('the block list leaves front matter out, and reads a name on a closing fence', () => {
+    const listed = (text: string) => blocksOf(text).map((one) => [one.line, one.text, one.id])
+    expect(listed('---\ntags:\n  - work\n---\nFirst para\n')).toEqual([[4, 'First para', null]])
+    expect(listed('    code line\n\nAfter para\n')).toEqual([
+      [0, 'code line', null],
+      [2, 'After para', null],
+    ])
+    expect(listed('a\n\n```\nx\n``` ^abc123\n')).toEqual([
+      [0, 'a', null],
+      [2, '```', 'abc123'],
+    ])
+  })
+
+  test('naming a code block keeps the name its closing fence has, and code in an item names the item', () => {
+    const fenced = 'a\n\n```\nx\n``` ^abc123\n\n# After\n'
+    expect(namedBlock(fenced, 2, () => 'new123')).toEqual({ id: 'abc123', source: fenced })
+    const note = '1. Install:\n   ```bash\n   npm i\n   ```\n2. Next\n'
+    expect(namedBlock(note, 2, () => 'new123')?.source).toBe(
+      note.replace('1. Install:', '1. Install: ^new123'),
+    )
+  })
+
   test('a heading is not given a block name, it is linked as a heading', () => {
     expect(namedBlock('# Plan\n\n## Tasks\n- Buy milk', 2, () => 'new123')).toBeNull()
     expect(blocksOf('## Tasks\n- Buy milk').map((one) => [one.line, one.text])).toEqual([
