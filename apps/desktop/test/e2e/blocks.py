@@ -491,10 +491,49 @@ def drive_gap(browser: Browser) -> None:
             wrong(f"[gap {width}] the line reached through the gap could not be carried: {source(page)[:40]!r}")
         page.context.close()
 
+LAST_LINE = """() => {
+  const line = [...document.querySelectorAll('.cm-line')].at(-1)
+  return { text: line.textContent, heading: /orden-h\\d/.test(line.className), bullet: !!line.querySelector('.orden-bullet') }
+}"""
+
+def drive_lone_mark(browser: Browser) -> None:
+    page = fresh(browser, "lone mark")
+    page.evaluate("() => { if (!window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
+    page.evaluate(
+        "() => { const view = window.orden; const end = view.state.doc.length;"
+        " view.dispatch({ selection: { anchor: end } }); view.focus() }"
+    )
+    page.keyboard.press("Enter")
+    page.keyboard.press("Enter")
+    for mark, kind in (("#", "heading"), ("-", "bullet")):
+        page.keyboard.type(mark)
+        page.wait_for_timeout(300)
+        alone = page.evaluate(LAST_LINE)
+        shot(page, f"50-lone-{kind}-mark")
+        say(f"[lone {mark}] {json.dumps(alone, ensure_ascii=False)}")
+        if alone[kind] or alone["text"] != mark:
+            wrong(f"[lone {mark}] a mark with no space after it is drawn as a {kind}: {alone}")
+        page.keyboard.type(" Title")
+        page.wait_for_timeout(300)
+        spaced = page.evaluate(LAST_LINE)
+        shot(page, f"51-spaced-{kind}-mark")
+        say(f"[spaced {mark}] {json.dumps(spaced, ensure_ascii=False)}")
+        if not spaced[kind]:
+            wrong(f"[spaced {mark}] a mark with a space after it is not drawn as a {kind}: {spaced}")
+        page.evaluate(
+            "() => { const view = window.orden; const line = view.state.doc.line(view.state.doc.lines);"
+            " view.dispatch({ changes: { from: line.from, to: line.to }, selection: { anchor: line.from } }) }"
+        )
+        page.wait_for_timeout(200)
+    page.evaluate("() => { if (window.ordenApp.modes.quietMarks) window.ordenApp.modes.toggleQuietMarks(window.orden) }")
+    page.context.close()
+
 def main() -> int:
     with DRIVE.session() as browser:
         say("--- the mark ---")
         drive_marks(browser)
+        say("--- a lone heading or list mark ---")
+        drive_lone_mark(browser)
         say("--- the gap before a line ---")
         drive_gap(browser)
         say("--- a narrow window ---")
