@@ -9,6 +9,7 @@ import {
   openFenceIn,
   ownLine,
   quoteAround,
+  quotedRows,
   type Row,
   rowsOf,
 } from './links'
@@ -32,6 +33,7 @@ function listed(row: Row | undefined): boolean {
 
 function endOf(rows: readonly Row[], line: number): number {
   const { held: blocks, goesOn, runOf } = layoutOf(rows)
+  const quoted = quotedRows(rows)
   const held = blocks.get(line)
   if (held?.first === line) return held.last
   const quote = quoteAround(rows, line)
@@ -43,7 +45,13 @@ function endOf(rows: readonly Row[], line: number): number {
     if (!next) return end
     if (rows[end]?.code) {
       if (!next.code || runOf[end + 1] !== runOf[end] || !goesOn[end + 1]) return end
-    } else if (blocks.has(end + 1) || !next.text.trim() || listed(next) || isHeading(next.text)) {
+    } else if (
+      blocks.has(end + 1) ||
+      (!quoted[end] && quoted[end + 1]) ||
+      !next.text.trim() ||
+      listed(next) ||
+      isHeading(next.text)
+    ) {
       return end
     }
     end++
@@ -80,8 +88,9 @@ export function namedBlock(
   const name = id()
   if (nameStandsApart(rows.slice(from, end + 1))) {
     const below = rows[end + 1]
-    const beneath = (below?.text.trim() ?? '') === '' || listed(below) ? [] : [ending]
-    lines.splice(end + 1, 0, ending, `${nameIndent(rows, from)}^${name}${ending}`, ...beneath)
+    const indent = nameIndent(rows, from)
+    const joins = (below?.text.trim() ?? '') === '' || (indent !== '' && listed(below))
+    lines.splice(end + 1, 0, ending, `${indent}^${name}${ending}`, ...(joins ? [] : [ending]))
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`
   }

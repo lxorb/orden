@@ -746,7 +746,8 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
     if (at > 0 && !held(at - 1)) {
       let last = at - 1
       while (last > 0 && !held(last)) last--
-      return { first: reach(last), last, indent: 0, apart: true }
+      const first = quoteAround(rows, last)?.first ?? reach(last)
+      return { first, last, indent: 0, apart: true }
     }
     return {
       first: at > 0 && blocks.has(at - 1) ? reach(at - 1) : reach(at),
@@ -766,6 +767,7 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
   const inside = blocks.get(at) ?? quoteAround(rows, at)
   if (inside) return { first: inside.first, last: inside.last, indent: 0, apart: false }
 
+  const quoted = quotedRows(rows)
   const stops = (line: number) => {
     const one = rows[line]
     return (
@@ -773,6 +775,7 @@ export function blockSpan(rows: readonly Lined[], at: number): BlockSpan {
       !one ||
       one.code ||
       blocks.has(line) ||
+      quoted[line] === true ||
       LIST_ITEM.test(one.text) ||
       HEADING.test(one.text)
     )
@@ -803,13 +806,17 @@ export function openFenceIn(rows: readonly Lined[], first: number, last: number)
   return false
 }
 
-export function quoteAround(rows: readonly Lined[], at: number): Held | null {
+export function quotedRows(rows: readonly Lined[]): boolean[] {
   const code = new CodeBlocks()
-  const inQuote = rows.map((row) => {
+  return rows.map((row) => {
     if (row.matter) return false
     code.line(row.text)
     return code.quoted
   })
+}
+
+export function quoteAround(rows: readonly Lined[], at: number): Held | null {
+  const inQuote = quotedRows(rows)
   const quoted = (line: number) => inQuote[line] === true
   if (!quoted(at)) return null
   let first = at
@@ -936,13 +943,16 @@ export function blocksOf(text: string): NoteBlock[] {
 
   const rows = rowsOf(text)
   const { held: blocks, goesOn } = layoutOf(rows)
+  const quoted = quotedRows(rows)
   for (const row of rows) {
     const holding = blocks.get(row.line)
     const inside = holding !== undefined && holding.first !== row.line
     const closed = blocks.get(row.line - 1)
     const bound =
       holding?.first === row.line ? holding : closed?.last === row.line - 1 ? closed : null
-    const edge = !!bound && !(listing && depthOf(rows[bound.first]?.text ?? '') > 0)
+    const turns = row.line > 0 && quoted[row.line] !== quoted[row.line - 1]
+    const nested = listing && depthOf((bound ? rows[bound.first] : row)?.text ?? '') > 0
+    const edge = (!!bound || turns) && !nested
     if (row.matter || (row.text.trim() === '' && goesOn[row.line] !== true && !inside)) {
       current = null
       run = null

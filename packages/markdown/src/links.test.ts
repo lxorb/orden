@@ -1205,9 +1205,7 @@ describe('a block in a list, a fence in a fence, and code after code', () => {
 
   test('a block named apart inside a list item keeps the list whole', () => {
     const more = '- a\n\n  more about a\n  ```\n  x\n  ```\n- b\n'
-    expect(namedBlock(more, 2, id)?.source).toBe(
-      more.replace('```\n- b', '```\n\n  ^new123\n- b'),
-    )
+    expect(namedBlock(more, 2, id)?.source).toBe(more.replace('```\n- b', '```\n\n  ^new123\n- b'))
     const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
     const named = namedBlock(table, 2, id)?.source ?? ''
     expect(named).toBe(table.replace('2 |\n- Next', '2 |\n\n  ^new123\n- Next'))
@@ -1279,5 +1277,27 @@ describe('a block in a quote, a loose item, or under an item', () => {
 
   test('code a fence never closes takes no name', () => {
     expect(namedBlock('Intro\n\n```js\nlet a = 1\n', 3, id)).toBeNull()
+  })
+})
+
+describe('a paragraph right over a quote, and a name before a later step', () => {
+  const id = () => 'n'
+  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+
+  test('the paragraph and the callout under it are two blocks', () => {
+    const note =
+      'Before you start:\n> [!warning] Back up first\n> It wipes the disk.\n\nNext para\n'
+    const named = namedBlock(note, 0, id)?.source ?? ''
+    expect(named).toBe(note.replace('start:', 'start: ^n'))
+    expect(block(named, 'n')).toBe('Before you start:')
+    expect(blocksOf(note).map((one) => one.line)).toEqual([0, 1, 4])
+    expect(block(namedBlock(note, 2, id)?.source ?? '', 'n')).toBe(
+      '> [!warning] Back up first\n> It wipes the disk.',
+    )
+  })
+
+  test('a name written apart before a step numbered past one keeps the step a list item', () => {
+    const note = '1. Install:\n```bash\nnpm i\n```\n2. Run:\n```bash\nnpm start\n```\n'
+    expect(namedBlock(note, 2, id)?.source).toBe(note.replace('```\n2.', '```\n\n^n\n\n2.'))
   })
 })
