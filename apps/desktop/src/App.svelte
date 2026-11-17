@@ -42,7 +42,7 @@
     PullMark,
   } from './lib/frame/src/api'
   import { Sidebar } from './lib/sidebar/src/api'
-  import { UpdateNotice, updates } from './lib/updates/src/api'
+  import { loadWhatsNew, UpdateNotice, updates } from './lib/updates/src/api'
   import { startup } from './lib/launch/src/api'
   import { renamed } from './lib/launch/src/renamed.svelte'
   import { account, arriving, usage } from './lib/accounts/src/api'
@@ -1025,6 +1025,11 @@
 {#if shareSheet.asked}
   {#await shareSheet.asked then ShareSheet}
     <ShareSheet />
+  {/await}
+{/if}
+{#if updates.news}
+  {#await loadWhatsNew() then { default: WhatsNew }}
+    <WhatsNew {...updates.news} onclose={() => (updates.news = null)} />
   {/await}
 {/if}
 {#if publishSheet.asked}
