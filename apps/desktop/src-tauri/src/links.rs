@@ -392,15 +392,7 @@ fn is_web_address(url: &str) -> bool {
     let authority = &rest[..host_end];
     let host = authority.rsplit('@').next().unwrap_or(authority);
     let host = host.split(':').next().unwrap_or(host).trim_end_matches('.');
-    !host.is_empty()
-        && ![
-            "tauri.localhost",
-            "ipc.localhost",
-            "asset.localhost",
-            "orden.localhost",
-            "nib.localhost",
-        ]
-        .contains(&host)
+    !host.is_empty() && !crate::web_tabs::app_host(host)
 }
 
 fn webloc_address(content: &str) -> Option<String> {
