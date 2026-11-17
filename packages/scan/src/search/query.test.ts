@@ -144,7 +144,8 @@ describe('nesting', () => {
   })
 
   test('drops a bracket nobody opened', () => {
-    expect(parseQuery('a) b')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
+    expect(parseQuery('a ) b')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
+    expect(parseQuery('a )) b )')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
   })
 
   test('leaves an empty group out', () => {
@@ -241,12 +242,110 @@ describe('regular expressions', () => {
     expect(parseQuery('/notes/2026')).toEqual(word('/notes/2026'))
   })
 
+  test('are a path, not a pattern, where what follows a slash is no set of flags', () => {
+    expect(parseQuery('/usr/bin')).toEqual(word('/usr/bin'))
+    expect(parseQuery('/Users/david')).toEqual(word('/Users/david'))
+    expect(parseQuery('/usr/local/bin')).toEqual(word('/usr/local/bin'))
+    expect(parseQuery('/dev/null')).toEqual(word('/dev/null'))
+    expect(parseQuery('/a/ii')).toEqual(word('/a/ii'))
+    expect(parseQuery('/Plan/i')).toEqual({ kind: 'regex', source: 'Plan', fold: true })
+    expect(parseQuery('/Plan/gi')).toEqual({ kind: 'regex', source: 'Plan', fold: true })
+  })
+
+  test('a path keeps the terms after it as they were', () => {
+    expect(parseQuery('/usr/bin line:/TODO/')).toEqual({
+      kind: 'all',
+      of: [
+        word('/usr/bin'),
+        { kind: 'scope', unit: 'line', of: { kind: 'regex', source: 'TODO', fold: false } },
+      ],
+    })
+    expect(parseQuery('/a/x OR /b/')).toEqual({
+      kind: 'any',
+      of: [word('/a/x'), { kind: 'regex', source: 'b', fold: false }],
+    })
+  })
+
+  test('a path whose last part is not letters keeps the terms after it', () => {
+    expect(parseQuery('/notes/2026 line:/TODO/')).toEqual({
+      kind: 'all',
+      of: [
+        word('/notes/2026'),
+        { kind: 'scope', unit: 'line', of: { kind: 'regex', source: 'TODO', fold: false } },
+      ],
+    })
+    expect(parseQuery('/tmp/a.txt OR /plan/i')).toEqual({
+      kind: 'any',
+      of: [word('/tmp/a.txt'), { kind: 'regex', source: 'plan', fold: true }],
+    })
+    expect(parseQuery('/help /x/')).toEqual({
+      kind: 'all',
+      of: [word('/help'), { kind: 'regex', source: 'x', fold: false }],
+    })
+    expect(parseQuery('/a b/')).toEqual({ kind: 'regex', source: 'a b', fold: false })
+    expect(parseQuery('/[/] x/')).toEqual({ kind: 'regex', source: '[/] x', fold: false })
+  })
+
   test('close at the slash that ends the word', () => {
     expect(parseQuery('/a/b/')).toEqual({ kind: 'regex', source: 'a/b', fold: false })
   })
 
   test('are an ordinary word when the query is only a slash', () => {
     expect(parseQuery('/')).toEqual(word('/'))
+  })
+})
+
+describe('a group after a regression of round 31', () => {
+  test('closes after an empty scope or a lone minus', () => {
+    expect(parseQuery('(task-todo: OR task-done:) plan').kind).toBe('all')
+    expect(parseQuery('(a OR line:) b').kind).toBe('all')
+    expect(parseQuery('-(task:) plan').kind).toBe('all')
+  })
+
+  test('a pattern may end in a space', () => {
+    expect(parseQuery('/^- /')).toEqual({ kind: 'regex', source: '^- ', fold: false })
+    expect(parseQuery('/TODO: / plan')).toEqual({
+      kind: 'all',
+      of: [{ kind: 'regex', source: 'TODO: ', fold: false }, word('plan')],
+    })
+  })
+})
+
+describe('a word with brackets in a group', () => {
+  test('keeps its brackets and leaves the group whole', () => {
+    expect(parseQuery('(f(x) notes)')).toEqual({ kind: 'all', of: [word('f(x)'), word('notes')] })
+    expect(parseQuery('(print() OR log())')).toEqual({
+      kind: 'any',
+      of: [word('print()'), word('log()')],
+    })
+  })
+
+  test('case: before a word still takes a minus or a scope', () => {
+    expect(parseQuery('-case:Plan')).toEqual({ kind: 'not', of: word('Plan', false) })
+    expect(parseQuery('task:case:Plan')).toEqual({
+      kind: 'scope',
+      unit: 'task',
+      of: word('Plan', false),
+    })
+    expect(parseQuery('meeting -case:Plan')).toEqual({
+      kind: 'all',
+      of: [word('meeting'), { kind: 'not', of: word('Plan', false) }],
+    })
+  })
+
+  test('a field that gives nothing leaves no bracket behind', () => {
+    expect(parseQuery('case:)')).toEqual({ kind: 'all', of: [] })
+  })
+})
+
+describe('a closing parenthesis outside any group', () => {
+  test('is part of the word it is written in', () => {
+    expect(parseQuery('print()')).toEqual(word('print()'))
+    expect(parseQuery('a) OR b')).toEqual({ kind: 'any', of: [word('a)'), word('b')] })
+    expect(parseQuery('(a OR b) c')).toEqual({
+      kind: 'all',
+      of: [{ kind: 'any', of: [word('a'), word('b')] }, word('c')],
+    })
   })
 })
 
@@ -335,6 +434,12 @@ describe('front matter', () => {
 
   test('is an ordinary word when the bracket never closes', () => {
     expect(parseQuery('[status')).toEqual(word('[status'))
+  })
+
+  test('is an ordinary word when the brackets are a link or a task box', () => {
+    expect(parseQuery('[[Meeting]]')).toEqual(word('[[Meeting]]'))
+    expect(parseQuery('[docs](http://x)')).toMatchObject({ kind: 'text' })
+    expect(parseQuery('[x] done')).toEqual({ kind: 'all', of: [word('[x]'), word('done')] })
   })
 
   test('holds a value against a number or a date', () => {

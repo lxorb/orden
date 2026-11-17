@@ -302,16 +302,18 @@
       return
     }
 
-    const found = wiki
+    const note = wiki
       ? { path: target }
       : (resolveRelative(index, target) ?? resolveNote(index, target))
-    if (!found) return
+    const file = note ? null : resolveFile(index, target, 'markdown')
+    const path = note?.path ?? file
+    if (path === null) return
 
-    const said = fragment ? decodeFragment(fragment) : null
+    const said = fragment && file === null ? decodeFragment(fragment) : null
     const block = said?.startsWith('^') ? said.slice(1) : null
     void workspace.followLink(
       {
-        path: found.path,
+        path,
         target,
         heading: block === null ? said : null,
         block,

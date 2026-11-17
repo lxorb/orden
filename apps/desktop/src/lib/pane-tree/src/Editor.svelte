@@ -56,7 +56,7 @@
     tab: Tab
     kept: Tab[]
     onimage?: (file: File, tab: Tab) => Promise<string | null>
-    resolveimage?: (src: string, tab: Tab) => string
+    resolveimage?: (src: string, tab: Tab, wikilink?: boolean) => string
     openlink?: (href: string, press: LinkPress) => void
     onselection?: (view: EditorView) => void
     notes?: (tab: Tab) => NoteIndex
@@ -94,7 +94,9 @@
       shared: one.note.live,
       selection: { anchor: one.cursor ?? 0 },
       ...(onimage ? { onImage: (file: File) => onimage(file, one) } : {}),
-      ...(resolveimage ? { resolveImage: (src: string) => resolveimage(src, one) } : {}),
+      ...(resolveimage
+        ? { resolveImage: (src: string, wikilink?: boolean) => resolveimage(src, one, wikilink) }
+        : {}),
       ...(openlink ? { openLink: openlink } : {}),
       ...(onselection ? { onSelection: onselection } : {}),
       ...(notes ? { notes: notes(one) } : {}),

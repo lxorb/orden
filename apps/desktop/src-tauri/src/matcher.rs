@@ -4,9 +4,10 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
+use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter::block as front_matter_block;
 use crate::query::{Compare, Query, Unit};
-use crate::regex::{budget_for, Pattern};
+use crate::regex::{budget_for, is_space, Pattern};
 use crate::tags::tags_in;
 use crate::tasks::task_at;
 
@@ -121,9 +122,9 @@ impl Facts<'_> {
     fn units_of(&self, unit: Unit) -> Units<'_> {
         if matches!(unit, Unit::Line) {
             Units::Lines {
+                body: self.body,
                 starts: self.starts(),
                 at: 0,
-                end: self.body.len(),
             }
         } else {
             Units::Held(self.units[slot(unit)].iter())
@@ -133,9 +134,9 @@ impl Facts<'_> {
 
 enum Units<'a> {
     Lines {
+        body: &'a str,
         starts: &'a [usize],
         at: usize,
-        end: usize,
     },
     Held(std::slice::Iter<'a, Region>),
 }
@@ -145,11 +146,9 @@ impl Iterator for Units<'_> {
 
     fn next(&mut self) -> Option<Region> {
         match self {
-            Units::Lines { starts, at, end } => {
+            Units::Lines { body, starts, at } => {
                 let from = *starts.get(*at)?;
-                let to = starts
-                    .get(*at + 1)
-                    .map_or(*end, |next| next.saturating_sub(1));
+                let to = line_end(body, starts, *at);
                 *at += 1;
 
                 Some(Region { from, to })
@@ -259,8 +258,21 @@ fn is_heading(line: &str) -> bool {
     rest.chars().nth(hashes).is_none_or(char::is_whitespace)
 }
 
+fn line_end(body: &str, starts: &[usize], index: usize) -> usize {
+    let Some(&next) = starts.get(index + 1) else {
+        return body.len();
+    };
+    let start = starts.get(index).copied().unwrap_or(0);
+    if next >= start + 2 && body.as_bytes().get(next - 2) == Some(&b'\r') {
+        next - 2
+    } else {
+        next - 1
+    }
+}
+
 fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
-    let end_of = |index: usize| starts.get(index + 1).map_or(body.len(), |next| next - 1);
+    let end_of = |index: usize| line_end(body, starts, index);
+    let mut code = CodeBlocks::default();
 
     if let Some(state) = task_state(unit) {
         let mut found = Vec::new();
@@ -268,6 +280,9 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
         for (index, &start) in starts.iter().enumerate() {
             let end = end_of(index);
             let text = body.get(start..end).unwrap_or_default();
+            if code.line(text) != CodeLine::Words {
+                continue;
+            }
             let Some(task) = task_at(text) else {
                 continue;
             };
@@ -292,7 +307,7 @@ fn units_in(body: &str, starts: &[usize], unit: Unit) -> Vec<Region> {
         let text = body.get(start..end_of(index)).unwrap_or_default();
         let previous = if index == 0 { start } else { end_of(index - 1) };
         let breaks = if sectioned {
-            is_heading(text)
+            code.line(text) == CodeLine::Words && is_heading(text)
         } else {
             text.trim().is_empty()
         };
@@ -330,16 +345,15 @@ fn front_matter(body: &str) -> HashMap<String, Vec<String>> {
             continue;
         }
 
-        let Some((name, _)) = line.split_once(':') else {
+        let Some((name, _)) = crate::front_matter::key_of(line) else {
             continue;
         };
-        let name = name.trim();
         if name.is_empty() {
             continue;
         }
 
         out.entry(name.to_lowercase())
-            .or_insert_with(|| crate::front_matter::list(body, &block, name));
+            .or_insert_with(|| crate::front_matter::list(body, &block, &name));
     }
 
     out
@@ -519,7 +533,7 @@ impl Matcher {
             tags: if self.needs.tags {
                 tags_in(body)
                     .iter()
-                    .map(|tag| tag.strip_prefix('#').unwrap_or(tag).to_lowercase())
+                    .map(|tag| tag_path(tag.strip_prefix('#').unwrap_or(tag)))
                     .collect()
             } else {
                 Vec::new()
@@ -619,7 +633,10 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
 
             if matches!(compare, Compare::Null) {
                 return held
-                    .is_none_or(|all| all.iter().all(|one| one.trim().is_empty()))
+                    .is_none_or(|all| {
+                        all.iter()
+                            .all(|one| matches!(one.trim(), "" | "~" | "null" | "Null" | "NULL"))
+                    })
                     .then(Vec::new);
             }
 
@@ -657,6 +674,14 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
             answered.then_some(out)
         }
     }
+}
+
+fn tag_path(tag: &str) -> String {
+    tag.to_lowercase()
+        .split('/')
+        .filter(|segment| !segment.is_empty())
+        .collect::<Vec<_>>()
+        .join("/")
 }
 
 fn under(tag: &str, parent: &str) -> bool {
@@ -704,34 +729,58 @@ fn a_number(said: &str) -> bool {
     at == bytes.len()
 }
 
-fn a_date(said: &str) -> bool {
+fn wall_clock(said: &str) -> Option<&str> {
     let bytes = said.as_bytes();
     let digits = |at: usize, many: usize| {
         (0..many).all(|step| matches!(bytes.get(at + step), Some(b'0'..=b'9')))
     };
 
-    if !(digits(0, 4) && bytes.get(4) == Some(&b'-') && digits(5, 2) && bytes.get(7) == Some(&b'-'))
+    if !(digits(0, 4)
+        && bytes.get(4) == Some(&b'-')
+        && digits(5, 2)
+        && bytes.get(7) == Some(&b'-')
+        && digits(8, 2))
     {
-        return false;
-    }
-    if !digits(8, 2) {
-        return false;
+        return None;
     }
     if bytes.len() == 10 {
-        return true;
+        return Some(said);
     }
 
-    if !matches!(bytes.get(10), Some(b'T' | b' ')) {
-        return false;
+    if !matches!(bytes.get(10), Some(b'T' | b't' | b' ')) {
+        return None;
     }
     if !(digits(11, 2) && bytes.get(13) == Some(&b':') && digits(14, 2)) {
-        return false;
+        return None;
     }
-    if bytes.len() == 16 {
-        return true;
+    let mut at = 16;
+    if bytes.get(at) == Some(&b':') && digits(at + 1, 2) {
+        at += 3;
+    }
+    let clock = at;
+
+    if bytes.get(at) == Some(&b'.') && digits(at + 1, 1) {
+        at += 1;
+        while digits(at, 1) {
+            at += 1;
+        }
+    }
+    match bytes.get(at) {
+        Some(b'Z' | b'z') => at += 1,
+        Some(b'+' | b'-') if digits(at + 1, 2) => {
+            at += 3;
+            if bytes.get(at) == Some(&b':') {
+                at += 1;
+            }
+            if !digits(at, 2) {
+                return None;
+            }
+            at += 2;
+        }
+        _ => {}
     }
 
-    bytes.get(16) == Some(&b':') && digits(17, 2) && bytes.len() == 19
+    (at == bytes.len()).then(|| &said[..clock])
 }
 
 fn order(value: &str, asked: &str) -> Ordering {
@@ -744,17 +793,35 @@ fn order(value: &str, asked: &str) -> Ordering {
         return here.partial_cmp(&there).unwrap_or(Ordering::Equal);
     }
 
-    if a_date(one) && a_date(other) {
-        return one.replacen(' ', "T", 1).cmp(&other.replacen(' ', "T", 1));
+    if let (Some(here), Some(there)) = (wall_clock(one), wall_clock(other)) {
+        let shared = here.len().min(there.len());
+        let even = |said: &str| said[..shared].replacen([' ', 't'], "T", 1);
+        return even(here).cmp(&even(there));
     }
 
     one.to_lowercase().cmp(&other.to_lowercase())
 }
 
+fn alike(value: &str, asked: &str) -> bool {
+    let one = value.trim();
+    let other = asked.trim();
+    let measured = (a_number(one) && a_number(other))
+        || (wall_clock(one).is_some() && wall_clock(other).is_some());
+    if measured {
+        order(one, other) == Ordering::Equal
+    } else {
+        one.to_lowercase() == other.to_lowercase()
+    }
+}
+
 fn held_against(value: &str, asked: &str, compare: Compare, upto: Option<&str>) -> bool {
+    let ordered = !matches!(compare, Compare::Has | Compare::Is);
+    if ordered && matches!(value.trim(), "" | "~" | "null" | "Null" | "NULL") {
+        return false;
+    }
     match compare {
-        Compare::Has => holds(value, asked, true),
-        Compare::Is => value.trim().to_lowercase() == asked.trim().to_lowercase(),
+        Compare::Has => holds(value, &asked.to_lowercase(), true),
+        Compare::Is => alike(value, asked),
         Compare::Lt => order(value, asked) == Ordering::Less,
         Compare::Lte => order(value, asked) != Ordering::Greater,
         Compare::Gt => order(value, asked) == Ordering::Greater,
@@ -784,8 +851,8 @@ fn line_text<'a>(body: &'a str, starts: &[usize], line: usize) -> &'a str {
 fn row(note: &Note, starts: &[usize], line: usize, spans: &[Span]) -> Hit {
     let from = starts.get(line).copied().unwrap_or_default();
     let raw = line_text(note.body, starts, line);
-    let lead = raw.len() - raw.trim_start().len();
-    let trimmed = raw.trim();
+    let lead = raw.len() - raw.trim_start_matches(is_space).len();
+    let trimmed = raw.trim_matches(is_space);
     let text: String = trimmed.chars().take(LINE).collect();
 
     let mut ranges = Vec::new();
@@ -828,7 +895,15 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
             body: true,
         },
 
-        Query::Regex { source, fold } => Term::Regex(Pattern::compile(&source, fold)),
+        Query::Regex {
+            source,
+            fold,
+            refused,
+        } => Term::Regex(if refused {
+            None
+        } else {
+            Pattern::compile(&source, fold)
+        }),
 
         Query::Path { text, fold: folded } => Term::Path {
             needle: if folded { text.to_lowercase() } else { text },
@@ -842,7 +917,7 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
 
         Query::Tag { tag } => {
             needs.tags = true;
-            Term::Tag(tag.to_lowercase())
+            Term::Tag(tag_path(&tag))
         }
 
         Query::Property {
@@ -854,9 +929,9 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
             needs.front = true;
             Term::Property {
                 name: name.to_lowercase(),
-                value: value.map(|one| one.to_lowercase()),
+                value,
                 compare,
-                upto: upto.map(|one| one.to_lowercase()),
+                upto,
             }
         }
 
@@ -963,6 +1038,56 @@ mod tests {
 
     fn pattern(source: &str, fold: bool) -> String {
         format!(r#"{{"kind":"regex","source":"{source}","fold":{fold}}}"#)
+    }
+
+    #[test]
+    fn a_pattern_the_page_refused_finds_nothing() {
+        let refused = r#"{"kind":"regex","source":"(\\d+\\.?)+","fold":false,"refused":true}"#;
+        assert!(!answers(refused, "Version 1.2.3 shipped"));
+        assert!(answers(
+            &pattern(r"(\\d+\\.?)+", false),
+            "Version 1.2.3 shipped"
+        ));
+        let not = format!(r#"{{"kind":"not","of":{refused}}}"#);
+        assert!(answers(&not, "Version 1.2.3 shipped"));
+    }
+
+    #[test]
+    fn a_section_does_not_end_at_a_comment_inside_a_code_fence() {
+        let body = "# One\nalpha\n```sh\n# comment\n```\nbeta\n";
+        assert!(answers(
+            &scope("section", &all(&[text("alpha"), text("beta")])),
+            body
+        ));
+        assert!(!answers(
+            &scope("section", &all(&[text("alpha"), text("gamma")])),
+            body
+        ));
+    }
+
+    #[test]
+    fn a_box_inside_a_code_fence_is_no_task() {
+        let body = "```\n- [ ] not a task\n```\n- [ ] a task\n";
+        assert_eq!(lines(&scope("task", &text("task")), body), ["- [ ] a task"]);
+    }
+
+    #[test]
+    fn a_pattern_anchored_to_the_end_of_a_line_finds_it_in_a_note_with_crlf() {
+        let body = "a done\r\nb\r\n";
+        assert!(answers(&scope("line", &pattern("done$", false)), body));
+        assert!(!answers(&scope("line", &pattern("b.$", false)), body));
+    }
+
+    #[test]
+    fn a_line_is_shown_without_the_marks_the_web_trims_off_it() {
+        assert_eq!(
+            lines(&text("alpha"), "\u{feff}alpha one\n"),
+            vec!["alpha one"]
+        );
+        assert_eq!(
+            lines(&text("alpha"), "\u{85}alpha\u{a0}\n"),
+            vec!["\u{85}alpha"]
+        );
     }
 
     #[test]
@@ -1098,6 +1223,14 @@ mod tests {
     }
 
     #[test]
+    fn a_tag_written_with_a_doubled_slash_is_the_tag_the_tree_shows() {
+        let tag = |one: &str| format!(r#"{{"kind":"tag","tag":"{one}"}}"#);
+        assert!(answers(&tag("a/b"), "see #a//b here\n"));
+        assert!(answers(&tag("a"), "see #a//b here\n"));
+        assert!(answers(&tag("a//b"), "see #a/b here\n"));
+    }
+
+    #[test]
     fn front_matter_answers_for_a_key_and_for_what_it_says() {
         let key = |one: &str| format!(r#"{{"kind":"property","name":"{one}","value":null}}"#);
         let pair = |one: &str, said: &str| {
@@ -1136,6 +1269,85 @@ mod tests {
         assert!(answers(&pair("status", "done", "is"), quoted));
         assert!(answers(&pair("next", "done", "is"), quoted));
         assert!(answers(&missing("empty"), quoted));
+    }
+
+    #[test]
+    fn front_matter_keys_and_lists_are_read_as_the_web_search_reads_them() {
+        let pair = |one: &str, said: &str, compare: &str| {
+            format!(
+                r#"{{"kind":"property","name":"{one}","value":"{said}","compare":"{compare}"}}"#
+            )
+        };
+
+        let written = "---\n\"status\": done\nauthors: ['Doe, Jane', Other]\n---\n";
+        assert!(answers(&pair("status", "done", "is"), written));
+        assert!(answers(&pair("authors", "Doe, Jane", "is"), written));
+        assert!(!answers(&pair("authors", "Jane'", "is"), written));
+    }
+
+    #[test]
+    fn a_date_and_time_asked_for_is_held_against_one_written_with_a_space() {
+        let pair = |said: &str, compare: &str| {
+            format!(r#"{{"kind":"property","name":"due","value":"{said}","compare":"{compare}"}}"#)
+        };
+        let note = "---\ndue: 2024-01-01 11:00\n---\n";
+
+        assert!(answers(&pair("2024-01-01T10:00", "gt"), note));
+        assert!(!answers(&pair("2024-01-01T12:00", "gt"), note));
+        assert!(answers(&pair("DUE", "has"), "---\ndue: Due soon\n---\n"));
+    }
+
+    #[test]
+    fn a_bare_day_is_the_whole_of_that_day_against_a_time_written_on_it() {
+        let pair = |said: &str, compare: &str| {
+            format!(r#"{{"kind":"property","name":"due","value":"{said}","compare":"{compare}"}}"#)
+        };
+        let due = |said: &str| format!("---\ndue: {said}\n---\n\nWords.\n");
+
+        assert!(answers(
+            &pair("2026-11-15", "lte"),
+            &due("2026-11-15 10:00")
+        ));
+        assert!(answers(&pair("2026-11-15", "is"), &due("2026-11-15 10:00")));
+        assert!(!answers(
+            &pair("2026-11-15", "gt"),
+            &due("2026-11-15 10:00")
+        ));
+        assert!(answers(&pair("2026-11-16", "lt"), &due("2026-11-15T23:59")));
+        assert!(answers(
+            &pair("2026-11-15 10:00", "gte"),
+            &due("2026-11-15")
+        ));
+        assert!(answers(
+            &pair("2026-11-15 10:00", "lt"),
+            &due("2026-11-15T09:00:00Z")
+        ));
+        assert!(answers(
+            &pair("2026-11-15 10:00", "gt"),
+            &due("2026-11-15t11:30:00.250+02:00")
+        ));
+        assert!(!answers(
+            &pair("2026-11-15 10:00", "lt"),
+            &due("2026-11-15 10:30")
+        ));
+        assert!(answers(&pair("5", "is"), "---\nn: 5.0\ndue: 5.0\n---\n"));
+        assert!(!answers(&pair("5", "is"), "---\ndue: 50\n---\n"));
+    }
+
+    #[test]
+    fn a_key_yaml_reads_as_null_holds_nothing() {
+        let null = r#"{"kind":"property","name":"n","value":null,"compare":"null"}"#;
+        for written in ["null", "Null", "NULL", "~"] {
+            assert!(answers(null, &format!("---\nn: {written}\n---\n")));
+        }
+        assert!(!answers(null, "---\nn: nullable\n---\n"));
+        let past = r#"{"kind":"property","name":"n","value":"2026-01-01","compare":"gt"}"#;
+        assert!(!answers(past, "---\nn: null\n---\n"));
+        let listed = r#"{"kind":"property","name":"tags","value":"b","compare":"has"}"#;
+        assert!(answers(
+            listed,
+            "---\ntags:\n  - a\n  # later\n  - b\n---\n"
+        ));
     }
 
     #[test]

@@ -189,20 +189,21 @@ export function fit(term: string, line: string): { score: number; ranges: Range[
 
   const kept: number[] = []
   const found = fitAt(letters, text, folded, text.length, first, kept, [])
-  return found ? { score: found.score, ranges: ranges(kept) } : null
+  return found ? { score: found.score, ranges: ranges(text, kept) } : null
 }
 
 function lettersOf(term: string): string[] {
   return Array.from(fold(term))
 }
 
-function ranges(at: readonly number[]): Range[] {
+function ranges(text: string, at: readonly number[]): Range[] {
   const out: Range[] = []
 
   for (const position of at) {
+    const to = position + ((text.codePointAt(position) ?? 0) > 0xffff ? 2 : 1)
     const last = out.at(-1)
-    if (last?.to === position) last.to = position + 1
-    else out.push({ from: position, to: position + 1 })
+    if (last?.to === position) last.to = to
+    else out.push({ from: position, to })
   }
 
   return out
@@ -370,7 +371,10 @@ export class Fuzzy {
     const text = Array.from(raw.trim()).slice(0, SHOWN).join('')
 
     const moved: Range[] = []
-    for (const range of ranges([...positions].sort((a, b) => a - b))) {
+    for (const range of ranges(
+      note.body,
+      [...positions].sort((a, b) => a - b),
+    )) {
       const start = Math.max(range.from - from - lead, 0)
       const end = Math.min(range.to - from - lead, text.length)
       if (start >= end) continue

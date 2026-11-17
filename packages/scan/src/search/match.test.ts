@@ -44,6 +44,14 @@ function marked(source: string, over: Partial<SearchNote> = {}): string[] {
     .flatMap((hit) => hit.ranges.map((range) => hit.text.slice(range.from, range.to)))
 }
 
+describe('a note whose lines end in CRLF', () => {
+  test('still has the block list its front matter holds', () => {
+    const body = '---\r\nstatus:\r\n  - open\r\n---\r\nalpha here\r\n'
+    expect(answers('[status:open] alpha', { body })).toBe(true)
+    expect(answers('[status:null]', { body })).toBe(false)
+  })
+})
+
 describe('words', () => {
   test('match anywhere in the note, folded', () => {
     expect(answers('alpha')).toBe(true)
@@ -105,6 +113,11 @@ describe('case', () => {
     expect(answers('ALPHA')).toBe(true)
     expect(answers('case: ALPHA')).toBe(false)
     expect(answers('case: Alpha')).toBe(true)
+  })
+
+  test('folds a capital sigma the same wherever it sits in a word', () => {
+    expect(answers('ΟΔΟΣ', { body: 'οδοστρωμα\n' })).toBe(true)
+    expect(answers('οδοσ', { body: 'ΟΔΟΣ\n' })).toBe(true)
   })
 })
 
@@ -202,6 +215,13 @@ describe('tags', () => {
     expect(answers('tag:missing', listed)).toBe(false)
   })
 
+  test('read a slash nobody meant the way the tag tree does', () => {
+    const doubled = { body: 'words #a//b more\n' }
+
+    expect(answers('tag:a/b', doubled)).toBe(true)
+    expect(answers('tag:a', doubled)).toBe(true)
+  })
+
   test('written as items under the key, which is Obsidian’s other spelling', () => {
     const items = { body: '---\ntags:\n  - work/orden\n  - other\n---\n\nwords\n' }
 
@@ -250,6 +270,42 @@ describe('a regular expression that backtracks without end', () => {
   test('leaves a pattern that runs in time alone', () => {
     expect(marked('/a+!/', { body: RUN })).toEqual([RUN])
   })
+
+  test('is judged in the Unicode mode it runs in', () => {
+    const started = Date.now()
+    expect(answers('/(\\p{L}+)+;/', { body: RUN })).toBe(false)
+    expect(answers('/(\\u{61}+)+;/', { body: RUN })).toBe(false)
+    expect(Date.now() - started).toBeLessThan(1500)
+    expect(answers('/\\p{L}+!/', { body: RUN })).toBe(true)
+  })
+
+  test('is judged with the case it was asked to ignore', () => {
+    const started = Date.now()
+    expect(answers('/(a|A)*b/i', { body: RUN })).toBe(false)
+    expect(Date.now() - started).toBeLessThan(1500)
+  })
+})
+
+describe('a regular expression over a note with one very long line', () => {
+  const blob = `![shot](data:image/png;base64,${'iVBORw0KGgo'.repeat(16_000)})`
+  const body = `# Shots\n\nfix the TODO here\n\n${blob}\n\nmail me at me@example.com\n`
+
+  test('still finds what the other lines hold, and in time', () => {
+    const started = Date.now()
+    expect(lines('/.*TODO/', { body })).toEqual(['fix the TODO here'])
+    expect(lines('/\\S+@\\S+\\.\\S+/', { body })).toEqual(['mail me at me@example.com'])
+    expect(Date.now() - started).toBeLessThan(1500)
+  })
+
+  test('still looks inside that line when the pattern runs in time there', () => {
+    expect(answers('/BORw0K/', { body })).toBe(true)
+  })
+
+  test('still looks inside a long paragraph of words', () => {
+    const paragraph = `${'the quarter plan and the wind above the field, '.repeat(120)}thinking`
+    expect(answers('/\\w+ing\\b/', { body: paragraph })).toBe(true)
+    expect(answers('/\\w+ingz/', { body: paragraph })).toBe(false)
+  })
 })
 
 describe('regular expressions', () => {
@@ -269,6 +325,16 @@ describe('regular expressions', () => {
 
   test('that will not compile match nothing rather than complaining', () => {
     expect(answers('/([a-/')).toBe(false)
+  })
+
+  test('take a character outside the basic plane whole', () => {
+    expect(marked('/x./', { body: 'x😀 end' })).toEqual(['x😀'])
+    expect(marked('/[^a]/', { body: '😀' })).toEqual(['😀'])
+  })
+
+  test('still read the escapes and braces a looser reading allows', () => {
+    expect(marked('/a\\-b/', { body: 'a-b' })).toEqual(['a-b'])
+    expect(marked('/{x/', { body: 'a{x' })).toEqual(['{x'])
   })
 })
 
@@ -299,6 +365,15 @@ describe('nearness', () => {
     const body = 'alpha beta\n\n# One\n\ngamma\n'
     expect(answers('section:(alpha beta)', { body })).toBe(true)
     expect(answers('section:(beta gamma)', { body })).toBe(false)
+  })
+
+  test('does not end at a comment inside a code fence', () => {
+    const body = '# One\nalpha\n```sh\n# comment\n```\nbeta\n'
+    expect(answers('section:(alpha beta)', { body })).toBe(true)
+  })
+
+  test('line: ends a line before its carriage return', () => {
+    expect(lines('line:/done$/', { body: 'a done\r\nb\r\n' })).toEqual(['a done'])
   })
 
   test('excludes within the line it is given', () => {
@@ -385,6 +460,10 @@ describe('tasks', () => {
     expect(asked('task-done:nested')).toEqual(['- [X] a nested one that is done'])
   })
 
+  test('and a box inside a code fence is not one', () => {
+    expect(answers('task:', { body: '```md\n- [ ] an example\n```\n' })).toBe(false)
+  })
+
   test('and a line with no box is not one', () => {
     expect(answers('task:"not a task"', { body: TASKS })).toBe(false)
   })
@@ -431,6 +510,26 @@ Words.
     expect(asked('[due:>2026-09-02]')).toBe(false)
   })
 
+  test('and a bare day as the whole of that day, against a time written on it', () => {
+    const at = (source: string, due: string) =>
+      answers(source, { body: `---\ndue: ${due}\n---\n\nWords.\n` })
+
+    expect(at('[due:<=2026-11-15]', '2026-11-15 10:00')).toBe(true)
+    expect(at('[due:2026-11-01..2026-11-15]', '2026-11-15 10:00')).toBe(true)
+    expect(at('[due:=2026-11-15]', '2026-11-15 10:00')).toBe(true)
+    expect(at('[due:>2026-11-15]', '2026-11-15 10:00')).toBe(false)
+    expect(at('[due:<2026-11-16]', '2026-11-15T23:59')).toBe(true)
+    expect(at('[due:>=2026-11-15 10:00]', '2026-11-15')).toBe(true)
+    expect(at('[due:<2026-11-15 10:00]', '2026-11-15T09:00:00Z')).toBe(true)
+    expect(at('[due:>2026-11-15 10:00]', '2026-11-15t11:30:00.250+02:00')).toBe(true)
+    expect(at('[due:<2026-11-15 10:00]', '2026-11-15 10:30')).toBe(false)
+  })
+
+  test('and a number written another way as the same number', () => {
+    expect(answers('[n:=5]', { body: '---\nn: 5.0\n---\n' })).toBe(true)
+    expect(answers('[n:=5]', { body: '---\nn: 50\n---\n' })).toBe(false)
+  })
+
   test('and takes a range with both ends in it', () => {
     expect(asked('[pages:100..200]')).toBe(true)
     expect(asked('[pages:150..150]')).toBe(true)
@@ -447,6 +546,21 @@ Words.
     expect(asked('[missing:null]')).toBe(true)
     expect(asked('[status:null]')).toBe(false)
     expect(asked('[empty:null]')).toBe(true)
+  })
+
+  test('and a key YAML reads as null holds nothing', () => {
+    for (const written of ['null', 'Null', 'NULL', '~']) {
+      expect(answers('[n:null]', { body: `---\nn: ${written}\n---\n` })).toBe(true)
+    }
+    expect(answers('[n:null]', { body: '---\nn: nullable\n---\n' })).toBe(false)
+    for (const asked of ['[n:>2026-01-01]', '[n:<5]', '[n:>5]', '[n:0..9]']) {
+      expect(answers(asked, { body: '---\nn: null\n---\n' })).toBe(false)
+    }
+  })
+
+  test('and reads a list on past a comment line between its items', () => {
+    const body = '---\ntags:\n  - a\n  # later\n  - b\n---\n'
+    expect(answers('[tags:b]', { body })).toBe(true)
   })
 
   test('and falls back to the words where the two are not the same kind of thing', () => {

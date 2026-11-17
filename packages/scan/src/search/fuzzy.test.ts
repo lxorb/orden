@@ -43,6 +43,13 @@ describe('a term against a line', () => {
     expect(marked('read', 'read me')).toBe('read')
   })
 
+  test('marks a letter outside the basic plane whole', () => {
+    expect(fit('a𝒳b', 'a𝒳 b')?.ranges).toEqual([
+      { from: 0, to: 3 },
+      { from: 4, to: 5 },
+    ])
+  })
+
   test('is nothing at all for an empty term', () => {
     expect(fit('', 'read me')).toBeNull()
   })

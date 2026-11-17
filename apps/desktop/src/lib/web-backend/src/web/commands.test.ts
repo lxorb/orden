@@ -1401,7 +1401,33 @@ describe('reading a whole space for the link index', () => {
 
     const plane = found.notes.find((one) => one.path === 'note-005.canvas')
     expect(plane?.icon).toBe('rocket')
-    expect(plane?.links.map((link) => link.target)).toEqual(['note-001.md'])
+    expect(plane?.links.map((link) => link.target)).toEqual(['/note-001.md'])
+    expect(found.files.sort()).toEqual(['Book.pages', 'note-005.canvas'])
+  })
+
+  test('keeps a canvas read afresh among the files, so a link to it reaches it', async () => {
+    await write('/Notes/a.md', 'see [[Board.canvas]]')
+    await write('/Notes/Board.canvas', JSON.stringify({ nodes: [], edges: [] }))
+    disk.planes.delete('/Notes/Board.canvas')
+
+    const found = await webInvoke<{ files: string[] }>('scan_links', { root: '/Notes' })
+
+    expect(found.files).toEqual(['Board.canvas'])
+  })
+
+  test('reads a page note written before as a plane, and keeps it among the files', async () => {
+    await write('/Notes/Idea.md', '# idea')
+    const card = { id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'Idea.md' }
+    await write('/Notes/Book.pages', JSON.stringify({ nodes: [card], edges: [] }))
+    disk.planes.delete('/Notes/Book.pages')
+
+    const found = await webInvoke<{
+      notes: { path: string; links: { target: string }[] }[]
+      files: string[]
+    }>('scan_links', { root: '/Notes' })
+
+    const book = found.notes.find((one) => one.path === 'Book.pages')
+    expect(book?.links.map((link) => link.target)).toEqual(['/Idea.md'])
     expect(found.files).toEqual(['Book.pages'])
   })
 
@@ -1450,6 +1476,15 @@ describe('a note kept away', () => {
     )
     return asked
   }
+
+  test('keeps a canvas and a page note among the files, so links to them reach them', async () => {
+    away({ yes: true }, ['/Notes/Board.canvas', '/Notes/Book.pages', '/Notes/Plan.md'])
+    await write('/Notes/a.md', 'see [[Board.canvas]] and [[Book.pages]]')
+
+    const found = await webInvoke<{ files: string[] }>('scan_links', { root: '/Notes' })
+
+    expect(found.files).toEqual(['Board.canvas', 'Book.pages'])
+  })
 
   test('of a folder are fetched together, in one ask, before the folder goes to Recently deleted', async () => {
     const asked = away({ yes: false }, ['/Notes/Plan.md', '/Notes/Deep/Idea.md', '/Other/x.md'])

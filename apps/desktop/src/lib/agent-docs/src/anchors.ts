@@ -1,5 +1,5 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blockIdOf, headingText, lines, slugify } from '@orden/markdown/links'
+import { blockIdOf, blockSpan, headingText, lines, slugify } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
 
@@ -245,42 +245,20 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
 function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): Place {
   const rows = [...lines(text)]
   const marked = rows.filter(
-    (row) => !row.code && !row.matter && blockIdOf(row.text) === anchor.block,
+    (row) => !row.matter && (row.code ? row.fenceName : blockIdOf(row.text)) === anchor.block,
   )
   const row = one(marked, anchor, undefined)
 
-  const filled = (at: number, code: boolean) => {
-    const near = rows[at]
-    return (
-      near !== undefined && !near.matter && near.code === code && (code || near.text.trim() !== '')
-    )
-  }
+  const span = blockSpan(rows, row.line)
   const alone = row.text.trim() === `^${anchor.block}`
-  let keep = alone ? `\n^${anchor.block}` : ` ^${anchor.block}`
-  let first = row.line
-  let last = row.line
-  let code = false
-  if (alone) {
-    let above = first - 1
-    while (above > 0 && !filled(above, false) && !filled(above, true) && !rows[above]?.matter)
-      above--
-    code = filled(above, true)
-    if (code || filled(above, false)) {
-      if (above < first - 1) keep = `\n\n^${anchor.block}`
-      first = above
-    }
-  }
-  while (filled(first - 1, code)) first--
-  while (filled(last + 1, false)) last++
-
-  const start = rows[first] ?? row
-  const end = rows[last] ?? row
+  const start = rows[span.first] ?? row
+  const end = alone ? row : (rows[span.last] ?? row)
 
   return {
     from: start.from,
     to: end.from + end.text.length,
     shape: 'paragraph',
-    keep,
+    keep: alone ? `${span.apart ? '\n\n' : '\n'}^${anchor.block}` : ` ^${anchor.block}`,
   }
 }
 

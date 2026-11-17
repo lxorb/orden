@@ -352,6 +352,27 @@ describe('which note a name means', () => {
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
   })
 
+  test('a markdown target written from the top or by name alone still finds its note', () => {
+    const here = index([note('ideas/Plan.md'), note('Plan B.md')], 'journal/Monday.md', {}, [
+      'files/pic.png',
+    ])
+    expect(resolveRelative(here, 'ideas/Plan.md')?.path).toBe('ideas/Plan.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('ideas/Plan.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveFile(here, 'files/pic.png', 'markdown')).toBe('files/pic.png')
+    expect(resolveFile(here, 'pic.png', 'markdown')).toBe('files/pic.png')
+    expect(resolveFile(here, './pic.png', 'markdown')).toBeNull()
+  })
+
+  test('a markdown target by name alone reaches the note at the top before a deeper one ending in the same folders', () => {
+    const here = index([note('Plan.md'), note('Archive/Projects/Plan.md')], 'Projects/n.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('Plan.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Archive/Projects/Plan.md')?.path).toBe(
+      'Archive/Projects/Plan.md',
+    )
+  })
+
   test('a path written from the top of the space, as Obsidian writes one, still names it', () => {
     const here = index([note('Projects/Plan.md'), note('Notes/Plan.md')], 'Notes/Day/x.md')
     expect(resolveRelative(here, 'Projects/Plan.md')?.path).toBe('Projects/Plan.md')
@@ -462,6 +483,7 @@ describe('where a link goes', () => {
       heading: 'Later',
       block: null,
       page: null,
+      kind: 'wikilink',
     })
   })
 
@@ -481,6 +503,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: 3,
+      kind: 'wikilink',
     })
   })
 
@@ -491,6 +514,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: null,
+      kind: 'wikilink',
     })
   })
 
@@ -499,7 +523,26 @@ describe('where a link goes', () => {
     expect(jumpFor(here, wiki('../reading/paper.pdf', 'page=2'), 'markdown')).toMatchObject({
       path: 'reading/paper.pdf',
       page: 2,
+      kind: 'markdown',
     })
+  })
+
+  test('to a file the space holds that opens in no tab, rather than to a note to make', () => {
+    expect(jumpFor(SPACE, wiki('shot.png'), 'wikilink')).toEqual({
+      path: 'shot.png',
+      target: 'shot.png',
+      heading: null,
+      block: null,
+      page: null,
+      kind: 'wikilink',
+    })
+    const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['files/spec.docx'])
+    expect(jumpFor(here, wiki('../files/spec.docx'), 'markdown').path).toBe('files/spec.docx')
+  })
+
+  test('a note named with a dot is still the note before any file', () => {
+    const here = index([note('v1.2.md')], null, {}, ['v1.2'])
+    expect(jumpFor(here, wiki('v1.2'), 'wikilink').path).toBe('v1.2.md')
   })
 
   test('a PDF the space does not hold is not a note to make', () => {
@@ -528,6 +571,7 @@ describe('where a link goes', () => {
       heading: 'Later',
       block: null,
       page: null,
+      kind: 'wikilink',
     })
     expect(jumpAt(where, doc.indexOf('Nowhere'))).toEqual({
       path: null,
@@ -535,6 +579,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: null,
+      kind: 'wikilink',
     })
     expect(jumpAt(where, doc.indexOf('plain'))).toBeNull()
   })

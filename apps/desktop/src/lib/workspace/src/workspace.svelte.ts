@@ -24,6 +24,7 @@ import {
   isPdfTarget,
   isTabFile,
   isWebTarget,
+  type LinkKind,
 } from '@orden/markdown/links'
 import { freePath } from '@orden/markdown/paths'
 import { openerFor, sharedKind } from './openers'
@@ -224,6 +225,7 @@ const STORAGE_KEY = 'orden:workspace'
 const TREE_KEY = 'orden:tree'
 const SESSION_DELAY = 400
 const WORDS_KEPT = 1_000_000
+const PLAIN_TEXT = /\.(txt|text)$/i
 
 const TRAIL = 30
 
@@ -233,6 +235,16 @@ const essentials = () => import('./essentials.svelte')
 const paneStays = (strip: number, showing: Tab | null) =>
   strip > 0 || (showing?.essential ?? null) !== null
 const sets = () => import('./sets.svelte').then((one) => one.sets)
+
+function fromFolder(folder: string, target: string): string | null {
+  const parts = folder.split('/').filter(Boolean)
+  for (const part of target.split('/')) {
+    if (part === '' || part === '.') continue
+    if (part !== '..') parts.push(part)
+    else if (parts.pop() === undefined) return null
+  }
+  return parts.length ? parts.join('/') : null
+}
 
 function lineOfTarget(doc: string, jump: NoteJump): number | null {
   if (jump.block !== null) {
@@ -3473,16 +3485,9 @@ class Workspace {
     }
 
     const rewrote = await this.retargetMoved(path, target)
-    if (undoable) {
-      this.undone.record({
-        kind: 'rename',
-        from: path,
-        to: target,
-        ...(rewrote ? { rewrote } : {}),
-      })
-    }
 
     const note = this.opened.at(path)
+    let retitled = false
     if (note) {
       note.flush()
       const was = `# ${shownName(nameOf(path))}`
@@ -3490,7 +3495,18 @@ class Workspace {
         note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
         note.dirty = true
         this.saving.owed(note)
+        retitled = true
       }
+    }
+
+    if (undoable) {
+      this.undone.record({
+        kind: 'rename',
+        from: path,
+        to: target,
+        ...(rewrote ? { rewrote } : {}),
+        ...(retitled ? { retitled } : {}),
+      })
     }
 
     await this.fileMoved(path, target, kind)
@@ -3741,6 +3757,16 @@ class Workspace {
       return
     }
 
+    if (jump.path && this.opensInNoTab(jump.path)) {
+      await this.revealLinked(insideSpace(root, jump.path))
+      return
+    }
+
+    if (jump.path && this.opensOwnKind(jump.path)) {
+      await this.openEntry(insideSpace(root, jump.path), how)
+      return
+    }
+
     const path = jump.path
       ? insideSpace(root, jump.path)
       : await this.linkedOrMade(jump, root, source)
@@ -3755,7 +3781,33 @@ class Workspace {
     this.landOn(path, jump)
   }
 
+  private opensOwnKind(path: string): boolean {
+    const isUrlNote = (one: string) => links.urlOf(one) !== null
+    const opener = openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() })
+    return opener === 'view' || opener === 'chat' || opener === 'term' || opener === 'application'
+  }
+
+  private opensInNoTab(path: string): boolean {
+    if (isMarkdownPath(path) || PLAIN_TEXT.test(path)) return false
+    const isUrlNote = (one: string) => links.urlOf(one) !== null
+    return (
+      openerFor(path, isUrlNote, { evenBuild: __EVEN_PLUGIN__, isPlugin: isPlugin() }) === 'note'
+    )
+  }
+
+  private async revealLinked(path: string) {
+    await (await import('../../files-out/src/api')).reveal(path)
+  }
+
   private async followAside(jump: NoteJump, root: string, source: string | null) {
+    if (jump.path && this.opensInNoTab(jump.path)) {
+      await this.revealLinked(insideSpace(root, jump.path))
+      return
+    }
+    if (jump.path && this.opensOwnKind(jump.path)) {
+      await this.openEntry(insideSpace(root, jump.path), { beside: true })
+      return
+    }
     const path = jump.path
       ? insideSpace(root, jump.path)
       : isTabFile(jump.target)
@@ -3783,23 +3835,34 @@ class Workspace {
     root: string,
     source: string | null,
   ): Promise<string | null> {
-    const known = await links.targetWhenRead(source, { kind: 'wikilink', target: jump.target })
-    return known === null ? this.makeLinked(jump.target, root, source) : insideSpace(root, known)
+    const kind = jump.kind ?? 'wikilink'
+    const known = await links.targetWhenRead(source, { kind, target: jump.target })
+    return known === null
+      ? this.makeLinked(jump.target, root, source, kind)
+      : insideSpace(root, known)
   }
 
   private async makeLinked(
     target: string,
     root: string,
     source: string | null,
+    kind: LinkKind = 'wikilink',
   ): Promise<string | null> {
     const slashed = target.replace(/[\\]/g, '/')
     if (slashed.trimStart().startsWith('//')) return null
+    if (kind === 'markdown' && /(?:^|\/)\.{0,2}\s*$/.test(slashed)) return null
     const clean = slashed.replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 
     const inside = source === null ? null : withinSpace(root, source)
     const here = inside === null || slashed.trimStart().startsWith('/') ? '' : folderOf(inside)
-    const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
+    const relative =
+      kind === 'markdown'
+        ? fromFolder(here, clean)
+        : clean.includes('/') || !here
+          ? clean
+          : `${here}/${clean}`
+    if (relative === null) return null
 
     const safe = insideOnly(isMarkdownPath(relative) ? relative : `${relative}.md`)
     if (safe === null) return null

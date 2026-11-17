@@ -38,6 +38,18 @@ vi.mock('@orden/editor', async (importOriginal) => {
   }
 })
 
+let folds = 0
+vi.mock('@orden/markdown/links', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@orden/markdown/links')>()
+  return {
+    ...real,
+    foldName: (name: string) => {
+      folds++
+      return real.foldName(name)
+    },
+  }
+})
+
 const { links } = await import('../src/lib/link-index/src/api')
 const { startup } = await import('../src/lib/launch/src/api')
 
@@ -98,6 +110,41 @@ describe('a large folder renamed or moved', () => {
   })
 })
 
+describe('many notes that share a name', () => {
+  const MANY = 1000
+
+  function pages() {
+    for (let one = 0; one < MANY; one++) {
+      notes[`Export/Page ${one}/index.md`] =
+        `[[Page ${(one + 1) % MANY}/index]] [next](../Page%20${(one + 2) % MANY}/index.md)\n`
+      notes[`Other/O ${one}.md`] = `[[Export/Page ${one}/index]]\n`
+    }
+  }
+
+  test('a folder of them renamed reads each name a handful of times, not once per namesake', async () => {
+    pages()
+    folds = 0
+
+    expect(await moving('Export', 'Archive/Export')).toBe(0)
+    expect(folds).toBeLessThan(40 * MANY)
+  })
+
+  test('the links into one of them, asked again after a save, read each name a handful of times', async () => {
+    pages()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Other/O 1.md`, '[[Export/Page 1/index]] more\n')
+    folds = 0
+
+    const into = links.backlinks(`${ROOT}/Export/Page 5/index.md`).map((one) => one.path)
+    expect(into.sort()).toEqual([
+      'Export/Page 3/index.md',
+      'Export/Page 4/index.md',
+      'Other/O 5.md',
+    ])
+    expect(folds).toBeLessThan(15 * MANY)
+  })
+})
+
 describe('a picture shown in a large space', () => {
   test('is looked for among the files of its name, not the whole space', async () => {
     notes['Notes/Day/x.md'] = 'x'
@@ -111,7 +158,9 @@ describe('a picture shown in a large space', () => {
     compared = 0
     expect(links.fileFor('beside.png', from)).toBe(`${ROOT}/Notes/Day/beside.png`)
     expect(links.fileFor('attachments/cat.png', from)).toBe(`${ROOT}/attachments/cat.png`)
-    expect(links.fileFor('../../attachments/cat.png', from)).toBe(`${ROOT}/attachments/cat.png`)
+    expect(links.fileFor('../../attachments/cat.png', from, 'markdown')).toBe(
+      `${ROOT}/attachments/cat.png`,
+    )
     expect(links.fileFor('img 7.png', from)).toBe(`${ROOT}/Folder 0/img 7.png`)
     expect(links.fileFor('nothing.png', from)).toBeNull()
     expect(compared).toBeLessThanOrEqual(200)

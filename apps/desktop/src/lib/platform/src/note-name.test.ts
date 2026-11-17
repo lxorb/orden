@@ -37,6 +37,32 @@ describe('naming a note after its own words', () => {
     expect(nameFromContent('a<b>c|d*e"f\n')).toBe('a b c d e f')
   })
 
+  test('keeps hyphens, which every filesystem takes, and drops control characters', () => {
+    expect(nameFromTitle('2026-11-16 Standup')).toBe('2026-11-16 Standup')
+    expect(nameFromTitle('my-project')).toBe('my-project')
+    expect(nameFromTitle('a\u0001b')).toBe('a b')
+  })
+
+  test('skips the front matter and a rule above the words', () => {
+    expect(nameFromContent('---\ntags: [a]\n---\nBuy milk\n')).toBe('Buy milk')
+    expect(nameFromContent('---\n\nB text\n')).toBe('B text')
+    expect(nameFromContent('- - -\n***\nWords\n')).toBe('Words')
+    expect(draftName('---\ntitle: x\n---\n# Plan\n'.split('\n'))).toBe('Plan')
+  })
+
+  test('reads no heading inside a code fence', () => {
+    const reply =
+      "Here's how to set up the project:\n\n```bash\n# Install dependencies\nnpm install\n```\n\nThen run it."
+    expect(nameFromContent(reply)).toBe("Here's how to set up the project")
+    expect(nameFromContent('Totals\n\n~~~python\n# compute\n~~~\n\n# Real\n')).toBe('Real')
+    expect(nameFromContent('intro\r\n# Heading\r\n')).toBe('Heading')
+  })
+
+  test('takes a code span at the start of a line for words, and a fence closes only on a bare mark', () => {
+    expect(nameFromContent('```npm install``` to set up\n')).toBe('```npm install``` to set up')
+    expect(nameFromContent('Setup\n\n```\n# one\n```js\n# two\n```\n\n# Real\n')).toBe('Real')
+  })
+
   test('has nothing to offer for an empty note', () => {
     expect(nameFromContent('')).toBeNull()
     expect(nameFromContent('\n\n   \n')).toBeNull()
@@ -49,6 +75,16 @@ describe('naming a note after its own words', () => {
 
   test('keeps it short enough to be a filename', () => {
     expect(nameFromContent(`# ${'word '.repeat(40)}\n`)!.length).toBeLessThanOrEqual(60)
+  })
+
+  test('ends on a letter where the cut falls on a space, a dot or inside an emoji', () => {
+    const sentence =
+      'We should move the weekly planning meeting to Thursday at 9 so everyone can attend.'
+    expect(nameFromTitle(sentence)).toBe(
+      'We should move the weekly planning meeting to Thursday at 9',
+    )
+    expect(nameFromTitle(`${'a'.repeat(58)}. then more`)).toBe('a'.repeat(58))
+    expect(nameFromTitle(`${'a'.repeat(59)}\u{1f600} more`)).toBe(`${'a'.repeat(59)}\u{1f600}`)
   })
 
   test('keeps letters other languages use', () => {

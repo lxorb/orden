@@ -132,10 +132,17 @@ describe('a row whose line is a task', () => {
     expect(html).not.toContain('- [ ]')
   })
 
+  test('and the box names its task, so a tick after the note changed finds it or nothing', async () => {
+    answering = [hit({ text: '- [ ] write the plan', ranges: [] })]
+    const { taskHash } = await import('@orden/bases')
+
+    expect((await answered('plan')) ?? '').toContain(`data-hash="${taskHash('write the plan')}"`)
+  })
+
   test('and a box that is ticked says so', async () => {
     answering = [hit({ text: '- [x] read the paper', ranges: [] })]
 
-    expect((await answered('plan')) ?? '').toContain('data-line="3" checked')
+    expect((await answered('plan')) ?? '').toMatch(/data-line="3" data-hash="\w+" checked/)
   })
 
   test('and the emphasis moves along with the words', async () => {

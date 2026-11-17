@@ -14,7 +14,7 @@ export type Query =
   | { kind: 'not'; of: Query }
   | { kind: 'text'; text: string; fold: boolean }
   | { kind: 'content'; text: string; fold: boolean }
-  | { kind: 'regex'; source: string; fold: boolean }
+  | { kind: 'regex'; source: string; fold: boolean; refused?: true }
   | { kind: 'path'; text: string; fold: boolean }
   | { kind: 'file'; text: string; fold: boolean }
   | { kind: 'tag'; tag: string }
@@ -40,6 +40,8 @@ const UNITS: Record<string, Unit> = {
 
 const FIELD = /^([A-Za-z][A-Za-z-]*):/
 
+const FLAGS = /^(?!.*(.).*\1)[dgimsuyv]*$/u
+
 export const OPERATORS: readonly string[] = [
   'tag:',
   'path:',
@@ -57,6 +59,7 @@ export const OPERATORS: readonly string[] = [
 class Parser {
   private at = 0
   private folding = true
+  private depth = 0
 
   constructor(private readonly source: string) {}
 
@@ -92,7 +95,7 @@ class Parser {
     for (;;) {
       this.skipSpace()
       if (this.at >= this.source.length) break
-      if (this.source.charAt(this.at) === ')') break
+      if (this.depth > 0 && this.source.charAt(this.at) === ')') break
       if (this.atOr()) break
 
       const before = this.at
@@ -115,6 +118,11 @@ class Parser {
     }
 
     if (here === '(') return this.group()
+    const stray = this.depth === 0 ? /^\)+(?=\s|$)/u.exec(this.source.slice(this.at)) : null
+    if (stray) {
+      this.at += stray[0].length
+      return null
+    }
     if (here === '"') return this.text(this.phrase())
 
     if (here === '/') {
@@ -127,12 +135,17 @@ class Parser {
       if (found) return found
     }
 
-    return this.field() ?? this.text(this.bare())
+    const before = this.at
+    const field = this.field()
+    if (field || this.at !== before) return field
+    return this.text(this.bare())
   }
 
   private group(): Query | null {
     this.at++
+    this.depth++
     const inner = this.expression()
+    this.depth--
     this.skipSpace()
     if (this.source.charAt(this.at) === ')') this.at++
 
@@ -153,7 +166,7 @@ class Parser {
 
     if (name === 'case') {
       this.folding = false
-      return null
+      return /^(?:[\s)]|$)/u.test(this.source.slice(this.at)) ? null : this.term()
     }
 
     if (unit) {
@@ -178,7 +191,9 @@ class Parser {
     const inner = this.source.slice(this.at + 1, end)
     const colon = inner.indexOf(':')
     const name = (colon === -1 ? inner : inner.slice(0, colon)).trim().toLowerCase()
-    if (!name) return null
+    if (!name || name.includes('[')) return null
+    if (!/^(?:[\s)]|$)/.test(this.source.slice(end + 1))) return null
+    if (colon === -1 && Array.from(inner).length === 1) return null
 
     this.at = end + 1
     const said = colon === -1 ? '' : inner.slice(colon + 1).trim()
@@ -189,6 +204,7 @@ class Parser {
     let at = this.at + 1
     let source = ''
     let inClass = false
+    let passed = false
 
     while (at < this.source.length) {
       const here = this.source.charAt(at)
@@ -200,6 +216,7 @@ class Parser {
       }
 
       if (here === '\n') break
+      if (passed && /\s/.test(here)) return null
 
       if (here === '/' && !inClass) {
         let after = at + 1
@@ -210,10 +227,13 @@ class Parser {
         }
 
         const ends = after >= this.source.length || /[\s)]/.test(this.source.charAt(after))
+        if (!ends && /\s/.test(this.source.charAt(at - 1))) return null
+        if (ends && !FLAGS.test(flags)) return null
         if (ends) {
           this.at = after
           return { kind: 'regex', source, fold: flags.includes('i') }
         }
+        passed = true
       }
 
       if (here === '[') inClass = true
@@ -249,6 +269,7 @@ class Parser {
 
   private bare(): string {
     let out = ''
+    let open = 0
 
     while (this.at < this.source.length) {
       const here = this.source.charAt(this.at)
@@ -259,7 +280,9 @@ class Parser {
         continue
       }
 
-      if (here === ')' || /\s/.test(here)) break
+      if ((here === ')' && this.depth > 0 && open === 0) || /\s/.test(here)) break
+      if (here === '(') open++
+      else if (here === ')' && open > 0) open--
 
       out += here
       this.at++

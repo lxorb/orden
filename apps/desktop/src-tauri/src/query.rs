@@ -50,6 +50,8 @@ pub enum Query {
     Regex {
         source: String,
         fold: bool,
+        #[serde(default)]
+        refused: bool,
     },
     Path {
         text: String,

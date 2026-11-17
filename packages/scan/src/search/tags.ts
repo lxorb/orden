@@ -36,32 +36,64 @@ export function tagsIn(body: string): string[] {
   return tagUses(body).map((use) => `#${use.tag}`)
 }
 
+export function tagPath(tag: string): string {
+  return tag
+    .toLowerCase()
+    .split('/')
+    .filter((segment) => segment !== '')
+    .join('/')
+}
+
+export function tagUnder(tag: string, wanted: string): boolean {
+  const path = tagPath(tag)
+  return path === wanted || path.startsWith(`${wanted}/`)
+}
+
 export function tagSpans(body: string, path: string): { from: number; to: number }[] {
-  const wanted = path.toLowerCase()
+  const wanted = tagPath(path)
   if (!wanted) return []
 
   return tagUses(body)
-    .filter((use) => {
-      const folded = use.tag.toLowerCase()
-      return folded === wanted || folded.startsWith(`${wanted}/`)
-    })
-    .map((use) => ({ from: use.from, to: use.from + wanted.length }))
+    .filter((use) => tagUnder(use.tag, wanted))
+    .map((use) => ({ from: use.from, to: use.from + nodeLength(use.tag, wanted) }))
+}
+
+function nodeLength(tag: string, wanted: string): number {
+  let left = wanted.split('/').length
+  let at = 0
+
+  for (const segment of tag.split('/')) {
+    at += segment.length
+    if (segment !== '') left--
+    if (left === 0) return at
+    at += 1
+  }
+
+  return tag.length
 }
 
 export function tagCuts(body: string, path: string): { from: number; to: number }[] {
-  const wanted = path.toLowerCase()
+  const wanted = tagPath(path)
   if (!wanted) return []
 
   const out: { from: number; to: number }[] = []
+  const frontEnds = frontMatterBlock(body)?.close ?? 0
 
   for (const use of tagUses(body)) {
-    const folded = use.tag.toLowerCase()
-    if (folded !== wanted && !folded.startsWith(`${wanted}/`)) continue
+    if (!tagUnder(use.tag, wanted)) continue
 
-    out.push(widened(body, use))
+    out.push(widened(body, use.from < frontEnds ? unquoted(body, use) : use))
   }
 
   return out
+}
+
+function unquoted(body: string, use: TagUse): TagUse {
+  const hash = body.charAt(use.from - 1) === '#' ? use.from - 1 : use.from
+  const quote = body.charAt(hash - 1)
+  if ((quote !== '"' && quote !== "'") || body.charAt(use.to) !== quote) return use
+
+  return { tag: use.tag, from: hash - 1, to: use.to + 1 }
 }
 
 function widened(body: string, use: TagUse): { from: number; to: number } {
@@ -77,8 +109,14 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
     return { from: line, to: end === -1 ? body.length : end + 1 }
   }
 
-  if (body.charAt(to) === ',') {
-    return { from, to: to + 1 + spaces(body, to + 1, after) }
+  const gap = spaces(body, to, after)
+  if (body.charAt(to + gap) === ',') {
+    if (body.charAt(to + gap + 1) === '#') return { from, to: to + gap }
+    const past = spaces(body, to + gap + 1, after)
+    const matter = (frontMatterBlock(body)?.close ?? 0) > from
+    if (matter && past && body.charAt(to + gap + 1 + past) === '#')
+      return { from, to: to + gap + 1 }
+    return { from, to: to + gap + 1 + past }
   }
 
   const before = /(,?[ \t]+|,)$/.exec(body.slice(line, from))
@@ -140,6 +178,11 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
     const end = body.indexOf('\n', at)
     const stop = end === -1 || end > front.close ? front.close : end
     const line = body.slice(at, stop).replace(/\r$/, '')
+    if (!line.trim() || line.trimStart().startsWith('#')) {
+      if (end === -1) return front.close
+      at = end + 1
+      continue
+    }
     const item = ITEM.exec(line)
     if (!item) return at
 

@@ -3,6 +3,7 @@
   "layer": "foundation",
   "dependsOn": [
     "contracts",
+    "bases",
     "chats",
     "editor",
     "graph",

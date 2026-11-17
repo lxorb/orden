@@ -4030,6 +4030,51 @@ describe('following a link to a note the space has not got', () => {
     expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/.github/CONTRIBUTING.md'])
   })
 
+  test('shows a linked file no tab opens where it lies, and makes no note for it', async () => {
+    const shown: string[] = []
+    const stop = providePort('explorer.show', {
+      offered: () => true,
+      show: async (path: string) => {
+        shown.push(path)
+        return true
+      },
+    })
+    await workspace.followLink({ ...asked('spec.docx'), path: 'files/spec.docx' })
+    await workspace.followLink({ ...asked('spec.docx'), path: 'files/spec.docx' }, 'aside')
+    stop()
+
+    expect(
+      sent.filter((one) => one.command === 'write_note' || one.command === 'read_note'),
+    ).toEqual([])
+    expect(workspace.tabs).toEqual([])
+    expect(shown).toEqual(['/space/files/spec.docx', '/space/files/spec.docx'])
+  })
+
+  test('opens a linked database as a database, never as its text', async () => {
+    notes['/space/Tasks.base'] = 'views:\n  - type: table\n'
+    await workspace.followLink({ ...asked('Tasks.base'), path: 'Tasks.base' })
+    await workspace.followLink({ ...asked('Tasks.base'), path: 'Tasks.base' }, 'aside')
+
+    expect(workspace.tabs.filter((tab) => tab.kind === 'note').map((tab) => tab.path)).toEqual([])
+  })
+
+  test('opens a linked plain text file in a tab rather than showing it where it lies', async () => {
+    const shown: string[] = []
+    const stop = providePort('explorer.show', {
+      offered: () => true,
+      show: async (path: string) => {
+        shown.push(path)
+        return true
+      },
+    })
+    notes['/space/notes.txt'] = 'plain words'
+    await workspace.followLink({ ...asked('notes.txt'), path: 'notes.txt' })
+    stop()
+
+    expect(shown).toEqual([])
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/notes.txt'])
+  })
+
   test('and writes nothing at all for a link that climbs out of the space', async () => {
     for (const target of [
       '../../../.bashrc',
@@ -4766,6 +4811,24 @@ describe('a tab asked for with a modifier', () => {
     } finally {
       delete notes['/space/New.md']
     }
+  })
+
+  test('a markdown link to no note makes it in the folder its path reads from', async () => {
+    const made = async (target: string) => {
+      sent.length = 0
+      const asked = { ...jump(target), path: null, kind: 'markdown' as const }
+      await workspace.followLink(asked, 'plain', '/space/B/x.md')
+      return sent.filter((one) => one.command === 'write_note').map((one) => one.path)
+    }
+
+    expect(await made('./New.md')).toEqual(['/space/B/New.md'])
+    expect(await made('../Up.md')).toEqual(['/space/Up.md'])
+    expect(await made('sub/Deep.md')).toEqual(['/space/B/sub/Deep.md'])
+    expect(await made('../../Out.md')).toEqual([])
+    expect(await made('./')).toEqual([])
+    expect(await made('../')).toEqual([])
+    expect(await made('sub/')).toEqual([])
+    expect(await made('..')).toEqual([])
   })
 
   test('a paper followed the same way opens behind too, as its page note', async () => {

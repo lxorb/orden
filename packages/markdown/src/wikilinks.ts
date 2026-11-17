@@ -15,17 +15,27 @@ import {
 import { firstStart, lineStart, matchesAt } from './starts'
 import { remembering } from './tags'
 
-export type LinkResolver = (link: Wikilink) => { href: string | null; text?: string } | null
+export type LinkResolver = (
+  link: Wikilink,
+  from?: EmbeddedNote,
+) => { href: string | null; text?: string } | null
 
 export type EmbedResolver = (link: Wikilink) => string | EmbeddedNote | null
 
 export interface EmbeddedNote {
   text: string
   escapeHtml: boolean
+  path?: string
 }
 
+export type PictureResolver = (
+  src: string,
+  wikilink: boolean,
+  from: EmbeddedNote | null,
+) => string | null
+
 export interface Embeds {
-  sections: { text: string; escapeHtml: boolean }[]
+  sections: { text: string; escapeHtml: boolean; from: EmbeddedNote }[]
   marker: (at: number) => string
 }
 
@@ -48,6 +58,7 @@ function embedLine(src: string, at: number): number | null {
 export function wikilinks(options: {
   resolveLink?: LinkResolver
   resolveEmbed?: EmbedResolver
+  resolvePicture?: PictureResolver
   embeds: Embeds
 }): MarkedExtension {
   return remembering({
@@ -67,7 +78,8 @@ export function wikilinks(options: {
         },
         renderer(token: Tokens.Generic) {
           const link = token.link as Wikilink
-          const shown = media(link) ?? card(link, options) ?? frame(link, options)
+          const shown =
+            media(link, options.resolvePicture) ?? card(link, options) ?? frame(link, options)
 
           return shown ?? `<p>${anchor(link, options.resolveLink, String(token.text ?? ''))}</p>\n`
         },
@@ -87,7 +99,7 @@ export function wikilinks(options: {
         },
         renderer(token: Tokens.Generic) {
           const link = token.link as Wikilink
-          const shown = link.embed ? media(link) : null
+          const shown = link.embed ? media(link, options.resolvePicture) : null
 
           return shown ?? anchor(link, options.resolveLink, String(token.text ?? ''))
         },
@@ -114,11 +126,12 @@ function anchored(link: Wikilink): string {
   return page === null ? `#${fragment(slugify(link.heading))}` : `#page=${page}`
 }
 
-function media(link: Wikilink): string | null {
+function media(link: Wikilink, resolve: PictureResolver | undefined): string | null {
   const kind = embedKind(link.target)
   if (kind === null || kind === 'pdf' || kind === 'canvas') return null
 
-  const source = safeHref(link.target) ? attributeUrl(link.target) : ''
+  const found = resolve?.(link.target, true, null) ?? link.target
+  const source = safeHref(link.target) ? attributeUrl(found) : ''
   if (!source) return null
 
   const size = embedSize(link.alias)
@@ -167,7 +180,8 @@ function frame(
   const section = sectionOf(note.text, link)
   if (section === null) return null
 
-  const at = options.embeds.sections.push({ text: section, escapeHtml: note.escapeHtml }) - 1
+  const at =
+    options.embeds.sections.push({ text: section, escapeHtml: note.escapeHtml, from: note }) - 1
   const name = escape(shownText(link))
 
   return `<figure class="embed">\n<div class="embed-body">${options.embeds.marker(

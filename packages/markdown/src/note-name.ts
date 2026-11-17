@@ -1,3 +1,5 @@
+import { frontMatterLines } from './front-matter-lines'
+
 const RESERVED = [
   'CON',
   'PRN',
@@ -54,23 +56,47 @@ const HEADING = /^ {0,3}(#{1,6})\s+(.*)$/
 
 const MARKUP = /^\s*(?:#{1,6}\s+|[-*+]\s+|>\s*)/
 
-export function titleFrom(lines: Iterable<string>): string | null {
-  let first: string | null = null
-  let read = 0
+const FENCE = /^ {0,3}(?:(`{3,})[^`]*|(~{3,}).*)$/
 
+const RULE = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
+
+export function titleFrom(lines: Iterable<string>): string | null {
+  const taken: string[] = []
   for (const line of lines) {
+    taken.push(line)
+    if (taken.length >= LINES) break
+  }
+
+  const matter = frontMatterLines(taken.join('\n'))
+  const after = matter ? taken.join('\n').slice(0, matter.close).split('\n').length : 0
+  let first: string | null = null
+
+  let fence: string | null = null
+
+  for (const raw of taken.slice(after)) {
+    const line = raw.replace(/\r$/, '')
+    const found = FENCE.exec(line)
+    const mark = found ? (found[1] ?? found[2] ?? null) : null
+    if (fence !== null) {
+      const closes = mark?.startsWith(fence.slice(0, 3)) === true && mark.length >= fence.length
+      if (closes && line.trim() === mark) fence = null
+      continue
+    }
+    if (mark !== null) {
+      fence = mark
+      continue
+    }
+
     const heading = HEADING.exec(line)
     if (heading) {
       const words = (heading[2] ?? '').trim()
       if (words) return words
     }
 
-    if (first === null) {
+    if (first === null && !RULE.test(line)) {
       const words = line.replace(MARKUP, '').trim()
       if (words) first = words
     }
-
-    if (++read >= LINES) break
   }
 
   return first
@@ -81,7 +107,7 @@ export function draftName(lines: Iterable<string>): string | null {
   if (title === null) return null
 
   const text = title.replace(/\s+/g, ' ').trim()
-  return text ? text.slice(0, MOST) : null
+  return text ? Array.from(text).slice(0, MOST).join('') : null
 }
 
 export function nameFromContent(doc: string): string | null {
@@ -91,11 +117,14 @@ export function nameFromContent(doc: string): string | null {
 
 export function nameFromTitle(title: string): string | null {
   const text = title
-    .replace(/[<>:"/\\|?* -]/g, ' ')
+    .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
+  const cut = Array.from(text)
     .slice(0, MOST)
+    .join('')
+    .replace(/[.\s]+$/, '')
 
-  if (!text) return null
-  return isReserved(text) ? `_${text}` : text
+  if (!cut) return null
+  return isReserved(cut) ? `_${cut}` : cut
 }

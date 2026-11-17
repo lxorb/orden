@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cellValue, groupName, type Row, rowId } from '@orden/bases'
   import { linkModifier } from '@orden/editor'
-  import { imageUrl } from '../../platform/src/api'
+  import { notePicture } from '../../link-index/src/api'
   import { valueText } from './chips'
   import { displayName } from './columns'
   import { draggable, droppable } from './drag.svelte'
@@ -44,7 +44,7 @@
       }
     }
     const path = notePath(row)
-    return { src: imageUrl(target, path) }
+    return { src: notePicture(target, path, '') }
   }
 </script>
 

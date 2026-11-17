@@ -56,6 +56,7 @@ class Space {
   private order: string[] = []
   private held = new Map<string, Held>()
   private whole = false
+  private listing = 0
   private characters = 0
   private dropped = 0
   private read = 0
@@ -81,6 +82,7 @@ class Space {
     if (this.root !== base) return
 
     this.order = paths
+    const mine = ++this.listing
 
     const listed = new Set(paths)
     for (const path of this.held.keys()) {
@@ -101,6 +103,7 @@ class Space {
       if (this.root !== base) return
     }
 
+    if (this.listing !== mine) return
     this.whole = true
     this.settle()
   }
@@ -159,6 +162,7 @@ class Space {
   forget(root: string | null): void {
     this.root = root === null ? null : normalise(root)
     this.order = []
+    this.listing += 1
     this.held.clear()
     this.whole = false
     this.characters = 0
@@ -184,6 +188,7 @@ class Space {
     if (!walking.on || this.root !== base) return
 
     this.order = [...new Set([...walked, ...this.order])].sort(inPathOrder)
+    this.listing += 1
     this.whole = true
   }
 

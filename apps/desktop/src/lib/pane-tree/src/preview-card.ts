@@ -51,7 +51,7 @@ export function mountPreview(
     trustedMarkup: trustsHtmlAt(path),
     place: path,
     openLink: followHref,
-    resolveImage: (src: string) => notePicture(src, path, said),
+    resolveImage: (src: string, wikilink?: boolean) => notePicture(src, path, said, wikilink),
   })
 
   const settings = modes.settings

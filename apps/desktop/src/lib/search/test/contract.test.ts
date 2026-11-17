@@ -80,7 +80,10 @@ describe('a replacement', () => {
     '/space/One.md': 'alpha here\nbeta\nalpha again\n',
     '/space/Link.url': 'alpha\n',
   }
-  const hit = (path: string, line: number) => ({ path, name: path, line, text: '', ranges: [] })
+  const hit = (path: string, line: number) => {
+    const text = (notes[path]?.split('\n')[line] ?? '').trim()
+    return { path, name: path, line, text, ranges: [] }
+  }
   const alpha = { kind: 'text', text: 'alpha', fold: true } as const
 
   test('changes the lines that were hit in notes, and says how to put each back', async () => {
