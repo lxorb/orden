@@ -46,9 +46,7 @@ const ROOTS: Record<Exclude<ProviderKind, 'compatible' | LocalKind>, string> = {
 }
 
 const ANTHROPIC_VERSION = '2023-06-01'
-
 const MOST_TOKENS = 4096
-
 const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|\[::1\])(?=[:/]|$)/i
 
 export function apiRoot(provider: Provider): string {

@@ -19,7 +19,6 @@
   let trouble = $state<Record<string, string>>({})
   let inFile = $state(false)
   const EXAMPLE_URL = 'http://localhost:11434'
-
   const named = (vendor: string) => vendorName(vendor, ai.accounts)
 
   const addable = $derived(
@@ -300,13 +299,11 @@
           <button class="orden-chip is-quiet" onclick={() => forget(provider)}>Remove</button>
         </div>
       </div>
-
       {#if isLocal(provider.kind)}
         <div class="orden-setting setting">
           <span class="name">{labelOf(provider)}</span>
         </div>
       {/if}
-
       {#if provider.kind === 'compatible' || siblings > 1}
         <label class="orden-setting setting">
           <span class="name">Name</span>
@@ -321,7 +318,6 @@
           />
         </label>
       {/if}
-
       {#if provider.kind === 'compatible'}
         <label class="orden-setting setting">
           <span class="name">Base URL</span>
@@ -340,7 +336,6 @@
           />
         </label>
       {/if}
-
       {#if !__EVEN_PLUGIN__ && (provider.kind === 'claude-code' || provider.kind === 'codex' || provider.kind === 'gemini-cli' || provider.kind === 'chatgpt')}
         {#await loadPlanRows() then { default: PlanRows }}
           <PlanRows {provider} kind={provider.kind} {refresh} trouble={said(provider)} />
@@ -375,7 +370,6 @@
           {/if}
         </div>
       {/if}
-
       {#if week}
         {@const words = weekWords(week)}
         <div class="week" data-week>
@@ -397,7 +391,6 @@
           </div>
         </div>
       {/if}
-
       {#if !__EVEN_PLUGIN__ && provider.kind === 'chatgpt' && plans?.chatgpt}
         <p class="hint">Using ChatGPT plan</p>
       {/if}

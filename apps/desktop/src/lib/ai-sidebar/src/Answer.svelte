@@ -16,7 +16,6 @@
     onpicture?: (src: string) => void
   }
   const { html, live = false, onfollow, onpicture }: Props = $props()
-
   const waiting = $derived(mathsWaiting(html))
 
   function copied(event: MouseEvent): boolean {

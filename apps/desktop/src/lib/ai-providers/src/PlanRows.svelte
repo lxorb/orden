@@ -17,7 +17,6 @@
   }
 
   const { provider, kind, refresh, trouble }: Props = $props()
-
   let signingIn = $state(false)
   let signIns = 0
 
@@ -120,7 +119,6 @@
       {/if}
     </div>
   </div>
-
   {@render limited(kind, plan.limit)}
 {/snippet}
 

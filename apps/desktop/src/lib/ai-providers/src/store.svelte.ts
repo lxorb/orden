@@ -11,9 +11,7 @@ import { type Provider, type ProviderKind, transcribes, usable } from './provide
 import { stuck } from './stuck'
 
 const EARLIER = 'orden:ai'
-
 const MOVED = 'orden:ai-moved'
-
 const TRIES = 3
 
 export type Feature = 'ask' | 'block' | 'rewrite'
@@ -41,23 +39,14 @@ class Ai {
   state = $state<Accounts>(NONE)
 
   readonly accounts = $derived<Account[]>(this.state.accounts)
-
   readonly providers = $derived<Provider[]>(actives(this.state))
-
   readonly vendors = $derived<Vendor[]>(vendors(this.state))
-
   readonly uses = $derived<Record<string, Vendor>>(this.state.uses)
-
   readonly defaultVendor = $derived<Vendor>(this.state.defaultVendor)
-
   readonly defaultAccount = $derived<Account | null>(defaultOf(this.state))
-
   readonly chosen = $derived(this.firstThat(usable))
-
   readonly ready = $derived(this.chosen !== null)
-
   readonly transcriber = $derived(this.firstThat(transcribes))
-
   private stamp = ''
   private synced: Promise<void> | null = null
   private writing: Promise<void> = Promise.resolve()

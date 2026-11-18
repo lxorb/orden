@@ -28,7 +28,6 @@ vi.mock('../../../platform/src/tauri', async (original) => ({
 }))
 
 const { openSession } = await import('./session')
-
 const settle = () => new Promise((done) => setTimeout(done, 0))
 
 test('what is said to a session reaches it one at a time, in the order it was said', async () => {

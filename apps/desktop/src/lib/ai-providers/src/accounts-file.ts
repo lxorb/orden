@@ -1,7 +1,6 @@
 import { keep, storedText, invoke, isNative } from '../../platform/src/api'
 
 const EVENT = 'orden://ai-accounts'
-
 export const COPY = 'orden:ai-accounts'
 
 export interface Kept {

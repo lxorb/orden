@@ -33,7 +33,6 @@
   }
 
   const listed = $derived(read(said))
-
   let ticked = $state<Record<string, boolean>>({})
 
   const placeOf = (one: Task) => `${one.space}\n${one.at}`

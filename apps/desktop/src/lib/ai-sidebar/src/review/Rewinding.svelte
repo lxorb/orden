@@ -6,7 +6,6 @@
   import { review, type ReviewPanel } from '../chat-parts'
 
   const { thread, panel = null }: { thread: Thread; panel?: ReviewPanel | null } = $props()
-
   const sheet = $derived(review.sheet?.thread.id === thread.id ? review.sheet : null)
   const redo = $derived(review.canRedo(thread))
 </script>

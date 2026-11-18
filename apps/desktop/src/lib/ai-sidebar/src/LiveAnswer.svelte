@@ -10,7 +10,6 @@
     onpicture: (src: string) => void
   }
   const { text, draw, onfollow, onpicture }: Props = $props()
-
   let drawnFor = untrack(() => text)
   let html = $state(untrack(() => draw(text)))
 

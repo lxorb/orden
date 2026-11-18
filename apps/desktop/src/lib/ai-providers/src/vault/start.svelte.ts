@@ -13,13 +13,11 @@ import VaultApprove from './VaultApprove.svelte'
 
 const SETTLE = 800
 const EVERY = 5 * 60_000
-
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
 
 const baseKey = (id: string) => `orden:ai-vault-base:${id}`
 
 const BROWSER_KEY = 'orden:ai-vault-browser'
-
 export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
 
 export async function keepBrowserInVault(on: boolean): Promise<void> {
@@ -105,7 +103,6 @@ export const world: VaultWorld = {
 }
 
 export const vault = new Vault(world)
-
 let started = false
 
 export function startVault(): void {

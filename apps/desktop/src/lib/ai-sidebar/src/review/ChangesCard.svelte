@@ -7,7 +7,6 @@
   import Tally from './Tally.svelte'
 
   const { thread }: { thread: Thread } = $props()
-
   const notes = $derived(review.notes(thread))
   const all = $derived(notes.flatMap((note) => note.changes))
   const files = $derived(review.files(thread))

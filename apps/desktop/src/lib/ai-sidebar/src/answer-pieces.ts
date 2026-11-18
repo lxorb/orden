@@ -1,7 +1,5 @@
 const AT_ONCE = 40_000
-
 const PIECE = 6_000
-
 const AT_A_STEP = 2
 
 type Later = (run: () => void) => () => void

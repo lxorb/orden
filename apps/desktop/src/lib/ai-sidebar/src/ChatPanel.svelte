@@ -53,7 +53,6 @@
 
   let root = $state<HTMLElement>()
   let railed = $state(railOpen())
-
   const ready = $derived(ai.providerFor('ask') !== null)
   const head = $derived(chat.head)
   const listing = $derived(chat.listing && !wide)
@@ -161,7 +160,6 @@
       <Threads rail />
     </aside>
   {/if}
-
   <div class="main">
     {#if shown && (wide || (head?.kept && !listing && session === null))}
       <header class="top">
@@ -188,7 +186,6 @@
         {/if}
       </header>
     {/if}
-
     {#if !shown}
       <button class="elsewhere" onclick={claim}>
         <span>{tab?.name ?? 'Untitled'}</span>

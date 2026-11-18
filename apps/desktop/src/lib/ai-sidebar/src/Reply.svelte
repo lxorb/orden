@@ -45,7 +45,6 @@
   let working = $state(false)
   const showWork = $derived(working || chat.unfolded)
   const worked = $derived(turn.took ? `Worked for ${lasted(turn.took, region())}` : 'Worked')
-
   const pictures = new SvelteSet<string>()
   const show = (src: string) => pictures.add(src)
 
@@ -134,7 +133,6 @@
   }
 
   const saveAsNote = () => chat.noteFrom(asNote)
-
   const copied = new Copied()
   const DONE = 'M2.8 6.8l2.4 2.4 5-5.4'
   const COPY =
@@ -256,7 +254,6 @@
   {#each fold.before as block (block.at)}
     {@render one(block)}
   {/each}
-
   {#if fold.work.length}
     <div class="worked">
       <StepLine verb={worked} open={showWork} onpress={() => (working = !working)} />
@@ -269,11 +266,9 @@
       </div>
     {/if}
   {/if}
-
   {#each fold.after as block (block.at)}
     {@render one(block)}
   {/each}
-
   {#if cited.length}
     <div class="sources">
       {#each cited as one (one.path)}
@@ -283,7 +278,6 @@
       {/each}
     </div>
   {/if}
-
   {#if !live && (answered || (last && !failed))}
     <div class="acts">
       {#if answered}

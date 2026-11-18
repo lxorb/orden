@@ -2,9 +2,7 @@
   import { chat } from './chat-parts'
 
   const { threads }: { threads: readonly string[] } = $props()
-
   const MOST = 3
-
   let all = $state(false)
 
   const rows = $derived(

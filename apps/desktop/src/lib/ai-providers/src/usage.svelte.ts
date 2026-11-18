@@ -7,9 +7,7 @@ export interface Weekly {
 }
 
 const WEEK_MINUTES = 7 * 24 * 60
-
 const AGAIN = 5 * 60_000
-
 const record = (value: unknown) => (isRecord(value) ? value : null)
 
 function percent(value: unknown): number | null {
@@ -80,5 +78,4 @@ class Usage {
 }
 
 export const usage = /* @__PURE__ */ new Usage()
-
 export const USAGE_EVERY = AGAIN

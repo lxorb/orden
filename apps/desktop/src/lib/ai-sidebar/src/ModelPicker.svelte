@@ -17,7 +17,6 @@
   const list = $derived(provider ? (chat.models[provider.id] ?? []) : [])
   const levels = $derived<Effort[]>(model ? ordered(model.efforts) : ['auto'])
   const columns = $derived(levels.length <= 5 ? levels.length : Math.ceil(levels.length / 2))
-
   let query = $state('')
   let lit = $state(0)
   let field = $state<HTMLElement>()
@@ -92,7 +91,6 @@
     >
     <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
   </button>
-
   {#if open && head}
     <div
       class="pop orden-layer"
@@ -114,7 +112,6 @@
           {/each}
         </div>
       {/if}
-
       {#if shown.length > 6 || query}
         <input
           class="orden-field filter"
@@ -127,7 +124,6 @@
       {:else}
         <span class="catch" tabindex="-1" bind:this={field}></span>
       {/if}
-
       <div class="models" role="listbox">
         {#each shown as one, index (one.id)}
           <button
@@ -144,7 +140,6 @@
           </button>
         {/each}
       </div>
-
       {#if levels.length > 1}
         <div class="line effort">
           <span class="what">Effort</span>
@@ -166,7 +161,6 @@
           </div>
         </div>
       {/if}
-
       {#if model?.fast}
         <button class="line fast" onclick={() => chat.setFast()}>
           <span class="what">Fast</span>

@@ -5,13 +5,9 @@ import { SvelteMap } from 'svelte/reactivity'
 import { agrees, type Base, baseOf, type Contents, contentsIn, merged, type Side } from './merge'
 
 const DIGITS = 'nib ai vault digits'
-
 const DEVICE_SECRET = 'ai-vault-device'
-
 const JOINED_SECRET = 'ai-vault-joined'
-
 const TRIES = 3
-
 const MOST_BEFORE = 20
 
 function beforeIn(value: unknown): string[] {

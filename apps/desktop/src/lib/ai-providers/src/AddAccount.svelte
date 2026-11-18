@@ -13,9 +13,7 @@
   }
 
   const { open, offered, onadd, onclose }: Props = $props()
-
   const EXAMPLE_URL = 'http://localhost:11434'
-
   let maker = $state<Maker | null>(null)
   let road = $state<ProviderKind | null>(null)
   let typed = $state('')
@@ -23,7 +21,6 @@
   let baseUrl = $state('')
   let busy = $state(false)
   let trouble = $state('')
-
   const makers = $derived(makersOf(offered))
   const roads = $derived(maker ? roadsOf(maker, offered) : [])
   const hint = $derived(road ? ROAD_HINTS[road] : '')
@@ -159,7 +156,6 @@
       </div>
     </form>
   {/if}
-
   {#if maker && !road}
     <div class="actions">
       <button type="button" class="orden-button is-quiet" onclick={back}>Back</button>
