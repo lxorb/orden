@@ -347,11 +347,7 @@ fn places(webview: &Webview) -> Result<Places, String> {
     let config = own
         .clone()
         .map_or_else(|| home.join(".ssh").join("config"), PathBuf::from);
-    let data = webview
-        .app_handle()
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("could not find the app's data folder: {error}"))?;
+    let data = orden_base::paths::data_dir(webview.app_handle())?;
     Ok(Places {
         home,
         config,

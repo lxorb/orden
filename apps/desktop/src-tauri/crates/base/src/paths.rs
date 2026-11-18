@@ -293,11 +293,7 @@ pub fn decide_spaces(app: &AppHandle) {
 fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
     let kept = config_dir(app)?.join(SPACES_KEPT);
     let said = fs::read_to_string(&kept).ok();
-    let fresh = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("could not find the app's data folder: {error}"))?
-        .join(SPACES);
+    let fresh = data_dir(app)?.join(SPACES);
     let nib = documents_nib(app).ok();
     let outside = outside_folder(said.as_deref(), &[Some(fresh.as_path()), nib.as_deref()]);
     let old = nib.filter(|dir| dir.is_dir());
@@ -352,6 +348,12 @@ pub fn spaces_root(app: &AppHandle) -> Result<PathBuf, String> {
     made(&dir)?;
 
     Ok(dir)
+}
+
+pub fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path()
+        .app_local_data_dir()
+        .map_err(|error| format!("could not find the app's data folder: {error}"))
 }
 
 pub fn config_dir(app: &AppHandle) -> Result<PathBuf, String> {

@@ -22,11 +22,7 @@ const MOST_PER_SPACE: usize = 32;
 const NO_SPACE: &str = "none";
 
 fn root(webview: &Webview) -> Result<PathBuf, String> {
-    let data = webview
-        .app_handle()
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("could not find the app's data folder: {error}"))?;
+    let data = orden_base::paths::data_dir(webview.app_handle())?;
     Ok(data.join("terminal"))
 }
 

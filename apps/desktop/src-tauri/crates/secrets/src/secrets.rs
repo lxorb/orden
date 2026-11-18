@@ -128,16 +128,12 @@ mod file {
     use orden_base::Held as _;
     use std::sync::Mutex;
 
-    use tauri::{AppHandle, Manager as _};
+    use tauri::AppHandle;
 
     static HELD: Mutex<()> = Mutex::new(());
 
     fn file(app: &AppHandle) -> Result<std::path::PathBuf, String> {
-        let folder = app
-            .path()
-            .app_local_data_dir()
-            .map_err(|error| format!("could not find the app's data folder: {error}"))?;
-        Ok(folder.join(super::FILE))
+        Ok(orden_base::paths::data_dir(app)?.join(super::FILE))
     }
 
     pub fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
