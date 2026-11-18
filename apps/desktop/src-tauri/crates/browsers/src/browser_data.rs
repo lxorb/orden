@@ -68,8 +68,8 @@ pub fn read_browser_icons(
     Ok(Value::Object(marks).to_string())
 }
 
-struct Opened {
-    connection: Connection,
+pub(crate) struct Opened {
+    pub(crate) connection: Connection,
     _copy: tempfile::TempDir,
 }
 
@@ -84,6 +84,10 @@ fn copied_database(browser: &str, profile: &str, file: &str) -> Result<Opened, S
     } else {
         known(browser, profile, file, &listed)?
     };
+    opened(&path, file)
+}
+
+pub(crate) fn opened(path: &Path, file: &str) -> Result<Opened, String> {
     let folder = path.parent().ok_or("a profile has a folder")?;
     let copy =
         copied(folder, file).map_err(|error| format!("{file} could not be copied: {error}"))?;

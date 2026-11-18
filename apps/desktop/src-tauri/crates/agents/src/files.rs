@@ -752,16 +752,10 @@ mod tests {
         );
     }
 
-    fn temp() -> PathBuf {
-        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-        let at = std::env::temp_dir().join(format!(
-            "orden-files-{}-{}-{}",
-            std::process::id(),
-            millis(SystemTime::now()),
-            NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-        ));
-        fs::create_dir_all(&at).expect("a folder");
-        at
+    fn temp() -> (tempfile::TempDir, PathBuf) {
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = dir.path().to_path_buf();
+        (dir, root)
     }
 
     fn files(op: FilesOp, path: &Path) -> Files {
@@ -779,7 +773,7 @@ mod tests {
 
     #[test]
     fn a_file_is_written_read_moved_copied_and_deleted() {
-        let root = temp();
+        let (_dir, root) = temp();
         let file = root.join("deep/down/plan.txt");
 
         let mut write = files(FilesOp::Write, &file);
@@ -825,12 +819,11 @@ mod tests {
             assert!(refused.is_err_and(|why| why.contains("inside itself")));
             assert!(!inside.exists() && moved_to.exists());
         }
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]
     fn what_is_not_text_comes_back_as_base64() {
-        let root = temp();
+        let (_dir, root) = temp();
         let file = root.join("bytes.bin");
         let mut write = files(FilesOp::Write, &file);
         write.content = Some("/wD+".into());
@@ -840,12 +833,11 @@ mod tests {
         let read = done(&files(FilesOp::Read, &file), &file, None, &[]).expect("read");
         assert!(read.base64);
         assert_eq!(read.content.as_deref(), Some("/wD+"));
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]
     fn a_search_finds_by_name_and_by_words_and_a_watch_what_changed() {
-        let root = temp();
+        let (_dir, root) = temp();
         fs::create_dir_all(root.join("a/.git")).expect("folders");
         fs::write(root.join("a/one.md"), "the Plan is here").expect("one");
         fs::write(root.join("a/two.txt"), "nothing").expect("two");
@@ -871,12 +863,11 @@ mod tests {
             .expect("watched")
             .entries
             .is_empty());
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]
     fn a_list_and_a_stat_say_what_is_there() {
-        let root = temp();
+        let (_dir, root) = temp();
         fs::create_dir_all(root.join("folder")).expect("folder");
         fs::write(root.join("file"), "12345").expect("file");
         let listed = done(&files(FilesOp::List, &root), &root, None, &[]).expect("listed");
@@ -887,12 +878,11 @@ mod tests {
             .collect();
         assert_eq!(kinds, [(FileKind::File, 5), (FileKind::Folder, 0)]);
         assert!(done(&files(FilesOp::Read, &root), &root, None, &[]).is_err());
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]
     fn a_fence_is_never_reached_and_a_walk_goes_round_it() {
-        let root = temp();
+        let (_dir, root) = temp();
         let fence = root.join("Orden");
         fs::create_dir_all(&fence).expect("fence");
         fs::write(fence.join("agents.json"), "secret plan").expect("grants");
@@ -916,13 +906,12 @@ mod tests {
         let found = done(&search, &root, None, &fenced).expect("searched");
         assert_eq!(found.entries.len(), 1);
         assert!(found.entries[0].path.ends_with("mine.txt"));
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[cfg(unix)]
     #[test]
     fn a_link_never_carries_a_call_behind_a_fence() {
-        let root = temp();
+        let (_dir, root) = temp();
         let fence = root.join("Orden");
         fs::create_dir_all(&fence).expect("fence");
         fs::write(fence.join("agents.json"), "secret plan").expect("grants");
@@ -950,13 +939,12 @@ mod tests {
             .file_type()
             .is_symlink());
         assert_eq!(fs::read_link(copy.join("door")).expect("where"), fence);
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[cfg(unix)]
     #[test]
     fn a_path_handed_to_the_system_is_never_behind_orden_s_fence() {
-        let root = temp();
+        let (_dir, root) = temp();
         let fence = root.join("Orden");
         fs::create_dir_all(&fence).expect("fence");
         fs::write(fence.join("agents.json"), "secret plan").expect("grants");
@@ -973,13 +961,12 @@ mod tests {
         assert!(behind(&fenced, &mine.join("grants")).is_some());
         assert!(behind(&fenced, &root).is_none());
         assert!(behind(&fenced, &mine).is_none());
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[cfg(unix)]
     #[test]
     fn a_path_an_agent_answers_a_dialog_with_reaches_no_further_than_a_pick() {
-        let root = temp();
+        let (_dir, root) = temp();
         let config = root.join("config");
         let fence = config.join("Orden");
         fs::create_dir_all(&fence).expect("fence");
@@ -998,7 +985,6 @@ mod tests {
             reach_of(&fenced, Path::new("/Plan.pdf")),
             Path::new("/Plan.pdf")
         );
-        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]

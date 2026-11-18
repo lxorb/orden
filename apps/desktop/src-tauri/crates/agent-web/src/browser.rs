@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use tauri::{AppHandle, Emitter as _};
 
-use crate::engines::{self, Element, Engine, Page, ReaderStore, View};
+use crate::engines::{self, Element, Page, ReaderStore, View};
 use crate::snapshot::{self, Asked, Wanted};
 use crate::tabs::{self, Tab};
 use orden_agents::approvals::{self, Asking};
@@ -1049,7 +1049,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 from_page(Answer::ok(picture))
             }
             Verb::Console(asked) => from_page(Answer::ok(
-                page.console(asked.since, asked.level.as_deref())?,
+                page.console(asked.since, asked.level.as_deref()),
             )),
             Verb::Network(asked) => {
                 if asked.bodies && !caller.holds(Scope::BrowserNetwork) {
@@ -1062,7 +1062,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     asked.since,
                     asked.matching.as_deref(),
                     asked.bodies,
-                )?))
+                )))
             }
             Verb::Evaluate(evaluate) => {
                 if let Caller::Agent(grant) = caller {

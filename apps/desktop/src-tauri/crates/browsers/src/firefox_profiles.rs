@@ -1,10 +1,10 @@
 use rusqlite::Connection;
 use serde_json::{json, Map, Value};
 use std::collections::HashMap;
-use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::browser_profiles::{copied, ini_profiles, known, once, Profile};
+use crate::browser_data::opened;
+use crate::browser_profiles::{ini_profiles, known, newest, once, present, Profile};
 use orden_base::paths::folder_named;
 
 pub(crate) const BROWSERS_DIR: &str = "ORDEN_BROWSERS_DIR";
@@ -30,13 +30,9 @@ pub(crate) fn profiles() -> Vec<Profile> {
 
 #[tauri::command(async)]
 pub fn read_firefox_places(profile: String) -> Result<String, String> {
-    let path = known("Firefox", &profile, PLACES, &profiles())?;
-    let folder = path.parent().ok_or("a profile has a folder")?;
-    let copy =
-        copied(folder, PLACES).map_err(|error| format!("{PLACES} could not be copied: {error}"))?;
-    let db = Connection::open(copy.path().join(PLACES))
-        .map_err(|error| format!("{PLACES} could not be opened: {error}"))?;
-    let tree = tree_of(&db).map_err(|error| format!("{PLACES} could not be read: {error}"))?;
+    let db = opened(&known("Firefox", &profile, PLACES, &profiles())?, PLACES)?;
+    let tree =
+        tree_of(&db.connection).map_err(|error| format!("{PLACES} could not be read: {error}"))?;
     Ok(tree.to_string())
 }
 
@@ -70,23 +66,10 @@ fn homes() -> Vec<PathBuf> {
 }
 
 fn files_of(profile: &Path) -> Vec<String> {
-    let mut found: Vec<String> = SESSIONS
-        .iter()
-        .chain(&[PLACES, FAVICONS, SEARCH])
-        .filter(|name| profile.join(name).is_file())
-        .map(|name| (*name).to_owned())
-        .collect();
+    let mut found = present(profile, &SESSIONS);
+    found.extend(present(profile, &[PLACES, FAVICONS, SEARCH]));
 
-    let newest = fs::read_dir(profile.join(BACKUPS))
-        .into_iter()
-        .flatten()
-        .flatten()
-        .filter_map(|entry| entry.file_name().to_str().map(str::to_owned))
-        .filter(|name| name.starts_with(BACKUP_PREFIX) && name.ends_with(BACKUP_SUFFIX))
-        .max();
-    if let Some(name) = newest {
-        found.push(format!("{BACKUPS}/{name}"));
-    }
+    found.extend(newest(profile, BACKUPS, BACKUP_PREFIX, BACKUP_SUFFIX));
 
     found
 }
@@ -157,6 +140,8 @@ fn node(row: &Row, children: &HashMap<i64, Vec<&Row>>, depth: usize) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::browser_profiles::copied;
+    use std::fs;
 
     const INI: &str = "[Profile0]\nName=default-release\nIsRelative=1\nPath=Profiles/x1.default-release\nDefault=1\n\n[Profile1]\nName=Empty\nIsRelative=1\nPath=Profiles/y2.empty\n";
 

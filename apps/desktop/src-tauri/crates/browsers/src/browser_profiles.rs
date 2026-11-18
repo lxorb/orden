@@ -87,6 +87,25 @@ pub(crate) fn copied(folder: &Path, database: &str) -> std::io::Result<tempfile:
     Ok(copy)
 }
 
+pub(crate) fn present(profile: &Path, names: &[&str]) -> Vec<String> {
+    names
+        .iter()
+        .filter(|name| profile.join(name).is_file())
+        .map(|name| (*name).to_owned())
+        .collect()
+}
+
+pub(crate) fn newest(profile: &Path, folder: &str, prefix: &str, suffix: &str) -> Option<String> {
+    let name = fs::read_dir(profile.join(folder))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter_map(|entry| entry.file_name().to_str().map(str::to_owned))
+        .filter(|name| name.starts_with(prefix) && name.ends_with(suffix))
+        .max()?;
+    Some(format!("{folder}/{name}"))
+}
+
 pub(crate) fn once(all: impl IntoIterator<Item = Profile>) -> Vec<Profile> {
     all.into_iter().fold(Vec::new(), |mut kept, one| {
         if !kept.iter().any(|held: &Profile| held.path == one.path) {

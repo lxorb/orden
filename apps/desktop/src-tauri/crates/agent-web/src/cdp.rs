@@ -1075,45 +1075,30 @@ mod tests {
     #[test]
     fn a_request_and_a_log_line_are_placed_by_the_frame_they_came_from() {
         let mut heard = Heard::default();
-        went(
-            &mut heard,
-            "",
+        for frame in [
             json!({ "id": "M", "url": "https://shop.example/", "securityOrigin": "https://shop.example" }),
-        );
-        went(
-            &mut heard,
-            "",
             json!({ "id": "B", "parentId": "M", "url": "about:blank", "securityOrigin": "https://shop.example" }),
-        );
-        went(
-            &mut heard,
-            "",
             json!({ "id": "P", "parentId": "M", "url": "https://pay.example.com/", "securityOrigin": "https://pay.example.com" }),
-        );
-        sent(
-            &mut heard,
-            "",
-            "1",
-            "B",
-            "about:blank",
-            "https://shop.example/api/x",
-        );
-        sent(
-            &mut heard,
-            "",
-            "2",
-            "Q",
-            "blob:https://shop.example/u",
-            "https://shop.example/api/y",
-        );
-        sent(
-            &mut heard,
-            "",
-            "3",
-            "P",
-            "https://pay.example.com/",
-            "https://api.example.com/accounts",
-        );
+        ] {
+            went(&mut heard, "", frame);
+        }
+        for (id, frame, document, url) in [
+            ("1", "B", "about:blank", "https://shop.example/api/x"),
+            (
+                "2",
+                "Q",
+                "blob:https://shop.example/u",
+                "https://shop.example/api/y",
+            ),
+            (
+                "3",
+                "P",
+                "https://pay.example.com/",
+                "https://api.example.com/accounts",
+            ),
+        ] {
+            sent(&mut heard, "", id, frame, document, url);
+        }
         let (rows, _) = heard.requests(None, None);
         assert_eq!(rows[0].1, at(&["about:blank", "https://shop.example"]));
         assert_eq!(rows[1].1, at(&["https://shop.example/u"]));
@@ -1141,59 +1126,37 @@ mod tests {
     #[test]
     fn a_frame_with_no_origin_of_its_own_is_placed_by_the_frame_round_it() {
         let mut heard = Heard::default();
-        went(
-            &mut heard,
-            "",
+        for frame in [
             json!({ "id": "M", "url": "https://www.example.com/", "securityOrigin": "https://www.example.com" }),
-        );
-        went(
-            &mut heard,
-            "",
             json!({ "id": "P", "parentId": "M", "url": "https://pay.example.com/", "securityOrigin": "https://pay.example.com" }),
-        );
-        went(
-            &mut heard,
-            "",
             json!({ "id": "D", "parentId": "P", "url": "data:text/html,x", "securityOrigin": "null" }),
-        );
+        ] {
+            went(&mut heard, "", frame);
+        }
         heard_event(
             &mut heard,
             "Page.frameAttached",
             "",
             json!({ "frameId": "U", "parentFrameId": "P" }),
         );
-        sent(
-            &mut heard,
-            "",
-            "1",
-            "D",
-            "data:text/html,x",
-            "https://api.example.com/accounts",
-        );
-        sent(
-            &mut heard,
-            "",
-            "2",
-            "U",
-            "about:blank",
-            "https://api.example.com/accounts",
-        );
-        sent(
-            &mut heard,
-            "",
-            "3",
-            "Z",
-            "about:blank",
-            "https://api.example.com/accounts",
-        );
-        sent(
-            &mut heard,
-            "",
-            "4",
-            "M",
-            "https://www.example.com/",
-            "https://api.example.com/cart",
-        );
+        for (id, frame, document, url) in [
+            (
+                "1",
+                "D",
+                "data:text/html,x",
+                "https://api.example.com/accounts",
+            ),
+            ("2", "U", "about:blank", "https://api.example.com/accounts"),
+            ("3", "Z", "about:blank", "https://api.example.com/accounts"),
+            (
+                "4",
+                "M",
+                "https://www.example.com/",
+                "https://api.example.com/cart",
+            ),
+        ] {
+            sent(&mut heard, "", id, frame, document, url);
+        }
         let (rows, _) = heard.requests(None, None);
         assert_eq!(
             rows[0].1,
@@ -1281,21 +1244,13 @@ mod tests {
             heard.session_address("s1").as_deref(),
             Some("https://b.example/")
         );
-        went(
-            &mut heard,
-            "",
+        for frame in [
             json!({ "id": "M", "url": "https://shop.example/", "securityOrigin": "https://shop.example" }),
-        );
-        went(
-            &mut heard,
-            "",
             json!({ "id": "B", "parentId": "M", "url": "about:blank", "securityOrigin": "https://shop.example" }),
-        );
-        went(
-            &mut heard,
-            "",
             json!({ "id": "M", "url": "https://other.example/", "securityOrigin": "https://other.example" }),
-        );
+        ] {
+            went(&mut heard, "", frame);
+        }
         sent(
             &mut heard,
             "",

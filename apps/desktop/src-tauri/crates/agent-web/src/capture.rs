@@ -46,7 +46,7 @@ fn no_paper() -> Answer {
 }
 
 fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
-    use crate::engines::{self, Engine};
+    use crate::engines;
     use orden_agents::verbs::Captured;
 
     if engines::cannot(VERB).is_some() {
@@ -61,30 +61,31 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     }
     let since = orden_agents::stop::generation();
     crate::browser::on_tab(app, caller, tab, VERB, since, false, |_, page| {
-        let url = Engine::url(page);
+        let url = page.url();
         let captured = match asked.shape {
-            CaptureAs::Clip => Engine::clip(page).map(|(url, title, html)| Captured {
+            CaptureAs::Clip => page.clip().map(|(url, title, html)| Captured {
                 url,
                 title,
                 html: Some(html),
                 ..Captured::default()
             }),
             CaptureAs::Screenshot => {
-                Engine::screenshot(page, None, asked.full_page, None).map(|picture| Captured {
-                    url: url.clone(),
-                    title: Engine::title(page),
-                    png: Some(picture.png),
-                    ..Captured::default()
-                })
+                page.screenshot(None, asked.full_page, None)
+                    .map(|picture| Captured {
+                        url: url.clone(),
+                        title: page.title(),
+                        png: Some(picture.png),
+                        ..Captured::default()
+                    })
             }
             CaptureAs::Pdf => asked
                 .paper
                 .as_ref()
                 .ok_or_else(no_paper)
-                .and_then(|paper| Engine::pdf(page, paper))
+                .and_then(|paper| page.pdf(paper))
                 .map(|pdf| Captured {
                     url: url.clone(),
-                    title: Engine::title(page),
+                    title: page.title(),
                     pdf: Some(pdf),
                     ..Captured::default()
                 }),
