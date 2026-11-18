@@ -1538,13 +1538,6 @@
     align-self: flex-start;
   }
 
-  .row {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
   .pictures {
     display: flex;
     align-items: center;
@@ -1796,20 +1789,6 @@
   .sheet.phone .setting.sliding {
     flex-wrap: wrap;
     padding-bottom: 6px;
-  }
-
-  .sheet.phone .setting.keyed {
-    flex-wrap: wrap;
-    row-gap: var(--space-1);
-  }
-
-  .sheet.phone .setting.keyed .row {
-    flex: 1 0 100%;
-    flex-wrap: wrap;
-  }
-
-  .sheet.phone .setting.keyed .hint {
-    margin-inline-end: auto;
   }
 
   .sheet.phone .setting .value {
