@@ -14,7 +14,7 @@ pub struct Usage {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Totals {
+struct Totals {
     pub ticks: u64,
     pub memory: u64,
     pub engines: HashMap<String, u64>,
@@ -23,7 +23,7 @@ pub struct Totals {
 const TICKS: f64 = 100.0;
 
 #[derive(Default)]
-pub struct Sampler {
+struct Sampler {
     last: HashMap<String, (Instant, Totals)>,
 }
 
@@ -38,7 +38,7 @@ impl Sampler {
     clippy::cast_precision_loss,
     reason = "ticks and nanoseconds over a second fit an f64's mantissa"
 )]
-pub fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &Totals) -> Usage {
+fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &Totals) -> Usage {
     let Some((at, old)) = before else {
         return Usage {
             cpu: 0.0,
@@ -108,7 +108,7 @@ pub enum Whose {
 }
 
 #[cfg(target_os = "linux")]
-pub fn totals(whose: Whose) -> Option<Totals> {
+fn totals(whose: Whose) -> Option<Totals> {
     let mut all: Vec<(u32, u32, u32, u64)> = Vec::new();
     for entry in std::fs::read_dir("/proc").ok()?.flatten() {
         let Some(pid) = entry.file_name().to_str().and_then(|one| one.parse().ok()) else {
@@ -184,7 +184,7 @@ pub fn sample(key: &str, whose: Whose) -> Option<Usage> {
 }
 
 #[cfg(not(target_os = "linux"))]
-pub fn totals(_whose: Whose) -> Option<Totals> {
+fn totals(_whose: Whose) -> Option<Totals> {
     None
 }
 

@@ -11,7 +11,7 @@ pub enum Counted {
 }
 
 #[derive(Default)]
-pub struct Counts {
+struct Counts {
     seen: HashMap<(String, Counted), VecDeque<Instant>>,
     said: HashMap<String, Instant>,
 }

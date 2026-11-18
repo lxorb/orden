@@ -19,7 +19,7 @@ fn past(used: u64, ceiling: u32) -> Option<String> {
 }
 
 #[cfg(windows)]
-pub fn engine_bytes() -> u64 {
+fn engine_bytes() -> u64 {
     let own = std::process::id();
     let all = orden_pty::terminal::process::processes();
     let mut below = vec![own];
@@ -66,7 +66,7 @@ fn working_set(pid: u32) -> u64 {
 }
 
 #[cfg(not(windows))]
-pub fn engine_bytes() -> u64 {
+fn engine_bytes() -> u64 {
     0
 }
 

@@ -156,7 +156,7 @@ impl Desk {
     clippy::cast_sign_loss,
     reason = "a ratio the wire holds to at most 8"
 )]
-pub fn gtk_scale(dpr: f64) -> (u32, f64) {
+fn gtk_scale(dpr: f64) -> (u32, f64) {
     let dpr = super::display::ratio(dpr);
     let scale = (dpr.floor() as u32).max(1);
     (scale, 96.0 * dpr / f64::from(scale))

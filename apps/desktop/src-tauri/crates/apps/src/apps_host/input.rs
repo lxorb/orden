@@ -82,7 +82,7 @@ fn sided(keysym: Keysym, code: &str) -> Keysym {
 }
 
 #[derive(Debug, Default)]
-pub struct Keymap {
+struct Keymap {
     keys: HashMap<(Keysym, bool), Keycode>,
     spare: Vec<Keycode>,
     lent: HashMap<Keysym, Keycode>,

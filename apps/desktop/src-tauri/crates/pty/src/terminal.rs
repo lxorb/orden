@@ -20,7 +20,7 @@ use tauri::{AppHandle, Manager, Webview};
 use session::{Fresh, Out, Place, Session};
 
 #[derive(Default)]
-pub struct Terminals {
+struct Terminals {
     sessions: Mutex<HashMap<String, Held>>,
     closing: AtomicBool,
     loads: Mutex<HashMap<String, u64>>,

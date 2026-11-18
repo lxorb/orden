@@ -88,13 +88,13 @@ fn now() -> u64 {
     not(target_os = "linux"),
     allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
 )]
-pub const IN_PAGE: &str = "orden://keyboard-in-page";
+const IN_PAGE: &str = "orden://keyboard-in-page";
 
 #[cfg_attr(
     not(target_os = "linux"),
     allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
 )]
-pub fn page_took(app: &AppHandle, window: &str, page: &str) {
+fn page_took(app: &AppHandle, window: &str, page: &str) {
     homes(|all| all.page_took(window, page));
     let _ = app.emit_to(window, IN_PAGE, ());
     crate::web_tabs::page_chosen(app, window, page);

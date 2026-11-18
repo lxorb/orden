@@ -237,5 +237,5 @@ describe('words typed while the keyboard is on something else', () => {
 })
 
 test('the crate and the page name the word the same', () => {
-  expect(crateSide).toContain(`pub const IN_PAGE: &str = "${IN_PAGE}";`)
+  expect(crateSide).toContain(`const IN_PAGE: &str = "${IN_PAGE}";`)
 })

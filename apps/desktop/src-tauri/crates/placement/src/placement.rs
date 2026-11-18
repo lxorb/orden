@@ -30,7 +30,7 @@ static AWAY: OnceLock<(f64, f64)> = OnceLock::new();
 static PUT: OnceLock<(f64, f64)> = OnceLock::new();
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Placement {
+struct Placement {
     x: f64,
     y: f64,
     width: f64,
