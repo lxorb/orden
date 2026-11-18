@@ -2,7 +2,7 @@ import Link from 'lucide/dist/esm/icons/link.mjs'
 import type { IconNode } from 'lucide'
 import { AccountOwed, type AccountSettings } from '../../accounts/src/api'
 import { BY_ID, known, runnable } from './registry'
-import { forget, isString, keepJson, stored } from '../../platform/src/api'
+import { forget, heardElsewhere, isString, keepJson, stored } from '../../platform/src/api'
 
 const STORAGE_KEY = 'orden:toolbar'
 const OWED_KEY = 'orden:toolbar-owed'
@@ -94,16 +94,6 @@ class Toolbar {
   restore() {
     const held = stored(STORAGE_KEY)
     this.chosen = usable(held)
-    this.hearOthers()
-  }
-
-  private hearing = false
-  private hearOthers() {
-    if (this.hearing || typeof window === 'undefined') return
-    this.hearing = true
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY) this.restore()
-    })
   }
 
   add(id: string) {
@@ -188,3 +178,5 @@ export function usable(value: unknown): string[] | null {
 }
 
 export const toolbar = new Toolbar()
+
+heardElsewhere([STORAGE_KEY], () => toolbar.restore())

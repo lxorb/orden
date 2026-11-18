@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
 import { modes } from '../../modes/src/api'
-import { isDesktop, stored, stringList } from '../../platform/src/api'
+import { heardElsewhere, isDesktop, stored, stringList } from '../../platform/src/api'
 import { viewport } from '../../ui-kit/src/api'
 
 export const KINDS_KEY = 'orden:hidden-kinds'
@@ -65,20 +65,12 @@ class HiddenKinds {
 
   restore() {
     this.hidden = stringList(stored(KINDS_KEY)) ?? []
-    this.hearOthers()
-  }
-
-  private hearing = false
-  private hearOthers() {
-    if (this.hearing || typeof window === 'undefined') return
-    this.hearing = true
-    window.addEventListener('storage', (event) => {
-      if (event.key === KINDS_KEY) this.restore()
-    })
   }
 }
 
 export const hiddenKinds = new HiddenKinds()
+
+heardElsewhere([KINDS_KEY], () => hiddenKinds.restore())
 
 export const EXPERIMENTAL_WORD = 'experimental'
 

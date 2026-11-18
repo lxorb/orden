@@ -75,6 +75,7 @@ export {
 export { spaceRelative } from './space-relative'
 export {
   forget,
+  heardElsewhere,
   isBoolean,
   isNumber,
   isRecord,
