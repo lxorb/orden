@@ -15,19 +15,13 @@ export interface Chart {
   series: Series[]
 }
 
-const KINDS: ReadonlyMap<string, ChartKind> = new Map(
-  Object.entries({
-    bar: 'bar',
-    line: 'line',
-    scatter: 'scatter',
-    pie: 'pie',
-    donut: 'donut',
-    doughnut: 'donut',
-    radar: 'radar',
-    polar: 'polar',
-    polararea: 'polar',
-  } satisfies Record<string, ChartKind>),
-)
+const KINDS = new Map<string, ChartKind>([
+  ...(['bar', 'line', 'scatter', 'pie', 'donut', 'radar', 'polar'] as const).map(
+    (kind): [string, ChartKind] => [kind, kind],
+  ),
+  ['doughnut', 'donut'],
+  ['polararea', 'polar'],
+])
 
 const MOST_POINTS = 200
 const MOST_SERIES = 12

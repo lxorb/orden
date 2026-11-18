@@ -23,9 +23,7 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
     if (when !== undefined) at[id] = when
   }
 
-  for (const thing of after.nodes) stamp(thing.id)
-  for (const thing of after.edges) stamp(thing.id)
-  for (const thing of after.ink) stamp(thing.id)
+  for (const thing of [...after.nodes, ...after.edges, ...after.ink]) stamp(thing.id)
 
   const gone = noTimes()
 

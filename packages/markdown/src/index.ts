@@ -122,11 +122,8 @@ function noteLink(href: string): { target: string; fragment: string } | null {
   if (!written || written.startsWith('/') || written.startsWith('#')) return null
   if (!isNoteTarget(written)) return null
 
-  const hash = written.indexOf('#')
-  const target = hash === -1 ? written : written.slice(0, hash)
-  if (!target || !NOTE_LINK.test(target)) return null
-
-  return { target, fragment: hash === -1 ? '' : attributeUrl(written.slice(hash)) }
+  const link = localLink(written)
+  return link?.target && NOTE_LINK.test(link.target) ? link : null
 }
 
 function localLink(href: string): { target: string; fragment: string } | null {
