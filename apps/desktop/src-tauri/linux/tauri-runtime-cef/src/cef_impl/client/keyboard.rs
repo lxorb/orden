@@ -24,6 +24,14 @@ wrap_keyboard_handler! {
       _os_event: CefOsEvent<'_>,
       _is_keyboard_shortcut: Option<&mut ::std::os::raw::c_int>,
     ) -> ::std::os::raw::c_int {
+      #[cfg(windows)]
+      if let Some(event) = event
+        && let Some(host) = _browser.and_then(|browser| browser.host())
+        && crate::platform::key_pressed(host.window_handle(), event)
+      {
+        return 1;
+      }
+
       // If devtools is disabled, block devtools keyboard shortcuts.
       if !self.devtools_enabled {
         let Some(event) = event else {

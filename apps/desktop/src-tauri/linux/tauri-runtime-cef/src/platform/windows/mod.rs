@@ -8,5 +8,7 @@ mod monitor;
 mod unhosted;
 mod webview;
 mod window;
+mod window_menu;
 
 pub(crate) use unhosted::put_out_of_sight;
+pub(crate) use window_menu::key_pressed;
