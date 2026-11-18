@@ -53,7 +53,7 @@ fn c_path(path: &Path) -> io::Result<std::ffi::CString> {
 }
 
 #[cfg(target_os = "linux")]
-#[allow(unsafe_code, reason = "renameat2 has no wrapper in std")]
+#[allow(unsafe_code)]
 fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
     let (from, to) = (c_path(from)?, c_path(to)?);
     let done = unsafe {
@@ -74,7 +74,7 @@ fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(unsafe_code, reason = "renamex_np has no wrapper in std")]
+#[allow(unsafe_code)]
 fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
     let (from, to) = (c_path(from)?, c_path(to)?);
     let done = unsafe { libc::renamex_np(from.as_ptr(), to.as_ptr(), libc::RENAME_EXCL) };
@@ -86,10 +86,7 @@ fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a move that never replaces has no wrapper in std"
-)]
+#[allow(unsafe_code)]
 fn renamed_unless_taken(from: &Path, to: &Path) -> io::Result<()> {
     use std::os::windows::ffi::OsStrExt as _;
     use windows::core::PCWSTR;

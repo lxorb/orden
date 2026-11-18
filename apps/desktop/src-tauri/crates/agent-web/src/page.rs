@@ -3221,10 +3221,7 @@ fn unprintable(said: &str) -> bool {
         || said.contains("wasn't found")
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    reason = "a point on a page is a few thousand pixels at most"
-)]
+#[allow(clippy::cast_possible_truncation)]
 fn whole(value: f64) -> i64 {
     value.round() as i64
 }

@@ -15,10 +15,7 @@ pub fn allowed() -> bool {
     screen && input
 }
 
-#[allow(
-    unsafe_code,
-    reason = "Accessibility's trust check is a C call taking a CFDictionary, built as the NSDictionary it bridges to"
-)]
+#[allow(unsafe_code)]
 fn trusted() -> bool {
     unsafe {
         let key: &NSString = &*kAXTrustedCheckOptionPrompt.cast::<NSString>();

@@ -149,13 +149,7 @@ pub fn pdfs_in<A: AsRef<OsStr>>(args: &[A], cwd: &Path) -> Vec<PathBuf> {
     found
 }
 
-#[cfg_attr(
-    not(target_os = "macos"),
-    allow(
-        dead_code,
-        reason = "only a Mac hands files over as addresses; the rule is tested everywhere"
-    )
-)]
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub fn pdfs_among(urls: &[Url]) -> Vec<PathBuf> {
     urls.iter()
         .filter(|url| url.scheme() == "file")

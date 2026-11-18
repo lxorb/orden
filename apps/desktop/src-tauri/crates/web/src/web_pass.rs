@@ -278,10 +278,7 @@ fn fill_checked(
 }
 
 #[tauri::command]
-#[allow(
-    clippy::implicit_hasher,
-    reason = "the values come over the bridge into the default map"
-)]
+#[allow(clippy::implicit_hasher)]
 pub async fn web_pass_fill(
     webview: tauri::Webview,
     tab: String,

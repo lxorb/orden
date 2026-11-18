@@ -768,10 +768,7 @@ fn say(
 }
 
 #[tauri::command]
-#[allow(
-    clippy::too_many_arguments,
-    reason = "a command's arguments are what the window sends, one by one"
-)]
+#[allow(clippy::too_many_arguments)]
 pub fn web_place(
     app: AppHandle,
     tab: String,
@@ -951,10 +948,7 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 }
 
 #[tauri::command]
-#[allow(
-    clippy::unused_async,
-    reason = "an async command runs off the main thread, where printing would hold the window"
-)]
+#[allow(clippy::unused_async)]
 pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
 

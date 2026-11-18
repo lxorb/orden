@@ -81,10 +81,7 @@ mod native {
     }
 
     impl Drop for Held {
-        #[allow(
-            unsafe_code,
-            reason = "an observer is taken off the notification centre through the Objective-C runtime"
-        )]
+        #[allow(unsafe_code)]
         fn drop(&mut self) {
             let centre = NSNotificationCenter::defaultCenter();
             for observer in &self.observers {
@@ -100,10 +97,7 @@ mod native {
         struct Watch;
     );
 
-    #[allow(
-        unsafe_code,
-        reason = "an associated object is read through the Objective-C runtime"
-    )]
+    #[allow(unsafe_code)]
     fn watch_on(window: &NSWindow) -> Option<Retained<Watch>> {
         unsafe {
             let found = objc2::ffi::objc_getAssociatedObject(
@@ -124,10 +118,7 @@ mod native {
         (frame.origin.x, top)
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "AppKit marks reading a view's superview unsafe, as the answer's class is not promised"
-    )]
+    #[allow(unsafe_code)]
     fn parent(view: &NSView) -> Option<Retained<NSView>> {
         unsafe { view.superview() }
     }
@@ -237,10 +228,7 @@ mod native {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "the class this method was added to is reached through the Objective-C runtime to call the layout it replaces"
-    )]
+    #[allow(unsafe_code)]
     extern "C-unwind" fn laid_out(this: &NSView, _: Sel) {
         if let Some(original) = original_of(this) {
             unsafe {
@@ -252,10 +240,7 @@ mod native {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a class is made and an object's class is changed through the Objective-C runtime"
-    )]
+    #[allow(unsafe_code)]
     fn adopt(holder: &NSView) {
         if original_of(holder).is_some() {
             return;
@@ -285,10 +270,7 @@ mod native {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "Tauri hands the NSWindow over as a bare pointer"
-    )]
+    #[allow(unsafe_code)]
     pub fn refresh(pointer: *mut c_void) {
         if pointer.is_null() {
             return;
@@ -299,10 +281,7 @@ mod native {
         place(&window);
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "Tauri hands the NSWindow over as a bare pointer, and observers, the main queue and associated objects are the Objective-C runtime's own calls"
-    )]
+    #[allow(unsafe_code)]
     pub fn hold(pointer: *mut c_void) {
         if pointer.is_null() {
             return;

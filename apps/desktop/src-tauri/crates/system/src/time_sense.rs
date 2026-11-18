@@ -93,11 +93,7 @@ fn busy_share(was: Ticks, now: Ticks) -> Option<f32> {
         return None;
     }
     let busy = now.busy.saturating_sub(was.busy).min(total);
-    #[allow(
-        clippy::cast_precision_loss,
-        clippy::cast_possible_truncation,
-        reason = "a share between nothing and all, where a float's precision is plenty"
-    )]
+    #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
     let share = (busy as f64 / total as f64) as f32;
     Some(share)
 }
@@ -148,10 +144,7 @@ fn linux_memory(info: &str) -> Option<f32> {
     if total <= 0.0 {
         return None;
     }
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "a share between nothing and all"
-    )]
+    #[allow(clippy::cast_possible_truncation)]
     let used = (1.0 - free / total).clamp(0.0, 1.0) as f32;
     Some(used)
 }
@@ -366,10 +359,7 @@ mod platform {
         let mut idle = FILETIME::default();
         let mut kernel = FILETIME::default();
         let mut user = FILETIME::default();
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask Windows how long its processors were busy"
-        )]
+        #[allow(unsafe_code)]
         unsafe {
             GetSystemTimes(
                 Some(&raw mut idle),
@@ -390,27 +380,18 @@ mod platform {
             dwLength: u32::try_from(std::mem::size_of::<MEMORYSTATUSEX>()).ok()?,
             ..Default::default()
         };
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask Windows how much memory is in use"
-        )]
+        #[allow(unsafe_code)]
         unsafe {
             GlobalMemoryStatusEx(&raw mut status).ok()?;
         }
-        #[allow(
-            clippy::cast_precision_loss,
-            reason = "a percentage, which a float holds exactly"
-        )]
+        #[allow(clippy::cast_precision_loss)]
         let used = (status.dwMemoryLoad as f32 / 100.0).clamp(0.0, 1.0);
         Some(used)
     }
 
     pub fn power() -> Power {
         let mut status = SYSTEM_POWER_STATUS::default();
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask Windows about the battery or the lock screen"
-        )]
+        #[allow(unsafe_code)]
         let (read, locked) = unsafe {
             let read = GetSystemPowerStatus(&raw mut status).is_ok();
             let desk = OpenInputDesktop(DESKTOP_CONTROL_FLAGS(0), false, DESKTOP_SWITCHDESKTOP);
@@ -439,10 +420,7 @@ mod platform {
         let mut process = 0u32;
         let mut buffer = [0u16; 1024];
         let mut length = u32::try_from(buffer.len()).ok()?;
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask Windows which program owns the window in front"
-        )]
+        #[allow(unsafe_code)]
         unsafe {
             let front = GetForegroundWindow();
             if front.is_invalid() {
@@ -468,10 +446,7 @@ mod platform {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    deprecated,
-    reason = "libc marks its mach calls for the mach2 crate, which two calls do not warrant"
-)]
+#[allow(deprecated)]
 mod platform {
     use std::process::Command;
 
@@ -482,10 +457,7 @@ mod platform {
     pub fn cpu_ticks() -> Option<Ticks> {
         let mut info = libc::host_cpu_load_info { cpu_ticks: [0; 4] };
         let mut count = libc::HOST_CPU_LOAD_INFO_COUNT;
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask macOS how long its processors were busy"
-        )]
+        #[allow(unsafe_code)]
         let read = unsafe {
             libc::host_statistics(
                 libc::mach_host_self(),
@@ -509,7 +481,7 @@ mod platform {
         let name = std::ffi::CString::new(name).ok()?;
         let mut value = 0u64;
         let mut size = std::mem::size_of::<u64>();
-        #[allow(unsafe_code, reason = "there is no safe way to read a sysctl")]
+        #[allow(unsafe_code)]
         let read = unsafe {
             libc::sysctlbyname(
                 name.as_ptr(),
@@ -526,16 +498,13 @@ mod platform {
         let total = sysctl("hw.memsize")?;
         let page = sysctl("hw.pagesize")?;
         let mut info: libc::vm_statistics64 = {
-            #[allow(unsafe_code, reason = "a plain struct of counters, all zero")]
+            #[allow(unsafe_code)]
             unsafe {
                 std::mem::zeroed()
             }
         };
         let mut count = libc::HOST_VM_INFO64_COUNT;
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask macOS how much memory is in use"
-        )]
+        #[allow(unsafe_code)]
         let read = unsafe {
             libc::host_statistics64(
                 libc::mach_host_self(),
@@ -551,11 +520,7 @@ mod platform {
             + u64::from(info.wire_count)
             + u64::from(info.compressor_page_count))
             * page;
-        #[allow(
-            clippy::cast_precision_loss,
-            clippy::cast_possible_truncation,
-            reason = "a share between nothing and all"
-        )]
+        #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
         let share = (used as f64 / total as f64).clamp(0.0, 1.0) as f32;
         Some(share)
     }

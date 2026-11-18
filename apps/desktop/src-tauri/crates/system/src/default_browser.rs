@@ -2,22 +2,13 @@ use tauri::AppHandle;
 
 const SHIPPED: &str = "so.orden.Orden";
 
-#[cfg_attr(
-    not(any(windows, test)),
-    allow(dead_code, reason = "only Windows keeps a registry of programs")
-)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
 const PROG_ID: &str = "NibURL";
 
-#[cfg_attr(
-    not(any(windows, test)),
-    allow(dead_code, reason = "only Windows keeps a registry of programs")
-)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
 const OLD_NAMES: [&str; 2] = ["Nib", "nibeditor"];
 
-#[cfg_attr(
-    not(any(windows, test)),
-    allow(dead_code, reason = "only Windows keeps a registry of programs")
-)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
 const DESCRIPTION: &str = "Notes and the web in one window.";
 
 #[tauri::command]
@@ -52,10 +43,7 @@ fn ships(app: &AppHandle) -> bool {
         && orden_placement::placement::away().is_none()
 }
 
-#[cfg_attr(
-    not(any(windows, test)),
-    allow(dead_code, reason = "only Windows keeps a registry of programs")
-)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Value {
     key: String,
@@ -63,10 +51,7 @@ struct Value {
     data: String,
 }
 
-#[cfg_attr(
-    not(any(windows, test)),
-    allow(dead_code, reason = "only Windows keeps a registry of programs")
-)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
 fn registration(app: &str, exe: &str) -> Vec<Value> {
     let client = format!(r"Software\Clients\StartMenuInternet\{app}");
     let capabilities = format!(r"{client}\Capabilities");
@@ -136,20 +121,14 @@ fn registration(app: &str, exe: &str) -> Vec<Value> {
     .collect()
 }
 
-#[cfg_attr(
-    not(any(windows, test)),
-    allow(dead_code, reason = "only Windows keeps a registry of programs")
-)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
 fn exe_of(command: &str) -> Option<String> {
     let rest = command.strip_prefix('"')?;
     let end = rest.find('"')?;
     Some(rest[..end].to_owned()).filter(|exe| !exe.is_empty())
 }
 
-#[cfg_attr(
-    not(any(target_os = "linux", test)),
-    allow(dead_code, reason = "only Linux names a program by its desktop entry")
-)]
+#[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 const ENTRIES: [&str; 8] = [
     "nib-handler.desktop",
     "nib.desktop",
@@ -161,10 +140,7 @@ const ENTRIES: [&str; 8] = [
     "orden_orden.desktop",
 ];
 
-#[cfg_attr(
-    not(any(target_os = "linux", test)),
-    allow(dead_code, reason = "only Linux names a program by its desktop entry")
-)]
+#[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn kept(
     entry: &str,
     own: Option<std::path::PathBuf>,
@@ -186,10 +162,7 @@ fn kept(
         .any(|dir| there(&dir.join("applications").join(entry.trim())))
 }
 
-#[cfg_attr(
-    not(any(target_os = "linux", test)),
-    allow(dead_code, reason = "only Linux names a program by its desktop entry")
-)]
+#[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn is_ours(entry: &str) -> bool {
     ENTRIES
         .iter()
@@ -294,10 +267,7 @@ mod platform {
         Ok(())
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "the shell's association query has no safe wrapper in the windows crate"
-    )]
+    #[allow(unsafe_code)]
     pub(super) fn handler_of(scheme: &str) -> Option<String> {
         let asked: Vec<u16> = scheme.encode_utf16().chain(Some(0)).collect();
         let mut out = [0u16; 256];

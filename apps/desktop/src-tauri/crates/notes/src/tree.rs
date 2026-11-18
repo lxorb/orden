@@ -13,10 +13,7 @@ use orden_base::paths::{
 pub const MAX_ENTRIES: usize = 100_000;
 
 #[derive(Serialize)]
-#[allow(
-    clippy::struct_excessive_bools,
-    reason = "four separate facts the window reads off the listing, each its own JSON field, three of them left out when false"
-)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Entry {
     name: String,
     path: String,

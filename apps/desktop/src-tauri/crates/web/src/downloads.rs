@@ -457,11 +457,7 @@ mod progress {
         params.get(name)?.as_str().map(str::to_string)
     }
 
-    #[allow(
-        clippy::cast_possible_truncation,
-        clippy::cast_sign_loss,
-        reason = "byte counts the engine says as whole numbers"
-    )]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn bytes(params: &Value, name: &str) -> Option<u64> {
         params
             .get(name)?

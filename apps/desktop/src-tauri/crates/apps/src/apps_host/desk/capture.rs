@@ -21,7 +21,7 @@ const FIRST_WITHIN: Duration = Duration::from_secs(5);
 pub enum News {
     Drawn,
     Resized,
-    #[allow(dead_code, reason = "the Linux capture's news, which the stream reads")]
+    #[allow(dead_code)]
     Pointer(String),
     Whole,
     Gone,
@@ -140,7 +140,7 @@ struct Surface {
 }
 
 impl Surface {
-    #[allow(unsafe_code, reason = "a bitmap in memory is made with GDI")]
+    #[allow(unsafe_code)]
     fn new(width: i32, height: i32) -> Option<Surface> {
         let info = BITMAPINFO {
             bmiHeader: BITMAPINFOHEADER {
@@ -182,10 +182,7 @@ impl Surface {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a bitmap's memory is read once GDI has drawn into it"
-    )]
+    #[allow(unsafe_code)]
     fn pixels(&self) -> &[u8] {
         let length = usize::try_from(self.size.0).unwrap_or(0)
             * usize::try_from(self.size.1).unwrap_or(0)
@@ -198,10 +195,7 @@ impl Surface {
 }
 
 impl Drop for Surface {
-    #[allow(
-        unsafe_code,
-        reason = "a bitmap and its device context are deleted with GDI"
-    )]
+    #[allow(unsafe_code)]
     fn drop(&mut self) {
         unsafe {
             SelectObject(self.dc, self.old);
@@ -218,10 +212,7 @@ struct Canvas {
 }
 
 impl Canvas {
-    #[allow(
-        unsafe_code,
-        reason = "windows are asked to draw themselves with Win32 calls"
-    )]
+    #[allow(unsafe_code)]
     fn draw(&mut self, size: (u16, u16)) -> Option<&[u8]> {
         let (width, height) = (i32::from(size.0), i32::from(size.1));
         if self

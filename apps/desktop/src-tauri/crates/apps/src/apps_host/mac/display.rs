@@ -50,11 +50,7 @@ pub fn screen(width: f64, height: f64, dpr: f64) -> (u32, u32) {
     let side = |css: f64| {
         let pixels = (css * dpr.clamp(1.0, 4.0)).round();
         let pixels = if pixels.is_finite() { pixels } else { 0.0 };
-        #[allow(
-            clippy::cast_possible_truncation,
-            clippy::cast_sign_loss,
-            reason = "clamped to 64..=MOST_PIXELS first"
-        )]
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let whole = pixels.clamp(64.0, f64::from(MOST_PIXELS)) as u32;
         whole & !1
     };
@@ -156,10 +152,7 @@ fn handed<T>(
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "CGVirtualDisplay has no header; its selectors are sent through the runtime"
-)]
+#[allow(unsafe_code)]
 fn make(
     width: u32,
     height: u32,
@@ -199,10 +192,7 @@ fn make(
     Ok((id, display))
 }
 
-#[allow(
-    unsafe_code,
-    reason = "CGVirtualDisplaySettings and its mode are reached through the runtime"
-)]
+#[allow(unsafe_code)]
 fn apply(display: &AnyObject, width: u32, height: u32, dpr: f64) -> bool {
     let (Some(settings_class), Some(mode_class)) = (
         AnyClass::get(c"CGVirtualDisplaySettings"),
@@ -227,10 +217,7 @@ fn apply(display: &AnyObject, width: u32, height: u32, dpr: f64) -> bool {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "CGGetActiveDisplayList writes into a buffer the caller hands it"
-)]
+#[allow(unsafe_code)]
 fn active() -> Vec<CGDirectDisplayID> {
     let mut ids = [0 as CGDirectDisplayID; 32];
     let mut count = 0_u32;
@@ -253,10 +240,7 @@ pub fn corner(others: &[CGRect]) -> CGPoint {
     CGPoint::new(right, bottom)
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a display configuration is a handle CoreGraphics hands out and takes back"
-)]
+#[allow(unsafe_code)]
 fn out_of_the_way(id: CGDirectDisplayID) {
     let others: Vec<CGRect> = active()
         .into_iter()
@@ -267,10 +251,7 @@ fn out_of_the_way(id: CGDirectDisplayID) {
         return;
     }
     let at = corner(&others);
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "display origins are whole points well within an i32"
-    )]
+    #[allow(clippy::cast_possible_truncation)]
     let (x, y) = (at.x.round() as i32, at.y.round() as i32);
     let mut config = std::ptr::null_mut();
     unsafe {

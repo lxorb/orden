@@ -152,11 +152,7 @@ pub fn rgba_png_within(rgba: &[u8], width: u32, height: u32, side: u32) -> Optio
     Some(png)
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "a side of at most a few hundred pixels, rounded"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn side_of(value: f64) -> usize {
     (value.round() as usize).max(1)
 }

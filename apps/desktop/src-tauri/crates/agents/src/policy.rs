@@ -186,10 +186,7 @@ pub fn script_allowed(grant: &Grant, host: &str) -> bool {
 
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
-#[allow(
-    clippy::struct_excessive_bools,
-    reason = "four things the page reports apart - submits, follows a link, takes words, in a form - which the policy reads one at a time, in every combination"
-)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Facts {
     pub tag: String,
     #[serde(rename = "type")]

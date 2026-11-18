@@ -44,7 +44,7 @@ pub fn identity(path: &Path) -> Option<String> {
 }
 
 #[cfg(target_os = "linux")]
-#[allow(unsafe_code, reason = "the generation is asked through an ioctl")]
+#[allow(unsafe_code)]
 fn generation(path: &Path) -> Option<libc::c_int> {
     use std::os::fd::AsRawFd;
     use std::os::unix::fs::OpenOptionsExt;

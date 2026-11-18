@@ -15,20 +15,11 @@ const LET_GO_AFTER: Duration = Duration::from_secs(2);
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Words {
-    #[cfg_attr(
-        not(any(windows, target_os = "macos")),
-        allow(dead_code, reason = "a tray's row, and Linux has no tray here")
-    )]
+    #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
     pub show: String,
-    #[cfg_attr(
-        not(any(windows, target_os = "macos")),
-        allow(dead_code, reason = "a tray's row, and Linux has no tray here")
-    )]
+    #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
     pub stop: String,
-    #[cfg_attr(
-        not(any(windows, target_os = "macos")),
-        allow(dead_code, reason = "a tray's row, and Linux has no tray here")
-    )]
+    #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
     pub quit: String,
     pub stopped: String,
     pub closed: String,

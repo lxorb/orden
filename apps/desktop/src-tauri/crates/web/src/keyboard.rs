@@ -84,16 +84,10 @@ fn now() -> u64 {
     u64::try_from(START.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
 
-#[cfg_attr(
-    not(target_os = "linux"),
-    allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 const IN_PAGE: &str = "orden://keyboard-in-page";
 
-#[cfg_attr(
-    not(target_os = "linux"),
-    allow(dead_code, reason = "a Mac's engine says it to the app's page itself")
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn page_took(app: &AppHandle, window: &str, page: &str) {
     homes(|all| all.page_took(window, page));
     let _ = app.emit_to(window, IN_PAGE, ());

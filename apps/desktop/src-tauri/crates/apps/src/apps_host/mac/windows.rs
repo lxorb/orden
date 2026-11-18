@@ -87,16 +87,13 @@ fn there(now: CGRect, goes: CGRect, fills: bool) -> bool {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "Accessibility has no Rust binding here; its C calls hand out CF objects"
-)]
+#[allow(unsafe_code)]
 fn application(pid: i32) -> Option<CFRetained<CFType>> {
     let made = NonNull::new(unsafe { AXUIElementCreateApplication(pid) })?;
     Some(unsafe { CFRetained::from_raw(made.cast()) })
 }
 
-#[allow(unsafe_code, reason = "see `application`")]
+#[allow(unsafe_code)]
 fn attribute(element: &CFType, name: &CFString) -> Option<CFRetained<CFType>> {
     let mut value: *const c_void = std::ptr::null();
     let said = unsafe {
@@ -109,7 +106,7 @@ fn attribute(element: &CFType, name: &CFString) -> Option<CFRetained<CFType>> {
     Some(unsafe { CFRetained::from_raw(value.cast()) })
 }
 
-#[allow(unsafe_code, reason = "see `application`")]
+#[allow(unsafe_code)]
 fn geometry<T: Default>(element: &CFType, name: &CFString, kind: u32) -> Option<T> {
     let value = attribute(element, name)?;
     let mut out = T::default();
@@ -123,7 +120,7 @@ fn geometry<T: Default>(element: &CFType, name: &CFString, kind: u32) -> Option<
     (read != 0).then_some(out)
 }
 
-#[allow(unsafe_code, reason = "see `application`")]
+#[allow(unsafe_code)]
 fn set_geometry<T>(element: &CFType, name: &CFString, kind: u32, value: &T) {
     unsafe {
         let Some(made) = NonNull::new(AXValueCreate(kind, std::ptr::from_ref(value).cast())) else {
@@ -138,10 +135,7 @@ fn set_geometry<T>(element: &CFType, name: &CFString, kind: u32, value: &T) {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "an Accessibility array's elements, read as what they are"
-)]
+#[allow(unsafe_code)]
 fn place_all(app: &CFType, screen: CGRect) {
     let windows_name = CFString::from_static_str("AXWindows");
     let Some(windows) = attribute(app, &windows_name) else {

@@ -30,10 +30,7 @@ struct Mapped {
 }
 
 impl Mapped {
-    #[allow(
-        unsafe_code,
-        reason = "mmap(2) is how memory shared with the X server is read; nothing safe wraps it"
-    )]
+    #[allow(unsafe_code)]
     fn new(descriptor: &std::os::fd::OwnedFd, length: usize) -> Option<Mapped> {
         use std::os::fd::AsRawFd as _;
         let at = unsafe {
@@ -49,20 +46,14 @@ impl Mapped {
         (at != libc::MAP_FAILED).then_some(Mapped { at, length })
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "the mapped segment, read as the bytes it is; see `Mapped::new`"
-    )]
+    #[allow(unsafe_code)]
     fn bytes(&self, length: usize) -> &[u8] {
         unsafe { std::slice::from_raw_parts(self.at.cast::<u8>(), length.min(self.length)) }
     }
 }
 
 impl Drop for Mapped {
-    #[allow(
-        unsafe_code,
-        reason = "munmap(2) undoes the mapping `Mapped::new` made; nothing safe wraps it"
-    )]
+    #[allow(unsafe_code)]
     fn drop(&mut self) {
         unsafe {
             libc::munmap(self.at, self.length);

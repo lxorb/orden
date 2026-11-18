@@ -27,10 +27,7 @@ fn sane(ending: &str) -> bool {
 }
 
 #[cfg(target_os = "windows")]
-#[allow(
-    unsafe_code,
-    reason = "a kind's icon is asked of the shell, and its pixels are read with GDI"
-)]
+#[allow(unsafe_code)]
 fn drawn(ending: &str) -> Option<String> {
     use windows::core::HSTRING;
     use windows::Win32::Storage::FileSystem::FILE_ATTRIBUTE_NORMAL;
@@ -98,10 +95,7 @@ fn drawn(ending: &str) -> Option<String> {
 }
 
 #[cfg(target_os = "windows")]
-#[allow(
-    unsafe_code,
-    reason = "an icon's bitmaps are taken out of it by Win32 calls"
-)]
+#[allow(unsafe_code)]
 fn icon_rgba(icon: windows::Win32::UI::WindowsAndMessaging::HICON) -> Option<(Vec<u8>, u32, u32)> {
     use windows::Win32::Graphics::Gdi::DeleteObject;
     use windows::Win32::UI::WindowsAndMessaging::{GetIconInfo, ICONINFO};
@@ -151,10 +145,7 @@ fn masked(rgba: &mut [u8], size: (u32, u32), holes: &[u8], hole_size: (u32, u32)
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "a kind's icon is drawn by AppKit into a bitmap made through its Objective-C interface"
-)]
+#[allow(unsafe_code)]
 fn drawn(ending: &str) -> Option<String> {
     use objc2::AllocAnyThread as _;
     use objc2_app_kit::{
@@ -168,10 +159,7 @@ fn drawn(ending: &str) -> Option<String> {
     } else {
         ending
     });
-    #[allow(
-        deprecated,
-        reason = "the content type it is replaced by needs a framework this app does not link for a name ending"
-    )]
+    #[allow(deprecated)]
     let image = NSWorkspace::sharedWorkspace().iconForFileType(&kind);
     let pixels = isize::try_from(icons::KIND_SIDE).ok()?;
     let bitmap = unsafe {

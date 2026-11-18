@@ -26,10 +26,7 @@ pub type Piece = (i32, i32, i32, i32, i32);
 
 pub type Shape = Option<Vec<Piece>>;
 
-#[allow(
-    clippy::cast_possible_truncation,
-    reason = "a page is never anywhere near two billion pixels across"
-)]
+#[allow(clippy::cast_possible_truncation)]
 fn pixels(length: f64, scale: f64) -> i32 {
     (length * scale).round() as i32
 }
@@ -239,10 +236,7 @@ mod engine {
         all
     }
 
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "never more than the radius, which is a page's size at most"
-    )]
+    #[allow(clippy::cast_possible_truncation)]
     fn inset(radius: i32, line: i32) -> i32 {
         let r = f64::from(radius);
         let off = r - f64::from(line) - 0.5;

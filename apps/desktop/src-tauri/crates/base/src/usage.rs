@@ -34,10 +34,7 @@ impl Sampler {
     }
 }
 
-#[allow(
-    clippy::cast_precision_loss,
-    reason = "ticks and nanoseconds over a second fit an f64's mantissa"
-)]
+#[allow(clippy::cast_precision_loss)]
 fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &Totals) -> Usage {
     let Some((at, old)) = before else {
         return Usage {

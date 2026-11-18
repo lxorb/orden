@@ -59,12 +59,12 @@ mod held {
 
     const SUBCLASS: usize = 0x6e69_6200;
 
-    #[allow(unsafe_code, reason = "locking the foreground is a Win32 call")]
+    #[allow(unsafe_code)]
     pub fn lock() -> bool {
         unsafe { LockSetForegroundWindow(LSFW_LOCK) }.is_ok()
     }
 
-    #[allow(unsafe_code, reason = "setting a window hook is a Win32 call")]
+    #[allow(unsafe_code)]
     pub fn on_this_thread() {
         let _ = unsafe {
             SetWindowsHookExW(
@@ -76,7 +76,7 @@ mod held {
         };
     }
 
-    #[allow(unsafe_code, reason = "setting an event hook is a Win32 call")]
+    #[allow(unsafe_code)]
     pub fn on_every_thread(thread: u32) -> Option<HWINEVENTHOOK> {
         unsafe {
             let module = GetModuleHandleW(None).ok()?;
@@ -104,10 +104,7 @@ mod held {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "setting and removing an event hook are Win32 calls"
-    )]
+    #[allow(unsafe_code)]
     pub fn in_context_refusal() -> Option<u32> {
         use windows::core::w;
         use windows::Win32::Foundation::GetLastError;
@@ -143,10 +140,7 @@ mod held {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "an event hook is a callback the system calls with a window it names"
-    )]
+    #[allow(unsafe_code)]
     unsafe extern "system" fn made(
         _hook: HWINEVENTHOOK,
         event: u32,
@@ -192,15 +186,12 @@ mod held {
         }
     }
 
-    #[allow(unsafe_code, reason = "asking a window's parent is a Win32 call")]
+    #[allow(unsafe_code)]
     fn top_level_now(window: HWND) -> bool {
         unsafe { GetAncestor(window, GA_PARENT) == GetDesktopWindow() }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "asking which screen a rectangle is on is a Win32 call"
-    )]
+    #[allow(unsafe_code)]
     fn on_a_screen(rectangle: &RECT) -> bool {
         if rectangle.right <= rectangle.left || rectangle.bottom <= rectangle.top {
             return false;
@@ -208,7 +199,7 @@ mod held {
         !unsafe { MonitorFromRect(rectangle, MONITOR_DEFAULTTONULL) }.is_invalid()
     }
 
-    #[allow(unsafe_code, reason = "reading where a window is now is a Win32 call")]
+    #[allow(unsafe_code)]
     fn kept_away(window: HWND, going: &mut WINDOWPOS) {
         if !top_level_now(window) {
             return;
@@ -240,10 +231,7 @@ mod held {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a window hook is a callback the system calls with pointers it owns"
-    )]
+    #[allow(unsafe_code)]
     unsafe extern "system" fn watching(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         match u32::try_from(code) {
             Ok(HCBT_ACTIVATE) => return LRESULT(1),
@@ -264,10 +252,7 @@ mod held {
         unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a subclass procedure is a callback the system calls with pointers it owns"
-    )]
+    #[allow(unsafe_code)]
     unsafe extern "system" fn holding(
         window: HWND,
         message: u32,
@@ -410,7 +395,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    #[allow(unsafe_code, reason = "making, restyling and activating a real window")]
+    #[allow(unsafe_code)]
     fn made_and_asked(holding: bool) -> Asked {
         use windows::core::w;
         use windows::Win32::UI::Input::KeyboardAndMouse::{GetActiveWindow, SetActiveWindow};
@@ -486,10 +471,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    #[allow(
-        unsafe_code,
-        reason = "a message box, a move and a close are Win32 calls"
-    )]
+    #[allow(unsafe_code)]
     fn a_message_box_watched(holding: bool) -> Watched {
         use std::sync::mpsc;
         use std::time::{Duration, Instant};
@@ -572,7 +554,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    #[allow(unsafe_code, reason = "making a desktop is a Win32 call")]
+    #[allow(unsafe_code)]
     fn own_desktop(which: bool) -> isize {
         use windows::core::PCWSTR;
         use windows::Win32::System::StationsAndDesktops::{CreateDesktopW, DESKTOP_CONTROL_FLAGS};
@@ -602,7 +584,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    #[allow(unsafe_code, reason = "moving a thread to a desktop is a Win32 call")]
+    #[allow(unsafe_code)]
     fn on_desktop(
         desktop: isize,
         work: impl FnOnce() + Send + 'static,
@@ -616,7 +598,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    #[allow(unsafe_code, reason = "listing a desktop's windows is a Win32 call")]
+    #[allow(unsafe_code)]
     fn shown(desktop: isize, thread: u32) -> Vec<(isize, bool)> {
         use windows::Win32::Foundation::{BOOL, HWND, LPARAM, RECT};
         use windows::Win32::Graphics::Gdi::{MonitorFromRect, MONITOR_DEFAULTTONULL};

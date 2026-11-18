@@ -185,10 +185,7 @@ struct Player {
 }
 
 impl Player {
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "a point of a view of at most 16K pixels"
-    )]
+    #[allow(clippy::cast_possible_truncation)]
     fn play(&mut self, event: InputEvent) {
         match event {
             InputEvent::Move { x, y } => {
@@ -301,10 +298,7 @@ impl Player {
         post(window, message, wparam, point_lparam(cx, cy));
     }
 
-    #[allow(
-        clippy::needless_pass_by_value,
-        reason = "the key's name is kept by what it was"
-    )]
+    #[allow(clippy::needless_pass_by_value)]
     fn key(&mut self, key: &str, code: String, down: bool) {
         if matches!(key, "Shift" | "Control" | "Alt" | "Meta" | "OS") {
             let Some((vk, extended)) = virtual_key(key) else {
@@ -373,7 +367,7 @@ impl Player {
         );
     }
 
-    #[allow(unsafe_code, reason = "a thread's keyboard is asked of Win32")]
+    #[allow(unsafe_code)]
     fn keyboard(&mut self) -> Option<HWND> {
         let front = self
             .front
@@ -391,10 +385,7 @@ impl Player {
         Some(focused.unwrap_or(front))
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a thread's keyboard state is shared and set with Win32 calls"
-    )]
+    #[allow(unsafe_code)]
     fn set_state(&mut self) {
         let Some(window) = self.keyboard() else {
             return;
@@ -424,10 +415,7 @@ impl Player {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a shared input state is let go with a Win32 call"
-    )]
+    #[allow(unsafe_code)]
     fn let_go(&mut self) {
         let keys: Vec<(u8, bool, bool)> = self.keys.drain().map(|(_, one)| one).collect();
         for (vk, extended, pressed) in keys {
@@ -453,7 +441,7 @@ impl Player {
     }
 }
 
-#[allow(unsafe_code, reason = "the layout is asked with a Win32 call")]
+#[allow(unsafe_code)]
 fn key_of_character(character: char) -> Option<u8> {
     let mut units = [0_u16; 2];
     let encoded = character.encode_utf16(&mut units);
@@ -465,23 +453,23 @@ fn key_of_character(character: char) -> Option<u8> {
     (said != -1 && low != 0xff).then_some(low)
 }
 
-#[allow(unsafe_code, reason = "the layout is asked with a Win32 call")]
+#[allow(unsafe_code)]
 fn scan_of(vk: u8) -> u32 {
     unsafe { MapVirtualKeyW(u32::from(vk), MAPVK_VK_TO_VSC) }
 }
 
-#[allow(unsafe_code, reason = "a setting is asked of Win32")]
+#[allow(unsafe_code)]
 fn double_click_time() -> Duration {
     Duration::from_millis(u64::from(unsafe { GetDoubleClickTime() }))
 }
 
-#[allow(unsafe_code, reason = "a window's class is asked of Win32")]
+#[allow(unsafe_code)]
 fn wants_double_clicks(window: HWND) -> bool {
     let style = unsafe { GetClassLongW(window, GCL_STYLE) };
     style & CS_DBLCLKS.0 != 0
 }
 
-#[allow(unsafe_code, reason = "a window's ancestor is asked of Win32")]
+#[allow(unsafe_code)]
 fn root(window: HWND) -> HWND {
     let top = unsafe { GetAncestor(window, GA_ROOT) };
     if top.is_invalid() {
@@ -491,7 +479,7 @@ fn root(window: HWND) -> HWND {
     }
 }
 
-#[allow(unsafe_code, reason = "windows under a point are asked of Win32")]
+#[allow(unsafe_code)]
 fn under(at: (i32, i32)) -> Option<HWND> {
     let top = shown().into_iter().find(|&window| {
         place_of(window).is_some_and(|place| {
@@ -516,14 +504,14 @@ fn under(at: (i32, i32)) -> Option<HWND> {
     Some(window)
 }
 
-#[allow(unsafe_code, reason = "a point is mapped into a window by Win32")]
+#[allow(unsafe_code)]
 fn client(window: HWND, at: (i32, i32)) -> (i32, i32) {
     let mut point = POINT { x: at.0, y: at.1 };
     let _ = unsafe { ScreenToClient(window, &raw mut point) };
     (point.x, point.y)
 }
 
-#[allow(unsafe_code, reason = "a message is posted with a Win32 call")]
+#[allow(unsafe_code)]
 fn post(window: HWND, message: u32, wparam: usize, lparam: isize) {
     let _ = unsafe { PostMessageW(window, message, WPARAM(wparam), LPARAM(lparam)) };
 }

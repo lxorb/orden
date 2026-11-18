@@ -401,10 +401,7 @@ fn judged(
     judged_times(app, caller, page, place, facts, act, key, 1)
 }
 
-#[allow(
-    clippy::too_many_arguments,
-    reason = "the one decision every act goes through, and each of these is what it is about"
-)]
+#[allow(clippy::too_many_arguments)]
 fn judged_times(
     app: &AppHandle,
     caller: &Caller,
@@ -652,10 +649,7 @@ fn element(page: &Page<'_>, reference: &str) -> Result<Element, Answer> {
     page.element(reference)
 }
 
-#[allow(
-    clippy::too_many_lines,
-    reason = "one arm a verb: the dispatch reads as the table of verbs it is"
-)]
+#[allow(clippy::too_many_lines)]
 fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: Verb) -> Answer {
     let tab = place.id().to_string();
     let from_page = |result: Answer| match result {

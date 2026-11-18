@@ -58,10 +58,7 @@ impl Family {
 }
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
-#[allow(
-    unsafe_code,
-    reason = "killpg is the system's own call and has no safe wrapper in the crates Orden uses"
-)]
+#[allow(unsafe_code)]
 fn end_group(pid: u32) {
     let Ok(group) = libc::pid_t::try_from(pid) else {
         return;
@@ -87,10 +84,7 @@ fn quiet(command: &mut Command) -> &mut Command {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a job object is Win32's own and has no safe wrapper in the crates Orden uses"
-)]
+#[allow(unsafe_code)]
 fn job_for(child: &Child) -> Option<std::os::windows::io::OwnedHandle> {
     use std::os::windows::io::{AsRawHandle as _, FromRawHandle as _, OwnedHandle};
     use windows::core::PCWSTR;
@@ -121,10 +115,7 @@ fn job_for(child: &Child) -> Option<std::os::windows::io::OwnedHandle> {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a job object is Win32's own and has no safe wrapper in the crates Orden uses"
-)]
+#[allow(unsafe_code)]
 fn end_job(job: &std::os::windows::io::OwnedHandle) {
     use std::os::windows::io::AsRawHandle as _;
     use windows::Win32::Foundation::HANDLE;
@@ -133,10 +124,7 @@ fn end_job(job: &std::os::windows::io::OwnedHandle) {
     let _ = unsafe { TerminateJobObject(HANDLE(job.as_raw_handle()), 1) };
 }
 
-#[allow(
-    unsafe_code,
-    reason = "whether a handle is inherited is Win32's own flag, with no safe wrapper"
-)]
+#[allow(unsafe_code)]
 #[cfg(windows)]
 pub fn keep_the_pipes() {
     use std::os::windows::io::AsRawHandle as _;

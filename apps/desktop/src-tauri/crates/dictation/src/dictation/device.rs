@@ -66,10 +66,7 @@ fn memory() -> Option<u64> {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "the memory status call has no safe wrapper in the windows crate"
-)]
+#[allow(unsafe_code)]
 fn memory() -> Option<u64> {
     use windows::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
 

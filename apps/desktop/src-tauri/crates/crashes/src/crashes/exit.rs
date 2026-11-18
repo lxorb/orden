@@ -178,14 +178,8 @@ pub fn ended_well() {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "how long Windows has run is GetTickCount64's to say"
-)]
-#[allow(
-    clippy::unnecessary_wraps,
-    reason = "one signature on every system; only Windows always knows"
-)]
+#[allow(unsafe_code)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn booted() -> Option<u64> {
     let since = unsafe { windows::Win32::System::SystemInformation::GetTickCount64() };
     Some(orden_base::clock::now().saturating_sub(since))
@@ -204,7 +198,7 @@ pub fn booted() -> Option<u64> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(unsafe_code, reason = "the boot time is asked of sysctl")]
+#[allow(unsafe_code)]
 pub fn booted() -> Option<u64> {
     let mut when: libc::timeval = unsafe { std::mem::zeroed() };
     let mut size = std::mem::size_of::<libc::timeval>();

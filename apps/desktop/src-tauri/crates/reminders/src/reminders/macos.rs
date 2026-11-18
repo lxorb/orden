@@ -76,10 +76,7 @@ define_class!(
     }
 );
 
-#[allow(
-    unsafe_code,
-    reason = "a class of our own is initialised through the Objective-C runtime"
-)]
+#[allow(unsafe_code)]
 fn delegate() -> Retained<Delegate> {
     let made = Delegate::alloc();
     unsafe { msg_send![made, init] }
@@ -242,10 +239,7 @@ impl System for Requests {
         let sound = UNNotificationSound::defaultSound();
         content.setSound(Some(&*sound));
 
-        #[allow(
-            clippy::cast_precision_loss,
-            reason = "milliseconds since 1970 are well inside a double's exact integers"
-        )]
+        #[allow(clippy::cast_precision_loss)]
         let seconds = one.at as f64 / 1000.0;
         let date = NSDate::dateWithTimeIntervalSince1970(seconds);
         let units = NSCalendarUnit::Year
@@ -276,18 +270,12 @@ impl System for Requests {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "the centre hands its answer over as a bare pointer for the length of the call"
-)]
+#[allow(unsafe_code)]
 fn status_of(settings: std::ptr::NonNull<UNNotificationSettings>) -> UNAuthorizationStatus {
     unsafe { settings.as_ref() }.authorizationStatus()
 }
 
-#[allow(
-    unsafe_code,
-    reason = "the centre hands its answer over as a bare pointer for the length of the call"
-)]
+#[allow(unsafe_code)]
 fn ids_of(requests: std::ptr::NonNull<NSArray<UNNotificationRequest>>) -> Vec<String> {
     let requests = unsafe { requests.as_ref() };
     requests

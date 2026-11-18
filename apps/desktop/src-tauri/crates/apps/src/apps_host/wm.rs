@@ -151,22 +151,14 @@ impl Desk {
     }
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "a ratio the wire holds to at most 8"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn gtk_scale(dpr: f64) -> (u32, f64) {
     let dpr = super::display::ratio(dpr);
     let scale = (dpr.floor() as u32).max(1);
     (scale, 96.0 * dpr / f64::from(scale))
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap,
-    reason = "values of at most 8 times 96 times 1024"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 pub fn settings(dpr: f64, serial: u32) -> Vec<u8> {
     let (scale, unscaled) = gtk_scale(dpr);
     let dots = f64::from(super::display::dpi(dpr));
@@ -455,10 +447,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(
-        clippy::too_many_lines,
-        reason = "one display's windows, told in the order they come and go"
-    )]
+    #[allow(clippy::too_many_lines)]
     fn fills_the_screen_with_the_main_window_and_follows_it() {
         super::super::in_time(|| {
             if !super::super::display::available() {

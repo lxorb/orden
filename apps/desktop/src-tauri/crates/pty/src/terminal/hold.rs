@@ -317,10 +317,7 @@ pub fn serve() -> i32 {
 }
 
 #[cfg(unix)]
-#[allow(
-    unsafe_code,
-    reason = "setsid is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn on_its_own() {
     unsafe {
         libc::setsid();
@@ -328,10 +325,7 @@ fn on_its_own() {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "SetConsoleCtrlHandler is Win32's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn on_its_own() {
     use windows::Win32::System::Console::SetConsoleCtrlHandler;
     let _ = unsafe { SetConsoleCtrlHandler(None, false) };
@@ -879,10 +873,7 @@ pub fn token() -> Result<String, String> {
 }
 
 #[cfg(unix)]
-#[allow(
-    unsafe_code,
-    reason = "kill is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn signal(pid: i32, signal: i32) {
     unsafe {
         libc::kill(pid, signal);
@@ -933,10 +924,7 @@ pub fn members(session: i32) -> Vec<i32> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "listing processes is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 pub fn members(session: i32) -> Vec<i32> {
     let count = unsafe { libc::proc_listallpids(std::ptr::null_mut(), 0) };
     let Ok(room) = usize::try_from(count) else {
@@ -953,10 +941,7 @@ pub fn members(session: i32) -> Vec<i32> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "proc_pidinfo is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn zombie(pid: i32) -> bool {
     const ZOMBIE: u32 = 5;
     let Ok(size) = libc::c_int::try_from(std::mem::size_of::<libc::proc_bsdinfo>()) else {

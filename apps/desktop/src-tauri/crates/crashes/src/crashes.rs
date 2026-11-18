@@ -314,10 +314,7 @@ fn drilled_freeze() {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a crash drill writes through a null pointer on purpose"
-)]
+#[allow(unsafe_code)]
 fn drilled_crash() {
     unsafe {
         std::hint::black_box(std::ptr::null_mut::<u8>()).write_volatile(1);

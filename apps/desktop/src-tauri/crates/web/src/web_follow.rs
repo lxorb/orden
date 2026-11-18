@@ -134,10 +134,7 @@ pub fn unfollow(label: &str) {
 }
 
 #[must_use]
-#[allow(
-    clippy::cast_possible_truncation,
-    reason = "a page is never anywhere near two billion pixels across"
-)]
+#[allow(clippy::cast_possible_truncation)]
 pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
     let at = |length: f64| (length * scale).round() as i32;
     let (left, top) = (at(bounds.x), at(bounds.y));

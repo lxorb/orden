@@ -583,7 +583,7 @@ mod tests {
             let took = at.elapsed().as_secs_f32();
             println!("{:20} {took:5.2}s {heard}", one["file"].as_str().unwrap());
             let reference = one["ref"].as_str().unwrap().to_owned();
-            #[allow(clippy::cast_precision_loss, reason = "a measurement")]
+            #[allow(clippy::cast_precision_loss)]
             let seconds = sound.len() as f32 / 16_000.0;
             rows.push((group, reference, heard, took, seconds, live));
         }
@@ -593,7 +593,7 @@ mod tests {
                 let (a, b) = (words_of(&row.1), words_of(&row.2));
                 (w + edits(&a, &b), n + a.len())
             });
-            #[allow(clippy::cast_precision_loss, reason = "a measurement")]
+            #[allow(clippy::cast_precision_loss)]
             let wer = wrong as f32 / words.max(1) as f32;
             println!("{group:6} WER {wer:.3}");
         }

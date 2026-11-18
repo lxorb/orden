@@ -126,10 +126,7 @@ pub fn session_of(asked: &Value) -> String {
         .to_owned()
 }
 
-#[allow(
-    clippy::too_many_arguments,
-    reason = "a log line names the caller, its session, the call and its answer"
-)]
+#[allow(clippy::too_many_arguments)]
 pub fn logged(
     app: &AppHandle,
     caller: &Caller,

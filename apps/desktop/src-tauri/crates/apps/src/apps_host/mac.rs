@@ -13,7 +13,7 @@ pub mod audio {
             None
         }
 
-        #[allow(clippy::unused_self, reason = "the face of Linux's sound")]
+        #[allow(clippy::unused_self)]
         pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
             None
         }

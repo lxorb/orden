@@ -195,10 +195,7 @@ pub struct Engine {
     _libraries: [Library; 2],
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a C object handed between threads behind a mutex"
-)]
+#[allow(unsafe_code)]
 unsafe impl Send for Engine {}
 
 pub struct Opening<'a> {
@@ -215,7 +212,7 @@ fn path_text(folder: &Path, name: &str) -> Result<CString, String> {
     text(&folder.join(name).to_string_lossy())
 }
 
-#[allow(unsafe_code, reason = "loading a library runs its initialisers")]
+#[allow(unsafe_code)]
 fn load(path: &Path) -> Result<Library, String> {
     #[cfg(windows)]
     let library = unsafe {
@@ -230,10 +227,7 @@ fn load(path: &Path) -> Result<Library, String> {
     library.map_err(|error| format!("the speech runtime could not be loaded: {error}"))
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a symbol is read as the type its C header declares"
-)]
+#[allow(unsafe_code)]
 fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
     unsafe { library.get::<T>(name).map(|found| *found) }.map_err(|error| {
         format!(
@@ -244,7 +238,7 @@ fn symbol<T: Copy>(library: &Library, name: &[u8]) -> Result<T, String> {
 }
 
 impl Engine {
-    #[allow(unsafe_code, reason = "sherpa-onnx's interface is C")]
+    #[allow(unsafe_code)]
     pub fn open(runtime: &Path, onnx: &str, api: &str, opening: &Opening) -> Result<Self, String> {
         let onnxruntime = load(&runtime.join(onnx))?;
         let library = load(&runtime.join(api))?;
@@ -330,7 +324,7 @@ impl Engine {
         })
     }
 
-    #[allow(unsafe_code, reason = "sherpa-onnx's interface is C")]
+    #[allow(unsafe_code)]
     fn pass(&self, samples: &[f32], hotwords: Option<&str>) -> Result<String, String> {
         let count = i32::try_from(samples.len()).map_err(|_| "too long a stretch".to_owned())?;
         let c = &self.calls;
@@ -380,7 +374,7 @@ fn repeats_a_name(text: &str, names: &[String]) -> bool {
 }
 
 impl Drop for Engine {
-    #[allow(unsafe_code, reason = "sherpa-onnx's interface is C")]
+    #[allow(unsafe_code)]
     fn drop(&mut self) {
         unsafe { (self.calls.destroy)(self.recognizer) }
     }

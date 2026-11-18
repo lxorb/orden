@@ -2,10 +2,7 @@
 const FULL_SCREEN_ROW: &str = "NSFullScreenMenuItemEverywhere";
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "registering defaults takes a dictionary whose values the type system does not check"
-)]
+#[allow(unsafe_code)]
 pub fn leave_out_system_rows() {
     use objc2::runtime::AnyObject;
     use objc2_foundation::{NSDictionary, NSNumber, NSString, NSUserDefaults};
@@ -36,10 +33,7 @@ pub fn hand_to_keyboard(app: tauri::AppHandle, action: StandIn) {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "an action is sent by selector, which the type system cannot check"
-)]
+#[allow(unsafe_code)]
 fn send(action: StandIn) {
     let Some(main) = objc2::MainThreadMarker::new() else {
         return;

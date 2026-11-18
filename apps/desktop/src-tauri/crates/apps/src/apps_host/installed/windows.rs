@@ -39,14 +39,14 @@ pub fn entries(with_icons: bool) -> Vec<Entry> {
 pub(super) struct Com(bool);
 
 impl Com {
-    #[allow(unsafe_code, reason = "COM is started on a thread by a Win32 call")]
+    #[allow(unsafe_code)]
     pub(super) fn start() -> Com {
         Com(unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.is_ok())
     }
 }
 
 impl Drop for Com {
-    #[allow(unsafe_code, reason = "COM is ended on its thread by a Win32 call")]
+    #[allow(unsafe_code)]
     fn drop(&mut self) {
         if self.0 {
             unsafe { CoUninitialize() };
@@ -163,10 +163,7 @@ fn is_program(path: &Path) -> bool {
         && path.is_file()
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a string COM handed over is read and freed with Win32 calls"
-)]
+#[allow(unsafe_code)]
 fn taken(text: PWSTR) -> Option<String> {
     if text.is_null() {
         return None;
@@ -184,10 +181,7 @@ fn written(buffer: &[u16]) -> String {
     String::from_utf16_lossy(&buffer[..end])
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a shortcut is read with the shell's IShellLink, a COM call"
-)]
+#[allow(unsafe_code)]
 fn shortcut(link: &Path, with_icons: bool) -> Option<Entry> {
     let shell: IShellLinkW =
         unsafe { CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER) }.ok()?;
@@ -229,10 +223,7 @@ fn shortcut(link: &Path, with_icons: bool) -> Option<Entry> {
     })
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a command line is split by the shell's CommandLineToArgvW"
-)]
+#[allow(unsafe_code)]
 pub fn arguments(line: &str) -> Vec<String> {
     use windows::Win32::Foundation::{LocalFree, HLOCAL};
     use windows::Win32::UI::Shell::CommandLineToArgvW;
@@ -256,21 +247,18 @@ pub fn arguments(line: &str) -> Vec<String> {
     words
 }
 
-#[allow(unsafe_code, reason = "a shell item is made by a Win32 call")]
+#[allow(unsafe_code)]
 fn shell_item(path: &Path) -> Option<IShellItem> {
     let path = HSTRING::from(path.as_os_str());
     unsafe { SHCreateItemFromParsingName(&path, None) }.ok()
 }
 
-#[allow(unsafe_code, reason = "a shell item's name is a COM call")]
+#[allow(unsafe_code)]
 fn display_name(item: &IShellItem) -> Option<String> {
     taken(unsafe { item.GetDisplayName(SIGDN_NORMALDISPLAY) }.ok()?)
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a shell item's picture is drawn by COM and read with GDI"
-)]
+#[allow(unsafe_code)]
 fn icon(item: &IShellItem) -> Option<String> {
     let factory: IShellItemImageFactory = item.cast().ok()?;
     let side = i32::try_from(icons::SIDE).ok()?;
@@ -292,7 +280,7 @@ fn icon(item: &IShellItem) -> Option<String> {
     ))
 }
 
-#[allow(unsafe_code, reason = "a bitmap's pixels are read with GDI")]
+#[allow(unsafe_code)]
 pub(super) fn bitmap_rgba(bitmap: HBITMAP) -> Option<(Vec<u8>, u32, u32)> {
     let mut about = BITMAP::default();
     let size = i32::try_from(std::mem::size_of::<BITMAP>()).ok()?;
@@ -363,10 +351,7 @@ pub fn straight(bgra: &[u8]) -> Vec<u8> {
     out
 }
 
-#[allow(
-    unsafe_code,
-    reason = "the Apps folder is walked with the shell's COM objects"
-)]
+#[allow(unsafe_code)]
 fn packaged(with_icons: bool) -> Vec<Entry> {
     let mut found = Vec::new();
     let Some(folder) = shell_item(Path::new("shell:AppsFolder")) else {
@@ -482,7 +467,7 @@ pub fn inside(path: &str, folder: &str) -> bool {
         .is_some_and(|rest| rest.starts_with('\\'))
 }
 
-#[allow(unsafe_code, reason = "a property of a shell item is a COM call")]
+#[allow(unsafe_code)]
 fn description(item: &IShellItem) -> Option<String> {
     let item: IShellItem2 = item.cast().ok()?;
     taken(unsafe { item.GetString(&FILE_DESCRIPTION) }.ok()?)
