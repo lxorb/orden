@@ -21,9 +21,11 @@ function numbered(doc: string) {
 }
 
 describe('equation labels', () => {
-  test('a label is bookkeeping, not something to render', () => {
-    expect(prepare('E = mc^2 \\label{eq:mass}')).toBe('E = mc^2 ')
-  })
+  test.each([
+    ['E = mc^2 \\label{eq:mass}', 'E = mc^2 '],
+    ['\\eqref{missing}', '\\eqref{missing}'],
+    ['\\int_0^\\infty e^{-x^2}\\,dx', '\\int_0^\\infty e^{-x^2}\\,dx'],
+  ])('%j', (input, wanted) => expect(prepare(input)).toEqual(wanted))
 
   test('a reference resolves to the number it was given', () => {
     expect(prepare('see \\eqref{eq:mass}', labels([['eq:mass', 3]]))).toBe('see (3)')

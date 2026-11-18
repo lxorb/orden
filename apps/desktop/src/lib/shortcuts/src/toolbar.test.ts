@@ -16,24 +16,10 @@ vi.mock('../../accounts/src/api', async (importOriginal) => {
   }
 })
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
-
 vi.stubGlobal('localStorage', memoryStorage())
 
 import { DEFAULT_TOOLBAR, markFor, nameFor, toolbar, usable } from './toolbar.svelte'
+import { memoryStorage } from '../../../../test/disk'
 
 beforeEach(() => {
   world.saved = []
@@ -159,5 +145,33 @@ describe('the account', () => {
 
     toolbar.receive({})
     expect(toolbar.ids).toEqual(held)
+  })
+})
+
+describe('a button this device cannot press yet', () => {
+  test('stays on the bar, out of sight, through edits made here', () => {
+    toolbar.receive({ toolbar: ['format.bold', 'app.new-window', 'format.italic'] })
+    expect(toolbar.ids).toEqual(['format.bold', 'format.italic'])
+
+    toolbar.move(1, 0)
+    expect(toolbar.ids).toEqual(['format.italic', 'format.bold'])
+    toolbar.add('paragraph.quote')
+    toolbar.remove('format.bold')
+
+    expect(toolbar.ids).toEqual(['format.italic', 'paragraph.quote'])
+    expect(toolbar.chosen).toEqual(['format.italic', 'app.new-window', 'paragraph.quote'])
+    expect(JSON.parse(localStorage.getItem('orden:toolbar') ?? 'null')).toEqual([
+      'format.italic',
+      'app.new-window',
+      'paragraph.quote',
+    ])
+  })
+
+  test('outlives a relaunch made before it could be pressed', () => {
+    localStorage.setItem('orden:toolbar', JSON.stringify(['format.bold', 'app.new-window']))
+    toolbar.restore()
+
+    expect(toolbar.chosen).toEqual(['format.bold', 'app.new-window'])
+    expect(toolbar.ids).toEqual(['format.bold'])
   })
 })

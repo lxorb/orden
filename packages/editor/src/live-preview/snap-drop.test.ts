@@ -48,24 +48,49 @@ function copied(doc: string, text: string, at: number): string {
 }
 
 describe('a word dragged between words', () => {
-  test('takes a space with it and leaves one behind', () => {
-    const doc = 'alpha beta gamma\n\nlast line here\n'
-    expect(moved(doc, 'beta', doc.indexOf(' here'))).toBe('alpha gamma\n\nlast line beta here\n')
-    expect(moved(doc, 'alpha', doc.indexOf('last'))).toBe('beta gamma\n\nalpha last line here\n')
-    expect(moved(doc, 'gamma', doc.indexOf('\n\nlast'))).toBe(doc)
-    expect(moved(doc, 'here', doc.indexOf('alpha'))).toBe('here alpha beta gamma\n\nlast line\n')
-  })
+  test.each([
+    [
+      'alpha beta gamma\n\nlast line here\n',
+      'alpha gamma\n\nlast line beta here\n',
+      'beta',
+      'alpha beta gamma\n\nlast line here\n'.indexOf(' here'),
+    ],
+    [
+      'alpha beta gamma\n\nlast line here\n',
+      'beta gamma\n\nalpha last line here\n',
+      'alpha',
+      'alpha beta gamma\n\nlast line here\n'.indexOf('last'),
+    ],
+    [
+      'alpha beta gamma\n\nlast line here\n',
+      'alpha beta gamma\n\nlast line here\n',
+      'gamma',
+      'alpha beta gamma\n\nlast line here\n'.indexOf('\n\nlast'),
+    ],
+    [
+      'alpha beta gamma\n\nlast line here\n',
+      'here alpha beta gamma\n\nlast line\n',
+      'here',
+      'alpha beta gamma\n\nlast line here\n'.indexOf('alpha'),
+    ],
+    [
+      '- one **two** three four\n',
+      '- one **two** four three\n',
+      'four',
+      '- one **two** three four\n'.indexOf('** three'),
+    ],
+    [
+      '- one **two** three four\n',
+      '- one **two** three four\n',
+      'one',
+      '- one **two** three four\n'.indexOf('two'),
+    ],
+    ['a **two** b\n', 'a b **two**\n', 'b', 'a **'.length],
+  ])('%j', (input, wanted, extra, last) => expect(moved(input, extra, last)).toBe(wanted))
 
-  test('lands outside the hidden marks of the bold it was dropped beside', () => {
-    const doc = '- one **two** three four\n'
-    expect(moved(doc, 'four', doc.indexOf('** three'))).toBe('- one **two** four three\n')
-    expect(moved(doc, 'one', doc.indexOf('two'))).toBe('- one **two** three four\n')
-    expect(moved('a **two** b\n', 'b', 'a **'.length)).toBe('a b **two**\n')
-  })
-
-  test('takes no space in the middle of a word or between characters that take none', () => {
-    expect(copied('abcdef\n', 'x', 3)).toBe('abcxdef\n')
-    expect(copied('one, two\n', 'x', 3)).toBe('one x, two\n')
-    expect(copied('日本語\n', '字', 1)).toBe('日字本語\n')
-  })
+  test.each([
+    ['abcdef\n', 'abcxdef\n', 'x', 3],
+    ['one, two\n', 'one x, two\n', 'x', 3],
+    ['日本語\n', '日字本語\n', '字', 1],
+  ])('%j', (input, wanted, extra, last) => expect(copied(input, extra, last)).toEqual(wanted))
 })

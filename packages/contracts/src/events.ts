@@ -50,10 +50,5 @@ export interface EventBus {
   ): Promise<Unlisten>
 }
 
-export function isEventName(value: unknown): value is EventName {
-  return (
-    typeof value === 'string' &&
-    value.startsWith(EVENT_PREFIX) &&
-    value.length > EVENT_PREFIX.length
-  )
-}
+export const isEventName = (value: unknown): value is EventName =>
+  typeof value === 'string' && value.startsWith(EVENT_PREFIX) && value.length > EVENT_PREFIX.length

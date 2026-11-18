@@ -9,7 +9,6 @@ function searched(base: string, path: string): boolean {
 }
 
 const CAP = 24_000_000
-
 let cap = CAP
 
 export function holdAtMost(characters: number): void {
@@ -17,6 +16,11 @@ export function holdAtMost(characters: number): void {
 }
 
 const READ_AT_ONCE = 256
+
+function inPathOrder(one: string, other: string): number {
+  if (one === other) return 0
+  return one < other ? -1 : 1
+}
 
 class Held implements SearchNote {
   private lowered: string | null = null
@@ -51,6 +55,7 @@ class Space {
   private order: string[] = []
   private held = new Map<string, Held>()
   private whole = false
+  private listing = 0
   private characters = 0
   private dropped = 0
   private read = 0
@@ -76,6 +81,7 @@ class Space {
     if (this.root !== base) return
 
     this.order = paths
+    const mine = ++this.listing
 
     const listed = new Set(paths)
     for (const path of this.held.keys()) {
@@ -96,6 +102,7 @@ class Space {
       if (this.root !== base) return
     }
 
+    if (this.listing !== mine) return
     this.whole = true
     this.settle()
   }
@@ -154,6 +161,7 @@ class Space {
   forget(root: string | null): void {
     this.root = root === null ? null : normalise(root)
     this.order = []
+    this.listing += 1
     this.held.clear()
     this.whole = false
     this.characters = 0
@@ -163,7 +171,7 @@ class Space {
 
   private async walk(base: string, visit: (note: Held) => boolean): Promise<void> {
     if (this.root !== base) this.forget(base)
-    this.order = []
+    const walked: string[] = []
     const walking = { on: true }
 
     await files.each((row) => {
@@ -172,11 +180,15 @@ class Space {
       this.read += 1
       if (!searched(base, row.path)) return
 
-      this.order.push(row.path)
+      walked.push(row.path)
       if (!visit(this.keep(base, row))) walking.on = false
     })
 
-    if (walking.on) this.whole = true
+    if (!walking.on || this.root !== base) return
+
+    this.order = [...new Set([...walked, ...this.order])].sort(inPathOrder)
+    this.listing += 1
+    this.whole = true
   }
 
   private keep(base: string, row: FileRow): Held {

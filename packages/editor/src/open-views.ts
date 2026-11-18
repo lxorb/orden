@@ -12,6 +12,4 @@ export const enrolled = ViewPlugin.define((view: EditorView) => {
   }
 })
 
-export function openViews(): Iterable<EditorView> {
-  return views
-}
+export const openViews = (): Iterable<EditorView> => views

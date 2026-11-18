@@ -1,4 +1,5 @@
-import { clockOf, dayOf } from './transcript'
+import { todayOf } from '@orden/bases'
+import { clockOf } from './transcript'
 
 const CONTAINERS = [
   'audio/webm;codecs=opus',
@@ -18,21 +19,14 @@ const EXTENSIONS: Readonly<Record<string, string>> = {
   'audio/x-wav': 'wav',
 }
 
-const FALLBACK = 'weba'
-
 export function extensionOf(type: string): string {
   const family = type.split(';')[0]?.trim().toLowerCase() ?? ''
-  return EXTENSIONS[family] ?? FALLBACK
+  return EXTENSIONS[family] ?? 'weba'
 }
 
 export function bestContainer(): string | null {
   if (typeof MediaRecorder === 'undefined') return null
-
-  for (const type of CONTAINERS) {
-    if (MediaRecorder.isTypeSupported(type)) return type
-  }
-
-  return ''
+  return CONTAINERS.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
 }
 
 export function canRecordHere(): boolean {
@@ -43,5 +37,5 @@ export function canRecordHere(): boolean {
 }
 
 export function recordingName(at: Date, extension: string): string {
-  return `recording-${dayOf(at)}-${clockOf(at)}.${extension}`
+  return `recording-${todayOf(at)}-${clockOf(at)}.${extension}`
 }

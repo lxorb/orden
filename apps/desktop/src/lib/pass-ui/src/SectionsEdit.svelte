@@ -3,8 +3,7 @@
   import { Cross } from '../../ui-kit/src/api'
   import AddField from './AddField.svelte'
   import FieldsEdit from './FieldsEdit.svelte'
-  import { newField } from '../../pass-sync/src/api'
-  import { newSection } from '../../pass-sync/src/api'
+  import { newField, newSection } from '../../pass-sync/src/api'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { sections = $bindable(), oninput }: { sections: Section[]; oninput: () => void } = $props()
@@ -42,7 +41,7 @@
       </button>
     </div>
     {#if section.fields.length}
-      <div class="card">
+      <div class="pass-stack">
         <FieldsEdit bind:fields={section.fields} {oninput} />
       </div>
     {/if}
@@ -92,15 +91,7 @@
     color: var(--text-strong);
   }
 
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > :global(* + *) {
+  .pass-stack > :global(* + *) {
     border-top: 1px solid var(--line);
   }
 

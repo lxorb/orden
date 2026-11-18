@@ -2,7 +2,6 @@ import { isNumber, isRecord, isString } from '../../platform/src/api'
 import { type Visit, visitKey } from '@orden/scan/visits'
 
 export const MOST_VISITS = 2000
-
 const LONGEST_TITLE = 200
 
 function readVisit(value: unknown): Visit | null {

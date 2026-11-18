@@ -1,0 +1,31 @@
+[package]
+name = "orden-explorer"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+orden-apps = { path = "../apps" }
+orden-base = { path = "../base" }
+tauri.workspace = true
+tauri-plugin-opener.workspace = true
+serde.workspace = true
+notify.workspace = true
+
+[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
+trash.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-foundation.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true, features = ["Win32_Storage_FileSystem"] }
+
+[dev-dependencies]
+orden-base = { path = "../base", features = ["testing"] }
+tempfile.workspace = true

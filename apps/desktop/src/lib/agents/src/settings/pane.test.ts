@@ -12,6 +12,12 @@ async function opened(fake: FakeCrate): Promise<AgentsPane> {
   return pane
 }
 
+async function paired(...names: string[]) {
+  const fake = new FakeCrate()
+  for (const [at, name] of names.entries()) fake.pair(name, at + 1)
+  return { fake, pane: await opened(fake) }
+}
+
 describe('the pane over the crate', () => {
   it('reads the agents, the program and when each last called', async () => {
     const now = Date.UTC(2026, 8, 30, 16)
@@ -26,9 +32,7 @@ describe('the pane over the crate', () => {
   })
 
   it('writes a switch through the crate and reads back what it kept', async () => {
-    const fake = new FakeCrate()
-    fake.pair('Claude Code', 1)
-    const pane = await opened(fake)
+    const { fake, pane } = await paired('Claude Code')
 
     await pane.change('claude-code', (grant) => withScope(grant, 'terminal', true))
     await pane.change('claude-code', (grant) => withSite(grant, 'bank.example', 'agent-store'))
@@ -43,9 +47,7 @@ describe('the pane over the crate', () => {
   })
 
   it('never drops an agent that paired while the pane was open', async () => {
-    const fake = new FakeCrate()
-    fake.pair('Claude Code', 1)
-    const pane = await opened(fake)
+    const { fake, pane } = await paired('Claude Code')
 
     fake.grants.push(ownGrant('codex', 'Codex', 2))
     await pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
@@ -55,9 +57,7 @@ describe('the pane over the crate', () => {
   })
 
   it('shows every switch at once and ends on the crate’s answer', async () => {
-    const fake = new FakeCrate()
-    fake.pair('Claude Code', 1)
-    const pane = await opened(fake)
+    const { fake, pane } = await paired('Claude Code')
 
     const first = pane.change('claude-code', (grant) => withScope(grant, 'terminal', true))
     const second = pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
@@ -70,9 +70,7 @@ describe('the pane over the crate', () => {
   })
 
   it('puts a switch back, with the reason, when the crate refuses it', async () => {
-    const fake = new FakeCrate()
-    fake.pair('Claude Code', 1)
-    const pane = await opened(fake)
+    const { fake, pane } = await paired('Claude Code')
 
     fake.failing = new Error('the agents cannot be read just now')
     await pane.change('claude-code', (grant) => withScope(grant, 'settings', true))
@@ -81,18 +79,14 @@ describe('the pane over the crate', () => {
   })
 
   it('removes an agent, and only that one', async () => {
-    const fake = new FakeCrate()
-    fake.pair('Claude Code', 1)
-    fake.pair('Codex', 2)
-    const pane = await opened(fake)
+    const { fake, pane } = await paired('Claude Code', 'Codex')
     await pane.remove('claude-code')
     expect(fake.grants.map((one) => one.id)).toEqual(['codex'])
     expect(pane.grants.map((one) => one.id)).toEqual(['codex'])
   })
 
   it('makes an agent by hand with somebody else’s defaults, and says its token once', async () => {
-    const fake = new FakeCrate()
-    const pane = await opened(fake)
+    const { pane } = await paired()
     await pane.mint('Nightly backup')
     expect(pane.minted?.token).toHaveLength(64)
     expect(pane.grants).toEqual([
@@ -104,8 +98,7 @@ describe('the pane over the crate', () => {
   })
 
   it('hears a pairing and an agent at work', async () => {
-    const fake = new FakeCrate()
-    const pane = await opened(fake)
+    const { fake, pane } = await paired()
     fake.pair('Claude Code', 1)
     await Promise.resolve()
     await Promise.resolve()

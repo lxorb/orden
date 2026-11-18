@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -128,5 +126,4 @@ def drive(browser: Browser) -> None:
     checked(page, "a word note, the right side open", "bar")
     context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the note's corners stay inside its pane"))
+raise SystemExit(DRIVE.run(drive, "the note's corners stay inside its pane"))

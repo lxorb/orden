@@ -19,5 +19,5 @@ describe('a wikilink to a heading, exported as Markdown', () => {
 })
 
 test('a wikilink to a block, exported as Markdown, keeps the block as the fragment', () => {
-  expect(exported('See [[Note#^abc]].\n')).toContain('(sub/Note.md#%5Eabc)')
+  expect(exported('See [[Note#^abc]].\n')).toContain('(sub/Note.md#^abc)')
 })

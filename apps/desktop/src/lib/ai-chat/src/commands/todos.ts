@@ -1,6 +1,5 @@
 import type { Thread } from '../../../ai-providers/src/api'
-import type { Host } from './host'
-import { sendHere } from './host'
+import { type Host, sendHere } from './host'
 
 const PLAN = [
   'Plan my day.',
@@ -31,6 +30,6 @@ export interface Listed {
 export async function showTasks(host: Host, thread: Thread, args: string): Promise<void> {
   const { listed } = await import('../../../tasks-model/src/api')
   const asked = args.trim()
-  const answer: Listed = { ...(asked ? { filter: asked } : {}), ...listed() }
+  const answer: Listed = { ...(asked ? { filter: asked } : {}), ...(await listed()) }
   host.line(thread, JSON.stringify(answer), 'tasks')
 }

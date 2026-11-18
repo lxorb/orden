@@ -8,7 +8,6 @@ function page(properties: Record<string, string>): (name: string) => string {
 describe('what a theme may declare', () => {
   test('a number in a range, with the unit it is measured in', () => {
     const found = settingOf('blur', 'range "Blur" 0 40 18 px')
-
     expect(found).toMatchObject({ id: 'blur', label: 'Blur', kind: 'range', min: 0, max: 40 })
     expect(found?.initial).toBe(18)
     expect(found?.paint(24, 'dark')).toEqual({ '--orden-blur': '24px' })
@@ -16,13 +15,11 @@ describe('what a theme may declare', () => {
 
   test('and a bare number, which is what a multiplier is', () => {
     const found = settingOf('weight', 'range "Weight" 0 2 1')
-
     expect(found?.paint(1.5, 'dark')).toEqual({ '--orden-weight': '1.5' })
   })
 
   test('a switch, which writes a one or a nought so CSS can do sums with it', () => {
     const found = settingOf('paper', 'switch "Frosted paper" off')
-
     expect(found).toMatchObject({ kind: 'switch', initial: false })
     expect(found?.paint(true, 'dark')).toEqual({ '--orden-paper': '1' })
     expect(found?.paint(false, 'dark')).toEqual({ '--orden-paper': '0' })
@@ -30,7 +27,6 @@ describe('what a theme may declare', () => {
 
   test('a choice, whose first option is where it starts', () => {
     const found = settingOf('depth', 'choice "Depth" "Flat" 0 "Deep" 1')
-
     expect(found).toMatchObject({ kind: 'choice', initial: '0' })
     expect(found?.kind === 'choice' && found.options).toEqual([
       { value: '0', label: 'Flat' },
@@ -40,7 +36,6 @@ describe('what a theme may declare', () => {
 
   test('and a colour, which is a choice whose options are painted rather than read', () => {
     const found = settingOf('glow', 'colour "Glow" "Violet" #7c6bf5 "Blue" #3584e4')
-
     expect(found).toMatchObject({ kind: 'colour', initial: '#7c6bf5' })
     expect(found?.kind === 'colour' && found.options[0]).toEqual({
       value: '#7c6bf5',
@@ -72,34 +67,27 @@ describe('what a theme may declare', () => {
 
 describe('what a theme may not', () => {
   test.each([
-    ['a kind nobody has heard of', 'colour-wheel "Glow" #fff'],
-    ['nothing at all', ''],
-    ['a range with no numbers in it', 'range "Blur" low high middle'],
-    ['a range that starts outside itself', 'range "Blur" 0 40 90 px'],
-    ['a range that runs backwards', 'range "Blur" 40 0 20 px'],
-    ['a unit that is not a length', 'range "Blur" 0 40 18 furlongs'],
-    ['a range with something extra on the end', 'range "Blur" 0 40 18 px please'],
-    ['a switch that is neither on nor off', 'switch "Paper" maybe'],
-    ['a choice with an option missing its value', 'choice "Depth" "Flat" 0 "Deep"'],
-    ['a choice with no options at all', 'choice "Depth"'],
-    ['a colour that is not one', 'colour "Glow" "Violet" rebeccapurple'],
-    ['a quote left open', 'range "Blur 0 40 18 px'],
-  ])('refuses %s', (_what, spec) => {
-    expect(settingOf('thing', spec)).toBeNull()
-  })
-
-  test('refuses an id that is not a word', () => {
-    expect(settingOf('Blur!', 'range "Blur" 0 40 18 px')).toBeNull()
-  })
-
-  test('refuses a label long enough to be a sentence', () => {
-    const long = `range "${'a'.repeat(25)}" 0 40 18 px`
-    expect(settingOf('blur', long)).toBeNull()
-  })
-
-  test('refuses a list longer than a row of controls', () => {
-    const many = Array.from({ length: 13 }, (_one, at) => `"O${at}" ${at}`).join(' ')
-    expect(settingOf('depth', `choice "Depth" ${many}`)).toBeNull()
+    ['a kind nobody has heard of', 'thing', 'colour-wheel "Glow" #fff'],
+    ['nothing at all', 'thing', ''],
+    ['a range with no numbers in it', 'thing', 'range "Blur" low high middle'],
+    ['a range that starts outside itself', 'thing', 'range "Blur" 0 40 90 px'],
+    ['a range that runs backwards', 'thing', 'range "Blur" 40 0 20 px'],
+    ['a unit that is not a length', 'thing', 'range "Blur" 0 40 18 furlongs'],
+    ['a range with something extra on the end', 'thing', 'range "Blur" 0 40 18 px please'],
+    ['a switch that is neither on nor off', 'thing', 'switch "Paper" maybe'],
+    ['a choice with an option missing its value', 'thing', 'choice "Depth" "Flat" 0 "Deep"'],
+    ['a choice with no options at all', 'thing', 'choice "Depth"'],
+    ['a colour that is not one', 'thing', 'colour "Glow" "Violet" rebeccapurple'],
+    ['a quote left open', 'thing', 'range "Blur 0 40 18 px'],
+    ['an id that is not a word', 'Blur!', 'range "Blur" 0 40 18 px'],
+    ['a label long enough to be a sentence', 'blur', `range "${'a'.repeat(25)}" 0 40 18 px`],
+    [
+      'a list longer than a row of controls',
+      'depth',
+      `choice "Depth" ${Array.from({ length: 13 }, (_one, at) => `"O${at}" ${at}`).join(' ')}`,
+    ],
+  ])('refuses %s', (_what, id, spec) => {
+    expect(settingOf(id, spec)).toBeNull()
   })
 
   test('and writes one property, named after itself, whatever it was handed', () => {
@@ -125,14 +113,12 @@ describe('a stylesheet, read', () => {
         '--orden-setting-blur': 'range "Blur" 0 40 20 px',
       }),
     )
-
     expect(found.map((one) => one.id)).toEqual(['tint', 'blur'])
     expect(found[0]?.initial).toBe(82)
   })
 
   test('takes the value off the page and not out of the file, so a scheme can differ', () => {
     const found = declaredIn(CSS, page({ '--orden-setting-tint': 'range "Tint" 60 100 95 %' }))
-
     expect(found).toHaveLength(1)
     expect(found[0]?.initial).toBe(95)
   })
@@ -145,7 +131,6 @@ describe('a stylesheet, read', () => {
         '--orden-setting-blur': 'wobble "Blur" a lot',
       }),
     )
-
     expect(found.map((one) => one.id)).toEqual(['tint'])
   })
 
@@ -159,7 +144,6 @@ describe('a stylesheet, read', () => {
     const answers = Object.fromEntries(
       names.map((id) => [`--orden-setting-${id}`, `range "${id}" 0 10 5`]),
     )
-
     expect(declaredIn(css, page(answers)).map((one) => one.id)).toEqual(names.slice(0, 6))
   })
 })

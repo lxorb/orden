@@ -51,19 +51,16 @@ describe('the scripts the firmware draws', () => {
   })
 })
 
-describe('asking about a script by its code', () => {
-  test('answers what the row says', () => {
-    expect(drawsScript('Latn')).toBe(true)
-    expect(drawsScript('Cyrl')).toBe(true)
-    expect(drawsScript('Jpan')).toBe(true)
-    expect(drawsScript('Deva')).toBe(false)
-    expect(drawsScript('Arab')).toBe(false)
-    expect(drawsScript('Ethi')).toBe(false)
-  })
-
-  test('and answers yes for a script nobody has listed', () => {
-    expect(drawsScript(undefined)).toBe(true)
-    expect(drawsScript('')).toBe(true)
-    expect(drawsScript('Runr')).toBe(true)
-  })
+test.each<[unknown, ...Parameters<typeof drawsScript>]>([
+  [true, 'Latn'],
+  [true, 'Cyrl'],
+  [true, 'Jpan'],
+  [false, 'Deva'],
+  [false, 'Arab'],
+  [false, 'Ethi'],
+  [true, undefined],
+  [true, ''],
+  [true, 'Runr'],
+])('%j from %j', (expected, ...args) => {
+  expect(drawsScript(...args)).toBe(expected)
 })

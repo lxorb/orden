@@ -4,32 +4,25 @@
   import SettingsGeneral from './SettingsGeneral.svelte'
   import SettingsImport from './SettingsImport.svelte'
   import SettingsSecurity from './SettingsSecurity.svelte'
-  import type { PassUi } from '../../pass-sync/src/api'
-  import { SETTINGS_TABS, type SettingsTab } from '../../pass-sync/src/api'
+  import { SETTINGS_TABS, type PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
 
-  const tab = $derived(ui.view.settingsTab)
+  const TABS = {
+    general: ['General', SettingsGeneral],
+    security: ['Security', SettingsSecurity],
+    aliases: ['Aliases', SettingsAliases],
+    import: ['Import', SettingsImport],
+    export: ['Export', SettingsExport],
+  } as const
 
-  function tabName(one: SettingsTab): string {
-    switch (one) {
-      case 'general':
-        return 'General'
-      case 'security':
-        return 'Security'
-      case 'aliases':
-        return 'Aliases'
-      case 'import':
-        return 'Import'
-      case 'export':
-        return 'Export'
-    }
-  }
+  const tab = $derived(ui.view.settingsTab)
+  const Page = $derived(TABS[tab][1])
 </script>
 
 <section class="settings" aria-label="Settings">
   <header class="head">
-    <h2 class="title">Settings</h2>
+    <h2 class="pass-title">Settings</h2>
     <div class="orden-segmented tabs" role="tablist" aria-label="Settings">
       {#each SETTINGS_TABS as one (one)}
         <button
@@ -39,24 +32,14 @@
           class:on={tab === one}
           onclick={() => ui.show({ settingsTab: one })}
         >
-          {tabName(one)}
+          {TABS[one][0]}
         </button>
       {/each}
     </div>
   </header>
 
   <div class="body" data-scrolls>
-    {#if tab === 'general'}
-      <SettingsGeneral />
-    {:else if tab === 'security'}
-      <SettingsSecurity />
-    {:else if tab === 'aliases'}
-      <SettingsAliases />
-    {:else if tab === 'import'}
-      <SettingsImport />
-    {:else}
-      <SettingsExport />
-    {/if}
+    <Page />
   </div>
 </section>
 
@@ -73,13 +56,6 @@
     flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-4) var(--space-5) var(--space-3);
-  }
-
-  .title {
-    margin: 0;
-    font-size: var(--text-head);
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
   }
 
   .tabs {

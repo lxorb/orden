@@ -1,9 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+import { SOURCE } from './files'
 
 function componentFiles(dir: string): string[] {
   const out: string[] = []

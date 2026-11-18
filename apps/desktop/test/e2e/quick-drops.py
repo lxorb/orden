@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Locator, Page
 
 from harness import Drive
@@ -115,5 +113,4 @@ def drive(browser: Browser) -> None:
     finally:
         context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "rows and sections let go of the moment they reach a drop"))
+raise SystemExit(DRIVE.run(drive, "rows and sections let go of the moment they reach a drop"))

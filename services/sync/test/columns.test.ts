@@ -1,23 +1,14 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, signIn, testEnv, type TestEnv } from './harness'
-import { fits, MOST_BYTES } from '../src/sync-server/src/spaces/columns'
-import { staysInside } from '../src/sync-server/src/spaces/paths'
+import { describe, expect, test } from 'vitest'
+import { aSpace } from './space-field'
+import { call } from './harness'
+import { fits, MOST_BYTES } from '../src/sync-server-engine/src/spaces/columns'
+import { staysInside } from '../src/sync-server/src/paths'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
+const at = aSpace()
 
 async function changedAt() {
-  const { json } = await call(env, '/v1/spaces', { token })
-  return json.spaces.find((one) => one.id === space)?.updatedAt
+  const { json } = await call(at.env, '/v1/spaces', { token: at.token })
+  return json.spaces.find((one) => one.id === at.space)?.updatedAt
 }
 
 const TOO_MUCH: {
@@ -77,9 +68,9 @@ const TOO_MUCH: {
 describe('a column filled past what it holds', () => {
   for (const column of TOO_MUCH) {
     test(`${column.name} says so, and says it the way it always has`, async () => {
-      const answer = await call(env, `/v1/spaces/${space}/${column.path}`, {
+      const answer = await call(at.env, `/v1/spaces/${at.space}/${column.path}`, {
         method: column.method,
-        token,
+        token: at.token,
         body: column.body(),
       })
 
@@ -93,9 +84,9 @@ describe('writing a column', () => {
   test('says the space changed, so every other device learns there is something', async () => {
     const before = await changedAt()
 
-    const answer = await call(env, `/v1/spaces/${space}/bookmarks`, {
+    const answer = await call(at.env, `/v1/spaces/${at.space}/bookmarks`, {
       method: 'PUT',
-      token,
+      token: at.token,
       body: { bookmarks: [{ kind: 'note', path: 'Read me.md', text: '' }] },
     })
     expect(answer.status).toBe(200)
@@ -106,20 +97,24 @@ describe('writing a column', () => {
   })
 
   test('and each of the five writes its own column and no other', async () => {
-    await call(env, `/v1/spaces/${space}/bookmarks`, {
+    await call(at.env, `/v1/spaces/${at.space}/bookmarks`, {
       method: 'PUT',
-      token,
+      token: at.token,
       body: { bookmarks: [{ kind: 'note', path: 'Read me.md', text: '' }] },
     })
-    await call(env, `/v1/spaces/${space}/excluded`, {
+    await call(at.env, `/v1/spaces/${at.space}/excluded`, {
       method: 'PUT',
-      token,
+      token: at.token,
       body: { excluded: ['Archive'] },
     })
-    await call(env, `/v1/spaces/${space}/graph`, { method: 'PUT', token, body: { graph: {} } })
+    await call(at.env, `/v1/spaces/${at.space}/graph`, {
+      method: 'PUT',
+      token: at.token,
+      body: { graph: {} },
+    })
 
-    const { json } = await call(env, '/v1/spaces', { token })
-    const kept = json.spaces.find((one) => one.id === space)
+    const { json } = await call(at.env, '/v1/spaces', { token: at.token })
+    const kept = json.spaces.find((one) => one.id === at.space)
 
     expect(kept?.bookmarks).toHaveLength(1)
     expect(kept?.excluded).toEqual(['Archive'])

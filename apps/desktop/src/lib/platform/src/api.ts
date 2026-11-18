@@ -19,10 +19,10 @@ export {
 export { breathe, idle, nextTask } from './breathe'
 export { decoded, fileBytes, fromBase64, pageBytes, parseDataUri, sha256, toBase64 } from './bytes'
 export { appleHandheld, deviceName, speechRecogniser } from './device'
-export { insideOnly } from './inside'
+export { insideOnly, namesByShortName } from './inside'
 export { heldForLife, holdIfFree, ifFree, inTurn, locksHere, locksWork } from './locks'
 export { collectErrors, log, recentLog, tokensOut } from './log'
-export { mimeOfPath, UNKNOWN_TYPE } from './mime'
+export { MIME_TYPES, mimeOfPath, UNKNOWN_TYPE } from './mime'
 export { calm, dur, fade, fly, LAYER, scale, slide, stillness } from './motion'
 export { extensionOf, nameFault, nameToCommit, nameToWrite } from './naming'
 export type { NameFault } from './naming'
@@ -71,10 +71,12 @@ export {
   within,
   withinSpace,
   withoutExtension,
+  spaceHolding,
 } from './space-paths'
 export { spaceRelative } from './space-relative'
 export {
   forget,
+  heardElsewhere,
   isBoolean,
   isNumber,
   isRecord,
@@ -124,7 +126,7 @@ export { answerNextDialog, dialogAnswer } from './dialog-answer'
 export { keepVersion, readText, writeInTurn, writeTaking } from './note-files'
 export { oneWriteAt, windows } from './windows'
 export type { Said, Windows } from './windows'
-export { localDate, localNumber, region, systemLocale } from './region'
+export { elapsed, localDate, localNumber, midnightOf, region, systemLocale } from './region'
 export { answer, frameWord, method, NoWord, onTheActivity, wordSaid } from './mobile-bridge'
 export { startInsets, tintSystemBars } from './insets'
 export { identifier } from './identifier'
@@ -132,7 +134,7 @@ export { factsOfLaunch, mark, markPainted, sendTrace, watchFirstInput } from './
 export const iCloud = () => import('./icloud-placeholder')
 export const droppedPaths = async (files: readonly File[]): Promise<string[]> =>
   (await import('./dropped-paths')).droppedPaths(files)
-export { imagePath, imageUrl } from './images'
+export { imagePath, imageUrl, isRemote } from './images'
 export { takeKeyboard } from './take-keyboard'
 export { isPlugin, markPlugin } from './plugin'
 

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -63,5 +61,4 @@ def drive(browser: Browser) -> None:
     shot(page, "lines")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Home, End and the arrows go the way each line reads"))
+raise SystemExit(DRIVE.run(drive, "Home, End and the arrows go the way each line reads"))

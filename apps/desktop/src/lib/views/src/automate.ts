@@ -28,13 +28,12 @@ export interface Planned {
 
 const EMPTY: Planned = { writes: [], moves: [], notices: [] }
 
-function ownRows(base: Base, all: readonly Row[], context: Context) {
-  return rowsInBase(
+const ownRows = (base: Base, all: readonly Row[], context: Context) =>
+  rowsInBase(
     base,
     all.filter((row) => row.kind === 'note'),
     context,
   )
-}
 
 export function planned(
   bases: readonly HeldBase[],

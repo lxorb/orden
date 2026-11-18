@@ -8,10 +8,18 @@ import {
   type UsageEvent,
 } from '@orden/sync-core'
 import { account, request } from '../../accounts/src/api'
-import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
+import {
+  heardElsewhere,
+  systemLocale,
+  log,
+  keepJson,
+  stored,
+  isMobile,
+  isNative,
+} from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
-import { USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
+import { HELP_IMPROVE, USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
 import { flush, pruned } from './queue'
 import { commonOf } from './system'
 import { saveTallies, started, spent, takeTallies, type Tally } from './tally'
@@ -20,16 +28,14 @@ const A_MINUTE = 60 * 1000
 const AN_HOUR = 60 * A_MINUTE
 const FIRST_SEND = 30 * 1000
 
-function eventsOf(value: unknown): UsageEvent[] {
-  if (!Array.isArray(value)) return []
-  return value.flatMap((one) => {
-    const event = usageEventOf(one)
-    return typeof event === 'string' ? [] : [event]
-  })
-}
-
 function queuedEvents(): UsageEvent[] {
-  return eventsOf(stored(USAGE_QUEUE))
+  const kept = stored(USAGE_QUEUE)
+  return Array.isArray(kept)
+    ? kept.flatMap((one) => {
+        const event = usageEventOf(one)
+        return typeof event === 'string' ? [] : [event]
+      })
+    : []
 }
 
 function metered(): boolean {
@@ -168,6 +174,7 @@ export function watchUsage(sending: boolean): () => void {
     send()
   }
   usageChoice.changes.add(chose)
+  const unheard = heardElsewhere([HELP_IMPROVE], () => usageChoice.heard())
 
   return () => {
     saveTallies()
@@ -178,5 +185,6 @@ export function watchUsage(sending: boolean): () => void {
     window.removeEventListener('pagehide', saveTallies)
     window.removeEventListener('online', send)
     usageChoice.changes.delete(chose)
+    unheard()
   }
 }

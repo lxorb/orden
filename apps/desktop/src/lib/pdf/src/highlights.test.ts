@@ -2,40 +2,33 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import {
-  type Box,
   boxOf,
-  citation,
   emptySheet,
   frozen,
   type Highlight,
-  joinRuns,
   matrixOf,
-  quadOf,
   type Quad,
   readSheet,
   SIDECAR,
-  toPdf,
   toViewport,
   type Transform,
   writeSheet,
 } from './highlights'
 
-function mark(over: Partial<Highlight> = {}): Highlight {
-  return {
-    id: 'abc123',
-    page: 3,
-    text: 'the selected words',
-    quads: [[100, 712, 200, 712, 200, 700, 100, 700]],
-    colour: 0,
-    created: 1_700_000_000_000,
-    ...over,
-  }
-}
+const mark = (over: Partial<Highlight> = {}): Highlight => ({
+  id: 'abc123',
+  page: 3,
+  text: 'the selected words',
+  quads: [[100, 712, 200, 712, 200, 700, 100, 700]],
+  colour: 0,
+  created: 1_700_000_000_000,
+  ...over,
+})
 
 describe('the sidecar', () => {
   test('is named after the PDF, under the name the Rust side writes', () => {
     const paths = readFileSync(
-      fileURLToPath(new URL('../../../../src-tauri/src/paths.rs', import.meta.url)),
+      fileURLToPath(new URL('../../../../src-tauri/crates/base/src/paths.rs', import.meta.url)),
       'utf8',
     )
 
@@ -147,26 +140,6 @@ describe('a mark on the page it is drawn on', () => {
     })
   })
 
-  test('and back again, so a mark made at one zoom is the same mark at another', () => {
-    const box: Box = { left: 200, top: 160, width: 200, height: 24 }
-    const quad = quadOf(box, toPdf(TWICE))
-
-    expect([...quad]).toEqual([100, 712, 200, 712, 200, 700, 100, 700])
-    expect(boxOf(quad, toViewport(TWICE))).toEqual(box)
-  })
-
-  test('the same words at any zoom', () => {
-    const quad = quadOf({ left: 100, top: 80, width: 100, height: 12 }, toPdf(TWICE))
-    const four: Transform = [4, 0, 0, -4, 0, 792 * 4]
-
-    expect(boxOf(quad, toViewport(four))).toEqual({
-      left: 200,
-      top: 160,
-      width: 200,
-      height: 24,
-    })
-  })
-
   test('all four corners, so a turned page comes out right', () => {
     const turned: Transform = [0, 1, 1, 0, 0, 0]
 
@@ -182,58 +155,5 @@ describe('a mark on the page it is drawn on', () => {
     expect(matrixOf([])).toEqual([1, 0, 0, 1, 0, 0])
     expect(matrixOf([3, 0, 0, 3, 5, 7])).toEqual([3, 0, 0, 3, 5, 7])
     expect(toViewport(matrixOf([]))(4, 9)).toEqual([4, 9])
-  })
-
-  test('a transform that cannot be undone turns every point into one', () => {
-    expect(toPdf([0, 0, 0, 0, 0, 0])(5, 6)).toEqual([0, 0])
-  })
-})
-
-describe('the boxes a selection covers', () => {
-  const box = (left: number, top: number, width: number, height: number): Box => ({
-    left,
-    top,
-    width,
-    height,
-  })
-
-  test('are one band per line, however many runs the browser split it into', () => {
-    expect(joinRuns([box(10, 100, 30, 14), box(40, 100, 40, 14), box(80, 100, 25, 14)])).toEqual([
-      box(10, 100, 95, 14),
-    ])
-  })
-
-  test('and a band per line where the selection ran across two', () => {
-    expect(joinRuns([box(10, 120, 60, 14), box(10, 100, 90, 14)])).toEqual([
-      box(10, 100, 90, 14),
-      box(10, 120, 60, 14),
-    ])
-  })
-
-  test('runs with a gap between them stay two, since the words do', () => {
-    const joined = joinRuns([box(10, 100, 30, 14), box(200, 100, 30, 14)])
-    expect(joined).toHaveLength(2)
-  })
-
-  test('a rectangle covering nothing is not a run', () => {
-    expect(joinRuns([box(10, 100, 0, 14), box(10, 100, 30, 0)])).toEqual([])
-  })
-})
-
-describe('the link a marked passage copies', () => {
-  test('is the words as a quote and the link under them', () => {
-    expect(citation('paper.pdf', 3, 'A claim worth keeping.')).toBe(
-      '> A claim worth keeping.\n\n[[paper.pdf#page=3]]\n',
-    )
-  })
-
-  test('quotes every line of a passage that ran across several', () => {
-    expect(citation('paper.pdf', 12, 'one\n  two  \nthree')).toBe(
-      '> one\n> two\n> three\n\n[[paper.pdf#page=12]]\n',
-    )
-  })
-
-  test('is the link alone when there are no words', () => {
-    expect(citation('paper.pdf', 1, '   ')).toBe('[[paper.pdf#page=1]]\n')
   })
 })

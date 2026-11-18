@@ -82,18 +82,15 @@ function isWord(state: EditorState, range: SelectionRange): boolean {
   const to = range.to - line.from
   if (WORD.test(text.charAt(from - 1)) || WORD.test(text.charAt(to))) return false
 
-  for (let at = from; at < to; at++) {
-    if (!WORD.test(text.charAt(at))) return false
-  }
+  for (let at = from; at < to; at++) if (!WORD.test(text.charAt(at))) return false
 
   return true
 }
 
 export const selectWord: StateCommand = (target) => {
   const { state, dispatch } = target
-  if (state.selection.ranges.every((range) => isWord(state, range))) {
+  if (state.selection.ranges.every((range) => isWord(state, range)))
     return selectNextOccurrence(target)
-  }
 
   const update = state.changeByRange((range) => {
     const line = state.doc.lineAt(range.head)

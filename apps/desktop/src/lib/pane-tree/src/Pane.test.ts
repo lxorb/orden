@@ -5,11 +5,15 @@ import { TAB_KINDS } from '../../tab-kinds/src/api'
 
 const SOURCE = readFileSync(join(import.meta.dirname, './Pane.svelte'), 'utf8')
 
-const SURFACES = [...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then \w+\}([\s\S]*?)\{\/await\}/g)]
+const SURFACES = [...SOURCE.matchAll(/\{#await (\w+)\(\) then \w+\}([\s\S]*?)\{\/await\}/g)]
+const DOORS = [
+  ...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then/g),
+  ...SOURCE.matchAll(/\{@render surface\((\w+Surface), tab\)\}/g),
+]
 
 describe('a surface a pane is filled with', () => {
   test('is every kind of tab a pane can show', () => {
-    expect(SURFACES.map(([, door]) => door).sort()).toEqual([
+    expect(DOORS.map(([, door]) => door).sort()).toEqual([
       'applicationSurface',
       'canvasSurface',
       'chatSurface',
@@ -68,5 +72,16 @@ describe('a protected tab', () => {
       /one\.kind === 'note' && !one\.reading && !protection\.locked\(one\.path\)/,
     )
     expect(SOURCE).toMatch(/const writing = \$derived\([^)]*&& !locked\)/)
+  })
+})
+
+describe('a column of a stacked pane', () => {
+  test('is the active tab once anything in it takes focus, so keys and menus act on it', () => {
+    expect(SOURCE).toMatch(
+      /<section\s+class="column"\s+class:is-active=\{[^}]*\}\s+onfocusin=\{\(\) => takeColumn\(one\.id\)\}\s*>/,
+    )
+    expect(SOURCE).toMatch(
+      /function takeColumn\(id: string\) \{\s*if \(id === pane\.activeTabId && workspace\.panes\.focusedId === pane\.id\) return\s*workspace\.focusPane\(pane\.id\)\s*workspace\.activate\(id\)/,
+    )
   })
 })

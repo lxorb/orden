@@ -10,26 +10,13 @@ import {
 } from '@orden/editor'
 import { parseCombination, sameCombination } from '../../ui-kit/src/keys'
 import { BROWSER_KEYS, SYSTEM_KEYS } from './registry'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 let registry: typeof import('./shortcuts.svelte')
+let shortcuts: typeof registry.shortcuts
 
 await Promise.all([
   import('./shortcuts.svelte'),
@@ -53,9 +40,24 @@ async function restarted() {
 }
 
 beforeEach(async () => {
+  vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
   localStorage.clear()
   registry = await restarted()
+  shortcuts = registry.shortcuts
 })
+
+async function onMac() {
+  vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
+  return restarted()
+}
+
+const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
+
+const onPlatform = (platform: string) => {
+  const one = Object.create(shortcuts) as typeof shortcuts
+  Object.defineProperty(one, 'platform', { value: platform })
+  return one
+}
 
 async function currentModes() {
   return (await import('../../modes/src/api')).modes
@@ -85,6 +87,8 @@ function press(
 }
 
 const PLATFORMS = ['mac', 'win', 'linux'] as const
+
+const idle = { palette: () => undefined, fullscreen: () => undefined }
 
 describe('every shortcut there is', () => {
   test('has an id nothing else has', () => {
@@ -197,7 +201,6 @@ describe('every shortcut there is', () => {
   })
 
   test('answers Redo on Ctrl+Shift+Z on Windows and Linux, and on Cmd+Shift+Z on a Mac', () => {
-    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
     const alt = found('edit.redo.alt')
     expect(defaultKeyFor(alt, 'win')).toBe('Ctrl-Shift-z')
     expect(defaultKeyFor(alt, 'linux')).toBe('Ctrl-Shift-z')
@@ -231,7 +234,6 @@ describe('every shortcut there is', () => {
 
 describe('choosing a key', () => {
   test('wins over the default', () => {
-    const { shortcuts } = registry
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
 
     shortcuts.set('format.bold', 'Mod-Alt-b')
@@ -239,14 +241,12 @@ describe('choosing a key', () => {
   })
 
   test('can be no key at all', () => {
-    const { shortcuts } = registry
     shortcuts.set('format.bold', null)
     expect(shortcuts.keyFor('format.bold')).toBeNull()
     expect(shortcuts.hint('format.bold')).toBeUndefined()
   })
 
   test('is put back by resetting it', () => {
-    const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
     shortcuts.reset('format.bold')
 
@@ -255,7 +255,6 @@ describe('choosing a key', () => {
   })
 
   test('and by resetting all of them', () => {
-    const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
     shortcuts.set('app.new', null)
     shortcuts.resetAll()
@@ -265,12 +264,7 @@ describe('choosing a key', () => {
   })
 
   test('is refused where it holds the Windows key, outside a Mac', () => {
-    const { shortcuts } = registry
-    const on = (platform: string, key: string) => {
-      const one = Object.create(shortcuts) as typeof shortcuts
-      Object.defineProperty(one, 'platform', { value: platform })
-      return one.refuse(key)
-    }
+    const on = (platform: string, key: string) => onPlatform(platform).refuse(key)
     for (const platform of ['win', 'linux']) {
       expect(on(platform, 'Meta-Space'), platform).not.toBeNull()
       expect(on(platform, 'Ctrl-Meta-k'), platform).not.toBeNull()
@@ -278,8 +272,17 @@ describe('choosing a key', () => {
     expect(on('mac', 'Meta-k')).toBeNull()
   })
 
+  test('is refused where it names no key the keyboard has', () => {
+    for (const key of ['Ctrl+Shift+K', 'banana', 'Mod-Shift-ctrl k', 'Mod-k k']) {
+      expect(shortcuts.refuse(key, 'app.palette'), key).toBe('That is not a key combination.')
+    }
+    for (const key of ['F5', 'Mod-F13', 'ContextMenu', 'Mod-Space', 'Mod Mod', 'Mod-لا', 'Mod-𝑥']) {
+      expect(shortcuts.refuse(key, 'app.palette'), key).toBeNull()
+    }
+  })
+
   test('is refused where it would fire while typing', () => {
-    const { shortcuts } = registry
+    expect(shortcuts.refuse('لا')).not.toBeNull()
     expect(shortcuts.refuse('k')).not.toBeNull()
     expect(shortcuts.refuse('Shift-k')).not.toBeNull()
     expect(shortcuts.refuse('F7')).toBeNull()
@@ -287,7 +290,6 @@ describe('choosing a key', () => {
   })
 
   test('is refused for an app key where the key is one typing needs', () => {
-    const { shortcuts } = registry
     for (const key of ['Enter', 'Tab', 'Backspace', 'Delete', 'ArrowLeft', 'Home', 'Shift-Enter']) {
       expect(shortcuts.refuse(key, 'app.scratchpad'), key).not.toBeNull()
     }
@@ -295,7 +297,6 @@ describe('choosing a key', () => {
   })
 
   test('is refused where a key that always cuts, copies or pastes would stop doing so', () => {
-    const { shortcuts } = registry
     for (const key of ['Mod-c', 'Mod-x', 'Mod-v']) {
       expect(shortcuts.refuse(key, 'app.palette'), key).toContain('already runs')
       expect(shortcuts.refuse(key, 'format.bold'), key).toContain('already runs')
@@ -306,24 +307,24 @@ describe('choosing a key', () => {
   })
 
   test('but a list’s own row may have it, where nobody is typing', () => {
-    const { shortcuts } = registry
     expect(shortcuts.refuse('Enter', 'tree.rename')).toBeNull()
   })
 
+  test('and a list’s own row may have a letter, where nobody is typing', () => {
+    expect(shortcuts.refuse('r', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('x', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('Shift-x', 'canvas.tool.rect')).toBeNull()
+    expect(shortcuts.refuse('k', 'format.bold')).not.toBeNull()
+  })
+
   test('and so may a row whose own key it is', () => {
-    const { shortcuts } = registry
     expect(shortcuts.refuse('Delete', 'table.delete')).toBeNull()
     expect(shortcuts.refuse('Enter', 'image.edit')).toBeNull()
     expect(shortcuts.refuse('Enter', 'table.delete')).not.toBeNull()
   })
 
   test('and the refusal names the keys the way the platform does', () => {
-    const { shortcuts } = registry
-    const on = (platform: string) => {
-      const one = Object.create(shortcuts) as typeof shortcuts
-      Object.defineProperty(one, 'platform', { value: platform })
-      return one.refuse('k')
-    }
+    const on = (platform: string) => onPlatform(platform).refuse('k')
 
     expect(on('mac')).toBe('Hold ⌃, ⌥ or ⌘ as well.')
     expect(on('win')).toBe('Hold Ctrl or Alt as well.')
@@ -331,19 +332,13 @@ describe('choosing a key', () => {
   })
 
   test('is warned about when the machine underneath usually keeps it', () => {
-    const { shortcuts } = registry
     expect(shortcuts.warning('Alt-F4')).not.toBeNull()
     expect(shortcuts.warning('Mod-Alt-b')).toBeNull()
     expect(shortcuts.warning(null)).toBeNull()
   })
 
   test('Control pressed twice on a Mac is warned about, since macOS dictates with it too', () => {
-    const { shortcuts } = registry
-    const on = (platform: string, key: string) => {
-      const one = Object.create(shortcuts) as typeof shortcuts
-      Object.defineProperty(one, 'platform', { value: platform })
-      return one.warning(key)
-    }
+    const on = (platform: string, key: string) => onPlatform(platform).warning(key)
 
     expect(on('mac', 'Ctrl Ctrl')).toBe('macOS can start dictation with this key too.')
     expect(on('mac', 'Alt Alt')).toBeNull()
@@ -355,7 +350,6 @@ describe('choosing a key', () => {
 
 describe('what is written down', () => {
   test('is only what differs from the defaults', async () => {
-    const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
 
     expect(JSON.parse(localStorage.getItem('orden:shortcuts')!)).toEqual({
@@ -395,7 +389,6 @@ describe('what is written down', () => {
   })
 
   test('comes back from the account', () => {
-    const { shortcuts } = registry
     shortcuts.receive({ shortcuts: { 'format.bold': 'Mod-Alt-b' } })
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-Alt-b')
@@ -405,7 +398,6 @@ describe('what is written down', () => {
   })
 
   test('is left alone by an account that carries none', () => {
-    const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
     shortcuts.receive({ ligatures: true })
 
@@ -420,7 +412,6 @@ describe('choosing a keyboard', () => {
   })
 
   test('rewrites the whole map rather than adding to it', () => {
-    const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
     shortcuts.choose(keyboard('obsidian'))
 
@@ -431,7 +422,6 @@ describe('choosing a keyboard', () => {
   })
 
   test('and Notion puts inline code where the reading view was', () => {
-    const { shortcuts } = registry
     shortcuts.choose(keyboard('notion'))
 
     expect(shortcuts.keyFor('format.code')).toBe('Mod-e')
@@ -440,7 +430,6 @@ describe('choosing a keyboard', () => {
   })
 
   test('goes back to the defaults by choosing the default one', () => {
-    const { shortcuts } = registry
     shortcuts.choose(keyboard('obsidian'))
     shortcuts.choose(keyboard('default'))
 
@@ -449,7 +438,6 @@ describe('choosing a keyboard', () => {
   })
 
   test('is what resetting every key does', () => {
-    const { shortcuts } = registry
     shortcuts.choose(keyboard('notion'))
     shortcuts.resetAll()
 
@@ -457,19 +445,7 @@ describe('choosing a keyboard', () => {
     expect(shortcuts.overrides).toEqual({})
   })
 
-  test('turns modal editing on for Vim and off for the others', async () => {
-    const { shortcuts } = registry
-    const modes = await currentModes()
-
-    shortcuts.choose(keyboard('vim'))
-    expect(modes.vim).toBe(true)
-
-    shortcuts.choose(keyboard('obsidian'))
-    expect(modes.vim).toBe(false)
-  })
-
   test('can be turned on over another keyboard without replacing it', async () => {
-    const { shortcuts } = registry
     const modes = await currentModes()
 
     shortcuts.choose(keyboard('notion'))
@@ -478,21 +454,28 @@ describe('choosing a keyboard', () => {
     expect(modes.vim).toBe(true)
     expect(shortcuts.preset).toBe('notion')
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    modes.setVimKeys(false)
   })
 
-  describe('and modal editing', () => {
-    test('stays off for every keyboard but Vim', async () => {
-      const { shortcuts } = registry
+  describe('and modal editing, which only the Vim keys switch holds', () => {
+    test('stays as it is when another keyboard is chosen or every key is put back', async () => {
       const modes = await currentModes()
 
+      modes.setVimKeys(true)
       for (const id of ['default', 'notion', 'obsidian', 'vscode']) {
         shortcuts.choose(keyboard(id))
-        expect(modes.vim, id).toBe(false)
+        expect(modes.vim, id).toBe(true)
       }
+      shortcuts.resetAll()
+      expect(modes.vim).toBe(true)
+
+      modes.setVimKeys(false)
+      shortcuts.choose(keyboard('notion'))
+      expect(modes.vim).toBe(false)
     })
 
     test('stays off when a name written down before is read back', async () => {
-      for (const id of ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']) {
+      for (const id of ['default', 'notion', 'obsidian', 'vscode', 'custom']) {
         localStorage.clear()
         localStorage.setItem('orden:preset', id)
 
@@ -504,37 +487,22 @@ describe('choosing a keyboard', () => {
       }
     })
 
-    test('stays off when the account names a keyboard, Vim included', async () => {
-      for (const preset of ['notion', 'vim']) {
-        const fresh = await restarted()
-        const modes = await currentModes()
-
-        fresh.shortcuts.receive({ shortcuts: {}, preset })
-
-        expect(fresh.shortcuts.preset, preset).toBe(preset)
-        expect(modes.vim, preset).toBe(false)
-      }
-    })
-
-    test('goes off again when every key is put back', async () => {
-      const { shortcuts } = registry
-      const modes = await currentModes()
-
-      shortcuts.choose(keyboard('vim'))
-      expect(modes.vim).toBe(true)
-
-      shortcuts.resetAll()
-      expect(modes.vim).toBe(false)
+    test('reads the Vim keyboard of before as the default keys', async () => {
+      localStorage.clear()
+      localStorage.setItem('orden:preset', 'vim')
+      const fresh = await restarted()
+      expect(fresh.shortcuts.preset).toBe('default')
     })
 
     test('survives rebinding a key by hand, which makes the map custom', async () => {
-      const { shortcuts } = registry
       const modes = await currentModes()
 
+      modes.setVimKeys(true)
       shortcuts.set('format.bold', 'Alt-b')
 
       expect(shortcuts.preset).toBe('custom')
-      expect(modes.vim).toBe(false)
+      expect(modes.vim).toBe(true)
+      modes.setVimKeys(false)
     })
   })
 
@@ -549,7 +517,6 @@ describe('choosing a keyboard', () => {
 
 describe('a map made by hand', () => {
   test('is Custom as soon as one key is rebound', () => {
-    const { shortcuts } = registry
     shortcuts.choose(keyboard('obsidian'))
     shortcuts.set('format.bold', 'Mod-Alt-b')
 
@@ -557,7 +524,6 @@ describe('a map made by hand', () => {
   })
 
   test('is Custom when one key is put back on its own, too', () => {
-    const { shortcuts } = registry
     shortcuts.choose(keyboard('obsidian'))
     shortcuts.reset('app.note-1')
 
@@ -575,7 +541,6 @@ describe('a map made by hand', () => {
 
 describe('the keyboard the account carries', () => {
   test('brings the name along with the map', () => {
-    const { shortcuts } = registry
     shortcuts.receive({ preset: 'notion', shortcuts: { 'format.code': 'Mod-e' } })
 
     expect(shortcuts.preset).toBe('notion')
@@ -584,7 +549,6 @@ describe('the keyboard the account carries', () => {
   })
 
   test('reads a name this version has never heard of as Custom', () => {
-    const { shortcuts } = registry
     shortcuts.receive({ preset: 'emacs', shortcuts: { 'format.bold': 'Mod-Alt-b' } })
 
     expect(shortcuts.preset).toBe('custom')
@@ -592,7 +556,6 @@ describe('the keyboard the account carries', () => {
   })
 
   test('keeps the one this machine has when the account carries none', () => {
-    const { shortcuts } = registry
     shortcuts.choose(keyboard('obsidian'))
     shortcuts.receive({ ligatures: true })
 
@@ -602,24 +565,20 @@ describe('the keyboard the account carries', () => {
 
 describe('two shortcuts on one key', () => {
   test('is a conflict, and says whose key it is', () => {
-    const { shortcuts } = registry
     expect(shortcuts.conflicts('app.new', 'Mod-o').map((one) => one.id)).toEqual([
       'app.palette.open',
     ])
   })
 
   test('counts across the app and the editor, which cannot share one', () => {
-    const { shortcuts } = registry
     expect(shortcuts.conflicts('app.new', 'Mod-b').map((one) => one.id)).toEqual(['format.bold'])
   })
 
   test('is not a conflict when nothing else is on the key', () => {
-    const { shortcuts } = registry
     expect(shortcuts.conflicts('app.new', 'Mod-Alt-j')).toEqual([])
   })
 
   test('follows the keys as they are now, not as they started', () => {
-    const { shortcuts } = registry
     shortcuts.set('app.palette.open', 'Mod-Alt-j')
 
     expect(shortcuts.conflicts('app.new', 'Mod-o')).toEqual([])
@@ -628,14 +587,46 @@ describe('two shortcuts on one key', () => {
     ])
   })
 
-  test('leaves the contextual ones out, which is how they share the arrows', () => {
-    const { shortcuts } = registry
-    expect(shortcuts.conflicts('table.below', 'ArrowUp')).toEqual([])
+  test('leaves the contextual ones of other places out, which is how they share the arrows', () => {
+    expect(shortcuts.conflicts('canvas.nudge.up', 'ArrowUp')).toEqual([])
     expect(shortcuts.conflicts('app.new', 'ArrowDown')).toEqual([])
+    expect(shortcuts.conflicts('table.below', 'ArrowUp').map((one) => one.id)).toEqual([
+      'table.above',
+    ])
+  })
+
+  test('counts the contextual ones that answer in the same place', () => {
+    expect(shortcuts.conflicts('canvas.tool.rect', 'c').map((one) => one.id)).toEqual([
+      'canvas.tool.text',
+    ])
+    expect(shortcuts.conflicts('canvas.tool.rect', 'Mod-Alt-=').map((one) => one.id)).toEqual([
+      'canvas.zoom.in',
+    ])
+  })
+
+  test('counts the list keys the explorer answers to as its own place', () => {
+    expect(shortcuts.conflicts('explorer.hidden', 'Mod-a').map((one) => one.id)).toEqual([
+      'tree.select-all',
+    ])
+    const held = shortcuts.keyFor('explorer.list')
+    expect(held).toBeTruthy()
+    expect(shortcuts.conflicts('tree.rename', held ?? '').map((one) => one.id)).toEqual([
+      'explorer.list',
+    ])
+  })
+
+  test('finds no contextual row clashing as the keys ship, on any system', () => {
+    for (const platform of ['mac', 'win', 'linux']) {
+      const one = Object.create(registry.shortcuts) as typeof registry.shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      for (const entry of registry.SHORTCUTS.filter((row) => row.contextual)) {
+        const key = one.keyFor(entry.id)
+        if (key) expect(one.conflicts(entry.id, key), `${platform} ${entry.id}`).toEqual([])
+      }
+    }
   })
 
   test('is resolved by taking the key, which leaves the other with none', () => {
-    const { shortcuts } = registry
     shortcuts.set('app.palette.open', null)
     shortcuts.set('app.new', 'Mod-o')
 
@@ -645,7 +636,6 @@ describe('two shortcuts on one key', () => {
   })
 
   test('names the fixed key a combination would land on', () => {
-    const { shortcuts } = registry
     expect(shortcuts.fixedHolder('Mod-x')?.id).toBe('fixed.cut')
     expect(shortcuts.fixedHolder('Mod-Alt-9')).toBeUndefined()
   })
@@ -653,7 +643,6 @@ describe('two shortcuts on one key', () => {
 
 describe('the keyboard', () => {
   test('runs what the key is bound to', () => {
-    const { shortcuts } = registry
     let opened = 0
 
     const ran = shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), {
@@ -666,7 +655,6 @@ describe('the keyboard', () => {
   })
 
   test('prints on Ctrl+P and never opens the palette there', () => {
-    const { shortcuts } = registry
     const ctrlP = press('p', { ctrl: true, code: 'KeyP' })
 
     expect(shortcuts.keyFor('app.print')).toBe('Mod-p')
@@ -677,7 +665,6 @@ describe('the keyboard', () => {
   })
 
   test('a key a surface has answered is not the app’s as well', () => {
-    const { shortcuts } = registry
     let opened = 0
     const context = { palette: () => opened++, fullscreen: () => undefined }
 
@@ -690,7 +677,6 @@ describe('the keyboard', () => {
   })
 
   test('follows a rebind straight away', () => {
-    const { shortcuts } = registry
     let opened = 0
     const context = { palette: () => opened++, fullscreen: () => undefined }
 
@@ -704,7 +690,6 @@ describe('the keyboard', () => {
   })
 
   test('opens the palette on the commands from a chord of its own', () => {
-    const { shortcuts } = registry
     const asked: (string | undefined)[] = []
     const context = {
       palette: (mode?: 'commands') => asked.push(mode),
@@ -720,7 +705,6 @@ describe('the keyboard', () => {
   })
 
   test('and follows a rebind of that one too', () => {
-    const { shortcuts } = registry
     const asked: (string | undefined)[] = []
     const context = {
       palette: (mode?: 'commands') => asked.push(mode),
@@ -738,14 +722,22 @@ describe('the keyboard', () => {
     expect(asked).toEqual(['commands'])
   })
 
+  test('leaves a key bound to what only the desktop app does to the browser', () => {
+    let prevented = false
+    const closeWindow = Object.assign(press('W', { ctrl: true, shift: true, code: 'KeyW' }), {
+      preventDefault: () => (prevented = true),
+    })
+
+    const ran = shortcuts.handle(closeWindow, idle)
+
+    expect(ran).toBe(false)
+    expect(prevented).toBe(false)
+  })
+
   test('leaves a key nothing is bound to alone', () => {
-    const { shortcuts } = registry
     shortcuts.set('app.palette.open', null)
 
-    const ran = shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), {
-      palette: () => undefined,
-      fullscreen: () => undefined,
-    })
+    const ran = shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), idle)
 
     expect(ran).toBe(false)
   })
@@ -756,7 +748,6 @@ describe('Alt and a digit', () => {
   const digit = (one: number) => press(String(one), { ...ALT, code: `Digit${one}` })
 
   test('is every place along the strip, the ninth included, and the nought the last', () => {
-    const { shortcuts } = registry
     for (let place = 1; place <= 8; place++) {
       expect(shortcuts.keyFor(`app.note-${place}.alt`)).toBe(`Alt-${place}`)
     }
@@ -765,8 +756,6 @@ describe('Alt and a digit', () => {
   })
 
   test('is a second key for the commands that had one, and the ninth place its own', () => {
-    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
-
     for (const [second, first] of [
       ['app.note-1.alt', 'app.note-1'],
       ['app.note-8.alt', 'app.note-8'],
@@ -784,30 +773,19 @@ describe('Alt and a digit', () => {
   })
 
   test('runs from the window, and says so', () => {
-    const { shortcuts } = registry
-    const context = { palette: () => undefined, fullscreen: () => undefined }
-
     for (const one of [1, 3, 9, 0])
-      expect(shortcuts.handle(digit(one), context), `Alt+${one}`).toBe(true)
+      expect(shortcuts.handle(digit(one), idle), `Alt+${one}`).toBe(true)
   })
 
   test('is never AltGr typing a character', () => {
-    const { shortcuts } = registry
-    const context = { palette: () => undefined, fullscreen: () => undefined }
-
     const swissAt = press('@', { ctrl: true, alt: true, code: 'Digit2' })
-    expect(shortcuts.handle(swissAt, context)).toBe(false)
-    expect(shortcuts.handle(press('2', { ctrl: true, alt: true, code: 'Digit2' }), context)).toBe(
-      true,
-    )
+    expect(shortcuts.handle(swissAt, idle)).toBe(false)
+    expect(shortcuts.handle(press('2', { ctrl: true, alt: true, code: 'Digit2' }), idle)).toBe(true)
   })
 
   test('is not a chord while an input method is composing', () => {
-    const { shortcuts } = registry
-    const context = { palette: () => undefined, fullscreen: () => undefined }
-
     const composing = Object.assign(digit(3), { isComposing: true })
-    expect(shortcuts.handle(composing, context)).toBe(false)
+    expect(shortcuts.handle(composing, idle)).toBe(false)
   })
 
   test.each(PLATFORMS)('displaces no other key (%s)', (platform) => {
@@ -833,7 +811,6 @@ describe('Alt and a digit', () => {
 
 describe('the file list', () => {
   test('reads its own keys from the registry', () => {
-    const { shortcuts } = registry
     expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(
       true,
     )
@@ -843,7 +820,6 @@ describe('the file list', () => {
   })
 
   test('follows a rebind like everything else', () => {
-    const { shortcuts } = registry
     shortcuts.set('tree.select-all', 'Mod-Alt-a')
 
     expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(
@@ -855,7 +831,6 @@ describe('the file list', () => {
   })
 
   test('is not read off the window', () => {
-    const { shortcuts } = registry
     let opened = 0
     shortcuts.set('app.palette', 'Mod-a')
 
@@ -876,13 +851,11 @@ describe('what a reader is shown', () => {
   })
 
   test('and follows a rebind', () => {
-    const { shortcuts } = registry
     shortcuts.set('app.new', 'Mod-Alt-s')
     expect(shortcuts.hint('app.new')).toBe('Ctrl+Alt+S')
   })
 
   test('reaches the menus and the palette', async () => {
-    const { shortcuts } = registry
     shortcuts.set('app.focus', 'Mod-Alt-9')
 
     const { appCommands } = await import('../../commands/src/api')
@@ -923,7 +896,6 @@ describe('the keys that move the keyboard about', () => {
   })
 
   test('opens the switcher on Ctrl+Space and Ctrl+Shift+Space', () => {
-    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
     const switcher = found('space.switcher')
     const alt = found('space.switcher.alt')
     for (const platform of ['win', 'linux'] as const) {
@@ -952,7 +924,6 @@ describe('the keys that move the keyboard about', () => {
   })
 
   test('make a new tab on Ctrl+T, the scratchpad on Ctrl+N, and a note on Ctrl+Alt+N', () => {
-    const { shortcuts } = registry
     expect(shortcuts.keyFor('app.new-kind')).toBe('Mod-t')
     expect(shortcuts.keyFor('app.scratchpad')).toBe('Mod-n')
     expect(shortcuts.keyFor('app.scratchpad.alt')).toBe('Mod-Shift-x')
@@ -1105,7 +1076,6 @@ describe('a page note’s zoom', () => {
   })
 
   test("is a browser's over a page", () => {
-    const { shortcuts } = registry
     const keys = {
       'web.reload': 'F5',
       'web.reload.alt': 'Mod-r',
@@ -1124,13 +1094,11 @@ describe('a page note’s zoom', () => {
     }
 
     expect(shortcuts.conflicts('web.reload', 'F5')).toEqual([])
-    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
     expect(defaultKeyFor(found('web.reload'), 'mac')).toBe('Mod-r')
     expect(defaultKeyFor(found('web.address.alt'), 'mac')).toBeNull()
   })
 
   test('answers the press the surface reads, and no other', () => {
-    const { shortcuts } = registry
     const press = (spelling: Partial<KeyboardEvent>) => spelling as KeyboardEvent
 
     expect(
@@ -1165,15 +1133,12 @@ describe('a page note’s zoom', () => {
 
 describe('on a Mac', () => {
   test('the keys are written as a Mac writes them', async () => {
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
-    const { shortcuts } = await restarted()
+    const { shortcuts } = await onMac()
 
     expect(shortcuts.platform).toBe('mac')
     expect(shortcuts.hint('app.new')).toBe('⌥⌘N')
     expect(shortcuts.hint('paragraph.code-block')).toBe('⇧⌘K')
     expect(shortcuts.keyFor('app.next-note')).toBe('Ctrl-Tab')
-
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
   })
 
   const MAC: [id: string, mac: string | null, elsewhere: string][] = [
@@ -1224,9 +1189,24 @@ describe('on a Mac', () => {
     expect(kept).toEqual([])
   })
 
+  test.each(PLATFORMS)(
+    'lets no keyboard that can be chosen bind a key the system keeps (%s)',
+    async (platform) => {
+      const { presetKeys } = await import('./preset-ids')
+      const kept = PRESETS.flatMap((preset) =>
+        Object.entries(presetKeys(preset, platform)).flatMap(([id, key]) =>
+          key && SYSTEM_KEYS[platform].some((held) => sameCombination(held, key, platform))
+            ? [`${preset.id}: ${id} on ${key}`]
+            : [],
+        ),
+      )
+
+      expect(kept).toEqual([])
+    },
+  )
+
   test('warns about the keys the Mac keeps for itself', async () => {
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
-    const { shortcuts } = await restarted()
+    const { shortcuts } = await onMac()
 
     for (const key of [
       'F11',
@@ -1239,13 +1219,10 @@ describe('on a Mac', () => {
       expect(shortcuts.warning(key), key).not.toBeNull()
     }
     expect(shortcuts.warning('Mod-Ctrl-f')).toBeNull()
-
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
   })
 
   test('the file list deletes on Cmd+Backspace and never on a bare one', async () => {
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
-    const { shortcuts } = await restarted()
+    const { shortcuts } = await onMac()
     const deletes = (event: KeyboardEvent) =>
       shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
 
@@ -1255,13 +1232,10 @@ describe('on a Mac', () => {
     expect(deletes(cmd('Backspace'))).toBe(true)
     expect(deletes(cmd('Delete'))).toBe(true)
     expect(shortcuts.hint('tree.delete')).toBe('⌘⌫')
-
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
   })
 
   test('the menus and the palette show the Mac keys, in signs', async () => {
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
-    const { shortcuts } = await restarted()
+    const { shortcuts } = await onMac()
     const { appCommands } = await import('../../commands/src/api')
 
     expect(shortcuts.hint('app.fullscreen')).toBe('⌃⌘F')
@@ -1271,8 +1245,6 @@ describe('on a Mac', () => {
     expect(shortcuts.hint('app.next-note.alt')).toBe('⇧⌘]')
     expect(shortcuts.hint('paragraph.bullet-list')).toBeUndefined()
     expect(appCommands().find((one) => one.id === 'focus')?.hint).toBe('⌃⌘O')
-
-    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
   })
 })
 

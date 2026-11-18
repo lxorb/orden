@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 const world = vi.hoisted(() => ({
   asked: [] as { command: string; args: unknown }[],
@@ -102,12 +103,6 @@ Element.prototype.animate = () =>
 let host: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 
-async function settled() {
-  for (let round = 0; round < 8; round++) await Promise.resolve()
-  await vi.waitFor(() => undefined)
-  flushSync()
-}
-
 function open() {
   shown = mount(AiPane, { target: host })
   flushSync()
@@ -145,7 +140,7 @@ describe('Settings > AI accounts', () => {
   test('are one flat list of cards, each naming its provider', async () => {
     start('claude-code', 'anthropic', 'codex')
     open()
-    await settled()
+    await settle()
     expect(host.querySelector('[data-vendor]')).toBeNull()
     expect(cards().map((one) => one.dataset.account)).toEqual(['claude-code', 'anthropic', 'codex'])
     for (const one of cards()) expect(one.querySelector('.mark')).not.toBeNull()
@@ -156,7 +151,7 @@ describe('Settings > AI accounts', () => {
   test('mark exactly one default, and Make default moves it', async () => {
     start('claude-code', 'anthropic', 'codex')
     open()
-    await settled()
+    await settle()
     const defaults = () => cards().filter((one) => one.classList.contains('fallback'))
     expect(defaults().map((one) => one.dataset.account)).toEqual(['claude-code'])
     expect(buttonIn(card('claude-code')!, 'Make default')).toBeUndefined()
@@ -176,7 +171,7 @@ describe('Settings > AI accounts', () => {
   test('hold no model field, model list or the removed sentences', async () => {
     start('claude-code', 'anthropic', 'chatgpt', 'compatible')
     open()
-    await settled()
+    await settle()
     expect(host.textContent).not.toContain('Model')
     expect(host.textContent).not.toContain('List models')
     expect(host.textContent).not.toContain('AI can be wrong')
@@ -210,7 +205,7 @@ describe('Settings > AI accounts', () => {
 describe('Add', () => {
   async function through(maker: string, road: string | null) {
     open()
-    await settled()
+    await settle()
     expect(host.querySelectorAll('[data-add-account]')).toHaveLength(1)
     host.querySelector<HTMLButtonElement>('[data-add-account]')!.click()
     flushSync()
@@ -235,12 +230,12 @@ describe('Add', () => {
     await vi.waitFor(() => {
       if (sheet()) throw new Error('still open')
     })
-    await settled()
+    await settle()
   }
 
   test('offers the providers as tiles, then only their ways', async () => {
     open()
-    await settled()
+    await settle()
     host.querySelector<HTMLButtonElement>('[data-add-account]')!.click()
     flushSync()
     const makers = [...sheet()!.querySelectorAll<HTMLElement>('[data-maker]')]

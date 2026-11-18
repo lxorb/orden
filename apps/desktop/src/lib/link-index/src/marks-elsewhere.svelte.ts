@@ -30,16 +30,13 @@ const NOTHING: Worn = {
   bare: false,
 }
 
-function wears(path: string): boolean {
-  return (
-    isMarkdownPath(path) ||
-    isCanvasTarget(path) ||
-    isPagesTarget(path) ||
-    isWebTarget(path) ||
-    isChatTarget(path) ||
-    isTermTarget(path)
-  )
-}
+const wears = (path: string): boolean =>
+  isMarkdownPath(path) ||
+  isCanvasTarget(path) ||
+  isPagesTarget(path) ||
+  isWebTarget(path) ||
+  isChatTarget(path) ||
+  isTermTarget(path)
 
 async function wornBy(path: string, content: string): Promise<Worn> {
   if (isWebTarget(path)) {
@@ -86,8 +83,7 @@ async function holdsItsPaper(path: string): Promise<boolean> {
 
 class Elsewhere {
   private readonly held = new SvelteMap<string, Worn>()
-  private readonly asked = new Map<string, string>()
-  private round = 0
+  private readonly asked = new Map<string, { path: string }>()
 
   of(path: string): Worn | null {
     if (!wears(path)) return null
@@ -96,42 +92,42 @@ class Elsewhere {
     const known = this.held.get(key)
     if (known || this.asked.has(key)) return known ?? null
 
-    this.asked.set(key, path)
-    const round = this.round
-    queueMicrotask(() => void this.read(path, key, round))
+    const asked = { path }
+    this.asked.set(key, asked)
+    queueMicrotask(() => void this.read(asked, key))
     return null
   }
 
-  private async read(path: string, key: string, round: number) {
+  private async read(asked: { path: string }, key: string) {
+    const { path } = asked
     const [content, paper] = await Promise.all([
       invoke<string>('read_note', { path }).catch(() => null),
       !__EVEN_PLUGIN__ && isPagesTarget(path) ? holdsItsPaper(path) : false,
     ])
     const worn = content === null ? NOTHING : await wornBy(path, content)
-    if (round === this.round) this.held.set(key, { ...worn, paper })
+    if (this.asked.get(key) === asked) this.held.set(key, { ...worn, paper })
   }
 
   saved(path: string, content: string) {
     const key = pathKey(path)
     if (!this.held.has(key) || !wears(path)) return
 
-    const round = this.round
+    const asked = this.asked.get(key)
     const paper = this.held.get(key)?.paper ?? false
     void wornBy(path, content).then((worn) => {
-      if (round === this.round) this.held.set(key, { ...worn, paper })
+      if (asked && this.asked.get(key) === asked) this.held.set(key, { ...worn, paper })
     })
   }
 
   forget(path: string) {
     for (const [key, asked] of [...this.asked]) {
-      if (within(path, asked) === null) continue
+      if (within(path, asked.path) === null) continue
       this.held.delete(key)
       this.asked.delete(key)
     }
   }
 
   clear() {
-    this.round++
     this.held.clear()
     this.asked.clear()
   }

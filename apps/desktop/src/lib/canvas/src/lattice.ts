@@ -1,16 +1,10 @@
 import { GRID } from '../../plane/src/api'
 
 const THINS_AT = 12
-
 const FILLS_AT = 15
-
 const MOST = 32
-
 const FAINTEST = 0.004
-
-export function latticeEvery(level: number): number {
-  return GRID * 2 ** level
-}
+export const latticeEvery = (level: number): number => GRID * 2 ** level
 
 export function latticeLevel(scale: number, held = 0): number {
   let level = Number.isFinite(held) ? Math.min(MOST, Math.max(0, Math.round(held))) : 0
@@ -44,9 +38,7 @@ export function aimed(fade: Fade, to: number): Fade {
   return { at: fade.at, from: fade.at, to: level, gone: 0 }
 }
 
-export function fading(fade: Fade): boolean {
-  return fade.at !== fade.to
-}
+export const fading = (fade: Fade): boolean => fade.at !== fade.to
 
 export function stepped(fade: Fade, dt: number, ms: number): Fade {
   if (!fading(fade)) return fade

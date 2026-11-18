@@ -8,7 +8,6 @@ import { paperOpened, paperRead, papersFor, papersListed, type Walked, writePape
 import { paperText } from './text-cache'
 
 const PAGES = 400
-
 let reading: string | null = null
 
 function sparing(): boolean {

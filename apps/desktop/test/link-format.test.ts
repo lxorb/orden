@@ -1,0 +1,326 @@
+import { describe, expect, test } from 'vitest'
+import { findLinks } from '@orden/markdown/links'
+import {
+  formatLink,
+  isLinkFormat,
+  LINK_FORMATS,
+  linkWriting,
+  setLinkWriting,
+  linkTo,
+  pickedLink,
+} from '../src/lib/link-format/src/api'
+import { rewriteLinks } from '../src/lib/import/src/rewrite'
+
+const PLAN = { name: 'Plan', path: 'ideas/Plan.md', from: 'journal/Monday.md' }
+
+describe('a link to a note', () => {
+  test('is a wikilink until the setting says otherwise, which is what Orden always wrote', () => {
+    expect(formatLink(PLAN, 'wikilink')).toBe('[[Plan]]')
+    expect(LINK_FORMATS[0]).toBe('wikilink')
+  })
+
+  test('shows its own words only when they are not the name already', () => {
+    expect(formatLink({ ...PLAN, shown: 'the plan' }, 'wikilink')).toBe('[[Plan|the plan]]')
+    expect(formatLink({ ...PLAN, shown: 'Plan' }, 'wikilink')).toBe('[[Plan]]')
+  })
+
+  test('keeps the name it shows when it goes to a heading, which bare would show too', () => {
+    expect(formatLink({ ...PLAN, fragment: 'Budget', shown: 'Plan' }, 'wikilink')).toBe(
+      '[[Plan#Budget|Plan]]',
+    )
+  })
+
+  test('carries the heading or the block after the target', () => {
+    expect(formatLink({ ...PLAN, fragment: 'Next steps' }, 'wikilink')).toBe('[[Plan#Next steps]]')
+    expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'wikilink')).toBe('[[Plan#^a1b2c3]]')
+  })
+
+  test('is a markdown link when a heading or its words hold a backtick a code span would take', () => {
+    const toHeading = formatLink({ ...PLAN, fragment: 'Using `git` well' }, 'wikilink')
+    expect(toHeading.startsWith('[[')).toBe(false)
+    expect(findLinks(`${toHeading} and \`x\``).map((one) => one.target)).toHaveLength(1)
+    const shown = formatLink({ ...PLAN, shown: 'it`s' }, 'wikilink')
+    expect(findLinks(`${shown} then \`x\``).map((one) => one.target)).toHaveLength(1)
+  })
+
+  test('is an embed where it was asked for as one', () => {
+    expect(formatLink({ ...PLAN, embed: true }, 'wikilink')).toBe('![[Plan]]')
+    expect(formatLink({ ...PLAN, embed: true }, 'shortest')).toBe('![Plan](Plan.md)')
+  })
+})
+
+describe('the three markdown spellings', () => {
+  test('write the shortest name, the path from here, or the path from the top', () => {
+    expect(formatLink(PLAN, 'shortest')).toBe('[Plan](Plan.md)')
+    expect(formatLink(PLAN, 'relative')).toBe('[Plan](../ideas/Plan.md)')
+    expect(formatLink(PLAN, 'absolute')).toBe('[Plan](ideas/Plan.md)')
+  })
+
+  test('take the path the picker found to reach the note read from the linking note', () => {
+    expect(
+      formatLink(
+        { name: 'b/c', markdown: '/b/c.md', path: 'b/c.md', from: 'a/new.md' },
+        'shortest',
+      ),
+    ).toBe('[b/c](/b/c.md)')
+  })
+
+  test('write the path from the top, slash and all, when only that says which', () => {
+    expect(formatLink({ ...PLAN, name: '/ideas/Plan' }, 'shortest')).toBe(
+      '[ideas/Plan](/ideas/Plan.md)',
+    )
+    expect(formatLink({ name: '/Plan', path: 'Plan.md', from: 'b/n.md' }, 'shortest')).toBe(
+      '[Plan](/Plan.md)',
+    )
+  })
+
+  test('write the folder in the shortest name when the name needs it to say which', () => {
+    expect(formatLink({ ...PLAN, name: 'ideas/Plan' }, 'shortest')).toBe(
+      '[ideas/Plan](ideas/Plan.md)',
+    )
+  })
+
+  test('write the folder for an alias when the file’s own name needs it to say which', () => {
+    const roadmap = { name: 'Roadmap', path: 'B/Plan.md', from: 'Journal.md' }
+    expect(formatLink({ ...roadmap, file: 'B/Plan' }, 'shortest')).toBe('[Roadmap](B/Plan.md)')
+    expect(formatLink({ ...roadmap, file: 'Plan' }, 'shortest')).toBe('[Roadmap](Plan.md)')
+  })
+
+  test('write a name said from the top as a path from the top', () => {
+    expect(
+      formatLink({ name: '/Plan', path: 'Plan.md', from: 'Work/Journal.md' }, 'shortest'),
+    ).toBe('[Plan](/Plan.md)')
+  })
+
+  test('always show something, since a markdown link with no words shows none', () => {
+    expect(formatLink({ ...PLAN, shown: 'the plan' }, 'absolute')).toBe('[the plan](ideas/Plan.md)')
+    expect(formatLink(PLAN, 'absolute')).toContain('[Plan]')
+  })
+
+  test('encode what a destination cannot hold as written', () => {
+    expect(formatLink({ name: 'My Plan', path: 'My Plan.md' }, 'absolute')).toBe(
+      '[My Plan](My%20Plan.md)',
+    )
+  })
+
+  test('a heading with an equals sign in it is a heading, and only a page number is kept', () => {
+    expect(formatLink({ name: 'Note', fragment: 'x = 1' }, 'shortest')).toBe('[Note](Note.md#x-1)')
+    expect(formatLink({ name: 'paper.pdf', fragment: 'page=3' }, 'shortest')).toBe(
+      '[paper.pdf](paper.pdf#page=3)',
+    )
+  })
+
+  test('write a heading as the anchor an exported or published page gives it', () => {
+    expect(formatLink({ ...PLAN, fragment: 'Next steps' }, 'absolute')).toBe(
+      '[Plan](ideas/Plan.md#next-steps)',
+    )
+  })
+
+  test('leave a block name and a page number exactly as they were written', () => {
+    expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'absolute')).toBe(
+      '[Plan](ideas/Plan.md#^a1b2c3)',
+    )
+    expect(formatLink({ name: 'paper.pdf', fragment: 'page=3' }, 'shortest')).toBe(
+      '[paper.pdf](paper.pdf#page=3)',
+    )
+  })
+
+  test('fall back to the name where nothing knows the path', () => {
+    expect(formatLink({ name: 'Plan' }, 'relative')).toBe('[Plan](Plan.md)')
+    expect(formatLink({ name: 'Plan' }, 'absolute')).toBe('[Plan](Plan.md)')
+  })
+
+  test('leave a name that already carries an extension alone', () => {
+    expect(formatLink({ name: 'paper.pdf' }, 'shortest')).toBe('[paper.pdf](paper.pdf)')
+  })
+})
+
+describe('the setting itself', () => {
+  test('refuses anything that is not one of the four', () => {
+    expect(isLinkFormat('wikilink')).toBe(true)
+    expect(isLinkFormat('sideways')).toBe(false)
+    expect(isLinkFormat(null)).toBe(false)
+  })
+
+  test('is what every writer in the app uses without being told', () => {
+    expect(linkWriting()).toBe('wikilink')
+    setLinkWriting('absolute')
+    try {
+      expect(linkTo('Plan', null, { path: 'ideas/Plan.md' })).toBe('[Plan](ideas/Plan.md)')
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+})
+
+describe('every writer in the app', () => {
+  test('writes what the setting asks for, and a wikilink by default', () => {
+    expect(linkTo('Plan')).toBe('[[Plan]]')
+  })
+
+  test('includes the block link a Copy link puts on the clipboard', () => {
+    expect(linkTo('Plan', null, { fragment: '^a1b2c3', path: 'Plan.md', from: 'Plan.md' })).toBe(
+      '[[Plan#^a1b2c3]]',
+    )
+
+    setLinkWriting('relative')
+    try {
+      expect(linkTo('Plan', null, { fragment: '^a1b2c3', path: 'Plan.md', from: 'Plan.md' })).toBe(
+        '[Plan](Plan.md#^a1b2c3)',
+      )
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+
+  test('includes the links an import rewrites', () => {
+    const find = (target: string) =>
+      target === 'old/Plan.md' ? { path: 'ideas/Plan.md', name: 'Plan' } : null
+    const at = { was: 'old/Monday.md', now: 'journal/Monday.md' }
+
+    expect(rewriteLinks('see [the plan](old/Plan.md)', at, find)).toBe('see [[Plan|the plan]]')
+    expect(rewriteLinks('see [[old/Plan.md]]', at, find)).toBe('see [[Plan]]')
+
+    setLinkWriting('relative')
+    try {
+      expect(rewriteLinks('see [the plan](old/Plan.md)', at, find)).toBe(
+        'see [the plan](../ideas/Plan.md)',
+      )
+      expect(rewriteLinks('see [[old/Plan.md]]', at, find)).toBe('see [Plan](../ideas/Plan.md)')
+    } finally {
+      setLinkWriting('wikilink')
+    }
+  })
+})
+
+describe('the `[[` popup, in a nested space', () => {
+  const HERE = 'journal/2026/Monday.md'
+  const DEEP = { path: 'ideas/deep/Deep note.md', from: HERE }
+
+  function spellings(target: Parameters<typeof pickedLink>[0]): string[] {
+    return LINK_FORMATS.map((format) => {
+      setLinkWriting(format)
+      try {
+        return pickedLink(target)
+      } finally {
+        setLinkWriting('wikilink')
+      }
+    })
+  }
+
+  test('a note row', () => {
+    expect(spellings({ name: 'Deep note', ...DEEP })).toEqual([
+      '[[Deep note]]',
+      '[Deep note](Deep%20note.md)',
+      '[Deep note](../../ideas/deep/Deep%20note.md)',
+      '[Deep note](ideas/deep/Deep%20note.md)',
+    ])
+  })
+
+  test('the three markdown spellings are three different links here', () => {
+    const [, shortest, relative, absolute] = spellings({ name: 'Deep note', ...DEEP })
+
+    expect(new Set([shortest, relative, absolute]).size).toBe(3)
+  })
+
+  test('an alias row writes the alias and still points at the note', () => {
+    expect(spellings({ name: 'The deep one', ...DEEP })).toEqual([
+      '[[The deep one]]',
+      '[The deep one](Deep%20note.md)',
+      '[The deep one](../../ideas/deep/Deep%20note.md)',
+      '[The deep one](ideas/deep/Deep%20note.md)',
+    ])
+  })
+
+  test('a heading row, of one note or out of `[[##`', () => {
+    expect(spellings({ name: 'Deep note', ...DEEP, fragment: 'Next steps' })).toEqual([
+      '[[Deep note#Next steps]]',
+      '[Deep note](Deep%20note.md#next-steps)',
+      '[Deep note](../../ideas/deep/Deep%20note.md#next-steps)',
+      '[Deep note](ideas/deep/Deep%20note.md#next-steps)',
+    ])
+  })
+
+  test('a block row, one the note already named or one the app just named', () => {
+    expect(spellings({ name: 'Deep note', ...DEEP, fragment: '^a1b2c3' })).toEqual([
+      '[[Deep note#^a1b2c3]]',
+      '[Deep note](Deep%20note.md#^a1b2c3)',
+      '[Deep note](../../ideas/deep/Deep%20note.md#^a1b2c3)',
+      '[Deep note](ideas/deep/Deep%20note.md#^a1b2c3)',
+    ])
+  })
+
+  test('a heading of this very note is an anchor on its own', () => {
+    expect(spellings({ name: '', path: null, from: HERE, fragment: 'Today' })).toEqual([
+      '[[#Today]]',
+      '[Today](#today)',
+      '[Today](#today)',
+      '[Today](#today)',
+    ])
+  })
+
+  test('a block of this very note, likewise', () => {
+    expect(spellings({ name: '', path: null, from: HERE, fragment: '^a1b2c3' })).toEqual([
+      '[[#^a1b2c3]]',
+      '[a1b2c3](#^a1b2c3)',
+      '[a1b2c3](#^a1b2c3)',
+      '[a1b2c3](#^a1b2c3)',
+    ])
+  })
+})
+
+describe('a link to a note a wikilink cannot name', () => {
+  const name = 'C# basics'
+  const about = { name, path: 'f/C# basics.md', from: 'g/n.md' }
+
+  test('is written as a markdown link, whatever the setting, and reads back', () => {
+    const written = formatLink(about, 'wikilink')
+    expect(written).toBe('[C# basics](C%23%20basics.md)')
+    expect(findLinks(written)).toMatchObject([{ target: 'C# basics.md', heading: null }])
+  })
+
+  test('with a folder in the name keeps the path that says which', () => {
+    const written = formatLink({ ...about, name: 'f/C# basics' }, 'wikilink')
+    expect(written).toBe('[f/C# basics](f/C%23%20basics.md)')
+  })
+
+  test('keeps its heading, its words and its embed', () => {
+    expect(formatLink({ ...about, fragment: 'Some Heading', shown: 'see' }, 'wikilink')).toBe(
+      '[see](C%23%20basics.md#some-heading)',
+    )
+    expect(formatLink({ ...about, embed: true }, 'wikilink')).toBe('![C# basics](C%23%20basics.md)')
+  })
+
+  test('brackets in a name stay a link, in the label and in the target', () => {
+    for (const odd of ['a[b]', 'a]b', 'a[b']) {
+      const written = formatLink({ name: odd, path: `${odd}.md` }, 'wikilink')
+      expect(findLinks(written)).toMatchObject([{ kind: 'markdown', target: `${odd}.md` }])
+    }
+  })
+
+  test('words or a heading that would close a wikilink early do the same', () => {
+    expect(formatLink({ ...PLAN, fragment: 'Foo [bar]' }, 'wikilink')).toBe(
+      '[Plan](Plan.md#foo-bar)',
+    )
+    expect(findLinks(formatLink({ ...PLAN, shown: 'a]b' }, 'wikilink'))).toMatchObject([
+      { kind: 'markdown', target: 'Plan.md' },
+    ])
+  })
+
+  test('a name a wikilink can say is still a wikilink', () => {
+    expect(formatLink({ name: 'a (1)' }, 'wikilink')).toBe('[[a (1)]]')
+    expect(formatLink({ ...PLAN, fragment: 'C# intro' }, 'wikilink')).toBe('[[Plan#C# intro]]')
+  })
+
+  test('words with a bracket in a markdown link are escaped so the label closes where it should', () => {
+    expect(formatLink({ ...PLAN, shown: 'a]b' }, 'shortest')).toBe('[a\\]b](Plan.md)')
+  })
+})
+
+describe('the label of a markdown link', () => {
+  test('a name ending in a backslash does not escape the bracket that closes it', () => {
+    const written = formatLink({ name: 'e\\', path: 'e\\.md' }, 'shortest')
+    expect(written.startsWith('[e\\\\](')).toBe(true)
+    expect(findLinks(written)).toHaveLength(1)
+  })
+})

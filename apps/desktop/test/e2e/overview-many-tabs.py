@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser
 
 from harness import Drive
@@ -47,5 +45,4 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(1500)
     DRIVE.shot(page, "after")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, f"the overview of {TABS} tabs never holds the window long"))
+raise SystemExit(DRIVE.run(drive, f"the overview of {TABS} tabs never holds the window long"))

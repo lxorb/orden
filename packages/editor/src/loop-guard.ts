@@ -3,9 +3,7 @@ import { parser } from '@lezer/javascript'
 import { backtracksWildly, patternJudge } from '@orden/markdown/pattern-cost'
 
 export const LOOP_LIMIT = 3000
-
 const SPIN = '__ordenSpin'
-
 const LOOPS = new Set(['ForStatement', 'WhileStatement', 'DoStatement'])
 
 export function guarded(code: string): string | null {
@@ -37,9 +35,8 @@ export function guarded(code: string): string | null {
   if (!edits.length) return code
 
   let out = code
-  for (const edit of edits.sort((a, b) => b.at - a.at)) {
+  for (const edit of edits.sort((a, b) => b.at - a.at))
     out = out.slice(0, edit.at) + edit.text + out.slice(edit.at)
-  }
   return out
 }
 
@@ -141,9 +138,7 @@ const PATTERNS = `;(function () {
   ;['match', 'matchAll', 'search'].forEach(function (name) {
     var native = String.prototype[name]
     own(String.prototype, name, function (pattern) {
-      if (pattern !== null && pattern !== undefined && !(pattern instanceof Native)) {
-        check(pattern, name === 'matchAll' ? 'g' : '')
-      }
+      if (pattern !== null && pattern !== undefined && !(pattern instanceof Native)) check(pattern, name === 'matchAll' ? 'g' : '')
       return native.apply(this, arguments)
     })
   })
@@ -279,9 +274,8 @@ function scripted(attribute: Attr): boolean {
   if (name.startsWith('on')) return true
   if (!ADDRESSES.has(name)) return false
   let written = ''
-  for (let at = 0; at < attribute.value.length && written.length < 11; at++) {
+  for (let at = 0; at < attribute.value.length && written.length < 11; at++)
     if (attribute.value.charCodeAt(at) > 32) written += attribute.value.charAt(at)
-  }
   return written.toLowerCase() === 'javascript:'
 }
 

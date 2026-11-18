@@ -69,7 +69,6 @@ describe('a finger held still', () => {
     touch('touchstart', at(100, 100))
     vi.advanceTimersByTime(499)
     expect(shown).toBe(0)
-
     vi.advanceTimersByTime(1)
     expect(shown).toBe(1)
   })
@@ -79,7 +78,6 @@ describe('a finger held still', () => {
     vi.advanceTimersByTime(300)
     touch('touchend', at(100, 100))
     vi.advanceTimersByTime(1000)
-
     expect(shown).toBe(0)
   })
 })
@@ -88,10 +86,8 @@ describe('a finger that moves first', () => {
   test('never opens the menu, however long it is then held', () => {
     touch('touchstart', at(100, 100))
     vi.advanceTimersByTime(200)
-
     touch('touchmove', at(100, 118))
     vi.advanceTimersByTime(5000)
-
     expect(shown).toBe(0)
   })
 
@@ -100,7 +96,6 @@ describe('a finger that moves first', () => {
     vi.advanceTimersByTime(200)
     touch('touchmove', at(104, 103))
     vi.advanceTimersByTime(500)
-
     expect(shown).toBe(1)
   })
 
@@ -108,7 +103,6 @@ describe('a finger that moves first', () => {
     touch('touchstart', at(100, 100))
     touch('touchmove', at(130, 100))
     vi.advanceTimersByTime(5000)
-
     expect(shown).toBe(0)
   })
 })
@@ -122,7 +116,6 @@ describe('two fingers', () => {
       ],
     })
     vi.advanceTimersByTime(5000)
-
     expect(shown).toBe(0)
   })
 })

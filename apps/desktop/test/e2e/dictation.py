@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import math
 import struct
@@ -239,5 +237,4 @@ def main() -> int:
 
     return DRIVE.verdict("dictation into the composer and quick add, live words and final")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

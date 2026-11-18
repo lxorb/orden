@@ -184,20 +184,7 @@ export interface KeepRequest {
   device: string
 }
 
-export interface SnapshotDoc {
-  id: string
-  epoch: number
-  epochBase?: string
-  seq: number
-  update: Uint8Array
-}
-
-export interface SnapshotPage {
-  docs: SnapshotDoc[]
-  next: string | null
-}
-
-export const ROOM_V2 = 'nib.v2'
+export const ROOM_V2 = 'orden.v2'
 
 export const ROOM_V2_NAMES: readonly string[] = ['orden.v2', 'nib.v2']
 
@@ -219,11 +206,9 @@ export function shutOut(code: number): boolean {
 export const BEAT = 'beat'
 export const BEAT_ANSWER = 'ok'
 
-export const FENCE_HEADER = 'x-orden-fence'
+export const TOKEN_PROTOCOL = 'orden.token.'
 
-export const TOKEN_PROTOCOL = 'nib.token.'
-
-export const DEVICE_PROTOCOL = 'nib.device.'
+export const DEVICE_PROTOCOL = 'orden.device.'
 
 const DEVICE_PROTOCOLS = ['orden.device.', 'nib.device.']
 
@@ -238,39 +223,6 @@ export function deviceOffered(header: string | undefined): OfferedDevice | null 
     if (prefix) return { device: protocol.slice(prefix.length), protocol }
   }
   return null
-}
-
-export type DeviceFrame =
-  | { t: 'hello'; device: string; name: string; platform: string; app: string }
-  | { t: 'active' }
-  | { t: 'idle' }
-  | { t: 'acquire'; key: string; take: boolean }
-  | { t: 'release'; key: string; version: number }
-  | { t: 'flushed'; key: string; version: number }
-  | { t: 'want-key'; pub: string }
-  | { t: 'grant-key'; to: string; wrapped: string; generation: number }
-  | { t: 'deny-key'; to: string }
-
-export type HubFrame =
-  | { t: 'poke'; space: string; seq: number }
-  | { t: 'granted'; key: string; fence: number; version: number }
-  | { t: 'busy'; key: string; device: string }
-  | { t: 'flush'; key: string; fence: number }
-  | { t: 'lost'; key: string; device: string }
-  | { t: 'free'; key: string }
-  | { t: 'state'; key: string; version: number }
-  | { t: 'key-wanted'; device: string; name: string; pub: string }
-  | { t: 'key'; wrapped: string; generation: number }
-  | { t: 'key-denied' }
-  | { t: 'machine'; state: 'asleep' | 'starting' | 'awake' | 'stopping' }
-  | { t: 'terms' }
-
-export interface DeviceRow {
-  id: string
-  name: string
-  platform: string
-  createdAt: number
-  lastSeenAt: number | null
 }
 
 export { ackFrame, epochFrame, frame, type Framed, roomNews, unframe } from './frame'
@@ -404,8 +356,8 @@ function opResultOf(value: unknown): OpResult | null {
 
   if (value.ok === true) {
     if (value.id === undefined) return { op, ok: true }
-    if (!isId(value.id) || !isParent(value.parent) || !isName(value.name)) return null
-    return { op, ok: true, id: value.id, parent: value.parent, name: value.name }
+    if (!isId(value.id) || !isParent(value.parent) || typeof value.name !== 'string') return null
+    return { op, ok: true, id: value.id, parent: value.parent, name: heldName(value.name) }
   }
   if (isId(value.merged)) return { op, merged: value.merged }
   const refused = REFUSALS.find((one) => one === value.refused)
@@ -577,121 +529,4 @@ export function keepRequestOf(value: unknown): KeepRequest | null {
   if (!isRecord(value) || !isId(value.id) || !isId(value.device)) return null
   if (typeof value.text !== 'string' || value.text.length > MOST_KEPT) return null
   return { id: value.id, text: value.text, device: value.device }
-}
-
-function snapshotDocOf(value: unknown): SnapshotDoc | null {
-  if (!isRecord(value) || !isId(value.id) || !isCount(value.epoch) || !isCount(value.seq)) {
-    return null
-  }
-  if (!isBytes(value.update)) return null
-  if (value.epochBase !== undefined && typeof value.epochBase !== 'string') return null
-  const doc: SnapshotDoc = {
-    id: value.id,
-    epoch: value.epoch,
-    seq: value.seq,
-    update: value.update,
-  }
-  if (typeof value.epochBase === 'string') doc.epochBase = value.epochBase
-  return doc
-}
-
-export function snapshotPageOf(value: unknown): SnapshotPage | null {
-  if (!isRecord(value) || !(value.next === null || isId(value.next))) return null
-  const docs = listOf(value.docs, snapshotDocOf)
-  return docs ? { docs, next: value.next } : null
-}
-
-export function deviceFrameOf(value: unknown): DeviceFrame | null {
-  if (!isRecord(value)) return null
-  switch (value.t) {
-    case 'hello': {
-      const { device, name, platform, app } = value
-      if (!isId(device) || !isId(name) || !isId(platform) || !isId(app)) return null
-      return { t: 'hello', device, name, platform, app }
-    }
-    case 'active':
-      return { t: 'active' }
-    case 'idle':
-      return { t: 'idle' }
-    case 'acquire':
-      return isId(value.key) && typeof value.take === 'boolean'
-        ? { t: 'acquire', key: value.key, take: value.take }
-        : null
-    case 'release':
-    case 'flushed':
-      return isId(value.key) && isCount(value.version)
-        ? { t: value.t, key: value.key, version: value.version }
-        : null
-    case 'want-key':
-      return isId(value.pub) ? { t: 'want-key', pub: value.pub } : null
-    case 'grant-key': {
-      const { to, wrapped, generation } = value
-      if (!isId(to) || typeof wrapped !== 'string' || !isCount(generation)) return null
-      return { t: 'grant-key', to, wrapped, generation }
-    }
-    case 'deny-key':
-      return isId(value.to) ? { t: 'deny-key', to: value.to } : null
-    default:
-      return null
-  }
-}
-
-export function hubFrameOf(value: unknown): HubFrame | null {
-  if (!isRecord(value)) return null
-  const { key } = value
-  switch (value.t) {
-    case 'poke':
-      return isId(value.space) && isCount(value.seq)
-        ? { t: 'poke', space: value.space, seq: value.seq }
-        : null
-    case 'granted':
-      return isId(key) && isCount(value.fence) && isCount(value.version)
-        ? { t: 'granted', key, fence: value.fence, version: value.version }
-        : null
-    case 'busy':
-    case 'lost':
-      return isId(key) && isId(value.device) ? { t: value.t, key, device: value.device } : null
-    case 'flush':
-      return isId(key) && isCount(value.fence) ? { t: 'flush', key, fence: value.fence } : null
-    case 'free':
-      return isId(key) ? { t: 'free', key } : null
-    case 'state':
-      return isId(key) && isCount(value.version)
-        ? { t: 'state', key, version: value.version }
-        : null
-    case 'key-wanted': {
-      const { device, name, pub } = value
-      if (!isId(device) || !isId(name) || !isId(pub)) return null
-      return { t: 'key-wanted', device, name, pub }
-    }
-    case 'key':
-      return typeof value.wrapped === 'string' && isCount(value.generation)
-        ? { t: 'key', wrapped: value.wrapped, generation: value.generation }
-        : null
-    case 'key-denied':
-      return { t: 'key-denied' }
-    case 'machine':
-      return value.state === 'asleep' ||
-        value.state === 'starting' ||
-        value.state === 'awake' ||
-        value.state === 'stopping'
-        ? { t: 'machine', state: value.state }
-        : null
-    case 'terms':
-      return { t: 'terms' }
-    default:
-      return null
-  }
-}
-
-function deviceRowOf(value: unknown): DeviceRow | null {
-  if (!isRecord(value)) return null
-  const { id, name, platform, createdAt, lastSeenAt } = value
-  if (!isId(id) || typeof name !== 'string' || typeof platform !== 'string') return null
-  if (!isTime(createdAt) || !(lastSeenAt === null || isTime(lastSeenAt))) return null
-  return { id, name, platform, createdAt, lastSeenAt }
-}
-
-export function deviceRowsOf(value: unknown): DeviceRow[] | null {
-  return listOf(value, deviceRowOf)
 }

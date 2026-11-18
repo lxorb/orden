@@ -48,20 +48,16 @@ export async function record(listening: Listening = {}): Promise<Recording> {
 
   const started = performance.now()
 
-  const close = () => {
-    for (const track of stream.getTracks()) track.stop()
-  }
-
   recorder.ondataavailable = (event) => {
     if (!event.data.size) return
 
+    if (full || held + event.data.size > MOST_BYTES) {
+      if (!full) listening.full?.()
+      full = true
+      return
+    }
     chunks.push(event.data)
     held += event.data.size
-    if (held <= MOST_BYTES || full) return
-
-    full = true
-    listening.full?.()
-    if (recorder.state !== 'inactive') recorder.stop()
   }
 
   recorder.start(HANDOVER)
@@ -73,7 +69,7 @@ export async function record(listening: Listening = {}): Promise<Recording> {
     stop: () =>
       new Promise((resolve) => {
         const done = () => {
-          close()
+          for (const track of stream.getTracks()) track.stop()
           const kind = recorder.mimeType || type || 'audio/webm'
           void new Blob(chunks, { type: kind })
             .arrayBuffer()

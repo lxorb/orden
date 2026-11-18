@@ -1,0 +1,6 @@
+{
+  "name": "system",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base", "placement"]
+}

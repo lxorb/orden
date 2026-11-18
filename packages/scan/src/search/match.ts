@@ -1,9 +1,10 @@
-import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { backtracksWildly } from '@orden/markdown/pattern-cost'
+import { frontMatterBlock, frontMatterKeys, frontMatterList } from '@orden/markdown/front-matter'
+import { searchBacktracksWildly } from '@orden/markdown/pattern-cost'
 import { taskAt } from '@orden/markdown/tasks'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 import { lineAt, lineStarts } from './lines'
 import { isEmpty, type Query, type Unit } from './query'
-import { tagsIn } from './tags'
+import { tagPath, tagsIn } from './tags'
 
 export interface SearchNote {
   path: string
@@ -42,6 +43,10 @@ export interface Hit {
 
 const LINE = 200
 
+export const shownLine = (raw: string): string => Array.from(raw.trim()).slice(0, LINE).join('')
+
+export const shownWhole = (text: string): boolean => Array.from(text).length < LINE
+
 const HEADING = /^ {0,3}#{1,6}(\s|$)/
 
 export interface Work {
@@ -51,9 +56,7 @@ export interface Work {
   characters: number
 }
 
-function nothing(): Work {
-  return { notes: 0, regions: 0, needles: 0, characters: 0 }
-}
+const nothing = (): Work => ({ notes: 0, regions: 0, needles: 0, characters: 0 })
 
 const work = nothing()
 
@@ -63,7 +66,8 @@ export function workDone(): Work {
   return done
 }
 
-export function fold(text: string): string {
+export function fold(written: string): string {
+  const text = written.includes('Σ') ? written.replaceAll('Σ', 'σ') : written
   const lowered = text.toLowerCase()
   if (lowered.length === text.length) return lowered
 
@@ -83,9 +87,10 @@ const A_TASK: Partial<Record<Unit, 'any' | 'todo' | 'done'>> = {
 }
 
 function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
-  const ends = starts.map((_start, index) => {
+  const ends = starts.map((start, index) => {
     const next = starts[index + 1]
-    return next === undefined ? body.length : next - 1
+    if (next === undefined) return body.length
+    return next - 2 >= start && body.charAt(next - 2) === '\r' ? next - 2 : next - 1
   })
 
   if (unit === 'line') {
@@ -95,10 +100,13 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   const state = A_TASK[unit]
   if (state) {
     const found: Range[] = []
+    const code = new CodeBlocks()
 
     for (const [index, start] of starts.entries()) {
       const end = ends[index] ?? body.length
-      const task = taskAt(body.slice(start, end))
+      const text = body.slice(start, end)
+      if (code.line(text) !== WORDS) continue
+      const task = taskAt(text)
       if (!task) continue
       if (state === 'todo' && task.done) continue
       if (state === 'done' && !task.done) continue
@@ -110,6 +118,7 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   }
 
   const out: Range[] = []
+  const code = new CodeBlocks()
   let open: number | null = null
 
   const close = (to: number) => {
@@ -127,7 +136,7 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
       continue
     }
 
-    if (HEADING.test(text)) {
+    if (code.line(text) === WORDS && HEADING.test(text)) {
       close(ends[index - 1] ?? start)
       open = start
     } else open ??= start
@@ -137,64 +146,58 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   return out
 }
 
-function frontMatter(body: string): Map<string, string> {
-  const out = new Map<string, string>()
-  const block = frontMatterBlock(body)
-  if (!block) return out
-
-  for (const line of body.slice(block.body.from, block.body.to).split('\n')) {
-    if (/^\s/.test(line)) continue
-
-    const colon = line.indexOf(':')
-    if (colon <= 0) continue
-
-    out.set(line.slice(0, colon).trim().toLowerCase(), line.slice(colon + 1).trim())
-  }
-
-  return out
-}
+const keysIn = (body: string): Set<string> =>
+  new Set(frontMatterKeys(body).map((key) => key.toLowerCase()))
 
 interface Facts {
   note: SearchNote
   folded: string | null
   starts: readonly number[] | null
   tags: string[] | null
-  front: Map<string, string> | null
+  keys: Set<string> | null
+  front: Map<string, string[]> | null
   words: number | null
   units: Partial<Record<Unit, Range[]>>
   places: Map<string, number[]>
 }
 
-function foldedOf(facts: Facts): string {
-  return (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
+const foldedOf = (facts: Facts): string =>
+  (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
+
+const startsOf = (facts: Facts): readonly number[] =>
+  (facts.starts ??= facts.note.starts?.() ?? lineStarts(facts.note.body))
+
+const tagsOf = (facts: Facts): string[] =>
+  (facts.tags ??= tagsIn(facts.note.body).map((tag) => tagPath(tag.slice(1))))
+
+function propertyOf(facts: Facts, name: string): string[] | undefined {
+  if (!(facts.keys ??= keysIn(facts.note.body)).has(name)) return undefined
+
+  const front = (facts.front ??= new Map<string, string[]>())
+  const held = front.get(name)
+  if (held) return held
+
+  const values = frontMatterList(facts.note.body, name)
+  front.set(name, values)
+  return values
 }
 
-function startsOf(facts: Facts): readonly number[] {
-  return (facts.starts ??= facts.note.starts?.() ?? lineStarts(facts.note.body))
-}
+const wordsIn = (body: string): number => frontMatterBlock(body)?.to ?? 0
 
-function tagsOf(facts: Facts): string[] {
-  return (facts.tags ??= tagsIn(facts.note.body).map((tag) => tag.slice(1).toLowerCase()))
-}
+const wordsFrom = (facts: Facts): number => (facts.words ??= wordsIn(facts.note.body))
 
-function frontOf(facts: Facts): Map<string, string> {
-  return (facts.front ??= frontMatter(facts.note.body))
-}
-
-function wordsIn(body: string): number {
-  return frontMatterBlock(body)?.to ?? 0
-}
-
-function wordsFrom(facts: Facts): number {
-  return (facts.words ??= wordsIn(facts.note.body))
-}
-
-function unitsOf(facts: Facts, unit: Unit): Range[] {
-  return (facts.units[unit] ??= unitsIn(facts.note.body, startsOf(facts), unit))
-}
+const unitsOf = (facts: Facts, unit: Unit): Range[] =>
+  (facts.units[unit] ??= unitsIn(facts.note.body, startsOf(facts), unit))
 
 const A_NUMBER = /^-?\d+(?:\.\d+)?$/
-const A_DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/
+const A_DATE =
+  /^(\d{4}-\d{2}-\d{2})(?:[Tt ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(?:[Zz]|[+-]\d{2}:?\d{2})?)?$/
+
+function wallClock(said: string): string | null {
+  const read = A_DATE.exec(said)
+  if (!read) return null
+  return read[2] ? `${read[1]}T${read[2]}` : (read[1] ?? null)
+}
 
 function order(value: string, asked: string): number {
   const one = value.trim()
@@ -206,21 +209,36 @@ function order(value: string, asked: string): number {
     return here < there ? -1 : here > there ? 1 : 0
   }
 
-  const dates = A_DATE.test(one) && A_DATE.test(other)
-  const left = dates ? one.replace(' ', 'T') : one.toLowerCase()
-  const right = dates ? other.replace(' ', 'T') : other.toLowerCase()
+  const here = wallClock(one)
+  const there = wallClock(other)
+  const shared = here && there ? Math.min(here.length, there.length) : 0
+  const left = here && there ? here.slice(0, shared) : one.toLowerCase()
+  const right = here && there ? there.slice(0, shared) : other.toLowerCase()
   return left < right ? -1 : left > right ? 1 : 0
 }
+
+function alike(value: string, asked: string): boolean {
+  const one = value.trim()
+  const other = asked.trim()
+  const measured =
+    (A_NUMBER.test(one) && A_NUMBER.test(other)) || (A_DATE.test(one) && A_DATE.test(other))
+  return measured ? order(one, other) === 0 : one.toLowerCase() === other.toLowerCase()
+}
+
+const NULLS = new Set(['', '~', 'null', 'Null', 'NULL'])
+
+const heldValue = (value: string): boolean => !NULLS.has(value.trim())
 
 function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>): boolean {
   const asked = query.value
   if (asked === null) return true
+  if (query.compare !== 'has' && query.compare !== 'is' && !heldValue(value)) return false
 
   switch (query.compare) {
     case 'has':
       return contains(value, asked, true)
     case 'is':
-      return value.trim().toLowerCase() === asked.trim().toLowerCase()
+      return alike(value, asked)
     case 'lt':
       return order(value, asked) < 0
     case 'lte':
@@ -244,9 +262,8 @@ function pastFrontMatter(body: string, starts: readonly number[]): number {
   return past === -1 ? starts.length : past
 }
 
-function contains(hay: string, needle: string, folded: boolean): boolean {
-  return folded ? hay.toLowerCase().includes(needle.toLowerCase()) : hay.includes(needle)
-}
+const contains = (hay: string, needle: string, folded: boolean): boolean =>
+  folded ? hay.toLowerCase().includes(needle.toLowerCase()) : hay.includes(needle)
 
 function placesIn(facts: Facts, hay: string, needle: string, folded: boolean): number[] {
   const key = `${folded ? 'i' : ' '}${needle}`
@@ -297,8 +314,23 @@ function clip(one: Range, other: Range): Range | null {
   return from <= to ? { from, to } : null
 }
 
+function compiled(source: string, flags: string): RegExp | null {
+  try {
+    return new RegExp(source, `${flags}u`)
+  } catch {
+    try {
+      return new RegExp(source, flags)
+    } catch {
+      return null
+    }
+  }
+}
+
 export class Matcher {
   private readonly patterns = new Map<string, RegExp | null>()
+
+  private readonly wildLines = new Map<string, boolean>()
+
   private readonly needles = new Map<string, string>()
 
   constructor(private readonly query: Query) {}
@@ -309,6 +341,7 @@ export class Matcher {
       folded: null,
       starts: null,
       tags: null,
+      keys: null,
       front: null,
       words: null,
       units: {},
@@ -353,7 +386,7 @@ export class Matcher {
     const next = starts[line + 1]
     const raw = note.body.slice(from, next === undefined ? note.body.length : next - 1)
     const lead = raw.length - raw.trimStart().length
-    const text = Array.from(raw.trim()).slice(0, LINE).join('')
+    const text = shownLine(raw)
 
     const moved: Range[] = []
     for (const range of ranges) {
@@ -422,19 +455,20 @@ export class Matcher {
         return contains(facts.note.name, query.text, query.fold) ? [] : null
 
       case 'tag': {
-        const wanted = query.tag.toLowerCase()
+        const wanted = tagPath(query.tag)
         const has = tagsOf(facts).some((tag) => tag === wanted || tag.startsWith(`${wanted}/`))
 
         return has ? [] : null
       }
 
       case 'property': {
-        const value = frontOf(facts).get(query.name)
+        const values = propertyOf(facts, query.name)
 
-        if (query.compare === 'null') return value?.trim() ? null : []
-        if (value === undefined) return null
+        if (query.compare === 'null') return values?.some(heldValue) ? null : []
+        if (values === undefined) return null
+        if (query.value === null) return []
 
-        return heldAgainst(value, query) ? [] : null
+        return values.some((one) => heldAgainst(one, query)) ? [] : null
       }
 
       case 'scope': {
@@ -474,12 +508,9 @@ export class Matcher {
     const held = this.patterns.get(key)
     if (held !== undefined) return held
 
-    let made: RegExp | null
-    try {
-      made = backtracksWildly(source) ? null : new RegExp(source, folded ? 'gi' : 'g')
-    } catch {
-      made = null
-    }
+    const made = searchBacktracksWildly(source, folded)
+      ? null
+      : compiled(source, folded ? 'gi' : 'g')
 
     this.patterns.set(key, made)
     return made
@@ -491,30 +522,95 @@ export class Matcher {
 
     const whole = region.from === 0 && region.to === body.length
     const text = whole ? body : body.slice(region.from, region.to)
+    const pieces = stretches(text)
     const out: Span[] = []
-    pattern.lastIndex = 0
 
-    for (;;) {
-      const found = pattern.exec(text)
-      if (!found) break
-
-      const from = found.index
-      const to = from + found[0].length
-
-      if (to === from) {
-        pattern.lastIndex = from + 1
-        continue
-      }
-
-      out.push({
-        from: region.from + from,
-        to: region.from + to,
-        groups: Array.from({ length: found.length - 1 }, (_, index) => found[index + 1] ?? ''),
-      })
-
-      pattern.lastIndex = to
+    for (const piece of pieces) {
+      if (piece.longest && this.wildOver(source, folded, piece)) continue
+      const part = pieces.length === 1 ? text : text.slice(piece.from, piece.to)
+      found(pattern, part, region.from + piece.from, out)
     }
 
     return out.length ? out : null
+  }
+
+  private wildOver(source: string, folded: boolean, piece: Stretch): boolean {
+    const key = `${folded ? 'i' : ''}\0${bucket(piece.longest)}\0${bucket(piece.widest)}\0${source}`
+    let held = this.wildLines.get(key)
+    if (held === undefined) {
+      held = searchBacktracksWildly(source, folded, piece.longest, piece.widest)
+      this.wildLines.set(key, held)
+    }
+    return held
+  }
+}
+
+interface Stretch extends Range {
+  longest: number
+  widest: number
+}
+
+const LONG_LINE = 2000
+
+const bucket = (length: number): number => (length > 0 ? Math.ceil(Math.log2(length)) : 0)
+
+function stretches(text: string): Stretch[] {
+  const out: Stretch[] = []
+  let start = 0
+  let at = 0
+  for (;;) {
+    const end = text.indexOf('\n', at)
+    const stop = end === -1 ? text.length : end
+    if (stop - at > LONG_LINE) {
+      if (at > start) out.push({ from: start, to: at, longest: 0, widest: 0 })
+      out.push({ from: at, to: stop, longest: stop - at, widest: widestRun(text, at, stop) })
+      start = stop
+    }
+    if (end === -1) break
+    at = end + 1
+  }
+  if (start < text.length || !out.length) {
+    out.push({ from: start, to: text.length, longest: 0, widest: 0 })
+  }
+  return out
+}
+
+function widestRun(text: string, from: number, to: number): number {
+  let widest = 0
+  let run = 0
+  for (let at = from; at < to; at++) {
+    const code = text.charCodeAt(at)
+    if (code === 32 || code === 9 || code === 13 || code === 0xa0 || code === 0x3000) {
+      run = 0
+      continue
+    }
+    run += 1
+    if (run > widest) widest = run
+  }
+  return widest
+}
+
+function found(pattern: RegExp, text: string, offset: number, out: Span[]) {
+  pattern.lastIndex = 0
+
+  for (;;) {
+    const match = pattern.exec(text)
+    if (!match) break
+
+    const from = match.index
+    const to = from + match[0].length
+
+    if (to === from) {
+      pattern.lastIndex = from + (pattern.unicode && (text.codePointAt(from) ?? 0) > 0xffff ? 2 : 1)
+      continue
+    }
+
+    out.push({
+      from: offset + from,
+      to: offset + to,
+      groups: Array.from({ length: match.length - 1 }, (_, index) => match[index + 1] ?? ''),
+    })
+
+    pattern.lastIndex = to
   }
 }

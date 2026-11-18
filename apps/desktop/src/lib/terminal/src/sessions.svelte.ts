@@ -22,13 +22,14 @@ import {
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../../ui-controls/src/api'
-import { droppedPaths, identifier, localDate, platform } from '../../platform/src/api'
+import { droppedPaths, identifier, invoke, localDate, platform } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
 import { owes } from '../../parting/src/api'
 import { SHORTCUTS, shortcuts } from '../../shortcuts/src/api'
 import { hostReached } from './remote/hosts'
 import { remote } from './remote/hosts.svelte'
 import { madeNow, markMade } from './remote/open'
+import { isPlain, markPlain } from './remote/plain'
 import { isMadeName, isOnlineTab, termName } from '../../online-terms/src/api'
 import { Arrival, type Status } from './online/arrival.svelte'
 import { LocalEcho } from './online/echo-view'
@@ -61,26 +62,28 @@ import { type Machine, PtySource, remoteShell, type Said, type Source } from './
 import { hostIdOf, hostShell, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 
 const SCROLLBACK = 5000
-
 const QUIET = 2000
-
 const FLOOD = 10_000
-
 const RESTING = 300
-
 const KERNEL_SAYS = ['linux', 'macos']
-
 const AFTER_ENTER = 500
-
 const ASK_AFTER = 300
-
 const ASK_EVERY = 1000
-
 const NOTICE_EVERY = 4000
-
 const OFFERED_FOR = 60_000
-
 const RELINK_GRACE = 5000
+const CONNECTED_AFTER = 10_000
+const FIRST_RETRY = 1000
+const LONGEST_RETRY = 15_000
+const MOST_RETRIES = 40
+
+function held(key: string): Promise<boolean> {
+  if (!key) return Promise.resolve(false)
+  return invoke<unknown>('pty_held', { key }).then(
+    (found) => found === true,
+    () => false,
+  )
+}
 
 function windowsPty(): { backend: 'conpty'; buildNumber: number } | undefined {
   if (platform() !== 'windows') return undefined
@@ -125,6 +128,12 @@ class Session {
   private applying = false
   private relinking = false
   private relinkSlow: ReturnType<typeof setTimeout> | undefined
+  private heldHost: string | null = null
+  private stillHeld = false
+  private detached = false
+  private startedAt = 0
+  private tries = 0
+  private retrying: ReturnType<typeof setTimeout> | undefined
 
   live = $state(true)
   machine = $state<Machine | null>(null)
@@ -159,6 +168,7 @@ class Session {
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
   offline = $state(false)
+  writer = $state(true)
 
   get status(): Status | null {
     return this.online && !this.live && !this.offline ? this.arrival.status : null
@@ -466,7 +476,8 @@ class Session {
       return null
     }
 
-    return shells.restoring ? historyOf(this.place()) : null
+    this.stillHeld = await held(spec.key)
+    return shells.restoring && !this.stillHeld ? historyOf(this.place()) : null
   }
 
   private replay(history: History | null) {
@@ -505,8 +516,7 @@ class Session {
   }
 
   private begin() {
-    if (this.online) void this.start()
-    else if (this.remote && !madeNow(this.spec().key)) this.wait()
+    if (!this.online && this.remote && !madeNow(this.spec().key) && !this.stillHeld) this.wait()
     else void this.start()
   }
 
@@ -647,7 +657,25 @@ class Session {
     }
   }
 
+  get detachable(): boolean {
+    if (this.online || this.pty === null) return false
+    return hostIdOf(this.spec().shell) === null || this.heldHost !== null
+  }
+
+  takeOver() {
+    if (this.writer || this.online) return
+    this.source?.take?.()
+  }
+
+  detachSession() {
+    if (!this.detachable) return
+    this.detached = true
+    this.source?.detach?.()
+    workspace.close(this.tab.id)
+  }
+
   end() {
+    clearTimeout(this.retrying)
     clearTimeout(this.relinkSlow)
     clearTimeout(this.resting)
     clearTimeout(this.waitingIdle)
@@ -663,7 +691,9 @@ class Session {
       void (this.coming ?? historyOf(place)).then((last) => dropHistory(place, last))
     }
 
-    this.source?.end()
+    if (this.online || this.pty !== null) {
+      if (!this.detached) this.source?.end()
+    } else this.endHeld()
     this.source = null
     this.pty = null
     this.arrival.stop()
@@ -676,6 +706,13 @@ class Session {
     this.echo?.dispose()
     this.term.dispose()
     this.host.remove()
+  }
+
+  private endHeld() {
+    const spec = this.spec()
+    const host = hostIdOf(spec.shell)
+    if (host === null || !this.offline || isPlain(host) || spec.via || !spec.key) return
+    void invoke('remote_end', { host, key: spec.key }).catch(() => undefined)
   }
 
   remember() {
@@ -726,7 +763,10 @@ class Session {
     }
     this.started += 1
     const id = `${this.tab.id}-${this.started}`
+    clearTimeout(this.retrying)
     this.pty = id
+    this.writer = true
+    this.startedAt = Date.now()
     this.exited = null
     setEnded(this.tab.id, false)
     this.offline = false
@@ -745,7 +785,7 @@ class Session {
             offer: (url) => this.offer(url),
           },
         )
-      : new PtySource(id, spec.shell, spec.folder, this.remote)
+      : this.ptySource(id, spec)
     if (this.pty !== id) {
       source.end()
       return
@@ -764,6 +804,13 @@ class Session {
 
     if (this.term.cols !== cols || this.term.rows !== rows)
       this.sized(this.term.cols, this.term.rows)
+  }
+
+  private ptySource(id: string, spec: Spec): PtySource {
+    const host = hostIdOf(spec.shell)
+    const plain = host !== null && isPlain(host)
+    this.heldHost = host !== null && !plain ? host : null
+    return new PtySource(id, spec.shell, spec.folder, this.remote, spec.key || id, plain, spec.name)
   }
 
   private async failed(spec: Spec) {
@@ -826,6 +873,7 @@ class Session {
       if (what.connected && this.screened) this.landed()
       else this.live = false
     } else if ('typing' in what) this.mayType = what.typing
+    else if ('writer' in what) this.writer = what.writer
     else if ('held' in what) {
       if (what.held) {
         this.live = false
@@ -972,6 +1020,23 @@ class Session {
       return
     }
 
+    const host = this.heldHost
+    if (host !== null) {
+      const lasted = Date.now() - this.startedAt > CONNECTED_AFTER
+      if (lasted) this.tries = 0
+      if (code === 255 && (lasted || this.tries > 0)) {
+        this.reconnectSoon(host)
+        return
+      }
+      if (code !== 255 && !lasted) {
+        markPlain(host)
+        this.heldHost = null
+        this.say(`${this.tab.shown} has no tmux, so this session is not persistent`)
+        void this.start()
+        return
+      }
+    }
+
     if (this.remote) {
       this.wait()
       return
@@ -979,6 +1044,25 @@ class Session {
 
     this.exited = code
     this.say(`Exited with code ${code}`)
+  }
+
+  private reconnectSoon(host: string) {
+    this.tries += 1
+    if (this.tries > MOST_RETRIES) {
+      this.tries = 0
+      this.wait()
+      return
+    }
+    if (this.tries === 1) this.say(`Disconnected from ${this.tab.shown}, reconnecting`)
+    this.wait()
+    const after = Math.min(LONGEST_RETRY, FIRST_RETRY * 2 ** (this.tries - 1))
+    clearTimeout(this.retrying)
+    this.retrying = setTimeout(() => {
+      this.retrying = undefined
+      if (!this.offline || this.pty !== null || !this.drawn) return
+      remote.connected(host)
+      void this.start()
+    }, after)
   }
 
   private say(words: string) {
@@ -990,6 +1074,7 @@ class Session {
       this.typedOnline(data, binary)
       return
     }
+    if (!this.writer) return
     if (this.pty === null) {
       if (this.offline && data === '\r') this.reconnect()
       else if (this.exited !== null && data === '\r') {
@@ -1065,9 +1150,7 @@ class Session {
 
     const folder = await source.where()
     const spec = this.spec()
-    if (folder && folder !== spec.folder) {
-      this.respec({ ...spec, folder })
-    }
+    if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
   }
 
   private reported(code: 7 | 9, data: string): boolean {
@@ -1213,29 +1296,16 @@ class Session {
   }
 
   private act(route: Exclude<Route, 'shell' | 'app' | 'paste' | 'ask'>) {
-    switch (route) {
-      case 'copy':
-        this.copyChosen()
-        return
-      case 'find':
-        this.finding = true
-        return
-      case 'select-all':
-        this.term.selectAll()
-        return
-      case 'clear':
-        this.term.clear()
-        return
-      case 'zoom-in':
-        shells.setSize(shells.size + 1)
-        return
-      case 'zoom-out':
-        shells.setSize(shells.size - 1)
-        return
-      case 'zoom-reset':
-        shells.setSize(SIZES.initial)
-        return
+    const acts: Record<typeof route, () => unknown> = {
+      copy: () => this.copyChosen(),
+      find: () => (this.finding = true),
+      'select-all': () => this.term.selectAll(),
+      clear: () => this.term.clear(),
+      'zoom-in': () => shells.setSize(shells.size + 1),
+      'zoom-out': () => shells.setSize(shells.size - 1),
+      'zoom-reset': () => shells.setSize(SIZES.initial),
     }
+    acts[route]()
   }
 
   private copyChosen() {
@@ -1370,6 +1440,7 @@ class Session {
       { label: 'Select all', run: () => this.term.selectAll() },
       { label: 'Find', hint: shortcuts.hint('edit.find'), run: () => (this.finding = true) },
       { label: 'Clear', run: () => this.term.clear() },
+      ...(this.detachable ? [DIVIDER, { label: 'Detach', run: () => this.detachSession() }] : []),
     ]
 
     menu.show(event, rows)
@@ -1432,10 +1503,7 @@ export function screenOf(tab: { readonly id: string }): { text: string; cols: nu
 
 export function sessionOf(tab: Tab): Session {
   let one = sessions.get(tab.id)
-  if (!one) {
-    one = new Session(tab)
-    sessions.set(tab.id, one)
-  }
+  if (!one) sessions.set(tab.id, (one = new Session(tab)))
   return one
 }
 

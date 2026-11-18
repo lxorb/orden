@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -103,5 +101,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("an address half typed stays with its tab, caret and all")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
-import { identifier, samePath, invoke, windows } from '../../platform/src/api'
-import { leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
+import { identifier, samePath, invoke, windows, within } from '../../platform/src/api'
+import { forgetHome, homeOf, leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
 import type { Space } from './workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 import { services } from './services'
@@ -9,12 +9,15 @@ export async function adoptSpace(
   ws: HoldsSpaces,
   name: string,
   fresh = false,
+  home?: string,
 ): Promise<string | null> {
   const existing = fresh ? undefined : ws.spaces.find((space) => space.name === name)
   if (existing) return existing.root
 
   const created =
-    (fresh ? null : await keptFolder(name.trim())) ??
+    (fresh && home === undefined
+      ? null
+      : await keptFolder(name.trim(), fresh ? home : undefined)) ??
     (await invoke<{ name: string; path: string }>('create_space', {
       name: name.trim(),
     }).catch(() => null))
@@ -33,10 +36,20 @@ export async function adoptSpace(
   return created.path
 }
 
-async function keptFolder(name: string): Promise<{ name: string; path: string } | null> {
+async function keptFolder(
+  name: string,
+  home?: string,
+): Promise<{ name: string; path: string } | null> {
   const listed = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null)
   const who = account.user?.id ?? null
-  return listed?.find((one) => one.name === name && !leftByAnother(one.path, who)) ?? null
+  return (
+    listed?.find(
+      (one) =>
+        one.name === name &&
+        !leftByAnother(one.path, who) &&
+        (home === undefined || homeOf(one.path, who) === home),
+    ) ?? null
+  )
 }
 
 export async function addSpace(ws: HoldsSpaces, name: string) {
@@ -48,6 +61,7 @@ export async function addSpace(ws: HoldsSpaces, name: string) {
 
   if (!created) return
 
+  forgetHome(created.path)
   const listed = ws.spaces.find((one) => samePath(one.root, created.path))
   const space: Space = listed ?? { id: identifier(), name: created.name, root: created.path }
   if (!listed) ws.spaces = [...ws.spaces, space]
@@ -88,21 +102,18 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space) return
 
-  {
-    const toAccount = account.signedIn && !keep && (await accountHoldsSpace(space.root))
-    const gone = await (
-      toAccount
-        ? invoke('delete_space', { path: space.root })
-        : invoke('trash_item', { path: space.root, kind: 'space' })
-    )
-      .then(() => true)
-      .catch(() => false)
+  const toAccount = account.signedIn && !keep && (await accountHoldsSpace(space.root))
+  const gone = await (
+    toAccount
+      ? invoke('delete_space', { path: space.root }).then(() => ({ back: undefined }))
+      : invoke<{ id: string }>('trash_item', { path: space.root, kind: 'space' }).then((entry) => ({
+          back: entry.id,
+        }))
+  ).catch(() => null)
 
-    if (!gone) return
-    if (toAccount) leftGone(space.root)
-  }
-
-  await spaceGone(ws, space)
+  if (!gone) return
+  if (toAccount) leftGone(space.root)
+  await spaceGone(ws, space, gone.back)
 }
 
 export async function dropSpace(ws: HoldsSpaces, id: string) {
@@ -111,7 +122,7 @@ export async function dropSpace(ws: HoldsSpaces, id: string) {
   await invoke('delete_space', { path: space.root })
   const trash = await invoke<{ id: string; from: string }[]>('list_trash').catch(() => [])
   for (const one of trash) {
-    if (samePath(one.from, space.root) || one.from.startsWith(`${space.root}/`)) {
+    if (within(space.root, one.from) !== null) {
       await invoke('purge_trash', { id: one.id }).catch(() => undefined)
     }
   }
@@ -119,9 +130,9 @@ export async function dropSpace(ws: HoldsSpaces, id: string) {
   await spaceGone(ws, space)
 }
 
-async function spaceGone(ws: HoldsSpaces, space: Space) {
+async function spaceGone(ws: HoldsSpaces, space: Space, back?: string) {
   const id = space.id
-  await ws.fileGone(space.root, 'space')
+  await ws.fileGone(space.root, 'space', back)
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
   const fetched =
     tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length

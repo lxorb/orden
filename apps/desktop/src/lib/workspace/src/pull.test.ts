@@ -1,26 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const refreshing = vi.hoisted(() => ({
-  calls: 0,
-  answer: (): Promise<void> => Promise.resolve(),
-}))
+const refreshing = vi.hoisted(() => ({ calls: 0, answer: (): Promise<void> => Promise.resolve() }))
 vi.mock('./refresh', () => ({
   refreshHere: () => {
     refreshing.calls++
@@ -62,7 +45,6 @@ describe('how far the surface follows', () => {
   test('less than the finger, and by less and less', () => {
     const near = pulled(20)
     const far = pulled(200)
-
     expect(near).toBeGreaterThan(0)
     expect(near).toBeLessThan(20 * 1.6)
     expect(far).toBeGreaterThan(near)

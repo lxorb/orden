@@ -25,26 +25,6 @@
   --text-strong: #05070a;
 }
 
-:root[data-translucent] {
-  --shell-ground: color-mix(in srgb, var(--glass-chrome) var(--glass-wash), transparent);
-  --content-ground: color-mix(in srgb, var(--bg) var(--content-alpha, 100%), transparent);
-  --terminal-ground: color-mix(in srgb, var(--bg) var(--terminal-alpha, 100%), transparent);
-  --content-link: color-mix(in srgb, var(--accent) 70%, var(--text-strong));
-  --tab-frame: transparent;
-  --side-bar-bg-color: var(--glass-layer);
-  --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
-}
-
-:root[data-translucent='mica'] {
-  --glass-chrome: #232932;
-  --glass-wash: 40%;
-}
-
-:root[data-translucent='mica'][data-theme='light'] {
-  --glass-chrome: #f4f6f9;
-  --glass-wash: 30%;
-}
-
 :root[data-tinted] {
   --paper: var(--bg);
   --shell-ground: color-mix(
@@ -56,15 +36,6 @@
   --side-bar-bg-color: var(--glass-layer);
   --item-hover-bg-color: color-mix(in srgb, var(--text) 8%, transparent);
   --glass-tab-hover: color-mix(in srgb, var(--text) 10%, transparent);
-}
-
-:root[data-tinted][data-translucent] {
-  --paper: var(--content-ground);
-  --shell-ground: color-mix(
-    in srgb,
-    var(--glass-tint, var(--glass-chrome)) var(--glass-tinted, var(--glass-wash)),
-    transparent
-  );
 }
 
 :root[data-tinted] [data-theme]:not([data-palette]) {
@@ -106,11 +77,6 @@
   --shell-ground: var(--glass-blend);
 }
 
-:root[data-tinted][data-paired][data-translucent] {
-  --glass-from: color-mix(in srgb, var(--glass-tint) var(--glass-tinted, 100%), transparent);
-  --glass-to: color-mix(in srgb, var(--glass-tint-2) var(--glass-tinted, 100%), transparent);
-}
-
 @property --tab-ground {
   syntax: '<color>';
   inherits: true;
@@ -118,10 +84,6 @@
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  :root[data-translucent][data-theme] {
-    --glass-wash: 100%;
-  }
-
   :root[data-tinted][data-theme] {
     --shell-ground: var(--glass-tint, var(--glass-chrome));
   }
@@ -130,10 +92,5 @@
     --glass-from: var(--glass-tint);
     --glass-to: var(--glass-tint-2);
     --shell-ground: var(--glass-blend);
-  }
-
-  :root[data-translucent][data-theme] {
-    --content-ground: var(--bg);
-    --terminal-ground: var(--bg);
   }
 }

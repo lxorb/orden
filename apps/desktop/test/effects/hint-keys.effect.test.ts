@@ -7,12 +7,6 @@ import { settings } from '../../src/lib/settings/src/api'
 providePort('settings.window', settings)
 
 Element.prototype.animate = () => ({ finished: Promise.resolve() }) as unknown as Animation
-globalThis.ResizeObserver = class {
-  observe = () => undefined
-  unobserve = () => undefined
-  disconnect = () => undefined
-}
-
 test('the `i` turns nothing, and no switch holds anything the keyboard can reach', () => {
   settings.section = 'markdown'
   mount(SettingsPanel, { target: document.body })

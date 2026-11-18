@@ -24,9 +24,7 @@ export const tableTracking = ViewPlugin.define((view) => {
 })
 
 export function tableViewAt(editor: EditorView, from: number): TableView | null {
-  for (const table of live) {
-    if (table.editor === editor && table.span()?.from === from) return table
-  }
+  for (const table of live) if (table.editor === editor && table.span()?.from === from) return table
   return null
 }
 

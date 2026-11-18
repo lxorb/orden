@@ -1,7 +1,15 @@
 import type { Awareness } from 'y-protocols/awareness'
 import { account, type LiveNote } from './ports'
 import { busy } from '../../ui-kit/src/api'
-import { deviceAccent, deviceName, personFace, personName, rooms } from '../../collab/src/api'
+import {
+  demoted,
+  deviceAccent,
+  deviceName,
+  personFace,
+  personName,
+  rooms,
+  TOO_LARGE_FOR_A_ROOM,
+} from '../../collab/src/api'
 import type { Carrying, Seen, Who } from '../../collab-rooms/src/api'
 import { theme } from '../../theme/src/api'
 import type { InkStroke } from '@orden/markdown/canvas'
@@ -41,27 +49,18 @@ export async function carry(
     },
     refused: () => {
       uncarry(key)
-      busy.failed('This note is as large as a note in a room may get.')
+      busy.failed(TOO_LARGE_FOR_A_ROOM)
     },
     shut: (signedOut: boolean) => {
       uncarry(key)
       if (signedOut) void account().recheck()
     },
     demoted: () => {
-      const note = 'note' in carried.on ? carried.on.note : null
-      if (note) note.reads = true
-      uncarry(key)
-      void account()
-        .loadSpaces()
-        .then(
-          () => {
-            if (note) note.reads = false
-          },
-          () => undefined,
-        )
-        .then(() => {
-          carried.gone()
-        })
+      void demoted(
+        'note' in carried.on ? carried.on.note : null,
+        () => uncarry(key),
+        () => carried.gone(),
+      )
     },
     holds: carried.holds ?? (() => true),
     carrying: carried.carrying,

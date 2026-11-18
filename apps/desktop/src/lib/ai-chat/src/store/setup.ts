@@ -1,7 +1,5 @@
-import type { ProviderKind } from '../../../ai-providers/src/api'
-import { ai } from '../../../ai-providers/src/api'
+import { type ProviderKind, ai, type Engine, type Thread } from '../../../ai-providers/src/api'
 import { engineFor, type Setup } from '../chat/engine'
-import type { Engine, Thread } from '../../../ai-providers/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { protection } from '../../../protect/src/api'
 import { fromOthers } from '../commands/found'

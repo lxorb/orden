@@ -1,8 +1,14 @@
 import { escapeAll } from '@orden/markdown/html'
 import { CODE_PALETTES } from '@orden/editor'
-import { type EmbeddedNote, frontMatterValue, renderMarkdown, type Wikilink } from '@orden/markdown'
+import {
+  type EmbeddedNote,
+  frontMatterValue,
+  type PictureResolver,
+  renderMarkdown,
+  type Wikilink,
+} from '@orden/markdown'
 import { exportCss, themeCss } from '@orden/themes/raw'
-import { accentTokens, DEFAULT_ACCENT } from '../../theme/src/api'
+import { accentTokens, DEFAULT_ACCENT, type Scheme } from '../../theme/src/api'
 import { busy } from '../../ui-kit/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { type Fence, prepareNote } from '../../fences/src/api'
@@ -21,12 +27,12 @@ import { PANDOC_FORMATS, type PandocFormat } from '../../export-formats/src/api'
 import { paletteCss } from '../../highlight/src/api'
 import { mathCss } from './math-fonts'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from '@orden/contracts'
-import type { Scheme } from '../../theme/src/api'
 import { diskPathOf } from '../../web-backend/src/api'
 
 export interface HtmlOptions {
   bare?: boolean
   resolveImage?: (src: string) => string
+  pictures?: PictureResolver
   scheme?: Scheme
   accent?: string
   codeTheme?: string
@@ -36,34 +42,30 @@ export interface HtmlOptions {
   fence?: Fence
   readNote?: (target: string) => Promise<string | EmbeddedNote | null>
   embed?: (link: Wikilink) => string | EmbeddedNote | null
-  pictures?: (html: string, embedded: EmbeddedNote | null) => string
   escapeHtml?: boolean
 }
 
-function declarations(tokens: Record<string, string>): string {
-  return Object.entries(tokens)
+const declarations = (tokens: Record<string, string>): string =>
+  Object.entries(tokens)
     .map(([token, value]) => `${token}: ${value};`)
     .join(' ')
-}
 
-function accentCss(accent: string, scheme: Scheme): string {
-  return [
+const accentCss = (accent: string, scheme: Scheme): string =>
+  [
     `:root { ${declarations(accentTokens(accent, scheme))} }`,
     `@media print { :root { ${declarations(accentTokens(accent, 'light'))} } }`,
   ].join('\n')
-}
 
-export function buildBody(source: string, options: HtmlOptions = {}): string {
-  return renderMarkdown(source, {
+export const buildBody = (source: string, options: HtmlOptions = {}): string =>
+  renderMarkdown(source, {
     footnotes: true,
     toc: true,
     cover: true,
     ...(options.fence ? { code: options.fence } : {}),
     ...(options.embed ? { resolveEmbed: options.embed } : {}),
+    ...(options.pictures ? { resolvePicture: options.pictures } : {}),
     ...(options.escapeHtml ? { escapeHtml: true } : {}),
-    ...(options.pictures ? { pictures: options.pictures } : {}),
   })
-}
 
 export function buildStyles(body: string, source: string, options: HtmlOptions = {}): string {
   const palette =

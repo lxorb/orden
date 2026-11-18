@@ -1,10 +1,8 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+import { ROOT, walk } from './files'
 
 const SOURCES = [
   'apps/desktop/src',
@@ -16,15 +14,13 @@ const SOURCES = [
   'packages/glasses/src',
 ]
 
-function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) return name === 'node_modules' ? [] : walk(path)
-    return /\.(ts|svelte|css|js)$/.test(name) && !name.endsWith('.test.ts') ? [path] : []
-  })
-}
-
-const files = SOURCES.flatMap((one) => walk(join(ROOT, one))).map((path) => ({
+const files = SOURCES.flatMap((one) =>
+  walk(
+    join(ROOT, one),
+    (path) => /\.(ts|svelte|css|js)$/.test(path) && !path.endsWith('.test.ts'),
+    ['node_modules'],
+  ),
+).map((path) => ({
   name: relative(ROOT, path).replaceAll('\\', '/'),
   text: readFileSync(path, 'utf8'),
 }))

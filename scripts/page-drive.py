@@ -1,53 +1,20 @@
 #!/usr/bin/env python3
 
-import json
-import os
 import subprocess
 import sys
 import time
-import urllib.request
 from pathlib import Path
 
 from PIL import Image
+from linux_app import CONFIG, run
 
 WHAT, OUT = sys.argv[1], Path(sys.argv[2])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 SITE = (255, 0, 255)
 failures = []
 
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
-def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=10) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
 
 def until(code, what, patience=20.0):
     ends = time.monotonic() + patience
@@ -188,7 +155,7 @@ def stale():
     move(600, 400)
     xdo("click", 1)
     time.sleep(0.3)
-    before = run("nib.workspace.notes.map((one) => one.path).sort()")
+    before = run("orden.workspace.notes.map((one) => one.path).sort()")
     lifted(rows[-1], rows[1])
     heard = run("window.__heard.splice(0)") or []
     if "dragover" not in heard:
@@ -209,7 +176,7 @@ def stale():
     move(600, 400)
     xdo("click", 1)
     time.sleep(0.5)
-    after = run("nib.workspace.notes.map((one) => one.path).sort()")
+    after = run("orden.workspace.notes.map((one) => one.path).sort()")
     if after != before:
         fail(f"a drag that lost its pointer moved a note: {set(after or []) ^ set(before or [])}")
     if "drop" in (run("window.__heard.splice(0)") or []):
@@ -327,7 +294,7 @@ def zoom():
     first = until(HOLE, "the web tab's hole")
     if not first:
         return
-    site = run("nib.workspace")
+    site = run("orden.workspace")
     width = first["sidebar"] * first["ratio"]
     print("at 100%", first, site is not None)
     corners(picture("zoom-100"), first, "100%")

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -86,5 +84,4 @@ def drive(browser: Browser) -> None:
     normal(page)
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Tab in Vim's normal mode folds, as Org mode does"))
+raise SystemExit(DRIVE.run(drive, "Tab in Vim's normal mode folds, as Org mode does"))

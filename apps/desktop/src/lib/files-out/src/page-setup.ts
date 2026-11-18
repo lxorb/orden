@@ -1,3 +1,4 @@
+import { todayOf } from '@orden/bases'
 import type { PaperInches } from './frame'
 import { escapeAll } from '@orden/markdown/html'
 import { frontMatter, frontMatterValue } from '@orden/markdown'
@@ -14,10 +15,7 @@ interface Length {
 }
 
 const DEFAULT_MARGIN: Length = { amount: '20', unit: 'mm' }
-
-function isUnit(value: string): value is Unit {
-  return UNITS.some((unit) => unit === value)
-}
+const isUnit = (value: string): value is Unit => UNITS.some((unit) => unit === value)
 
 function parseLength(value: string): Length | null {
   const [, amount, unit] = LENGTH.exec(value.trim()) ?? []
@@ -115,14 +113,8 @@ const PAPER_INCHES: Record<Paper, [number, number]> = {
   Legal: [8.5, 14],
 }
 
-function localDay(at: Date): string {
-  const two = (value: number) => String(value).padStart(2, '0')
-  return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
-}
-
-export function runningDate(source: string, given?: string, now = new Date()): string {
-  return given ?? frontMatterValue(source, 'date') ?? localDay(now)
-}
+export const runningDate = (source: string, given?: string, now = new Date()): string =>
+  given ?? frontMatterValue(source, 'date') ?? todayOf(now)
 
 export function paperInches(setup: PageSetup): PaperInches {
   const [width, height] = PAPER_INCHES[setup.paper]

@@ -1,5 +1,6 @@
 import type { Message } from '@orden/chats'
 import { expect, test } from 'vitest'
+import { messageOf } from '../test-account'
 import { estimate } from './estimate'
 import type { Item } from './rows'
 
@@ -10,22 +11,7 @@ function row(more: Partial<Message> = {}, head = true): Item {
     head,
     pending: false,
     seen: [],
-    message: {
-      id: 'm',
-      seq: 1,
-      at: 0,
-      author: 'user:emil',
-      body: 'hello',
-      alsoToChat: false,
-      files: [],
-      mentions: [],
-      reactions: {},
-      pinned: false,
-      history: [],
-      deleted: false,
-      replies: 0,
-      ...more,
-    },
+    message: messageOf(1, { id: 'm', at: 0, author: 'user:emil', body: 'hello', ...more }),
   }
 }
 

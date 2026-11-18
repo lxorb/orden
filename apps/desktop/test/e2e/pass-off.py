@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive, experimental_on
@@ -117,5 +115,4 @@ def drive(browser: Browser) -> None:
     say("still on after a reload")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Pass is off until turned on, and keeps its vaults through off and on"))
+raise SystemExit(DRIVE.run(drive, "Pass is off until turned on, and keeps its vaults through off and on"))

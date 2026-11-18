@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { convertIdLinks, convertRoam, convertTags, converted, idsIn } from './convert'
 
 describe("Bear's closed tags", () => {
@@ -35,6 +34,14 @@ describe("Bear's closed tags", () => {
   })
 })
 
+test('Roam marks converted in a note of the space keep its heading, block and embed links as written', () => {
+  const text =
+    '- {{[[TODO]]}} read [[Plan#Goals]] and [[Plan#^abc123]] and ![[Plan#Goals]] and ^^key^^\n'
+  expect(convertRoam(text).text).toBe(
+    '- [ ] read [[Plan#Goals]] and [[Plan#^abc123]] and ![[Plan#Goals]] and ==key==\n',
+  )
+})
+
 describe('a Zettelkasten id link', () => {
   const ids = idsIn(['202201011200 The first note.md', '202301011200.md', 'Ordinary note.md'])
 
@@ -45,6 +52,13 @@ describe('a Zettelkasten id link', () => {
     expect(said.changes).toBe(1)
   })
 
+  test('is a link that reaches a note whose name a wikilink cannot hold', () => {
+    const named = idsIn(['202201011200 C# notes.md'])
+    expect(convertIdLinks('See [[202201011200]].', named).text).toBe(
+      'See [202201011200 C# notes](202201011200%20C%23%20notes.md).',
+    )
+  })
+
   test('keeps the words the link showed', () => {
     expect(convertIdLinks('[[202201011200|the first one]]', ids).text).toBe(
       '[[202201011200 The first note|the first one]]',
@@ -53,6 +67,16 @@ describe('a Zettelkasten id link', () => {
 
   test('a note whose whole name is the id needs no rewriting', () => {
     expect(convertIdLinks('[[202301011200]]', ids).changes).toBe(0)
+  })
+
+  test('an id written in code is left as it was written', () => {
+    const text = 'Type `[[202201011200]]`, see [[202201011200]].\n\n```\n[[202201011200]]\n```\n'
+    const said = convertIdLinks(text, ids)
+
+    expect(said.text).toBe(
+      'Type `[[202201011200]]`, see [[202201011200 The first note]].\n\n```\n[[202201011200]]\n```\n',
+    )
+    expect(said.changes).toBe(1)
   })
 
   test('an id no note carries is left exactly as it was', () => {

@@ -1,5 +1,6 @@
 import { door as fetched } from '@orden/markdown/door'
 import type { HighlightColour } from '@orden/markdown/highlights'
+import { stillOn } from './shared'
 
 type Commands = typeof import('./line-commands')
 
@@ -9,12 +10,15 @@ export const loadLineCommands: () => Promise<Commands> = fetched(() =>
   import('./line-commands').then((module) => (loaded = module)),
 )
 
-function door<Target>(
+function door<Target extends object>(
   pick: (commands: Commands) => (target: Target) => boolean,
 ): (target: Target) => boolean {
   return (target) => {
     if (loaded) return pick(loaded)(target)
-    void loadLineCommands().then((commands) => pick(commands)(target))
+    const still = stillOn(target)
+    void loadLineCommands().then((commands) => {
+      if (still()) pick(commands)(target)
+    })
 
     return true
   }
@@ -46,7 +50,6 @@ export const outdentItems = writable(door((commands) => commands.outdentItems))
 const moveDown = door((commands) => commands.moveLineOver(1))
 const moveUp = door((commands) => commands.moveLineOver(-1))
 export const moveLineOver = (delta: -1 | 1) => writable(delta < 0 ? moveUp : moveDown)
-
 export const clearFormatting = door((commands) => commands.clearFormatting)
 
 export const marksAcross = (mark: string, adding = false) =>

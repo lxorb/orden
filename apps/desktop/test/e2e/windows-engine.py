@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 import json
 import time
 
@@ -170,5 +168,4 @@ def main() -> int:
         print(f"WRONG: {one}")
     return 1 if wrong else 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

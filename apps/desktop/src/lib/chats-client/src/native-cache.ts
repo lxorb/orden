@@ -69,17 +69,8 @@ function outboxOf(row: Row): OutboxRow | null {
 function wired(change: CacheChange): Row {
   switch (change.t) {
     case 'chat': {
-      const chat = change.chat
-      return {
-        t: 'chat',
-        id: chat.id,
-        space: chat.space,
-        seq: chat.seq,
-        readSeq: chat.readSeq,
-        oldest: chat.older,
-        complete: chat.complete,
-        row: chat.row ? JSON.stringify(chat.row) : null,
-      }
+      const { older, row, ...chat } = change.chat
+      return { t: 'chat', ...chat, oldest: older, row: row ? JSON.stringify(row) : null }
     }
     case 'message': {
       const { message, upto, marks } = change.kept
@@ -100,18 +91,8 @@ function wired(change: CacheChange): Row {
         marks: JSON.stringify(marks),
       }
     }
-    case 'queue': {
-      const row = change.row
-      return {
-        t: 'queue',
-        id: row.id,
-        chat: row.chat,
-        event: JSON.stringify(row.event),
-        madeAt: row.madeAt,
-        tries: row.tries,
-        refused: row.refused,
-      }
-    }
+    case 'queue':
+      return { t: 'queue', ...change.row, event: JSON.stringify(change.row.event) }
     case 'draft':
       return { t: 'draft', ...change.draft }
     case 'unmessage':

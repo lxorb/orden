@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { closeOnBack } from '../../src/lib/ui-kit/src/backstack.svelte'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
-
-const settled = async () => {
-  for (let turn = 0; turn < 12; turn++) await new Promise((resolve) => setTimeout(resolve, 5))
-}
+import { settle } from './settle'
 
 const layer = (shut: string[], name: string) => {
   const done = closeOnBack(true, () => shut.push(name))
@@ -16,7 +13,7 @@ const ours = () => (history.state as { ordenLayer?: number } | null)?.ordenLayer
 
 beforeEach(async () => {
   viewport.device = 'phone'
-  await settled()
+  await settle()
 })
 
 afterEach(() => {
@@ -29,17 +26,17 @@ test('layers that close and open in the same moment leave the history where the 
 
   const left = layer(shut, 'left')
   const right = layer(shut, 'right')
-  await settled()
+  await settle()
 
   left()
   right()
   const settings = layer(shut, 'settings')
   const store = layer(shut, 'store')
-  await settled()
+  await settle()
 
   store()
   settings()
-  await settled()
+  await settle()
 
   expect(ours()).toBeUndefined()
   expect(history.state).toEqual(base)
@@ -50,19 +47,19 @@ test('after that, Back closes only the layer on top, and the next Back the one u
   const shut: string[] = []
   const left = layer(shut, 'left')
   const right = layer(shut, 'right')
-  await settled()
+  await settle()
   left()
   right()
   layer(shut, 'settings')
   layer(shut, 'store')
-  await settled()
+  await settle()
 
   history.back()
-  await settled()
+  await settle()
   expect(shut).toEqual(['store'])
 
   history.back()
-  await settled()
+  await settle()
   expect(shut).toEqual(['store', 'settings'])
   expect(ours()).toBeUndefined()
 })
@@ -71,13 +68,13 @@ test('a layer closed under another keeps one entry for the one still up', async 
   const shut: string[] = []
   const under = layer(shut, 'under')
   layer(shut, 'over')
-  await settled()
+  await settle()
 
   under()
-  await settled()
+  await settle()
 
   history.back()
-  await settled()
+  await settle()
   expect(shut).toEqual(['over'])
   expect(ours()).toBeUndefined()
 })

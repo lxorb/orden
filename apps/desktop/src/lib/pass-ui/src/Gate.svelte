@@ -15,7 +15,7 @@
 <div class="gate" in:fade={{ duration: dur(160) }}>
   <div class="card">
     <span class="mark"><Glyph {icon} /></span>
-    <h2 class="title">{title}</h2>
+    <h2 class="pass-title">{title}</h2>
     {#if line}<p class="line">{line}</p>{/if}
     {@render children()}
   </div>
@@ -54,13 +54,6 @@
   .mark :global(.glyph) {
     width: 26px;
     height: 26px;
-  }
-
-  .title {
-    margin: 0;
-    font-size: var(--text-head);
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
   }
 
   .line {

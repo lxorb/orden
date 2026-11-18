@@ -61,7 +61,6 @@ describe('unwritten words meeting an open document', () => {
     await workspace.open(PATH)
     await workspace.applyLayout(layout(tab()), false)
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
     expect(workspace.tabs).toHaveLength(1)
     expect(workspace.tabs[0]?.note.latest).toBe('base\ntyped\n')
@@ -77,7 +76,6 @@ describe('unwritten words meeting an open document', () => {
     go()
     await Promise.all([opening, arriving])
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
   })
 
@@ -87,7 +85,6 @@ describe('unwritten words meeting an open document', () => {
     await workspace.open(PATH)
     await workspace.reopenClosed()
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
     expect(workspace.closed.stack).toHaveLength(0)
   })
@@ -99,7 +96,6 @@ describe('unwritten words meeting an open document', () => {
     const open = workspace.active!
     await workspace.reopenClosed()
     await workspace.writesSettled()
-
     expect(workspace.tabs.filter((one) => one.path === PATH)).toEqual([open])
     expect(workspace.active).toBe(open)
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
@@ -118,10 +114,8 @@ describe('unwritten words meeting an open document', () => {
     workspace.closed.restore([
       { paneId: workspace.panes.focusedId, at: 0, draft: tab({ path: THERE, space: 'two' }) },
     ])
-
     await workspace.reopenClosed()
     await workspace.writesSettled()
-
     expect(workspace.activeSpaceId).toBe('two')
     expect(workspace.active?.note).toBe(open)
     expect(open.latest).toBe('base\ntyped\n')
@@ -135,7 +129,6 @@ describe('unwritten words meeting an open document', () => {
     workspace.tabs[0]!.note.replace('intro\nbase\n')
     await workspace.applyLayout(layout(tab()), false)
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('intro\nbase\ntyped\n')
   })
 
@@ -144,7 +137,6 @@ describe('unwritten words meeting an open document', () => {
     await workspace.open(PATH)
     await workspace.applyLayout(layout(tab()), false)
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('base\ntyped\nmore\n')
     expect(workspace.tabs).toHaveLength(1)
     expect(workspace.tabs[0]?.dirty).toBe(false)
@@ -156,7 +148,6 @@ describe('unwritten words meeting an open document', () => {
     delete (bare as { base?: string }).base
     await workspace.applyLayout(layout(bare), false)
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('base\n')
     const words = workspace.tabs.map((one) => [one.path, one.note.latest])
     expect(words).toContainEqual([PATH, 'base\n'])
@@ -174,7 +165,6 @@ describe('unwritten words meeting an open document', () => {
       false,
     )
     await workspace.writesSettled()
-
     expect(d.files.get(plane)).toBe('{"nodes":[],"edges":[]}')
     expect(workspace.tabs.map((one) => one.note.latest)).toContain(words)
   })
@@ -183,7 +173,6 @@ describe('unwritten words meeting an open document', () => {
     d.files.set(PATH, 'base\nelsewhere\n')
     await workspace.applyLayout(layout(tab(), tab()), false)
     await workspace.writesSettled()
-
     const notes = new Set(workspace.tabs.map((one) => one.note))
     expect(notes.size).toBe(1)
     const file = d.files.get(PATH)!
@@ -204,7 +193,6 @@ describe('unwritten words meeting an open document', () => {
       false,
     )
     await workspace.writesSettled()
-
     expect(workspace.tabs.map((one) => one.path)).toEqual([other, PATH])
     const file = d.files.get(PATH)!
     expect(file).toContain('typed')
@@ -218,7 +206,6 @@ describe('unwritten words meeting an open document', () => {
     shown.frame.pane.active = 1
     await workspace.applyLayout(shown as never, false)
     await workspace.writesSettled()
-
     expect(workspace.tabs).toHaveLength(1)
     expect(workspace.active?.path).toBe(PATH)
   })
@@ -246,7 +233,6 @@ describe('unwritten words meeting an open document', () => {
     }
     await workspace.applyLayout(twoPanes as never, false)
     await workspace.writesSettled()
-
     expect(workspace.tabs).toHaveLength(2)
     expect(new Set(workspace.tabs.map((one) => one.note)).size).toBe(1)
   })
@@ -259,7 +245,6 @@ describe('unwritten words meeting an open document', () => {
     ])
     await workspace.reopenClosed()
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('base\n')
   })
 
@@ -267,7 +252,6 @@ describe('unwritten words meeting an open document', () => {
     workspace.closed.restore([{ paneId: workspace.panes.focusedId, at: 0, draft: tab() }])
     await workspace.applyLayout(layout(tab()), false)
     await workspace.writesSettled()
-
     expect(d.files.get(PATH)).toBe('base\ntyped\n')
     expect(workspace.closed.stack[0]?.draft.dirty).toBe(false)
   })

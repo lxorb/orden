@@ -1,9 +1,9 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { SOURCE, svelte, walk } from './files'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
 const uncommented = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '')
@@ -20,16 +20,6 @@ const SCALE = {
   '--screen-gutter': 'var(--space-5)',
 }
 
-function files(dir: string): string[] {
-  const out: string[] = []
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) out.push(...files(path))
-    else if (name.endsWith('.svelte')) out.push(path)
-  }
-  return out
-}
-
 function rule(css: string, selector: string): string | null {
   for (const one of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     if ((one[1] ?? '').trim() === selector) return one[2] ?? ''
@@ -37,7 +27,7 @@ function rule(css: string, selector: string): string | null {
   return null
 }
 
-const layers = files(SOURCE).flatMap((path) => {
+const layers = walk(SOURCE, svelte).flatMap((path) => {
   const text = readFileSync(path, 'utf8')
   const css = uncommented(
     [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n'),

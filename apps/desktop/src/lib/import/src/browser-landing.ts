@@ -1,7 +1,7 @@
 import type { BrowserId } from '@orden/contracts'
 import type { Space } from '../../workspace/src/api'
 import { arcSidebar } from './arc'
-import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
+import { bringHistory, droppedLine, takeEngine, withMarks } from './browser-extras'
 import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'
 import { chromiumSidebar } from './chromium'
 import { firefoxSidebar } from './firefox'
@@ -21,7 +21,6 @@ interface Read {
 }
 
 const CONTAINERS = 'Containers stay in Firefox'
-
 const SAVED = (browser: string) => `Saved tab groups and the reading list stay in ${browser}`
 const WORKSPACES = (browser: string) => `${browser}’s workspaces come in as one space`
 const KEPT: Partial<Record<BrowserId, (browser: string) => string>> = {
@@ -86,14 +85,13 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
   const engine = profile.files.includes(SEARCH)
     ? mozillaEngine(mozJson(await browserFile(profile, SEARCH)))
     : null
-  return { sidebar: firefoxSidebar(session, bookmarks, name, folderWords()), engine, lost: [] }
+  return { sidebar: firefoxSidebar(session, bookmarks, name), engine, lost: [] }
 }
 
 const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
 
-function isSession(file: string): boolean {
-  return file.startsWith('Sessions') || file === 'Current Session' || file === 'Last Session'
-}
+const isSession = (file: string): boolean =>
+  file.startsWith('Sessions') || file === 'Current Session' || file === 'Last Session'
 
 async function readChromium(profile: BrowserProfile, name: string): Promise<Read | null> {
   let session: SnssSession | null = null
@@ -122,7 +120,7 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
         ]
       : []
   return {
-    sidebar: chromiumSidebar(session, bookmarks, name, folderWords(), account),
+    sidebar: chromiumSidebar(session, bookmarks, name, account),
     engine: await preferencesEngine(profile),
     lost,
   }
@@ -183,7 +181,6 @@ async function readSafari(name: string): Promise<Read | null> {
         session: files.session ?? null,
       },
       name,
-      folderWords(),
     ),
     engine: safariEngine(files.engine),
     lost: [],

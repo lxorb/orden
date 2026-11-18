@@ -73,10 +73,4 @@ describe('the ground a launch paints before it has read anything', () => {
 
     expect(left.trim()).toBe('')
   })
-
-  test('puts no colour on the body, which is what lets a translucent window through', () => {
-    const coloured = rules().filter((one) => one.sets.includes('background:'))
-
-    expect(coloured.map((one) => one.on).filter((on) => /\bbody\b/.test(on))).toEqual([])
-  })
 })

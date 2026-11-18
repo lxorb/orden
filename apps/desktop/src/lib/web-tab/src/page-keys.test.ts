@@ -3,7 +3,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
 const source = readFileSync(
-  new URL('../../../../src-tauri/src/web_opens.rs', import.meta.url),
+  new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url),
   'utf8',
 )
 const script = /pub const SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''
@@ -141,5 +141,67 @@ describe('the other chords, which only a preventDefault keeps', () => {
   ])('key %i with Shift %s asks %s', async (code, shift, name) => {
     expect(await pressedWithCtrl('stops', code, shift)).toEqual([name])
     expect(await pressedWithCtrl('takes', code, shift)).toEqual([])
+  })
+})
+
+describe('a tab a page asks to open in front', () => {
+  function opening(active: boolean | null = null) {
+    const dom = new JSDOM('<button id="press">', { runScripts: 'outside-only' })
+    const asked: string[] = []
+    const inside = dom.window as unknown as Window & typeof globalThis
+    if (active !== null)
+      Object.defineProperty(inside.navigator, 'userActivation', { value: { isActive: active } })
+    inside.open = (_url?: string | URL, name?: string) => {
+      asked.push(name ?? '')
+      return null
+    }
+    inside.eval(script.replaceAll('!event.isTrusted', 'false'))
+    const asks = (url: string) =>
+      inside.dispatchEvent(new inside.CustomEvent('orden-open-tab', { detail: url }))
+    const happens = (type: string) =>
+      inside.document
+        .getElementById('press')
+        ?.dispatchEvent(new inside.MouseEvent(type, { bubbles: true }))
+    const press = () => happens('pointerdown')
+    return { asked, asks, press, happens }
+  }
+
+  test('is blocked when nobody pressed anything', () => {
+    const { asked, asks } = opening()
+    for (let one = 0; one < 3; one++) asks(`https://ads.example/${one}`)
+    expect(asked).toEqual(['orden-popup-blocked', 'orden-popup-blocked', 'orden-popup-blocked'])
+  })
+
+  test('opens once for a press, and the next ask in that press is blocked', () => {
+    const { asked, asks, press } = opening()
+    press()
+    asks('https://example.com/a')
+    asks('https://ads.example/b')
+    expect(asked).toEqual(['orden-front', 'orden-popup-blocked'])
+  })
+
+  test('opens once for a press however many of its events the page opens in', () => {
+    const { asked, asks, press, happens } = opening()
+    press()
+    asks('https://example.com/a')
+    for (const type of ['mousedown', 'pointerup', 'mouseup', 'click']) {
+      happens(type)
+      asks(`https://ads.example/${type}`)
+    }
+    expect(asked).toEqual(['orden-front', ...Array<string>(4).fill('orden-popup-blocked')])
+  })
+
+  test('opens once for a press in a frame inside the page, which only the activation tells of', () => {
+    const { asked, asks } = opening(true)
+    asks('https://example.com/a')
+    asks('https://ads.example/b')
+    expect(asked).toEqual(['orden-front', 'orden-popup-blocked'])
+  })
+
+  test('is blocked once the press is spent, whenever the page last heard one', () => {
+    const { asked, asks, press } = opening(false)
+    press()
+    asks('https://ads.example/a')
+    expect(asked).toEqual(['orden-popup-blocked'])
   })
 })

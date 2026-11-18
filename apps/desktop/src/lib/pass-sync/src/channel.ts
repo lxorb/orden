@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { invoke, isDesktop } from '../../platform/src/api'
 
 export type FormKind =
@@ -77,12 +78,11 @@ export interface FillTarget {
 
 type Unlisten = () => void
 
-let ownWindow: Promise<typeof import('../../windows/src/api')> | undefined
+const ownWindow = door(() => import('../../windows/src/api'))
 
 async function heard(event: string, then: (said: unknown) => void): Promise<Unlisten> {
   if (!isDesktop) return () => undefined
-  ownWindow ??= import('../../windows/src/api')
-  const { hearHere } = await ownWindow
+  const { hearHere } = await ownWindow()
   return hearHere(event, (said) => then(said.payload))
 }
 

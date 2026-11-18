@@ -1,8 +1,8 @@
+import { encodeTarget, wikilinkCannotName } from '@orden/markdown/links'
 import { freePath, withoutForbidden } from '@orden/markdown/paths'
 import { isReserved } from '../../platform/src/api'
 
 const LONGEST = 96
-
 const NOTION_ID = /[ -][0-9a-f]{32}$/i
 
 export function looksLikePapers(paths: readonly string[]): boolean {
@@ -31,7 +31,8 @@ export function safeName(title: string): string {
     .replace(/^\.+ *(?=.)/, '_')
     .replace(/^\.+$/, '')
 
-  const short = one.length > LONGEST ? one.slice(0, LONGEST).trimEnd() : one
+  const points = Array.from(one)
+  const short = points.length > LONGEST ? points.slice(0, LONGEST).join('').trimEnd() : one
   if (!short) return 'Untitled'
   return undeviced(short)
 }
@@ -93,9 +94,7 @@ export function titleFrom(text: string): string | null {
   return null
 }
 
-export function nameKey(path: string): string {
-  return path.normalize('NFC').toLowerCase()
-}
+export const nameKey = (path: string): string => path.normalize('NFC').toLowerCase()
 
 export class Names {
   private readonly taken = new Set<string>()
@@ -122,4 +121,12 @@ export class Names {
   has(path: string): boolean {
     return this.taken.has(nameKey(path))
   }
+}
+
+export function pageLink(name: string, shown: string | null = null, embed = false): string {
+  if (!wikilinkCannotName(name)) {
+    return `${embed ? '!' : ''}[[${name}${shown === null ? '' : `|${shown}`}]]`
+  }
+  const words = (shown ?? name).replace(/[[\]\\]/g, (one) => `\\${one}`)
+  return `[${words}](${encodeTarget(`${name}.md`)})`
 }

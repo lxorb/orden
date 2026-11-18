@@ -21,7 +21,7 @@ export function closesFence(line: string, mark: string): boolean {
 
   const run = found[1] ?? ''
   if (!run.startsWith(mark.charAt(0)) || run.length < mark.length) return false
-  return /^ {0,3}[`~]+[ \t]*\r?$/.test(line) || fenceName(line) !== null
+  return /^ {0,3}(?:`+|~+)[ \t]*\r?$/.test(line) || fenceName(line) !== null
 }
 
 export function fenceName(line: string): string | null {
@@ -46,11 +46,8 @@ type Container = { quote: true } | { quote: false; width: number }
 type Leaf = null | 'paragraph' | 'indented' | { mark: string }
 
 const MARKER = /^([-*+]|(\d{1,9})[.)])( *)(.?)/
-
 const BREAK = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
-
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
-
 const NEST_DEEPEST = 100
 
 function expanded(line: string): string {
@@ -72,6 +69,7 @@ export class CodeBlocks {
   private leaf: Leaf = null
   private item = false
   private named: string | null = null
+  private shut = false
 
   copy(): CodeBlocks {
     const copy = new CodeBlocks()
@@ -88,6 +86,23 @@ export class CodeBlocks {
     return this.named
   }
 
+  get closedFence(): boolean {
+    return this.shut
+  }
+
+  get quoted(): boolean {
+    return this.containers.some((container) => container.quote)
+  }
+
+  get listWidth(): number {
+    let width = 0
+    for (const container of this.containers) {
+      if (container.quote) break
+      width += container.width
+    }
+    return width
+  }
+
   get fence(): string | null {
     return this.leaf !== null && typeof this.leaf === 'object' ? this.leaf.mark : null
   }
@@ -96,6 +111,7 @@ export class CodeBlocks {
     const line = expanded(raw.endsWith('\r') ? raw.slice(0, -1) : raw)
     this.item = false
     this.named = null
+    this.shut = false
     let at = 0
     let matched = 0
 
@@ -127,6 +143,7 @@ export class CodeBlocks {
       if (closesFence(rest, this.leaf.mark)) {
         this.leaf = null
         this.named = fenceName(rest)
+        this.shut = true
       }
       return CODE
     }

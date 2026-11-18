@@ -1,20 +1,17 @@
-import { userStep } from '../chat/transcript'
-import type {
-  Draft,
-  Effort,
-  Engine,
-  EngineEvent,
-  GoalState,
-  Mode,
-  ModelInfo,
-  Part,
-  Stop,
-  Thread,
-  Turn,
-  Usage,
-} from '../../../ai-providers/src/api'
-import { always, type Answers, crateAnswers } from '../chat/approvals'
+import { errorText, modelTurn, userStep, youTurn } from '../chat/transcript'
 import {
+  type Draft,
+  type Effort,
+  type Engine,
+  type EngineEvent,
+  type GoalState,
+  type Mode,
+  type ModelInfo,
+  type Part,
+  type Stop,
+  type Thread,
+  type Turn,
+  type Usage,
   KIND_NAMES,
   type Heard,
   type Level,
@@ -27,6 +24,7 @@ import {
   type Session,
   steers,
 } from '../../../ai-providers/src/api'
+import { always, type Answers, crateAnswers } from '../chat/approvals'
 import { agentsOf } from '../review/changes'
 
 const {
@@ -82,10 +80,6 @@ function levelOf(kind: LocalKind, effort: Effort): Level | null {
   if (effort === 'auto' || kind === 'gemini-cli') return null
   if (kind === 'claude-code' && (effort === 'off' || effort === 'minimal')) return null
   return effort
-}
-
-function fresh(): string {
-  return crypto.randomUUID()
 }
 
 function wordsOf(turn: Turn): string {
@@ -149,8 +143,8 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         },
       )
     } catch (error) {
-      const said = error instanceof Error ? error.message : String(error)
-      throw new Error(said === 'missing' ? `${KIND_NAMES[kind]} is not installed.` : said, {
+      const words = errorText(error)
+      throw new Error(words === 'missing' ? `${KIND_NAMES[kind]} is not installed.` : words, {
         cause: error,
       })
     }
@@ -192,22 +186,18 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     pursuit: Pursuit | null = null,
   ): Promise<Stop> {
     const switched = [...thread.turns].reverse().find((one) => one.role === 'model')?.model
-    const you: Turn = {
-      id: fresh(),
-      role: 'you',
-      at: Date.now(),
-      draft: message,
-      parts: [],
-      effort: thread.effort,
-    }
+    const you = youTurn(thread, message)
     const before: Thread = { ...thread, turns: [...thread.turns] }
     thread.turns.push(you)
     if (!thread.title) thread.title = message.text.trim().split('\n')[0]?.slice(0, 80) ?? ''
     on({ type: 'turn', turn: you })
+    const begin = (made: Turn) => {
+      thread.turns.push(made)
+      on({ type: 'turn', turn: made })
+      return made
+    }
 
-    let turn = modelTurn(thread)
-    thread.turns.push(turn)
-    on({ type: 'turn', turn })
+    let turn = begin(modelTurn(thread))
     const say = (part: Part) => {
       turn.parts.push(part)
       on({ type: 'part', turn: turn.id, index: turn.parts.length - 1, part })
@@ -218,6 +208,12 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     }
     if (switched && thread.model && switched !== thread.model)
       say({ kind: 'notice', code: 'model', text: thread.model })
+    const failed = (error: unknown): Stop => {
+      const words = errorText(error)
+      say({ kind: 'notice', code: 'error', text: words })
+      on({ type: 'done', stop: 'error', error: words })
+      return 'error'
+    }
 
     let live: Live
     let opened: boolean
@@ -227,10 +223,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       ;[live, opened] = await liveFor(thread, provider)
       if (!opened) await retell(live, thread)
     } catch (error) {
-      const words = error instanceof Error ? error.message : String(error)
-      say({ kind: 'notice', code: 'error', text: words })
-      on({ type: 'done', stop: 'error', error: words })
-      return 'error'
+      return failed(error)
     }
 
     const read: (line: string) => Read = readerOf(kind)
@@ -262,16 +255,14 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           pursuit.after = null
           between = true
           live.session.say(after).catch((error: unknown) => {
-            heard.trouble = error instanceof Error ? error.message : String(error)
+            heard.trouble = errorText(error)
             ended('error')
           })
           return
         }
         if (how === 'end' && pursuit && goesOn(kind) && pursuit.state === 'pursuing') {
           between = true
-          quiet = setTimeout(() => {
-            close('end')
-          }, QUIET)
+          quiet = setTimeout(() => close('end'), QUIET)
           return
         }
         if (how === 'end') {
@@ -303,9 +294,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           between = false
           clearTimeout(quiet)
           if (turn.usage) spend(thread, turn.usage)
-          turn = modelTurn(thread)
-          thread.turns.push(turn)
-          on({ type: 'turn', turn })
+          turn = begin(modelTurn(thread))
         }
         if (said.model && !named) {
           named = true
@@ -344,31 +333,19 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           else say({ kind: 'text', text: said.text })
         }
         if (said.tool) {
-          const tool = said.tool
-          const at = turn.parts.findIndex((one) => one.kind === 'tool' && one.id === tool.id)
+          const { id, name, args, done } = said.tool
+          const at = turn.parts.findIndex((one) => one.kind === 'tool' && one.id === id)
           const part = turn.parts[at]
-          if (part?.kind === 'tool' && tool.done) {
-            grow(at, {
-              ...part,
-              state: tool.done.error ? 'error' : 'ok',
-              result: { text: tool.done.text, images: [], error: tool.done.error },
-              at: Date.now(),
-            })
-          } else if (at < 0) {
-            say({
-              kind: 'tool',
-              id: tool.id,
-              verb: tool.name,
-              args: tool.args ?? {},
-              state: tool.done ? (tool.done.error ? 'error' : 'ok') : 'running',
-              ...(tool.done
-                ? {
-                    result: { text: tool.done.text, images: [], error: tool.done.error },
-                    at: Date.now(),
-                  }
-                : {}),
-            })
-          }
+          const outcome = done
+            ? {
+                state: done.error ? ('error' as const) : ('ok' as const),
+                result: { text: done.text, images: [], error: done.error },
+                at: Date.now(),
+              }
+            : null
+          if (part?.kind === 'tool' && outcome) grow(at, { ...part, ...outcome })
+          else if (at < 0)
+            say({ kind: 'tool', id, verb: name, args: args ?? {}, state: 'running', ...outcome })
         }
         if (said.compacted) say({ kind: 'notice', code: 'compacted', text: '' })
         if (said.usage) counted(said.usage)
@@ -416,20 +393,8 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     })
 
     const steered = (text: string) => {
-      const said: Turn = {
-        id: fresh(),
-        role: 'you',
-        at: Date.now(),
-        draft: { text, attachments: [] },
-        steered: true,
-        parts: [],
-        effort: thread.effort,
-      }
-      thread.turns.push(said)
-      on({ type: 'turn', turn: said })
-      turn = modelTurn(thread)
-      thread.turns.push(turn)
-      on({ type: 'turn', turn })
+      begin(youTurn(thread, { text, attachments: [] }, { steered: true }))
+      turn = begin(modelTurn(thread))
     }
     running.set(thread.id, { thread, on, steered })
 
@@ -503,10 +468,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       )
       return end.stop
     } catch (error) {
-      const words = error instanceof Error ? error.message : String(error)
-      say({ kind: 'notice', code: 'error', text: words })
-      on({ type: 'done', stop: 'error', error: words })
-      return 'error'
+      return failed(error)
     } finally {
       unhear()
       for (const part of turn.parts)
@@ -565,9 +527,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       if (!live || live.session.ended || running.has(thread.id)) return
       await new Promise<void>((resolve) => {
         const read: (line: string) => Read = readerOf(kind)
-        const timer = setTimeout(() => {
-          done()
-        }, 120_000)
+        const timer = setTimeout(() => done(), 120_000)
         const done = () => {
           clearTimeout(timer)
           live.hear = null
@@ -594,18 +554,6 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
 
 function finished(heard: Read): boolean {
   return !!heard.compacted || !!heard.ended
-}
-
-function modelTurn(thread: Thread): Turn {
-  return {
-    id: fresh(),
-    role: 'model',
-    at: Date.now(),
-    parts: [],
-    provider: thread.provider,
-    model: thread.model,
-    effort: thread.effort,
-  }
 }
 
 function spend(thread: Thread, usage: Usage): void {

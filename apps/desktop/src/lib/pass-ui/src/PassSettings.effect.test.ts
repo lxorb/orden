@@ -1,20 +1,7 @@
-import 'fake-indexeddb/auto'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
+import { closed, showing, target, typed } from '../test/drawn'
+import { PASSWORD, opened, pass } from '../test/opened'
 
 const delivered = vi.hoisted(() => [] as string[])
 vi.mock('../../files-out/src/save', () => ({
@@ -24,49 +11,27 @@ vi.mock('../../files-out/src/save', () => ({
   },
 }))
 
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const PassSettings = (await import('./PassSettings.svelte')).default
 
-const FAST = { m: 64, t: 1, p: 1 }
-const PASSWORD = 'correct horse battery staple'
-configurePass({ kdf: FAST, pinKdf: FAST })
+beforeAll(opened)
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
-
-beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup(PASSWORD)
-})
-
-afterEach(() => {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
-})
+afterEach(closed)
 
 function shownOn(tab: 'general' | 'export') {
   const ui = new PassUi(null)
   ui.show({ settingsTab: tab })
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(PassSettings, { target, props: { ui }, intro: false })
-  flushSync()
+  showing(PassSettings, { ui })
 }
 
 async function until(ready: () => boolean): Promise<void> {
-  for (let tries = 0; tries < 100 && !ready(); tries++) {
-    await new Promise((done) => setTimeout(done, 20))
-    flushSync()
-  }
-}
-
-function typed(field: HTMLInputElement | undefined, value: string) {
-  if (!field) throw new Error('no field')
-  field.value = value
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  flushSync()
+  await vi.waitFor(
+    () => {
+      flushSync()
+      expect(ready()).toBe(true)
+    },
+    { timeout: 5000, interval: 20 },
+  )
 }
 
 describe('Pass settings', () => {
@@ -91,7 +56,7 @@ describe('Pass settings', () => {
     )
     csv?.click()
     flushSync()
-    const field = () => target.querySelector<HTMLInputElement>('input[type=password]') ?? undefined
+    const field = () => target.querySelector<HTMLInputElement>('input[type=password]')
     typed(field(), 'not it')
     target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
     await until(() => target.querySelector('[role=alert]') !== null)

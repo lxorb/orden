@@ -53,7 +53,6 @@ export function noteText(title: string | null, body: string, meta: Meta = {}, ow
 }
 
 const KEY_LINE = /^[^\s#-].*?[ \t]*:(?:\s|$)/
-
 const BLOCK_LINE = new RegExp(`${KEY_LINE.source}|^(?:[ \\t]|-(?:\\s|$)|#)`)
 
 function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {
@@ -195,4 +194,28 @@ function dayFrom(year: number, month: number, day: number): string | null {
 
   const written = `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   return `${year}-${written}`
+}
+
+export function wallClock(moment: Date, zone?: string): { day: string; time: string } | null {
+  try {
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-CA', {
+        ...(zone ? { timeZone: zone } : {}),
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      })
+        .formatToParts(moment)
+        .map((part) => [part.type, part.value]),
+    )
+    return {
+      day: `${parts.year}-${parts.month}-${parts.day}`,
+      time: `${parts.hour}:${parts.minute}`,
+    }
+  } catch {
+    return null
+  }
 }

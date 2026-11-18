@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import tempfile
 from pathlib import Path
@@ -140,5 +138,4 @@ def drive(browser: Browser) -> None:
         run(browser, page, "home", ["Escape"], Path(folder))
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every frame of the overview's way in and home is on time"))
+raise SystemExit(DRIVE.run(drive, "every frame of the overview's way in and home is on time"))

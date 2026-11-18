@@ -1,8 +1,7 @@
 <script lang="ts">
   import { type Row, rowId } from '@orden/bases'
   import { untrack, type Snippet } from 'svelte'
-  import { windowFor } from '../../windows/src/api'
-  import { ListView } from '../../windows/src/api'
+  import { windowFor, ListView } from '../../windows/src/api'
   import { dragging } from './drag.svelte'
 
   const {

@@ -1,12 +1,10 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { graphPoint, screenPoint, wheelPixels, zoomed } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-const ROOT = join(HERE, '../../../../..')
-const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '/index.ts']
 
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
@@ -16,35 +14,11 @@ function sources(folder: string): string[] {
   })
 }
 
-function pendingOf(): string[] {
-  const json = JSON.parse(readFileSync(join(HERE, 'module.json'), 'utf8')) as { pending?: string[] }
-  return json.pending ?? []
-}
-
-describe('the module stands on its own', () => {
-  test('nothing under src reaches past a module api or a file still listed as pending', () => {
-    const pending = pendingOf()
-    const reaching = sources(SRC).flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'(\.[^']*)'/g)].flatMap(
-        (found) => {
-          const target = resolve(dirname(file), found[1] ?? '')
-          if (target.startsWith(SRC)) return []
-          if (/\/[a-z-]+\/src\/api$/.test(target)) return []
-          const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one))
-          const named = path === undefined ? target : relative(ROOT, path)
-          return pending.includes(named) ? [] : [`${relative(SRC, file)}: ${found[1]}`]
-        },
-      ),
-    )
-    expect(reaching).toEqual([])
-  })
-
-  test('imports nothing at all, so the published site script carries it without a barrel', () => {
-    const imports = sources(SRC).flatMap((file) => [
-      ...readFileSync(file, 'utf8').matchAll(/^import .* from '([^']+)'/gm),
-    ])
-    expect(imports.map((found) => found[1])).toEqual([])
-  })
+test('the module stands on its own imports nothing at all, so the published site script carries it without a barrel', () => {
+  const imports = sources(SRC).flatMap((file) => [
+    ...readFileSync(file, 'utf8').matchAll(/^import .* from '([^']+)'/gm),
+  ])
+  expect(imports.map((found) => found[1])).toEqual([])
 })
 
 describe('a camera', () => {

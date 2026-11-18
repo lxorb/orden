@@ -23,10 +23,8 @@ describe('choosing files', () => {
   test('a second ask in the same moment, as a double click makes, opens no second chooser', async () => {
     const first = chooseFiles()
     const second = chooseFiles({ folder: true })
-
     expect(clicks).toHaveLength(1)
     expect(second).toBe(first)
-
     clicks[0]?.dispatchEvent(new Event('cancel'))
     expect(await second).toEqual([])
   })
@@ -35,7 +33,6 @@ describe('choosing files', () => {
     const first = chooseFiles()
     clicks[0]?.dispatchEvent(new Event('cancel'))
     await first
-
     void chooseFiles()
     expect(clicks).toHaveLength(2)
   })
@@ -44,7 +41,6 @@ describe('choosing files', () => {
     void chooseFiles()
     vi.advanceTimersByTime(1500)
     void chooseFiles()
-
     expect(clicks).toHaveLength(2)
   })
 })

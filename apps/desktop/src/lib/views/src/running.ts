@@ -8,14 +8,14 @@ import {
   insideSpace,
   pathKey,
   within,
+  spaceHolding,
   invoke,
   joinPath,
 } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { protection } from '../../protect/src/api'
 import { notify } from '../../notify/src/api'
-import { rows } from '../../rows/src/api'
-import { noteRowsOf, type RowsChange } from '../../rows/src/api'
+import { rows, noteRowsOf, type RowsChange } from '../../rows/src/api'
 import { basesOn } from '../../gates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
@@ -29,7 +29,6 @@ import { nowHere, todayHere } from './days'
 import { templatesFolder, templateWords } from './templates'
 
 const held = new Map<string, HeldBase>()
-
 const leading = new Set<string>()
 const letGo = new Map<string, AbortController>()
 
@@ -69,13 +68,12 @@ export function basesAre(paths: readonly string[]) {
 
 const running = (): boolean => held.size > 0
 
-function heldIn(space: string, led = false): HeldBase[] {
-  return [...held.entries()].flatMap(([path, one]) => {
+const heldIn = (space: string, led = false): HeldBase[] =>
+  [...held.entries()].flatMap(([path, one]) => {
     if ((led && !leading.has(path)) || protection.locked(path)) return []
     const base = one.space === space ? guardedAt(one.base, path) : null
     return base ? [{ ...one, base }] : []
   })
-}
 const ours = new Set<string>()
 const waiting = new Map<
   string,
@@ -89,8 +87,8 @@ const waiting = new Map<
 >()
 
 const SETTLE = 80
-
 const runs = new Set<Promise<void>>()
+const lastRun = new Map<string, Promise<void>>()
 
 export async function settledRuns(): Promise<void> {
   while (runs.size) await Promise.allSettled([...runs])
@@ -104,7 +102,7 @@ function clock() {
 }
 
 export async function readHeld(path: string): Promise<void> {
-  const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
+  const space = spaceHolding(workspace.spaces, path)
   try {
     const base = readBase(await invoke<string>('read_note', { path }))
     if (basesOn() && space && (base.orden.id || readAutomations(base).length)) {
@@ -122,12 +120,11 @@ export async function readHeld(path: string): Promise<void> {
   forget(path)
 }
 
-function rowsOf(space: string, path: string): readonly Row[] {
-  return rows.of(space).filter((row) => row.path === path)
-}
+const rowsOf = (space: string, path: string): readonly Row[] =>
+  rows.of(space).filter((row) => row.path === path)
 
 function numbering(path: string) {
-  const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
+  const space = spaceHolding(workspace.spaces, path)
   const bases = space ? heldIn(space.name).filter((one) => one.base.orden.id) : []
   return { space, bases }
 }
@@ -179,7 +176,7 @@ async function run(space: string, path: string, removed: readonly Row[]) {
 }
 
 export function heardChange(change: RowsChange) {
-  if (change.path === null || !running()) return
+  if (change.path === null || change.firstRead || !running()) return
   if (!change.added.some((row) => row.kind === 'note')) return
   if (change.from) heard(change.space, change.path, change.from.rows, change.from)
   else {
@@ -195,8 +192,16 @@ function settling(key: string, space: string, path: string, before: readonly Row
     removed: before,
     timer: setTimeout(() => {
       waiting.delete(key)
-      const one: Promise<void> = run(space, path, before).finally(() => runs.delete(one))
+      const prior = lastRun.get(space)
+      const one: Promise<void> = (prior ?? Promise.resolve())
+        .catch(() => undefined)
+        .then(() => run(space, path, before))
+        .finally(() => {
+          runs.delete(one)
+          if (lastRun.get(space) === one) lastRun.delete(space)
+        })
       runs.add(one)
+      lastRun.set(space, one)
     }, SETTLE),
   })
 }
@@ -230,12 +235,10 @@ export function heard(
 }
 
 const MAKING = 'orden:repeat-templates'
-
 const MAKING_PATIENCE = 60_000
 
-export function repeatTemplates(): Promise<void> {
-  return inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
-}
+export const repeatTemplates = (): Promise<void> =>
+  inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
 
 async function makeRepeats() {
   const space = workspace.activeSpace

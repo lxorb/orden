@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -46,7 +44,6 @@ CAPTIONS = """
   return {
     text: said?.textContent ?? null,
     language: language?.textContent ?? null,
-    // Where the code itself starts, so a caption can be level with it.
     inset: mark ? Math.round(mark.left - box.left - Number.parseFloat(style.paddingLeft)) : null,
     into: mark ? Math.round(mark.top + mark.height / 2 - box.top) : null,
     source: line.textContent.includes('```'),
@@ -225,5 +222,4 @@ def main() -> int:
 
     return DRIVE.verdict("a code block says what it is, in the editor and on the page")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

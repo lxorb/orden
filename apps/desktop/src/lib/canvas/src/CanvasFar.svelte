@@ -2,8 +2,7 @@
   import type { Camera } from '../../camera/src/api'
   import { paintFar } from './far'
   import type { CanvasEdge, CanvasNode } from '@orden/markdown/canvas'
-  import type { Box } from '../../plane/src/api'
-  import type { Palette } from '../../plane/src/api'
+  import type { Box, Palette } from '../../plane/src/api'
   import { pixelRatio } from '../../ui-controls/src/api'
 
   const {
@@ -57,7 +56,6 @@
   }
 
   const follows = (..._values: unknown[]) => undefined
-
   let frame = 0
   let painted = false
   $effect(() => {

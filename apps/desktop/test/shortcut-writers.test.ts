@@ -1,21 +1,13 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { code, walk } from './files'
 import { settleShortcuts } from '@orden/scan/settle'
 import { withOwn } from '../src/lib/web-tab/src/own-file'
 import { readShortcut, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
-
-function files(dir: string, found: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) files(path, found)
-    else if (/\.(ts|svelte)$/.test(name) && !name.endsWith('.test.ts')) found.push(path)
-  }
-  return found
-}
 
 const FRESH: Record<string, string> = {
   'lib/web-tab/src/new-site.ts': 'a website made from an address',
@@ -65,7 +57,7 @@ describe('a shortcut written again', () => {
   })
 
   test('is never written from its parts but where that is the point', () => {
-    const writers = files(SOURCE)
+    const writers = walk(SOURCE, code)
       .filter((path) => /\bwriteShortcut\(/.test(readFileSync(path, 'utf8')))
       .map((path) => relative(SOURCE, path).replace(/\\/g, '/'))
       .sort()

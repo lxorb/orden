@@ -58,7 +58,6 @@ vi.mock('./pages.svelte', () => ({
 }))
 
 const { lend, unlend } = await import('./lending')
-
 const NOTHING = { url: null, space: null, path: null, own: null }
 
 beforeEach(() => {

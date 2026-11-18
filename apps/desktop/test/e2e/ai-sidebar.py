@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import http.server
 import json
 import sys
@@ -737,5 +735,4 @@ def main() -> int:
         " reviews, rewinds and resends"
     )
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

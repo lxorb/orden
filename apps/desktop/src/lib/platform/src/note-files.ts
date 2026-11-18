@@ -1,9 +1,8 @@
 import { invoke } from './tauri'
 import { oneWriteAt, windows } from './windows'
 
-export function readText(path: string): Promise<string | null> {
-  return invoke<string>('read_note', { path }).catch(() => null)
-}
+export const readText = (path: string): Promise<string | null> =>
+  invoke<string>('read_note', { path }).catch(() => null)
 
 export async function keepVersion(path: string, content: string, source?: string): Promise<void> {
   const from = source === undefined ? {} : { source }
@@ -15,6 +14,5 @@ export async function writeInTurn(path: string, content: string, arrived = false
   if (!windows.alone) windows.say('words', { path, text: content })
 }
 
-export function writeTaking(path: string, content: string, arrived = false): Promise<void> {
-  return oneWriteAt(path, () => writeInTurn(path, content, arrived))
-}
+export const writeTaking = (path: string, content: string, arrived = false): Promise<void> =>
+  oneWriteAt(path, () => writeInTurn(path, content, arrived))

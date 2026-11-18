@@ -1,4 +1,4 @@
-import { addMonths, dateAt, dayNumber, msOf, readDate } from '../dates'
+import { addMonths, dateAt, dayNumber, msOf, readDate, wallMs } from '../dates'
 import { BasesError } from '../errors'
 import { spend, stepsOfText } from './pattern'
 import type {
@@ -41,17 +41,14 @@ export interface Scope {
   formula: (name: string, row: Row) => Val
 }
 
-export function isDate(value: Val): value is DateValue {
-  return isRecordLike(value) && value.kind === 'date' && typeof value.iso === 'string'
-}
+export const isDate = (value: Val): value is DateValue =>
+  isRecordLike(value) && value.kind === 'date' && typeof value.iso === 'string'
 
-export function isDuration(value: Val): value is DurationValue {
-  return isRecordLike(value) && value.kind === 'duration' && typeof value.ms === 'number'
-}
+export const isDuration = (value: Val): value is DurationValue =>
+  isRecordLike(value) && value.kind === 'duration' && typeof value.ms === 'number'
 
-export function isLink(value: Val): value is LinkValue {
-  return isRecordLike(value) && value.kind === 'link' && typeof value.target === 'string'
-}
+export const isLink = (value: Val): value is LinkValue =>
+  isRecordLike(value) && value.kind === 'link' && typeof value.target === 'string'
 
 function isRecordLike(value: Val): value is ValueRecord {
   if (value === null || typeof value !== 'object') return false
@@ -59,30 +56,36 @@ function isRecordLike(value: Val): value is ValueRecord {
   return prototype === Object.prototype || prototype === null
 }
 
-export function isObject(value: Val): value is ValueRecord {
-  return isRecordLike(value) && !isDate(value) && !isDuration(value) && !isLink(value)
-}
+export const isObject = (value: Val): value is ValueRecord =>
+  isRecordLike(value) && !isDate(value) && !isDuration(value) && !isLink(value)
 
 export function fileOf(value: Val, scope: Scope): Row | null {
   if (value instanceof FileRef || value instanceof ThisRef) return value.row
   if (isLink(value) || typeof value === 'string') {
-    const target = typeof value === 'string' ? value : value.target
     const from = scope.row ?? scope.context.this
     if (!from) return null
-    const path = scope.context.resolve?.(target, from)
+    const path =
+      typeof value === 'string'
+        ? reachedFrom(value, from, scope.context)
+        : linkPath(value, from, scope.context)
     return path ? (scope.context.row?.(path, from.space) ?? null) : null
   }
   return null
 }
 
-export function plainTarget(target: string): string {
-  return target
+const reachedFrom = (target: string, from: Row, context: Context): string | null =>
+  context.resolve?.(target, from) ?? null
+
+const linkPath = (link: LinkValue, from: Row, context: Context): string | null =>
+  link.exact ? link.target : reachedFrom(link.target, from, context)
+
+export const plainTarget = (target: string): string =>
+  target
     .replace(/^!?\[\[|\]\]$/g, '')
     .replace(/[|#].*$/, '')
     .replace(/\.md$/i, '')
     .trim()
     .toLowerCase()
-}
 
 export function pointsAt(
   target: string,
@@ -107,9 +110,8 @@ export function truthy(value: Val): boolean {
   return true
 }
 
-function pathOf(value: Val): string | null {
-  return value instanceof FileRef || value instanceof ThisRef ? value.row.path : null
-}
+const pathOf = (value: Val): string | null =>
+  value instanceof FileRef || value instanceof ThisRef ? value.row.path : null
 
 export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (a === b) return true
@@ -119,6 +121,7 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
   const pathA = pathOf(a)
   const pathB = pathOf(b)
   if (pathA !== null && pathB !== null) return pathA === pathB
+  if (pathA !== null && isLink(b) && b.exact) return b.target === pathA
   if (pathA !== null && (isLink(b) || typeof b === 'string')) {
     return pointsAt(typeof b === 'string' ? b : b.target, pathA, scope.row, scope.context)
   }
@@ -128,9 +131,10 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
     const textA = isLink(a) ? a.target : typeof a === 'string' ? a : null
     const textB = isLink(b) ? b.target : typeof b === 'string' ? b : null
     if (textA === null || textB === null) return false
-    if (isLink(a) && isLink(b) && scope.row && scope.context.resolve) {
-      const resolvedA = scope.context.resolve(textA, scope.row)
-      const resolvedB = scope.context.resolve(textB, scope.row)
+    if (isLink(a) && isLink(b) && a.exact && b.exact) return a.target === b.target
+    if (isLink(a) && isLink(b) && scope.row) {
+      const resolvedA = linkPath(a, scope.row, scope.context)
+      const resolvedB = linkPath(b, scope.row, scope.context)
       if (resolvedA !== null && resolvedB !== null) return resolvedA === resolvedB
     }
     return plainTarget(textA) === plainTarget(textB)
@@ -138,7 +142,9 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
 
   const dateA = asDate(a)
   const dateB = asDate(b)
-  if (dateA && dateB && (isDate(a) || isDate(b))) return msOf(dateA) === msOf(dateB)
+  if (dateA && dateB && (isDate(a) || isDate(b))) {
+    return msOf(dateA, scope.context.zone) === msOf(dateB, scope.context.zone)
+  }
   if (isDuration(a) && isDuration(b)) return a.ms === b.ms && a.months === b.months
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) return false
@@ -164,15 +170,15 @@ export function asDate(value: Val): DateValue | null {
   return null
 }
 
-export function compare(a: Val, b: Val): number | null {
+export function compare(a: Val, b: Val, zone?: string): number | null {
   if (a === null || b === null) return null
   if (typeof a === 'number' && typeof b === 'number') return a - b
   if (isDate(a) || isDate(b)) {
     const dateA = asDate(a)
     const dateB = asDate(b)
-    if (dateA && dateB) return msOf(dateA) - msOf(dateB)
-    if (typeof a === 'number' && dateB) return a - msOf(dateB)
-    if (dateA && typeof b === 'number') return msOf(dateA) - b
+    if (dateA && dateB) return msOf(dateA, zone) - msOf(dateB, zone)
+    if (typeof a === 'number' && dateB) return a - msOf(dateB, zone)
+    if (dateA && typeof b === 'number') return msOf(dateA, zone) - b
     return null
   }
   if (isDuration(a) || isDuration(b)) {
@@ -206,7 +212,7 @@ function sortRank(value: Val): number {
   return 5
 }
 
-export function sortCompare(a: Val, b: Val): number {
+export function sortCompare(a: Val, b: Val, zone?: string): number {
   if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1
   const rankA = sortRank(a)
   const rankB = sortRank(b)
@@ -216,7 +222,7 @@ export function sortCompare(a: Val, b: Val): number {
     spend(stepsOfText(left.length + right.length))
     return collator.compare(left, right)
   }
-  return compare(a, b) ?? 0
+  return compare(a, b, zone) ?? 0
 }
 
 const DEEPEST_VALUE = 64
@@ -258,7 +264,7 @@ export function text(value: Val): string {
     const shown = value.value
     return shown.kind === 'image' ? shown.src : shown.kind === 'icon' ? shown.name : shown.html
   }
-  if (isDate(value)) return value.time ? `${value.iso} ${value.time}` : value.iso
+  if (isDate(value)) return value.time ? `${value.iso} ${value.time}${value.zone ?? ''}` : value.iso
   if (isDuration(value)) return durationText(value)
   if (isLink(value)) return value.display ?? value.target
   weigh(value)
@@ -352,7 +358,7 @@ function shifted(date: DateValue, by: DurationValue, sign: 1 | -1): DateValue {
       iso: dateAt((dayNumber(moved.iso) + (sign * by.ms) / 86_400_000) * 86_400_000, true).iso,
     }
   }
-  const result = dateAt(msOf(moved) + sign * by.ms)
+  const result = dateAt(wallMs(moved) + sign * by.ms)
   return date.zone ? { ...result, zone: date.zone } : result
 }
 
@@ -378,16 +384,16 @@ export function add(a: Val, b: Val): Val {
   throw new BasesError(`Cannot add ${kindName(b)} to ${kindName(a)}`)
 }
 
-export function subtract(a: Val, b: Val): Val {
+export function subtract(a: Val, b: Val, zone?: string): Val {
   if (typeof a === 'number' && typeof b === 'number') return a - b
   if (isDate(a)) {
     const other = asDate(b)
     if (other && (isDate(b) || !asDuration(b))) {
-      return { kind: 'duration', ms: msOf(a) - msOf(other), months: 0 }
+      return { kind: 'duration', ms: msOf(a, zone) - msOf(other, zone), months: 0 }
     }
     const by = asDuration(b)
     if (by) return shifted(a, by, -1)
-    if (typeof b === 'number') return dateAt(msOf(a) - b)
+    if (typeof b === 'number') return dateAt(msOf(a, zone) - b)
   }
   if (isDuration(a) && isDuration(b))
     return { kind: 'duration', ms: a.ms - b.ms, months: a.months - b.months }
@@ -434,13 +440,12 @@ export function settled(value: Val): Value {
   }
   if (value instanceof RegExp) return `/${value.source}/${value.flags}`
   if (value instanceof FileRef || value instanceof ThisRef)
-    return { kind: 'link', target: value.row.path }
+    return { kind: 'link', target: value.row.path, exact: true }
   if (value instanceof NoteRef) return value.row.note
   if (value instanceof TaskRef) return value.row.task ? { text: value.row.task.text } : null
   if (value instanceof Rendered) return value.value
   return value
 }
 
-export function fieldOf(object: ValueRecord | RenderedValue, name: string): Val {
-  return Object.hasOwn(object, name) ? ((object as ValueRecord)[name] ?? null) : null
-}
+export const fieldOf = (object: ValueRecord | RenderedValue, name: string): Val =>
+  Object.hasOwn(object, name) ? ((object as ValueRecord)[name] ?? null) : null

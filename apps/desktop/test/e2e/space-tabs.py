@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -202,5 +200,4 @@ def drive(browser: Browser) -> None:
     no_row(page, "dark")
     page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "each space's own tabs swap in, and come back after a restart"))
+raise SystemExit(DRIVE.run(drive, "each space's own tabs swap in, and come back after a restart"))

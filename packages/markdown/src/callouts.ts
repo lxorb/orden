@@ -52,7 +52,6 @@ const ALIASES: ReadonlyMap<string, string> = new Map(
 )
 
 const SHOUTED = new Set(['tldr', 'faq'])
-
 const MARKER = /^([ \t]*\[!([^\]\n]+)\]([-+])?[ \t]*)([^\n]*)/
 
 export interface Callout {
@@ -105,6 +104,4 @@ export function calloutIcon(look: string | null): string {
   return parts ? iconMarkup(parts, 'callout-icon') : ''
 }
 
-export function calloutChevron(): string {
-  return iconMarkup(CHEVRON, 'callout-fold')
-}
+export const calloutChevron = (): string => iconMarkup(CHEVRON, 'callout-fold')

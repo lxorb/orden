@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Page
@@ -122,6 +120,34 @@ def the_rollup(page: Page) -> None:
         wrong("the table is not two lines tall with its first column frozen")
     shot(page, "01-rollup")
 
+HEAD_WIDTH = "() => Math.round(document.querySelector('.view-tab .heads .head:nth-child(2)')?.getBoundingClientRect().width ?? -1)"
+
+def the_cancelled_resize(page: Page) -> None:
+    open_view(page, "All")
+    before = page.evaluate(HEAD_WIDTH)
+    grip = page.locator(".view-tab .heads .head:nth-child(2) .grip").first.bounding_box()
+    if not grip:
+        wrong("[cancel] the column has no grip to drag")
+        return
+    x, y = grip["x"] + grip["width"] / 2, grip["y"] + grip["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x + 90, y, steps=6)
+    stretched = page.evaluate(HEAD_WIDTH)
+    page.evaluate("() => window.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true }))")
+    page.wait_for_timeout(200)
+    cancelled = page.evaluate(HEAD_WIDTH)
+    page.mouse.move(x + 200, y, steps=6)
+    page.mouse.up()
+    page.wait_for_timeout(600)
+    after = page.evaluate(HEAD_WIDTH)
+    say(f"[cancel] the column was {before}, stretched to {stretched}, {cancelled} once cancelled, {after} after the button came up")
+    shot(page, "03-resize-cancelled")
+    if stretched <= before:
+        wrong(f"[cancel] the drag did not stretch the column: {before} -> {stretched}")
+    if cancelled != before or after != before:
+        wrong(f"[cancel] a cancelled resize was kept: {before} -> {cancelled} -> {after}")
+
 def the_button(page: Page) -> None:
     page.locator(".view-tab .line:has-text('Thesis') .press").click()
     if not DRIVE.waited(
@@ -218,10 +244,10 @@ def drive(browser) -> None:  # type: ignore[no-untyped-def]
     DRIVE.open(page)
     seed(page)
     the_rollup(page)
+    the_cancelled_resize(page)
     the_button(page)
     the_builders(page)
     the_form(page)
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a rollup counted, a button set a property, a form made a note"))
+raise SystemExit(DRIVE.run(drive, "a rollup counted, a button set a property, a form made a note"))

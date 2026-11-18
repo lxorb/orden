@@ -40,8 +40,6 @@ export const BROWSER_VERBS = [
   'agent_bye',
 ] as const
 
-export type BrowserVerb = (typeof BROWSER_VERBS)[number]
-
 export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   get_context: 'context',
   list_spaces: null,
@@ -102,6 +100,8 @@ export const CRATE_ASKS = {
   lend: 'agent.lend',
   storeFor: 'agent.store_for',
   markdown: 'agent.markdown',
+  mayHand: 'agent.may_hand',
+  programFree: 'agent.program_free',
 } as const
 
 export type { Scope }
@@ -160,21 +160,6 @@ export type Code =
   | 'no_dialog'
   | 'denied'
 
-export interface Dialog {
-  kind: 'alert' | 'confirm' | 'prompt' | 'beforeunload' | 'sign_in' | 'certificate'
-  message: string
-  default_text?: string
-  url: string
-  open_ms: number
-}
-
-export type Answer =
-  | { status: 'ok'; result: unknown; untrusted?: string; dialog?: Dialog }
-  | { status: 'needs_approval'; approval: string; summary: string }
-  | { status: 'error'; code: Code; message: string; dialog?: Dialog }
-
-export type Store = 'reader' | 'agent' | 'space'
-
 export interface ReaderTab {
   id: string
   title: string
@@ -189,21 +174,14 @@ export interface AgentTab {
   url: string
   title: string
   loading: boolean
-  store: Store
+  store: 'reader' | 'agent' | 'space'
   parked: boolean
-}
-
-export interface StoreAsk {
-  space?: string
-  url: string
 }
 
 export interface StoreSaid {
   space: string
   store: string | null
 }
-
-export type ApprovalAnswer = 'pending' | 'allowed' | 'denied' | 'expired' | 'done'
 
 export interface Approval {
   id: string
@@ -215,12 +193,7 @@ export interface Approval {
   tab?: string
   verb?: string
   asked: number
-  answer: ApprovalAnswer
-}
-
-export interface Opened {
-  tab: string
-  store: Store
+  answer: 'pending' | 'allowed' | 'denied' | 'expired' | 'done'
 }
 
 export const AGENT_COMMANDS = [

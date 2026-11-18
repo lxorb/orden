@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { noteLinks } from './note-links'
-import type { LinkWrite, NoteIndex, NoteRef } from './notes'
+import { type LinkWrite, type NoteIndex, type NoteRef, resolveFile, resolveNote } from './notes'
 
 function note(path: string): NoteRef {
   const name = (path.split('/').pop() ?? path).replace(/\.[^.]+$/, '')
@@ -19,29 +19,69 @@ const markdown = (target: LinkWrite) =>
   `[${target.name}](${target.path ?? ''} from ${target.from ?? ''})`
 
 describe('noteLinks', () => {
-  test('a note is linked by its name', () => {
-    expect(noteLinks(index, ['Ideas.md'], wikilink)).toBe('[[Ideas]]')
+  test.each([
+    [index, '[[Ideas]]', ['Ideas.md'], wikilink],
+    [index, '[[work/Plan]]', ['work/Plan.md'], wikilink],
+    [index, '[[Ideas]]\n[[paper.pdf]]', ['Ideas.md', 'paper.pdf'], wikilink],
+    [index, '![[cat.png]]', ['pics/cat.png'], wikilink],
+    [index, '[[Board.canvas]]', ['Board.canvas'], wikilink],
+    [index, '[[Trips]]', ['Trips/Trips.md'], wikilink],
+    [index, '[Ideas](Ideas.md from journal/Today.md)', ['Ideas.md'], markdown],
+  ])('%j', (input, wanted, extra, last) => expect(noteLinks(input, extra, last)).toEqual(wanted))
+
+  test.each([
+    [
+      { ...index, files: ['image.png', 'Trips/image.png'] },
+      '![[Trips/image.png]]',
+      ['Trips/image.png'],
+      wikilink,
+    ],
+    [index, '![[cat.png]]', ['pics/cat.png'], wikilink],
+    [
+      { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
+      '![[a/b/pic.png]]',
+      ['a/b/pic.png'],
+      wikilink,
+    ],
+    [
+      { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
+      '![[b/pic.png]]',
+      ['b/pic.png'],
+      wikilink,
+    ],
+    [
+      { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
+      '![[d.png]]',
+      ['c/d.png'],
+      wikilink,
+    ],
+  ])('%j', (input, wanted, extra, last) => expect(noteLinks(input, extra, last)).toBe(wanted))
+
+  test('a note or file at the top whose name one beside the note shares is linked from the top', () => {
+    const asked: NoteIndex = {
+      notes: [note('Plan.md'), note('Work/Plan.md'), note('Work/Journal.md')],
+      files: ['image.png', 'Work/image.png'],
+      path: 'Work/Journal.md',
+      read: () => Promise.resolve(null),
+    }
+    const top = noteLinks(asked, ['Plan.md'], wikilink)
+    expect(top).toBe('[[/Plan]]')
+    expect(resolveNote(asked, '/Plan')?.path).toBe('Plan.md')
+    expect(noteLinks(asked, ['image.png'], wikilink)).toBe('![[/image.png]]')
+    expect(resolveFile(asked, '/image.png', 'wikilink')).toBe('image.png')
   })
 
-  test('a name two notes share is linked by enough of the path to tell them apart', () => {
-    expect(noteLinks(index, ['work/Plan.md'], wikilink)).toBe('[[work/Plan]]')
-  })
+  test('a markdown link is given a path that reaches the same file read from the note first', () => {
+    const shortest = (target: LinkWrite) => target.markdown ?? ''
+    const here = { ...index, files: ['image.png', 'a/b/image.png'], path: 'a/b/c.md' }
+    expect(noteLinks(here, ['image.png'], shortest)).toBe('!/image.png')
+    expect(noteLinks(here, ['a/b/image.png'], shortest)).toBe('!image.png')
 
-  test('several notes are a line each, in the order they were carried', () => {
-    expect(noteLinks(index, ['Ideas.md', 'paper.pdf'], wikilink)).toBe('[[Ideas]]\n[[paper.pdf]]')
-  })
-
-  test('a picture is embedded, and a paper or a canvas is linked with its extension', () => {
-    expect(noteLinks(index, ['pics/cat.png'], wikilink)).toBe('![[cat.png]]')
-    expect(noteLinks(index, ['Board.canvas'], wikilink)).toBe('[[Board.canvas]]')
-  })
-
-  test('a note not written yet is linked by the name that will find it', () => {
-    expect(noteLinks(index, ['Trips/Trips.md'], wikilink)).toBe('[[Trips]]')
-  })
-
-  test('the writer is told where the target is and which note the link is in', () => {
-    expect(noteLinks(index, ['Ideas.md'], markdown)).toBe('[Ideas](Ideas.md from journal/Today.md)')
+    const three = [note('c.md'), note('a/b/c.md'), note('b/c.md')]
+    const notes = { ...index, notes: three, path: 'a/new.md' }
+    expect(noteLinks(notes, ['b/c.md'], shortest)).toBe('/b/c.md')
+    expect(noteLinks(notes, ['a/b/c.md'], shortest)).toBe('b/c.md')
+    expect(noteLinks(notes, ['c.md'], shortest)).toBe('c.md')
   })
 })
 

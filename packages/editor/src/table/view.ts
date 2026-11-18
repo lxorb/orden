@@ -87,11 +87,8 @@ export type Placement = 'start' | 'end' | 'all' | { x: number; edge: 'top' | 'bo
 export type Landing = 'start' | 'end' | { x: number }
 
 const WINDOWED = 150
-
 const AROUND = 40
-
 const STEP = 20
-
 const GUESSED_ROW = 32
 
 let active: TableView | null = null
@@ -112,13 +109,11 @@ const ALIGN_PATHS = {
 
 export class TableView {
   readonly dom: HTMLElement
-
   private readonly scroller: HTMLElement
   private readonly table: HTMLTableElement
   private readonly columnBar: HTMLElement
   private readonly rowBar: HTMLElement
   private readonly alignButtons: Record<'left' | 'center' | 'right', HTMLButtonElement>
-
   private model: TableModel
   private source: string
 
@@ -131,35 +126,20 @@ export class TableView {
   private composing = false
 
   private widths: (number | null)[]
-
   private barColumn = -1
-
   private barRow = -1
-
   private sortedAs: { column: number; order: Order } | null = null
-
   private dragging: (() => void) | null = null
-
   private editable: boolean
-
   private body: HTMLTableSectionElement | null = null
-
   private readonly drawn = new Map<number, HTMLTableRowElement>()
-
   private readonly heights = new Map<number, number>()
-
   private shown = { from: 0, to: 0 }
-
   private guess = GUESSED_ROW
-
   private drawnFor = -1
-
   private fitted: number[] | null = null
-
   private frame = 0
-
   private gaps: IntersectionObserver | null = null
-
   private following = false
 
   constructor(
@@ -180,17 +160,11 @@ export class TableView {
     this.table = element('table', 'orden-table')
     this.scroller.append(this.table)
 
-    this.alignButtons = {
-      left: this.columnButton('Align left', ALIGN_PATHS.left, (column) =>
-        this.toggleAlign(column, 'left'),
-      ),
-      center: this.columnButton('Align center', ALIGN_PATHS.center, (column) =>
-        this.toggleAlign(column, 'center'),
-      ),
-      right: this.columnButton('Align right', ALIGN_PATHS.right, (column) =>
-        this.toggleAlign(column, 'right'),
-      ),
-    }
+    const align = (side: 'left' | 'center' | 'right') =>
+      this.columnButton(`Align ${side}`, ALIGN_PATHS[side], (column) =>
+        this.toggleAlign(column, side),
+      )
+    this.alignButtons = { left: align('left'), center: align('center'), right: align('right') }
     this.columnBar = this.buildColumnBar()
     this.rowBar = this.buildRowBar()
     this.dom.append(this.scroller, this.columnBar, this.rowBar)
@@ -805,6 +779,10 @@ export class TableView {
     cell.addEventListener('keydown', (event) => this.keyInCell(event, cell, at))
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
+    cell.addEventListener(PASTE_TEXT, (event) => {
+      if (event instanceof CustomEvent && typeof event.detail === 'string')
+        this.typeInCell(event.detail, cell, at)
+    })
 
     return cell
   }
@@ -965,7 +943,12 @@ export class TableView {
 
   private pasteInCell(event: ClipboardEvent, cell: HTMLElement, at: CellAddress) {
     event.preventDefault()
-    const text = (event.clipboardData?.getData('text/plain') ?? '').replace(/\r?\n/g, ' ')
+    this.typeInCell(event.clipboardData?.getData('text/plain') ?? '', cell, at)
+  }
+
+  private typeInCell(said: string, cell: HTMLElement, at: CellAddress) {
+    if (this.editor.state.readOnly) return
+    const text = said.replace(/\r?\n/g, ' ')
     if (!text) return
 
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- no replacement reaches the browser's own undo stack
@@ -1186,9 +1169,8 @@ export class TableView {
     bar.style.left = `${left}px`
 
     const align = this.model.align[column]
-    for (const [name, element] of Object.entries(this.alignButtons)) {
+    for (const [name, element] of Object.entries(this.alignButtons))
       element.classList.toggle('is-active', name === align)
-    }
   }
 
   private hideColumnBar() {
@@ -1315,4 +1297,18 @@ function lineChanges(from: number, before: string, after: string): ChangeSpec[] 
     at += line.length + 1
   })
   return changes
+}
+
+const PASTE_TEXT = 'orden:paste-text'
+
+export function editableCellAt(view: EditorView, target: EventTarget | null): HTMLElement | null {
+  if (!(target instanceof Element)) return null
+  const cell = target.closest('td, th')
+  if (!(cell instanceof HTMLElement) || cell.contentEditable !== 'true') return null
+  return view.contentDOM.contains(cell) ? cell : null
+}
+
+export function pasteIntoCell(cell: HTMLElement, text: string): void {
+  cell.focus()
+  cell.dispatchEvent(new CustomEvent(PASTE_TEXT, { detail: text }))
 }

@@ -7,10 +7,7 @@ export interface Clipboard {
   write(text: string): Promise<void>
 }
 
-const system: Clipboard = {
-  read: () => navigator.clipboard.readText(),
-  write: copyText,
-}
+const system: Clipboard = { read: () => navigator.clipboard.readText(), write: copyText }
 
 let copies = 0
 let copied: string | null = null

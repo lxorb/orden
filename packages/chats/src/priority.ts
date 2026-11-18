@@ -2,9 +2,8 @@ export type Level = 'urgent' | 'important' | 'if-time' | 'unimportant'
 
 export const LEVELS: readonly Level[] = ['urgent', 'important', 'if-time', 'unimportant']
 
-export function isLevel(value: unknown): value is Level {
-  return typeof value === 'string' && (LEVELS as readonly string[]).includes(value)
-}
+export const isLevel = (value: unknown): value is Level =>
+  typeof value === 'string' && (LEVELS as readonly string[]).includes(value)
 
 export interface Assigned {
   level: Level

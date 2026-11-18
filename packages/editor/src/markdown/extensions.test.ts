@@ -8,14 +8,13 @@ import { growth, GROWS_AT_MOST } from '../../../../scripts/growth'
 import { ordenMarkdownExtensions } from './extensions'
 import { parsed } from '../../test/parsed'
 
-function stateFor(doc: string): EditorState {
-  return parsed(
+const stateFor = (doc: string): EditorState =>
+  parsed(
     EditorState.create({
       doc,
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-}
 
 function treeOf(state: EditorState): string {
   const doc = state.doc.toString()
@@ -32,28 +31,22 @@ function treeOf(state: EditorState): string {
   return out.join('\n')
 }
 
-function tree(doc: string): string {
-  return treeOf(stateFor(doc))
-}
+const tree = (doc: string): string => treeOf(stateFor(doc))
 
-function namesOf(state: EditorState): string[] {
-  return treeOf(state)
+const namesOf = (state: EditorState): string[] =>
+  treeOf(state)
     .split('\n')
     .map((line) => line.trim().split(' ')[0] ?? '')
-}
 
-function names(doc: string): string[] {
-  return namesOf(stateFor(doc))
-}
+const names = (doc: string): string[] => namesOf(stateFor(doc))
 
 describe('front matter being typed', () => {
   const language = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
   const top = (state: EditorState): string => {
     const out: string[] = []
     const tree = ensureSyntaxTree(state, state.doc.length, 5000) ?? syntaxTree(state)
-    for (let at = tree.topNode.firstChild; at; at = at.nextSibling) {
+    for (let at = tree.topNode.firstChild; at; at = at.nextSibling)
       out.push(`${at.name}@${at.from}-${at.to}`)
-    }
     return out.join(' ')
   }
   const fresh = (doc: string) => top(EditorState.create({ doc, extensions: [language] }))
@@ -137,13 +130,10 @@ describe('inline math', () => {
     expect(names('see $x^2$ here')).toContain('InlineMath')
   })
 
-  test('ignores prices with spaces', () => {
-    expect(names('costs $5 and $9 total')).not.toContain('InlineMath')
-  })
-
-  test('ignores a dollar at end of line', () => {
-    expect(names('a $ b')).not.toContain('InlineMath')
-  })
+  test.each([
+    ['costs $5 and $9 total', 'InlineMath'],
+    ['a $ b', 'InlineMath'],
+  ])('%j', (input, wanted) => expect(names(input)).not.toContain(wanted))
 
   test('ignores a range of prices, whose second dollar is before a digit', () => {
     expect(names('from $5-$10 a head')).not.toContain('InlineMath')
@@ -171,24 +161,18 @@ describe('block math', () => {
     `)
   })
 
-  test('leaves $$ part way along a line alone', () => {
-    expect(names('Costs $$5 and $$6 in total.')).not.toContain('BlockMath')
-    expect(names('The sum $$E = mc^2$$ sits here.')).not.toContain('BlockMath')
-  })
+  test.each([
+    ['Costs $$5 and $$6 in total.', 'BlockMath'],
+    ['The sum $$E = mc^2$$ sits here.', 'BlockMath'],
+    ['$$$$', 'BlockMath'],
+  ])('%j', (input, wanted) => expect(names(input)).not.toContain(wanted))
 
-  test('does not read an empty pair as a formula', () => {
-    expect(names('$$$$')).not.toContain('BlockMath')
-  })
-
-  test('ends the paragraph above it, in both shapes', () => {
-    expect(names('Text above\n$$x + y$$\nText below\n')).toContain('BlockMath')
-    expect(names('Text above\n$$\nx + y\n$$\nText below\n')).toContain('BlockMath')
-  })
-
-  test('which is what the two constructs either side of it already did', () => {
-    expect(names('Text above\n```js\nlet x = 1\n```\nText below\n')).toContain('FencedCode')
-    expect(names('Text above\n# A heading\nText below\n')).toContain('ATXHeading1')
-  })
+  test.each([
+    ['Text above\n$$x + y$$\nText below\n', 'BlockMath'],
+    ['Text above\n$$\nx + y\n$$\nText below\n', 'BlockMath'],
+    ['Text above\n```js\nlet x = 1\n```\nText below\n', 'FencedCode'],
+    ['Text above\n# A heading\nText below\n', 'ATXHeading1'],
+  ])('%j', (input, wanted) => expect(names(input)).toContain(wanted))
 
   test('and the paragraph above it is still a paragraph', () => {
     expect(tree('Text above\n$$x + y$$\n')).toMatchInlineSnapshot(`
@@ -212,13 +196,10 @@ describe('block math', () => {
 })
 
 describe('footnotes', () => {
-  test('parses a reference', () => {
-    expect(names('text[^1] more')).toContain('FootnoteRef')
-  })
-
-  test('parses a definition', () => {
-    expect(names('[^1]: the note')).toContain('FootnoteDef')
-  })
+  test.each([
+    ['text[^1] more', 'FootnoteRef'],
+    ['[^1]: the note', 'FootnoteDef'],
+  ])('%j', (input, wanted) => expect(names(input)).toContain(wanted))
 
   test('does not swallow ordinary links', () => {
     expect(names('[label](url)')).not.toContain('FootnoteRef')
@@ -236,13 +217,10 @@ describe('front matter', () => {
     `)
   })
 
-  test('leaves a leading horizontal rule alone', () => {
-    expect(names('---\n\njust a rule')).not.toContain('FrontMatter')
-  })
-
-  test('ignores YAML that is not at the top', () => {
-    expect(names('intro\n\n---\ntitle: Hi\n---\n')).not.toContain('FrontMatter')
-  })
+  test.each([
+    ['---\n\njust a rule', 'FrontMatter'],
+    ['intro\n\n---\ntitle: Hi\n---\n', 'FrontMatter'],
+  ])('%j', (input, wanted) => expect(names(input)).not.toContain(wanted))
 })
 
 describe('fenced code', () => {
@@ -288,22 +266,45 @@ describe('fenced code', () => {
     expect(tree('~~~a\n\n~~~~\nx\n~~~~\n')).toContain('FencedCode "~~~a\\n\\n~~~~"')
   })
 
-  test('leaves a fence on the last line as a paragraph', () => {
-    expect(tree('# Title\n\n```')).toBe(
+  test.each([
+    [
+      '# Title\n\n```',
       [
         'Document "# Title\\n\\n```"',
         '  ATXHeading1 "# Title"',
         '    HeaderMark "#"',
         '  Paragraph "```"',
       ].join('\n'),
-    )
-  })
-
-  test('still cuts a paragraph short, so the fence line stands on its own', () => {
-    expect(tree('text\n```')).toBe(
-      ['Document "text\\n```"', '  Paragraph "text"', '  Paragraph "```"'].join('\n'),
-    )
-  })
+    ],
+    ['text\n```', ['Document "text\\n```"', '  Paragraph "text"', '  Paragraph "```"'].join('\n')],
+    [
+      '- ```\n  code\n  ```',
+      [
+        'Document "- ```\\n  code\\n  ```"',
+        '  BulletList "- ```\\n  code\\n  ```"',
+        '    ListItem "- ```\\n  code\\n  ```"',
+        '      ListMark "-"',
+        '      FencedCode "```\\n  code\\n  ```"',
+        '        CodeMark "```"',
+        '        CodeText "code"',
+        '        CodeMark "```"',
+      ].join('\n'),
+    ],
+    [
+      '> ```\n> code\n> ```',
+      [
+        'Document "> ```\\n> code\\n> ```"',
+        '  Blockquote "> ```\\n> code\\n> ```"',
+        '    QuoteMark ">"',
+        '    FencedCode "```\\n> code\\n> ```"',
+        '      CodeMark "```"',
+        '      QuoteMark ">"',
+        '      CodeText "code"',
+        '      QuoteMark ">"',
+        '      CodeMark "```"',
+      ].join('\n'),
+    ],
+  ])('%j', (input, wanted) => expect(tree(input)).toBe(wanted))
 
   test('becomes a fence the moment the third backtick of the closer lands', () => {
     expect(names('```js\ncode\n`')).not.toContain('FencedCode')
@@ -346,21 +347,6 @@ describe('fenced code', () => {
     expect(names('    ```')).toEqual(['Document', 'CodeBlock', 'CodeText'])
   })
 
-  test('closes inside a list item', () => {
-    expect(tree('- ```\n  code\n  ```')).toBe(
-      [
-        'Document "- ```\\n  code\\n  ```"',
-        '  BulletList "- ```\\n  code\\n  ```"',
-        '    ListItem "- ```\\n  code\\n  ```"',
-        '      ListMark "-"',
-        '      FencedCode "```\\n  code\\n  ```"',
-        '        CodeMark "```"',
-        '        CodeText "code"',
-        '        CodeMark "```"',
-      ].join('\n'),
-    )
-  })
-
   test('does not let a list item close a fence for it', () => {
     const found = names('- ```\n  code\n\nafter')
     expect(found).not.toContain('FencedCode')
@@ -370,22 +356,6 @@ describe('fenced code', () => {
 
   test('ignores a closer outside the list item', () => {
     expect(names('- ```\n  code\n\n```')).not.toContain('FencedCode')
-  })
-
-  test('closes inside a blockquote', () => {
-    expect(tree('> ```\n> code\n> ```')).toBe(
-      [
-        'Document "> ```\\n> code\\n> ```"',
-        '  Blockquote "> ```\\n> code\\n> ```"',
-        '    QuoteMark ">"',
-        '    FencedCode "```\\n> code\\n> ```"',
-        '      CodeMark "```"',
-        '      QuoteMark ">"',
-        '      CodeText "code"',
-        '      QuoteMark ">"',
-        '      CodeMark "```"',
-      ].join('\n'),
-    )
   })
 
   test('does not let a blockquote close a fence for it', () => {
@@ -482,9 +452,8 @@ describe('a long paragraph', () => {
       .language.parser
     const log = (lines: number) => {
       let doc = ''
-      for (let line = 0; line < lines; line++) {
+      for (let line = 0; line < lines; line++)
         doc += `2026-10-19 12:00:00 [INFO] request ${line} url=https://example.com/${line}\n`
-      }
       return doc
     }
     const found = { Link: 0, URL: 0 }
@@ -531,9 +500,8 @@ describe('a long paragraph', () => {
   test('a line of list or quote marks thousands deep parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
       ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}x\n`)
-    for (const unit of ['- ', '* ', '1. ', '> ', '> - ']) {
+    for (const unit of ['- ', '* ', '1. ', '> ', '> - '])
       expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
-    }
   }, 30_000)
 
   test('reads lists and quotes 100 deep, as the page is drawn', () => {
@@ -556,17 +524,15 @@ describe('a long paragraph', () => {
       .language.parser
     const parsed = (unit: string) => (length: number) =>
       parser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
-    for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a ']) {
+    for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a '])
       expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
-    }
   }, 60_000)
 
   test('repeating what closes a link nothing opened parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
       ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
-    for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*']) {
+    for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*'])
       expect(growth(parsed(unit), 32_000), unit).toBeLessThan(GROWS_AT_MOST)
-    }
   }, 120_000)
 
   test('reads a link and emphasis that close as before', () => {

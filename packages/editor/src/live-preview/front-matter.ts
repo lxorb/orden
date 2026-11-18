@@ -18,9 +18,8 @@ export function frontMatterSpan(state: EditorState): FrontMatterSpan | null {
   return { end, after: Math.min(end + 1, state.doc.length) }
 }
 
-export function applied(source: string, edit: TextEdit): string {
-  return source.slice(0, edit.from) + edit.insert + source.slice(edit.to)
-}
+export const applied = (source: string, edit: TextEdit): string =>
+  source.slice(0, edit.from) + edit.insert + source.slice(edit.to)
 
 export function clearOfBlock(view: EditorView, after: string): { anchor: number } | undefined {
   const was = frontMatterBlock(view.state.doc.toString())

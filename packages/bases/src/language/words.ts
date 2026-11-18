@@ -21,9 +21,8 @@ export function wordsOf(text: string): Word[] {
 
 export const bare = (word: Word | undefined): string => (word?.key ?? '').replace(/\.$/u, '')
 
-function phraseAt(words: readonly Word[], at: number, phrase: readonly string[]): boolean {
-  return phrase.every((one, index) => bare(words[at + index]) === one)
-}
+const phraseAt = (words: readonly Word[], at: number, phrase: readonly string[]): boolean =>
+  phrase.every((one, index) => bare(words[at + index]) === one)
 
 export function longestAt(
   words: readonly Word[],

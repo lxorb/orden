@@ -14,6 +14,7 @@ import { shortcuts } from '../../shortcuts/src/api'
 import { busy } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
+import { picturesWrittenOut } from '../../link-index/src/api'
 import { frontShut, openOut, openTarget, renderOptions } from './context'
 import { picker } from './picker.svelte'
 
@@ -109,7 +110,8 @@ export function exportCommands(): Row[] {
           'Exporting',
           async () => {
             const m = await import('./exporters')
-            await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
+            const path = note()?.path ?? null
+            await m.exportPandoc(picturesWrittenOut(source(), path), name(), format.id, path)
           },
           `export-${format.id}`,
         ),

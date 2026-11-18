@@ -5,22 +5,6 @@ import { emptyCanvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
 import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
 
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 let close: (() => void) | undefined
 
 afterEach(() => {

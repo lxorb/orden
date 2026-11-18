@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import './idn'
 import { completion, suggested } from './omnibox'
-import { frecency, shownAddress } from '@orden/scan/visits'
-import type { Visit } from '@orden/scan/visits'
+import { frecency, shownAddress, type Visit } from '@orden/scan/visits'
 
 const NOW = Date.UTC(2026, 8, 27)
 const DAY = 24 * 60 * 60 * 1000

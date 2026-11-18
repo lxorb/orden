@@ -2,45 +2,13 @@
 
 import base64
 import json
-import os
 import subprocess
 import sys
 import time
-import urllib.request
 from pathlib import Path
+from linux_app import run
 
 OUT = Path(sys.argv[1])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
-def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=10) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
 
 def until(code, seconds=20):
     for _ in range(seconds * 4):
@@ -78,7 +46,7 @@ def mark(path):
         " const mark = row && row.querySelector('.mark svg'); return mark ? mark.innerHTML : null })()"
     )
 
-root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
+root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 folder = Path(root)
@@ -111,7 +79,7 @@ if not until(
     sys.exit("::error::the file list never showed the files put in the space")
 
 made = str(folder / "Lecture.pages")
-run(f"nib.workspace.openPdf({json.dumps(str(lecture))}); true")
+run(f"orden.workspace.openPdf({json.dumps(str(lecture))}); true")
 if not until(f"{LISTED}orden.workspace.entryAt({json.dumps(made)})?.path ?? null"):
     sys.exit("::error::opening the PDF made no page note")
 print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {run(f"nib.invoke('path_exists', {{ path: {json.dumps(str(folder / 'Lecture.pages.pdf'))} }})")}")
@@ -144,7 +112,7 @@ else:
 run(f"(() => {{ for (const tab of orden.workspace.tabs) if (tab.path === {json.dumps(made)}) orden.workspace.close(tab.id); return true }})()")
 time.sleep(1)
 run("void orden.workspace.addSpace('Elsewhere'), true")
-if not until("nib.workspace.activeSpace && orden.workspace.activeSpace.name === 'Elsewhere'"):
+if not until("orden.workspace.activeSpace && orden.workspace.activeSpace.name === 'Elsewhere'"):
     failures.append("the second space never opened")
 else:
     run(f"void orden.workspace.openPdf({json.dumps(made)}), true")
@@ -161,7 +129,7 @@ else:
             break
         time.sleep(0.25)
     subprocess.run(["grim", str(OUT / "pdf-mark-elsewhere.png")], check=False)
-    front = run("nib.workspace.activeSpace && orden.workspace.activeSpace.name")
+    front = run("orden.workspace.activeSpace && orden.workspace.activeSpace.name")
     listed = run(f"!!orden.workspace.entryAt({json.dumps(made)})")
     print(f"pdf mark: {front!r} is in front, and its list holds the note: {listed}")
     if front != "Elsewhere" or listed:

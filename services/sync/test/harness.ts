@@ -94,6 +94,7 @@ export interface Reply {
   token: string
   user: UserView
   resendIn: number
+  code: boolean
   settings: Record<string, unknown>
   password: { hash: string } | null
 
@@ -126,6 +127,7 @@ export interface Reply {
   excluded: string[]
   arranged: Record<string, string[]>
   archived: Record<string, number>
+  sort: string
   files: SpaceFileView[]
   missing: string[]
   deleted: string[]
@@ -321,4 +323,37 @@ export async function signIn(env: Env, email: string, guest?: string): Promise<s
 export function file(size: number, seed = 0): { bytes: Uint8Array; hash: string } {
   const bytes = new Uint8Array(size).fill(seed)
   return { bytes, hash: createHash('sha256').update(bytes).digest('hex') }
+}
+
+export async function invitation(
+  env: Env,
+  token: string,
+  space: string,
+  email: string,
+  role: 'write' | 'read' = 'write',
+  item = '',
+): Promise<string> {
+  const sent = await mail(() =>
+    call(env, `/v1/spaces/${space}/share/invite${item ? `?item=${item}` : ''}`, {
+      token,
+      body: { email, role },
+    }),
+  )
+  const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
+  if (!link) throw new Error(`no invitation was sent:\n${sent}`)
+  return link
+}
+
+export async function joined(
+  env: Env,
+  owner: string,
+  space: string,
+  email: string,
+  role: 'write' | 'read' = 'write',
+  { as, item }: { as?: string; item?: string } = {},
+): Promise<string> {
+  const link = await invitation(env, owner, space, email, role, item)
+  const token = as ?? (await signIn(env, email))
+  await call(env, `/v1/join/${link}`, { method: 'POST', token })
+  return token
 }

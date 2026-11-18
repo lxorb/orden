@@ -1,6 +1,7 @@
 import '../../sync-ports'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Said } from '../../platform/src/windows'
+import { memoryStorage } from '../test/memory-storage'
 
 vi.mock('../../platform/src/windows', async (original) => {
   const real = await original<typeof import('../../platform/src/windows')>()
@@ -43,19 +44,6 @@ vi.mock('./left', async (importOriginal) => ({
   },
 }))
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 function locksOf() {
@@ -284,7 +272,6 @@ describe('signing out in a window with no engine', () => {
     locks.free('orden-sync:local')
     await leaving
     expect(opening.forgotten).toEqual(['a'])
-    expect(windows).toBeDefined()
   })
 })
 

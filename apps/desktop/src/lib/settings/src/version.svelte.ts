@@ -1,13 +1,14 @@
-import { copyText } from '../../ui-controls/src/api'
+import { Copied } from '../../ui-controls/src/api'
 import { isDesktop } from '../../platform/src/api'
 import { updates, webChannel } from '../../updates/src/api'
 import type { Field } from './fields'
 
-const SAID_FOR = 1600
-
 class Version {
-  copied = $state(false)
-  private saying: ReturnType<typeof setTimeout> | undefined
+  private readonly copying = new Copied()
+
+  get copied(): boolean {
+    return this.copying.what === true
+  }
 
   channel(): string | null {
     const channel = isDesktop ? updates.channel : webChannel
@@ -26,11 +27,8 @@ class Version {
     return channel ? `${this.which()}, ${channel}` : this.which()
   }
 
-  async copy(): Promise<void> {
-    await copyText(this.which())
-    this.copied = true
-    clearTimeout(this.saying)
-    this.saying = setTimeout(() => (this.copied = false), SAID_FOR)
+  copy(): Promise<void> {
+    return this.copying.copy(this.which(), true)
   }
 }
 

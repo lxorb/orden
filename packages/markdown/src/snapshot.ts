@@ -1,5 +1,2 @@
 export const SELECTED = 'data-orden-selection'
-
-export function isSnapshot(html: string): boolean {
-  return /^\s*<!doctype html/i.test(html)
-}
+export const isSnapshot = (html: string): boolean => /^\s*<!doctype html/i.test(html)

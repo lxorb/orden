@@ -8,7 +8,10 @@ import { describe, expect, test } from 'vitest'
 
 const read = (name: string) =>
   readFileSync(
-    new URL(`../../../../src-tauri/src/extensions/firefox/${name}`, import.meta.url),
+    new URL(
+      `../../../../src-tauri/crates/extensions/src/extensions/firefox/${name}`,
+      import.meta.url,
+    ),
     'utf8',
   )
 const FIREFOX = read('firefox.js')
@@ -64,22 +67,8 @@ function engine() {
   const executed: unknown[] = []
   const registered: any[] = []
   const unregistered: unknown[] = []
-  const KINDS = [
-    'main_frame',
-    'sub_frame',
-    'stylesheet',
-    'script',
-    'image',
-    'font',
-    'object',
-    'xmlhttprequest',
-    'ping',
-    'csp_report',
-    'media',
-    'websocket',
-    'webbundle',
-    'other',
-  ]
+  const KINDS = `main_frame sub_frame stylesheet script image font object xmlhttprequest ping
+    csp_report media websocket webbundle other`.split(/\s+/)
   const requests = event()
   const filters: unknown[] = []
   const opened: any[] = []

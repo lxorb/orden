@@ -93,6 +93,7 @@ export const PACKAGES = [
   'glasses',
   'lang-html',
   'markdown',
+  'pass',
   'rooms',
   'scan',
   'sync-core',

@@ -1,8 +1,5 @@
-import { describe, expect, test } from 'vitest'
-import { loadLinksPanel } from '../src/api'
+import { expect, test } from 'vitest'
 
-describe('the links panel', () => {
-  test('loads behind its door', async () => {
-    expect(typeof (await loadLinksPanel()).default).toBe('function')
-  })
+test('the links panel is one door, so loading the api draws no panel', async () => {
+  expect(Object.keys(await import('../src/api')).sort()).toEqual(['loadLinksPanel'])
 })

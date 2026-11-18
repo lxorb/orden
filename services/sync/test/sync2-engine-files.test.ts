@@ -1,114 +1,12 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import app from '../src'
-import { call, signIn, type TestEnv, testEnv } from './harness'
-import { type Live, live } from './sync2'
-
-interface Core {
-  spaces: Map<string, { outbox: unknown[]; entries: Map<string, { name: string }> }>
-  held: Map<string, unknown>
-  addSpace(id: string, root: string, role: string): unknown[]
-  commit(changes: unknown[]): Promise<void>
-}
-
-interface Device {
-  root: string
-  store: { rows(table: 'log'): { failed: string | null }[]; open(): unknown }
-  disk: {
-    bytes: Map<string, Uint8Array>
-    files: Map<string, string>
-    kept: unknown[]
-    readBytes(path: string): Promise<Uint8Array | null>
-    writeBytes(path: string, bytes: Uint8Array): Promise<void>
-    write(path: string, text: string): Promise<void>
-    remove(path: string): Promise<void>
-    mkdir(path: string): Promise<void>
-    move(from: string, to: string): Promise<void>
-  }
-  engine: {
-    core: Core & { world: unknown }
-    pass(space: string): Promise<{ finished: boolean; full: boolean } | null>
-    created(path: string, dir: boolean, text?: string): Promise<string | null>
-    foreign(path: string): Promise<void>
-    removed(path: string): Promise<void>
-    moved(from: string, to: string): Promise<void>
-    waiting(space: string): boolean
-    stamped(path: string, mtime: number, size: number): Promise<void>
-    stop(): void
-    on(type: 'unsynced', listener: (event: { name: string }) => void): () => void
-    held: {
-      notes: readonly { id: string }[]
-      answer(id: string, answer: string): Promise<string | undefined>
-    }
-  }
-}
-
-interface Kit {
-  testDevice(making: {
-    fetch: (request: Request) => Promise<Response>
-    token: string
-    name?: string
-    files?: Record<string, string | Uint8Array>
-  }): Promise<Device>
-  firstPass(core: Core, space: unknown, v1: null): Promise<boolean>
-  Engine: { start(world: unknown, store: unknown): Promise<Device['engine']> }
-}
-
-async function kit(): Promise<Kit> {
-  const at = (file: string) =>
-    new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
-  const [device, migrate, engine] = await Promise.all([
-    import(/* @vite-ignore */ at('test/test-device.ts')),
-    import(/* @vite-ignore */ at('src/migrate.ts')),
-    import(/* @vite-ignore */ at('src/engine.ts')),
-  ])
-  return { ...(device as object), ...(migrate as object), ...(engine as object) } as Kit
-}
-
-let env: TestEnv
-let rooms: Live
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  rooms = live(env)
-  token = await signIn(env, 'pictures@example.com')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Pictures' } })).json.space.id
-})
-
-afterEach(() => env.close())
+import { type Device, engineSpace, kit } from './engine-kit'
+import { signIn } from './harness'
 
 const picture = (seed: number) =>
   new Uint8Array(Array.from({ length: 4096 }, (_, at) => (at * seed) % 251))
 
-async function device(
-  name: string,
-  files: Record<string, string | Uint8Array> = {},
-  as = { token, role: 'owner' },
-): Promise<Device> {
-  const made = await (
-    await kit()
-  ).testDevice({
-    fetch: async (request) => await app.fetch(request, env),
-    token: as.token,
-    name,
-    files,
-  })
-  const core = made.engine.core
-  await core.commit(core.addSpace(space, made.root, as.role))
-  expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
-  await rooms.settle()
-  return made
-}
-
-async function passed(...devices: Device[]) {
-  for (let round = 0; round < 2; round += 1) {
-    for (const one of devices) {
-      await one.engine.pass(space)
-      await rooms.settle()
-    }
-  }
-}
+const { at, device, passed } = engineSpace()
 
 const bytesAt = (one: Device, path: string) => one.disk.bytes.get(`${one.root}/${path}`)
 
@@ -140,23 +38,23 @@ describe('a file that is not a note, under v2', () => {
     ).testDevice({
       fetch: async (request) => {
         const replacing = request.method === 'PUT' && request.url.includes('/v2/files/')
-        const answer = await app.fetch(request, env)
+        const answer = await app.fetch(request, at.env)
         if (lose && replacing) throw new TypeError('the answer was lost')
         return answer
       },
-      token,
+      token: at.token,
       name: 'laptop',
       files: { 'photo.png': picture(3) },
     })
     const core = made.engine.core
-    await core.commit(core.addSpace(space, made.root, 'owner'))
-    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
+    await core.commit(core.addSpace(at.space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(at.space), null)).toBe(true)
     await passed(made)
 
     await made.disk.writeBytes(`${made.root}/photo.png`, picture(5))
     await made.engine.foreign(`${made.root}/photo.png`)
     lose = true
-    expect((await made.engine.pass(space))?.finished).toBe(false)
+    expect((await made.engine.pass(at.space))?.finished).toBe(false)
     lose = false
     await made.engine.foreign(`${made.root}/photo.png`)
     await passed(made)
@@ -177,8 +75,8 @@ describe('a file that is not a note, under v2', () => {
     await laptop.engine.foreign(`${laptop.root}/photo.png`)
     await phone.disk.writeBytes(`${phone.root}/photo.png`, picture(7))
     await phone.engine.foreign(`${phone.root}/photo.png`)
-    await laptop.engine.pass(space)
-    await phone.engine.pass(space)
+    await laptop.engine.pass(at.space)
+    await phone.engine.pass(at.space)
 
     expect(phone.engine.held.notes).toHaveLength(1)
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(7))
@@ -202,8 +100,8 @@ describe('a file that is not a note, under v2', () => {
     await laptop.engine.foreign(`${laptop.root}/photo.png`)
     await phone.disk.writeBytes(`${phone.root}/photo.png`, picture(7))
     await phone.engine.foreign(`${phone.root}/photo.png`)
-    await laptop.engine.pass(space)
-    await phone.engine.pass(space)
+    await laptop.engine.pass(at.space)
+    await phone.engine.pass(at.space)
 
     await phone.engine.held.answer(phone.engine.held.notes[0]?.id ?? '', 'mine')
     await passed(phone, laptop)
@@ -217,10 +115,10 @@ describe('a file that is not a note, under v2', () => {
     await laptop.disk.writeBytes(`${laptop.root}/Scan.pdf`, picture(3))
     await laptop.engine.created(`${laptop.root}/Scan.pdf`, false)
     await desktop.disk.writeBytes(`${desktop.root}/Scan.pdf`, picture(7))
-    await laptop.engine.pass(space)
-    await rooms.settle()
-    await desktop.engine.pass(space)
-    await rooms.settle()
+    await laptop.engine.pass(at.space)
+    await at.rooms.settle()
+    await desktop.engine.pass(at.space)
+    await at.rooms.settle()
 
     expect(bytesAt(desktop, 'Scan.pdf')).toEqual(picture(7))
 
@@ -271,15 +169,15 @@ describe('a file that is not a note, under v2', () => {
 
 describe('a file whose bytes on this disk cannot be judged', () => {
   const entryOf = (one: Device, name: string) =>
-    [...(one.engine.core.spaces.get(space)?.entries.values() ?? [])].find(
+    [...(one.engine.core.spaces.get(at.space)?.entries.values() ?? [])].find(
       (entry) => entry.name === name,
     ) as unknown as { file_key: string; written_hash: string; mtime: number | null }
 
   const replacedElsewhere = async (other: Device, name: string) => {
     await other.disk.writeBytes(`${other.root}/${name}`, picture(5))
     await other.engine.foreign(`${other.root}/${name}`)
-    await other.engine.pass(space)
-    await rooms.settle()
+    await other.engine.pass(at.space)
+    await at.rooms.settle()
   }
 
   test('past what travels, it is not written over by another device’s replacement', async () => {
@@ -294,8 +192,8 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await replacedElsewhere(desktop, 'v.bin')
 
     const reads = vi.spyOn(laptop.disk, 'readBytes')
-    await laptop.engine.pass(space)
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
+    await laptop.engine.pass(at.space)
 
     expect(bytesAt(laptop, 'v.bin') === big).toBe(true)
     expect(told).toEqual(['v.bin'])
@@ -305,7 +203,7 @@ describe('a file whose bytes on this disk cannot be judged', () => {
 
     await laptop.disk.writeBytes(`${laptop.root}/v.bin`, picture(9))
     await laptop.engine.foreign(`${laptop.root}/v.bin`)
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
     expect(bytesAt(laptop, 'v.bin')).toEqual(picture(9))
     expect(laptop.engine.held.notes).toHaveLength(1)
   })
@@ -322,12 +220,12 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await laptop.engine.foreign(path)
     await replacedElsewhere(desktop, 'v.bin')
 
-    await laptop.engine.pass(space)
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
+    await laptop.engine.pass(at.space)
     expect(bytesAt(laptop, 'v.bin')).toEqual(picture(7))
 
     locked = false
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
     expect(bytesAt(laptop, 'v.bin')).toEqual(picture(7))
     expect(laptop.engine.held.notes).toHaveLength(1)
   })
@@ -342,7 +240,7 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     laptop.disk.readBytes = (at) => (locked && at === path ? Promise.resolve(null) : real(at))
     await laptop.disk.writeBytes(path, picture(7))
     await laptop.engine.foreign(path)
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
     locked = false
     await passed(laptop, desktop)
     expect(bytesAt(desktop, 'v.bin')).toEqual(picture(7))
@@ -354,7 +252,7 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await passed(laptop, desktop)
     laptop.disk.bytes.delete(`${laptop.root}/v.bin`)
     await replacedElsewhere(desktop, 'v.bin')
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
     expect(bytesAt(laptop, 'v.bin')).toEqual(picture(5))
   })
 
@@ -367,9 +265,9 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await laptop.engine.created(path, false)
     await laptop.disk.writeBytes(path, new Uint8Array(65 * 1024 * 1024).fill(9))
 
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
 
-    expect(laptop.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
+    expect(laptop.engine.core.spaces.get(at.space)?.outbox).toHaveLength(1)
     expect(told).toEqual(['new.bin'])
   })
 
@@ -382,9 +280,9 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     let locked = true
     laptop.disk.readBytes = (at) => (locked && at === path ? Promise.resolve(null) : real(at))
 
-    await laptop.engine.pass(space)
-    expect(laptop.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
-    expect(laptop.engine.waiting(space)).toBe(false)
+    await laptop.engine.pass(at.space)
+    expect(laptop.engine.core.spaces.get(at.space)?.outbox).toHaveLength(1)
+    expect(laptop.engine.waiting(at.space)).toBe(false)
     expect(entryOf(laptop, 'new.bin')).toBeTruthy()
 
     locked = false
@@ -402,17 +300,17 @@ describe('a file whose bytes on this disk cannot be judged', () => {
         if (busy && new URL(request.url).pathname.startsWith('/v2/blobs')) {
           return new Response(null, { status: 503 })
         }
-        return await app.fetch(request, env)
+        return await app.fetch(request, at.env)
       },
-      token,
+      token: at.token,
       name: 'laptop',
       files: { 'p.png': picture(3) },
     })
     const core = made.engine.core
-    await core.commit(core.addSpace(space, made.root, 'owner'))
-    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
-    await rooms.settle()
-    await made.engine.pass(space)
+    await core.commit(core.addSpace(at.space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(at.space), null)).toBe(true)
+    await at.rooms.settle()
+    await made.engine.pass(at.space)
     const before = entryOf(made, 'p.png').file_key
 
     const path = `${made.root}/p.png`
@@ -420,10 +318,10 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await made.engine.foreign(path)
     await made.engine.stamped(path, 123, 456)
     busy = true
-    await made.engine.pass(space)
+    await made.engine.pass(at.space)
     expect(entryOf(made, 'p.png').mtime).not.toBe(123)
     busy = false
-    await made.engine.pass(space)
+    await made.engine.pass(at.space)
 
     expect(entryOf(made, 'p.png').file_key).not.toBe(before)
     expect(entryOf(made, 'p.png').file_key).toBe(entryOf(made, 'p.png').written_hash)
@@ -440,17 +338,17 @@ describe('a file whose bytes on this disk cannot be judged', () => {
           hung.begun()
           await new Promise<void>((resolve) => (hung.free = resolve))
         }
-        return await app.fetch(request, env)
+        return await app.fetch(request, at.env)
       },
-      token,
+      token: at.token,
       name: 'laptop',
       files: { 'p.png': picture(3) },
     })
     const core = made.engine.core
-    await core.commit(core.addSpace(space, made.root, 'owner'))
-    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
-    await rooms.settle()
-    await made.engine.pass(space)
+    await core.commit(core.addSpace(at.space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(at.space), null)).toBe(true)
+    await at.rooms.settle()
+    await made.engine.pass(at.space)
     return { made, hung }
   }
 
@@ -461,7 +359,7 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     await made.engine.stamped(path, 123, 456)
     hung.hanging = true
     const begun = new Promise<void>((resolve) => (hung.begun = resolve))
-    const passing = made.engine.pass(space)
+    const passing = made.engine.pass(at.space)
     await begun
     return { path, passing }
   }
@@ -476,7 +374,7 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     hung.free()
     await passing
 
-    await made.engine.pass(space)
+    await made.engine.pass(at.space)
     expect(entryOf(made, 'p.png').file_key).not.toBe(before)
     expect(entryOf(made, 'p.png').mtime).toBe(123)
   })
@@ -490,14 +388,14 @@ describe('a file whose bytes on this disk cannot be judged', () => {
     const k = await kit()
     const again = await k.Engine.start(made.engine.core.world, made.store.open())
     const row = () =>
-      [...(again.core.spaces.get(space)?.entries.values() ?? [])].find(
+      [...(again.core.spaces.get(at.space)?.entries.values() ?? [])].find(
         (entry) => entry.name === 'p.png',
       ) as unknown as { file_key: string; mtime: number | null }
     held.hung.hanging = false
     expect(row().mtime).not.toBe(123)
     await again.foreign(path)
     await again.stamped(path, 123, 456)
-    await again.pass(space)
+    await again.pass(at.space)
     expect(row().file_key).not.toBe(before)
     expect(row().mtime).toBe(123)
   })
@@ -505,10 +403,10 @@ describe('a file whose bytes on this disk cannot be judged', () => {
   test('in step, a stamp is written down, and the scan has nothing more to read', async () => {
     const laptop = await device('laptop', { 'v.bin': picture(3) })
     const path = `${laptop.root}/v.bin`
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
     await laptop.engine.foreign(path)
     await laptop.engine.stamped(path, 55, 4096)
-    await laptop.engine.pass(space)
+    await laptop.engine.pass(at.space)
     expect(entryOf(laptop, 'v.bin').mtime).toBe(55)
   })
 })
@@ -523,12 +421,14 @@ describe('a file whose bytes the account lost', () => {
     const hash = [...new Uint8Array(digest)]
       .map((one) => one.toString(16).padStart(2, '0'))
       .join('')
-    expect(env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
+    expect(
+      at.env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash),
+    ).toEqual({
       many: 1,
     })
 
-    env.db.prepare('delete from blobs where hash = ?').run(hash)
-    await env.NOTES.delete(`blobs/${hash}`)
+    at.env.db.prepare('delete from blobs where hash = ?').run(hash)
+    await at.env.NOTES.delete(`blobs/${hash}`)
 
     const phone = await device('phone')
     await passed(phone)
@@ -537,7 +437,9 @@ describe('a file whose bytes the account lost', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(Date.now() + 7 * 60 * 60 * 1000)
     await passed(laptop)
-    expect(env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
+    expect(
+      at.env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash),
+    ).toEqual({
       many: 1,
     })
 
@@ -555,15 +457,15 @@ describe('an account too full for a file', () => {
       fetch: async (request) => {
         if (state.full && request.method === 'PUT' && request.url.includes('/v2/blobs/'))
           return Response.json({ error: 'refused' }, { status: state.status })
-        return await app.fetch(request, env)
+        return await app.fetch(request, at.env)
       },
-      token,
+      token: at.token,
       name: 'laptop',
       files,
     })
     const core = made.engine.core
-    await core.commit(core.addSpace(space, made.root, 'owner'))
-    expect(await (await kit()).firstPass(core, core.spaces.get(space), null)).toBe(true)
+    await core.commit(core.addSpace(at.space, made.root, 'owner'))
+    expect(await (await kit()).firstPass(core, core.spaces.get(at.space), null)).toBe(true)
     await passed(made)
     return { made, state }
   }
@@ -586,22 +488,22 @@ describe('an account too full for a file', () => {
     await made.disk.write(`${made.root}/Notes.md`, 'a new note')
     await made.engine.created(`${made.root}/Notes.md`, false, 'a new note')
     for (let round = 0; round < 2; round += 1) {
-      const one = await made.engine.pass(space)
+      const one = await made.engine.pass(at.space)
       expect(one?.finished).toBe(true)
       expect(one?.full).toBe(true)
-      await rooms.settle()
+      await at.rooms.settle()
     }
     await passed(phone)
     expect(phone.disk.files.get(`${phone.root}/Notes.md`)).toBe('a new note')
     expect(bytesAt(phone, 'photo.png')).toBeUndefined()
-    expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
+    expect(made.engine.core.spaces.get(at.space)?.outbox).toHaveLength(1)
 
     state.full = false
-    expect((await made.engine.pass(space))?.full).toBe(true)
+    expect((await made.engine.pass(at.space))?.full).toBe(true)
     later()
-    const freed = await made.engine.pass(space)
+    const freed = await made.engine.pass(at.space)
     expect(freed?.full).toBe(false)
-    await rooms.settle()
+    await at.rooms.settle()
     await passed(phone)
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
   })
@@ -617,7 +519,7 @@ describe('an account too full for a file', () => {
     state.full = true
     await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
     await made.engine.created(`${made.root}/photo.png`, false)
-    expect((await made.engine.pass(space))?.full).toBe(true)
+    expect((await made.engine.pass(at.space))?.full).toBe(true)
     await made.disk.mkdir(`${made.root}/G`)
     await made.engine.created(`${made.root}/G`, true)
     await made.disk.move(`${made.root}/photo.png`, `${made.root}/G/photo.png`)
@@ -626,8 +528,8 @@ describe('an account too full for a file', () => {
       await made.disk.move(`${made.root}/G/photo.png`, `${made.root}/${to}`)
       await made.engine.moved(`${made.root}/G/photo.png`, `${made.root}/${to}`)
     }
-    expect((await made.engine.pass(space))?.full).toBe(true)
-    await rooms.settle()
+    expect((await made.engine.pass(at.space))?.full).toBe(true)
+    await at.rooms.settle()
 
     state.full = false
     later()
@@ -636,7 +538,7 @@ describe('an account too full for a file', () => {
       expect(bytesAt(one, to)).toEqual(picture(3))
       expect(bytesAt(one, 'photo.png')).toBeUndefined()
     }
-    expect(made.engine.waiting(space)).toBe(false)
+    expect(made.engine.waiting(at.space)).toBe(false)
   })
 
   test('kept back, then changed here, its new bytes go at once rather than after the wait', async () => {
@@ -647,7 +549,7 @@ describe('an account too full for a file', () => {
     state.full = true
     await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
     await made.engine.created(`${made.root}/photo.png`, false)
-    expect((await made.engine.pass(space))?.full).toBe(true)
+    expect((await made.engine.pass(at.space))?.full).toBe(true)
 
     state.full = false
     await made.disk.writeBytes(`${made.root}/photo.png`, picture(7))
@@ -663,13 +565,13 @@ describe('an account too full for a file', () => {
     await made.disk.writeBytes(`${made.root}/photo.png`, picture(3))
     await made.engine.created(`${made.root}/photo.png`, false)
     for (let round = 0; round < 2; round += 1) {
-      const one = await made.engine.pass(space)
+      const one = await made.engine.pass(at.space)
       expect(one?.finished).toBe(true)
       expect(one?.full).toBe(false)
     }
     const said = made.store.rows('log').filter((row) => row.failed?.includes('photo.png'))
     expect(said.map((row) => row.failed)).toEqual(['the account would not take photo.png'])
-    expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
+    expect(made.engine.core.spaces.get(at.space)?.outbox).toHaveLength(1)
   })
 
   test('keeps a replacement back, and the rest of the space still syncs', async () => {
@@ -682,10 +584,10 @@ describe('an account too full for a file', () => {
     await made.engine.foreign(`${made.root}/photo.png`)
     await made.disk.write(`${made.root}/Notes.md`, 'a new note')
     await made.engine.created(`${made.root}/Notes.md`, false, 'a new note')
-    const one = await made.engine.pass(space)
+    const one = await made.engine.pass(at.space)
     expect(one?.finished).toBe(true)
     expect(one?.full).toBe(true)
-    await rooms.settle()
+    await at.rooms.settle()
     await passed(phone)
     expect(phone.disk.files.get(`${phone.root}/Notes.md`)).toBe('a new note')
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
@@ -700,12 +602,12 @@ describe('an account too full for a file', () => {
 
 describe('a file in a space this account may only read', () => {
   async function reader(): Promise<Device> {
-    const theirs = await signIn(env, 'reader@example.com')
-    env.db
+    const theirs = await signIn(at.env, 'reader@example.com')
+    at.env.db
       .prepare(
         "insert into space_members (space_id, email, role, created_at) values (?, 'reader@example.com', 'read', 1)",
       )
-      .run(space)
+      .run(at.space)
     return await device('reader', {}, { token: theirs, role: 'read' })
   }
 
@@ -727,14 +629,14 @@ describe('a file in a space this account may only read', () => {
 
     await owner.disk.write(`${owner.root}/a.md`, 'one\ntwo\n')
     await owner.engine.foreign(`${owner.root}/a.md`)
-    await owner.engine.pass(space)
-    await rooms.settle()
+    await owner.engine.pass(at.space)
+    await at.rooms.settle()
 
     const taken = trashed(here)
     await here.disk.writeBytes(`${here.root}/photo.png`, picture(10))
     await here.engine.foreign(`${here.root}/photo.png`)
-    expect((await here.engine.pass(space))?.finished).toBe(true)
-    await rooms.settle()
+    expect((await here.engine.pass(at.space))?.finished).toBe(true)
+    await at.rooms.settle()
 
     expect(taken).toContain(`${here.root}/photo.png`)
     expect(bytesAt(here, 'photo.png')).toEqual(picture(3))
@@ -748,21 +650,21 @@ describe('a file in a space this account may only read', () => {
 
     await owner.disk.write(`${owner.root}/a.md`, 'one\ntwo\n')
     await owner.engine.foreign(`${owner.root}/a.md`)
-    await owner.engine.pass(space)
-    await rooms.settle()
+    await owner.engine.pass(at.space)
+    await at.rooms.settle()
 
     const remove = here.disk.remove.bind(here.disk)
     here.disk.remove = () => Promise.reject(new Error('the file is being used by another process'))
     await here.disk.writeBytes(`${here.root}/photo.png`, picture(10))
     await here.engine.foreign(`${here.root}/photo.png`)
-    expect((await here.engine.pass(space))?.finished).toBe(true)
-    await rooms.settle()
+    expect((await here.engine.pass(at.space))?.finished).toBe(true)
+    await at.rooms.settle()
     expect(here.disk.files.get(`${here.root}/a.md`)).toBe('one\ntwo\n')
     expect(bytesAt(here, 'photo.png')).toEqual(picture(10))
 
     here.disk.remove = remove
-    await here.engine.pass(space)
-    await rooms.settle()
+    await here.engine.pass(at.space)
+    await at.rooms.settle()
     expect(bytesAt(here, 'photo.png')).toEqual(picture(3))
   })
 
@@ -777,14 +679,14 @@ describe('a file in a space this account may only read', () => {
     await here.disk.write(`${here.root}/mine.md`, 'my words\n')
     await here.engine.created(`${here.root}/mine.md`, false)
     for (let round = 0; round < 3; round += 1) {
-      expect((await here.engine.pass(space))?.finished).toBe(true)
-      await rooms.settle()
+      expect((await here.engine.pass(at.space))?.finished).toBe(true)
+      await at.rooms.settle()
     }
 
     expect(taken).toEqual([])
     expect(bytesAt(here, 'mine.png')).toEqual(picture(9))
     expect(here.disk.files.get(`${here.root}/mine.md`)).toBe('my words\n')
-    const theirs = here.engine.core.spaces.get(space)
+    const theirs = here.engine.core.spaces.get(at.space)
     expect(theirs?.outbox).toEqual([])
     expect([...(theirs?.entries.values() ?? [])].map((entry) => entry.name)).toEqual(['a.md'])
   })

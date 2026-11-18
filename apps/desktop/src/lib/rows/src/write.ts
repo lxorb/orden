@@ -1,5 +1,16 @@
-import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@orden/bases'
-import { lineOfTask, listAsWritten, noteValues, tick, todayOf } from '@orden/bases'
+import {
+  type DateValue,
+  type DurationValue,
+  type LinkValue,
+  type Row,
+  type TaskChange,
+  type Value,
+  lineOfTask,
+  listAsWritten,
+  noteValues,
+  tick,
+  todayOf,
+} from '@orden/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { type Property, keyCalled, readProperties } from '@orden/markdown/properties'
 import {
@@ -189,7 +200,8 @@ function written(value: Value): string | null {
   if (hasKind(value, 'link')) {
     return value.display ? `[[${value.target}|${value.display}]]` : `[[${value.target}]]`
   }
-  if (hasKind(value, 'date')) return value.time ? `${value.iso}T${value.time}` : value.iso
+  if (hasKind(value, 'date'))
+    return value.time ? `${value.iso}T${value.time}${value.zone ?? ''}` : value.iso
   if (hasKind(value, 'duration')) return `${Math.round(value.ms / 60_000)}m`
   return null
 }

@@ -1,16 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
-const held = new Map<string, string>()
-
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => held.get(key) ?? null,
-  setItem: (key: string, value: string) => void held.set(key, value),
-  removeItem: (key: string) => void held.delete(key),
-  key: (at: number) => [...held.keys()][at] ?? null,
-  get length() {
-    return held.size
-  },
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 await import('./renamed.svelte')
 
@@ -20,15 +11,15 @@ async function launched() {
   return renamed
 }
 
-beforeEach(() => held.clear())
+beforeEach(() => localStorage.clear())
 
 test('is said to an install an earlier version wrote settings into', async () => {
-  held.set('orden:theme', 'dark')
+  localStorage.setItem('orden:theme', 'dark')
   expect((await launched()).showing).toBe(true)
 })
 
 test('is said once, however many launches follow', async () => {
-  held.set('orden:session', '{}')
+  localStorage.setItem('orden:session', '{}')
   const first = await launched()
   first.dismiss()
   expect(first.showing).toBe(false)
@@ -39,11 +30,11 @@ test('is said once, however many launches follow', async () => {
 test('is never said to a fresh install, on this launch or the next', async () => {
   expect((await launched()).showing).toBe(false)
 
-  held.set('orden:theme', 'dark')
+  localStorage.setItem('orden:theme', 'dark')
   expect((await launched()).showing).toBe(false)
 })
 
 test('reads nothing but its own app’s settings as an earlier version', async () => {
-  held.set('somebody-else', 'yes')
+  localStorage.setItem('somebody-else', 'yes')
   expect((await launched()).showing).toBe(false)
 })

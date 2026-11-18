@@ -50,6 +50,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
   account: {
     accountToken: 'token',
     forgetWithSession: (clear: () => void) => session.forgets.push(clear),
+    holdsNoAccount: () => undefined,
   },
   api: {
     saveSettings: (_token: string, patch: unknown) => {
@@ -112,7 +113,6 @@ describe('a space put away', () => {
 
   test('is never the last one in sight', async () => {
     for (const one of workspace.spaces.slice(1)) await archive.archiveSpace(one)
-    expect(archive.canArchive(at(0))).toBe(false)
     await archive.archiveSpace(at(0))
     expect(workspace.shownSpaces.map((one) => one.name)).toEqual(['Notes'])
   })

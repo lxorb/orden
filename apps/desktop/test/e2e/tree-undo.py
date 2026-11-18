@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import re
 
@@ -213,5 +211,4 @@ def drive(browser: Browser) -> None:
     finally:
         context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the file list's undo and redo take back and do again what was done in it"))
+raise SystemExit(DRIVE.run(drive, "the file list's undo and redo take back and do again what was done in it"))

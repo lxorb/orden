@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 import base64
 import io
 import zipfile
@@ -219,5 +217,4 @@ def drive(browser: Browser) -> None:
         if looked_at(page, name, "image/png", pictures.read(name)) > 5000:
             wrong(f"the locked paper's page came out in {name}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

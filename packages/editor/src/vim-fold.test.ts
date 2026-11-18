@@ -11,12 +11,12 @@ import { loadLineCommands } from './line-door'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { loadVim } from './vim'
 import { modalEditing, normalTab } from './vim-mode'
+import { noRects } from '../test/views'
 
 beforeAll(async () => {
   await loadVim()
   await loadLineCommands()
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  noRects()
 })
 
 const open: EditorView[] = []
@@ -172,19 +172,19 @@ describe('Tab, as normal mode reads it', () => {
   const idle = { prefixRepeat: [], operator: null, keyBuffer: [] }
   const normal = { insertMode: false, visualMode: false, inputState: idle }
 
-  test('is one fold alone and every heading with Shift', () => {
-    expect(normalTab(tab, normal)).toBe('one')
-    expect(normalTab({ ...tab, shiftKey: true }, normal)).toBe('all')
-  })
+  test.each([
+    [tab, 'one', normal],
+    [{ ...tab, shiftKey: true }, 'all', normal],
+  ])('%j', (input, wanted, extra) => expect(normalTab(input, extra)).toEqual(wanted))
 
-  test('is nothing in insert or visual mode, mid-command, in a chord or with no Vim', () => {
-    expect(normalTab(tab, { ...normal, insertMode: true })).toBeNull()
-    expect(normalTab(tab, { ...normal, visualMode: true })).toBeNull()
-    expect(normalTab(tab, { ...normal, inputState: { ...idle, operator: 'delete' } })).toBeNull()
-    expect(normalTab(tab, { ...normal, inputState: { ...idle, prefixRepeat: ['2'] } })).toBeNull()
-    expect(normalTab({ ...tab, ctrlKey: true }, normal)).toBeNull()
-    expect(normalTab({ ...tab, altKey: true }, normal)).toBeNull()
-    expect(normalTab({ ...tab, key: 'Enter' }, normal)).toBeNull()
-    expect(normalTab(tab, null)).toBeNull()
-  })
+  test.each([
+    [tab, { ...normal, insertMode: true }],
+    [tab, { ...normal, visualMode: true }],
+    [tab, { ...normal, inputState: { ...idle, operator: 'delete' } }],
+    [tab, { ...normal, inputState: { ...idle, prefixRepeat: ['2'] } }],
+    [{ ...tab, ctrlKey: true }, normal],
+    [{ ...tab, altKey: true }, normal],
+    [{ ...tab, key: 'Enter' }, normal],
+    [tab, null],
+  ])('%j', (input, extra) => expect(normalTab(input, extra)).toBeNull())
 })

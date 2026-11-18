@@ -35,13 +35,10 @@ describe('translating a sequence fence', () => {
     expect(lines('Title: A chat')[1]).toBe('  title A chat')
   })
 
-  test('drops blank lines and comments', () => {
-    expect(lines('\n# a comment\nA->B: x')).toEqual(['sequenceDiagram', '  A->>B: x'])
-  })
-
-  test('ignores a line it cannot read rather than emitting nonsense', () => {
-    expect(lines('this is not a message')).toEqual(['sequenceDiagram'])
-  })
+  test.each([
+    ['\n# a comment\nA->B: x', ['sequenceDiagram', '  A->>B: x']],
+    ['this is not a message', ['sequenceDiagram']],
+  ])('%j', (input, wanted) => expect(lines(input)).toEqual(wanted))
 
   test('keeps a colon in the message text', () => {
     expect(lines('A->B: ratio 3:1')[1]).toBe('  A->>B: ratio 3:1')

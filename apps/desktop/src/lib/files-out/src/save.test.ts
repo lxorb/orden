@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const calls: { command: string; args: Record<string, unknown> }[] = []
-
 const onDisk = new Set<string>()
-
 let typed = ''
 
 vi.mock('../../platform/src/tauri', () => ({
@@ -39,13 +37,12 @@ beforeEach(() => {
   onDisk.clear()
 })
 
-function written(): Map<string, unknown> {
-  return new Map(
+const written = (): Map<string, unknown> =>
+  new Map(
     calls
       .filter((one) => one.command === 'write_note' || one.command === 'write_bytes')
       .map((one) => [String(one.args.path), one.args.content ?? one.args.bytes]),
   )
-}
 
 describe('writing a file', () => {
   test('text goes through the note writer, as text', async () => {

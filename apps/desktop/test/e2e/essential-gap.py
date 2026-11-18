@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser
 
 from harness import Drive
@@ -70,5 +68,4 @@ def drive(browser: Browser) -> None:
         if now and abs(now["width"] - one["width"]) > 2:
             wrong(f"{one['name']} was {one['width']:.0f} wide under the carried tab and {now['width']:.0f} after")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "an essential carried into the strip is given its own room"))
+raise SystemExit(DRIVE.run(drive, "an essential carried into the strip is given its own room"))

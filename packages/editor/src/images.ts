@@ -11,17 +11,14 @@ export interface CarriedFiles {
   read: (transfer: DataTransfer | null) => Promise<File[]> | null
 }
 
-export const imageResolver = Facet.define<(src: string) => string, (src: string) => string>({
+export type ImageResolver = (src: string, wikilink?: boolean) => string
+
+export const imageResolver = Facet.define<ImageResolver, ImageResolver>({
   combine: (values) => values[0] ?? ((src) => src),
 })
 
-function isImage(file: File): boolean {
-  return file.type.startsWith('image/')
-}
-
-function isKept(file: File): boolean {
-  return isImage(file) || embedKind(file.name) !== null
-}
+const isImage = (file: File): boolean => file.type.startsWith('image/')
+const isKept = (file: File): boolean => isImage(file) || embedKind(file.name) !== null
 
 function markdownFor(file: File, path: string, index: NoteIndex): string {
   if (isImage(file)) return `![](${encodeTarget(path)})`

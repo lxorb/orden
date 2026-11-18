@@ -1,9 +1,7 @@
 import { isNumber, isRecord, isString, invoke } from '../../platform/src/api'
 
 const A_PAPER = 2_000_000
-
 const ALL_PAPERS = 16_000_000
-
 let aPaper = A_PAPER
 let allPapers = ALL_PAPERS
 
@@ -34,14 +32,11 @@ export function textWork(): { read: number; wrote: number } {
   return done
 }
 
-function isPages(value: unknown): value is [number, string][] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (one) => Array.isArray(one) && one.length === 2 && isNumber(one[0]) && isString(one[1]),
-    )
+const isPages = (value: unknown): value is [number, string][] =>
+  Array.isArray(value) &&
+  value.every(
+    (one) => Array.isArray(one) && one.length === 2 && isNumber(one[0]) && isString(one[1]),
   )
-}
 
 function isPaperText(value: unknown): value is PaperText {
   if (!isRecord(value)) return false
@@ -55,9 +50,8 @@ function isPaperText(value: unknown): value is PaperText {
   )
 }
 
-function isPaperFile(value: unknown): value is PaperFile {
-  return isRecord(value) && isString(value.path) && isNumber(value.size)
-}
+const isPaperFile = (value: unknown): value is PaperFile =>
+  isRecord(value) && isString(value.path) && isNumber(value.size)
 
 export function paperTextOf(
   path: string,

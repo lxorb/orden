@@ -5,9 +5,7 @@ import {
   AA,
   alphaFor,
   CONTENT_LEVELS,
-  CopyButton,
   hexOf,
-  Hint,
   inkFor,
   layered,
   linkOf,
@@ -16,9 +14,6 @@ import {
   percent,
   ratio,
   rgbOf,
-  Select,
-  Sheet,
-  Switch,
   tidyPath,
 } from '../src/api'
 import { putsAway } from '../src/sheet-pull'
@@ -37,10 +32,6 @@ describe('the module stands on its own', () => {
           .map((spec) => `${name}: ${spec}`)
       })
     expect(reaching).toEqual([])
-  })
-
-  test('the controls are components', () => {
-    for (const one of [Sheet, Select, Switch, Hint, CopyButton]) expect(typeof one).toBe('function')
   })
 })
 

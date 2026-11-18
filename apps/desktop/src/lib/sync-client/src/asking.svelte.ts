@@ -169,7 +169,9 @@ class Asking {
       const copy = await engine.held.answer(note.id, answer)
       if (copy) {
         const root = workspace().rootHolding(note.path)
-        workspace().copied(note.path, copy, root, workspace().rootHolding(copy))
+        const into = workspace().rootHolding(copy)
+        workspace().copied(note.path, copy, root, into)
+        workspace().copied(copy, note.path, into, root)
       }
       this.shut = note.id
       if (this.open === note.id) this.open = null

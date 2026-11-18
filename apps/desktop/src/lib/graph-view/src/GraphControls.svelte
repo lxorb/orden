@@ -40,12 +40,9 @@
   const DROP_MARK = 'M3.8 3.8l5.4 5.4M9.2 3.8l-5.4 5.4'
   const PLAY_MARK = 'M4 2.6 10.4 6.5 4 10.4z'
   const PAUSE_MARK = 'M4.4 3v7M8.6 3v7'
-
   const settings = $derived(workspace.graphSettings.here)
   const spread = $derived(settings.spread)
-
   let forcing = $state(false)
-
   let corner = $state<HTMLElement>()
   $effect(() =>
     open

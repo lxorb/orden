@@ -1,5 +1,4 @@
 export const SAMPLE_EVERY = 5000
-
 export const KEEP_MINUTES = 90 * 24 * 60 * 60_000
 
 export interface Sample {
@@ -30,19 +29,17 @@ const minuteOf = (at: number): number => Math.floor(at / 60_000) * 60_000
 const share = (value: number | null): number | null =>
   value === null || !Number.isFinite(value) ? null : Math.min(1, Math.max(0, value))
 
-function fresh(sample: Sample): Minute {
-  return {
-    at: minuteOf(sample.at),
-    active: 0,
-    samples: 0,
-    cpu: null,
-    memory: null,
-    battery: null,
-    charging: null,
-    lid: null,
-    locked: null,
-  }
-}
+const fresh = (sample: Sample): Minute => ({
+  at: minuteOf(sample.at),
+  active: 0,
+  samples: 0,
+  cpu: null,
+  memory: null,
+  battery: null,
+  charging: null,
+  lid: null,
+  locked: null,
+})
 
 function folded(minute: Minute, sample: Sample): Minute {
   const busy = sample.idleMs !== null && sample.idleMs < SAMPLE_EVERY && sample.locked !== true
@@ -89,14 +86,6 @@ export class MinuteFold {
   get open(): Minute | null {
     return this.current
   }
-}
-
-export type Shade = 'active' | 'idle' | 'locked' | 'shut'
-
-export function shadeOf(minute: Minute): Shade {
-  if (minute.lid === false) return 'shut'
-  if (minute.locked === true) return 'locked'
-  return minute.active > 0 ? 'active' : 'idle'
 }
 
 export function minuteValue(value: unknown): Minute | null {

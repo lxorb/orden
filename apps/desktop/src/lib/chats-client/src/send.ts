@@ -2,7 +2,7 @@ import { may } from '@orden/chats'
 import { account } from '../../accounts/src/api'
 import { hiddenKinds } from '../../gates/src/api'
 import { prompt } from '../../ui-kit/src/api'
-import { nameOf, samePath, within, withoutExtension } from '../../platform/src/api'
+import { nameOf, samePath, spaceHolding, withoutExtension } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { headingAbove, sentWords } from './sent-words'
 import { openChat } from './view/open'
@@ -22,7 +22,7 @@ export async function sendToChat(
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
-  const space = workspace.spaces.find((one) => within(one.root, note) !== null) ?? null
+  const space = spaceHolding(workspace.spaces, note)
   const ours = (root: string | null) => (space && samePath(root, space.root) ? 0 : 1)
   const open = chats.list
     .filter((one) => one.path && one.name && may(one.role, 'post', one.meta.posting))

@@ -21,6 +21,5 @@
     "surfaces",
     "icon-picker",
     "glyphs"
-  ],
-  "pending": ["apps/desktop/src/lib/theme-ports.ts"]
+  ]
 }

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -185,5 +183,4 @@ def main() -> int:
 
     return DRIVE.verdict("a selection counts, a section moves, a word is a word")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

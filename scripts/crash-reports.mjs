@@ -27,6 +27,10 @@ export function issueTitle(group) {
   return `${LABELS[group.kind] ?? 'Crash'}: ${group.title}`.slice(0, 250)
 }
 
+function plain(text) {
+  return String(text).replace(/[^\p{L}\p{N} ._+:,()/-]/gu, '')
+}
+
 export function fenced(text, language = 'text') {
   const longest = [...text.matchAll(/`+/g)]
     .map((run) => run[0].length)
@@ -117,8 +121,8 @@ function facts(report) {
 export function issueBody(group, id, report, symbols) {
   const parts = [
     `**${group.count} report${group.count === 1 ? '' : 's'}** from ${stamp(group.firstAt)} to ${stamp(group.lastAt)}`,
-    `Versions: ${group.versions.join(', ') || 'unknown'}`,
-    `Platforms: ${group.platforms.join(', ') || 'unknown'}`,
+    `Versions: ${group.versions.map(plain).join(', ') || 'unknown'}`,
+    `Platforms: ${group.platforms.map(plain).join(', ') || 'unknown'}`,
     `Group: \`${group.signature}\` · representative report: \`${id}\``,
     '### Report',
     fenced(facts(report)),
@@ -226,9 +230,11 @@ async function groups(args) {
   for (const group of listed.groups) {
     const issue = group.issue ? ` #${group.issue.number}` : ''
     console.log(
-      `${String(group.count).padStart(5)}  ${group.signature}  ${stamp(group.lastAt)}  ${issueTitle(group)}${issue}`,
+      `${String(group.count).padStart(5)}  ${plain(group.signature)}  ${stamp(group.lastAt)}  ${plain(issueTitle(group))}${issue}`,
     )
-    console.log(`       ${group.versions.join(', ') || '-'} · ${group.platforms.join(', ') || '-'}`)
+    console.log(
+      `       ${group.versions.map(plain).join(', ') || '-'} · ${group.platforms.map(plain).join(', ') || '-'}`,
+    )
   }
   if (!listed.groups.length) console.log('no crash reports')
 }
@@ -241,7 +247,9 @@ async function list(args) {
     `/v1/crashes?group=${encodeURIComponent(signature)}&limit=${encodeURIComponent(limit)}`,
   )
   for (const one of listed.reports) {
-    console.log(`${one.id}  ${stamp(one.receivedAt)}  ${one.kind}  ${one.version}  ${one.platform}`)
+    console.log(
+      `${plain(one.id)}  ${stamp(one.receivedAt)}  ${plain(one.kind)}  ${plain(one.version)}  ${plain(one.platform)}`,
+    )
   }
 }
 

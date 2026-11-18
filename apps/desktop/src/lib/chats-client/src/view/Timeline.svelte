@@ -1,9 +1,7 @@
 <script lang="ts">
-  import type { Message } from '@orden/chats'
-  import { may } from '@orden/chats'
+  import { may, type Message } from '@orden/chats'
   import { onMount, untrack } from 'svelte'
-  import { localNumber } from '../../../platform/src/api'
-  import { dur, fade } from '../../../platform/src/api'
+  import { dur, fade, localNumber } from '../../../platform/src/api'
   import { longPress, menu } from '../../../ui-kit/src/api'
   import type { ChatPage } from './chat.svelte'
   import { estimate } from './estimate'

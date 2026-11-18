@@ -1,25 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from './disk'
 
 vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/platform/src/tauri')>()),
   invoke: (command: string) => Promise.resolve(command === 'read_note' ? '# a' : undefined),
 }))
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../src/lib/workspace/src/api')
@@ -138,7 +126,7 @@ describe('an essential dragged into a strip', () => {
       join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'),
       'utf8',
     )
-    expect(tabs).toMatch(/const takes = [^\n]*\n?[^\n]*isBookmarkDrag\(transfer\)/)
+    expect(tabs).toMatch(/const takes = [^\n]*\n(?:[^\n]*\n){0,3}[^\n]*isBookmarkDrag\(transfer\)/)
     expect(tabs).toContain('droppedEssential(mark, paneId, at)')
   })
 

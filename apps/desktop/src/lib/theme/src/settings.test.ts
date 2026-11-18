@@ -3,12 +3,9 @@ import { settingOf } from './declared'
 import { declares, paintOf, paintsOver, type ThemeSetting, valueOf } from './settings'
 
 describe('whether the grammar is wanted at all', () => {
-  test('is no for the app’s own tokens and for a theme that only states colours', () => {
+  test('is no for the app’s own tokens and a theme that only states colours, yes for a dial', () => {
     expect(declares('')).toBe(false)
     expect(declares(':root { --bg: #000; --orden-tint: 82%; }')).toBe(false)
-  })
-
-  test('and yes for one that declares a dial', () => {
     expect(declares(':root { --orden-setting-blur: range "Blur" 0 40 20 px; }')).toBe(true)
   })
 })
@@ -24,16 +21,10 @@ describe('what a value is worth', () => {
     expect(valueOf(paper, undefined)).toBe(true)
   })
 
-  test('a number past the end of a range is pulled back into it', () => {
+  test('a range is clamped, and a choice gone or a value of the wrong shape falls back', () => {
     expect(valueOf(blur, 400)).toBe(40)
     expect(valueOf(blur, -12)).toBe(0)
-  })
-
-  test('a choice the theme no longer offers falls back to its first', () => {
     expect(valueOf(depth, 'cavernous')).toBe('flat')
-  })
-
-  test('and so does a value of the wrong shape entirely', () => {
     expect(valueOf(blur, 'thick')).toBe(18)
     expect(valueOf(paper, 'yes')).toBe(true)
     expect(valueOf(depth, 3)).toBe('flat')
@@ -76,9 +67,6 @@ describe('what goes onto the page', () => {
       '--orden-blur': '30px',
       '--orden-paper': '0',
     })
-  })
-
-  test('with the theme’s own answer wherever nobody has chosen one', () => {
     expect(paintOf(settings, {}, 'dark')).toEqual({ '--orden-blur': '18px', '--orden-paper': '1' })
   })
 })
@@ -95,24 +83,17 @@ describe('a theme that paints a setting’s tokens itself', () => {
     paint: () => ({ '--accent': '#7c6bf5', '--accent-soft': 'rgb(124 107 245 / 0.15)' }),
   }
 
-  test('withdraws it, so the row is not one that would make its own picture a lie', () => {
-    expect(paintsOver("[data-theme='dark'] { --accent: #ff0000; }", accent)).toBe(true)
-  })
-
-  test('and a theme that says nothing about them keeps it', () => {
-    expect(paintsOver("[data-theme='dark'] { --bg: #000; }", accent)).toBe(false)
-  })
-
-  test('as does one that keeps them where they are, which states no colour', () => {
-    expect(paintsOver('.frame[data-theme] { --accent: inherit; }', accent)).toBe(false)
-    expect(paintsOver('.frame { --accent: inherit; --accent-soft: red; }', accent)).toBe(true)
-  })
-
-  test('which is any one of them and not all of them', () => {
-    expect(paintsOver(':root { --accent-soft: rgb(0 0 0 / 0.2); }', accent)).toBe(true)
-  })
-
-  test('and a name that merely starts the same way is not one of them', () => {
-    expect(paintsOver(':root { --accents-are-nice: 1; }', accent)).toBe(false)
-  })
+  test.each([
+    ["[data-theme='dark'] { --accent: #ff0000; }", true],
+    ["[data-theme='dark'] { --bg: #000; }", false],
+    ['.frame[data-theme] { --accent: inherit; }', false],
+    ['.frame { --accent: inherit; --accent-soft: red; }', true],
+    [':root { --accent-soft: rgb(0 0 0 / 0.2); }', true],
+    [':root { --accents-are-nice: 1; }', false],
+  ])(
+    '%j paints over it, by stating any one of its colours, not inheriting or a like name: %s',
+    (css, over) => {
+      expect(paintsOver(css, accent)).toBe(over)
+    },
+  )
 })

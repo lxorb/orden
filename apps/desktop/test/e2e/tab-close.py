@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -133,5 +131,4 @@ def drive(browser: Browser) -> None:
             closing(page, scheme, icons)
             page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a closed tab shrinks out of the way, and the rest hold still"))
+raise SystemExit(DRIVE.run(drive, "a closed tab shrinks out of the way, and the rest hold still"))

@@ -1,32 +1,11 @@
-const NODE_FIELDS = new Set([
-  'id',
-  'type',
-  'x',
-  'y',
-  'width',
-  'height',
-  'color',
-  'text',
-  'file',
-  'subpath',
-  'url',
-  'label',
-  'background',
-  'backgroundStyle',
-])
-
-const EDGE_FIELDS = new Set([
-  'id',
-  'fromNode',
-  'fromSide',
-  'fromEnd',
-  'toNode',
-  'toSide',
-  'toEnd',
-  'color',
-  'label',
-])
-
+const NODE_FIELDS = new Set(
+  'id type x y width height color text file subpath url label background backgroundStyle'.split(
+    ' ',
+  ),
+)
+const EDGE_FIELDS = new Set(
+  'id fromNode fromSide fromEnd toNode toSide toEnd color label'.split(' '),
+)
 const TOP_FIELDS = new Set(['nodes', 'edges', 'orden', 'nib'])
 
 export function ownOf(file: Record<string, unknown>): Fields | undefined {
@@ -40,22 +19,9 @@ function keptOwn(file: Record<string, unknown>, own: Fields | null): void {
   else delete file.orden
 }
 
-const ORDEN_FIELDS = new Set([
-  'version',
-  'icon',
-  'iconColor',
-  'pages',
-  'ink',
-  'shapes',
-  'order',
-  'words',
-  'locked',
-  'at',
-  'gone',
-  'moved',
-  'outside',
-])
-
+const ORDEN_FIELDS = new Set(
+  'version icon iconColor pages ink shapes order words locked at gone moved outside'.split(' '),
+)
 const RECORD = 'outside'
 
 type Fields = Record<string, unknown>
@@ -74,17 +40,13 @@ export interface Extras {
 
 type Kind = 'node' | 'edge' | 'ink' | 'shape' | 'field' | 'top' | 'nib'
 
-function named(kind: Kind, id: string): string {
-  return `${kind}:${id}`
-}
+const named = (kind: Kind, id: string): string => `${kind}:${id}`
 
-function isRecord(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Fields =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-function idOf(value: Fields): string | null {
-  return typeof value.id === 'string' && value.id ? value.id : null
-}
+const idOf = (value: Fields): string | null =>
+  typeof value.id === 'string' && value.id ? value.id : null
 
 function beyond(value: Fields, known: ReadonlySet<string>): Fields | null {
   let out: Fields | null = null
@@ -96,19 +58,17 @@ function beyond(value: Fields, known: ReadonlySet<string>): Fields | null {
   return out
 }
 
-function none(): Extras {
-  return {
-    top: {},
-    nib: {},
-    nodes: new Map(),
-    edges: new Map(),
-    ink: new Map(),
-    shapes: new Map(),
-    fields: new Map(),
-    generations: new Map(),
-    buried: new Map(),
-  }
-}
+const none = (): Extras => ({
+  top: {},
+  nib: {},
+  nodes: new Map(),
+  edges: new Map(),
+  ink: new Map(),
+  shapes: new Map(),
+  fields: new Map(),
+  generations: new Map(),
+  buried: new Map(),
+})
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
@@ -151,9 +111,7 @@ function entryOf(entry: unknown): { print: string | null; generation: number } |
   return at > 0 ? { print: entry.slice(0, at), generation } : null
 }
 
-export function noExtras(): Extras {
-  return none()
-}
+export const noExtras = (): Extras => none()
 
 export function extrasFrom(
   parsed: Fields,
@@ -234,9 +192,8 @@ export function holdsExtras(extras: Extras | undefined): extras is Extras {
   )
 }
 
-function either(ours: unknown, theirs: unknown): unknown {
-  return JSON.stringify(ours) <= JSON.stringify(theirs) ? ours : theirs
-}
+const either = (ours: unknown, theirs: unknown): unknown =>
+  JSON.stringify(ours) <= JSON.stringify(theirs) ? ours : theirs
 
 export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Extras {
   const mine = everyOf(ours)

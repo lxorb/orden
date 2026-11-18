@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 
 use tauri::{AppHandle, Manager as _};
 use zbus::blocking::{Connection, MessageIterator};
@@ -58,7 +59,7 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
     let portal = match Portal::open() {
         Ok(portal) => portal,
         Err(error) => {
-            crate::logs::say(
+            orden_base::logs::say(
                 app,
                 "info",
                 &format!("global keys: no desktop portal for them here ({error})"),
@@ -67,7 +68,7 @@ fn run(app: &AppHandle, asked: &Receiver<Ask>) {
             return;
         }
     };
-    crate::logs::say(
+    orden_base::logs::say(
         app,
         "info",
         &format!(
@@ -159,7 +160,7 @@ impl Portal {
                 super::bound(app, held, refused);
             }
             Err(error) => {
-                crate::logs::say(app, "info", &format!("global keys: not bound ({error})"));
+                orden_base::logs::say(app, "info", &format!("global keys: not bound ({error})"));
                 super::bound(app, BTreeMap::new(), wanted.keys().copied().collect());
             }
         }
@@ -270,7 +271,7 @@ impl Portal {
             .name("orden-portal-presses".into())
             .spawn(move || {
                 if let Err(error) = presses(&bus, &app) {
-                    crate::logs::say(&app, "info", &format!("global keys: deaf ({error})"));
+                    orden_base::logs::say(&app, "info", &format!("global keys: deaf ({error})"));
                 }
             });
     }
@@ -359,15 +360,11 @@ fn first_entry(folders: &[PathBuf], exists: impl Fn(&std::path::Path) -> bool) -
 }
 
 fn set_session(session: Option<String>) {
-    *SESSION_NOW.lock().unwrap_or_else(PoisonError::into_inner) = session;
+    *SESSION_NOW.held() = session;
 }
 
 fn is_now(session: &str) -> bool {
-    SESSION_NOW
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_deref()
-        == Some(session)
+    SESSION_NOW.held().as_deref() == Some(session)
 }
 
 fn token() -> String {

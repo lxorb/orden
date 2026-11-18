@@ -45,8 +45,6 @@ the window manager's answer, polled from here, because that step happens before 
 is a page to say so.
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import os
@@ -522,5 +520,4 @@ def main() -> int:
         told.json.write_text(json.dumps(kept, indent=1), encoding="utf-8")
     return 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

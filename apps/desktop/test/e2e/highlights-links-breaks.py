@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Browser, Page
@@ -418,5 +416,4 @@ def main() -> int:
 
     return DRIVE.verdict("six colours, one link spelling, one answer about a newline")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

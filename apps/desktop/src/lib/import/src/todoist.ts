@@ -3,10 +3,11 @@ import { taskLine } from '@orden/markdown/task-edits'
 import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
 import { readCsv } from './csv'
-import { dayOf } from './meta'
+import { dayOf, wallClock } from './meta'
 import { safeName } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
+import { isRecord } from '../../platform/src/api'
 
 interface Project {
   id: string
@@ -250,9 +251,7 @@ export function planOf(account: Account): ImportPlan & { inbox?: string } {
 }
 
 const WORDS = 'Some repeating dates stay as words under their tasks'
-
 const ELSEWHERE = '\0elsewhere'
-
 const HEADER = ['TYPE', 'CONTENT', 'DESCRIPTION', 'PRIORITY', 'INDENT']
 
 export function isTodoistCsv(text: string): boolean {
@@ -293,7 +292,6 @@ function linkTo(file: Json): string {
 }
 
 const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
-
 const personOf = (said: string) => said.replace(/\s*\(\d+\)\s*$/, '').trim()
 
 export function csvProject(name: string, text: string, at: number): Account {
@@ -398,8 +396,6 @@ export type Fetch = (
 
 type Json = Record<string, unknown>
 
-const isRecord = (value: unknown): value is Json =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 const id = (value: unknown) =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : ''
@@ -442,30 +438,6 @@ function dueOf(due: unknown): Pick<Task, 'due' | 'time' | 'zone' | 'repeats'> {
     if (local) return { due: local.day, time: local.time, zone, ...repeats }
   }
   return { due: day, time: `${clock[1]}:${clock[2]}`, ...repeats }
-}
-
-function wallClock(moment: Date, zone?: string): { day: string; time: string } | null {
-  try {
-    const parts = Object.fromEntries(
-      new Intl.DateTimeFormat('en-CA', {
-        ...(zone ? { timeZone: zone } : {}),
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hourCycle: 'h23',
-      })
-        .formatToParts(moment)
-        .map((part) => [part.type, part.value]),
-    )
-    return {
-      day: `${parts.year}-${parts.month}-${parts.day}`,
-      time: `${parts.hour}:${parts.minute}`,
-    }
-  } catch {
-    return null
-  }
 }
 
 function taskOf(

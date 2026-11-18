@@ -32,21 +32,13 @@ interface Row extends Provider {
 }
 
 const ID = /^[\w-]{1,64}$/
-
 const NAME = /^[\w.-]{1,80}$/
+const parts = (url: URL): string[] => url.pathname.split('/').filter(Boolean)
 
-function parts(url: URL): string[] {
-  return url.pathname.split('/').filter(Boolean)
-}
+const id = (piece: string | undefined): string | null =>
+  piece !== undefined && ID.test(piece) ? piece : null
 
-function id(piece: string | undefined): string | null {
-  return piece !== undefined && ID.test(piece) ? piece : null
-}
-
-function quoted(url: URL): string {
-  return encodeURIComponent(url.toString())
-}
-
+const quoted = (url: URL): string => encodeURIComponent(url.toString())
 const YOUTUBE = 'allow-scripts allow-same-origin allow-presentation'
 const PLAYER = 'encrypted-media; picture-in-picture; fullscreen'
 
@@ -227,12 +219,8 @@ function seconds(written: string | null): number | null {
   return total > 0 ? total : null
 }
 
-function hostOf(url: URL): string {
-  return url.hostname.toLowerCase().replace(/^www\./, '')
-}
-
+const hostOf = (url: URL): string => url.hostname.toLowerCase().replace(/^www\./, '')
 const LISTED = 'allow-scripts'
-
 const PIECE = /^[\w.:=@~-]{1,120}$/
 
 function filled(template: string, found: RegExpExecArray, url: URL): string | null {
@@ -274,9 +262,13 @@ function listed(url: URL, host: string): WebEmbed | null {
   return null
 }
 
-function plainly(row: Listed): Provider {
-  return { id: row.id, name: row.name, mark: row.mark, shape: row.shape, sandbox: LISTED }
-}
+const plainly = (row: Listed): Provider => ({
+  id: row.id,
+  name: row.name,
+  mark: row.mark,
+  shape: row.shape,
+  sandbox: LISTED,
+})
 
 export function webEmbed(address: string): WebEmbed | null {
   let url: URL
@@ -301,17 +293,13 @@ export function webEmbed(address: string): WebEmbed | null {
   return listed(url, host)
 }
 
-function named(row: Row): Provider {
-  return {
-    id: row.id,
-    name: row.name,
-    mark: row.mark,
-    shape: row.shape,
-    sandbox: row.sandbox,
-    ...(row.allow === undefined ? {} : { allow: row.allow }),
-  }
-}
+const named = (row: Row): Provider => ({
+  id: row.id,
+  name: row.name,
+  mark: row.mark,
+  shape: row.shape,
+  sandbox: row.sandbox,
+  ...(row.allow === undefined ? {} : { allow: row.allow }),
+})
 
-export function providers(): Provider[] {
-  return [...ROWS.map(named), ...EMBEDDABLE.map(plainly)]
-}
+export const providers = (): Provider[] => [...ROWS.map(named), ...EMBEDDABLE.map(plainly)]

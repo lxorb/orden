@@ -14,7 +14,6 @@ export interface Place {
 }
 
 export const LINES = 1000
-
 export const MOST = 512 * 1024
 
 export function fitted(serialize: (lines: number) => string, most = MOST): string | null {
@@ -45,9 +44,7 @@ function readHistory(value: unknown): History | null {
 }
 
 const closed = new Map<string, History>()
-
 const KEPT_CLOSED = 12
-
 const turns = new Map<string, Promise<void>>()
 
 function inTurn(key: string, run: () => Promise<unknown>): Promise<void> {
@@ -63,34 +60,21 @@ function inTurn(key: string, run: () => Promise<unknown>): Promise<void> {
   return mine
 }
 
-export async function historyOf(place: Place): Promise<History | null> {
-  if (!place.key) return null
-
-  const kept = closed.get(place.key)
+async function lastOf({ space, key }: Place, taken: boolean): Promise<History | null> {
+  if (!key) return null
+  const kept = closed.get(key)
   if (kept) {
-    closed.delete(place.key)
+    if (taken) closed.delete(key)
     return kept
   }
-
-  await turns.get(place.key)
-  const found = await invoke<unknown>('terminal_history_read', {
-    space: place.space,
-    key: place.key,
-  }).catch(() => null)
+  await turns.get(key)
+  const found = await invoke<unknown>('terminal_history_read', { space, key }).catch(() => null)
   return readHistory(found)
 }
 
-export async function peekHistory(place: Place): Promise<History | null> {
-  if (!place.key) return null
-  const kept = closed.get(place.key)
-  if (kept) return kept
-  await turns.get(place.key)
-  const found = await invoke<unknown>('terminal_history_read', {
-    space: place.space,
-    key: place.key,
-  }).catch(() => null)
-  return readHistory(found)
-}
+export const historyOf = (place: Place) => lastOf(place, true)
+
+export const peekHistory = (place: Place) => lastOf(place, false)
 
 export function keepHistory(place: Place, history: History): void {
   if (!place.key) return

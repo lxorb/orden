@@ -92,9 +92,10 @@ export {
   clearFormatting,
 } from './line-door'
 export { pasteHere, pastePlain } from './paste'
+export { editableCellAt, pasteIntoCell } from './table/view'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'
-export { DIAGRAM_LANGUAGES, diagramSvg, RENDERED_LANGUAGES } from './live-preview/render'
+export { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from './live-preview/render'
 export { blockAt, type BlockKind, type BlockShape, type BlockSpan } from './block'
 export { landed, landOnLine } from './landing'
 export { fenceLanguages } from './languages'
@@ -103,11 +104,18 @@ export { mermaidSvg } from './live-preview/mermaid-turns'
 export { ordenHighlightStyle, ordenEditorTheme } from './theme'
 export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'
-export { type CarriedFiles, imageResolver, type ImageSink, wordsBesidePicture } from './images'
+export {
+  type CarriedFiles,
+  imageResolver,
+  type ImageResolver,
+  type ImageSink,
+  wordsBesidePicture,
+} from './images'
 export { hrefOf, type LinkPress, linkOpener, modifier as linkModifier } from './links'
 export { type TagOpener } from './tag-press'
 export {
   type FileDrawing,
+  linkNameAt,
   type LinkWrite,
   type NoteIndex,
   noteIndexExtension,
@@ -121,7 +129,6 @@ export {
   setNoteIndex,
   type SpaceBlock,
   type SpaceTag,
-  type TaskHelp,
 } from './wikilink/notes'
 export { trustedMarkupEffect } from './markup'
 export { keptCoverEffect } from './live-preview/kept-cover'

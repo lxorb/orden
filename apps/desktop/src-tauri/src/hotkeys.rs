@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter as _};
@@ -88,13 +89,13 @@ static HELD: Mutex<State> = Mutex::new(State {
 });
 
 fn with_state<T>(on_held: impl FnOnce(&mut State) -> T) -> T {
-    on_held(&mut HELD.lock().unwrap_or_else(PoisonError::into_inner))
+    on_held(&mut HELD.held())
 }
 
 pub fn hold(app: &AppHandle, which: Which, key: Option<String>) -> Option<String> {
     let key = key.filter(|key| !key.trim().is_empty() && allowed(key, cfg!(target_os = "macos")));
     #[cfg(target_os = "linux")]
-    if crate::linux::wayland_session() {
+    if orden_base::linux::wayland_session() {
         return by_portal(app, which, key);
     }
     by_plugin(app, which, key)
@@ -180,7 +181,7 @@ pub fn pressed(app: &AppHandle, which: Which, token: Option<String>) {
     match which {
         Which::QuickAdd => crate::quick_add::bring_up(app, token),
         Which::StopAgents => {
-            crate::agents::stop::stop(app);
+            orden_agents::stop::stop(app);
         }
     }
 }
@@ -256,7 +257,7 @@ fn keys_now() -> Keys {
 fn wayland() -> bool {
     #[cfg(target_os = "linux")]
     {
-        crate::linux::wayland_session()
+        orden_base::linux::wayland_session()
     }
     #[cfg(not(target_os = "linux"))]
     {
@@ -291,7 +292,7 @@ fn started_by(
 #[tauri::command]
 pub fn global_keys(app: AppHandle) -> Keys {
     #[cfg(target_os = "linux")]
-    if crate::linux::wayland_session() {
+    if orden_base::linux::wayland_session() {
         portal::wake(&app);
     }
     let _ = &app;
@@ -301,7 +302,7 @@ pub fn global_keys(app: AppHandle) -> Keys {
 #[tauri::command]
 pub fn global_keys_change(app: AppHandle) {
     #[cfg(target_os = "linux")]
-    if crate::linux::wayland_session() {
+    if orden_base::linux::wayland_session() {
         portal::reconfigure(&app);
     }
     let _ = app;

@@ -8,229 +8,143 @@ import {
   showCombination,
 } from './keys'
 
-function press(key: string, held: Partial<KeyboardEvent> & { code?: string } = {}) {
+function press(key: string, mods = '', code?: string) {
   return {
     key,
-    code: held.code,
-    ctrlKey: !!held.ctrlKey,
-    metaKey: !!held.metaKey,
-    altKey: !!held.altKey,
-    shiftKey: !!held.shiftKey,
+    code,
+    ctrlKey: mods.includes('ctrl'),
+    metaKey: mods.includes('meta'),
+    altKey: mods.includes('alt'),
+    shiftKey: mods.includes('shift'),
   }
 }
 
 describe('reading a written combination', () => {
-  test('Mod is Ctrl off a Mac and Cmd on one', () => {
-    expect(parseCombination('Mod-k', 'win')).toEqual({
+  test('Mod is Ctrl off a Mac and Cmd on one, Space is the space bar', () => {
+    const k = { alt: false, shift: false, key: 'k' }
+    expect(parseCombination('Mod-k', 'win')).toEqual({ ...k, ctrl: true, meta: false })
+    expect(parseCombination('Mod-k', 'mac')).toEqual({ ...k, ctrl: false, meta: true })
+    expect(parseCombination('Mod-Shift-Space', 'win')).toEqual({
       ctrl: true,
       meta: false,
       alt: false,
-      shift: false,
-      key: 'k',
-    })
-    expect(parseCombination('Mod-k', 'mac')).toEqual({
-      ctrl: false,
-      meta: true,
-      alt: false,
-      shift: false,
-      key: 'k',
+      shift: true,
+      key: ' ',
     })
   })
 
-  test('keeps a trailing minus as the key it is', () => {
+  test('keeps a trailing minus, takes modifiers in any order, and refuses what is not one', () => {
     expect(parseCombination('Mod--', 'win')?.key).toBe('-')
     expect(parseCombination('Mod-Shift-[', 'win')?.key).toBe('[')
-  })
-
-  test('takes the modifiers in any order and the letter in any case', () => {
     expect(sameCombination('Mod-Shift-k', 'Shift-Mod-K', 'win')).toBe(true)
     expect(sameCombination('Mod-k', 'Ctrl-k', 'win')).toBe(true)
     expect(sameCombination('Mod-k', 'Ctrl-k', 'mac')).toBe(false)
-  })
-
-  test('refuses what is not one', () => {
     expect(parseCombination('', 'win')).toBeNull()
     expect(parseCombination('Hyper-k', 'win')).toBeNull()
   })
 })
 
 describe('reading a keystroke', () => {
-  test('writes it the way the keymap writes it', () => {
-    expect(readCombination(press('s', { ctrlKey: true, code: 'KeyS' }), 'win')).toBe('Mod-s')
-    expect(readCombination(press('s', { metaKey: true, code: 'KeyS' }), 'mac')).toBe('Mod-s')
-    expect(readCombination(press('F10'), 'win')).toBe('F10')
-  })
-
-  test('names the key rather than the character Shift made of it', () => {
-    expect(
-      readCombination(press('#', { ctrlKey: true, shiftKey: true, code: 'Digit3' }), 'win'),
-    ).toBe('Mod-Shift-3')
-    expect(
-      readCombination(press('+', { ctrlKey: true, shiftKey: true, code: 'Equal' }), 'win'),
-    ).toBe('Mod-Shift-=')
-  })
-
-  test('waits through the modifiers on their own', () => {
-    expect(readCombination(press('Control', { ctrlKey: true }), 'win')).toBeNull()
-    expect(readCombination(press('Shift', { shiftKey: true }), 'win')).toBeNull()
-  })
+  test.each([
+    ['s', 'ctrl', 'KeyS', 'win', 'Mod-s'],
+    ['s', 'meta', 'KeyS', 'mac', 'Mod-s'],
+    ['F10', '', undefined, 'win', 'F10'],
+    ['#', 'ctrl shift', 'Digit3', 'win', 'Mod-Shift-3'],
+    ['+', 'ctrl shift', 'Equal', 'win', 'Mod-Shift-='],
+    ['Control', 'ctrl', undefined, 'win', null],
+    ['Shift', 'shift', undefined, 'win', null],
+    ['@', 'ctrl alt', 'Digit2', 'win', 'Mod-Alt-@'],
+    ['2', 'ctrl alt', 'Digit2', 'win', 'Mod-Alt-2'],
+    [' ', 'ctrl shift', 'Space', 'win', 'Mod-Shift-Space'],
+  ] as const)(
+    'writes %j with %j the way the keymap does, naming the key, waiting through modifiers',
+    (key, mods, code, platform, written) => {
+      expect(readCombination(press(key, mods, code), platform)).toBe(written)
+    },
+  )
 })
 
 describe('matching a keystroke against a binding', () => {
-  test('answers to the character or to the key', () => {
-    expect(
-      matchesCombination(
-        'Mod-Shift-3',
-        press('#', { ctrlKey: true, shiftKey: true, code: 'Digit3' }),
-        'win',
-      ),
-    ).toBe(true)
-    expect(
-      matchesCombination(
-        'Mod-Shift-3',
-        press('3', { ctrlKey: true, shiftKey: true, code: 'Digit3' }),
-        'win',
-      ),
-    ).toBe(true)
-  })
-
-  test('a digit answers to its own key, whatever the layout needs to type it', () => {
-    expect(matchesCombination('Mod-0', press('0', { ctrlKey: true, code: 'Digit0' }), 'win')).toBe(
-      true,
-    )
-    expect(
-      matchesCombination(
-        'Mod-0',
-        press('0', { ctrlKey: true, shiftKey: true, code: 'Digit0' }),
-        'win',
-      ),
-    ).toBe(true)
-    expect(matchesCombination('Mod-0', press('à', { ctrlKey: true, code: 'Digit0' }), 'win')).toBe(
-      true,
-    )
-  })
-
-  test('but a letter still wants the Shift it was written with', () => {
-    expect(
-      matchesCombination(
-        'Mod-e',
-        press('E', { ctrlKey: true, shiftKey: true, code: 'KeyE' }),
-        'win',
-      ),
-    ).toBe(false)
-    expect(
-      matchesCombination(
-        'Mod-Shift-e',
-        press('E', { ctrlKey: true, shiftKey: true, code: 'KeyE' }),
-        'win',
-      ),
-    ).toBe(true)
-  })
-
-  test('and Shift written into the chord is still wanted exactly', () => {
-    expect(
-      matchesCombination('Mod-Shift-0', press('0', { ctrlKey: true, code: 'Digit0' }), 'win'),
-    ).toBe(false)
-    expect(
-      matchesCombination(
-        'Mod-=',
-        press('+', { ctrlKey: true, shiftKey: true, code: 'Equal' }),
-        'win',
-      ),
-    ).toBe(false)
-  })
-
-  test('wants the modifiers exactly', () => {
-    expect(matchesCombination('Mod-s', press('s', { ctrlKey: true, code: 'KeyS' }), 'win')).toBe(
-      true,
-    )
-    expect(
-      matchesCombination('Mod-s', press('s', { ctrlKey: true, altKey: true, code: 'KeyS' }), 'win'),
-    ).toBe(false)
-    expect(matchesCombination('Mod-s', press('s', { metaKey: true, code: 'KeyS' }), 'win')).toBe(
-      false,
-    )
-  })
-
-  test('AltGr typing a character is that character, not a chord', () => {
-    const swissAt = press('@', { ctrlKey: true, altKey: true, code: 'Digit2' })
-    expect(matchesCombination('Alt-2', swissAt, 'win')).toBe(false)
-    expect(matchesCombination('Mod-Alt-2', swissAt, 'win')).toBe(false)
-    const germanBrace = press('{', { ctrlKey: true, altKey: true, code: 'Digit7' })
-    expect(matchesCombination('Mod-Alt-7', germanBrace, 'win')).toBe(false)
-    const polishO = press('ó', { ctrlKey: true, altKey: true, code: 'KeyO' })
-    expect(matchesCombination('Mod-Alt-o', polishO, 'win')).toBe(false)
-
-    const usTwo = press('2', { ctrlKey: true, altKey: true, code: 'Digit2' })
-    expect(matchesCombination('Mod-Alt-2', usTwo, 'win')).toBe(true)
-    expect(
-      matchesCombination(
-        'Mod-Alt-ArrowRight',
-        press('ArrowRight', { ctrlKey: true, altKey: true, code: 'ArrowRight' }),
-        'win',
-      ),
-    ).toBe(true)
-    const azertyTwo = press('2', { ctrlKey: true, altKey: true, shiftKey: true, code: 'Digit2' })
-    expect(matchesCombination('Mod-Alt-2', azertyTwo, 'win')).toBe(true)
-    const usShifted = press('@', { ctrlKey: true, altKey: true, shiftKey: true, code: 'Digit2' })
-    expect(matchesCombination('Mod-Alt-Shift-2', usShifted, 'win')).toBe(true)
-  })
-
-  test('and the recorder writes down what the matcher will answer to', () => {
-    const swissAt = press('@', { ctrlKey: true, altKey: true, code: 'Digit2' })
-    expect(readCombination(swissAt, 'win')).toBe('Mod-Alt-@')
-    expect(matchesCombination('Mod-Alt-@', swissAt, 'win')).toBe(true)
-    expect(
-      readCombination(press('2', { ctrlKey: true, altKey: true, code: 'Digit2' }), 'win'),
-    ).toBe('Mod-Alt-2')
-  })
-
-  test('Alt and a digit answers to the key, whatever the layout prints on it', () => {
-    expect(matchesCombination('Alt-3', press('3', { altKey: true, code: 'Digit3' }), 'win')).toBe(
-      true,
-    )
-    expect(matchesCombination('Alt-3', press('"', { altKey: true, code: 'Digit3' }), 'win')).toBe(
-      true,
-    )
-    expect(matchesCombination('Alt-0', press('0', { altKey: true, code: 'Digit0' }), 'linux')).toBe(
-      true,
-    )
-    expect(
-      matchesCombination('Alt-3', press('Alt', { altKey: true, code: 'AltLeft' }), 'win'),
-    ).toBe(false)
+  test.each([
+    ['Mod-Shift-3', '#', 'ctrl shift', 'Digit3', 'win', true],
+    ['Mod-Shift-3', '3', 'ctrl shift', 'Digit3', 'win', true],
+    ['Mod-0', '0', 'ctrl', 'Digit0', 'win', true],
+    ['Mod-0', '0', 'ctrl shift', 'Digit0', 'win', true],
+    ['Mod-0', 'à', 'ctrl', 'Digit0', 'win', true],
+    ['Mod-e', 'E', 'ctrl shift', 'KeyE', 'win', false],
+    ['Mod-Shift-e', 'E', 'ctrl shift', 'KeyE', 'win', true],
+    ['Mod-Shift-0', '0', 'ctrl', 'Digit0', 'win', false],
+    ['Mod-=', '+', 'ctrl shift', 'Equal', 'win', false],
+    ['Mod-s', 's', 'ctrl', 'KeyS', 'win', true],
+    ['Mod-s', 's', 'ctrl alt', 'KeyS', 'win', false],
+    ['Mod-s', 's', 'meta', 'KeyS', 'win', false],
+    ['Alt-2', '@', 'ctrl alt', 'Digit2', 'win', false],
+    ['Mod-Alt-2', '@', 'ctrl alt', 'Digit2', 'win', false],
+    ['Mod-Alt-7', '{', 'ctrl alt', 'Digit7', 'win', false],
+    ['Mod-Alt-o', 'ó', 'ctrl alt', 'KeyO', 'win', false],
+    ['Mod-Alt-2', '2', 'ctrl alt', 'Digit2', 'win', true],
+    ['Mod-Alt-ArrowRight', 'ArrowRight', 'ctrl alt', 'ArrowRight', 'win', true],
+    ['Mod-Alt-2', '2', 'ctrl alt shift', 'Digit2', 'win', true],
+    ['Mod-Alt-Shift-2', '@', 'ctrl alt shift', 'Digit2', 'win', true],
+    ['Mod-Alt-@', '@', 'ctrl alt', 'Digit2', 'win', true],
+    ['Alt-3', '3', 'alt', 'Digit3', 'win', true],
+    ['Alt-3', '"', 'alt', 'Digit3', 'win', true],
+    ['Alt-0', '0', 'alt', 'Digit0', 'linux', true],
+    ['Alt-3', 'Alt', 'alt', 'AltLeft', 'win', false],
+    ['Alt-3', 'Process', 'alt', 'Digit3', 'win', false],
+    ['Mod-Shift-Space', ' ', 'ctrl shift', 'Space', 'win', true],
+    ['Mod-Shift-Space', ' ', 'ctrl shift', 'Space', 'mac', false],
+    ['Mod-Shift-Space', ' ', '', 'Space', 'win', false],
+    ['Mod-Space', ' ', 'ctrl', 'Space', 'win', true],
+    ['Mod-Space', ' ', 'ctrl', 'Space', 'linux', true],
+    ['Mod-Space', ' ', 'ctrl shift', undefined, 'win', false],
+    ['Mod-Space', 'Process', 'ctrl', 'Space', 'win', false],
+    ['Shift Shift', 'Shift', 'shift', undefined, 'win', false],
+  ] as const)('%s answers %j with %j on %s: %s', (binding, key, mods, code, platform, answers) => {
+    expect(matchesCombination(binding, press(key, mods, code), platform)).toBe(answers)
   })
 
   test('nothing is a chord while an input method is composing', () => {
-    const composing = { ...press('3', { altKey: true, code: 'Digit3' }), isComposing: true }
-    expect(matchesCombination('Alt-3', composing, 'win')).toBe(false)
     expect(
-      matchesCombination('Alt-3', press('Process', { altKey: true, code: 'Digit3' }), 'win'),
+      matchesCombination('Alt-3', { ...press('3', 'alt', 'Digit3'), isComposing: true }, 'win'),
+    ).toBe(false)
+    expect(
+      matchesCombination('Mod-Space', { ...press(' ', 'ctrl', 'Space'), isComposing: true }, 'win'),
     ).toBe(false)
   })
 })
 
 describe('showing a combination', () => {
-  test('is signs on a Mac and words everywhere else', () => {
-    expect(showCombination('Mod-Shift-k', 'mac')).toBe('⇧⌘K')
-    expect(showCombination('Mod-Shift-k', 'win')).toBe('Ctrl+Shift+K')
-    expect(showCombination('Mod-Shift-k', 'linux')).toBe('Ctrl+Shift+K')
-  })
-
-  test('puts the Mac signs in the order a Mac writes them', () => {
-    expect(showCombination('Mod-Alt-Ctrl-Shift-k', 'mac')).toBe('⌃⌥⇧⌘K')
-  })
-
-  test('calls the meta key what the keyboard under it calls it', () => {
-    expect(showCombination('Meta-k', 'win')).toBe('Win+K')
-    expect(showCombination('Meta-k', 'linux')).toBe('Super+K')
-    expect(showCombination('Ctrl-k', 'mac')).toBe('⌃K')
-  })
-
-  test('names the keys that have no character', () => {
-    expect(showCombination('Alt-ArrowUp', 'win')).toBe('Alt+↑')
-    expect(showCombination('Escape', 'win')).toBe('Esc')
-    expect(showCombination('F10', 'mac')).toBe('F10')
-  })
+  test.each([
+    ['Mod-Shift-k', 'mac', '⇧⌘K'],
+    ['Mod-Shift-k', 'win', 'Ctrl+Shift+K'],
+    ['Mod-Shift-k', 'linux', 'Ctrl+Shift+K'],
+    ['Mod-Alt-Ctrl-Shift-k', 'mac', '⌃⌥⇧⌘K'],
+    ['Meta-k', 'win', 'Win+K'],
+    ['Meta-k', 'linux', 'Super+K'],
+    ['Ctrl-k', 'mac', '⌃K'],
+    ['Alt-ArrowUp', 'win', 'Alt+↑'],
+    ['F10', 'mac', 'F10'],
+    ['Mod-Backspace', 'mac', '⌘⌫'],
+    ['Mod-Backspace', 'win', 'Ctrl+Backspace'],
+    ['Mod-Ctrl-f', 'mac', '⌃⌘F'],
+    ['Ctrl-Shift-Tab', 'mac', '⌃⇧⇥'],
+    ['Mod-Shift-PageDown', 'win', 'Ctrl+Shift+PgDn'],
+    ['Hyper-k', 'win', 'Hyper-k'],
+    ['Mod-Shift-Space', 'win', 'Ctrl+Shift+Space'],
+    ['Mod-Shift-Space', 'mac', '⇧⌘Space'],
+    ['Mod-Space', 'win', 'Ctrl+Space'],
+    ['Shift Shift', 'win', 'Shift Shift'],
+    ['Mod Mod', 'win', 'Ctrl Ctrl'],
+    ['Meta Meta', 'linux', 'Super Super'],
+    ['Shift Shift', 'mac', '⇧⇧'],
+    ['Mod Mod', 'mac', '⌘⌘'],
+  ] as const)(
+    'shows %s on %s as %s, signs on a Mac in its order and words elsewhere',
+    (key, platform, shown) => {
+      expect(showCombination(key, platform)).toBe(shown)
+    },
+  )
 
   test.each([
     ['Escape', '⎋', 'Esc'],
@@ -249,86 +163,21 @@ describe('showing a combination', () => {
     expect(showCombination(key, 'win')).toBe(other)
     expect(showCombination(key, 'linux')).toBe(other)
   })
-
-  test('puts the key sign after the modifiers on a Mac', () => {
-    expect(showCombination('Mod-Backspace', 'mac')).toBe('⌘⌫')
-    expect(showCombination('Mod-Backspace', 'win')).toBe('Ctrl+Backspace')
-    expect(showCombination('Mod-Ctrl-f', 'mac')).toBe('⌃⌘F')
-    expect(showCombination('Ctrl-Shift-Tab', 'mac')).toBe('⌃⇧⇥')
-    expect(showCombination('Mod-Shift-PageDown', 'win')).toBe('Ctrl+Shift+PgDn')
-  })
-
-  test('hands back what it cannot read rather than nothing', () => {
-    expect(showCombination('Hyper-k', 'win')).toBe('Hyper-k')
-  })
-})
-
-describe('the space bar', () => {
-  test('is written Space and read as one', () => {
-    expect(parseCombination('Mod-Shift-Space', 'win')).toEqual({
-      ctrl: true,
-      meta: false,
-      alt: false,
-      shift: true,
-      key: ' ',
-    })
-    expect(
-      readCombination(press(' ', { ctrlKey: true, shiftKey: true, code: 'Space' }), 'win'),
-    ).toBe('Mod-Shift-Space')
-    expect(showCombination('Mod-Shift-Space', 'win')).toBe('Ctrl+Shift+Space')
-    expect(showCombination('Mod-Shift-Space', 'mac')).toBe('⇧⌘Space')
-  })
-
-  test('answers the chord the space switcher is bound to', () => {
-    const chord = press(' ', { ctrlKey: true, shiftKey: true, code: 'Space' })
-    expect(matchesCombination('Mod-Shift-Space', chord, 'win')).toBe(true)
-    expect(matchesCombination('Mod-Shift-Space', chord, 'mac')).toBe(false)
-    expect(matchesCombination('Mod-Shift-Space', press(' ', { code: 'Space' }), 'win')).toBe(false)
-  })
-
-  test('answers Ctrl+Space, and never an input method’s', () => {
-    const chord = press(' ', { ctrlKey: true, code: 'Space' })
-    expect(matchesCombination('Mod-Space', chord, 'win')).toBe(true)
-    expect(matchesCombination('Mod-Space', chord, 'linux')).toBe(true)
-    expect(
-      matchesCombination('Mod-Space', press(' ', { ctrlKey: true, shiftKey: true }), 'win'),
-    ).toBe(false)
-    expect(
-      matchesCombination('Mod-Space', press('Process', { ctrlKey: true, code: 'Space' }), 'win'),
-    ).toBe(false)
-    expect(matchesCombination('Mod-Space', { ...chord, isComposing: true }, 'win')).toBe(false)
-    expect(showCombination('Mod-Space', 'win')).toBe('Ctrl+Space')
-  })
 })
 
 describe('telling a chord from a key a widget owns', () => {
-  test('a bare key, and one under Shift, belong to the widget', () => {
-    expect(chorded(press(' ', { code: 'Space' }))).toBe(false)
-    expect(chorded(press('Enter'))).toBe(false)
-    expect(chorded(press('F10', { shiftKey: true }))).toBe(false)
-  })
-
-  test('a key under Ctrl, Alt or Cmd is on its way to the window', () => {
-    expect(chorded(press(' ', { ctrlKey: true, shiftKey: true, code: 'Space' }))).toBe(true)
-    expect(chorded(press('ArrowLeft', { altKey: true }))).toBe(true)
-    expect(chorded(press('Enter', { metaKey: true }))).toBe(true)
+  test.each([
+    [' ', '', 'Space', false],
+    ['Enter', '', undefined, false],
+    ['F10', 'shift', undefined, false],
+    [' ', 'ctrl shift', 'Space', true],
+    ['ArrowLeft', 'alt', undefined, true],
+    ['Enter', 'meta', undefined, true],
+  ] as const)('%j with %j is on its way to the window: %s', (key, mods, code, chord) => {
+    expect(chorded(press(key, mods, code))).toBe(chord)
   })
 
   test('a keystroke with nothing said about the modifiers is a bare one', () => {
     expect(chorded({ key: ' ' })).toBe(false)
-  })
-})
-
-describe('a modifier tapped twice', () => {
-  test('reads the way it is pressed: the sign twice on a Mac, the name twice elsewhere', () => {
-    expect(showCombination('Shift Shift', 'win')).toBe('Shift Shift')
-    expect(showCombination('Mod Mod', 'win')).toBe('Ctrl Ctrl')
-    expect(showCombination('Meta Meta', 'linux')).toBe('Super Super')
-    expect(showCombination('Shift Shift', 'mac')).toBe('⇧⇧')
-    expect(showCombination('Mod Mod', 'mac')).toBe('⌘⌘')
-  })
-
-  test('is no keystroke', () => {
-    expect(matchesCombination('Shift Shift', press('Shift', { shiftKey: true }), 'win')).toBe(false)
   })
 })

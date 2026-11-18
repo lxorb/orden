@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-
 import { readPdfPages } from './pdf-pages'
-import { sourceOf, type Source } from './sources'
+import { file } from './fixtures'
 
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
@@ -10,10 +9,6 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
       ? Promise.resolve([{ width: 612, height: 792 }])
       : Promise.reject(new Error('not a PDF')),
 }))
-
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
 
 describe('papers', () => {
   test('each becomes its page note, byte for byte', async () => {

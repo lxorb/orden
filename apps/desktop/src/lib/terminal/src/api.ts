@@ -19,25 +19,14 @@ export { opens, rowOf } from './online/listing'
 export { type Destination, destinationOf, type Host, hostFor, said } from './remote/hosts'
 
 const refused = () => Promise.reject(new Error('no terminal in the Even Realities plugin'))
-
+export const programJudge = () => (__EVEN_PLUGIN__ ? refused() : import('./agent/free'))
 export const sessions = () => (__EVEN_PLUGIN__ ? refused() : import('./sessions.svelte'))
-
-export const onlineCalls = () => (__EVEN_PLUGIN__ ? refused() : import('./online/calls'))
-
-export const onlineMachine = () => (__EVEN_PLUGIN__ ? refused() : import('./online/machine.svelte'))
-
-export const remoteHosts = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/hosts.svelte'))
-
+const onlineMachine = () => (__EVEN_PLUGIN__ ? refused() : import('./online/machine.svelte'))
 export const hostPicking = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/picker.svelte'))
-
 const closing = () => (__EVEN_PLUGIN__ ? refused() : import('./closing'))
-
 const renaming = () => (__EVEN_PLUGIN__ ? refused() : import('./rename'))
-
 const previews = () => (__EVEN_PLUGIN__ ? refused() : import('./previews'))
-
 const onlineOpening = () => (__EVEN_PLUGIN__ ? refused() : import('./online/open'))
-
 const remoteOpening = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/open'))
 
 export const usageOfTab = async (...args: Parameters<typeof Sessions.usageOfTab>) =>

@@ -1,7 +1,6 @@
 import { isRecord } from '../../platform/src/api'
 
 export type View = 'day' | 'week' | 'reports'
-
 const VIEWS: readonly View[] = ['day', 'week', 'reports']
 
 export interface Spec {
@@ -23,6 +22,4 @@ export function readSpec(text: string): Spec {
   }
 }
 
-export function writeSpec(spec: Spec): string {
-  return JSON.stringify(spec)
-}
+export const writeSpec = (spec: Spec): string => JSON.stringify(spec)

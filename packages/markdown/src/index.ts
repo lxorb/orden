@@ -13,7 +13,7 @@ import {
 import { withoutComments } from './comments'
 import { type Cover, coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
-import { attributeUrl, escape, safeHref, safeSrc } from './html'
+import { attributeUrl, escape, pathHref, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
 import {
   blockAnchorsDrawn,
@@ -34,6 +34,7 @@ import {
   type Embeds,
   embedSink,
   type LinkResolver,
+  type PictureResolver,
   wikilinks,
 } from './wikilinks'
 import {
@@ -59,9 +60,11 @@ export interface RenderOptions {
   blockAnchors?: boolean
   resolveLink?: LinkResolver
   resolveNoteHref?: (target: string) => string | null
+  resolveNoteFrom?: (target: string, from: EmbeddedNote) => string | null
+  from?: EmbeddedNote
   tagHref?: TagHref
   resolveEmbed?: EmbedResolver
-  pictures?: (html: string, embedded: EmbeddedNote | null) => string
+  resolvePicture?: PictureResolver
   breaks?: boolean
   locale?: string
   headings?: Heading[]
@@ -80,8 +83,8 @@ export interface Heading {
   id: string
 }
 
-function plainText(html: string): string {
-  return html
+const plainText = (html: string): string =>
+  html
     .replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -89,15 +92,11 @@ function plainText(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .trim()
-}
 
 const defaults = Renderer.prototype as Renderer
-
 const TOC_MARK = '<!--orden:toc-->'
-
 const TOC_AT = /\[toc\][ \t]*(?=\r?\n|$)/iy
 const TOC_NEEDLES = ['c]', 'C]']
-
 const TOC_OPEN = 3
 
 function tocLine(src: string, at: number): number | null {
@@ -124,34 +123,34 @@ function noteLink(href: string): { target: string; fragment: string } | null {
   if (!written || written.startsWith('/') || written.startsWith('#')) return null
   if (!isNoteTarget(written)) return null
 
+  const link = localLink(written)
+  return link?.target && NOTE_LINK.test(link.target) ? link : null
+}
+
+function localLink(href: string): { target: string; fragment: string } | null {
+  const written = href.trim()
+  if (!written || written.startsWith('#') || written.startsWith('//')) return null
+  if (/^[a-z][a-z\d+.-]*:/i.test(written)) return null
+
   const hash = written.indexOf('#')
   const target = hash === -1 ? written : written.slice(0, hash)
-  if (!target || !NOTE_LINK.test(target)) return null
-
   return { target, fragment: hash === -1 ? '' : attributeUrl(written.slice(hash)) }
 }
 
 const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
-
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
-
 const PUNCTUATION = /^[!-/:-@[-`{-~]$/
-
 const SCHEME = /^(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)/
-
 const MAIL_RUNS = new WeakMap<Token[], { from: number; to: number }>()
 
-function inMail(code: number): boolean {
-  return (
-    (code >= 48 && code <= 57) ||
-    (code >= 65 && code <= 90) ||
-    (code >= 97 && code <= 122) ||
-    code === 46 ||
-    code === 95 ||
-    code === 43 ||
-    code === 45
-  )
-}
+const inMail = (code: number): boolean =>
+  (code >= 48 && code <= 57) ||
+  (code >= 65 && code <= 90) ||
+  (code >= 97 && code <= 122) ||
+  code === 46 ||
+  code === 95 ||
+  code === 43 ||
+  code === 45
 
 function mailAhead(src: string, tokens: Token[] | undefined): boolean {
   if (!inMail(src.charCodeAt(0))) return false
@@ -203,6 +202,9 @@ function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Lin
   }
 }
 
+const linksFrom = (resolve: LinkResolver, from: EmbeddedNote | undefined): LinkResolver =>
+  from ? (link) => resolve(link, from) : resolve
+
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(
@@ -220,8 +222,9 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   marked.use(
     wikilinks({
       embeds,
-      ...(options.resolveLink ? { resolveLink: options.resolveLink } : {}),
+      ...(options.resolveLink ? { resolveLink: linksFrom(options.resolveLink, options.from) } : {}),
       ...(options.resolveEmbed ? { resolveEmbed: options.resolveEmbed } : {}),
+      ...(options.resolvePicture ? { resolvePicture: options.resolvePicture } : {}),
     }),
   )
   marked.use(hashtags(options.tagHref))
@@ -241,13 +244,23 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
       link(token: Tokens.Link) {
         const body = this.parser.parseInline(token.tokens)
+        const from = options.from
+        const nested = from && options.resolveNoteFrom ? localLink(token.href) : null
+        const there =
+          nested && from ? (options.resolveNoteFrom?.(nested.target, from) ?? null) : null
+        const nestedHref = nested && there !== null ? pathHref(there) : null
+        if (nested && nestedHref !== null) {
+          const title = token.title ? ` title="${escape(token.title)}"` : ''
+          return `<a class="wikilink" href="${nestedHref}${nested.fragment}"${title}>${body}</a>`
+        }
 
         const resolve = options.resolveNoteHref
         const written = resolve ? noteLink(token.href) : null
         if (resolve && written) {
           const found = resolve(written.target)
-          if (found === null || !safeHref(found)) return body
-          return `<a href="${attributeUrl(found)}${written.fragment}">${body}</a>`
+          const foundHref = found === null ? null : pathHref(found)
+          if (foundHref === null) return body
+          return `<a href="${foundHref}${written.fragment}">${body}</a>`
         }
 
         const href = safeHref(token.href) ? attributeUrl(token.href) : ''
@@ -267,7 +280,8 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const { alt, size } = sizedAlt(
           this.parser.parseInline(token.tokens, this.parser.textRenderer),
         )
-        const src = safeSrc(token.href) ? attributeUrl(token.href) : ''
+        const found = options.resolvePicture?.(token.href, false, null) ?? token.href
+        const src = safeSrc(token.href) ? attributeUrl(found) : ''
         if (!src) return escape(alt)
 
         const attributes = [` src="${src}"`, ` alt="${escape(alt)}"`]
@@ -330,9 +344,8 @@ const publishing = renderer({ escapeHtml: true }, [], embedSink())
 
 export { frontMatter, frontMatterList, frontMatterValue, stripFrontMatter } from './front-matter'
 
-export function documentTitle(source: string): string | null {
-  return /^#\s+(.+)$/m.exec(stripFrontMatter(source))?.[1]?.trim() ?? null
-}
+export const documentTitle = (source: string): string | null =>
+  /^#\s+(.+)$/m.exec(stripFrontMatter(source))?.[1]?.trim() ?? null
 
 function captioned(html: string, caption: string): string {
   if (!caption || html.startsWith('<figure')) return html
@@ -357,29 +370,23 @@ export function codeBlocks(source: string): CodeBlock[] {
   return found
 }
 
-export function lexMarkdown(source: string): Token[] {
-  return trusting.lexer(source)
-}
+export const lexMarkdown = (source: string): Token[] => trusting.lexer(source)
 
-function needsOwn(options: RenderOptions): boolean {
-  return (
-    options.toc === true ||
-    options.code !== undefined ||
-    options.resolveLink !== undefined ||
-    options.resolveNoteHref !== undefined ||
-    options.tagHref !== undefined ||
-    options.resolveEmbed !== undefined ||
-    options.headings !== undefined ||
-    options.locale !== undefined
-  )
-}
-
-const FOOTNOTE_IDS = /(id="|href="#)(fn|fnref)-/g
+const needsOwn = (options: RenderOptions): boolean =>
+  options.toc === true ||
+  options.code !== undefined ||
+  options.resolveLink !== undefined ||
+  options.resolveNoteHref !== undefined ||
+  options.resolveNoteFrom !== undefined ||
+  options.tagHref !== undefined ||
+  options.resolveEmbed !== undefined ||
+  options.resolvePicture !== undefined ||
+  options.headings !== undefined ||
+  options.locale !== undefined
 
 function inside(options: RenderOptions): RenderOptions {
   const rest = { ...options }
   delete rest.resolveEmbed
-  delete rest.pictures
   delete rest.toc
   delete rest.cover
   delete rest.blockAnchors
@@ -479,6 +486,21 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = html.replace(TOC_MARK, () => contents)
   }
 
+  const outer = options.resolvePicture
+  embeds.sections.forEach((section, at) => {
+    const embedded = renderMarkdown(section.text, {
+      ...inside(options),
+      ...(section.escapeHtml ? { escapeHtml: true } : {}),
+      from: section.from,
+      ...(outer
+        ? {
+            resolvePicture: (src: string, wikilink: boolean) => outer(src, wikilink, section.from),
+          }
+        : {}),
+    })
+    html = html.replace(embeds.marker(at), () => notesApart(embedded, at))
+  })
+
   if (options.footnotes) {
     html = html.replace(
       /(?:<li id="fn-[\s\S]*?<\/li>\n?)+/g,
@@ -493,23 +515,25 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     html = propertiesSource(source) + html
   }
 
-  if (options.cover) {
-    html = coverFigure(options.cover === true ? coverOf(source) : options.cover) + html
-  }
+  if (!options.cover) return html
+  return coverFigure(options.cover === true ? coverFound(source, options) : options.cover) + html
+}
 
-  const pictures = options.pictures
-  if (pictures) html = pictures(html, null)
+function coverFound(source: string, options: RenderOptions): Cover | null {
+  const cover = coverOf(source)
+  const found = cover && options.resolvePicture?.(cover.src, false, null)
+  return cover && found ? { ...cover, src: found } : cover
+}
 
-  embeds.sections.forEach((section, at) => {
-    const drawn = renderMarkdown(section.text, {
-      ...inside(options),
-      ...(section.escapeHtml ? { escapeHtml: true } : {}),
-    }).replace(FOOTNOTE_IDS, `$1$2-embed${at}-`)
-    const embedded = pictures ? pictures(drawn, section) : drawn
-    html = html.replace(embeds.marker(at), () => embedded)
-  })
-
+function notesApart(html: string, at: number): string {
+  const own = `e${at}-`
   return html
+    .replace(/<li id="fn-/g, `<li id="${own}fn-`)
+    .replace(/(<a class="footnote-back" href="#)fnref-/g, `$1${own}fnref-`)
+    .replace(
+      /(<sup class="footnote-ref" id=")fnref-([^"]*"><a href="#)fn-/g,
+      `$1${own}fnref-$2${own}fn-`,
+    )
 }
 
 export function tableOfContents(headings: Heading[]): string {
@@ -561,7 +585,6 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
 
   const skip = /<(code|pre|abbr|script|style)\b[\s\S]*?<\/\1>|<[^>]+>|&[#\w]+;/g
   const word = new RegExp(`(?<![\\p{L}\\p{N}_])(${pattern})(?![\\p{L}\\p{N}_])`, 'gu')
-
   let out = ''
   let last = 0
 
@@ -586,4 +609,4 @@ export { noteWithoutComments, withoutComments } from './comments'
 export { MOST_EMS } from './engines'
 
 export { findLinks, type FoundLink, type Wikilink } from './links'
-export type { EmbeddedNote } from './wikilinks'
+export type { EmbeddedNote, PictureResolver } from './wikilinks'

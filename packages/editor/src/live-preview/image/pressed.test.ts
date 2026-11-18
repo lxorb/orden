@@ -21,24 +21,42 @@ function state(doc: string, readOnly = false) {
 
 describe('the picture a press landed on', () => {
   test.each([
-    ['a ![a cat](shots/cat.png "t") b', 'shots/cat.png', 'a cat'],
-    ['a <img src="cat.png" alt="a cat" style="zoom:50%"> b', 'cat.png', 'a cat'],
-    ['a ![[cat.png|a cat]] b', 'cat.png', 'a cat'],
-    ['a ![[cat.png|300]] b', 'cat.png', ''],
-  ])('%s', (doc, src, alt) => {
-    expect(pictureAt(state(doc), 2)).toEqual({ from: 2, to: doc.length - 2, src, alt })
+    ['a ![a cat](shots/cat.png "t") b', 'shots/cat.png', 'a cat', false],
+    ['a <img src="cat.png" alt="a cat" style="zoom:50%"> b', 'cat.png', 'a cat', false],
+    ['a ![[cat.png|a cat]] b', 'cat.png', 'a cat', true],
+    ['a ![[cat.png|300]] b', 'cat.png', '', true],
+  ])('%s', (doc, src, alt, wikilink) => {
+    expect(pictureAt(state(doc), 2)).toEqual({ from: 2, to: doc.length - 2, src, alt, wikilink })
   })
 
   test('is none for a note, a PDF or a link, which are not pictures', () => {
-    for (const doc of ['a ![[Plan]] b', 'a ![[paper.pdf]] b', 'a [[cat.png]] b', 'a b c']) {
+    for (const doc of ['a ![[Plan]] b', 'a ![[paper.pdf]] b', 'a [[cat.png]] b', 'a b c'])
       expect(pictureAt(state(doc), 2), doc).toBeNull()
-    }
   })
 
   test('is loaded through the resolver the note is drawn with', () => {
     const current = state('![](cat.png)')
     const picture = pictureAt(current, 0)
     expect(picture && pictureUrl(current, picture)).toBe('asset://space/cat.png')
+  })
+
+  test('tells the resolver when a wikilink named it', () => {
+    const asked: (boolean | undefined)[] = []
+    const current = parsed(
+      EditorState.create({
+        doc: '![[cat.png]]',
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
+          imageResolver.of((src, wikilink) => {
+            asked.push(wikilink)
+            return src
+          }),
+        ],
+      }),
+    )
+    const picture = pictureAt(current, 0)
+    if (picture) pictureUrl(current, picture)
+    expect(asked).toEqual([true])
   })
 })
 
@@ -54,10 +72,10 @@ describe('deleting it', () => {
     return { ran, doc: current.doc.toString() }
   }
 
-  test('takes the picture out of the note and leaves the words around it', () => {
-    expect(run('a ![](cat.png) b')).toEqual({ ran: true, doc: 'a  b' })
-    expect(run('a ![[cat.png]] b')).toEqual({ ran: true, doc: 'a  b' })
-  })
+  test.each([
+    ['a ![](cat.png) b', { ran: true, doc: 'a  b' }],
+    ['a ![[cat.png]] b', { ran: true, doc: 'a  b' }],
+  ])('%j', (input, wanted) => expect(run(input)).toEqual(wanted))
 
   test('does nothing once the note has moved under it', () => {
     expect(run('a ![](cat.png) b', false, 'xyz')).toEqual({

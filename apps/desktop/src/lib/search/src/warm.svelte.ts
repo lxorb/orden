@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { internal, invoke, isNative, mark } from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
 import { warmInternal, warmSpace } from '../../web-backend/src/api'
@@ -7,7 +8,11 @@ class Warm {
   private held = $state<Warmth | null>(null)
   private root: string | null = null
   private papers = $state<PapersHeld | null>(null)
-  private hearing: Promise<void> | null = null
+  private readonly hearing = door(() =>
+    import('../../pdf/src/api')
+      .then((pdf) => pdf.papers())
+      .then((one) => one.hearPapers((held) => (this.papers = held))),
+  )
 
   readonly said = $derived(said(this.held, this.papers))
 
@@ -16,12 +21,7 @@ class Warm {
     this.held = null
 
     await startup.turn('search')
-    this.hearing ??= import('../../pdf/src/api')
-      .then((pdf) => pdf.papers())
-      .then((one) => one.hearPapers((held) => (this.papers = held)))
-      .catch(() => {
-        this.hearing = null
-      })
+    void this.hearing().catch(() => undefined)
     if (this.root !== root) return
 
     if (!isNative) {

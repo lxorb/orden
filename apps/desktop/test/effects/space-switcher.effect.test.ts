@@ -5,24 +5,9 @@ import { Titlebar } from '../../src/lib/titlebar/src/api'
 import { spacesMenu } from '../../src/lib/surfaces/src/api'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
+import { settle } from './settle'
 
 Element.prototype.scrollIntoView = () => undefined
-
-class NoLayout {
-  observe() {
-    // Nothing to measure.
-  }
-
-  unobserve() {
-    // Nothing to measure.
-  }
-
-  disconnect() {
-    // Nothing to measure.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
 
 const SPACES = [
   { id: 'vis', name: 'VIS', root: '/spaces/VIS' },
@@ -73,15 +58,8 @@ async function dropped() {
   mark()?.click()
   flushSync()
   await spacesMenu()
-  await settled()
+  await settle()
   expect(list()).not.toBe(null)
-}
-
-async function settled() {
-  for (let turn = 0; turn < 5; turn++) {
-    await new Promise((done) => setTimeout(done, 0))
-    flushSync()
-  }
 }
 
 test('the shut panel leaves no space in the title bar', () => {
@@ -110,7 +88,7 @@ test('a press on the header opens the switcher, and a row in it changes space', 
   expect(rows[0]?.classList.contains('is-on')).toBe(true)
 
   rows[1]?.click()
-  await settled()
+  await settle()
 
   expect(shown).toHaveBeenCalledWith('journal')
   expect(list()).toBe(null)
@@ -126,7 +104,7 @@ test('the list wears no numbers, and a digit typed into it still goes there', as
   document.activeElement?.dispatchEvent(
     new KeyboardEvent('keydown', { key: '2', code: 'Digit2', bubbles: true, cancelable: true }),
   )
-  await settled()
+  await settle()
 
   expect(shown).toHaveBeenCalledWith('journal')
   expect(list()).toBe(null)
@@ -139,7 +117,7 @@ test('a second press puts the list away again', async () => {
   expect(list()).not.toBe(null)
 
   mark()?.click()
-  await settled()
+  await settle()
   expect(list()).toBe(null)
   expect(mark()?.getAttribute('aria-expanded')).toBe('false')
 })

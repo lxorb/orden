@@ -2,23 +2,18 @@ import type { EditorView } from '@orden/editor'
 import { busy, message } from '../../../ui-kit/src/api'
 import { region, assetUrl, joinPath } from '../../../platform/src/api'
 import { links } from '../../../link-index/src/api'
-import { settingsWindow } from '@orden/contracts'
+import { sayNotice } from '@orden/contracts'
 import { workspace } from '../../../workspace/src/api'
 import { transcribedBy, wordsInFile } from './transcribe'
 import { languageName, transcriptCallout } from './transcript'
 
 async function bytesOf(target: string, notePath: string | null): Promise<ArrayBuffer | null> {
   const found = !target.includes('/') ? links.fileFor(target, notePath) : null
-  const path = found ?? beside(notePath, target)
+  const path = found ?? (notePath ? joinPath(notePath.replace(/[\\/][^\\/]*$/, ''), target) : null)
   if (!path) return null
 
   const response = await fetch(assetUrl(path)).catch(() => null)
   return response?.ok ? response.arrayBuffer() : null
-}
-
-function beside(notePath: string | null, target: string): string | null {
-  if (!notePath) return null
-  return joinPath(notePath.replace(/[\\/][^\\/]*$/, ''), target)
 }
 
 export async function transcribeInto(view: EditorView, at: number, target: string) {
@@ -34,7 +29,7 @@ export async function transcribeInto(view: EditorView, at: number, target: strin
     })
 
     if (!words.text) {
-      settingsWindow().error = 'Nothing could be heard in that recording.'
+      sayNotice('Nothing could be heard in that recording.')
       return
     }
 
@@ -49,6 +44,6 @@ export async function transcribeInto(view: EditorView, at: number, target: strin
       userEvent: 'input.complete',
     })
   } catch (error) {
-    settingsWindow().error = message(error, 'That recording could not be turned into words.')
+    sayNotice(message(error, 'That recording could not be turned into words.'))
   }
 }

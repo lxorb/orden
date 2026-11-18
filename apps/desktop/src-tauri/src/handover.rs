@@ -42,7 +42,7 @@ pub fn handed_over(identifier: &str) -> bool {
     let mut launch: Vec<String> = std::env::args_os()
         .map(|arg| arg.to_string_lossy().into_owned())
         .collect();
-    if let Some(token) = crate::linux::launched_with() {
+    if let Some(token) = orden_base::linux::launched_with() {
         launch.push(format!("{}{token}", crate::launch::TOKEN_FLAG));
     }
     on_the_bus(identifier, &launch).unwrap_or(false)
@@ -87,7 +87,7 @@ pub fn handed_over(_identifier: &str) -> bool {
 
 pub fn said(app: &tauri::AppHandle) {
     if let Some(pid) = ENDED.get() {
-        crate::logs::say(
+        orden_base::logs::say(
             app,
             "warn",
             &format!(
@@ -232,7 +232,7 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
         })
     };
 
-    let chosen = if crate::placement::asked_away() {
+    let chosen = if orden_placement::placement::asked_away() {
         match std::env::var("ORDEN_PROBE_NOT_RESPONDING").as_deref() {
             Ok("end") => IDOK,
             Ok("wait") => {

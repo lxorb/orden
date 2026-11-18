@@ -58,15 +58,6 @@
     facingSide,
     SIDES,
     sidePoint,
-  } from '../../plane/src/api'
-  import {
-    type Canvas as Plane,
-    type InkPoint,
-    readCanvas,
-    type Shape,
-    writeCanvas,
-  } from '@orden/markdown/canvas'
-  import {
     type Box,
     boxOf,
     caught,
@@ -81,6 +72,13 @@
     rectBetween,
     shapePath,
   } from '../../plane/src/api'
+  import {
+    type Canvas as Plane,
+    type InkPoint,
+    readCanvas,
+    type Shape,
+    writeCanvas,
+  } from '@orden/markdown/canvas'
   import { cursorFor, type Over } from './cursor'
   import { hand } from './hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './lattice'
@@ -114,23 +112,14 @@
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
   const store = untrack(() => new CanvasStore(tab))
-
   const SLACK = 800
-
   const QUANTUM = 400
-
-  const FAR_SCALE = 0.35
   const MOST_CARDS = 300
   const MADE_A_FRAME = 60
-
   const HELD = 480
-
   const STILL: Point = { x: 0, y: 0 }
-
   const ROOM = 72
-
   const CARD_MARGIN = 24
-
   let host = $state<HTMLElement>()
   let width = $state(0)
   let height = $state(0)
@@ -144,18 +133,13 @@
   let narrowed = $state(false)
   let finding = $state(false)
   let askedFind = $state(0)
-
   const camera = $derived(store.camera)
   const unit = $derived(1 / camera.scale)
-
   const turn = $derived(turnOf(camera))
-
   const spanX = $derived(turn ? Math.ceil(Math.hypot(width, height)) : width)
   const spanY = $derived(turn ? spanX : height)
-
   const originX = $derived(spanX / 2 - camera.x * camera.scale)
   const originY = $derived(spanY / 2 - camera.y * camera.scale)
-
   let twisted = 0
   let twistedTo = 0
 
@@ -195,12 +179,10 @@
   }
 
   const THINNING = 210
-
   let crossing = untrack(() => settled(latticeLevel(camera.scale)))
   let stands = $state(crossing.at)
   let thinning = 0
   let thinnedAt = 0
-
   const patterns = $derived(latticeLayers(stands, camera.scale))
 
   $effect(() => {
@@ -397,9 +379,7 @@
   })
 
   const far = $derived(
-    camera.scale < FAR_SCALE ||
-      cards.length > MOST_CARDS ||
-      (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
+    cards.length > MOST_CARDS || (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
   )
 
   const wanted = $derived(
@@ -462,7 +442,6 @@
   })
 
   const box = $derived(pickedBox(shown, store.picked))
-
   const inked = $derived(new Set(store.canvas.ink.map((stroke) => stroke.id)))
 
   const describes = $derived(
@@ -492,11 +471,8 @@
 
   const band = $derived(gesture?.kind === 'band' ? rectBetween(gesture.from, gesture.to) : null)
   const lasso = $derived(gesture?.kind === 'lasso' ? gesture.points : null)
-
   const pullFrom = $derived(joining?.leaves ?? pulling?.from ?? null)
-
   const pullBox = $derived(pullFrom && pullTo ? rectBetween(pullFrom, pullTo) : null)
-
   const PLAIN = new Set(['text', 'words', 'file', 'picture', 'link', 'group', 'rect', 'ellipse'])
 
   function pulledPath(tool: string, from: Point, to: Point, box: Box): string {
@@ -572,10 +548,7 @@
         : pullSnap.guides,
   )
 
-  function modulo(value: number, by: number): number {
-    return by > 0 ? ((value % by) + by) % by : 0
-  }
-
+  const modulo = (value: number, by: number): number => (by > 0 ? ((value % by) + by) % by : 0)
   const follows = (_value: unknown) => undefined
 
   $effect(() => {
@@ -719,8 +692,8 @@
     return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) }
   }
 
-  function hitFor(point: Point, coarse: boolean): Hit {
-    return hitAt(
+  const hitFor = (point: Point, coarse: boolean): Hit =>
+    hitAt(
       {
         canvas: shown,
         picked: store.picked,
@@ -732,7 +705,6 @@
       },
       point,
     )
-  }
 
   function sampleOf(event: PointerEvent, began: number): InkPoint {
     const point = planeAt(event)
@@ -747,7 +719,6 @@
   let began = 0
   let holding = 0
   let held: Point = { x: 0, y: 0 }
-
   const A_TWITCH = 6
 
   function waitForHold(point: Point) {
@@ -778,10 +749,7 @@
 
   let gestures = 0
   let cloning: string | null = null
-
-  function putting() {
-    return { colour: tools.colour, path: tab.path }
-  }
+  const putting = () => ({ colour: tools.colour, path: tab.path })
 
   function send(input: Input) {
     const preview = shown
@@ -920,9 +888,8 @@
     predicted = []
   }
 
-  function kindOf(event: PointerEvent) {
-    return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
-  }
+  const kindOf = (event: PointerEvent) =>
+    penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
 
   const contacts = new Contacts()
 
@@ -954,9 +921,7 @@
   }
 
   let lastPen = false
-
   const right = new RightPan()
-
   const GRACE = 160
   let doubting: { id: number; timer: number } | null = null
 
@@ -1260,17 +1225,11 @@
 
     const pointerType = 'pointerType' in event ? (event as PointerEvent).pointerType : ''
     const touch = pointerType === 'touch' || performance.now() - touchUpAt < 350
-    if (!touch || store.editing !== null) return
+    if (!touch || store.editing !== null || event.detail !== 2) return
 
-    if (event.detail === 2) {
-      touchMultiTapAt = performance.now()
-      event.preventDefault()
-      store.undo()
-    } else if (event.detail === 3) {
-      touchMultiTapAt = performance.now()
-      event.preventDefault()
-      store.redo()
-    }
+    touchMultiTapAt = performance.now()
+    event.preventDefault()
+    store.undo()
   }
 
   function showMenu(point: Point, about = false, buttons = 0) {
@@ -1524,7 +1483,6 @@
   })
 
   let over = $state.raw<Over>(null)
-
   let rubAt = $state.raw<Point | null>(null)
 
   function overOf(found: Hit): Over {

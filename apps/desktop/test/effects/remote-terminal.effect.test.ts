@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { idle } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let refuse = false
@@ -114,17 +115,6 @@ vi.mock('@xterm/addon-unicode11', () => ({
   },
 }))
 
-globalThis.ResizeObserver = class {
-  observe() {
-    // Nothing is measured here.
-  }
-  unobserve() {
-    // Said above.
-  }
-  disconnect() {
-    // Said above.
-  }
-}
 Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { load: () => Promise.resolve([]) },
@@ -186,7 +176,7 @@ test('it is the system ssh for the host, named and coloured for it, whatever run
   typing?.('vim notes\r')
   flushSync()
   expect(tab.shown).toBe('pi')
-  await new Promise((settle) => setTimeout(settle, 400))
+  await idle(400)
   expect(asked.some((one) => one.command === 'pty_program' || one.command === 'pty_folder')).toBe(
     false,
   )
@@ -203,7 +193,7 @@ test('a dropped connection puts up Reconnect, which connects again; never by its
   expect(workspace.tabs).toHaveLength(1)
   const bar = () => place.querySelector<HTMLButtonElement>('.offline button')
   expect(bar()?.textContent).toBe('Reconnect')
-  await new Promise((settle) => setTimeout(settle, 50))
+  await idle(50)
   expect(spawns()).toHaveLength(1)
 
   bar()?.click()
@@ -293,12 +283,12 @@ test('ssh to an address no host has, or with a command, leaves the tab a shell h
   reached = { hostname: 'box.example.com', user: 'emil', port: 2222 }
   typing?.('ssh emil@box.example.com -p 2222\r')
   await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
-  await new Promise((settle) => setTimeout(settle, 50))
+  await idle(50)
   expect(readSpec(tab.doc)?.shell).toBe('pwsh')
 
   reached = null
   typing?.('ssh pi uptime\r')
-  await new Promise((settle) => setTimeout(settle, 1500))
+  await idle(1500)
   expect(readSpec(tab.doc)?.shell).toBe('pwsh')
 })
 
@@ -387,12 +377,12 @@ test('an address no host has is looked up once, not every time ssh is asked afte
 
   typing?.('ssh box.example.com\r')
   await vi.waitFor(() => expect(asked.some((one) => one.command === 'pty_ssh')).toBe(true))
-  await new Promise((settle) => setTimeout(settle, 100))
+  await idle(100)
   const after = lookups()
   typing?.('ls\r')
-  await new Promise((settle) => setTimeout(settle, 1200))
+  await idle(1200)
   typing?.('ls\r')
-  await new Promise((settle) => setTimeout(settle, 1200))
+  await idle(1200)
   expect(lookups()).toBe(after)
   expect(readSpec(tab.doc)?.shell).toBe('pwsh')
 })
@@ -416,7 +406,7 @@ test('an address looked up once is looked up again the next time ssh starts', as
 
   front = null
   typing?.('exit\r')
-  await new Promise((settle) => setTimeout(settle, 1200))
+  await idle(1200)
   front = 'ssh'
   reached = { hostname: 'pi', user: null, port: null }
   typing?.('ssh pi\r')

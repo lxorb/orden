@@ -4,11 +4,10 @@ import { blockIdOf } from '@orden/markdown/links'
 
 const WORD_START = /(^|[^\p{L}\p{N}'’])(\p{L})/gu
 
-function titled(text: string): string {
-  return text
+const titled = (text: string): string =>
+  text
     .toLocaleLowerCase()
     .replace(WORD_START, (_, before: string, letter: string) => before + letter.toLocaleUpperCase())
-}
 
 interface Span {
   from: number

@@ -16,10 +16,8 @@ import {
 import { type Callout, calloutOf } from '@orden/markdown/callouts'
 import { blockIdOf } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
-import { EditorView } from '@codemirror/view'
 import { inCode, inVerbatimBlock } from './code'
 import { marksAcross } from './line-door'
-import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
 import { enclosing, enclosingNamed, linkAddress } from './nodes'
 
@@ -76,9 +74,8 @@ export function toggleWrap(before: string, after = before): StateCommand {
 
   return (target) => {
     const { state, dispatch } = target
-    if (across && state.selection.ranges.some((range) => spansLines(state, range))) {
+    if (across && state.selection.ranges.some((range) => spansLines(state, range)))
       return across(target)
-    }
 
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
@@ -396,7 +393,6 @@ export const toggleQuote: StateCommand = ({ state, dispatch }) => {
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 
 const INDENT = /^\s*/
-
 const QUOTED = /^(?:[ \t]*>[ \t]?)*/
 
 const NO_TASK_HERE = new Set([
@@ -433,20 +429,14 @@ function taskLines(state: EditorState): Line[] {
 export const toggleTask: StateCommand = (target) => {
   const { state, dispatch } = target
   const changes: ChangeSpec[] = []
-  const help = target instanceof EditorView ? state.facet(noteIndex).tasks : undefined
-  const ticking: number[] = []
 
   for (const line of taskLines(state)) {
     if (!taskable(state, line)) continue
 
     const task = taskAt(line.text)
-    if (task && help) {
-      ticking.push(line.number)
-      continue
-    }
     if (task) {
       const at = line.from + task.box + 1
-      changes.push({ from: at, to: at + 1, insert: task.done ? ' ' : 'x' })
+      changes.push({ from: at, to: at + task.mark.length, insert: task.done ? ' ' : 'x' })
       continue
     }
 
@@ -455,12 +445,6 @@ export const toggleTask: StateCommand = (target) => {
     changes.push({ from: line.from + indent, to: line.from + marker, insert: '- [ ] ' })
   }
 
-  if (ticking.length && help && target instanceof EditorView) {
-    void import('./task-tick').then(({ tickLines }) =>
-      tickLines(target, help, state.doc, ticking, changes),
-    )
-    return true
-  }
   if (!changes.length) return false
 
   const set = state.changes(changes)
@@ -799,8 +783,9 @@ function roomBelow(state: EditorState, at: number, text: string, blank: boolean)
 
 const HOLDS_ITS_LINES: ReadonlySet<string> = new Set(['Table', 'FencedCode', 'BlockMath'])
 
-function insertBlock(build: () => Block, room: Room = {}): StateCommand {
-  return ({ state, dispatch }) => {
+const insertBlock =
+  (build: () => Block, room: Room = {}): StateCommand =>
+  ({ state, dispatch }) => {
     const range = state.selection.main
     const inTree = syntaxTree(state).resolveInner(range.to, -1)
     const holder = enclosingNamed(inTree, HOLDS_ITS_LINES)
@@ -828,7 +813,6 @@ function insertBlock(build: () => Block, room: Room = {}): StateCommand {
     )
     return true
   }
-}
 
 function fenceFor(words: string): string {
   const longest = words
@@ -1053,8 +1037,9 @@ export function calloutSign(state: EditorState): '+' | '-' | '' | null {
   return found.callout.foldable ? (found.callout.folded ? '-' : '+') : ''
 }
 
-export function setCalloutSign(sign: '+' | '-'): StateCommand {
-  return ({ state, dispatch }) => {
+export const setCalloutSign =
+  (sign: '+' | '-'): StateCommand =>
+  ({ state, dispatch }) => {
     const found = calloutAt(state)
     if (!found) return false
 
@@ -1069,7 +1054,6 @@ export function setCalloutSign(sign: '+' | '-'): StateCommand {
     dispatch(state.update({ changes: { from, to: from + held, insert }, userEvent: 'input' }))
     return true
   }
-}
 
 export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
 

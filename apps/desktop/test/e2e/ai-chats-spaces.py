@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -51,7 +49,6 @@ STATE = """
     field: document.querySelector('.ask textarea')?.value ?? null,
     scroll: talk ? Math.round(talk.scrollTop) : null,
     space: window.ordenApp.workspace.activeSpace?.name ?? null,
-    // In the page is not on the screen: a shut side keeps its panel built, and inert.
     seen: !!document.querySelector('.ask')?.checkVisibility({ visibilityProperty: true }),
   }
 }
@@ -118,5 +115,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("the AI panel's chats are one list, and the open one stays as the space changes")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -197,3 +197,171 @@ describe('what is heard while a first pass runs', () => {
     watched.stop()
   })
 })
+
+describe('a rename another program makes', () => {
+  const heardRename = async (from: string, to: string) => {
+    const { providePort } = await import('@orden/contracts')
+    const copied = vi.fn()
+    providePort('sync.workspace', { copied, rootHolding: () => ROOT } as never)
+    const space = {
+      id: 's',
+      row: { root: ROOT },
+      entries: new Map(),
+      key: (path: string) => path,
+      at: () => null,
+      paths: () => new Map(),
+      wantedAt: () => [],
+    }
+    const watched = await watchFolders({
+      engine: {
+        created: () => Promise.resolve(),
+        placed: (path: string) => ({ space, path: path.slice(ROOT.length + 1) }),
+        entryAt: () => null,
+        ownWork: () => false,
+        core: {
+          spaces: new Map([['s', space]]),
+          world: {
+            foldsCase: false,
+            blobs: {},
+            join: (root: string, path: string) => `${root}/${path}`,
+            disk: { exists: () => Promise.resolve(true), read: () => Promise.resolve('words') },
+          },
+        },
+      },
+      ready: () => true,
+      changed: () => undefined,
+    } as unknown as Watching)
+    watch.heard({
+      root: ROOT,
+      scan: false,
+      gone: false,
+      changes: [{ kind: 'renamed', from, path: to, dir: false, size: 1, mtime: 1, id: null }],
+    })
+    await vi.waitFor(() => expect(copied).toHaveBeenCalled())
+    watched.stop()
+    return copied
+  }
+
+  test('with something new already at the old name gives the moved note the old name’s lock', async () => {
+    const copied = await heardRename(`${ROOT}/Diary.md`, `${ROOT}/Old/Diary.md`)
+    expect(copied).toHaveBeenCalledWith(`${ROOT}/Diary.md`, `${ROOT}/Old/Diary.md`, ROOT, ROOT)
+  })
+
+  test('into a dotted folder gives the hidden note the lock it had', async () => {
+    const copied = await heardRename(`${ROOT}/Diary.md`, `${ROOT}/.stash/Diary.md`)
+    expect(copied).toHaveBeenCalledWith(`${ROOT}/Diary.md`, `${ROOT}/.stash/Diary.md`, ROOT, ROOT)
+  })
+})
+
+describe('a note another program moves', () => {
+  const OTHER = '/home/me/Spaces/Other'
+  const hear = async (changes: unknown[], there: string[], count: number) => {
+    const { providePort } = await import('@orden/contracts')
+    const done: string[] = []
+    const rootOf = (path: string) => (path.startsWith(OTHER) ? OTHER : ROOT)
+    providePort('sync.workspace', {
+      copied: (from: string, to: string) => void done.push(`copied ${from} ${to}`),
+      rootHolding: rootOf,
+    } as never)
+    const spaceAt = (root: string) => ({
+      id: root,
+      row: { root },
+      entries: new Map(),
+      key: (path: string) => path,
+      at: () => null,
+      paths: () => new Map(),
+      wantedAt: () => [],
+    })
+    const spaces = new Map([ROOT, OTHER].map((root) => [root, spaceAt(root)]))
+    const watched = await watchFolders({
+      engine: {
+        removed: (path: string) => void done.push(`removed ${path}`),
+        created: (path: string) => void done.push(`created ${path}`),
+        moved: (from: string, to: string) => void done.push(`moved ${from} ${to}`),
+        foreign: () => Promise.resolve(),
+        placed: (path: string) => {
+          const root = rootOf(path)
+          return { space: spaces.get(root), path: path.slice(root.length + 1) }
+        },
+        entryAt: (path: string) => (there.includes(path) ? null : { id: path }),
+        ownWork: () => false,
+        core: {
+          spaces,
+          world: {
+            foldsCase: false,
+            blobs: {},
+            join: (root: string, path: string) => `${root}/${path}`,
+            disk: {
+              exists: (path: string) => Promise.resolve(there.includes(path)),
+              read: () => Promise.resolve('words'),
+            },
+          },
+        },
+      },
+      ready: () => true,
+      changed: () => undefined,
+    } as unknown as Watching)
+    watch.heard({ root: ROOT, scan: false, gone: false, changes })
+    await vi.waitFor(() => expect(done.length).toBeGreaterThanOrEqual(count))
+    watched.stop()
+    return done
+  }
+
+  test('into a dotted folder gives it the lock before the note is let go of', async () => {
+    const done = await hear(
+      [
+        {
+          kind: 'renamed',
+          from: `${ROOT}/Diary.md`,
+          path: `${ROOT}/.trash/Diary.md`,
+          dir: false,
+          size: 1,
+          mtime: 1,
+          id: 'a',
+        },
+      ],
+      [`${ROOT}/.trash/Diary.md`],
+      2,
+    )
+    expect(done).toEqual([
+      `copied ${ROOT}/Diary.md ${ROOT}/.trash/Diary.md`,
+      `removed ${ROOT}/Diary.md`,
+    ])
+  })
+
+  test('over a second note gives that note the lock before the first is let go of', async () => {
+    const done = await hear(
+      [
+        { kind: 'removed', path: `${ROOT}/Diary.md`, dir: false, id: 'a' },
+        { kind: 'modified', path: `${ROOT}/Todo.md`, dir: false, size: 1, mtime: 1, id: 'a' },
+      ],
+      [`${ROOT}/Todo.md`],
+      3,
+    )
+    expect(done[0]).toBe(`copied ${ROOT}/Diary.md ${ROOT}/Todo.md`)
+    expect(done).toContain(`removed ${ROOT}/Diary.md`)
+  })
+
+  test('into another space carries its lock there and is let go of and made anew', async () => {
+    const done = await hear(
+      [
+        {
+          kind: 'renamed',
+          from: `${OTHER}/Diary.md`,
+          path: `${ROOT}/Diary.md`,
+          dir: false,
+          size: 1,
+          mtime: 1,
+          id: 'a',
+        },
+      ],
+      [`${ROOT}/Diary.md`],
+      3,
+    )
+    expect(done).toEqual([
+      `copied ${OTHER}/Diary.md ${ROOT}/Diary.md`,
+      `removed ${OTHER}/Diary.md`,
+      `created ${ROOT}/Diary.md`,
+    ])
+  })
+})

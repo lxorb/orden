@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Totp, TotpAlgorithm } from './totp'
-import { code, totpIn, totpUri } from './totp'
+import { code, totpIn, totpUri, type Totp, type TotpAlgorithm } from './totp'
 
 function base32(text: string): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'

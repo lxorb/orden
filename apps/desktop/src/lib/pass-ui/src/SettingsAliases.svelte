@@ -94,7 +94,7 @@
 </script>
 
 {#if read && account}
-  <div class="card">
+  <div class="card pass-stack">
     <div class="orden-setting row">
       <span class="mark"><Glyph icon={AtSign} /></span>
       <span class="name">{NAMES[account.provider]}</span>
@@ -128,7 +128,7 @@
     {/if}
   </div>
 {:else if read}
-  <form class="card" onsubmit={(event) => void connect(event)}>
+  <form class="card pass-stack" onsubmit={(event) => void connect(event)}>
     <div class="orden-setting row">
       <span class="name">Alias service</span>
       <Select
@@ -161,16 +161,11 @@
   </p>
 {/if}
 {#if said}<p class="line" role="status">{said}</p>{/if}
-{#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+{#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 
 <style>
   .card {
-    display: flex;
-    flex-direction: column;
     margin: 0;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
   }
 
   .card > :global(* + *) {
@@ -202,11 +197,5 @@
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>

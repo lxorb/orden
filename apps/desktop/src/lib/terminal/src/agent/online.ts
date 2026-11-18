@@ -4,7 +4,7 @@ import type { Listed, Refused as Why } from '../online/calls'
 import { opens, rowOf } from '../online/listing'
 import { isOnlineTab } from '../../../online-terms/src/api'
 import { termOf } from '@orden/online/term'
-import { relativeTo, samePath, within } from '../../../platform/src/api'
+import { relativeTo, samePath, spaceHolding } from '../../../platform/src/api'
 import { runner } from '../../../sync-client/src/api'
 import {
   asksFront,
@@ -67,7 +67,7 @@ export async function listOnline(call: Call): Promise<AgentAnswer> {
 
 function sessionOf(call: Call, one: Listed) {
   const file = one.term !== null && opens(one) ? runner.fileOf(one.term) : null
-  const space = file === null ? null : reachable(call).find((it) => within(it.root, file) !== null)
+  const space = file === null ? null : spaceHolding(reachable(call), file)
   if (file !== null && !space) return []
 
   const tab = tabsInReach(call).find(

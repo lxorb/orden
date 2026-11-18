@@ -1,5 +1,6 @@
 export { default as CanvasColours } from './CanvasColours.svelte'
 export { copySelection, copyText, cutSelection } from './clipboard'
+export { Copied, SAID_FOR } from './copied.svelte'
 export { copyPicture } from './copy-picture'
 export {
   alphaFor,
@@ -30,6 +31,7 @@ export { adrift, pressedThrough } from './adrift'
 export { accelerator } from './accelerator'
 export { longPaste } from './long-paste'
 export { default as Outward } from './Outward.svelte'
+export { default as QrCode } from './QrCode.svelte'
 export { pixelRatio } from './pixel-ratio.svelte'
 export type { PairField, SwatchOption } from './swatch'
 export { default as Swatches } from './Swatches.svelte'

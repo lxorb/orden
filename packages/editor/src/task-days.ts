@@ -15,11 +15,10 @@ const momentOf = (iso: string, time = '00:00') => {
 const said = (iso: string, options: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat(languageOf(), options).format(momentOf(iso))
 
-export function timeWords(time: string): string {
-  return new Intl.DateTimeFormat(languageOf(), { hour: 'numeric', minute: '2-digit' }).format(
+export const timeWords = (time: string): string =>
+  new Intl.DateTimeFormat(languageOf(), { hour: 'numeric', minute: '2-digit' }).format(
     momentOf('2000-01-01', time),
   )
-}
 
 export function todayHere(): string {
   const now = new Date()

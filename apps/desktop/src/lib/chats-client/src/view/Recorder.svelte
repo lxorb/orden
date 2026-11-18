@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { elapsed } from '../../../platform/src/api'
   import type { FileRef } from '@orden/chats'
   import { MOST_VOICE_SECONDS } from '@orden/chats/limits'
   import { onMount } from 'svelte'
@@ -7,17 +8,10 @@
   import { recordVoice } from '../voice'
   import { shortcuts } from '../../../shortcuts/src/api'
   import { Glyph } from '../../../chat-kit/src/api'
-  import { clock } from './media'
   import { sound } from './prepare'
   import { put } from './attachments.svelte'
 
-  const {
-    onsend,
-    ondone,
-  }: {
-    onsend: (file: FileRef) => void
-    ondone: () => void
-  } = $props()
+  const { onsend, ondone }: { onsend: (file: FileRef) => void; ondone: () => void } = $props()
 
   let recording: VoiceRecording | null = null
   let started = $state(0)
@@ -99,7 +93,7 @@
     >
   {:else}
     <span class="dot" aria-hidden="true"></span>
-    <span class="time">{clock(started ? (now - started) / 1000 : 0)}</span>
+    <span class="time">{elapsed(started ? (now - started) / 1000 : 0)}</span>
     <span class="grow"></span>
     <button type="button" class="orden-glyph" aria-label="Delete" onclick={cancel}
       ><Glyph name="close" /></button

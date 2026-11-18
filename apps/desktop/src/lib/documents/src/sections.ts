@@ -72,5 +72,8 @@ export function moveSection(
   const arrivedAt = to > from ? landing - (moving.to - moving.from) : landing
   const inside = caret >= moving.from && caret <= moving.to
 
-  return { changes, caret: inside ? arrivedAt + (caret - moving.from) : caret }
+  const lifted = caret > moving.to ? moving.to - moving.from : 0
+  const stayed = caret - lifted + (caret >= landing ? insert.length : 0)
+
+  return { changes, caret: inside ? arrivedAt + (caret - moving.from) : stayed }
 }

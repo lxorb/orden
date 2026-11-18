@@ -60,45 +60,31 @@ function detailOf(user: string | null, hostname: string | null, port: number | n
 }
 
 export function hostsOf(config: readonly ConfigHost[], kept: Kept): Host[] {
-  const about = (id: string): About => kept.about[id] ?? {}
-
-  const fromConfig = config.map((one): Host => {
-    const known = about(one.id)
+  const hostOf = (one: Omit<ConfigHost, 'also'>, name: string, also: string[], own = false) => {
+    const known: About = kept.about[one.id] ?? {}
+    const [user, hostname, port] = [one.user ?? null, one.hostname ?? null, one.port ?? null]
     return {
       id: one.id,
-      name: one.id,
-      own: false,
-      also: [...one.also, ...(one.hostname ? [one.hostname] : [])],
-      detail: detailOf(one.user ?? null, one.hostname ?? null, one.port ?? null, one.id),
-      user: one.user ?? null,
-      hostname: one.hostname ?? null,
-      port: one.port ?? null,
+      name,
+      own,
+      also,
+      detail: detailOf(user, hostname, port, name),
+      user,
+      hostname,
+      port,
       group: known.group ?? one.group ?? null,
       colour: known.colour ?? null,
       pinned: known.pinned ?? false,
       last: known.last ?? null,
     }
-  })
+  }
 
-  const made = kept.own.map((one): Host => {
-    const known = about(one.id)
-    return {
-      id: one.id,
-      name: one.name,
-      own: true,
-      also: [one.hostname],
-      detail: detailOf(one.user ?? null, one.hostname, one.port ?? null, one.name),
-      user: one.user ?? null,
-      hostname: one.hostname,
-      port: one.port ?? null,
-      group: known.group ?? null,
-      colour: known.colour ?? null,
-      pinned: known.pinned ?? false,
-      last: known.last ?? null,
-    }
-  })
-
-  const all = [...fromConfig, ...made]
+  const all: Host[] = [
+    ...config.map((one) =>
+      hostOf(one, one.id, [...one.also, ...(one.hostname ? [one.hostname] : [])]),
+    ),
+    ...kept.own.map((one) => hostOf(one, one.name, [one.hostname], true)),
+  ]
   const place = new Map(kept.order.map((id, at) => [id, at]))
   const rank = (host: Host) => place.get(host.id) ?? Number.MAX_SAFE_INTEGER
   return all

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -79,9 +77,6 @@ COUNTS = """
     slices: count('path.chart-slice'),
     keys: count('.chart-key'),
     frames: count('iframe'),
-    // A fence stays code either way, and the two surfaces spell that
-    // differently: the reading view writes a `<pre>`, the editor colours the
-    // lines where they are.
     code: count('pre, .cm-line.orden-code'),
   }
 }
@@ -282,5 +277,4 @@ def main() -> int:
 
     return DRIVE.verdict("media plays, files are cards, a chart draws, and nothing loads unasked")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

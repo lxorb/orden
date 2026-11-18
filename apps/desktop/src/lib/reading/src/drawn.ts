@@ -8,13 +8,9 @@ export interface Drawn extends FileDrawing {
 }
 
 const FIRST_PAGE = 1
-
 const AHEAD = '400px'
-
 const FALLBACK_WIDTH = 640
-
 const MOST_PIXELS = 4 * 1024 * 1024
-
 const DRAWN = 'embed-drawn'
 const SHEET = 'embed-sheet'
 
@@ -70,9 +66,7 @@ function askedBy(card: HTMLElement, root: string): Drawn | null {
   return { kind, path, root, page: Number.isInteger(page) && page >= 1 ? page : null }
 }
 
-function written(target: string): string {
-  return decodeTarget(target)
-}
+const written = (target: string): string => decodeTarget(target)
 
 async function fill(card: HTMLElement, file: Drawn, showing: () => boolean): Promise<void> {
   const width = Math.round(card.clientWidth) || FALLBACK_WIDTH

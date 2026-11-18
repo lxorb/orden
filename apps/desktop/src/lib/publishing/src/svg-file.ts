@@ -32,9 +32,7 @@ function allowed(name: string): boolean {
   return !['target', 'attributename', 'xlink:show', 'xlink:actuate', 'begin', 'end'].includes(said)
 }
 
-function pointsInside(value: string): boolean {
-  return value.trim().startsWith('#')
-}
+const pointsInside = (value: string): boolean => value.trim().startsWith('#')
 
 interface Tag {
   to: number

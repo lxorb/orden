@@ -7,10 +7,10 @@
   import { answerHtml } from './drawn'
   import type { ContextKind } from './chat-parts'
   import { dollarMaths } from '@orden/markdown/streamed'
-  import { quick } from './chat-parts'
+  import { quick as sheet } from './chat-parts'
   import Thinking from './Thinking.svelte'
   import { closeOnBack } from '../../ui-kit/src/api'
-  import { longPaste, copyText, trap } from '../../ui-controls/src/api'
+  import { Copied, longPaste, trap } from '../../ui-controls/src/api'
   import { Cross } from '../../ui-kit/src/api'
   import { links } from '../../link-index/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
@@ -19,8 +19,10 @@
   import { scrollbar } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import { grow } from './grow'
-  import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
+  import { DictateButton, dictating, showsDictateButton } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
+
+  const { quick = sheet, docked = false }: { quick?: typeof sheet; docked?: boolean } = $props()
 
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()
@@ -35,8 +37,11 @@
   const waiting = $derived(quick.running && last?.role !== 'model')
   const done = $derived(last?.role === 'model' && !quick.running ? last : null)
 
-  $effect(() => (quick.open ? overlays.show(() => quick.close()) : undefined))
-  $effect(() => closeOnBack(quick.open, () => quick.close()))
+  $effect(() => (quick.open && !docked ? overlays.show(() => quick.close()) : undefined))
+  $effect(() => closeOnBack(quick.open && !docked, () => quick.close()))
+  $effect(() => {
+    if (docked && quick.open) requestAnimationFrame(() => field?.focus())
+  })
 
   const follows = (..._values: unknown[]) => undefined
 
@@ -72,6 +77,11 @@
   }
 
   function onKey(event: KeyboardEvent) {
+    if (docked && event.key === 'Escape') {
+      event.preventDefault()
+      quick.close()
+      return
+    }
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return
     event.preventDefault()
     void quick.ask()
@@ -113,24 +123,230 @@
   }
   const show = (src: string) => pictures.add(src)
 
-  let copied = $state(false)
-  let copying: ReturnType<typeof setTimeout> | undefined
-
-  async function copy(text: string) {
-    await copyText(text)
-    copied = true
-    clearTimeout(copying)
-    copying = setTimeout(() => (copied = false), 1600)
-  }
+  const copied = new Copied()
 
   const MARKS: Record<ContextKind, string> = {
     note: 'M7.5 1.8H3.6a1 1 0 0 0-1 1v7.4a1 1 0 0 0 1 1h5.8a1 1 0 0 0 1-1V4.7zM7.5 1.8v2.9h2.9',
     selection: 'M2.5 3.5h8M2.5 6.5h8M2.5 9.5h5',
+    thread: 'M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z',
     page: 'M6.5 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 1 0 0-9.4zM1.8 6.5h9.4M6.5 1.8c1.3 1.3 1.9 2.9 1.9 4.7s-.6 3.4-1.9 4.7c-1.3-1.3-1.9-2.9-1.9-4.7s.6-3.4 1.9-4.7z',
   }
 </script>
 
-{#if quick.open}
+{#snippet body()}
+  {#if quick.ready}
+    <div class="field orden-field">
+      <textarea
+        bind:this={field}
+        bind:value={quick.question}
+        use:grow={quick.question}
+        use:dictating={voiceField}
+        data-lands
+        rows="1"
+        placeholder="Ask"
+        aria-label={docked ? 'Side question' : 'Quick question'}
+        spellcheck="false"
+        onpaste={onPaste}
+        onkeydown={onKey}></textarea>
+
+      {#if showsDictateButton()}
+        <span class="voice"><DictateButton owner={voiceField} below /></span>
+      {/if}
+
+      {#if quick.running}
+        <button class="go" title="Stop" aria-label="Stop" onclick={() => quick.stop()}>
+          <svg viewBox="0 0 13 13"
+            ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
+          >
+        </button>
+      {:else}
+        <button
+          class="go"
+          title="Ask"
+          aria-label="Ask"
+          disabled={!quick.question.trim() && !quick.texts.length}
+          onclick={() => void quick.ask()}
+        >
+          <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
+        </button>
+      {/if}
+    </div>
+
+    {#if quick.context !== null || quick.texts.length > 0}
+      <div class="chips" transition:fade={{ duration: dur(120) }}>
+        {#if quick.context}
+          {@const context = quick.context}
+          <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
+            <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
+            <span class="what" dir="auto">{context.name}</span>
+            <button
+              class="drop"
+              title="Remove"
+              aria-label="Remove"
+              onclick={() => {
+                quick.drop()
+                field?.focus()
+              }}
+            >
+              <Cross small />
+            </button>
+          </span>
+        {/if}
+        {#each quick.texts as one (one.id)}
+          <span class="chip" title={one.label}>
+            <svg viewBox="0 0 13 13"><path d={MARKS.selection} /></svg>
+            <span class="what" dir="auto">{one.label}</span>
+            <button
+              class="drop"
+              title="Remove"
+              aria-label="Remove"
+              onclick={() => {
+                quick.dropText(one.id)
+                field?.focus()
+              }}
+            >
+              <Cross small />
+            </button>
+          </span>
+        {/each}
+      </div>
+    {/if}
+  {:else}
+    <p class="empty-text">
+      Add an AI provider in Settings first.
+      <button
+        class="link"
+        data-lands
+        onclick={() => {
+          quick.close()
+          settingsWindow().show('ai')
+        }}>Settings › AI</button
+      >
+    </p>
+  {/if}
+
+  {#if turns.length || quick.trouble}
+    <div class="talk" bind:this={talk} use:scrollbar onscroll={onScroll}>
+      {#each turns as turn, at (at)}
+        {#if turn.role === 'you'}
+          <p class="said" dir="auto" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>
+            {turn.text}
+          </p>
+        {:else}
+          {#if quick.running && at === turns.length - 1}
+            <LiveAnswer
+              text={turn.text}
+              draw={(text: string) => drawn(text, true)}
+              onfollow={follow}
+              onpicture={show}
+            />
+          {:else}
+            <Answer html={drawn(turn.text, false)} onfollow={follow} onpicture={show} />
+          {/if}
+        {/if}
+      {/each}
+
+      {#if waiting}
+        <Thinking />
+      {/if}
+
+      {#if quick.asking && workspace.offers('ask')}
+        <div class="acts" in:fade={{ duration: dur(120) }}>
+          <button
+            class="orden-glyph act"
+            title={docked ? 'Continue as its own chat' : 'Continue in the panel'}
+            aria-label={docked ? 'Continue as its own chat' : 'Continue in the panel'}
+            onclick={() => void quick.continueInPanel()}
+          >
+            <svg viewBox="0 0 13 13"
+              ><path
+                d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
+              /></svg
+            >
+          </button>
+        </div>
+      {/if}
+
+      {#if quick.trouble}
+        <p class="wrong">{quick.trouble}</p>
+      {/if}
+
+      {#if done}
+        <div class="acts" in:fade={{ duration: dur(120) }}>
+          {#if !docked}
+            <button
+              class="orden-glyph act"
+              title="Add to note"
+              aria-label="Add to note"
+              onclick={() => void quick.addToNote(dollarMaths(done.text))}
+            >
+              <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg
+              >
+            </button>
+          {/if}
+          <button
+            class="orden-glyph act"
+            title="Copy"
+            aria-label="Copy"
+            onclick={() => void copied.copy(dollarMaths(done.text), true)}
+          >
+            <svg viewBox="0 0 13 13">
+              {#if copied.what}
+                <path d="M2.8 6.8l2.4 2.4 5-5.4" />
+              {:else}
+                <path
+                  d="M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z"
+                />
+              {/if}
+            </svg>
+          </button>
+          {#if workspace.offers('ask')}
+            <button
+              class="orden-glyph act"
+              title={docked ? 'Continue as its own chat' : 'Continue in the panel'}
+              aria-label={docked ? 'Continue as its own chat' : 'Continue in the panel'}
+              onclick={() => void quick.continueInPanel()}
+            >
+              <svg viewBox="0 0 13 13"
+                ><path
+                  d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
+                /></svg
+              >
+            </button>
+          {/if}
+        </div>
+      {/if}
+    </div>
+  {/if}
+{/snippet}
+
+{#if quick.open && docked}
+  <section
+    class="side"
+    aria-label="Side chat"
+    transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
+  >
+    <header class="head">
+      <span class="name">Side chat</span>
+      <button
+        class="drop"
+        title="Hide"
+        aria-label="Hide the side chat"
+        onclick={() => quick.close()}
+      >
+        <Cross small />
+      </button>
+    </header>
+    {@render body()}
+  </section>
+{:else if docked && quick.of}
+  <div class="tucked" transition:fade={{ duration: dur(120) }}>
+    <button class="orden-chip" onclick={() => (quick.open = true)}>Side chat</button>
+    <button class="drop" title="End" aria-label="End the side chat" onclick={() => quick.end()}>
+      <Cross small />
+    </button>
+  </div>
+{:else if quick.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
     class="orden-scrim scrim"
@@ -146,188 +362,7 @@
     aria-label="Quick question"
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
-    {#if quick.ready}
-      <div class="field orden-field">
-        <textarea
-          bind:this={field}
-          bind:value={quick.question}
-          use:grow={quick.question}
-          use:dictating={voiceField}
-          data-lands
-          rows="1"
-          placeholder="Ask"
-          aria-label="Quick question"
-          spellcheck="false"
-          onpaste={onPaste}
-          onkeydown={onKey}></textarea>
-
-        {#if canDictate()}
-          <span class="voice"><DictateButton owner={voiceField} below /></span>
-        {/if}
-
-        {#if quick.running}
-          <button class="go" title="Stop" aria-label="Stop" onclick={() => quick.stop()}>
-            <svg viewBox="0 0 13 13"
-              ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
-            >
-          </button>
-        {:else}
-          <button
-            class="go"
-            title="Ask"
-            aria-label="Ask"
-            disabled={!quick.question.trim() && !quick.texts.length}
-            onclick={() => void quick.ask()}
-          >
-            <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
-          </button>
-        {/if}
-      </div>
-
-      {#if quick.context !== null || quick.texts.length > 0}
-        <div class="chips" transition:fade={{ duration: dur(120) }}>
-          {#if quick.context}
-            {@const context = quick.context}
-            <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
-              <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
-              <span class="what" dir="auto">{context.name}</span>
-              <button
-                class="drop"
-                title="Remove"
-                aria-label="Remove"
-                onclick={() => {
-                  quick.drop()
-                  field?.focus()
-                }}
-              >
-                <Cross small />
-              </button>
-            </span>
-          {/if}
-          {#each quick.texts as one (one.id)}
-            <span class="chip" title={one.label}>
-              <svg viewBox="0 0 13 13"><path d={MARKS.selection} /></svg>
-              <span class="what" dir="auto">{one.label}</span>
-              <button
-                class="drop"
-                title="Remove"
-                aria-label="Remove"
-                onclick={() => {
-                  quick.dropText(one.id)
-                  field?.focus()
-                }}
-              >
-                <Cross small />
-              </button>
-            </span>
-          {/each}
-        </div>
-      {/if}
-    {:else}
-      <p class="empty-text">
-        Add an AI provider in Settings first.
-        <button
-          class="link"
-          data-lands
-          onclick={() => {
-            quick.close()
-            settingsWindow().show('ai')
-          }}>Settings › AI</button
-        >
-      </p>
-    {/if}
-
-    {#if turns.length || quick.trouble}
-      <div class="talk" bind:this={talk} use:scrollbar onscroll={onScroll}>
-        {#each turns as turn, at (at)}
-          {#if turn.role === 'you'}
-            <p class="said" dir="auto" in:fly={{ y: 6, duration: dur(150), easing: cubicOut }}>
-              {turn.text}
-            </p>
-          {:else}
-            {#if quick.running && at === turns.length - 1}
-              <LiveAnswer
-                text={turn.text}
-                draw={(text: string) => drawn(text, true)}
-                onfollow={follow}
-                onpicture={show}
-              />
-            {:else}
-              <Answer html={drawn(turn.text, false)} onfollow={follow} onpicture={show} />
-            {/if}
-          {/if}
-        {/each}
-
-        {#if waiting}
-          <Thinking />
-        {/if}
-
-        {#if quick.asking && workspace.offers('ask')}
-          <div class="acts" in:fade={{ duration: dur(120) }}>
-            <button
-              class="orden-glyph act"
-              title="Continue in the panel"
-              aria-label="Continue in the panel"
-              onclick={() => void quick.continueInPanel()}
-            >
-              <svg viewBox="0 0 13 13"
-                ><path
-                  d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
-                /></svg
-              >
-            </button>
-          </div>
-        {/if}
-
-        {#if quick.trouble}
-          <p class="wrong">{quick.trouble}</p>
-        {/if}
-
-        {#if done}
-          <div class="acts" in:fade={{ duration: dur(120) }}>
-            <button
-              class="orden-glyph act"
-              title="Add to note"
-              aria-label="Add to note"
-              onclick={() => void quick.addToNote(dollarMaths(done.text))}
-            >
-              <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg
-              >
-            </button>
-            <button
-              class="orden-glyph act"
-              title="Copy"
-              aria-label="Copy"
-              onclick={() => void copy(dollarMaths(done.text))}
-            >
-              <svg viewBox="0 0 13 13">
-                {#if copied}
-                  <path d="M2.8 6.8l2.4 2.4 5-5.4" />
-                {:else}
-                  <path
-                    d="M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z"
-                  />
-                {/if}
-              </svg>
-            </button>
-            {#if workspace.offers('ask')}
-              <button
-                class="orden-glyph act"
-                title="Continue in the panel"
-                aria-label="Continue in the panel"
-                onclick={() => void quick.continueInPanel()}
-              >
-                <svg viewBox="0 0 13 13"
-                  ><path
-                    d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
-                  /></svg
-                >
-              </button>
-            {/if}
-          </div>
-        {/if}
-      </div>
-    {/if}
+    {@render body()}
   </div>
 {/if}
 
@@ -577,6 +612,62 @@
 
   .wrong {
     color: var(--danger);
+  }
+
+  .side {
+    --quick-inset: var(--space-2);
+    --go-inset: calc((var(--text-base) * 1.4 + 2 * var(--space-3) - 28px) / 2);
+
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    width: calc(100% - 2 * var(--space-3));
+    max-width: var(--column, 100%);
+    max-height: 45%;
+    margin: 0 0 var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--ground, var(--bg));
+    overflow: hidden;
+  }
+
+  .side .head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    padding: var(--space-1) var(--space-1) 0 var(--space-3);
+  }
+
+  .side .name {
+    flex: 1;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  .side .talk {
+    order: 1;
+    flex: 1;
+  }
+
+  .side .chips {
+    order: 2;
+    padding: var(--space-2) var(--quick-inset) 0;
+  }
+
+  .side .field {
+    order: 3;
+    margin-bottom: var(--quick-inset);
+  }
+
+  .tucked {
+    flex: none;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0 0 var(--space-2);
   }
 
   :global([data-touch]) .quick {

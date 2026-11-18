@@ -22,7 +22,7 @@ pub fn watch(app: &AppHandle) {
         #[cfg(desktop)]
         let urls: Vec<String> = urls
             .into_iter()
-            .filter(|url| !crate::reminders::answer_link(&opened, url))
+            .filter(|url| !orden_reminders::reminders::answer_link(&opened, url))
             .collect();
         if urls.is_empty() {
             return;
@@ -44,7 +44,7 @@ pub fn watch(app: &AppHandle) {
     #[cfg(desktop)]
     let launched: Vec<String> = launched
         .into_iter()
-        .filter(|url| !crate::reminders::answer_link(app, url))
+        .filter(|url| !orden_reminders::reminders::answer_link(app, url))
         .collect();
     if launched.is_empty() {
         return;
@@ -59,8 +59,8 @@ pub fn watch(app: &AppHandle) {
 
 #[cfg(desktop)]
 fn hand_over(app: &AppHandle, urls: Vec<String>) {
-    let waiting = app.state::<crate::endpoint::Waiting>();
-    let windows: Vec<LinkWindow> = crate::launch::document_windows(app)
+    let waiting = app.state::<orden_agents::endpoint::Waiting>();
+    let windows: Vec<LinkWindow> = orden_base::labels::document_windows(app)
         .iter()
         .map(|one| LinkWindow {
             label: one.label().to_owned(),
@@ -119,9 +119,9 @@ pub fn launched_quietly(app: &AppHandle) -> bool {
             .flatten()
             .unwrap_or_default(),
     );
-    let quiet = crate::reminders::quiet_launch(&launched);
+    let quiet = orden_reminders::reminders::quiet_launch(&launched);
     if quiet {
-        crate::reminders::came_up_quietly();
+        orden_reminders::reminders::came_up_quietly();
     }
     quiet
 }
@@ -135,7 +135,7 @@ pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
     std::mem::take(&mut *urls)
 }
 
-const SCHEMES: [&str; 2] = ["orden:", "nib:"];
+const SCHEME: &str = "orden:";
 
 fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
     urls.iter()
@@ -146,10 +146,8 @@ fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
 
 fn is_ours(url: &str) -> bool {
     let url = url.trim_start();
-    SCHEMES.iter().any(|ours| {
-        url.get(..ours.len())
-            .is_some_and(|scheme| scheme.eq_ignore_ascii_case(ours))
-    })
+    url.get(..SCHEME.len())
+        .is_some_and(|scheme| scheme.eq_ignore_ascii_case(SCHEME))
 }
 
 #[cfg(test)]
@@ -241,9 +239,9 @@ mod tests {
     }
 
     #[test]
-    fn still_says_a_link_written_before_the_rename() {
-        assert_eq!(said(vec!["nib://open?path=Idea.md".to_string()]).len(), 1);
-        assert_eq!(said(vec!["NIB://search".to_string()]).len(), 1);
+    fn says_no_link_under_the_name_before_the_rename() {
+        assert!(said(vec!["nib://open?path=Idea.md".to_string()]).is_empty());
+        assert!(said(vec!["NIB://search".to_string()]).is_empty());
     }
 
     #[test]

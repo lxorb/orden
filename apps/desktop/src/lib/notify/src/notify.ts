@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { invoke, isDesktop } from '../../platform/src/api'
 
 const PRESSED = 'orden://notice'
@@ -17,7 +18,11 @@ export interface Notice {
 const answering = new Map<string, Notice>()
 const showing = new Map<string, string>()
 const up = new Map<string, Notification>()
-let listening: Promise<unknown> | null = null
+const listening = door(() =>
+  import('../../windows/src/api').then(({ hearHere }) =>
+    hearHere<unknown>(PRESSED, (event) => pressed(event.payload)),
+  ),
+)
 
 export function notify(title: string, body: string, tag?: string, opened?: () => void): void {
   show({ title, body, ...(tag ? { tag } : {}), ...(opened ? { opened } : {}) })
@@ -91,10 +96,11 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
     hearingTheWorker = true
     workers.addEventListener('message', (event: MessageEvent) => {
       const said: unknown = event.data
-      const pressed =
+      const { ordenNotice: pressed, ordenHolds: asked } =
         typeof said === 'object' && said !== null
-          ? (said as { ordenNotice?: unknown }).ordenNotice
-          : null
+          ? (said as { ordenNotice?: unknown; ordenHolds?: unknown })
+          : {}
+      if (typeof asked === 'string') event.ports[0]?.postMessage(byWorker.has(asked))
       if (typeof pressed === 'string') byWorker.get(pressed)?.opened?.()
     })
     workers.startMessages()
@@ -128,9 +134,7 @@ function plainTag(tag: string): string {
 }
 
 function shownByTheCrate(one: Notice): void {
-  listening ??= import('../../windows/src/api').then(({ hearHere }) =>
-    hearHere<unknown>(PRESSED, (event) => pressed(event.payload)),
-  )
+  void listening().catch(() => undefined)
 
   const id = fresh()
   if (one.tag) {

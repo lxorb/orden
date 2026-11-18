@@ -1,4 +1,3 @@
-from __future__ import annotations
 from harness import Drive
 DRIVE = Drive(__file__, dev=True)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -59,5 +58,4 @@ def drive(browser):
     if got["redone"] != "# S4 new\n\nFRESH words\n":
         wrong(f"redone: {got['redone']!r}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

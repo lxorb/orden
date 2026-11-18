@@ -9,9 +9,8 @@ export interface OccurrenceOptions {
   created?: boolean
 }
 
-function referenceOf(task: TaskFields): string | undefined {
-  return task.due ?? task.scheduled ?? task.start ?? task.deadline
-}
+const referenceOf = (task: TaskFields): string | undefined =>
+  task.due ?? task.scheduled ?? task.start ?? task.deadline
 
 const later = (a: string, b: string) => (a > b ? a : b)
 
@@ -151,9 +150,14 @@ export function tick(
       edits.push({ from: target.from, to: target.from + target.text.length, insert: nextLine })
       return edits
     }
-    edits.push({ from: target.from, to: target.from, insert: `${block.join('\n')}\n` })
+    const lineBreak = note.includes('\r\n') ? '\r\n' : '\n'
+    edits.push({
+      from: target.from,
+      to: target.from,
+      insert: `${block.join(lineBreak)}${lineBreak}`,
+    })
   } else if (task.onCompletion === 'delete') {
-    const end = target.from + target.text.length + (line < lines.length - 1 ? 1 : 0)
+    const end = lines[line + 1]?.from ?? target.from + target.text.length
     return [{ from: target.from, to: end, insert: '' }]
   }
 
@@ -194,8 +198,7 @@ export function skip(line: string, today: string, options: OccurrenceOptions = {
   return next ? writeTask(line, changeBetween(task, { ...next, status: task.status })) : []
 }
 
-export function finish(line: string): TextEdit[] {
-  return writeTask(line, { done: true, recurrence: null })
-}
+export const finish = (line: string): TextEdit[] =>
+  writeTask(line, { done: true, recurrence: null })
 
 export { todayOf }

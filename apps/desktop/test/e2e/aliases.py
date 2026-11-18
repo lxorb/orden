@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -111,5 +109,4 @@ def drive(browser: Browser) -> None:
 
     page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a note answers to the names it gave itself"))
+raise SystemExit(DRIVE.run(drive, "a note answers to the names it gave itself"))

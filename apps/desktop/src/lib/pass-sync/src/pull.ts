@@ -6,14 +6,17 @@ import {
   sealVersion,
   unwrapVaultKey,
 } from '@orden/pass/keys'
-import type { Changes, ItemRow as WireItem, VaultRow as WireVault } from '@orden/pass/wire'
+import type {
+  Accepted,
+  Changes,
+  ItemRow as WireItem,
+  VaultRow as WireVault,
+} from '@orden/pass/wire'
 import type { Change, ItemRow, VaultRow, VersionRow } from './local'
 import { KEPT_AFTER_DELETE } from './local'
 import { rekeyed } from './rekey'
-import type { Held, HeldVault } from './rows'
-import { itemOf, vaultOf } from './rows'
-import type { Shown } from './shown'
-import { nothingShown, isShown } from './shown'
+import { itemOf, vaultOf, type Held, type HeldVault } from './rows'
+import { nothingShown, isShown, type Shown } from './shown'
 import type { SyncWorld } from './sync-world'
 import type { DeviceRows } from './synced'
 import {
@@ -24,7 +27,7 @@ import {
   keepVaultBase,
 } from './synced'
 import type { TrustReason } from './trust-problem'
-import { vaultDistrust } from './vault-trust'
+import { keptPin, vaultDistrust } from './vault-trust'
 
 export type Pulled = 'pulled' | 'conflict' | 'deferred'
 
@@ -50,19 +53,16 @@ function isReplayed(local: string, incoming: string): boolean {
   return sent === null || sent < kept
 }
 
-function emptyChange(): Required<Change> {
-  return { vaults: [], items: [], versions: [], dropVersions: [] }
-}
-
 function sameContent(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-function deviceItemOf(row: WireItem): ItemRow {
-  return { ...row, pending: false }
-}
-
-function deviceVaultOf(row: WireVault, key: string, pub: string): VaultRow {
+function deviceVaultOf(
+  row: WireVault,
+  key: string,
+  pub: string,
+  accepted: Accepted | null,
+): VaultRow {
   return {
     id: row.id,
     rev: row.rev,
@@ -75,7 +75,7 @@ function deviceVaultOf(row: WireVault, key: string, pub: string): VaultRow {
     pending: false,
     deleted: false,
     proof: row.proof,
-    accepted: row.accepted,
+    accepted,
     handovers: row.handovers,
   }
 }
@@ -183,7 +183,7 @@ async function appliedVault(
       return 'pulled'
     }
   }
-  const next = deviceVaultOf(row, row.key, doing.pub)
+  const next = deviceVaultOf(row, row.key, doing.pub, await keptPin(doing.me, row, local))
   doing.change.vaults.push(next)
   await keepVaultBase(rows, row.id, { rev: row.rev, meta: row.meta })
   if (!local) doing.fresh.push(row.id)
@@ -277,7 +277,7 @@ async function appliedItem(doing: Applying, row: WireItem): Promise<void> {
     doing.shown.goneItems.push({ vault: row.vault, id: row.id })
     return
   }
-  const next = deviceItemOf(row)
+  const next: ItemRow = { ...row, pending: false }
   if (local && held) doing.change.versions.push(...(await versionOfOld(doing, held, local, row)))
   doing.change.items.push(next)
   await keepItemBase(rows, row.vault, row.id, {
@@ -289,16 +289,9 @@ async function appliedItem(doing: Applying, row: WireItem): Promise<void> {
   const box = held?.vaults.get(row.vault)
   if (!held || !box) return
   try {
-    const { envelope, itemKey } = await openItem(
-      box.key,
-      row.vault,
-      row.id,
-      row.key,
-      row.body,
-      row.keyVersion,
-    )
-    held.items.set(row.id, { key: itemKey, row: next })
-    doing.shown.items.push(itemOf(next, envelope))
+    const opened = await openItem(box.key, row.vault, row.id, row.key, row.body, row.keyVersion)
+    held.items.set(row.id, { key: opened.itemKey, row: next })
+    doing.shown.items.push(itemOf(next, opened.envelope))
   } catch {
     return
   }
@@ -330,23 +323,26 @@ async function finished(doing: Applying): Promise<void> {
   if (isShown(doing.shown)) doing.world.shown(doing.shown)
 }
 
+async function applying(world: SyncWorld, held: Held | null): Promise<Applying> {
+  return {
+    world,
+    held,
+    change: { vaults: [], items: [], versions: [], dropVersions: [] },
+    shown: nothingShown(),
+    pub: (await world.rows.keyring())?.keyring.pub ?? '',
+    me: held?.opened.signer?.pub ?? null,
+    fresh: [],
+    was: new Map(),
+  }
+}
+
 export async function appliedChanges(
   world: SyncWorld,
   held: Held | null,
   changes: Changes,
   since: number,
 ): Promise<{ pulled: Pulled; fresh: string[] }> {
-  const keyring = await world.rows.keyring()
-  const doing: Applying = {
-    world,
-    held,
-    change: emptyChange(),
-    shown: nothingShown(),
-    pub: keyring?.keyring.pub ?? '',
-    me: held?.opened.signer?.pub ?? null,
-    fresh: [],
-    was: new Map(),
-  }
+  const doing = await applying(world, held)
   const took = await appliedKeyring(doing, changes)
   if (took !== 'pulled') return { pulled: took, fresh: [] }
   const vaults = new Map((await world.rows.vaults()).map((one) => [one.id, one]))
@@ -368,17 +364,7 @@ export async function appliedItems(
   held: Held | null,
   items: readonly WireItem[],
 ): Promise<void> {
-  const keyring = await world.rows.keyring()
-  const doing: Applying = {
-    world,
-    held,
-    change: emptyChange(),
-    shown: nothingShown(),
-    pub: keyring?.keyring.pub ?? '',
-    me: held?.opened.signer?.pub ?? null,
-    fresh: [],
-    was: new Map(),
-  }
+  const doing = await applying(world, held)
   for (const row of items) await appliedItem(doing, row)
   await finished(doing)
 }

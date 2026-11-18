@@ -35,6 +35,7 @@ import { forgetKey, keysAreGuarded, readSecret, writeSecret } from '../../ai-pro
 import { message } from '../../ui-kit/src/api'
 import { deviceCan, deviceSays } from '../../protect/src/api'
 import { passOn } from '../../gates/src/api'
+import { forget, heardElsewhere, storedText } from '../../platform/src/api'
 import { adoptedChange } from './adopt'
 import type { AliasAccount } from './alias-account'
 import type { Picked } from './attachments'
@@ -64,6 +65,7 @@ import {
   emptyHeld,
   envelopeOf,
   folderFor,
+  heldVault,
   metaOf,
   newId,
   openAll,
@@ -75,10 +77,9 @@ import {
   without,
 } from './rows'
 import type { LockWay, PassSettings } from './settings'
-import { keepSettings, readSettings } from './settings'
+import { keepSettings, readSettings, SETTINGS_KEY } from './settings'
 import type { InvitedRole, Sharing } from './share'
-import type { Person } from './people'
-import { codeOf, confirmedPerson } from './people'
+import { codeOf, confirmedPerson, type Person } from './people'
 import {
   acceptedInvite,
   confirmedMember,
@@ -93,12 +94,11 @@ import {
   trustBackfilled,
 } from './share'
 import type { Signed } from './share-call'
-import type { Shown } from './shown'
-import { shownAfter } from './shown'
+import { shownAfter, type Shown } from './shown'
 import { accountKeyringOf, keepAdopted } from './synced'
-import type { TrustProblem } from './trust-problem'
-import { trustWords } from './trust-problem'
+import { trustWords, type TrustProblem } from './trust-problem'
 import { madeVaultRow } from './vault-made'
+import { useNativeStretcher } from './stretcher'
 
 export type { LockWay, PassSettings } from './settings'
 
@@ -112,12 +112,11 @@ export interface Unlock {
 }
 
 export const PIN_TRIES = 5
-
 const DEVICE_SECRET = 'pass-device'
+const LEFT_BEHIND = 'orden:pass-left-behind'
 const HIBP = 'hibp'
 const ALIAS = 'alias'
 const SEALED_HERE = [HIBP, ALIAS]
-
 let kdf: KdfParams = PASSWORD_KDF
 let pinKdf: KdfParams = PIN_KDF
 
@@ -155,16 +154,10 @@ async function ensuredDeviceSecret(): Promise<Uint8Array<ArrayBuffer>> {
   return made
 }
 
-function exportName(format: 'sealed' | 'json' | 'csv'): string {
-  const day = new Date().toISOString().slice(0, 10)
-  switch (format) {
-    case 'sealed':
-      return `orden-pass-${day}.sealed.json`
-    case 'json':
-      return `orden-pass-${day}.json`
-    case 'csv':
-      return `orden-pass-${day}.csv`
-  }
+const EXPORT_ENDS = { sealed: '.sealed.json', json: '.json', csv: '.csv' }
+
+function exportName(format: keyof typeof EXPORT_ENDS): string {
+  return `orden-pass-${new Date().toISOString().slice(0, 10)}${EXPORT_ENDS[format]}`
 }
 
 export class PassStore {
@@ -173,6 +166,7 @@ export class PassStore {
   items = $state.raw<Item[]>([])
   settings = $state.raw<PassSettings>(readSettings())
   pinTries = $state(PIN_TRIES)
+  leftBehind = $state(storedText(LEFT_BEHIND) === '1')
   canDevice = $state(false)
   canPin = $state(false)
   mustChangePassword = $state(false)
@@ -338,14 +332,7 @@ export class PassStore {
 
   async confirmPassword(password: string): Promise<boolean> {
     const keyring = this.keyring?.keyring
-    if (!keyring) return false
-    try {
-      await openWithPassword(keyring, password)
-      return true
-    } catch (error) {
-      if (error instanceof WrongSecret) return false
-      throw error
-    }
+    return !!keyring && (await this.openedByPassword(keyring, password)) !== null
   }
 
   async hibpKey(): Promise<string> {
@@ -394,9 +381,7 @@ export class PassStore {
       this.stillHeld(held)
       const attachments = [...item.attachments, attachment]
       const envelope = { ...envelopeOf(item), attachments, modified: Date.now() }
-      const [made] = await this.put([{ vault: item.vault, id, envelope }])
-      if (!made) throw new Error('pass: the item was not written')
-      return made
+      return await this.putOne({ vault: item.vault, id, envelope })
     })
   }
 
@@ -405,8 +390,7 @@ export class PassStore {
       const item = this.item(id)
       const attachments = item.attachments.filter((one) => one.id !== file)
       const envelope = { ...envelopeOf(item), attachments, modified: Date.now() }
-      const [made] = await this.put([{ vault: item.vault, id, envelope }])
-      if (!made) throw new Error('pass: the item was not written')
+      const made = await this.putOne({ vault: item.vault, id, envelope })
       await (await files()).forgottenAttachment(deviceRows, item.vault, id, file)
       return made
     })
@@ -457,9 +441,7 @@ export class PassStore {
   create(vault: string, content: Content, folder: string | null = null): Promise<Item> {
     return this.serial(async () => {
       const envelope = { ...newEnvelope(content, Date.now()), folder }
-      const [made] = await this.put([{ vault, id: newId(), envelope, fresh: true }])
-      if (!made) throw new Error('pass: the item was not written')
-      return made
+      return await this.putOne({ vault, id: newId(), envelope, fresh: true })
     })
   }
 
@@ -492,24 +474,14 @@ export class PassStore {
   remove(ids: string[]): Promise<void> {
     return this.serial(async () => {
       const held = this.held()
-      const gone = ids.flatMap((id) => held.items.get(id) ?? [])
+      const gone = ids.flatMap((id) => held.items.get(id)?.row ?? [])
       if (!gone.length) return
       const at = Date.now()
-      await write({
-        items: gone.map((one) => tombstoneOf(one.row, at)),
-        dropVersions: gone.map((one) => one.row),
-      })
-      for (const one of gone) held.items.delete(one.row.id)
-      await (
-        await files()
-      ).forgottenItemFiles(
-        deviceRows,
-        gone.map((one) => one.row.id),
-      )
-      this.items = without(
-        this.items,
-        gone.map((one) => one.row.id),
-      )
+      const removed = gone.map((row) => row.id)
+      await write({ items: gone.map((row) => tombstoneOf(row, at)), dropVersions: gone })
+      for (const id of removed) held.items.delete(id)
+      await (await files()).forgottenItemFiles(deviceRows, removed)
+      this.items = without(this.items, removed)
     })
   }
 
@@ -564,6 +536,12 @@ export class PassStore {
     })
   }
 
+  heardSettings(): void {
+    const was = this.settings.relockAfter
+    this.settings = { ...readSettings(), lock: this.settings.lock }
+    if (this.settings.relockAfter !== was) this.relock.rearm()
+  }
+
   setSetting<K extends keyof PassSettings>(key: K, value: PassSettings[K]): void {
     this.settings = { ...this.settings, [key]: value }
     keepSettings(this.settings)
@@ -589,7 +567,7 @@ export class PassStore {
 
   async exportAll(
     password: string,
-    format: 'sealed' | 'json' | 'csv',
+    format: keyof typeof EXPORT_ENDS,
     passphrase?: string,
   ): Promise<{ name: string; text: string } | null> {
     if (!(await this.confirmPassword(password))) return null
@@ -702,14 +680,8 @@ export class PassStore {
 
   restoreDeleted(item: Item): Promise<Item> {
     return this.serial(async () => {
-      const envelope = {
-        ...envelopeOf(item),
-        attachments: [],
-        trashed: null,
-        modified: Date.now(),
-      }
-      const [made] = await this.put([{ vault: item.vault, id: newId(), envelope, fresh: true }])
-      if (!made) throw new Error('pass: the item was not written')
+      const envelope = { ...envelopeOf(item), attachments: [], trashed: null, modified: Date.now() }
+      const made = await this.putOne({ vault: item.vault, id: newId(), envelope, fresh: true })
       await write({ dropVersions: [{ vault: item.vault, id: item.id }] })
       return made
     })
@@ -852,9 +824,7 @@ export class PassStore {
   }
 
   private heldVault(id: string): HeldVault {
-    const box = this.held().vaults.get(id)
-    if (!box) throw new Error('pass: no such vault')
-    return box
+    return heldVault(this.held(), id)
   }
 
   private item(id: string): Item {
@@ -872,6 +842,10 @@ export class PassStore {
     this.vaults = vaults
     this.items = items
     this.state = 'open'
+    if (this.leftBehind) {
+      forget(LEFT_BEHIND)
+      this.leftBehind = false
+    }
     this.relock.watch()
   }
 
@@ -1009,9 +983,7 @@ export class PassStore {
   private change(id: string, next: (envelope: Envelope) => Envelope): Promise<Item> {
     return this.serial(async () => {
       const item = this.item(id)
-      const [made] = await this.put([{ vault: item.vault, id, envelope: next(envelopeOf(item)) }])
-      if (!made) throw new Error('pass: the item was not written')
-      return made
+      return await this.putOne({ vault: item.vault, id, envelope: next(envelopeOf(item)) })
     })
   }
 
@@ -1024,6 +996,12 @@ export class PassStore {
       })
       return await this.put(puts)
     })
+  }
+
+  private async putOne(put: Put): Promise<Item> {
+    const [made] = await this.put([put])
+    if (!made) throw new Error('pass: the item was not written')
+    return made
   }
 
   private async put(puts: readonly Put[]): Promise<Item[]> {
@@ -1039,3 +1017,7 @@ export class PassStore {
 }
 
 export const pass = new PassStore()
+
+useNativeStretcher()
+
+heardElsewhere([SETTINGS_KEY], () => pass.heardSettings())

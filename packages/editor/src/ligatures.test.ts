@@ -57,66 +57,39 @@ describe('finding runs', () => {
 })
 
 describe('what is shown', () => {
-  test('a run in prose', () => {
-    expect(shown('a -> b')).toEqual(['->→'])
-  })
+  test.each([
+    ['a -> b', ['->→']],
+    ['```\na->b\n```', ['->→']],
+    ['`x <= y`', ['<=≤']],
+    ['>= 1', []],
+    ['==>a==', []],
+    ['<!-- a -->', []],
+    ['text\n\n<!-- a -->\n\nmore', []],
+    ['[x](http://a.b/->c)', []],
+    ['<http://a.b/->c>', []],
+    ['$a <= b$', []],
+  ])('%j', (input, wanted) => expect(shown(input)).toEqual(wanted))
 
-  test('a run in code', () => {
-    expect(shown('```\na->b\n```')).toEqual(['->→'])
-    expect(shown('`x <= y`')).toEqual(['<=≤'])
-  })
-
-  test('the run under the caret reads as typed', () => {
-    expect(shown('a -> b', 3)).toEqual([])
-    expect(shown('a -> b', 2)).toEqual(['->→'])
-    expect(shown('a -> b', 4)).toEqual(['->→'])
-  })
+  test.each([
+    ['a -> b', [], 3],
+    ['a -> b', ['->→'], 2],
+    ['a -> b', ['->→'], 4],
+  ])('%j', (input, wanted, extra) => expect(shown(input, extra)).toEqual(wanted))
 
   test('a selection over the run reads as typed', () => {
     const full = 'a -> b' + PARK
     const selected = state(full, 0).update({ selection: EditorSelection.range(1, 3) }).state
     expect(ligaturesIn(selected)).toEqual([])
   })
-
-  test('a quote mark is not the start of a sign', () => {
-    expect(shown('>= 1')).toEqual([])
-  })
-
-  test('a highlight mark is not the start of an arrow', () => {
-    expect(shown('==>a==')).toEqual([])
-  })
-
-  test('a comment keeps its closing', () => {
-    expect(shown('<!-- a -->')).toEqual([])
-    expect(shown('text\n\n<!-- a -->\n\nmore')).toEqual([])
-  })
-
-  test('an address is left alone', () => {
-    expect(shown('[x](http://a.b/->c)')).toEqual([])
-    expect(shown('<http://a.b/->c>')).toEqual([])
-  })
-
-  test('maths is left alone', () => {
-    expect(shown('$a <= b$')).toEqual([])
-  })
 })
 
 describe('the code scope', () => {
-  test('draws in a fence and in an inline span', () => {
-    expect(shownInCode(['```', 'a->b', '```'].join('\n'))).toEqual(['->→'])
-    expect(shownInCode('`x <= y`')).toEqual(['<=≤'])
-  })
-
-  test('draws in a fence whose language the app knows', () => {
-    expect(shownInCode(['```js', 'const f = (a) => a', '```'].join('\n'))).toEqual(['=>⇒'])
-  })
-
-  test('leaves prose as typed', () => {
-    expect(shownInCode('a -> b')).toEqual([])
-    expect(shownInCode('a **b -> c** d')).toEqual([])
-  })
-
-  test('draws in the code of a line that is otherwise prose', () => {
-    expect(shownInCode('walk `a -> b` then a -> b')).toEqual(['->→'])
-  })
+  test.each([
+    [['```', 'a->b', '```'].join('\n'), ['->→']],
+    ['`x <= y`', ['<=≤']],
+    [['```js', 'const f = (a) => a', '```'].join('\n'), ['=>⇒']],
+    ['a -> b', []],
+    ['a **b -> c** d', []],
+    ['walk `a -> b` then a -> b', ['->→']],
+  ])('%j', (input, wanted) => expect(shownInCode(input)).toEqual(wanted))
 })

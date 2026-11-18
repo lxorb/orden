@@ -478,9 +478,8 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   }
 }
 
-export function buildBlockDecorations(state: EditorState): DecorationSet {
-  return buildBlocks(state).decorations
-}
+export const buildBlockDecorations = (state: EditorState): DecorationSet =>
+  buildBlocks(state).decorations
 
 const ANSWERED = new Set(['query', 'tasks'])
 
@@ -491,14 +490,10 @@ function widgetFor(language: string, code: string, index: NoteIndex) {
   return new DiagramWidget(code, language)
 }
 
-function crosses(spans: readonly Span[], ranges: readonly SelectionRange[]) {
-  return spans.some((span) =>
-    ranges.some((range) => range.from <= span.to && range.to >= span.from),
-  )
-}
+const crosses = (spans: readonly Span[], ranges: readonly SelectionRange[]) =>
+  spans.some((span) => ranges.some((range) => range.from <= span.to && range.to >= span.from))
 
 const PROSE = /^[\p{L}\p{N} ,;'"?]*$/u
-
 const PUNCTUATION = /^[\p{L}\p{N}\p{P}\p{S} ]*$/u
 const BLOCK_MARKS = /[`~|$[\]<>]/
 
@@ -570,12 +565,11 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
   return ordinary
 }
 
-function mapSpans(spans: readonly Span[], changes: ChangeDesc): Span[] {
-  return spans.map((span) => ({
+const mapSpans = (spans: readonly Span[], changes: ChangeDesc): Span[] =>
+  spans.map((span) => ({
     from: changes.mapPos(span.from, 1),
     to: changes.mapPos(span.to, -1),
   }))
-}
 
 function settingsChanged(transaction: Transaction): boolean {
   const before = transaction.startState
@@ -622,15 +616,13 @@ export const blockDecorations = StateField.define<Blocks>({
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
 
     const held = transaction.state.field(dragging, false) === true
-    if (transaction.startState.field(dragging, false) === true && !held) {
+    if (transaction.startState.field(dragging, false) === true && !held)
       return buildBlocks(transaction.state, chosen)
-    }
 
     if (!transaction.docChanged && !transaction.selection && !reparsed) return value
 
-    if (held && !transaction.docChanged && !reparsed) {
+    if (held && !transaction.docChanged && !reparsed)
       return chosen === value.chosen ? value : { ...value, chosen }
-    }
 
     const was = transaction.startState.selection.ranges
     const now = transaction.state.selection.ranges

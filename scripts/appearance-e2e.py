@@ -136,16 +136,9 @@ def pressed(held: dict, command: str) -> None:
 def frame_said(held: dict) -> str:
     return str(ran(held, "document.documentElement.dataset.frame") or "")
 
-def translucent_said(held: dict) -> bool:
-    return bool(ran(held, "document.documentElement.hasAttribute('data-translucent')"))
-
 def framed_as(held: dict, wanted: str) -> None:
     if frame_said(held) != wanted:
         pressed(held, "window-frame")
-
-def translucent_as(held: dict, wanted: bool) -> None:
-    if translucent_said(held) != wanted:
-        pressed(held, "theme:glass" if wanted else "theme:default")
 
 def shot(pid: int, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
@@ -219,23 +212,20 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         if frame_of(hwnd) != bare:
             wrong(f"going back to Orden's own frame left {frame_of(hwnd) - bare}px of the system's")
 
-        translucent_as(held, True)
+        pressed(held, "theme:glass")
 
-        behind = backdrop_of(hwnd)
-        if behind != DWMSBT_TABBEDWINDOW:
-            wrong(f"DWM says the backdrop is {behind}, not the window material ({DWMSBT_TABBEDWINDOW})")
+        if backdrop_of(hwnd) == DWMSBT_TABBEDWINDOW:
+            wrong("glass put a material behind the window")
         else:
-            say("glass: the compositor is drawing Mica Alt behind the window")
+            say("glass: no material behind the window")
 
-        if not translucent_said(held):
-            wrong("the root does not say so, so the app's own ground is still opaque")
         ground = ran(held, "getComputedStyle(document.body).backgroundColor")
-        if ground != "rgba(0, 0, 0, 0)":
-            wrong(f"the window's ground is {ground!r} rather than transparent")
+        if ground == "rgba(0, 0, 0, 0)":
+            wrong("the window's ground is transparent under glass")
         else:
-            say("and the app's own ground is transparent, so the material can be seen")
+            say(f"and the app's own ground is {ground}")
 
-        shot(process.pid, "03-translucent")
+        shot(process.pid, "03-glass")
 
         asked(held, "commands.run", {"id": "settings"})
         time.sleep(1.2)
@@ -254,24 +244,18 @@ def drive(app: pathlib.Path, given: str | None) -> None:
             held,
             "(() => { const rows = [...document.querySelectorAll('.orden-setting')]"
             ".map((one) => one.textContent.replace(/\\s+/g, ' ').trim());"
-            " return JSON.stringify(rows.filter((one) => /Frame|Translucency/.test(one))) })()",
+            " return JSON.stringify(rows.filter((one) => /Frame|Translucency|Material/.test(one))) })()",
         )
         say(f"the pane shows {pane}")
-        if not pane or "Frame" not in str(pane) or "Translucency" in str(pane):
-            wrong(f"the Appearance pane should show the Frame row and no Translucency: {pane}")
+        if not pane or "Frame" not in str(pane) or "Translucency" in str(pane) or "Material" in str(pane):
+            wrong(f"the Appearance pane should show the Frame row and no Translucency or Material: {pane}")
 
         shot(process.pid, "03b-the-pane")
         ran(held, "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
         time.sleep(0.8)
 
-        translucent_as(held, False)
-        if backdrop_of(hwnd) == DWMSBT_TABBEDWINDOW:
-            wrong("going back to the built-in theme left the material behind the window")
-        else:
-            say("off again: the material is cleared")
-
+        pressed(held, "theme:default")
         framed_as(held, "system")
-        translucent_as(held, True)
 
     finally:
         process.terminate()
@@ -292,15 +276,9 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         else:
             say("after a restart the system's frame is still on")
 
-        if backdrop_of(hwnd) != DWMSBT_TABBEDWINDOW:
-            wrong("glass's material was not there after a restart")
-        else:
-            say("and so is the material behind the window")
-
         shot(process.pid, "04-remembered")
 
         framed_as(held, "orden")
-        translucent_as(held, False)
     finally:
         process.terminate()
         process.wait(timeout=30)
@@ -324,7 +302,7 @@ def main() -> int:
             print(f"  - {one}")
         return 1
 
-    print("\nthe frame and the material are both the reader's, and both are remembered")
+    print("\nthe frame is the reader's and is remembered, and glass puts no material behind the window")
     return 0
 
 if __name__ == "__main__":

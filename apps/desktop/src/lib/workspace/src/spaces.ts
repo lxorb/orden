@@ -15,7 +15,7 @@ export interface HoldsSpaces {
   readonly tabs: Tab[]
   setsRead: unknown
   fileMoved(from: string, to: string, kind: 'space'): Promise<void>
-  fileGone(path: string, kind: 'space'): Promise<void>
+  fileGone(path: string, kind: 'space', back?: string): Promise<void>
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   close(id: string): void
   clearSelection(): void
@@ -72,9 +72,16 @@ export async function loadSpaces(ws: HoldsSpaces) {
         byRoot.get(entry.path) ?? { id: identifier(), name: entry.name, root: entry.path },
     )
 
-  if (!ws.spaces.some((space) => space.id === ws.activeSpaceId)) {
-    ws.activeSpaceId = ws.spaces[0]?.id ?? null
+  const gone = ws.activeSpaceId
+  if (ws.spaces.some((space) => space.id === gone)) return
+  const next = ws.spaces[0]?.id ?? null
+  if (gone === null || next === null || !tabSets.fetched) {
+    ws.activeSpaceId = next
+    return
   }
+  const { sets } = await import('./sets.svelte')
+  await sets.toSpace(next)
+  await sets.gone(gone)
 }
 
 export function moveSpace(ws: HoldsSpaces, id: string, beforeId: string | null): boolean {

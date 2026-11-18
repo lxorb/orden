@@ -1,11 +1,12 @@
 <script lang="ts">
+  import Glyph from './Glyph.svelte'
   import { onMount, untrack } from 'svelte'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { region } from '../../platform/src/api'
-  import { localDate } from '../../platform/src/api'
+  import { region, localDate } from '../../platform/src/api'
   import { tabAsk, type TabAsk } from '../../workspace/src/api'
   import { menu } from '../../ui-kit/src/api'
-  import { dayName, historyRows, hostOf, onScreen, type HistoryRow } from './history-list'
+  import { dayName, historyRows, onScreen, type HistoryRow } from './history-list'
+  import { shownHost } from '@orden/scan/web-address'
   import { siteMark } from './pages.svelte'
   import { visited } from './visited'
   import type { Visit } from '@orden/scan/visits'
@@ -30,7 +31,6 @@
   let rowHeight = $state(28)
   let list = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
-
   const rows = $derived(historyRows(all, typed))
   const shown = $derived(onScreen(scrolled, height, rowHeight, rows.length))
 
@@ -68,7 +68,7 @@
   }
 
   function titleOf(visit: Visit): string {
-    return visit.title === '' ? hostOf(visit.url) : visit.title
+    return visit.title === '' ? shownHost(visit.url) : visit.title
   }
 
   function remove(visit: Visit) {
@@ -79,7 +79,7 @@
     event.preventDefault()
     menu.show(event, [
       { label: 'Open in new tab', run: () => onopen(visit.url, 'behind') },
-      { label: 'More from this site', run: () => (typed = hostOf(visit.url)) },
+      { label: 'More from this site', run: () => (typed = shownHost(visit.url)) },
       { label: 'Remove from history', run: () => remove(visit) },
     ])
   }
@@ -183,7 +183,7 @@
                   {#if mark}<img src={mark} alt="" draggable="false" />{/if}
                 </span>
                 <span class="orden-row-label" dir="auto">{titleOf(visit)}</span>
-                <span class="orden-row-meta host">{hostOf(visit.url)}</span>
+                <span class="orden-row-meta host">{shownHost(visit.url)}</span>
               </button>
               <button
                 class="orden-glyph gone"
@@ -191,11 +191,7 @@
                 aria-label="Remove from history"
                 onclick={() => remove(visit)}
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  {#each X as [tag, attrs], at (at)}
-                    <svelte:element this={tag} {...attrs} />
-                  {/each}
-                </svg>
+                <Glyph icon={X} />
               </button>
             </div>
           {/if}

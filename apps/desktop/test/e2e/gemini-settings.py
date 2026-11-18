@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from harness import Drive
@@ -160,5 +158,4 @@ def drive(browser) -> None:
         fits = tabs.evaluate("(one) => one.scrollWidth <= one.clientWidth + 1")
         check("the tabs fit their row", fits)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "settings > ai offers Gemini and Antigravity"))
+raise SystemExit(DRIVE.run(drive, "settings > ai offers Gemini and Antigravity"))

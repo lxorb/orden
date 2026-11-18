@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import functools
 import json
 import sys
@@ -110,10 +108,6 @@ def notes_here(page: Page, about: str) -> dict[str, str]:
 def history_here(page: Page, about: str) -> list[str]:
     return page.evaluate(
         """(about) => new Promise((resolve, reject) => {
-          // The browser's own store, where a version this device kept lives; see
-          // `snapshots` in src/lib/web/store.ts. Read here rather than through the
-          // app because the history sheet reads it with a command a page cannot
-          // call, and what is being checked is that the words are on the device.
           const open = indexedDB.open('orden')
           open.onerror = () => reject(new Error('no store'))
           open.onsuccess = () => {
@@ -493,5 +487,4 @@ def main() -> int:
     print("\nevery case kept every line somebody typed", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

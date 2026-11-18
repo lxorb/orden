@@ -54,9 +54,8 @@ describe('the link a press landed on', () => {
   })
 
   test('is no picture and no embed, which have menus of their own', () => {
-    for (const doc of ['![shot](https://x.dev/a.png)', '![[shot.png]]', 'plain words']) {
+    for (const doc of ['![shot](https://x.dev/a.png)', '![[shot.png]]', 'plain words'])
       expect(linkPartsAt(state(doc), 4), doc).toBeNull()
-    }
   })
 })
 

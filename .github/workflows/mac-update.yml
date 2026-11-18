@@ -9,12 +9,12 @@ on:
       - scripts/mac-update-check.sh
       - .github/workflows/mac-update.yml
       - apps/desktop/src/lib/updater.ts
-      - apps/desktop/src-tauri/src/updates.rs
-      - apps/desktop/src-tauri/src/bundle_name.rs
-      - apps/desktop/src-tauri/src/app_place.rs
+      - apps/desktop/src-tauri/crates/system/src/updates.rs
+      - apps/desktop/src-tauri/crates/system/src/bundle_name.rs
+      - apps/desktop/src-tauri/crates/system/src/app_place.rs
       - scripts/mac-move-check.sh
       - scripts/mac-window-check.sh
-      - apps/desktop/src-tauri/src/placement.rs
+      - apps/desktop/src-tauri/crates/placement/**
 
 concurrency:
   group: mac-update-${{ github.ref }}
@@ -73,6 +73,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: |
             apps/desktop/src-tauri
           key: mac-move
@@ -99,6 +100,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: |
             apps/desktop/src-tauri
           key: mac-window

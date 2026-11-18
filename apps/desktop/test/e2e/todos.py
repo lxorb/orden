@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import hashlib
 import json
 import time
@@ -186,5 +184,4 @@ def main() -> int:
     return DRIVE.verdict("todos are per user, filtered by space and label, and a board in their own tab")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

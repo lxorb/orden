@@ -61,25 +61,31 @@ interface Thing {
 
 const FIELDS = ['icon', 'iconColor', 'extras'] as const
 
-function same(one: unknown, other: unknown): boolean {
-  return one === other || JSON.stringify(one) === JSON.stringify(other)
+const same = (one: unknown, other: unknown): boolean =>
+  one === other || JSON.stringify(one) === JSON.stringify(other)
+
+interface ListChange {
+  change: Map<string, Thing | null>
+  added: Thing[]
 }
 
-function listChange(ours: readonly Thing[], theirs: readonly Thing[]): Map<string, Thing | null> {
+function listChange(ours: readonly Thing[], theirs: readonly Thing[]): ListChange {
   const mine = new Map(ours.map((one) => [one.id, one]))
   const change = new Map<string, Thing | null>()
+  const added: Thing[] = []
 
   for (const one of theirs) {
     const held = mine.get(one.id)
     mine.delete(one.id)
+    if (held === undefined) added.push(one)
     if (held === undefined || !same(held, one)) change.set(one.id, one)
   }
   for (const id of mine.keys()) change.set(id, null)
 
-  return change
+  return { change, added }
 }
 
-function changedList<T extends Thing>(held: readonly T[], change: Map<string, Thing | null>): T[] {
+function changedList<T extends Thing>(held: readonly T[], { change, added }: ListChange): T[] {
   if (!change.size) return held.slice()
 
   const seen = new Set<string>()
@@ -89,7 +95,7 @@ function changedList<T extends Thing>(held: readonly T[], change: Map<string, Th
     const now = change.has(one.id) ? change.get(one.id) : one
     if (now) out.push(now as T)
   }
-  for (const [id, one] of change) if (one && !seen.has(id)) out.push(one as T)
+  for (const one of added) if (!seen.has(one.id)) out.push(one as T)
 
   return out
 }
@@ -99,7 +105,7 @@ function changeBetween(ours: Canvas, theirs: Canvas): ((held: Canvas) => Canvas)
   const edges = listChange(ours.edges, theirs.edges)
   const ink = listChange(ours.ink, theirs.ink)
   const fields = FIELDS.filter((name) => !same(ours[name], theirs[name]))
-  if (!nodes.size && !edges.size && !ink.size && !fields.length) return null
+  if (!nodes.change.size && !edges.change.size && !ink.change.size && !fields.length) return null
 
   return (held) => {
     const out: Canvas = {

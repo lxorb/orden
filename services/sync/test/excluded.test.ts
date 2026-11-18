@@ -1,62 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { readExcluded } from '../src/sync-server/src/spaces/excluded'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { describe, expect, test } from 'vitest'
+import { readExcluded } from '../src/sync-server-engine/src/spaces/excluded'
+import { spaceField } from './space-field'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
-
-function put(excluded: unknown) {
-  return call(env, `/v1/spaces/${space}/excluded`, { method: 'PUT', token, body: { excluded } })
-}
-
-async function listed() {
-  const { json } = await call(env, '/v1/spaces', { token })
-  return json.spaces.find((one) => one.id === space)?.excluded
-}
-
-function column(raw: string) {
-  env.db.prepare('update spaces set excluded = ? where id = ?').run(raw, space)
-}
+const { put, listed, column, kept, owned } = spaceField('excluded')
 
 const LEFT_OUT = ['Archive', 'Work/Old plan.md']
 
-describe('what a space leaves out', () => {
-  test('starts as nothing', async () => {
-    expect(await listed()).toEqual([])
-  })
-
-  test('is kept whole, and rides the space listing', async () => {
-    const set = await put(LEFT_OUT)
-    expect(set.status).toBe(200)
-    expect(set.json.excluded).toEqual(LEFT_OUT)
-
-    expect(await listed()).toEqual(LEFT_OUT)
-  })
-
-  test('is replaced by what arrives, which is how a path is taken back', async () => {
-    await put(LEFT_OUT)
-    await put(['Archive'])
-
-    expect(await listed()).toEqual(['Archive'])
-  })
-
-  test('marks the space as changed, so another device notices', async () => {
-    const before = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-    await put(LEFT_OUT)
-    const after = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-
-    expect(after).toBeGreaterThanOrEqual(before)
-  })
-})
+kept([], LEFT_OUT, ['Archive'])
+owned([], LEFT_OUT)
 
 describe('what may be in it', () => {
   test('is a list, and never an object or a word', async () => {

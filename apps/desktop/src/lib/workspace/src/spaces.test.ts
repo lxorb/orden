@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const sent: { command: string; args: Record<string, unknown> }[] = []
 
@@ -58,7 +59,10 @@ vi.mock('../../left-spaces/src/api', async (importOriginal) => ({
   },
 }))
 
+vi.stubGlobal('localStorage', memoryStorage())
+
 const { applySpaceOrder, loadSpaces, moveSpace } = await import('./spaces')
+const { keepHomes } = await import('../../left-spaces/src/api')
 const { adoptSpace, deleteSpace, renameSpace } = await import('./space-changes')
 type HoldsSpaces = import('./spaces').HoldsSpaces
 type Space = import('./workspace.svelte').Space
@@ -74,14 +78,9 @@ function store(spaces: Space[]) {
     panel: null,
     notes: [],
     tabs: [],
-    fileMoved: (from: string, to: string, kind: string) => {
-      told.push(`moved ${kind} ${from} -> ${to}`)
-      return Promise.resolve()
-    },
-    fileGone: (path: string, kind: string) => {
-      told.push(`gone ${kind} ${path}`)
-      return Promise.resolve()
-    },
+    fileMoved: async (from: string, to: string, kind: string) =>
+      void told.push(`moved ${kind} ${from} -> ${to}`),
+    fileGone: async (path: string, kind: string) => void told.push(`gone ${kind} ${path}`),
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     close: (id: string) => void told.push(`closed ${id}`),
     clearSelection: () => undefined,
@@ -103,6 +102,7 @@ beforeEach(() => {
   filtering = null
   theirs = new Set()
   who.user = null
+  localStorage.clear()
 })
 
 describe('reading the spaces folder', () => {
@@ -112,9 +112,7 @@ describe('reading the spaces folder', () => {
       { name: 'Home', path: '/spaces/Home' },
       { name: 'Work', path: '/spaces/Work' },
     ]
-
     await loadSpaces(ws)
-
     expect(ws.spaces.map((one) => one.id)).toEqual(['w', 'h'])
     expect(ws.activeSpaceId).toBe('w')
   })
@@ -125,9 +123,7 @@ describe('reading the spaces folder', () => {
       { name: 'Ideas', path: '/spaces/Ideas' },
       { name: 'Work', path: '/spaces/Work' },
     ]
-
     await loadSpaces(ws)
-
     expect(ws.spaces.map((one) => one.name)).toEqual(['Work', 'Ideas'])
     expect(ws.spaces[1]?.id).toBeTruthy()
   })
@@ -136,9 +132,7 @@ describe('reading the spaces folder', () => {
     const { ws } = store([WORK, HOME])
     ws.activeSpaceId = 'h'
     listed = [{ name: 'Work', path: '/spaces/Work' }]
-
     await loadSpaces(ws)
-
     expect(ws.spaces.map((one) => one.id)).toEqual(['w'])
     expect(ws.activeSpaceId).toBe('w')
   })
@@ -146,7 +140,6 @@ describe('reading the spaces folder', () => {
   test('and none at all leaves nothing open', async () => {
     const { ws } = store([WORK])
     await loadSpaces(ws)
-
     expect(ws.spaces).toEqual([])
     expect(ws.activeSpaceId).toBeNull()
   })
@@ -163,9 +156,7 @@ describe('the spaces folder read while a space comes or goes', () => {
       listed = [...listed, { name: 'Team', path: TEAM.root }]
       ws.spaces = [...ws.spaces, { ...TEAM }]
     }
-
     await loadSpaces(ws)
-
     expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/Work', '/spaces/Team'])
     expect(ws.spaces[1]?.id).toBe('t')
   })
@@ -180,9 +171,7 @@ describe('the spaces folder read while a space comes or goes', () => {
       listed = [...listed, { name, path: `/spaces/${name}` }]
       ws.spaces = [...ws.spaces, { id: name, name, root: `/spaces/${name}` }]
     }
-
     await loadSpaces(ws)
-
     expect(ws.spaces.map((one) => one.name)).toEqual(['Work', 'A', 'B', 'C'])
   })
 
@@ -197,9 +186,7 @@ describe('the spaces folder read while a space comes or goes', () => {
       listed = listed.filter((one) => one.name !== 'Home')
       ws.spaces = ws.spaces.filter((one) => one.id !== 'h')
     }
-
     await loadSpaces(ws)
-
     expect(ws.spaces.map((one) => one.id)).toEqual(['w'])
   })
 
@@ -215,9 +202,7 @@ describe('the spaces folder read while a space comes or goes', () => {
         one.id === 't' ? { ...one, name: 'Crew', root: '/spaces/Crew' } : one,
       )
     }
-
     await loadSpaces(ws)
-
     expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/Work', '/spaces/Crew'])
   })
 })
@@ -237,7 +222,6 @@ describe('the order the switcher shows', () => {
   test('and keeps the place of a space the account has never heard of', () => {
     const { ws } = store([WORK, HOME, { id: 'l', name: 'Local', root: '/spaces/Local' }])
     applySpaceOrder(ws, [HOME.root, WORK.root])
-
     expect(ws.spaces.map((one) => one.name)).toEqual(['Home', 'Work', 'Local'])
   })
 
@@ -258,7 +242,6 @@ describe('a space renamed', () => {
   test('takes everything kept under its root with it', async () => {
     const { ws, told } = store([WORK])
     await renameSpace(ws, 'w', 'Studio')
-
     expect(ws.spaces[0]).toEqual({ id: 'w', name: 'Studio', root: '/spaces/Studio' })
     expect(told).toEqual(['moved space /spaces/Work -> /spaces/Studio'])
   })
@@ -267,7 +250,6 @@ describe('a space renamed', () => {
     const { ws } = store([WORK])
     refuses = true
     await renameSpace(ws, 'w', 'Studio')
-
     expect(ws.naming).toBeNull()
     expect(ws.spaces[0]?.name).toBe('Work')
   })
@@ -275,7 +257,6 @@ describe('a space renamed', () => {
   test('and a name of nothing at all is not a rename', async () => {
     const { ws } = store([WORK])
     await renameSpace(ws, 'w', '   ')
-
     expect(sent).toEqual([])
     expect(ws.spaces[0]?.name).toBe('Work')
   })
@@ -285,7 +266,6 @@ describe('a space deleted', () => {
   test('is said once, as a space that went, and the next one opens', async () => {
     const { ws, told } = store([WORK, HOME])
     await deleteSpace(ws, 'w')
-
     expect(ws.spaces.map((one) => one.id)).toEqual(['h'])
     expect(told).toEqual(['gone space /spaces/Work'])
     expect(ws.activeSpaceId).toBe('h')
@@ -294,7 +274,6 @@ describe('a space deleted', () => {
   test('goes to this device’s trash while there is no account to keep it', async () => {
     const { ws } = store([WORK])
     await deleteSpace(ws, 'w')
-
     expect(sent.map((one) => one.command)).toEqual(['trash_item'])
   })
 
@@ -302,7 +281,6 @@ describe('a space deleted', () => {
     const { ws } = store([WORK, HOME])
     refuses = true
     await deleteSpace(ws, 'w')
-
     expect(ws.spaces.map((one) => one.id)).toEqual(['w', 'h'])
   })
 })
@@ -311,9 +289,7 @@ describe('a space of the account taken in', () => {
   test('lands in the folder of its name the window has not listed yet, not in a copy beside it', async () => {
     const { ws } = store([])
     listed = [{ name: 'Notes', path: '/spaces/Notes' }]
-
     const root = await adoptSpace(ws, 'Notes')
-
     expect(root).toBe('/spaces/Notes')
     expect(sent.map((one) => one.command)).not.toContain('create_space')
     expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/Notes'])
@@ -323,14 +299,39 @@ describe('a space of the account taken in', () => {
     const { ws } = store([])
     listed = [{ name: 'Notes', path: '/spaces/Notes' }]
     theirs = new Set(['/spaces/Notes'])
-
     expect(await adoptSpace(ws, 'Notes')).toBe('/spaces/Notes 2')
   })
 
   test('and one asked for beside a space of the same name gets a folder of its own', async () => {
     const { ws } = store([])
     listed = [{ name: 'Notes', path: '/spaces/Notes' }]
-
     expect(await adoptSpace(ws, 'Notes', true)).toBe('/spaces/Notes 2')
+  })
+})
+
+describe('a space somebody shared taken in afresh', () => {
+  test('lands in the folder this device remembers it in, not in a numbered copy', async () => {
+    who.user = { id: 'a' }
+    keepHomes('a', [{ root: '/spaces/Team', spaceId: 'shared-team' }])
+    const { ws } = store([])
+    listed = [{ name: 'Team', path: '/spaces/Team' }]
+    expect(await adoptSpace(ws, 'Team', true, 'shared-team')).toBe('/spaces/Team')
+    expect(sent.map((one) => one.command)).not.toContain('create_space')
+  })
+
+  test('but not in a folder of that name remembered for another space', async () => {
+    who.user = { id: 'a' }
+    keepHomes('a', [{ root: '/spaces/Team', spaceId: 'mine' }])
+    const { ws } = store([])
+    listed = [{ name: 'Team', path: '/spaces/Team' }]
+    expect(await adoptSpace(ws, 'Team', true, 'shared-team')).toBe('/spaces/Team 2')
+  })
+
+  test('nor in one remembered for it by another account', async () => {
+    who.user = { id: 'b' }
+    keepHomes('a', [{ root: '/spaces/Team', spaceId: 'shared-team' }])
+    const { ws } = store([])
+    listed = [{ name: 'Team', path: '/spaces/Team' }]
+    expect(await adoptSpace(ws, 'Team', true, 'shared-team')).toBe('/spaces/Team 2')
   })
 })

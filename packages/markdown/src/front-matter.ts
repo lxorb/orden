@@ -1,6 +1,14 @@
 import { oneEdit, type TextEdit } from './edits'
 import { frontMatterLines, isKeyLine, valueClosesAt } from './front-matter-lines'
-import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
+import {
+  flowItem,
+  flowItems,
+  listItem,
+  scalar,
+  uncommented,
+  unquoted,
+  writtenListItem,
+} from './yaml'
 
 export { oneLine } from './yaml'
 export { valueClosesAt }
@@ -19,16 +27,9 @@ interface KeyLine {
 }
 
 const KEY = /^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s#-].*?)[ \t]*:(?=\s|$)/
-
 const NAME = /^(?![\s#\-?:,[\]{}&*!|>'"%@`])(?!.*:(?:\s|$))(?!.*\s#)[^\p{Cc}\p{Zl}\p{Zp}]+(?<!\s)$/u
-
-export function isPropertyName(name: string): boolean {
-  return NAME.test(name) && isKeyLine(`${name}: x`)
-}
-
-function keyWritten(key: string): string {
-  return isKeyLine(`${key}: x`) ? key : JSON.stringify(key)
-}
+export const isPropertyName = (name: string): boolean => NAME.test(name) && isKeyLine(`${name}: x`)
+const keyWritten = (key: string): string => (isKeyLine(`${key}: x`) ? key : JSON.stringify(key))
 
 export function frontMatterBlock(source: string): FrontMatterBlock | null {
   const lines = frontMatterLines(source)
@@ -43,9 +44,7 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
   }
 }
 
-export function opensFrontMatter(source: string): boolean {
-  return frontMatterLines(source) !== null
-}
+export const opensFrontMatter = (source: string): boolean => frontMatterLines(source) !== null
 
 export type FrontMatterRow = readonly [
   key: string,
@@ -87,7 +86,6 @@ export function frontMatterList(source: string, key: string): string[] {
   if (!line) return []
 
   const value = source.slice(line.value.from, line.value.to).trim()
-
   const closes = valueClosesAt(source, line.value.from, block.body.to)
   if (closes !== -1) {
     const joined = source
@@ -108,10 +106,10 @@ export function frontMatterList(source: string, key: string): string[] {
     const stop = end === -1 || end > block.body.to ? block.body.to : end
     const text = source.slice(at, stop)
 
-    if (text.trim()) {
-      const item = listItem(text)
+    if (text.trim() && !text.trim().startsWith('#')) {
+      const item = writtenListItem(text)
       if (item === null) break
-      out.push(item)
+      out.push(unquoted(uncommented(item)))
     }
 
     if (end === -1) break
@@ -154,7 +152,6 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
     const stop = end === -1 || end > block.body.to ? block.body.to : end
     const text = source.slice(at, stop)
     const found = KEY.exec(text)
-
     const name = found?.[1] === undefined ? undefined : unquoted(found[1])
     if (found && name?.toLowerCase() === wanted) {
       const value = at + found[0].length
@@ -189,6 +186,15 @@ export function frontMatterEdits(
   }
 
   return oneEdit(source, after)
+}
+
+export function frontMatterEntry(source: string, key: string): string | null {
+  const block = frontMatterBlock(source)
+  const found = block && keyLine(source, block, key)
+  if (!block || !found) return null
+
+  const line = withUnder(source, block, found)
+  return source.slice(line.from, cutTo(source, line))
 }
 
 export function frontMatterEdit(
@@ -257,9 +263,8 @@ function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyL
   return to === line.to ? line : { ...line, to, value: { ...line.value, to } }
 }
 
-function cutTo(source: string, line: KeyLine): number {
-  return source.startsWith('\r\n', line.to) ? line.to + 2 : Math.min(line.to + 1, source.length)
-}
+const cutTo = (source: string, line: KeyLine): number =>
+  source.startsWith('\r\n', line.to) ? line.to + 2 : Math.min(line.to + 1, source.length)
 
 function blankAfter(source: string, at: number): number {
   let over = at

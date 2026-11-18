@@ -3,8 +3,7 @@
   import { approach, arrived } from './ease'
   import { ALONE_INSET, heldAtEdge, INSET } from './edge'
   import { alone } from '../../workspace/src/api'
-  import { INK_STYLES, inkOpacity, inkPath, outlineOf } from '../../plane/src/api'
-  import type { Palette } from '../../plane/src/api'
+  import { INK_STYLES, inkOpacity, inkPath, outlineOf, type Palette } from '../../plane/src/api'
   import type { Hand } from '@orden/markdown/plane'
   import { stillness } from '../../platform/src/api'
 
@@ -31,15 +30,9 @@
   const LABEL = 11
   const TARGET = 16
   const ARROW = 'M 11 0 L -6.6 -7.7 L -3.3 0 L -6.6 7.7 Z'
-
   const follows = (_value: unknown) => undefined
-
-  function inked(colour: string): string {
-    return palette[colour] ?? colour
-  }
-
+  const inked = (colour: string): string => palette[colour] ?? colour
   const CATCHING_UP = 70
-
   let eased = $state.raw<Record<number, { x: number; y: number }>>({})
   let frame = 0
   let last = 0

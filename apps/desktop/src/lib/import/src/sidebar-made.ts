@@ -1,32 +1,28 @@
 import { isWebAddress } from '@orden/scan/web-address'
 import type { Sidebar, SidebarFolder, SidebarTab } from './sidebar'
 
-export interface FolderWords {
-  bookmarks: string
-  savedGroups: string
-  group: string
-  toolbar: string
-  bar: string
-  menu: string
-  other: string
-  mobile: string
-  favorites: string
-  readingList: string
+export const WORDS = {
+  bookmarks: 'Bookmarks',
+  savedGroups: 'Saved groups',
+  group: 'Tab group',
+  toolbar: 'Bookmarks toolbar',
+  bar: 'Bookmarks bar',
+  menu: 'Bookmarks menu',
+  other: 'Other bookmarks',
+  mobile: 'Mobile bookmarks',
+  favorites: 'Favorites',
+  readingList: 'Reading List',
 }
 
 export type Said = Record<string, unknown>
 
-export function isObject(value: unknown): value is Said {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+export const isObject = (value: unknown): value is Said =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-export function list(value: unknown): Said[] {
-  return Array.isArray(value) ? value.filter(isObject) : []
-}
+export const list = (value: unknown): Said[] => (Array.isArray(value) ? value.filter(isObject) : [])
 
-export function text(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null
-}
+export const text = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() ? value.trim() : null
 
 export function siteMark(value: unknown): string | null {
   const said = text(value)

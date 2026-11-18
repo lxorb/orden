@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from harness import Drive
 from shell import DESKTOP_AGENT, PHONE_AGENT, SEED
 
@@ -86,5 +84,4 @@ def main() -> int:
 
     return DRIVE.verdict(f"shots in {OUT}")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

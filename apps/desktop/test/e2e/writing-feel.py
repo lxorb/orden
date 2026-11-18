@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -252,5 +250,4 @@ def main() -> int:
     return DRIVE.run(drive, "tags, the pointer and the format bar all behave")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

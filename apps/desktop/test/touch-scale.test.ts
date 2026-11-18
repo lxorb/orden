@@ -2,8 +2,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { SOURCE } from './files'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const TOKENS = fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url))
 
 const SCALE = {

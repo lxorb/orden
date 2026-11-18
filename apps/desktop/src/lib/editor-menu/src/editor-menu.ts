@@ -2,7 +2,9 @@ import {
   type BlockKind,
   type BlockShape,
   clearFormatting,
+  type EditorState,
   type EditorView,
+  linkNameAt,
   type NoteJump,
   insertCodeFence,
   insertHorizontalRule,
@@ -10,6 +12,9 @@ import {
   insertPageBreak,
   calloutSign,
   insertTableToEdit,
+  editableCellAt,
+  pasteHere,
+  pasteIntoCell,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
@@ -55,15 +60,6 @@ function runCommand(view: EditorView | undefined, command: StateCommand) {
   view.focus()
 }
 
-async function paste(view: EditorView) {
-  const text = await navigator.clipboard.readText().catch(() => '')
-  if (!text) return
-
-  const range = view.state.selection.main
-  view.dispatch({ changes: { from: range.from, to: range.to, insert: text } })
-  view.focus()
-}
-
 function blockName(kind: BlockKind): string {
   switch (kind) {
     case 'heading':
@@ -89,9 +85,8 @@ function blockName(kind: BlockKind): string {
   }
 }
 
-export function blockLinkName(path: string | null | undefined): string | null {
-  return path && isMarkdownPath(path) ? noteName(path) : null
-}
+export const blockLinkName = (path: string | null | undefined): string | null =>
+  path && isMarkdownPath(path) ? noteName(path) : null
 
 function blockEntries(
   view: EditorView | undefined,
@@ -140,7 +135,7 @@ function blockEntries(
         void copyText(
           targets
             .map((target) =>
-              linkTo(name, null, {
+              linkTo((relative ? linkNameAt(view.state, relative) : null) ?? name, null, {
                 fragment: target.slice(1),
                 ...(relative ? { path: relative, from: relative } : {}),
               }),
@@ -236,12 +231,29 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
   ]
 }
 
-function rowsFor(place: CommandPlace, on: object | undefined): MenuEntry[] {
-  return commandRows(place, on).map(({ label, run }) => ({ label, run }))
+const rowsFor = (place: CommandPlace, on: object | undefined): MenuEntry[] =>
+  commandRows(place, on).map(({ label, run }) => ({ label, run }))
+
+function pasteInto(view: EditorView, cell: HTMLElement | null): void {
+  if (!cell) {
+    pasteHere(view)
+    view.focus()
+    return
+  }
+  void navigator.clipboard
+    .readText()
+    .then((text) => pasteIntoCell(cell, text))
+    .catch(() => undefined)
 }
 
-function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry[] {
-  const selected = !!view && !view.state.selection.main.empty
+function editorMenu(
+  view: EditorView | undefined,
+  block: MenuEntry[],
+  cell: HTMLElement | null = null,
+): MenuEntry[] {
+  const selected = cell
+    ? !(cell.ownerDocument.getSelection()?.isCollapsed ?? true)
+    : !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)
 
@@ -263,7 +275,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[]): MenuEntry
       hint: shortcuts.hint('fixed.paste'),
       disabled: locked,
       run: () => {
-        if (view) void paste(view)
+        if (view) pasteInto(view, cell)
       },
     },
   ]
@@ -357,7 +369,7 @@ function linkEntries(
   const jump = view && at !== null && link.hasAttribute('data-note') ? jumpAt(view.state, at) : null
 
   return [
-    ...(jump ? noteEntries(jump, path ?? null) : []),
+    ...(jump && view ? noteEntries(jump, path ?? null, view.state) : []),
     ...(href && webHref(href) !== null
       ? [{ label: 'Open in the browser', run: () => void openExternal(href) }]
       : []),
@@ -374,28 +386,27 @@ function linkEntries(
   ]
 }
 
-function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
-  return [
-    { label: 'Open in new tab', run: () => void workspace.followLink(jump, 'behind', from) },
-    ...(viewport.touch
-      ? []
-      : [
-          {
-            label: 'Open to the side',
-            run: () => void workspace.followLink(jump, 'aside', from),
-          },
-        ]),
-    { label: 'Copy link', run: () => void copyText(linkOf(jump)) },
-  ]
-}
+const noteEntries = (jump: NoteJump, from: string | null, state: EditorState): MenuEntry[] => [
+  { label: 'Open in new tab', run: () => void workspace.followLink(jump, 'behind', from) },
+  ...(viewport.touch
+    ? []
+    : [
+        {
+          label: 'Open to the side',
+          run: () => void workspace.followLink(jump, 'aside', from),
+        },
+      ]),
+  { label: 'Copy link', run: () => void copyText(linkOf(jump, state)) },
+]
 
-function linkOf(jump: NoteJump): string {
+function linkOf(jump: NoteJump, state: EditorState): string {
   const fragment =
     jump.block !== null
       ? `^${jump.block}`
       : (jump.heading ?? (jump.page === null ? null : `page=${String(jump.page)}`))
 
-  return linkTo(jump.path ? noteName(jump.path) : jump.target, null, {
+  const name = jump.path ? (linkNameAt(state, jump.path) ?? noteName(jump.path)) : jump.target
+  return linkTo(name, null, {
     path: jump.path,
     fragment,
   })
@@ -436,7 +447,11 @@ export function showEditorMenu(
     [
       ...pictureEntries(view, event),
       ...linkEntries(view, event, path),
-      ...editorMenu(view, blockEntries(view, at, path)),
+      ...editorMenu(
+        view,
+        blockEntries(view, at, path),
+        view ? editableCellAt(view, event.target) : null,
+      ),
       ...recordingEntries(view, at),
     ],
     { near: true, until: unlocks.held },

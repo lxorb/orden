@@ -1,4 +1,3 @@
-import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { resolveNote } from '@orden/editor'
 import {
@@ -11,30 +10,9 @@ import {
   renameSteps,
   unnesting,
 } from './folder-notes'
-import { rewriteLinks } from '../../link-index/src/api'
+import { rewriteLinks } from '../../link-index/src/link-rewrite'
 import { noteName } from '../../platform/src/space-paths'
-
-function note(path: string): Entry {
-  return {
-    name: path.split(/[\\/]/).pop() ?? path,
-    path,
-    is_dir: false,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
-
-function folder(path: string, children: Entry[] = []): Entry {
-  return {
-    name: path.split(/[\\/]/).pop() ?? path,
-    path,
-    is_dir: true,
-    modified: 0,
-    created: 0,
-    children,
-  }
-}
+import { file as note, folder } from './entries'
 
 describe('the folder a note would become', () => {
   test('is the note without its extension', () => {

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Page
@@ -16,8 +14,6 @@ def fail(what: str) -> None:
     print(f"  FAIL {what}", flush=True)
 
 PREPARE = """
-// What is handed to the print engine, kept where the drive can read it: printing goes
-// through a frame's `srcdoc`, and the dialog it opens is not something a drive sees.
 (() => {
   const own = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc');
   Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', {
@@ -1264,5 +1260,4 @@ def main() -> int:
 
     return DRIVE.verdict("everything the drive checked was right")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

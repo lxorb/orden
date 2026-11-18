@@ -16,9 +16,8 @@ import { loadLineCommands } from './line-door'
 import { enclosingNamed } from './nodes'
 import { later } from './shared'
 
-function converter(): Promise<(html: string) => string> {
-  return import('@orden/markdown/from-html').then((one) => one.htmlToMarkdown)
-}
+const converter = (): Promise<(html: string) => string> =>
+  import('@orden/markdown/from-html').then((one) => one.htmlToMarkdown)
 
 export function delimitedToTable(text: string): string | null {
   const lines = text
@@ -58,9 +57,8 @@ export function delimitedToTable(text: string): string | null {
   ].join('\n')
 }
 
-function copiedHere(html: string, text: string): string | null {
-  return text && ourOwn(html) ? text : null
-}
+const copiedHere = (html: string, text: string): string | null =>
+  text && ourOwn(html) ? text : null
 
 export interface Landing {
   changes: ChangeSpec
@@ -86,9 +84,8 @@ export function everywhere(
   return { ...state.changeByRange(land), scrollIntoView: true, userEvent: 'input.paste' }
 }
 
-function inserted(state: EditorState, text: string): TransactionSpec {
-  return everywhere(state, (range) => plainAt(range, text))
-}
+const inserted = (state: EditorState, text: string): TransactionSpec =>
+  everywhere(state, (range) => plainAt(range, text))
 
 function codeLead(state: EditorState, range: SelectionRange): string {
   const block =
@@ -178,8 +175,8 @@ export async function pastedMarkdown(html: string, text: string): Promise<string
   return htmlToMarkdown(html) || null
 }
 
-export function richPaste(): Extension {
-  return EditorView.domEventHandlers({
+export const richPaste = (): Extension =>
+  EditorView.domEventHandlers({
     paste(event, view) {
       if (view.state.readOnly) return false
 
@@ -253,7 +250,6 @@ export function richPaste(): Extension {
       return true
     },
   })
-}
 
 export const pasteHere: Command = (view) => {
   if (view.state.readOnly) return false

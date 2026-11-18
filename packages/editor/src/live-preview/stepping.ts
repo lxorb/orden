@@ -60,8 +60,9 @@ export function edgeBeside(state: EditorState, head: number, down: boolean): num
   return down ? first.from : first.to
 }
 
-function step(down: boolean): Command {
-  return (view) => {
+const step =
+  (down: boolean): Command =>
+  (view) => {
     const range = view.state.selection.main
     if (!range.empty) return false
 
@@ -85,7 +86,6 @@ function step(down: boolean): Command {
     })
     return true
   }
-}
 
 export const stepDown = step(true)
 

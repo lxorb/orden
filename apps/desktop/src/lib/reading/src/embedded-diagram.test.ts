@@ -19,6 +19,7 @@ vi.mock('../../link-index/src/api', () => ({
       Promise.resolve(target === 'Flow' ? { text: flowNote, escapeHtml: false } : null),
   },
   notePicture: (src: string) => src,
+  picturesOf: () => () => null,
   queryRowsHtml: () => Promise.resolve(null),
 }))
 

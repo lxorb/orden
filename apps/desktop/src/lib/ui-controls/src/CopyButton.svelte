@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { copyText } from './clipboard'
-
-  const SAID_FOR = 1600
+  import { Copied } from './copied.svelte'
 
   const {
     value,
@@ -15,22 +13,19 @@
     disabled?: boolean
   } = $props()
 
-  let said = $state(false)
-  let saying: ReturnType<typeof setTimeout> | undefined
+  const said = new Copied()
 
-  async function copy() {
-    await copyText(value)
-
-    said = true
-    clearTimeout(saying)
-    saying = setTimeout(() => (said = false), SAID_FOR)
-  }
-
-  $effect(() => () => clearTimeout(saying))
+  $effect(() => () => said.stop())
 </script>
 
-<button class="copy" class:wide class:done={said} {disabled} onclick={() => void copy()}>
-  {said ? 'Copied' : word || 'Copy'}
+<button
+  class="copy"
+  class:wide
+  class:done={said.what}
+  {disabled}
+  onclick={() => void said.copy(value, true)}
+>
+  {said.what ? 'Copied' : word || 'Copy'}
 </button>
 
 <style>

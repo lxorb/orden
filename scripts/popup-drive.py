@@ -1,135 +1,13 @@
 #!/usr/bin/env python3
 
 import json
-import os
-import subprocess
 import sys
 import time
-import urllib.request
-from pathlib import Path
+from linux_app import run
+from linux_desk import DESK, OUT, failures, move, shoot, ratio, box, at, press, until
 
-DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
 ROUNDS = int(sys.argv[4]) if len(sys.argv) > 4 else 5
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
-POINTER = OUT / "pointer.fifo"
-failures = []
 done = []
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
-def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=10) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
-
-if DESK == "sway":
-
-    def window():
-        def walk(node):
-            if str(node.get("pid")) == APP:
-                yield node
-            for child in node.get("nodes", []) + node.get("floating_nodes", []):
-                yield from walk(child)
-
-        tree = json.loads(subprocess.check_output(["swaymsg", "-r", "-t", "get_tree"]))
-        found = sorted(walk(tree), key=lambda n: n["rect"]["width"] * n["rect"]["height"])
-        rect = found[-1]["rect"]
-        return rect["x"], rect["y"]
-
-    def tell(line):
-        with open(POINTER, "w") as pointer:
-            pointer.write(line + "\n")
-
-    def move(x, y):
-        tell(f"move {x} {y}")
-
-    def click():
-        tell("click")
-
-    def shoot(name):
-        subprocess.run(["grim", str(OUT / f"popup-{name}.png")], check=False)
-
-    subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
-    time.sleep(2)
-
-else:
-
-    def xdo(*words):
-        return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout
-
-    def window():
-        found = [w for w in xdo("search", "--onlyvisible", "--name", "Orden").split() if w]
-        best, area, at = None, 0, (0, 0)
-        for one in found:
-            got = dict(
-                line.split("=", 1) for line in xdo("getwindowgeometry", "--shell", one).split() if "=" in line
-            )
-            size = int(got.get("WIDTH", 0)) * int(got.get("HEIGHT", 0))
-            if size > area:
-                best, area, at = one, size, (int(got["X"]), int(got["Y"]))
-        return at
-
-    def move(x, y):
-        xdo("mousemove", str(int(x)), str(int(y)))
-
-    def click():
-        xdo("click", "1")
-
-    def shoot(name):
-        subprocess.run(["import", "-window", "root", str(OUT / f"popup-{name}.png")], check=False)
-
-def ratio():
-    return run("devicePixelRatio") or 1
-
-def box(selector, text=None):
-    return run(
-        "(() => { for (const one of document.querySelectorAll(%s)) {"
-        " const r = one.getBoundingClientRect(); if (r.width <= 0 || r.height <= 0) continue;"
-        " if (%s !== null && one.textContent.trim() !== %s) continue;"
-        " return { x: r.x, y: r.y, width: r.width, height: r.height } } return null })()"
-        % (json.dumps(selector), json.dumps(text), json.dumps(text))
-    )
-
-def at(rect):
-    x, y = window()
-    scale = ratio()
-    return x + (rect["x"] + rect["width"] / 2) * scale, y + (rect["y"] + rect["height"] / 2) * scale
-
-def press(rect):
-    move(*at(rect))
-    time.sleep(0.25)
-    click()
-
-def until(code, seconds=4):
-    for _ in range(int(seconds / 0.2)):
-        said = run(code)
-        if said:
-            return said
-        time.sleep(0.2)
-    return None
 
 HEARD = (
     "(() => { if (window.__popupHeard) return true; window.__popupHeard = [];"
@@ -172,7 +50,7 @@ def answer():
         press(button)
         time.sleep(1)
 
-ACTIVE = "nib.workspace.activeSpace && orden.workspace.activeSpace.name"
+ACTIVE = "orden.workspace.activeSpace && orden.workspace.activeSpace.name"
 SWITCHER = '[data-space-drop="switcher"]'
 SPACES = "[data-spaces-open]"
 
@@ -311,7 +189,7 @@ def pens(round_):
     run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
     until(f"!document.querySelector('{PANEL}')", 2)
 
-VISIBLE = "nib.pages.each().some(([, page]) => page.sent && page.sent.visible)"
+VISIBLE = "orden.pages.each().some(([, page]) => page.sent && page.sent.visible)"
 WEB_TAB = (
     "(() => { const one = [...document.querySelectorAll('.tab .pick[data-tab]')]"
     ".find((tab) => orden.pages.each().some(([id]) => id === tab.dataset.tab));"
@@ -332,13 +210,13 @@ def web_tab_in_front():
 if not web_tab_in_front():
     raise SystemExit(f"::error::{DESK}: no web tab's page in sight to put popups over")
 first = run(ACTIVE)
-if (run("nib.workspace.spaces.length") or 0) < 2:
-    run("nib.workspace.addSpace('Second space')")
+if (run("orden.workspace.spaces.length") or 0) < 2:
+    run("orden.workspace.addSpace('Second space')")
     time.sleep(1.5)
     if run(ACTIVE) != first:
         run(f"(async () => {{ const one = orden.workspace.spaces.find((s) => s.name === {json.dumps(first)}); if (one) await orden.workspace.selectSpace(one.id) }})()")
         time.sleep(1.5)
-other = run(f"nib.workspace.spaces.map((s) => s.name).find((name) => name !== {json.dumps(first)})")
+other = run(f"orden.workspace.spaces.map((s) => s.name).find((name) => name !== {json.dumps(first)})")
 print(f"{DESK}: spaces {first!r} and {other!r}, the page's ratio {ratio()}")
 
 run(HEARD)
@@ -351,7 +229,7 @@ for round_ in range(1, ROUNDS + 1):
     zoom_in_the_menu(round_)
     time.sleep(0.5)
 
-run("nib.workspace.newCanvas()")
+run("orden.workspace.newCanvas()")
 if until("!!document.querySelector('.cluster button.pen')", 10):
     for round_ in range(1, ROUNDS + 1):
         pens(round_)

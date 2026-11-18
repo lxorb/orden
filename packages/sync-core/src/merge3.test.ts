@@ -151,6 +151,38 @@ describe('merge3', () => {
   })
 })
 
+describe('merge3 with one change made on both sides beside a copy of what it changed', () => {
+  const cases: [string, string, string][] = [
+    ['a\nb\nb\nc\n', 'A\nb\nc\n', 'a\nb\nc\n'],
+    [
+      'I went to the the shop today.\n',
+      'Yesterday I went to the shop today.\n',
+      'I went to the shop today.\n',
+    ],
+    [
+      '# Shop\n- [ ] milk\n- [ ] milk\n- [ ] eggs\n',
+      '# Shopping\n- [ ] milk\n- [ ] eggs\n',
+      '# Shop\n- [ ] milk\n- [ ] eggs\n',
+    ],
+    [
+      'Intro.\n\nSame line.\nSame line.\n\nEnd.\n',
+      'Intro!\n\nSame line.\n\nEnd.\n',
+      'Intro.\n\nSame line.\n\nEnd.\n',
+    ],
+    [
+      '- [ ] milk\n- [ ] eggs\n',
+      '- [ ] bread\n- [ ] milk\n- [ ] milk\n- [ ] eggs\n',
+      '- [ ] milk\n- [ ] milk\n- [ ] eggs\n',
+    ],
+    ['# Log\nok\n', '# Log!\nok\nok\n', '# Log\nok\nok\n'],
+  ]
+
+  test.each(cases)('makes it once: %j', (base, local, remote) => {
+    expect(merge3(base, local, remote).text).toBe(local)
+    expect(merge3(base, remote, local).text).toBe(local)
+  })
+})
+
 describe('mergedOn', () => {
   test.each([
     [

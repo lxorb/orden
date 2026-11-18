@@ -3,7 +3,7 @@ import { keep, storedText } from '../../platform/src/api'
 const KEY = 'orden:icon-tabs'
 
 class IconTabs {
-  on = $state(storedText(KEY) !== 'no')
+  on = $state(storedText(KEY) === 'yes')
 
   set(on: boolean) {
     this.on = on

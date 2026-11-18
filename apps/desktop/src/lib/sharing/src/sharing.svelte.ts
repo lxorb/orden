@@ -10,8 +10,7 @@ import {
 } from '../../accounts/src/api'
 import { message } from '../../ui-kit/src/api'
 import { rooms } from '../../collab/src/api'
-import { samePath, forget, keepJson, Shared } from '../../platform/src/api'
-import { within } from '../../sync-mirror/src/api'
+import { samePath, forget, keepJson, Shared, spaceHolding, within } from '../../platform/src/api'
 import { type Origin, originOf, trustsHtml } from './trust'
 import type { NoteDoc } from '../../documents/src/api'
 import { keeping } from '../../file-ops/src/api'
@@ -156,7 +155,7 @@ export function isSharedItem(path: string): boolean {
 export function canShareItem(path: string | null | undefined): boolean {
   if (!path) return false
 
-  const space = workspaceView().spaces.find((one) => within(one.root, path) !== null)
+  const space = spaceHolding(workspaceView().spaces, path)
   if (!space || !ownsRemotely(space)) return false
 
   return !!idOf(path)
@@ -199,7 +198,7 @@ export function reachedByOthers(path: string | null): boolean {
 export function reachedAs(path: string | null): Reach {
   if (path === null) return null
 
-  const space = workspaceView().spaces.find((one) => within(one.root, path) !== null)
+  const space = spaceHolding(workspaceView().spaces, path)
   return space ? reached(space.root, path) : null
 }
 
@@ -304,8 +303,8 @@ export function trustsHtmlAt(path: string | null): boolean {
 }
 
 interface Someone {
-  email: string | null
-  guest: string | null
+  email?: string | null
+  guest?: string | null
 }
 
 interface Asking {
@@ -534,7 +533,7 @@ class Share {
   }
 }
 
-function whoIs(person: Someone): string {
+export function whoIs(person: Someone): string {
   return `person:${person.guest ?? person.email ?? ''}`
 }
 
@@ -557,7 +556,7 @@ export function canPublish(space: WorkspaceSpace): boolean {
 }
 
 export async function shareThisFile(path: string) {
-  const space = workspaceView().spaces.find((one) => within(one.root, path) !== null)
+  const space = spaceHolding(workspaceView().spaces, path)
   if (!space) return
 
   await share.showItem(space, path)

@@ -44,9 +44,14 @@ interface Taking {
   next: { section: string; rule: string } | null
 }
 
-function empty(section: string, rule: string, head: Line | null = null): Taking {
-  return { taken: [], rows: 0, section, rule, head, next: null }
-}
+const empty = (section: string, rule: string, head: Line | null = null): Taking => ({
+  taken: [],
+  rows: 0,
+  section,
+  rule,
+  head,
+  next: null,
+})
 
 function partsOf(whole: Wrapped, most: number, next: number): Wrapped[] {
   if (whole.rows.length <= most) return [whole]
@@ -71,9 +76,7 @@ export interface Work {
   lines: number
 }
 
-function nothing(): Work {
-  return { pages: 0, lines: 0 }
-}
+const nothing = (): Work => ({ pages: 0, lines: 0 })
 
 const work = nothing()
 

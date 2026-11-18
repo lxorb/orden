@@ -37,8 +37,5 @@ export function wholeRows(list: HTMLElement, _rows?: unknown) {
   fit()
   window.addEventListener('resize', fit)
 
-  return {
-    update: fit,
-    destroy: () => window.removeEventListener('resize', fit),
-  }
+  return { update: fit, destroy: () => window.removeEventListener('resize', fit) }
 }

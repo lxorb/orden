@@ -84,9 +84,7 @@ function shortcutText(parts: {
   return `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n`
 }
 
-function oneLine(value: string): string {
-  return value.replace(/[\r\n]+/g, ' ').trim()
-}
+const oneLine = (value: string): string => value.replace(/[\r\n]+/g, ' ').trim()
 
 export function readShortcut(text: string | null | undefined): Shortcut | null {
   if (!text) return null
@@ -177,19 +175,16 @@ export function readWebloc(text: string | null | undefined): string | null {
   return isWebAddress(url) ? url : null
 }
 
-export function aimWebloc(text: string, url: string): string {
-  return text.replace(WEBLOC_URL, () => escaped(url))
-}
+export const aimWebloc = (text: string, url: string): string =>
+  text.replace(WEBLOC_URL, () => escaped(url))
 
-function escaped(url: string): string {
-  return url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
+const escaped = (url: string): string =>
+  url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-function entities(value: string): string {
-  return value
+const entities = (value: string): string =>
+  value
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&amp;/g, '&')
-}

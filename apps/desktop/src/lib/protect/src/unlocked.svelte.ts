@@ -1,8 +1,15 @@
-import { movedTo, relativeTo, samePath, keep, storedText, isDesktop } from '../../platform/src/api'
+import {
+  heardElsewhere,
+  movedTo,
+  relativeTo,
+  samePath,
+  keep,
+  storedText,
+  isDesktop,
+} from '../../platform/src/api'
 import type { Lock } from './protection.svelte'
 
 const RELOCK_KEY = 'orden:protect-relock'
-
 export const NEVER = -1
 export const RELOCK_MINUTES = [0, 1, 5, 15, 60, NEVER] as const
 export const DEFAULT_RELOCK = 5
@@ -61,6 +68,7 @@ class Unlocks {
   private proven = false
   private grace: ReturnType<typeof setTimeout> | null = null
   private watching = false
+  private wasAway = false
 
   get any(): boolean {
     return this.open.size > 0
@@ -120,36 +128,49 @@ class Unlocks {
 
   setRelock(minutes: number): void {
     if (!(RELOCK_MINUTES as readonly number[]).includes(minutes)) return
-    this.relock = minutes
     keep(RELOCK_KEY, String(minutes))
+    this.retime(minutes)
+  }
+
+  private remapped(to: (one: string) => string): void {
+    this.agents = new Set([...this.agents].map(to))
+    this.open = new Set([...this.open].map(to))
   }
 
   moved(from: string, to: string, root: string | null): void {
     if (root === null || !this.open.size) return
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
-    this.open = new Set(
-      [...this.open].map((one) => {
-        const [at = '', key = ''] = one.split('\u0000')
-        if (!key || !samePath(at, root)) return one
-        const moved = movedTo(key, was, now, root)
-        return moved === null ? one : keyOf({ root: at, key: moved })
-      }),
-    )
+    this.remapped((one) => {
+      const [at = '', key = ''] = one.split('\u0000')
+      if (!key || !samePath(at, root)) return one
+      const moved = movedTo(key, was, now, root)
+      return moved === null ? one : keyOf({ root: at, key: moved })
+    })
   }
 
   spaceMoved(from: string, to: string): void {
     if (!this.open.size) return
-    this.open = new Set(
-      [...this.open].map((one) => {
-        const [at = '', key = ''] = one.split('\u0000')
-        return samePath(at, from) ? keyOf({ root: to, key }) : one
-      }),
-    )
+    this.remapped((one) => {
+      const [at = '', key = ''] = one.split('\u0000')
+      return samePath(at, from) ? keyOf({ root: to, key }) : one
+    })
+  }
+
+  heardRelock(): void {
+    this.retime(readRelock())
+  }
+
+  private retime(minutes: number): void {
+    if (minutes === this.relock) return
+    this.relock = minutes
+    if (this.proven) this.prove()
+    if (this.wasAway) this.away()
   }
 
   away(): void {
     this.settle()
+    this.wasAway = true
     if (!this.open.size || this.relock === NEVER) return
     if (this.relock === 0) {
       this.lockAll()
@@ -160,6 +181,7 @@ class Unlocks {
 
   back(): void {
     this.settle()
+    this.wasAway = false
   }
 
   private settle(): void {
@@ -187,3 +209,5 @@ class Unlocks {
 }
 
 export const unlocks = new Unlocks()
+
+heardElsewhere([RELOCK_KEY], () => unlocks.heardRelock())

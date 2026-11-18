@@ -1,9 +1,7 @@
 import type { InkStroke } from '@orden/markdown/canvas'
-import type { Box } from '../../plane/src/api'
-import { strokeBox } from '../../plane/src/api'
+import { type Box, strokeBox } from '../../plane/src/api'
 
 const CELL = 256
-
 const SPAN = 2 ** 21
 const HALF = 2 ** 20
 
@@ -11,27 +9,17 @@ function cellOf(value: number): number {
   return Math.max(-HALF, Math.min(HALF - 1, Math.floor(value / CELL)))
 }
 
-function keyOf(across: number, down: number): number {
-  return (across + HALF) * SPAN + (down + HALF)
-}
-
+const keyOf = (across: number, down: number): number => (across + HALF) * SPAN + (down + HALF)
 const MOST_CELLS = 1024
 
-function cellsUnder(box: Box): number {
-  return (
-    (cellOf(box.x + box.width) - cellOf(box.x) + 1) *
-    (cellOf(box.y + box.height) - cellOf(box.y) + 1)
-  )
-}
+const cellsUnder = (box: Box): number =>
+  (cellOf(box.x + box.width) - cellOf(box.x) + 1) * (cellOf(box.y + box.height) - cellOf(box.y) + 1)
 
-function meets(its: Box, box: Box): boolean {
-  return (
-    its.x < box.x + box.width &&
-    box.x < its.x + its.width &&
-    its.y < box.y + box.height &&
-    box.y < its.y + its.height
-  )
-}
+const meets = (its: Box, box: Box): boolean =>
+  its.x < box.x + box.width &&
+  box.x < its.x + its.width &&
+  its.y < box.y + box.height &&
+  box.y < its.y + its.height
 
 export class InkGrid {
   #cells = new Map<number, Set<InkStroke>>()

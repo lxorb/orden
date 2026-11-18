@@ -9,15 +9,29 @@ interface FakeTab {
   id: string
   kind: string
   paneId: string
-  note: { path: string | null }
+  path: string | null
+  note: { path: string | null; shared: string | null }
 }
 const tabs: FakeTab[] = [
-  { id: 'n1', kind: 'note', paneId: 'p1', note: { path: '/s/Work/Plan.md' } },
-  { id: 'n2', kind: 'note', paneId: 'p1', note: { path: '/s/Work/Other.md' } },
+  {
+    id: 'n1',
+    kind: 'note',
+    paneId: 'p1',
+    path: '/s/Work/Plan.md',
+    note: { path: '/s/Work/Plan.md', shared: null },
+  },
+  {
+    id: 'n2',
+    kind: 'note',
+    paneId: 'p1',
+    path: '/s/Work/Other.md',
+    note: { path: '/s/Work/Other.md', shared: null },
+  },
 ]
 const showing: Record<string, string> = { p1: 'n1' }
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
+    spaces: [{ id: 'work', name: 'Work', root: '/s/Work' }],
     get tabs() {
       return tabs
     },
@@ -26,6 +40,7 @@ vi.mock('../../workspace/src/api', () => ({
 }))
 
 const locked = new Set<string>()
+const othersWrite = new Set<string>()
 vi.mock('../../protect/src/api', () => ({
   protection: { agentsMay: (path: string) => !locked.has(path) },
 }))
@@ -57,7 +72,7 @@ vi.mock('../../agent-verbs/src/api', async (original) => ({
 
 vi.mock('../../sharing/src/api', () => ({
   canWriteAt: () => true,
-  reachedAs: () => null,
+  reachedAs: (path: string | null) => (path !== null && othersWrite.has(path) ? 'space' : null),
   reachedByOthersIn: () => false,
 }))
 
@@ -122,6 +137,28 @@ describe('a note’s editor', () => {
     expect(noteEditor(call(select, ['editor', 'workspace.focus']))).toMatchObject({
       result: { selections: [{ text: 'second' }] },
     })
+  })
+
+  test('the selections of a note others write in are read as data', () => {
+    const select = {
+      tab: 'n1',
+      op: 'select',
+      selections: [{ anchor: { line: 2, ch: 0 }, head: { line: 2, ch: 6 } }],
+    }
+    expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).not.toHaveProperty('untrusted')
+
+    othersWrite.add('/s/Work/Plan.md')
+    try {
+      expect(noteEditor(call({ tab: 'n1', op: 'selection' }))).toMatchObject({
+        untrusted: 'shared space Work',
+      })
+      expect(noteEditor(call(select, ['editor', 'workspace.focus']))).toMatchObject({
+        result: { selections: [{ text: 'second' }] },
+        untrusted: 'shared space Work',
+      })
+    } finally {
+      othersWrite.clear()
+    }
   })
 
   test('at most 500 selections are set or read, with at most 20000 characters of their words', () => {

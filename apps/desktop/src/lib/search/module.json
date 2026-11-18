@@ -3,6 +3,7 @@
   "layer": "content",
   "dependsOn": [
     "contracts",
+    "bases",
     "editor",
     "pdf",
     "platform",

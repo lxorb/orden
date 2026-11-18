@@ -172,14 +172,13 @@ function tidyAround(line: string, kept: readonly [number, number][]): string {
   return line.replace(/[^]/g, (char, at: number) => (isKept(at) ? char : tidied.charAt(at)))
 }
 
-function tidy(line: string): string {
-  return line
+const tidy = (line: string): string =>
+  line
     .replace(/^(\s*)\*(\s+)/, '$1-$2')
     .replace(/(^|[\s(])__(\S(?:[^_]*\S)?)__(?=[\s).,;:!?]|$)/g, '$1**$2**')
     .replace(/(^|[\s(])_(\S(?:[^_]*\S)?)_(?=[\s).,;:!?]|$)/g, '$1*$2*')
     .replace(/^(#{1,6}\s+.*?)\s+#+\s*$/, '$1')
     .replace(/[ \t]+$/, '')
-}
 
 export const reformatDocument: StateCommand = ({ state, dispatch }) => {
   const source = state.doc.toString()

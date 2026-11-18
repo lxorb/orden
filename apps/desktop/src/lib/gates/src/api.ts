@@ -19,7 +19,6 @@ export {
   kindsHere,
   PASS_WORD,
   passOn,
-  shownOf,
   TIME_WORD,
   timeOn,
 } from './gates.svelte'

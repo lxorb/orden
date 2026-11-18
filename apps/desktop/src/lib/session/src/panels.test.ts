@@ -11,6 +11,8 @@ import {
   showing,
   sideOf,
   splitTabs,
+  type Panel,
+  type PanelSide,
   type Sides,
   STARTS_RIGHT,
   tabsShown,
@@ -18,28 +20,25 @@ import {
 
 const EVERY = ['tree', 'outline', 'search', 'links'] as const
 
-function fresh(): Sides {
-  return { panel: null, rightPanel: null, right: [] }
-}
+type Some = Sides['panel']
+const at = (panel: Some, rightPanel: Some = null, right: Sides['right'] = []): Sides => ({
+  panel,
+  rightPanel,
+  right,
+})
+const fresh = () => at(null)
 
 describe('which side a panel is on', () => {
-  test('is the left unless it was moved', () => {
-    expect(sideOf([], 'tree')).toBe('left')
+  test('is the left unless it was moved, and every one where nothing was', () => {
     expect(sideOf(['outline'], 'tree')).toBe('left')
     expect(sideOf(['outline'], 'outline')).toBe('right')
-  })
-
-  test('and a session with no right side at all reads as all on the left', () => {
     for (const panel of EVERY) expect(sideOf([], panel)).toBe('left')
   })
 })
 
 describe('which panels a side holds', () => {
-  test('the left keeps the app’s own order, less whatever moved over', () => {
+  test('the left keeps the app’s own order, less whatever moved over; the right its own', () => {
     expect(panelsOn(['search'], 'left', EVERY)).toEqual(['tree', 'outline', 'links'])
-  })
-
-  test('the right keeps the order they were moved over in', () => {
     expect(panelsOn(['search', 'outline'], 'right', EVERY)).toEqual(['search', 'outline'])
   })
 
@@ -50,82 +49,49 @@ describe('which panels a side holds', () => {
 })
 
 describe('showing a panel', () => {
-  test('opens it on its own side', () => {
-    expect(showing(fresh(), 'tree')).toEqual({ panel: 'tree', rightPanel: null, right: [] })
+  const both = at('tree', 'search', ['search'])
 
-    const moved: Sides = { panel: 'tree', rightPanel: null, right: ['outline'] }
-    expect(showing(moved, 'outline')).toEqual({
-      panel: 'tree',
-      rightPanel: 'outline',
-      right: ['outline'],
-    })
-  })
-
-  test('and shuts it where it is already the one showing', () => {
-    const open: Sides = { panel: 'tree', rightPanel: null, right: [] }
-    expect(showing(open, 'tree').panel).toBeNull()
-  })
-
-  test('and leaves the other side alone either way', () => {
-    const both: Sides = { panel: 'tree', rightPanel: 'search', right: ['search'] }
-    expect(showing(both, 'search')).toEqual({ panel: 'tree', rightPanel: null, right: ['search'] })
-    expect(showing(both, 'tree')).toEqual({ panel: null, rightPanel: 'search', right: ['search'] })
+  test.each<[string, Sides, Panel, Sides]>([
+    ['opens it on its own side', fresh(), 'tree', at('tree')],
+    [
+      'on the right too',
+      at('tree', null, ['outline']),
+      'outline',
+      at('tree', 'outline', ['outline']),
+    ],
+    ['shuts it where it is already showing', at('tree'), 'tree', fresh()],
+    ['leaves the left alone', both, 'search', at('tree', null, ['search'])],
+    ['leaves the right alone', both, 'tree', at(null, 'search', ['search'])],
+  ])('%s', (_, from, panel, to) => {
+    expect(showing(from, panel)).toEqual(to)
   })
 })
 
 describe('shutting a side', () => {
-  test('closes whichever panel is in it', () => {
-    const both: Sides = { panel: 'tree', rightPanel: 'search', right: ['search'] }
-    expect(closing(both, 'left')).toEqual({ panel: null, rightPanel: 'search', right: ['search'] })
-    expect(closing(both, 'right')).toEqual({ panel: 'tree', rightPanel: null, right: ['search'] })
-  })
-
-  test('and leaves what has been moved over where it is', () => {
-    const both: Sides = { panel: null, rightPanel: 'search', right: ['search'] }
-    expect(closing(both, 'right').right).toEqual(['search'])
+  test('closes whichever panel is in it, and leaves what was moved over where it is', () => {
+    const both = at('tree', 'search', ['search'])
+    expect(closing(both, 'left')).toEqual(at(null, 'search', ['search']))
+    expect(closing(both, 'right')).toEqual(at('tree', null, ['search']))
   })
 })
 
 describe('moving a panel to the other side', () => {
-  test('takes its open state with it', () => {
-    const open: Sides = { panel: 'outline', rightPanel: null, right: [] }
-    expect(moving(open, 'outline', 'right')).toEqual({
-      panel: null,
-      rightPanel: 'outline',
-      right: ['outline'],
-    })
-  })
-
-  test('and a panel that was not being read arrives shut', () => {
-    const other: Sides = { panel: 'tree', rightPanel: null, right: [] }
-    expect(moving(other, 'outline', 'right')).toEqual({
-      panel: 'tree',
-      rightPanel: null,
-      right: ['outline'],
-    })
-  })
-
-  test('and back again the same way', () => {
-    const over: Sides = { panel: null, rightPanel: 'outline', right: ['outline'] }
-    expect(moving(over, 'outline', 'left')).toEqual({
-      panel: 'outline',
-      rightPanel: null,
-      right: [],
-    })
+  test.each<[string, Sides, PanelSide, Sides]>([
+    ['takes its open state with it', at('outline'), 'right', at(null, 'outline', ['outline'])],
+    ['arrives shut where it was not read', at('tree'), 'right', at('tree', null, ['outline'])],
+    ['and back again the same way', at(null, 'outline', ['outline']), 'left', at('outline')],
+  ])('%s', (_, from, side, to) => {
+    expect(moving(from, 'outline', side)).toEqual(to)
   })
 
   test('and the last one leaving means a right side with nothing to draw', () => {
-    const two: Sides = { panel: null, rightPanel: 'search', right: ['outline', 'search'] }
-    const after = moving(two, 'outline', 'left')
+    const after = moving(at(null, 'search', ['outline', 'search']), 'outline', 'left')
     expect(after.right).toEqual(['search'])
-
-    const one = moving(after, 'search', 'left')
-    expect(one.right).toEqual([])
-    expect(one.rightPanel).toBeNull()
+    expect(moving(after, 'search', 'left')).toMatchObject({ right: [], rightPanel: null })
   })
 
   test('and moving it where it already is changes nothing at all', () => {
-    const over: Sides = { panel: null, rightPanel: 'outline', right: ['outline'] }
+    const over = at(null, 'outline', ['outline'])
     expect(moving(over, 'outline', 'right')).toBe(over)
     expect(moving(fresh(), 'tree', 'left')).toEqual(fresh())
   })
@@ -133,7 +99,7 @@ describe('moving a panel to the other side', () => {
 
 describe('what each side shows', () => {
   test('is the panel open on it, or none', () => {
-    const both: Sides = { panel: 'tree', rightPanel: 'search', right: ['search'] }
+    const both = at('tree', 'search', ['search'])
     expect(openOn(both, 'left')).toBe('tree')
     expect(openOn(both, 'right')).toBe('search')
     expect(openOn(fresh(), 'left')).toBeNull()
@@ -142,7 +108,7 @@ describe('what each side shows', () => {
 })
 
 describe('the scratchpad over the right side', () => {
-  const under: Sides = { panel: 'tree', rightPanel: 'outline', right: ['outline'], covered: true }
+  const under: Sides = { ...at('tree', 'outline', ['outline']), covered: true }
 
   test('shows nothing there, and keeps the panel for when the card goes', () => {
     expect(openOn(under, 'right')).toBeNull()
@@ -165,11 +131,8 @@ describe('the scratchpad over the right side', () => {
   })
 
   test('a panel moved over while it is being read takes the edge from the card', () => {
-    const reading: Sides = { panel: 'search', rightPanel: null, right: [], covered: true }
-    expect(moving(reading, 'search', 'right')).toEqual({
-      panel: null,
-      rightPanel: 'search',
-      right: ['search'],
+    expect(moving({ ...at('search'), covered: true }, 'search', 'right')).toEqual({
+      ...at(null, 'search', ['search']),
       covered: false,
     })
     expect(moving(under, 'links', 'right').covered).toBe(true)
@@ -212,7 +175,7 @@ describe('the Tasks panel', () => {
   })
 
   test('and is never moved to the left', () => {
-    const sides = { ...fresh(), right: ['tasks' as const], rightPanel: 'tasks' as const }
+    const sides = at(null, 'tasks', ['tasks'])
     expect(moving(sides, 'tasks', 'left')).toBe(sides)
     expect(mayLiveOn('tasks', 'left')).toBe(false)
     expect(mayLiveOn('tasks', 'right')).toBe(true)
@@ -232,41 +195,35 @@ describe('the Tasks panel', () => {
 })
 
 describe('how many tabs the strip draws', () => {
-  test('all of them where nothing has been laid out yet', () => {
-    expect(tabsShown(9, 0, 26)).toBe(9)
-  })
-
-  test('all of them where they fit at their narrowest', () => {
-    expect(tabsShown(6, 172, 26)).toBe(6)
-    expect(tabsShown(6, 840, 26)).toBe(6)
-  })
-
-  test('and where they do not, as many as fit beside More', () => {
-    expect(tabsShown(6, 171, 26)).toBe(4)
-    expect(tabsShown(9, 172, 26)).toBe(5)
-  })
-
-  test('but never none: the one showing always has a place', () => {
-    expect(tabsShown(9, 10, 26)).toBe(1)
+  test.each([
+    ['all, where nothing has been laid out yet', 9, 0, 9],
+    ['all, where they fit at their narrowest', 6, 172, 6],
+    ['all, where there is room to spare', 6, 840, 6],
+    ['as many as fit beside More where they do not', 6, 171, 4],
+    ['as many as fit beside More, more of them', 9, 172, 5],
+    ['never none: the one showing always has a place', 9, 10, 1],
+  ])('%s', (_, count, width, shown) => {
+    expect(tabsShown(count, width, 26)).toBe(shown)
   })
 })
 
 describe('which tabs go behind More', () => {
   const tabs = ['outline', 'links', 'properties', 'footnotes', 'ask', 'agents']
+  const split = (fit: number, showing: string) => splitTabs(tabs, fit, (one) => one === showing)
 
   test('none, where every one is drawn', () => {
-    expect(splitTabs(tabs, 6, (one) => one === 'ask')).toEqual({ drawn: tabs, behind: [] })
+    expect(split(6, 'ask')).toEqual({ drawn: tabs, behind: [] })
   })
 
   test('the last ones, in the strip’s order', () => {
-    expect(splitTabs(tabs, 3, (one) => one === 'links')).toEqual({
+    expect(split(3, 'links')).toEqual({
       drawn: ['outline', 'links', 'properties'],
       behind: ['footnotes', 'ask', 'agents'],
     })
   })
 
   test('except the one showing, which takes the last place drawn', () => {
-    expect(splitTabs(tabs, 3, (one) => one === 'ask')).toEqual({
+    expect(split(3, 'ask')).toEqual({
       drawn: ['outline', 'links', 'ask'],
       behind: ['properties', 'footnotes', 'agents'],
     })

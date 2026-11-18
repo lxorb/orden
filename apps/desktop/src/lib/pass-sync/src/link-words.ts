@@ -32,8 +32,6 @@ export function expiresIn(expires: number, now: number): string {
 }
 
 export function viewsWord(link: Pick<LinkRow, 'views' | 'seen'>): string {
-  if (link.views === null) {
-    return link.seen === 1 ? '1 view' : `${link.seen} views`
-  }
+  if (link.views === null) return link.seen === 1 ? '1 view' : `${link.seen} views`
   return link.views === 1 ? `${link.seen} of 1 view` : `${link.seen} of ${link.views} views`
 }

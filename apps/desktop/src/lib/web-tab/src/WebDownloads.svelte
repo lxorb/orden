@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Glyph from './Glyph.svelte'
   import { cubicOut } from 'svelte/easing'
   import FileIcon from 'lucide/dist/esm/icons/file.mjs'
   import CircleAlert from 'lucide/dist/esm/icons/circle-alert.mjs'
@@ -47,11 +48,7 @@
             onclose()
           }}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            {#each one.state === 'failed' ? CircleAlert : FileIcon as [tag, attrs], index (index)}
-              <svelte:element this={tag} {...attrs} />
-            {/each}
-          </svg>
+          <Glyph icon={one.state === 'failed' ? CircleAlert : FileIcon} />
           <span class="words">
             <span class="name">{one.name}</span>
             {#if one.state === 'going'}
@@ -71,11 +68,7 @@
             aria-label="Cancel"
             onclick={() => void downloads.cancel(one.id)}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              {#each X as [tag, attrs], index (index)}
-                <svelte:element this={tag} {...attrs} />
-              {/each}
-            </svg>
+            <Glyph icon={X} />
           </button>
         {:else if one.state === 'done'}
           <button
@@ -87,11 +80,7 @@
               onclose()
             }}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              {#each FolderOpen as [tag, attrs], index (index)}
-                <svelte:element this={tag} {...attrs} />
-              {/each}
-            </svg>
+            <Glyph icon={FolderOpen} />
           </button>
         {/if}
       </li>

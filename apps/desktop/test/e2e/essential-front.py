@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser
 
 from harness import Drive
@@ -44,5 +42,4 @@ def drive(browser: Browser) -> None:
     if behind["front"]:
         wrong("the essential's tile still says its tab is in front with another one there")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "an essential says its tab is in front"))
+raise SystemExit(DRIVE.run(drive, "an essential says its tab is in front"))

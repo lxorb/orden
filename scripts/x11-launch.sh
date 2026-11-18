@@ -87,24 +87,15 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   sleep 15
   python3 "$here/idle-cpu.py" "$app" 20 | tee "$out/idle.txt"
   [ "${PIPESTATUS[0]}" = 0 ] || status=1
-  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" \( -name orden.log -o -name nib.log \) -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
+  find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name orden.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
 fi
 
-if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
-  python3 "$here/flash-drive.py" x11 "$out" "$app" || status=1
-fi
-if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
-  python3 "$here/popup-drive.py" x11 "$out" "$app" || status=1
-fi
-if [ "$status" = 0 ] && [ "${TREE:-0}" = 1 ]; then
-  python3 "$here/page-drive.py" tree "$out" || status=1
-fi
-if [ "$status" = 0 ] && [ "${BACK:-0}" = 1 ]; then
-  python3 "$here/page-drive.py" back "$out" || status=1
-fi
-if [ "$status" = 0 ] && [ "${ZOOM:-0}" = 1 ]; then
-  python3 "$here/page-drive.py" zoom "$out" || status=1
-fi
+drive() { [ "$status" = 0 ] && [ "${!1:-0}" = 1 ] || return 0; python3 "$here/$2" "${@:3}" || status=1; }
+drive FLASH flash-drive.py x11 "$out" "$app"
+drive POPUP popup-drive.py x11 "$out" "$app"
+drive TREE page-drive.py tree "$out"
+drive BACK page-drive.py back "$out"
+drive ZOOM page-drive.py zoom "$out"
 if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
   python3 "$here/window-drag.py" x11 "$out" "$app" || status=1
   if [ -n "$wm" ] && ! kill -0 "$wm" 2>/dev/null; then
@@ -118,7 +109,7 @@ wait "$app" 2>/dev/null || true
 [ -n "$wm" ] && kill "$wm" 2>/dev/null || true
 kill "$xvfb" 2>/dev/null || true
 [ -n "$site" ] && kill "$site" 2>/dev/null || true
-find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" \( -name orden.log -o -name nib.log \) -exec cp {} "$out/app.log" \; 2>/dev/null || true
+find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name orden.log -exec cp {} "$out/app.log" \; 2>/dev/null || true
 [ -f "$out/app.log" ] && { echo "::group::the app's log"; cat "$out/app.log"; echo "::endgroup::"; }
 echo "::group::orden's output"
 cat "$out/orden.log"

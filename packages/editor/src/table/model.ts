@@ -63,9 +63,8 @@ function readAlign(cell: string): Align {
   return null
 }
 
-function isDelimiterRow(line: string): boolean {
-  return /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/.test(line)
-}
+const isDelimiterRow = (line: string): boolean =>
+  /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/.test(line)
 
 export function parseTable(source: string): TableModel | null {
   const lines = source.split('\n').filter((line) => line.trim().length > 0)
@@ -103,9 +102,8 @@ export function nameAfter(model: TableModel, row: number): string {
 
 const MIN_CELL = 3
 
-function padCell(text: string, width: number): string {
-  return text + ' '.repeat(Math.max(0, width - displayWidth(text)))
-}
+const padCell = (text: string, width: number): string =>
+  text + ' '.repeat(Math.max(0, width - displayWidth(text)))
 
 function delimiterCell(align: Align, width: number): string {
   switch (align) {

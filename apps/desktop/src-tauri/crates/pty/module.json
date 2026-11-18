@@ -1,0 +1,6 @@
+{
+  "name": "pty",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base"]
+}

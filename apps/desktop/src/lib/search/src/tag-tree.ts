@@ -58,9 +58,8 @@ function sort(nodes: TagNode[]) {
   for (const node of nodes) sort(node.children)
 }
 
-export function nodesIn(nodes: readonly TagNode[]): TagNode[] {
-  return nodes.flatMap((node) => [node, ...nodesIn(node.children)])
-}
+export const nodesIn = (nodes: readonly TagNode[]): TagNode[] =>
+  nodes.flatMap((node) => [node, ...nodesIn(node.children)])
 
 export function renamedTo(path: string, name: string): string | null {
   const wanted = segmentsOf(name).join('/').toLowerCase()

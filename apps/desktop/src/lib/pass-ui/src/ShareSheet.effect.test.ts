@@ -1,8 +1,9 @@
-import type { Role, Vault } from '@orden/pass/types'
+import type { Vault } from '@orden/pass/types'
 import type { Member } from '@orden/pass/wire'
 import type { Person } from '../../pass-sync/src/people'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { button, closed, draw, landed, target, typed, vaultAs } from '../test/drawn'
 
 interface Signed {
   user: { id: string; email: string; name: string } | null
@@ -54,25 +55,7 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({ prompt: fake.prompt }))
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ShareSheet = (await import('./ShareSheet.svelte')).default
 const FieldRow = (await import('./FieldRow.svelte')).default
-
 const CODE = '1a2b 3c4d 5e6f 7a8b 9c0d 1e2f 3a4b 5c6d'
-
-function vaultAs(role: Role, hidePasswordsFromViewers = false): Vault {
-  return {
-    v: 1,
-    id: 'v1',
-    name: 'Family',
-    description: '',
-    color: 'purple',
-    icon: 'home',
-    folders: [],
-    hidePasswordsFromViewers,
-    rev: 1,
-    role,
-    members: 4,
-    shared: true,
-  }
-}
 
 const MEMBERS: Member[] = [
   { email: 'ada@example.com', name: 'Ada', role: 'owner', state: 'active', pub: 'P1' },
@@ -87,9 +70,6 @@ const personAt = (email: string, known: Person['known'] = 'seen'): Person => ({
   code: CODE,
   known,
 })
-
-let target: HTMLElement
-let close: (() => void) | undefined
 
 beforeEach(() => {
   for (const one of Object.values(fake.pass)) {
@@ -106,46 +86,25 @@ beforeEach(() => {
   fake.pass.vaults = [vaultAs('owner')]
   fake.account.user = { id: 'ada', email: 'ada@example.com', name: 'Ada' }
   fake.prompt.confirm.mockResolvedValue(true)
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
 })
 
-afterEach(() => {
-  close?.()
-  close = undefined
-  target.remove()
-})
+afterEach(closed)
 
 async function shown() {
   const ui = new PassUi(null)
   ui.sheet = { kind: 'share', vault: 'v1' }
-  const drawn = mount(ShareSheet, { target, props: { ui }, intro: false })
-  close = () => void unmount(drawn)
-  flushSync()
+  draw(ShareSheet, { ui })
   await vi.waitFor(() => {
     if (fake.account.user && !target.querySelector('[data-member]')) throw new Error('no members')
   })
   return ui
 }
 
-function button(name: string, within: ParentNode = target): HTMLButtonElement {
-  const found = [...within.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name || one.getAttribute('aria-label') === name,
-  )
-  if (!found) throw new Error(`no ${name} button`)
-  return found
-}
-
 function member(email: string): HTMLElement {
   const found = target.querySelector<HTMLElement>(`[data-member="${email}"]`)
   if (!found) throw new Error(`no ${email}`)
   return found
-}
-
-function typed(field: HTMLInputElement, text: string) {
-  field.value = text
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  flushSync()
 }
 
 describe('sharing a vault', () => {
@@ -182,7 +141,7 @@ describe('sharing a vault', () => {
   test('warns when somebody’s key is not the one this device knew', async () => {
     fake.pass.person.mockResolvedValue(personAt('eve@example.com', 'changed'))
     await shown()
-    typed(target.querySelector<HTMLInputElement>('input[type="email"]')!, 'eve@example.com')
+    typed(target.querySelector<HTMLInputElement>('input[type="email"]'), 'eve@example.com')
     await vi.waitFor(() => expect(target.querySelector('[data-changed]')).not.toBe(null))
   })
 
@@ -226,7 +185,7 @@ describe('sharing a vault', () => {
       known: 'new',
     })
     await shown()
-    typed(target.querySelector<HTMLInputElement>('input[type="email"]')!, 'new@example.com')
+    typed(target.querySelector<HTMLInputElement>('input[type="email"]'), 'new@example.com')
     await vi.waitFor(() =>
       expect(target.querySelector('[data-safety]')?.textContent).toContain('not set up Pass'),
     )
@@ -298,12 +257,7 @@ describe('sharing a vault', () => {
 
 describe('a hidden field in a vault that hides passwords from viewers', () => {
   test('shows neither Show nor Copy, nor the value', () => {
-    const drawn = mount(FieldRow, {
-      target,
-      props: { label: 'Password', value: 'hunter2', hidden: true, sealed: true },
-    })
-    close = () => void unmount(drawn)
-    flushSync()
+    draw(FieldRow, { label: 'Password', value: 'hunter2', hidden: true, sealed: true })
     expect(target.textContent).not.toContain('hunter2')
     expect(target.querySelectorAll('button')).toHaveLength(0)
   })

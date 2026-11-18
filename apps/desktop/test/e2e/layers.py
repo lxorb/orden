@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import argparse
 import functools
 import hashlib
@@ -229,5 +227,4 @@ def main() -> int:
     say("both layers opened on every shape, and the console stayed quiet")
     return 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

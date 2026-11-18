@@ -1,21 +1,6 @@
-import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { anyOpen, flatRows, heldRows, rowIndex, standsOpen } from './tree-flat'
-
-const file = (path: string): Entry => ({
-  name: path.slice(path.lastIndexOf('/') + 1),
-  path,
-  is_dir: false,
-  modified: 0,
-  created: 0,
-  children: [],
-})
-
-const folder = (path: string, children: Entry[]): Entry => ({
-  ...file(path),
-  is_dir: true,
-  children,
-})
+import { file, folder } from './entries'
 
 const WORK = folder('/s/Work', [
   file('/s/Work/Work.md'),
@@ -24,7 +9,6 @@ const WORK = folder('/s/Work', [
 ])
 const PROJECTS = folder('/s/Projects', [file('/s/Projects/one.md')])
 const READ_ME = file('/s/Read me.md')
-
 const SPACE = folder('/s', [WORK, PROJECTS, READ_ME])
 
 const open = (...paths: string[]) => {
@@ -107,15 +91,13 @@ describe('how many rows a note holds open', () => {
   })
 })
 
-describe('where each row is', () => {
-  test('is the number the window and the walk both speak in', () => {
-    const at = rowIndex(flatRows(SPACE, open('/s/Work')))
+test('where each row is is the number the window and the walk both speak in', () => {
+  const at = rowIndex(flatRows(SPACE, open('/s/Work')))
 
-    expect(at.get('/s/Work')).toBe(0)
-    expect(at.get('/s/Work/plan.md')).toBe(2)
-    expect(at.get('/s/Read me.md')).toBe(4)
-    expect(at.get('/s/Work/Work.md')).toBeUndefined()
-  })
+  expect(at.get('/s/Work')).toBe(0)
+  expect(at.get('/s/Work/plan.md')).toBe(2)
+  expect(at.get('/s/Read me.md')).toBe(4)
+  expect(at.get('/s/Work/Work.md')).toBeUndefined()
 })
 
 describe('a row that stands open', () => {

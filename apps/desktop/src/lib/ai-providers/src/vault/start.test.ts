@@ -13,8 +13,21 @@ vi.mock('../../../sync-client/src/api', async (original) => ({
   },
 }))
 
-await import('../store.svelte')
-const { startVault, vault } = await import('./start.svelte')
+const keys = vi.hoisted(() => ({ refuse: false }))
+vi.mock('../keys', async (original) => ({
+  ...(await original<typeof import('../keys')>()),
+  writeKey: async () => {
+    if (keys.refuse) throw new Error('the keychain said no')
+  },
+}))
+
+const { memoryStorage } = await import('../../../../../test/disk')
+vi.stubGlobal('localStorage', memoryStorage())
+
+await import('../../../sync-client/src/api')
+const { ai } = await import('../store.svelte')
+const { startVault, vault, world } = await import('./start.svelte')
+const { movedSince } = await import('../moves')
 
 test('a hub open again reads the vault again', async () => {
   const refresh = vi.spyOn(vault, 'refresh').mockResolvedValue()
@@ -25,4 +38,57 @@ test('a hub open again reads the vault again', async () => {
   for (const run of opened) run()
 
   expect(refresh).toHaveBeenCalledOnce()
+})
+
+test('what moved to a fresh id is kept as moved before the accounts are taken', async () => {
+  const none = {
+    accounts: { accounts: [], active: {}, defaultVendor: '', uses: {} },
+    keys: {},
+    seen: {},
+  }
+  const seen: string[] = []
+  vi.spyOn(ai, 'adopt').mockImplementation(() => {
+    seen.push(movedSince('compatible-1', 0))
+  })
+
+  await world.apply(none, none, { 'compatible-1': 'compatible-2' })
+
+  expect(seen).toEqual(['compatible-2'])
+})
+
+test('nothing is kept as moved when the keys of a merge could not be written', async () => {
+  const none = {
+    accounts: { accounts: [], active: {}, defaultVendor: '', uses: {} },
+    keys: {},
+    seen: {},
+  }
+  const adopt = vi.spyOn(ai, 'adopt').mockImplementation(() => undefined)
+  keys.refuse = true
+
+  await expect(
+    world.apply({ ...none, keys: { 'openai-2': 'sk-moved' } }, none, { openai: 'openai-2' }),
+  ).rejects.toThrow('the keychain said no')
+
+  keys.refuse = false
+  expect(movedSince('openai', 0)).toBe('openai')
+  expect(adopt).not.toHaveBeenCalled()
+})
+
+test('a move is kept with the account that stayed on its id, so the same move said by a window that read the keys later is kept once', async () => {
+  const account = { id: 'openai', kind: 'openai' as const, name: 'OpenAI', model: '' }
+  const accounts = { accounts: [account], active: {}, defaultVendor: '', uses: {} }
+  const merged = { accounts, keys: { openai: 'sk-theirs' }, seen: {} }
+  vi.spyOn(ai, 'adopt').mockImplementation(() => undefined)
+
+  await world.apply(merged, { ...merged, keys: { openai: 'sk-mine' } }, { openai: 'openai-9' })
+  await world.apply(merged, { ...merged, keys: { openai: 'sk-theirs' } }, { openai: 'openai-9' })
+
+  const { movesAfter } = await import('../moves')
+  expect(movesAfter(0).filter((one) => one.to === 'openai-9')).toEqual([
+    expect.objectContaining({
+      from: 'openai',
+      to: 'openai-9',
+      who: expect.stringMatching(/^openai\|\|.+/) as string,
+    }),
+  ])
 })

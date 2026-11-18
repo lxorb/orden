@@ -135,6 +135,21 @@ describe('a space Orden keeps, through the file commands', () => {
     expect(await webInvoke('list_trash')).toEqual([])
   })
 
+  test('remembers which deleted notes sync put there and which the reader did', async () => {
+    await mounted()
+    await webInvoke('write_note', { path: `${WEB}/Gone elsewhere.md`, content: 'theirs' })
+    await webInvoke('write_note', { path: `${WEB}/Mine.md`, content: 'mine' })
+
+    await webInvoke('trash_item', { path: `${WEB}/Gone elsewhere.md`, kind: 'note', arrived: true })
+    await webInvoke('trash_item', { path: `${WEB}/Mine.md`, kind: 'note' })
+
+    const listed = await webInvoke<{ name: string; arrived?: boolean }[]>('list_trash')
+    expect(Object.fromEntries(listed.map((one) => [one.name, one.arrived === true]))).toEqual({
+      'Gone elsewhere.md': true,
+      'Mine.md': false,
+    })
+  })
+
   test('copies under new keys, and deletes a folder with everything in it', async () => {
     const { bytes, folder } = await mounted()
     await webInvoke('write_note', { path: `${WEB}/Work/Plan.md`, content: 'ship it' })

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from harness import Drive
 from settling import quiet
 
@@ -228,5 +226,4 @@ def drive(browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "Settings > Agents held in both looks")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

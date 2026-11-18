@@ -7,7 +7,6 @@ export function isWebData(value: unknown): value is WebData {
 }
 
 const UNSAFE = /[^a-z0-9.-]/g
-
 const LONGEST = 160
 
 export function siteOf(host: string, registrable: (host: string) => string | null): string {
@@ -21,4 +20,13 @@ export function storeName(choice: WebData, space: string, site: string | null): 
   if (choice === 'space' || !site) return `space_${id}`
 
   return `site_${id}_${site.toLowerCase().replace(UNSAFE, '-')}`.slice(0, LONGEST)
+}
+
+export function originOf(url: string): string | null {
+  try {
+    const at = new URL(url)
+    return at.protocol === 'https:' || at.protocol === 'http:' ? at.origin : null
+  } catch {
+    return null
+  }
 }

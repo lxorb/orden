@@ -1,5 +1,6 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { AccountOwed, type AccountSettings } from '../../accounts/src/api'
+import { tapOf } from '../../double-tap/src/api'
 import {
   currentPlatform,
   type Keystroke,
@@ -9,12 +10,12 @@ import {
   showCombination,
   viewport,
 } from '../../ui-kit/src/api'
-import { modes } from '../../modes/src/api'
-import { knownPreset, type PresetId } from './preset-ids'
+import { knownPreset, type PresetId, presetKeys } from './preset-ids'
 import type { Preset } from './presets'
 import {
   without,
   isRecord,
+  heardElsewhere,
   keep,
   keepJson,
   stored,
@@ -27,6 +28,7 @@ import {
   BY_ID,
   DICTATION_TAPS,
   FIXED_ENTRIES,
+  offeredHere,
   SHORTCUTS,
   type Shortcut,
   SYSTEM_KEYS,
@@ -40,8 +42,17 @@ const STORAGE_KEY = 'orden:shortcuts'
 
 const WRITE_CHORD = 'Mod-s'
 const PRESET_KEY = 'orden:preset'
+const OWED_KEY = 'orden:shortcuts-owed'
 
 const MOST_OVERRIDES = 200
+
+const NAMED_KEY = /^[A-Z][A-Za-z0-9]*$/
+
+const PRINTED_ELSEWHERE = /^[^\s!-~]{1,4}$/u
+
+const printed = (key: string) => key.length === 1 || PRINTED_ELSEWHERE.test(key)
+
+const namesAKey = (key: string) => printed(key) || NAMED_KEY.test(key)
 
 const TYPING_KEYS: ReadonlySet<string> = new Set([
   'Enter',
@@ -66,17 +77,25 @@ class Shortcuts {
   readonly platform = currentPlatform()
 
   restore() {
+    this.unkept = false
     this.overrides = usable(stored(STORAGE_KEY))
     this.preset =
       knownPreset(storedText(PRESET_KEY)) ??
       (Object.keys(this.overrides).length ? 'custom' : 'default')
+    for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
 
-  choose(preset: Pick<Preset, 'id' | 'keys' | 'vim'>) {
+  private unkept = false
+
+  private get written(): KeyOverrides {
+    const held = stored(STORAGE_KEY)
+    return held === null || this.unkept ? this.overrides : usable(held)
+  }
+
+  choose(preset: Pick<Preset, 'id' | 'keys' | 'mac'>) {
     this.preset = preset.id
-    this.overrides = { ...preset.keys }
+    this.overrides = presetKeys(preset, this.platform)
     this.settle()
-    modes.setVimKeys(preset.vim)
   }
 
   keyFor(id: string): string | null {
@@ -107,11 +126,13 @@ class Shortcuts {
   }
 
   conflicts(id: string, key: string): Shortcut[] {
-    const entry = BY_ID.get(id)
-    if (!key || entry?.contextual) return []
+    if (!key) return []
+    const places = BY_ID.get(id)?.contextual ? placesOf(id) : null
 
     return SHORTCUTS.filter((one) => {
-      if (one.id === id || one.contextual || one.scope === 'fixed') return false
+      if (one.id === id || one.scope === 'fixed') return false
+      if (!one.contextual !== !places) return false
+      if (places && !placesOf(one.id).some((place) => places.includes(place))) return false
 
       const held = this.keyFor(one.id)
       return !!held && sameCombination(held, key, this.platform)
@@ -146,10 +167,13 @@ class Shortcuts {
     const combination = parseCombination(key, this.platform)
     if (!combination) return 'That is not a key combination.'
     if (combination.meta && this.platform !== 'mac') return 'That is not a key combination.'
+    if (!namesAKey(combination.key) && !tapOf(key, this.platform)) {
+      return 'That is not a key combination.'
+    }
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
-    const typing = TYPING_KEYS.has(combination.key) && !this.inAList(row) && !this.ownKey(row, key)
-    if (bare && (combination.key.length === 1 || typing)) {
+    const typed = printed(combination.key) || TYPING_KEYS.has(combination.key)
+    if (bare && typed && !this.inAList(row) && !this.ownKey(row, key)) {
       return this.platform === 'mac' ? 'Hold ⌃, ⌥ or ⌘ as well.' : 'Hold Ctrl or Alt as well.'
     }
 
@@ -170,25 +194,26 @@ class Shortcuts {
   }
 
   set(id: string, key: string | null) {
-    if (Object.keys(this.overrides).length >= MOST_OVERRIDES && !(id in this.overrides)) return
+    const held = this.written
+    if (Object.keys(held).length >= MOST_OVERRIDES && !(id in held)) return
 
-    this.overrides = { ...this.overrides, [id]: key }
+    this.overrides = { ...held, [id]: key }
     this.preset = 'custom'
     this.settle()
   }
 
   reset(id: string) {
-    this.overrides = without(this.overrides, id)
+    this.overrides = without(this.written, id)
     this.preset = 'custom'
     this.settle()
   }
 
   resetAll() {
-    this.choose({ id: 'default', keys: {}, vim: false })
+    this.choose({ id: 'default', keys: {} })
   }
 
   private settle() {
-    keepJson(STORAGE_KEY, this.overrides)
+    this.unkept = !keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
     this.share()
@@ -209,8 +234,14 @@ class Shortcuts {
     return this.overrides
   }
 
+  private readonly owed = new AccountOwed(OWED_KEY)
+
   receive(remote: AccountSettings) {
     const theirs = remote.shortcuts
+    if (this.owed.standing) {
+      this.share()
+      return
+    }
     if (!theirs || typeof theirs !== 'object') {
       if (Object.keys(this.overrides).length || this.preset !== 'default') this.share()
       return
@@ -224,18 +255,13 @@ class Shortcuts {
 
     this.overrides = usableOnes
     this.preset = named
-    keepJson(STORAGE_KEY, this.overrides)
+    this.unkept = !keepJson(STORAGE_KEY, this.overrides)
     keep(PRESET_KEY, this.preset)
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
 
   private share() {
-    const token = account.accountToken
-    if (!token) return
-
-    void api
-      .saveSettings(token, { shortcuts: this.overrides, preset: this.preset })
-      .catch(() => undefined)
+    this.owed.send({ shortcuts: this.overrides, preset: this.preset })
   }
 
   pressed(id: string, event: Keystroke): boolean {
@@ -247,14 +273,14 @@ class Shortcuts {
     if (event.defaultPrevented) return false
 
     for (const entry of SHORTCUTS) {
-      if (entry.scope !== 'app' || !entry.run || entry.shown?.() === false) continue
+      if (entry.scope !== 'app' || !entry.run || !offeredHere(entry)) continue
 
       const key = this.keyFor(entry.id)
       if (!key || !matchesCombination(key, event, this.platform)) continue
 
       event.preventDefault()
       ran(entry.id, 'shortcut')
-      entry.run(context)
+      entry.run({ ...context, held: event.ctrlKey || event.metaKey || event.altKey })
       return true
     }
 
@@ -276,6 +302,24 @@ class Shortcuts {
   }
 }
 
+const EXPLORER_TREE_KEYS: ReadonlySet<string> = new Set([
+  'tree.delete',
+  'tree.deselect',
+  'tree.down',
+  'tree.extend-down',
+  'tree.extend-up',
+  'tree.open',
+  'tree.rename',
+  'tree.select-all',
+  'tree.toggle',
+  'tree.up',
+])
+
+function placesOf(id: string): string[] {
+  const prefix = id.split('.')[0] ?? id
+  return EXPLORER_TREE_KEYS.has(id) ? [prefix, 'explorer'] : [prefix]
+}
+
 function usable(value: unknown): KeyOverrides {
   if (!isRecord(value)) return {}
 
@@ -291,3 +335,5 @@ function usable(value: unknown): KeyOverrides {
 }
 
 export const shortcuts = new Shortcuts()
+
+heardElsewhere([STORAGE_KEY, PRESET_KEY], () => shortcuts.restore())

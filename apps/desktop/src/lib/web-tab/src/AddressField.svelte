@@ -1,6 +1,7 @@
 <script module lang="ts">
   let pressing = false
   let pressedOn: Element | null = null
+  const afterPresses: (() => void)[] = []
   if (typeof window !== 'undefined') {
     window.addEventListener(
       'pointerdown',
@@ -11,15 +12,19 @@
       true,
     )
     for (const ends of ['pointerup', 'pointercancel'])
-      window.addEventListener(ends, () => (pressing = false), true)
+      window.addEventListener(
+        ends,
+        () => {
+          pressing = false
+          for (const run of afterPresses.splice(0)) setTimeout(run, 0)
+        },
+        true,
+      )
   }
 
   function afterPress(run: () => void) {
-    if (!pressing) {
-      run()
-      return
-    }
-    window.addEventListener('pointerup', () => setTimeout(run, 0), { once: true, capture: true })
+    if (pressing) afterPresses.push(run)
+    else run()
   }
 </script>
 
@@ -27,14 +32,12 @@
   import { onMount, untrack } from 'svelte'
   import { FileMark } from '../../marks/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { Suggest } from '../../matching/src/api'
+  import { Suggest, frecency, pieces } from '../../matching/src/api'
   import { links } from '../../link-index/src/api'
-  import { frecency, pieces } from '../../matching/src/api'
   import { dotCom, type HalfTyped } from '@orden/scan/typed'
-  import { shownAddress } from '@orden/scan/visits'
+  import { shownAddress, type Visit } from '@orden/scan/visits'
   import { visited } from './visited'
   import { leads, noteKey, webNotesFor, webNotesOf, type WebNote } from './web-notes'
-  import type { Visit } from '@orden/scan/visits'
 
   type Offer = { kind: 'page'; visit: Visit } | { kind: 'note'; note: WebNote }
 
@@ -59,7 +62,6 @@
   } = $props()
 
   const id = $props.id()
-
   let field = $state<HTMLInputElement>()
   let editing = $state(false)
   let typed = $state('')
@@ -67,7 +69,6 @@
   let active = $state(-1)
   let shut = $state(false)
   let composing = false
-
   const listing = $derived(editing && !shut && rows.length > 0)
   const byValue = $derived(new Map(rows.map((one) => [valueOf(one), one])))
 

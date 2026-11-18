@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { expect, test, vi } from 'vitest'
+import { idle } from '../../../../test/effects/settle'
 
 let land: () => void = () => undefined
 const landed = new Promise<void>((resolve) => (land = resolve))
@@ -37,8 +38,7 @@ test('a formula already drawn is drawn again once its engine lands, and never as
   expect(words()?.classList.contains('waiting')).toBe(true)
   expect(words()?.querySelectorAll('.math-inline, .math-block')).toHaveLength(2)
 
-  await new Promise((resolve) => setTimeout(resolve, 300))
-  flushSync()
+  await idle(300)
   expect(engines.mathsEngine()).toBeNull()
   expect(words()?.classList.contains('waiting')).toBe(true)
 

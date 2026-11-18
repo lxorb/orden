@@ -1,5 +1,6 @@
 import '../../sync-ports'
 import { describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../test/memory-storage'
 
 const forgotten = vi.hoisted(() => [] as string[])
 vi.mock('./store', async (importOriginal) => ({
@@ -22,19 +23,6 @@ vi.mock('../../accounts/src/client', async (importOriginal) => ({
   },
 }))
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { runner } = await import('./runner.svelte')

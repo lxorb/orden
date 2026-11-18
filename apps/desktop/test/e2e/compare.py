@@ -27,8 +27,6 @@ than the exit code when a floor is in play.
 Needs Pillow, which is the only thing here that is not the standard library.
 """
 
-from __future__ import annotations
-
 import hashlib
 import sys
 from pathlib import Path
@@ -82,5 +80,4 @@ def main() -> int:
     print(f"{same} identical, {differ} differ, {missing} in one run only, of {len(names)}")
     return 1 if differ or missing else 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

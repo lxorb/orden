@@ -11,7 +11,6 @@
   const shown = new Shown(shellWorld(() => todos.todos))
   let typed = $state('')
   let openId = $state<string | null>(null)
-
   const open = $derived(openId === null ? null : todos.todo(openId))
 
   async function add() {

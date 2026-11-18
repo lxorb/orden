@@ -23,13 +23,11 @@ const shortcutKeys = Facet.define<KeyOverrides, KeyOverrides>({
 
 const chosen = new Compartment()
 
-export function shortcutExtensions(overrides: KeyOverrides = {}): Extension {
-  return chosen.of(shortcutKeys.of(overrides))
-}
+export const shortcutExtensions = (overrides: KeyOverrides = {}): Extension =>
+  chosen.of(shortcutKeys.of(overrides))
 
-export function shortcutEffect(overrides: KeyOverrides): StateEffect<unknown> {
-  return chosen.reconfigure(shortcutKeys.of(overrides))
-}
+export const shortcutEffect = (overrides: KeyOverrides): StateEffect<unknown> =>
+  chosen.reconfigure(shortcutKeys.of(overrides))
 
 export function setShortcutKeys(view: EditorView, overrides: KeyOverrides) {
   view.dispatch({ effects: shortcutEffect(overrides) })

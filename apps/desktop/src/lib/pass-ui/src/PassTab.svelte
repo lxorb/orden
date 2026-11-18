@@ -8,7 +8,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import type { Tab } from '../../documents/src/api'
   import AdoptSheet from './AdoptSheet.svelte'
-  import { asked } from '../../pass-sync/src/api'
+  import { asked, pass, PassUi, flagName } from '../../pass-sync/src/api'
   import ChangePassword from './ChangePassword.svelte'
   import Gate from './Gate.svelte'
   import Generator from './Generator.svelte'
@@ -27,10 +27,7 @@
   import RecoveryKit from './RecoveryKit.svelte'
   import Setup from './Setup.svelte'
   import ShareSheet from './ShareSheet.svelte'
-  import { pass } from '../../pass-sync/src/api'
-  import { PassUi } from '../../pass-sync/src/api'
   import VaultSheet from './VaultSheet.svelte'
-  import { flagName } from '../../pass-sync/src/api'
 
   const {
     tab,
@@ -135,11 +132,7 @@
     {#key ui.editing.id ?? 'new'}
       <ItemEdit {ui} />
     {/key}
-  {:else if item && page === 'items'}
-    {#key item.id}
-      <ItemView {ui} {item} stepped={columns < 3} />
-    {/key}
-  {:else if item && flagged}
+  {:else if item && (page === 'items' || flagged)}
     {#key item.id}
       <ItemView {ui} {item} stepped={columns < 3} />
     {/key}
@@ -325,5 +318,42 @@
   .wide-body {
     flex: 1;
     min-height: 0;
+  }
+
+  :global(.pass-card),
+  :global(.pass-stack) {
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  :global(.pass-stack) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.pass-wrong) {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--danger);
+  }
+
+  :global(.pass-quiet) {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  :global(.pass-buttons) {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  :global(.pass-title) {
+    margin: 0;
+    font-size: var(--text-head);
+    font-weight: var(--weight-strong);
+    color: var(--text-strong);
   }
 </style>

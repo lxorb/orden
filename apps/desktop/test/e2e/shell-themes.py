@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import sys
 import urllib.request
@@ -79,5 +77,4 @@ def main() -> int:
 
     return DRIVE.verdict()
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import struct
 import sys
@@ -249,5 +247,4 @@ def main() -> int:
     print("\na face set in one browser is on the Share sheet, a caret and a tab in another", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

@@ -1,7 +1,7 @@
 import { oneEdit } from '@orden/markdown/edits'
 import { applied, changeOf, type Edit } from '@orden/scan/search/replace'
 import type { Keeping } from '../../workspace/src/api'
-import { waited, folderOf, movedTo, nameOf, samePath, within } from '../../platform/src/api'
+import { folderOf, movedTo, nameOf, samePath, within } from '../../platform/src/api'
 import type { NoteDoc } from '../../documents/src/api'
 import type { Selected } from './anchors'
 import { type Desk, type Located, type NoteAt, openNote, reachable, TYPING, wordsOf } from './desk'
@@ -11,9 +11,9 @@ import { DocError } from './problem'
 import { revOf } from './rev'
 import { touch, touchedBy, touchedMoved, type Touched } from './touched'
 import { Track } from './track'
-import { inTurn } from './turns'
+import { inTurn, startsBefore, waitedUntil } from './turns'
 
-export const PATIENCE = 30_000
+export const PATIENCE = 20_000
 
 export interface NoteEdited {
   path: string
@@ -205,12 +205,14 @@ export async function editNote(
   at: NoteAt,
   edits: unknown,
   ifRev?: string,
+  deadline?: AbortSignal,
 ): Promise<NoteEdited> {
   const asked = readEdits(edits)
   const note = reachable(desk, at)
+  const started = Date.now()
 
-  return inTurn(keyOf(agent.id, note.path), () =>
-    change(desk, agent, note, ifRev, (text, selected, _open, again) => {
+  return inTurnBy(keyOf(agent.id, note.path), note, deadline, () =>
+    change(desk, agent, note, ifRev, { started, deadline }, (text, selected, _open, again) => {
       try {
         return plan(asked, text, selected)
       } catch (error) {
@@ -233,13 +235,15 @@ export async function writeNote(
   at: NoteAt,
   text: string,
   ifRev?: string,
+  deadline?: AbortSignal,
 ): Promise<NoteEdited> {
   const note = reachable(desk, at)
   const wanted = text.replace(/\r\n?/g, '\n')
   let first: { text: string; edits: Replacement[] } | null = null
+  const started = Date.now()
 
-  return inTurn(keyOf(agent.id, note.path), () =>
-    change(desk, agent, note, ifRev, (words, _selected, open) => {
+  return inTurnBy(keyOf(agent.id, note.path), note, deadline, () =>
+    change(desk, agent, note, ifRev, { started, deadline }, (words, _selected, open) => {
       if (first && open) {
         const edits = open.live.carried(first.edits, first.text, true) ?? first.edits
         return { edits, places: [] }
@@ -252,17 +256,54 @@ export async function writeNote(
   )
 }
 
+interface Waits {
+  started: number
+  deadline: AbortSignal | undefined
+}
+
+function inTurnBy<T>(
+  key: string,
+  note: Located,
+  deadline: AbortSignal | undefined,
+  run: () => Promise<T>,
+): Promise<T> {
+  return startsBefore(
+    deadline,
+    () => ranOut(note, false),
+    (go) => inTurn(key, go),
+    run,
+  )
+}
+
+function ranOut(note: Located, waitedOnTheReader: boolean): DocError {
+  if (waitedOnTheReader) return stillTyping(note)
+  return new DocError(
+    'timeout',
+    note.relative,
+    'the time to answer ran out before the edit’s turn came, and nothing was changed',
+  )
+}
+
+function stillTyping(note: Located): DocError {
+  return new DocError(
+    'reader_typing',
+    note.relative,
+    'the reader is still writing where the edit goes',
+  )
+}
+
 async function change(
   desk: Desk,
   agent: Agent,
   note: Located,
   ifRev: string | undefined,
+  { started, deadline }: Waits,
   planner: Planner,
 ): Promise<NoteEdited> {
-  const started = Date.now()
   let again = false
 
   for (;;) {
+    if (deadline?.aborted) throw ranOut(note, again)
     const open = openNote(desk, note)
     if (!open) {
       const done = await changeClosed(desk, agent, note, ifRev, planner)
@@ -273,21 +314,15 @@ async function change(
     const done = changeOpen(desk, agent, note, open, ifRev, planner, again)
     if (done) return done
 
-    if (Date.now() - started > PATIENCE) {
-      throw new DocError(
-        'reader_typing',
-        note.relative,
-        'the reader is still writing where the edit goes',
-      )
-    }
-    await quiet(open)
+    if (Date.now() - started > PATIENCE) throw stillTyping(note)
+    await quiet(open, deadline)
     again = true
   }
 }
 
-function quiet(note: NoteDoc): Promise<void> {
+function quiet(note: NoteDoc, deadline: AbortSignal | undefined): Promise<void> {
   const last = note.live.readerAt ?? 0
-  return waited(Math.max(50, TYPING - (Date.now() - last) + 10))
+  return waitedUntil(Math.max(50, TYPING - (Date.now() - last) + 10), deadline)
 }
 
 function refuseStale(text: string, ifRev: string | undefined, note: Located) {

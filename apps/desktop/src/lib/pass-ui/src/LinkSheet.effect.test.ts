@@ -1,8 +1,9 @@
 import { blank } from '@orden/pass/envelope'
-import type { Item, Role, Vault } from '@orden/pass/types'
+import type { Item, Vault } from '@orden/pass/types'
 import type { LinkRow } from '@orden/pass/wire'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { button, closed, draw, landed, target, typed, vaultAs } from '../test/drawn'
 
 const HOUR = 3600e3
 const DAY = 24 * HOUR
@@ -45,23 +46,6 @@ const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const LinkSheet = (await import('./LinkSheet.svelte')).default
 const LinksPage = (await import('./LinksPage.svelte')).default
 
-function vaultAs(role: Role): Vault {
-  return {
-    v: 1,
-    id: 'v1',
-    name: 'Family',
-    description: '',
-    color: 'purple',
-    icon: 'home',
-    folders: [],
-    hidePasswordsFromViewers: false,
-    rev: 1,
-    role,
-    members: 2,
-    shared: true,
-  }
-}
-
 const ITEM: Item = {
   id: 'i1',
   vault: 'v1',
@@ -78,9 +62,6 @@ const ITEM: Item = {
 
 const URL_MADE = 'https://orden.so/pass-link/AAAAAAAAAAAAAAAAAAAAAA#key'
 
-let target: HTMLElement
-let close: (() => void) | undefined
-
 beforeEach(() => {
   for (const one of [
     fake.createLink,
@@ -93,32 +74,19 @@ beforeEach(() => {
   fake.pass.vaults = [vaultAs('editor')]
   fake.pass.items = [ITEM]
   fake.account.user = { id: 'ada', email: 'ada@example.com', name: 'Ada' }
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
 })
 
 afterEach(() => {
-  close?.()
-  close = undefined
-  target.remove()
+  closed()
   vi.useRealTimers()
 })
 
 function sheet() {
   const ui = new PassUi(null)
   ui.sheet = { kind: 'link', item: 'i1' }
-  const drawn = mount(LinkSheet, { target, props: { ui }, intro: false })
-  close = () => void unmount(drawn)
-  flushSync()
+  draw(LinkSheet, { ui })
   return ui
-}
-
-function button(name: string): HTMLButtonElement {
-  const found = [...target.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name || one.getAttribute('aria-label') === name,
-  )
-  if (!found) throw new Error(`no ${name} button`)
-  return found
 }
 
 function option(name: string): HTMLElement {
@@ -131,12 +99,6 @@ function option(name: string): HTMLElement {
 
 function views(): HTMLInputElement {
   return target.querySelector<HTMLInputElement>('input[aria-label="Max views"]')!
-}
-
-function typed(field: HTMLInputElement, text: string) {
-  field.value = text
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  flushSync()
 }
 
 describe('making a secure link', () => {
@@ -204,8 +166,8 @@ describe('making a secure link', () => {
     fake.account.user = null
     sheet()
     expect(target.querySelector('[data-signed-out]')?.textContent).toContain('Sign in to share')
-    close?.()
-    target.replaceChildren()
+    closed()
+    landed()
     fake.account.user = { id: 'ada', email: 'ada@example.com', name: 'Ada' }
     fake.pass.vaults = [vaultAs('viewer')]
     sheet()
@@ -228,9 +190,7 @@ describe('the secure links page', () => {
   function page() {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(NOW)
-    const drawn = mount(LinksPage, { target, intro: false })
-    close = () => void unmount(drawn)
-    flushSync()
+    draw(LinksPage, {})
   }
 
   test('lists each link with its item, when it expires and its views, and removes one', async () => {

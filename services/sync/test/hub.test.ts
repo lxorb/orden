@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { readFrame } from '../src/sync-server/src/hub/frames'
+import { readFrame } from '../src/sync-server-engine/src/hub/frames'
 import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { computer, connect, hub, type Hubs, hubs, send } from './hub-fakes'
 
@@ -64,7 +64,7 @@ describe('ending a device', () => {
     const laptop = await computer(env, running, 'end@example.com', 'Laptop')
     const desktop = await computer(env, running, 'end@example.com', 'Desktop')
 
-    const ended = await call(env, `/v2/devices/${laptop.id}`, {
+    const ended = await call(env, `/v1/sessions/${laptop.session}`, {
       method: 'DELETE',
       token: desktop.token,
     })
@@ -84,7 +84,7 @@ describe('ending a device', () => {
     wrap.run(laptop.user, laptop.id)
     wrap.run(desktop.user, desktop.id)
 
-    const ended = await call(env, `/v2/devices/${laptop.id}`, {
+    const ended = await call(env, `/v1/sessions/${laptop.session}`, {
       method: 'DELETE',
       token: desktop.token,
     })
@@ -231,13 +231,6 @@ describe('ending a device', () => {
       app: '1.0.0',
     })
     expect(late.closedWith?.code).toBe(1008)
-  })
-
-  test('is unknown for a device the account does not have', async () => {
-    const token = await signIn(env, 'none@example.com')
-    const answer = await call(env, '/v2/devices/device-nobody', { method: 'DELETE', token })
-    expect(answer.status).toBe(404)
-    expect(answer.json.error).toBe('no such device')
   })
 })
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import app from '../../../App.svelte?raw'
-import crateSide from '../../../../src-tauri/src/keyboard.rs?raw'
+import crateSide from '../../../../src-tauri/crates/web/src/keyboard.rs?raw'
+import { settle } from '../../../../test/effects/settle'
 
 const crate = vi.hoisted(() => ({
   inPage: true,
@@ -28,26 +29,22 @@ const { IN_PAGE } = await import('./keyboard-home')
 const { overlays } = await import('../../ui-kit/src/overlays')
 const { IN_A_PAGE } = await import('./trap')
 
-async function settled() {
-  await new Promise((done) => setTimeout(done, 40))
-}
-
 async function pageTookIt() {
   await vi.waitFor(() => expect(crate.heard.has(IN_PAGE)).toBe(true))
   crate.heard.get(IN_PAGE)?.()
-  await settled()
+  await settle()
 }
 
 async function windowBlurred() {
   focused = false
   window.dispatchEvent(new FocusEvent('blur'))
-  await settled()
+  await settle()
 }
 
 async function windowFocused() {
   focused = true
   window.dispatchEvent(new FocusEvent('focus'))
-  await settled()
+  await settle()
 }
 
 let blurs = 0
@@ -89,9 +86,7 @@ describe('a site taking the keyboard', () => {
     ;(field as HTMLInputElement).select()
     const lost = vi.fn()
     field.addEventListener('blur', lost)
-
     await pageTookIt()
-
     expect(document.activeElement).toBe(document.body)
     expect(lost).toHaveBeenCalledTimes(1)
     expect(document.documentElement.hasAttribute(IN_A_PAGE)).toBe(true)
@@ -109,9 +104,7 @@ describe('a site taking the keyboard', () => {
     const one = control(html)
     one.focus()
     expect(document.activeElement).toBe(one)
-
     await pageTookIt()
-
     expect(document.activeElement).toBe(document.body)
   })
 
@@ -120,9 +113,7 @@ describe('a site taking the keyboard', () => {
     editor.focus()
     getSelection()?.selectAllChildren(editor)
     expect(getSelection()?.isCollapsed).toBe(false)
-
     await pageTookIt()
-
     expect(getSelection()?.isCollapsed ?? true).toBe(true)
   })
 
@@ -134,9 +125,7 @@ describe('a site taking the keyboard', () => {
     expect(app).toContain('onblur={() => overlays.away()}')
     const away = () => overlays.away()
     window.addEventListener('blur', away)
-
     await pageTookIt()
-
     window.removeEventListener('blur', away)
     expect(closed).toHaveBeenCalledTimes(1)
     expect(overlays.depth).toBe(0)
@@ -146,7 +135,6 @@ describe('a site taking the keyboard', () => {
   test('on the engine s blur alone, as on a Mac, and never plays a second one', async () => {
     const field = control('<input value="https://example.com">')
     field.focus()
-
     await windowBlurred()
     expect(document.activeElement).toBe(document.body)
     await pageTookIt()
@@ -167,9 +155,7 @@ describe('a site taking the keyboard', () => {
     field.focus()
     ;(field as HTMLInputElement).select()
     await pageTookIt()
-
     await windowFocused()
-
     expect(document.activeElement).toBe(document.body)
   })
 })
@@ -179,9 +165,7 @@ describe('the keyboard going anywhere else', () => {
     crate.inPage = false
     const field = control('<input value="half typed">')
     field.focus()
-
     await windowBlurred()
-
     expect(document.activeElement).toBe(field)
     expect(document.documentElement.hasAttribute(IN_A_PAGE)).toBe(false)
   })
@@ -193,14 +177,12 @@ describe('the keyboard going anywhere else', () => {
     })
     const field = control('<input value="https://example.com">')
     field.focus()
-
     await vi.waitFor(() => expect(crate.heard.has(IN_PAGE)).toBe(true))
     crate.heard.get(IN_PAGE)?.()
     window.dispatchEvent(new Event('pointerdown'))
     field.focus()
     answer()
-    await settled()
-
+    await settle()
     expect(document.activeElement).toBe(field)
   })
 })
@@ -237,5 +219,5 @@ describe('words typed while the keyboard is on something else', () => {
 })
 
 test('the crate and the page name the word the same', () => {
-  expect(crateSide).toContain(`pub const IN_PAGE: &str = "${IN_PAGE}";`)
+  expect(crateSide).toContain(`const IN_PAGE: &str = "${IN_PAGE}";`)
 })

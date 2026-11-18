@@ -85,7 +85,6 @@ describe('the version', () => {
     world.desktop = true
     const field = versionField()
     if (field.kind !== 'value') throw new Error('the version is a value')
-
     field.press()
     await vi.waitFor(() => expect(world.copied).toEqual(['under test']))
     expect(field.get()).toBe('Copied')

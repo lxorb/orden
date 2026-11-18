@@ -3,19 +3,28 @@
 use orden_lib as orden;
 
 fn main() {
-    orden::former_name::carry_env();
+    #[cfg(desktop)]
+    if let Some(code) = orden::terminal_hold() {
+        std::process::exit(code);
+    }
     #[cfg(desktop)]
     if orden::cef_helper() {
         return;
     }
     #[cfg(desktop)]
-    orden::old_home::carry_home();
+    orden_carry::old_home::carry_home(env!("ORDEN_IDENTIFIER"));
+    #[cfg(desktop)]
+    orden_carry::old_engine::carry_storage(env!("ORDEN_IDENTIFIER"));
     #[cfg(desktop)]
     if std::env::args_os()
         .nth(1)
         .is_some_and(|first| first == "mcp")
     {
-        std::process::exit(orden::mcp::serve());
+        orden_ai::mcp::home::name(orden_ai::mcp::home::Named {
+            identifier: env!("ORDEN_IDENTIFIER"),
+            version: env!("ORDEN_VERSION"),
+        });
+        std::process::exit(orden_ai::mcp::serve());
     }
     orden::run();
 }

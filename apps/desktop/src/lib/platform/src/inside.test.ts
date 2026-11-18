@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest'
-import { insideOnly } from './inside'
+import { describe, expect, test, vi } from 'vitest'
+import { insideOnly, namesByShortName } from './inside'
 
 describe('a path a link may be joined to a space by', () => {
   test('is the path itself, tidied', () => {
@@ -34,6 +34,19 @@ describe('a path a link may be joined to a space by', () => {
     }
   })
 
+  test('on Windows, holds no name Windows would open as another, without its last dots or spaces', () => {
+    vi.stubGlobal('window', { __TAURI_OS_PLUGIN_INTERNALS__: { platform: 'windows' } })
+    try {
+      for (const said of ['Diary./secret.md', 'Plans.md.', 'Diary /secret.md', 'Plans.md ..']) {
+        expect(insideOnly(said), said).toBeNull()
+      }
+      expect(insideOnly('Mr. Smith/Plan.md')).toBe('Mr. Smith/Plan.md')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(insideOnly('Diary./secret.md')).toBe('Diary./secret.md')
+  })
+
   test('holds nothing a file name cannot hold', () => {
     expect(insideOnly(`notes/${String.fromCharCode(0)}.md`)).toBeNull()
     expect(insideOnly('notes/two\nlines.md')).toBeNull()
@@ -57,4 +70,19 @@ describe('a path a link may be joined to a space by', () => {
     expect(insideOnly('.')).toBeNull()
     expect(insideOnly('./')).toBeNull()
   })
+})
+
+test.each<[unknown, ...Parameters<typeof namesByShortName>]>([
+  [true, 'PRIVAT~1/Diary.md'],
+  [true, 'THERAP~1.MD'],
+  [true, 'Work/priva~12/Diary.md'],
+  [false, 'Private Journal/Diary.md'],
+  [false, 'Plan ~2.md'],
+  [false, 'Notes~ideas.md'],
+  [true, 'PRIVAT~1./Diary.md'],
+  [true, 'Notes/DIARY~1.MD. .'],
+  [true, 'C:\\Users\\me\\Orden\\Work\\PRIVAT~1'],
+  [false, 'C:\\Users\\me\\Orden\\Work\\Private'],
+])('%j from %j', (expected, ...args) => {
+  expect(namesByShortName(...args)).toBe(expected)
 })

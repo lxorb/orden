@@ -11,11 +11,8 @@
   import ShieldOff from 'lucide/dist/esm/icons/shield-off.mjs'
   import Smartphone from 'lucide/dist/esm/icons/smartphone.mjs'
   import { message } from '../../ui-kit/src/api'
-  import { fetcher } from '../../pass-sync/src/api'
-  import { flagName } from '../../pass-sync/src/api'
+  import { fetcher, flagName, pass, type PassUi } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
-  import { pass } from '../../pass-sync/src/api'
-  import type { PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
 
@@ -96,38 +93,11 @@
     }
   }
 
-  interface Card {
-    flag: Flag
-    icon: IconNode
-    ids: string[]
-    line: string
-  }
-
-  const cards = $derived<Card[]>([
-    {
-      flag: 'weak',
-      icon: ShieldAlert,
-      ids: found.weak,
-      line: 'Easy to guess. Change them to generated ones.',
-    },
-    {
-      flag: 'reused',
-      icon: Repeat,
-      ids: [...found.reused.keys()],
-      line: 'Used for more than one login.',
-    },
-    {
-      flag: 'inactive2fa',
-      icon: Smartphone,
-      ids: found.inactive2fa,
-      line: 'These sites offer two-factor authentication.',
-    },
-    {
-      flag: 'excluded',
-      icon: EyeOff,
-      ids: found.excluded,
-      line: 'Left out of Monitor.',
-    },
+  const cards = $derived<[Flag, IconNode, string[], string][]>([
+    ['weak', ShieldAlert, found.weak, 'Easy to guess. Change them to generated ones.'],
+    ['reused', Repeat, [...found.reused.keys()], 'Used for more than one login.'],
+    ['inactive2fa', Smartphone, found.inactive2fa, 'These sites offer two-factor authentication.'],
+    ['excluded', EyeOff, found.excluded, 'Left out of Monitor.'],
   ])
 
   function opened(flag: Flag, ids: string[]) {
@@ -147,11 +117,11 @@
 
 <section class="monitor" aria-label="Monitor" data-scrolls>
   <header class="head">
-    <h2 class="title">Monitor</h2>
+    <h2 class="pass-title">Monitor</h2>
   </header>
 
   <div class="cards">
-    <div class="card is-first" class:is-bad={found.compromised.length > 0}>
+    <div class="pass-stack is-first" class:is-bad={found.compromised.length > 0}>
       <button
         class="orden-row press"
         type="button"
@@ -186,29 +156,29 @@
       {/if}
     </div>
 
-    {#each cards as card (card.flag)}
-      <div class="card" class:is-bad={card.ids.length > 0 && card.flag !== 'excluded'}>
+    {#each cards as [flag, icon, ids, line] (flag)}
+      <div class="pass-stack" class:is-bad={ids.length > 0 && flag !== 'excluded'}>
         <button
           class="orden-row press"
           type="button"
-          data-flag={card.flag}
-          disabled={!card.ids.length}
-          onclick={() => opened(card.flag, card.ids)}
+          data-flag={flag}
+          disabled={!ids.length}
+          onclick={() => opened(flag, ids)}
         >
-          <span class="mark"><Glyph icon={card.icon} /></span>
+          <span class="mark"><Glyph {icon} /></span>
           <span class="words">
-            <span class="name">{flagName(card.flag)}</span>
-            <span class="line">{card.line}</span>
+            <span class="name">{flagName(flag)}</span>
+            <span class="line">{line}</span>
           </span>
-          {@render counted(card.ids.length)}
-          {#if card.ids.length}<Glyph icon={ChevronRight} class="chevron" />{/if}
+          {@render counted(ids.length)}
+          {#if ids.length}<Glyph icon={ChevronRight} class="chevron" />{/if}
         </button>
       </div>
     {/each}
   </div>
 
   <h3 class="orden-section">Dark web monitoring</h3>
-  <div class="card dark">
+  <div class="pass-stack dark">
     <div class="press is-static">
       <span class="mark"><Glyph icon={Radar} /></span>
       <span class="words">
@@ -247,9 +217,9 @@
             {/if}
           </div>
         {:else}
-          <p class="quiet">No email addresses in your logins</p>
+          <p class="pass-quiet">No email addresses in your logins</p>
         {/each}
-        <div class="buttons">
+        <div class="buttons pass-buttons">
           <button class="orden-button is-quiet" type="button" onclick={() => void forgetKey()}
             >Remove key</button
           >
@@ -276,25 +246,10 @@
     margin-bottom: var(--space-4);
   }
 
-  .title {
-    margin: 0;
-    font-size: var(--text-head);
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
-  }
-
   .cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
     gap: var(--space-3);
-  }
-
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
   }
 
   .press {
@@ -396,16 +351,7 @@
     font-size: var(--text-sm);
   }
 
-  .quiet {
-    margin: 0;
-    color: var(--muted);
-    font-size: var(--text-sm);
-  }
-
   .buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-2);
     margin-top: var(--space-2);
   }
 </style>

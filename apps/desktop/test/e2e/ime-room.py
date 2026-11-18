@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -55,5 +53,4 @@ def drive(browser: Browser) -> None:
     composing(page, line, len(line), 7, "Q", "hullo wQorld日本", "inside-the-word")
     page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "words from elsewhere wait for a composition, and nothing half-composed stays"))
+raise SystemExit(DRIVE.run(drive, "words from elsewhere wait for a composition, and nothing half-composed stays"))

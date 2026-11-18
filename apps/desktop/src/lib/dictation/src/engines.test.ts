@@ -46,7 +46,8 @@ vi.mock('../../platform/src/stored', () => ({
   forget: (key: string) => world.stored.delete(key),
 }))
 
-const { canDictate, deviceHears, engines, whereTo } = await import('./engines.svelte')
+const { canDictate, deviceHears, engines, showsDictateButton, whereTo } =
+  await import('./engines.svelte')
 const { local } = await import('./local.svelte')
 
 const PARAKEET = { id: 'parakeet', name: 'Parakeet TDT 0.6B v3', bytes: 670_000_000 }
@@ -59,14 +60,8 @@ function computer(fit: 'fits' | 'cores', installed: boolean, pace: number | null
 }
 
 beforeEach(() => {
-  Object.assign(world, {
-    token: null,
-    provider: null,
-    native: false,
-    os: '',
-    phone: false,
-    desktop: false,
-  })
+  Object.assign(world, { token: null, provider: null, native: false })
+  Object.assign(world, { os: '', phone: false, desktop: false })
   world.stored.clear()
   world.invoked.length = 0
   local.machine = null
@@ -111,6 +106,23 @@ describe('the roads offered', () => {
     expect(deviceHears()).toBe(false)
     world.os = 'linux'
     expect(deviceHears()).toBe(false)
+  })
+})
+
+describe('the dictate button', () => {
+  test('shows wherever a road is offered but in the Mac app, whose system dictates in any field', () => {
+    world.token = 'a token'
+    expect(showsDictateButton()).toBe(true)
+    world.native = true
+    world.os = 'windows'
+    expect(showsDictateButton()).toBe(true)
+    world.os = 'macos'
+    expect(canDictate()).toBe(true)
+    expect(showsDictateButton()).toBe(false)
+  })
+
+  test('is not shown where no road is offered', () => {
+    expect(showsDictateButton()).toBe(false)
   })
 })
 
@@ -181,19 +193,18 @@ describe('Auto', () => {
     expect(engines.now()).toBe('account')
   })
 
-  test('takes this computer once the model is here and keeps up', () => {
-    world.token = 'a token'
-    computer('fits', true, 0.08)
-    engines.choose('auto')
-    expect(engines.now()).toBe('local')
-  })
-
-  test('keeps to the network where the model here is too slow', () => {
-    world.token = 'a token'
-    computer('fits', true, 0.6)
-    engines.choose('auto')
-    expect(engines.now()).toBe('account')
-  })
+  test.each([
+    [0.08, 'local'],
+    [0.6, 'account'],
+  ])(
+    'takes this computer once the model is here, at pace %s, only if it keeps up',
+    (pace, road) => {
+      world.token = 'a token'
+      computer('fits', true, pace)
+      engines.choose('auto')
+      expect(engines.now()).toBe(road)
+    },
+  )
 
   test('waits for the download where there is no network road', () => {
     computer('fits', false)

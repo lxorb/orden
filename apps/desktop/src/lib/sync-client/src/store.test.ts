@@ -22,7 +22,7 @@ import {
 } from './store'
 
 const SCHEMA = readFileSync(
-  new URL('../../../../src-tauri/src/sync_store/1.sql', import.meta.url),
+  new URL('../../../../src-tauri/crates/store/src/sync_store/1.sql', import.meta.url),
   'utf8',
 )
 

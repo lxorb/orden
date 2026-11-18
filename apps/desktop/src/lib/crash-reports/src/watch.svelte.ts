@@ -1,6 +1,6 @@
 import { listen } from '@tauri-apps/api/event'
-import { log, invoke } from '../../platform/src/api'
-import { crashAskDue } from '../../surfaces/src/api'
+import { heardElsewhere, log, invoke } from '../../platform/src/api'
+import { CRASH_REPORTS, crashAskDue } from '../../surfaces/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { crashReports } from './choice.svelte'
@@ -31,6 +31,7 @@ export function watchForCrashes(sending: boolean): () => void {
   alive()
   const beating = setInterval(alive, ALIVE)
   document.addEventListener('visibilitychange', alive)
+  const unheard = heardElsewhere([CRASH_REPORTS], () => crashReports.heard())
 
   let shaping: ReturnType<typeof setTimeout> | undefined
   const stopShape = $effect.root(() => {
@@ -43,14 +44,14 @@ export function watchForCrashes(sending: boolean): () => void {
     })
   })
 
-  if (!sending) {
-    return () => {
-      clearInterval(beating)
-      clearTimeout(shaping)
-      stopShape()
-      document.removeEventListener('visibilitychange', alive)
-    }
+  const stopWatching = () => {
+    clearInterval(beating)
+    clearTimeout(shaping)
+    stopShape()
+    document.removeEventListener('visibilitychange', alive)
+    unheard()
   }
+  if (!sending) return stopWatching
 
   const how = nativeSending(
     () => crashReports.on,
@@ -74,12 +75,9 @@ export function watchForCrashes(sending: boolean): () => void {
   void listen(TOLD, send).then((stop) => (unlisten = stop))
 
   return () => {
-    clearInterval(beating)
+    stopWatching()
     clearInterval(again)
-    clearTimeout(shaping)
-    stopShape()
     stopAnswer()
     unlisten?.()
-    document.removeEventListener('visibilitychange', alive)
   }
 }

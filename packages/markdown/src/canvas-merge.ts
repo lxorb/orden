@@ -3,9 +3,8 @@ import { holdsExtras, mergedExtras } from './canvas-extras'
 
 export const TOMBSTONE_KEPT = 90 * 24 * 60 * 60 * 1000
 
-function byId<T extends Thing>(things: readonly T[]): Map<string, T> {
-  return new Map(things.map((thing) => [thing.id, thing]))
-}
+const byId = <T extends Thing>(things: readonly T[]): Map<string, T> =>
+  new Map(things.map((thing) => [thing.id, thing]))
 
 export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   const changed: string[] = []
@@ -24,9 +23,7 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
     if (when !== undefined) at[id] = when
   }
 
-  for (const thing of after.nodes) stamp(thing.id)
-  for (const thing of after.edges) stamp(thing.id)
-  for (const thing of after.ink) stamp(thing.id)
+  for (const thing of [...after.nodes, ...after.edges, ...after.ink]) stamp(thing.id)
 
   const gone = noTimes()
 
@@ -273,9 +270,7 @@ export function standing<T extends object>(
   return out
 }
 
-function timeOf(canvas: Canvas, id: string): number {
-  return timeIn(canvas.at, id) ?? 0
-}
+const timeOf = (canvas: Canvas, id: string): number => timeIn(canvas.at, id) ?? 0
 
 function later<T extends Thing>(ours: T, ourTime: number, theirs: T, theirTime: number): T {
   if (ourTime !== theirTime) return ourTime > theirTime ? ours : theirs
@@ -296,7 +291,6 @@ function mergeList<T extends Thing>(
   const ourMove = (id: string) => timeIn(ourCanvas.moved ?? {}, id) ?? 0
   const theirMove = (id: string) => timeIn(theirCanvas.moved ?? {}, id) ?? 0
   const shared = (id: string) => mine.has(id) && yours.has(id) && ourMove(id) === theirMove(id)
-
   const ourList = [...mine.values()]
   const theirList = [...yours.values()]
   const anchors = settled(
@@ -412,9 +406,7 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     (edge) => cards.has(edge.fromNode) && cards.has(edge.toNode),
   )
   const ink = mergeList(ours.ink, theirs.ink, ours, theirs, gone)
-
   const held = new Set([...cards, ...edges.map((edge) => edge.id), ...ink.map((one) => one.id)])
-
   const at = noTimes()
   for (const id of new Set([...Object.keys(ours.at), ...Object.keys(theirs.at)])) {
     if (gone[id] !== undefined && !held.has(id)) continue
@@ -471,12 +463,9 @@ export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now())
   return writeCanvas(merged(mine, yours, now))
 }
 
-function weighs(canvas: Canvas): boolean {
-  return (
-    holdsExtras(canvas.extras) ||
-    canvas.nodes.length > 0 ||
-    canvas.ink.length > 0 ||
-    Object.keys(canvas.gone).length > 0 ||
-    !!canvas.icon
-  )
-}
+const weighs = (canvas: Canvas): boolean =>
+  holdsExtras(canvas.extras) ||
+  canvas.nodes.length > 0 ||
+  canvas.ink.length > 0 ||
+  Object.keys(canvas.gone).length > 0 ||
+  !!canvas.icon

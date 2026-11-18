@@ -448,10 +448,9 @@ describe('an undo that arrives as input rather than as a key', () => {
     expect(redoEdit(view)).toBe(false)
   })
 
-  test('and nothing else typed is one', () => {
-    expect(fromInput('insertText')).toBeNull()
-    expect(fromInput('deleteContentBackward')).toBeNull()
-  })
+  test.each([['insertText'], ['deleteContentBackward']])('%j', (input) =>
+    expect(fromInput(input)).toBeNull(),
+  )
 })
 
 describe('edits carried onto the words as they are now', () => {
@@ -684,6 +683,42 @@ describe('words from the room while somebody composes (#544)', () => {
 
     expect(room.words).toBe('hello wQo日rld')
     expect(pane.text).toBe(room.words)
+  })
+})
+
+describe('what the room held back and what came from outside (#2176)', () => {
+  test('a note taken on afresh forgets what the room held back for a composition', () => {
+    const note = new SharedDoc('hello world')
+    const pane = new Composing(note, 0)
+    pane.composing = true
+    note.arrived([{ from: 0, to: 0, insert: 'room ' }])
+
+    note.takeOn('a much longer note than the one before')
+    pane.composing = false
+
+    expect(() => note.settle()).not.toThrow()
+    expect(note.text.toString()).toBe('a much longer note than the one before')
+    expect(pane.text).toBe('a much longer note than the one before')
+  })
+
+  test('a change from outside beside the caret is its own undo step', () => {
+    const note = new SharedDoc('abc')
+    const pane = new Pane(note, 3)
+    pane.edit({ from: 3, insert: 'x' }, 4)
+    note.edit([{ from: 4, to: 4, insert: 'Y' }])
+
+    note.undo(pane)
+    expect(note.text.toString()).toBe('abcx')
+  })
+
+  test('and so are words replaced from outside', () => {
+    const note = new SharedDoc('abc')
+    const pane = new Pane(note, 3)
+    pane.edit({ from: 3, insert: 'x' }, 4)
+    note.replace('abcxY')
+
+    note.undo(pane)
+    expect(note.text.toString()).toBe('abcx')
   })
 })
 

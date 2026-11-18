@@ -1,9 +1,9 @@
 import type { Event, Message } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
-import type { OutboxRow } from './cache'
-import { isMain } from './cache'
+import { isMain, type OutboxRow } from './cache'
 import type { Kept } from './fold'
 import { overlay } from './overlay'
+import { messageOf } from './test-account'
 
 const CHAT = `c_${'b'.repeat(32)}`
 
@@ -11,22 +11,7 @@ function placed(id: string, seq: number, extra: Partial<Message> = {}): Kept {
   return {
     upto: seq,
     marks: { r: [], v: [] },
-    message: {
-      id,
-      seq,
-      at: seq * 1000,
-      author: 'user:ana',
-      body: `words ${id}`,
-      alsoToChat: false,
-      files: [],
-      mentions: [],
-      reactions: {},
-      pinned: false,
-      history: [],
-      deleted: false,
-      replies: 0,
-      ...extra,
-    },
+    message: messageOf(seq, { id, body: `words ${id}`, ...extra }),
   }
 }
 

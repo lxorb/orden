@@ -14,9 +14,7 @@ export function atVaultTop(sources: readonly Source[]): Source[] {
     .find(Boolean)
   if (!wrapper) return [...sources]
   const beside = (path: string) => !path.startsWith(wrapper) && !isJunk(path) && !leftInVault(path)
-  if (sources.some((one) => beside(one.path))) {
-    return [...sources]
-  }
+  if (sources.some((one) => beside(one.path))) return [...sources]
 
   return sources.map((one) =>
     one.path.startsWith(wrapper) ? { ...one, path: one.path.slice(wrapper.length) } : one,
@@ -56,11 +54,10 @@ export async function obsidianCarries(sources: readonly Source[]): Promise<Carri
   let said: unknown = {}
 
   if (app) {
-    try {
-      said = JSON.parse(await app.text())
-    } catch {
-      // A settings file Obsidian could not read either is a vault on its defaults.
-    }
+    said = await app
+      .text()
+      .then((words) => JSON.parse(words) as unknown)
+      .catch(() => ({}))
   }
 
   return fromAppJson(said)

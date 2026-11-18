@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -62,9 +60,6 @@ async (where) => {
   await ws.createPages(root, 'Lecture.pages')
   ws.openGraph()
 
-  // A web note in a browser build opens a browser tab rather than one of Orden's,
-  // so the two websites come in the way a sitting puts them back:
-  // written into the arrangement, as the desktop app's session holds them.
   const layout = ws.layout()
   const pane = layout.frame.pane
   for (const [path, name] of [[where.marked, 'A site with a mark'], [where.plain, 'A site with no mark']]) {
@@ -89,8 +84,6 @@ STRIP = """
 
   return [...document.querySelectorAll('.tab')].map((tab) => {
     const pick = tab.querySelector('.pick')
-    // The mark sits in the tab's face since the strip took Chrome's shape (917497b4);
-    // counted there, so a second mark anywhere in the face still counts as two.
     const face = pick.querySelector('.face') ?? pick
     const marks = [...face.children].filter((one) => one.classList.contains('mark'))
     const mark = marks[0] ?? null
@@ -101,23 +94,18 @@ STRIP = """
 
     return {
       name: tab.querySelector('.label')?.textContent ?? null,
-      // A tab drawn as an icon is its mark alone, which is the one place the mark is
-      // the whole of what the reader has to go on (#1041).
       icon: tab.classList.contains('icon'),
       shut: !!tab.querySelector('.shut'),
       marks: marks.length,
       kind: img ? 'picture' : svg ? 'stroke' : 'nothing',
       width: box ? Math.round(box.width * 100) / 100 : null,
       height: box ? Math.round(box.height * 100) / 100 : null,
-      // Where the mark sits inside the tab's own button, which is what makes every
-      // name in the strip start at the same place.
       at: box ? Math.round((box.left - seat.left) * 100) / 100 : null,
       middle: box ? Math.round((box.top + box.height / 2 - seat.top) * 100) / 100 : null,
       tab: Math.round(tab.getBoundingClientRect().width * 100) / 100,
       hairline: svg ? hairline(svg) : null,
       drawing: svg ? (svg.querySelector('path')?.getAttribute('d') ?? '').slice(0, 44) : null,
       src: img?.getAttribute('src') ?? null,
-      // Whether the picture really arrived, rather than merely being asked for.
       arrived: img ? img.naturalWidth > 0 : null,
     }
   })
@@ -333,5 +321,4 @@ def main() -> int:
         " file's own mark in the strip as in the list, down to the chip a tab behind is drawn as"
     )
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

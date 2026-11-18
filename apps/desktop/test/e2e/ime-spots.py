@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, CDPSession, Page
 
 from harness import Drive
@@ -105,5 +103,4 @@ def drive(browser: Browser) -> None:
     cdp.detach()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a composition keeps what is beside it, wherever it starts"))
+raise SystemExit(DRIVE.run(drive, "a composition keeps what is beside it, wherever it starts"))

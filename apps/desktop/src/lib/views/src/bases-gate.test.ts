@@ -17,7 +17,7 @@ vi.mock('../../file-writes/src/api', async (original) => ({
 
 const { hiddenKinds, KINDS_KEY, BASES_WORD, EXPERIMENTAL_WORD, PASS_WORD, basesOn } =
   await import('../../gates/src/api')
-const { setWord, receive } = await import('../../gates/src/api')
+const { receive } = await import('../../gates/src/api')
 const { experimentalPane } = await import('../../settings/src/experimental-pane')
 const { appCommands } = await import('../../commands/src/api')
 const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()
@@ -82,7 +82,7 @@ describe('databases, until they are turned on', () => {
   })
 
   test('follow the account, beside the other switches', () => {
-    setWord(PASS_WORD, true)
+    hiddenKinds.hidden = [EXPERIMENTAL_WORD, PASS_WORD]
     receive({ hiddenKinds: [EXPERIMENTAL_WORD, PASS_WORD, BASES_WORD] })
     expect(basesOn()).toBe(true)
     receive({ hiddenKinds: [EXPERIMENTAL_WORD, PASS_WORD] })

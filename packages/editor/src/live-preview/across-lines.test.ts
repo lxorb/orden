@@ -2,22 +2,14 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { afterEach, beforeAll, expect, test } from 'vitest'
+import { expect, test } from 'vitest'
 import '@orden/markdown/eager'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { trustedMarkup } from '../markup'
 import { livePreview } from '.'
+import { keptViews } from '../../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
-
-const open: EditorView[] = []
-
-afterEach(() => {
-  for (const view of open.splice(0)) view.destroy()
-})
+const open = keptViews()
 
 function viewOf(doc: string, trusted = false): EditorView {
   const view = new EditorView({

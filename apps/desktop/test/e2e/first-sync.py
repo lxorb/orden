@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import sys
 
@@ -54,8 +52,6 @@ STATE = """
     notes: ws.notes.length,
     coming: window.ordenApp.arriving.coming?.size ?? null,
     rows: document.querySelectorAll('aside .row').length,
-    // How many rows the tree has, as against how many of them are drawn: the list
-    // draws the ones that fit. See Tree.svelte.
     onTree: Number(
       document.querySelector('aside [aria-setsize]')?.getAttribute('aria-setsize') ?? 0,
     ),

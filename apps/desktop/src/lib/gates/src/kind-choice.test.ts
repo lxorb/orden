@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
-const store = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => store.get(key) ?? null,
-  setItem: (key: string, value: string) => void store.set(key, value),
-  removeItem: (key: string) => void store.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const saved = vi.hoisted(() => [] as [string, unknown][])
 vi.mock('../../accounts/src/client', async (actual) => ({
@@ -19,7 +15,7 @@ vi.mock('../../accounts/src/client', async (actual) => ({
 }))
 
 const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } =
-  await import('./api')
+  await import('./gates.svelte')
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('../../new-here/src/api')
 const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()
@@ -34,7 +30,7 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
-  store.clear()
+  localStorage.clear()
   saved.length = 0
   hiddenKinds.restore()
 })
@@ -82,14 +78,18 @@ describe('a stored list of kinds turned off', () => {
 })
 
 describe('the kinds a device has', () => {
-  test('are what is written, the online terminal and an application on a page in a browser', () => {
-    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'web'])
+  test('are only notes in the glasses plugin, which draws no canvas or page note', () => {
+    expect(kindsHere(true)).toEqual(['note'])
+  })
+
+  test('are what is written, the AI chat, the online terminal and an application on a page in a browser', () => {
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'ai', 'online', 'web'])
   })
 
   test('take Pass in once Settings turns the password manager on', () => {
     setWord(EXPERIMENTAL_WORD, true)
     setWord(PASS_WORD, true)
-    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'online', 'pass', 'web'])
+    expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'ai', 'online', 'pass', 'web'])
     setWord(PASS_WORD, false)
     expect(kindsHere()).not.toContain('pass')
   })
@@ -102,9 +102,10 @@ describe('the kinds a device has', () => {
     expect(kindsHere()).toContain('chat')
   })
 
-  test('leave the web out on a phone', () => {
+  test('leave the web and the AI chat out on a phone', () => {
     viewport.device = 'phone'
     expect(kindsHere()).not.toContain('web')
+    expect(kindsHere()).not.toContain('ai')
   })
 
   test('and on a tablet', () => {
@@ -117,7 +118,7 @@ describe('turning a kind off', () => {
   test('takes it out of the chooser and the file list, and nothing else', () => {
     setKind('canvas', false)
 
-    expect(offeredKinds().map((one) => one.kind)).toEqual(['note', 'pages', 'online', 'web'])
+    expect(offeredKinds().map((one) => one.kind)).toEqual(['note', 'pages', 'ai', 'online', 'web'])
     expect(newFileRows().map((one) => one?.label)).toEqual([
       'New note',
       'New page note',
@@ -128,15 +129,15 @@ describe('turning a kind off', () => {
 
   test('is undone by turning it on, and the default is stored as nothing', () => {
     setKind('canvas', false)
-    expect(JSON.parse(store.get('orden:hidden-kinds') ?? '[]')).toEqual(['canvas'])
+    expect(JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]')).toEqual(['canvas'])
 
     setKind('canvas', true)
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('orden:hidden-kinds')).toBe(false)
+    expect(localStorage.getItem('orden:hidden-kinds')).toBeNull()
   })
 
   test('is refused for the last kind offered', () => {
-    for (const kind of ['note', 'canvas', 'pages', 'online'] as const) setKind(kind, false)
+    for (const kind of ['note', 'canvas', 'pages', 'ai', 'online'] as const) setKind(kind, false)
     expect(hiddenKinds.shown).toEqual(['web'])
 
     setKind('web', false)
@@ -173,7 +174,17 @@ describe('the account', () => {
 
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('orden:hidden-kinds')).toBe(false)
+    expect(localStorage.getItem('orden:hidden-kinds')).toBeNull()
+  })
+
+  test('keeps a change it was not told of yet over the older list it still holds', () => {
+    setWord(EXPERIMENTAL_WORD, true)
+    token = 'token'
+
+    receive({ hiddenKinds: [] })
+
+    expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD])
+    expect(saved).toEqual([['token', { hiddenKinds: [EXPERIMENTAL_WORD] }]])
   })
 
   test('that never heard of it takes this machine’s list', () => {

@@ -34,6 +34,9 @@ vi.mock('../../accounts/src/api', () => ({
   },
 }))
 vi.mock('../../left-spaces/src/api', () => ({
+  forgetHome: () => undefined,
+  homeOf: () => null,
+  keepHomes: () => undefined,
   leaveSpaces: () => undefined,
   leftByAnother: () => false,
 }))

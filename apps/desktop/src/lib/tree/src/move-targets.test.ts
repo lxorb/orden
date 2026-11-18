@@ -1,28 +1,6 @@
-import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { copiesInto, movesInto, moveTargets, type Space } from './move-targets'
-
-function folder(path: string, children: Entry[] = []): Entry {
-  return {
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: true,
-    modified: 0,
-    created: 0,
-    children,
-  }
-}
-
-function note(path: string): Entry {
-  return {
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: false,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
+import { file as note, folder } from './entries'
 
 const tree = folder('/Notes', [
   folder('/Notes/Work', [folder('/Notes/Work/Deep', [note('/Notes/Work/Deep/deep.md')])]),
@@ -291,11 +269,9 @@ describe('a path written with backslashes, as a desktop hands them over', () => 
   })
 })
 
-describe('copying a row', () => {
-  test('may land beside itself, but never inside itself', () => {
-    expect(copiesInto(['/s/a.md'], '/s')).toBe(true)
-    expect(copiesInto(['/s/Work'], '/s/Work')).toBe(false)
-    expect(copiesInto(['/s/Work'], '/s/Work/deep')).toBe(false)
-    expect(copiesInto(['/s/Work'], '/s/Workshop')).toBe(true)
-  })
+test('copying a row may land beside itself, but never inside itself', () => {
+  expect(copiesInto(['/s/a.md'], '/s')).toBe(true)
+  expect(copiesInto(['/s/Work'], '/s/Work')).toBe(false)
+  expect(copiesInto(['/s/Work'], '/s/Work/deep')).toBe(false)
+  expect(copiesInto(['/s/Work'], '/s/Workshop')).toBe(true)
 })

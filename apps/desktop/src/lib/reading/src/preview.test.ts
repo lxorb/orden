@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { scanNote } from '@orden/scan/note'
 
 const ROOT = '/space'
-
 const FIXTURE = `---
 title: Everything
 tags:
@@ -76,6 +75,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.mock('../../link-index/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../link-index/src/api')>()),
   notePicture: (src: string) => `asset://${src}`,
+  picturesOf: () => () => null,
 }))
 
 const { links } = await import('../../link-index/src/api')

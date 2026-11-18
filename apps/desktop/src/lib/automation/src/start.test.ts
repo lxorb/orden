@@ -47,14 +47,7 @@ vi.mock('../../platform/src/tauri', () => ({
   },
 }))
 
-vi.stubGlobal('localStorage', {
-  length: 0,
-  key: () => null,
-  getItem: () => null,
-  setItem: () => undefined,
-  removeItem: () => undefined,
-  clear: () => undefined,
-} satisfies Storage)
+vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { startAutomation } = await import('./start')
@@ -64,9 +57,9 @@ vi.spyOn(busy, 'failed').mockImplementation((words: string) => {
   world.said.push(words)
 })
 
-async function arrives(uri: string, query = 'orden'): Promise<void> {
+async function arrives(uri: string): Promise<void> {
   const at = new URL('https://orden.example/')
-  at.searchParams.set(query, uri)
+  at.searchParams.set('orden', uri)
   world.here = at.href
 
   await startAutomation()
@@ -74,20 +67,13 @@ async function arrives(uri: string, query = 'orden'): Promise<void> {
 
 const BACK = 'https://elsewhere.example/done'
 
+const told = () => new URL(world.went[0] ?? '').searchParams
+
 beforeEach(() => {
   world.asked = []
   world.went = []
   world.said = []
   world.answer = { ok: true, value: {} }
-})
-
-describe('a link a browser hands over', () => {
-  test('is followed under the name it registered before the rename too', async () => {
-    world.answer = { ok: true, value: { path: 'reading/Divorce.md', heading: null } }
-    await arrives('web+nib://open?path=Divorce', 'nib')
-
-    expect(world.asked).toEqual(['open'])
-  })
 })
 
 describe('a link that changed nothing', () => {
@@ -136,7 +122,7 @@ describe('a link that made a note', () => {
     expect(world.asked).toEqual(['new'])
     expect(world.went.length).toBe(1)
 
-    const said = new URL(world.went[0] ?? '').searchParams
+    const said = told()
     expect(said.get('path')).toBe('inbox/Idea.md')
     expect(said.get('created')).toBe('true')
   })
@@ -145,7 +131,7 @@ describe('a link that made a note', () => {
     world.answer = { ok: false, error: 'Idea.md is already there: say append or prepend' }
     await arrives(`orden://new?name=Idea&x-error=${encodeURIComponent(BACK)}`)
 
-    expect(new URL(world.went[0] ?? '').searchParams.get('error')).toContain('already there')
+    expect(told().get('error')).toContain('already there')
   })
 })
 
@@ -158,7 +144,7 @@ describe('a link that added to a note', () => {
 
     expect(world.asked).toEqual(['append'])
 
-    const said = new URL(world.went[0] ?? '').searchParams
+    const said = told()
     expect(said.get('path')).toBe('Daily.md')
     expect(said.get('added')).toBe('true')
   })
@@ -169,15 +155,13 @@ describe('a link the app will not take at all', () => {
     await arrives(`orden://files.delete?path=x&x-cancel=${encodeURIComponent(BACK)}`)
 
     expect(world.asked).toEqual([])
-    expect(new URL(world.went[0] ?? '').searchParams.get('error')).toBe(
-      'not something a link may ask for',
-    )
+    expect(told().get('error')).toBe('not something a link may ask for')
   })
 
   test('and one naming nothing is simply wrong', async () => {
     await arrives(`orden://nonsense?x-error=${encodeURIComponent(BACK)}`)
 
-    expect(new URL(world.went[0] ?? '').searchParams.get('error')).toBe('no action called nonsense')
+    expect(told().get('error')).toBe('no action called nonsense')
   })
 })
 

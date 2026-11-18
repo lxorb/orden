@@ -9,12 +9,10 @@ export interface ClipOrigin {
 }
 
 const LONGEST_TITLE = 300
-
 export const UNTITLED = 'Untitled'
 
-export function clipTitle(title: string): string {
-  return oneLine(title).slice(0, LONGEST_TITLE).trim() || UNTITLED
-}
+export const clipTitle = (title: string): string =>
+  oneLine(title).slice(0, LONGEST_TITLE).trim() || UNTITLED
 
 export function clipFrontMatter(
   origin: ClipOrigin,

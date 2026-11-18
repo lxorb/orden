@@ -12,11 +12,8 @@ import { invoke as crate } from '../../crate/src/api'
 import { hearHere } from '../../windows/src/api'
 
 const TAKING = 'orden:shortcuts-added'
-
 const ADDED = 'orden://shortcuts-added'
-
 export const TAKEN = '.shortcuts'
-
 const OPEN_TASK = /^\s*[-*+]\s+\[ \]\s+(.+?)\s*$/
 
 interface Added {
@@ -126,15 +123,14 @@ async function exclusive<T>(run: () => Promise<T>): Promise<T> {
   return locks.request(TAKING, run) as Promise<T>
 }
 
-export function takeAdded(add: Add = addedHere): Promise<number> {
-  return exclusive(async () => {
+export const takeAdded = (add: Add = addedHere): Promise<number> =>
+  exclusive(async () => {
     const behind = await leftBehind(add).catch((error: unknown) => {
       log('warn', `shortcuts: the old inbox was not read: ${String(error)}`)
       return 0
     })
     return behind + (await waiting(add))
   })
-}
 
 export async function hearShortcuts(): Promise<void> {
   await takeAdded()

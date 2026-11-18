@@ -19,7 +19,7 @@ export function arcSidebar(said: unknown, folder: string): ArcRead | null {
     if (id) items.set(id, one)
   }
 
-  const read: Reading = { items, folders: [], tabs: [], stayed: 0 }
+  const read: Reading = { items, folders: [], tabs: [], stayed: 0, seen: new Set() }
   const favourites = listOf(held.topAppsContainerIDs, (marker) => profileIs(marker, folder))
   if (favourites) rows(read, favourites, null, null, 'essential')
 
@@ -51,6 +51,7 @@ interface Reading {
   folders: SidebarFolder[]
   tabs: SidebarTab[]
   stayed: number
+  seen: Set<string>
 }
 
 type Row = 'essential' | 'pinned' | 'open'
@@ -63,9 +64,8 @@ function listOf(value: unknown, wanted: (marker: unknown) => boolean): string | 
   return null
 }
 
-function isKey(marker: unknown, key: string): boolean {
-  return marker === key || (isObject(marker) && key in marker)
-}
+const isKey = (marker: unknown, key: string): boolean =>
+  marker === key || (isObject(marker) && key in marker)
 
 function profileIs(profile: unknown, folder: string): boolean {
   if (!isObject(profile)) return folder === 'Default'
@@ -96,7 +96,8 @@ function rows(
   depth = 0,
 ) {
   const parent = read.items.get(id)
-  if (!parent || depth > DEEPEST) return
+  if (!parent || depth > DEEPEST || read.seen.has(id)) return
+  read.seen.add(id)
 
   const children = Array.isArray(parent.childrenIds)
     ? parent.childrenIds.map(text).filter((one): one is string => one !== null)
@@ -122,6 +123,7 @@ function rows(
         container: 0,
       })
     } else if ('list' in data && space !== null) {
+      if (read.seen.has(child)) continue
       read.folders.push({
         id: child,
         name: text(item.title) ?? 'Folder',

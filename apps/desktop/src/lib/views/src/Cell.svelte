@@ -1,11 +1,10 @@
 <script lang="ts">
-  import type { Row, Value } from '@orden/bases'
-  import { cellValue } from '@orden/bases'
+  import { type Row, type Value, cellValue, onClock, rewritten } from '@orden/bases'
   import { tick } from 'svelte'
   import type { Property } from '@orden/markdown/properties'
   import type { ListItem } from '@orden/markdown/property-edits'
   import PropertyValue from './PropertyValue.svelte'
-  import { valueText } from './chips'
+  import { valueText, toneColour } from './chips'
   import {
     bare,
     changeOf,
@@ -14,14 +13,15 @@
     holdsLists,
     isNoteProperty,
     optionsOf,
+    optionWritten,
     toneOf,
   } from './columns'
   import { formatted } from './format'
-  import { toneColour } from './chips'
   import { openExternal } from '../../platform/src/api'
   import type { Kit } from './kit'
   import type { ListChange } from '../../rows/src/api'
-  import { isDateValue } from './values'
+  import { isDateValue, isDurationValue } from './values'
+  import { writeDuration } from '@orden/markdown/task-line'
 
   const {
     row,
@@ -68,6 +68,8 @@
       (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
   )
 
+  const here = $derived(isDateValue(value) ? onClock(value) : null)
+
   const asProperty = $derived.by((): Property => {
     const items = Array.isArray(value) ? value.map((one) => valueText(one, kit.live.today)) : []
     const kind = listed
@@ -82,13 +84,15 @@
     const said =
       value === null
         ? ''
-        : isDateValue(value)
-          ? value.iso + (value.time ? ` ${value.time.slice(0, 5)}` : '')
-          : typeof value === 'boolean'
-            ? String(value)
-            : Array.isArray(value)
-              ? ''
-              : shown
+        : here
+          ? here.iso + (here.time ? ` ${here.time.slice(0, 5)}` : '')
+          : isDurationValue(value)
+            ? writeDuration(Math.round(value.ms / 60_000))
+            : typeof value === 'boolean' || typeof value === 'number'
+              ? String(value)
+              : Array.isArray(value)
+                ? ''
+                : shown
     return {
       key: bare(property),
       kind,
@@ -101,9 +105,8 @@
 
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
 
-  function shownMember(item: ListItem): Value {
-    return item !== null && typeof item === 'object' ? item.asWritten : item
-  }
+  const shownMember = (item: ListItem): Value =>
+    item !== null && typeof item === 'object' ? item.asWritten : item
 
   function fromWords(words: string | null): Value | null {
     if (words === null || words === '') return null
@@ -111,8 +114,15 @@
     if (editor === 'checkbox') return words === 'true'
     if (editor === 'date') {
       const [day, time] = words.split(' ')
-      return time ? { kind: 'date', iso: day ?? words, time } : { kind: 'date', iso: day ?? words }
+      const iso = day ?? words
+      if (!time) return { kind: 'date', iso }
+      return isDateValue(value)
+        ? rewritten(value, { kind: 'date', iso, time })
+        : { kind: 'date', iso, time }
     }
+    const base = kit.live.base
+    if (editor === 'select' && base)
+      return optionWritten(base, property, value, kit.live.rows, words)
     return words
   }
 
@@ -167,11 +177,11 @@
       />
     {/if}
   </span>
-{:else if editor === 'checkbox' && typeof value === 'boolean'}
+{:else if editor === 'checkbox' && (typeof value === 'boolean' || value === null)}
   <input
     type="checkbox"
     class="orden-checkbox"
-    checked={value}
+    checked={value === true}
     disabled={!writable}
     aria-label={bare(property)}
     onchange={(event) => {

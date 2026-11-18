@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import io
 import json
 import os
@@ -75,28 +73,6 @@ async ([paint, side]) => {
 }
 """
 
-STAND_ON = """
-([desk, material]) => {
-  document.getElementById('orden-desk')?.remove()
-  const style = document.createElement('style')
-  style.id = 'orden-desk'
-  style.textContent = `html { background: ${desk} !important; background-attachment: fixed !important; }`
-  document.head.append(style)
-  if (material) document.documentElement.dataset.translucent = material
-  else delete document.documentElement.dataset.translucent
-}
-"""
-
-DESKS = {
-    "white": "#ffffff",
-    "black": "#000000",
-    "busy": "linear-gradient(90deg, #000 0 25%, #fff 25% 50%, #e3342f 50% 75%, #3490dc 75%)",
-}
-MICA = {
-    "dark": "linear-gradient(90deg, #000 0 33%, #3a3a3a 33% 66%, #1d2338 66%)",
-    "light": "linear-gradient(90deg, #c0c0c0 0 33%, #fff 33% 66%, #d9dde8 66%)",
-}
-
 FILTERS = """
 () => [...document.querySelectorAll('*')]
   .filter((one) => {
@@ -115,8 +91,6 @@ BOXES = """
   const lines = [...document.querySelectorAll('.cm-line')].map((one) => one.getBoundingClientRect())
   const editor = document.querySelector('.cm-editor')?.getBoundingClientRect()
   const last = Math.max(0, ...lines.map((r) => r.bottom))
-  // Each ink as the part it is written on resolves it: under glass a part of the frame
-  // may wear the other scheme's words.
   const ink = (name, where = document.body) => {
     const probe = document.createElement('span')
     probe.style.color = `var(${name})`
@@ -136,7 +110,6 @@ BOXES = """
     sideMuted: ink('--muted', sideNode),
     text: ink('--text'),
     bg: ink('--bg'),
-    alpha: getComputedStyle(document.documentElement).getPropertyValue('--content-alpha').trim(),
   }
 }
 """
@@ -295,39 +268,18 @@ def glass(browser: Any, scheme: str) -> None:
     page.evaluate("() => window.ordenApp.theme.select('glass')")
     wait_for(page, "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')", "glass's sheet")
 
-    for material in ("mica", "acrylic", "clear"):
-        desks = {"band": MICA[scheme]} if material == "mica" else DESKS
-        for desk, paint in desks.items():
-            page.evaluate(STAND_ON, [paint, material])
-            wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "glass's dials")
-            for level in ("tinted", "opaque", "clear"):
-                dial(page, "content", level)
-                keep_shot(page, f"glass-{scheme}-{material}-{desk}-{level}")
-                measure(
-                    page,
-                    f"glass {scheme} {material} {desk} {level}",
-                    frame=6 if material == "clear" else 4.5,
-                    opaque=level == "opaque",
-                )
-
-    page.evaluate(STAND_ON, [DESKS["busy"], "acrylic"])
     page.wait_for_timeout(400)
-    for id, value in (("opacity", 0), ("opacity", 100), ("tint", 0), ("follow", False), ("tab", False)):
+    keep_shot(page, f"glass-{scheme}")
+    measure(page, f"glass {scheme}")
+    for id, value in (("tint", 0), ("follow", False), ("tab", False)):
         dial(page, id, value)
         keep_shot(page, f"glass-{scheme}-{id}-{value}")
         measure(page, f"glass {scheme} {id} {value}")
-    for id, value in (("opacity", 50), ("tint", 100), ("follow", True), ("tab", True)):
+    for id, value in (("tint", 100), ("follow", True), ("tab", True)):
         dial(page, id, value)
 
     page.evaluate("() => window.ordenApp.settings.show('appearance')")
-    page.wait_for_timeout(600)
-    floored = page.evaluate(
-        "() => { const one = document.querySelector('.sheet input.slider.floored'); "
-        "if (!one) return null; one.scrollIntoView({ block: 'center' }); "
-        "return { least: one.getAttribute('aria-valuemin'), value: one.value } }"
-    )
-    (say if floored else wrong)(f"glass {scheme}: the Opacity dial says its floor: {floored}")
-    page.wait_for_timeout(300)
+    page.wait_for_timeout(900)
     keep_shot(page, f"glass-{scheme}-settings")
     page.evaluate("() => { window.ordenApp.settings.open = false }")
 
@@ -361,13 +313,11 @@ def summary(frames: list[float]) -> str:
 
 def cost(browser: Any) -> None:
     results: dict[str, dict[str, str]] = {}
-    for look in ("default", "glass-clear", "wallpaper-clear"):
+    for look in ("default", "glass", "wallpaper-clear"):
         page = fresh(browser, "dark", LONG, "A long note")
-        if look.startswith("glass"):
+        if look == "glass":
             page.evaluate("() => window.ordenApp.theme.select('glass')")
-            page.evaluate(STAND_ON, [DESKS["busy"], "mica"])
-            wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "glass's dials")
-            dial(page, "content", "clear")
+            wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'tint')", "glass's dials")
         elif look.startswith("wallpaper"):
             page.evaluate("() => window.ordenApp.theme.select('wallpaper')")
             wait_for(page, "window.ordenApp.theme.settings.some((one) => one.id === 'content')", "the wallpaper's dials")
@@ -400,5 +350,4 @@ def drive(browser: Any) -> None:
         glass(browser, scheme)
     cost(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

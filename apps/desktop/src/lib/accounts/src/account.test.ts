@@ -76,6 +76,8 @@ vi.mock('./client', async (importOriginal) => {
         return { spaces: [{ id: 's1', name: 'Theirs' }], deleted: [] }
       },
       signOut: () => Promise.resolve({ ok: true as const }),
+      rename: (_token: string, name: string) =>
+        Promise.resolve({ user: { id: 'u1', email: 'me@example.com', name } }),
       usage: () => Promise.resolve({ used: 0, limit: 0 }),
     },
   }
@@ -182,6 +184,18 @@ describe('the countdown to another code', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('a name given to the account', () => {
+  test('keeps the picture and the rest of the profile the account already had', async () => {
+    await account.verify('123456')
+    const face = { s: 'a'.repeat(64), l: 'b'.repeat(64) }
+    if (account.user) account.user = { ...account.user, avatar: face, pronouns: 'she/her' }
+
+    await account.rename('Ada')
+
+    expect(account.user).toMatchObject({ name: 'Ada', avatar: face, pronouns: 'she/her' })
   })
 })
 
@@ -316,18 +330,18 @@ describe('six digits, on whichever half of the sign-in', () => {
   })
 })
 
-describe('restoring a session', () => {
-  async function restore(): Promise<void> {
-    vi.useFakeTimers()
-    try {
-      const restoring = account.restore()
-      await vi.advanceTimersByTimeAsync(10_000)
-      await restoring
-    } finally {
-      vi.useRealTimers()
-    }
+async function restore(): Promise<void> {
+  vi.useFakeTimers()
+  try {
+    const restoring = account.restore()
+    await vi.advanceTimersByTimeAsync(10_000)
+    await restoring
+  } finally {
+    vi.useRealTimers()
   }
+}
 
+describe('restoring a session', () => {
   test('has looked for the session once its token is read, before the account answers', async () => {
     localStorage.setItem('orden:session', 'session')
     server.meFails = Infinity
@@ -554,6 +568,126 @@ describe('a session a share link handed out', () => {
     expect(account.user).toBeNull()
     expect(account.accountToken).toBeNull()
     expect(account.name).toBe('Windows wren')
+  })
+
+  test('tells what was owed meanwhile that no account will hear it', async () => {
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    server.meIsAGuest = true
+    localStorage.setItem('orden:session', 'guest-session')
+
+    await account.restore()
+
+    expect(told).toBe(1)
+  })
+
+  test('tells it too when no session is saved, and not when an account answers', async () => {
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    await account.restore()
+    expect(told).toBe(1)
+
+    localStorage.setItem('orden:session', 'session')
+    await account.restore()
+    expect(account.user).not.toBeNull()
+    expect(told).toBe(1)
+  })
+
+  test('tells it when a session that never answered gives way to another account', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    await account.arrive('other-session', {
+      user: { id: 'u2', email: 'other@example.com', name: null },
+    })
+
+    expect(told).toBe(1)
+  })
+
+  test('tells it too when a code signs in over a session that never answered', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    account.email = 'me@example.com'
+    await account.verify('123456')
+
+    expect(told).toBe(1)
+  })
+
+  test('does not tell it when a code signs the same account in again', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+    server.meFails = server.meCalls
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    account.email = 'me@example.com'
+    await account.verify('123456')
+
+    expect(account.user?.id).toBe('u1')
+    expect(told).toBe(0)
+  })
+
+  test('forgets the old account when it answers while another one signs in', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+    server.meFails = server.meCalls
+
+    let forgotten = 0
+    account.forgetWithSession(() => forgotten++)
+    const arriving = account.arrive('other-session', {
+      user: { id: 'u2', email: 'other@example.com', name: null },
+    })
+    await account.recheck()
+    await arriving
+
+    expect(account.user?.id).toBe('u2')
+    expect(forgotten).toBe(1)
+  })
+
+  test('forgets the old account it hears of while another one signs in', async () => {
+    localStorage.setItem('orden:session', 'unanswered-session')
+    server.meFails = Infinity
+    await restore()
+    server.meFails = server.meCalls
+
+    let forgotten = 0
+    account.forgetWithSession(() => forgotten++)
+    await account.arrive('other-session', {
+      user: { id: 'u2', email: 'other@example.com', name: null },
+    })
+
+    expect(account.user?.id).toBe('u2')
+    expect(forgotten).toBe(1)
+  })
+
+  test('does not tell it when the session that never answered arrives as itself', async () => {
+    localStorage.setItem('orden:session', 'session')
+    server.meFails = Infinity
+    await restore()
+
+    let told = 0
+    account.holdsNoAccount(() => told++)
+    await account.arrive('session', { user: { id: 'u1', email: 'me@example.com', name: null } })
+
+    expect(told).toBe(0)
+  })
+
+  test('holds no account for sure, so nothing it changes is owed to the one it signs in to', async () => {
+    server.meIsAGuest = true
+    localStorage.setItem('orden:session', 'guest-session')
+
+    await account.restore()
+
+    expect(account.noAccountForSure).toBe(true)
   })
 
   test('hands itself to the sign-in, so what a link lent it follows it in', async () => {

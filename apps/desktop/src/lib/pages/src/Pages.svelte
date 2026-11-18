@@ -26,6 +26,8 @@
     pens,
     putWords,
     RightPan,
+    run,
+    takesOver,
     type Tool,
     toolPressed,
     tools,
@@ -45,9 +47,7 @@
   } from '../../camera/src/api'
   import {
     cardsInLasso,
-    coloured,
     Contacts,
-    copied,
     DEFAULT_INK,
     hovering,
     leadPoint,
@@ -57,7 +57,6 @@
     pickedBox,
     type Point,
     readPalette,
-    removed,
     rubbedBetween,
     rubbedOut,
     sized,
@@ -99,10 +98,10 @@
   import { rooms } from '../../collab/src/api'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-
   import { pages as pagesState } from './showing.svelte'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'
+  import { pans } from './starts'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -115,9 +114,7 @@
   })
 
   const A_TWITCH = 6
-
   const A_PAUSE = 220
-
   const INKING: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
 
   const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>([
@@ -129,47 +126,29 @@
     'words',
   ])
 
-  const TWO_FINGERS = 250
-
   const GRACE = 160
-
   const follows = (_value: unknown) => undefined
-
   let host = $state<HTMLElement>()
   let width = $state(0)
   let height = $state(0)
   let palette = $state<Record<string, string>>({})
-
   const pages = $derived(store.pages)
   const canvas = $derived(store.canvas)
   const camera = $derived(store.camera)
   const showing = $derived(store.showing)
-
   const unit = $derived(1 / camera.scale)
-
   const writable = $derived(!store.readOnly)
   const trusted = $derived(trustsHtmlIn(tab.note))
-
   const cards = $derived(canvas.nodes.filter((node) => node.type !== 'page'))
-
   let rise = $state(0)
-
   let pull = $state.raw<Pulling>(noPull())
-
   let falling = 0
-
   const slot = $derived(store.slot)
-
   const reach = $derived(reachFor((store.last?.height ?? 0) * camera.scale))
-
   const view = $derived<Camera>(rise ? { ...camera, y: camera.y + rise / camera.scale } : camera)
-
   const sight = $derived(inSight(pages, view, turnOf(view) ? Math.hypot(width, height) : height))
-
   const near = $derived(pages.slice(sight.from, sight.to))
-
   const STILL = 250
-
   let still = $state(true)
 
   $effect(() => {
@@ -284,9 +263,7 @@
   }
 
   const MOST_HITS = 500
-
   const AROUND = 24
-
   let finding = $state(false)
   let askedFind = $state(0)
   let term = $state('')
@@ -345,9 +322,7 @@
     return kept ? was : null
   })
 
-  function hitId(hit: PaperHit): string {
-    return `paper:${hit.paper}:${hit.at}`
-  }
+  const hitId = (hit: PaperHit): string => `paper:${hit.paper}:${hit.at}`
 
   function around(hit: PaperHit): Found {
     const text = texts[hit.paper - 1] ?? ''
@@ -455,7 +430,6 @@
   })
 
   const NO_MARKS: readonly Highlight[] = []
-
   const NO_HITS: readonly PaperHit[] = []
 
   const marksOn = $derived.by(() => {
@@ -501,14 +475,12 @@
   }
 
   const contacts = new Contacts()
-
   const right = new RightPan()
 
   $effect(() => holdFreeScroll())
 
-  function kindOf(event: PointerEvent) {
-    return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
-  }
+  const kindOf = (event: PointerEvent) =>
+    penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
 
   const stylus = new Stylus({
     agent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
@@ -547,7 +519,6 @@
   let gesture = $state.raw<Gesture | null>(null)
   let predicted = $state.raw<InkPoint[]>([])
   let pointing = $state.raw<Point | null>(null)
-
   let driver = $state.raw<{ id: number; touch: boolean; screen: Point; since: number } | null>(null)
 
   const live = $derived.by(() => {
@@ -587,24 +558,14 @@
     }
   }
 
-  function inside(
+  const inside = (
     point: Point,
     box: { x: number; y: number; width: number; height: number },
-  ): boolean {
-    return (
-      point.x >= box.x &&
-      point.x <= box.x + box.width &&
-      point.y >= box.y &&
-      point.y <= box.y + box.height
-    )
-  }
-
-  function takesOver(one: Gesture, since: number, now: number): boolean {
-    if (one.kind === 'pinch') return false
-    if (one.kind !== 'draw' && one.kind !== 'erase') return true
-
-    return now - since <= TWO_FINGERS
-  }
+  ): boolean =>
+    point.x >= box.x &&
+    point.x <= box.x + box.width &&
+    point.y >= box.y &&
+    point.y <= box.y + box.height
 
   let doubting: { id: number; timer: number; event: PointerEvent } | null = null
 
@@ -657,7 +618,7 @@
     }
 
     if (one && driver?.touch && kind === 'touch' && driver.id !== event.pointerId) {
-      if (!takesOver(one, driver.since, event.timeStamp)) return
+      if (!takesOver(one.kind, driver.since, event.timeStamp)) return
 
       store.halt()
       if (one.kind === 'erase') store.takeBack(one.run)
@@ -696,7 +657,7 @@
     const asked = eraser ? 'erase' : tools.which
     const tool = drawing || !INKING.has(asked) ? asked : 'select'
 
-    if (tool === 'hand' || !page) {
+    if (pans(tool, !!page, writable) || !page) {
       gesture = {
         kind: 'pan',
         id: event.pointerId,
@@ -708,8 +669,6 @@
       pull = began(pull, startedNearEnd(store.viewBottom, store.last), Date.now())
       return
     }
-
-    if (!writable) return
 
     if (tool === 'words') {
       event.preventDefault()
@@ -804,27 +763,22 @@
   })
 
   function colourPicked(colour: string | null) {
-    store.edit(coloured(canvas, store.picked, colour ?? DEFAULT_INK))
+    run.colour(store, colour ?? DEFAULT_INK)
   }
 
-  function inkPicked(): boolean {
-    return writable && canvas.ink.some((one) => store.pickedSet.has(one.id))
-  }
+  const inkPicked = (): boolean => writable && canvas.ink.some((one) => store.pickedSet.has(one.id))
 
   function duplicatePicked() {
-    if (!writable || !store.picked.length) return
-    const made = copied(canvas, store.picked)
-    store.edit(made.canvas)
-    store.pickAll(made.ids)
+    if (writable) run.duplicate(store)
   }
 
   function deletePicked() {
     if (!writable) return
     const paged = new Set(pages.map((page) => page.id))
-    const going = store.picked.filter((id) => !paged.has(id))
-    if (!going.length) return
-    store.edit(removed(canvas, going))
-    store.clearPicked()
+    run.remove(
+      store,
+      store.picked.filter((id) => !paged.has(id)),
+    )
   }
 
   async function runCommandRow(id: string) {
@@ -832,12 +786,10 @@
     await runRow(id)
   }
 
-  function command(id: string, label: string): MenuEntry {
-    return {
-      label,
-      run: () => void runCommandRow(id),
-    }
-  }
+  const command = (id: string, label: string): MenuEntry => ({
+    label,
+    run: () => void runCommandRow(id),
+  })
 
   function pagesMenu(point: Point): MenuEntry[] {
     const page = pageAt(pages, point)
@@ -1188,9 +1140,8 @@
     return new MouseEvent('contextmenu', { clientX: box?.left ?? 0, clientY: box?.bottom ?? 0 })
   }
 
-  function sameView(one: Camera, other: Camera): boolean {
-    return one.x === other.x && one.y === other.y && one.scale === other.scale
-  }
+  const sameView = (one: Camera, other: Camera): boolean =>
+    one.x === other.x && one.y === other.y && one.scale === other.scale
 
   function dropTouch() {
     const one = gesture
@@ -1317,14 +1268,11 @@
     else fall()
   }
 
-  function typing(target: EventTarget | null): boolean {
-    return (
-      target instanceof HTMLElement &&
-      (target.isContentEditable ||
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement)
-    )
-  }
+  const typing = (target: EventTarget | null): boolean =>
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement)
 
   function onkeydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (store.editing !== null || typing(event.target)) return
@@ -1413,14 +1361,11 @@
     if (layer?.textContent.trim()) selection?.selectAllChildren(layer)
   }
 
-  function onWords(event: MouseEvent): boolean {
-    return (
-      tools.which === 'select' &&
-      event.target instanceof Element &&
-      event.target.closest('.words') !== null &&
-      !(caught && inside(planeAt(event), caught))
-    )
-  }
+  const onWords = (event: MouseEvent): boolean =>
+    tools.which === 'select' &&
+    event.target instanceof Element &&
+    event.target.closest('.words') !== null &&
+    !(caught && inside(planeAt(event), caught))
 
   function ondblclick(event: MouseEvent) {
     if (onWords(event)) return

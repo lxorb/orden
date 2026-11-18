@@ -7,6 +7,11 @@ import {
   now,
   within,
   NO_SUCH_SPACE,
+  type Env,
+  type Variables,
+  type Whoever,
+} from '../../../sync-server/src/api'
+import {
   MOST_MEMBERS,
   roomForAnItem,
   roomForItem,
@@ -21,10 +26,7 @@ import {
   BYTES,
   NO_SUCH_FILE,
   deviceOf,
-  type Env,
-  type Variables,
-  type Whoever,
-} from '../../../sync-server/src/api'
+} from '../../../sync-server-engine/src/api'
 import { askChat, CHAT_AWAY, chatsMoved } from './ask'
 import { INVALID, RATE } from './placing'
 import { askingOf, reachChat, type Reached } from './reach'

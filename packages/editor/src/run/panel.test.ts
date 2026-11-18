@@ -31,15 +31,13 @@ const FENCED = 'intro\n\n```js\nconsole.log(1)\n```\n\ntail\n'
 
 describe('which fences can be run', () => {
   test('accepts the spellings of JavaScript, whatever their case', () => {
-    for (const language of ['js', 'javascript', 'mjs', 'cjs', 'JS', ' JavaScript ']) {
+    for (const language of ['js', 'javascript', 'mjs', 'cjs', 'JS', ' JavaScript '])
       expect(isRunnableLanguage(language), language).toBe(true)
-    }
   })
 
   test('refuses everything that is not JavaScript', () => {
-    for (const language of ['', 'ts', 'typescript', 'jsx', 'node', 'python', 'mermaid', 'json']) {
+    for (const language of ['', 'ts', 'typescript', 'jsx', 'node', 'python', 'mermaid', 'json'])
       expect(isRunnableLanguage(language), language).toBe(false)
-    }
   })
 })
 
@@ -52,15 +50,15 @@ describe('finding the fence the caret is in', () => {
     expect(found?.to).toBe(FENCED.indexOf('```\n\ntail') + 3)
   })
 
-  test('reaches it from the fence lines themselves', () => {
-    expect(runnableFenceAt(state(FENCED), FENCED.indexOf('```js') + 2)).not.toBeNull()
-    expect(runnableFenceAt(state(FENCED), FENCED.indexOf('```\n\ntail') + 1)).not.toBeNull()
-  })
+  test.each([
+    [state(FENCED), FENCED.indexOf('```js') + 2],
+    [state(FENCED), FENCED.indexOf('```\n\ntail') + 1],
+  ])('%j', (input, extra) => expect(runnableFenceAt(input, extra)).not.toBeNull())
 
-  test('finds nothing in the prose around it', () => {
-    expect(runnableFenceAt(state(FENCED), 2)).toBeNull()
-    expect(runnableFenceAt(state(FENCED), FENCED.indexOf('tail'))).toBeNull()
-  })
+  test.each([
+    [state(FENCED), 2],
+    [state(FENCED), FENCED.indexOf('tail')],
+  ])('%j', (input, extra) => expect(runnableFenceAt(input, extra)).toBeNull())
 
   test('finds nothing in a fence of another language', () => {
     const other = 'x\n\n```python\nprint(1)\n```\n'
@@ -317,15 +315,12 @@ describe('the panel state', () => {
 })
 
 describe('showing how long a run took', () => {
-  test('counts in milliseconds while that reads well', () => {
-    expect(formatElapsed(0)).toBe('0 ms')
-    expect(formatElapsed(47.6)).toBe('48 ms')
-    expect(formatElapsed(999)).toBe('999 ms')
-  })
-
-  test('switches to seconds, and drops the decimal once it is long', () => {
-    expect(formatElapsed(1000)).toBe('1.0 s')
-    expect(formatElapsed(1440)).toBe('1.4 s')
-    expect(formatElapsed(10_000)).toBe('10 s')
-  })
+  test.each([
+    [0, '0 ms'],
+    [47.6, '48 ms'],
+    [999, '999 ms'],
+    [1000, '1.0 s'],
+    [1440, '1.4 s'],
+    [10_000, '10 s'],
+  ])('%j', (input, wanted) => expect(formatElapsed(input)).toEqual(wanted))
 })

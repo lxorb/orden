@@ -7,11 +7,9 @@ import type {
   PredefinedMenuItem,
   Submenu,
 } from '@tauri-apps/api/menu'
-import { account } from '../../accounts/src/api'
 import { takeKeyboard, currentWindow, invoke, afterQuiet } from '../../platform/src/api'
 import { hiddenKinds } from '../../gates/src/api'
 import { type MenuItem, fullscreen } from '../../ui-kit/src/api'
-import { modes } from '../../modes/src/api'
 import {
   type Change,
   changesBetween,
@@ -23,6 +21,7 @@ import {
   keystrokeOf,
   leftFullscreen,
   letPass,
+  type MenuBar as Described,
   type MenuBarSources,
   type MenuBarWords,
   type NativeEntry,
@@ -33,7 +32,6 @@ import {
 import { shortcuts } from '../../shortcuts/src/api'
 import { type AppContext, BY_ID, runEntry } from '../../shortcuts/src/api'
 import { appMenuRows } from './api'
-import { viewport } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 
 export interface MenuBarContext {
@@ -80,33 +78,6 @@ function words(): MenuBarWords {
     bringAllToFront: 'Bring all to front',
     find: 'Find',
   }
-}
-
-function signature(context: MenuBarContext): unknown[] {
-  const active = workspace.active
-
-  return [
-    context.view,
-    'File',
-    shortcuts.overrides,
-    workspace.activeTabId,
-    active?.kind,
-    active?.path,
-    active?.reading,
-    workspace.closed.any,
-    workspace.panel,
-    workspace.panes.count,
-    modes.readOnly,
-    active?.source,
-    modes.typewriter,
-    modes.focus,
-    modes.alwaysOnTop,
-    modes.highlightTone,
-    fullscreen.on,
-    account.user,
-    viewport.touch,
-    hiddenKinds.shown.join(),
-  ]
 }
 
 function entryRow(id: string, context: MenuBarContext, row: Partial<MenuItem> = {}): MenuItem {
@@ -156,7 +127,37 @@ function reloadRows(context: MenuBarContext): MenuItem[] {
   ]
 }
 
+type AppMenu = Awaited<ReturnType<typeof appMenuRows>>
+
+function describeNow(appMenu: AppMenu, context: MenuBarContext): Described {
+  return describeMenuBar({
+    groups: appMenu(context),
+    file: fileRows(context),
+    settings: entryRow('app.settings', context),
+    windowRows: [entryRow('app.next-note', context), entryRow('app.previous-note', context)],
+    helpRows: [entryRow('app.keys', context)],
+    viewRows: reloadRows(context),
+    keyFor: (command) => shortcuts.keyFor(command),
+    isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app' || RELOADING.has(command),
+    words: words(),
+  })
+}
+
+export function followDescribed(
+  appMenu: AppMenu,
+  context: () => MenuBarContext,
+  changed: (described: Described, now: MenuBarContext) => void,
+): () => void {
+  return $effect.root(() => {
+    $effect(() => {
+      const now = context()
+      changed(describeNow(appMenu, now), now)
+    })
+  })
+}
+
 class MenuBar {
+  private described: Described | null = null
   private context: MenuBarContext | null = null
   private label = ''
   private menu: Menu | null = null
@@ -196,13 +197,10 @@ class MenuBar {
 
     this.followFullscreen(frame)
 
-    $effect.root(() => {
-      $effect(() => {
-        const now = context()
-        signature(now)
-        this.context = now
-        this.soon()
-      })
+    followDescribed(await appMenuRows(), context, (described, now) => {
+      this.described = described
+      this.context = now
+      this.soon()
     })
   }
 
@@ -211,21 +209,9 @@ class MenuBar {
   }
 
   private async catchUp(raise: boolean): Promise<void> {
-    const context = this.context
-    if (!context) return
+    const described = this.described
+    if (!described) return
 
-    const appMenu = await appMenuRows()
-    const described = describeMenuBar({
-      groups: appMenu(context),
-      file: fileRows(context),
-      settings: entryRow('app.settings', context),
-      windowRows: [entryRow('app.next-note', context), entryRow('app.previous-note', context)],
-      helpRows: [entryRow('app.keys', context)],
-      viewRows: reloadRows(context),
-      keyFor: (command) => shortcuts.keyFor(command),
-      isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app' || RELOADING.has(command),
-      words: words(),
-    })
     const entries = this.owned(described.entries)
 
     this.runs = new Map([...described.runs].map(([id, run]) => [this.idOf(id), run]))

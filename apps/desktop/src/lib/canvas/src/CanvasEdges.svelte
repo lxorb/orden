@@ -1,7 +1,14 @@
 <script lang="ts">
   import type { CanvasEdge, CanvasNode, Side } from '@orden/markdown/canvas'
-  import { arrowAt, boxOf, edgeEnds, edgeMiddle, edgePath, facingSide } from '../../plane/src/api'
-  import { shownColour } from '../../plane/src/api'
+  import {
+    arrowAt,
+    boxOf,
+    edgeEnds,
+    edgeMiddle,
+    edgePath,
+    facingSide,
+    shownColour,
+  } from '../../plane/src/api'
 
   const {
     edges,
@@ -38,7 +45,6 @@
   const WEIGHT = 2
   const ARROW = 9
   const LABEL = 12
-
   const SPAN = 80000
   const HALF = SPAN / 2
 

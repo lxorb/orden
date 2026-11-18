@@ -1,8 +1,5 @@
 const QUOTED = /^(["'])([\s\S]*)\1$/
-
-export function isQuoted(value: string): boolean {
-  return QUOTED.test(value.trim())
-}
+export const isQuoted = (value: string): boolean => QUOTED.test(value.trim())
 
 export function unquoted(value: string): string {
   const trimmed = value.trim()
@@ -42,9 +39,8 @@ export function uncommented(value: string): string {
 
 const FLOW = /^\[([\s\S]*)\]$/
 
-export function flowItems(value: string): string[] | null {
-  return writtenFlowItems(value)?.map(unquoted) ?? null
-}
+export const flowItems = (value: string): string[] | null =>
+  writtenFlowItems(value)?.map(unquoted) ?? null
 
 export function writtenFlowItems(value: string): string[] | null {
   const found = FLOW.exec(value.trim())
@@ -86,7 +82,7 @@ function members(inside: string): string[] {
   return out
 }
 
-const ITEM = /^[ \t]*-(?=[ \t]|$)[ \t]*(.*)$/
+const ITEM = /^[ \t]*-(?=[ \t]|\r?$)[ \t]*(.*?)\r?$/
 
 export function listItem(line: string): string | null {
   const written = writtenListItem(line)
@@ -98,24 +94,18 @@ export function writtenListItem(line: string): string | null {
   return found === null ? null : (found[1] ?? '').trim()
 }
 
-export function oneLine(value: string): string {
-  return value.replace(/\s+/gu, ' ').trim()
-}
+export const oneLine = (value: string): string => value.replace(/\s+/gu, ' ').trim()
 
-function ambiguous(value: string): boolean {
-  return (
-    !value ||
-    /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
-    /:\s|:$|\s#/.test(value) ||
-    /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
-    /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
-    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
-  )
-}
+const ambiguous = (value: string): boolean =>
+  !value ||
+  /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
+  /:\s|:$|\s#/.test(value) ||
+  /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
+  /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
+  /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
 
-function quoted(value: string): string {
-  return value.includes("'") ? JSON.stringify(value) : `'${value}'`
-}
+const quoted = (value: string): string =>
+  value.includes("'") ? JSON.stringify(value) : `'${value}'`
 
 export function scalar(value: string): string {
   const said = oneLine(value)
@@ -125,4 +115,72 @@ export function scalar(value: string): string {
 export function flowItem(value: string): string {
   const said = oneLine(value)
   return /[,[\]{}]/.test(said) || ambiguous(said) ? quoted(said) : said
+}
+
+const SCALAR_OPENS = /(?:^\s*(?:-\s+)?|[:[,]\s*)$/
+
+export interface ReadLine {
+  text: string
+  at: number[]
+}
+
+export function readInQuotes(line: string): ReadLine {
+  let text = ''
+  const at: number[] = []
+  let quote: "'" | '"' | null = null
+  let open = -1
+  let held = ''
+  let heldAt: number[] = []
+
+  for (let index = 0; index < line.length; index++) {
+    const character = line.charAt(index)
+
+    if (quote === null) {
+      if (character === '#' && (index === 0 || /\s/.test(line.charAt(index - 1)))) {
+        for (let rest = index; rest < line.length; rest++) at.push(rest)
+        text += line.slice(index)
+        break
+      }
+      text += character
+      at.push(index)
+      if ((character === "'" || character === '"') && SCALAR_OPENS.test(line.slice(0, index))) {
+        quote = character
+        open = index
+        held = ''
+        heldAt = []
+      }
+      continue
+    }
+
+    const next = line.charAt(index + 1)
+    if (quote === '"' && character === '\\' && next) {
+      const plain = next === '"' || next === '\\' || next === '/'
+      held += plain ? next : character + next
+      heldAt.push(...(plain ? [index] : [index, index + 1]))
+      index++
+      continue
+    }
+    if (quote === "'" && character === "'" && next === "'") {
+      held += "'"
+      heldAt.push(index)
+      index++
+      continue
+    }
+    if (character === quote) {
+      text += held + character
+      at.push(...heldAt, index)
+      quote = null
+      continue
+    }
+    held += character
+    heldAt.push(index)
+  }
+
+  if (quote !== null) {
+    for (let rest = open + 1; rest < line.length; rest++) at.push(rest)
+    text += line.slice(open + 1)
+  }
+
+  at.push(line.length)
+  return { text, at }
 }

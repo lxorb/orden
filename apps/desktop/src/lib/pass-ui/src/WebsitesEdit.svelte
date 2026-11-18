@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { MATCH_RULES, type MatchRule, type Website } from '@orden/pass/types'
+  import { MATCH_RULES, type Website } from '@orden/pass/types'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import { Cross } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import { FIELD_ICONS } from '../../pass-sync/src/api'
-  import { matchLabel } from '../../pass-sync/src/api'
+  import { FIELD_ICONS, matchLabel } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
@@ -21,10 +20,6 @@
   function remove(at: number) {
     websites = websites.filter((_, index) => index !== at)
     oninput()
-  }
-
-  function ruleOf(value: string): MatchRule {
-    return MATCH_RULES.find((rule) => rule === value) ?? 'domain'
   }
 </script>
 
@@ -51,7 +46,7 @@
             options={rules}
             label="Fill on"
             onchange={(value: string) => {
-              website.match = ruleOf(value)
+              website.match = MATCH_RULES.find((rule) => rule === value) ?? 'domain'
               oninput()
             }}
           />

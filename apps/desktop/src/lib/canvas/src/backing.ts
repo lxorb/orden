@@ -6,7 +6,6 @@ const SETTINGS: Record<InkMode, CanvasRenderingContext2DSettings> = {
 }
 
 const OVERLAID = /android/i
-
 const AGENT = typeof navigator === 'undefined' ? '' : navigator.userAgent
 
 export interface InkBacking {
@@ -26,10 +25,7 @@ export function inkMode({ agent, reported }: InkBacking): InkMode {
   return 'latency'
 }
 
-export function wantedInkMode(): InkMode {
-  return inkMode({ agent: AGENT, reported: null })
-}
-
+export const wantedInkMode = (): InkMode => inkMode({ agent: AGENT, reported: null })
 const announced = new Set<string>()
 
 function announce(mode: InkMode, wanted: InkMode) {

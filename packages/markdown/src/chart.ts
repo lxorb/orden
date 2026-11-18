@@ -15,19 +15,13 @@ export interface Chart {
   series: Series[]
 }
 
-const KINDS: ReadonlyMap<string, ChartKind> = new Map(
-  Object.entries({
-    bar: 'bar',
-    line: 'line',
-    scatter: 'scatter',
-    pie: 'pie',
-    donut: 'donut',
-    doughnut: 'donut',
-    radar: 'radar',
-    polar: 'polar',
-    polararea: 'polar',
-  } satisfies Record<string, ChartKind>),
-)
+const KINDS = new Map<string, ChartKind>([
+  ...(['bar', 'line', 'scatter', 'pie', 'donut', 'radar', 'polar'] as const).map(
+    (kind): [string, ChartKind] => [kind, kind],
+  ),
+  ['doughnut', 'donut'],
+  ['polararea', 'polar'],
+])
 
 const MOST_POINTS = 200
 const MOST_SERIES = 12
@@ -202,10 +196,7 @@ const PLOT = {
 }
 
 const GRID = 4
-
-function round(value: number): string {
-  return (Math.round(value * 100) / 100).toString()
-}
+const round = (value: number): string => (Math.round(value * 100) / 100).toString()
 
 export interface ChartOptions {
   locale?: string | undefined
@@ -230,7 +221,6 @@ function span(chart: Chart): { low: number; high: number; step: number } {
   const bottom = every.reduce((low, one) => Math.min(low, one), 0)
   if (top - bottom < SMALLEST) return { low: 0, high: 1, step: 0.25 }
   const reach = top - bottom
-
   const rough = reach / (GRID - 1)
   const power = 10 ** Math.floor(Math.log10(rough))
   const step = [1, 2, 2.5, 5, 10].map((one) => one * power).find((one) => one >= rough / 1.5) ?? 1
@@ -250,9 +240,8 @@ function marks(low: number, high: number, step: number): number[] {
   return out
 }
 
-function text(words: string, x: number, y: number, className: string, anchor = 'middle'): string {
-  return `<text class="${className}" x="${round(x)}" y="${round(y)}" text-anchor="${anchor}">${escape(words)}</text>`
-}
+const text = (words: string, x: number, y: number, className: string, anchor = 'middle'): string =>
+  `<text class="${className}" x="${round(x)}" y="${round(y)}" text-anchor="${anchor}">${escape(words)}</text>`
 
 function frame(chart: Chart, low: number, high: number, step: number, said: Said): string {
   const out: string[] = []
@@ -273,9 +262,8 @@ function frame(chart: Chart, low: number, high: number, step: number, said: Said
   return out.join('')
 }
 
-function longest(chart: Chart): number {
-  return chart.series.map((one) => one.data.length).reduce((high, one) => Math.max(high, one), 1)
-}
+const longest = (chart: Chart): number =>
+  chart.series.map((one) => one.data.length).reduce((high, one) => Math.max(high, one), 1)
 
 function bars(chart: Chart, low: number, high: number, said: Said): string {
   const points = longest(chart)
@@ -372,9 +360,8 @@ function round_middle(): { middle: { x: number; y: number }; radius: number } {
   }
 }
 
-function spoke(count: number, at: number): number {
-  return -Math.PI / 2 + (at / Math.max(1, count)) * Math.PI * 2
-}
+const spoke = (count: number, at: number): number =>
+  -Math.PI / 2 + (at / Math.max(1, count)) * Math.PI * 2
 
 function radar(chart: Chart, low: number, high: number, step: number, said: Said): string {
   const { middle, radius } = round_middle()
@@ -450,9 +437,8 @@ function polar(chart: Chart, high: number, said: Said): string {
   return out.join('')
 }
 
-function at(middle: { x: number; y: number }, radius: number, angle: number): string {
-  return `${round(middle.x + radius * Math.cos(angle))},${round(middle.y + radius * Math.sin(angle))}`
-}
+const at = (middle: { x: number; y: number }, radius: number, angle: number): string =>
+  `${round(middle.x + radius * Math.cos(angle))},${round(middle.y + radius * Math.sin(angle))}`
 
 function slice(
   middle: { x: number; y: number },

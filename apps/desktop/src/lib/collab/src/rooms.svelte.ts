@@ -1,11 +1,13 @@
+import { door } from '@orden/markdown/door'
 import { untrack } from 'svelte'
 import { documentOf, type EditorView } from '@orden/editor'
 import { account } from '../../accounts/src/api'
 import type { PlaneSurface } from '@orden/markdown/plane'
 import { busy } from '../../ui-kit/src/api'
 import { sha256, without } from '../../platform/src/api'
+import { demoted as demotedFrom, TOO_LARGE_FOR_A_ROOM } from './demoted'
 import { roomKindOf } from './kind'
-import type { PlaneRoom, Room, Seen } from '../../collab-rooms/src/api'
+import type { PlaneRoom, Room, Seen, Worn } from '../../collab-rooms/src/api'
 import { deviceName, ownAccent, personFace, personName } from './who'
 import { type Scheme, theme } from '../../theme/src/api'
 import type { NoteDoc } from '../../documents/src/api'
@@ -40,6 +42,8 @@ interface Engine {
   PlaneRoom: typeof PlaneRoom
 }
 
+const roomsCode = door(() => import('../../collab-rooms/src/api'))
+
 class Rooms {
   present = $state<Record<string, number>>({})
   seen = $state<Record<string, Seen>>({})
@@ -51,7 +55,6 @@ class Rooms {
   }
 
   private engine: Engine | null = null
-  private reaching: Promise<void> | null = null
 
   private readonly held = new Map<string, Joined>()
   private readonly shut = new Map<string, { noteId: string; token: string }>()
@@ -130,7 +133,7 @@ class Rooms {
     if (!token) return
 
     if (!this.engine) {
-      void this.reach()
+      void this.reach().catch(() => undefined)
       return
     }
 
@@ -140,10 +143,11 @@ class Rooms {
   }
 
   reach(): Promise<void> {
-    return (this.reaching ??= import('../../collab-rooms/src/api').then(({ Room, PlaneRoom }) => {
+    return roomsCode().then(({ Room, PlaneRoom }) => {
+      if (this.engine) return
       this.engine = { Room, PlaneRoom }
       this.follow(this.open)
-    }))
+    })
   }
 
   drawing(key: string, surface: PlaneSurface | null) {
@@ -186,10 +190,10 @@ class Rooms {
     })
   }
 
-  rename(person: string | undefined) {
+  rename(person: string | undefined, worn?: Worn) {
     untrack(() => {
-      for (const joined of this.held.values()) joined.room.rename(person)
-      for (const one of this.carried.values()) one.room.rename(person)
+      for (const joined of this.held.values()) joined.room.rename(person, worn)
+      for (const one of this.carried.values()) one.room.rename(person, worn)
     })
   }
 
@@ -235,7 +239,7 @@ class Rooms {
     const refused = () => {
       this.letGo(key)
       this.shut.set(key, { noteId: open.noteId, token })
-      busy.failed('This note is as large as a note in a room may get.')
+      busy.failed(TOO_LARGE_FOR_A_ROOM)
     }
 
     const shut = (signedOut: boolean) => {
@@ -245,19 +249,11 @@ class Rooms {
     }
 
     const demoted = () => {
-      open.note.reads = true
-      this.letGo(key)
-      void account
-        .loadSpaces()
-        .then(
-          () => {
-            open.note.reads = false
-          },
-          () => undefined,
-        )
-        .then(() => {
-          this.follow(this.open)
-        })
+      void demotedFrom(
+        open.note,
+        () => this.letGo(key),
+        () => this.follow(this.open),
+      )
     }
 
     const arrivals = open.note.arrivals

@@ -37,9 +37,9 @@
   import BoardNew from './BoardNew.svelte'
   import { cardEntries, columnEntries, optionFor, renameOption } from './board-menus'
   import { toneColour, valueText } from './chips'
-  import { editorOf, displayName } from './columns'
+  import { editorOf, displayName, keyWritten } from './columns'
   import { dragging, droppable, placeAmong, type Point } from './drag.svelte'
-  import { type Drop, dropInto } from './drop'
+  import { dropInto, inTurn } from './drop'
   import {
     placeColumn,
     prunedOrder,
@@ -84,7 +84,6 @@
   const phone = $derived(viewport.device === 'phone')
   const options = $derived(base && property ? optionsAt(base, property) : [])
   const lists = $derived(property?.startsWith('note.') ? holdsLists(live.rows, property) : false)
-
   let pending = $state<Pending[]>([])
   let shuffled = $state<{ column: string; order: string[] } | null>(null)
 
@@ -110,7 +109,6 @@
   )
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
   const names = $derived(shownGroups.map((group) => groupName(group.key)))
-
   let seen: Answer | null = null
   $effect(() => {
     const answer = live.answer
@@ -122,7 +120,7 @@
     })
   })
 
-  const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups))
+  const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups, live.answer?.lanes))
   const noteCounts = $derived(noteNames(groups.map((one) => one.key)))
   const laneNames = $derived(noteNames(lanes))
   const walked = $derived<(Value | undefined)[]>(lanes.length ? lanes : [undefined])
@@ -268,11 +266,10 @@
     )
   }
 
-  function sumsOf(group: Group): string[] {
-    return Object.keys(view?.summaries ?? {})
+  const sumsOf = (group: Group): string[] =>
+    Object.keys(view?.summaries ?? {})
       .map((one) => valueText(group.summaries[one] ?? null, live.today))
       .filter(Boolean)
-  }
 
   let pickedFrom: { column: string; lane: string | null } | null = null
 
@@ -308,25 +305,6 @@
     carryTo(row, group, laneKey, indexWithout(indexAt(place, at), was), at)
   }
 
-  function inTurn(drops: readonly (Drop | null)[]): Drop[] {
-    const given = drops.filter((one): one is Drop => one !== null)
-    const changes = given.flatMap((one) => ('change' in one ? [one.change] : []))
-    const change: Drop[] = changes.length
-      ? [
-          {
-            change: changes.reduce((one, next) => ({
-              note: { ...one.note, ...next.note },
-            })),
-          },
-        ]
-      : []
-    return [
-      ...change,
-      ...given.filter((one) => 'tick' in one),
-      ...given.filter((one) => 'move' in one),
-    ]
-  }
-
   function carryTo(
     row: Row,
     group: Group,
@@ -356,10 +334,11 @@
     if (!carries) return
 
     const fromKey = groups.find((one) => groupName(one.key) === from.column)?.key
-    const first = from.column === name ? null : dropInto(by, group.key, row, fromKey)
+    const written = (on: string, key: Value) => (base ? keyWritten(base, on, key, live.rows) : key)
+    const first = from.column === name ? null : dropInto(by, written(by, group.key), row, fromKey)
     const second =
       toLane !== undefined && sub !== undefined && from.lane !== lane
-        ? dropInto(sub, toLane, row, laneOf(from.lane))
+        ? dropInto(sub, written(sub, toLane), row, laneOf(from.lane))
         : null
     const drops = inTurn([first, second])
     if (!drops.length) return
@@ -450,7 +429,6 @@
   }
 
   const titleOf = (row: Row) => row.file.basename
-
   let said = $state('')
   function announce(words: string) {
     said = words
@@ -512,9 +490,8 @@
     return null
   })
 
-  function isFocus(column: string, lane: string | null, row: Row): boolean {
-    return rover?.column === column && rover.lane === lane && rover.card === cardKey(row)
-  }
+  const isFocus = (column: string, lane: string | null, row: Row): boolean =>
+    rover?.column === column && rover.lane === lane && rover.card === cardKey(row)
 
   async function focusAt(column: number, lane: number, index: number) {
     const group = shownGroups[column]

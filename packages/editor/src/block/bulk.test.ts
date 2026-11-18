@@ -94,10 +94,10 @@ describe('a line as the words in it', () => {
     expect(shaped('an item', 'numbered', 4)).toBe('4. an item')
   })
 
-  test('and a line with no words in it is left exactly as it was', () => {
-    expect(shaped('', 'bullet')).toBe('')
-    expect(shaped('   ', 'bullet')).toBe('   ')
-  })
+  test.each([
+    ['', '', 'bullet' as const],
+    ['   ', '   ', 'bullet' as const],
+  ])('%j', (input, wanted, extra) => expect(shaped(input, extra)).toEqual(wanted))
 })
 
 describe('turning several blocks into something else', () => {
@@ -228,6 +228,38 @@ describe('a link to several blocks', () => {
     expect(said()).toContain('Third words. ')
   })
 
+  test('on code nested in a list item names the item, and keeps the list whole', () => {
+    const doc = '1. Install:\n   ```bash\n   npm i\n   ```\n2. Run it\n'
+    const at = doc.indexOf('   ```bash')
+    const { view, said } = viewOf(doc, at, at)
+
+    const [target] = blockTargets(view, at)
+    expect(said()).toBe(doc.replace('1. Install:', `1. Install: ${target?.slice(1) ?? ''}`))
+  })
+
+  test('on maths or a table nested in a list item keeps the list whole', () => {
+    const maths = '- Formula:\n  $$\n  x^2\n  $$\n- Next\n'
+    const on = maths.indexOf('  $$')
+    const first = viewOf(maths, on, on)
+    const [target] = blockTargets(first.view, on)
+    expect(first.said()).toBe(maths.replace('- Formula:', `- Formula: ${target?.slice(1) ?? ''}`))
+
+    const table = '- Data:\n\n  | a | b |\n  | - | - |\n  | 1 | 2 |\n- Next\n'
+    const at = table.indexOf('  | a')
+    const second = viewOf(table, at, at)
+    const [named] = blockTargets(second.view, at)
+    expect(second.said()).toBe(
+      table.replace('2 |\n- Next', `2 |\n\n  ^${named?.slice(2) ?? ''}\n\n- Next`),
+    )
+    expect(named).toMatch(/^#\^\w+$/)
+  })
+
+  test('on indented code takes no name from a fence after it', () => {
+    const doc = '    a\n\n```\nb\n``` ^abc\n'
+    const { view } = viewOf(doc, 0, 0)
+    expect(blockTargets(view, 0)).not.toContain('#^abc')
+  })
+
   test('names a heading by its words rather than writing one in', () => {
     const doc = '# One\n\nwords\n'
     const { view, said } = viewOf(doc, 0, 0)
@@ -307,9 +339,7 @@ describe('a link to a block', () => {
       top.push(node.name)
     }
     expect(top).toEqual(['OrderedList'])
-    expect(said()).toBe(
-      `1. a\n\n   \`\`\`js\n   x()\n   \`\`\`\n\n   ${target?.slice(1) ?? ''}\n\n2. b\n`,
-    )
+    expect(said()).toBe(doc.replace('1. a', `1. a ${target?.slice(1) ?? ''}`))
   })
 
   test('a fence written on the item line itself takes it inside the item too', () => {
@@ -326,15 +356,18 @@ describe('a link to a block', () => {
     expect(said()).toBe(`- \`\`\`js\n  x()\n  \`\`\`\n\n  ${target?.slice(1) ?? ''}\n\n- b\n`)
   })
 
-  test('asked twice gives the name it already has', () => {
-    const doc = 'a\n\n```\ncode\n```\n\n^abc123\n\nb\n'
-    expect(named(doc, 'code')).toEqual({ target: '#^abc123', said: doc })
-  })
-
-  test('front matter has none', () => {
-    const doc = '---\ntitle: x\n---\n\nb\n'
-    expect(named(doc, 'title')).toEqual({ target: undefined, said: doc })
-  })
+  test.each([
+    [
+      'a\n\n```\ncode\n```\n\n^abc123\n\nb\n',
+      { target: '#^abc123', said: 'a\n\n```\ncode\n```\n\n^abc123\n\nb\n' },
+      'code',
+    ],
+    [
+      '---\ntitle: x\n---\n\nb\n',
+      { target: undefined, said: '---\ntitle: x\n---\n\nb\n' },
+      'title',
+    ],
+  ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
 
   test('an item with children takes it on its own line', () => {
     const { target, said } = named('- a\n  more\n  - nested\n- b\n', '- a')
@@ -350,20 +383,15 @@ describe('naming a block in old notes and open ones', () => {
     return { target, said: said() }
   }
 
-  test('an unclosed fence takes no name, since it would be code', () => {
-    const doc = 'a\n\n```\nx\n'
-    expect(named(doc, 'x')).toEqual({ target: undefined, said: doc })
-  })
-
-  test('a closing fence an older build named keeps that name', () => {
-    const doc = 'a\n\n```\nx\n``` ^abc123\n\nb\n'
-    expect(named(doc, 'x')).toEqual({ target: '#^abc123', said: doc })
-  })
-
-  test('a name under a paragraph is its name, not a reason for a second', () => {
-    const doc = 'para\n\n^have\n\nb\n'
-    expect(named(doc, 'para')).toEqual({ target: '#^have', said: doc })
-  })
+  test.each([
+    ['a\n\n```\nx\n', { target: undefined, said: 'a\n\n```\nx\n' }, 'x'],
+    [
+      'a\n\n```\nx\n``` ^abc123\n\nb\n',
+      { target: '#^abc123', said: 'a\n\n```\nx\n``` ^abc123\n\nb\n' },
+      'x',
+    ],
+    ['para\n\n^have\n\nb\n', { target: '#^have', said: 'para\n\n^have\n\nb\n' }, 'para'],
+  ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
 
   test('maths with a blank line in it takes it under the whole of it', () => {
     const { target, said } = named('$$\na\n\nb\n$$\n', 'a')

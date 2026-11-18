@@ -1,21 +1,22 @@
 <script lang="ts">
   import { domainNotice } from './domain-status'
-  import { localDate } from '../../platform/src/api'
+  import {
+    localDate,
+    shownName,
+    nameOf,
+    isDesktop,
+    openExternal,
+    dur,
+    slide,
+  } from '../../platform/src/api'
   import { publish } from './publishing.svelte'
-  import { segmented } from '../../ui-kit/src/api'
-  import { shownName } from '../../platform/src/api'
-  import { nameOf } from '../../platform/src/api'
-  import { Facts } from '../../ui-kit/src/api'
-  import { Select } from '../../ui-controls/src/api'
-  import { Sheet } from '../../ui-controls/src/api'
+  import { segmented, Facts, viewport } from '../../ui-kit/src/api'
+  import { Select, Sheet } from '../../ui-controls/src/api'
   import { chooseTarget, download, writeFile } from '../../files-out/src/api'
   import { siteIcon } from './site-icon'
-  import { isDesktop, openExternal } from '../../platform/src/api'
   import { SpaceMark } from '../../marks/src/api'
   import { readableSize } from '../../accounts/src/api'
-  import { viewport } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
-  import { dur, slide } from '../../platform/src/api'
 
   const blog = $derived(publish.blog)
   const published = $derived(publish.published)
@@ -23,7 +24,6 @@
   const liveAt = $derived(blog?.domain ?? (blog?.subdomain ? `${blog.subdomain}.orden.so` : ''))
   const records = $derived(publish.dns.length ? publish.dns : (blog?.dns ?? []))
   const notice = $derived(publish.status ? domainNotice(publish.status) : null)
-
   const showing = $derived(publish.space?.id === workspace.activeSpaceId)
 
   const noteChoices = $derived([
@@ -44,9 +44,7 @@
   ])
 
   const SHOWN = 6
-
   const SHOWN_ANSWERS = 20
-
   const when = (stamp: number) => localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
   async function saveAnswers() {

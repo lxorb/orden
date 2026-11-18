@@ -36,7 +36,6 @@ describe('a menu held by a signal', () => {
     expect(menu.open).toBe(true)
     lock.abort()
     expect(menu.open).toBe(false)
-
     const again = new AbortController()
     menu.show(press(), [{ label: 'Copy', run: () => undefined }], { until: again.signal })
     menu.show(press(), [{ label: 'Paste', run: () => undefined }])

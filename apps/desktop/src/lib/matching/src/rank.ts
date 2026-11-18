@@ -37,20 +37,13 @@ const SHORT: Record<Kind, number> = {
 }
 
 const STRONG: Partial<Record<Kind, number>> = { setting: 0.75, page: 0.5, heading: 0.9 }
-
 const EXACT = 40
 const PREFIX = 10
-
 const SLIPPED = 0.45
-
 const ALSO = 0.7
-
 const MOST_USE = 40
-
 export const MOST = 50
-
 export const LONGEST = 256
-
 export const MOST_PLACES = 200
 
 interface Typed {
@@ -84,9 +77,7 @@ function quality(words: readonly string[], reading: string, slips: boolean): num
   return best > 0 ? score / best : 0
 }
 
-function usePoints(use: number): number {
-  return Math.min(MOST_USE, 12 * Math.log2(1 + use))
-}
+const usePoints = (use: number): number => Math.min(MOST_USE, 12 * Math.log2(1 + use))
 
 function scored<T>(
   { words, typed, short }: Typed,

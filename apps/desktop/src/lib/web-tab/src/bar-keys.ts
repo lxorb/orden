@@ -17,7 +17,6 @@ export type ZoomStep = 'in' | 'out' | 'reset'
 
 export function barKey(event: KeyboardEvent, keys: Bindings): BarKey | null {
   const either = (id: string) => keys.pressed(id, event) || keys.pressed(`${id}.alt`, event)
-
   const f6 = event.key === 'F6' && !event.ctrlKey && !event.shiftKey && !event.altKey
   if (either('web.address') || (f6 && fromPage(event))) return { to: 'address' }
 

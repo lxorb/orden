@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 interface Heard {
   on: string | null
@@ -13,6 +13,9 @@ const world = vi.hoisted(() => ({
   listeners: [] as Heard[],
   ran: [] as string[],
   claims: true,
+  hangs: false,
+  deadlines: [] as (AbortSignal | undefined)[],
+  results: [] as { id: number; result: unknown }[],
 }))
 
 function sendTo(label: string, event: string, payload: unknown) {
@@ -42,15 +45,27 @@ vi.mock('@tauri-apps/api/window', () => ({
 vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   isDesktop: true,
-  invoke: (command: string) => Promise.resolve(command === 'automation_claim' ? world.claims : []),
+  invoke: (command: string, args?: { id: number; result: unknown }) => {
+    if (command === 'automation_result' && args) world.results.push(args)
+    return Promise.resolve(command === 'automation_claim' ? world.claims : [])
+  },
   openExternal: () => Promise.resolve(),
 }))
 vi.mock('../../ui-kit/src/busy.svelte', () => ({ busy: { failed: () => undefined } }))
 vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
 vi.mock('./caller', () => ({ callerOf: () => undefined }))
 vi.mock('./verbs', () => ({
-  dispatch: (verb: string) => {
+  dispatch: (
+    verb: string,
+    _args: unknown,
+    _rest: unknown,
+    _road: unknown,
+    _caller: unknown,
+    deadline?: AbortSignal,
+  ) => {
     world.ran.push(verb)
+    world.deadlines.push(deadline)
+    if (world.hangs) return new Promise(() => undefined)
     return Promise.resolve({ ok: true, value: {} })
   },
   isVerb: () => true,
@@ -67,9 +82,8 @@ async function openWindow(label: string) {
 
 describe('with two windows open', () => {
   beforeEach(async () => {
-    world.listeners.length = 0
-    world.ran.length = 0
-    world.claims = true
+    Object.assign(world, { listeners: [], ran: [], claims: true, hangs: false })
+    Object.assign(world, { deadlines: [], results: [] })
     await openWindow('main')
     await openWindow('orden-2')
   })
@@ -86,6 +100,39 @@ describe('with two windows open', () => {
     expect(world.ran).toEqual([])
   })
 
+  describe('with a verb that hangs', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      world.hangs = true
+    })
+    afterEach(() => vi.useRealTimers())
+
+    test('it is told when to stop working, a moment before the endpoint stops waiting', async () => {
+      sendTo('main', 'orden://automation', { id: 1, verb: 'append_note', within_ms: 25_000 })
+      await vi.advanceTimersByTimeAsync(23_900)
+      const deadline = world.deadlines[0]
+      expect(deadline?.aborted).toBe(false)
+      await vi.advanceTimersByTimeAsync(200)
+      expect(deadline?.aborted).toBe(true)
+    })
+
+    test('it is answered for, in words, when the time is up', async () => {
+      sendTo('main', 'orden://automation', { id: 7, verb: 'sync.now', within_ms: 25_000 })
+      await vi.advanceTimersByTimeAsync(24_900)
+      expect(world.results).toEqual([])
+      await vi.advanceTimersByTimeAsync(200)
+      expect(world.results).toEqual([
+        { id: 7, result: expect.objectContaining({ ok: false, code: 'timeout' }) },
+      ])
+    })
+  })
+
+  test('a request with no time given has no deadline to stop by', async () => {
+    sendTo('main', 'orden://automation', { id: 1, verb: 'run_terminal' })
+    await vi.waitFor(() => expect(world.deadlines).toHaveLength(1))
+    expect(world.deadlines[0]).toBeUndefined()
+  })
+
   test('a link runs once, in the window it was sent to', async () => {
     sendTo('main', 'orden://open-url', ['orden://new?title=x'])
     await Promise.resolve()
@@ -95,6 +142,7 @@ describe('with two windows open', () => {
 
 const here = join(import.meta.dirname, '..')
 const crate = join(here, '../../../src-tauri/src')
+const crates = join(here, '../../../src-tauri/crates')
 
 function filesUnder(dir: string, ending: RegExp): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -106,7 +154,7 @@ function filesUnder(dir: string, ending: RegExp): string[] {
 
 function sentToOneWindow(): Set<string> {
   const events = new Set<string>()
-  for (const file of filesUnder(crate, /\.rs$/)) {
+  for (const file of [crate, crates].flatMap((dir) => filesUnder(dir, /\.rs$/))) {
     const source = readFileSync(file, 'utf8')
     for (const [, name] of source.matchAll(/emit_to\(\s*[^,]+,\s*([A-Z_]+|"orden:[^"]+")\s*,/g)) {
       if (name?.startsWith('"')) {
@@ -137,7 +185,12 @@ describe('the audit of every event a window hears', () => {
   })
 
   test('what a window acts on is never sent to every window', () => {
-    const bare = (file: string) => readFileSync(join(crate, file), 'utf8')
+    const all = [crate, crates].flatMap((dir) => filesUnder(dir, /\.rs$/))
+    const bare = (file: string) =>
+      readFileSync(
+        all.find((path) => path.split(/[\\/]/).at(-1) === file) ?? join(crate, file),
+        'utf8',
+      )
     expect(bare('uris.rs')).not.toMatch(/\.emit\(OPENED/)
     expect(bare('reminders.rs')).not.toMatch(/\.emit\(PRESSED/)
     expect(bare('search.rs')).not.toMatch(/\.emit\(\s*HITS/)

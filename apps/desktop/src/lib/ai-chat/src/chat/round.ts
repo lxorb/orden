@@ -1,4 +1,4 @@
-import { sseEvents } from '../../../ai-providers/src/api'
+import { sseEvents, type Effort, type Part, type Usage } from '../../../ai-providers/src/api'
 import {
   nearest,
   ordered,
@@ -10,7 +10,6 @@ import {
 } from './effort'
 import { learn } from './learned'
 import { Refused, refusalIn, request } from './request'
-import type { Effort, Part, Usage } from '../../../ai-providers/src/api'
 import { type Answer, type Ask, record, type Wire } from './wire'
 
 export interface Round {
@@ -34,7 +33,8 @@ function without(refused: Refused, ask: Ask): { ask: Ask; adjusted: Adjusted } |
 
   if (ask.perMessage && /per-turn effort|per-message effort|mid-conversation/i.test(said)) {
     learn(provider, model, { perMessage: false })
-    return { ask: { ...ask, perMessage: false, base: ask.effort }, adjusted: {} }
+    const steps = ask.steps.filter((one) => one.role !== 'effort')
+    return { ask: { ...ask, steps, perMessage: false, base: ask.effort }, adjusted: {} }
   }
   const aboutEffort = refusesEffort(said, refused.param)
   if (refusesReasoning(said, refused.param) || (aboutEffort && takesNoEffort(said, refused.code))) {

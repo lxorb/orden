@@ -32,7 +32,7 @@ export function openChat(path: string, how: OpenHow = {}, message?: string): voi
   const open = workspace.tabs.find((one) => one.kind === 'channel' && samePath(one.path, path))
   if (open) {
     if (how.activate !== false) workspace.activeTabId = open.id
-    if (message) jumpOpen(path)
+    if (message) for (const hear of hearers) hear(path)
     return
   }
   workspace.openView('', chatName(path), path, how, 'channel')
@@ -55,10 +55,6 @@ const hearers = new Set<(path: string) => void>()
 export function hearJumps(hear: (path: string) => void): () => void {
   hearers.add(hear)
   return () => hearers.delete(hear)
-}
-
-function jumpOpen(path: string) {
-  for (const hear of hearers) hear(path)
 }
 
 export async function makeChat(folder?: string, named?: string): Promise<void> {

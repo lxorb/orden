@@ -1,7 +1,6 @@
 import { foldName } from '@orden/markdown/links'
 import { nameOf, samePath, joinPath, shownName } from '../../platform/src/api'
-import type { Candidate } from '../../matching/src/api'
-import { ranked } from '../../matching/src/api'
+import { ranked, type Candidate } from '../../matching/src/api'
 import { shownAddress } from '@orden/scan/visits'
 
 export interface WebNote {
@@ -14,7 +13,6 @@ export interface WebNote {
 type Websites = ReadonlyMap<string, { address: string | null }>
 
 const WEB_NOTES = 4
-
 export const noteKey = (path: string) => `note:${path}`
 
 function readable(url: string): string {

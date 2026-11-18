@@ -16,61 +16,31 @@ export const IDENTITY_FIRST: Record<IdentityGroup, readonly IdentityKey[]> = {
 }
 
 export function fieldKindLabel(kind: FieldKind): string {
-  switch (kind) {
-    case 'text':
-      return 'Text'
-    case 'hidden':
-      return 'Hidden'
-    case 'totp':
-      return '2FA code'
-    case 'date':
-      return 'Date'
-  }
+  return { text: 'Text', hidden: 'Hidden', totp: '2FA code', date: 'Date' }[kind]
 }
 
 export function matchLabel(rule: MatchRule): string {
-  switch (rule) {
-    case 'domain':
-      return 'Site and its subdomains'
-    case 'host':
-      return 'Exact host'
-    case 'exact':
-      return 'Exact address'
-    case 'prefix':
-      return 'Starts with'
-    case 'never':
-      return 'Never'
-  }
+  return {
+    domain: 'Site and its subdomains',
+    host: 'Exact host',
+    exact: 'Exact address',
+    prefix: 'Starts with',
+    never: 'Never',
+  }[rule]
 }
 
 export function securityLabel(security: WifiSecurity): string {
-  switch (security) {
-    case 'wpa':
-      return 'WPA'
-    case 'wpa2':
-      return 'WPA2'
-    case 'wpa3':
-      return 'WPA3'
-    case 'wep':
-      return 'WEP'
-    case 'none':
-      return 'None'
-  }
+  return { wpa: 'WPA', wpa2: 'WPA2', wpa3: 'WPA3', wep: 'WEP', none: 'None' }[security]
 }
 
 export function brandLabel(brand: CardBrand): string {
-  switch (brand) {
-    case 'visa':
-      return 'Visa'
-    case 'mastercard':
-      return 'Mastercard'
-    case 'amex':
-      return 'American Express'
-    case 'discover':
-      return 'Discover'
-    case 'other':
-      return 'Other'
-  }
+  return {
+    visa: 'Visa',
+    mastercard: 'Mastercard',
+    amex: 'American Express',
+    discover: 'Discover',
+    other: 'Other',
+  }[brand]
 }
 
 export function brandOf(number: string): CardBrand | null {
@@ -84,22 +54,14 @@ export function brandOf(number: string): CardBrand | null {
 }
 
 export function separatorLabel(separator: Separator | 'none'): string {
-  switch (separator) {
-    case 'none':
-      return 'None'
-    case 'hyphen':
-      return 'Hyphens'
-    case 'space':
-      return 'Spaces'
-    case 'period':
-      return 'Periods'
-    case 'comma':
-      return 'Commas'
-    case 'underscore':
-      return 'Underscores'
-    case 'digit':
-      return 'Numbers'
-    case 'digitOrSymbol':
-      return 'Numbers and symbols'
-  }
+  return {
+    none: 'None',
+    hyphen: 'Hyphens',
+    space: 'Spaces',
+    period: 'Periods',
+    comma: 'Commas',
+    underscore: 'Underscores',
+    digit: 'Numbers',
+    digitOrSymbol: 'Numbers and symbols',
+  }[separator]
 }

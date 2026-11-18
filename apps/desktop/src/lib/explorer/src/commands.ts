@@ -39,17 +39,13 @@ export interface Place {
   name: string | null
 }
 
-export function listFolder(path: string): Promise<Listing> {
-  return invoke<Listing>('explorer_list', { path })
-}
+export const listFolder = (path: string): Promise<Listing> =>
+  invoke<Listing>('explorer_list', { path })
 
-export function listPlaces(): Promise<Place[]> {
-  return invoke<Place[]>('explorer_places')
-}
+export const listPlaces = (): Promise<Place[]> => invoke<Place[]>('explorer_places')
 
-export function openWithSystem(path: string): Promise<void> {
-  return invoke<undefined>('explorer_open', { path })
-}
+export const openWithSystem = (path: string): Promise<void> =>
+  invoke<undefined>('explorer_open', { path })
 
 const watchTurns = new Map<string, Promise<void>>()
 
@@ -67,14 +63,8 @@ function inTurn(folder: string, command: string): Promise<void> {
   return turn
 }
 
-export function watchFolder(folder: string): Promise<void> {
-  return inTurn(folder, 'explorer_watch')
-}
-
-export function unwatchFolder(folder: string): Promise<void> {
-  return inTurn(folder, 'explorer_unwatch')
-}
-
+export const watchFolder = (folder: string): Promise<void> => inTurn(folder, 'explorer_watch')
+export const unwatchFolder = (folder: string): Promise<void> => inTurn(folder, 'explorer_unwatch')
 export const CHANGED = 'explorer://changed'
 
 export interface Pair {
@@ -86,15 +76,14 @@ export interface Transferred {
   done: (Pair & { stayed?: boolean })[]
   replaced: OutsideTicket[]
   skipped: string[]
-  failed: { path: string; why: string }[]
+  failed: Failed[]
   cancelled: boolean
 }
 
 export type Clash = 'replace' | 'skip' | 'keep'
 
-export function makeIn(folder: string, name: string, file: boolean): Promise<string> {
-  return invoke<string>('explorer_make', { folder, name, file })
-}
+export const makeIn = (folder: string, name: string, file: boolean): Promise<string> =>
+  invoke<string>('explorer_make', { folder, name, file })
 
 export async function renameTo(path: string, name: string): Promise<string> {
   const to = await invoke<string>('explorer_rename', { path, name })
@@ -107,56 +96,56 @@ function carried(done: Transferred, how: 'copy' | 'move'): Transferred {
   return done
 }
 
-export interface Trashing {
+export interface Failed {
+  path: string
   why: string
+}
+
+export interface Trashing {
   went: OutsideTicket[]
+  failed: Failed[]
 }
 
-export function trashPaths(paths: readonly string[]): Promise<OutsideTicket[]> {
-  return invoke<OutsideTicket[]>('explorer_trash', { paths })
-}
+export const trashPaths = (paths: readonly string[]): Promise<OutsideTicket[]> =>
+  invoke<OutsideTicket[]>('explorer_trash', { paths })
 
-export function untrash(tickets: readonly OutsideTicket[]): Promise<string[]> {
-  return invoke<string[]>('explorer_untrash', { tickets })
-}
+export const untrash = (tickets: readonly OutsideTicket[]): Promise<string[]> =>
+  invoke<string[]>('explorer_untrash', { tickets })
 
-export function deleteForGood(paths: readonly string[]): Promise<void> {
-  return invoke<undefined>('explorer_delete', { paths })
-}
+export const deleteForGood = (paths: readonly string[]): Promise<void> =>
+  invoke<undefined>('explorer_delete', { paths })
 
-export function clashesIn(sources: readonly string[], folder: string): Promise<string[]> {
-  return invoke<string[]>('explorer_clashes', { sources, folder })
-}
+export const clashesIn = (sources: readonly string[], folder: string): Promise<string[]> =>
+  invoke<string[]>('explorer_clashes', { sources, folder })
 
-export function transfer(
+export const transfer = (
   job: string,
   sources: readonly string[],
   folder: string,
   how: 'copy' | 'move',
   clash: Clash,
   staying: readonly string[] = [],
-): Promise<Transferred> {
-  return invoke<Transferred>('explorer_transfer', {
+  fenced = false,
+): Promise<Transferred> =>
+  invoke<Transferred>('explorer_transfer', {
     job,
     sources,
     folder,
     how,
     clash,
     staying,
+    ...(fenced ? { fenced } : {}),
   }).then((done) => carried(done, how))
-}
 
-export function put(
+export const put = (
   job: string,
   pairs: readonly Pair[],
   how: 'copy' | 'move',
-): Promise<Transferred> {
-  return invoke<Transferred>('explorer_put', { job, pairs, how }).then((done) => carried(done, how))
-}
+): Promise<Transferred> =>
+  invoke<Transferred>('explorer_put', { job, pairs, how }).then((done) => carried(done, how))
 
-export function cancelJob(job: string): Promise<void> {
-  return invoke<undefined>('explorer_cancel', { job })
-}
+export const cancelJob = (job: string): Promise<void> =>
+  invoke<undefined>('explorer_cancel', { job })
 
 export const PROGRESS = 'explorer://progress'
 
@@ -169,9 +158,7 @@ export interface Facts extends Entry {
   link: string | null
 }
 
-export function factsOf(path: string): Promise<Facts> {
-  return invoke<Facts>('explorer_facts', { path })
-}
+export const factsOf = (path: string): Promise<Facts> => invoke<Facts>('explorer_facts', { path })
 
 export interface Peek {
   bytes: Uint8Array
@@ -190,9 +177,8 @@ export interface Count {
   cancelled: boolean
 }
 
-export function countIn(job: string, path: string): Promise<Count> {
-  return invoke<Count>('explorer_count', { job, path })
-}
+export const countIn = (job: string, path: string): Promise<Count> =>
+  invoke<Count>('explorer_count', { job, path })
 
 export interface Found extends Entry {
   within: string
@@ -204,13 +190,11 @@ export interface Searched {
   cancelled: boolean
 }
 
-export function searchBelow(
+export const searchBelow = (
   job: string,
   folder: string,
   query: string,
   hidden: boolean,
-): Promise<Searched> {
-  return invoke<Searched>('explorer_search', { job, folder, query, hidden })
-}
+): Promise<Searched> => invoke<Searched>('explorer_search', { job, folder, query, hidden })
 
 export const FOUND = 'explorer://found'

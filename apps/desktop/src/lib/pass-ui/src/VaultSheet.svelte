@@ -1,14 +1,10 @@
 <script lang="ts">
-  import type { VaultColor, VaultIcon } from '@orden/pass/types'
-  import { VAULT_COLORS } from '@orden/pass/types'
+  import { VAULT_COLORS, type VaultColor, type VaultIcon } from '@orden/pass/types'
   import { iconChoice } from '../../icon-picker/src/api'
   import { message } from '../../ui-kit/src/api'
   import { Sheet } from '../../ui-controls/src/api'
   import { theme } from '../../theme/src/api'
-  import { vaultColour } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
-  import type { PassUi } from '../../pass-sync/src/api'
-  import { colorName } from '../../pass-sync/src/api'
+  import { vaultColour, pass, colorName, type PassUi } from '../../pass-sync/src/api'
   import VaultMark from './VaultMark.svelte'
 
   const { ui }: { ui: PassUi } = $props()
@@ -114,7 +110,7 @@
       <span class="orden-row-label">Choose an icon</span>
     </button>
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
-    <div class="buttons">
+    <div class="pass-buttons">
       <button class="orden-button is-quiet" type="button" onclick={close}>Cancel</button>
       <button class="orden-button" type="submit" disabled={!name.trim() || busy}>
         {editing ? 'Save' : 'Create vault'}
@@ -167,18 +163,6 @@
   }
 
   .chooser {
-    gap: var(--space-2);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
-  }
-
-  .buttons {
-    display: flex;
-    justify-content: flex-end;
     gap: var(--space-2);
   }
 </style>

@@ -31,10 +31,11 @@ export function planSpaces(input: {
   local: LocalSpace[]
   remote: RemoteSpace[]
   mirrors: Pairing[]
+  homes?: Pairing[]
   deleted?: string[]
   untouched?: string | null
 }): Plan {
-  const { local, remote, deleted = [] } = input
+  const { local, remote, deleted = [], homes = [] } = input
   const spelled = (root: string) => local.find((one) => samePath(one.root, root))?.root ?? root
   const mirrors = input.mirrors.map((one) => ({ ...one, root: spelled(one.root) }))
   const untouched = input.untouched == null ? null : spelled(input.untouched)
@@ -74,10 +75,22 @@ export function planSpaces(input: {
       .map((one) => one.spaceId),
   )
 
-  for (const space of local) {
-    if (mirrorByRoot.has(space.root) || removing.has(space.root) || space.root === discarding) {
-      continue
-    }
+  const loose = local.filter(
+    (space) =>
+      !mirrorByRoot.has(space.root) && !removing.has(space.root) && space.root !== discarding,
+  )
+  const housed = new Set<string>()
+  for (const space of loose) {
+    const home = homes.find((one) => samePath(one.root, space.root))
+    const kept = home && remoteById.get(home.spaceId)
+    if (!kept || gone.has(kept.id) || spoken.has(kept.id)) continue
+    plan.pair.push({ root: space.root, spaceId: kept.id })
+    spoken.add(kept.id)
+    housed.add(space.root)
+  }
+
+  for (const space of loose) {
+    if (housed.has(space.root)) continue
 
     const match = remoteByName.get(space.name)
     if (match && !spoken.has(match.id)) {

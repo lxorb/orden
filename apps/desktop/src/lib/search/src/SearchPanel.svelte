@@ -1,22 +1,20 @@
 <script lang="ts">
   import type { Entry } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
-  import { shownName } from '../../platform/src/api'
+  import { shownName, relativeTo, dur, fly } from '../../platform/src/api'
   import { ARCHIVE_MARK, roving, SEARCH_MARK } from '../../ui-kit/src/api'
-  import { search } from './panel.svelte'
+  import { hitKey, search } from './panel.svelte'
   import { OPERATORS } from '@orden/scan/search/query'
   import { searchWarmth, type Warming } from './api'
   import { chosen, completing, naming, nearest, offered } from '@orden/scan/search/suggest'
   import type { Hit, Range } from '@orden/scan/search/match'
-  import { taskOf } from '@orden/scan/search/task'
-  import { relativeTo } from '../../platform/src/api'
+  import { taskOf, taskWordsOf } from '@orden/scan/search/task'
   import { Suggest } from '../../matching/src/api'
   import { nodesIn, tagTree } from './tag-tree'
   import TagTree from './TagTree.svelte'
   import { isScratchpad, pad } from '../../scratchpad/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import { workspace, howFor, middleOpens, tabAsk } from '../../workspace/src/api'
-  import { dur, fly } from '../../platform/src/api'
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
 
@@ -24,14 +22,11 @@
     'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
 
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
-
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
-
   let warm = $state<Warming>()
   void searchWarmth().then((one) => (warm = one))
 
   const writable = $derived(canWriteAt(workspace.activeSpace?.root ?? ''))
-
   let field = $state<HTMLInputElement>()
 
   $effect(() => {
@@ -75,7 +70,6 @@
   )
 
   const tags = $derived(tagTree(workspace.tags))
-
   const tagPaths = $derived(nodesIn(tags).map((node) => node.path))
 
   const asking = $derived(
@@ -195,16 +189,15 @@
     }
   }
 
-  function shown(hit: Hit, task: { text: string; ranges: Range[] } | null) {
-    return task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
-  }
+  const shown = (hit: Hit, task: { text: string; ranges: Range[] } | null) =>
+    task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
 
-  function ticked(event: Event, hit: Hit) {
+  async function ticked(event: Event, hit: Hit) {
     event.preventDefault()
     event.stopPropagation()
-    void workspace.toggleTaskAt(hit.path, hit.line).then((done) => {
-      if (done) search.ask(search.text)
-    })
+    const words = taskWordsOf(hit)
+    const hash = words === null ? undefined : (await import('@orden/bases')).taskHash(words)
+    if (await workspace.toggleTaskAt(hit.path, hit.line, hash)) search.ask(search.text)
   }
 
   async function openHit(hit: Hit, press: MouseEvent) {
@@ -367,7 +360,7 @@
             >{/if}{shownName(group.name)}
         </div>
 
-        {#each group.hits as hit (hit.line)}
+        {#each group.hits as hit (hitKey(hit))}
           {@const task = hit.tab === undefined ? taskOf(hit) : null}
           <div class="line">
             {#if search.replacing && hit.tab === undefined && !hit.bare}
@@ -389,7 +382,7 @@
                 class="orden-checkbox"
                 checked={task.done}
                 aria-label={task.text}
-                onclick={(event) => ticked(event, hit)}
+                onclick={(event) => void ticked(event, hit)}
               />
             {/if}
             <button

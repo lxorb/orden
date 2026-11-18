@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 from harness import Drive
@@ -97,11 +95,6 @@ HERE = """
       if (!at || at === document.body) return null
       return at.querySelector('.orden-row-label')?.textContent.trim() ?? at.tagName.toLowerCase()
     })(),
-    // Each mark's artwork in its own 24 unit grid: where it starts down the box and
-    // how much of it it fills. Read off the drawing with `getBBox` rather than off
-    // the screen, so it is the ink and not the stroke around it. This is twice the
-    // size a row draws a mark at, which is where a mark that fills less of its grid
-    // than the rest stops being invisible; see file-mark.ts.
     marks: buttons.map((one) => {
       const svg = one.querySelector('.mark svg')
       if (!svg) return null
@@ -193,8 +186,10 @@ def heading_key(page) -> None:
 
 LINES = [
     ["New note", "New canvas", "New page note"],
-    ["Online terminal", "New application", "Pass"],
+    ["New AI chat"],
+    ["Online terminal"],
     ["New web note"],
+    ["New application", "Pass"],
 ]
 
 def chooser(page) -> None:
@@ -218,7 +213,7 @@ def chooser(page) -> None:
         wrong(f"the kinds are not in Emil's lines: {new['lines']}")
     else:
         say(f"the lines              -> {new['lines']}")
-    if new["letters"] != ["N", "C", "P", "O", "A", "K", "W"]:
+    if new["letters"] != ["N", "C", "P", "Q", "O", "W", "A", "K"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
     settles(page, f"() => ({CALLED})().title === 'New tab'")
     called = page.evaluate(CALLED)
@@ -409,7 +404,7 @@ def nothing_open(page) -> None:
     if any(one is None for one in marks):
         wrong(f"a button wears no mark at all: {marks}")
     else:
-        files = [one for one, name in zip(marks, here["buttons"]) if name != "Online terminal"]
+        files = [one for one, name in zip(marks, here["buttons"]) if name not in ("Online terminal", "New AI chat")]
         sizes = {(one["top"], one["tall"]) for one in files}
         if len(sizes) != 1:
             wrong(f"the marks do not fill the same height of their grid: {sorted(sizes)}")
@@ -420,10 +415,10 @@ def nothing_open(page) -> None:
 
     page.keyboard.press("ArrowLeft")
     page.wait_for_timeout(250)
-    if page.evaluate(HERE)["on"] != "New web note":
+    if page.evaluate(HERE)["on"] != "Pass":
         wrong("the arrows do not walk the buttons, or do not wrap")
     else:
-        say("ArrowLeft              -> New web note, round the end")
+        say("ArrowLeft              -> Pass, round the end")
     page.keyboard.press("ArrowRight")
     page.keyboard.press("ArrowRight")
     page.keyboard.press("ArrowRight")
@@ -472,6 +467,36 @@ def held_over_the_buttons(page) -> None:
         say("Control+T              -> a new tab, as anywhere")
     page.screenshot(path=str(SHOTS / "over-nothing-open.png"))
 
+GROUPS = """() => [...document.querySelectorAll('.here[role=group] .kind')].map((one) => ({
+  name: one.querySelector('.orden-row-label')?.textContent.trim(),
+  group: one.getAttribute('data-group'),
+}))"""
+
+def grouped(page) -> None:
+    say("--- a small window ---")
+    page.set_viewport_size({"width": 820, "height": 520})
+    if not settles(page, "() => !!document.querySelector('.here[role=group] [data-group]')"):
+        wrong(f"a small window still shows every kind: {page.evaluate(GROUPS)}")
+        page.set_viewport_size({"width": 1440, "height": 900})
+        return
+    cards = page.evaluate(GROUPS)
+    say(f"the cards              -> {[one['name'] for one in cards]}")
+    if [one["name"] for one in cards if one["group"]] != ["Notes", "Apps"]:
+        wrong(f"the groups are not Notes and Apps: {cards}")
+    page.screenshot(path=str(SHOTS / "grouped.png"))
+    page.click(".here[role=group] [data-group=notes]")
+    if not settles(page, "() => [...document.querySelectorAll('[role=menu] [role=menuitem]')].some((one) => one.textContent.includes('New canvas'))"):
+        wrong("the Notes card opened no menu with its kinds")
+    else:
+        say("Notes                  -> a menu of note, canvas and page note")
+    page.screenshot(path=str(SHOTS / "grouped-menu.png"))
+    page.keyboard.press("Escape")
+    page.set_viewport_size({"width": 1440, "height": 900})
+    if not settles(page, "() => !document.querySelector('.here[role=group] [data-group]')"):
+        wrong("a large window again still shows the groups")
+    else:
+        say("a large window again   -> every kind")
+
 def drive(browser) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
 
@@ -499,6 +524,7 @@ def drive(browser) -> None:
     unsaved(page)
     saving(page)
     nothing_open(page)
+    grouped(page)
 
     page.screenshot(path=str(SHOTS / "after.png"))
     context.close()
@@ -509,5 +535,4 @@ def main() -> int:
 
     return DRIVE.verdict("everything the drive checked was right")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

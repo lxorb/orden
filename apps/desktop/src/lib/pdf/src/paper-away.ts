@@ -22,9 +22,7 @@ export interface AwaySaid {
 }
 
 export const HERE = 'here'
-
 type Drawn = ImageBitmap | null | typeof HERE
-
 let worker: Worker | null = null
 let broken = false
 let asked = 0
@@ -59,9 +57,7 @@ function opened(): Worker | null {
   return worker
 }
 
-export function drawsAway(): boolean {
-  return opened() !== null
-}
+export const drawsAway = (): boolean => opened() !== null
 
 export function openAway(bytes: Uint8Array): number | null {
   const away = opened()

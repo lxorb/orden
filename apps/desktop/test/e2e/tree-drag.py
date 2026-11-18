@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -56,10 +54,29 @@ def drive(browser: Browser) -> None:
     if now[0] != moving:
         wrong(f"{moving} let go above {under} did not stand there: {now}")
 
+    held = page.evaluate(PATHS)
     drag(page, now[0], now[1], 0.5)
     wait_for(page, f"window.ordenApp.workspace.notes.some((one) => one.path.includes('/{now[1]}/{now[0]}'))", "the note nested")
-    say(f"nested: {page.evaluate(PATHS)}")
+    nested = page.evaluate(PATHS)
+    say(f"nested: {nested}")
     shot(page, "nested")
+    if len(nested) != len(held) or sum(one.endswith(f"/{now[0]}.md") for one in nested) != 1:
+        wrong(f"{now[0]} let go onto {now[1]} was copied, not moved: {nested}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+    parent, child = now[1], now[0]
+    page.evaluate(f"() => {{ const ws = window.ordenApp.workspace; const dir = ws.notes.find((one) => one.path.endsWith('/{parent}/{parent}.md')).path.replace(/\\/[^/]*$/, ''); if (ws.isExpanded(dir)) ws.toggleFolder(dir) }}")
+    wait_for(page, f"!({ROWS})().includes('{child}')", "the subnotes folded away")
+    shot(page, "folded")
+    row(page, parent).click()
+    page.wait_for_timeout(500)
+    shown = page.evaluate(ROWS)
+    say(f"after a click on {parent}: {shown}")
+    shot(page, "opened-with-subnotes")
+    if child not in shown:
+        wrong(f"a click on {parent} did not show its subnote {child}: {shown}")
+    row(page, parent).click()
+    page.wait_for_timeout(500)
+    if child not in page.evaluate(ROWS):
+        wrong(f"a second click on {parent} hid its subnotes")
+
+raise SystemExit(DRIVE.run(drive))

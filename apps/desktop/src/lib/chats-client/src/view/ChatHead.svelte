@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { Message, Notify } from '@orden/chats'
-  import { may } from '@orden/chats'
+  import { may, type Message, type Notify } from '@orden/chats'
   import { LONGEST_TOPIC } from '@orden/chats/limits'
   import { localNumber } from '../../../platform/src/api'
   import { Avatar } from '../../../accounts-ui/src/api'
@@ -13,7 +12,7 @@
   import { firstLine } from './body'
   import { accountOf, faceOf, nameOf } from './people'
   import { store } from './source.svelte'
-  import { tip } from './tips.svelte'
+  import { boxOf, tip } from './tips.svelte'
 
   const {
     page,
@@ -60,11 +59,6 @@
     const list = ids
     return people.watch(() => list)
   })
-
-  function boxOf(element: Element): Box {
-    const box = element.getBoundingClientRect()
-    return { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
-  }
 
   async function showPins(element: Element) {
     pinned = await page.pinned()
@@ -259,7 +253,8 @@
   }
 
   @media (hover: hover) {
-    .people:hover {
+    .people:hover,
+    .pin:hover {
       background: var(--surface-hover);
     }
   }
@@ -301,12 +296,6 @@
     font: inherit;
     font-size: var(--text-sm);
     text-align: start;
-  }
-
-  @media (hover: hover) {
-    .pin:hover {
-      background: var(--surface-hover);
-    }
   }
 
   .pin span {

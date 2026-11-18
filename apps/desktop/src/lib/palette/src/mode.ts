@@ -1,10 +1,6 @@
 export type PaletteMode = 'everything' | 'commands' | 'headings' | 'line' | 'hosts'
 
-const MARKS: Record<string, PaletteMode> = {
-  '>': 'commands',
-  '#': 'headings',
-  ':': 'line',
-}
+const MARKS: Record<string, PaletteMode> = { '>': 'commands', '#': 'headings', ':': 'line' }
 
 const SSH = /^ssh\s+/i
 

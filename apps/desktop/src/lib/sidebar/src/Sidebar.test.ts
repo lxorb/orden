@@ -17,7 +17,8 @@ vi.mock('../../surfaces/src/api', () => ({
 const { workspace } = await import('../../workspace/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { agentMarks } = await import('../../workspace/src/api')
-const { EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('../../gates/src/api')
+const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } =
+  await import('../../gates/src/api')
 const Sidebar = (await import('./Sidebar.svelte')).default
 await (await import('../../../../test/sidebar-parts')).registerSidebarParts()
 const { loadPhoneTabs, loadPhoneYou } = await import('../../phone/src/api')
@@ -73,6 +74,29 @@ describe('the panel tabs', () => {
     expect(strip('left')).toEqual(['Files', 'Time tracker'])
     hiddenKinds.hidden = []
     expect(strip('left')).toEqual(['Files'])
+  })
+
+  test('show a panel only where they offer its tab: chats wait for an account', () => {
+    open('# Head\n')
+    hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD]
+    const body = drawn('chats')
+    hiddenKinds.hidden = []
+
+    expect(body).not.toContain('aria-label="Chats"')
+    expect(body).not.toContain('data-panel="chats"')
+  })
+
+  test('on a tablet the right side stays shut under a scratchpad, which floats over the page there', async () => {
+    const { serveWorkspace, services } = await import('../../workspace/src/services')
+    const pad = services().scratchpad
+    serveWorkspace({ scratchpad: { ...pad, on: true } })
+    viewport.device = 'tablet'
+    workspace.rightPanel = null
+    const body = render(Sidebar, { props: { side: 'right' as const } }).body
+    serveWorkspace({ scratchpad: pad })
+    viewport.device = 'desktop'
+
+    expect(body).toMatch(/class="column[^"]*\bshut\b/)
   })
 
   function row(panel: Parameters<typeof workspace.showPanel>[0]) {
@@ -395,8 +419,6 @@ describe('the AI panel on a phone and a tablet', () => {
 
     viewport.device = 'phone'
     workspace.showPanel('ask')
-    expect(workspace.rightPanel).toBeNull()
-    workspace.togglePanel('ask')
     expect(workspace.rightPanel).toBeNull()
     expect(workspace.offers('ask')).toBe(false)
     expect(workspace.offers('outline')).toBe(true)

@@ -90,7 +90,7 @@ describe('where it is asked for', () => {
       /id: 'app\.tasks',[\s\S]*?run: \(\) => void runCommand\('views\.todos'\)/,
     )
     expect(read('../../commands/src/commands.ts')).toMatch(
-      /id: 'todos',[\s\S]*?hint: shortcuts\.hint\('app\.tasks'\),[\s\S]*?views\.todos/,
+      /id: 'todos',[\s\S]*?hint: shortcuts\.hint\('app\.tasks'\),[\s\S]*?run: entry\('app\.tasks'/,
     )
   })
 })

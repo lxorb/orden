@@ -82,3 +82,18 @@ class Startup {
 }
 
 export const startup = new Startup()
+
+export class Stops {
+  private readonly held: (() => void)[] = []
+  private ended = false
+
+  readonly keep = (stop: () => void): void => {
+    if (this.ended) stop()
+    else this.held.push(stop)
+  }
+
+  end(): void {
+    this.ended = true
+    for (const stop of this.held.splice(0).reverse()) stop()
+  }
+}

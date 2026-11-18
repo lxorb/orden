@@ -2,8 +2,18 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
-import { MOST_MEMBERS } from '../src/sync-server/src/spaces/share'
-import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
+import { MOST_MEMBERS } from '../src/sync-server-engine/src/spaces/share'
+import {
+  call,
+  invitation,
+  joined,
+  mail,
+  signIn,
+  testEnv,
+  type JoinView,
+  type ShareView,
+  type TestEnv,
+} from './harness'
 import { framed, live } from './sync2'
 
 const NO_FACE = { id: null, avatar: null }
@@ -26,22 +36,10 @@ let guestReader: string
 let waitingGuest: string
 let readingGuest: string
 
-async function invite(email: string, role: 'write' | 'read'): Promise<string> {
-  const link = await inviteLink(email, role)
-  const token = await signIn(env, email)
-  await call(env, `/v1/join/${link}`, { method: 'POST', token })
-  return token
-}
+const invite = (email: string, role: 'write' | 'read') => joined(env, owner, space, email, role)
 
-async function inviteLink(email: string, role: 'write' | 'read'): Promise<string> {
-  const sent = await mail(() =>
-    call(env, `/v1/spaces/${space}/share/invite`, { token: owner, body: { email, role } }),
-  )
-
-  const found = /\/join\/([a-f0-9]+)/.exec(sent)
-  if (!found?.[1]) throw new Error(`no invitation was sent:\n${sent}`)
-  return found[1]
-}
+const inviteLink = (email: string, role: 'write' | 'read') =>
+  invitation(env, owner, space, email, role)
 
 function shareView(as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: as })
@@ -330,29 +328,9 @@ ROUTES.push(
     go: (token) => call(env, `/v2/spaces/${space}/feed?since=0`, { token }),
   },
   {
-    what: 'reading the documents in bulk',
-    needs: 'read',
-    go: (token) => call(env, `/v2/spaces/${space}/snapshot`, { token }),
-  },
-  {
     what: 'making the tree into rows',
     needs: 'read',
     go: (token) => call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' }),
-  },
-  {
-    what: "reading the space's maps",
-    needs: 'read',
-    go: (token) => call(env, `/v2/spaces/${space}/maps?since=0`, { token }),
-  },
-  {
-    what: "changing the space's maps",
-    needs: 'write',
-    go: (token) =>
-      call(env, `/v2/spaces/${space}/maps`, {
-        method: 'PATCH',
-        token,
-        body: { entries: [{ map: 'graph', key: 'orphans', value: true }] },
-      }),
   },
   {
     what: 'fetching a file',
@@ -829,7 +807,7 @@ describe('an invitation', () => {
     ).toEqual({ n: 0 })
   })
 
-  test('opens one sign-in when it is followed twice at once', async () => {
+  test('opens no sign-in by itself, however often it is followed', async () => {
     const link = await inviteLink('fresh@example.com', 'read')
     const sessions = () =>
       (env.db.prepare('select count(*) as n from sessions').get() as { n: number }).n
@@ -839,8 +817,12 @@ describe('an invitation', () => {
       [0, 1].map(() => call(env, `/v1/join/${link}`, { method: 'POST' })),
     )
 
-    expect(answers.map((one) => one.status).sort()).toEqual([200, 404])
-    expect(sessions() - before).toBe(1)
+    expect(answers.map((one) => [one.status, one.json.code])).toEqual([
+      [200, true],
+      [200, true],
+    ])
+    expect(answers.some((one) => 'token' in one.json)).toBe(false)
+    expect(sessions() - before).toBe(0)
   })
 
   test('stops being a shortcut once it has run out', async () => {

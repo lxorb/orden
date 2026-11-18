@@ -1,18 +1,10 @@
 // @vitest-environment jsdom
 import { EditorState, Prec, StateEffect, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
-import { afterEach, beforeAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { keptViews } from '../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
-
-const open: EditorView[] = []
-
-afterEach(() => {
-  for (const view of open.splice(0)) view.destroy()
-})
+const open = keptViews()
 
 class Gap extends WidgetType {
   constructor(readonly block: boolean) {
@@ -64,9 +56,8 @@ function viewWith(above: { from: number; to: number }[]): EditorView {
   return view
 }
 
-function lineText(view: EditorView): string {
-  return view.contentDOM.querySelectorAll('.cm-line')[2]?.textContent ?? ''
-}
+const lineText = (view: EditorView): string =>
+  view.contentDOM.querySelectorAll('.cm-line')[2]?.textContent ?? ''
 
 describe('a replaced range that starts under one of higher precedence', () => {
   test.each([

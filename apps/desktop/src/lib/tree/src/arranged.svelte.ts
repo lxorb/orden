@@ -24,11 +24,8 @@ import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '.
 import { carried, type Moving, moving } from '../../file-ops/src/api'
 
 export const STORAGE_KEY = 'orden:arranged'
-
 export const MOST_ARRANGED = 200
-
 export const MOST_NAMES = 500
-
 const LONGEST_NAME = 255
 
 function isName(value: unknown): value is string {
@@ -44,9 +41,7 @@ function isName(value: unknown): value is string {
   )
 }
 
-function isFolderKey(key: string): boolean {
-  return key === '' || insideItsSpace(key)
-}
+const isFolderKey = (key: string): boolean => key === '' || insideItsSpace(key)
 
 function namesIn(value: unknown): string[] {
   if (!Array.isArray(value)) return []
@@ -80,16 +75,14 @@ interface Kept extends Folded {
   sent: boolean
 }
 
-function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({
+const read = (): Record<string, Kept> =>
+  readSpaces(STORAGE_KEY, (one) => ({
     folders: arrangedMap(one.folders),
     sent: one.sent !== false,
   }))
-}
 
-function sameNames(one: readonly string[], other: readonly string[]): boolean {
-  return one.length === other.length && one.every((name, at) => name === other[at])
-}
+const sameNames = (one: readonly string[], other: readonly string[]): boolean =>
+  one.length === other.length && one.every((name, at) => name === other[at])
 
 const SETTLING = 700
 
@@ -407,25 +400,20 @@ export class Arranged {
   }
 }
 
-function placingKey(root: string, at: string): string {
-  return `${root}\u0000${at}`
-}
+const placingKey = (root: string, at: string): string => `${root}\u0000${at}`
 
 function folderKeyOf(at: string): string {
   const cut = at.lastIndexOf('/')
   return cut < 0 ? '' : at.slice(0, cut)
 }
 
-function withList(
+const withList = (
   held: Record<string, string[]>,
   folder: string,
   names: string[],
-): Record<string, string[]> {
-  return names.length ? { ...held, [folder]: names } : without(held, folder)
-}
+): Record<string, string[]> => (names.length ? { ...held, [folder]: names } : without(held, folder))
 
 export const SORT_KEY = 'orden:sorting'
-
 const BEFORE = 'orden:list-order'
 
 interface Sorted extends Folded {
@@ -519,7 +507,7 @@ export class SpaceSorting {
       (api, token, spaceId) => api.saveSort(token, spaceId, this.of(root)),
       (landed) => {
         const kept = this.spaces[root]
-        if (kept && !landed) this.keepAs(root, kept.mode, kept.account, false)
+        if (kept && kept.sent !== landed) this.keepAs(root, kept.mode, kept.account, landed)
       },
     )
   }

@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const told: { tab: string; muted: boolean }[] = []
 
@@ -11,21 +12,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 
 const tabs: { id: string; kind: string }[] = []
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 
 vi.stubGlobal('localStorage', memoryStorage())
 
@@ -75,39 +61,13 @@ test('a site muted in a private tab is muted there and written nowhere', () => {
 })
 
 test('a private page answered is remembered for the private session and written nowhere', () => {
-  grants.heard({
-    id: 1,
-    tab: 'priv',
-    site: 'secret.example',
-    ask: 'notifications',
-    privately: true,
-  })
-  grants.answer(grants.asking[0]!, false)
+  grants.remember('secret.example', 'notifications', 'block', true)
 
   expect(localStorage.getItem('orden:web-grants')).toBeNull()
   expect(grants.said('secret.example', 'notifications')).toBeNull()
   expect(grants.said('secret.example', 'notifications', true)).toBe('block')
 
-  grants.heard({
-    id: 2,
-    tab: 'priv',
-    site: 'secret.example',
-    ask: 'notifications',
-    privately: true,
-  })
-  expect(grants.asking).toEqual([])
-
-  grants.heard({
-    id: 3,
-    tab: 'open',
-    site: 'secret.example',
-    ask: 'notifications',
-    privately: false,
-  })
-  expect(grants.asking.map((one) => one.id)).toEqual([3])
-  grants.dismiss(grants.asking[0]!)
-
-  grants.dropped('priv', false)
+  grants.leftPrivate()
   expect(grants.said('secret.example', 'notifications', true)).toBeNull()
 })
 

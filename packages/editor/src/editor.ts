@@ -20,7 +20,13 @@ import { external } from './external'
 import { blockHandles } from './block/handle'
 import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
-import { type CarriedFiles, imageHandling, imageResolver, type ImageSink } from './images'
+import {
+  type CarriedFiles,
+  imageHandling,
+  imageResolver,
+  type ImageResolver,
+  type ImageSink,
+} from './images'
 import { linkClicks, type LinkPress, linkOpener } from './links'
 import { tagClicks, tagOpener, type TagOpener } from './tag-press'
 import { coverMover, keptCoverExtension } from './live-preview/kept-cover'
@@ -47,6 +53,7 @@ import { richPaste } from './paste'
 import { ordenSelection } from './selection/layer'
 import { steppingKeymap } from './live-preview/stepping'
 import { openTail, openTailDown } from './tail'
+import { aiPlace } from './ai/run'
 import { modeExtensions } from './modes'
 import { parseAhead } from './parse-ahead'
 import { documentOf, fromInput, type SharedDoc, sharing } from './shared'
@@ -61,7 +68,7 @@ export interface StateOptions {
   onChange?: (doc: Text) => void
   onImage?: ImageSink
   carriedFiles?: CarriedFiles
-  resolveImage?: (src: string) => string
+  resolveImage?: ImageResolver
   onSelection?: (view: EditorView) => void
   codeTheme?: string
   openLink?: (href: string, press: LinkPress) => void
@@ -76,6 +83,7 @@ export interface StateOptions {
   onFind?: (ask: FindAsk | null) => void
   onFindSlow?: (view: EditorView) => void
   trustedMarkup?: boolean
+  place?: string
   cover?: Cover | null
   moveCover?: (position: number) => void
   editPreview?: PreviewMount
@@ -151,6 +159,7 @@ export function editorState(options: StateOptions): EditorState {
       wikilinks(),
       noteIndexExtension(options.notes),
       trustedMarkup(options.trustedMarkup),
+      ...(options.place ? [aiPlace.of(options.place)] : []),
       keptCoverExtension(options.cover),
       ...(options.moveCover ? [coverMover.of(options.moveCover)] : []),
       ...(openNote ? [noteOpener.of(openNote)] : []),
@@ -249,9 +258,8 @@ const mathsPreview = ViewPlugin.fromClass(
   },
 )
 
-function coveredBelow(covered: () => number) {
-  return EditorView.scrollMargins.of(() => ({ bottom: covered() }))
-}
+const coveredBelow = (covered: () => number) =>
+  EditorView.scrollMargins.of(() => ({ bottom: covered() }))
 
 export function createEditor(options: EditorOptions): EditorView {
   const view = new EditorView({ parent: options.parent, state: editorState(options) })

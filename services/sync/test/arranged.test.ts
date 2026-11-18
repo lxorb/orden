@@ -1,96 +1,23 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { isName, readArranged } from '../src/sync-server/src/spaces/arranged'
-import { call, mail, signIn, testEnv, type TestEnv } from './harness'
+import { describe, expect, test } from 'vitest'
+import { isName, readArranged } from '../src/sync-server-engine/src/spaces/arranged'
+import { call } from './harness'
+import { spaceField } from './space-field'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
-
-function put(arranged: unknown, options: { as?: string; id?: string } = {}) {
-  return call(env, `/v1/spaces/${options.id ?? space}/arranged`, {
-    method: 'PUT',
-    token: options.as ?? token,
-    body: { arranged },
-  })
-}
-
-async function listed(as = token) {
-  const { json } = await call(env, '/v1/spaces', { token: as })
-  return json.spaces.find((one) => one.id === space)?.arranged
-}
-
-function column(raw: string) {
-  env.db.prepare('update spaces set arranged = ? where id = ?').run(raw, space)
-}
-
-async function reader(): Promise<string> {
-  const sent = await mail(() =>
-    call(env, `/v1/spaces/${space}/share/invite`, {
-      token,
-      body: { email: 'c@d.dev', role: 'read' },
-    }),
-  )
-
-  const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-  if (!link) throw new Error(`no invitation was sent:\n${sent}`)
-
-  const theirs = await signIn(env, 'c@d.dev')
-  await call(env, `/v1/join/${link}`, { method: 'POST', token: theirs })
-  return theirs
-}
+const { at, put, listed, column, kept, owned } = spaceField('arranged')
 
 const ARRANGED = {
   Work: ['Plan.md', 'Ideas', 'Old.md'],
   'Work/Ideas': ['Best.md', 'Rest.md'],
 }
 
+kept({}, ARRANGED, { Work: ['Plan.md'] })
+owned({}, ARRANGED)
+
 describe("the order a space's folders were arranged into", () => {
-  test('starts as nothing, every folder being in name order', async () => {
-    expect(await listed()).toEqual({})
-  })
-
-  test('is kept whole, and rides the space listing', async () => {
-    const set = await put(ARRANGED)
-    expect(set.status).toBe(200)
-    expect(set.json.arranged).toEqual(ARRANGED)
-
-    expect(await listed()).toEqual(ARRANGED)
-  })
-
-  test('is replaced by the map that arrives, which is how a folder goes back to names', async () => {
-    await put(ARRANGED)
-    await put({ Work: ['Plan.md'] })
-
-    expect(await listed()).toEqual({ Work: ['Plan.md'] })
-  })
-
-  test('goes away when an empty map is sent', async () => {
-    await put(ARRANGED)
-    await put({})
-
-    expect(await listed()).toEqual({})
-  })
-
   test('drops a folder whose list comes to nothing', async () => {
     const set = await put({ ...ARRANGED, Travel: [] })
 
     expect(set.json.arranged).toEqual(ARRANGED)
-  })
-
-  test('marks the space as changed, so another device notices', async () => {
-    const before = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-    await put(ARRANGED)
-    const after = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-
-    expect(after).toBeGreaterThanOrEqual(before)
   })
 })
 
@@ -215,9 +142,9 @@ describe('a map that is not one', () => {
   })
 
   test('is refused when the body is not an object at all', async () => {
-    const sent = await call(env, `/v1/spaces/${space}/arranged`, {
+    const sent = await call(at.env, `/v1/spaces/${at.space}/arranged`, {
       method: 'PUT',
-      token,
+      token: at.token,
       body: [ARRANGED],
     })
 
@@ -269,36 +196,5 @@ describe('a column written by a newer build', () => {
     expect(readArranged('["Work"]')).toEqual({})
     expect(readArranged('null')).toEqual({})
     expect(readArranged('7')).toEqual({})
-  })
-})
-
-describe('the order is the space’s', () => {
-  test('so everybody in it reads the same one', async () => {
-    const theirs = await reader()
-    await put(ARRANGED)
-
-    expect(await listed(theirs)).toEqual(ARRANGED)
-  })
-
-  test('and arranging a folder is writing in the space, which a reader may not', async () => {
-    const theirs = await reader()
-
-    expect((await put(ARRANGED, { as: theirs })).status).toBe(403)
-    expect(await listed()).toEqual({})
-  })
-
-  test('is not another account’s to write', async () => {
-    const other = await signIn(env, 'e@f.dev')
-
-    expect((await put(ARRANGED, { as: other })).status).toBe(404)
-    expect(await listed()).toEqual({})
-  })
-
-  test('needs a session at all', async () => {
-    expect((await call(env, `/v1/spaces/${space}/arranged`, { method: 'PUT' })).status).toBe(401)
-  })
-
-  test('answers 404 for a space that is not there', async () => {
-    expect((await put(ARRANGED, { id: 'nope' })).status).toBe(404)
   })
 })

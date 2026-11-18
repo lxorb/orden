@@ -10,11 +10,7 @@ export const BACKSLASH = 92
 export const BANG = 33
 export const HASH = 35
 export const NEWLINE = 10
+export const isDigit = (code: number): boolean => code >= 48 && code <= 57
 
-export function isDigit(code: number): boolean {
-  return code >= 48 && code <= 57
-}
-
-export function isSpace(code: number): boolean {
-  return code === 32 || code === 9 || code === NEWLINE || code === -1
-}
+export const isSpace = (code: number): boolean =>
+  code === 32 || code === 9 || code === NEWLINE || code === -1

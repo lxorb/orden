@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { answers, dayName, dayOf, historyRows, hostOf, onScreen } from './history-list'
+import { shownHost } from '@orden/scan/web-address'
+import { midnightOf } from '../../platform/src/api'
+import { answers, dayName, historyRows, onScreen } from './history-list'
 import type { Visit } from '@orden/scan/visits'
 
 const NOW = new Date(2026, 9, 3, 12, 0).getTime()
@@ -26,7 +28,7 @@ describe('the History page', () => {
       'day',
       'https://a.example/',
     ])
-    expect(rows[0]).toMatchObject({ kind: 'day', day: dayOf(NOW) })
+    expect(rows[0]).toMatchObject({ kind: 'day', day: midnightOf(NOW) })
   })
 
   test('finds a page by every word, in its title or its address, any case', () => {
@@ -40,15 +42,15 @@ describe('the History page', () => {
 
   test('calls today and yesterday by name, and the rest by date', () => {
     const words = { today: 'Today', yesterday: 'Yesterday' }
-    expect(dayName(dayOf(NOW), NOW, 'en', words)).toBe('Today')
-    expect(dayName(dayOf(NOW - 24 * HOUR), NOW, 'en', words)).toBe('Yesterday')
-    expect(dayName(dayOf(NOW - 72 * HOUR), NOW, 'en', words)).toBe('Wednesday, September 30')
-    expect(dayName(dayOf(new Date(2025, 0, 2).getTime()), NOW, 'en', words)).toContain('2025')
+    expect(dayName(midnightOf(NOW), NOW, 'en', words)).toBe('Today')
+    expect(dayName(midnightOf(NOW - 24 * HOUR), NOW, 'en', words)).toBe('Yesterday')
+    expect(dayName(midnightOf(NOW - 72 * HOUR), NOW, 'en', words)).toBe('Wednesday, September 30')
+    expect(dayName(midnightOf(new Date(2025, 0, 2).getTime()), NOW, 'en', words)).toContain('2025')
   })
 
   test('shows the host without www, as the list reads it', () => {
-    expect(hostOf('https://www.bbc.co.uk/news')).toBe('bbc.co.uk')
-    expect(hostOf('not an address')).toBe('not an address')
+    expect(shownHost('https://www.bbc.co.uk/news')).toBe('bbc.co.uk')
+    expect(shownHost('not an address')).toBe('not an address')
   })
 
   test('draws the rows on screen and a few either side', () => {

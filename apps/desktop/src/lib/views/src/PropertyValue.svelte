@@ -24,7 +24,6 @@
   } = $props()
 
   const uid = $props.id()
-
   const offered = $derived(choices?.filter((one) => !property.items.includes(one)) ?? [])
 
   function commitOnEnter(event: KeyboardEvent) {
@@ -33,9 +32,8 @@
     if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur()
   }
 
-  function dated(field: HTMLInputElement): string {
-    return field.type === 'datetime-local' ? field.value.replace('T', ' ') : field.value
-  }
+  const dated = (field: HTMLInputElement): string =>
+    field.type === 'datetime-local' ? field.value.replace('T', ' ') : field.value
 
   function fieldType(one: Property): string {
     if (one.kind === 'number') return 'number'

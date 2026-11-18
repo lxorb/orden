@@ -9,42 +9,11 @@ import time
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from devtools import Session  # noqa: E402
+from devtools import Session
+from linux_app import CONFIG, run
 
 OUT, STEP = Path(sys.argv[1]), sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 DEBUG = os.environ["ORDEN_CEF_DEBUG_PORT"]
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
-def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=10) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
 
 def pages():
     with urllib.request.urlopen(f"http://127.0.0.1:{DEBUG}/json/version", timeout=5) as answer:
@@ -105,16 +74,16 @@ if STEP == "first":
     if len(site(found)) != 1:
         raise SystemExit(f"::error::first: {len(site(found))} pages of the site")
     (OUT / "session-counts").write_text(f"{seen} {shown}\n")
-    normal = run("nib.workspace.activeTabId")
-    run("nib.workspace.openWebsite(true); true")
+    normal = run("orden.workspace.activeTabId")
+    run("orden.workspace.openWebsite(true); true")
     private = None
     for _ in range(40):
-        private = run("nib.workspace.activeTabId")
+        private = run("orden.workspace.activeTabId")
         if private and private != normal:
             break
         time.sleep(0.5)
     address = site(found)[0]["url"].split("?")[0]
-    run(f"nib.pages.go({json.dumps(private)}, {json.dumps(address + '?private')}); true")
+    run(f"orden.pages.go({json.dumps(private)}, {json.dumps(address + '?private')}); true")
     titled("a private cookie made", private=True)
     print("session: a private tab made its cookie")
 elif STEP == "again":

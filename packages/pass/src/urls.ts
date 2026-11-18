@@ -61,17 +61,8 @@ export function matches(website: Website, pageUrl: string): boolean {
 
 export function rank(website: Website, pageUrl: string): number {
   if (!matches(website, pageUrl)) return 0
-  switch (website.match) {
-    case 'exact':
-      return 5
-    case 'prefix':
-      return 4
-    case 'host':
-      return 3
-    case 'domain':
-    case 'never':
-      return hostOf(website.url) === hostOf(pageUrl) ? 2 : 1
-  }
+  const fixed = { exact: 5, prefix: 4, host: 3, domain: 0, never: 0 }[website.match]
+  return fixed || (hostOf(website.url) === hostOf(pageUrl) ? 2 : 1)
 }
 
 export function isSecurePage(url: string): boolean {

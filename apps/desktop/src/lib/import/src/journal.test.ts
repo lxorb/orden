@@ -1,12 +1,8 @@
 import { describe, expect, test } from 'vitest'
-
 import { readJournal } from './journal'
 import { detect } from './read'
 import { sourceOf, type Source } from './sources'
-
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+import { file } from './fixtures'
 
 const ENTRY = `<!DOCTYPE html>
 <html>

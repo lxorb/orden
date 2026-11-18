@@ -47,7 +47,6 @@ describe('a catch that takes a tap (#411)', () => {
     spendClick({ pointerType: 'pen' })
     dispatch('pointerdown')
     expect(dispatch('click')).toBe(false)
-
     vi.useFakeTimers()
     spendClick({ pointerType: 'touch' })
     vi.advanceTimersByTime(1000)

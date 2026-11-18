@@ -7,12 +7,10 @@ export interface Clock {
   minutes: number
 }
 
-export function clockOf(now: Date): Clock {
-  return {
-    today: todayOf(now),
-    minutes: now.getHours() * 60 + now.getMinutes(),
-  }
-}
+export const clockOf = (now: Date): Clock => ({
+  today: todayOf(now),
+  minutes: now.getHours() * 60 + now.getMinutes(),
+})
 
 export interface When {
   end: number
@@ -277,15 +275,39 @@ export function timeInPart(
 ): When | null {
   const said = askedTime(words, at, g)
   if (!said?.time) return null
-  const hours = Number(said.time.slice(0, 2))
-  const minutes = Number(said.time.slice(3))
-  const evening = Number(part.slice(0, 2)) >= 12
-  if (evening && hours < 12) return { end: said.end, time: timeOf(hours + 12, minutes) }
-  if (!evening && said.guessed) return { end: said.end, time: timeOf(hours - 12, minutes) }
-  return { end: said.end, time: said.time }
+  return { end: said.end, time: inPart(said, part) }
 }
 
-function askedTime(words: readonly Word[], at: number, g: Grammar): When | null {
+function inPart(said: When, part: string): string {
+  const time = said.time ?? ''
+  const hours = Number(time.slice(0, 2))
+  const minutes = Number(time.slice(3))
+  const evening = Number(part.slice(0, 2)) >= 12
+  if (evening && hours < 12) return timeOf(hours + 12, minutes)
+  if (!evening && said.guessed) return timeOf(hours - 12, minutes)
+  return time
+}
+
+function partAt(
+  words: readonly Word[],
+  at: number,
+  g: Grammar,
+  afterDay: boolean,
+): string | undefined {
+  const key = bare(words[at])
+  const named = g.times[key]
+  if (named && Object.values(g.partsOfDay).includes(named)) return named
+  return afterDay ? g.partsOfDay[key] : undefined
+}
+
+function partOfDayAt(words: readonly Word[], at: number, g: Grammar): When | null {
+  const part = g.partsOfDay[bare(words[at])]
+  if (!part) return null
+  const later = timeInPart(words, at + 1, g, part)
+  return later ?? { end: at + 1, time: part }
+}
+
+export function askedTime(words: readonly Word[], at: number, g: Grammar): When | null {
   if (g.timeWords.has(bare(words[at]))) return timeAt(words, at + 1, g, true)
   const part = g.dayWords.has(bare(words[at])) ? g.partsOfDay[bare(words[at + 1])] : undefined
   if (part) return { end: at + 2, time: part }
@@ -338,12 +360,20 @@ export function whenAt(
 
   const day = askedDay(words, at, g, clock, free)
   if (day) {
-    const time = askedTime(words, day.end, g)
+    const time = askedTime(words, day.end, g) ?? partOfDayAt(words, day.end, g)
     return time ? { end: time.end, day: day.day ?? '', time: time.time ?? '' } : day
   }
 
   const time = askedTime(words, at, g)
   if (!time) return null
+  const dayAndPart = dayTimeAt(words, time.end, g, clock)
+  if (dayAndPart) {
+    const { end, day: partDay = '', time: part = '' } = dayAndPart
+    return { end, day: partDay, time: inPart(time, part) }
+  }
   const later = askedDay(words, time.end, g, clock, free)
-  return later ? { end: later.end, day: later.day ?? '', time: time.time ?? '' } : time
+  const end = later?.end ?? time.end
+  const part = partAt(words, end, g, later !== null)
+  const said = part ? { end: end + 1, time: inPart(time, part) } : { ...time, end }
+  return later?.day ? { ...said, day: later.day } : said
 }

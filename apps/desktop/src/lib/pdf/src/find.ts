@@ -8,9 +8,7 @@ export function runsOfItems(items: readonly object[]): string[] {
   })
 }
 
-export function textOfRuns(runs: readonly string[]): string {
-  return runs.join('')
-}
+export const textOfRuns = (runs: readonly string[]): string => runs.join('')
 
 export interface Place {
   at: number
@@ -93,6 +91,4 @@ export function spansOver(pieces: readonly Piece[], at: number, length: number):
   return out
 }
 
-function isText(node: ChildNode | null | undefined): node is Text {
-  return node?.nodeType === 3
-}
+const isText = (node: ChildNode | null | undefined): node is Text => node?.nodeType === 3

@@ -1,9 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { ROOT, walk } from './files'
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const E2E = join(ROOT, 'apps', 'desktop', 'test', 'e2e')
 
 const read = (...parts: string[]) => readFileSync(join(...parts), 'utf8')
@@ -14,22 +13,9 @@ const drives = readdirSync(E2E)
   .filter((name) => name.endsWith('.py'))
   .sort()
 
-function sourcesUnder(dir: string, found: string[] = []): string[] {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === 'dist') continue
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) sourcesUnder(path, found)
-    else if (/\.(ts|svelte|css|html)$/.test(entry.name)) found.push(path)
-  }
-
-  return found
-}
-
-const sources = [
-  ...sourcesUnder(join(ROOT, 'apps', 'desktop', 'src')),
-  ...sourcesUnder(join(ROOT, 'packages')),
-  ...sourcesUnder(join(ROOT, 'services')),
-]
+const sources = ['apps/desktop/src', 'packages', 'services'].flatMap((dir) =>
+  walk(join(ROOT, dir), (path) => /\.(ts|svelte|css|html)$/.test(path), ['node_modules', 'dist']),
+)
 
 const IN_CSS = /\.(-?[A-Za-z_][\w-]*)/g
 const STYLE = /<style[^>]*>([\s\S]*?)<\/style>/g
@@ -299,5 +285,49 @@ describe('the modules a drive loads from the dev server', () => {
         .map((path) => `${name}: ${path}`),
     )
     expect(gone).toEqual([])
+  })
+})
+
+describe('the requests a drive holds or refuses', () => {
+  test('are routed on the context when the service worker fetches them', () => {
+    const SERVED = /\/assets\/|\/asset\/|:\/\/\[\^\/\]\+\//
+    const routed = drives.flatMap((name) => {
+      const text = read(E2E, name)
+      const named = new Map(
+        [...text.matchAll(/^\s*([A-Za-z_]+) = (?:re\.compile\()?r?["'](.*)["']/gm)].map((found) => [
+          caught(found),
+          caught(found, 2),
+        ]),
+      )
+      const blocked = text.includes('service_workers="block"')
+      return [...text.matchAll(/\b(\w+)\.route\(\s*([^,]+),/g)]
+        .filter((found) => caught(found) !== 'context' && !blocked)
+        .filter((found) => {
+          const said = caught(found, 2)
+          return SERVED.test(said) || SERVED.test(named.get(said.trim()) ?? '')
+        })
+        .map((found) => `${name}: ${found[0]}`)
+    })
+    expect(routed).toEqual([])
+  })
+})
+
+describe('a panel the sidebar offers only to an account', () => {
+  const sidebar = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'sidebar', 'src', 'Sidebar.svelte')
+  const owed = [...sidebar.matchAll(/id !== '(\w+)' \|\| \(!!account\.accountToken\b/g)].map(
+    (found) => caught(found),
+  )
+
+  test('is read from the rule that offers it', () => {
+    expect(owed).toContain('chats')
+  })
+
+  test('is shown by a drive only once it has signed in', () => {
+    const unsigned = drives.filter((name) => {
+      const text = read(E2E, name)
+      const shown = owed.some((panel) => text.includes(`showPanel('${panel}')`))
+      return shown && !/\.sign_in\(|\bsigned_in\(/.test(text)
+    })
+    expect(unsigned).toEqual([])
   })
 })

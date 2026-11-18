@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Page
@@ -49,6 +47,7 @@ def desktop(page: Page, scheme: str) -> None:
     DRIVE.open(page)
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.evaluate(START)
+    DRIVE.sign_in(page)
     page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
     page.evaluate(OPEN, THESIS)
     if not wait_for(page, "document.querySelectorAll('.chat-tab .message').length > 4", "the chat's rows"):
@@ -254,5 +253,4 @@ def main() -> int:
         page.context.close()
     return DRIVE.verdict("all good")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

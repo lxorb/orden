@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, BrowserContext, Page
@@ -24,8 +22,6 @@ async (notes) => {
   for (const [, text] of notes) await ws.noteFrom(text, ws.activeSpace.root)
   await ws.loadTree()
 
-  // The welcome note a first visit is given goes first, so what the pane holds is what
-  // this drive put in it and the numbers below are its own.
   for (const tab of [...ws.tabs]) ws.close(tab.id)
 
   for (const [name] of notes) {
@@ -216,5 +212,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "a pane lays its notes out as columns when it is asked to")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

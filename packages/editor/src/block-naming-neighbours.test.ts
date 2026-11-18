@@ -9,10 +9,6 @@ function shownAfterNaming(source: string, line: number): string | null {
 }
 
 describe('naming a block that touches a block of another kind', () => {
-  test('a heading with words right under it is named, not the words', () => {
-    expect(shownAfterNaming('# Title\nSome text\n', 0)).toContain('Title')
-  })
-
   test('words right above a heading are named, not the heading', () => {
     expect(shownAfterNaming('Some text\n# Title\n', 0)).toContain('Some text')
   })

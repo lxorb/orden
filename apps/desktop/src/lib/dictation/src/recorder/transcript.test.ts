@@ -1,49 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  dayOf,
-  embedFor,
-  languageName,
-  recordingNoteName,
-  spanOf,
-  transcriptCallout,
-  writtenBy,
-} from './transcript'
-
-describe('the embed a recording writes', () => {
-  test('names the file, as Obsidian spells an embed', () => {
-    expect(embedFor('recording-2026-09-12-1432.weba')).toBe('![[recording-2026-09-12-1432.weba]]')
-  })
-})
-
-describe('a length', () => {
-  test('reads the way a player writes one', () => {
-    expect(spanOf(0)).toBe('0:00')
-    expect(spanOf(9)).toBe('0:09')
-    expect(spanOf(70)).toBe('1:10')
-    expect(spanOf(600)).toBe('10:00')
-    expect(spanOf(3609)).toBe('1:00:09')
-    expect(spanOf(3600 * 2 + 61)).toBe('2:01:01')
-  })
-
-  test('and never reads as a negative one', () => {
-    expect(spanOf(-5)).toBe('0:00')
-  })
-})
-
-describe('a date', () => {
-  test('is the day, padded, in the reader own clock', () => {
-    expect(dayOf(new Date(2026, 8, 12, 23, 59))).toBe('2026-09-12')
-    expect(dayOf(new Date(2026, 0, 3, 0, 1))).toBe('2026-01-03')
-  })
-})
-
-describe('what a recording note is called', () => {
-  test('is the word, the day and the minute', () => {
-    const at = new Date(2026, 8, 12, 14, 32)
-
-    expect(recordingNoteName(at)).toBe('Recording 2026-09-12 1432')
-  })
-})
+import { languageName, transcriptCallout, writtenBy } from './transcript'
 
 describe('the line that says a machine wrote something', () => {
   test('names the model', () => {

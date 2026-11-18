@@ -2,6 +2,7 @@ import type { Look } from '@orden/sync-core'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { type AccountDouble, accountDouble } from '../../../accounts/test/fakes'
 import { LookSync } from './look-sync'
+import { OwedMark } from './owed-mark'
 
 const DARK_GLASS: Look = { theme: 'glass', scheme: 'dark', values: { '*': { accent: 'blue' } } }
 const LIGHT_ROSE: Look = { theme: 'file:rose', scheme: 'light', values: {}, css: ':root{}' }
@@ -29,8 +30,12 @@ function userOf(token: string): string {
   return token.replace(/^token-/, '')
 }
 
-function device(start: Look, user: string | null = 'a'): Device {
-  const account = accountDouble(user)
+function device(
+  start: Look,
+  user: string | null = 'a',
+  kept = new Map<string, unknown>(),
+  account = accountDouble(user),
+): Device {
   const pending: Promise<unknown>[] = []
   const track = <T>(work: Promise<T>): Promise<T> => {
     pending.push(work)
@@ -41,6 +46,11 @@ function device(start: Look, user: string | null = 'a'): Device {
     account,
     worn: start,
     sync: new LookSync({
+      owing: new OwedMark('orden:look-owed', account, {
+        read: (key) => kept.get(key) ?? null,
+        write: (key, value) => void kept.set(key, value),
+        drop: (key) => void kept.delete(key),
+      }),
       token: () => account.accountToken,
       look: () => one.worn,
       wear: (look) => {
@@ -98,10 +108,8 @@ describe('a theme that follows the account', () => {
     const phone = device(CLASSIC)
     await signIn(laptop)
     await signIn(phone)
-
     laptop.pick(DARK_GLASS)
     await settled(laptop, phone)
-
     expect(phone.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
@@ -109,9 +117,7 @@ describe('a theme that follows the account', () => {
   test('takes the account’s theme the first time a device syncs', async () => {
     server.settings.set('a', { look: DARK_GLASS })
     const fresh = device(LIGHT_ROSE)
-
     await signIn(fresh)
-
     expect(fresh.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
@@ -119,9 +125,7 @@ describe('a theme that follows the account', () => {
   test('gives the account this device’s theme when the account has none yet', async () => {
     server.settings.set('a', { ligatures: true })
     const first = device(LIGHT_ROSE)
-
     await signIn(first)
-
     expect(first.worn).toEqual(LIGHT_ROSE)
     expect(server.settings.get('a')).toEqual({ ligatures: true, look: LIGHT_ROSE })
   })
@@ -129,20 +133,16 @@ describe('a theme that follows the account', () => {
   test('reads an account an older build wrote, with settings it does not know', async () => {
     server.settings.set('a', { look: { ...DARK_GLASS, someday: 1 }, vim: true })
     const one = device(CLASSIC)
-
     await signIn(one)
-
     expect(one.worn).toEqual(DARK_GLASS)
   })
 
   test('keeps a theme picked while signed out on this device only', async () => {
     server.settings.set('a', { look: DARK_GLASS })
     const one = device(CLASSIC, null)
-
     one.pick(LIGHT_ROSE)
     one.account.signInAs('a')
     await signIn(one)
-
     expect(one.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
@@ -151,9 +151,7 @@ describe('a theme that follows the account', () => {
     server.settings.set('a', { look: DARK_GLASS })
     const one = device(CLASSIC)
     await signIn(one)
-
     one.account.signOut()
-
     expect(one.worn).toEqual(DARK_GLASS)
     one.pick(LIGHT_ROSE)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
@@ -166,9 +164,7 @@ describe('a theme that follows the account', () => {
     laptop.pick(DARK_GLASS)
     await settled(laptop)
     server.away = false
-
     await signIn(laptop)
-
     expect(laptop.worn).toEqual(DARK_GLASS)
     expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
@@ -181,10 +177,8 @@ describe('a theme that follows the account', () => {
     one.pick(DARK_GLASS)
     await settled(one)
     server.away = false
-
     one.account.signInAs('b')
     await signIn(one)
-
     expect(server.settings.get('b')?.look).toEqual(CLASSIC)
     expect(server.settings.get('a')?.look).toEqual(CLASSIC)
     expect(one.worn).toEqual(CLASSIC)
@@ -197,12 +191,10 @@ describe('a theme that follows the account', () => {
     let free: () => void = () => undefined
     server.held = new Promise((resolve) => (free = resolve))
     const reading = signIn(one)
-
     one.account.signInAs('b')
     const next = signIn(one)
     free()
     await Promise.all([reading, next])
-
     expect(one.worn).toEqual(LIGHT_ROSE)
   })
 
@@ -212,14 +204,42 @@ describe('a theme that follows the account', () => {
     let free: () => void = () => undefined
     server.held = new Promise((resolve) => (free = resolve))
     const reading = signIn(one)
-
     server.held = null
     one.pick(LIGHT_ROSE)
     free()
     await reading
     await settled(one)
-
     expect(one.worn).toEqual(LIGHT_ROSE)
     expect(server.settings.get('a')?.look).toEqual(LIGHT_ROSE)
+  })
+})
+
+describe('a theme picked while the account could not hear it', () => {
+  test('outlives a relaunch and wins over the account’s older one', async () => {
+    server.settings.set('a', { look: CLASSIC })
+    const kept = new Map<string, unknown>()
+    const first = device(CLASSIC, 'a', kept)
+    await signIn(first)
+    server.away = true
+    first.pick(DARK_GLASS)
+    await settled(first)
+    server.away = false
+    const again = device(DARK_GLASS, 'a', kept)
+    await signIn(again)
+    expect(again.worn).toEqual(DARK_GLASS)
+    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
+  })
+
+  test('picked before the account is known is not undone once it is', async () => {
+    server.settings.set('a', { look: CLASSIC })
+    const account = accountDouble('a')
+    const known = account.user
+    account.user = null
+    const one = device(CLASSIC, 'a', new Map(), account)
+    one.pick(DARK_GLASS)
+    account.user = known
+    await signIn(one)
+    expect(one.worn).toEqual(DARK_GLASS)
+    expect(server.settings.get('a')?.look).toEqual(DARK_GLASS)
   })
 })

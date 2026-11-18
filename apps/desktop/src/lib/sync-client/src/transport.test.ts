@@ -60,7 +60,7 @@ describe('the engine over the network', () => {
     expect(ops?.method).toBe('POST')
     expect(new URL(ops?.url ?? '').pathname).toBe(`/v2/spaces/${SPACE}/ops`)
     expect(ops?.headers.get('authorization')).toBe('Bearer token-1')
-    expect(ops?.headers.get('x-nib-device')).toBe('one')
+    expect(ops?.headers.get('x-orden-device')).toBe('one')
     expect(ops?.headers.get('content-type')).toBe('application/octet-stream')
     const body = unframe(new Uint8Array(await ops!.arrayBuffer())) as {
       ops: { t: string; name: string }[]
@@ -99,9 +99,35 @@ describe('a file’s bytes over the network', () => {
     expect(await over(404).replace('s', 'f', 'h', 'b')).toEqual({ gone: true })
   })
 
+  test('an account that lacks the new bytes says so apart from a file that has gone', async () => {
+    const lacking = remoteFiles({
+      base: 'https://sync.test',
+      token: () => 'token-1',
+      device: () => 'one',
+      fetch: () =>
+        Promise.resolve(Response.json({ error: 'no such file', blob: 'h' }, { status: 404 })),
+    })
+    expect(await lacking.replace('s', 'f', 'h', 'b')).toEqual({ lost: true })
+  })
+
+  test('asks which bytes it keeps for the space they are in', async () => {
+    const bodies: unknown[] = []
+    const asking = remoteFiles({
+      base: 'https://sync.test',
+      token: () => 'token-1',
+      device: () => 'one',
+      fetch: async (request) => {
+        bodies.push(await request.json())
+        return Response.json({ kept: ['h'] })
+      },
+    })
+    expect(await asking.have?.('s', ['h', 'i'])).toEqual(new Set(['h']))
+    expect(bodies).toEqual([{ space: 's', hashes: ['h', 'i'] }])
+  })
+
   test('an account that cannot say which bytes it keeps says nothing', async () => {
-    expect(await over(404).have?.(['h'])).toBeNull()
-    expect(await over(503).have?.(['h'])).toBeNull()
+    expect(await over(404).have?.('s', ['h'])).toBeNull()
+    expect(await over(503).have?.('s', ['h'])).toBeNull()
   })
 })
 

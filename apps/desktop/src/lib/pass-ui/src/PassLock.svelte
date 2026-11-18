@@ -57,19 +57,22 @@
   }
 
   const wrongWord = $derived.by(() => {
-    switch (way) {
-      case 'pin':
-        return 'Wrong PIN'
-      case 'recovery':
-        return 'That recovery key does not open Pass'
-      case 'password':
-      case 'device':
-        return 'Wrong password'
-    }
+    return {
+      pin: 'Wrong PIN',
+      recovery: 'That recovery key does not open Pass',
+      password: 'Wrong password',
+      device: 'Wrong password',
+    }[way]
   })
 </script>
 
-<Gate icon={Lock} title="Pass is locked">
+<Gate
+  icon={Lock}
+  title="Pass is locked"
+  line={pass.leftBehind
+    ? 'Some of Pass on this device could not be carried over from the previous version of Orden. What was synced comes back once Pass is open; changes made here and not yet synced are gone.'
+    : ''}
+>
   {#if way === 'device'}
     <button class="orden-button" type="button" disabled={busy} onclick={() => void opened()}>
       Use {deviceName()}

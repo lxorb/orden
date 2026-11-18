@@ -9,14 +9,20 @@ let here: typeof import('@codemirror/lang-html') | null = null
 let held: Promise<typeof import('@codemirror/lang-html')> | null = null
 
 export function htmlGrammar(): Promise<typeof import('@codemirror/lang-html')> {
-  return (held ??= import('@codemirror/lang-html').then((module) => {
+  if (held) return held
+  const loading = import('@codemirror/lang-html').then((module) => {
     closers = EditorState.create({ extensions: module.autoCloseTags }).facet(
       EditorView.inputHandler,
     )
     here = module
 
     return module
-  }))
+  })
+  held = loading
+  loading.catch(() => {
+    if (held === loading) held = null
+  })
+  return loading
 }
 
 export interface HtmlConfig {
@@ -75,6 +81,4 @@ const closeTags: Extension = EditorView.inputHandler.of((view, from, to, text, i
   closers.some((close) => close(view, from, to, text, insert)),
 )
 
-export function htmlCompletionSource(_context: CompletionContext): CompletionResult | null {
-  return null
-}
+export const htmlCompletionSource = (_context: CompletionContext): CompletionResult | null => null

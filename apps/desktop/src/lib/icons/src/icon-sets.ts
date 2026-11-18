@@ -175,7 +175,7 @@ async function loadLucide(): Promise<LoadedSet> {
     })),
     groups: [],
     shape: (name) => {
-      const icon = library[name]
+      const icon = Object.hasOwn(library, name) ? library[name] : undefined
       return icon ? { kind: 'stroked', icon } : null
     },
   }
@@ -199,7 +199,7 @@ function iconify(collection: IconifyCollection, tags: Map<string, string>): Load
     })),
     groups: [],
     shape: (name) => {
-      const icon = collection.icons[name]
+      const icon = Object.hasOwn(collection.icons, name) ? collection.icons[name] : undefined
       if (!icon) return null
 
       return {

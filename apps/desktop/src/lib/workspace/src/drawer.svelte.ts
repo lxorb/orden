@@ -1,6 +1,6 @@
 import type { Panel, PanelSide } from '../../session/src/api'
 import { workspace } from './workspace.svelte'
-import { TAB_KINDS } from '../../tab-kinds/src/api'
+import { TAB_KINDS, type TabPanel } from '../../tab-kinds/src/api'
 
 class Drawer {
   at = $state<number | null>(null)
@@ -29,7 +29,11 @@ class Drawer {
     const next = workspace.nextRight
     if (next === null) return false
     const kind = workspace.active?.kind
-    return next !== 'outline' || kind === undefined || kind === 'pages' || TAB_KINDS[kind].editor
+    return (
+      next !== 'outline' ||
+      kind === undefined ||
+      (TAB_KINDS[kind].panels as readonly TabPanel[]).includes('outline')
+    )
   }
 
   get progress(): number | null {

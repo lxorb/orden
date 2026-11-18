@@ -12,7 +12,6 @@
   import Target from 'lucide/dist/esm/icons/target.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { onMount, tick, untrack } from 'svelte'
-  import { DictateButton, canDictate, dictating } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
   import { longPaste } from '../../ui-controls/src/api'
   import type { Provider } from '../../ai-providers/src/api'
@@ -78,9 +77,7 @@
   let words = $state<HTMLTextAreaElement>()
   let asking = $state<{ rows: MenuEntry[]; at: DOMRect } | null>(null)
   let pasted = $state<string[] | null>(null)
-
   let seen = untrack(() => prefill.text ?? '')
-
   const today = $derived(todayOf())
   const read = $derived(
     smart
@@ -118,7 +115,28 @@
     return out
   })
 
-  onMount(() => input?.focus())
+  const dictation = () => import('../../dictation/src/api')
+  let speech = $state.raw<Awaited<ReturnType<typeof dictation>> | null>(null)
+
+  onMount(() => {
+    input?.focus()
+    if (dictates) void dictation().then((one) => (speech = one))
+  })
+
+  function dictated(field: HTMLInputElement | HTMLTextAreaElement, owner: Dictates) {
+    let held: { destroy(): void } | null = null
+    let gone = !dictates
+    if (!gone)
+      void dictation().then((one) => {
+        if (!gone) held = one.dictating(field, owner)
+      })
+    return {
+      destroy() {
+        gone = true
+        held?.destroy()
+      },
+    }
+  }
 
   let spoken = $state<HTMLInputElement | HTMLTextAreaElement>()
 
@@ -143,7 +161,6 @@
   let caret = $state(-1)
   let dismissed = $state(-1)
   let active = $state(0)
-
   const token = $derived(smart && caret >= 0 ? tokenAt(text, caret) : null)
   const offered = $derived.by((): string[] => {
     if (!token || token.from === dismissed) return []
@@ -453,7 +470,7 @@
     <input
       bind:this={input}
       bind:value={text}
-      use:dictating={voiceField}
+      use:dictated={voiceField}
       class="field"
       onfocus={() => (spoken = input)}
       {onkeydown}
@@ -495,7 +512,7 @@
     <textarea
       bind:this={words}
       bind:value={description}
-      use:dictating={voiceField}
+      use:dictated={voiceField}
       class="words"
       onfocus={() => (spoken = words)}
       rows="2"
@@ -595,8 +612,8 @@
           <Glyph icon={Sparkles} />
         </button>
       {/if}
-      {#if dictates && canDictate()}
-        <DictateButton owner={voiceField} below />
+      {#if dictates && speech?.canDictate()}
+        <speech.DictateButton owner={voiceField} below />
       {/if}
       <button type="button" class="add" disabled={!read.text} onclick={() => void submit(false)}
         >{mode === 'edit' ? 'Save' : 'Add'}</button

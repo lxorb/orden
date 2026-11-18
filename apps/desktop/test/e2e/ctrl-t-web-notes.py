@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -128,5 +126,4 @@ def main() -> int:
 
     return DRIVE.verdict("Ctrl+T finds the space's web notes and opens them")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

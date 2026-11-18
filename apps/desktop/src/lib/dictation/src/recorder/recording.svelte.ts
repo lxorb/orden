@@ -1,7 +1,7 @@
 import { storeBeside, workspace } from '../../../workspace/src/api'
 import { busy, message, reloading } from '../../../ui-kit/src/api'
 import { links } from '../../../link-index/src/api'
-import { askSheet, settingsWindow } from '@orden/contracts'
+import { askSheet, sayNotice } from '@orden/contracts'
 import { nameOf, spaceRelative } from '../../../platform/src/api'
 import { canRecordHere, recordingName } from './container'
 import { MOST_BYTES, record, type Recording } from './microphone'
@@ -54,8 +54,10 @@ class Recorder {
       this.path = path
 
       this.held = await record({
-        full: () => this.failed('That is as much as one recording may hold.'),
+        full: () =>
+          void this.stop().then(() => busy.failed('That is as much as one recording may hold.')),
       })
+      this.at = performance.now()
 
       this.ticking = setInterval(() => {
         this.elapsed = (performance.now() - this.at) / 1000
@@ -66,7 +68,7 @@ class Recorder {
       this.on = false
       this.held = null
       this.stopAsked = false
-      settingsWindow().error = message(error, 'That microphone could not be opened.')
+      sayNotice(message(error, 'That microphone could not be opened.'))
     }
   }
 
@@ -102,7 +104,7 @@ class Recorder {
         await this.keep(path, file.bytes, held.extension)
       })
     } catch (error) {
-      settingsWindow().error = message(error, 'That recording could not be saved.')
+      sayNotice(message(error, 'That recording could not be saved.'))
     } finally {
       this.saving = false
       void workspace.writesSettled()
@@ -129,10 +131,6 @@ class Recorder {
     else appendTo(path, `\n${embed}\n`)
 
     void workspace.loadTree()
-  }
-
-  private failed(reason: string) {
-    busy.failed(reason)
   }
 }
 

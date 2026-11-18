@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from harness import Drive
 from shell import SEED
 
@@ -85,5 +83,4 @@ def main() -> int:
 
     return DRIVE.verdict("a canvas follows the screen it is moved to")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -1,11 +1,8 @@
 import { readTint } from '../../ui-kit/src/api'
 
-export const LONGEST_NAME = 80
-
+const LONGEST_NAME = 80
 const LONGEST_NOTE = 1000
-
 const MOST_TAGS = 12
-
 const LONGEST_TAG = 40
 
 export interface Activity {
@@ -18,11 +15,8 @@ export interface Activity {
 }
 
 export type Lane = 'app' | 'site' | 'space' | 'tab'
-
 export const LANES: readonly Lane[] = ['app', 'site', 'space', 'tab']
-
 type Source = 'manual' | 'timer' | Lane
-
 const SOURCES: readonly Source[] = ['manual', 'timer', ...LANES]
 
 export interface Span {
@@ -58,8 +52,10 @@ function tagsOf(value: unknown): string[] {
   return out
 }
 
+export const activityName = (name: string): string => name.trim().slice(0, LONGEST_NAME).trim()
+
 export function activityOf(id: string, value: Record<string, unknown>): Activity | null {
-  const name = textOr(value.name, LONGEST_NAME).trim()
+  const name = typeof value.name === 'string' ? activityName(value.name) : ''
   if (!name) return null
   return {
     id,
@@ -89,29 +85,25 @@ export function spanOf(id: string, value: Record<string, unknown>): Span | null 
   }
 }
 
-export function activityValue(activity: Activity): Record<string, unknown> {
-  return {
-    name: activity.name,
-    tint: activity.tint,
-    parent: activity.parent,
-    archived: activity.archived,
-    order: activity.order,
-  }
-}
+export const activityValue = (activity: Activity): Record<string, unknown> => ({
+  name: activityName(activity.name),
+  tint: activity.tint,
+  parent: activity.parent,
+  archived: activity.archived,
+  order: activity.order,
+})
 
-export function spanValue(span: Span): Record<string, unknown> {
-  return {
-    start: span.start,
-    end: span.end,
-    activity: span.activity,
-    tags: span.tags,
-    note: span.note.slice(0, LONGEST_NOTE),
-    source: span.source,
-    place: span.place,
-    label: span.label,
-    device: span.device,
-  }
-}
+export const spanValue = (span: Span): Record<string, unknown> => ({
+  start: span.start,
+  end: span.end,
+  activity: span.activity,
+  tags: span.tags,
+  note: span.note.slice(0, LONGEST_NOTE),
+  source: span.source,
+  place: span.place,
+  label: span.label,
+  device: span.device,
+})
 
 export interface Rule {
   id: string
@@ -130,9 +122,11 @@ export function ruleOf(id: string, value: Record<string, unknown>): Rule | null 
   return { id, activity, lane, place }
 }
 
-export function ruleValue(rule: Rule): Record<string, unknown> {
-  return { activity: rule.activity, lane: rule.lane, place: rule.place }
-}
+export const ruleValue = (rule: Rule): Record<string, unknown> => ({
+  activity: rule.activity,
+  lane: rule.lane,
+  place: rule.place,
+})
 
 export function recordingOf(value: Record<string, unknown> | null | undefined): boolean {
   if (!value) return true
@@ -158,6 +152,8 @@ export function goalOf(id: string, value: Record<string, unknown>): Goal | null 
   return { id, activity, per, ms: value.ms }
 }
 
-export function goalValue(goal: Goal): Record<string, unknown> {
-  return { activity: goal.activity, per: goal.per, ms: goal.ms }
-}
+export const goalValue = (goal: Goal): Record<string, unknown> => ({
+  activity: goal.activity,
+  per: goal.per,
+  ms: goal.ms,
+})

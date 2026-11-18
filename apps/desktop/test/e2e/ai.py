@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import http.server
 import json
 import re
@@ -549,5 +547,4 @@ def main() -> int:
 
     return DRIVE.verdict("a block is asked, answered, replaced and stopped; a selection is rewritten")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

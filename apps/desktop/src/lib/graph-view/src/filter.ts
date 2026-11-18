@@ -63,13 +63,10 @@ export function graphFilter(query: Query): Keeps | null {
   }
 }
 
-function known(parts: readonly (Keeps | null)[]): Keeps[] {
-  return parts.filter((one): one is Keeps => one !== null)
-}
+const known = (parts: readonly (Keeps | null)[]): Keeps[] =>
+  parts.filter((one): one is Keeps => one !== null)
 
-function folded(text: string, fold: boolean): string {
-  return fold ? text.toLowerCase() : text
-}
+const folded = (text: string, fold: boolean): string => (fold ? text.toLowerCase() : text)
 
 function compiled(source: string, fold: boolean): RegExp | null {
   try {

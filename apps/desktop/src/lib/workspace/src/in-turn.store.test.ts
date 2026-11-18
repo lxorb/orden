@@ -50,9 +50,7 @@ test('an outside edit it had not heard of is taken in, not replaced', async () =
   d.files.set(PATH, 'a [[old]]\n\nend\nfrom a git pull\n')
   const after = 'a [[new]]\n\nend\n'
   const knew = change(note, after)
-
   const written = await writeEdited(note, PATH, after, knew)
-
   expect(d.files.get(PATH)).toBe('a [[new]]\n\nend\nfrom a git pull\n')
   expect(written).toBe('a [[new]]\n\nend\nfrom a git pull\n')
   expect(note.latest).toBe('a [[new]]\n\nend\nfrom a git pull\n')
@@ -64,13 +62,10 @@ test('a refused write stays owed and lands', async () => {
   const after = 'a [[new]]\n'
   const knew = change(note, after)
   refused.times = 1
-
   const written = await writeEdited(note, PATH, after, knew)
-
   expect(written).toBeNull()
   expect(note.dirty).toBe(true)
   expect(d.files.get(PATH)).toBe('a [[old]]\n')
-
   await workspace.writesSettled()
   await vi.waitFor(() => expect(d.files.get(PATH)).toBe('a [[new]]\n'), { timeout: 5000 })
   expect(note.dirty).toBe(false)

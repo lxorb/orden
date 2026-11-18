@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -12,9 +10,6 @@ UNEXPLAINED = """
   const pane = document.querySelector('[role="region"][aria-label="Settings"]')
   const rows = [...pane.querySelectorAll('.orden-setting')].filter((row) =>
     !row.closest('.shortcut, .button, .extension') &&
-    // A row's control, in the shapes Settings draws them in: a value - a dropdown or a
-    // field - is `.orden-setting-value` or `.orden-field` since #1056, which put every one in
-    // one box and one column.
     row.querySelector(
       '[role="switch"], .orden-switch, input[type="range"], .orden-segmented, .orden-setting-value,' +
         ' input.orden-field, .orden-swatches, .swatches, .pictures',
@@ -114,5 +109,4 @@ def drive(browser: Browser) -> None:
     )
     every_pane(page)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every setting has a ? that explains it"))
+raise SystemExit(DRIVE.run(drive, "every setting has a ? that explains it"))

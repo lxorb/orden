@@ -16,21 +16,13 @@ const paperAway = () =>
     : import('./paper-away')
 
 const SCALE = 2
-
 const ROUGH = 0.5
-
 const SHARP = 4
-
 const DENSITIES = [ROUGH, SCALE, SHARP]
-
 const MOST_PIXELS = 16 * 1024 * 1024
-
 const CLOSE_PIXELS = 64 * 1024 * 1024
-
 const KEPT = 24
-
 const SIDE = 16384
-
 const KEPT_PIXELS = 64 * 1024 * 1024
 
 export function paperPlaces(file: string, note: string | null, root: string | null): string[] {
@@ -71,9 +63,7 @@ interface Job {
 }
 
 const held = new Map<string, Held>()
-
 const queue: Job[] = []
-
 let pumping = false
 
 export interface PaperAt {
@@ -101,9 +91,8 @@ export function drawScale(width: number, height: number, density: number): numbe
   )
 }
 
-export function densityFor(onScreen: number): number {
-  return DENSITIES.find((one) => onScreen <= one) ?? SHARP
-}
+export const densityFor = (onScreen: number): number =>
+  DENSITIES.find((one) => onScreen <= one) ?? SHARP
 
 export function paperOf(
   at: PaperAt,
@@ -159,9 +148,7 @@ function letGo(job: Job) {
   job.settle(null)
 }
 
-function keyOfJob(job: Job): string {
-  return `${String(job.number)}@${String(job.density)}`
-}
+const keyOfJob = (job: Job): string => `${String(job.number)}@${String(job.density)}`
 
 function next(): Job | undefined {
   const at = queue.findIndex((job) => !job.aside)
@@ -202,9 +189,8 @@ export async function outlineOf(at: PaperAt): Promise<PdfHeading[]> {
   return opened ? await readOutline(opened.doc) : []
 }
 
-export async function paperPathOf(at: PaperAt): Promise<string | null> {
-  return (await heldOf(at)?.place) ?? null
-}
+export const paperPathOf = async (at: PaperAt): Promise<string | null> =>
+  (await heldOf(at)?.place) ?? null
 
 export interface PaperView {
   transform: Transform
@@ -280,6 +266,14 @@ async function opened(
   }
 
   throw last instanceof Error ? last : new Error(String(last))
+}
+
+export async function paperBytesOf(at: PaperAt): Promise<Uint8Array | null> {
+  for (const path of paperPlaces(at.file, at.note, at.root)) {
+    const bytes = await fileBytes(path).catch(() => null)
+    if (bytes) return bytes
+  }
+  return fromAccount(at).catch(() => null)
 }
 
 async function fromAccount(at: PaperAt): Promise<Uint8Array | null> {

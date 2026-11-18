@@ -1,6 +1,5 @@
 import { mapSources } from '@orden/markdown/sources'
-import { claimName } from '../../files-out/src/api'
-import { type ZipEntry as Entry, zipOf } from '../../files-out/src/api'
+import { claimName, type ZipEntry as Entry, zipOf } from '../../files-out/src/api'
 import { type Picture, suffixFor } from './pictures'
 import { legalCode, legalXml } from './xml-legal'
 
@@ -95,8 +94,8 @@ function legalReference(reference: string): boolean {
   return legalCode(Number.parseInt(reference.slice(hex ? 3 : 2), hex ? 16 : 10))
 }
 
-function escaped(text: string, quotes: boolean): string {
-  return legalXml(text).replace(CHARACTER, (whole: string, name: string | undefined) => {
+const escaped = (text: string, quotes: boolean): string =>
+  legalXml(text).replace(CHARACTER, (whole: string, name: string | undefined) => {
     if (name !== undefined) return referenceOf(name)
     if (whole.startsWith('&#')) return legalReference(whole) ? whole.replace('&#X', '&#x') : ''
     if (whole === '&') return '&amp;'
@@ -105,7 +104,6 @@ function escaped(text: string, quotes: boolean): string {
     if (whole === '"') return quotes ? '&quot;' : whole
     return whole
   })
-}
 
 type Piece =
   | { kind: 'text'; text: string }
@@ -187,7 +185,6 @@ function piecesOf(html: string): Piece[] {
 }
 
 const ATTRIBUTE = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>/]+)))?/g
-
 const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
 
 function attributesOf(source: string): string {
@@ -318,9 +315,7 @@ function withoutFootnotes(xhtml: string): { body: string; footnotes: string } {
   return { body, footnotes: found[0] }
 }
 
-function sectionFile(index: number): string {
-  return `section-${index + 1}.xhtml`
-}
+const sectionFile = (index: number): string => `section-${index + 1}.xhtml`
 
 function placesOf(sections: readonly string[]): Map<string, number> {
   const places = new Map<string, number>()

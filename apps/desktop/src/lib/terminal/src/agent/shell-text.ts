@@ -15,88 +15,20 @@ export function programOf(command: string, os: Os): string {
 
 const PACKAGES = { long: ['--script-shell', '--node-options'] }
 const PLAIN = ['--version', '--help', '-v', '-h', '--silent', '-s']
-const SCRIPTS = [
-  'test',
-  'build',
-  'dev',
-  'start',
-  'stop',
-  'restart',
-  'lint',
-  'check',
-  'format',
-  'typecheck',
-  'preview',
-  'serve',
-]
+const SCRIPTS = `test build dev start stop restart lint check format typecheck preview
+  serve`.split(/\s+/)
 
 const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:-]+$/
-
 const TOOLS = ['tsc', 'vitest', 'jest', 'eslint', 'prettier']
 const OPTIONS_FREE = [
   ...PLAIN,
-  '--save',
-  '-S',
-  '--save-dev',
-  '-D',
-  '-d',
-  '--dev',
-  '--save-exact',
-  '-E',
-  '--exact',
-  '--save-optional',
-  '-O',
-  '--optional',
-  '--save-peer',
-  '--no-save',
-  '--global',
-  '-g',
-  '--production',
-  '--prod',
-  '-P',
-  '--force',
-  '-f',
-  '--frozen-lockfile',
-  '--no-frozen-lockfile',
-  '--immutable',
-  '--legacy-peer-deps',
-  '--omit',
-  '--include',
-  '--no-audit',
-  '--no-fund',
-  '--audit-level',
-  '--fix',
-  '--json',
-  '--long',
-  '--depth',
-  '--all',
-  '-a',
-  '--recursive',
-  '-r',
-  '--filter',
-  '-F',
-  '--workspace',
-  '-w',
-  '--workspaces',
-  '--workspace-root',
-  '--if-present',
-  '--verbose',
-  '--parallel',
-  '--stream',
-  '--watch',
-  '--coverage',
-  '--bail',
-  '--dry-run',
-  '--offline',
-  '--prefer-offline',
-  '--latest',
-  '-L',
-  '--ignore-scripts',
-  '--save-prod',
-  '--loglevel',
-  '--noEmit',
-  '--write',
-  '--check',
+  ...`--save -S --save-dev -D -d --dev --save-exact -E --exact --save-optional -O --optional
+  --save-peer --no-save --global -g --production --prod -P --force -f --frozen-lockfile
+  --no-frozen-lockfile --immutable --legacy-peer-deps --omit --include --no-audit --no-fund
+  --audit-level --fix --json --long --depth --all -a --recursive -r --filter -F --workspace -w
+  --workspaces --workspace-root --if-present --verbose --parallel --stream --watch --coverage --bail
+  --dry-run --offline --prefer-offline --latest -L --ignore-scripts --save-prod --loglevel --noEmit
+  --write --check`.split(/\s+/),
 ]
 const REACH: Record<
   string,
@@ -111,102 +43,24 @@ const REACH: Record<
   npm: {
     ...PACKAGES,
     short: null,
-    commands: [
-      'test',
-      't',
-      'run',
-      'run-script',
-      'start',
-      'stop',
-      'restart',
-      'install',
-      'i',
-      'add',
-      'ci',
-      'clean-install',
-      'uninstall',
-      'remove',
-      'rm',
-      'un',
-      'update',
-      'up',
-      'upgrade',
-      'ls',
-      'list',
-      'll',
-      'la',
-      'outdated',
-      'audit',
-      'view',
-      'info',
-      'show',
-      'pack',
-      'help',
-      'root',
-      'prefix',
-      'why',
-      'explain',
-      'dedupe',
-      'prune',
-      'rebuild',
-      'version',
-    ],
+    commands: `test t run run-script start stop restart install i add ci clean-install uninstall
+      remove rm un update up upgrade ls list ll la outdated audit view info show pack help root
+      prefix why explain dedupe prune rebuild version`.split(/\s+/),
     before: PLAIN,
     valued: ['--prefix', '-w', '--workspace'],
   },
   pnpm: {
     ...PACKAGES,
     short: null,
-    commands: [
-      't',
-      'run',
-      'install',
-      'i',
-      'add',
-      'remove',
-      'rm',
-      'uninstall',
-      'un',
-      'update',
-      'up',
-      'upgrade',
-      'list',
-      'ls',
-      'll',
-      'la',
-      'outdated',
-      'audit',
-      'why',
-      'view',
-      'info',
-      'prune',
-      'rebuild',
-      'dedupe',
-      'pack',
-      'root',
-      'help',
-    ],
+    commands: `t run install i add remove rm uninstall un update up upgrade list ls ll la outdated
+      audit why view info prune rebuild dedupe pack root help`.split(/\s+/),
     before: [...PLAIN, '-r', '--recursive', '-w', '--workspace-root'],
     valued: ['--filter', '-F', '--dir', '-C'],
   },
   yarn: {
     ...PACKAGES,
     short: null,
-    commands: [
-      'run',
-      'install',
-      'add',
-      'remove',
-      'upgrade',
-      'up',
-      'list',
-      'info',
-      'why',
-      'outdated',
-      'audit',
-      'pack',
-      'help',
-    ],
+    commands: 'run install add remove upgrade up list info why outdated audit pack help'.split(' '),
     before: PLAIN,
     valued: ['--cwd'],
   },
@@ -227,54 +81,13 @@ interface Free {
   long?: readonly string[]
 }
 
-const LOOKS = [
-  '--oneline',
-  '--graph',
-  '--decorate',
-  '--no-decorate',
-  '--stat',
-  '--shortstat',
-  '--numstat',
-  '--name-only',
-  '--name-status',
-  '--patch',
-  '--no-patch',
-  '--color',
-  '--no-color',
-  '--format',
-  '--pretty',
-  '--abbrev-commit',
-  '--date',
-  '--author',
-  '--grep',
-  '--since',
-  '--until',
-  '--after',
-  '--before',
-  '--all',
-  '--follow',
-  '--reverse',
-  '--max-count',
-  '--first-parent',
-  '--merges',
-  '--no-merges',
-  '--cached',
-  '--staged',
-  '--word-diff',
-  '--ignore-all-space',
-  '--unified',
-]
-const GIT_BEFORE = [
-  '--version',
-  '--help',
-  '-v',
-  '-h',
-  '-P',
-  '--no-pager',
-  '--no-optional-locks',
-  '--no-replace-objects',
-  '--literal-pathspecs',
-]
+const LOOKS = `--oneline --graph --decorate --no-decorate --stat --shortstat --numstat --name-only
+  --name-status --patch --no-patch --color --no-color --format --pretty --abbrev-commit --date
+  --author --grep --since --until --after --before --all --follow --reverse --max-count
+  --first-parent --merges --no-merges --cached --staged --word-diff --ignore-all-space
+  --unified`.split(/\s+/)
+const GIT_BEFORE = `--version --help -v -h -P --no-pager --no-optional-locks --no-replace-objects
+  --literal-pathspecs`.split(/\s+/)
 const GIT: Record<string, Free> = {
   status: {
     flags: 'sbu',
@@ -310,58 +123,21 @@ const GIT: Record<string, Free> = {
   commit: {
     flags: 'asqv',
     valued: 'm',
-    long: [
-      '--all',
-      '--amend',
-      '--message',
-      '--no-edit',
-      '--signoff',
-      '--no-verify',
-      '--allow-empty',
-      '--quiet',
-      '--verbose',
-    ],
+    long: `--all --amend --message --no-edit --signoff --no-verify --allow-empty --quiet
+      --verbose`.split(/\s+/),
   },
   push: {
     flags: 'uqvnfd',
-    long: [
-      '--set-upstream',
-      '--force',
-      '--force-with-lease',
-      '--tags',
-      '--follow-tags',
-      '--dry-run',
-      '--delete',
-      '--quiet',
-      '--verbose',
-      '--no-verify',
-    ],
+    long: `--set-upstream --force --force-with-lease --tags --follow-tags --dry-run --delete --quiet
+      --verbose --no-verify`.split(/\s+/),
   },
   pull: {
     flags: 'qv',
-    long: [
-      '--rebase',
-      '--no-rebase',
-      '--ff-only',
-      '--no-ff',
-      '--ff',
-      '--quiet',
-      '--verbose',
-      '--tags',
-    ],
+    long: '--rebase --no-rebase --ff-only --no-ff --ff --quiet --verbose --tags'.split(' '),
   },
   fetch: {
     flags: 'qvp',
-    long: [
-      '--all',
-      '--prune',
-      '--tags',
-      '--depth',
-      '--quiet',
-      '--verbose',
-      '--no-tags',
-      '--unshallow',
-    ],
+    long: '--all --prune --tags --depth --quiet --verbose --no-tags --unshallow'.split(' '),
   },
   checkout: {
     flags: 'qf',
@@ -377,18 +153,8 @@ const GIT: Record<string, Free> = {
   reset: { flags: 'q', long: ['--soft', '--mixed', '--hard', '--keep', '--merge', '--quiet'] },
   branch: {
     flags: 'avrdDmMf',
-    long: [
-      '--all',
-      '--verbose',
-      '--remotes',
-      '--delete',
-      '--move',
-      '--list',
-      '--merged',
-      '--no-merged',
-      '--show-current',
-      '--force',
-    ],
+    long: `--all --verbose --remotes --delete --move --list --merged --no-merged --show-current
+      --force`.split(/\s+/),
   },
   tag: {
     flags: 'adlf',
@@ -398,17 +164,8 @@ const GIT: Record<string, Free> = {
   merge: {
     flags: 'q',
     valued: 'm',
-    long: [
-      '--no-ff',
-      '--ff',
-      '--ff-only',
-      '--squash',
-      '--abort',
-      '--continue',
-      '--no-edit',
-      '--message',
-      '--quiet',
-    ],
+    long: `--no-ff --ff --ff-only --squash --abort --continue --no-edit --message
+      --quiet`.split(/\s+/),
   },
   rebase: {
     flags: 'q',
@@ -443,6 +200,15 @@ function gitOptionFree(word: string, free: Free): boolean {
   return word.length > 1
 }
 
+const OUTSIDE = /(^|[=@])([\\/~]|[A-Za-z]:)|(file|link|portal):/i
+
+function reachesOut(word: string): boolean {
+  return OUTSIDE.test(word) || word.split(/[\\/=@:]/).includes('..')
+}
+
+const anyReachesOut = (words: readonly string[]) =>
+  words.some((word) => !word.startsWith('-') && reachesOut(word))
+
 function gitStays(plain: readonly string[]): boolean {
   const at = plain.findIndex((word) => !word.startsWith('-'))
   const leading = at === -1 ? plain : plain.slice(0, at)
@@ -452,6 +218,7 @@ function gitStays(plain: readonly string[]): boolean {
   if (command === undefined) return true
   const free = Object.hasOwn(GIT, command) ? GIT[command] : undefined
   if (!free) return false
+  if (anyReachesOut(plain.slice(at + 1))) return false
 
   for (const word of plain.slice(at + 1)) {
     if (word === '--') return true
@@ -512,13 +279,17 @@ function positional(plain: readonly string[], from: number): boolean {
   return plain.slice(from, end === -1 ? undefined : end).some((word) => !word.startsWith('-'))
 }
 
+function optionReachesOut(word: string): boolean {
+  return word.startsWith('-') && (/[\\/~:]/.test(word) || word.includes('..'))
+}
+
 function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (RUNS_WHAT_IT_FETCHES.has(program)) return false
 
   if (program === 'git') return gitStays(plain)
 
   const reach = REACH[program]
-  if (!reach) return true
+  if (!reach) return !anyReachesOut(plain) && !plain.some(optionReachesOut)
 
   let at = 0
   for (; at < plain.length; at++) {
@@ -531,6 +302,8 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
         if (at === plain.length) return false
       }
       if (/\s/.test(word) || /\s/.test(plain[at] ?? '')) return false
+      const value = word.includes('=') ? word.slice(word.indexOf('=') + 1) : (plain[at] ?? '')
+      if (reachesOut(value)) return false
       continue
     }
     return false
@@ -544,6 +317,8 @@ function argumentsStay(program: string, plain: readonly string[]): boolean {
   if (command !== undefined) {
     if (!reach.commands.includes(command) && !bareNameStays(program, plain, at)) return false
   }
+
+  if (anyReachesOut(plain.slice(at + 1))) return false
 
   const end = plain.indexOf('--', at)
   for (const word of plain.slice(at + 1, end === -1 ? undefined : end)) {
@@ -563,10 +338,38 @@ export function onTheList(command: string, programs: readonly string[], os: Os):
   const program = programOf(command, os)
   if (program === '' || !programs.some((one) => programOf(one, os) === program)) return false
 
-  if (/(?! )\p{Zs}/u.test(command)) return false
+  if (!readAlikeEverywhere(command, os)) return false
 
   const words = wordsOf(command.trim())
-  return words !== null && argumentsStay(program.toLowerCase(), words.slice(1))
+  if (words === null || !argumentsStay(program.toLowerCase(), words.slice(1))) return false
+  return os !== 'windows' || argumentsStay(program.toLowerCase(), asCommandPromptReads(command))
+}
+
+function asCommandPromptReads(command: string): string[] {
+  const words = command.trim().match(/"[^"]*"|[^ ]+/g) ?? []
+  return words.slice(1).map((one) => one.replace(/"/g, ''))
+}
+
+export function runsOnTheList(
+  program: string,
+  args: readonly string[],
+  programs: readonly string[],
+  os: Os,
+): boolean {
+  const name = programOf(program, os)
+  if (name === '' || !programs.some((one) => programOf(one, os) === name)) return false
+  if (args.some((one) => /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one))) return false
+  return argumentsStay(name.toLowerCase(), args)
+}
+
+const READ_ALIKE = /^[\p{L}\p{M}0-9 _\-./:=+@%~,^'"]*$/u
+
+function readAlikeEverywhere(command: string, os: Os): boolean {
+  if (!READ_ALIKE.test(command) || /,['"]*-/.test(command)) return false
+  if (os !== 'windows') return true
+  if (/[\^]|%[^%\s]*%/.test(command)) return false
+  if (/""|''/.test(command) || (command.includes("'") && command.includes('"'))) return false
+  return !/'[^']*\s-[^']*'/.test(command)
 }
 
 export function startsOnlyOne(command: string): boolean {

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/sync-server/src/crypto'
-import { presenceOf } from '../src/sync-server/src/people/presence'
-import { profileChanges, statusIn } from '../src/sync-server/src/people/profile'
-import { call, mail, signIn, testEnv, type TestEnv } from './harness'
+import { presenceOf } from '../src/sync-server-engine/src/people/presence'
+import { profileChanges, statusIn } from '../src/sync-server-engine/src/people/profile'
+import { call, joined, mail, signIn, type TestEnv, testEnv } from './harness'
 import { connect, hangUp, hub, send } from './hub-fakes'
 import { invited } from './sync2'
 
@@ -105,19 +105,7 @@ describe('the routes', () => {
     return (await call(env, '/v1/me', { token })).json.user.id
   }
 
-  async function invite(email: string): Promise<string> {
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${space}/share/invite`, {
-        token: owner,
-        body: { email, role: 'write' },
-      }),
-    )
-    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-    if (!link) throw new Error(`no invitation was sent:\n${sent}`)
-    const token = await signIn(env, email)
-    await call(env, `/v1/join/${link}`, { method: 'POST', token })
-    return token
-  }
+  const invite = (email: string) => joined(env, owner, space, email)
 
   async function seen(token: string, ids: string[]): Promise<Record<string, unknown>[]> {
     const { json } = await call<PeopleReply>(env, `/v2/people?ids=${ids.join(',')}`, { token })
@@ -248,6 +236,20 @@ describe('the routes', () => {
     const gone = await call<PeopleReply>(env, '/v2/me/avatar', { method: 'DELETE', token: member })
     expect(gone.json.profile.avatar).toBeNull()
     expect(env.db.prepare('select count(*) as n from blobs').get()).toEqual({ n: 0 })
+  })
+
+  test('signing in again brings the account’s face with it, as reading the account does', async () => {
+    const small = await upload(member, 'small face')
+    const large = await upload(member, 'large face')
+    await call(env, '/v2/me/avatar', { method: 'PUT', token: member, body: { s: small, l: large } })
+
+    const logged = await mail(() => call(env, '/v1/auth/code', { body: { email: MEMBER } }))
+    const code = /(\d{3}) (\d{3})/.exec(logged)
+    const verified = await call<{ user: { avatar: unknown } }>(env, '/v1/auth/verify', {
+      body: { email: MEMBER, code: `${code?.[1]}${code?.[2]}` },
+    })
+
+    expect(verified.json.user.avatar).toEqual({ s: small, l: large })
   })
 
   test('a face given back stays where the account’s own note shows it', async () => {

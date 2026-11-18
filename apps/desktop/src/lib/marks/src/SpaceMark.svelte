@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Icon } from '../../glyphs/src/api'
-  import { iconLibrary } from '../../glyphs/src/api'
+  import { Icon, iconLibrary } from '../../glyphs/src/api'
   import { initial, readIcon } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
 
@@ -14,7 +13,6 @@
 
   const chosen = $derived(id ? readIcon(workspace.iconFor(id)) : null)
   const tint = $derived(id ? workspace.tintFor(id) : null)
-
   const drawn = $derived(iconLibrary.drawing(chosen) !== null)
 </script>
 

@@ -10,10 +10,8 @@ function sheet() {
     it.open = false
     it.closed++
   })
-
   return { ...it, off, state: it }
 }
-
 function keystroke() {
   const press = {
     defaultPrevented: false,
@@ -21,83 +19,44 @@ function keystroke() {
     preventDefault: () => (press.defaultPrevented = true),
     stopImmediatePropagation: () => (press.stopped = true),
   }
-
   return press
 }
-
 describe('escape', () => {
-  test('closes nothing when nothing is open', () => {
-    expect(overlays.escape()).toBe(false)
-  })
-
-  test('closes the one that is open', () => {
-    const one = sheet()
-
-    expect(overlays.escape()).toBe(true)
-    expect(one.state.open).toBe(false)
-
-    one.off()
-  })
-
-  test('closes the newest first, and leaves the one underneath standing', () => {
-    const settings = sheet()
-    const dropdown = sheet()
-
-    expect(overlays.escape()).toBe(true)
-    expect(dropdown.state.open).toBe(false)
-    expect(settings.state.open).toBe(true)
-
-    expect(overlays.escape()).toBe(true)
-    expect(settings.state.open).toBe(false)
-    expect(overlays.escape()).toBe(false)
-
-    settings.off()
-    dropdown.off()
-  })
-
-  test('closes each overlay once, however fast the key is pressed twice', () => {
-    const settings = sheet()
-    const dropdown = sheet()
-
-    overlays.escape()
-    overlays.escape()
-
-    expect(dropdown.state.closed).toBe(1)
-    expect(settings.state.closed).toBe(1)
-
-    settings.off()
-    dropdown.off()
-  })
-
-  test('takes the keystroke with it, so nothing else acts on the same press', () => {
-    const one = sheet()
+  test('closes nothing when nothing is open, and leaves that press alone', () => {
     const press = keystroke()
-
-    expect(overlays.escape(press)).toBe(true)
-    expect(press.defaultPrevented).toBe(true)
-    expect(press.stopped).toBe(true)
-
-    one.off()
-  })
-
-  test('leaves a press nothing was open for alone', () => {
-    const press = keystroke()
-
     expect(overlays.escape(press)).toBe(false)
     expect(press.defaultPrevented).toBe(false)
     expect(press.stopped).toBe(false)
   })
-
+  test('closes the one that is open, taking the keystroke with it', () => {
+    const one = sheet()
+    const press = keystroke()
+    expect(overlays.escape(press)).toBe(true)
+    expect(one.state.open).toBe(false)
+    expect(press.defaultPrevented).toBe(true)
+    expect(press.stopped).toBe(true)
+    one.off()
+  })
+  test('closes the newest first, each once, leaving the one underneath standing', () => {
+    const settings = sheet()
+    const dropdown = sheet()
+    expect(overlays.escape()).toBe(true)
+    expect(dropdown.state.open).toBe(false)
+    expect(settings.state.open).toBe(true)
+    expect(overlays.escape()).toBe(true)
+    expect(settings.state.open).toBe(false)
+    expect(overlays.escape()).toBe(false)
+    expect(dropdown.state.closed).toBe(1)
+    expect(settings.state.closed).toBe(1)
+    settings.off()
+    dropdown.off()
+  })
   test('unwinds a deep stack one press at a time, newest first', () => {
     const closed: string[] = []
     const offs = ['deck', 'sheet', 'settings', 'dropdown'].map((name) =>
       overlays.show(() => closed.push(name)),
     )
-
-    while (overlays.escape()) {
-      // Each press closes exactly one, so the order is the whole answer.
-    }
-
+    while (overlays.escape());
     expect(closed).toEqual(['dropdown', 'settings', 'sheet', 'deck'])
     for (const off of offs) off()
   })
@@ -105,7 +64,6 @@ describe('escape', () => {
   test('an overlay that closes itself is no longer on the stack', () => {
     const one = sheet()
     one.off()
-
     expect(overlays.depth).toBe(0)
     expect(overlays.escape()).toBe(false)
     expect(one.state.closed).toBe(0)
@@ -114,13 +72,10 @@ describe('escape', () => {
   test('one taken off from under another leaves the order it was in', () => {
     const settings = sheet()
     const dropdown = sheet()
-
     settings.off()
-
     expect(overlays.escape()).toBe(true)
     expect(dropdown.state.open).toBe(false)
     expect(overlays.depth).toBe(0)
-
     dropdown.off()
   })
 })
@@ -152,15 +107,12 @@ describe('a press past a popup', () => {
   const press = (target: unknown) => ({ target: target as EventTarget })
 
   afterEach(() => {
-    while (overlays.escape()) {
-      // Whatever a test left open.
-    }
+    while (overlays.escape());
   })
 
   test('closes on a press anywhere else', () => {
     const { it } = popup()
     overlays.pressed(press(new Box()))
-
     expect(it.open).toBe(false)
     expect(overlays.depth).toBe(0)
   })
@@ -169,7 +121,6 @@ describe('a press past a popup', () => {
     const { it, off } = popup()
     overlays.pressed(press(new Box(it.box)))
     overlays.pressed(press(it.opener))
-
     expect(it.open).toBe(true)
     off()
   })
@@ -178,7 +129,6 @@ describe('a press past a popup', () => {
     const opener = new Box()
     overlays.pressed(press(opener))
     const { it, off } = popup(opener)
-
     expect(it.open).toBe(true)
     off()
   })
@@ -187,20 +137,16 @@ describe('a press past a popup', () => {
     const { it } = popup()
     const queued = { target: new Box() as unknown as EventTarget, timeStamp: 0 }
     overlays.pressed(queued)
-
     expect(it.open).toBe(false)
   })
 
   test('a press in a submenu leaves both open, and one past both closes both', () => {
     const parent = popup()
     const child = popup(new Box(parent.it.box))
-
     overlays.pressed(press(new Box(child.it.box)))
     expect([parent.it.open, child.it.open]).toEqual([true, true])
-
     overlays.pressed(press(new Box(parent.it.box)))
     expect([parent.it.open, child.it.open]).toEqual([true, false])
-
     overlays.pressed(press(new Box()))
     expect(parent.it.open).toBe(false)
   })
@@ -208,7 +154,6 @@ describe('a press past a popup', () => {
   test('a sheet is closed by its own scrim, and keeps what is under it', () => {
     const under = popup()
     const off = overlays.show(() => undefined)
-
     overlays.pressed(press(new Box()))
     expect(under.it.open).toBe(true)
     expect(overlays.depth).toBe(2)
@@ -233,7 +178,6 @@ describe('a press past a popup', () => {
       overlays.pressed(press(new Box()))
       const landed = click(it.opener)
       overlays.clicked(landed)
-
       expect(it.open).toBe(false)
       expect(landed.spent).toBe(true)
     })
@@ -244,7 +188,6 @@ describe('a press past a popup', () => {
       const elsewhere = click(new Box())
       overlays.clicked(elsewhere)
       expect(elsewhere.spent).toBe(false)
-
       overlays.pressed(press(it.opener))
       const again = click(it.opener)
       overlays.clicked(again)
@@ -256,7 +199,6 @@ describe('a press past a popup', () => {
       overlays.pressed(press(it.opener))
       const own = click(it.opener)
       overlays.clicked(own)
-
       expect(it.open).toBe(true)
       expect(own.spent).toBe(false)
       off()
@@ -267,7 +209,6 @@ describe('a press past a popup', () => {
     const offSheet = overlays.show(() => undefined)
     const one = popup()
     const two = popup(new Box(one.it.box))
-
     overlays.away()
     expect([one.it.open, two.it.open]).toEqual([false, false])
     expect(overlays.depth).toBe(1)
@@ -283,7 +224,6 @@ describe('a press past a popup', () => {
       null,
       true,
     )
-
     overlays.away()
     expect([under.it.open, open]).toEqual([true, true])
     overlays.pressed(press(new Box()))
@@ -296,61 +236,53 @@ describe('what hides a web page', () => {
   const src = fileURLToPath(new URL('../../..', import.meta.url))
   const read = (path: string) => readFileSync(join(src, path), 'utf8')
 
-  const LAYERS: Record<string, string> = {
-    'App.svelte': 'a panel slid over the note as a drawer',
-    'lib/canvas/src/CanvasBar.svelte': 'dropdown',
-    'lib/canvas/src/CanvasPicked.svelte': "the colours of what is picked, over the plane's own bar",
-    'lib/context-menu/src/ContextMenu.svelte': 'menu',
-    'lib/crash-reports/src/CrashAsk.svelte': 'dialog',
-    'lib/graph-view/src/GraphControls.svelte': 'dropdown',
-    'lib/surfaces/src/FeedbackSheet.svelte': 'dialog',
-    'lib/collab/src/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
-    'lib/history/src/History.svelte': 'sheet',
-    'lib/sharing/src/JoinSheet.svelte': 'sheet',
-    'lib/icon-picker/src/IconPicker.svelte': 'sheet',
-    'lib/palette/src/Palette.svelte': 'dialog',
-    'lib/surfaces/src/PromptSheet.svelte': 'dialog',
-    'lib/ai-sidebar/src/QuickQuestion.svelte': 'dialog',
-    'lib/ui-controls/src/Select.svelte': 'dropdown',
-    'lib/sidebar/src/Sidebar.svelte':
-      'the shut file list, out over the note while the pointer is on it',
-    'lib/ui-controls/src/Sheet.svelte': 'sheet',
-    'lib/accounts-ui/src/SignIn.svelte': 'sheet',
-    'lib/spaces/src/SpacePicker.svelte': 'dialog',
-    'lib/sidebar/src/SpaceSwitcher.svelte': 'menu',
-    'lib/overview/src/Overview.svelte': 'dialog',
-    'lib/pass-ui/src/PassFill.svelte':
-      "Pass's offer to fill, save or sign in, under a web tab's bar",
-    'lib/settings/src/ThemeStore.svelte': 'sheet',
-    'lib/agents/src/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
-    'lib/ai-sidebar/src/Composer.svelte': "the AI's model or context, over its composer",
-    'lib/ai-providers/src/vault/VaultApprove.svelte':
-      'another of your devices asking for your AI accounts',
-    'lib/dictation/src/EngineChooser.svelte': "where dictation's voice may go, over its microphone",
-    'lib/chat-kit/src/Float.svelte': "a chat's small layer: the emoji picker, the pins, the search",
-    'lib/chats-client/src/view/Lightbox.svelte':
-      "a message's pictures, one at a time, over everything",
-    'lib/chats-client/src/view/MembersPanel.svelte':
-      "a chat's members as a sheet over the chat, on a narrow window",
-    'lib/accounts-ui/src/ProfileCard.svelte': "a person's card, beside the face that was pressed",
-    'lib/quick-add/src/QuickAddSheet.svelte': 'dialog',
-    'lib/quitting/src/QuitSheet.svelte': 'dialog',
-    'lib/terminal/src/remote/HostPicker.svelte': 'dialog',
-    'lib/tab-strip/src/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
-    'lib/save-place/src/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
-    'lib/settings/src/FontPicker.svelte': 'dropdown',
-    'lib/theme-looks/src/picker/ThemePicker.svelte':
-      'the theme picker, over the themes button or the note',
-    'lib/views/src/Popover.svelte': 'the filter, sort or group of a view, under its button',
-    'lib/views/src/ToneDot.svelte': "a tone's colours, beside its dot",
-    'lib/web-tab/src/AddressField.svelte': 'the suggestions under the address',
-    'lib/web-tab/src/WebAsk.svelte': "a site's question, under the bar",
-    'lib/web-tab/src/WebDialog.svelte': "a page's own dialog, at the top of the page",
-    'lib/web-tab/src/WebDownloads.svelte': 'bubble',
-    'lib/web-tab/src/WebExtensionPopup.svelte': "an extension's popup, under its button",
-    'lib/web-tab/src/WebExtensions.svelte': 'bubble',
-    'lib/web-tab/src/WebSite.svelte': 'bubble',
-  }
+  const LAYERS = [
+    'App.svelte',
+    'lib/canvas/src/CanvasBar.svelte',
+    'lib/canvas/src/CanvasPicked.svelte',
+    'lib/context-menu/src/ContextMenu.svelte',
+    'lib/crash-reports/src/CrashAsk.svelte',
+    'lib/graph-view/src/GraphControls.svelte',
+    'lib/surfaces/src/FeedbackSheet.svelte',
+    'lib/collab/src/GuestCorner.svelte',
+    'lib/history/src/History.svelte',
+    'lib/sharing/src/JoinSheet.svelte',
+    'lib/icon-picker/src/IconPicker.svelte',
+    'lib/palette/src/Palette.svelte',
+    'lib/surfaces/src/PromptSheet.svelte',
+    'lib/ai-sidebar/src/QuickQuestion.svelte',
+    'lib/ui-controls/src/Select.svelte',
+    'lib/sidebar/src/Sidebar.svelte',
+    'lib/ui-controls/src/Sheet.svelte',
+    'lib/accounts-ui/src/SignIn.svelte',
+    'lib/spaces/src/SpacePicker.svelte',
+    'lib/sidebar/src/SpaceSwitcher.svelte',
+    'lib/overview/src/Overview.svelte',
+    'lib/pass-ui/src/PassFill.svelte',
+    'lib/settings/src/ThemeStore.svelte',
+    'lib/agents/src/ui/PairingBubble.svelte',
+    'lib/ai-sidebar/src/Composer.svelte',
+    'lib/ai-providers/src/vault/VaultApprove.svelte',
+    'lib/dictation/src/EngineChooser.svelte',
+    'lib/chat-kit/src/Float.svelte',
+    'lib/chats-client/src/view/Lightbox.svelte',
+    'lib/chats-client/src/view/MembersPanel.svelte',
+    'lib/accounts-ui/src/ProfileCard.svelte',
+    'lib/quick-add/src/QuickAddSheet.svelte',
+    'lib/quitting/src/QuitSheet.svelte',
+    'lib/terminal/src/remote/HostPicker.svelte',
+    'lib/tab-strip/src/hover-card.svelte.ts',
+    'lib/save-place/src/SavePlace.svelte',
+    'lib/settings/src/FontPicker.svelte',
+    'lib/theme-looks/src/picker/ThemePicker.svelte',
+    'lib/views/src/Popover.svelte',
+    'lib/views/src/ToneDot.svelte',
+    'lib/web-tab/src/AddressField.svelte',
+    'lib/web-tab/src/WebDownloads.svelte',
+    'lib/web-tab/src/WebExtensionPopup.svelte',
+    'lib/web-tab/src/WebExtensions.svelte',
+    'lib/web-tab/src/WebSite.svelte',
+  ]
 
   const FURNITURE = [
     'lib/updates/src/UpdateNotice.svelte',
@@ -368,7 +300,7 @@ describe('what hides a web page', () => {
 
   test('every layer on the stack is one somebody opened over the note', () => {
     const callers = sources().filter((path) => /overlays\.(show|peek)\(/.test(read(path)))
-    expect(callers.sort()).toEqual(Object.keys(LAYERS).sort())
+    expect(callers.sort()).toEqual(LAYERS.sort())
   })
 
   test('what comes out under a resting pointer is a peek, and nothing opened by a press is', () => {
@@ -396,7 +328,6 @@ describe('what hides a web page', () => {
     const app = read('App.svelte')
     const row = app.slice(app.indexOf('class="notices"'))
     const end = row.indexOf('{/snippet}')
-
     expect(end).toBeGreaterThan(0)
     for (const name of [
       'StorageWarning',
@@ -415,7 +346,6 @@ describe('what hides a web page', () => {
     const panes = app.slice(app.indexOf('class="panes"'))
     const inPanes = panes.slice(0, panes.indexOf('\n        </div>'))
     expect(inPanes).toContain('{#if !noticesOver}\n            {@render notices()}')
-
     const style = app.slice(app.indexOf('<style>'))
     const row = style.slice(style.indexOf('  .notices {'))
     const rule = row.slice(0, row.indexOf('}'))
@@ -430,7 +360,6 @@ describe('what hides a web page', () => {
     )
     const main = app.slice(app.indexOf('<div class="middle"'), app.indexOf('</main>'))
     const after = main.slice(main.lastIndexOf('\n  </div>'))
-
     expect(after).toContain('{#if noticesOver}')
     expect(after).toContain('{@render notices()}')
     const style = app.slice(app.indexOf('<style>'))

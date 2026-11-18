@@ -9,8 +9,7 @@ import type {
   RepliesView,
   Shown,
 } from './shapes'
-import type { ChatCache, OutboxRow } from './cache'
-import { isMain } from './cache'
+import { type ChatCache, isMain, type OutboxRow } from './cache'
 import type { Change, ChatEngine } from './engine'
 import type { Kept } from './fold'
 import { type Filter, overlay } from './overlay'
@@ -100,11 +99,14 @@ class Listing implements MessageList {
     this.window = next
       .filter((one) => !gone.has(one.message.id))
       .sort((a, b) => a.message.seq - b.message.seq)
-    if (this.window.length > MOST_HELD) {
-      this.window = this.window.slice(-MOST_HELD)
-      this.atStart = false
-    }
+    this.keepNewest()
     void this.draw()
+  }
+
+  private keepNewest(): void {
+    if (this.window.length <= MOST_HELD) return
+    this.window = this.window.slice(-MOST_HELD)
+    this.atStart = false
   }
 
   async older(): Promise<void> {
@@ -129,10 +131,7 @@ class Listing implements MessageList {
       const rows = await this.rows({ after: last, limit: PAGE })
       this.atEnd = rows.length < PAGE
       this.window = [...this.window, ...rows]
-      if (this.window.length > MOST_HELD) {
-        this.window = this.window.slice(-MOST_HELD)
-        this.atStart = false
-      }
+      this.keepNewest()
     })
   }
 

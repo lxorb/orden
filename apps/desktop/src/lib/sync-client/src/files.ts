@@ -12,6 +12,7 @@ export type Replaced =
   | { ok: true; seq: number }
   | { moved: { hash: string; size: number; at: number } }
   | { gone: true }
+  | { lost: true }
   | { refused: 'role' }
 
 export interface Blobs {
@@ -22,7 +23,7 @@ export interface Blobs {
   up(hash: string, bytes: Uint8Array): Promise<boolean | 'full' | null>
   down(space: string, id: string): Promise<Uint8Array | 'gone' | null>
   replace(space: string, id: string, hash: string, base: string): Promise<Replaced | null>
-  have?(hashes: string[]): Promise<Set<string> | null>
+  have?(space: string, hashes: string[]): Promise<Set<string> | null>
 }
 
 const LOST_EVERY = 6 * 60 * 60_000
@@ -154,11 +155,12 @@ export async function settleFiles(
       }
       continue
     }
-    if (changedHere && changedThere) {
+    if (changedHere && space.row.role === 'read') {
+      if (!(await readOnlyHere(core, space, entry))) continue
+    } else if (changedHere && changedThere) {
       await core.commit(holdFile(core, entry, here.hash))
       continue
-    }
-    if (changedHere) {
+    } else if (changedHere) {
       core.touched.add(entry.id)
       if (resting(core, entry.id, here.hash, room)) continue
       const stored = await blobs.up(here.hash, here.bytes)
@@ -176,16 +178,11 @@ export async function settleFiles(
       } else if ('moved' in answer) {
         entry.file_key = answer.moved.hash
         await core.commit(holdFile(core, entry, here.hash, answer.moved.at))
+      } else if ('lost' in answer) {
+        core.touched.add(entry.id)
       }
       if (!('refused' in answer)) continue
-      try {
-        await core.world.disk.remove(core.world.join(space.row.root, entry.local_path), 'file')
-      } catch {
-        core.touched.add(entry.id)
-        continue
-      }
-      entry.local_path = ''
-      await core.commit([put('entries', { ...entry })])
+      if (!(await readOnlyHere(core, space, entry))) continue
     }
     if (changedThere || !entry.local_path) {
       const full = core.world.join(space.row.root, path)
@@ -200,6 +197,20 @@ export async function settleFiles(
       const bytes = await blobs.down(space.id, entry.id)
       if (!alive() || bytes === null) return false
       if (bytes === 'gone') continue
+      if (entry.local_path) {
+        const meanwhile = await readBytes(core, space, entry)
+        if (typeof meanwhile === 'string') {
+          core.touched.add(entry.id)
+          continue
+        }
+        if (meanwhile !== null && meanwhile.hash !== (here?.hash ?? entry.written_hash)) {
+          await core.commit(holdFile(core, entry, meanwhile.hash))
+          continue
+        }
+      } else if (await core.world.disk.exists(full)) {
+        await claimed(core, space, entry, path)
+        continue
+      }
       try {
         await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
         await blobs.write(full, bytes)
@@ -239,7 +250,9 @@ export async function recoverLost(
   )
   for (let from = 0; from < inStep.length; from += ASKED_AT_ONCE) {
     const batch = inStep.slice(from, from + ASKED_AT_ONCE)
-    const kept = await blobs.have([...new Set(batch.map((entry) => entry.file_key ?? ''))])
+    const kept = await blobs.have(space.id, [
+      ...new Set(batch.map((entry) => entry.file_key ?? '')),
+    ])
     if (!alive()) return false
     if (kept === null) return true
     for (const entry of batch) {
@@ -337,6 +350,23 @@ async function written(core: Core, entry: EntryRow, hash: string, bytes: Uint8Ar
 function folderPath(path: string): string {
   const at = path.lastIndexOf('/')
   return at < 0 ? '' : path.slice(0, at)
+}
+
+async function readOnlyHere(core: Core, space: SpaceState, entry: EntryRow): Promise<boolean> {
+  const path = entry.local_path
+  try {
+    await core.world.disk.remove(core.world.join(space.row.root, path), 'file')
+  } catch {
+    core.touched.add(entry.id)
+    return false
+  }
+  entry.local_path = ''
+  const failed = `you can only read this space, so your change to ${path} went to Recently deleted`
+  await core.commit([
+    put('entries', { ...entry }),
+    put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed }),
+  ])
+  return true
 }
 
 function holdFile(core: Core, entry: EntryRow, mine: string, at = core.world.now()): Change[] {

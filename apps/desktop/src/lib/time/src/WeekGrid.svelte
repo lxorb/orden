@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { localDate } from '../../platform/src/api'
-  import { dayOf, daysAfter, HOUR, MINUTE, piecesIn, wholeOf } from './days'
+  import { localDate, midnightOf } from '../../platform/src/api'
+  import { daysAfter, HOUR, MINUTE, piecesIn, wholeOf } from './days'
   import { bucketsOf, hoursShown, stacked } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
   import type { Minute } from './minutes'
@@ -21,15 +21,14 @@
   } = $props()
 
   const PER_HOUR = 44
-
   const days = $derived(Array.from({ length: 7 }, (_, index) => daysAfter(from, index)))
   const bounds = $derived.by((): [number, number] => {
     const times = [
       ...piecesIn(said, from, daysAfter(from, 7), now).flatMap((one) => [
-        one.from - dayOf(one.from),
-        one.to - dayOf(Math.max(one.from, one.to - 1)),
+        one.from - midnightOf(one.from),
+        one.to - midnightOf(Math.max(one.from, one.to - 1)),
       ]),
-      ...minutes.map((one) => one.at - dayOf(one.at)),
+      ...minutes.map((one) => one.at - midnightOf(one.at)),
     ]
     const [start, end] = hoursShown(0, 24 * HOUR, times)
     return [start, end]
@@ -64,7 +63,7 @@
     <button
       type="button"
       class="head"
-      class:today={column.day === dayOf(now)}
+      class:today={column.day === midnightOf(now)}
       onclick={() => onpick(column.day, null)}
     >
       <span class="name">{localDate(column.day, { weekday: 'short', day: 'numeric' })}</span>
@@ -81,7 +80,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="column"
-      class:today={column.day === dayOf(now)}
+      class:today={column.day === midnightOf(now)}
       onclick={(event) => {
         if (event.target === event.currentTarget) onpick(column.day, null)
       }}

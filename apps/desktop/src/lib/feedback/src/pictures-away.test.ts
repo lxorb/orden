@@ -32,9 +32,7 @@ vi.stubGlobal('Worker', Away)
 
 beforeEach(() => {
   vi.resetModules()
-  seen.most = 0
-  seen.now = 0
-  seen.sent = []
+  Object.assign(seen, { most: 0, now: 0, sent: [] })
   able = true
   broken = false
 })

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -172,5 +170,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Pass on a phone fits it and its Back steps back through the columns"))
+raise SystemExit(DRIVE.run(drive, "Pass on a phone fits it and its Back steps back through the columns"))

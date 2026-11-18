@@ -19,11 +19,8 @@ import type { Hand, PlaneSurface, Reachable, SharedPlane } from '@orden/markdown
 import type { NoteDoc, Tab } from '../../documents/src/api'
 
 const PADDING = 48
-
 const WRITE_DELAY = 1_200
-
 const PRINTED_AT_ONCE = 10_000
-
 const FEW_PICKED = 16
 
 export class CanvasStore implements PlaneSurface {
@@ -42,7 +39,19 @@ export class CanvasStore implements PlaneSurface {
     this.#editing = id
   }
 
-  shared = $state.raw<SharedPlane | null>(null)
+  #shared = $state.raw<SharedPlane | null>(null)
+  get shared(): SharedPlane | null {
+    return this.#shared
+  }
+
+  set shared(next: SharedPlane | null) {
+    if (next === this.#shared) return
+    this.#shared = next
+    this.during = null
+    this.reachable = { undo: false, redo: false }
+    this.history.clear()
+    this.stackChanged()
+  }
 
   hands = $state.raw<readonly Hand[]>([])
 
@@ -144,7 +153,7 @@ export class CanvasStore implements PlaneSurface {
     const carrying = run !== undefined && run === this.during
     this.during = run ?? null
 
-    if (this.shared) this.shared.push(before, after)
+    if (this.shared) this.shared.push(before, after, carrying ? 'more' : 'step')
     else if (!carrying) {
       this.history.record(before)
       this.stackChanged()
@@ -159,7 +168,13 @@ export class CanvasStore implements PlaneSurface {
     const next = change(this.canvas)
     if (next === this.canvas) return false
 
-    this.edit(next)
+    const before = this.canvas
+    const after = stamped(before, next, Date.now())
+    this.history.carry(before, after)
+    this.canvas = after
+    this.keepPicked()
+    this.shared?.push(before, after, 'aside')
+    this.writing()
     this.writing.flush()
     return true
   }
@@ -180,6 +195,8 @@ export class CanvasStore implements PlaneSurface {
   }
 
   undo() {
+    this.during = null
+    if (this.readOnly) return
     if (this.shared) {
       this.shared.undo()
       return
@@ -195,6 +212,8 @@ export class CanvasStore implements PlaneSurface {
   }
 
   redo() {
+    this.during = null
+    if (this.readOnly) return
     if (this.shared) {
       this.shared.redo()
       return
@@ -284,7 +303,7 @@ export class CanvasStore implements PlaneSurface {
     this.history.carry(ours, together)
     this.canvas = together
     this.keepPicked()
-    this.shared?.push(ours, together)
+    this.shared?.push(ours, together, 'aside')
 
     this.commit()
     return true
@@ -454,7 +473,6 @@ export class CanvasStore implements PlaneSurface {
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; see above
 const drawn = new Set<WeakRef<CanvasStore>>()
-
 const LEFT = new WeakMap<Tab, { note: NoteDoc; revision: number; history: CanvasHistory }>()
 
 function flushCanvases(): void {

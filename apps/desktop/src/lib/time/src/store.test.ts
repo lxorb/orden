@@ -7,7 +7,6 @@ import type { Span } from './records'
 import { TimeStore } from './store.svelte'
 
 const M = 60_000
-
 let owners = 0
 const owner = () => `owner-${(owners += 1)}`
 
@@ -201,6 +200,21 @@ describe('the time a person records', () => {
     expect(new Set(store.activities.map((one) => one.tint)).size).toBe(2)
   })
 
+  test('a name longer than an activity keeps finds the same activity on every start', async () => {
+    const store = await opened(owner(), null)
+    const long = `  ${'Reading the whole long book '.repeat(5)}`
+    store.startNamed(long, M)
+    store.startNamed(long, 2 * M)
+    store.startNamed(long.toUpperCase(), 3 * M)
+    expect(store.activities).toHaveLength(1)
+    const [made] = store.activities
+    expect(made?.name).toBe(long.trim().slice(0, 80).trim())
+    expect(new Set(store.spans.map((one) => one.activity))).toEqual(new Set([made?.id]))
+    store.changeActivity(made?.id ?? '', { name: `${long}renamed` })
+    expect(store.activities.map((one) => one.name)).toEqual([made?.name])
+    expect(store.named(long)?.id).toBe(made?.id)
+  })
+
   test('keeps the minutes on the device, and only the last ninety days of them', async () => {
     const store = await opened(owner(), null)
     const day = 24 * 3_600_000
@@ -324,29 +338,27 @@ describe('the time a person records', () => {
   })
 })
 
-describe('a long history of recorded time', () => {
-  test('the recent activities are not looked up again on every read', async () => {
-    const stores = new Map<number, TimeStore>()
-    for (const size of [2000, 128_000]) {
-      const store = await opened(owner(), null)
-      const used = store.addActivity('Uni')
-      store.addActivity('Never')
-      store.spans = Array.from({ length: size }, (_, index): Span => ({
-        id: `s${index}`,
-        start: index * M,
-        end: index * M + M / 2,
-        activity: index ? null : used.id,
-        tags: [],
-        note: '',
-        source: 'app',
-        place: null,
-        label: null,
-        device: null,
-      }))
-      expect(store.latest().map((one) => one.name)).toEqual(['Uni', 'Never'])
-      stores.set(size, store)
-    }
-    const ratio = growth((size) => stores.get(size)?.latest(), 2000, 64)
-    expect(ratio).toBeLessThan(GROWS_AT_MOST)
-  })
+test('a long history of recorded time the recent activities are not looked up again on every read', async () => {
+  const stores = new Map<number, TimeStore>()
+  for (const size of [2000, 128_000]) {
+    const store = await opened(owner(), null)
+    const used = store.addActivity('Uni')
+    store.addActivity('Never')
+    store.spans = Array.from({ length: size }, (_, index): Span => ({
+      id: `s${index}`,
+      start: index * M,
+      end: index * M + M / 2,
+      activity: index ? null : used.id,
+      tags: [],
+      note: '',
+      source: 'app',
+      place: null,
+      label: null,
+      device: null,
+    }))
+    expect(store.latest().map((one) => one.name)).toEqual(['Uni', 'Never'])
+    stores.set(size, store)
+  }
+  const ratio = growth((size) => stores.get(size)?.latest(), 2000, 64)
+  expect(ratio).toBeLessThan(GROWS_AT_MOST)
 })

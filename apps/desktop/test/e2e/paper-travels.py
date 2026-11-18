@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import json
 import re
@@ -261,5 +259,4 @@ def main() -> int:
     print("\na page note's paper goes with it, to another device and to a guest", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

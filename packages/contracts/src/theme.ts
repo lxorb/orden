@@ -52,7 +52,6 @@ export type ThemeSetting = ThemeSettingCommon &
         step: number
         unit: string
         initial: number
-        least?: () => number
       }
     | { kind: 'switch'; initial: boolean }
   )
@@ -62,7 +61,6 @@ export interface ThemeInfo {
   readonly name: string
   readonly variants: readonly Scheme[]
   readonly path?: string
-  readonly translucent?: boolean
   readonly pictured?: boolean
   readonly load?: () => Promise<string>
   readonly own?: () => Promise<() => ThemeSetting[]>
@@ -83,10 +81,7 @@ export interface ThemePorts {
 
 export const SCHEMES: readonly Scheme[] = ['dark', 'light']
 
-export function isScheme(value: unknown): value is Scheme {
-  return value === 'dark' || value === 'light'
-}
+export const isScheme = (value: unknown): value is Scheme => value === 'dark' || value === 'light'
 
-export function isSchemeChoice(value: unknown): value is SchemeChoice {
-  return value === 'system' || isScheme(value)
-}
+export const isSchemeChoice = (value: unknown): value is SchemeChoice =>
+  value === 'system' || isScheme(value)

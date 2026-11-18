@@ -27,12 +27,10 @@ import { attachmentsUnder } from './item-keys'
 import type { ItemRow, VaultRow, VersionRow } from './local'
 import type { Person, PersonKey } from './people'
 import { isConfirmed, PersonChanged, personOf, seenPerson } from './people'
-import type { Held, HeldVault } from './rows'
-import type { Resealed, Rotation, ShareApi } from './share-api'
-import { refusalOf } from './share-api'
+import { heldVault, type Held, type HeldVault } from './rows'
+import { refusalOf, type Resealed, type Rotation, type ShareApi } from './share-api'
 import { STALE } from './sync'
-import type { DeviceRows } from './synced'
-import { keepItemBase, keepVaultBase, vaultBaseOf } from './synced'
+import { keepItemBase, keepVaultBase, vaultBaseOf, type DeviceRows } from './synced'
 import { ownersOf } from './vault-trust'
 
 export interface Sharing {
@@ -86,12 +84,6 @@ export function emailOf(email: string): string {
   return email.trim().toLowerCase()
 }
 
-function boxOf(held: Held, vault: string): HeldVault {
-  const box = held.vaults.get(vault)
-  if (!box) throw new Error('pass: no such vault')
-  return box
-}
-
 function signerOf(held: Held): Signer {
   if (!held.opened.signer) throw new NotTrusted('Pass has no signing key yet. Lock and unlock it.')
   return held.opened.signer
@@ -111,7 +103,7 @@ export async function memberPerson(sharing: Sharing, member: Member): Promise<Pe
 }
 
 async function ownersHeld(sharing: Sharing, vault: string): Promise<string[]> {
-  return await ownersOf(signerOf(sharing.held).pub, vault, boxOf(sharing.held, vault).row)
+  return await ownersOf(signerOf(sharing.held).pub, vault, heldVault(sharing.held, vault).row)
 }
 
 async function vouchOf(
@@ -149,7 +141,7 @@ export async function invitedState(
   person: Person,
   role: InvitedRole,
 ): Promise<MemberState> {
-  const box = boxOf(sharing.held, vault)
+  const box = heldVault(sharing.held, vault)
   const signer = signerOf(sharing.held)
   const owners = await ownersHeld(sharing, vault)
   const mine = await vouchOf(sharing, vault, owners, await sharing.api.members(vault))
@@ -187,7 +179,7 @@ export async function confirmedMember(
   vault: string,
   person: Person,
 ): Promise<void> {
-  const box = boxOf(sharing.held, vault)
+  const box = heldVault(sharing.held, vault)
   const member = (await sharing.api.members(vault)).find((one) => one.email === person.email)
   if (!member || member.state === 'active') throw new Error('pass: no such invitation')
   const key = await readyKey(sharing, person)
@@ -255,7 +247,7 @@ function currentOf(body: unknown): WireVault | null {
 }
 
 async function startOf(sharing: Sharing, vault: string): Promise<KeyAt> {
-  const box = boxOf(sharing.held, vault)
+  const box = heldVault(sharing.held, vault)
   const base = await vaultBaseOf(sharing.rows, vault)
   return {
     key: box.key,
@@ -281,9 +273,11 @@ async function wrappedToEveryone(
   members: readonly Member[],
   owners: readonly string[],
   next: Uint8Array<ArrayBuffer>,
+  gone: string | null,
 ): Promise<Record<string, string>> {
   const keys: Record<string, string> = {}
   for (const member of members) {
+    if (gone !== null && emailOf(member.email) === gone) continue
     if (member.email === sharing.email) {
       keys[member.email] = await wrapVaultKey(next, sharing.held.opened.pair.pub, vault)
       continue
@@ -331,6 +325,7 @@ async function rotationOf(
   vault: string,
   from: KeyAt,
   next: Uint8Array<ArrayBuffer>,
+  gone: string | null,
 ): Promise<{ sent: Rotation; renewed: Map<string, Renewed> }> {
   const [members, rows] = await Promise.all([
     sharing.api.members(vault),
@@ -356,7 +351,7 @@ async function rotationOf(
       rev: from.rev,
       keyVersion,
       meta,
-      members: await wrappedToEveryone(sharing, vault, members, owners, next),
+      members: await wrappedToEveryone(sharing, vault, members, owners, next, gone),
       items,
       proof: await keyProofOf(signer, vault, keyVersion, next, vouch),
     },
@@ -372,19 +367,13 @@ async function versionsRenewed(
   itemKey: Uint8Array<ArrayBuffer>,
 ): Promise<VersionRow[]> {
   const kept: VersionRow[] = []
-  for (const version of await sharing.versions(one.vault, one.id)) {
+  const { vault, id } = one
+  for (const version of await sharing.versions(vault, id)) {
     for (const key of from) {
       try {
-        const was = await openVersion(
-          key,
-          one.vault,
-          one.id,
-          version.rev,
-          version.key,
-          version.body,
-        )
-        const envelope = await attachmentsUnder(was.envelope, one.id, [was.itemKey], itemKey)
-        const sealed = await sealVersion(to, one.vault, one.id, version.rev, envelope, itemKey)
+        const was = await openVersion(key, vault, id, version.rev, version.key, version.body)
+        const envelope = await attachmentsUnder(was.envelope, id, [was.itemKey], itemKey)
+        const sealed = await sealVersion(to, vault, id, version.rev, envelope, itemKey)
         kept.push({ ...version, ...sealed })
         break
       } catch {
@@ -406,9 +395,7 @@ async function itemRenewedLocally(
   const keyVersion = now.keyVersion
   const base = theirs ? { ...theirs.sent, rev: theirs.sent.rev + 1, keyVersion } : null
   if (base) await keepItemBase(rows, one.vault, one.id, base)
-  if (!one.pending && theirs && base) {
-    return { row: { ...one, ...base }, itemKey: theirs.itemKey }
-  }
+  if (!one.pending && theirs && base) return { row: { ...one, ...base }, itemKey: theirs.itemKey }
   const itemKey = theirs?.itemKey ?? newKey()
   try {
     const sealed = await renewedItem(one, from, now.key, keyVersion, itemKey)
@@ -426,13 +413,9 @@ async function rekeyedLocally(
   now: Rotated,
 ): Promise<void> {
   const { held, rows } = sharing
-  const box = boxOf(held, vault)
+  const box = heldVault(held, vault)
   const from = box.key === was.key ? [box.key] : [box.key, was.key]
-  const renewedRow = {
-    key: now.wrapped,
-    keyVersion: now.keyVersion,
-    proof: now.proof,
-  }
+  const renewedRow = { key: now.wrapped, keyVersion: now.keyVersion, proof: now.proof }
   const row: VaultRow = box.row.pending
     ? {
         ...box.row,
@@ -463,11 +446,15 @@ async function rekeyedLocally(
   }
 }
 
-async function rotatedVault(sharing: Sharing, vault: string): Promise<number> {
+async function rotatedVault(
+  sharing: Sharing,
+  vault: string,
+  gone: string | null = null,
+): Promise<number> {
   let from = await startOf(sharing, vault)
   for (let tries = 0; tries < TRIES; tries++) {
     const next = newKey()
-    const { sent, renewed } = await rotationOf(sharing, vault, from, next)
+    const { sent, renewed } = await rotationOf(sharing, vault, from, next, gone)
     const wrapped = await wrapVaultKey(next, sharing.held.opened.pair.pub, vault)
     try {
       const done = await sharing.api.rotate(vault, sent)
@@ -505,7 +492,7 @@ export async function removedMember(
   } catch (error) {
     if (refusalOf(error)?.error !== 'no such member') throw error
   }
-  return await rotatedVault(sharing, vault)
+  return await rotatedVault(sharing, vault, emailOf(email))
 }
 
 async function ownerOfMembers(sharing: Sharing, vault: string): Promise<string | null> {

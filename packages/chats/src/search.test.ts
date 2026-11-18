@@ -4,19 +4,17 @@ import type { Message, Who } from './types'
 
 const TODAY = '2026-10-07'
 
-function query(fields: Partial<SearchQuery>): SearchQuery {
-  return {
-    words: [],
-    phrases: [],
-    without: [],
-    from: [],
-    in: [],
-    has: [],
-    isReply: false,
-    mentions: [],
-    ...fields,
-  }
-}
+const query = (fields: Partial<SearchQuery>): SearchQuery => ({
+  words: [],
+  phrases: [],
+  without: [],
+  from: [],
+  in: [],
+  has: [],
+  isReply: false,
+  mentions: [],
+  ...fields,
+})
 
 describe('parseSearch', () => {
   it('reads words, phrases and words left out', () => {
@@ -114,40 +112,35 @@ describe('parseSearch', () => {
 const EMIL: Who = 'user:emil'
 const LUCILE: Who = 'user:lucile'
 
-function messageOf(fields: Partial<Message>): Message {
-  return {
-    id: 'm1',
-    seq: 1,
-    at: Date.UTC(2026, 9, 2, 16, 40),
-    author: LUCILE,
-    body: '',
-    alsoToChat: false,
-    files: [],
-    mentions: [],
-    reactions: {},
-    pinned: false,
-    history: [],
-    deleted: false,
-    replies: 0,
-    ...fields,
-  }
-}
+const messageOf = (fields: Partial<Message>): Message => ({
+  id: 'm1',
+  seq: 1,
+  at: Date.UTC(2026, 9, 2, 16, 40),
+  author: LUCILE,
+  body: '',
+  alsoToChat: false,
+  files: [],
+  mentions: [],
+  reactions: {},
+  pinned: false,
+  history: [],
+  deleted: false,
+  replies: 0,
+  ...fields,
+})
 
 const NAMES: Record<Who, string[]> = { [EMIL]: ['Emil'], [LUCILE]: ['Lucile Martin', 'Lu'] }
 
-function hit(message: Message): Hit {
-  return {
-    message,
-    chat: 'thesis',
-    me: EMIL,
-    namesOf: (who) => NAMES[who] ?? [],
-    dayOf: (at) => new Date(at).toISOString().slice(0, 10),
-  }
-}
+const hit = (message: Message): Hit => ({
+  message,
+  chat: 'thesis',
+  me: EMIL,
+  namesOf: (who) => NAMES[who] ?? [],
+  dayOf: (at) => new Date(at).toISOString().slice(0, 10),
+})
 
-function found(text: string, message: Message): boolean {
-  return matches(parseSearch(text, TODAY), hit(message))
-}
+const found = (text: string, message: Message): boolean =>
+  matches(parseSearch(text, TODAY), hit(message))
 
 describe('hasOf', () => {
   const file = (type: string) => ({ hash: 'a'.repeat(64), name: 'x', size: 1, type })

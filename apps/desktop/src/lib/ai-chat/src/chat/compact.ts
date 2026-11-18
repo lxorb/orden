@@ -147,7 +147,7 @@ async function ownSummary(
       effort: 'auto',
       fast: false,
       system: job.system,
-      tools: [],
+      tools: job.tools,
       steps,
       added: [],
       web: false,

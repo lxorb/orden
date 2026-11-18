@@ -69,13 +69,16 @@ export function applied(body: string, edits: readonly Edit[]): string {
   return text + body.slice(at)
 }
 
-export function changeOf(path: string, before: string, edits: Edit[]): Change {
-  return { path, before, after: applied(before, edits), edits, back: reverse(before, edits) }
-}
+export const changeOf = (path: string, before: string, edits: Edit[]): Change => ({
+  path,
+  before,
+  after: applied(before, edits),
+  edits,
+  back: reverse(before, edits),
+})
 
-export function endingsLike(words: string, like: string): string {
-  return like.includes('\r') || !words.includes('\r') ? words : words.replace(/\r\n?/g, '\n')
-}
+export const endingsLike = (words: string, like: string): string =>
+  like.includes('\r') || !words.includes('\r') ? words : words.replace(/\r\n?/g, '\n')
 
 export function flatEdits(words: string, edits: readonly Edit[]): { words: string; edits: Edit[] } {
   if (!words.includes('\r')) return { words, edits: edits.map((one) => ({ ...one })) }

@@ -1,9 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+import { ROOT } from './files'
 
 const PACKAGES = [
   /^@whiskeysockets\//,
@@ -102,6 +100,7 @@ describe('chats from other services', () => {
       join(ROOT, 'packages/chats/src'),
       join(ROOT, 'apps/desktop/src/lib/chats-client'),
       join(ROOT, 'apps/desktop/src-tauri/src'),
+      join(ROOT, 'apps/desktop/src-tauri/crates'),
     ].flatMap((dir) =>
       files(dir, (path) => SERVICES.test(relative(dir, path))).map((path) => relative(ROOT, path)),
     )

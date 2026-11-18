@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { eraseAccount } from '../src/sync-server/src/erase'
+import { eraseAccount } from '../src/sync-server-engine/src/erase'
 import {
   jpegWithout,
   MOST_IMAGES,
@@ -9,7 +9,7 @@ import {
 } from '../src/sync-server-feedback/src/feedback-images'
 import { issueBody } from '../src/sync-server-feedback/src/feedback-issues'
 import { reportPage, standing } from '../src/sync-server-feedback/src/feedback-page'
-import { sweepLeftovers } from '../src/sync-server/src/leftovers'
+import { sweepLeftovers } from '../src/sync-server-engine/src/leftovers'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 let env: TestEnv

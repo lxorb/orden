@@ -12,7 +12,13 @@ import {
   afterQuiet,
   windows,
 } from '../../platform/src/api'
-import { onUnwatched, type SpaceChange, type SpaceNews, watchSpaces } from '../../crate/src/api'
+import {
+  onUnwatched,
+  landedElsewhere,
+  type SpaceChange,
+  type SpaceNews,
+  watchSpaces,
+} from '../../crate/src/api'
 import { sync } from '../../sync-store/src/api'
 import { type Leadership, leadSync } from '../../sync-client/src/api'
 import { type FileOp, landing } from '../../file-ops/src/api'
@@ -50,7 +56,7 @@ async function lookAt(path: string): Promise<void> {
 
 async function told(op: FileOp) {
   windows.say('file-op', { op })
-  await workspace.fileOps.tell({ ...op, heard: true })
+  await workspace.fileOps.tell({ ...op, heard: true, watched: true })
 }
 
 const kindOf = (dir: boolean) => (dir ? 'folder' : 'file')
@@ -76,8 +82,16 @@ async function gone(path: string, dir: boolean) {
   listAgain()
 }
 
+function lockedAlike(from: string, to: string) {
+  workspace.protection.copied(from, to, workspace.rootHolding(from), workspace.rootHolding(to))
+}
+
 async function moved(from: string, to: string, dir: boolean) {
-  if (landing(to) || (await onDisk(from))) return
+  if (landing(to)) return
+  if (await onDisk(from)) {
+    lockedAlike(from, to)
+    return
+  }
   await told({
     op: 'moved',
     from,
@@ -95,7 +109,11 @@ async function came(path: string, dir: boolean) {
 }
 
 export async function heardChange(change: SpaceChange): Promise<void> {
-  if (dotted(change.path)) return
+  if (dotted(change.path)) {
+    if (change.kind !== 'renamed' || dotted(change.from)) return
+    if (!landing(change.path)) lockedAlike(change.from, change.path)
+    return gone(change.from, change.dir)
+  }
   if (!change.dir) {
     const { paperRewritten, sheetArrived } = await services().sheets()
     sheetArrived(change.path)
@@ -129,7 +147,10 @@ export function heardNews(news: SpaceNews): Promise<void> {
   hearing = hearing.then(async () => {
     if (news.unwatched) log('warn', `not all of ${news.root} can be watched: ${news.unwatched}`)
     if (news.gone) return
+    const landed = landedElsewhere(news.changes)
     for (const change of news.changes) {
+      const to = change.kind === 'removed' ? landed.get(change.path) : undefined
+      if (to !== undefined) lockedAlike(change.path, to)
       await heardChange(change).catch((error: unknown) => {
         log('error', `outside: ${change.path} - ${String(error)}`)
       })

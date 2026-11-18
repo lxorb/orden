@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { failedSeeds } from './roads'
 import { type Crowd, crowded, simulate } from './run'
 
 const SAID = process.env.SIM_MIX
@@ -19,13 +20,8 @@ describe(`nightly walks${MIX ? ` of the ${MIX}` : ''}`, () => {
     const from = START + chunk * CHUNK
     const to = Math.min(from + CHUNK, START + SEEDS)
     test(`seeds ${String(from)} to ${String(to - 1)}`, async () => {
-      const failed: string[] = []
-      for (let seed = from; seed < to && failed.length < 5; seed++) {
-        const report = await simulate(MIX ? crowded(seed, MIX) : { seed })
-        if (report.failures.length)
-          failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
-      }
-      expect(failed).toEqual([])
+      const report = (seed: number) => simulate(MIX ? crowded(seed, MIX) : { seed })
+      expect(await failedSeeds(from, to - from, report)).toEqual([])
     })
   }
 })

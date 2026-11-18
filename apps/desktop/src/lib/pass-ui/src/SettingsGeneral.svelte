@@ -3,37 +3,22 @@
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { Select } from '../../ui-controls/src/api'
   import Glyph from './Glyph.svelte'
-  import { pauseWord } from '../../pass-sync/src/api'
-  import { type Paused, PAUSES } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
+  import { pauseWord, type Paused, PAUSES, pass } from '../../pass-sync/src/api'
   import SwitchRow from './SwitchRow.svelte'
 
-  type Flag =
-    | 'autofill'
-    | 'autofillTotp'
-    | 'copyTotpAfterFill'
-    | 'suggest'
-    | 'autosave'
-    | 'autoLogin'
-    | 'showUsernameField'
-
-  const FLAGS: { key: Flag; label: () => string }[] = [
-    { key: 'autofill', label: () => 'Autofill' },
-    { key: 'autofillTotp', label: () => 'Autofill 2FA codes' },
-    { key: 'copyTotpAfterFill', label: () => 'Copy 2FA code after autofill' },
-    { key: 'suggest', label: () => 'Suggest passwords and aliases' },
-    { key: 'autosave', label: () => 'Offer to save logins' },
-    { key: 'autoLogin', label: () => 'Sign in automatically' },
-    { key: 'showUsernameField', label: () => 'Show username field' },
-  ]
+  const FLAGS = [
+    ['autofill', 'Autofill'],
+    ['autofillTotp', 'Autofill 2FA codes'],
+    ['copyTotpAfterFill', 'Copy 2FA code after autofill'],
+    ['suggest', 'Suggest passwords and aliases'],
+    ['autosave', 'Offer to save logins'],
+    ['autoLogin', 'Sign in automatically'],
+    ['showUsernameField', 'Show username field'],
+  ] as const
 
   const settings = $derived(pass.settings)
   const sites = $derived(Object.entries(settings.paused).sort(([a], [b]) => a.localeCompare(b)))
   let typed = $state('')
-
-  function flag(key: Flag, on: boolean) {
-    pass.setSetting(key, on)
-  }
 
   function paused(site: string, change: Partial<Paused>) {
     const was = settings.paused[site]
@@ -60,17 +45,13 @@
   }
 </script>
 
-<div class="card">
-  {#each FLAGS as one (one.key)}
-    <SwitchRow
-      label={one.label()}
-      on={settings[one.key]}
-      onchange={(on: boolean) => flag(one.key, on)}
-    />
+<div class="pass-stack">
+  {#each FLAGS as [key, label] (key)}
+    <SwitchRow {label} on={settings[key]} onchange={(on: boolean) => pass.setSetting(key, on)} />
   {/each}
 </div>
 
-<div class="card">
+<div class="pass-stack">
   <div class="orden-setting row">
     <span class="name">Default vault</span>
     <Select
@@ -86,7 +67,7 @@
 </div>
 
 <h3 class="orden-section">Excluded sites</h3>
-<div class="card">
+<div class="pass-stack">
   {#each sites as [site, pausedFor] (site)}
     <div class="site">
       <div class="site-head">
@@ -124,14 +105,6 @@
 </div>
 
 <style>
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
   .row {
     padding: var(--space-1) var(--space-3);
   }

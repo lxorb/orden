@@ -62,6 +62,26 @@
   }
 </script>
 
+{#snippet line(name: string, size: number, remove: () => void)}
+  <div class="line">
+    <Glyph icon={Paperclip} />
+    <span class="name">{name}</span>
+    <span class="meta">{readableSize(size)}</span>
+    <button
+      class="orden-glyph"
+      type="button"
+      aria-label="Remove {name}"
+      title="Remove"
+      onclick={() => {
+        remove()
+        oninput()
+      }}
+    >
+      <Glyph icon={X} />
+    </button>
+  </div>
+{/snippet}
+
 <section
   class="files"
   class:over
@@ -72,44 +92,16 @@
   ondrop={dropped}
 >
   {#if shown.length || adding.length}
-    <div class="card">
+    <div class="pass-stack">
       {#each shown as file (file.id)}
-        <div class="line">
-          <Glyph icon={Paperclip} />
-          <span class="name">{file.name}</span>
-          <span class="meta">{readableSize(file.size)}</span>
-          <button
-            class="orden-glyph"
-            type="button"
-            aria-label="Remove {file.name}"
-            title="Remove"
-            onclick={() => {
-              removing = [...removing, file.id]
-              oninput()
-            }}
-          >
-            <Glyph icon={X} />
-          </button>
-        </div>
+        {@render line(file.name, file.size, () => (removing = [...removing, file.id]))}
       {/each}
       {#each adding as file, index (index)}
-        <div class="line is-new">
-          <Glyph icon={Paperclip} />
-          <span class="name">{file.name}</span>
-          <span class="meta">{readableSize(file.bytes.length)}</span>
-          <button
-            class="orden-glyph"
-            type="button"
-            aria-label="Remove {file.name}"
-            title="Remove"
-            onclick={() => {
-              adding = adding.filter((_, at) => at !== index)
-              oninput()
-            }}
-          >
-            <Glyph icon={X} />
-          </button>
-        </div>
+        {@render line(
+          file.name,
+          file.bytes.length,
+          () => (adding = adding.filter((_, at) => at !== index)),
+        )}
       {/each}
     </div>
   {/if}
@@ -121,7 +113,7 @@
   >
     <Glyph icon={Paperclip} />Attach file
   </button>
-  {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+  {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 </section>
 
 <style>
@@ -135,14 +127,6 @@
   .files.over {
     outline: 2px dashed var(--accent);
     outline-offset: 2px;
-  }
-
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
   }
 
   .line {
@@ -180,11 +164,5 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>

@@ -35,13 +35,11 @@ const COULD_FOLD =
 
 const HEADING = /^[ \t]*#{1,6}[ \t]/
 
-function foldAtLine(state: EditorState, line: Line): FoldRange | null {
-  return foldable(state, line.from, line.to) ?? null
-}
+const foldAtLine = (state: EditorState, line: Line): FoldRange | null =>
+  foldable(state, line.from, line.to) ?? null
 
-export function foldOpenedBy(state: EditorState, line: Line): FoldRange | null {
-  return COULD_FOLD.test(line.text) ? foldAtLine(state, line) : null
-}
+export const foldOpenedBy = (state: EditorState, line: Line): FoldRange | null =>
+  COULD_FOLD.test(line.text) ? foldAtLine(state, line) : null
 
 function foldedAtLine(state: EditorState, line: Line): FoldRange | null {
   let found: FoldRange | null = null
@@ -148,9 +146,8 @@ function foldableBlocks(state: EditorState): Block[] {
     if (!range) continue
 
     while (holding.length && (holding.at(-1)?.to ?? 0) < range.to) holding.pop()
-    for (let next = shut[before]; next && next.from < range.from; next = shut[++before]) {
+    for (let next = shut[before]; next && next.from < range.from; next = shut[++before])
       reach = Math.max(reach, next.to)
-    }
 
     blocks.push({
       ...range,
@@ -298,13 +295,10 @@ export function sameFolds(
   return true
 }
 
-export function foldsChanged(update: ViewUpdate): boolean {
-  return foldedRanges(update.startState) !== foldedRanges(update.state)
-}
+export const foldsChanged = (update: ViewUpdate): boolean =>
+  foldedRanges(update.startState) !== foldedRanges(update.state)
 
-function chevron(): SVGElement {
-  return iconElement(CHEVRON)
-}
+const chevron = (): SVGElement => iconElement(CHEVRON)
 
 class FoldWidget extends OrdenWidget {
   constructor(private readonly folded: boolean) {
@@ -412,9 +406,8 @@ function build(view: EditorView): DecorationSet {
       const line = state.doc.lineAt(pos)
       const folded = !!foldedAtLine(state, line) || shuttingAt(state, line.from, line.to)
 
-      if (folded || foldOpenedBy(state, line)) {
+      if (folded || foldOpenedBy(state, line))
         marks.push(Decoration.widget({ widget: new FoldWidget(folded), side: -1 }).range(line.from))
-      }
 
       if (line.to >= state.doc.length) break
       pos = line.to + 1
@@ -424,6 +417,8 @@ function build(view: EditorView): DecorationSet {
   return Decoration.set(marks, true)
 }
 
-export function folding(): Extension {
-  return [codeFolding({ placeholderDOM: placeholder }), hinges, foldMovement()]
-}
+export const folding = (): Extension => [
+  codeFolding({ placeholderDOM: placeholder }),
+  hinges,
+  foldMovement(),
+]

@@ -1,19 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { describe, expect, test } from 'vitest'
+import { aSpace } from './space-field'
+import { call } from './harness'
 import { listIn, MOST_BODY_BYTES, objectBody, objectIn } from '../src/sync-server/src/body'
-import { MAX_NOTE_BYTES } from '../src/sync-server/src/notes'
+import { MAX_NOTE_BYTES } from '../src/sync-server-engine/src/notes'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
+const at = aSpace()
 
 const NOT_OBJECTS: { what: string; raw: string }[] = [
   { what: 'a list', raw: '[1, 2]' },
@@ -25,43 +16,43 @@ const NOT_OBJECTS: { what: string; raw: string }[] = [
 const ROUTES: { name: string; path: () => string; method: string; older: unknown }[] = [
   {
     name: 'PUT /v1/spaces/:id/bookmarks',
-    path: () => `/v1/spaces/${space}/bookmarks`,
+    path: () => `/v1/spaces/${at.space}/bookmarks`,
     method: 'PUT',
     older: { bookmarks: [{ kind: 'note', path: 'Read me.md', text: '' }] },
   },
   {
     name: 'PUT /v1/spaces/:id/excluded',
-    path: () => `/v1/spaces/${space}/excluded`,
+    path: () => `/v1/spaces/${at.space}/excluded`,
     method: 'PUT',
     older: { excluded: ['Archive'] },
   },
   {
     name: 'PUT /v1/spaces/:id/files',
-    path: () => `/v1/spaces/${space}/files`,
+    path: () => `/v1/spaces/${at.space}/files`,
     method: 'PUT',
     older: { files: [] },
   },
   {
     name: 'PUT /v1/spaces/:id/graph',
-    path: () => `/v1/spaces/${space}/graph`,
+    path: () => `/v1/spaces/${at.space}/graph`,
     method: 'PUT',
     older: { graph: { depth: 2 } },
   },
   {
     name: 'PUT /v1/spaces/:id/icons',
-    path: () => `/v1/spaces/${space}/icons`,
+    path: () => `/v1/spaces/${at.space}/icons`,
     method: 'PUT',
     older: { icons: { Archive: '📦' } },
   },
   {
     name: 'PUT /v1/spaces/:id/site',
-    path: () => `/v1/spaces/${space}/site`,
+    path: () => `/v1/spaces/${at.space}/site`,
     method: 'PUT',
     older: { rules: { include: ['Public'] } },
   },
   {
     name: 'POST /v1/spaces/:id/site/preview',
-    path: () => `/v1/spaces/${space}/site/preview`,
+    path: () => `/v1/spaces/${at.space}/site/preview`,
     method: 'POST',
     older: { rules: { otherwise: 'none' } },
   },
@@ -77,7 +68,11 @@ describe('a body that is not an object', () => {
   for (const route of ROUTES) {
     for (const { what, raw } of NOT_OBJECTS) {
       test(`${route.name} refuses ${what}, in the words it always has`, async () => {
-        const answer = await call(env, route.path(), { method: route.method, token, raw })
+        const answer = await call(at.env, route.path(), {
+          method: route.method,
+          token: at.token,
+          raw,
+        })
 
         expect(answer.status).toBe(400)
         expect(answer.json.error).toBe('send an object')
@@ -86,7 +81,11 @@ describe('a body that is not an object', () => {
   }
 
   test('and a route that asks for its fields one at a time says so its own way', async () => {
-    const answer = await call(env, '/v1/spaces', { method: 'POST', token, raw: '[1, 2]' })
+    const answer = await call(at.env, '/v1/spaces', {
+      method: 'POST',
+      token: at.token,
+      raw: '[1, 2]',
+    })
 
     expect(answer.status).toBe(400)
     expect(answer.json.error).toBe('send a JSON object')
@@ -96,9 +95,9 @@ describe('a body that is not an object', () => {
 describe('the body an older client sends', () => {
   for (const route of ROUTES) {
     test(`${route.name} still takes it`, async () => {
-      const answer = await call(env, route.path(), {
+      const answer = await call(at.env, route.path(), {
         method: route.method,
-        token,
+        token: at.token,
         body: route.older,
       })
 
@@ -109,28 +108,36 @@ describe('the body an older client sends', () => {
 
 describe('POST /v1/mcp/token', () => {
   test('takes no body at all, and hands back a read-only token', async () => {
-    const answer = await call(env, '/v1/mcp/token', { method: 'POST', token })
+    const answer = await call(at.env, '/v1/mcp/token', { method: 'POST', token: at.token })
 
     expect(answer.status).toBe(200)
     expect(typeof answer.json.token).toBe('string')
   })
 
   test('and an unparseable body the same way, as it always has', async () => {
-    const answer = await call(env, '/v1/mcp/token', { method: 'POST', token, raw: '{' })
+    const answer = await call(at.env, '/v1/mcp/token', {
+      method: 'POST',
+      token: at.token,
+      raw: '{',
+    })
     expect(answer.status).toBe(200)
   })
 
   test('but refuses a body that parsed to something else', async () => {
-    const answer = await call(env, '/v1/mcp/token', { method: 'POST', token, raw: '[1, 2]' })
+    const answer = await call(at.env, '/v1/mcp/token', {
+      method: 'POST',
+      token: at.token,
+      raw: '[1, 2]',
+    })
 
     expect(answer.status).toBe(400)
     expect(answer.json.error).toBe('send an object')
   })
 
   test('and still refuses a readOnly that is not true or false', async () => {
-    const answer = await call(env, '/v1/mcp/token', {
+    const answer = await call(at.env, '/v1/mcp/token', {
       method: 'POST',
-      token,
+      token: at.token,
       body: { readOnly: 'yes' },
     })
 

@@ -4,7 +4,7 @@ const { written, template, moved, plan, before, writing, trusted, ran, shut } = 
   shut: new Set<string>(),
   trusted: { yes: true },
   ran: [] as { base: { guarded?: boolean } }[][],
-  writing: { pairs: [] as unknown[], changed: true },
+  writing: { pairs: [] as unknown[], changed: true, now: 0, most: 0, hold: Promise.resolve() },
   before: [] as unknown[][],
   written: new Map<string, string>(),
   template: { folder: '' },
@@ -34,7 +34,13 @@ vi.mock('./automate', () => ({
 }))
 vi.mock('./act', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./act')>()),
-  writeEach: async () => writing.changed,
+  writeEach: async () => {
+    writing.now++
+    writing.most = Math.max(writing.most, writing.now)
+    await writing.hold
+    writing.now--
+    return writing.changed
+  },
 }))
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
@@ -98,39 +104,35 @@ beforeEach(() => {
   moved.length = 0
 })
 
-describe('a base somebody else could have written', () => {
-  test('runs under the guard any other reader of it runs under', async () => {
-    plan.folder = ''
-    trusted.yes = false
-    ran.length = 0
-    try {
-      await readHeld('/s/Shared/Tasks.base')
-      heard('Shared', 'Inbox/a.md', [])
-      await new Promise((done) => setTimeout(done, 150))
-    } finally {
-      trusted.yes = true
-    }
-    expect(ran.at(-1)?.map((one) => one.base.guarded)).toEqual([true])
-  })
-})
-
-describe('a protected base while it is shut', () => {
-  test('runs nothing, and runs again once it is unlocked', async () => {
-    plan.folder = ''
-    ran.length = 0
-    shut.add('/s/Shared/Tasks.base')
-    try {
-      await readHeld('/s/Shared/Tasks.base')
-      heard('Shared', 'Inbox/a.md', [])
-      await new Promise((done) => setTimeout(done, 150))
-      expect(ran.at(-1) ?? []).toEqual([])
-    } finally {
-      shut.clear()
-    }
+test('a base somebody else could have written runs under the guard any other reader of it runs under', async () => {
+  plan.folder = ''
+  trusted.yes = false
+  ran.length = 0
+  try {
+    await readHeld('/s/Shared/Tasks.base')
     heard('Shared', 'Inbox/a.md', [])
     await new Promise((done) => setTimeout(done, 150))
-    expect(ran.at(-1)).toHaveLength(1)
-  })
+  } finally {
+    trusted.yes = true
+  }
+  expect(ran.at(-1)?.map((one) => one.base.guarded)).toEqual([true])
+})
+
+test('a protected base while it is shut runs nothing, and runs again once it is unlocked', async () => {
+  plan.folder = ''
+  ran.length = 0
+  shut.add('/s/Shared/Tasks.base')
+  try {
+    await readHeld('/s/Shared/Tasks.base')
+    heard('Shared', 'Inbox/a.md', [])
+    await new Promise((done) => setTimeout(done, 150))
+    expect(ran.at(-1) ?? []).toEqual([])
+  } finally {
+    shut.clear()
+  }
+  heard('Shared', 'Inbox/a.md', [])
+  await new Promise((done) => setTimeout(done, 150))
+  expect(ran.at(-1)).toHaveLength(1)
 })
 
 describe("a base's automation that moves a note", () => {
@@ -305,4 +307,42 @@ describe('a note renamed or moved', () => {
 
     expect(before).toEqual([[]])
   })
+})
+
+test('a note saved before its space is first read is not looked at as a note just made, since what it was is not known yet', async () => {
+  await readHeld('/s/Shared/Tasks.base')
+  const row = { kind: 'note', space: 'Shared', path: 'Bugs/Old.md', note: { status: 'Done' } }
+  heardChange({
+    root: '/s/Shared',
+    space: 'Shared',
+    path: 'Bugs/Old.md',
+    removed: [],
+    added: [row] as never,
+    firstRead: true,
+  })
+  await new Promise((done) => setTimeout(done, 150))
+
+  expect(before).toEqual([])
+})
+
+test('notes that reach a numbered base at about the same time are looked at one after the other, so each sees the id the one before it was given', async () => {
+  plan.folder = ''
+  writing.changed = true
+  writing.most = 0
+  let release: () => void = () => undefined
+  writing.hold = new Promise<void>((done) => (release = done))
+  writing.pairs = [{ row: { space: 'Shared', path: 'Bugs/Written.md' }, change: {} }]
+  await readHeld('/s/Shared/Tasks.base')
+  heard('Shared', 'Bugs/A.md', [])
+  heard('Shared', 'Bugs/B.md', [])
+  await new Promise((done) => setTimeout(done, 150))
+  expect(before).toHaveLength(1)
+
+  release()
+  await new Promise((done) => setTimeout(done, 20))
+  writing.pairs = []
+  writing.hold = Promise.resolve()
+
+  expect(before).toHaveLength(2)
+  expect(writing.most).toBe(1)
 })

@@ -6,13 +6,11 @@ export interface FlatRow {
   depth: number
 }
 
-export function standsOpen(entry: Entry, isOpen: (path: string) => boolean): boolean {
-  return entry.is_dir && isOpen(entry.path) && nestedIn(entry).length > 0
-}
+export const standsOpen = (entry: Entry, isOpen: (path: string) => boolean): boolean =>
+  entry.is_dir && isOpen(entry.path) && nestedIn(entry).length > 0
 
-export function anyOpen(tree: Entry | null, isOpen: (path: string) => boolean): boolean {
-  return tree?.children.some((child) => standsOpen(child, isOpen)) ?? false
-}
+export const anyOpen = (tree: Entry | null, isOpen: (path: string) => boolean): boolean =>
+  tree?.children.some((child) => standsOpen(child, isOpen)) ?? false
 
 export function flatRows(tree: Entry | null, isOpen: (path: string) => boolean): FlatRow[] {
   const out: FlatRow[] = []

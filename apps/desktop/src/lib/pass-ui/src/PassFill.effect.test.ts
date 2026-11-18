@@ -1,5 +1,6 @@
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { closed, draw, landed, target } from '../test/drawn'
 import type { PassBubble } from '../../pass-sync/src/fill-bubble'
 
 const fake = vi.hoisted(() => ({
@@ -45,26 +46,15 @@ const { overlays } = await import('../../ui-kit/src/overlays')
 
 const TAB = 'tab-1'
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
-
 beforeEach(() => {
   fake.calls = []
   fake.state = 'open'
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
 })
 
-afterEach(() => {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
-})
+afterEach(closed)
 
-function showing(bubble: PassBubble) {
-  shown = mount(PassFill, { target, props: { bubble }, intro: false })
-  flushSync()
-}
+const showing = (bubble: PassBubble) => draw(PassFill, { bubble })
 
 function press(words: string) {
   const button = [...target.querySelectorAll('button')].find((one) =>

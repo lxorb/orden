@@ -4,7 +4,6 @@ import { scryptOffThread } from './scrypt-off'
 
 const COST: Cost = { n: 32768, r: 8, p: 1 }
 const LENGTH = 32
-
 const encoder = new TextEncoder()
 
 function base64(bytes: Uint8Array): string {

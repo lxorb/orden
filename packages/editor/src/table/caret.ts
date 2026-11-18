@@ -11,9 +11,7 @@ export function selectionIn(element: HTMLElement): { from: number; to: number } 
   }
 }
 
-export function caretOffset(element: HTMLElement): number {
-  return selectionIn(element)?.to ?? 0
-}
+export const caretOffset = (element: HTMLElement): number => selectionIn(element)?.to ?? 0
 
 function offsetOf(element: HTMLElement, node: Node, offset: number): number {
   const measured = document.createRange()

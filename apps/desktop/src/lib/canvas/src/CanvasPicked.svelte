@@ -38,10 +38,8 @@
   let colouring = $state(false)
   let run = freshId()
   let over = $state<HTMLElement>()
-
   let wide = $state(0)
   let room = $state(0)
-
   const MARGIN = 8
 
   const left = $derived.by(() => {

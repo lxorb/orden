@@ -14,7 +14,6 @@ export interface Snap {
 }
 
 export const NO_SNAP: Snap = { dx: 0, dy: 0, guides: [] }
-
 const REACH = GRID / 2
 
 interface Span {
@@ -22,13 +21,8 @@ interface Span {
   size: number
 }
 
-function acrossOf(box: Box): Span {
-  return { from: box.x, size: box.width }
-}
-
-function downOf(box: Box): Span {
-  return { from: box.y, size: box.height }
-}
+const acrossOf = (box: Box): Span => ({ from: box.x, size: box.width })
+const downOf = (box: Box): Span => ({ from: box.y, size: box.height })
 
 function stops(span: Span): [number, number, number] {
   return [span.from, span.from + span.size / 2, span.from + span.size]

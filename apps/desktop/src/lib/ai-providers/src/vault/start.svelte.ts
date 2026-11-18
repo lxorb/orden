@@ -1,6 +1,7 @@
 import { mount, unmount, untrack } from 'svelte'
 import { account, request } from '../../../accounts/src/api'
 import {
+  afterQuiet,
   deviceName,
   forget,
   keep,
@@ -14,6 +15,8 @@ import {
 } from '../../../platform/src/api'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
+import { keepMoves } from '../moves'
+import { fingerprint } from './crypto'
 import { ai } from '../store.svelte'
 import type { Base, Contents } from './merge'
 import { Vault, type VaultWorld } from './vault.svelte'
@@ -56,7 +59,21 @@ async function signIns(): Promise<Record<string, string>> {
   return seen
 }
 
-const world: VaultWorld = {
+async function whoStayed(
+  after: Contents,
+  moved: Record<string, string>,
+): Promise<Record<string, string>> {
+  const who: Record<string, string> = {}
+  for (const from of Object.keys(moved)) {
+    const one = after.accounts.accounts.find((account) => account.id === from)
+    const key = after.keys[from]
+    const print = key ? await fingerprint(key) : ''
+    if (one) who[from] = `${one.kind}|${one.baseUrl ?? ''}|${print}`
+  }
+  return who
+}
+
+export const world: VaultWorld = {
   account: () =>
     account.user && account.token && (isNative || browserVault.on) ? account.user.id : null,
   call: (path, method, body) =>
@@ -80,13 +97,15 @@ const world: VaultWorld = {
     }
     return { accounts: ai.state, keys, seen: await signIns() }
   },
-  async apply(contents, before) {
+  async apply(contents, before, moved) {
     for (const [id, key] of Object.entries(contents.keys)) {
       if (before.keys[id] !== key) await writeKey(id, key, true)
     }
     for (const id of Object.keys(before.keys)) {
       if (!(id in contents.keys)) await forgetKey(id, true)
     }
+    const who = await whoStayed(contents, moved)
+    keepMoves(moved, Date.now(), who)
     ai.adopt(contents.accounts)
   },
   loadBase: (id) => (parsed(storedText(baseKey(id))) as Base | null) ?? null,
@@ -104,11 +123,7 @@ export function startVault(): void {
   if (started) return
   started = true
 
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const soon = () => {
-    clearTimeout(timer)
-    timer = setTimeout(() => void vault.refresh(), SETTLE)
-  }
+  const soon = afterQuiet(() => void vault.refresh(), SETTLE)
   ai.onLocalChange(soon)
   keysMoved(soon)
   void import('../../../sync-client/src/api')

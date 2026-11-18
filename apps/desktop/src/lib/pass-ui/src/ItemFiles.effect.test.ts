@@ -1,26 +1,13 @@
-import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
 import type { Item, Passkey } from '@orden/pass/types'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { closed, showing, target } from '../test/drawn'
+import { opened, pass } from '../test/opened'
 
 const fake = vi.hoisted(() => ({
   confirm: vi.fn(),
   delivered: [] as { name: string; extension: string; bytes: Uint8Array }[],
-}))
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
 }))
 
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({
@@ -34,21 +21,14 @@ vi.mock('../../files-out/src/save', () => ({
   },
 }))
 
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ItemView = (await import('./ItemView.svelte')).default
 const ItemEdit = (await import('./ItemEdit.svelte')).default
 
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
-
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 let vault = ''
 
 beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup('correct horse battery staple')
+  await opened()
   pass.fileSource = () => Promise.resolve(null)
   vault = pass.vaults[0]?.id ?? ''
 })
@@ -59,25 +39,10 @@ beforeEach(() => {
   fake.delivered.length = 0
 })
 
-afterEach(() => {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
-})
+afterEach(closed)
 
-function viewing(item: Item) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(ItemView, { target, props: { ui: new PassUi(null), item }, intro: false })
-  flushSync()
-}
-
-function editing(ui: InstanceType<typeof PassUi>) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(ItemEdit, { target, props: { ui }, intro: false })
-  flushSync()
-}
+const viewing = (item: Item) => showing(ItemView, { ui: new PassUi(null), item })
+const editing = (ui: InstanceType<typeof PassUi>) => showing(ItemEdit, { ui })
 
 function press(label: string) {
   const button = target.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
@@ -218,8 +183,7 @@ describe('an SSH key', () => {
     if (key?.content.kind !== 'ssh') throw new Error('no key')
     expect(key.content.publicKey).toMatch(/^ssh-ed25519 \S+ Server$/)
 
-    if (shown) void unmount(shown)
-    target.remove()
+    closed()
     viewing(key)
     await vi.waitFor(() =>
       expect(target.querySelector('[data-field="Fingerprint"]')?.textContent).toMatch(/SHA256:/),

@@ -55,11 +55,8 @@
         {#if row.member.nick && row.member.nick !== row.member.name}
           <span class="orden-row-meta">{row.member.name}</span>
         {/if}
-      {:else if row.key === 'orden'}
-        <span class="orden-row-mark at">✦</span>
-        <span class="orden-row-label">@{row.key}</span>
       {:else}
-        <span class="orden-row-mark at">@</span>
+        <span class="orden-row-mark at">{row.key === 'orden' ? '✦' : '@'}</span>
         <span class="orden-row-label">@{row.key}</span>
       {/if}
     </button>

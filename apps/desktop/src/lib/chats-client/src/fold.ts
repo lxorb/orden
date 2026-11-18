@@ -178,11 +178,7 @@ export async function fold(event: Logged, lookup: Lookup): Promise<Kept[]> {
       for (const [emoji, who] of r) byEmoji.set(emoji, [...(byEmoji.get(emoji) ?? []), who])
       const reactions = Object.fromEntries(byEmoji)
       return [
-        {
-          upto: event.seq,
-          marks: { ...kept.marks, r },
-          message: { ...kept.message, reactions },
-        },
+        { upto: event.seq, marks: { ...kept.marks, r }, message: { ...kept.message, reactions } },
       ]
     }
 

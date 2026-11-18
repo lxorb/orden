@@ -152,9 +152,8 @@ function removals(
   return runs.map((run) => removal(line, run.from, run.to, wordsFrom))
 }
 
-function same(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
-}
+const same = (a: unknown, b: unknown): boolean =>
+  JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
 function nextStatus(fields: TaskFields, change: TaskChange): string | null {
   let status = fields.status
@@ -188,7 +187,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const arriving: Arrival[] = []
   const taking: { from: number; to: number }[] = []
   const form = bracketStyle(parsed) ? 'bracket' : 'emoji'
-
   const status = nextStatus(fields, change)
   if (status !== null)
     edits.push({ from: parsed.box + 1, to: parsed.box + 1 + fields.status.length, insert: status })
@@ -380,12 +378,10 @@ function arrivals(
   return edits
 }
 
-function ordered(edits: TextEdit[]): TextEdit[] {
-  return edits.sort((a, b) => a.from - b.from || a.to - a.from - (b.to - b.from))
-}
+const ordered = (edits: TextEdit[]): TextEdit[] =>
+  edits.sort((a, b) => a.from - b.from || a.to - a.from - (b.to - b.from))
 
 const DATES = ['due', 'start', 'scheduled', 'deadline'] as const
-
 const takes = (value: string | null | undefined) => value === null || value === ''
 
 export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {
@@ -405,9 +401,8 @@ function withoutOrphans(fields: TaskFields, change: TaskChange): TaskChange {
   return out
 }
 
-export function changedTask(line: string, change: TaskChange): string {
-  return appliedEdits(line, writeTask(line, change))
-}
+export const changedTask = (line: string, change: TaskChange): string =>
+  appliedEdits(line, writeTask(line, change))
 
 export function taskLine(fields: TaskFields, prefix = '- '): string {
   const parts = [fields.text]
@@ -428,6 +423,4 @@ export function taskLine(fields: TaskFields, prefix = '- '): string {
   return `${prefix}[${fields.status}] ${parts.filter((part) => part !== '').join(' ')}`
 }
 
-function tagsWritten(text: string): string[] {
-  return parseTask(`- [ ] ${text}`)?.fields.tags ?? []
-}
+const tagsWritten = (text: string): string[] => parseTask(`- [ ] ${text}`)?.fields.tags ?? []

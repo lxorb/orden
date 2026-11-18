@@ -152,6 +152,17 @@ describe('writing a change', () => {
     expect(readBase(written).views.at(-1)?.orden.date).toBe('note.last')
   })
 
+  test('a formula is taken out whatever it is called', () => {
+    for (const name of ['other', 'toString', 'constructor', 'valueOf', 'hasOwnProperty']) {
+      const source = `formulas:\n  ${name}: 1 + 1\n  kept: file.name\nviews:\n  - type: table\n    name: A\n`
+      const base = readBase(source)
+      base.formulas = { kept: 'file.name' }
+      expect(writeBase(base, source)).toBe(
+        'formulas:\n  kept: file.name\nviews:\n  - type: table\n    name: A\n',
+      )
+    }
+  })
+
   test('a quoted filter keeps its quotes when another one changes', () => {
     const source = fixture('kepano/Books.base')
     const base = readBase(source)
@@ -258,5 +269,37 @@ describe('writing a change', () => {
     expect(writeBase(base, source)).toBe(
       '# my bugs\nviews:\n  - type: table # the main one\n    name: Everything\n',
     )
+  })
+})
+
+describe('keys this version does not know', () => {
+  test('stay on an option and on the id when the base is written again', () => {
+    const yaml = `views:
+  - type: table
+    name: All
+orden:
+  id:
+    property: num
+    prefix: T-
+    start: 100
+  properties:
+    status:
+      options:
+        - value: Todo
+          group: todo
+          colour: red
+          icon: star
+`
+    const base = readBase(yaml)
+    const view = base.views[0]
+    if (!view) throw new Error('no view')
+    const written = readBase(writeBase({ ...base, views: [{ ...view, name: 'Renamed' }] }, yaml))
+    expect(written.orden.id?.kept).toEqual({ start: 100 })
+    expect(written.orden.properties.status?.options?.[0]).toEqual({
+      value: 'Todo',
+      group: 'todo',
+      kept: { colour: 'red', icon: 'star' },
+    })
+    expect(written.views[0]?.name).toBe('Renamed')
   })
 })

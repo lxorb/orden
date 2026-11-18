@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { arcSidebar } from './arc'
 import { SIDEBAR } from './arc.fixture'
 import { sidebarImport } from './sidebar-plan'
@@ -43,6 +42,19 @@ describe("Arc's sidebar as Orden's", () => {
 
   test('counts the easels and notes that stay', () => {
     expect(arcSidebar(SIDEBAR, 'Default')?.stayed).toBe(1)
+  })
+
+  test('reads a folder that lists itself once, as one folder', () => {
+    const looped = JSON.parse(
+      JSON.stringify(SIDEBAR).replace(
+        '"childrenIds":["P-SPLIT","P-GUIDE"]',
+        '"childrenIds":["P-DOCS","P-SPLIT","P-DOCS","P-GUIDE"]',
+      ),
+    ) as unknown
+    const read = arcSidebar(looped, 'Default')
+
+    expect(read?.sidebar.folders.map((one) => one.id)).toEqual(['P-DOCS'])
+    expect(read?.sidebar.tabs.filter((one) => one.url.startsWith('https://docs.'))).toHaveLength(1)
   })
 
   test('is nothing for a file with no spaces of the profile', () => {

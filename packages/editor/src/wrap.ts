@@ -6,8 +6,8 @@ import { marksAcross } from './line-door'
 
 const MARKS = new Set(['`', '*', '_', '~', '='])
 
-export function wrapSelection(): Extension {
-  return Prec.high(
+export const wrapSelection = (): Extension =>
+  Prec.high(
     EditorView.inputHandler.of((view, from, to, typed) => {
       if (typed.length !== 1 || !MARKS.has(typed)) return false
 
@@ -43,4 +43,3 @@ export function wrapSelection(): Extension {
       return true
     }),
   )
-}

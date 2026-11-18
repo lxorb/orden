@@ -2,9 +2,7 @@ import { frontMatterValue } from './front-matter'
 import { attributeUrl, escape, safeSrc } from './html'
 
 export const COVER_KEY = 'cover'
-
 export const COVER_POSITION_KEY = 'cover-position'
-
 export const COVER_MIDDLE = 50
 
 export interface Cover {

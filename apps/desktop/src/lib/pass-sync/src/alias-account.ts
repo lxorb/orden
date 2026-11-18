@@ -8,7 +8,6 @@ export interface AliasAccount {
 }
 
 const SERVICES: readonly string[] = ['simplelogin', 'addy']
-
 const textOrNull = (value: unknown) => (typeof value === 'string' && value !== '' ? value : null)
 
 export function aliasAccountIn(text: string): AliasAccount | null {

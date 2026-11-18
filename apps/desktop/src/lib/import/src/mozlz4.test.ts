@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { lz4Block, unmozLz4 } from './mozlz4'
 import { mozLz4Of } from './zen.fixture'
 

@@ -30,33 +30,29 @@ function afterMove(doc: string, from: number, to: number) {
   return { was, is: now.field(blockDecorations) }
 }
 
-function spans(doc: string, cursor = 0): string[] {
-  return state(doc, cursor)
+const spans = (doc: string, cursor = 0): string[] =>
+  state(doc, cursor)
     .field(blockDecorations)
     .spans.map((span) => doc.slice(span.from, span.to))
-}
 
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |'
 const PROSE = 'one **two** three [four](five) `six`\n\nseven eight nine\n\n'
 const FILLER = 'prose with **emphasis** and a [link](x).\n\n'.repeat(200)
 
 describe('block decorations', () => {
-  test('records where the constructs that mind the caret are', () => {
-    expect(spans(`${PROSE}${TABLE}`)).toEqual([TABLE])
-    expect(spans('$$\nx = 1\n$$')).toEqual(['$$\nx = 1\n$$'])
-    expect(spans('```mermaid\ngraph TD\n```')).toEqual(['```mermaid\ngraph TD\n```'])
-    expect(spans('[toc]')).toEqual(['[toc]'])
-  })
+  test.each([
+    [`${PROSE}${TABLE}`, [TABLE]],
+    ['$$\nx = 1\n$$', ['$$\nx = 1\n$$']],
+    ['```mermaid\ngraph TD\n```', ['```mermaid\ngraph TD\n```']],
+    ['[toc]', ['[toc]']],
+    [PROSE, []],
+  ])('%j', (input, wanted) => expect(spans(input)).toEqual(wanted))
 
   test('a toc with a line of words right under it is drawn, however long the words', () => {
     for (const words of ['see below', 'The plan for this week']) {
       const doc = `[toc]\n${words}\n\n# One\n\nx`
       expect(drawn(state(doc, doc.length).field(blockDecorations), doc), words).toEqual(['[toc]'])
     }
-  })
-
-  test('prose is not a place the caret changes anything', () => {
-    expect(spans(PROSE)).toEqual([])
   })
 
   test('every fence is a place worth looking at again, whatever its language', () => {
@@ -232,9 +228,8 @@ describe('a caret put where a block is drawn', () => {
       const doc = `intro\n\n${block}\n\n# One\n\ntail\n`
       const from = doc.indexOf(block)
 
-      for (let at = from; at <= from + block.length; at++) {
+      for (let at = from; at <= from + block.length; at++)
         expect(overCaret(doc, at), `${what} at ${at - from}`).toEqual([])
-      }
     })
 
     test(`${what} is drawn again once the caret is off its lines`, () => {
@@ -498,13 +493,10 @@ describe('a note cover', () => {
     return found
   }
 
-  test('is drawn for a note that names one', () => {
-    expect(covers(COVERED)).toBe(1)
-  })
-
-  test('is not drawn for a note that names none', () => {
-    expect(covers('---\ntitle: Wide\n---\n\n# Wide\n')).toBe(0)
-  })
+  test.each([
+    [COVERED, 1],
+    ['---\ntitle: Wide\n---\n\n# Wide\n', 0],
+  ])('%j', (input, wanted) => expect(covers(input)).toEqual(wanted))
 
   test('stays drawn while the caret is inside the front matter', () => {
     expect(covers(COVERED, COVERED.indexOf('cover:') + 3)).toBe(1)

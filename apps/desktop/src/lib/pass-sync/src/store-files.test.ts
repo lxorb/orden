@@ -3,6 +3,8 @@ import { blank } from '@orden/pass/envelope'
 import { FILE_PART } from '@orden/pass/files'
 import type { Alias } from '@orden/pass/types'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
+import '../test/no-device'
 import { NotHere } from './attachments'
 import { deviceRows } from './device-rows'
 import type { FileApi } from './file-api'
@@ -10,31 +12,12 @@ import { waitingFiles } from './file-queue'
 import { forgetLocal, readFileParts, readMeta } from './local'
 import { configurePass, PassStore } from './store.svelte'
 
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
-
 const FAST = { m: 64, t: 1, p: 1 }
 configurePass({ kdf: FAST, pinKdf: FAST })
 
 beforeEach(async () => {
   await forgetLocal()
-  const kept = new Map<string, string>()
-  vi.stubGlobal('localStorage', {
-    getItem: (key: string) => kept.get(key) ?? null,
-    setItem: (key: string, value: string) => kept.set(key, value),
-    removeItem: (key: string) => kept.delete(key),
-  })
+  vi.stubGlobal('localStorage', memoryStorage())
 })
 
 afterEach(() => {
@@ -49,11 +32,7 @@ async function opened(): Promise<{ store: PassStore; vault: string }> {
   return { store, vault: store.vaults[0]?.id ?? '' }
 }
 
-const picked = (bytes: Uint8Array, name = 'scan.pdf') => ({
-  name,
-  type: 'application/pdf',
-  bytes,
-})
+const picked = (bytes: Uint8Array, name = 'scan.pdf') => ({ name, type: 'application/pdf', bytes })
 
 describe('a file attached to an item', () => {
   test('is sealed on this device, listed on the item and opened again', async () => {
@@ -150,18 +129,9 @@ describe('the alias service', () => {
   test('is kept sealed, read back and forgotten', async () => {
     const { store } = await opened()
     expect(await store.aliasProvider()).toBeNull()
-    await store.setAliasProvider({
-      provider: 'addy',
-      key: ' secret-alias-key ',
-      mailbox: 'r1',
-      suffix: null,
-    })
-    expect(await store.aliasProvider()).toEqual({
-      provider: 'addy',
-      key: 'secret-alias-key',
-      mailbox: 'r1',
-      suffix: null,
-    })
+    const kept = { provider: 'addy' as const, key: 'secret-alias-key', mailbox: 'r1', suffix: null }
+    await store.setAliasProvider({ ...kept, key: ' secret-alias-key ' })
+    expect(await store.aliasProvider()).toEqual(kept)
     expect(JSON.stringify(await readMeta('alias'))).not.toContain('secret-alias-key')
     await store.setAliasProvider(null)
     expect(await store.aliasProvider()).toBeNull()

@@ -6,13 +6,11 @@ const ESCAPES: Record<string, string> = {
   "'": '&#39;',
 }
 
-export function escape(text: string): string {
-  return text.replace(/&(?!#?\w+;)|[<>"']/g, (character) => ESCAPES[character] ?? character)
-}
+export const escape = (text: string): string =>
+  text.replace(/&(?!#?\w+;)|[<>"']/g, (character) => ESCAPES[character] ?? character)
 
-export function escapeAll(text: string): string {
-  return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
-}
+export const escapeAll = (text: string): string =>
+  text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 
 const NAMED: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
 
@@ -28,25 +26,19 @@ export function attributeText(written: string): string {
 }
 
 const SAFE_SCHEMES = new Set(['http', 'https', 'mailto', 'tel'])
-
 const SAFE_DATA_IMAGE = /^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|x-icon);/i
+const withoutBlanks = (target: string): string => target.replace(/[\s\p{Cc}\p{Cf}]/gu, '')
 
-function withoutBlanks(target: string): string {
-  return target.replace(/[\s\p{Cc}\p{Cf}]/gu, '')
-}
-
-function schemeOf(target: string): string {
-  return /^([a-z][a-z\d+.-]*):/i.exec(withoutBlanks(target))?.[1]?.toLowerCase() ?? ''
-}
+const schemeOf = (target: string): string =>
+  /^([a-z][a-z\d+.-]*):/i.exec(withoutBlanks(target))?.[1]?.toLowerCase() ?? ''
 
 export function safeHref(target: string): boolean {
   const scheme = schemeOf(target)
   return scheme === '' || SAFE_SCHEMES.has(scheme)
 }
 
-export function safeSrc(target: string): boolean {
-  return safeHref(target) || SAFE_DATA_IMAGE.test(withoutBlanks(target))
-}
+export const safeSrc = (target: string): boolean =>
+  safeHref(target) || SAFE_DATA_IMAGE.test(withoutBlanks(target))
 
 const CODE_SCHEMES = new Set(['javascript', 'vbscript', 'data', 'blob', 'filesystem'])
 
@@ -63,6 +55,13 @@ export function attributeUrl(target: string): string {
     return ''
   }
   return encoded.replace(/&/g, '&amp;')
+}
+
+const NOT_IN_PATH = /[#?:]/g
+
+export function pathHref(path: string): string | null {
+  if (CODE_SCHEMES.has(schemeOf(path))) return null
+  return attributeUrl(path).replace(NOT_IN_PATH, (one) => `%${one.charCodeAt(0).toString(16)}`)
 }
 
 export function fragment(name: string): string {

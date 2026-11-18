@@ -6,10 +6,7 @@ import { chats } from './store.svelte'
 export async function mayDelete(paths: readonly string[]): Promise<boolean> {
   const asked = paths.filter((path) => isChatTarget(path))
   const full = chats.list.filter(
-    (one) =>
-      one.lastSeq > 0 &&
-      one.path !== null &&
-      asked.some((path) => one.path !== null && samePath(one.path, path)),
+    (one) => one.lastSeq > 0 && asked.some((path) => one.path !== null && samePath(one.path, path)),
   )
   const [one] = full
   if (!one) return true

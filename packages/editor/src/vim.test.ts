@@ -34,11 +34,10 @@ function surface() {
   return { view: view as unknown as EditorView, current: () => state }
 }
 
-function modal(state: EditorState): boolean {
-  return state
+const modal = (state: EditorState): boolean =>
+  state
     .facet(EditorView.editorAttributes)
     .some((attrs) => typeof attrs === 'object' && attrs.class === 'orden-vim')
-}
 
 describe('modal editing', () => {
   test('is off until it is asked for', () => {
@@ -155,35 +154,18 @@ describe('Enter, as normal mode reads it', () => {
   const idle = { prefixRepeat: [], operator: null, keyBuffer: [] }
   const normal = { insertMode: false, visualMode: false, inputState: idle }
 
-  test('is a plain Enter in normal mode with nothing typed before it', () => {
-    expect(plainNormalEnter(enter, normal)).toBe(true)
-  })
-
-  test('is not Enter in insert mode or in visual mode', () => {
-    expect(plainNormalEnter(enter, { ...normal, insertMode: true })).toBe(false)
-    expect(plainNormalEnter(enter, { ...normal, visualMode: true })).toBe(false)
-  })
-
-  test('is not Enter finishing a command: a count, an operator, a register, a sequence', () => {
-    expect(
-      plainNormalEnter(enter, { ...normal, inputState: { ...idle, prefixRepeat: ['3'] } }),
-    ).toBe(false)
-    expect(
-      plainNormalEnter(enter, { ...normal, inputState: { ...idle, operator: 'delete' } }),
-    ).toBe(false)
-    expect(plainNormalEnter(enter, { ...normal, inputState: { ...idle, registerName: 'a' } })).toBe(
-      false,
-    )
-    expect(plainNormalEnter(enter, { ...normal, inputState: { ...idle, keyBuffer: ['g'] } })).toBe(
-      false,
-    )
-  })
-
-  test('is not a chord with Enter in it, another key, or a view with no modal editing', () => {
-    expect(plainNormalEnter({ ...enter, ctrlKey: true }, normal)).toBe(false)
-    expect(plainNormalEnter({ ...enter, shiftKey: true }, normal)).toBe(false)
-    expect(plainNormalEnter({ ...enter, isComposing: true }, normal)).toBe(false)
-    expect(plainNormalEnter({ ...enter, key: 'j' }, normal)).toBe(false)
-    expect(plainNormalEnter(enter, null)).toBe(false)
-  })
+  test.each([
+    [enter, true, normal],
+    [enter, false, { ...normal, insertMode: true }],
+    [enter, false, { ...normal, visualMode: true }],
+    [enter, false, { ...normal, inputState: { ...idle, prefixRepeat: ['3'] } }],
+    [enter, false, { ...normal, inputState: { ...idle, operator: 'delete' } }],
+    [enter, false, { ...normal, inputState: { ...idle, registerName: 'a' } }],
+    [enter, false, { ...normal, inputState: { ...idle, keyBuffer: ['g'] } }],
+    [{ ...enter, ctrlKey: true }, false, normal],
+    [{ ...enter, shiftKey: true }, false, normal],
+    [{ ...enter, isComposing: true }, false, normal],
+    [{ ...enter, key: 'j' }, false, normal],
+    [enter, false, null],
+  ])('%j', (input, wanted, extra) => expect(plainNormalEnter(input, extra)).toEqual(wanted))
 })

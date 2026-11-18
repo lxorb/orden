@@ -11,11 +11,12 @@ import { services } from './services'
 
 export interface Copies {
   readonly undone: FileActions
-  readonly protection: Pick<Protection, 'copied'>
+  readonly protection: Pick<Protection, 'copied' | 'moved'>
   rootHolding(path: string | null): string | null
   readonly itemMeta: Pick<ItemMetaStore, 'copied' | 'moved' | 'set'>
   entryAt(path: string): Entry | null
   showEntry(entry: Entry): void
+  heardGone(path: string): void
   freshEntry(path: string, isFolder: boolean): Entry
   freeNameOnDisk(dir: string, wanted: string): Promise<string>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
@@ -80,7 +81,10 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
   const landed = await copyPath(entry.path, path)
     .then(() => true)
     .catch(() => false)
-  if (!landed) return false
+  if (!landed) {
+    ws.heardGone(path)
+    return false
+  }
   await idsLeftBehind(entry, path)
   ws.itemMeta.copied(entry.path, path)
   ws.protection.copied(entry.path, path, ws.rootHolding(entry.path), ws.rootHolding(path))
@@ -92,7 +96,10 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
       () => true,
       () => false,
     ))
-  if (own && renamed) ws.itemMeta.moved(own.from, own.to)
+  if (own && renamed) {
+    ws.itemMeta.moved(own.from, own.to)
+    ws.protection.moved(own.from, own.to, ws.rootHolding(own.to))
+  }
   await ws.fileCame(path, entry.is_dir ? 'folder' : 'file')
 
   return true

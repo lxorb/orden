@@ -1,8 +1,7 @@
 import { err, failure, ok, type Result } from '@orden/contracts'
-import type { InboxFields, InboxValue } from '@orden/sync-core'
+import { inboxChangeOf, inboxStamp, type InboxFields, type InboxValue } from '@orden/sync-core'
 
 export const PRIORITIES = [0, 1, 2, 3] as const
-
 export type Priority = (typeof PRIORITIES)[number]
 
 export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
@@ -12,13 +11,12 @@ export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
   3: 'High',
 }
 
-export function priorityTone(priority: number): string | undefined {
-  return (
-    { 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' } as Record<number, string>
+export const priorityTone = (priority: number): string | undefined =>
+  (
+    ({ 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' }) as Record<number, string>
   )[priority]
-}
 
-export interface Subtask {
+interface Subtask {
   readonly id: string
   readonly title: string
   readonly done: boolean
@@ -51,10 +49,41 @@ export const LIMITS = {
 } as const
 
 export const KIND = 'todo'
+const DESCRIPTION_BYTES = 12_000
+const encoder = new TextEncoder()
+const bytesOf = (text: string): number => encoder.encode(JSON.stringify(text)).length
+
+function wholeSlice(text: string, end: number): string {
+  const code = text.charCodeAt(end - 1)
+  return text.slice(0, code >= 0xd800 && code <= 0xdbff ? end - 1 : end)
+}
+
+function cutToBytes(text: string, most: number): string {
+  if (bytesOf(text) <= most) return text
+  let low = 0
+  let high = text.length
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2)
+    if (bytesOf(text.slice(0, middle)) <= most) low = middle
+    else high = middle - 1
+  }
+  return wholeSlice(text, low)
+}
+
+export const fittedDescription = (text: string): string =>
+  cutToBytes(wholeSlice(text, LIMITS.description), DESCRIPTION_BYTES)
+
+export function titledOf(text: string): { title: string; description?: string } {
+  if (text.length <= LIMITS.title) return { title: text }
+  return {
+    title: `${wholeSlice(text, LIMITS.title - 1).trimEnd()}…`,
+    description: fittedDescription(text),
+  }
+}
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
-export const isDay = (value: unknown): value is string =>
+const isDay = (value: unknown): value is string =>
   typeof value === 'string' && DAY.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
 
 export const isPriority = (value: unknown): value is Priority =>
@@ -122,7 +151,6 @@ export function fieldsOf(patch: TodoPatch): InboxFields {
 }
 
 const refused = (message: string) => err(failure('tasks-model', 'invalid', message))
-
 type Mutable<T> = { -readonly [K in keyof T]: T[K] }
 
 export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {
@@ -176,6 +204,14 @@ export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {
     out.order = patch.order
   }
   return ok(out)
+}
+
+export function fitsOneChange(id: string, fields: InboxFields, device: string): Result<void> {
+  const stamp = inboxStamp(Number.MAX_SAFE_INTEGER, 0, device)
+  const stamps = Object.fromEntries(Object.keys(fields).map((key) => [key, stamp]))
+  return inboxChangeOf({ id, fields, stamps })
+    ? ok(undefined)
+    : refused('this todo is too long to keep; shorten its description or subtasks')
 }
 
 export const newId = (): string => `t${crypto.randomUUID().replace(/-/g, '').slice(0, 15)}`

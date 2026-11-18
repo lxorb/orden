@@ -2,11 +2,7 @@ import { escape, escapeAll } from './html'
 import { cardMarkup, iframeCard } from './web-embed'
 
 const SCRIPTED = /<script\b[^>]*>[\s\S]*?<\/script\s*>/i
-
-function isInteractiveHtml(html: string): boolean {
-  return SCRIPTED.test(html)
-}
-
+const isInteractiveHtml = (html: string): boolean => SCRIPTED.test(html)
 const FIRST_HEIGHT = 180
 
 export function htmlBlockCard(html: string): string | null {

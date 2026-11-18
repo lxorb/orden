@@ -10,7 +10,13 @@ export async function searchRows(
   limit: number,
   onFound: (found: Found) => void,
   excluded: readonly string[] = [],
+  onNote: (relative: string) => void = () => undefined,
 ): Promise<void> {
   const base = normalise(root)
-  await walkSearch((visit) => space.each(base, visit), query, terms, limit, onFound, excluded)
+  const each = (visit: Parameters<typeof space.each>[1]) =>
+    space.each(base, (note) => {
+      onNote(note.relative)
+      return visit(note)
+    })
+  await walkSearch(each, query, terms, limit, onFound, excluded)
 }

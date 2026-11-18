@@ -1,10 +1,7 @@
 <script lang="ts">
-  import type { Alias, Item } from '@orden/pass/types'
-  import { atLeast } from '@orden/pass/types'
+  import { atLeast, type Alias, type Item } from '@orden/pass/types'
   import { message } from '../../ui-kit/src/api'
-  import { aliasStats, switchedAlias } from '../../pass-sync/src/api'
-  import type { AliasStats } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
+  import { aliasStats, switchedAlias, pass, type AliasStats } from '../../pass-sync/src/api'
   import SwitchRow from './SwitchRow.svelte'
 
   const { item, content }: { item: Item; content: Alias } = $props()
@@ -44,7 +41,7 @@
   }
 </script>
 
-<section class="card" aria-label="Alias">
+<section class="pass-card" aria-label="Alias">
   <SwitchRow
     label="Forward mail to this alias"
     on={content.enabled}
@@ -67,17 +64,11 @@
       <span><strong>{stats.blocked}</strong> blocked</span>
     </div>
   {/if}
-  {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+  {#if wrong}<p class="wrong pass-wrong" role="alert">{wrong}</p>{/if}
 </section>
 
 <style>
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > :global(* + *) {
+  .pass-card > :global(* + *) {
     border-top: 1px solid var(--line);
   }
 
@@ -124,9 +115,6 @@
   }
 
   .wrong {
-    margin: 0;
     padding: var(--space-2) var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>

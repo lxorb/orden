@@ -112,7 +112,6 @@ afterEach(() => {
 describe('the drag that opens the drawer', () => {
   test('a sideways pull over the writing opens it and follows the thumb', async () => {
     const { swipe, workspace, drawer } = await opened()
-
     const drag = swipe(prose, 30, 200)
     expect(workspace.panel).toBe('tree')
     expect(drag.pulled).toBeGreaterThan(0)
@@ -124,30 +123,25 @@ describe('the drag that opens the drawer', () => {
   test('a scroll up the note is not a pull, however far it goes', async () => {
     const { drawer, followDrawers, workspace } = await opened()
     const host = stage()
-
     touched = prose
     followDrawers(host.element)
     host.listeners.get('touchstart')?.(moment(200, 600, 16) as never)
     host.listeners.get('touchmove')?.(moment(202, 500, 32) as never)
     host.listeners.get('touchmove')?.(moment(204, 380, 48) as never)
-
     expect(drawer.at).toBe(null)
     expect(workspace.panel).toBe(null)
   })
 
   test('a table takes its own sideways drag, and the drawer stays put', async () => {
     const { swipe, workspace } = await opened()
-
     expect(swipe(table, 300, 60).pulled).toBe(null)
     expect(workspace.panel).toBe(null)
   })
 
   test('it still stays put on the drag straight after one that moved it', async () => {
     const { swipe, workspace } = await opened()
-
     swipe(prose, 30, 200).lift()
     expect(workspace.panel).toBe('tree')
-
     expect(swipe(table, 300, 60).pulled).toBe(null)
     expect(workspace.panel).toBe('tree')
   })
@@ -156,7 +150,6 @@ describe('the drag that opens the drawer', () => {
     const { drawer, followDrawers } = await opened()
     const host = stage()
     followDrawers(host.element)
-
     touched = prose
     host.listeners.get('touchstart')?.({
       touches: [
@@ -167,7 +160,6 @@ describe('the drag that opens the drawer', () => {
       preventDefault: () => undefined,
     } as never)
     host.listeners.get('touchmove')?.(moment(200, 400, 32) as never)
-
     expect(drawer.at).toBe(null)
   })
 })
@@ -175,7 +167,6 @@ describe('the drag that opens the drawer', () => {
 describe('the drag that opens the other side', () => {
   test('a pull the other way opens it and follows the thumb', async () => {
     const { swipe, workspace, rightDrawer } = await opened('phone', ['outline'])
-
     const drag = swipe(prose, 300, 60)
     expect(workspace.rightPanel).toBe('outline')
     expect(drag.pulledRight).toBeGreaterThan(0)
@@ -187,7 +178,6 @@ describe('the drag that opens the other side', () => {
 
   test('and leaves the left one where it was', async () => {
     const { swipe, workspace, drawer } = await opened('phone', ['outline'])
-
     swipe(prose, 300, 60).lift()
     expect(workspace.panel).toBe(null)
     expect(drawer.at).toBe(null)
@@ -195,7 +185,6 @@ describe('the drag that opens the other side', () => {
 
   test('a pull along the line still opens the file list', async () => {
     const { swipe, workspace } = await opened('phone', ['outline'])
-
     const drag = swipe(prose, 30, 260)
     expect(workspace.panel).toBe('tree')
     expect(workspace.rightPanel).toBe(null)
@@ -205,7 +194,6 @@ describe('the drag that opens the other side', () => {
 
   test('nothing happens where the right side holds nothing', async () => {
     const { swipe, workspace } = await opened('phone')
-
     const drag = swipe(prose, 300, 60)
     expect(drag.pulled).toBe(null)
     expect(drag.pulledRight).toBe(null)
@@ -215,10 +203,8 @@ describe('the drag that opens the other side', () => {
 
   test('open, a pull back the other way puts it away', async () => {
     const { swipe, workspace } = await opened('phone', ['outline'])
-
     swipe(prose, 300, 60).lift()
     expect(workspace.rightPanel).toBe('outline')
-
     const back = swipe(prose, 60, 300)
     expect(back.pulledRight).toBeLessThan(WIDTH)
     back.lift()
@@ -230,7 +216,6 @@ describe('the drag that opens the other side', () => {
     left.swipe(prose, 30, 270).lift()
     expect(left.drawer.settle).toBeGreaterThan(0)
     expect(left.drawer.at).toBe(null)
-
     const right = await opened('phone', ['outline'])
     right.swipe(prose, 300, 60).lift()
     expect(right.rightDrawer.at).toBe(null)
@@ -241,7 +226,6 @@ describe('the drag that opens the other side', () => {
     const near = await opened('tablet', ['outline'])
     expect(near.swipe(prose, 1276, 1000).pulledRight).toBeGreaterThan(0)
     expect(near.workspace.rightPanel).toBe('outline')
-
     const middle = await opened('tablet', ['outline'])
     expect(middle.swipe(prose, 640, 300).pulledRight).toBe(null)
     expect(middle.workspace.rightPanel).toBe(null)
@@ -249,7 +233,6 @@ describe('the drag that opens the other side', () => {
 
   test('the side that loses the gesture is not left promoted', async () => {
     const { swipe, drawer, rightDrawer } = await opened('phone', ['outline'])
-
     const drag = swipe(prose, 300, 60)
     expect(rightDrawer.held).toBe(true)
     expect(drawer.held).toBe(false)
@@ -258,7 +241,6 @@ describe('the drag that opens the other side', () => {
 
   test('a pen is drawing on that edge too', async () => {
     const { swipe, workspace } = await opened('tablet', ['outline'])
-
     expect(swipe(prose, 1276, 1000, 'pen').pulledRight).toBe(null)
     expect(workspace.rightPanel).toBe(null)
   })
@@ -267,7 +249,6 @@ describe('the drag that opens the other side', () => {
 describe('a pen is drawing, not swiping', () => {
   test('a stroke across the note leaves the drawer where it was', async () => {
     const { swipe, workspace, drawer } = await opened('tablet')
-
     expect(swipe(prose, 8, 400, 'pen').pulled).toBe(null)
     expect(workspace.panel).toBe(null)
     expect(drawer.held).toBe(false)
@@ -275,17 +256,14 @@ describe('a pen is drawing, not swiping', () => {
 
   test('nor over the canvas, which is where the pen mostly is', async () => {
     const { swipe, workspace } = await opened('tablet')
-
     expect(swipe(canvas, 8, 400, 'pen').pulled).toBe(null)
     expect(workspace.panel).toBe(null)
   })
 
   test('a finger after a pen is still a finger', async () => {
     const { swipe, workspace } = await opened('tablet')
-
     swipe(prose, 8, 400, 'pen')
     expect(workspace.panel).toBe(null)
-
     expect(swipe(prose, 8, 400).pulled).toBeGreaterThan(0)
     expect(workspace.panel).toBe('tree')
   })
@@ -294,31 +272,26 @@ describe('a pen is drawing, not swiping', () => {
 describe('where a tablet lets the drag begin', () => {
   test('at the left edge, the way a tablet app has it', async () => {
     const { swipe, workspace } = await opened('tablet')
-
     expect(swipe(prose, EDGE - 8, 300).pulled).toBeGreaterThan(0)
     expect(workspace.panel).toBe('tree')
   })
 
   test('and nowhere else: a drag in the middle of the page belongs to the page', async () => {
     const { swipe, workspace } = await opened('tablet')
-
     expect(swipe(prose, 500, 900).pulled).toBe(null)
     expect(workspace.panel).toBe(null)
   })
 
   test('a finger over the canvas belongs to the canvas wherever it starts', async () => {
     const { swipe, workspace } = await opened('tablet')
-
     expect(swipe(canvas, 4, 300).pulled).toBe(null)
     expect(workspace.panel).toBe(null)
   })
 
   test('open, it closes from anywhere: the drawer is under the finger', async () => {
     const { swipe, workspace } = await opened('tablet')
-
     swipe(prose, 8, 300).lift()
     expect(workspace.panel).toBe('tree')
-
     const back = swipe(prose, 260, 20)
     expect(back.pulled).toBeLessThan(WIDTH)
     back.lift()
@@ -327,7 +300,6 @@ describe('where a tablet lets the drag begin', () => {
 
   test('a phone opens from the middle, where an edge would be a thin target', async () => {
     const { swipe, workspace } = await opened('phone')
-
     expect(swipe(prose, 500, 900).pulled).toBeGreaterThan(0)
     expect(workspace.panel).toBe('tree')
   })
@@ -337,8 +309,23 @@ describe('the drawer on a phone', () => {
   test('opens on the tab last shown, the way back does', async () => {
     const { drawer, workspace } = await opened('phone')
     Object.assign(workspace, { reopens: 'tasks' })
-
     drawer.open()
     expect(workspace.panel).toBe('tasks')
+  })
+})
+
+describe('the right drawer', () => {
+  test.each([
+    ['note', true],
+    ['pages', true],
+    ['pdf', true],
+    ['canvas', false],
+    ['web', false],
+  ])('is there to pull out the outline over a %s tab: %s', async (kind, there) => {
+    const { rightDrawer, workspace, stop } = await opened('phone', ['outline'])
+    Object.assign(workspace, { active: { kind } })
+
+    expect(rightDrawer.there).toBe(there)
+    stop()
   })
 })

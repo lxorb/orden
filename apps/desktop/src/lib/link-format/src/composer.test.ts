@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { decodeTarget, findLinks } from '@orden/markdown/links'
 import { extracted, linkTo, merged, splitAt } from './composer'
 
 describe('merging one note into another', () => {
@@ -13,6 +14,39 @@ describe('merging one note into another', () => {
   test('an empty note on either side is not a seam at all', () => {
     expect(merged('', '# B')).toBe('# B')
     expect(merged('# A', '   \n')).toBe('# A')
+  })
+
+  test('takes the front matter of the note that goes into the one it joins', () => {
+    const from = '---\naliases: [F]\ntags: [work]\nstatus: draft\n---\n# From\n\nbody\n'
+    expect(merged('# Into\n\ntext', from)).toBe(
+      '---\naliases: [F]\ntags: [work]\nstatus: draft\n---\n# Into\n\ntext\n\n---\n\n# From\n\nbody\n',
+    )
+  })
+
+  test('joins the aliases and tags of both, and keeps the values the note joined already had', () => {
+    const into = '---\naliases:\n  - I\nstatus: done\n---\n# Into\n'
+    const from = '---\naliases: [F, I]\ntags: [work]\nstatus: draft\n---\n# From\n'
+    expect(merged(into, from)).toBe(
+      '---\nstatus: done\naliases: [I, F]\ntags: [work]\n---\n# Into\n\n---\n\n# From\n',
+    )
+  })
+})
+
+describe('a merge into a note that has front matter', () => {
+  test('carries over a key that was the only one the moved note had', () => {
+    expect(merged('---\nstatus: done\n---\n# Into\n', '---\naliases: [F]\n---\n# From\n')).toBe(
+      '---\nstatus: done\naliases: [F]\n---\n# Into\n\n---\n\n# From\n',
+    )
+  })
+
+  test('carries over a key written in quotes', () => {
+    expect(
+      merged('---\nstatus: done\n---\n# Into\n', '---\n"my key": 1\nb: 2\n---\n# From\n'),
+    ).toBe('---\nstatus: done\n"my key": 1\nb: 2\n---\n# Into\n\n---\n\n# From\n')
+  })
+
+  test('closes front matter the moved note left without an ending line', () => {
+    expect(merged('# Into\n', '---\na: 1\n---')).toBe('---\na: 1\n---\n# Into')
   })
 })
 
@@ -47,6 +81,28 @@ describe('splitting a note at the caret', () => {
     expect(split?.taken.startsWith('## Later')).toBe(true)
   })
 
+  test.each(['Report.pdf', 'Ideas.canvas', 'CHANGELOG.md'])(
+    'a link to a note named %s keeps the .md that makes it a note',
+    (name) => {
+      const split = splitAt(`# Title\n\n## ${name}\n\nmore\n`, 9, 'Untitled')
+      expect(split?.kept).toBe(`# Title\n\n[[${name}.md]]\n`)
+      const cut = extracted(`See ${name}.`, 4, 4 + name.length, 'Untitled')
+      expect(cut?.kept).toBe(`See [[${name}.md]].`)
+    },
+  )
+
+  test.each(['Using `git` well', 'it`s odd'])(
+    'a link to a note named %s still reaches it past the backticks',
+    (name) => {
+      const reached = (text: string | undefined) =>
+        findLinks(text ?? '').map((link) => decodeTarget(link.target))
+      const split = splitAt(`# Title\n\n## ${name}\n\nmore \`x\`\n`, 9, 'Untitled')
+      expect(reached(split?.kept)).toEqual([`${name}.md`])
+      const cut = extracted(`See ${name} and \`y\`.`, 4, 4 + name.length, 'Untitled')
+      expect(reached(cut?.kept)).toEqual([`${name}.md`])
+    },
+  )
+
   test('nothing after the caret is nothing to split', () => {
     expect(splitAt(doc, doc.length, 'Untitled')).toBeNull()
     expect(splitAt('# Title\n\n   \n', 8, 'Untitled')).toBeNull()
@@ -69,6 +125,18 @@ describe('extracting a selection', () => {
     expect(carved?.name).toBe('The whole idea, written out')
     expect(carved?.taken).toBe('The whole idea, written out.\n')
     expect(carved?.kept).toBe('before [[The whole idea, written out]] after')
+  })
+
+  test('a whole line taken with its line break leaves the next line as it was', () => {
+    const doc = '# Note\n\nIdea one is here.\n## Next\n\nmore\n'
+    const from = doc.indexOf('Idea')
+    const carved = extracted(doc, from, doc.indexOf('## Next'), 'Untitled')
+    expect(carved?.kept).toBe('# Note\n\n[[Idea one is here]]\n## Next\n\nmore\n')
+
+    const paragraphs = 'para one\n\npara two\n\npara three'
+    const two = paragraphs.indexOf('para two')
+    const cut = extracted(paragraphs, two, paragraphs.indexOf('para three'), 'Untitled')
+    expect(cut?.kept).toBe('para one\n\n[[para two]]\n\npara three')
   })
 
   test('words the name could not keep are shown by the link', () => {

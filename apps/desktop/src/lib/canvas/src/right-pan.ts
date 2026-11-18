@@ -1,7 +1,5 @@
 export const RIGHT_SLOP = 4
-
 const AFTER = 600
-
 const RIGHT_HELD = 2
 
 interface Press {

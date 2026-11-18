@@ -22,14 +22,11 @@ describe('plain text, as a note may hold it', () => {
     )
   })
 
-  test('two equals signs are the characters, not a highlight', () => {
+  test('two equals signs are the characters, not a highlight; a list item stays a list item, and a heading-like line is words', () => {
     expect(plainWords('if a==b or c==d then\nx === y')).toBe(
       'if a=\\=b or c=\\=d then\nx =\\=\\= y',
     )
     expect(renderMarkdown(plainWords('if a==b or c==d then'))).toBe('<p>if a==b or c==d then</p>\n')
-  })
-
-  test('a list item stays a list item, and a heading-like line is words', () => {
     expect(plainWords('- milk at ~2\n  * eggs $3\n1. one\n# not a heading')).toBe(
       '- milk at \\~2\n  * eggs \\$3\n1. one\n\\# not a heading',
     )
@@ -62,13 +59,10 @@ describe('plain text, as a note may hold it', () => {
     expect(renderMarkdown(nested)).toContain('<li>a<ul>\n<li><p>b [x]</p>')
   })
 
-  test('a bullet under an item that runs on to a second line still nests', () => {
+  test('a bullet under an item that runs on to a second line still nests; a bare address still links', () => {
     const nested = plainWords('- a\n  more words\n    - b [x]')
     expect(nested).toBe('- a\n  more words\n    - b \\[x\\]')
     expect(renderMarkdown(nested)).toContain('<li>a\nmore words<ul>\n<li>b [x]</li>')
-  })
-
-  test('a bare address still links', () => {
     expect(plainWords('see https://a.test/~al/_x_/ now')).toBe('see https://a.test/~al/_x_/ now')
   })
 })
@@ -76,13 +70,10 @@ describe('plain text, as a note may hold it', () => {
 const PROSE = { addresses: true }
 
 describe('a page’s text, as a note may hold it', () => {
-  test('prose is prose', () => {
+  test('prose is prose; a marker that would be read as markup is escaped', () => {
     expect(escapeText('Schauen Sie sich das Cheatsheet an.')).toBe(
       'Schauen Sie sich das Cheatsheet an.',
     )
-  })
-
-  test('a marker that would be read as markup is escaped', () => {
     expect(escapeText('see [1] and [2]')).toBe('see \\[1\\] and \\[2\\]')
     expect(escapeText('a ` and nothing to close it')).toBe('a \\` and nothing to close it')
     expect(escapeText('*emphasis*')).toBe('\\*emphasis\\*')
@@ -90,32 +81,21 @@ describe('a page’s text, as a note may hold it', () => {
   })
 
   describe('an escape that changes nothing', () => {
-    test('is not written in front of an underscore inside a word', () => {
+    test('is not written in front of an underscore inside a word; and is still written where the underscore can open emphasis; nor in front of a star that leans neither way', () => {
       expect(escapeText('cx_out and snake_case_name')).toBe('cx_out and snake_case_name')
-    })
-
-    test('and is still written where the underscore can open emphasis', () => {
       expect(escapeText('_start and end_')).toBe('\\_start and end\\_')
       expect(escapeText('a _ b')).toBe('a \\_ b')
       expect(escapeText('_out')).toBe('\\_out')
       expect(escapeText('out_')).toBe('out\\_')
-    })
-
-    test('nor in front of a star that leans neither way', () => {
       expect(escapeText('2 * 3 = 6')).toBe('2 * 3 = 6')
     })
-
-    test('and is still written where the star could begin a list or a word', () => {
+    test('and is still written where the star could begin a list or a word; nor in front of a backslash that escapes nothing', () => {
       expect(escapeText('* item')).toBe('\\* item')
       expect(escapeText('  * item')).toBe('  \\* item')
       expect(escapeText('2*3*4')).toBe('2\\*3\\*4')
       expect(escapeText('rename *.md to *.txt')).toBe('rename \\*.md to \\*.txt')
-    })
-
-    test('nor in front of a backslash that escapes nothing', () => {
       expect(escapeText('C:\\Users\\me')).toBe('C:\\Users\\me')
     })
-
     test('and is still written where the backslash would eat the marker after it', () => {
       expect(escapeText('C:\\*.md')).toBe('C:\\\\\\*.md')
       expect(escapeText('ends in \\')).toBe('ends in \\\\')
@@ -123,29 +103,19 @@ describe('a page’s text, as a note may hold it', () => {
   })
 
   describe('a run that is unmistakably markdown', () => {
-    test('is kept as it was written', () => {
+    test('is kept as it was written; and a code span keeps what a fence would keep; unless a marker has a blank against it, where markdown stops reading one', () => {
       expect(escapeText('überfliegen Sie **kurz** das Dokument')).toBe(
         'überfliegen Sie **kurz** das Dokument',
       )
       expect(escapeText('ganz __fett__ gesagt')).toBe('ganz __fett__ gesagt')
       expect(escapeText('run `npm run dev` first')).toBe('run `npm run dev` first')
-    })
-
-    test('and a code span keeps what a fence would keep', () => {
       expect(escapeText('the `<img>` tag')).toBe('the `<img>` tag')
       expect(escapeText('write `a_b` for it')).toBe('write `a_b` for it')
-    })
-
-    test('unless a marker has a blank against it, where markdown stops reading one', () => {
       expect(escapeText('2 ** 3 ** 4')).toBe('2 \\*\\* 3 \\*\\* 4')
       expect(escapeText('**half open')).toBe('\\*\\*half open')
     })
-
-    test('unless there is more of the same marker against it', () => {
+    test('unless there is more of the same marker against it; unless the words inside it are not words', () => {
       expect(escapeText('***drei***')).toBe('\\*\\*\\*drei\\*\\*\\*')
-    })
-
-    test('unless the words inside it are not words', () => {
       expect(escapeText('**<img src=q>**')).toBe('\\*\\*\\<img src=q>\\*\\*')
       expect(escapeText('**[a](javascript:alert(1))**')).toBe(
         '\\*\\*\\[a\\](javascript:alert(1))\\*\\*',
@@ -153,12 +123,8 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('**a\\**')).toBe('\\*\\*a\\\\\\*\\*')
       expect(escapeText('**a`b**')).toBe('\\*\\*a\\`b\\*\\*')
     })
-
-    test('and the words around it are escaped as the text they are', () => {
+    test('and the words around it are escaped as the text they are; and a wall of markers is escaped rather than read', () => {
       expect(escapeText('[1] **kurz** *lang*')).toBe('\\[1\\] **kurz** \\*lang\\*')
-    })
-
-    test('and a wall of markers is escaped rather than read', () => {
       expect(escapeText('````x````')).toBe('\\`\\`\\`\\`x\\`\\`\\`\\`')
       expect(escapeText(`${'`'.repeat(2000)}x`)).toBe(`${'\\`'.repeat(2000)}x`)
     })
@@ -176,7 +142,6 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('1. eins')).toBe('1\\. eins')
       expect(escapeText('1) eins')).toBe('1\\) eins')
     })
-
     test('and is not where the same characters are punctuation', () => {
       expect(escapeText('-5 °C und +5 °C')).toBe('-5 °C und +5 °C')
       expect(escapeText('#hashtag')).toBe('#hashtag')
@@ -223,26 +188,20 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('https://ex.com/a%%b', PROSE)).toBe('https://ex.com/a%\\%b')
   })
 
-  test('a dollar that would open or close maths is escaped', () => {
+  test('a dollar that would open or close maths is escaped; a doubled marker around a dollar is escaped rather than kept', () => {
     expect(escapeText('Tickets cost $5-$10 each', PROSE)).toBe('Tickets cost \\$5-\\$10 each')
     expect(escapeText('5$ or 10$', PROSE)).toBe('5\\$ or 10\\$')
     expect(escapeText('$$', PROSE)).toBe('\\$\\$')
     expect(escapeText('a $ b', PROSE)).toBe('a $ b')
-  })
-
-  test('a doubled marker around a dollar is escaped rather than kept', () => {
     expect(escapeText('**$5** and **$6**', PROSE)).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
   })
 
-  test('an address is words unless the words are said to be prose', () => {
+  test('an address is words unless the words are said to be prose; nothing in, nothing out', () => {
     const name = escapeText('https://player.test/v/__ab__/')
     expect(name).toBe('https://player.test/v/\\_\\_ab\\_\\_/')
     expect(renderMarkdown(`[${name}](https://player.test/v/__ab__/)`)).toBe(
       '<p><a class="url" href="https://player.test/v/__ab__/">https://player.test/v/__ab__/</a></p>\n',
     )
-  })
-
-  test('nothing in, nothing out', () => {
     expect(escapeText('')).toBe('')
   })
 })
@@ -307,13 +266,10 @@ describe('where the escapes taken off were', () => {
 })
 
 describe('an escaped backtick', () => {
-  test('opens no code', () => {
+  test('opens no code; and an edit beside one keeps the line as it was', () => {
     expect(shownWords('1 \\` 2 \\` 3')).toBe('1 ` 2 ` 3')
     expect(released(heldEscapes('1 \\` 2 \\` 3'))).toBe('1 ` 2 ` 3')
     expect(shownWords('a \\\\`b` c')).toBe('a \\`b` c')
-  })
-
-  test('and an edit beside one keeps the line as it was', () => {
     const line = 'w b=`^\\`< z'
     const edited = 'w b=\\`< z'
     expect(shownWords(editedWords(line, edited))).toBe(edited)

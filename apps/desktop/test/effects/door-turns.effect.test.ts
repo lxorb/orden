@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Doorway from './Doorway.svelte'
+import { settle } from './settle'
 
 interface Played {
   node: Element
@@ -46,10 +47,6 @@ afterEach(() => {
 function finish(one: Played) {
   one.playState = 'finished'
   one.onfinish?.()
-}
-
-async function settle() {
-  for (let round = 0; round < 5; round++) await new Promise((done) => setTimeout(done, 0))
 }
 
 const of = (selector: string) => played.filter((one) => one.node.matches(selector))

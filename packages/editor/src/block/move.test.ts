@@ -160,21 +160,15 @@ describe('a nested list', () => {
     expect(up(doc, 'Bravo')).toBe('Bravo words.\n\n- one\n  - nested\n')
   })
 
-  test('an item moved up past one with children does not adopt them', () => {
-    expect(up('- one\n  - nested\n- two\n', 'two')).toBe('- two\n- one\n  - nested\n')
-  })
+  test.each([
+    ['- one\n  - nested\n- two\n', '- two\n- one\n  - nested\n', 'two'],
+    ['- one\n  - a\n  - b\n', '- one\n  - b\n  - a\n', 'b'],
+    ['- one\n  - nested\n', '- nested\n- one\n', 'nested'],
+  ])('%j', (input, wanted, extra) => expect(up(input, extra)).toEqual(wanted))
 
   test('a paragraph moved down steps over the whole item', () => {
     const doc = 'Bravo words.\n\n- one\n  - nested\n- two\n'
     expect(down(doc, 'Bravo')).toBe('- one\n  - nested\n\nBravo words.\n\n- two\n')
-  })
-
-  test('a child moves among its siblings', () => {
-    expect(up('- one\n  - a\n  - b\n', 'b')).toBe('- one\n  - b\n  - a\n')
-  })
-
-  test('a child moved out of its parent comes out to the parent’s depth', () => {
-    expect(up('- one\n  - nested\n', 'nested')).toBe('- nested\n- one\n')
   })
 
   test('a deep child moved past a paragraph stays an item rather than turning into code', () => {
@@ -236,11 +230,10 @@ describe('a heading', () => {
     expect(down(doc, '# One')).toBe('# Two\n\nbeta\n\n# One\n\nalpha\n')
   })
 
-  test('steps over its sibling sections, not the words of the one above', () => {
-    const doc = '# A\n\na\n\n## B\n\nb\n\n## C\n\nc\n'
-    expect(up(doc, '## C')).toBe('# A\n\na\n\n## C\n\nc\n\n## B\n\nb\n')
-    expect(up('# A\n\na\n\n## C\n\nc\n', '## C')).toBe('## C\n\nc\n\n# A\n\na\n')
-  })
+  test.each([
+    ['# A\n\na\n\n## B\n\nb\n\n## C\n\nc\n', '# A\n\na\n\n## C\n\nc\n\n## B\n\nb\n', '## C'],
+    ['# A\n\na\n\n## C\n\nc\n', '## C\n\nc\n\n# A\n\na\n', '## C'],
+  ])('%j', (input, wanted, extra) => expect(up(input, extra)).toBe(wanted))
 
   test('a paragraph moves through one a line at a time, either way', () => {
     const into = down(doc, 'alpha')

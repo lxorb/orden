@@ -116,13 +116,9 @@ const SPACERS: Record<string, string> = {
 }
 
 const ALIGNMENT = new Set(['\\\\', '&'])
-
 const DELIMITERS: Record<string, string> = { '(': ')', '[': ']', '\\{': '\\}' }
-
 const SCRIPTS = new Set(['^', '_'])
-
 const TOKEN = /\\[a-zA-Z]+|\\[\s\S]|\s+|[\s\S]/g
-
 const PLAIN = /^[\p{L}\p{N}+\-=<>/|.,;:!?'*]$/u
 
 interface Reader {
@@ -130,9 +126,7 @@ interface Reader {
   at: number
 }
 
-function peek(reader: Reader, ahead = 0): string | undefined {
-  return reader.tokens[reader.at + ahead]
-}
+const peek = (reader: Reader, ahead = 0): string | undefined => reader.tokens[reader.at + ahead]
 
 function tokensOf(tex: string): string[] {
   return (tex.match(TOKEN) ?? []).filter((token) => !/^\s+$/.test(token))

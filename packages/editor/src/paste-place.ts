@@ -13,7 +13,6 @@ const CONTAINERS = /^(?:[ \t]*(?:>[ \t]?|(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t
 const ITEM_MARKS = /((?:[-*+]|\d+[.)])[ \t]+)(?:\[[ xX]\][ \t]+)?/g
 
 const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
-
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 
 const INNERMOST =

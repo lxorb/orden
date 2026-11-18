@@ -1,7 +1,6 @@
 <script lang="ts">
   import { deliver } from '../../files-out/src/api'
-  import { message } from '../../ui-kit/src/api'
-  import { segmented } from '../../ui-kit/src/api'
+  import { message, segmented } from '../../ui-kit/src/api'
   import { pass } from '../../pass-sync/src/api'
 
   type Format = 'sealed' | 'json' | 'csv'
@@ -103,7 +102,7 @@
     bind:value={password}
     oninput={() => (wrong = '')}
   />
-  {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+  {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
   {#if saved}<p class="meta" role="status">{saved}</p>{/if}
   <div class="buttons">
     <button class="orden-button" type="submit" disabled={!ready || busy} aria-busy={busy}
@@ -132,12 +131,6 @@
     background: color-mix(in srgb, var(--callout-warning) 14%, transparent);
     font-size: var(--text-sm);
     color: var(--text-strong);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 
   .meta {

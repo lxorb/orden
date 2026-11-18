@@ -12,8 +12,7 @@ import type { ItemRow, KeyringRow, VaultRow, VersionRow } from './local'
 import { attachmentsUnder } from './item-keys'
 import { mergedEnvelope, mergedFields } from './merge'
 import { appliedItems } from './pull'
-import type { HeldVault } from './rows'
-import { itemOf, vaultOf } from './rows'
+import { itemOf, vaultOf, type HeldVault } from './rows'
 import { nothingShown } from './shown'
 import type { Answer, Landed } from './sync'
 import { currentItem, currentKeyring, currentVault, NO_SUCH_ITEM, ROTATED, STALE } from './sync'
@@ -94,7 +93,7 @@ async function settledKeyring(world: SyncWorld, sent: KeyringRow, rev: number): 
   })
 }
 
-async function settledVault(world: SyncWorld, sent: VaultRow, landed: Landed): Promise<void> {
+async function settledVault(world: SyncWorld, sent: VaultRow, landed: Landed): Promise<'sent'> {
   const { rows } = world
   await world.exclusive(async (held) => {
     await keepVaultBase(rows, sent.id, { rev: landed.rev, meta: sent.meta })
@@ -105,6 +104,7 @@ async function settledVault(world: SyncWorld, sent: VaultRow, landed: Landed): P
     const box = held?.vaults.get(row.id)
     if (held && box) held.vaults.set(row.id, { key: box.key, row })
   })
+  return 'sent'
 }
 
 async function openedMeta(box: HeldVault, id: string, sealed: string): Promise<VaultMeta | null> {
@@ -158,10 +158,7 @@ async function pushedVault(world: SyncWorld, first: VaultRow): Promise<Sent> {
           }
         : { rev, meta: row.meta },
     )
-    if (answer.ok) {
-      await settledVault(world, row, answer.value)
-      return 'sent'
-    }
+    if (answer.ok) return await settledVault(world, row, answer.value)
     if (answer.error !== STALE) return 'stuck'
     const current = currentVault(answer)
     if (!current || current.deleted) return 'again'
@@ -199,7 +196,7 @@ async function pushedVaultGone(world: SyncWorld, row: VaultRow): Promise<Sent> {
   return 'sent'
 }
 
-async function settledItem(world: SyncWorld, sent: ItemRow, landed: Landed): Promise<void> {
+async function settledItem(world: SyncWorld, sent: ItemRow, landed: Landed): Promise<'sent'> {
   const { rows } = world
   await world.exclusive(async (held) => {
     await keepItemBase(rows, sent.vault, sent.id, { ...baseOf(sent), rev: landed.rev })
@@ -210,13 +207,14 @@ async function settledItem(world: SyncWorld, sent: ItemRow, landed: Landed): Pro
     const one = held?.items.get(row.id)
     if (held && one?.row.vault === row.vault) held.items.set(row.id, { key: one.key, row })
   })
+  return 'sent'
 }
 
 async function settledTombstone(
   world: SyncWorld,
   sent: ItemRow,
   rev: number | null,
-): Promise<void> {
+): Promise<'sent'> {
   const { rows } = world
   await world.exclusive(async () => {
     await keepItemBase(rows, sent.vault, sent.id, null)
@@ -224,6 +222,7 @@ async function settledTombstone(
     if (!now?.pending || !now.deleted) return
     await rows.write({ items: [{ ...now, rev: rev ?? now.rev, pending: false }] })
   })
+  return 'sent'
 }
 
 async function opened(
@@ -327,10 +326,7 @@ async function pushedItem(world: SyncWorld, first: ItemRow): Promise<Sent> {
       keyVersion: row.keyVersion,
       ...(trashed === undefined ? {} : { trashed }),
     })
-    if (answer.ok) {
-      await settledItem(world, row, answer.value)
-      return 'sent'
-    }
+    if (answer.ok) return await settledItem(world, row, answer.value)
     if (answer.error === ROTATED) return 'again'
     if (answer.error !== STALE) return 'stuck'
     const current = currentItem(answer)
@@ -354,25 +350,13 @@ async function revived(world: SyncWorld, sent: ItemRow, current: WireItem): Prom
 
 async function pushedTombstone(world: SyncWorld, row: ItemRow): Promise<Sent> {
   const base = await itemBaseOf(world.rows, row.vault, row.id)
-  if (!base || base.body === '') {
-    await settledTombstone(world, row, null)
-    return 'sent'
-  }
+  if (!base || base.body === '') return await settledTombstone(world, row, null)
   const answer = await world.api.deleteItem(row.vault, row.id, base.rev)
-  if (answer.ok) {
-    await settledTombstone(world, row, answer.value.rev)
-    return 'sent'
-  }
-  if (answer.error === NO_SUCH_ITEM) {
-    await settledTombstone(world, row, null)
-    return 'sent'
-  }
+  if (answer.ok) return await settledTombstone(world, row, answer.value.rev)
+  if (answer.error === NO_SUCH_ITEM) return await settledTombstone(world, row, null)
   if (answer.error !== STALE) return 'stuck'
   const current = currentItem(answer)
-  if (!current || current.deleted) {
-    await settledTombstone(world, row, current?.rev ?? null)
-    return 'sent'
-  }
+  if (!current || current.deleted) return await settledTombstone(world, row, current?.rev ?? null)
   await revived(world, row, current)
   return 'sent'
 }
@@ -389,8 +373,7 @@ async function pushedMove(world: SyncWorld, from: ItemRow, to: ItemRow): Promise
   })
   if (answer.ok) {
     await settledTombstone(world, from, base.rev + 1)
-    await settledItem(world, to, answer.value)
-    return 'sent'
+    return await settledItem(world, to, answer.value)
   }
   if (answer.error === ROTATED) return 'again'
   const made = await pushedItem(world, to)

@@ -2,6 +2,7 @@ import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 import type { Warmth } from '@orden/scan/search/warmth'
+import { isRecord } from '../../../platform/src/api'
 
 export interface Ask {
   kind: 'ask'
@@ -21,11 +22,8 @@ export interface Warm {
 export type Answer =
   | { kind: 'found'; id: number; hits: Hit[]; loose: FuzzyHit[] }
   | { kind: 'done'; id: number }
+  | { kind: 'at'; id: number; relative: string }
   | { kind: 'warmth'; warmth: Warmth }
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
 
 export function isAsk(value: unknown): value is Ask {
   if (!isRecord(value) || value.kind !== 'ask') return false
@@ -51,6 +49,7 @@ export function isAnswer(value: unknown): value is Answer {
   if (value.kind === 'warmth') return isRecord(value.warmth)
   if (typeof value.id !== 'number') return false
   if (value.kind === 'done') return true
+  if (value.kind === 'at') return typeof value.relative === 'string'
 
   return value.kind === 'found' && Array.isArray(value.hits) && Array.isArray(value.loose)
 }

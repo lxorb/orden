@@ -1,34 +1,4 @@
-export const SOURCE_IDS = [
-  'proton',
-  'bitwarden',
-  'onepassword',
-  'lastpass',
-  'chrome',
-  'edge',
-  'brave',
-  'firefox',
-  'safari',
-  'keepass',
-  'keepassxc',
-  'dashlane',
-  'keeper',
-  'roboform',
-  'nordpass',
-  'enpass',
-  'kaspersky',
-  'orden',
-  'csv',
-] as const
-
-export type SourceId = (typeof SOURCE_IDS)[number]
-
-export interface Source {
-  id: SourceId
-  name: string
-  accept: readonly string[]
-}
-
-export const SOURCES: readonly Source[] = [
+const LIST = [
   { id: 'proton', name: 'Proton Pass', accept: ['.zip', '.json', '.csv'] },
   { id: 'bitwarden', name: 'Bitwarden', accept: ['.json', '.csv'] },
   { id: 'onepassword', name: '1Password', accept: ['.1pux', '.1pif', '.csv'] },
@@ -48,7 +18,18 @@ export const SOURCES: readonly Source[] = [
   { id: 'kaspersky', name: 'Kaspersky Password Manager', accept: ['.txt'] },
   { id: 'orden', name: 'Orden Pass', accept: ['.json'] },
   { id: 'csv', name: 'Another app (CSV)', accept: ['.csv'] },
-]
+] as const
+
+export type SourceId = (typeof LIST)[number]['id']
+
+export interface Source {
+  id: SourceId
+  name: string
+  accept: readonly string[]
+}
+
+export const SOURCES: readonly Source[] = LIST
+export const SOURCE_IDS: readonly SourceId[] = LIST.map((one) => one.id)
 
 export function sourceOf(id: SourceId): Source {
   const found = SOURCES.find((one) => one.id === id)

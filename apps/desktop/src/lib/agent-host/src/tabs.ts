@@ -8,7 +8,8 @@ import {
   type SettingsSectionId,
 } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
-import { seen } from './guarded'
+import { readable, seen } from './guarded'
+import { noteBehind, protection } from '../../protect/src/api'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { views } from '../../panes/src/api'
@@ -59,8 +60,10 @@ function front(tab: Tab): boolean {
   return workspace.showing(tab.paneId)?.id === tab.id
 }
 
+const shut = (tab: Tab) => noteBehind(tab) !== null && !protection.agentsMay(noteBehind(tab))
+
 function addressOf(tab: Tab): string | null {
-  if (tab.kind !== 'web') return null
+  if (tab.kind !== 'web' || shut(tab)) return null
   return webPages().addressOf(tab.id) ?? workspace.webAddressOf(tab)
 }
 
@@ -172,6 +175,10 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
 
 function namedOutside(call: Call): boolean {
   return tabsInReach(call).some((one) => TAB_KINDS[one.kind].outsideTitle)
+}
+
+function tabsAnswer(call: Call): AgentAnswer {
+  return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
 }
 
 function tabNamed(call: Call): Tab {
@@ -351,6 +358,8 @@ async function renameTab(call: Call): Promise<AgentAnswer> {
 async function saveTab(call: Call): Promise<AgentAnswer> {
   const tab = tabNamed(call)
   if (!isUnsaved(tab.note)) throw new Refused('exists', `tab ${tab.id} has a file already`)
+  const behind = noteBehind(tab)
+  if (behind !== null) readable(behind, tab.shown)
 
   const place = placeFor(call, null)
   const relative = judgedForWriting(need(call, 'path'))
@@ -374,12 +383,13 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
   switch (op) {
     case 'list':
-      if (maybe(call, 'kind') === 'online') {
-        const list = (await agentTabKindLoaded('online')).list
-        if (!list) throw new Refused('unsupported_on_this_engine', 'there are no online tabs here')
+      if (maybe(call, 'kind') === 'online' || maybe(call, 'kind') === 'terminal') {
+        const kind = maybe(call, 'kind') ?? ''
+        const list = (await agentTabKindLoaded(kind)).list
+        if (!list) throw new Refused('unsupported_on_this_engine', `there are no ${kind} tabs here`)
         return list(call.args, call.caller)
       }
-      return done(tabsInReach(call).map(tabOf), namedOutside(call) ? 'tab titles' : null)
+      return tabsAnswer(call)
 
     case 'open':
       return openSomething(call)
@@ -403,7 +413,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
     case 'split': {
       view.splitBeside(call, tabNamed(call))
-      return done(tabsInReach(call).map(tabOf))
+      return tabsAnswer(call)
     }
 
     case 'focus': {
@@ -423,13 +433,13 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
       }
       const at = 'at' in call.args ? Number(call.args.at) : null
       view.moveTabTo(call, tab, pane, at !== null && Number.isInteger(at) && at >= 0 ? at : null)
-      return done(workspace.tabs.map(tabOf))
+      return tabsAnswer(call)
     }
 
     case 'arrange': {
       const named = maybe(call, 'tab') === null ? null : tabNamed(call)
       view.arrangePanes(call, need(call, 'layout'), named)
-      return done(workspace.tabs.map(tabOf))
+      return tabsAnswer(call)
     }
 
     default:
@@ -442,7 +452,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
 
 export function readerTabs(): ReaderTab[] {
   return workspace.tabs
-    .filter((tab) => tab.kind === 'web')
+    .filter((tab) => tab.kind === 'web' && !shut(tab))
     .map((tab) => {
       const shown = workspace.panes.at(tab.paneId) !== null && front(tab)
       const home = workspace.spaceOf(tab.note)
@@ -462,7 +472,7 @@ const LENT_UNMARKED = ACTIVE_FOR + 5_000
 
 export async function lendTab(id: string): Promise<null> {
   const tab = workspace.tabs.find((one) => one.id === id && one.kind === 'web')
-  if (!tab) return null
+  if (!tab || shut(tab)) return null
 
   const lending = portOf('web.lending')
   if (!lending.ok) return null

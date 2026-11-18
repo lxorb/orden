@@ -37,6 +37,10 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
   cssColour: (colour: string) => colour,
   sharpness: (_width: number, _height: number, wanted: number) => wanted,
   paperIsLocked: () => Promise.resolve(held.locked),
+  paperBytesOf: (at: unknown) => {
+    held.at.push(at)
+    return Promise.resolve(held.bytes)
+  },
   paperPicture: (at: unknown, number: number) => {
     held.asked.push(number)
     held.at.push(at)
@@ -194,37 +198,41 @@ describe('a note shared on its own', () => {
     await exportPagesSvg({ ...out(paperNote()), shared: 'note-1' })
     expect(held.at[0]).toMatchObject({ shared: 'note-1' })
   })
-})
 
-describe('one page of a paper on two sheets', () => {
-  test('makes two sheets, each with its own ink', async () => {
+  test('as a PDF, reads its paper by the note’s id on the account', async () => {
     held.bytes = await (await paper()).save()
-    const canvas = paperNote()
-    const [, second] = canvas.nodes as [PageNode, PageNode]
-    second.page = 1
-    inked(canvas, second, 'b', '#0000ff')
+    const bytes = await pagesPdf({ ...out(paperNote()), path: null, root: null, shared: 'note-1' })
 
-    const bytes = await pagesPdf(out(canvas))
-
+    expect(held.at[0]).toMatchObject({ file: 'Paper.pdf', shared: 'note-1' })
     expect((await PDFDocument.load(bytes!)).getPageCount()).toBe(2)
-    const [one, two] = [await contentOf(bytes!, 0), await contentOf(bytes!, 1)]
-    expect(one).toContain('1 0 0 rg')
-    expect(one).not.toContain('0 0 1 rg')
-    expect(two).toContain('0 0 1 rg')
-    expect(two).not.toContain('1 0 0 rg')
   })
 })
 
-describe('pages of more than one size, printed', () => {
-  test('give every sheet a paper of its own size', () => {
-    const style = sheetStyle([
-      { width: 816, height: 1056 },
-      { width: 1056, height: 816 },
-    ])
+test('one page of a paper on two sheets makes two sheets, each with its own ink', async () => {
+  held.bytes = await (await paper()).save()
+  const canvas = paperNote()
+  const [, second] = canvas.nodes as [PageNode, PageNode]
+  second.page = 1
+  inked(canvas, second, 'b', '#0000ff')
 
-    expect(style).toContain('@page s0{size:816px 1056px;margin:0}')
-    expect(style).toContain('@page s1{size:1056px 816px;margin:0}')
-    expect(style).toContain('.s1{page:s1;width:1056px;height:816px}')
-    expect(style).not.toMatch(/\.sheet\{[^}]*width:/)
-  })
+  const bytes = await pagesPdf(out(canvas))
+
+  expect((await PDFDocument.load(bytes!)).getPageCount()).toBe(2)
+  const [one, two] = [await contentOf(bytes!, 0), await contentOf(bytes!, 1)]
+  expect(one).toContain('1 0 0 rg')
+  expect(one).not.toContain('0 0 1 rg')
+  expect(two).toContain('0 0 1 rg')
+  expect(two).not.toContain('1 0 0 rg')
+})
+
+test('pages of more than one size, printed give every sheet a paper of its own size', () => {
+  const style = sheetStyle([
+    { width: 816, height: 1056 },
+    { width: 1056, height: 816 },
+  ])
+
+  expect(style).toContain('@page s0{size:816px 1056px;margin:0}')
+  expect(style).toContain('@page s1{size:1056px 816px;margin:0}')
+  expect(style).toContain('.s1{page:s1;width:1056px;height:816px}')
+  expect(style).not.toMatch(/\.sheet\{[^}]*width:/)
 })

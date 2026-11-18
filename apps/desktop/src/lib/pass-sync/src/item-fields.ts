@@ -1,5 +1,4 @@
-import type { Content, Field, Section } from '@orden/pass/types'
-import { IDENTITY_FIELDS } from '@orden/pass/types'
+import { IDENTITY_FIELDS, type Content, type Field, type Section } from '@orden/pass/types'
 import { HIDDEN_IDENTITY, identityFieldName, identityGroupName } from './identity-words'
 
 interface ShownField {

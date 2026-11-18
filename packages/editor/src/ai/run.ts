@@ -1,22 +1,28 @@
 import {
   type EditorState,
   type Extension,
+  Facet,
   StateEffect,
   StateField,
-  Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
-import { external } from '../external'
 import { fenceCode, fenceLanguage, fenceLead, fenceNear, opensFence } from '../fence'
-import { documentOf } from '../shared'
+import { todayHere } from '../task-days'
+import { documentOf, type SharedDoc } from '../shared'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
 export interface AiAsk {
   prompt: string
   note: string | null
+  shows: SharedDoc | null
+  place?: string | null
   started: (model: string) => void
   wrote: (text: string) => void
 }
+
+export const aiPlace = Facet.define<string, string | null>({
+  combine: (values) => values[0] ?? null,
+})
 
 export type AiRunner = (ask: AiAsk, signal: AbortSignal) => Promise<void>
 
@@ -111,86 +117,30 @@ export interface AiView {
   dispatch: (spec: TransactionSpec) => void
 }
 
-export function askingAt(state: EditorState, from: number): boolean {
-  return (state.field(asks, false) ?? []).some((run) => run.from === from)
-}
+export const askingAt = (state: EditorState, from: number): boolean =>
+  (state.field(asks, false) ?? []).some((run) => run.from === from)
 
 export function stopAskAt(view: AiView, from: number) {
-  for (const run of view.state.field(asks, false) ?? []) {
-    if (run.from === from) run.stop()
-  }
+  for (const run of view.state.field(asks, false) ?? []) if (run.from === from) run.stop()
 }
 
-export function asksMoved(before: EditorState, after: EditorState): boolean {
-  return before.field(asks, false) !== after.field(asks, false)
-}
+export const asksMoved = (before: EditorState, after: EditorState): boolean =>
+  before.field(asks, false) !== after.field(asks, false)
 
 let counter = 0
 
-interface Owner {
-  readonly state: EditorState | null
-  dispatch: (spec: TransactionSpec) => void
-}
+const runOf = (state: EditorState, id: number): AiRun | null =>
+  (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
 
-function ownerOf(view: AiView): Owner {
-  const note = documentOf(view)
-  let kept = view.state
-  let keptText = note?.text ?? null
-
-  const turn = note?.turn
-  const away = () => note !== null && documentOf(view) !== note
-  const gone = () => note !== null && note.turn !== turn
-
-  const current = (): EditorState | null => {
-    if (gone()) return null
-    if (!note || !away()) {
-      kept = view.state
-      keptText = note?.text ?? null
-      return kept
-    }
-    if (note.text === keptText) return kept
-
-    const since = note.since(kept.doc.toString())
-    if (!since) return null
-    kept = kept.update({ changes: since, annotations: external.of(true), filter: false }).state
-    keptText = note.text
-    return kept
-  }
-
-  return {
-    get state() {
-      return current()
-    },
-
-    dispatch(spec) {
-      if (gone()) return
-      if (!note || !away()) {
-        view.dispatch(spec)
-        current()
-        return
-      }
-
-      const base = current()
-      if (!base) return
-      const made = base.update(spec)
-      kept = made.state
-      if (!made.changes.empty) {
-        note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
-      }
-      keptText = note.text
-      note.announce(made.effects)
-    },
-  }
-}
-
-function today(): string {
-  const now = new Date()
-  const two = (value: number) => String(value).padStart(2, '0')
-  return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`
-}
-
-function runOf(state: EditorState, id: number): AiRun | null {
-  return (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
+function holderOf(
+  view: AiView,
+  note: SharedDoc | null,
+  turn: number | undefined,
+  id: number,
+): AiView | null {
+  if (note && note.turn !== turn) return null
+  if (runOf(view.state, id)) return view
+  return note?.holding((state) => runOf(state, id) !== null) ?? null
 }
 
 export function askAiFence(view: AiView, fence: AiFence): boolean {
@@ -202,45 +152,55 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
   const id = ++counter
   const controller = new AbortController()
   const ask = runner
+  const shows = documentOf(view)
+  const turn = shows?.turn
   view.dispatch({ effects: openAsk.of({ id, from: fence.from, stop: () => controller.abort() }) })
-  const owner = ownerOf(view)
+
+  const holding = (then: (holder: AiView) => void) => {
+    const holder = holderOf(view, shows, turn, id)
+    if (holder) then(holder)
+    else controller.abort()
+  }
 
   void ask(
     {
       prompt,
       note: mentionsNote(prompt) ? view.state.doc.toString() : null,
-      started: (model) => beginAnswer(owner, id, model),
-      wrote: (text) => writeAnswer(owner, id, text),
+      shows,
+      place: view.state.facet(aiPlace),
+      started: (model) => holding((holder) => beginAnswer(holder, id, model)),
+      wrote: (text) => holding((holder) => writeAnswer(holder, id, text)),
     },
     controller.signal,
   )
     .catch(() => undefined)
     .finally(() => {
-      trimAnswer(owner, id)
-      owner.dispatch({ effects: closeAsk.of(id) })
+      const holder = holderOf(view, shows, turn, id)
+      if (!holder) return
+      trimAnswer(holder, id)
+      holder.dispatch({ effects: closeAsk.of(id) })
     })
 
   return true
 }
 
-function beginAnswer(owner: Owner, id: number, model: string) {
-  const state = owner.state
-  const live = state && runOf(state, id)
+function beginAnswer(view: AiView, id: number, model: string) {
+  const live = runOf(view.state, id)
   if (!live) return
   if (live.body !== null) return
 
-  const found = aiFenceAt(state, live.from)
+  const found = aiFenceAt(view.state, live.from)
   if (!found) return
 
-  const parts = answerParts(`answered by ${model}, ${today()}`)
+  const parts = answerParts(`answered by ${model}, ${todayHere()}`)
   const head = within(parts.head, found.lead)
   const tail = within(parts.tail, found.lead)
-  const existing = answerSpan(state.doc.toString().split('\n'), found.closeLine, found.lead)
+  const existing = answerSpan(view.state.doc.toString().split('\n'), found.closeLine, found.lead)
   const span = existing ?? { from: found.to, to: found.to }
   const lead = existing ? '' : within('\n\n', found.lead)
   const from = existing ? span.from + found.lead.length : span.from
 
-  owner.dispatch({
+  view.dispatch({
     changes: { from, to: span.to, insert: `${lead}${head}${tail}` },
     effects: beganAnswer.of({ id, body: from + lead.length + head.length }),
     scrollIntoView: true,
@@ -254,30 +214,28 @@ function within(text: string, lead: string): string {
   )
 }
 
-function writeAnswer(owner: Owner, id: number, text: string) {
-  const state = owner.state
-  const live = state && runOf(state, id)
+function writeAnswer(view: AiView, id: number, text: string) {
+  const live = runOf(view.state, id)
   if (!live) return
   if (live.at === null || !text) return
-  const written = within(text, aiFenceAt(state, live.from)?.lead ?? '')
 
-  owner.dispatch({
+  const written = within(text, aiFenceAt(view.state, live.from)?.lead ?? '')
+  view.dispatch({
     changes: { from: live.at, insert: written },
     effects: wroteAnswer.of({ id, at: live.at + written.length }),
   })
 }
 
-function trimAnswer(owner: Owner, id: number) {
-  const state = owner.state
-  const live = state && runOf(state, id)
+function trimAnswer(view: AiView, id: number) {
+  const live = runOf(view.state, id)
   if (!live) return
   if (live.body === null || live.at === null) return
 
-  const text = state.doc.sliceString(live.body, live.at)
+  const text = view.state.doc.sliceString(live.body, live.at)
   const kept = text.replace(/\s+$/, '')
   if (kept.length === text.length) return
 
-  owner.dispatch({ changes: { from: live.body + kept.length, to: live.at, insert: '' } })
+  view.dispatch({ changes: { from: live.body + kept.length, to: live.at, insert: '' } })
 }
 
 export const aiExtension: Extension = [asks]

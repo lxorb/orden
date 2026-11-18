@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -83,5 +81,4 @@ def drive(browser: Browser) -> None:
     typed(page, "page note", ".pages", "() => window.ordenApp.pages.current?.store.part()")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "words are typed straight onto a canvas and a page note"))
+raise SystemExit(DRIVE.run(drive, "words are typed straight onto a canvas and a page note"))

@@ -46,29 +46,26 @@ export function slides(
   now: ReadonlyMap<string, number>,
   carried: readonly string[] = [],
 ): Map<string, number> {
-  const out = new Map<string, number>()
-
-  for (const [path, here] of now) {
-    if (carried.includes(path)) continue
-
-    const before = was.get(path)
-    if (before === undefined || before === here) continue
-
-    out.set(path, before - here)
-  }
-
-  return out
+  return new Map(
+    [...now].flatMap(([path, here]) => {
+      const before = was.get(path)
+      return carried.includes(path) || before === undefined || before === here
+        ? []
+        : [[path, before - here] as const]
+    }),
+  )
 }
 
 export function placesOf(held: Held): Map<string, number> {
-  const out = new Map<string, number>()
-  for (const row of held.rows()) {
-    const path = row.dataset.path
-    if (path !== undefined) out.set(path, row.getBoundingClientRect().top)
-  }
-
-  return out
+  return new Map(
+    [...held.rows()].flatMap((row) => {
+      const path = row.dataset.path
+      return path === undefined ? [] : [[path, row.getBoundingClientRect().top] as const]
+    }),
+  )
 }
+
+const sliding = () => ({ duration: dur(SLIDING), easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)' })
 
 export async function slideInto(held: Held, was: Map<string, number>): Promise<void> {
   if (dur(SLIDING) === 0) return
@@ -80,10 +77,7 @@ export async function slideInto(held: Held, was: Map<string, number>): Promise<v
     const from = moving.get(row.dataset.path ?? '')
     if (from === undefined) continue
 
-    row.animate([{ transform: `translateY(${from}px)` }, { transform: 'none' }], {
-      duration: dur(SLIDING),
-      easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
-    })
+    row.animate([{ transform: `translateY(${from}px)` }, { transform: 'none' }], sliding())
   }
 }
 
@@ -98,10 +92,7 @@ export async function arrive(held: Held, was: Map<string, number>): Promise<void
         { opacity: 0, transform: 'translateX(-6px)' },
         { opacity: 1, transform: 'none' },
       ],
-      {
-        duration: dur(SLIDING),
-        easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
-      },
+      sliding(),
     )
   }
 }
@@ -224,30 +215,23 @@ function lift(held: Held, row: HTMLElement, entry: Entry) {
 
   copy.classList.add('carried')
   copy.dataset.covers = ''
-  copy.style.width = `${box.width}px`
-  copy.style.left = `${box.left}px`
-  copy.style.top = `${box.top}px`
+  Object.assign(copy.style, { width: `${box.width}px`, left: `${box.left}px`, top: `${box.top}px` })
   copy.setAttribute('aria-hidden', 'true')
   document.body.append(copy)
 
   ghost = copy
   ghostFrom = heldAt.y
 
-  const moved = (event: TouchEvent) => onLiftMove(held, event)
-  const ended = (event: TouchEvent) => onLiftEnd(held, event)
-  const gone = () => dropLift(held)
-  const pressed = (event: KeyboardEvent) => onLiftKey(held, event)
+  const heard: [string, (event: Event) => void, AddEventListenerOptions?][] = [
+    ['touchmove', (event) => onLiftMove(held, event as TouchEvent), { passive: false }],
+    ['touchend', (event) => onLiftEnd(held, event as TouchEvent)],
+    ['touchcancel', () => dropLift(held)],
+    ['keydown', (event) => onLiftKey(held, event as KeyboardEvent)],
+  ]
+  for (const [type, run, how] of heard) window.addEventListener(type, run, how)
   stopping = () => {
-    window.removeEventListener('touchmove', moved)
-    window.removeEventListener('touchend', ended)
-    window.removeEventListener('touchcancel', gone)
-    window.removeEventListener('keydown', pressed)
+    for (const [type, run] of heard) window.removeEventListener(type, run)
   }
-
-  window.addEventListener('touchmove', moved, { passive: false })
-  window.addEventListener('touchend', ended)
-  window.addEventListener('touchcancel', gone)
-  window.addEventListener('keydown', pressed)
 }
 
 let stopping: (() => void) | null = null

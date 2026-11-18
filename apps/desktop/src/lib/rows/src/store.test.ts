@@ -7,13 +7,19 @@ import { type Host, type RowsChange, RowsStore } from './store'
 const WORK = '/spaces/Work'
 const HOME = '/spaces/Home'
 
-function scanned(path: string, content: string): ScannedNote {
-  return {
-    ...scanNote(path, content),
-    ...scanRows(content),
-    stamp: { size: content.length, mtime: 1, ctime: 1 },
-  }
-}
+const moved = (from: string, to: string, kind: 'file' | 'folder' = 'file') => ({
+  op: 'moved' as const,
+  from,
+  to,
+  kind,
+  root: WORK,
+})
+
+const scanned = (path: string, content: string): ScannedNote => ({
+  ...scanNote(path, content),
+  ...scanRows(content),
+  stamp: { size: content.length, mtime: 1, ctime: 1 },
+})
 
 interface Rig {
   store: RowsStore
@@ -219,13 +225,7 @@ describe('the rows of every space', () => {
     disk.delete(`${WORK}/A/Plan.md`)
     disk.set(`${WORK}/B/Plan.md`, after)
     store.saved(`${WORK}/B/Plan.md`, after)
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/A/Plan.md`,
-      to: `${WORK}/B/Plan.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/A/Plan.md`, `${WORK}/B/Plan.md`))
 
     expect(tasks(store.of())).toEqual(['Work:B/Plan.md:Read [s](../A/Spec.md)'])
     expect(store.of().map((row) => row.file.ctime)).toEqual([1, 1])
@@ -243,13 +243,7 @@ describe('the rows of every space', () => {
     disk.delete(`${WORK}/Plan.md`)
     disk.set(`${WORK}/Road.md`, after)
     store.saved(`${WORK}/Road.md`, after)
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Plan.md`,
-      to: `${WORK}/Road.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Plan.md`, `${WORK}/Road.md`))
 
     expect(store.of().map((row) => row.path)).toEqual(['Road.md', 'Road.md'])
     const link = { kind: 'link', target: 'Road' }
@@ -266,28 +260,16 @@ describe('the rows of every space', () => {
     await settled()
     heard.length = 0
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Projects/Launch.md`,
-      to: `${WORK}/Projects/Launch v2.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Projects/Launch.md`, `${WORK}/Projects/Launch v2.md`))
     const there = heard.find((one) => one.path === 'Projects/Launch v2.md')
     expect(there?.added).toHaveLength(1)
     expect(there?.from).toMatchObject({ space: 'Work', path: 'Projects/Launch.md' })
     expect(there?.from?.rows[0]?.note).toEqual({ status: 'Doing' })
 
     heard.length = 0
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Projects`,
-      to: `${WORK}/Archive/Projects`,
-      kind: 'folder',
-      root: WORK,
-    })
-    const moved = heard.find((one) => one.path === 'Archive/Projects/Launch v2.md')
-    expect(moved?.from?.path).toBe('Projects/Launch v2.md')
+    void store.follow(moved(`${WORK}/Projects`, `${WORK}/Archive/Projects`, 'folder'))
+    const inside = heard.find((one) => one.path === 'Archive/Projects/Launch v2.md')
+    expect(inside?.from?.path).toBe('Projects/Launch v2.md')
     store.saved(`${WORK}/New.md`, 'x\n')
     expect(heard.at(-1)?.from).toBeUndefined()
   })
@@ -301,23 +283,11 @@ describe('the rows of every space', () => {
     await store.follow({ op: 'created', path: `${WORK}/New.md`, kind: 'file', root: WORK })
     expect(tasks(store.of())).toEqual(['Work:New.md:Fresh'])
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/New.md`,
-      to: `${WORK}/Done/Old.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/New.md`, `${WORK}/Done/Old.md`))
     expect(tasks(store.of())).toEqual(['Work:Done/Old.md:Fresh'])
     expect(store.of()[0]?.file).toMatchObject({ name: 'Old.md', basename: 'Old', folder: 'Done' })
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Done`,
-      to: `${WORK}/Archive`,
-      kind: 'folder',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Done`, `${WORK}/Archive`, 'folder'))
     expect(tasks(store.of())).toEqual(['Work:Archive/Old.md:Fresh'])
 
     void store.follow({ op: 'removed', path: `${WORK}/Archive`, kind: 'folder', root: WORK })
@@ -334,16 +304,10 @@ describe('the rows of every space', () => {
     answer(HOME)
     await settled()
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Plan.md`,
-      to: `${HOME}/Plan.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Plan.md`, `${HOME}/Plan.md`))
     expect(tasks(store.of())).toEqual(['Home:Plan.md:Go'])
-    const [, moved] = store.of()
-    expect(moved && store.rootOf(moved)).toBe(HOME)
+    const [, other] = store.of()
+    expect(other && store.rootOf(other)).toBe(HOME)
   })
 
   test('what happens while a space is being read is done again over what it brings back', async () => {
@@ -376,6 +340,39 @@ describe('the rows of every space', () => {
     expect(
       store.of().find((row) => row.path === 'Kept.md' && row.kind === 'task')?.task?.done,
     ).toBe(true)
+  })
+
+  test('a note saved before its space is first read says its rows before it are not known yet', async () => {
+    const { store, heard, answer, settled } = rig({
+      [`${WORK}/Bugs/Old.md`]: '---\nstatus: Done\n---\nmore\n',
+    })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    await settled()
+
+    store.saved(`${WORK}/Bugs/Old.md`, '---\nstatus: Done\n---\nmore and more\n')
+    expect(heard.filter((one) => one.path === 'Bugs/Old.md').map((one) => one.firstRead)).toEqual([
+      true,
+    ])
+
+    answer(WORK)
+    await settled()
+    store.saved(`${WORK}/Bugs/Old.md`, '---\nstatus: Done\n---\nless\n')
+    store.again(WORK)
+    store.saved(`${WORK}/Bugs/Old.md`, '---\nstatus: Done\n---\nless again\n')
+    const told = heard.filter((one) => one.path === 'Bugs/Old.md').slice(1)
+    expect(told.map((one) => one.firstRead)).toEqual([undefined, undefined])
+    expect(told.every((one) => one.removed.length > 0)).toBe(true)
+  })
+
+  test('a note saved or read here gives its size in bytes, as the scan of the disk does', async () => {
+    const { store, answer, settled } = rig({ [`${WORK}/Notiz.md`]: 'Grüße\n' })
+    store.spacesAre([{ root: WORK, name: 'Work' }])
+    answer(WORK)
+    await settled()
+
+    store.saved(`${WORK}/Notiz.md`, 'Grüße 😀\n')
+    const row = store.of().find((one) => one.path === 'Notiz.md')
+    expect(row?.file.size).toBe(new TextEncoder().encode('Grüße 😀\n').length)
   })
 
   test('a space renamed keeps its rows under its new name, and one gone takes them', async () => {
@@ -429,38 +426,34 @@ describe('the rows of every space', () => {
   })
 })
 
-describe('a space’s AGENTS.md, which its settings edit', () => {
-  test('makes no row, and one in a folder makes its rows', async () => {
-    const { store, answer, settled } = rig({
-      [`${WORK}/AGENTS.md`]: '- [ ] Top\n',
-      [`${WORK}/sub/AGENTS.md`]: '- [ ] Nested\n',
-    })
-    store.spacesAre([{ root: WORK, name: 'Work' }])
-    await settled()
-    answer(WORK)
-    await settled()
-
-    const said = [...new Set(store.of('Work').map((row) => row.file.path))]
-    expect(said).toEqual(['sub/AGENTS.md'])
-
-    store.saved(`${WORK}/AGENTS.md`, '- [ ] Again\n')
-    expect([...new Set(store.of('Work').map((row) => row.file.path))]).toEqual(['sub/AGENTS.md'])
+test('a space’s AGENTS.md, which its settings edit makes no row, and one in a folder makes its rows', async () => {
+  const { store, answer, settled } = rig({
+    [`${WORK}/AGENTS.md`]: '- [ ] Top\n',
+    [`${WORK}/sub/AGENTS.md`]: '- [ ] Nested\n',
   })
+  store.spacesAre([{ root: WORK, name: 'Work' }])
+  await settled()
+  answer(WORK)
+  await settled()
+
+  const said = [...new Set(store.of('Work').map((row) => row.file.path))]
+  expect(said).toEqual(['sub/AGENTS.md'])
+
+  store.saved(`${WORK}/AGENTS.md`, '- [ ] Again\n')
+  expect([...new Set(store.of('Work').map((row) => row.file.path))]).toEqual(['sub/AGENTS.md'])
 })
 
-describe('the rows a view shows', () => {
-  test('leave out every note that is protected and shut, and only those', async () => {
-    const { store, answer, settled } = rig({
-      [`${WORK}/Plan.md`]: '- [ ] Ship it\n',
-      [`${WORK}/Diary/Mine.md`]: '- [ ] Call her\n',
-    })
-    store.spacesAre([{ root: WORK, name: 'Work' }])
-    await settled()
-    answer(WORK)
-    await settled()
-
-    const shut = (path: string) => path.startsWith(`${WORK}/Diary/`)
-    expect(tasks(store.openOf(undefined, shut))).toEqual(['Work:Plan.md:Ship it'])
-    expect(tasks(store.openOf('Work', () => false))).toHaveLength(2)
+test('the rows a view shows leave out every note that is protected and shut, and only those', async () => {
+  const { store, answer, settled } = rig({
+    [`${WORK}/Plan.md`]: '- [ ] Ship it\n',
+    [`${WORK}/Diary/Mine.md`]: '- [ ] Call her\n',
   })
+  store.spacesAre([{ root: WORK, name: 'Work' }])
+  await settled()
+  answer(WORK)
+  await settled()
+
+  const shut = (path: string) => path.startsWith(`${WORK}/Diary/`)
+  expect(tasks(store.openOf(undefined, shut))).toEqual(['Work:Plan.md:Ship it'])
+  expect(tasks(store.openOf('Work', () => false))).toHaveLength(2)
 })

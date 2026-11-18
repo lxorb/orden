@@ -1,35 +1,24 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { ROOT, walk } from './files'
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const APP = join(ROOT, 'apps/desktop')
 const CRATE = join(APP, 'src-tauri')
-
-function files(dir: string, keep: (path: string) => boolean): string[] {
-  const out: string[] = []
-  for (const name of readdirSync(dir)) {
-    if (name === 'node_modules' || name === 'target' || name === 'gen') continue
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) out.push(...files(path, keep))
-    else if (keep(path)) out.push(path)
-  }
-  return out
-}
 
 const read = (path: string) => readFileSync(path, 'utf8')
 
 const CODE = /\.(ts|svelte|rs|css|json|html|py)$/
 
 const source = (dir: string) =>
-  files(
+  walk(
     dir,
     (path) =>
       CODE.test(path) &&
       !path.endsWith('.test.ts') &&
       !/[\\/]locales[\\/]/.test(path) &&
       !/[\\/]src-tauri[\\/](linux|windows)[\\/]/.test(path),
+    ['node_modules', 'target', 'gen'],
   )
 
 const OFFERS =

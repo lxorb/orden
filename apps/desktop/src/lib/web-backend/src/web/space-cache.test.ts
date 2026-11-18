@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { FileRow } from './store'
 
 const disk = vi.hoisted(() => ({ files: new Map<string, FileRow>() }))
-
 const inOrder = () => [...disk.files.keys()].sort()
 
 vi.mock('./store', () => ({
@@ -102,6 +101,50 @@ describe('the space a search holds', () => {
     expect(space.warmth().read).toBe(3)
   })
 
+  test('says which note it is in before it searches it, cold or warm', async () => {
+    for (const fill of [false, true]) {
+      if (fill) await space.fill(ROOT)
+      const passed: string[] = []
+      await searchRows(
+        ROOT,
+        parseQuery('wind'),
+        [],
+        50,
+        () => undefined,
+        [],
+        (relative) => passed.push(relative),
+      )
+      expect(passed.sort()).toEqual(['Ink.md', 'Kestrel.md', 'Plan.md'])
+    }
+  })
+
+  test('a search while the warm pass runs leaves the whole space to it', async () => {
+    for (let at = 0; at < 600; at++) write(`n${String(at).padStart(3, '0')}.md`, 'wind')
+    const filling = space.fill(ROOT)
+    for (let tick = 0; tick < 20 && space.warmth().of === 0; tick++) await Promise.resolve()
+
+    const first: string[] = []
+    await searchRows(ROOT, parseQuery('wind'), [], 5, (batch) => {
+      for (const hit of batch.hits) first.push(hit.path)
+    })
+    await filling
+
+    expect(first).toHaveLength(5)
+    expect(space.warmth()).toMatchObject({ of: 603, warm: true })
+    let all = 0
+    await searchRows(ROOT, parseQuery('wind'), [], 1000, (batch) => (all += batch.hits.length))
+    expect(all).toBe(602)
+  })
+
+  test('a whole search beside the warm pass counts each note once', async () => {
+    for (let at = 0; at < 600; at++) write(`n${String(at).padStart(3, '0')}.md`, 'wind')
+    const filling = space.fill(ROOT)
+    await searchRows(ROOT, parseQuery('wind'), [], 1000, () => undefined)
+    await filling
+
+    expect(space.warmth()).toMatchObject({ of: 603, warm: true })
+  })
+
   test('a walk that stopped early leaves the space to the warm pass', async () => {
     const found: string[] = []
     await searchRows(ROOT, parseQuery('the'), [], 1, (batch) => {
@@ -114,6 +157,54 @@ describe('the space a search holds', () => {
     await space.fill(ROOT)
     expect(space.warmth()).toMatchObject({ of: 3, warm: true })
     expect((await searched('wind')).reads).toBe(0)
+  })
+
+  test('a walk that stops early while the warm pass reads leaves every note to later searches', async () => {
+    const { files } = await import('./store')
+    const reading = files.between
+    let reached = (): void => undefined
+    let resume = (): void => undefined
+    const asked = new Promise<void>((done) => (reached = done))
+    const held = new Promise<void>((done) => (resume = done))
+    files.between = async (from, to) => {
+      reached()
+      await held
+      return reading(from, to)
+    }
+
+    try {
+      const filling = space.fill(ROOT)
+      await asked
+      await space.each(ROOT, () => false)
+      resume()
+      await filling
+    } finally {
+      files.between = reading
+    }
+
+    expect(space.warmth()).toMatchObject({ of: 3, warm: true })
+    expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
+  })
+
+  test('two walks at once leave each note listed once', async () => {
+    const { files } = await import('./store')
+    const walking = files.each
+    files.each = async (visit) => {
+      for (const path of [...disk.files.keys()].sort()) {
+        await Promise.resolve()
+        const row = disk.files.get(path)
+        if (row) visit(row)
+      }
+    }
+
+    try {
+      await Promise.all([space.each(ROOT, () => true), space.each(ROOT, () => true)])
+    } finally {
+      files.each = walking
+    }
+
+    expect(space.warmth()).toMatchObject({ of: 3, warm: true })
+    expect((await searched('wind')).names).toEqual(['Kestrel.md', 'Plan.md'])
   })
 })
 

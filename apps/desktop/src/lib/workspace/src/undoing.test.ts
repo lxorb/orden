@@ -36,6 +36,7 @@ vi.mock('../../platform/src/tauri', () => ({
 }))
 
 const told: string[] = []
+const backs: (string | undefined)[] = []
 
 vi.mock('../../link-index/src/api', () => ({
   links: {
@@ -57,18 +58,12 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     undone,
     documentAt: () => null,
     entryAt: () => null,
-    fileMoved: (from: string, to: string) => {
-      told.push(`moved ${from} -> ${to}`)
-      return Promise.resolve()
-    },
-    fileGone: (path: string) => {
+    fileMoved: async (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
+    fileGone: async (path: string, _kind: string, back?: string) => {
       told.push(`gone ${path}`)
-      return Promise.resolve()
+      backs.push(back)
     },
-    fileCame: (path: string) => {
-      told.push(`back ${path}`)
-      return Promise.resolve()
-    },
+    fileCame: async (path: string) => void told.push(`back ${path}`),
     reload: (path: string) => void told.push(`reloaded ${path}`),
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     renameOnDisk: async (from: string, to: string) => {
@@ -83,9 +78,8 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
       told.push(`retargeted ${from} -> ${to}`)
       return Promise.resolve(1)
     },
-    loadTree: () => {
+    loadTree: async () => {
       kept.loaded += 1
-      return Promise.resolve()
     },
     persist: () => {
       kept.wrote += 1
@@ -100,6 +94,7 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
 beforeEach(() => {
   sent.length = 0
   told.length = 0
+  backs.length = 0
   refused.clear()
   disk.clear()
   restores.clear()
@@ -109,7 +104,6 @@ describe('an entry that goes back', () => {
   test('comes off the stack, and the rows and the strip are written again', async () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a' })
     await undoLastFileAction(ws)
-
     expect(sent).toEqual([
       { command: 'file_stamp', path: '/s/a.md', content: '' },
       { command: 'read_tree', path: '', content: '' },
@@ -124,7 +118,6 @@ describe('an entry that goes back', () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a' })
     ws.undone.drop()
     await undoLastFileAction(ws)
-
     expect(sent).toEqual([])
     expect(ws.loaded).toBe(0)
   })
@@ -135,7 +128,6 @@ describe('an entry that cannot go back', () => {
     refused.add('/s/a.md')
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a' })
     await undoLastFileAction(ws)
-
     expect(ws.undone.stack).toHaveLength(1)
     expect(ws.loaded).toBe(0)
     expect(told).toEqual([])
@@ -144,7 +136,6 @@ describe('an entry that cannot go back', () => {
   test('and a deletion with nothing kept says so rather than writing nothing', async () => {
     const ws = store({ kind: 'delete', path: '/s/paper.pdf', content: '' })
     await undoLastFileAction(ws)
-
     expect(sent).toEqual([])
     expect(ws.undone.stack).toHaveLength(1)
   })
@@ -153,7 +144,6 @@ describe('an entry that cannot go back', () => {
     refused.add('trash-1')
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a', trashId: 'trash-1' })
     await undoLastFileAction(ws)
-
     expect(sent.map((one) => one.command)).toEqual([
       'restore_trash',
       'file_stamp',
@@ -182,7 +172,6 @@ describe('a replacement put back', () => {
       ],
     })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([
       { command: 'write_note', path: '/s/a.md', content: NOTE.content },
       { command: 'write_note', path: '/s/b.md', content: NOTE.content },
@@ -201,7 +190,6 @@ describe('a replacement put back', () => {
       ],
     })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
     expect(ws.undone.last?.kind).toBe('replace')
   })
@@ -220,7 +208,6 @@ describe('an import taken back', () => {
       wrote: { '/s/a.md': wrote, '/s/b.md': wrote, '/s/c.md': wrote },
     })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'delete_note').map((one) => one.path)).toEqual([
       '/s/a.md',
       '/s/b.md',
@@ -240,7 +227,6 @@ describe('an import taken back', () => {
       wrote: { '/s/a.md': wrote, '/s/b.md': wrote },
     })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'delete_note').map((one) => one.path)).toEqual([
       '/s/a.md',
     ])
@@ -251,9 +237,9 @@ describe('an import taken back', () => {
   test('and sends what it cannot compare to the trash', async () => {
     const ws = store({ kind: 'import', paths: ['/s/paper.pdf'], wrote: {} })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'delete_note')).toEqual([])
     expect(told).toEqual(['binned /s/paper.pdf', 'gone /s/paper.pdf'])
+    expect(backs).toEqual(['t-/s/paper.pdf'])
   })
 })
 
@@ -267,7 +253,6 @@ describe('a copy taken back', () => {
       ],
     })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command.startsWith('delete'))).toEqual([])
     expect(told).toEqual([
       'binned /s/a copy.md',
@@ -275,13 +260,13 @@ describe('a copy taken back', () => {
       'binned folder /s/Trip copy',
       'gone /s/Trip copy',
     ])
+    expect(backs).toEqual(['t-/s/a copy.md', 't-/s/Trip copy'])
     expect(ws.undone.next?.kind).toBe('copy')
   })
 
   test('and one dropped from outside cannot be made again', async () => {
     const ws = store({ kind: 'copy', made: [{ path: '/s/map.png', folder: false }] })
     await undoLastFileAction(ws)
-
     expect(ws.undone.ahead).toEqual([])
   })
 })
@@ -293,20 +278,13 @@ describe('doing it again', () => {
     const does = {
       ...ws,
       undone: ws.undone,
-      move: (from: string, into: string) => {
+      move: async (from: string, into: string) => {
         asked.push(`move ${from} -> ${into}`)
         if (refuse) return Promise.reject(new Error('taken'))
         ws.undone.record({ kind: 'move', from, to: `${into}/x` })
-        return Promise.resolve()
       },
-      rename: (path: string, name: string) => {
-        asked.push(`rename ${path} -> ${name}`)
-        return Promise.resolve()
-      },
-      remove: (path: string) => {
-        asked.push(`remove ${path}`)
-        return Promise.resolve()
-      },
+      rename: async (path: string, name: string) => void asked.push(`rename ${path} -> ${name}`),
+      remove: async (path: string) => void asked.push(`remove ${path}`),
     }
     return { ws: does as unknown as PutsBack & import('./redoing').DoesAgain, asked }
   }
@@ -315,7 +293,6 @@ describe('doing it again', () => {
     const { ws, asked } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' })
     await undoLastFileAction(ws)
     await redoLastFileAction(ws)
-
     expect(asked).toEqual(['move /s/a.md -> /s/Work'])
     expect(ws.undone.last?.kind).toBe('move')
     expect(ws.undone.ahead).toEqual([])
@@ -327,7 +304,6 @@ describe('doing it again', () => {
     await undoLastFileAction(written.ws)
     await redoLastFileAction(written.ws)
     expect(written.asked).toEqual(['remove /s/old 2.md'])
-
     const trashed = again({ kind: 'delete', path: '/s/old.md', content: '', trashId: 't-1' })
     restores.set('t-1', '/s/old 2.md')
     await undoLastFileAction(trashed.ws)
@@ -339,11 +315,9 @@ describe('doing it again', () => {
     const renamed = again({ kind: 'rename', from: '/s/a.md', to: '/s/Plan.md' })
     await undoLastFileAction(renamed.ws)
     await redoLastFileAction(renamed.ws)
-
     const deleted = again({ kind: 'delete', path: '/s/old.md', content: 'kept words' })
     await undoLastFileAction(deleted.ws)
     await redoLastFileAction(deleted.ws)
-
     expect(renamed.asked).toEqual(['rename /s/a.md -> Plan.md'])
     expect(deleted.asked).toEqual(['remove /s/old.md'])
     expect(deleted.ws.undone.canRedo).toBe(false)
@@ -352,16 +326,13 @@ describe('doing it again', () => {
   test('keeps what is further ahead when it does the nearer one again', async () => {
     const { ws, asked } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' })
     ws.undone.record({ kind: 'move', from: '/s/b.md', to: '/s/Work/b.md' })
-
     await undoLastFileAction(ws)
     await undoLastFileAction(ws)
     expect(ws.undone.ahead.map((one) => one.kind === 'move' && one.from)).toEqual([
       '/s/b.md',
       '/s/a.md',
     ])
-
     await redoLastFileAction(ws)
-
     expect(asked).toEqual(['move /s/a.md -> /s/Work'])
     expect(ws.undone.next).toEqual({ kind: 'move', from: '/s/b.md', to: '/s/Work/b.md' })
   })
@@ -369,7 +340,6 @@ describe('doing it again', () => {
   test('does nothing at all when nothing was taken back', async () => {
     const { ws, asked } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' })
     await redoLastFileAction(ws)
-
     expect(asked).toEqual([])
     expect(ws.undone.last?.kind).toBe('move')
   })
@@ -378,7 +348,6 @@ describe('doing it again', () => {
     const { ws } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' }, true)
     await undoLastFileAction(ws)
     await redoLastFileAction(ws)
-
     expect(ws.undone.next?.kind).toBe('move')
   })
 
@@ -392,7 +361,6 @@ describe('doing it again', () => {
       intoAfter: '',
     })
     await undoLastFileAction(ws)
-
     expect(ws.undone.ahead).toEqual([])
     expect(ws.undone.canRedo).toBe(false)
   })
@@ -402,15 +370,31 @@ describe('a name put back', () => {
   test('rewrites the links that followed it, and only when they were rewritten', async () => {
     const ws = store({ kind: 'rename', from: '/s/a.md', to: '/s/b.md', rewrote: true })
     await undoLastFileAction(ws)
-
     expect(sent).toEqual([{ command: 'rename_note', path: '', content: '' }])
     expect(told).toEqual(['retargeted /s/b.md -> /s/a.md', 'moved /s/b.md -> /s/a.md'])
+  })
+
+  test('puts back the title the rename wrote at the top of the note', async () => {
+    disk.set('/s/Plan.md', '# Road\n\nwords\n')
+    const ws = store({ kind: 'rename', from: '/s/Plan.md', to: '/s/Road.md', retitled: true })
+    await undoLastFileAction(ws)
+    expect(sent).toContainEqual({
+      command: 'write_note',
+      path: '/s/Plan.md',
+      content: '# Plan\n\nwords\n',
+    })
+  })
+
+  test('and leaves a title written since the rename as it is', async () => {
+    disk.set('/s/Plan.md', '# Something else\n')
+    const ws = store({ kind: 'rename', from: '/s/Plan.md', to: '/s/Road.md', retitled: true })
+    await undoLastFileAction(ws)
+    expect(sent.some((one) => one.command === 'write_note')).toBe(false)
   })
 
   test('and leaves the links alone where the rename did not touch them', async () => {
     const ws = store({ kind: 'move', from: '/s/a.md', to: '/s/f/a.md' })
     await undoLastFileAction(ws)
-
     expect(told).toEqual(['moved /s/f/a.md -> /s/a.md'])
   })
 })
@@ -438,7 +422,6 @@ describe('a merge and a carve put back', () => {
     disk.set('/s/b.md', MERGE.intoAfter)
     const ws = store({ ...MERGE })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
       '/s/b.md',
       '/s/a.md',
@@ -451,11 +434,43 @@ describe('a merge and a carve put back', () => {
     ])
   })
 
+  test('a merge puts back the very words it relinked, so a link that was always to the note it went into stays', async () => {
+    const relinks = [
+      { path: '/s/c.md', before: 'see [[a]] and [[b]]', after: 'see [[b]] and [[b]]' },
+    ]
+    disk.set('/s/b.md', MERGE.intoAfter)
+    disk.set('/s/c.md', 'see [[b]] and [[b]]')
+    const ws = store({ ...MERGE, relinked: ['/s/c.md'], relinks })
+    await undoLastFileAction(ws)
+    const written = sent.filter((one) => one.command === 'write_note')
+    expect(written.map((one) => [one.path, one.content])).toContainEqual([
+      '/s/c.md',
+      'see [[a]] and [[b]]',
+    ])
+    expect(told.filter((one) => one.startsWith('retargeted'))).toEqual([])
+  })
+
+  test('and points the links back in a relinked note written in since', async () => {
+    const relinks = [{ path: '/s/c.md', before: 'see [[a]]', after: 'see [[b]]' }]
+    disk.set('/s/b.md', MERGE.intoAfter)
+    disk.set('/s/c.md', 'see [[b]], typed since')
+    const ws = store({ ...MERGE, relinked: ['/s/c.md'], relinks })
+    await undoLastFileAction(ws)
+    expect(sent.filter((one) => one.path === '/s/c.md' && one.command === 'write_note')).toEqual([])
+    expect(told).toContain('retargeted /s/b.md -> /s/a.md')
+  })
+
+  test('a merge put back hands the note back under the id it left with, so what it kept returns', async () => {
+    disk.set('/s/b.md', MERGE.intoAfter)
+    const ws = store({ ...MERGE, back: 'merged-1' })
+    await undoLastFileAction(ws)
+    expect(told).toContain('back /s/a.md')
+  })
+
   test('and leaves a merge alone whose note has been written in since', async () => {
     disk.set('/s/b.md', `${MERGE.intoAfter}\n\ntyped since`)
     const ws = store({ ...MERGE })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
     expect(ws.undone.last?.kind).toBe('merge')
   })
@@ -465,7 +480,6 @@ describe('a merge and a carve put back', () => {
     disk.set('/s/a.md', '# a, arrived since')
     const ws = store({ ...MERGE })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
       '/s/b.md',
       '/s/a 2.md',
@@ -478,7 +492,6 @@ describe('a merge and a carve put back', () => {
     disk.set('/s/b.md', SPLIT.createdContent)
     const ws = store({ ...SPLIT })
     await undoLastFileAction(ws)
-
     expect(
       sent
         .filter((one) => one.command === 'write_note' || one.command === 'delete_note')
@@ -492,7 +505,6 @@ describe('a merge and a carve put back', () => {
     disk.set('/s/b.md', SPLIT.createdContent)
     const ws = store({ ...SPLIT })
     await undoLastFileAction(ws)
-
     expect(
       sent.filter((one) => one.command === 'write_note' || one.command === 'delete_note'),
     ).toEqual([])
@@ -504,7 +516,6 @@ describe('a merge and a carve put back', () => {
     disk.set('/s/b.md', `${SPLIT.createdContent}typed since\n`)
     const ws = store({ ...SPLIT })
     await undoLastFileAction(ws)
-
     expect(sent.filter((one) => one.command === 'delete_note')).toEqual([])
     expect(told).toEqual(['saved /s/a.md', 'reloaded /s/a.md'])
   })
@@ -522,7 +533,6 @@ describe('a merge and a carve put back', () => {
       createdContent: '',
     })
     await undoLastFileAction(ws)
-
     expect(ws.undone.stack).toEqual([])
     expect(told).toEqual(['saved /s/a.md', 'gone /s/b.md', 'reloaded /s/a.md'])
   })
@@ -534,10 +544,7 @@ describe('an archiving put back', () => {
     const opened: string[] = []
     const ws = Object.assign(store(action), {
       archive: { change: (...args: unknown[]) => void changes.push(args) },
-      openEntry: (path: string) => {
-        opened.push(path)
-        return Promise.resolve()
-      },
+      openEntry: async (path: string) => void opened.push(path),
     }) as unknown as PutsBack
 
     return { ws, changes, opened }
@@ -552,7 +559,6 @@ describe('an archiving put back', () => {
       closed: ['/s/Plan.md'],
     })
     await undoLastFileAction(ws)
-
     expect(changes).toEqual([['/s', [], ['Plan.md']]])
     expect(opened).toEqual(['/s/Plan.md'])
     expect(ws.undone.stack).toEqual([])
@@ -568,7 +574,6 @@ describe('an archiving put back', () => {
       closed: [],
     })
     await undoLastFileAction(ws)
-
     expect(changes).toEqual([['/s', ['Old'], ['Old/Notes.md']]])
     expect(ws.undone.ahead).toHaveLength(1)
   })
@@ -577,16 +582,13 @@ describe('an archiving put back', () => {
 describe('a gesture of several', () => {
   test('is recorded as one step, and one that recorded one is that one', async () => {
     const undone = new FileActions()
-    await undone.batch(() => {
+    await undone.batch(async () => {
       undone.record({ kind: 'delete', path: '/s/a.md', content: '# a' })
       undone.record({ kind: 'delete', path: '/s/b.md', content: '# b' })
-      return Promise.resolve()
     })
-    await undone.batch(() => {
+    await undone.batch(async () => {
       undone.record({ kind: 'move', from: '/s/c.md', to: '/s/W/c.md' })
-      return Promise.resolve()
     })
-
     expect(undone.stack.map((one) => one.kind)).toEqual(['many', 'move'])
     expect(undone.label).toBe('Undo moving c')
     undone.stack = undone.stack.slice(0, 1)
@@ -595,17 +597,14 @@ describe('a gesture of several', () => {
 
   test('is said as its first step where it mixed kinds, and keeps a trash id', async () => {
     const undone = new FileActions()
-    await undone.batch(() => {
+    await undone.batch(async () => {
       undone.record({ kind: 'delete', path: '/s/A/b.md', content: '# b' })
       undone.trashed('/s/A/b.md', 'id-b')
       undone.record({ kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true })
-      return Promise.resolve()
     })
-
     expect(undone.label).toBe('Undo deleting b')
     const [step] = undone.stack
     expect(step?.kind === 'many' && step.steps[0]).toMatchObject({ trashId: 'id-b' })
-
     undone.forget('id-b')
     expect(undone.stack).toEqual([
       { kind: 'many', steps: [{ kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true }] },
@@ -621,7 +620,6 @@ describe('a gesture of several', () => {
       ],
     })
     await undoLastFileAction(ws)
-
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'rename_note ',
       'file_stamp /s/A/b.md',
@@ -643,7 +641,6 @@ describe('a gesture of several', () => {
       ],
     })
     await undoLastFileAction(ws)
-
     expect(ws.undone.stack).toEqual([
       { kind: 'many', steps: [{ kind: 'delete', path: '/s/A/b.md', content: '# b' }] },
     ])
@@ -661,22 +658,18 @@ describe('a gesture of several', () => {
     })
     const asked: string[] = []
     const does = Object.assign(ws, {
-      move: (from: string, into: string) => {
+      move: async (from: string, into: string) => {
         asked.push(`move ${from} -> ${into}`)
         ws.undone.record({ kind: 'move', from, to: `${into}/c.md` })
-        return Promise.resolve()
       },
-      remove: (path: string, folder: boolean) => {
+      remove: async (path: string, folder: boolean) => {
         asked.push(`remove ${path}${folder ? ' folder' : ''}`)
         ws.undone.record({ kind: 'delete', path, content: '' })
-        return Promise.resolve()
       },
       rename: () => Promise.resolve(),
     }) as unknown as PutsBack & import('./redoing').DoesAgain
-
     await undoLastFileAction(does)
     await redoLastFileAction(does)
-
     expect(asked).toEqual(['remove /s/A/b.md', 'move /s/c.md -> /s/W'])
     expect(does.undone.stack.map((one) => one.kind)).toEqual(['many'])
     expect(does.undone.ahead).toEqual([])
@@ -691,7 +684,6 @@ describe('something made, taken back', () => {
       rename: () => Promise.resolve(),
       remove: () => Promise.resolve(),
     }) as unknown as PutsBack & import('./redoing').DoesAgain
-
     await undoLastFileAction(does)
     expect(told).toEqual(['binned /s/New.md', 'gone /s/New.md'])
     expect(does.undone.next).toEqual({
@@ -700,7 +692,6 @@ describe('something made, taken back', () => {
       content: '# new',
       trashId: 't-/s/New.md',
     })
-
     told.length = 0
     await redoLastFileAction(does)
     expect(sent.at(-1)).toMatchObject({ command: 'restore_trash' })
@@ -711,7 +702,6 @@ describe('something made, taken back', () => {
   test('and a folder a nesting made goes with the note that went into it', async () => {
     const ws = store({ kind: 'move', from: '/s/A.md', to: '/s/A/A.md', nests: true })
     await undoLastFileAction(ws)
-
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'rename_note ',
       'remove_empty_folder /s/A',
@@ -730,7 +720,6 @@ describe('a folder deleted', () => {
       folders: ['/s/A/B'],
     })
     await undoLastFileAction(ws)
-
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'create_folder /s/A',
       'create_folder /s/A/B',
@@ -744,7 +733,6 @@ describe('a folder deleted', () => {
   test('signed out comes back out of the trash whole', async () => {
     const ws = store({ kind: 'delete', path: '/s/A', content: '', folder: true, trashId: 'f1' })
     await undoLastFileAction(ws)
-
     expect(sent).toEqual([{ command: 'restore_trash', path: '', content: '' }])
     expect(told.at(-1)).toBe('back /s/A')
   })
@@ -766,49 +754,41 @@ describe('what the account holds of a folder', () => {
 
   test('one whose every file is held is held', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/Inner', [at('/s/Work/Inner/a.md')])]))
-
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(true)
   })
 
   test('one holding a picture is not, however well the account holds it', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/cat.png')]))
-
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
   })
 
   test('nor one holding a paper deeper down', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/Inner', [at('/s/Work/Inner/paper.pdf')])]))
-
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
   })
 
   test('clutter sync leaves alone does not count against it', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/Thumbs.db')]))
-
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(true)
   })
 
   test('one holding a folder the listing did not read into is not', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/linked', [], { unlisted: true })]))
-
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
   })
 
   test('nor one the listing could not read into itself', async () => {
     trees.set('/s/Work', at('/s/Work', [], { unlisted: true }))
-
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
   })
 
   test('asks after each file with when it was written and one allowance for all', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/b.md')]))
     const asked: { path: string; modified?: number; budget?: object }[] = []
-
     await accountHoldsAll('/s/Work', (path, how) => {
       asked.push({ path, ...how })
       return Promise.resolve(true)
     })
-
     expect(asked.map((one) => [one.path, one.modified])).toEqual([
       ['/s/Work/a.md', 0],
       ['/s/Work/b.md', 0],

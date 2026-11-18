@@ -2,22 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { default: Palette } = await (await import('../../src/lib/palette/src/api')).loadPalette()
 await (await import('@orden/contracts')).registered()

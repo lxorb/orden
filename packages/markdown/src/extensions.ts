@@ -81,13 +81,16 @@ export const highlight: MarkedExtension = remembering({
 })
 
 export const scripts: MarkedExtension = remembering({
+  tokenizer: {
+    del: (src: string) => (src.startsWith('~~') ? false : undefined),
+  },
   extensions: [
     {
       name: 'subscript',
       level: 'inline',
       start: (src: string) => src.indexOf('~'),
       tokenizer(src: string) {
-        const inner = /^~(?!~)((?:[^~\s\\]|\\[\s\S])+)~/.exec(src)
+        const inner = /^~(?!~)((?:\\[\s\S]|[^~\s\\])+)~/.exec(src)
         if (!inner?.[1]) return undefined
         return {
           type: 'subscript',
@@ -105,7 +108,7 @@ export const scripts: MarkedExtension = remembering({
       level: 'inline',
       start: (src: string) => src.indexOf('^'),
       tokenizer(src: string) {
-        const inner = /^\^((?:[^^\s\\]|\\[\s\S])+)\^/.exec(src)
+        const inner = /^\^(?!\^)((?:\\[\s\S]|[^^\s\\])+)\^/.exec(src)
         if (!inner?.[1]) return undefined
         return {
           type: 'superscript',
@@ -116,6 +119,21 @@ export const scripts: MarkedExtension = remembering({
       },
       renderer(token: Tokens.Generic) {
         return `<sup>${this.parser.parseInline(token.tokens ?? [])}</sup>`
+      },
+    },
+    {
+      name: 'taggedScript',
+      level: 'inline',
+      start: (src: string) => src.search(/<su[bp]>/i),
+      tokenizer(src: string) {
+        const inner = /^<(su[bp])>([^<>\n]+)<\/\1>/i.exec(src)
+        if (!inner?.[1] || !inner[2]) return undefined
+        return {
+          type: inner[1].toLowerCase() === 'sup' ? 'superscript' : 'subscript',
+          raw: inner[0],
+          text: inner[2],
+          tokens: this.lexer.inlineTokens(inner[2]),
+        }
       },
     },
   ],
@@ -238,7 +256,6 @@ export const definitionLists: MarkedExtension = {
       ...definitionList,
       renderer(token: Tokens.Generic) {
         const items = token.items as { term: Tokens.Generic[]; details: Tokens.Generic[][] }[]
-
         const body = items
           .map((item) => {
             const term = `<dt>${this.parser.parseInline(item.term)}</dt>`
@@ -307,9 +324,7 @@ export function collectAbbreviations(source: string): Map<string, string> {
 }
 
 const FOOTNOTE_DEF = /\[\^[^\]\s]+\]:\s*\S/y
-
 const REF_STOPS = new WeakMap<Token[], number>()
-
 const A_REF_STOP = /[\]\s]/g
 
 function footnoteRefEnd(src: string, tokens: Token[]): number {

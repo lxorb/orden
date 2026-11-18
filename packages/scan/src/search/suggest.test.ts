@@ -88,6 +88,20 @@ describe('choosing one', () => {
     })
   })
 
+  test('quotes and escapes a value the query would read another way', () => {
+    for (const [value, written] of [
+      ['Archive(2024)/', 'path:"Archive(2024)/"'],
+      ['He said "hi"', 'path:"He said \\"hi\\""'],
+      ['a\\b/', 'path:"a\\\\b/"'],
+    ] as const) {
+      const source = 'plan path:Arc'
+      const found = completing(source, source.length)
+      const made = found && chosen(source, found, value)
+      expect(made?.text).toBe(`plan ${written}`)
+      expect(JSON.stringify(parseQuery(made?.text ?? ''))).toContain(JSON.stringify(value))
+    }
+  })
+
   test('closes a quote the reader opened', () => {
     const source = 'path:"my'
     const found = completing(source, source.length)

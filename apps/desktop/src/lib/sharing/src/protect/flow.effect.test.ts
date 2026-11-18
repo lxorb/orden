@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { settle } from '../../../../../test/effects/settle'
 
 const owner = vi.hoisted(() => ({ says: 'yes' }))
 
@@ -37,13 +38,6 @@ afterEach(() => {
   workspace.protection.setPassword(null)
 })
 
-async function settle() {
-  for (let i = 0; i < 20; i++) {
-    await new Promise((done) => setTimeout(done, 10))
-    flushSync()
-  }
-}
-
 function press(label: string) {
   const button = [...document.querySelectorAll('button')].find(
     (one) => one.textContent.trim() === label,
@@ -74,9 +68,7 @@ describe('protecting from the menu', () => {
     type(1, 'tulip ladder')
     flushSync()
     press('Protect')
-    await settle()
-    await new Promise((done) => setTimeout(done, 1500))
-    expect(workspace.protection.own(ROOT, NOTE)?.way).toBe('password')
+    await vi.waitFor(() => expect(workspace.protection.own(ROOT, NOTE)?.way).toBe('password'))
   })
 
   test('with the device protects once it says yes', async () => {

@@ -31,23 +31,23 @@ export const noteDrops: Extension = EditorView.domEventHandlers({
     const land = later(view)
     view.focus()
 
-    void noteLinksCode().then(({ noteLinks }) => {
-      land((state) => {
+    void noteLinksCode().then(({ noteLinks }) =>
+      land((state, placed) => {
         if (state.readOnly) return null
 
         const text = noteLinks(state.facet(noteIndex), paths, state.facet(linkWriter))
-        const from = Math.min(at, state.doc.length)
+        const from = placed(at)
+
         return {
           changes: { from, insert: text },
           selection: EditorSelection.cursor(from + text.length),
           userEvent: 'input.drop',
         }
-      })
-    })
+      }),
+    )
     return true
   },
 })
 
-function carried(event: DragEvent, view: EditorView): readonly string[] {
-  return view.state.facet(noteCarrier)(event.dataTransfer)
-}
+const carried = (event: DragEvent, view: EditorView): readonly string[] =>
+  view.state.facet(noteCarrier)(event.dataTransfer)

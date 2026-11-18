@@ -1,6 +1,5 @@
 import type { Member, Who } from '@orden/chats'
-import type { Face } from '../../../accounts/src/api'
-import { people } from '../../../accounts/src/api'
+import { type Face, people } from '../../../accounts/src/api'
 
 export function accountOf(who: Who): string | null {
   return who.startsWith('user:') ? who.slice(5) : null
@@ -16,9 +15,5 @@ export function nameOf(who: Who, members: readonly Member[], space: string | nul
 export function faceOf(who: Who, members: readonly Member[], space: string | null): Face {
   const id = accountOf(who)
   const person = id === null ? undefined : people.of(id)
-  return {
-    name: nameOf(who, members, space),
-    avatar: person?.avatar ?? null,
-    key: id ?? who,
-  }
+  return { name: nameOf(who, members, space), avatar: person?.avatar ?? null, key: id ?? who }
 }

@@ -130,13 +130,12 @@ describe('who writes to storage', () => {
   })
 })
 
-function readsItself(): string[] {
-  return sourceFiles(SOURCE)
+const readsItself = (): string[] =>
+  sourceFiles(SOURCE)
     .filter((path) => path !== HERE)
     .filter((path) => readFileSync(path, 'utf8').includes('localStorage.getItem('))
     .map((path) => path.slice(SOURCE.length).replace(/\\/g, '/'))
     .sort()
-}
 
 describe('who reads storage', () => {
   test('is this module, and the site script for the reason above', () => {

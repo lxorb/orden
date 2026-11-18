@@ -27,12 +27,6 @@ Element.prototype.animate = () =>
     },
   }) as unknown as Animation
 
-globalThis.ResizeObserver = class {
-  observe = () => undefined
-  unobserve = () => undefined
-  disconnect = () => undefined
-}
-
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { asking, QUIET } = await import('../../src/lib/sync-client/src/asking.svelte')

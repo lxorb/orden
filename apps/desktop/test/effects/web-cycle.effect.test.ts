@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { elapse } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
@@ -13,26 +14,12 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
+vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => undefined) }))
+
 vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/windows/src/api')>()),
   hearHere: () => Promise.resolve(() => undefined),
 }))
-
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
 
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const rect = this.isConnected
@@ -93,7 +80,7 @@ afterEach(() => {
 })
 
 async function frames(): Promise<void> {
-  await vi.advanceTimersByTimeAsync(300)
+  await elapse(300)
 }
 
 async function tenTabs(): Promise<string[]> {
@@ -148,7 +135,7 @@ test('and once more after a break long enough to freeze them: woken, not built',
   await frames()
   await cycle(10)
 
-  await vi.advanceTimersByTimeAsync(10 * 60_000)
+  await elapse(10 * 60_000)
   const frozen = asked.filter((one) => one.command === 'web_pause' && one.args.paused === true)
   expect(frozen).toHaveLength(9)
 

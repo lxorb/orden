@@ -8,6 +8,7 @@
   } from '@orden/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@orden/markdown/highlights'
   import type { IconNode } from 'lucide'
+  import PenLine from 'lucide/dist/esm/icons/pen-line.mjs'
   import { keepFocus, roving, viewport } from '../../ui-kit/src/api'
   import { tick } from 'svelte'
   import { Glyph } from '../../ui-controls/src/api'
@@ -122,6 +123,7 @@
   }
 
   const HIGHLIGHT = 'format.highlight'
+  const HANDWRITING = 'app.handwriting'
 
   const held = $derived(toolbar.ids)
 
@@ -197,6 +199,9 @@
         {@render dot(modes.highlight, false, () => void showColours(true))}
       {/if}
     {/each}
+    {#if docked && !__EVEN_PLUGIN__ && !held.includes(HANDWRITING)}
+      {@render press(nameFor(HANDWRITING), '', () => act(HANDWRITING), PenLine)}
+    {/if}
   {/if}
 {/snippet}
 

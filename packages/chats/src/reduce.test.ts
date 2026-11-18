@@ -8,14 +8,13 @@ const LUCILE: Who = 'user:lucile'
 const MIA: Who = 'user:mia'
 const PAUL: Who = 'user:paul'
 
-function log(...events: [Who, Event][]): Logged[] {
-  return events.map(([author, event], index) => ({
+const log = (...events: [Who, Event][]): Logged[] =>
+  events.map(([author, event], index) => ({
     ...event,
     seq: index + 1,
     at: (index + 1) * 1000,
     author,
   }))
-}
 
 function stateOf(events: readonly Logged[]): ChatState {
   const state = chatState()
@@ -430,13 +429,11 @@ const shuffled = fc
     ),
   )
 
-function comparable(state: ChatState) {
-  return {
-    messages: [...state.messages.values()].sort((a, b) => a.id.localeCompare(b.id)),
-    meta: state.meta,
-    seq: state.seq,
-  }
-}
+const comparable = (state: ChatState) => ({
+  messages: [...state.messages.values()].sort((a, b) => a.id.localeCompare(b.id)),
+  meta: state.meta,
+  seq: state.seq,
+})
 
 describe('order', () => {
   it('never changes the state the same placed events make', () => {

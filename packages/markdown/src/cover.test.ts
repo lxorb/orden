@@ -12,35 +12,23 @@ import { renderMarkdown } from './index'
 const withCover = (rows: string) => `---\n${rows}\n---\n\n# Head\n\nWords.\n`
 
 describe('the cover a note names', () => {
-  test('is nothing at all for a note that names none', () => {
+  test('is nothing at all for a note that names none; is the picture the front matter says, taken from the middle; reads a wikilink as the file it names', () => {
     expect(coverOf('# Head\n\nWords.\n')).toBeNull()
     expect(coverOf(withCover('title: Note'))).toBeNull()
-  })
-
-  test('is the picture the front matter says, taken from the middle', () => {
     expect(coverOf(withCover('cover: assets/wide.jpg'))).toEqual({
       src: 'assets/wide.jpg',
       position: COVER_MIDDLE,
     })
-  })
-
-  test('reads a wikilink as the file it names', () => {
     expect(coverOf(withCover('cover: "[[wide.jpg]]"'))?.src).toBe('wide.jpg')
     expect(coverOf(withCover('cover: "![[wide.jpg]]"'))?.src).toBe('wide.jpg')
     expect(coverOf(withCover('cover: "[[wide.jpg|400]]"'))?.src).toBe('wide.jpg')
   })
 
-  test('keeps an address as the address it is', () => {
+  test('keeps an address as the address it is; takes the band from where the second key says; is nothing for a key with nothing under it', () => {
     expect(coverOf(withCover('cover: https://orden.so/wide.jpg'))?.src).toBe(
       'https://orden.so/wide.jpg',
     )
-  })
-
-  test('takes the band from where the second key says', () => {
     expect(coverOf(withCover('cover: wide.jpg\ncover-position: 20'))?.position).toBe(20)
-  })
-
-  test('is nothing for a key with nothing under it', () => {
     expect(coverOf(withCover('cover:'))).toBeNull()
   })
 
@@ -49,33 +37,21 @@ describe('the cover a note names', () => {
   })
 })
 
-describe('where the band is taken from', () => {
-  test('is the middle for anything a number cannot be made of', () => {
-    for (const said of [null, undefined, '', 'middle', 'NaN']) {
-      expect(coverPosition(said), String(said)).toBe(COVER_MIDDLE)
-    }
-  })
-
-  test('stays inside the picture', () => {
-    expect(coverPosition('-40')).toBe(0)
-    expect(coverPosition('180')).toBe(100)
-  })
-
-  test('is a whole number, because a pointer wrote it', () => {
-    expect(coverPosition('43.7183')).toBe(44)
-  })
+test('where the band is taken from: is the middle for anything a number cannot be made of; stays inside the picture; is a whole number, because a pointer wrote it', () => {
+  for (const said of [null, undefined, '', 'middle', 'NaN']) {
+    expect(coverPosition(said), String(said)).toBe(COVER_MIDDLE)
+  }
+  expect(coverPosition('-40')).toBe(0)
+  expect(coverPosition('180')).toBe(100)
+  expect(coverPosition('43.7183')).toBe(44)
 })
 
 describe('the banner every surface draws', () => {
-  test('is one element carrying the picture and where its band sits', () => {
+  test('is one element carrying the picture and where its band sits; is nothing for no cover, and nothing for an address that is not a picture', () => {
     const html = coverFigure({ src: 'assets/wide.jpg', position: 20 })
-
     expect(html).toContain('class="orden-cover"')
     expect(html).toContain('src="assets/wide.jpg"')
     expect(html).toContain('object-position: 50% 20%')
-  })
-
-  test('is nothing for no cover, and nothing for an address that is not a picture', () => {
     expect(coverFigure(null)).toBe('')
     expect(coverFigure({ src: 'javascript:alert(1)', position: 50 })).toBe('')
   })
@@ -89,26 +65,18 @@ describe('the banner every surface draws', () => {
 describe('a rendered note', () => {
   const source = withCover('title: Note\ncover: assets/wide.jpg\ncover-position: 30')
 
-  test('draws the banner where the caller asked for one', () => {
+  test('draws the banner where the caller asked for one; draws none where the caller did not ask', () => {
     const html = renderMarkdown(source, { cover: true })
-
     expect(html).toContain('class="orden-cover"')
     expect(html.indexOf('orden-cover')).toBeLessThan(html.indexOf('<h1'))
     expect(html).toContain('object-position: 50% 30%')
-  })
-
-  test('draws none where the caller did not ask', () => {
     expect(renderMarkdown(source)).not.toContain('orden-cover')
   })
 
-  test('puts the banner above the properties, which are above the note', () => {
+  test('puts the banner above the properties, which are above the note; leaves a note with no cover exactly as it was', () => {
     const html = renderMarkdown(source, { cover: true, properties: 'properties' })
-
     expect(html.indexOf('orden-cover')).toBeLessThan(html.indexOf('class="property'))
     expect(html.indexOf('class="property')).toBeLessThan(html.indexOf('<h1'))
-  })
-
-  test('leaves a note with no cover exactly as it was', () => {
     const plain = '# Head\n\nWords.\n'
     expect(renderMarkdown(plain, { cover: true })).toBe(renderMarkdown(plain))
   })

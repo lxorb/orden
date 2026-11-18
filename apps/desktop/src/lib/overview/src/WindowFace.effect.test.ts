@@ -1,14 +1,12 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { workspace } = await import('../../workspace/src/api')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { unlocks } = await import('../../protect/src/unlocked.svelte')
 const WindowFace = (await import('./WindowFace.svelte')).default
-
 const ROOT = '/space'
 const PATH = `${ROOT}/Diary.md`
-
 let target: HTMLElement | undefined
 let shown: ReturnType<typeof mount> | undefined
 
@@ -17,13 +15,6 @@ afterEach(() => {
   target?.remove()
   workspace.protection.set(ROOT, PATH, null)
 })
-
-async function until(done: () => boolean) {
-  for (let waited = 0; !done() && waited < 10_000; waited += 20) {
-    await new Promise((later) => setTimeout(later, 20))
-    flushSync()
-  }
-}
 
 async function face(drawn: (shown: HTMLElement) => boolean): Promise<HTMLElement> {
   const note = new NoteDoc(
@@ -42,7 +33,13 @@ async function face(drawn: (shown: HTMLElement) => boolean): Promise<HTMLElement
   shown = mount(WindowFace, { target, props: { tab, face: null, width: 400, height: 300 } })
   flushSync()
   const shownIn = target
-  await until(() => drawn(shownIn))
+  await vi.waitFor(
+    () => {
+      flushSync()
+      expect(drawn(shownIn)).toBe(true)
+    },
+    { timeout: 10_000, interval: 20 },
+  )
   return shownIn
 }
 

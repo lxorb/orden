@@ -31,7 +31,6 @@ import {
 } from './notes'
 
 const MOST_EMBEDDED = 40_000
-
 const EMBED_MAX = 512
 
 const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter|HorizontalRule|FencedCode|BlockMath)$/
@@ -212,9 +211,8 @@ export function embedWidget(
   if (kind === 'base' && index.mountBase)
     return new BaseWidget({ target: link.target, view: link.heading }, index)
 
-  if (kind === 'pdf' || kind === 'canvas') {
+  if (kind === 'pdf' || kind === 'canvas')
     return new EmbedFileWidget(link, kind, resolveFile(index, link.target, link.kind))
-  }
 
   const path = link.target ? (resolveLink(index, link, link.kind)?.path ?? null) : index.path
   return new EmbedWidget(link, path, index)

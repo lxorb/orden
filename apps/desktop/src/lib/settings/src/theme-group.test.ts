@@ -72,9 +72,21 @@ describe('the Theme group in Appearance', () => {
     expect(existsSync(join(TAURI, 'browser_themes.rs'))).toBe(false)
     expect(places().filter((one) => one.label === 'Import')).toEqual([])
     const gone = /browser_themes|BrowserTheme|wearFirefoxTheme|userChrome|statictheme.*Theme/
-    for (const path of [...sources(LIB), ...sources(TAURI)]) {
+    for (const path of [...sources(LIB), ...sources(TAURI), ...sources(join(TAURI, '../crates'))]) {
       if (path === import.meta.filename) continue
       expect(readFileSync(path, 'utf8'), path).not.toMatch(gone)
     }
   })
+})
+
+test('every field of a theme not worn reads as its starting value on a fresh profile', async () => {
+  await import('../../theme-ports')
+  const fields = await (await import('./appearance-pane')).themeDeclarations()
+  expect(
+    fields.filter((one) => one.kind === 'switch' && one.initial === true).length,
+  ).toBeGreaterThan(0)
+  for (const one of fields) {
+    if (!('initial' in one) || one.initial === undefined) continue
+    expect([one.key, one.get()]).toEqual([one.key, one.initial])
+  }
 })

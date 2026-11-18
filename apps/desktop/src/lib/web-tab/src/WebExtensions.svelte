@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Glyph from './Glyph.svelte'
   import { cubicOut } from 'svelte/easing'
   import Pin from 'lucide/dist/esm/icons/pin.mjs'
   import PinOff from 'lucide/dist/esm/icons/pin-off.mjs'
@@ -58,11 +59,7 @@
             {#if one.picture}
               <img src={one.picture} alt="" draggable="false" />
             {:else}
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                {#each Puzzle as [tag, attrs], index (index)}
-                  <svelte:element this={tag} {...attrs} />
-                {/each}
-              </svg>
+              <Glyph icon={Puzzle} />
             {/if}
             <span class="words">{one.name}</span>
           </button>
@@ -75,11 +72,7 @@
               aria-pressed={one.pinned}
               onclick={() => void extensions.pin(one.id, !one.pinned)}
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                {#each one.pinned ? Pin : PinOff as [tag, attrs], index (index)}
-                  <svelte:element this={tag} {...attrs} />
-                {/each}
-              </svg>
+              <Glyph icon={one.pinned ? Pin : PinOff} />
             </button>
           {/if}
         </li>
@@ -114,11 +107,7 @@
       settingsWindow().show('general')
     }}
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each Settings as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
+    <Glyph icon={Settings} />
     <span class="words">Manage extensions</span>
   </button>
 </div>

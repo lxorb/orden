@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 
@@ -47,8 +45,6 @@ async () => {
 SPREAD_DATES = """
 async () => {
   const day = 24 * 60 * 60 * 1000
-  // No version asked for: the page's own store decides which it is on, and
-  // asking for an older one is an error rather than a database.
   const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
@@ -136,8 +132,6 @@ async ({ steps }) => {
   send('pointerdown', from.x, from.y, 1)
   await nextFrame()
 
-  // Round and back, so the view ends where it began and the picture at the end of
-  // one pan is the picture at the start of the next.
   for (let step = 0; step < steps; step++) {
     const turn = (step / steps) * Math.PI * 2
     send('pointermove', from.x + Math.sin(turn) * 180, from.y + (1 - Math.cos(turn)) * 90, 1)
@@ -148,7 +142,6 @@ async ({ steps }) => {
   watching = false
   await nextFrame()
 
-  // The first two are the frames before the drag began.
   const kept = frames.slice(2).filter((one) => one > 0)
   kept.sort((one, other) => one - other)
   return {
@@ -175,7 +168,6 @@ async ({ ratio, width, height }) => {
   const context = canvas.getContext('2d')
   context.setTransform(ratio, 0, 0, ratio, 0, 0)
 
-  // A disc of notes, which is the shape a settled space has.
   const count = graph.nodes.length
   const x = new Float64Array(count)
   const y = new Float64Array(count)
@@ -197,9 +189,6 @@ async ({ ratio, width, height }) => {
     context.stroke(path)
   }
 
-  // The same hairline stroked more than once, a device pixel apart, which is what
-  // the Lines dial's thick step draws: a line two device pixels wide out of strokes
-  // that are each still a hairline. See `LINES` in graph-drawing/src/paint.ts.
   const brushed = (offsets) => (shift) => {
     const hair = 1 / ratio
     const path = new Path2D()
@@ -252,8 +241,6 @@ async ({ ratio, width, height }) => {
   out.push(await measure('a clear and nothing else', () => undefined))
   out.push(await measure('links one page pixel wide', strokeAt(1)))
   out.push(await measure('links one screen pixel wide', strokeAt(1 / ratio)))
-  // The three steps of the Lines dial, and the quarter pixel past the cliff that
-  // says why the thick one is a brush rather than a wider stroke.
   out.push(await measure('Lines thin: 0.6 screen pixels', strokeAt(0.6 / ratio)))
   out.push(await measure('Lines normal: one screen pixel', brushed([[0, 0]])))
   out.push(
@@ -715,5 +702,4 @@ def main() -> int:
 
     return DRIVE.verdict(f"shots in {out}")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

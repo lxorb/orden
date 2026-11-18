@@ -2,7 +2,7 @@ import { webPages } from '@orden/contracts'
 import { invoke } from '../../platform/src/api'
 import type { BrowserEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
-import { type FolderWords, isObject, text } from './sidebar-made'
+import { isObject, text } from './sidebar-made'
 
 type Browser = string
 
@@ -58,19 +58,4 @@ export function droppedLine(sidebar: Sidebar): string[] {
       ? '1 page not on the web stays behind'
       : `${count} pages not on the web stay behind`,
   ]
-}
-
-export function folderWords(): FolderWords {
-  return {
-    bookmarks: 'Bookmarks',
-    savedGroups: 'Saved groups',
-    group: 'Tab group',
-    toolbar: 'Bookmarks toolbar',
-    bar: 'Bookmarks bar',
-    menu: 'Bookmarks menu',
-    other: 'Other bookmarks',
-    mobile: 'Mobile bookmarks',
-    favorites: 'Favorites',
-    readingList: 'Reading List',
-  }
 }

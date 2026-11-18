@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any
 
 from PIL import Image, ImageChops
@@ -153,5 +151,4 @@ def drive(browser: Any) -> None:
                 handheld(browser, name, width, height, agent, insets, theme, side)
         desktop(browser, theme)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

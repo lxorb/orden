@@ -173,7 +173,6 @@ describe('a persist while the session is coming back', () => {
   test('keeps everything, at every round trip of a launch, and a good launch after it brings it back', async () => {
     const trips = await roundTrips()
     expect(trips).toBeGreaterThan(5)
-
     for (let at = 0; at < trips; at += 1) {
       freshRound()
       held.gate = new Promise(() => undefined)
@@ -184,7 +183,6 @@ describe('a persist while the session is coming back', () => {
       void workspace.restore().then(() => allIn(workspace))
       await vi.waitFor(() => expect(held.reached).toBe(true), { timeout: 5000 })
       workspace.persist()
-
       const lost = [
         kept(DRAFT) ? null : 'draft',
         kept(TYPED, `${ONE}/b.md`) ? null : 'typed',
@@ -192,7 +190,6 @@ describe('a persist while the session is coming back', () => {
         kept(CLOSED) ? null : 'closed',
       ].filter(Boolean)
       expect(lost, `round trip ${at}, ${held.asked[at]}`).toEqual([])
-
       await goodLaunch()
     }
   }, 240_000)
@@ -225,7 +222,6 @@ describe('a persist while the session is coming back', () => {
     expect(written).toContain(DRAFT.trim())
     expect(written).toContain('gap.md')
     expect(written).toContain('slow.md')
-
     open()
     await restoring
     const paths = workspace.tabs.map((tab) => tab.path)
@@ -278,7 +274,6 @@ describe('a persist while the session is coming back', () => {
     spy.mockRestore()
     workspace.persist()
     expect(session()).toContain(IN_A_SET.trim())
-
     await sets.wake()
     expect(workspace.tabs.map((tab) => tab.note.latest)).toContain(IN_A_SET)
   })

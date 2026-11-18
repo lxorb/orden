@@ -53,7 +53,6 @@
   const total = $derived((daysBetween(span.first, span.last) + 1) * width)
   const ROW = 32
   const NAMED = 80
-
   const x = (day: string) => daysBetween(span.first, day) * width
 
   const ticks = $derived.by(() => {

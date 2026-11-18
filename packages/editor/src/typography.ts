@@ -20,9 +20,7 @@ export interface Replacement {
   insert: string
 }
 
-export function typingBreak(before: string): boolean {
-  return BREAK.test(before)
-}
+export const typingBreak = (before: string): boolean => BREAK.test(before)
 
 const DIVIDER_ROW = /^[ \t]*(?:>[ \t]*)*\|?[ \t:|-]*$/
 const COMMENT_OPENING = /<!-?-?$/
@@ -113,8 +111,8 @@ export function keepsStraightQuotes(state: EditorState, pos: number): boolean {
   return enclosingNamed(inner, STRAIGHT) !== null
 }
 
-export function smartPunctuation(): Extension {
-  return Prec.high(
+export const smartPunctuation = (): Extension =>
+  Prec.high(
     EditorView.inputHandler.of((view, from, to, text) => {
       if (text.length !== 1 || !`"'-.`.includes(text)) return false
 
@@ -134,4 +132,3 @@ export function smartPunctuation(): Extension {
       return true
     }),
   )
-}

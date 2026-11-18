@@ -1,11 +1,13 @@
+import { attributeText } from '@orden/markdown/html'
 import { protection } from '../../protect/src/api'
-import type { EmbeddedNote } from '@orden/markdown'
 import type { HtmlOptions } from './render'
-import { attributeText, escapeAll } from '@orden/markdown/html'
-import { decodeTarget } from '@orden/markdown/links'
-import { mapSources } from '@orden/markdown/sources'
-import { folderOf, imagePath, relativePath } from '../../platform/src/api'
-import { links } from '../../link-index/src/api'
+import {
+  links,
+  pictureBeside,
+  picturePath,
+  picturesOf,
+  picturesWrittenOut,
+} from '../../link-index/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { trustsHtmlIn } from '../../sharing/src/api'
 import { theme, carriedCss } from '../../theme/src/api'
@@ -68,37 +70,14 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
 }
 
-function pictureFile(src: string, path: string | null, text: string): string | null {
-  const name = decodeTarget(src)
-  const found = links.fileFor(name, path)
-  return found ?? imagePath(src, path, text)
-}
-
-function fromFolder(folder: string, file: string): string {
-  return relativePath(folder.replace(/\\/g, '/'), file.replace(/\\/g, '/'))
-    .split('/')
-    .map(encodeURIComponent)
-    .join('/')
-}
-
-function embeddedPictures(target: Target) {
-  return (html: string, embedded: EmbeddedNote | null): string => {
-    const own = target.path
-    const path = embedded?.path
-    if (own === null || !path) return html
-    return mapSources(html, (src) => {
-      const found = pictureFile(attributeText(src), path, embedded.text)
-      return found === null ? null : escapeAll(fromFolder(folderOf(own), found))
-    })
-  }
-}
-
 export async function renderOptions(target: Target): Promise<RunOptions> {
   await links.spaceRead(target.path)
   return {
     page: choices.page,
-    resolveImage: (src: string) => pictureFile(src, target.path, target.source) ?? src,
-    pictures: embeddedPictures(target),
+    resolveImage: (src: string) =>
+      picturePath(attributeText(src), target.path, target.source) ?? src,
+    pictures: picturesOf(target.path, target.source, pictureBeside(target.path), true),
+    picturesWritten: (source: string) => picturesWrittenOut(source, target.path),
     readNote: (name: string) => links.embedNote(name, target.path),
     link: (link) => links.relativeTarget(link, target.path),
     escapeHtml: !target.trusted,

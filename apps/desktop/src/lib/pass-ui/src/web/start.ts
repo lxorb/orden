@@ -1,4 +1,3 @@
-import '../../../theme-ports'
 import { account, connectors } from '../../../accounts/src/api'
 import { collectErrors } from '../../../platform/src/api'
 import { choices } from '../../../modes/src/api'

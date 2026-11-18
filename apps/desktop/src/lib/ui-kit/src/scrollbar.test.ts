@@ -6,62 +6,44 @@ function track(patch: Partial<Track> = {}): Track {
 }
 
 describe('the thumb', () => {
-  test('is as much of the bar as the screen is of the note', () => {
-    expect(thumbFor(track())?.size).toBe(100)
-  })
+  test.each([
+    [{}, { size: 100, offset: 0 }],
+    [{ content: 400 }, null],
+    [{ content: 401 }, null],
+    [{ content: 404, slack: 4 }, null],
+    [{ content: 405, slack: 4 }, null],
+    [{ at: 1200 }, { size: 100, offset: 300 }],
+    [{ at: 600 }, { size: 100, offset: 150 }],
+    [{ at: -80 }, { size: 100, offset: 0 }],
+    [{ at: 4000 }, { size: 100, offset: 300 }],
+    [{ content: 400_000 }, { size: 28, offset: 0 }],
+    [
+      { content: 400_000, at: 399_600 },
+      { size: 28, offset: 372 },
+    ],
+    [{ track: 20 }, { size: 20, offset: 0 }],
+    [{ track: 0 }, null],
+  ])(
+    'over %o is the share of the bar the screen is, flush at the ends, never too small or too long, and none when it fits',
+    (patch, shape) => {
+      expect(thumbFor(track(patch))).toEqual(shape)
+    },
+  )
 
-  test('has nothing to say when the content fits', () => {
-    expect(thumbFor(track({ content: 400 }))).toBeNull()
-    expect(thumbFor(track({ content: 401 }))).toBeNull()
-  })
-
-  test('has nothing to say when only the scroller’s own padding runs past', () => {
-    expect(thumbFor(track({ content: 404, slack: 4 }))).toBeNull()
-    expect(thumbFor(track({ content: 405, slack: 4 }))).toBeNull()
+  test('shows once more than the scroller’s own padding runs past', () => {
     expect(thumbFor(track({ content: 432, slack: 4 }))).not.toBeNull()
-  })
-
-  test('starts at the top and ends flush with the bottom', () => {
-    expect(thumbFor(track())?.offset).toBe(0)
-    expect(thumbFor(track({ at: 1200 }))?.offset).toBe(300)
-  })
-
-  test('sits proportionally along the way down', () => {
-    expect(thumbFor(track({ at: 600 }))?.offset).toBe(150)
-  })
-
-  test('stays inside the bar when a touchpad pulls past either end', () => {
-    expect(thumbFor(track({ at: -80 }))?.offset).toBe(0)
-    expect(thumbFor(track({ at: 4000 }))?.offset).toBe(300)
-  })
-
-  test('is never too small to grab, however long the note', () => {
-    const shape = thumbFor(track({ content: 400_000 }))
-    expect(shape?.size).toBe(28)
-    expect(thumbFor(track({ content: 400_000, at: 399_600 }))?.offset).toBe(372)
-  })
-
-  test('never runs longer than the bar it is in', () => {
-    const shape = thumbFor(track({ track: 20, content: 1600 }))
-    expect(shape?.size).toBe(20)
-    expect(shape?.offset).toBe(0)
-  })
-
-  test('a bar with no height at all has no thumb', () => {
-    expect(thumbFor(track({ track: 0 }))).toBeNull()
   })
 })
 
 describe('dragging the thumb', () => {
-  test('moves the content by the same share of it', () => {
-    expect(contentPerThumb(track())).toBe(4)
-  })
-
-  test('moves nothing when the thumb fills the bar', () => {
-    expect(contentPerThumb(track({ track: 20 }))).toBe(0)
-  })
-
-  test('moves nothing when there is nothing to scroll', () => {
-    expect(contentPerThumb(track({ content: 400 }))).toBe(0)
-  })
+  test.each([
+    [{}, 4],
+    [{ track: 20 }, 0],
+    [{ content: 400 }, 0],
+  ])(
+    'over %o moves the content by the same share, or nothing when there is nothing to move',
+    (patch, share) => {
+      expect(contentPerThumb(track(patch))).toBe(share)
+    },
+  )
 })

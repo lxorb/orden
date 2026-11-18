@@ -1,15 +1,12 @@
 <script lang="ts">
-  import type { Item } from '@orden/pass/types'
-  import { atLeast } from '@orden/pass/types'
+  import { atLeast, type Item } from '@orden/pass/types'
   import Download from 'lucide/dist/esm/icons/download.mjs'
   import Paperclip from 'lucide/dist/esm/icons/paperclip.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { message } from '../../ui-kit/src/api'
-  import { prompt } from '../../ui-kit/src/api'
+  import { message, prompt } from '../../ui-kit/src/api'
   import { readableSize } from '../../accounts/src/api'
-  import { savedAttachment } from '../../pass-sync/src/api'
+  import { savedAttachment, pass } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
-  import { pass } from '../../pass-sync/src/api'
 
   const { item }: { item: Item } = $props()
 
@@ -52,7 +49,7 @@
 </script>
 
 {#if item.attachments.length}
-  <section class="card" aria-label="Attachments">
+  <section class="pass-card" aria-label="Attachments">
     <h3 class="orden-section">Attachments</h3>
     {#each item.attachments as file (file.id)}
       <div class="line" data-file={file.name}>
@@ -83,18 +80,12 @@
         {/if}
       </div>
     {/each}
-    {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+    {#if wrong}<p class="wrong pass-wrong" role="alert">{wrong}</p>{/if}
   </section>
 {/if}
 
 <style>
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > .orden-section {
+  .pass-card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }
@@ -127,9 +118,6 @@
   }
 
   .wrong {
-    margin: 0;
     padding: var(--space-2) var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>

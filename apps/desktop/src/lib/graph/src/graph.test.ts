@@ -20,15 +20,13 @@ function graphOf(scanned: ScannedNote[]): NoteGraph {
 }
 
 const space = (notes: Record<string, string>) => graphOf(scan(notes))
-
 const named = (graph: NoteGraph) => graph.nodes.map((node) => node.name)
 
-function joins(graph: NoteGraph): string[] {
-  return graph.edges
+const joins = (graph: NoteGraph): string[] =>
+  graph.edges
     .map((edge) => [graph.nodes[edge.a]?.name ?? '', graph.nodes[edge.b]?.name ?? ''].sort())
     .map((pair) => pair.join(' - '))
     .sort()
-}
 
 describe('the space as a graph', () => {
   test('a node per note, whether anything links to it or not', () => {
@@ -46,6 +44,16 @@ describe('the space as a graph', () => {
     })
 
     expect(joins(graph)).toEqual(['Ideas - Plan', 'Notes - Plan'])
+  })
+
+  test('an edge for a wikilink to a note whose name holds a dot', () => {
+    const graph = space({
+      '16.11.2026.md': '# Monday',
+      'Version 2.0.md': '# Release',
+      'One.md': 'see [[16.11.2026]] and [[Version 2.0]]',
+    })
+
+    expect(joins(graph)).toEqual(['16.11.2026 - One', 'One - Version 2.0'])
   })
 
   test('one edge for a pair that links both ways, marked as both', () => {
@@ -457,16 +465,14 @@ describe('a space worth a graph (#677)', () => {
   })
 })
 
-describe('a note under a hidden name', () => {
-  test('is no node of the graph, as the space read from disk holds none, and a link to it draws nothing', () => {
-    const graph = space({
-      'Plan.md': '[[Read me]] [[.hidden]]',
-      'Read me.md': '',
-      '.hidden.md': '[[Plan]]',
-      '.trash/Old.md': '[[Plan]]',
-    })
-
-    expect(named(graph)).toEqual(['Plan', 'Read me'])
-    expect(joins(graph)).toEqual(['Plan - Read me'])
+test('a note under a hidden name is no node of the graph, as the space read from disk holds none, and a link to it draws nothing', () => {
+  const graph = space({
+    'Plan.md': '[[Read me]] [[.hidden]]',
+    'Read me.md': '',
+    '.hidden.md': '[[Plan]]',
+    '.trash/Old.md': '[[Plan]]',
   })
+
+  expect(named(graph)).toEqual(['Plan', 'Read me'])
+  expect(joins(graph)).toEqual(['Plan - Read me'])
 })

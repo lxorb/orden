@@ -1,8 +1,7 @@
 import type { InkStroke } from '@orden/markdown/canvas'
-import type { Box } from '../../plane/src/api'
-import { strokeBox } from '../../plane/src/api'
-import { InkGrid } from './ink-grid'
 import {
+  type Box,
+  strokeBox,
   fillInk,
   firstSeen,
   inkKind,
@@ -17,20 +16,15 @@ import {
   type View,
   wipe,
 } from '../../plane/src/api'
+import { InkGrid } from './ink-grid'
 import { hunksOf } from '@orden/markdown/canvas-merge'
 
 export const TILE = 256
-
 export const FILLED_A_FRAME = 2048
-
 export const OUTLINE_WEIGHT = 8
-
 export const FILE_WEIGHT = 0.25
-
 const FRAME_TIME = 6
-
 const KEPT = 2
-
 const MOST_PATCHES = 8
 
 export interface Surface {
@@ -82,10 +76,7 @@ interface Spot {
 
 const SPAN = 2 ** 21
 const HALF = 2 ** 20
-
-function keyOf(across: number, down: number): number {
-  return (across + HALF) * SPAN + (down + HALF)
-}
+const keyOf = (across: number, down: number): number => (across + HALF) * SPAN + (down + HALF)
 
 function grewFrom(was: readonly InkStroke[], now: readonly InkStroke[]): boolean {
   if (now.length < was.length) return false
@@ -135,14 +126,12 @@ function samePalette(one: Palette, other: Palette | null): boolean {
 
 const WHOLE: Patch = { left: 0, top: 0, right: TILE, bottom: TILE }
 
-function bounds(patches: readonly Patch[]): Patch {
-  return {
-    left: patches.map((one) => one.left).reduce((low, one) => Math.min(low, one), Infinity),
-    top: patches.map((one) => one.top).reduce((low, one) => Math.min(low, one), Infinity),
-    right: patches.map((one) => one.right).reduce((high, one) => Math.max(high, one), -Infinity),
-    bottom: patches.map((one) => one.bottom).reduce((high, one) => Math.max(high, one), -Infinity),
-  }
-}
+const bounds = (patches: readonly Patch[]): Patch => ({
+  left: patches.map((one) => one.left).reduce((low, one) => Math.min(low, one), Infinity),
+  top: patches.map((one) => one.top).reduce((low, one) => Math.min(low, one), Infinity),
+  right: patches.map((one) => one.right).reduce((high, one) => Math.max(high, one), -Infinity),
+  bottom: patches.map((one) => one.bottom).reduce((high, one) => Math.max(high, one), -Infinity),
+})
 
 export class InkTiles {
   readonly #make: MakeSurface

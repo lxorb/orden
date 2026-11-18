@@ -32,9 +32,8 @@ export function programOf(line: string): { path: string; args: string[] } | null
   return path ? { path, args } : null
 }
 
-export function mayHost(platform: string): boolean {
-  return platform === 'linux' || platform === 'windows' || platform === 'macos'
-}
+export const mayHost = (platform: string): boolean =>
+  platform === 'linux' || platform === 'windows' || platform === 'macos'
 
 export interface Computer {
   id: string

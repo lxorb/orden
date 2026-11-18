@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Page
@@ -207,5 +205,4 @@ def main() -> int:
 
     return DRIVE.verdict("all good")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

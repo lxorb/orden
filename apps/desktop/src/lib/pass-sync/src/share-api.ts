@@ -1,14 +1,5 @@
 import type { Role } from '@orden/pass/types'
 import { isSignPub } from '@orden/pass/shape'
-import type {
-  Accepted,
-  KeyProof,
-  LinkRow,
-  Member,
-  MemberState,
-  Pin,
-  VaultRow,
-} from '@orden/pass/wire'
 import {
   isCount,
   isSealed,
@@ -17,10 +8,16 @@ import {
   MEMBER_STATES,
   MOST_KEY_BYTES,
   vaultRowIn,
+  type Accepted,
+  type KeyProof,
+  type LinkRow,
+  type Member,
+  type MemberState,
+  type Pin,
+  type VaultRow,
 } from '@orden/pass/wire'
 import type { PersonKey } from './people'
-import type { Method, PassCall } from './sync'
-import { PassApi } from './sync'
+import { errorOf, isFields, PassApi, saidOf, withFrom, type Method, type PassCall } from './sync'
 
 const PREFIX = '/v2/pass'
 
@@ -65,10 +62,6 @@ export interface Refusal {
 
 type Fields = Record<string, unknown>
 
-function isFields(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
 function fieldsOf(value: unknown): Fields {
   if (!isFields(value)) throw new Error('pass: unreadable answer')
   return value
@@ -88,12 +81,8 @@ function isState(value: unknown): value is MemberState {
 }
 
 export function refusalOf(error: unknown): Refusal | null {
-  if (!(error instanceof Error)) return null
-  const status = (error as { status?: unknown }).status
-  if (typeof status !== 'number') return null
-  const body = (error as { body?: unknown }).body ?? null
-  const said = isFields(body) && typeof body.error === 'string' ? body.error : ''
-  return { status, error: said, body }
+  const said = saidOf(error)
+  return said && { ...said, error: errorOf(said.body) }
 }
 
 const part = encodeURIComponent
@@ -192,8 +181,7 @@ export class ShareApi extends PassApi {
   }
 
   private async ask(path: string, method?: Method, body?: unknown): Promise<unknown> {
-    const from = method && method !== 'GET' ? this.sender() : null
-    const sent = from ? `${path}${path.includes('?') ? '&' : '?'}from=${part(from)}` : path
+    const sent = withFrom(path, method && method !== 'GET' ? this.sender() : null)
     return await this.reach(`${PREFIX}${sent}`, method, body)
   }
 }

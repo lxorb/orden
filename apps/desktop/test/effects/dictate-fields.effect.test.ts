@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 const world = vi.hoisted((): { provider: object | null } => ({
   provider: { id: 'p', kind: 'openai', name: 'OpenAI', model: '' },
@@ -52,11 +53,6 @@ function draw(props: Record<string, unknown> = {}) {
   flushSync()
 }
 
-const settle = async () => {
-  for (let one = 0; one < 3; one++) await new Promise((resolve) => setTimeout(resolve, 0))
-  flushSync()
-}
-
 beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
@@ -72,9 +68,9 @@ afterEach(() => {
 })
 
 describe('quick add', () => {
-  test('draws the microphone where there is a road to take', () => {
+  test('draws the microphone where there is a road to take, once dictation has come', async () => {
     draw()
-    expect(target.querySelector('button.mic')).not.toBeNull()
+    await vi.waitFor(() => expect(target.querySelector('button.mic')).not.toBeNull())
   })
 
   test('and none where there is none', () => {
@@ -90,6 +86,7 @@ describe('quick add', () => {
 
   test('reads the dictation key in its line, for its line', async () => {
     draw()
+    await vi.waitFor(() => expect(target.querySelector('button.mic')).not.toBeNull())
     const line = target.querySelector<HTMLInputElement>('input.field')!
     line.focus()
     line.dispatchEvent(
@@ -108,6 +105,7 @@ describe('quick add', () => {
 
   test('and in its description, once that is where the typing is', async () => {
     draw({ prefill: { description: '' } })
+    await vi.waitFor(() => expect(target.querySelector('button.mic')).not.toBeNull())
     const words = target.querySelector<HTMLTextAreaElement>('textarea.words')!
     words.focus()
     words.dispatchEvent(new FocusEvent('focus'))

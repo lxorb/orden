@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import shutil
 import sys
@@ -49,7 +47,6 @@ async (many) => {
     return made
   }
 
-  // Deliberately not in name order: zeta first, Note 12 before Note 2.
   const top = ['zeta', 'Note 12', 'Note 2', 'Note 10', 'Alpha', 'Note 1', 'beta', 'Note 3']
   for (const name of top) await write(name, root)
 
@@ -78,8 +75,6 @@ async (names) => {
     if (!doc) continue
 
     doc.replace(`${doc.text}\\nwritten in again\\n`, true)
-    // Written the way the app writes, a moment after the words change: waited for
-    // here, or the tree is read before either file has moved.
     await ws.writeNow()
     done.push(name)
   }
@@ -386,5 +381,4 @@ def main() -> int:
 
     return DRIVE.verdict("the seven orders read as they should, and Manual held a drag")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

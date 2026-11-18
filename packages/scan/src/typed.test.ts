@@ -1,22 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { dotCom, isLocalFile, mayBeSecret, typedAddress, unopened, webAddress } from './typed'
 
-describe('the dot-com press', () => {
-  test('makes one word a site', () => {
-    expect(dotCom('svelte')).toBe('https://www.svelte.com')
-    expect(dotCom('  example  ')).toBe('https://www.example.com')
-  })
-
-  test('leaves anything that already reads as an address to the ordinary press', () => {
-    expect(dotCom('svelte.dev')).toBe(null)
-    expect(dotCom('https://svelte.dev')).toBe(null)
-    expect(dotCom('localhost:1425')).toBe(null)
-    expect(dotCom('svelte docs')).toBe(null)
-    expect(dotCom('a/b')).toBe(null)
-    expect(dotCom('')).toBe(null)
-  })
-})
-
 describe('what somebody typed', () => {
   test('nothing means nothing', () => {
     expect(webAddress('')).toBeNull()
@@ -31,64 +15,14 @@ describe('what somebody typed', () => {
     expect(webAddress('127.1:3000')).toBe('http://127.1:3000')
   })
 
-  test('a known web scheme with no slashes is that address, as in a browser', () => {
-    expect(webAddress('http:example.com')).toBe('http://example.com')
-    expect(webAddress('https:example.com/a')).toBe('https://example.com/a')
-  })
-
-  test('an address is taken as written', () => {
-    expect(webAddress('https://svelte.dev/docs')).toBe('https://svelte.dev/docs')
-    expect(webAddress('http://localhost:5173/')).toBe('http://localhost:5173/')
-  })
-
   test('a scheme no tab opens means nothing rather than a search', () => {
     expect(webAddress('javascript:alert(1)')).toBeNull()
     expect(webAddress('file:///etc/passwd')).toBeNull()
   })
 
-  test('a host is given https', () => {
-    expect(webAddress('svelte.dev')).toBe('https://svelte.dev')
-    expect(webAddress('svelte.dev/docs?a=1#b')).toBe('https://svelte.dev/docs?a=1#b')
-    expect(webAddress('//svelte.dev')).toBe('https://svelte.dev')
-    expect(webAddress('example.com:443/a')).toBe('https://example.com:443/a')
-  })
-
-  test('this machine, the network and a port of its own are given http', () => {
-    expect(webAddress('localhost:8765')).toBe('http://localhost:8765')
-    expect(webAddress('localhost')).toBe('http://localhost')
-    expect(webAddress('localhost/a?b')).toBe('http://localhost/a?b')
-    expect(webAddress('app.localhost:5173')).toBe('http://app.localhost:5173')
-    expect(webAddress('127.0.0.1:8765')).toBe('http://127.0.0.1:8765')
-    expect(webAddress('127.0.0.1')).toBe('http://127.0.0.1')
-    expect(webAddress('[::1]:3000')).toBe('http://[::1]:3000')
-    expect(webAddress('192.168.1.1')).toBe('http://192.168.1.1')
-    expect(webAddress('10.0.0.5/admin')).toBe('http://10.0.0.5/admin')
-    expect(webAddress('172.20.3.4:9000')).toBe('http://172.20.3.4:9000')
-    expect(webAddress('printer.local')).toBe('http://printer.local')
-    expect(webAddress('router.lan')).toBe('http://router.lan')
-    expect(webAddress('nas:5000')).toBe('http://nas:5000')
-    expect(webAddress('example.com:8080')).toBe('http://example.com:8080')
-    expect(webAddress('//localhost:8765')).toBe('http://localhost:8765')
-  })
-
-  test('a public address is given https', () => {
-    expect(webAddress('8.8.8.8')).toBe('https://8.8.8.8')
-    expect(webAddress('172.32.0.1')).toBe('https://172.32.0.1')
-  })
-
-  test('a scheme typed is kept as typed', () => {
-    expect(webAddress('http://example.com')).toBe('http://example.com')
-    expect(webAddress('https://localhost:8765')).toBe('https://localhost:8765')
-  })
-
   test('a word with digits after it is a host only when it is not a scheme', () => {
     expect(webAddress('tel:123')).toBeNull()
     expect(webAddress('nas')).toBe('https://www.google.com/search?q=nas')
-  })
-
-  test('words are a search', () => {
-    expect(webAddress('svelte docs')).toBe('https://www.google.com/search?q=svelte%20docs')
-    expect(webAddress('svelte')).toBe('https://www.google.com/search?q=svelte')
   })
 
   test('on the engine the reader chose', () => {
@@ -120,25 +54,11 @@ describe('a name with a dot whose last part is no top-level domain', () => {
       expect(typedAddress(name)).toBeNull()
   })
 
-  test('still opens with a scheme, a slash, a path or a port, as in a browser', () => {
-    expect(webAddress('http://node.js')).toBe('http://node.js')
-    expect(webAddress('node.js/')).toBe('https://node.js/')
-    expect(webAddress('wiki.corp/home')).toBe('https://wiki.corp/home')
-    expect(webAddress('build.server:8080')).toBe('http://build.server:8080')
-  })
-
   test('a real top-level domain, in any case or script, still opens', () => {
     for (const name of ['readme.md', 'svelte.dev', 'x.co', 'Example.COM', 'deno.land', 'foo.zip'])
       expect(webAddress(name)).toBe(`https://${name}`)
     expect(webAddress('例子.中国')).toBe('https://xn--fsqu00a.xn--fiqs8s/')
     expect(webAddress('xn--fsqu00a.xn--fiqs8s')).toBe('https://xn--fsqu00a.xn--fiqs8s')
-  })
-
-  test('the names of this machine and its network still open', () => {
-    expect(webAddress('printer.lan')).toBe('http://printer.lan')
-    expect(webAddress('nas.local')).toBe('http://nas.local')
-    expect(webAddress('app.localhost')).toBe('http://app.localhost')
-    expect(webAddress('router.home.arpa')).toBe('http://router.home.arpa')
   })
 })
 
@@ -206,21 +126,6 @@ describe('a word with a colon after it', () => {
   ])('%s is an address no tab opens, and stays out of the search', (typed) => {
     expect(webAddress(typed)).toBeNull()
   })
-
-  test('an address still goes where it says', () => {
-    expect(webAddress('view-source:https://example.com')).toBe('view-source:https://example.com')
-    expect(webAddress('HTTP://example.com')).toBe('HTTP://example.com')
-    expect(webAddress('nas:5000')).toBe('http://nas:5000')
-    expect(webAddress('c:8080')).toBe('http://c:8080')
-    expect(webAddress('example.com:8080/a')).toBe('http://example.com:8080/a')
-    expect(webAddress('[::1]:3000/a')).toBe('http://[::1]:3000/a')
-  })
-
-  test('a colon after a host with nothing in the port is still that host', () => {
-    expect(webAddress('example.com.:8080')).toBe('http://example.com.:8080')
-    expect(webAddress('example.com:/a')).toBe('https://example.com:/a')
-    expect(webAddress('www.example.com:')).toBe('https://www.example.com:')
-  })
 })
 
 describe('a local path', () => {
@@ -272,19 +177,6 @@ describe('a Windows path', () => {
     expect(webAddress(path)).toBe(null)
     expect(typedAddress(path)).toBe(null)
   })
-
-  test('is told from what merely goes nowhere, so the bar can say why', () => {
-    expect(isLocalFile('C:\\thesis.pdf')).toBe(true)
-    expect(isLocalFile('\\\\nas\\share')).toBe(true)
-    expect(isLocalFile('file:///etc/passwd')).toBe(true)
-    expect(isLocalFile('javascript:alert(1)')).toBe(false)
-    expect(isLocalFile('example.com')).toBe(false)
-  })
-
-  test('a host with a backslash after it is still that host', () => {
-    expect(webAddress('example.com\\docs')).toBe('https://example.com\\docs')
-    expect(webAddress('nas:5000')).toBe('http://nas:5000')
-  })
 })
 
 describe('a name that is not ASCII', () => {
@@ -313,11 +205,6 @@ describe('a time of day', () => {
     '9:5',
   ])('%s is a number with a port, and opens', (typed) => {
     expect(webAddress(typed)).toBe(`http://${typed}`)
-  })
-
-  test('a word with a port is still a host', () => {
-    expect(webAddress('nas:5000')).toBe('http://nas:5000')
-    expect(webAddress('host1:5000')).toBe('http://host1:5000')
   })
 })
 
@@ -382,10 +269,90 @@ describe('what Enter does when the bar opens no page', () => {
       expect(unopened(said)).toBe('link')
     }
   })
+})
 
-  test('a file says it could not be read, and an empty bar says nothing', () => {
-    expect(unopened('/etc/hosts')).toBe('file')
-    expect(unopened('C:\\a.txt')).toBe('file')
-    expect(unopened('   ')).toBe('nothing')
-  })
+test.each<[unknown, ...Parameters<typeof dotCom>]>([
+  ['https://www.svelte.com', 'svelte'],
+  ['https://www.example.com', '  example  '],
+  [null, 'svelte.dev'],
+  [null, 'https://svelte.dev'],
+  [null, 'localhost:1425'],
+  [null, 'svelte docs'],
+  [null, 'a/b'],
+  [null, ''],
+])('%j from %j', (expected, ...args) => {
+  expect(dotCom(...args)).toBe(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof isLocalFile>]>([
+  [true, 'C:\\thesis.pdf'],
+  [true, '\\\\nas\\share'],
+  [true, 'file:///etc/passwd'],
+  [false, 'javascript:alert(1)'],
+  [false, 'example.com'],
+])('%j from %j', (expected, ...args) => {
+  expect(isLocalFile(...args)).toBe(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof unopened>]>([
+  ['file', '/etc/hosts'],
+  ['file', 'C:\\a.txt'],
+  ['nothing', '   '],
+])('%j from %j', (expected, ...args) => {
+  expect(unopened(...args)).toBe(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof webAddress>]>([
+  ['http://example.com', 'http:example.com'],
+  ['https://example.com/a', 'https:example.com/a'],
+  ['https://svelte.dev/docs', 'https://svelte.dev/docs'],
+  ['http://localhost:5173/', 'http://localhost:5173/'],
+  ['https://svelte.dev', 'svelte.dev'],
+  ['https://svelte.dev/docs?a=1#b', 'svelte.dev/docs?a=1#b'],
+  ['https://svelte.dev', '//svelte.dev'],
+  ['https://example.com:443/a', 'example.com:443/a'],
+  ['http://localhost:8765', 'localhost:8765'],
+  ['http://localhost', 'localhost'],
+  ['http://localhost/a?b', 'localhost/a?b'],
+  ['http://app.localhost:5173', 'app.localhost:5173'],
+  ['http://127.0.0.1:8765', '127.0.0.1:8765'],
+  ['http://127.0.0.1', '127.0.0.1'],
+  ['http://[::1]:3000', '[::1]:3000'],
+  ['http://192.168.1.1', '192.168.1.1'],
+  ['http://10.0.0.5/admin', '10.0.0.5/admin'],
+  ['http://172.20.3.4:9000', '172.20.3.4:9000'],
+  ['http://printer.local', 'printer.local'],
+  ['http://router.lan', 'router.lan'],
+  ['http://nas:5000', 'nas:5000'],
+  ['http://example.com:8080', 'example.com:8080'],
+  ['http://localhost:8765', '//localhost:8765'],
+  ['https://8.8.8.8', '8.8.8.8'],
+  ['https://172.32.0.1', '172.32.0.1'],
+  ['http://example.com', 'http://example.com'],
+  ['https://localhost:8765', 'https://localhost:8765'],
+  ['https://www.google.com/search?q=svelte%20docs', 'svelte docs'],
+  ['https://www.google.com/search?q=svelte', 'svelte'],
+  ['http://node.js', 'http://node.js'],
+  ['https://node.js/', 'node.js/'],
+  ['https://wiki.corp/home', 'wiki.corp/home'],
+  ['http://build.server:8080', 'build.server:8080'],
+  ['http://printer.lan', 'printer.lan'],
+  ['http://nas.local', 'nas.local'],
+  ['http://app.localhost', 'app.localhost'],
+  ['http://router.home.arpa', 'router.home.arpa'],
+  ['view-source:https://example.com', 'view-source:https://example.com'],
+  ['HTTP://example.com', 'HTTP://example.com'],
+  ['http://nas:5000', 'nas:5000'],
+  ['http://c:8080', 'c:8080'],
+  ['http://example.com:8080/a', 'example.com:8080/a'],
+  ['http://[::1]:3000/a', '[::1]:3000/a'],
+  ['http://example.com.:8080', 'example.com.:8080'],
+  ['https://example.com:/a', 'example.com:/a'],
+  ['https://www.example.com:', 'www.example.com:'],
+  ['https://example.com\\docs', 'example.com\\docs'],
+  ['http://nas:5000', 'nas:5000'],
+  ['http://nas:5000', 'nas:5000'],
+  ['http://host1:5000', 'host1:5000'],
+])('%j from %j', (expected, ...args) => {
+  expect(webAddress(...args)).toBe(expected)
 })

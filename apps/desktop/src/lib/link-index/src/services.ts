@@ -5,7 +5,6 @@ import type { Hit } from '@orden/scan/search/match'
 import type { Query } from '@orden/scan/search/query'
 
 type BaseAsk = Parameters<NonNullable<NoteIndex['mountBase']>>[1]
-
 type FileDrawer = (card: HTMLElement, file: FileDrawing & { root: string }) => () => void
 
 type BaseMounter = (

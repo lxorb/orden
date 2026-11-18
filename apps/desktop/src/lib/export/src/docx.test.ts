@@ -43,8 +43,8 @@ function png(width: number, height: number): Uint8Array {
   ])
 }
 
-function jpeg(width: number, height: number): Uint8Array {
-  return new Uint8Array([
+const jpeg = (width: number, height: number): Uint8Array =>
+  new Uint8Array([
     0xff,
     0xd8,
     0xff,
@@ -69,7 +69,6 @@ function jpeg(width: number, height: number): Uint8Array {
     0xff,
     0xd9,
   ])
-}
 
 const LOCAL = png(24, 16)
 const REMOTE = jpeg(1200, 600)
@@ -85,7 +84,6 @@ const PICTURES: Picture[] = [
 ]
 
 const doc = documentOf(CORPUS, CORPUS_NAME)
-
 let zip: JSZip
 let document_: string
 let styles: string
@@ -340,29 +338,26 @@ describe('footnotes', () => {
   })
 })
 
-describe('lists', () => {
-  test('nested deeper than Word counts are written, each item numbered at a level Word has', async () => {
-    const deep = (marker: string) =>
-      Array.from({ length: 12 }, (_, at) => `${'    '.repeat(at)}${marker} item ${at}`).join('\n')
-    const source = `${deep('-')}\n\nWords.\n\n${deep('1.')}\n\n> ${deep('-').replace(/\n/g, '\n> ')}\n`
-    const xml = await JSZip.loadAsync(await toDocx(documentOf(source, 'N.md'), [], PAPER)).then(
-      (one) => one.file('word/document.xml')!.async('string'),
-    )
+test('lists nested deeper than Word counts are written, each item numbered at a level Word has', async () => {
+  const deep = (marker: string) =>
+    Array.from({ length: 12 }, (_, at) => `${'    '.repeat(at)}${marker} item ${at}`).join('\n')
+  const source = `${deep('-')}\n\nWords.\n\n${deep('1.')}\n\n> ${deep('-').replace(/\n/g, '\n> ')}\n`
+  const xml = await JSZip.loadAsync(await toDocx(documentOf(source, 'N.md'), [], PAPER)).then(
+    (one) => one.file('word/document.xml')!.async('string'),
+  )
 
-    wellFormed(xml)
-    expect(count(xml, /item 11/g)).toBe(3)
-    const levels = [...xml.matchAll(/<w:ilvl w:val="(\d+)"\/>/g)].map(([, level = '']) =>
-      Number(level),
-    )
-    expect(levels).toHaveLength(36)
-    expect(Math.max(...levels)).toBe(8)
+  wellFormed(xml)
+  expect(count(xml, /item 11/g)).toBe(3)
+  const levels = [...xml.matchAll(/<w:ilvl w:val="(\d+)"\/>/g)].map(([, level = '']) =>
+    Number(level),
+  )
+  expect(levels).toHaveLength(36)
+  expect(Math.max(...levels)).toBe(8)
 
-    const numbering = await JSZip.loadAsync(
-      await toDocx(documentOf(deep('1.'), 'N.md'), [], PAPER),
-    ).then((one) => one.file('word/numbering.xml')!.async('string'))
-    for (const level of [5, 6, 7, 8])
-      expect(numbering).toContain(`w:lvlText w:val="%${level + 1}."`)
-  })
+  const numbering = await JSZip.loadAsync(
+    await toDocx(documentOf(deep('1.'), 'N.md'), [], PAPER),
+  ).then((one) => one.file('word/numbering.xml')!.async('string'))
+  for (const level of [5, 6, 7, 8]) expect(numbering).toContain(`w:lvlText w:val="%${level + 1}."`)
 })
 
 const EMU = 9525
@@ -438,6 +433,15 @@ describe('pictures', () => {
     )
 
     expect(xml).toContain('[Gone]')
+  })
+
+  test('a linked picture is a link', async () => {
+    const linked = documentOf('[![CI](badge.png)](https://ci.org)\n', 'N.md')
+    const xml = await JSZip.loadAsync(await toDocx(linked, [], PAPER)).then((one) =>
+      one.file('word/document.xml')!.async('string'),
+    )
+
+    expect(xml).toMatch(/<w:hyperlink[^>]*>(?:(?!<\/w:hyperlink>).)*\[CI\]/s)
   })
 })
 

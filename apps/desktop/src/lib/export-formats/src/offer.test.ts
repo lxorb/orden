@@ -13,11 +13,11 @@ import {
   labelOf,
   offeredBy,
 } from './offer'
+import { memoryStorage } from '../../../../test/disk'
 
 const TEN = EXPORT_FORMATS.map((format) => format.id)
 const VARIANTS = EXPORT_VARIANTS.map((variant) => variant.id)
 const KINDS: ExportKind[] = ['note', 'canvas', 'file', 'none']
-
 const RULED = '# One\n\ntext\n\n---\n\n# Two\n\nmore\n'
 
 describe('what each kind of document goes out as', () => {
@@ -117,21 +117,6 @@ describe('the rows themselves', () => {
   })
 })
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
-
 const CANVAS = '{"nodes":[],"edges":[]}'
 
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
@@ -174,16 +159,13 @@ function menuRows(): MenuItem[] {
   return submenu.rows.filter((row): row is MenuItem => row !== null && !isSubmenu(row))
 }
 
-function menuLabels(): string[] {
-  return menuRows().map((row) => row.label)
-}
+const menuLabels = (): string[] => menuRows().map((row) => row.label)
 
-function offeredIds(): string[] {
-  return exportCommands()
+const offeredIds = (): string[] =>
+  exportCommands()
     .map((command) => command.id)
     .filter((id) => id.startsWith('export-'))
     .map((id) => id.slice('export-'.length))
-}
 
 async function only(open: () => Promise<void> | void) {
   for (const tab of [...workspace.tabs]) workspace.close(tab.id)

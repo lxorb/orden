@@ -33,10 +33,14 @@ export function excludedPaths(value: unknown): string[] {
 
 interface Kept extends Folded {
   paths: string[]
+  sent: boolean
 }
 
 function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({ paths: excludedPaths(one.paths) }))
+  return readSpaces(STORAGE_KEY, (one) => ({
+    paths: excludedPaths(one.paths),
+    sent: one.sent !== false,
+  }))
 }
 
 function same(one: readonly string[], other: readonly string[]): boolean {
@@ -178,7 +182,7 @@ export class Excluded {
     const met = meet(held, accountId, held?.paths ?? [], account, PATHS)
     if (!met) return
 
-    this.spaces = { ...this.spaces, [root]: { paths: met.value, account: accountId } }
+    this.spaces = { ...this.spaces, [root]: { paths: met.value, account: accountId, sent: true } }
     this.write()
 
     if (met.tell) void this.push(root)
@@ -187,7 +191,7 @@ export class Excluded {
   private put(root: string, paths: string[]) {
     this.spaces = {
       ...this.spaces,
-      [root]: { paths, account: this.spaces[root]?.account ?? null },
+      [root]: { paths, account: this.spaces[root]?.account ?? null, sent: false },
     }
     this.write()
     void this.push(root)
@@ -195,7 +199,20 @@ export class Excluded {
 
   private async push(root: string) {
     const { push } = await import('./pushing')
-    await push(root, (api, token, spaceId) => api.saveExcluded(token, spaceId, this.of(root)))
+    const paths = this.of(root)
+    await push(
+      root,
+      (api, token, spaceId) => api.saveExcluded(token, spaceId, paths),
+      (landed) => this.said(root, landed, paths),
+    )
+  }
+
+  private said(root: string, landed: boolean, paths: string[]) {
+    const held = this.spaces[root]
+    if (!held || held.sent === landed || (landed && !same(held.paths, paths))) return
+
+    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
+    this.write()
   }
 
   private write() {

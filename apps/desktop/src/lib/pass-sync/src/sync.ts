@@ -22,7 +22,6 @@ const NO_SUCH_VAULT = 'no such vault'
 export const NO_SUCH_ITEM = 'no such item'
 const NOT_YOUR_ROLE = 'your role in this vault does not allow that'
 const TAKEN = 'that id is taken'
-
 const PREFIX = '/v2/pass'
 
 export class Refused extends Error {
@@ -55,20 +54,20 @@ interface Said {
   body: unknown
 }
 
-function isFields(value: unknown): value is Record<string, unknown> {
+export function isFields(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 const FULL = 507
 
-function saidOf(error: unknown): Said | null {
+export function saidOf(error: unknown): Said | null {
   if (!(error instanceof Error)) return null
   const status = (error as { status?: unknown }).status
   if (typeof status !== 'number') return null
   return { status, body: (error as { body?: unknown }).body ?? null }
 }
 
-function errorOf(body: unknown): string {
+export function errorOf(body: unknown): string {
   return isFields(body) && typeof body.error === 'string' ? body.error : ''
 }
 
@@ -102,7 +101,7 @@ function landedIn(value: unknown): Landed {
   throw new Error('pass: unreadable answer')
 }
 
-function withFrom(path: string, from: string | null): string {
+export function withFrom(path: string, from: string | null): string {
   if (!from) return path
   return `${path}${path.includes('?') ? '&' : '?'}from=${encodeURIComponent(from)}`
 }

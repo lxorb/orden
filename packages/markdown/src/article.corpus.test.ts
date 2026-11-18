@@ -31,32 +31,20 @@ describe('a news article', () => {
   const url = 'https://ledger.example/news/2026/lake.html'
   const { live, written, markdown } = both('news.html', url)
 
-  test('reads the same live and written down', () => {
+  test('reads the same live and written down; is called what the article says, without the site; carries the tags the page published', () => {
     expect(written).toEqual(live)
-  })
-
-  test('is called what the article says, without the site', () => {
     expect(live.title).toBe('Lake Zurich warms a full degree in a decade')
-  })
-
-  test('carries the tags the page published', () => {
     expect(live.tags).toEqual(['Climate', 'Zurich', 'Lakes'])
   })
 
-  test('keeps the article and leaves the furniture', () => {
+  test('keeps the article and leaves the furniture; keeps the photograph a lazy picture deferred, at its widest; resolves a link that climbs out of the page’s folder', () => {
     expect(markdown).toContain('the cantonal water office said on Friday')
     expect(markdown).toContain('"A lake does not forget a warm winter,"')
     for (const furniture of ['We use cookies', 'Subscribe', 'Privacy', 'console.log']) {
       expect(markdown).not.toContain(furniture)
     }
-  })
-
-  test('keeps the photograph a lazy picture deferred, at its widest', () => {
     expect(markdown).toMatch(/!\[The lake at dawn\]\(https:\/\/ledger\.example\/img\/lake-/)
     expect(markdown).not.toContain('data:image/gif')
-  })
-
-  test('resolves a link that climbs out of the page’s folder', () => {
     expect(markdown).toContain('[plant shade trees](https://ledger.example/news/plans/shade.html)')
   })
 })
@@ -65,17 +53,11 @@ describe('a page of documentation', () => {
   const url = 'https://rivulet.example/docs/streams.html'
   const { live, written, markdown } = both('docs.html', url)
 
-  test('reads the same live and written down', () => {
+  test('reads the same live and written down; fences each block with the language its page named, however it named it; keeps code as it was written', () => {
     expect(written).toEqual(live)
-  })
-
-  test('fences each block with the language its page named, however it named it', () => {
     expect(markdown).toContain("```ts\nimport { from } from 'rivulet'")
     expect(markdown).toContain('```python\nfrom rivulet import stream')
     expect(markdown).toContain('```sh\n$ rivulet run --slow-reader example.ts')
-  })
-
-  test('keeps code as it was written', () => {
     expect(markdown).toContain('.map((n) => n * 2)')
     expect(markdown).toContain('`map`, `filter` and `take`')
   })
@@ -90,17 +72,11 @@ describe('Wikipedia, with maths', () => {
   const url = 'https://en.wikipedia.example/wiki/Euler%27s_identity'
   const { live, written, markdown } = both('wikipedia.html', url)
 
-  test('reads the same live and written down', () => {
+  test('reads the same live and written down; keeps a formula as the TeX it was written in, once; keeps an inline formula inline', () => {
     expect(written).toEqual(live)
-  })
-
-  test('keeps a formula as the TeX it was written in, once', () => {
     expect(markdown).toContain('e^{i\\pi }+1=0')
     expect(markdown.split('e^{i\\pi }+1=0').length).toBe(2)
     expect(markdown).not.toContain('render/svg')
-  })
-
-  test('keeps an inline formula inline', () => {
     expect(markdown).toMatch(/where \$\{?\\displaystyle e\}?\$ is/)
   })
 
@@ -114,18 +90,12 @@ describe('a page whose point is a table', () => {
   const url = 'https://rails.example/guides/night-trains'
   const { live, written, markdown } = both('tables.html', url)
 
-  test('reads the same live and written down', () => {
+  test('reads the same live and written down; keeps the table as a table; escapes a pipe a cell holds, so the row stays one row', () => {
     expect(written).toEqual(live)
-  })
-
-  test('keeps the table as a table', () => {
     expect(markdown).toMatch(/\| Destination \| Leaves \| Arrives \| Couchette from \|/)
     expect(markdown).toContain(
       '| [Hamburg](https://rails.example/trains/hamburg) | 19:59 | 08:09 |',
     )
-  })
-
-  test('escapes a pipe a cell holds, so the row stays one row', () => {
     expect(markdown).toContain('CHF 99 \\| sleeper only')
   })
 })

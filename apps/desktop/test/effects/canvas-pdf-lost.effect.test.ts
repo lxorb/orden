@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 const world = vi.hoisted(() => ({ readable: false, asked: [] as number[] }))
 
@@ -48,22 +49,17 @@ function shown(page?: number) {
   return target
 }
 
-const settled = async () => {
-  for (let turn = 0; turn < 5; turn += 1) await Promise.resolve()
-  flushSync()
-}
-
 test('a PDF card whose paper cannot be read says so, and shows the page once it can', async () => {
   vi.useFakeTimers()
   const target = shown()
-  await settled()
+  await settle()
 
   expect(target.querySelector('.missing')?.textContent).toBe('The paper could not be read')
 
   world.readable = true
   vi.advanceTimersByTime(5000)
   flushSync()
-  await settled()
+  await settle()
 
   expect(target.querySelector('.missing')).toBeNull()
 })
@@ -71,7 +67,7 @@ test('a PDF card whose paper cannot be read says so, and shows the page once it 
 test('a PDF card that names a page draws that page', async () => {
   world.readable = true
   shown(3)
-  await settled()
+  await settle()
 
   expect(world.asked).toContain(3)
   expect(world.asked).not.toContain(1)

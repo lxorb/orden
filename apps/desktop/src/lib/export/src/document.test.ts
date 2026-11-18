@@ -269,10 +269,8 @@ describe('a fenced block', () => {
   })
 })
 
-describe('display maths', () => {
-  test('is its own block, holding the TeX as written', () => {
-    expect(kind('maths')[0]?.tex.trim()).toBe('\\int_0^1 x^2\\,dx = \\frac{1}{3}')
-  })
+test('display maths is its own block, holding the TeX as written', () => {
+  expect(kind('maths')[0]?.tex.trim()).toBe('\\int_0^1 x^2\\,dx = \\frac{1}{3}')
 })
 
 describe('lists', () => {
@@ -352,6 +350,13 @@ describe('an embed on a line of its own', () => {
       { kind: 'paragraph', spans: [{ text: '', picture: 'shot.png' }] },
     ])
     expect(picturesIn(documentOf('![[shot.png]]\n', 'Note'))).toEqual(['shot.png'])
+  })
+
+  test('an embedded picture beside words or another picture, or in a table, is a picture too', () => {
+    expect(picturesIn(documentOf('![[a.png]] ![[b.png]]\n', 'Note'))).toEqual(['a.png', 'b.png'])
+    expect(picturesIn(documentOf('See ![[a.png|the map]] here\n', 'Note'))).toEqual(['a.png'])
+    expect(picturesIn(documentOf('| a |\n|---|\n| ![[cat.png]] |\n', 'Note'))).toEqual(['cat.png'])
+    expect(picturesIn(documentOf('See ![[Plan]] here\n', 'Note'))).toEqual([])
   })
 
   test('and the words after the bar are what it is of', () => {
@@ -447,9 +452,7 @@ describe('naming the document', () => {
   })
 })
 
-describe('a title from the file’s name', () => {
-  test('keeps a dot that is no ending', () => {
-    expect(titleOf('words\n', 'v1.2 plan')).toBe('v1.2 plan')
-    expect(titleOf('words\n', 'v1.2 plan.md')).toBe('v1.2 plan')
-  })
+test('a title from the file’s name keeps a dot that is no ending', () => {
+  expect(titleOf('words\n', 'v1.2 plan')).toBe('v1.2 plan')
+  expect(titleOf('words\n', 'v1.2 plan.md')).toBe('v1.2 plan')
 })

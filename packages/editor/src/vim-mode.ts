@@ -20,22 +20,17 @@ Object.assign(Vim, {
 })
 
 const unmap = Vim.unmap as (keys: string, context?: string) => boolean | undefined
-
 const CONTEXTS = [undefined, 'normal', 'insert', 'visual']
 
 function takeBack(keys: string): number {
   let found = 0
-  for (const context of CONTEXTS) {
-    while (unmap(keys, context)) found++
-  }
+  for (const context of CONTEXTS) while (unmap(keys, context)) found++
 
   return found
 }
 
 const HOLDING_PLACE = { keys: '<OrdenTaken>', type: 'idle' } as const
-
 const CTRL_LETTERS = 'abcdefghijklmnoprstuvwxyz'
-
 const CTRL_OTHERS = ['<C-[>', '<C-Space>', '<C-BS>', '<C-Esc>', '<C-r><register>']
 
 const CARET_KEYS = [
@@ -142,9 +137,8 @@ function idleNormal(event: Keyed, mode: Moded | null | undefined): boolean {
   )
 }
 
-export function plainNormalEnter(event: Keyed, mode: Moded | null | undefined): boolean {
-  return event.key === 'Enter' && !event.shiftKey && idleNormal(event, mode)
-}
+export const plainNormalEnter = (event: Keyed, mode: Moded | null | undefined): boolean =>
+  event.key === 'Enter' && !event.shiftKey && idleNormal(event, mode)
 
 export function normalTab(event: Keyed, mode: Moded | null | undefined): 'one' | 'all' | null {
   if (event.key !== 'Tab' || !idleNormal(event, mode)) return null

@@ -1,4 +1,10 @@
-import type { EditorState, StateEffect, TransactionSpec } from '@codemirror/state'
+import {
+  type EditorState,
+  type StateEffect,
+  Transaction,
+  type TransactionSpec,
+} from '@codemirror/state'
+import { isExternal } from './external'
 import type { DocView, SharedDoc } from './shared'
 import { flushTableEdits } from './table/view'
 
@@ -14,12 +20,8 @@ interface EditContextKeeper {
   reset(state: EditorState): void
 }
 
-function keeperOf(view: StateView): EditContextKeeper | null {
-  return (
-    (view as { observer?: { editContext?: EditContextKeeper | null } }).observer?.editContext ??
-    null
-  )
-}
+const keeperOf = (view: StateView): EditContextKeeper | null =>
+  (view as { observer?: { editContext?: EditContextKeeper | null } }).observer?.editContext ?? null
 
 function endComposing(view: StateView): () => void {
   const real = view as StateView & { contentDOM?: HTMLElement; focus?: () => void }
@@ -74,8 +76,13 @@ export class HeldState implements DocView {
   dispatch(spec: TransactionSpec) {
     const made = this.held.update(spec)
     this.held = made.state
+    if (made.changes.empty) return
 
-    if (this.place && !made.changes.empty) this.place = this.place.map(made.changes) ?? null
+    if (this.place) this.place = this.place.map(made.changes) ?? null
+    if (isExternal(made)) return
+
+    const userEvent = made.annotation(Transaction.userEvent)
+    this.note.local(made.changes, made.state.selection, this, userEvent)
   }
 
   give(view: StateView, effects: readonly StateEffect<unknown>[] = []) {

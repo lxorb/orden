@@ -100,18 +100,27 @@ describe('the caret', () => {
     expect(out.slice(made!.caret, made!.caret + 5)).toBe('first')
   })
 
-  test('and is left to the change set when it was somewhere else', () => {
+  test('and stays on its own words when it was in a section the move went past', () => {
     const headings = scanHeadings(NOTE)
-    const made = moveSection(NOTE, headings, 0, 2, NOTE.length - 1)
+    const caret = NOTE.indexOf('second')
+    const made = moveSection(NOTE, headings, 0, 2, caret)
+    const out = moved(NOTE, 0, 2) ?? ''
 
-    expect(made?.caret).toBe(NOTE.length - 1)
+    expect(out.slice(made!.caret, made!.caret + 6)).toBe('second')
+  })
+
+  test('and stays on its own words when the section landed before it', () => {
+    const headings = scanHeadings(NOTE)
+    const caret = NOTE.indexOf('first')
+    const made = moveSection(NOTE, headings, 2, 0, caret)
+    const out = moved(NOTE, 2, 0) ?? ''
+
+    expect(out.slice(made!.caret, made!.caret + 5)).toBe('first')
   })
 })
 
-describe('a section drag keeps code whole', () => {
-  test('the fences of a block holding a shorter one move with it', () => {
-    expect(moved('# A\n````md\n```js\n# not\n```\n````\n# B\nb\n', 1, 0)).toBe(
-      '# B\nb\n# A\n````md\n```js\n# not\n```\n````\n',
-    )
-  })
+test('a section drag keeps code whole the fences of a block holding a shorter one move with it', () => {
+  expect(moved('# A\n````md\n```js\n# not\n```\n````\n# B\nb\n', 1, 0)).toBe(
+    '# B\nb\n# A\n````md\n```js\n# not\n```\n````\n',
+  )
 })

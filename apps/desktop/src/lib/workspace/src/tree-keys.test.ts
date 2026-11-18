@@ -10,61 +10,27 @@ const ROWS: TreeRow[] = [
 ]
 
 describe('walking the file list', () => {
-  test('goes down a row', () => {
-    expect(treeStep('ArrowDown', ROWS, '/s/Work')).toEqual({ do: 'stand', path: '/s/Work/Notes' })
-  })
-
-  test('goes up a row', () => {
-    expect(treeStep('ArrowUp', ROWS, '/s/Work/plan.md')).toEqual({
-      do: 'stand',
-      path: '/s/Work/Notes',
-    })
-  })
-
-  test('stays where it is at either end', () => {
-    expect(treeStep('ArrowDown', ROWS, '/s/Read me.md')).toEqual({
-      do: 'stand',
-      path: '/s/Read me.md',
-    })
-    expect(treeStep('ArrowUp', ROWS, '/s/Work')).toEqual({ do: 'stand', path: '/s/Work' })
-  })
-
-  test('starts at the top when it is standing nowhere', () => {
-    expect(treeStep('ArrowDown', ROWS, null)).toEqual({ do: 'stand', path: '/s/Work' })
-  })
-
-  test('opens a shut folder', () => {
-    expect(treeStep('ArrowRight', ROWS, '/s/Work/Notes')).toEqual({
-      do: 'expand',
-      path: '/s/Work/Notes',
-    })
-  })
-
-  test('steps into a folder that is already open', () => {
-    expect(treeStep('ArrowRight', ROWS, '/s/Work')).toEqual({
-      do: 'stand',
-      path: '/s/Work/Notes',
-    })
-  })
-
-  test('closes an open folder', () => {
-    expect(treeStep('ArrowLeft', ROWS, '/s/Work')).toEqual({ do: 'collapse', path: '/s/Work' })
-  })
-
-  test('steps out of a note to the folder holding it', () => {
-    expect(treeStep('ArrowLeft', ROWS, '/s/Work/plan.md')).toEqual({
-      do: 'stand',
-      path: '/s/Work',
-    })
-    expect(treeStep('ArrowLeft', ROWS, '/s/Work/Notes')).toEqual({
-      do: 'stand',
-      path: '/s/Work',
-    })
-  })
-
-  test('does nothing sideways on a row at the top of the space', () => {
-    expect(treeStep('ArrowLeft', ROWS, '/s/Read me.md')).toBeNull()
-    expect(treeStep('ArrowRight', ROWS, '/s/Read me.md')).toBeNull()
+  const stand = (path: string) => ({ do: 'stand', path })
+  test.each([
+    ['goes down a row', 'ArrowDown', '/s/Work', stand('/s/Work/Notes')],
+    ['goes up a row', 'ArrowUp', '/s/Work/plan.md', stand('/s/Work/Notes')],
+    ['stays at the bottom', 'ArrowDown', '/s/Read me.md', stand('/s/Read me.md')],
+    ['stays at the top', 'ArrowUp', '/s/Work', stand('/s/Work')],
+    ['starts at the top when it is standing nowhere', 'ArrowDown', null, stand('/s/Work')],
+    ['opens a shut folder', 'ArrowRight', '/s/Work/Notes', { do: 'expand', path: '/s/Work/Notes' }],
+    ['steps into a folder that is already open', 'ArrowRight', '/s/Work', stand('/s/Work/Notes')],
+    ['closes an open folder', 'ArrowLeft', '/s/Work', { do: 'collapse', path: '/s/Work' }],
+    ['steps out of a note to its folder', 'ArrowLeft', '/s/Work/plan.md', stand('/s/Work')],
+    ['steps out of a folder to its folder', 'ArrowLeft', '/s/Work/Notes', stand('/s/Work')],
+    ['does nothing left at the top of the space', 'ArrowLeft', '/s/Read me.md', null],
+    ['does nothing right at the top of the space', 'ArrowRight', '/s/Read me.md', null],
+    ['ignores Enter', 'Enter', '/s/Work', null],
+    ['ignores F2', 'F2', '/s/Work', null],
+    ['ignores a letter', 'a', '/s/Work', null],
+    ['ignores right on a row not on show', 'ArrowRight', '/s/Gone.md', null],
+    ['ignores left on a row not on show', 'ArrowLeft', '/s/Gone.md', null],
+  ] as const)('%s', (_name, key, at, step) => {
+    expect(treeStep(key, ROWS, at)).toEqual(step)
   })
 
   test('has nowhere to step into an open folder that is empty', () => {
@@ -72,7 +38,6 @@ describe('walking the file list', () => {
       { path: '/s/Empty', folder: true, open: true },
       { path: '/s/next.md', folder: false, open: false },
     ]
-
     expect(treeStep('ArrowRight', rows, '/s/Empty')).toBeNull()
   })
 
@@ -81,22 +46,10 @@ describe('walking the file list', () => {
       { path: 'C:\\s\\Work', folder: true, open: true },
       { path: 'C:\\s\\Work\\plan.md', folder: false, open: false },
     ]
-
     expect(treeStep('ArrowLeft', rows, 'C:\\s\\Work\\plan.md')).toEqual({
       do: 'stand',
       path: 'C:\\s\\Work',
     })
-  })
-
-  test('says nothing about a key that is not one of its own', () => {
-    expect(treeStep('Enter', ROWS, '/s/Work')).toBeNull()
-    expect(treeStep('F2', ROWS, '/s/Work')).toBeNull()
-    expect(treeStep('a', ROWS, '/s/Work')).toBeNull()
-  })
-
-  test('says nothing about a row that is not on show', () => {
-    expect(treeStep('ArrowRight', ROWS, '/s/Gone.md')).toBeNull()
-    expect(treeStep('ArrowLeft', ROWS, '/s/Gone.md')).toBeNull()
   })
 
   test('has nowhere to go in an empty space', () => {

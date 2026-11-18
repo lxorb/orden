@@ -30,15 +30,10 @@ function sharedQuote(one: string, other: string): string {
   return kept.slice(0, kept.lastIndexOf('>') + 1)
 }
 
-export function indentOf(text: string): number {
-  return text.length - text.trimStart().length
-}
+export const indentOf = (text: string): number => text.length - text.trimStart().length
 
-export function itemsAround(state: EditorState, pos: number): SyntaxNode[] {
-  return [...enclosing(syntaxTree(state).resolveInner(pos, -1))].filter(
-    (node) => node.name === 'ListItem',
-  )
-}
+export const itemsAround = (state: EditorState, pos: number): SyntaxNode[] =>
+  [...enclosing(syntaxTree(state).resolveInner(pos, -1))].filter((node) => node.name === 'ListItem')
 
 function itemStarting(state: EditorState, line: Line): SyntaxNode | null {
   let found: SyntaxNode | null = null

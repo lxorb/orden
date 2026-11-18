@@ -1,11 +1,9 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { ROOT } from './files'
 import { inText, type Kind, oldNames } from '../../../scripts/old-name'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 const MOVED_PACKAGES: readonly string[] = execFileSync('git', ['ls-files', '*package.json'], {
   cwd: ROOT,
@@ -21,155 +19,12 @@ const SAYING = ['apps/desktop/test/internal-name.test.ts', 'scripts/old-name.ts'
 
 const MOST: Record<Kind, number> = {
   package: 0,
-  identifier: 8,
-  scheme: 21,
-  key: 69,
-  variable: 18,
-  dashed: 209,
-  word: 1381,
-}
-
-const ALIASES_GONE_BY = 'v0.22.0'
-
-const ALIASES: Record<string, readonly string[]> = {
-  '.github/workflows/check.yml': ['nibApp'],
-  'apps/cli/orden.mjs': ['NIB_', 'nib is the same command'],
-  'apps/cli/package.json': ['"nib"'],
-  'apps/desktop/public/manifest.webmanifest': ['web+nib'],
-  'apps/desktop/public/sw.js': ["'nib'", 'nibNotice'],
-  'apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml': ['android:scheme="nib"'],
-  'apps/desktop/src-tauri/linux/nib': ['/usr/bin/orden'],
-  'apps/desktop/src-tauri/src/agents/grants.rs': ['"nib-"'],
-  'apps/desktop/src-tauri/src/ai_agent.rs': ['BUILT_IN_BEFORE'],
-  'apps/desktop/src-tauri/src/ai_cli.rs': ['NIB_CLAUDE_CODE'],
-  'apps/desktop/src-tauri/src/default_browser.rs': ['"orden", "nib"'],
-  'apps/desktop/src-tauri/src/engine.rs': ['"orden", "nib"'],
-  'apps/desktop/src-tauri/src/former_name.rs': ['NIB_'],
-  'apps/desktop/src-tauri/src/links.rs': [
-    'nib: Option',
-    '"nib-chosen-icon"',
-    '"nib-chosen-color"',
-    '"nib-icon"',
-    'Nib-Icon',
-  ],
-  'apps/desktop/src-tauri/src/logs.rs': ['nib.log'],
-  'apps/desktop/src-tauri/src/main.rs': ['former_name'],
-  'apps/desktop/src-tauri/src/mcp/program.rs': ['const FORMER'],
-  'apps/desktop/src-tauri/src/reminders/link.rs': ['nib://'],
-  'apps/desktop/src-tauri/src/reminders/macos.rs': ['nib.reminder'],
-  'apps/desktop/src-tauri/src/secrets.rs': ['"nibeditor"'],
-  'apps/desktop/src-tauri/src/terminal/picture.rs': ['strip_prefix("nib-")', 'is_ours("nib-'],
-  'apps/desktop/src-tauri/src/uris.rs': ['"nib:"', 'nib://', 'NIB://'],
-  'apps/desktop/src-tauri/tauri.conf.json': [
-    '"orden", "nib"',
-    '"/usr/bin/nib"',
-    '"/usr/share/Orden/nib"',
-  ],
-  'apps/desktop/src-tauri/tauri.macos.conf.json': ['"orden", "nib"'],
-  'apps/desktop/src/App.svelte': ['nibApp'],
-  'apps/desktop/src/lib/pane-tree/src/Editor.svelte': ["'nib'"],
-  'apps/desktop/src/lib/ai-chat/src/chat/tools.test.ts': ['ch.emilvinu.nib/answer'],
-  'apps/desktop/src/lib/ai-chat/src/chat/tools.ts': ['ch.emilvinu.nib/answer'],
-  'apps/desktop/src/lib/ai-chat/src/chat/wire.ts': ['|nib)'],
-  'apps/desktop/src/lib/ai-providers/src/local/claude.ts': ['|nib)'],
-  'apps/desktop/src/lib/ai-providers/src/local/codex.ts': ["'nib'"],
-  'apps/desktop/src/lib/ai-providers/src/local/gemini.ts': ['|nib)'],
-  'apps/desktop/src/lib/ai-chat/src/review/changes.test.ts': ['nib-anthropic'],
-  'apps/desktop/src/lib/ai-chat/src/review/changes.ts': ["'nib-'"],
-  'apps/desktop/src/lib/accounts/src/client.ts': ["'x-nib-device'"],
-  'apps/desktop/src/lib/apps/src/host.test.ts': ["'nib."],
-  'apps/desktop/src/lib/automation/src/eval.test.ts': ['nib.'],
-  'apps/desktop/src/lib/automation/src/eval.ts': ["'nib'"],
-  'apps/desktop/src/lib/automation/src/start.test.ts': ['nib://', "'nib')"],
-  'apps/desktop/src/lib/automation/src/start.ts': ["'nib'"],
-  'apps/desktop/src/lib/automation/src/uri.test.ts': ['nib:'],
-  'apps/desktop/src/lib/automation/src/uri.ts': ["'nib:'", 'web+nib'],
-  'apps/desktop/src/lib/link-index/src/canvas-rewrite.ts': ["'nib'"],
-  'apps/desktop/src/lib/chats-client/src/socket.test.ts': ["'nib."],
-  'apps/desktop/src/lib/chats-client/src/view/compose.test.ts': ['@NIB'],
-  'apps/desktop/src/lib/chats-client/src/view/compose.ts': ['|nib)'],
-  'apps/desktop/src/lib/onboarding/src/first-space.test.ts': ['Welcome to Nib', 'nib://'],
-  'apps/desktop/src/lib/platform/src/former-keys.test.ts': ["'nib"],
-  'apps/desktop/src/lib/platform/src/former-keys.ts': ["'nib:'", "'nib.'"],
-  'apps/desktop/src/lib/modes/src/modes.svelte.ts': ["'nib'"],
-  'apps/desktop/src/lib/modes/src/modes.test.ts': ["frame: 'nib'"],
-  'apps/desktop/src/lib/online-link/src/link.test.ts': ["'nib."],
-  'apps/desktop/src/lib/workspace/src/open-link.test.ts': ['NIB://'],
-  'apps/desktop/src/lib/workspace/src/open-link.ts': ['|nib)'],
-  'apps/desktop/src/lib/collab-rooms/src/carried.test.ts': ["'nib."],
-  'apps/desktop/src/lib/publishing/src/site-diagrams.test.ts': ['x-nib-diagram'],
-  'apps/desktop/src/lib/publishing/src/site-diagrams.ts': ["'x-nib-diagram'"],
-  'apps/desktop/src/lib/sync-mirror/src/aside.test.ts': ['.nib-moving-'],
-  'apps/desktop/src/lib/sync-mirror/src/mirror.test.ts': ['.nib-moving-'],
-  'apps/desktop/src/lib/sync-mirror/src/pass.ts': ['.nib-moving-'],
-  'apps/desktop/src/lib/sync-mirror/src/seed.test.ts': ["'Nib'"],
-  'apps/desktop/src/lib/sync-client/src/hub.test.ts': ["'nib."],
-  'apps/desktop/src/lib/sync-client/src/lead.ts': ["'nib-sync'"],
-  'apps/desktop/src/lib/sync-client/src/runner.svelte.ts': ['|nib)-moving'],
-  'apps/desktop/src/lib/sync-client/src/transport.test.ts': ['x-nib-device'],
-  'apps/desktop/src/lib/sync-client/src/transport.ts': ["'x-nib-device'"],
-  'apps/desktop/src/lib/theme/src/carried.test.ts': ['nib-'],
-  'apps/desktop/src/lib/theme/src/carried.ts': ['nib-'],
-  'apps/desktop/src/lib/web-tab/src/shortcut-former.test.ts': ['Nib-'],
-  'apps/desktop/src/lib/web-backend/src/web/carry-database.ts': ["'nib'"],
-  'apps/desktop/src/lib/web-backend/src/web/commands.test.ts': ['/.nib/'],
-  'apps/desktop/src/lib/web-backend/src/web/commands.ts': ['/.nib/'],
-  'apps/desktop/src/lib/web-backend/src/web/database-former.test.ts': ['nib'],
-  'apps/desktop/src/lib/handoff/src/handoff.test.ts': ['nib-handoff'],
-  'apps/desktop/src/lib/handoff/src/handoff.ts': ["'nib-handoff'", "'nib'"],
-  'apps/desktop/src/lib/web-backend/src/web/sw.test.ts': ["'nib'", 'nibNotice'],
-  'apps/desktop/src/lib/sync-client/src/browser-store.ts': ['nib-sync:'],
-  'apps/desktop/src/lib/sync-client/src/browser-store-former.test.ts': ['nib-sync:'],
-  'apps/desktop/src/lib/workspace/src/workspace.test.ts': ['Welcome to Nib'],
-  'apps/desktop/src/site/site.ts': ["'nib:site-theme'"],
-  'apps/desktop/test/android.test.ts': ['scheme="nib"'],
-  'apps/desktop/test/cli-args.test.ts': ['NIB_ENDPOINT'],
-  'apps/desktop/test/drive-handle.test.ts': ['nibApp', "'nib'"],
-  'apps/desktop/vite.config.ts': ['NIB_CLAUDE_CODE'],
-  'packages/bases/src/base-file.ts': ["'nib'", 'plain.nib'],
-  'packages/bases/src/base-former.test.ts': ['nib:'],
-  'packages/chats/src/links.test.ts': ['nib://'],
-  'packages/chats/src/links.ts': ['nib://'],
-  'packages/editor/src/ai/block.test.ts': ['nib:ai'],
-  'packages/editor/src/ai/block.ts': ['nib:ai'],
-  'packages/editor/src/copy.ts': ['data-nib'],
-  'packages/editor/src/links.test.ts': ['nib://'],
-  'packages/editor/src/links.ts': ['|nib)'],
-  'packages/markdown/src/canvas-extras.ts': ['file.nib', "'orden', 'nib'"],
-  'packages/markdown/src/canvas-former.test.ts': ['nib'],
-  'packages/markdown/src/canvas.ts': ['file.nib'],
-  'packages/online/src/apps.ts': ["HOST_PROTOCOL = 'nib.role.host'"],
-  'packages/rooms/src/wire.ts': ["TOKEN = 'nib.token.'"],
-  'packages/scan/src/own-pages.test.ts': ['nib://'],
-  'packages/scan/src/own-pages.ts': ['nib://'],
-  'packages/scan/src/scan-canvas.ts': ["'nib'"],
-  'packages/scan/src/shortcut.ts': ['/^nib-'],
-  'packages/scan/src/typed.test.ts': ['NIB://'],
-  'packages/scan/src/typed.ts': ["'nib',"],
-  'packages/scan/src/web-address.test.ts': ['nib://'],
-  'packages/scan/src/web-address.ts': ["'nib.localhost'", "'nib:'"],
-  'packages/sync-core/src/wire.ts': [
-    "ROOM_V2 = 'nib.v2'",
-    "TOKEN_PROTOCOL = 'nib.token.'",
-    "DEVICE_PROTOCOL = 'nib.device.'",
-  ],
-  'packaging/scoop/orden.json': ['"nib"'],
-  'scripts/account-backup.mjs': ['NIB_API', 'NIB_TOKEN', 'x-nib-device'],
-  'scripts/extensions-drive.py': ['nib.log'],
-  'scripts/heavy-launch-probe.py': ['nib.log'],
-  'scripts/nib-sync.mjs': ['orden-sync'],
-  'scripts/not-responding-probe.py': ['nib.log'],
-  'scripts/online-e2e.mjs': ['nib.token.', 'nib.device.'],
-  'scripts/orden-sync.mjs': ['NIB_API', 'NIB_TOKEN', '.nib-cursor'],
-  'scripts/sync-flip.mjs': ["'x-nib-device'"],
-  'scripts/wayland-launch.sh': ['nib.log'],
-  'scripts/web-freeze-probe.py': ['nib.log'],
-  'scripts/web-tab-drive.py': ['nib.log'],
-  'scripts/x11-launch.sh': ['nib.log'],
-  'services/machine/orden-update': ['NIB_ORIGIN'],
-  'services/machine/src/images-former.test.ts': ["'nib'"],
-  'services/machine/src/images.ts': ['.cache/nib/images', "'nib', 'images'"],
-  'services/machine/test/update.test.ts': ['NIB_ORIGIN'],
+  identifier: 6,
+  scheme: 19,
+  key: 56,
+  variable: 2,
+  dashed: 186,
+  word: 970,
 }
 
 describe('the old name inside the repo', () => {
@@ -198,22 +53,6 @@ describe('the old name inside the repo', () => {
       return now > most ? [`${kind}: ${now} written, at most ${most}`] : []
     })
     expect(over, over.join('\n')).toEqual([])
-  })
-
-  test(`keeps its aliases through one release: gone before ${ALIASES_GONE_BY} is tagged`, () => {
-    const missing = Object.keys(ALIASES).filter((path) => !existsSync(join(ROOT, path)))
-    expect(missing, `${missing.join(', ')} moved: name them anew`).toEqual([])
-    const shipped = execFileSync('git', ['tag', '--list', ALIASES_GONE_BY], {
-      cwd: ROOT,
-      encoding: 'utf8',
-    }).trim()
-    const left = shipped
-      ? Object.entries(ALIASES).flatMap(([path, needles]) => {
-          const text = readFileSync(join(ROOT, path), 'utf8')
-          return needles.filter((needle) => text.includes(needle)).map((one) => `${path}: ${one}`)
-        })
-      : []
-    expect(left, left.join('\n')).toEqual([])
   })
 
   test('is told apart by what is written around it', () => {

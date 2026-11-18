@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Page
@@ -133,5 +131,4 @@ def main() -> int:
             page.context.close()
     return DRIVE.verdict("AI suggestions in a note are undone and redone as one step each")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

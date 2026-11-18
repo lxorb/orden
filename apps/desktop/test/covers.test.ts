@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
+import { svelte, walk } from './files'
 import { COVERS } from '../src/lib/web-tab/src/covers'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
@@ -13,6 +14,7 @@ const RUNG =
 const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .fab': 'a touch screen only, which builds no native page',
   'lib/phone/src/PhoneTabs.svelte .new': 'a phone only, which builds no native page',
+  'lib/phone/src/TabGrid.svelte .grid-sheet': 'a touch screen only, which builds no native page',
   'App.svelte .notices': 'the row itself; each card in it is a layer of the registry',
   'App.svelte .notices.over': 'the same row, over a drawer: see .notices and .panels',
   'App.svelte .notices.above': 'the same row, over the tab overview: see .notices',
@@ -62,14 +64,6 @@ interface Node {
   name?: string
   attributes?: { type: string; name?: string; value?: unknown }[]
   [key: string]: unknown
-}
-
-function components(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return components(path)
-    return one.name.endsWith('.svelte') ? [path] : []
-  })
 }
 
 function classesOf(node: Node): string[] {
@@ -147,7 +141,7 @@ interface Found {
 
 function layersOfTheWindow(): Found[] {
   const found: Found[] = []
-  for (const path of components(SRC)) {
+  for (const path of walk(SRC, svelte)) {
     const file = path.slice(SRC.length).replaceAll('\\', '/')
     const source = readFileSync(path, 'utf8')
     const tree = parse(source, { modern: true })
@@ -207,21 +201,19 @@ test('nothing is excused that is in the registry after all, or is no layer any m
 })
 
 const PLACED_INSIDE: Record<string, string> = {
-  'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebAsk.svelte .ask':
+  'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebSite.svelte .site':
     'under a web tab’s bar, inside the tab it is about, which it never leaves',
-  'lib/web-tab/src/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebSite.svelte .site': 'under a web tab’s bar: see WebAsk',
 }
 
 test('every bubble is placed in the window, where nothing that holds it can cut it', () => {
   const OWN = new Set(['orden-bubble', 'is-pressable', 'orden-host'])
   const bubbles: string[] = []
   const cut: string[] = []
-  for (const path of components(SRC)) {
+  for (const path of walk(SRC, svelte)) {
     const file = path.slice(SRC.length).replaceAll('\\', '/')
     const source = readFileSync(path, 'utf8')
     const tree = parse(source, { modern: true })

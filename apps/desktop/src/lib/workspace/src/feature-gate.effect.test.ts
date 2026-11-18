@@ -27,17 +27,14 @@ describe('a feature turned on and off while the app runs', () => {
     )
     flushSync()
     expect(said).toEqual([])
-
     setWord(PASS_WORD, true)
     flushSync()
     expect(openPass()?.kind).toBe('pass')
     expect(said).toEqual(['run'])
-
     setWord(PASS_WORD, false)
     flushSync()
     expect(workspace.tabs.some((one) => one.kind === 'pass')).toBe(false)
     expect(said).toEqual(['run', 'off'])
-
     setWord(PASS_WORD, true)
     flushSync()
     setWord(PASS_WORD, false)
@@ -68,14 +65,12 @@ describe('a feature turned on and off while the app runs', () => {
     flushSync()
     expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(false)
     expect(said).toEqual([])
-
     setWord(CHATS_WORD, true)
     flushSync()
     workspace.openView('', 'Team', '/space/Team.chat', {}, 'channel')
     flushSync()
     expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(true)
     expect(said).toEqual(['run'])
-
     setWord(CHATS_WORD, false)
     flushSync()
     expect(workspace.tabs.some((one) => one.kind === 'channel')).toBe(false)

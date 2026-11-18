@@ -1,20 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const asked = vi.hoisted(() => [] as { command: string; args?: unknown }[])
@@ -25,9 +13,8 @@ const homes = vi.hoisted(() => ({
 }))
 const relaunched = vi.hoisted(() => ({ count: 0 }))
 vi.mock('@tauri-apps/plugin-process', () => ({
-  relaunch: () => {
+  relaunch: async () => {
     relaunched.count++
-    return Promise.resolve()
   },
 }))
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
@@ -49,7 +36,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 const { finishFormerHome, formerSaid, HOME_CARRIED } = await import('./former-home')
 
 const SCRIPT = readFileSync(
-  join(import.meta.dirname, '../../../../src-tauri/src/former.js'),
+  join(import.meta.dirname, '../../../../src-tauri/crates/carry/src/former.js'),
   'utf8',
 )
 
@@ -174,9 +161,7 @@ describe.each([
   test('keeps every item’s metadata and the chosen inbox', async () => {
     oldProfile(profile)
     homes.said = [profile.base]
-
     expect(await start()).toBe(false)
-
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md']) {
       expect(meta.itemsOf(now)[path]).toBeDefined()
@@ -194,9 +179,7 @@ describe.each([
     oldProfile(profile)
     startedAfterTheMove(profile)
     homes.said = [profile.base]
-
     expect(await start()).toBe(false)
-
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md', 'Inbox today.md']) {
       expect(meta.itemsOf(now)[path]).toBeDefined()
@@ -217,16 +200,13 @@ describe('a browser profile an early start made beside the old one', () => {
     localStorage.setItem('orden:font', 'Lato')
     homes.said = [mac.base]
     homes.waiting = true
-
     expect(await start()).toBe(true)
     expect(relaunched.count).toBe(1)
     expect(homes.dumped).not.toBeNull()
-
     localStorage.clear()
     oldProfile(mac)
     localStorage.setItem('orden:font', 'Inter')
     homes.waiting = false
-
     expect(await start()).toBe(false)
     expect(homes.dumped).toBeNull()
     const meta = new ItemMetaStore(() => now)
@@ -241,7 +221,6 @@ describe('a browser profile an early start made beside the old one', () => {
     homes.waiting = true
     homes.dumped = '{}'
     localStorage.setItem('orden:font', 'Lato')
-
     expect(await start()).toBe(false)
     expect(relaunched.count).toBe(0)
     expect(JSON.parse(homes.dumped)).toEqual({ 'orden:font': 'Lato' })
@@ -252,7 +231,6 @@ describe('carrying the former home', () => {
   test('happens once, and a profile with nothing under the old name reloads nothing', async () => {
     homes.said = [mac.base]
     localStorage.setItem('orden:theme', 'dark')
-
     expect(await start()).toBe(false)
     expect(localStorage.getItem(HOME_CARRIED)).toBe('1')
     asked.length = 0
@@ -264,7 +242,6 @@ describe('carrying the former home', () => {
     oldProfile(mac)
     homes.said = [mac.base]
     pageStarts(said())
-
     expect(formerSaid()?.carried).toBe(true)
     vi.stubGlobal('__ORDEN_FORMER__', undefined)
     expect(formerSaid()).toBeNull()
@@ -273,7 +250,6 @@ describe('carrying the former home', () => {
   test('is not marked done by a build that has no former home, so the update still carries it', async () => {
     homes.said = []
     oldProfile(mac)
-
     expect(await start()).toBe(false)
     expect(localStorage.getItem(HOME_CARRIED)).toBeNull()
     homes.said = [mac.base]

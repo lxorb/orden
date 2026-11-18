@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -114,5 +112,4 @@ def drive(browser: Browser) -> None:
             say(f"ok   [{label}] panned under it, the bubbles stay clear of the buttons at the top")
         page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "nothing floats over the overview, and its buttons stay clear of the bubbles"))
+raise SystemExit(DRIVE.run(drive, "nothing floats over the overview, and its buttons stay clear of the bubbles"))

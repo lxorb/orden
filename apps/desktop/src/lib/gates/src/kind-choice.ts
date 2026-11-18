@@ -1,4 +1,4 @@
-import { account, api, type AccountSettings } from '../../accounts/src/api'
+import { AccountOwed, type AccountSettings } from '../../accounts/src/api'
 import {
   chosenOn,
   gated,
@@ -9,6 +9,11 @@ import {
   shownOf,
 } from './gates.svelte'
 import { forget, isString, keepJson } from '../../platform/src/api'
+
+const OWED_KEY = 'orden:kinds-owed'
+
+let owed: AccountOwed | null = null
+const owing = () => (owed ??= new AccountOwed(OWED_KEY))
 
 const MOST_KINDS = 32
 const KIND = /^[a-z][a-z-]{0,23}$/
@@ -54,6 +59,10 @@ export function setWord(word: string, on: boolean) {
 
 export function receive(remote: AccountSettings) {
   const theirs = remote.hiddenKinds
+  if (owing().standing) {
+    share()
+    return
+  }
   if (theirs === undefined) {
     if (hiddenKinds.hidden.length) share()
     return
@@ -73,10 +82,6 @@ function settle() {
 }
 
 function share() {
-  const token = account.accountToken
-  if (!token) return
-
   const hidden = hiddenKinds.hidden
-  const list = hidden.length ? [...hidden] : null
-  void api.saveSettings(token, { hiddenKinds: list }).catch(() => undefined)
+  owing().send({ hiddenKinds: hidden.length ? [...hidden] : null })
 }

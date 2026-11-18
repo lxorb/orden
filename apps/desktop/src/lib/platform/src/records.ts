@@ -1,8 +1,7 @@
 import { isRecord, isString, stored } from './stored'
 
-export function without<T>(record: Record<string, T>, key: string): Record<string, T> {
-  return Object.fromEntries(Object.entries(record).filter(([one]) => one !== key))
-}
+export const without = <T>(record: Record<string, T>, key: string): Record<string, T> =>
+  Object.fromEntries(Object.entries(record).filter(([one]) => one !== key))
 
 export function filledIn<T>(
   record: Record<string, T>,

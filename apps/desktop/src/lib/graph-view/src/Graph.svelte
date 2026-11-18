@@ -41,18 +41,12 @@
   if (!__EVEN_PLUGIN__) void hinting().then(({ hints }) => hints.dismiss('graph'))
 
   const A_FRAME = 6
-
   const A_SETTLE = 10
-
   const A_CLICK = 3
-
   const PADDING = 24
-
   const A_LAPSE = 6000
-
   let host = $state<HTMLElement>()
   let canvas = $state<HTMLCanvasElement>()
-
   let layout: Layout | null = null
   let radii = new Float64Array(0)
   let lit = new Uint8Array(0)
@@ -64,7 +58,6 @@
   let height = 0
   let ratio = 1
   let hovered = -1
-
   let frame = 0
   let touched = false
   let panning = $state(false)
@@ -74,17 +67,13 @@
   let lastY = 0
   let travelled = 0
   const fingers = new Fingers()
-
   let carding = $state(false)
   let at = $state<number | null>(null)
   let playing = $state(false)
   let started = 0
   let startedAt = 0
-
   const settings = $derived(workspace.graphSettings.here)
-
   const asked = $derived(whole ? settings.filter.trim() : '')
-
   const filter = $derived<Keeps | null>(asked ? graphFilter(parseQuery(asked)) : null)
 
   const groups = $derived(
@@ -131,7 +120,6 @@
   )
 
   const arrangedBy = $derived(`${pushedBy}\n${shape}`)
-
   const follows = (_value: unknown) => undefined
 
   $effect(() => {

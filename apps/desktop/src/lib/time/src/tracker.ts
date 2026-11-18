@@ -24,7 +24,6 @@ interface Open {
 }
 
 export const GAP = 90_000
-
 export const WRITE_EVERY = 60_000
 
 export class Tracker {

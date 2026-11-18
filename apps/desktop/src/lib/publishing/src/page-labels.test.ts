@@ -10,7 +10,7 @@ Object.assign(SVGElement.prototype, {
 })
 
 const { drawDiagram } = await import('../../fences/src/diagrams')
-const { diagramSvg } = await import('@orden/editor')
+const { mermaidSvg } = await import('@orden/editor')
 const { asFile } = await import('./site-diagrams')
 
 const FENCE = 'flowchart TD\n  A[Start here] --> B[Finish line]'
@@ -29,7 +29,10 @@ test('a published diagram drawn on its own keeps its words', async () => {
 test('a published diagram drawn while the editor draws a diagram keeps its words', async () => {
   const [page] = await Promise.all([
     drawDiagram(FENCE, 'mermaid', 'light', 'page'),
-    diagramSvg('flowchart TD\n  X[In the editor]', 'mermaid'),
+    mermaidSvg('orden-diagram-editor', 'flowchart TD\n  X[In the editor]', {
+      htmlLabels: true,
+      dompurifyConfig: {},
+    }),
   ])
   const file = asFile(page) ?? ''
   expect(wordsIn(file)).toContain('Start here')

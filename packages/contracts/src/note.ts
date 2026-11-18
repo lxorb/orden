@@ -28,16 +28,7 @@ export interface Heading {
   readonly line: number
 }
 
-export interface HeldEditPort {
-  readonly flush: () => void
-}
-
-export interface NotePorts {
-  readonly 'edits.held': HeldEditPort
-}
-
 export const UNTITLED = 'Untitled'
 
-export function unixLines(text: string): string {
-  return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text
-}
+export const unixLines = (text: string): string =>
+  text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text

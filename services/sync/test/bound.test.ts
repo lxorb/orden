@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { purgeExpired } from '../src/sync-server/src/trash'
+import { purgeExpired } from '../src/sync-server-engine/src/trash'
 import { MOST_BOUND } from '../src/sync-server/src/bound'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
@@ -101,7 +101,7 @@ test('recording the many PDFs a space keeps', async () => {
   withinTheLimit()
 })
 
-test('purging a space of many notes', async () => {
+async function bigDeletedSpace(): Promise<string> {
   const space = (await call(env, '/v1/spaces', { token, body: { name: 'Big' } })).json.space.id
 
   for (let at = 0; at < 600; at++) {
@@ -115,13 +115,46 @@ test('purging a space of many notes', async () => {
     await env.NOTES.put(`spaces/${space}/${id}`, 'x')
   }
 
-  await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
-  await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
+  expect((await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })).status).toBe(200)
+  return space
+}
+
+test('purging a space of many notes', async () => {
+  const space = await bigDeletedSpace()
+  const purged = await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
+  expect(purged.status).toBe(200)
   withinTheLimit()
 
   env.db.prepare('update spaces set deleted_at = 1 where id = ?').run(space)
   await purgeExpired(env, Date.now())
   withinTheLimit()
+  expect(env.db.prepare('select count(*) as n from notes where space_id = ?').get(space)).toEqual({
+    n: 0,
+  })
+})
+
+test('a space purged by hand that takes more than one go says so until it is gone', async () => {
+  const space = await bigDeletedSpace()
+  const left = () => env.db.prepare('select count(*) as n from notes where space_id = ?').get(space)
+
+  const first = await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
+  expect(first.json).toEqual({ ok: true, more: true })
+  expect(left()).toEqual({ n: 100 })
+
+  const second = await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
+  expect(second.json).toEqual({ ok: true, more: false })
+  expect(left()).toEqual({ n: 0 })
+  expect(env.db.prepare('select deleted_at from spaces where id = ?').get(space)).toEqual({
+    deleted_at: null,
+  })
+
+  const again = await bigDeletedSpace()
+  const emptied = await call(env, '/v1/trash', { method: 'DELETE', token })
+  expect(emptied.json).toEqual({ ok: true, more: true })
+  expect((await call(env, '/v1/trash', { method: 'DELETE', token })).json.more).toBe(false)
+  expect(env.db.prepare('select count(*) as n from notes where space_id = ?').get(again)).toEqual({
+    n: 0,
+  })
 })
 
 test('deleting an account of many spaces, notes and pictures', async () => {

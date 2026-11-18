@@ -83,11 +83,8 @@ function itemAbove(state: EditorState, number: number, depth: number): Item | nu
   return null
 }
 
-function itemLines(state: EditorState): boolean {
-  return selectedLines(state).some(
-    (line) => itemOf(line.text) !== null && !inCode(state, line.from),
-  )
-}
+const itemLines = (state: EditorState): boolean =>
+  selectedLines(state).some((line) => itemOf(line.text) !== null && !inCode(state, line.from))
 
 function hanging(state: EditorState, line: Line, item: Item): Line[] {
   const held: Line[] = []

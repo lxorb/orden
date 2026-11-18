@@ -1,21 +1,7 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import { defaultKeyFor } from '@orden/editor'
 import { parseCombination, type Platform, sameCombination } from '../../ui-kit/src/keys'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
@@ -45,7 +31,6 @@ describe('every keyboard there is', () => {
     const ids = presets.PRESETS.map((one) => one.id)
     expect(new Set(ids).size).toBe(ids.length)
     expect(ids).toContain('default')
-    expect(ids).toContain('vim')
   })
 
   test('is every name the launch knows, in the same order', () => {
@@ -56,15 +41,13 @@ describe('every keyboard there is', () => {
     expect(presets.presetById('default')?.keys).toEqual({})
   })
 
-  test('is modal editing only where it says so', () => {
-    expect(presets.presetById('vim')?.vim).toBe(true)
-    expect(presets.presetById('obsidian')?.vim).toBe(false)
-    expect(presets.presetById('notion')?.vim).toBe(false)
-    expect(presets.presetById('vscode')?.vim).toBe(false)
+  test('is keys only, and Vim is the Vim keys switch rather than a keyboard of its own', () => {
+    expect(presets.presetById('vim')).toBeUndefined()
+    expect(names.knownPreset('vim')).toBe('default')
   })
 })
 
-describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboard', (id) => {
+describe.each(['default', 'notion', 'obsidian', 'vscode'])('the %s keyboard', (id) => {
   const keysOf = () => presets.presetById(id)?.keys ?? {}
 
   test('names only shortcuts the app has', () => {
@@ -169,7 +152,7 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
   })
 })
 
-describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboard', (id) => {
+describe.each(['default', 'notion', 'obsidian', 'vscode'])('the %s keyboard', (id) => {
   test('opens the commands on Ctrl+Shift+P, and leaves Paragraph no key', () => {
     const keys = presets.presetById(id)?.keys ?? {}
 
@@ -239,7 +222,7 @@ describe('the Obsidian keyboard', () => {
 })
 
 describe('Ctrl+D', () => {
-  test.each(['default', 'vim'])('deselects the tab under %s, and nothing else holds it', (id) => {
+  test.each(['default'])('deselects the tab under %s, and nothing else holds it', (id) => {
     const keys = presets.presetById(id)?.keys ?? {}
 
     for (const platform of PLATFORMS) {
@@ -263,7 +246,7 @@ describe('Ctrl+D', () => {
     }
   })
 
-  test.each(['default', 'vim', 'vscode', 'obsidian', 'notion'])(
+  test.each(['default', 'vscode', 'obsidian', 'notion'])(
     'puts every pane down on Ctrl+Shift+D under %s',
     (id) => {
       const keys = presets.presetById(id)?.keys ?? {}
@@ -401,7 +384,7 @@ describe('the VS Code keyboard', () => {
 })
 
 describe('Ctrl+P', () => {
-  test.each(['default', 'vim'])('prints under %s, and the palette is not on it', (id) => {
+  test.each(['default'])('prints under %s, and the palette is not on it', (id) => {
     const keys = presets.presetById(id)?.keys ?? {}
     expect(keys['app.print']).toBeUndefined()
     expect(registry.BY_ID.get('app.print')?.key).toBe('Mod-p')

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from harness import Drive
@@ -152,5 +150,4 @@ def main() -> int:
     (SHOTS / "found.json").write_text(json.dumps(found, indent=2), encoding="utf8")
     return DRIVE.verdict()
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

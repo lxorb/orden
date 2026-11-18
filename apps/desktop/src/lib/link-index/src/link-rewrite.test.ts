@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import type { FoundLink } from '@orden/markdown/links'
-import { rewriteLinks } from './link-rewrite'
+import { findLinks, type FoundLink } from '@orden/markdown/links'
+import { retargetLinks, rewriteLinks } from './link-rewrite'
 
 const pointsAt = (wanted: string) => (link: FoundLink) =>
   link.target
@@ -122,20 +122,18 @@ describe('rewriting a markdown link', () => {
   })
 })
 
-describe('code the page draws is never rewritten', () => {
-  test('a fence in a callout, indented code, and code in a list item', () => {
-    for (const note of [
-      '> [!example] Linking\n> ```md\n> See [[Plan]] for more.\n> ```\n',
-      'Write it like this:\n\n    [[Plan]]\n',
-      '- step\n\n      [[Plan]]\n',
-      '- step\n  ```\n  [[Plan]]\n  ```\n',
-    ]) {
-      expect(rewriteLinks(note, 'Note.md', move, pointsAt('Plan')), note).toBeNull()
-    }
-    expect(rewriteLinks('> See [[Plan]]\n', 'Note.md', move, pointsAt('Plan'))).toBe(
-      '> See [[Roadmap]]\n',
-    )
-  })
+test('code the page draws is never rewritten a fence in a callout, indented code, and code in a list item', () => {
+  for (const note of [
+    '> [!example] Linking\n> ```md\n> See [[Plan]] for more.\n> ```\n',
+    'Write it like this:\n\n    [[Plan]]\n',
+    '- step\n\n      [[Plan]]\n',
+    '- step\n  ```\n  [[Plan]]\n  ```\n',
+  ]) {
+    expect(rewriteLinks(note, 'Note.md', move, pointsAt('Plan')), note).toBeNull()
+  }
+  expect(rewriteLinks('> See [[Plan]]\n', 'Note.md', move, pointsAt('Plan'))).toBe(
+    '> See [[Roadmap]]\n',
+  )
 })
 
 describe('renaming a note to a name a wikilink cannot say', () => {
@@ -156,6 +154,13 @@ describe('renaming a note to a name a wikilink cannot say', () => {
     )
     expect(rewriteLinks('![[Plan]]', 'Note.md', to, pointsAt('plan'))).toBe(
       '![C# basics](f/C%23%20basics.md)',
+    )
+  })
+
+  test('keeps the alias a link reached it by as the words it shows', () => {
+    const placed = { path: 'f/C# basics.md', reaches: () => false, shown: 'Shortcut' }
+    expect(retargetLinks('a [[Shortcut]] b', 'Note.md', () => placed)).toBe(
+      'a [Shortcut](f/C%23%20basics.md) b',
     )
   })
 
@@ -201,4 +206,137 @@ describe('a link that changes spelling keeps what it could say', () => {
     )
     expect(rewriteLinks('![[Old.png|300]]', 'N.md', png, points)).toBe('![\\|300](C%23.png)')
   })
+})
+
+describe('a link in quoted front matter', () => {
+  const quoted = (to: string) => ({ from: 'Plan.md', to })
+
+  test('a new name with an apostrophe moves a single-quoted value into double quotes', () => {
+    const text = "---\nup: '[[Plan]]'\n---\nbody"
+    expect(rewriteLinks(text, 'One.md', quoted("Bob's plan.md"), pointsAt('plan'))).toBe(
+      '---\nup: "[[Bob\'s plan]]"\n---\nbody',
+    )
+  })
+
+  test('a new name with quotes or backslashes moves a double-quoted value into single quotes', () => {
+    const text = '---\nrel: "[[Plan]]"\nlist:\n  - "[[Plan|p]]"\n---\nbody'
+    expect(rewriteLinks(text, 'One.md', quoted('Say "hi" \\ there.md'), pointsAt('plan'))).toBe(
+      '---\nrel: \'[[Say "hi" \\ there]]\'\nlist:\n  - \'[[Say "hi" \\ there|p]]\'\n---\nbody',
+    )
+  })
+
+  test('a value that cannot change its quotes escapes the new name as its quotes need', () => {
+    const text = '---\nup: \'[[Plan]] "x"\'\nrel: "[[Plan]] it\'s"\n---\n'
+    expect(rewriteLinks(text, 'One.md', quoted('Bob\'s "plan".md'), pointsAt('plan'))).toBe(
+      '---\nup: \'[[Bob\'\'s "plan"]] "x"\'\nrel: "[[Bob\'s \\"plan\\"]] it\'s"\n---\n',
+    )
+  })
+
+  test('an escaped new name is read back as the name and renamed again cleanly', () => {
+    const text = '---\nup: \'[[Plan]] "x"\'\nrel: "[[Plan]] it\'s"\n---\n'
+    const once = rewriteLinks(text, 'One.md', quoted('Bob\'s "plan".md'), pointsAt('plan')) ?? ''
+    expect(findLinks(once).map((link) => link.target)).toEqual(['Bob\'s "plan"', 'Bob\'s "plan"'])
+    const back = (link: FoundLink) => link.target === 'Bob\'s "plan"'
+    expect(rewriteLinks(once, 'One.md', { from: 'Bob\'s "plan".md', to: 'Plan.md' }, back)).toBe(
+      text,
+    )
+  })
+
+  test('the same name in the body and in a plain value is written as it is', () => {
+    const text = "---\nup: [[Plan]]\n---\n[[Plan]] 'x'"
+    expect(rewriteLinks(text, 'One.md', quoted("Bob's plan.md"), pointsAt('plan'))).toBe(
+      "---\nup: [[Bob's plan]]\n---\n[[Bob's plan]] 'x'",
+    )
+  })
+
+  test('apostrophes in a plain value are words, not quotes', () => {
+    const text = "---\nnote: Bob's [[Plan]] and Jim's\n---\n"
+    expect(rewriteLinks(text, 'One.md', quoted("O'Neil.md"), pointsAt('plan'))).toBe(
+      "---\nnote: Bob's [[O'Neil]] and Jim's\n---\n",
+    )
+  })
+
+  test('each link of a flow list keeps to its own quotes', () => {
+    const text = "---\nrel: ['[[Plan]]', \"[[Plan]]\", '[[Other]]']\n---\n"
+    expect(rewriteLinks(text, 'One.md', quoted("It's.md"), pointsAt('plan'))).toBe(
+      '---\nrel: ["[[It\'s]]", "[[It\'s]]", \'[[Other]]\']\n---\n',
+    )
+  })
+
+  test('a name that needs no escaping leaves the quotes as they were', () => {
+    const text = "---\nup: '[[Plan]]'\n---\n"
+    expect(rewriteLinks(text, 'One.md', quoted('Roadmap.md'), pointsAt('plan'))).toBe(
+      "---\nup: '[[Roadmap]]'\n---\n",
+    )
+  })
+})
+
+describe('a link in plain front matter', () => {
+  const renamed = (to: string) => ({ from: 'Plan.md', to: `${to}.md` })
+
+  test.each(['@Alice', 'a{b}', '%20', '*x', 'a, b', 'a: b'])(
+    'a new name %s that plain YAML cannot hold is quoted, in a value and in a list',
+    (name) => {
+      const text = '---\nup: [[Plan]]\nlist:\n  - [[Plan]]\n---\n[[Plan]]'
+      const out = rewriteLinks(text, 'One.md', renamed(name), pointsAt('plan')) ?? ''
+      expect(out).toBe(`---\nup: "[[${name}]]"\nlist:\n  - "[[${name}]]"\n---\n[[${name}]]`)
+      expect(findLinks(out).map((link) => link.target)).toEqual([name, name, name])
+    },
+  )
+
+  test('a link written as markdown for a name with a hash is quoted', () => {
+    const text = '---\nup: [[Plan]]\nnote: see [[Plan]] first\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('Issue #12'), pointsAt('plan'))).toBe(
+      '---\nup: "[Issue #12](Issue%20%2312.md)"\nnote: "see [Issue #12](Issue%20%2312.md) first"\n---\n',
+    )
+  })
+
+  test('a quoted name with double quotes takes single quotes', () => {
+    const text = '---\nup: [[Plan]]\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('@"x"'), pointsAt('plan'))).toBe(
+      '---\nup: \'[[@"x"]]\'\n---\n',
+    )
+  })
+
+  test('a name plain YAML holds stays plain', () => {
+    const text = '---\nup: [[Plan]]\nlist:\n  - [[Plan|p]]\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('Road map 2'), pointsAt('plan'))).toBe(
+      '---\nup: [[Road map 2]]\nlist:\n  - [[Road map 2|p]]\n---\n',
+    )
+  })
+
+  test.each([
+    '---\nup: [[Plan]]\nsummary: |\n  hello [[Plan]] there\n---\n',
+    '---\nup: [[Plan]]\ntitle: a long [[Plan]]\n  that goes on\n---\n',
+  ])(
+    'a plain value is quoted beside a value that runs over lines, which is left as it is',
+    (text) => {
+      const out = rewriteLinks(text, 'One.md', renamed('@Alice'), pointsAt('plan')) ?? ''
+      expect(out.split('\n').slice(0, 3)).toEqual([
+        '---',
+        'up: "[[@Alice]]"',
+        text.split('\n')[2]?.replace('[[Plan]]', '[[@Alice]]'),
+      ])
+      expect(out.split('\n')[3]).toBe(text.split('\n')[3]?.replace('[[Plan]]', '[[@Alice]]'))
+    },
+  )
+
+  test('a value that was not plain YAML before is left as it was', () => {
+    const text = '---\nrel: [[[Plan]], [[Other]]]\ntext: |\n  see [[Plan]]\n---\n'
+    expect(rewriteLinks(text, 'One.md', renamed('@Alice'), pointsAt('plan'))).toBe(
+      '---\nrel: [[[@Alice]], [[Other]]]\ntext: |\n  see [[@Alice]]\n---\n',
+    )
+  })
+})
+
+describe('a new name that reads as a file a tab opens', () => {
+  test.each(['Ideas.canvas', 'Report.pdf', 'Book.pages', 'Site.url', 'Table.base'])(
+    'a wikilink to a note renamed %s.md keeps the .md that makes it a note',
+    (name) => {
+      const text = 'see [[Plan]], [[Plan|p]] and [p](Plan.md)'
+      expect(
+        rewriteLinks(text, 'One.md', { from: 'Plan.md', to: `${name}.md` }, pointsAt('plan')),
+      ).toBe(`see [[${name}.md]], [[${name}.md|p]] and [p](${name}.md)`)
+    },
+  )
 })

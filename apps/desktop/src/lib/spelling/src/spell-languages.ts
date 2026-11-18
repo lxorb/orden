@@ -25,7 +25,6 @@ export const DICTIONARIES: readonly Dictionary[] = [
 ]
 
 const KNOWN = new Set(DICTIONARIES.map((one) => one.id))
-
 export const choosable = isDesktop && platform() === 'linux'
 
 export function dictionaryFor(tag: string, preferred: readonly string[] = []): string {
@@ -67,16 +66,8 @@ export function toggled(chosen: readonly string[], id: string, on: boolean): str
   return DICTIONARIES.map((one) => one.id).filter((one) => next.includes(one))
 }
 
-export function machineLanguages(): readonly string[] {
-  return typeof navigator === 'undefined' ? [] : navigator.languages
-}
-
-export function chosenOf(saved: unknown): string[] {
-  if (!Array.isArray(saved)) return []
-  return [
-    ...new Set(saved.filter((one): one is string => typeof one === 'string' && KNOWN.has(one))),
-  ]
-}
+export const machineLanguages = (): readonly string[] =>
+  typeof navigator === 'undefined' ? [] : navigator.languages
 
 export function tellEngine(languages: readonly string[]): void {
   if (!choosable) return

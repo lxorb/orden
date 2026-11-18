@@ -10,8 +10,8 @@ on:
       - apps/desktop/src-tauri/wix/**
       - apps/desktop/src-tauri/tauri.conf.json
       - apps/desktop/src-tauri/tauri.macos.conf.json
-      - apps/desktop/src-tauri/src/bundle_name.rs
-      - apps/desktop/src-tauri/src/default_browser.rs
+      - apps/desktop/src-tauri/crates/system/src/bundle_name.rs
+      - apps/desktop/src-tauri/crates/system/src/default_browser.rs
       - apps/desktop/src-tauri/tauri.windows.conf.json
       - apps/desktop/src-tauri/Info.plist
       - apps/desktop/src-tauri/icons/documents/**
@@ -56,6 +56,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
+          env-vars: ImageVersion
           workspaces: |
             apps/desktop/src-tauri
           key: upgrade-${{ matrix.label }}

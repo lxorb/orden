@@ -11,9 +11,7 @@ export const HEADING_LEVEL: Readonly<Record<string, number>> = {
   ATXHeading6: 6,
 }
 
-export function headingLevel(name: string): number | null {
-  return HEADING_LEVEL[name] ?? null
-}
+export const headingLevel = (name: string): number | null => HEADING_LEVEL[name] ?? null
 
 export { headingText } from '@orden/markdown/links'
 

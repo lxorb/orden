@@ -1,6 +1,6 @@
 import type { Who } from '@orden/chats'
 import type { ChatMember } from '../shapes'
-import { FixtureChats, fixtureFile } from './fixture.svelte'
+import { FixtureChats, fixtureFile, randomFrom } from './fixture.svelte'
 
 const EMIL: Who = 'user:emil'
 export const LUCILE: Who = 'user:lucile'
@@ -25,11 +25,7 @@ function voice(random: () => number): number[] {
 export function seeded(now = Date.now()): { store: FixtureChats; thesis: string; general: string } {
   let at = now
   const store = new FixtureChats(EMIL, { seed: 11, now: () => at })
-  let state = 7
-  const random = () => {
-    state = (state * 1664525 + 1013904223) >>> 0
-    return state / 2 ** 32
-  }
+  const random = randomFrom(7)
   const thesis = store.add('thesis', TEAM, {
     meta: { topic: 'Chapters, deadlines, the defence', posting: 'writers', slowmode: 0 },
   })

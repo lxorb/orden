@@ -2,6 +2,7 @@ import { settingsPartsIn } from '@orden/contracts'
 import { account } from '../../accounts/src/api'
 import type { Place } from './settings-search'
 import { isDesktop } from '../../platform/src/api'
+import { sectionGroups } from './sections'
 
 export function places(): Place[] {
   const all: Place[] = [
@@ -68,5 +69,6 @@ export function places(): Place[] {
     })
   }
 
-  return all
+  const shown = new Set(sectionGroups().flatMap((group) => group.map((one) => one.id)))
+  return all.filter((place) => shown.has(place.section))
 }

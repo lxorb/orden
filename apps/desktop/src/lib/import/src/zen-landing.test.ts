@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import { toBase64 } from '../../platform/src/bytes'
 import { writeShortcut } from '@orden/scan/shortcut'
 import type { Planned } from './plan'
@@ -7,13 +6,10 @@ import { mozLz4Of, SIDEBAR } from './zen.fixture'
 import { ZEN_1_17, ZEN_1_17_PLACES } from './zen-versions.fixture'
 
 const disk = new Map<string, string>()
-
 const written: { root: string; files: Planned[] }[] = []
-
 const spaces: { id: string; name: string; root: string }[] = []
 const done: string[] = []
 const marks: { kind: string; path: string; text: string }[] = []
-
 let sidebar: unknown = SIDEBAR
 let firefoxSession: unknown = null
 let places: unknown = null
@@ -68,6 +64,9 @@ vi.mock('../../workspace/src/api', () => {
   return {
     workspace: {
       spaces,
+      get files() {
+        return [...disk.keys()].map((path) => ({ path, name: path.split('/').pop() ?? path }))
+      },
       get activeSpaceId() {
         return active
       },
@@ -167,6 +166,22 @@ describe('Zen brought into Orden', () => {
     expect(marks).toHaveLength(1)
   })
 
+  test('does not bring a tab again whose title changed, beside the shortcut it made of it', async () => {
+    await landZen(PROFILE)
+    const board = disk.get('/spaces/Work/Board.url') ?? ''
+    disk.delete('/spaces/Work/Board.url')
+    disk.set('/spaces/Work/Board (3).url', board)
+    disk.set(
+      '/spaces/Work/Docs/Board.url',
+      writeShortcut('https://elsewhere.example.com/', 'B', new Date()),
+    )
+    written.length = 0
+
+    await landZen(PROFILE)
+
+    expect(written).toEqual([])
+  })
+
   test('finds the space it made again where the name it asked for was not a folder name', async () => {
     sidebar = {
       ...SIDEBAR,
@@ -191,28 +206,24 @@ describe('Zen brought into Orden', () => {
   })
 })
 
-describe('a Zen up to 1.17 brought into Orden', () => {
-  test('takes its spaces and its Essentials out of Places, which its session lacks', async () => {
-    firefoxSession = ZEN_1_17
-    places = ZEN_1_17_PLACES
+test('a Zen up to 1.17 brought into Orden takes its spaces and its Essentials out of Places, which its session lacks', async () => {
+  firefoxSession = ZEN_1_17
+  places = ZEN_1_17_PLACES
 
-    const first = await landZen({ ...PROFILE, files: ['sessionstore.jsonlz4', 'places.sqlite'] })
+  const first = await landZen({ ...PROFILE, files: ['sessionstore.jsonlz4', 'places.sqlite'] })
 
-    expect(first.name).toBe('Home')
-    expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work'])
-    expect(marks.map((one) => one.path)).toEqual(['Mail.url', 'Calendar.url', 'Chat.url'])
-  })
+  expect(first.name).toBe('Home')
+  expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work'])
+  expect(marks.map((one) => one.path)).toEqual(['Mail.url', 'Calendar.url', 'Chat.url'])
 })
 
-describe('a space of the same name shared to be read', () => {
-  test('is passed over, while the rest still land', async () => {
-    spaces.push({ id: 'Work', name: 'Work', root: '/spaces/Work' })
-    readOnly.add('/spaces/Work')
+test('a space of the same name shared to be read is passed over, while the rest still land', async () => {
+  spaces.push({ id: 'Work', name: 'Work', root: '/spaces/Work' })
+  readOnly.add('/spaces/Work')
 
-    const first = await landZen(PROFILE)
+  const first = await landZen(PROFILE)
 
-    expect(first.name).toBe('Home')
-    expect(written.map((one) => one.root)).toEqual(['/spaces/Home'])
-    expect(done.filter((one) => one.includes('/spaces/Work') || one.includes('Work '))).toEqual([])
-  })
+  expect(first.name).toBe('Home')
+  expect(written.map((one) => one.root)).toEqual(['/spaces/Home'])
+  expect(done.filter((one) => one.includes('/spaces/Work') || one.includes('Work '))).toEqual([])
 })

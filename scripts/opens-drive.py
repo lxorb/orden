@@ -10,12 +10,11 @@ import subprocess
 import sys
 import threading
 import time
-import urllib.request
 from pathlib import Path
 from urllib.parse import unquote
+from linux_app import run
 
 DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 POINTER = OUT / "pointer.fifo"
 PAGES = 8770
 SITE = f"http://127.0.0.1:{PAGES}"
@@ -60,7 +59,7 @@ TABS = {
     "sandboxed",
 }
 
-WEB_TABS = "nib.workspace.tabs.filter((tab) => tab.kind === 'web').length"
+WEB_TABS = "orden.workspace.tabs.filter((tab) => tab.kind === 'web').length"
 
 BUTTON = "display:block;box-sizing:border-box;width:100%;height:30px;margin:0 0 2px;font:14px sans-serif"
 OPENER = f"""<!doctype html><title>opener</title>
@@ -142,36 +141,6 @@ class Pages(http.server.BaseHTTPRequestHandler):
 class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
-def run(code, timeout=10):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=timeout) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
 
 if DESK == "sway":
 
@@ -265,7 +234,7 @@ for _ in range(60):
     time.sleep(0.5)
 run("(orden.workspace.openWebsite(), 'opened')")
 time.sleep(0.5)
-OWN = run("nib.workspace.activeTabId")
+OWN = run("orden.workspace.activeTabId")
 for _ in range(10):
     run(f"(orden.pages.go({json.dumps(OWN)}, '{SITE}/opener'), 'sent')")
     time.sleep(3)
@@ -296,7 +265,7 @@ for case, wanted in CASES.items():
     press(left + (place["x"] + at[0]) * RATIO, top + (place["y"] + at[1]) * RATIO)
     if case in LATE:
         time.sleep(LATE[case])
-        offered = run(f"nib.pages.of({json.dumps(OWN)}).blocked")
+        offered = run(f"orden.pages.of({json.dumps(OWN)}).blocked")
         if offered != f"{SITE}/landing?blocked":
             failures.append(f"{case}: the tab's bar offered {offered!r}")
             print(f"::error::{case}: the tab's bar offered {offered!r}")

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import difflib
 import hashlib
 import json
@@ -369,5 +367,4 @@ def main() -> int:
     )
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

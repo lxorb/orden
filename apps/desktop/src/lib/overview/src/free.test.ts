@@ -1,8 +1,7 @@
 import { expect, test } from 'vitest'
-import { keptAt, overlaps, roomFor, settled, stripLanding } from './free'
+import { keptAt, overlaps, roomFor, settled, stripLanding, stripPlace } from './free'
 import { cellAt } from './cells'
-import { around } from './layout'
-import type { Slot } from './layout'
+import { around, type Slot } from './layout'
 
 const at = (id: string, x: number, y: number, paneId = 'p'): Slot => ({
   id,
@@ -150,4 +149,16 @@ test('a window kept where it was let go takes the shape its pane has now', () =>
     w: 200,
     h: 100,
   })
+})
+
+test('a window let go before another lands at that one’s place among the strip’s tabs', () => {
+  expect(stripPlace(['a', 'b', 'c'], 'c', 'b')).toBe(1)
+  expect(stripPlace(['a', 'b', 'c'], 'a', null)).toBe(2)
+  expect(stripPlace(['a', 'b'], 'x', 'b')).toBe(1)
+  expect(stripPlace(['a', 'b'], 'x', 'essential')).toBe(2)
+})
+
+test('a window let go where it already is moves nowhere', () => {
+  expect(stripPlace(['a', 'b', 'c'], 'b', 'c')).toBeNull()
+  expect(stripPlace(['a', 'b', 'c'], 'c', null)).toBeNull()
 })

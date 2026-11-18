@@ -62,14 +62,12 @@ const BESIDE = JSON.stringify({
   orden: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'blank' }] },
 })
 
-describe('a PDF whose move happened and then failed (#537)', () => {
-  test('is kept in its note: the note is not discarded, and the paper with it', async () => {
-    const { files, how } = disk({ '/s/Lecture.pdf': '%PDF' }, 'after')
+test('a PDF whose move happened and then failed (#537) is kept in its note: the note is not discarded, and the paper with it', async () => {
+  const { files, how } = disk({ '/s/Lecture.pdf': '%PDF' }, 'after')
 
-    expect(await asPageNote('/s/Lecture.pdf', how)).toBe('/s/Lecture.pages')
-    expect(files.get('/s/Lecture.pages.pdf')).toBe('%PDF')
-    expect(files.has('/s/Lecture.pages')).toBe(true)
-  })
+  expect(await asPageNote('/s/Lecture.pdf', how)).toBe('/s/Lecture.pages')
+  expect(files.get('/s/Lecture.pages.pdf')).toBe('%PDF')
+  expect(files.has('/s/Lecture.pages')).toBe(true)
 })
 
 describe('a PDF, as the page note that holds it', () => {

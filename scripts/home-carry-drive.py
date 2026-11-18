@@ -16,7 +16,7 @@ from typing import Any
 
 import crash_told
 
-HOME = pathlib.Path(__file__).resolve().parent.parent / "apps/desktop/src-tauri/src/old_home.rs"
+HOME = pathlib.Path(__file__).resolve().parent.parent / "apps/desktop/src-tauri/crates/carry/src/old_home.rs"
 
 
 def said_in_home(name: str) -> str:
@@ -33,9 +33,9 @@ PLAN = "Projects/Plan.md"
 GROCERIES = "Lists/Groceries.md"
 LATER = "Lists/Later.md"
 NOTES = {
-    PLAN: "# Plan\n\n- [ ] ship the carry\n",
-    GROCERIES: "# Groceries\n\n- [ ] buy oat milk\n",
-    LATER: "# Later\n\n- [ ] read the letter\n",
+    PLAN: "# Plan\n\nShip the carry.\n",
+    GROCERIES: "# Groceries\n\nOat milk.\n",
+    LATER: "# Later\n\nThe letter.\n",
     "Diary.md": "# Diary\n\n- [ ] a box that is only a box\n",
 }
 
@@ -219,6 +219,13 @@ def tasks_text(app: App) -> str:
     return json.dumps(app.ask("tasks.list", {}))
 
 
+def added(app: App, words: list[str], name: str, wrong: list[str]) -> None:
+    for one in words:
+        said = app.ask("tasks.add", {"text": one})
+        if not isinstance(said, dict) or said.get("title") != one:
+            wrong.append(f"{name}: the todo '{one}' could not be added: {said}")
+
+
 def wait_for(app: App, words: list[str], seconds: float = 120) -> str:
     stop = time.monotonic() + seconds
     text = ""
@@ -241,6 +248,7 @@ def old_profile(exe: pathlib.Path, out: pathlib.Path, wrong: list[str]) -> None:
     print(f"old: the space is at {root}", flush=True)
     patches = [[GROCERIES, {"todo-list": "yes", "inbox": "yes"}]]
     app.until(MARK % {"space": json.dumps(SPACE), "patches": json.dumps(patches)}, 30)
+    added(app, ["ship the carry", "buy oat milk"], "old", wrong)
     text = wait_for(app, ["ship the carry", "buy oat milk"])
     print(f"old: the todos {text}", flush=True)
     if "buy oat milk" not in text or "ship the carry" not in text:
@@ -291,6 +299,7 @@ def half_moved(old_exe: pathlib.Path, new_exe: pathlib.Path, out: pathlib.Path, 
     if isinstance(root, str):
         patches = [[LATER, {"todo-list": "yes"}]]
         app.until(MARK % {"space": json.dumps(SPACE), "patches": json.dumps(patches)}, 30)
+        added(app, ["read the letter"], "half-first", wrong)
         print(f"half-first: the todos {tasks_text(app)}", flush=True)
     run.stop()
     held.close()

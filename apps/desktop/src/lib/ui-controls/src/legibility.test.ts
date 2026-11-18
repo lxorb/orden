@@ -92,7 +92,6 @@ describe('the least scrim', () => {
 
   test('is the hundredth that reads over white, and the one below it does not', () => {
     const floor = scrimFloor(INK, SCRIM, { least: BLACK, most: WHITE })
-
     expect(floor).toBeGreaterThan(0)
     expect(floor).toBeLessThan(1)
     expect(reads(floor, WHITE)).toBe(true)
@@ -102,7 +101,6 @@ describe('the least scrim', () => {
   test('reads over every colour between the two corners, not only over them', () => {
     const span = { least: [10, 40, 0] as Rgb, most: [250, 200, 255] as Rgb }
     const floor = scrimFloor(INK, SCRIM, span)
-
     for (let r = 10; r <= 250; r += 40) {
       for (let g = 40; g <= 200; g += 40) {
         for (let b = 0; b <= 255; b += 51)
@@ -115,7 +113,6 @@ describe('the least scrim', () => {
     const span = { least: BLACK, most: WHITE }
     const plain = scrimFloor(INK, SCRIM, span)
     const lifted = scrimFloor(INK, SCRIM, span, [{ colour: rgbOf('#e8edf4')!, alpha: 0.08 }])
-
     expect(lifted).toBeGreaterThanOrEqual(plain)
   })
 
@@ -127,7 +124,6 @@ describe('the least scrim', () => {
     const ink: Rgb = [118, 118, 118]
     const span = { least: BLACK, most: WHITE }
     const floor = scrimFloor(ink, BLACK, span, [], 1.5)
-
     for (let level = 0; level <= 255; level += 5) {
       expect(
         ratio(ink, over(BLACK, floor, [level, level, level])),

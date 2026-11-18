@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -58,5 +56,4 @@ def drive(browser: Browser) -> None:
         wrong(f"no bar over the list of every command: {commands}")
     DRIVE.shot(page, "commands")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the palette's bar is there only over something to scroll to"))
+raise SystemExit(DRIVE.run(drive, "the palette's bar is there only over something to scroll to"))

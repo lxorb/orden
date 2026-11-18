@@ -31,7 +31,6 @@
   const SETTLED = 250
   const SOONEST = 800
   const LONGEST = 2500
-
   const tried = new SvelteSet<string>()
   const next = $derived(
     tabs.find(
@@ -115,7 +114,7 @@
       {:else if current.kind === 'channel'}
         {#await chatSurface() then ChatTab}<ChatTab tab={current} />{/await}
       {:else if current.kind === 'chat'}
-        {#await askPanel() then ChatPanel}<ChatPanel wide />{/await}
+        {#await askPanel() then ChatPanel}<ChatPanel wide tab={current} />{/await}
       {:else if current.kind === 'explorer'}
         {#await explorerSurface() then ExplorerTab}<ExplorerTab
             tab={current}

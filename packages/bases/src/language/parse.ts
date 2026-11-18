@@ -212,6 +212,14 @@ function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): 
   const when = whenAt(words, at, g, clock)
   if (!when) return null
   const { day, time } = when
+  if (day && !time && g.deadlineWords.has(bare(words[at]))) {
+    return {
+      kind: 'deadline',
+      at,
+      end: when.end,
+      apply: (into) => (into.fields.deadline = day),
+    }
+  }
   return {
     kind: 'when',
     at,

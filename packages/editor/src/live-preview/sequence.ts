@@ -28,9 +28,7 @@ export function sequenceToMermaid(source: string): string {
   return out.join('\n')
 }
 
-function asParticipant(line: string): string {
-  return line.replace(/^participant\b/i, 'participant')
-}
+const asParticipant = (line: string): string => line.replace(/^participant\b/i, 'participant')
 
 function asMessage(line: string): string | null {
   const dash = line.indexOf('-', 1)
@@ -45,6 +43,4 @@ function asMessage(line: string): string | null {
   return `${clean(from)}${mermaidArrow}${clean(to)}: ${text}`
 }
 
-function clean(name: string): string {
-  return name.trim().replace(/[:;]/g, '')
-}
+const clean = (name: string): string => name.trim().replace(/[:;]/g, '')

@@ -1,28 +1,14 @@
 import { readBase } from '@orden/bases'
 import { describe, expect, test } from 'vitest'
-
 import { notionPage, readNotion } from './notion'
 import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
+import { file, noteAt } from './fixtures'
 
 const PLAN = '1a2b3c4d5e6f78901a2b3c4d5e6f7890'
 const SUB = 'aaaabbbbccccddddeeeeffff00001111'
 const TASKS = '99998888777766665555444433332222'
 const ROW = '11112222333344445555666677778888'
-
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
-
-function pathsOf(plan: ImportPlan): string[] {
-  return plan.files.map((one) => one.path)
-}
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
+const pathsOf = (plan: ImportPlan): string[] => plan.files.map((one) => one.path)
 
 function fenced(note: string): string {
   const found = /```base\n([\s\S]*?)\n```/.exec(note)
@@ -209,6 +195,19 @@ describe('a Notion export', () => {
     expect(home).toContain('[[Mine]]')
   })
 
+  test('a link to a database named with brackets goes to its folder note', async () => {
+    const plan = await readNotion([
+      file(
+        `Home ${PLAN}.md`,
+        `# Home\n\n[Reading (2024)](Home%20${PLAN}/Reading%20(2024)%20${TASKS}.csv)\n`,
+      ),
+      file(`Home ${PLAN}/Reading (2024) ${TASKS}.csv`, 'Name\nOne\n'),
+      file(`Home ${PLAN}/Reading (2024) ${TASKS}_all.csv`, 'Name\nOne\n'),
+    ])
+
+    expect(noteAt(plan, 'Home.md')).toContain('[[Reading (2024)]]')
+  })
+
   test('an HTML export keeps a row’s properties and its to-dos', async () => {
     const plan = await readNotion([
       file(
@@ -367,6 +366,58 @@ describe('a Notion export', () => {
     expect(row).toContain('status: Doing\n')
     expect(row).toContain('status-2: done\n')
     expect(row).toMatch(/^property-\d+: 5$/m)
+  })
+
+  test('two databases of one name under one page each keep a folder of their own', async () => {
+    const one = 'a'.repeat(32)
+    const two = 'b'.repeat(32)
+    const plan = await readNotion([
+      file(`Home ${PLAN}.md`, '# Home\n'),
+      file(`Home ${PLAN}/Untitled ${one}_all.csv`, 'Name\nOne\n'),
+      file(`Home ${PLAN}/Untitled ${one}/One ${ROW}.md`, '# One\n'),
+      file(`Home ${PLAN}/Untitled ${two}_all.csv`, 'Name\nTwo\nThree\n'),
+      file(`Home ${PLAN}/Untitled ${two}/Two ${SUB}.md`, '# Two\n'),
+    ])
+
+    expect(pathsOf(plan).sort()).toEqual([
+      'Home.md',
+      'Home/Untitled 2.md',
+      'Home/Untitled 2/Three.md',
+      'Home/Untitled 2/Two.md',
+      'Home/Untitled.md',
+      'Home/Untitled/One.md',
+    ])
+  })
+
+  test('two pages of one name keep their subpages apart, in Markdown and in HTML', async () => {
+    const one = 'a'.repeat(32)
+    const two = 'b'.repeat(32)
+    const markdown = await readNotion([
+      file(`Untitled ${one}/Kit ${ROW}.md`, '# Kit\n'),
+      file(`Untitled ${one}.md`, '# Untitled\n'),
+      file(`Untitled ${two}.md`, `# Untitled\n\n[Tent](Untitled%20${two}/Tent%20${SUB}.md)\n`),
+      file(`Untitled ${two}/Tent ${SUB}.md`, '# Tent\n'),
+    ])
+    const html = await readNotion([
+      file(`Untitled ${one}.html`, '<h1>Untitled</h1>'),
+      file(`Untitled ${one}/Kit ${ROW}.html`, '<h1>Kit</h1>'),
+      file(`Untitled ${two}.html`, '<h1>Untitled</h1>'),
+      file(`Untitled ${two}/Tent ${SUB}.html`, '<h1>Tent</h1>'),
+    ])
+
+    expect(pathsOf(markdown).sort()).toEqual([
+      'Untitled 2.md',
+      'Untitled 2/Tent.md',
+      'Untitled.md',
+      'Untitled/Kit.md',
+    ])
+    expect(noteAt(markdown, 'Untitled 2.md')).toContain('[[Tent]]')
+    expect(pathsOf(html).sort()).toEqual([
+      'Untitled 2.md',
+      'Untitled 2/Tent.md',
+      'Untitled.md',
+      'Untitled/Kit.md',
+    ])
   })
 
   test('an HTML export is read as HTML rather than refused', async () => {

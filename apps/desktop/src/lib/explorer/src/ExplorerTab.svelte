@@ -22,7 +22,6 @@
   const { tab: shown, focused = false }: { tab: Tab; focused?: boolean } = $props()
   const tab = untrack(() => shown)
   const view = viewOf(tab)
-
   const above = $derived(view.folder && !view.search ? parentOf(view.folder) : null)
   const inside = $derived.by(() => {
     const cursor = view.picked.cursor

@@ -6,15 +6,10 @@ import { bestShown } from './wikilink/best-shown'
 import { fuzzy, noteIndex, type SpaceTag } from './wikilink/notes'
 
 const MOST_SHOWN = 40
-
 const NAME = TAG_NAME
-
 const TYPED = new RegExp(String.raw`(?:^|[\s(])#(${NAME})?$`, 'u')
-
 const VALUE = new RegExp(String.raw`(?:^|[\s,[])(${NAME})?$`, 'u')
-
 const TAIL = new RegExp(String.raw`(${NAME})?$`, 'u')
-
 const STILL_A_NAME = new RegExp(String.raw`^${NAME}$`, 'u')
 
 const NOT_PROSE = new Set([
@@ -38,7 +33,6 @@ const NOT_PROSE = new Set([
 ])
 
 const KEY = /^tags?:/i
-
 const ITEM = /^\s*-\s/
 
 function inFrontMatterTags(context: CompletionContext): boolean {

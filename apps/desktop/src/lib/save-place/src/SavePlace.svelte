@@ -1,20 +1,14 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { FileMark } from '../../marks/src/api'
-  import { rank } from '../../ui-kit/src/api'
-  import { LAYER, scale } from '../../platform/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import { selectAll } from '../../ui-kit/src/api'
+  import { FileMark, SpaceMark } from '../../marks/src/api'
+  import { rank, overlays, selectAll } from '../../ui-kit/src/api'
+  import { LAYER, scale, isAgentsName, joinPath } from '../../platform/src/api'
   import { canWriteAt } from '../../sharing/src/api'
-  import { SpaceMark } from '../../marks/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { webPages } from '@orden/contracts'
-  import type { Tab } from '../../documents/src/api'
+  import { type Tab, offeredName } from '../../documents/src/api'
   import { notices, workspace } from '../../workspace/src/api'
-  import { offeredName } from '../../documents/src/api'
-  import { isAgentsName } from '../../platform/src/api'
-  import { joinPath } from '../../platform/src/api'
   import { fileFor, placesFor, startingPlace } from './places'
 
   const {
@@ -43,9 +37,7 @@
   )
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))
-
   let named = $state<HTMLInputElement>()
-
   let choosing = $state(false)
   let query = $state('')
   let cursor = $state(0)

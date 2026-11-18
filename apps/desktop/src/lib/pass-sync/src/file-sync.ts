@@ -1,8 +1,6 @@
 import type { ItemRow as WireItem } from '@orden/pass/wire'
-import type { FileApi } from './file-api'
-import { FileRefused } from './file-api'
-import type { FileWaiting } from './file-queue'
-import { droppedWaiting, settledWaiting, waitingFiles } from './file-queue'
+import { FileRefused, type FileApi } from './file-api'
+import { droppedWaiting, settledWaiting, waitingFiles, type FileWaiting } from './file-queue'
 import type { FilePartRow } from './local'
 import type { SyncWorld } from './sync-world'
 

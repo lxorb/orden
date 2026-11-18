@@ -2,10 +2,10 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { SOURCE } from './files'
 import { render } from 'svelte/server'
 import NameField from '../src/lib/sidebar/src/NameField.svelte'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')
@@ -28,14 +28,13 @@ const tree = read('lib/sidebar/src/Tree.svelte')
 const switcher = read('lib/sidebar/src/SpaceSwitcher.svelte')
 const shared = readFileSync(`${THEMES}base.css`, 'utf8')
 
-const naming = tree.slice(
-  tree.indexOf('{#if named?.path === entry.path}'),
-  tree.indexOf('{:else if own}'),
-)
+const namingAt = tree.indexOf('{#if named?.path === entry.path}')
+const naming = tree.slice(namingAt, tree.indexOf('{:else}', namingAt))
 
 describe('the row a name is being typed on', () => {
-  test('is found by this test at all', () => {
+  test('is found by this test at all, and only that row', () => {
     expect(naming).toContain('<NameField')
+    expect(naming).not.toContain('role="treeitem"')
   })
 
   test('is the same row it was a moment ago', () => {

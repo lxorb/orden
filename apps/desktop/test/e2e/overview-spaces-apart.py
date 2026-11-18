@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -234,5 +232,4 @@ def drive(browser: Browser) -> None:
     at_rest(page, "empty carried")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "no two spaces' bubbles on each other"))
+raise SystemExit(DRIVE.run(drive, "no two spaces' bubbles on each other"))

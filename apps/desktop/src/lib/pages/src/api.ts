@@ -3,15 +3,8 @@ import { pages } from './showing.svelte'
 
 export { pages }
 
-const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
-
-export const loadPages = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./Pages.svelte')>() : import('./Pages.svelte')
-
-export const loadNavigator = () =>
-  __EVEN_PLUGIN__
-    ? away<typeof import('./PagesNavigator.svelte')>()
-    : import('./PagesNavigator.svelte')
+export const loadPages = () => import('./Pages.svelte')
+export const loadNavigator = () => import('./PagesNavigator.svelte')
 
 export const pagesOut = () =>
   __EVEN_PLUGIN__

@@ -23,7 +23,7 @@ beforeEach(() => {
 
 function pageScript(): string {
   const crate = readFileSync(
-    fileURLToPath(new URL('../../../../src-tauri/src/web_opens.rs', import.meta.url)),
+    fileURLToPath(new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url)),
     'utf8',
   )
   const found = /pub const SCRIPT: &str = r"([\s\S]*?)";/.exec(crate)

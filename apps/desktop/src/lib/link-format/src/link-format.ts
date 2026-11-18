@@ -2,12 +2,10 @@ import { encodeTarget, slugify, wikilinkCannotName } from '@orden/markdown/links
 import { folderOf, nameOf, relativePath } from '../../platform/src/api'
 
 export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
-
 export const LINK_FORMATS: readonly LinkFormat[] = ['wikilink', 'shortest', 'relative', 'absolute']
 
-export function isLinkFormat(value: unknown): value is LinkFormat {
-  return typeof value === 'string' && (LINK_FORMATS as readonly string[]).includes(value)
-}
+export const isLinkFormat = (value: unknown): value is LinkFormat =>
+  typeof value === 'string' && (LINK_FORMATS as readonly string[]).includes(value)
 
 let writing: LinkFormat = 'wikilink'
 
@@ -15,16 +13,16 @@ export function setLinkWriting(format: LinkFormat) {
   writing = format
 }
 
-export function linkWriting(): LinkFormat {
-  return writing
-}
+export const linkWriting = (): LinkFormat => writing
 
 export interface LinkTarget {
   name: string
+  markdown?: string | null
   path?: string | null
   from?: string | null
   fragment?: string | null
   shown?: string | null
+  file?: string | null
   embed?: boolean
 }
 
@@ -38,7 +36,8 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
     return `${bang}[[${inner}${shown ? `|${shown}` : ''}]]`
   }
 
-  const label = (shown || target.name || bareFragment(fragment)).replace(/[\\[\]|]/g, '\\$&')
+  const named = target.name.replace(/^\/+/, '')
+  const label = (shown || named || bareFragment(fragment)).replace(/[\\[\]|`]/g, '\\$&')
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
   const path = pathFor(target, format === 'wikilink' ? 'shortest' : format)
 
@@ -46,7 +45,7 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
 }
 
 function beyondWikilink(name: string, fragment: string, shown: string): boolean {
-  return wikilinkCannotName(name) || /[[\]|]/.test(fragment) || /[[\]]/.test(shown)
+  return wikilinkCannotName(name) || /[[\]|`]/.test(fragment) || /[[\]`]/.test(shown)
 }
 
 function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): string {
@@ -54,19 +53,20 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
 
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
-  if (format === 'shortest') return target.name.includes('/') ? path : withExtension(nameOf(path))
+  if (format === 'shortest') {
+    if (target.markdown) return target.markdown
+    const said = target.file ?? target.name
+    if (said.startsWith('/')) return `/${path.replace(/^\/+/, '')}`
+    return said.includes('/') ? path : withExtension(nameOf(path))
+  }
   return target.from ? relativePath(folderOf(target.from), path) : path
 }
 
-function bareFragment(fragment: string): string {
-  return fragment.startsWith('^') ? fragment.slice(1) : fragment
-}
+const bareFragment = (fragment: string): string =>
+  fragment.startsWith('^') ? fragment.slice(1) : fragment
 
 const EXTENSION = /\.[^./]+$/
-
-function withExtension(name: string): string {
-  return EXTENSION.test(name) ? name : `${name}.md`
-}
+const withExtension = (name: string): string => (EXTENSION.test(name) ? name : `${name}.md`)
 
 function markdownFragment(fragment: string): string {
   if (fragment.startsWith('^') || /^page=\d+$/i.test(fragment)) return fragment

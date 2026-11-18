@@ -14,6 +14,7 @@ import {
   registerSurfaces,
   registerTabKind,
   runCommand,
+  whenNoSurface,
   whenPortProvided,
 } from '@orden/contracts'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
@@ -31,7 +32,7 @@ import { loadGraph } from './graph-view/src/api'
 import { archive, loadArchive, loadArchivedStrip, showArchive, unarchive } from './archive/src/api'
 import { loadPrivateMark, loadWebTab, siteDropping, webDataSheet } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
-import { focusEditor, noteCovers, paneMoves } from './workspace/src/api'
+import { focusEditor, noteCovers, notices, paneMoves } from './workspace/src/api'
 import { previewCards } from './pane-tree/src/api'
 import { startup } from './launch/src/api'
 import {
@@ -76,8 +77,29 @@ serveLinks({
 })
 providePort('search', { panel: search, show: showSearch, fromView: searchFrom })
 providePort('settings.window', settings)
+providePort('settings.ask', {
+  ask: async (system, said) => {
+    const { ai, complete } = await import('./ai-providers/src/api')
+    const provider = ai.providerFor('ask')
+    if (!provider) return null
+    return await complete({
+      provider,
+      model: provider.model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: said },
+      ],
+    })
+  },
+})
 providePort('shell.sheets', sheets)
 providePort('shell.focus', { editor: focusEditor })
+providePort('shell.notice', {
+  say: (words) => {
+    if (__EVEN_PLUGIN__) settings.error = words
+    else void notices().then(({ gateNote }) => gateNote.show(words))
+  },
+})
 providePort('quick-add.show', {
   show: (prefill = {}) => {
     if (__EVEN_PLUGIN__) return
@@ -153,24 +175,7 @@ registerCommandRows('record', async () => (await import('./dictation/src/api')).
 registerCommandRows('transcribe', async () => (await import('./dictation/src/api')).transcribeRows)
 registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
 
-if (__EVEN_PLUGIN__) {
-  const waits = () => new Promise<never>(() => undefined)
-  registerSurfaces({
-    tasks: waits,
-    todos: waits,
-    channel: waits,
-    'chat-links': waits,
-    chats: waits,
-    'time-panel': waits,
-    'pass-fill': waits,
-    'takeover-bar': waits,
-    'agent-rows': waits,
-    'agent-session': waits,
-    spark: waits,
-    'phone-tabs': waits,
-    'phone-you': waits,
-  })
-}
+if (__EVEN_PLUGIN__) whenNoSurface(() => new Promise<never>(() => undefined))
 
 if (!__EVEN_PLUGIN__) {
   registerSurfaces({
@@ -228,6 +233,10 @@ if (!__EVEN_PLUGIN__) {
     async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents,
   )
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
+  registerCommand('app.handwriting', async () => {
+    const { handwrite } = await (await import('./canvas/src/api')).handwriting()
+    return () => void handwrite()
+  })
   providePort('explorer.show', {
     offered: () => hiddenKinds.offers('explorer'),
     show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
@@ -255,6 +264,10 @@ if (!__EVEN_PLUGIN__) {
   })
   registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
   registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
+  registerCommand(
+    'ai.tab',
+    async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab,
+  )
   registerCommand('ai.threads', async () => {
     const { chat } = await (await import('./ai-chat/src/api')).chatStore()
     return () => chat.showThreads()

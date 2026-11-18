@@ -33,53 +33,35 @@ function click(doc: string, pos: number, parkedAt?: number): number {
 describe('inline code', () => {
   const doc = 'a `code` b'
 
-  test('a click at the right edge lands after the closing backtick', () => {
-    expect(click(doc, 7)).toBe(8)
-  })
+  test.each([
+    [doc, 8, 7],
+    [doc, 2, 3],
+    [doc, 5, 5],
+    [doc, 8, 8],
+    [doc, 2, 2],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 
-  test('a click at the left edge lands before the opening backtick', () => {
-    expect(click(doc, 3)).toBe(2)
-  })
-
-  test('a click inside the code stays where it was', () => {
-    expect(click(doc, 5)).toBe(5)
-  })
-
-  test('a click already outside stays put', () => {
-    expect(click(doc, 8)).toBe(8)
-    expect(click(doc, 2)).toBe(2)
-  })
-
-  test('visible marks are not stepped over', () => {
-    expect(click(doc, 7, 4)).toBe(7)
-    expect(click(doc, 3, 4)).toBe(3)
-  })
+  test.each([
+    [doc, 7, 7, 4],
+    [doc, 3, 3, 4],
+  ])('%j', (input, wanted, extra, last) => expect(click(input, extra, last)).toEqual(wanted))
 })
 
 describe('emphasis', () => {
-  test('bold', () => {
-    const doc = '**bold** x'
-    expect(click(doc, 6)).toBe(8)
-    expect(click(doc, 2)).toBe(0)
-  })
+  test.each([
+    ['**bold** x', 8, 6],
+    ['**bold** x', 0, 2],
+    ['**bold `code`** x', 15, 12],
+    ['**bold `code`** x', 7, 8],
+    ['**a**`b`', 5, 3],
+    ['**a**`b`', 5, 6],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toBe(wanted))
 
-  test('italic, strikethrough and highlight', () => {
-    expect(click('_i_ x', 2)).toBe(3)
-    expect(click('~~s~~ x', 3)).toBe(5)
-    expect(click('==h== x', 3)).toBe(5)
-  })
-
-  test('nested constructs snap all the way out', () => {
-    const doc = '**bold `code`** x'
-    expect(click(doc, 12)).toBe(15)
-    expect(click(doc, 8)).toBe(7)
-  })
-
-  test('adjacent constructs meet between their marks', () => {
-    const doc = '**a**`b`'
-    expect(click(doc, 3)).toBe(5)
-    expect(click(doc, 6)).toBe(5)
-  })
+  test.each([
+    ['_i_ x', 3, 2],
+    ['~~s~~ x', 5, 3],
+    ['==h== x', 5, 3],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 })
 
 describe('links', () => {
@@ -103,29 +85,20 @@ describe('constructs that are not applicable', () => {
     expect(click(doc, doc.length)).toBe(doc.length)
   })
 
-  test('inline math is replaced wholesale', () => {
-    const doc = 'mass $E$ here'
-    expect(click(doc, 5)).toBe(5)
-    expect(click(doc, 8)).toBe(8)
-  })
+  test.each([
+    ['mass $E$ here', 5, 5],
+    ['mass $E$ here', 8, 8],
+    ['---\ntitle: Hi\n---\n\nbody', 3, 3],
+    ['Term\n: a meaning', 6, 6],
+    ['[^1]: the note', 4, 4],
+    ['*[HTML]: Markup', 2, 2],
+    ['text[^1] more', 8, 7],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toBe(wanted))
 
-  test('block marks follow the line, not the click', () => {
-    expect(click('# Title', 2)).toBe(2)
-    expect(click('> quoted', 2)).toBe(2)
-  })
-
-  test('marks that open a whole line are block marks too', () => {
-    const front = '---\ntitle: Hi\n---\n\nbody'
-    expect(click(front, 3)).toBe(3)
-    expect(click('Term\n: a meaning', 6)).toBe(6)
-    expect(click('[^1]: the note', 4)).toBe(4)
-    expect(click('*[HTML]: Markup', 2)).toBe(2)
-  })
-
-  test('a footnote reference in prose still snaps', () => {
-    const doc = 'text[^1] more'
-    expect(click(doc, 7)).toBe(8)
-  })
+  test.each([
+    ['# Title', 2, 2],
+    ['> quoted', 2, 2],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 })
 
 describe('only clicks', () => {
@@ -144,9 +117,8 @@ describe('only clicks', () => {
     expect(after.state.selection.main).toMatchObject({ from: 3, to: 7 })
   })
 
-  test('the pure function reports the same landing spots', () => {
-    const doc = 'a `code` b' + PARK
-    expect(snapOutward(state(doc, doc.length), 7)).toBe(8)
-    expect(snapOutward(state(doc, doc.length), 3)).toBe(2)
-  })
+  test.each([
+    [state('a `code` b' + PARK, ('a `code` b' + PARK).length), 8, 7],
+    [state('a `code` b' + PARK, ('a `code` b' + PARK).length), 2, 3],
+  ])('%j', (input, wanted, extra) => expect(snapOutward(input, extra)).toBe(wanted))
 })

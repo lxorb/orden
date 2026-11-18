@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -105,5 +103,4 @@ def drive(browser: Browser) -> None:
         DRIVE.shot(page, f"{mode}-column")
         page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the first tab with nothing ahead of it stands at its pane's edge"))
+raise SystemExit(DRIVE.run(drive, "the first tab with nothing ahead of it stands at its pane's edge"))

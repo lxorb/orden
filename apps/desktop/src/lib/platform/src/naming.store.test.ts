@@ -17,16 +17,14 @@ interface Entry {
   children: Entry[]
 }
 
-function entry(path: string, isFolder: boolean): Entry {
-  return {
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: isFolder,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
+const entry = (path: string, isFolder: boolean): Entry => ({
+  name: path.split('/').pop() ?? path,
+  path,
+  is_dir: isFolder,
+  modified: 0,
+  created: 0,
+  children: [],
+})
 
 function listing(root: string, papers = false): Entry {
   const tree = entry(root, true)

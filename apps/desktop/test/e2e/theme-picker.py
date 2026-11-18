@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from settling import HIDE_CARET, steady
@@ -113,13 +111,18 @@ def main() -> int:
         check("the store installed the six themes", {f"file:{one}" for one in INSTALL} <= set(installed))
         page.wait_for_timeout(300)
 
-        themes = page.locator('.foot .acts button[aria-label="Themes"]')
-        themes.click()
+        who = page.locator('.foot [aria-haspopup="menu"]')
+
+        def themes() -> None:
+            who.click()
+            page.locator("[role=menu] [role=menuitem]", has_text="Themes").first.click()
+
+        themes()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         box = page.locator('[role="dialog"][aria-label="Themes"]').bounding_box()
-        near = themes.bounding_box()
+        near = who.bounding_box()
         check(
-            "the Themes button opens the picker beside it",
+            "Themes in the account menu opens the picker above the account",
             box is not None
             and near is not None
             and box["y"] + box["height"] <= near["y"]
@@ -171,14 +174,14 @@ def main() -> int:
             now["id"] == "default" and now["kept"] == "default" and not now["open"],
         )
 
-        themes.click()
+        themes()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         card("Graphite").hover()
         page.mouse.click(1100, 400)
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]', state="detached")
         check("a press outside puts back the kept theme", state()["id"] == "default")
 
-        themes.click()
+        themes()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         page.locator('[role="radiogroup"] button[aria-label="Light"]').hover()
         now = state()
@@ -223,7 +226,7 @@ def main() -> int:
         page.evaluate(
             "() => { window.ordenApp.theme.select('default'); window.ordenApp.theme.setScheme('light') }"
         )
-        themes.click()
+        themes()
         page.wait_for_selector('[role="dialog"][aria-label="Themes"]')
         shot("10-light-open")
         page.keyboard.press("Escape")
@@ -235,5 +238,4 @@ def main() -> int:
     say("every promise kept")
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

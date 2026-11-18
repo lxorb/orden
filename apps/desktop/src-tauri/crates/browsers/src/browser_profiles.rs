@@ -1,0 +1,229 @@
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine as _;
+use serde::Serialize;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use crate::{chromium_profiles, firefox_profiles, safari, zen_profiles};
+use orden_base::paths::folded;
+
+#[derive(Serialize, Debug, PartialEq, Eq)]
+pub struct Profile {
+    pub name: String,
+    pub path: String,
+    pub files: Vec<String>,
+}
+
+#[derive(Serialize)]
+pub struct Browser {
+    pub id: &'static str,
+    pub profiles: Vec<Profile>,
+}
+
+#[tauri::command(async)]
+pub fn browser_profiles() -> Vec<Browser> {
+    ["safari", "firefox"]
+        .into_iter()
+        .chain(chromium_profiles::BROWSERS)
+        .map(|id| Browser {
+            id,
+            profiles: profiles_of(id),
+        })
+        .filter(|one| !one.profiles.is_empty())
+        .collect()
+}
+
+#[tauri::command(async)]
+pub fn read_browser_file(browser: String, profile: String, file: String) -> Result<String, String> {
+    read_listed(&browser, &profile, &file, &profiles_of(&browser))
+}
+
+const DATABASES: [&str; 2] = ["History", "Favicons"];
+
+fn is_database(file: &str) -> bool {
+    Path::new(file)
+        .extension()
+        .is_some_and(|one| one.eq_ignore_ascii_case("sqlite"))
+        || DATABASES.contains(&file)
+}
+
+pub(crate) fn profiles_of(browser: &str) -> Vec<Profile> {
+    match browser {
+        "zen" => zen_profiles::listed(),
+        "safari" => safari::profiles(),
+        "firefox" => firefox_profiles::profiles(),
+        _ if chromium_profiles::BROWSERS.contains(&browser) => chromium_profiles::profiles(browser),
+        _ => Vec::new(),
+    }
+}
+
+const MOST_BYTES: u64 = 128 * 1024 * 1024;
+
+pub(crate) fn read_listed(
+    browser: &str,
+    profile: &str,
+    file: &str,
+    listed: &[Profile],
+) -> Result<String, String> {
+    if is_database(file) {
+        return Err(format!("{file} is a database"));
+    }
+    let path = known(browser, profile, file, listed)?;
+    let size = fs::metadata(&path)
+        .map_err(|error| format!("{file}: {error}"))?
+        .len();
+    if size > MOST_BYTES {
+        return Err(format!("{file} is larger than any session"));
+    }
+    let bytes = fs::read(&path).map_err(|error| format!("{file} could not be read: {error}"))?;
+    Ok(BASE64.encode(bytes))
+}
+
+pub(crate) fn copied(folder: &Path, database: &str) -> std::io::Result<tempfile::TempDir> {
+    let copy = tempfile::tempdir()?;
+    fs::copy(folder.join(database), copy.path().join(database))?;
+    let log = format!("{database}-wal");
+    let _ = fs::copy(folder.join(&log), copy.path().join(&log));
+    Ok(copy)
+}
+
+pub(crate) fn once(all: impl IntoIterator<Item = Profile>) -> Vec<Profile> {
+    all.into_iter().fold(Vec::new(), |mut kept, one| {
+        if !kept.iter().any(|held: &Profile| held.path == one.path) {
+            kept.push(one);
+        }
+        kept
+    })
+}
+
+pub(crate) fn ini_profiles(home: &Path, files_of: impl Fn(&Path) -> Vec<String>) -> Vec<Profile> {
+    let Ok(text) = fs::read_to_string(home.join("profiles.ini")) else {
+        return Vec::new();
+    };
+
+    let mut found: Vec<(u8, Profile)> = Vec::new();
+    let opened = installed_defaults(&text);
+    for entry in entries_in(&text) {
+        let folder = if entry.relative {
+            home.join(&entry.path)
+        } else {
+            PathBuf::from(&entry.path)
+        };
+        let files = files_of(&folder);
+        if files.is_empty() {
+            continue;
+        }
+        let rank = if opened.contains(&entry.path) {
+            0
+        } else if entry.default {
+            1
+        } else {
+            2
+        };
+        found.push((
+            rank,
+            Profile {
+                name: entry.name,
+                path: folder.to_string_lossy().into_owned(),
+                files,
+            },
+        ));
+    }
+
+    found.sort_by_key(|(rank, _)| *rank);
+    found.into_iter().map(|(_, one)| one).collect()
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Entry {
+    pub(crate) name: String,
+    pub(crate) path: String,
+    pub(crate) relative: bool,
+    pub(crate) default: bool,
+}
+
+fn rows(text: &str) -> Vec<(String, String, String)> {
+    let mut section = String::new();
+    let mut found = Vec::new();
+
+    for line in text.lines().map(str::trim) {
+        if line.is_empty() || line.starts_with(';') || line.starts_with('#') {
+            continue;
+        }
+        if let Some(name) = line
+            .strip_prefix('[')
+            .and_then(|rest| rest.strip_suffix(']'))
+        {
+            name.trim().clone_into(&mut section);
+            continue;
+        }
+        if let Some((key, value)) = line.split_once('=') {
+            found.push((
+                section.clone(),
+                key.trim().to_ascii_lowercase(),
+                value.trim().to_owned(),
+            ));
+        }
+    }
+
+    found
+}
+
+pub(crate) fn entries_in(text: &str) -> Vec<Entry> {
+    let rows = rows(text);
+    let mut sections: Vec<&str> = Vec::new();
+    for (section, _, _) in &rows {
+        if section.to_ascii_lowercase().starts_with("profile")
+            && !sections.contains(&section.as_str())
+        {
+            sections.push(section);
+        }
+    }
+
+    sections
+        .into_iter()
+        .filter_map(|section| {
+            let value = |key: &str| {
+                rows.iter()
+                    .find(|(one, name, _)| one == section && name == key)
+                    .map(|(_, _, value)| value.clone())
+            };
+            let path = value("path").filter(|one| !one.is_empty())?;
+            Some(Entry {
+                name: value("name")
+                    .filter(|one| !one.is_empty())
+                    .unwrap_or_else(|| path.clone()),
+                relative: value("isrelative").as_deref() != Some("0"),
+                default: value("default").as_deref() == Some("1"),
+                path,
+            })
+        })
+        .collect()
+}
+
+pub(crate) fn installed_defaults(text: &str) -> Vec<String> {
+    rows(text)
+        .into_iter()
+        .filter(|(section, key, _)| {
+            section.to_ascii_lowercase().starts_with("install") && key == "default"
+        })
+        .map(|(_, _, value)| value)
+        .collect()
+}
+
+pub(crate) fn known(
+    browser: &str,
+    profile: &str,
+    file: &str,
+    listed: &[Profile],
+) -> Result<PathBuf, String> {
+    let asked = folded(Path::new(profile));
+    let one = listed
+        .iter()
+        .find(|one| folded(Path::new(&one.path)) == asked)
+        .ok_or_else(|| format!("{profile} is not a profile {browser} lists"))?;
+    if !one.files.iter().any(|name| name == file) {
+        return Err(format!("{file} is not a file of that profile"));
+    }
+    Ok(Path::new(&one.path).join(file))
+}

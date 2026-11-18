@@ -15,6 +15,13 @@ export interface Server {
   id: number
   status: string
   location: string
+  type: string
+}
+
+interface Price {
+  location: string
+  monthly: number
+  hourly: number
 }
 
 export interface ServerType {
@@ -22,8 +29,22 @@ export interface ServerType {
   cores: number
   memory: number
   disk: number
-  prices: { location: string; monthly: number }[]
+  cpu: 'shared' | 'dedicated'
+  arch: 'x86' | 'arm'
+  deprecated: boolean
+  prices: Price[]
   available: string[]
+}
+
+export interface Location {
+  name: string
+  city: string
+  country: string
+}
+
+export interface Pricing {
+  currency: string
+  ipv4: Map<string, { monthly: number; hourly: number }>
 }
 
 export interface NewServer {
@@ -47,10 +68,47 @@ function serverOf(value: unknown): Server | null {
   }
   const datacenter = isRecord(value.datacenter) ? value.datacenter : null
   const location = datacenter && isRecord(datacenter.location) ? datacenter.location.name : null
+  const type = isRecord(value.server_type) ? value.server_type.name : null
   return {
     id: value.id,
     status: value.status,
     location: typeof location === 'string' ? location : '',
+    type: typeof type === 'string' ? type : '',
+  }
+}
+
+const listed = (value: unknown, key: string): unknown[] => {
+  const list = isRecord(value) ? value[key] : null
+  return Array.isArray(list) ? list : []
+}
+
+function typeOf(value: unknown): ServerType | null {
+  if (!isRecord(value) || typeof value.name !== 'string') return null
+  if (typeof value.cores !== 'number' || typeof value.memory !== 'number') return null
+  const prices = listed(value, 'prices').flatMap((one): Price[] => {
+    if (!isRecord(one) || typeof one.location !== 'string') return []
+    const monthly = amount(one.price_monthly)
+    const hourly = amount(one.price_hourly)
+    return monthly === null ? [] : [{ location: one.location, monthly, hourly: hourly ?? 0 }]
+  })
+  const available = listed(value, 'locations').flatMap((one) =>
+    isRecord(one) &&
+    typeof one.name === 'string' &&
+    one.available !== false &&
+    !isRecord(one.deprecation)
+      ? [one.name]
+      : [],
+  )
+  return {
+    name: value.name,
+    cores: value.cores,
+    memory: value.memory,
+    disk: typeof value.disk === 'number' ? value.disk : 0,
+    cpu: value.cpu_type === 'dedicated' ? 'dedicated' : 'shared',
+    arch: value.architecture === 'arm' ? 'arm' : 'x86',
+    deprecated: value.deprecated === true || isRecord(value.deprecation),
+    prices,
+    available,
   }
 }
 
@@ -118,6 +176,17 @@ export class Hetzner {
     return made
   }
 
+  async changeType(id: number, type: string): Promise<void> {
+    await this.ask('POST', `/servers/${String(id)}/actions/change_type`, {
+      server_type: type,
+      upgrade_disk: true,
+    })
+  }
+
+  async shutdown(id: number, hard: boolean): Promise<void> {
+    await this.ask('POST', `/servers/${String(id)}/actions/${hard ? 'poweroff' : 'shutdown'}`)
+  }
+
   async deleteServer(id: number): Promise<void> {
     await this.ask('DELETE', `/servers/${String(id)}`)
   }
@@ -157,43 +226,45 @@ export class Hetzner {
 
   async serverType(name: string): Promise<ServerType> {
     const said = await this.ask('GET', `/server_types?name=${encodeURIComponent(name)}`)
-    const types = isRecord(said) && Array.isArray(said.server_types) ? said.server_types : []
-    const type: unknown = types[0]
-    if (!isRecord(type) || typeof type.cores !== 'number' || typeof type.memory !== 'number') {
-      throw new HetznerError(404, 'not_found', `no server type ${name}`)
-    }
-    const prices = (Array.isArray(type.prices) ? type.prices : []).flatMap((one: unknown) => {
-      if (!isRecord(one) || typeof one.location !== 'string') return []
-      const monthly = amount(one.price_monthly)
-      return monthly === null ? [] : [{ location: one.location, monthly }]
-    })
-    const available = (Array.isArray(type.locations) ? type.locations : []).flatMap(
-      (one: unknown) =>
-        isRecord(one) && typeof one.name === 'string' && one.available !== false ? [one.name] : [],
-    )
-    return {
-      name,
-      cores: type.cores,
-      memory: type.memory,
-      disk: typeof type.disk === 'number' ? type.disk : 0,
-      prices,
-      available,
-    }
+    const type = typeOf(listed(said, 'server_types')[0])
+    if (!type) throw new HetznerError(404, 'not_found', `no server type ${name}`)
+    return { ...type, name }
   }
 
-  async ipv4(location: string): Promise<{ monthly: number; currency: string }> {
+  async serverTypes(): Promise<ServerType[]> {
+    const said = await this.ask('GET', '/server_types?per_page=50')
+    return listed(said, 'server_types').flatMap((one) => typeOf(one) ?? [])
+  }
+
+  async locations(): Promise<Location[]> {
+    const said = await this.ask('GET', '/locations?per_page=50')
+    return listed(said, 'locations').flatMap((one) =>
+      isRecord(one) && typeof one.name === 'string'
+        ? [
+            {
+              name: one.name,
+              city: typeof one.city === 'string' ? one.city : one.name,
+              country: typeof one.country === 'string' ? one.country : '',
+            },
+          ]
+        : [],
+    )
+  }
+
+  async pricing(): Promise<Pricing> {
     const said = await this.ask('GET', '/pricing')
     const pricing = isRecord(said) && isRecord(said.pricing) ? said.pricing : {}
-    const currency = typeof pricing.currency === 'string' ? pricing.currency : 'EUR'
-    const ips: unknown[] = Array.isArray(pricing.primary_ips) ? pricing.primary_ips : []
-    for (const ip of ips) {
-      if (!isRecord(ip) || ip.type !== 'ipv4' || !Array.isArray(ip.prices)) continue
-      for (const one of ip.prices as unknown[]) {
-        if (isRecord(one) && one.location === location) {
-          return { monthly: amount(one.price_monthly) ?? 0, currency }
-        }
+    const ipv4 = new Map<string, { monthly: number; hourly: number }>()
+    for (const ip of listed(pricing, 'primary_ips')) {
+      if (!isRecord(ip) || ip.type !== 'ipv4') continue
+      for (const one of listed(ip, 'prices')) {
+        if (!isRecord(one) || typeof one.location !== 'string') continue
+        ipv4.set(one.location, {
+          monthly: amount(one.price_monthly) ?? 0,
+          hourly: amount(one.price_hourly) ?? 0,
+        })
       }
     }
-    return { monthly: 0, currency }
+    return { currency: typeof pricing.currency === 'string' ? pricing.currency : 'EUR', ipv4 }
   }
 }

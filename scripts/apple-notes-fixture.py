@@ -6,7 +6,7 @@ import sys
 import zlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / "apps" / "desktop" / "src-tauri" / "tests" / "apple-notes"
+OUT = ROOT / "apps" / "desktop" / "src-tauri" / "crates" / "import" / "tests" / "apple-notes"
 
 FROM_2001 = 978_307_200
 

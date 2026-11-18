@@ -13,7 +13,7 @@ import type { Disk, FileKind, World } from './world'
 export interface Telling {
   holdingWrites(from: string, run: () => Promise<void>, stalled: () => Promise<void>): Promise<void>
   moved(from: string, to: string, kind: FileKind): Promise<void>
-  gone(path: string, kind: FileKind): Promise<void>
+  gone(path: string, kind: FileKind, back?: string): Promise<void>
   written(path: string, fresh: boolean): void
   writing?(path: string, text: string, write: () => Promise<unknown>): Promise<unknown>
 }
@@ -77,16 +77,21 @@ function diskOf(telling: Telling): Disk {
         if (words?.trim())
           await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
+      let back: string | undefined
       if (syncDeletes(path, kind)) await invoke('delete_note', { path })
       else
-        await invoke('trash_item', {
-          path,
-          kind: kind === 'folder' ? 'folder' : 'note',
-          alone: true,
-        })
-      await telling.gone(path, kind)
+        back = (
+          await invoke<{ id: string }>('trash_item', {
+            path,
+            kind: kind === 'folder' ? 'folder' : 'note',
+            alone: true,
+            arrived: true,
+          })
+        ).id
+      await telling.gone(path, kind, back)
     },
     mkdir: (path) => invoke('create_folder', { path, arrived: true }).then(() => undefined),
+    holds,
     exists: thereOrUnsure,
     evicted: async (path) => (await iCloud()).evictedHere(path),
   }
@@ -101,6 +106,22 @@ interface Listed {
   is_dir: boolean
   unlisted?: boolean
   children?: Listed[]
+}
+
+async function holds(folder: string): Promise<readonly string[] | null> {
+  const tree = await invoke<Listed>('read_tree', {
+    root: folder,
+    options: { showHidden: true, papers: true, every: true },
+    ...raw(),
+  }).catch(() => null)
+  if (!tree || tree.unlisted) return null
+  const out: string[] = []
+  const walk = (node: Listed): boolean =>
+    (node.children ?? []).every((child) => {
+      out.push(child.path)
+      return !child.unlisted && (!child.is_dir || walk(child))
+    })
+  return walk(tree) ? out : null
 }
 
 async function listed(root: string): Promise<{ path: string; dir: boolean }[] | null> {

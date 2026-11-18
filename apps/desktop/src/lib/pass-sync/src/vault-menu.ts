@@ -6,11 +6,7 @@ import { pass } from './store.svelte'
 import type { PassUi } from './ui.svelte'
 
 async function newFolder(vault: Vault, parent: string | null): Promise<void> {
-  const name = await prompt.ask({
-    until: pass.opened,
-    title: 'New folder',
-    confirmLabel: 'Create',
-  })
+  const name = await prompt.ask({ until: pass.opened, title: 'New folder', confirmLabel: 'Create' })
   if (!name) return
   const folder: Folder = { id: newId(), name, parent }
   await pass.updateVault(vault.id, { folders: [...vault.folders, folder] })

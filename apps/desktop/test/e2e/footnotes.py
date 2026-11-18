@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from settling import HIDE_CARET, quiet
@@ -116,5 +114,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "a footnote is read and followed where it is used")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

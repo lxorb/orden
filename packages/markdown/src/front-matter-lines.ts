@@ -1,17 +1,11 @@
 const FENCE = /^---[ \t]*$/
-
 const MOST_KEY_WORDS = 6
 const MOST_KEY_CHARACTERS = 80
-
 const SENTENCE_KEY_WORDS = 3
 const SENTENCE_VALUE_WORDS = 3
-
 const MOST_KEY_LENGTH = 1024
-
 const NOT_A_KEY = '#*>|[]{}!&%@`,'
-
 const NOT_THE_FIRST_KEY = /^(?:[-+][ \t]|\d+[.)][ \t]|<[a-zA-Z/!?])/
-
 const TIGHT_KEY = /^[A-Za-z_][\w.$-]*:(?!\/\/)[^\s:]/
 
 interface Open {
@@ -19,13 +13,8 @@ interface Open {
   depth: number
 }
 
-function isBlank(one: string | undefined): boolean {
-  return one === ' ' || one === '\t'
-}
-
-function wordsIn(text: string): number {
-  return text.trim().split(/\s+/u).filter(Boolean).length
-}
+const isBlank = (one: string | undefined): boolean => one === ' ' || one === '\t'
+const wordsIn = (text: string): number => text.trim().split(/\s+/u).filter(Boolean).length
 
 export function isKeyLine(text: string): boolean {
   const past = pastKey(text, 0)
@@ -110,7 +99,6 @@ function staysOpen(line: string, open: Open): boolean {
 }
 
 const BLOCK_SCALAR = /^[|>][-+0-9]*[ \t]*(?:#.*)?$/
-
 const PROPERTIES = /^(?:[&!][^ \t]*(?:[ \t]+|$))+/
 
 export function valueClosesAt(source: string, from: number, limit: number): number {

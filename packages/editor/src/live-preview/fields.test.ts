@@ -6,19 +6,16 @@ import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { livePreview } from '.'
+import { noRects } from '../../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
+beforeAll(noRects)
 
 const leaveNow = StateEffect.define()
 
 const leavesMidUpdate = ViewPlugin.define(() => ({
   update(update) {
-    if (!update.transactions.some((one) => one.effects.some((effect) => effect.is(leaveNow)))) {
+    if (!update.transactions.some((one) => one.effects.some((effect) => effect.is(leaveNow))))
       return
-    }
     const focused = document.activeElement
     if (focused instanceof HTMLElement) focused.blur()
   },

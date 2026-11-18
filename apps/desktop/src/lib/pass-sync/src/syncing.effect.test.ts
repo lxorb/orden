@@ -1,4 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
+import { elapse } from '../../../../test/effects/settle'
 
 const fake = vi.hoisted(() => ({
   syncOnce: vi.fn(),
@@ -35,18 +36,18 @@ test('a sync the network refused is tried again soon, not at the next five-minut
   const { passSync, startPassSync } = await import('./syncing.svelte')
 
   startPassSync()
-  await vi.advanceTimersByTimeAsync(0)
+  await elapse(0)
   expect(passSync.state).toBe('offline')
   const tried = fake.syncOnce.mock.calls.length
   fake.syncOnce.mockResolvedValue('synced')
 
-  await vi.advanceTimersByTimeAsync(30_000)
+  await elapse(30_000)
 
   expect(fake.syncOnce.mock.calls.length).toBeGreaterThan(tried)
   expect(passSync.state).toBe('synced')
 
   const settled = fake.syncOnce.mock.calls.length
   window.dispatchEvent(new Event('online'))
-  await vi.advanceTimersByTimeAsync(0)
+  await elapse(0)
   expect(fake.syncOnce.mock.calls.length).toBe(settled + 1)
 })

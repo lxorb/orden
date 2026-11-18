@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import sys
 import time
@@ -160,5 +158,4 @@ def main() -> int:
     print("\na note shared on its own carries and keeps its words with both sides on v2", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

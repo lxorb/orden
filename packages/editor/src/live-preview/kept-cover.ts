@@ -6,9 +6,7 @@ const setKeptCover = StateEffect.define<Cover | null>()
 const keptCoverField = StateField.define<Cover | null>({
   create: () => null,
   update(value, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(setKeptCover)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(setKeptCover)) return effect.value
     return value
   },
 })
@@ -20,9 +18,8 @@ export const coverMover = Facet.define<
   combine: (values) => values.at(-1) ?? null,
 })
 
-export function keptCover(state: EditorState): Cover | null {
-  return state.field(keptCoverField, false) ?? null
-}
+export const keptCover = (state: EditorState): Cover | null =>
+  state.field(keptCoverField, false) ?? null
 
 export function keptCoverChanged(before: EditorState, after: EditorState): boolean {
   const one = keptCover(before)
@@ -30,10 +27,7 @@ export function keptCoverChanged(before: EditorState, after: EditorState): boole
   return one?.src !== other?.src || one?.position !== other?.position
 }
 
-export function keptCoverExtension(cover: Cover | null | undefined): Extension {
-  return keptCoverField.init(() => cover ?? null)
-}
+export const keptCoverExtension = (cover: Cover | null | undefined): Extension =>
+  keptCoverField.init(() => cover ?? null)
 
-export function keptCoverEffect(cover: Cover | null): StateEffect<unknown> {
-  return setKeptCover.of(cover)
-}
+export const keptCoverEffect = (cover: Cover | null): StateEffect<unknown> => setKeptCover.of(cover)

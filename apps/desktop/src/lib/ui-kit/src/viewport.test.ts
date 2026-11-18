@@ -140,12 +140,10 @@ describe('the keyboard', () => {
     const { viewport, window } = await started()
     expect(viewport.typing).toBe(false)
     expect(viewport.keyboard).toBe(0)
-
     window.keysOver(KEYS)
     expect(viewport.keyboard).toBe(KEYS)
     expect(viewport.height).toBe(844 - KEYS)
     expect(viewport.typing).toBe(true)
-
     window.keysOver(0)
     expect(viewport.keyboard).toBe(0)
     expect(viewport.typing).toBe(false)
@@ -153,19 +151,16 @@ describe('the keyboard', () => {
 
   test('in the app it takes the height instead, and nothing is covered', async () => {
     const { viewport, window } = await started({ app: true })
-
     window.keysBelow(KEYS)
     expect(viewport.keyboard).toBe(0)
     expect(viewport.height).toBe(844 - KEYS)
     expect(viewport.typing).toBe(true)
-
     window.keysBelow(0)
     expect(viewport.typing).toBe(false)
   })
 
   test('an iPhone sliding the page up to the caret is put back, and the keys measured whole', async () => {
     const { viewport, window } = await started({ app: true, finger: true })
-
     window.keysOverSliding(KEYS, KEYS)
     expect(window.scrolled).toEqual([0, 0])
     expect(viewport.keyboard).toBe(KEYS)
@@ -174,30 +169,23 @@ describe('the keyboard', () => {
 
   test('an iPhone saying its window shrank as the page scrolled still has its keys', async () => {
     const { viewport, window } = await started({ app: true, finger: true })
-
     window.keysOver(KEYS)
     window.innerShrinks()
     expect(viewport.keyboard).toBe(KEYS)
     expect(viewport.typing).toBe(true)
   })
 
-  test('a browser window made shorter by hand is not a keyboard', async () => {
+  test('a browser window made shorter by hand, or a few pixels of chrome sliding away, is not a keyboard', async () => {
     const { viewport, window } = await started()
-
     window.keysBelow(KEYS)
     expect(viewport.typing).toBe(false)
-  })
-
-  test('a few pixels of browser chrome sliding away is not one either', async () => {
-    const { viewport, window } = await started()
-
+    window.keysBelow(0)
     window.keysOver(60)
     expect(viewport.typing).toBe(false)
   })
 
   test('turning the phone is a new window, not a keyboard', async () => {
     const { viewport, window } = await started({ app: true })
-
     window.turned()
     expect(viewport.typing).toBe(false)
     expect(viewport.height).toBe(390)
@@ -205,79 +193,41 @@ describe('the keyboard', () => {
 })
 
 describe('which device this is', () => {
-  test('the app on a phone is a phone, either way up', async () => {
-    const device = await machine({ app: true })
-
-    expect(device(390, 844)).toBe('phone')
-    expect(device(844, 390)).toBe('phone')
-  })
-
-  test('the app on a tablet is a tablet, not a phone with a big screen', async () => {
-    const device = await machine({ app: true })
-
-    expect(device(800, 1280)).toBe('tablet')
-    expect(device(1280, 800)).toBe('tablet')
-    expect(device(600, 960)).toBe('tablet')
-  })
-
-  test('a phone browser is a phone: it says so, and the glass says so', async () => {
-    const phone = await machine({ agent: AGENTS.phone, mobile: true, finger: true })
-
-    expect(phone(412, 915)).toBe('phone')
-    expect(phone(915, 412)).toBe('phone')
-  })
-
-  test('a tablet browser is a tablet, though it calls itself no such thing', async () => {
-    const tablet = await machine({ agent: AGENTS.tablet, mobile: false, finger: true })
-    expect(tablet(800, 1280)).toBe('tablet')
-
-    const ipad = await machine({ agent: AGENTS.ipad, finger: true })
-    expect(ipad(1024, 768)).toBe('tablet')
-  })
-
-  test('a phone asked for the desktop site is a desktop, which is the point', async () => {
-    const asked = await machine({ agent: AGENTS.asked, mobile: false, finger: true })
-
-    expect(asked(980, 1743)).toBe('desktop')
-    expect(asked(412, 915)).toBe('desktop')
-  })
-
-  test('and it is a desktop even if the hint beside the string says otherwise', async () => {
-    const asked = await machine({ agent: AGENTS.asked, mobile: true, finger: true })
-
-    expect(asked(980, 1743)).toBe('desktop')
-  })
-
-  test('a desktop window dragged narrow stays a desktop', async () => {
-    const desktop = await machine()
-
-    expect(desktop(420, 900)).toBe('desktop')
-    expect(desktop(320, 700)).toBe('desktop')
-    expect(desktop(1280, 800)).toBe('desktop')
-  })
-
-  test('a desktop with a touch screen is a desktop', async () => {
-    expect((await machine({ finger: false }))(1280, 800)).toBe('desktop')
-    expect((await machine({ finger: true }))(1280, 800)).toBe('desktop')
-  })
-
-  test('and a touch screen alone is not a handheld either', async () => {
-    const spoofed = await machine({ agent: AGENTS.phone, mobile: true, finger: false })
-    expect(spoofed(412, 915)).toBe('desktop')
-  })
+  test.each([
+    [{ app: true }, 390, 844, 'phone'],
+    [{ app: true }, 844, 390, 'phone'],
+    [{ app: true }, 800, 1280, 'tablet'],
+    [{ app: true }, 1280, 800, 'tablet'],
+    [{ app: true }, 600, 960, 'tablet'],
+    [{ agent: AGENTS.phone, mobile: true, finger: true }, 412, 915, 'phone'],
+    [{ agent: AGENTS.phone, mobile: true, finger: true }, 915, 412, 'phone'],
+    [{ agent: AGENTS.tablet, mobile: false, finger: true }, 800, 1280, 'tablet'],
+    [{ agent: AGENTS.ipad, finger: true }, 1024, 768, 'tablet'],
+    [{ agent: AGENTS.asked, mobile: false, finger: true }, 980, 1743, 'desktop'],
+    [{ agent: AGENTS.asked, mobile: false, finger: true }, 412, 915, 'desktop'],
+    [{ agent: AGENTS.asked, mobile: true, finger: true }, 980, 1743, 'desktop'],
+    [{}, 420, 900, 'desktop'],
+    [{}, 320, 700, 'desktop'],
+    [{}, 1280, 800, 'desktop'],
+    [{ finger: true }, 1280, 800, 'desktop'],
+    [{ agent: AGENTS.phone, mobile: true, finger: false }, 412, 915, 'desktop'],
+  ] satisfies [Kind, number, number, string][])(
+    '%o at %i by %i is a %s: the app by its screen, a browser by what it says and the glass',
+    async (kind, width, height, device) => {
+      expect((await machine(kind))(width, height)).toBe(device)
+    },
+  )
 })
 
 describe('what the document is told', () => {
   test('the app on a tablet: touch, and the drawer while it is upright', async () => {
     const upright = await started({ app: true }, 800, 1280)
-
     expect(upright.viewport.device).toBe('tablet')
     expect(upright.viewport.touch).toBe(true)
     expect(upright.viewport.narrow).toBe(false)
     expect(upright.root.dataset.device).toBe('tablet')
     expect(upright.viewport.drawer).toBe(true)
     expect(upright.root.attributes.has('data-drawer')).toBe(true)
-
     upright.window.turned()
     expect(upright.viewport.portrait).toBe(false)
     expect(upright.viewport.drawer).toBe(false)
@@ -287,7 +237,6 @@ describe('what the document is told', () => {
 
   test('a desktop browser: no touch, and no drawer', async () => {
     const { viewport, root } = await started({}, 1280, 800)
-
     expect(viewport.device).toBe('desktop')
     expect(viewport.touch).toBe(false)
     expect(viewport.installed).toBe(false)
@@ -298,13 +247,11 @@ describe('what the document is told', () => {
     const phone = await started({ app: true }, 390, 844)
     expect(phone.viewport.narrow).toBe(true)
     expect(phone.root.attributes.has('data-narrow')).toBe(true)
-
     phone.window.turned()
     expect(phone.viewport.device).toBe('phone')
     expect(phone.viewport.drawer).toBe(true)
     expect(phone.viewport.narrow).toBe(false)
     expect(phone.root.attributes.has('data-narrow')).toBe(false)
-
     const window = await started({}, 420, 900)
     expect(window.viewport.device).toBe('desktop')
     expect(window.viewport.narrow).toBe(true)
@@ -317,7 +264,6 @@ describe('a page that fills the screen', () => {
   test('is the viewport, and gives the keyboard its share back', async () => {
     const { pageHeight, window } = await started({ app: true })
     expect(pageHeight()).toBe('844px')
-
     window.keysOver(KEYS)
     expect(pageHeight()).toBe(`${844 - KEYS}px`)
   })

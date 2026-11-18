@@ -32,9 +32,7 @@ describe('a picture copied from its menu', () => {
     const png = new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' })
     vi.stubGlobal('fetch', () => Promise.resolve(new Response(png)))
     const written = clipboard()
-
     await copyPicture('asset://space/cat.png')
-
     expect(written.map((one) => Object.keys(one))).toEqual([['image/png']])
     const handed = await written[0]?.['image/png']
     expect(handed?.type).toBe('image/png')
@@ -44,7 +42,6 @@ describe('a picture copied from its menu', () => {
   test('and says so when the picture could not be read', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response(null, { status: 404 })))
     clipboard()
-
     await expect(copyPicture('asset://space/gone.png')).rejects.toThrow('404')
   })
 })

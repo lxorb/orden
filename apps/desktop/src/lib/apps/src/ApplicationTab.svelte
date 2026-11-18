@@ -19,7 +19,7 @@
   import { settingsWindow } from '@orden/contracts'
   import { Sweep } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
-  import { appSessionOf, type Unread } from './session.svelte'
+  import { type AppStatus, appSessionOf, type Unread } from './session.svelte'
 
   const { tab: shown }: { tab: Tab } = $props()
   const tab = untrack(() => shown)
@@ -59,19 +59,13 @@
   onMount(() => {
     void session.start(view())
     const settling = new Settling(
-      () => {
-        session.resize(view())
-      },
+      () => session.resize(view()),
       (ms, run) => {
         const timer = setTimeout(run, ms)
-        return () => {
-          clearTimeout(timer)
-        }
+        return () => clearTimeout(timer)
       },
     )
-    const changed = () => {
-      settling.saw(null)
-    }
+    const changed = () => settling.saw(null)
     const watching = new ResizeObserver(changed)
     if (place) watching.observe(place)
 
@@ -131,85 +125,51 @@
 
   const status = $derived(session.status)
   const device = $derived(session.hostName || 'another device')
+  const SAID: Record<Exclude<AppStatus['is'], 'unread' | 'away' | 'held' | 'here'>, string> = {
+    reading: 'Connecting…',
+    connecting: 'Connecting…',
+    damaged: 'This application’s file is damaged',
+    'signed-out': 'Sign in to use this application.',
+    syncing: 'Waiting for this application’s file to sync…',
+    unsynced: 'This application’s file has not reached your account yet. Still trying…',
+    'not-running': 'Sync has not started on this device yet. Still trying…',
+    untaken: 'Sync has not taken in this application’s file yet. Still trying…',
+    outside: 'This application’s file is in a space that does not sync to your account.',
+    'old-sync': 'Your account is still on the old sync, which cannot carry applications.',
+    shared: 'An application runs only from a space of your own: this space is shared with you.',
+    unserved: 'Your account’s server does not run applications yet.',
+    unreachable: 'Cannot reach your account’s server. Still trying…',
+    gone: 'The computer this application runs on is no longer signed in to your account.',
+  }
+  const UNREAD: Record<Unread, string> = {
+    away: 'Not on this device. It opens once you are online again.',
+    missing: 'This application’s file is no longer there.',
+    denied: 'Orden is not allowed to read this application’s file.',
+    locked: 'Another program is holding this application’s file. Close it, then try again.',
+    unread: 'This file could not be read.',
+  }
+  const NOT_STARTED: Record<NotStarted, (device: string) => string> = {
+    isolation: (device) => `${device} cannot run an application on a display of its own yet.`,
+    display: (device) => `${device} needs Xvfb to run an application.`,
+    permission: (device) => `${device} needs Screen Recording and Accessibility.`,
+    refused: (device) => `${device} did not allow this program.`,
+    missing: (device) => `${device} does not have this application.`,
+    handed: (device) => `It was already open on ${device}, and opened there instead.`,
+    packaged: (device) => `${device} cannot start a Store application on a desktop of its own.`,
+    failed: (device) => `It did not start on ${device}.`,
+  }
   const line = $derived.by(() => {
-    switch (status.is) {
-      case 'reading':
-      case 'connecting':
-        return 'Connecting…'
-      case 'damaged':
-        return 'This application’s file is damaged'
-      case 'unread':
-        return unreadLine(status.why)
-      case 'signed-out':
-        return 'Sign in to use this application.'
-      case 'syncing':
-        return 'Waiting for this application’s file to sync…'
-      case 'unsynced':
-        return 'This application’s file has not reached your account yet. Still trying…'
-      case 'not-running':
-        return 'Sync has not started on this device yet. Still trying…'
-      case 'untaken':
-        return 'Sync has not taken in this application’s file yet. Still trying…'
-      case 'outside':
-        return 'This application’s file is in a space that does not sync to your account.'
-      case 'old-sync':
-        return 'Your account is still on the old sync, which cannot carry applications.'
-      case 'shared':
-        return 'An application runs only from a space of your own: this space is shared with you.'
-      case 'unserved':
-        return 'Your account’s server does not run applications yet.'
-      case 'unreachable':
-        return 'Cannot reach your account’s server. Still trying…'
-      case 'gone':
-        return 'The computer this application runs on is no longer signed in to your account.'
-      case 'away':
-        return `Waiting for ${device}`
-      case 'held':
-        return heldLine(status.holder)
-      case 'here':
-        if (status.why) return notStarted(status.why, device)
-        if (status.state === 'running') return `Running on ${device}`
-        if (status.state === 'starting') return `Starting on ${device}…`
-        if (status.state === 'exited' && status.code !== null)
-          return `Exited with code ${String(status.code)}`
-        return `Not running on ${device}`
-    }
+    if (status.is === 'unread') return UNREAD[status.why]
+    if (status.is === 'away') return `Waiting for ${device}`
+    if (status.is === 'held') return heldLine(status.holder)
+    if (status.is !== 'here') return SAID[status.is]
+    if (status.why) return NOT_STARTED[status.why](device)
+    if (status.state === 'running') return `Running on ${device}`
+    if (status.state === 'starting') return `Starting on ${device}…`
+    if (status.state === 'exited' && status.code !== null)
+      return `Exited with code ${String(status.code)}`
+    return `Not running on ${device}`
   })
-  function unreadLine(why: Unread): string {
-    switch (why) {
-      case 'away':
-        return 'Not on this device. It opens once you are online again.'
-      case 'missing':
-        return 'This application’s file is no longer there.'
-      case 'denied':
-        return 'Orden is not allowed to read this application’s file.'
-      case 'locked':
-        return 'Another program is holding this application’s file. Close it, then try again.'
-      case 'unread':
-        return 'This file could not be read.'
-    }
-  }
-
-  function notStarted(why: NotStarted, device: string): string {
-    switch (why) {
-      case 'isolation':
-        return `${device} cannot run an application on a display of its own yet.`
-      case 'display':
-        return `${device} needs Xvfb to run an application.`
-      case 'permission':
-        return `${device} needs Screen Recording and Accessibility.`
-      case 'refused':
-        return `${device} did not allow this program.`
-      case 'missing':
-        return `${device} does not have this application.`
-      case 'handed':
-        return `It was already open on ${device}, and opened there instead.`
-      case 'packaged':
-        return `${device} cannot start a Store application on a desktop of its own.`
-      case 'failed':
-        return `It did not start on ${device}.`
-    }
-  }
 
   const picture = $derived(session.picture.status)
   const showing = $derived(
@@ -269,9 +229,7 @@
     const over = video
     if (!over) return
     over.addEventListener('wheel', wheel, { passive: false })
-    return () => {
-      over.removeEventListener('wheel', wheel)
-    }
+    return () => over.removeEventListener('wheel', wheel)
   })
   let pasting: InputEvent | null = null
   function key(event: KeyboardEvent, down: boolean) {
@@ -331,31 +289,18 @@
       handle = over.requestVideoFrameCallback(each)
     }
     handle = over.requestVideoFrameCallback(each)
-    return () => {
-      over.cancelVideoFrameCallback(handle)
-    }
+    return () => over.cancelVideoFrameCallback(handle)
   })
-  function figure(value: number | null | undefined, digits = 0): string {
-    return value === null || value === undefined ? '–' : value.toFixed(digits)
-  }
+  const figure = (value: number | null | undefined, digits = 0) => value?.toFixed(digits) ?? '–'
 
   const waiting = $derived(
-    status.is === 'reading' ||
-      status.is === 'connecting' ||
-      status.is === 'syncing' ||
-      status.is === 'away' ||
+    ['reading', 'connecting', 'syncing', 'away'].includes(status.is) ||
       (status.is === 'here' && status.state === 'starting' && !status.unanswered),
   )
   const again = $derived(
-    status.is === 'unsynced' ||
-      status.is === 'unserved' ||
-      status.is === 'unreachable' ||
-      status.is === 'not-running' ||
-      status.is === 'untaken' ||
-      status.is === 'outside' ||
-      status.is === 'old-sync' ||
-      status.is === 'shared' ||
-      status.is === 'unread',
+    'unsynced unserved unreachable not-running untaken outside old-sync shared unread'
+      .split(' ')
+      .includes(status.is),
   )
   $effect(() => {
     if (account.accountToken && untrack(() => session.status.is) === 'signed-out') session.retry()
@@ -494,14 +439,11 @@
     height: 100%;
     object-fit: contain;
     visibility: hidden;
+    touch-action: none;
   }
 
   video.shown {
     visibility: visible;
-  }
-
-  video {
-    touch-action: none;
   }
 
   .typing {

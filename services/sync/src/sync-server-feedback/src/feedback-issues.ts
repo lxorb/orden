@@ -1,4 +1,5 @@
-import { type Env, ISSUES, now, oneLine } from '../../sync-server/src/api'
+import { type Env, now, oneLine } from '../../sync-server/src/api'
+import { ISSUES } from '../../sync-server-engine/src/api'
 
 const API = 'https://api.github.com'
 

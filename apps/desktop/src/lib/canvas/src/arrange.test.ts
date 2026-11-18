@@ -3,14 +3,17 @@ import { aligned, ALIGNMENTS, distributed, ordered } from './arrange'
 import { type Canvas, type CanvasNode } from '@orden/markdown/canvas'
 import { merged, stamped } from '@orden/markdown/canvas-merge'
 
-function card(id: string, x: number, y: number, width = 100, height = 100): CanvasNode {
-  return { id, type: 'text', x, y, width, height, text: id }
-}
+const card = (id: string, x: number, y: number, width = 100, height = 100): CanvasNode => ({
+  id,
+  type: 'text',
+  x,
+  y,
+  width,
+  height,
+  text: id,
+})
 
-function plane(nodes: CanvasNode[]): Canvas {
-  return { nodes, edges: [], ink: [], at: {}, gone: {} }
-}
-
+const plane = (nodes: CanvasNode[]): Canvas => ({ nodes, edges: [], ink: [], at: {}, gone: {} })
 const at = (canvas: Canvas) => canvas.nodes.map((node) => [node.id, node.x, node.y])
 const order = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
 

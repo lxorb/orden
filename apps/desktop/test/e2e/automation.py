@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 
 import json
@@ -91,9 +89,9 @@ def fresh(browser: Browser) -> Page:
 def follow(page: Page, uri: str, label: str) -> dict:
     with contextlib.suppress(Exception):
         page.wait_for_load_state("networkidle", timeout=10_000)
-    page.goto(f"{ORIGIN}/?nib={quote(uri, safe='')}", wait_until="domcontentloaded")
+    page.goto(f"{ORIGIN}/?orden={quote(uri, safe='')}", wait_until="domcontentloaded")
     ready(page, label)
-    DRIVE.waited(page, "() => !location.search.includes('nib=')", f"[{label}] the link to be read")
+    DRIVE.waited(page, "() => !location.search.includes('orden=')", f"[{label}] the link to be read")
     page.wait_for_timeout(900)
     return page.evaluate(STATE)
 
@@ -104,7 +102,7 @@ def drive_opening(page: Page) -> None:
 
     if state["active"] != "The plan.md":
         wrong(f"a link to a note did not open it: {state['active']}")
-    if "nib=" in state["address"]:
+    if "orden=" in state["address"]:
         wrong(f"the link is still in the address: {state['address']!r}")
     if state["trouble"]:
         wrong(f"a link that worked said something went wrong: {state['trouble']!r}")
@@ -248,5 +246,4 @@ def main() -> int:
 
     return DRIVE.verdict("a orden:// link opens, makes, appends and searches, and is refused where it should be")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

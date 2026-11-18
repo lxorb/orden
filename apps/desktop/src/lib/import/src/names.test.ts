@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { hasNotionId, keptName, Names, safeName, titleFrom, withoutNotionId } from './names'
 
 describe('a title as a file name', () => {
@@ -59,6 +58,10 @@ describe('a title as a file name', () => {
 
   test('is short enough to leave room for the folders above it', () => {
     expect(safeName('a'.repeat(300))).toHaveLength(96)
+  })
+
+  test('and never cuts a character in half', () => {
+    expect(safeName(`${'a'.repeat(95)}😀😀`)).toBe(`${'a'.repeat(95)}😀`)
   })
 
   test('a newline in a title is a space', () => {

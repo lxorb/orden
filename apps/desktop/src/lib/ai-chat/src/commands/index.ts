@@ -1,6 +1,6 @@
 import { settingsWindow } from '@orden/contracts'
 import { isEffort } from '../chat/effort'
-import type { Effort, Thread } from '../../../ai-providers/src/api'
+import { type Effort, type Thread, FIRST_MODE, noMoreThan } from '../../../ai-providers/src/api'
 import { sign, doctor, status, usage } from './account'
 import { availability } from './available'
 import { catchup, reply } from './chats'
@@ -17,7 +17,6 @@ import { planDay, showTasks } from './todos'
 import type { CommandContext, Panel, PanelCommand } from './types'
 import { explain, review, rewrite, summarize } from './words'
 import { message } from '../../../ui-kit/src/api'
-import { FIRST_MODE, noMoreThan } from '../../../ai-providers/src/api'
 
 interface ReviewCommands {
   rewind(context: CommandContext): void | Promise<void>
@@ -78,12 +77,15 @@ const RUNS: Record<string, Run> = {
     if (thread) autocompact(host, thread, context.args)
   },
   context: ({ panel }) => panel.openContext(),
-  btw: async ({ args }) => {
-    const { quick } = await import('../quick.svelte')
-    quick.show()
-    if (args && quick.open) {
-      quick.question = args
-      await quick.ask()
+  btw: async ({ args, thread, panel }) => {
+    const { quick, side } = await import('../quick.svelte')
+    const main = thread ?? panel.ensure?.()
+    const asked = main ? side : quick
+    if (main) side.aside(main)
+    else quick.show()
+    if (args && asked.open) {
+      asked.question = args
+      await asked.ask()
     }
   },
   copy: async ({ args, thread }) => {

@@ -1,10 +1,6 @@
 const TITLED = /^title\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+))\s*$/i
-
 const FIRST_WORD = /^\S+/
-
-export function languageIn(info: string): string {
-  return FIRST_WORD.exec(info.trim())?.[0] ?? ''
-}
+export const languageIn = (info: string): string => FIRST_WORD.exec(info.trim())?.[0] ?? ''
 
 export function captionIn(info: string): string {
   const trimmed = info.trim()

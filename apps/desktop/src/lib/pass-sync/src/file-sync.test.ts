@@ -1,11 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { BYTES_WITHIN, LATE } from '../../platform/src/timing'
-import type { FileApi } from './file-api'
-import { FileRefused, fileApi } from './file-api'
-import type { FileWaiting } from './file-queue'
-import { waitingFiles } from './file-queue'
-import type { WorldFiles } from './file-sync'
-import { pushedFiles } from './file-sync'
+import { FileRefused, fileApi, type FileApi } from './file-api'
+import { waitingFiles, type FileWaiting } from './file-queue'
+import { pushedFiles, type WorldFiles } from './file-sync'
 import type { SyncWorld } from './sync-world'
 
 afterEach(() => {

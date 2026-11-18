@@ -1,21 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-
-  return {
-    get length() {
-      return held.size
-    },
-    key: (index) => [...held.keys()][index] ?? null,
-    getItem: (key) => held.get(key) ?? null,
-    setItem: (key, value) => void held.set(key, value),
-    removeItem: (key) => void held.delete(key),
-    clear: () => held.clear(),
-  }
-}
-
-vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal('localStorage', (await import('../../../../../test/disk')).memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 let apiKey = ''
@@ -87,29 +72,27 @@ const { heardPiece, transcribedBy, WHISPER } = await import('./transcribe')
 
 const wav = new Uint8Array(new ArrayBuffer(2048))
 
-function local(): void {
-  const made = ai.add('compatible')
-  ai.update(made.id, { name: 'On this machine', baseUrl: 'http://localhost:23311', model: 'llama' })
+function provider(kind: Parameters<typeof ai.add>[0], fields: Parameters<typeof ai.update>[1]) {
+  const made = ai.add(kind)
+  ai.update(made.id, fields)
   ai.setDefault(made.id)
 }
 
-function hosted(): void {
-  const made = ai.add('openai')
-  ai.update(made.id, { model: 'gpt-5' })
-  ai.setDefault(made.id)
-}
-
-function claude(): void {
-  const made = ai.add('anthropic')
-  ai.update(made.id, { model: 'claude-4' })
-  ai.setDefault(made.id)
+const local = () =>
+  provider('compatible', {
+    name: 'On this machine',
+    baseUrl: 'http://localhost:23311',
+    model: 'llama',
+  })
+const hosted = () => provider('openai', { model: 'gpt-5' })
+const claude = () => {
+  provider('anthropic', { model: 'claude-4' })
+  expect(ai.ready).toBe(true)
 }
 
 beforeEach(() => {
   for (const one of [...ai.accounts]) ai.remove(one.id)
-  sent.length = 0
-  askedAccount.length = 0
-  likedAccount.length = 0
+  for (const one of [sent, askedAccount, likedAccount]) one.length = 0
   answers = []
   apiKey = ''
   account.token = null
@@ -122,24 +105,14 @@ function signedIn(): void {
 }
 
 describe('whether there is anything to ask at all', () => {
-  test('no provider and no account is nothing', () => {
-    expect(canTranscribe()).toBe(false)
-  })
-
-  test('a provider of the reader’s own is enough, with no account anywhere', () => {
-    local()
-    expect(canTranscribe()).toBe(true)
-  })
-
-  test('and so is an account with no provider', () => {
-    signedIn()
-    expect(canTranscribe()).toBe(true)
-  })
-
-  test('but Claude alone is not, because there is no route to ask', () => {
-    claude()
-    expect(ai.ready).toBe(true)
-    expect(canTranscribe()).toBe(false)
+  test.each([
+    ['nothing', () => undefined, false],
+    ['a provider of the reader’s own', local, true],
+    ['an account with no provider', signedIn, true],
+    ['Claude alone, with no route to ask', claude, false],
+  ])('with %s is %s', (_name, given, can) => {
+    given()
+    expect(canTranscribe()).toBe(can)
   })
 })
 
@@ -170,20 +143,15 @@ describe('a recording with a provider set up', () => {
     expect(sent[0]?.url).toBe('http://localhost:23311/v1/audio/transcriptions')
   })
 
-  test('carries the sound as a file, and names no content type of its own', async () => {
+  test('carries the sound as a file to whisper with no prompt, asking for the language', async () => {
     local()
     await heardPiece(wav)
 
     expect(sent[0]?.headers['content-type']).toBeUndefined()
     expect(sent[0]?.file).toEqual({ size: wav.byteLength, type: 'audio/wav', name: 'said.wav' })
-  })
-
-  test('asks a server on this machine for whisper, and for the language with it', async () => {
-    local()
-    await heardPiece(wav)
-
     expect(sent[0]?.model).toBe('whisper-1')
     expect(sent[0]?.format).toBe('verbose_json')
+    expect(sent[0]?.prompt).toBe('')
   })
 
   test('and says which language, where the model said', async () => {
@@ -270,12 +238,6 @@ describe('a piece heard for dictation', () => {
     signedIn()
     await heardPiece(wav, { prompt: 'Sync Worker' })
     expect(likedAccount).toEqual(['Sync Worker'])
-  })
-
-  test('sends no prompt field where nothing is expected', async () => {
-    local()
-    await heardPiece(wav)
-    expect(sent[0]?.prompt).toBe('')
   })
 
   test('goes to the account when that is the road chosen, past a provider', async () => {

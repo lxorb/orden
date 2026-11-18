@@ -1,68 +1,29 @@
-import type { FieldKind } from '../types'
-import { Collector, ImportError, dateOf, fieldsOf, itemOf, loginOf, noteOf, urlsIn } from './build'
+import {
+  Collector,
+  type Extra,
+  ImportError,
+  dateOf,
+  fieldsOf,
+  itemOf,
+  loginOf,
+  noteOf,
+  urlsIn,
+} from './build'
 import { csvRows } from './csv'
 import type { Imported } from './types'
 
 const ROLES = {
-  title: [
-    'title',
-    'name',
-    'account',
-    'item',
-    'entry',
-    'service',
-    'site',
-    'item name',
-    'account name',
-  ],
-  url: [
-    'url',
-    'urls',
-    'website',
-    'web site',
-    'uri',
-    'login_uri',
-    'login url',
-    'address',
-    'web address',
-    'website address',
-    'link',
-  ],
-  username: [
-    'username',
-    'user name',
-    'user',
-    'login',
-    'login name',
-    'login_username',
-    'userid',
-    'user id',
-  ],
-  email: ['email', 'e-mail', 'email address', 'mail'],
-  password: ['password', 'pass', 'pwd', 'passwd', 'login_password', 'secret'],
-  totp: [
-    'totp',
-    'otp',
-    'otpauth',
-    'otp auth',
-    '2fa',
-    'login_totp',
-    'one-time password',
-    'otp secret',
-    'mfa',
-  ],
-  note: ['note', 'notes', 'extra', 'comment', 'comments', 'description', 'memo'],
-  folder: ['folder', 'group', 'grouping', 'category', 'collection', 'path', 'vault'],
-  created: ['created', 'creation time', 'date created', 'created at', 'timecreated'],
-  modified: [
-    'modified',
-    'last modified',
-    'updated',
-    'updated at',
-    'date modified',
-    'last modified time',
-  ],
-} as const
+  title: 'title,name,account,item,entry,service,site,item name,account name',
+  url: 'url,urls,website,web site,uri,login_uri,login url,address,web address,website address,link',
+  username: 'username,user name,user,login,login name,login_username,userid,user id',
+  email: 'email,e-mail,email address,mail',
+  password: 'password,pass,pwd,passwd,login_password,secret',
+  totp: 'totp,otp,otpauth,otp auth,2fa,login_totp,one-time password,otp secret,mfa',
+  note: 'note,notes,extra,comment,comments,description,memo',
+  folder: 'folder,group,grouping,category,collection,path,vault',
+  created: 'created,creation time,date created,created at,timecreated',
+  modified: 'modified,last modified,updated,updated at,date modified,last modified time',
+}
 
 type Role = keyof typeof ROLES
 
@@ -76,7 +37,7 @@ export function columnsOf(header: readonly string[]): Partial<Record<Role, numbe
   const columns: Partial<Record<Role, number>> = {}
   const names = header.map(normalized)
   for (const role of Object.keys(ROLES) as Role[]) {
-    for (const alias of ROLES[role]) {
+    for (const alias of ROLES[role].split(',')) {
       const at = names.indexOf(normalized(alias))
       if (at >= 0 && !Object.values(columns).includes(at)) {
         columns[role] = at
@@ -108,7 +69,7 @@ export function parseCsv(text: string): Imported {
       const at = columns[role]
       return at === undefined ? '' : (row[at] ?? '')
     }
-    const extra: { name: string; value: string; kind: FieldKind }[] = head.flatMap((name, at) =>
+    const extra: Extra[] = head.flatMap((name, at) =>
       used.has(at) || name.trim() === ''
         ? []
         : [

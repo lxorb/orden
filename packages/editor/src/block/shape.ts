@@ -2,13 +2,11 @@ export type BlockShape =
   'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'bullet' | 'numbered' | 'task' | 'quote'
 
 const INDENT = /^[ \t]*/
-
 const QUOTED = /^(?:>[ \t]?)+/
 
 const QUOTE_LEAD = /^[ \t]*(?:>[ \t]?)+/
 
 const HASHES = /^#{1,6}[ \t]+/
-
 const MARKER = /^(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?/
 
 const TICKED = /^(?:[-*+]|\d+[.)])[ \t]+\[[xX]\][ \t]/

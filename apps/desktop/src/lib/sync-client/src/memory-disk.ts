@@ -64,6 +64,13 @@ export class MemoryDisk implements Disk {
     return Promise.resolve()
   }
 
+  holds(folder: string): Promise<readonly string[]> {
+    const under = (one: string) => one.startsWith(`${folder}/`)
+    return Promise.resolve(
+      [...this.files.keys(), ...this.bytes.keys(), ...this.folders].filter(under),
+    )
+  }
+
   mkdir(path: string): Promise<void> {
     this.mkdirNow(path)
     return Promise.resolve()

@@ -35,16 +35,24 @@ describe('the formula the caret is in', () => {
     expect(mathsAtCaret(at('so $a^2$ holds'))).toBeNull()
   })
 
-  test('outside it there is none', () => {
-    expect(tex('so| $a^2$ holds')).toBeNull()
-    expect(tex('words $a$ and |more')).toBeNull()
-    expect(tex('costs $5 and $|6')).toBeNull()
-  })
+  test.each([
+    ['so| $a^2$ holds'],
+    ['words $a$ and |more'],
+    ['costs $5 and $|6'],
+    ['```\n$a|$\n```'],
+    ['so `$a|$` here'],
+  ])('%j', (input) => expect(tex(input)).toBeNull())
 
-  test('of two on a line, the one the caret is in', () => {
-    expect(tex('$x$ and $y|$')).toBe('y')
-    expect(tex('$x|$ and $y$')).toBe('x')
-  })
+  test.each([
+    ['$x$ and $y|$', 'y'],
+    ['$x|$ and $y$', 'x'],
+    ['$$E = m|c^2$$', 'E = mc^2'],
+    ['$$\na + |b', 'a + b'],
+    ['> [!note]\n> $$\n> a +| b\n> $$', 'a + b'],
+    ['> so $x^|2$', 'x^2'],
+    ['- item $\\alpha|$', '\\alpha'],
+    ['# Title $\\beta|$', '\\beta'],
+  ])('%j', (input, wanted) => expect(tex(input)).toEqual(wanted))
 
   test('a display block, on any of its lines', () => {
     const block = mathsAtCaret(at('above\n\n$$\n\\frac{1}{2}\n+ |x\n$$\n\nbelow'))
@@ -53,38 +61,15 @@ describe('the formula the caret is in', () => {
     expect(tex('$$\nx\n$$|')).toBe('x')
   })
 
-  test('a display block written on one line', () => {
-    expect(tex('$$E = m|c^2$$')).toBe('E = mc^2')
-  })
-
-  test('a display block still being written, with no closing $$ yet', () => {
-    expect(tex('$$\na + |b')).toBe('a + b')
-  })
-
-  test('in a quote or a callout, without the > of each line', () => {
-    expect(tex('> [!note]\n> $$\n> a +| b\n> $$')).toBe('a + b')
-    expect(tex('> so $x^|2$')).toBe('x^2')
-  })
-
-  test('in a list item and a heading', () => {
-    expect(tex('- item $\\alpha|$')).toBe('\\alpha')
-    expect(tex('# Title $\\beta|$')).toBe('\\beta')
-  })
-
   test('a selection inside it counts, one reaching past it does not', () => {
     expect(tex('so $|a^2|$ holds')).toBe('a^2')
     expect(tex('s|o $a^2|$ holds')).toBeNull()
   })
 
-  test('none where nothing can be typed or nothing is revealed', () => {
-    expect(tex('$a|$', EditorState.readOnly.of(true))).toBeNull()
-    expect(tex('$a|$', noReveal.of(true))).toBeNull()
-  })
-
-  test('none in a fence, where a dollar is code', () => {
-    expect(tex('```\n$a|$\n```')).toBeNull()
-    expect(tex('so `$a|$` here')).toBeNull()
-  })
+  test.each([
+    ['$a|$', EditorState.readOnly.of(true)],
+    ['$a|$', noReveal.of(true)],
+  ])('%j', (input, extra) => expect(tex(input, extra)).toBeNull())
 })
 
 describe('the formula in a table cell', () => {

@@ -1,10 +1,7 @@
 export const LEAST_REACH = 96
 export const MOST_REACH = 160
-
 const GIVE = 3
-
 export const FALL = 250
-
 export const SETTLE = 300
 
 export function reachFor(pageOnScreen: number): number {
@@ -20,9 +17,7 @@ export function risen(raw: number, reach: number, still = false): number {
   return Math.min(most, raw / (1 + raw / most))
 }
 
-export function armed(rise: number, reach: number): boolean {
-  return rise >= reach
-}
+export const armed = (rise: number, reach: number): boolean => rise >= reach
 
 export function fallen(raw: number, elapsed: number, still = false): number {
   if (elapsed >= FALL || raw <= 0) return 0
@@ -49,13 +44,16 @@ export interface Pulling {
   quiet: number
 }
 
-export function noPull(): Pulling {
-  return { raw: 0, at: 0, allowed: false, holding: false, quiet: 0 }
-}
+export const noPull = (): Pulling => ({ raw: 0, at: 0, allowed: false, holding: false, quiet: 0 })
 
-export function began(pull: Pulling, near: boolean, now: number): Pulling {
-  return { ...pull, raw: 0, at: now, allowed: near, holding: false, quiet: pull.quiet }
-}
+export const began = (pull: Pulling, near: boolean, now: number): Pulling => ({
+  ...pull,
+  raw: 0,
+  at: now,
+  allowed: near,
+  holding: false,
+  quiet: pull.quiet,
+})
 
 export function riseOf(pull: Pulling, reach: number, now: number, still = false): number {
   const raw = pull.holding ? pull.raw : fallen(pull.raw, now - pull.at, still)

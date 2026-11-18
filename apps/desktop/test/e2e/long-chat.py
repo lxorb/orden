@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 
 from playwright.sync_api import Browser
@@ -100,5 +98,4 @@ def drive(browser: Browser) -> None:
     DRIVE.shot(page, "long")
     page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a long chat opens on its last turns and draws the earlier ones as it is scrolled up"))
+raise SystemExit(DRIVE.run(drive, "a long chat opens on its last turns and draws the earlier ones as it is scrolled up"))

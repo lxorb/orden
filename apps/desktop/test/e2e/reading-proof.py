@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib.util
 import json
 import sys
@@ -32,8 +30,6 @@ async () => {
   const source = tab.doc
   out.bytes = source.length
 
-  // Every heading in the source, by the offset it starts at. The same scan the
-  // reading view's own places() does, done here so the proof does not depend on it.
   const heads = []
   {
     let at = 0
@@ -67,8 +63,6 @@ async () => {
 
   await into()
 
-  // One pass down the whole page, so every block has been rendered once and any
-  // block that remembers its size has one to remember.
   const scroller = page()?.parentElement?.closest('*')
   const scrolled = (() => {
     let one = page()
@@ -88,8 +82,6 @@ async () => {
     await window.__painted()
   }
 
-  // Every block's rect, relative to the page's own top-left, so the numbers do not
-  // move with the scroll.
   const held = page()
   const origin = held.getBoundingClientRect()
   out.blocks = [...held.children].map((one) => {
@@ -105,9 +97,6 @@ async () => {
   out.pageHeight = Math.round(held.getBoundingClientRect().height)
   out.blockCount = out.blocks.length
 
-  // Twenty headings spread through the note, each landed on from the editor and
-  // then read back. The error is in pixels: where the heading sits once the page
-  // has settled, measured from the top of what is on screen.
   const picked = []
   for (let one = 0; one < 20; one++) {
     const index = Math.floor((one * (heads.length - 1)) / 19)
@@ -119,13 +108,10 @@ async () => {
     const offset = heads[index]
 
     await outOf()
-    // The editor's own place, which is what the reading view is handed.
     ws.notePlace(tab.id, 0, offset)
     await window.__painted()
 
     await into()
-    // Let the landing settle: the page scrolls, blocks render, and it may take a
-    // frame or two for a skipped block to be laid out.
     for (let spin = 0; spin < 30; spin++) await window.__painted()
 
     const now = page()
@@ -143,8 +129,6 @@ async () => {
     }
 
     const error = Math.round(target.getBoundingClientRect().top - view.getBoundingClientRect().top)
-    // And what the reading view then told the tab, which is what the editor gets
-    // back. In characters, so it is the same unit the anchor is in.
     const back = tab.anchor ?? null
     landings.push({ index, error, wanted: offset, back, drift: back === null ? null : back - offset })
   }
@@ -184,5 +168,4 @@ def main() -> int:
 
     return DRIVE.verdict()
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

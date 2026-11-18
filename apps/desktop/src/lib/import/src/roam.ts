@@ -1,8 +1,7 @@
 import { foldName } from '@orden/markdown/links'
 import { asWords } from '@orden/markdown/words'
-
 import { dayOf, noteText, type Meta } from './meta'
-import { Names, safeName } from './names'
+import { Names, pageLink, safeName } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
@@ -27,11 +26,8 @@ const MONTHS = [
 ]
 
 const EMBED = String.raw`\{\{\s*(?:\[\[)?embed(?:-path)?(?:\]\])?\s*:\s*`
-
 const BLOCK_EMBED = new RegExp(`${EMBED}\\(\\(([^()\\s]+)\\)\\)\\s*\\}\\}`, 'g')
-
 const ALONE = new RegExp(`^\\s*${BLOCK_EMBED.source}\\s*$`)
-
 const PAGE_EMBED = new RegExp(`${EMBED}\\[\\[([^\\]\\n]+)\\]\\]\\s*\\}\\}`, 'g')
 
 interface RoamBlock {
@@ -159,7 +155,7 @@ function linesOf(
 
     const embedded = ALONE.exec(said)?.[1]
     const shown = embedded && graph.known.has(embedded) && !here.has(embedded) ? embedded : null
-    const words = roamText(said, graph.known, graph.counted, new Set(uid ? [uid] : []))
+    const words = roamText(said, graph.known, graph.counted, new Set(uid ? [uid] : []), pageLink)
     const indent = '  '.repeat(depth)
 
     const heading = depth === 0 && typeof block.heading === 'number' ? block.heading : 0
@@ -193,17 +189,21 @@ function itemText(words: string, indent: string): string {
     .join('\n')
 }
 
+const asWritten = (name: string, shown: string | null = null, embed = false): string =>
+  `${embed ? '!' : ''}[[${name}${shown === null ? '' : `|${shown}`}]]`
+
 export function roamText(
   said: string,
   known: ReadonlyMap<string, string> = new Map(),
   counted: () => void = () => undefined,
   showing: ReadonlySet<string> = new Set(),
+  link: typeof pageLink = asWritten,
 ): string {
   const block = (whole: string, uid: string, as?: () => string) => {
     const words = known.get(uid)
     if (words === undefined || showing.has(uid)) return whole
     counted()
-    return as ? as() : roamText(words, known, counted, new Set([...showing, uid]))
+    return as ? as() : roamText(words, known, counted, new Set([...showing, uid]), link)
   }
   const page = (name: string) => dayName(name.trim()) ?? name
 
@@ -214,16 +214,17 @@ export function roamText(
       .replace(/\^\^([^^]+)\^\^/g, '==$1==')
       .replace(/(?<![\w_])__(?=\S)([^_\n]+?)__(?![\w_])/g, '*$1*')
       .replace(BLOCK_EMBED, (whole, uid: string) => block(whole, uid))
-      .replace(PAGE_EMBED, (_whole, name: string) => `![[${page(name)}]]`)
+      .replace(PAGE_EMBED, (_whole, name: string) => link(page(name), null, true))
       .replace(/\[([^\]\n]+)\]\(\(\(([^()\s]+)\)\)\)/g, (whole, words: string, uid: string) =>
         block(whole, uid, () => words),
       )
       .replace(/\(\(([^()\s]+)\)\)/g, (whole, uid: string) => block(whole, uid))
-      .replace(
-        /\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g,
-        (_whole, words: string, name: string) => `[[${page(name)}|${words}]]`,
+      .replace(/\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g, (_whole, words: string, name: string) =>
+        link(page(name), words),
       )
-      .replace(/(?<!\{)\[\[([^[\]\n]+)\]\](?!\})/g, (_whole, name: string) => `[[${page(name)}]]`)
+      .replace(/(?<!\{)\[\[([^[\]\n]+)\]\](?!\})/g, (whole, name: string) =>
+        name.includes('|') ? whole : link(page(name)),
+      )
       .replace(/\{\{\[\[([^\]]+)\]\]\}\}/g, '$1'),
   )
 }
@@ -287,6 +288,5 @@ export function dayName(title: string): string | null {
   return dayOf(`${found[3]}-${String(month).padStart(2, '0')}-${(found[2] ?? '').padStart(2, '0')}`)
 }
 
-function asNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
+const asNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null

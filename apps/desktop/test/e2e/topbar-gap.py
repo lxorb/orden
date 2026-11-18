@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any
 
 from harness import Drive
@@ -100,5 +98,4 @@ def drive(browser: Any) -> None:
     wait_for(page, "document.querySelector('header[data-chrome=\"top\"] .strip .link')", "the chain")
     row(page, "08-filled-twinned")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

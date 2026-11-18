@@ -8,7 +8,6 @@ const app = readFileSync(`${SOURCE}App.svelte`, 'utf8')
 test('the drawer is registered on whether a side is covered, not on which panel', () => {
   expect(app).toContain('const covered = $derived(!!workspace.panel)')
   expect(app).toContain('closeOnBack(covered, () => workspace.closePanel())')
-
   expect(app).toContain('const coveredRight = $derived(rightOpen)')
   expect(app).toContain('closeOnBack(coveredRight, () => workspace.closeRight())')
 })

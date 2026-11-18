@@ -22,11 +22,9 @@ export interface NoteGraph {
 }
 
 export type Resolve = (from: string, link: { kind: LinkKind; target: string }) => string | null
-
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 const CANVAS = /\.canvas$/i
 const EXTENSION = /\.[A-Za-z0-9]{1,8}$/
-
 const MISSING = '?'
 const EMBEDDED = '!'
 
@@ -95,9 +93,9 @@ export function buildGraph(
       if (!link.target) continue
 
       const file = options.attachments && namesFile(link)
-      if (!file && !namesNote(link.target)) continue
-
       const found = file ? null : resolve(note.path, link)
+      if (!file && found === null && !namesNote(link.target)) continue
+
       const to = file
         ? embedded(nodes, at, link.target)
         : found === null

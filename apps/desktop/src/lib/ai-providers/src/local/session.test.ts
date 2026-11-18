@@ -6,9 +6,13 @@ class FakeChannel {
 
 const asked: string[] = []
 const answers = new Map<string, () => void>()
+const opened: Record<string, unknown>[] = []
 
 async function fakeInvoke(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
-  if (command === 'ai_cli_open') return null
+  if (command === 'ai_cli_open') {
+    opened.push(args.opening as Record<string, unknown>)
+    return null
+  }
   const say = args.say as { kind: string } | undefined
   const name = say ? say.kind : command
   asked.push(name)
@@ -57,4 +61,25 @@ test('what is said to a session reaches it one at a time, in the order it was sa
   expect(asked).toEqual(['model', 'interrupt', 'turn', 'ai_cli_close'])
   answers.get('ai_cli_close')?.()
   await closed
+})
+
+test('a session of an account the vault moved to a fresh id goes by the agent rights it had, as that account', async () => {
+  const { keepMoves } = await import('../moves')
+  keepMoves({ cx: 'cx-2' })
+
+  await openSession(
+    {
+      tool: 'codex',
+      agent: { id: 'cx-2', name: 'Codex' },
+      mode: 'auto',
+      model: null,
+      effort: null,
+    },
+    () => undefined,
+  )
+
+  expect(opened.at(-1)).toMatchObject({
+    agent: { id: 'cx', name: 'Codex', readerTabs: true },
+    account: 'cx-2',
+  })
 })

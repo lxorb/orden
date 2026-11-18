@@ -23,7 +23,6 @@ export function meetAcross(one: Across | null) {
 }
 
 let acrossSoon: (() => Promise<Across>) | null = null
-
 let owed: ((note: NoteDoc) => void) | null = null
 
 export function oweTo(owe: (note: NoteDoc) => void) {

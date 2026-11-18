@@ -1,4 +1,4 @@
-import { ChangeSet, type Heard, type Mark, Text } from '@orden/editor'
+import { ChangeSet, type Heard, Text } from '@orden/editor'
 import { fold } from '@orden/rooms/fold'
 import type { NoteDoc } from '../../documents/src/api'
 import type { Replacement } from './edits'
@@ -87,9 +87,7 @@ export class Track {
     this.catchUp(note, note.live.text.toString())
     const before = note.live.text
 
-    const changes = this.quietly(() =>
-      note.live.edit(edits, { userEvent: AGENT_EVENT, marks: [{ id, undone: false }] }),
-    )
+    const changes = this.editOpen(note, edits, [id], false)
     this.recorded(id, changes, before)
     return changes
   }
@@ -125,11 +123,7 @@ export class Track {
     const some = this.steps.take(ids, before)
     if (!some?.ids.length) return []
 
-    const marks: Mark[] = some.ids.map((id) => ({ id, undone: true }))
-    const changes = this.quietly(() =>
-      note.live.edit(some.changes, { userEvent: UNDO_EVENT, marks }),
-    )
-    this.tookBack(some.ids, changes, before, token)
+    this.tookBack(some.ids, this.editOpen(note, some.changes, some.ids, true), before, token)
     return some.ids
   }
 
@@ -154,17 +148,15 @@ export class Track {
     words: string,
     ids: ReadonlySet<string>,
     token?: string,
-  ): { edits: Replacement[]; after: string; ids: string[]; refused: () => void } | null {
+  ): { edits: Replacement[]; ids: string[]; refused: () => void } | null {
     this.catchUp(null, words)
     const refused = this.saved()
     const before = ropeOf(words)
     const some = this.steps.take(ids, before)
     if (!some?.ids.length) return null
 
-    const after = some.changes.apply(before).toString()
-    this.seen = after
     this.tookBack(some.ids, some.changes, before, token)
-    return { edits: replacementsOf(some.changes), after, ids: some.ids, refused }
+    return { edits: this.closedBy(before, some.changes), ids: some.ids, refused }
   }
 
   putBackOpen(note: NoteDoc, token: string): string[] {
@@ -174,18 +166,14 @@ export class Track {
     this.takenBack.delete(token)
 
     const before = note.live.text
-    const marks: Mark[] = back.ids.map((id) => ({ id, undone: false }))
-    const changes = this.quietly(() =>
-      note.live.edit(back.changes, { userEvent: AGENT_EVENT, marks }),
-    )
-    this.recorded(back.ids, changes, before)
+    this.recorded(back.ids, this.editOpen(note, back.changes, back.ids, false), before)
     return back.ids
   }
 
   putBackClosed(
     words: string,
     token: string,
-  ): { edits: Replacement[]; after: string; ids: string[]; refused: () => void } | null {
+  ): { edits: Replacement[]; ids: string[]; refused: () => void } | null {
     this.catchUp(null, words)
     const refused = this.saved()
     const back = this.takenBack.get(token)
@@ -193,10 +181,9 @@ export class Track {
     this.takenBack.delete(token)
 
     const before = ropeOf(words)
-    const after = back.changes.apply(before).toString()
-    this.seen = after
+    const edits = this.closedBy(before, back.changes)
     this.recorded(back.ids, back.changes, before)
-    return { edits: replacementsOf(back.changes), after, ids: back.ids, refused }
+    return { edits, ids: back.ids, refused }
   }
 
   holds(token: string): boolean {
@@ -256,27 +243,20 @@ export class Track {
     const all = this.steps.takeAll()
     if (!all) return 0
 
-    const marks: Mark[] = all.ids.map((id) => ({ id, undone: true }))
-    const changes = this.quietly(() =>
-      note.live.edit(all.changes, { userEvent: UNDO_EVENT, marks }),
-    )
-    this.tookBack(all.ids, changes, before)
+    this.tookBack(all.ids, this.editOpen(note, all.changes, all.ids, true), before)
     return all.ids.length
   }
 
-  undoClosed(
-    words: string,
-  ): { edits: Replacement[]; after: string; count: number; refused: () => void } | null {
+  undoClosed(words: string): { edits: Replacement[]; count: number; refused: () => void } | null {
     this.catchUp(null, words)
     const refused = this.saved()
     const all = this.steps.takeAll()
     if (!all) return null
 
     const before = ropeOf(words)
-    const after = all.changes.apply(before).toString()
-    this.seen = after
+    const edits = this.closedBy(before, all.changes)
     this.tookBack(all.ids, all.changes, before)
-    return { edits: replacementsOf(all.changes), after, count: all.ids.length, refused }
+    return { edits, count: all.ids.length, refused }
   }
 
   private hold(note: NoteDoc) {
@@ -338,10 +318,23 @@ export class Track {
     this.told(this.said)
   }
 
-  private quietly<T>(make: () => T): T {
+  private closedBy(before: Text, changes: ChangeSet): Replacement[] {
+    this.seen = changes.apply(before).toString()
+    return replacementsOf(changes)
+  }
+
+  private editOpen(
+    note: NoteDoc,
+    changes: readonly Replacement[] | ChangeSet,
+    ids: readonly string[],
+    undone: boolean,
+  ): ChangeSet {
     this.making = true
     try {
-      return make()
+      return note.live.edit(changes, {
+        userEvent: undone ? UNDO_EVENT : AGENT_EVENT,
+        marks: ids.map((id) => ({ id, undone })),
+      })
     } finally {
       this.making = false
     }

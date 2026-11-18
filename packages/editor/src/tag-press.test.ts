@@ -61,29 +61,13 @@ function pills(doc: string, at?: number, more: Extension[] = []) {
 }
 
 describe('what the parser reads as a tag', () => {
-  test('a hash opening a word, then a name', () => {
-    expect(parsedTags('Filed under #work and (#aside), #b2')).toEqual(['#work', '#aside', '#b2'])
-  })
-
-  test('nested is one tag, and it stops where the name does', () => {
-    expect(parsedTags('#work/orden/canvas, then #tag. And #tag’s')).toEqual([
-      '#work/orden/canvas',
-      '#tag',
-      '#tag',
-    ])
-  })
-
-  test('in a heading’s words, a list item and a quote', () => {
-    expect(parsedTags('## Plan #work\n\n- #item\n\n> #quoted')).toEqual([
-      '#work',
-      '#item',
-      '#quoted',
-    ])
-  })
-
-  test('never a heading, a number, a word’s middle or an escaped hash', () => {
-    expect(parsedTags('# Heading\n\n#42 and C#sharp and a#b and \\#not')).toEqual([])
-  })
+  test.each([
+    ['Filed under #work and (#aside), #b2', ['#work', '#aside', '#b2']],
+    ['#work/orden/canvas, then #tag. And #tag’s', ['#work/orden/canvas', '#tag', '#tag']],
+    ['## Plan #work\n\n- #item\n\n> #quoted', ['#work', '#item', '#quoted']],
+    ['# Heading\n\n#42 and C#sharp and a#b and \\#not', []],
+    ['---\ntags: [one]\n# comment\n---\n\n#body', ['#body']],
+  ])('%j', (input, wanted) => expect(parsedTags(input)).toEqual(wanted))
 
   test('never in code, maths, a comment, an address or a tag of HTML', () => {
     const doc = [
@@ -98,30 +82,29 @@ describe('what the parser reads as a tag', () => {
 
     expect(parsedTags(doc)).toEqual([])
   })
-
-  test('never in the front matter, where the tags are YAML', () => {
-    expect(parsedTags('---\ntags: [one]\n# comment\n---\n\n#body')).toEqual(['#body'])
-  })
 })
 
 describe('a tag in the preview', () => {
-  test('is a pill carrying its name, the hash inside it', () => {
-    expect(pills('Filed under #work/orden today')).toEqual([
-      { text: '#work/orden', className: 'tag', tag: 'work/orden' },
-    ])
-  })
+  test.each([
+    [
+      'Filed under #work/orden today',
+      [{ text: '#work/orden', className: 'tag', tag: 'work/orden' }],
+    ],
+    ['[see #this](https://orden.dev) and ![#alt](pic.png)', []],
+  ])('%j', (input, wanted) => expect(pills(input)).toEqual(wanted))
 
-  test('reads as its source while the caret is in it, and as a pill again after', () => {
-    const doc = 'Filed #work today'
-    const inside = doc.indexOf('work') + 2
-
-    expect(pills(doc, inside)).toEqual([{ text: '#work', className: 'tag is-open', tag: 'work' }])
-    expect(pills(doc, doc.length)).toEqual([{ text: '#work', className: 'tag', tag: 'work' }])
-  })
-
-  test('is left to the link it is written in', () => {
-    expect(pills('[see #this](https://orden.dev) and ![#alt](pic.png)')).toEqual([])
-  })
+  test.each([
+    [
+      'Filed #work today',
+      [{ text: '#work', className: 'tag is-open', tag: 'work' }],
+      'Filed #work today'.indexOf('work') + 2,
+    ],
+    [
+      'Filed #work today',
+      [{ text: '#work', className: 'tag', tag: 'work' }],
+      'Filed #work today'.length,
+    ],
+  ])('%j', (input, wanted, extra) => expect(pills(input, extra)).toEqual(wanted))
 
   test('promises a press only in an editor that can answer one', () => {
     expect(pills('A #tag')[0]?.title).toBeUndefined()

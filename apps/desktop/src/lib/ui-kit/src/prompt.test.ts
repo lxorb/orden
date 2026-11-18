@@ -10,22 +10,18 @@ describe('asks that come while another is open', () => {
     const first = prompt.choose({ title: 'First.pdf', options: [{ id: 'all', label: 'All' }] })
     const second = prompt.choose({ title: 'Second.pdf', options: [{ id: 'one', label: 'One' }] })
     const third = prompt.confirm({ title: 'Third' })
-
     expect(prompt.title).toBe('First.pdf')
     prompt.pick('all')
     expect(await first).toBe('all')
-
     await settle()
     expect(prompt.open).toBe(true)
     expect(prompt.title).toBe('Second.pdf')
     prompt.dismiss()
     expect(await second).toBeNull()
-
     await settle()
     expect(prompt.title).toBe('Third')
     prompt.submit()
     expect(await third).toBe(true)
-
     await settle()
     expect(prompt.open).toBe(false)
   })
@@ -37,11 +33,9 @@ describe('asks that come while another is open', () => {
       options: [{ id: 'b', label: 'B' }],
       tick: 'Remember',
     })
-
     expect(prompt.tick).toBe('')
     prompt.pick('a')
     await plain
-
     await settle()
     expect(prompt.tick).toBe('Remember')
     prompt.ticked = true
@@ -56,12 +50,10 @@ describe('an ask held by a signal', () => {
     const held = prompt.confirm({ title: 'Delete Bank for good?', until: lock.signal })
     const waiting = prompt.choose({ title: 'Move to', options: [], until: lock.signal })
     const other = prompt.confirm({ title: 'Elsewhere' })
-
     expect(prompt.title).toBe('Delete Bank for good?')
     lock.abort()
     expect(await held).toBe(false)
     expect(await waiting).toBeNull()
-
     await settle()
     expect(prompt.title).toBe('Elsewhere')
     prompt.dismiss()

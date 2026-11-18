@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import json
 
@@ -178,5 +176,4 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("v")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "holding the right mouse button and moving pans a canvas and a page note, with any tool"))
+raise SystemExit(DRIVE.run(drive, "holding the right mouse button and moving pans a canvas and a page note, with any tool"))

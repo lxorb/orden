@@ -10,10 +10,7 @@ export interface Face {
 
 const BUDGET = 20_000_000
 export const LARGEST = BUDGET / 50
-
-export function sizeOf(face: Face): number {
-  return (face.html?.length ?? 0) + (face.shot?.length ?? 0)
-}
+export const sizeOf = (face: Face): number => (face.html?.length ?? 0) + (face.shot?.length ?? 0)
 
 export function isFace(value: unknown): value is Face {
   if (typeof value !== 'object' || value === null) return false
@@ -63,16 +60,14 @@ const held = heldDatabase(NAME, 2, (request, oldVersion) => {
   else request.transaction?.objectStore(STORE).delete(IDBKeyRange.bound('web:', 'web:\uffff'))
 })
 
-function settled<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
+const settled = <T>(request: IDBRequest<T>): Promise<T> =>
+  new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the faces store refused'))
   })
-}
 
-async function asked<T>(mode: IDBTransactionMode, ask: (store: IDBObjectStore) => IDBRequest<T>) {
-  return settled(ask((await held.transaction(STORE, mode)).objectStore(STORE)))
-}
+const asked = async <T>(mode: IDBTransactionMode, ask: (store: IDBObjectStore) => IDBRequest<T>) =>
+  settled(ask((await held.transaction(STORE, mode)).objectStore(STORE)))
 
 export async function upgradeFaces(): Promise<void> {
   await held.transaction(STORE).catch(() => undefined)

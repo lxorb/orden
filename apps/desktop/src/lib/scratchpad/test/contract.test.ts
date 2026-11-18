@@ -1,5 +1,3 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 
 const right = vi.hoisted(() => ({ shows: null as string | null, closed: 0 }))
@@ -23,67 +21,28 @@ vi.mock('../../workspace/src/api', () => ({
 const api = await import('../src/api')
 const { difference, joined } = await import('../src/words')
 
-const HERE = join(import.meta.dirname, '..')
-const SRC = join(HERE, 'src')
-const ROOT = join(HERE, '../../../../..')
-const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '/index.ts']
-
-function sources(folder: string): string[] {
-  return readdirSync(folder).flatMap((name) => {
-    const path = join(folder, name)
-    if (statSync(path).isDirectory()) return sources(path)
-    return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
-  })
-}
-
-function pendingOf(): string[] {
-  const json = JSON.parse(readFileSync(join(HERE, 'module.json'), 'utf8')) as { pending?: string[] }
-  return json.pending ?? []
-}
-
-describe('the module stands on its own', () => {
-  test('nothing under src reaches past a module api or a file still listed as pending', () => {
-    const pending = pendingOf()
-    const reaching = sources(SRC).flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'(\.[^']*)'/g)].flatMap(
-        (found) => {
-          const target = resolve(dirname(file), found[1] ?? '')
-          if (target.startsWith(SRC)) return []
-          if (/\/[a-z-]+\/src\/api$/.test(target)) return []
-          const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one))
-          const named = path === undefined ? target : relative(ROOT, path)
-          return pending.includes(named) ? [] : [`${relative(SRC, file)}: ${found[1]}`]
-        },
-      ),
-    )
-    expect(reaching).toEqual([])
-  })
-
-  test('the api loads with the pad, the card and the sync closed, and every call is there', () => {
-    for (const one of [
-      api.closeScratchpad,
-      api.isScratchpad,
-      api.loadScratchpadCard,
-      api.pad,
-      api.padTab,
-      api.scratchFromDrawer,
-      api.toggleScratchpad,
-      api.wakeScratchpad,
-    ]) {
-      expect(typeof one).toBe('function')
-    }
-    expect(api.SCRATCHPAD).toBe('Scratchpad.md')
-  })
+test('the module stands on its own the api loads with the pad, the card and the sync closed, and every call is there', () => {
+  for (const one of [
+    api.closeScratchpad,
+    api.isScratchpad,
+    api.loadScratchpadCard,
+    api.pad,
+    api.padTab,
+    api.scratchFromDrawer,
+    api.toggleScratchpad,
+    api.wakeScratchpad,
+  ]) {
+    expect(typeof one).toBe('function')
+  }
+  expect(api.SCRATCHPAD).toBe('Scratchpad.md')
 })
 
-describe('which file is the scratchpad', () => {
-  test('a Scratchpad.md outside every space, and no note of that name inside one', () => {
-    expect(api.isScratchpad('/app/Scratchpad.md')).toBe(true)
-    expect(api.isScratchpad('/space/Scratchpad.md')).toBe(false)
-    expect(api.isScratchpad('/app/Other.md')).toBe(false)
-    expect(api.isScratchpad(null)).toBe(false)
-    expect(api.padTab()).toBeNull()
-  })
+test('which file is the scratchpad a Scratchpad.md outside every space, and no note of that name inside one', () => {
+  expect(api.isScratchpad('/app/Scratchpad.md')).toBe(true)
+  expect(api.isScratchpad('/space/Scratchpad.md')).toBe(false)
+  expect(api.isScratchpad('/app/Other.md')).toBe(false)
+  expect(api.isScratchpad(null)).toBe(false)
+  expect(api.padTab()).toBeNull()
 })
 
 describe('showing it on the right', () => {

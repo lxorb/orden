@@ -27,7 +27,6 @@ export interface SealedExport {
 
 const SALT = 16
 const EXPORT_INFO = 'orden pass export'
-
 export const CSV_COLUMNS = ['name', 'url', 'email', 'username', 'password', 'totp', 'note'] as const
 
 export function spreadsheetSafe(cell: string): string {

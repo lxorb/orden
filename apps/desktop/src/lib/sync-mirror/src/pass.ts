@@ -23,18 +23,12 @@ import {
   invoke,
   joinPath,
   passing,
+  within,
 } from '../../platform/src/api'
 import { settleShortcuts } from '@orden/scan/settle'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
-import {
-  fileStamp,
-  type Mirror,
-  type Moving,
-  type Tracked,
-  type TrackedFile,
-  within,
-} from './mirror'
+import { fileStamp, type Mirror, type Moving, type Tracked, type TrackedFile } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
 import { askSheet, type Entry, isUntouchedWelcome } from '@orden/contracts'
@@ -638,7 +632,7 @@ async function deletedThere(
   await invoke('snapshot_note', { path: target, content: local }).catch(() => undefined)
   const how = syncDeletes(target, 'file')
     ? invoke('delete_note', { path: target })
-    : invoke('trash_item', { path: target, kind: 'note' })
+    : invoke('trash_item', { path: target, kind: 'note', arrived: true })
   await how.catch((error: unknown) => {
     log(
       'warn',
@@ -657,7 +651,7 @@ export async function movedHere(
 ): Promise<boolean> {
   const was = within(mirror.root, from)
   const now = within(mirror.root, to)
-  if (was === null || now === null) return false
+  if (!was || !now) return false
 
   const under = `${was}/`
   const moving = Object.entries(mirror.notes)

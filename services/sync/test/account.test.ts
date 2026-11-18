@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { codeAt } from '../src/sync-server-accounts/src/second'
-import { call, file, mail, signIn, type Answer, type TestEnv, testEnv } from './harness'
+import { type Answer, call, file, joined, mail, signIn, type TestEnv, testEnv } from './harness'
 
 interface LeavingView {
   resendIn?: number
@@ -316,14 +316,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-    await call(env, `/v1/join/${link}`, { method: 'POST', token })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const wrote = await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
       token,
@@ -381,11 +374,7 @@ describe('what is left', () => {
       })
     ).json.note?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${mine}/share/invite`, { token, body: { email: OTHER, role: 'read' } }),
-    )
-    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-    await call(env, `/v1/join/${link}`, { method: 'POST', token: other })
+    await joined(env, token, mine ?? '', OTHER, 'read', { as: other })
     expect((await call(env, `/v1/notes/${note}`, { token: other })).status).toBe(200)
 
     expect((await leave()).status).toBe(200)
@@ -429,16 +418,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const pictures = [file(3, 4), file(3, 5)]
     const [pasted, kept] = pictures.map((one) => one.hash) as [string, string]
@@ -471,16 +451,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const pages = (
       await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
@@ -561,16 +532,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const picture = file(3, 10)
     await call(env, `/v1/blobs/${picture.hash}`, {
@@ -610,16 +572,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const picture = file(3, 11)
     for (const as of [token, stranger]) {
@@ -653,16 +606,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const picture = file(3, 12)
     await call(env, `/v1/blobs/${picture.hash}`, {
@@ -700,16 +644,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const pages = (
       await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
@@ -823,16 +758,7 @@ describe('what is left', () => {
       const theirs = (
         await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
       ).json.space?.id
-      const sent = await mail(() =>
-        call(env, `/v1/spaces/${theirs}/share/invite`, {
-          token: other,
-          body: { email: ME, role: 'write' },
-        }),
-      )
-      await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-        method: 'POST',
-        token,
-      })
+      await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
       const bytes = new TextEncoder().encode('%PDF-1.4\nemptied\n%%EOF\n')
       const hash = createHash('sha256').update(bytes).digest('hex')
@@ -932,16 +858,7 @@ describe('what is left', () => {
     const theirs = (
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const picture = file(3, 15)
     await call(env, `/v1/blobs/${picture.hash}`, {
@@ -982,16 +899,7 @@ describe('what is left', () => {
         )
         .run(`n${String(at)}`, big, `n${String(at)}.md`, row.seq + at, row.updated_at, 5, row.hash)
     }
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${big}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'read' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, big, ME, 'read', { as: token })
 
     const own = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json
       .space?.id

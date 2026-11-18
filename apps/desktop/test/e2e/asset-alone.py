@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 
 from playwright.sync_api import Browser
@@ -59,5 +57,4 @@ def drive(browser: Browser) -> None:
         alone.close()
     context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

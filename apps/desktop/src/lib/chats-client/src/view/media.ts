@@ -18,11 +18,7 @@ function isSound(file: FileRef): boolean {
   return file.type.startsWith('audio/')
 }
 
-export function sortFiles(files: readonly FileRef[]): {
-  seen: FileRef[]
-  heard: FileRef[]
-  other: FileRef[]
-} {
+export function sortFiles(files: readonly FileRef[]) {
   return {
     seen: files.filter((one) => isPicture(one) || isVideo(one)),
     heard: files.filter(isSound),
@@ -42,11 +38,7 @@ export function fitted(file: FileRef, column: number): { width: number; height: 
   return { width: Math.round(width * scale), height: Math.round(height * scale) }
 }
 
-export function gallery(files: readonly FileRef[]): {
-  across: number
-  shown: FileRef[]
-  more: number
-} {
+export function gallery(files: readonly FileRef[]) {
   const shown = files.slice(0, GALLERY_MOST)
   const across = shown.length === 2 || shown.length === 4 ? 2 : 3
   return { across, shown, more: files.length - shown.length }
@@ -70,9 +62,4 @@ export function barsOf(samples: Float32Array, bars = WAVE_BARS): number[] {
 export function seekAt(x: number, left: number, width: number): number {
   if (width <= 0) return 0
   return Math.min(1, Math.max(0, (x - left) / width))
-}
-
-export function clock(seconds: number): string {
-  const whole = Math.max(0, Math.round(seconds))
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
 }

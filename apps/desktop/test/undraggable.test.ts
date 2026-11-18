@@ -1,23 +1,13 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { readFileSync } from 'node:fs'
+import { relative } from 'node:path'
 import { expect, test } from 'vitest'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
-
-function components(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) return components(path)
-    return name.endsWith('.svelte') ? [path] : []
-  })
-}
+import { SOURCE, svelte, walk } from './files'
 
 function pictures(text: string): string[] {
   return [...text.matchAll(/<img\b[\s\S]*?\/>/g)].map((one) => one[0])
 }
 
-const found = components(SOURCE).flatMap((path) =>
+const found = walk(SOURCE, svelte).flatMap((path) =>
   pictures(readFileSync(path, 'utf8')).map((tag) => ({ file: relative(SOURCE, path), tag })),
 )
 

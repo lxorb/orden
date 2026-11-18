@@ -6,6 +6,7 @@
   import { modes } from '../../modes/src/api'
   import { placesIn, type Words } from '@orden/scan/search/find'
   import { inlineFiles } from './drawn'
+  import { reachKey } from './reach'
   import { paint, rangeOf, wordsOf } from './find'
   import { headingOffsets, positionOf, type Section, sectionAt } from './places'
   import { readingHtml, tagAnchor, unreadableHtml } from './render'
@@ -27,16 +28,13 @@
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
   const REDRAW = 200
-
   let scroller = $state<HTMLDivElement>()
   let root = $state<HTMLDivElement>()
   let surface = $state<HTMLElement>()
   let html = $state('')
-
   let latest = 0
   let redraw: ReturnType<typeof setTimeout> | undefined
   let drawn = false
-
   let undrawn: (() => void) | undefined
 
   function basesIn(page: HTMLElement, from: string | null): () => void {
@@ -62,19 +60,13 @@
     }
   }
 
-  const readsOthers = $derived(
-    tab.doc.includes('```query') ||
-      tab.doc.includes('```tasks') ||
-      tab.doc.includes('[[') ||
-      tab.doc.includes(']('),
-  )
+  const reach = $derived(reachKey(tab.doc, tab.path, links))
 
-  function note() {
-    return untrack(() => {
+  const note = () =>
+    untrack(() => {
       tab.note.flush()
       return { text: tab.doc, path: tab.path }
     })
-  }
 
   async function draw() {
     const mine = ++latest
@@ -124,7 +116,7 @@
       tab.note.revision,
       theme.current,
       trustsHtmlIn(tab.note),
-      readsOthers ? links.version : 0,
+      reach,
       links.locksSeen(),
       modes.hardBreaks,
     ]
@@ -312,16 +304,18 @@
       return
     }
 
-    const found = wiki
+    const note = wiki
       ? { path: target }
       : (resolveRelative(index, target) ?? resolveNote(index, target))
-    if (!found) return
+    const file = note ? null : resolveFile(index, target, 'markdown')
+    const path = note?.path ?? file
+    if (path === null) return
 
-    const said = fragment ? decodeFragment(fragment) : null
+    const said = fragment && file === null ? decodeFragment(fragment) : null
     const block = said?.startsWith('^') ? said.slice(1) : null
     void workspace.followLink(
       {
-        path: found.path,
+        path,
         target,
         heading: block === null ? said : null,
         block,
@@ -349,9 +343,7 @@
   const offsetOf = (line: number) =>
     tab.doc.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)
 
-  function written(target: string): string {
-    return decodeTarget(target)
-  }
+  const written = (target: string): string => decodeTarget(target)
 
   function jump(fragment: string) {
     const page = surface
@@ -390,13 +382,10 @@
   }
 
   const painter = {}
-
   let finding = $state(false)
   let query = $state('')
   let current = $state(0)
-
   let words: Words | null = null
-
   let drawnPage = $state(0)
 
   function changed() {

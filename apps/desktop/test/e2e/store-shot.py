@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Browser, Page
@@ -80,5 +78,4 @@ def shoot(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(shoot)
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

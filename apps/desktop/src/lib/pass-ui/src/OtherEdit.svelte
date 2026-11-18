@@ -1,21 +1,13 @@
 <script lang="ts">
-  import {
-    type Custom,
-    type SshKey,
-    type Wifi,
-    WIFI_SECURITY,
-    type WifiSecurity,
-  } from '@orden/pass/types'
+  import { type Custom, type SshKey, type Wifi, WIFI_SECURITY } from '@orden/pass/types'
   import { canMakeSshKey, newSshKey, sshPublicOf } from '@orden/pass/ssh'
   import { message } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
-  import { FIELD_ICONS } from '../../pass-sync/src/api'
-  import { securityLabel } from '../../pass-sync/src/api'
+  import { FIELD_ICONS, securityLabel, type PassUi } from '../../pass-sync/src/api'
   import PasswordField from './PasswordField.svelte'
   import SectionsEdit from './SectionsEdit.svelte'
-  import type { PassUi } from '../../pass-sync/src/api'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let {
@@ -65,10 +57,6 @@
     const derived = sshPublicOf(content.privateKey)
     if (derived) content.publicKey = derived
   }
-
-  function securityIn(value: string): WifiSecurity {
-    return WIFI_SECURITY.find((one) => one === value) ?? 'wpa2'
-  }
 </script>
 
 {#if content.kind === 'ssh'}
@@ -104,7 +92,7 @@
       {content.privateKey.trim() === '' ? 'Generate key' : 'Generate a new key'}
     </button>
   {/if}
-  {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+  {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 {:else if content.kind === 'wifi'}
   <EditCard>
     <EditField
@@ -121,7 +109,7 @@
         value={content.security}
         options={securities}
         onchange={(value: string) => {
-          content.security = securityIn(value)
+          content.security = WIFI_SECURITY.find((one) => one === value) ?? 'wpa2'
           oninput()
         }}
       />
@@ -134,12 +122,6 @@
 <style>
   .generate {
     align-self: flex-start;
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 
   .security {

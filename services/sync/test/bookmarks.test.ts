@@ -1,100 +1,32 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { describe, expect, test } from 'vitest'
+import { call, signIn } from './harness'
+import { spaceField } from './space-field'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
-
-function put(bookmarks: unknown, options: { as?: string; id?: string } = {}) {
-  return call(env, `/v1/spaces/${options.id ?? space}/bookmarks`, {
-    method: 'PUT',
-    token: options.as ?? token,
-    body: { bookmarks },
-  })
-}
-
-async function listed(as = token) {
-  const { json } = await call(env, '/v1/spaces', { token: as })
-  return json.spaces.find((one) => one.id === space)?.bookmarks
-}
+const { at, put, listed, column, kept, owned } = spaceField('bookmarks')
 
 const note = { kind: 'note', path: 'Read me.md', text: '' }
 const folder = { kind: 'folder', path: 'Work', text: '' }
 const heading = { kind: 'heading', path: 'Read me.md', text: 'Why it works' }
 const search = { kind: 'search', path: '', text: 'tea' }
 
+kept([], [note, folder, heading, search], [folder, note])
+owned([], [note])
+
 describe("a space's bookmarks", () => {
-  test('start empty', async () => {
-    expect(await listed()).toEqual([])
-  })
-
-  test('are kept whole, in the order they were sent', async () => {
-    const set = await put([note, folder, heading, search])
-    expect(set.status).toBe(200)
-    expect(set.json.bookmarks).toEqual([note, folder, heading, search])
-
-    expect(await listed()).toEqual([note, folder, heading, search])
-  })
-
-  test('are replaced by the list that arrives, which is what reordering is', async () => {
-    await put([note, folder])
-    await put([folder, note])
-
-    expect(await listed()).toEqual([folder, note])
-  })
-
-  test('go away when an empty list is sent', async () => {
-    await put([note])
-    await put([])
-
-    expect(await listed()).toEqual([])
-  })
-
   test('keep only the fields a bookmark has', async () => {
     await put([{ ...note, colour: 'red', run: 'rm -rf' }])
     expect(await listed()).toEqual([note])
   })
-
-  test('mark the space as changed, so another device notices', async () => {
-    const before = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-    await put([note])
-    const after = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-
-    expect(after).toBeGreaterThanOrEqual(before)
-  })
 })
 
 describe('bookmarks belong to one account', () => {
-  test("are not another account's to write", async () => {
-    const other = await signIn(env, 'c@d.dev')
-
-    expect((await put([note], { as: other })).status).toBe(404)
-    expect(await listed()).toEqual([])
-  })
-
   test('are not another account’s to read', async () => {
-    const other = await signIn(env, 'c@d.dev')
+    const other = await signIn(at.env, 'c@d.dev')
     await put([note])
 
-    const theirs = await call(env, '/v1/spaces', { token: other })
-    expect(theirs.json.spaces.map((one) => one.id)).not.toContain(space)
+    const theirs = await call(at.env, '/v1/spaces', { token: other })
+    expect(theirs.json.spaces.map((one) => one.id)).not.toContain(at.space)
     expect(theirs.json.spaces.flatMap((one) => one.bookmarks)).toEqual([])
-  })
-
-  test('need a session at all', async () => {
-    expect((await call(env, `/v1/spaces/${space}/bookmarks`, { method: 'PUT' })).status).toBe(401)
-  })
-
-  test('answer 404 for a space that is not there', async () => {
-    expect((await put([note], { id: 'nope' })).status).toBe(404)
   })
 })
 
@@ -103,16 +35,6 @@ describe('a list that is not one', () => {
     expect((await put('Read me.md')).status).toBe(400)
     expect((await put({ 0: note })).status).toBe(400)
     expect((await put(null)).status).toBe(400)
-  })
-
-  test('is refused when the body is not an object at all', async () => {
-    const sent = await call(env, `/v1/spaces/${space}/bookmarks`, {
-      method: 'PUT',
-      token,
-      body: [note],
-    })
-
-    expect(sent.status).toBe(400)
   })
 
   test('says what is wrong with it', async () => {
@@ -205,18 +127,16 @@ describe('more bookmarks than a space holds', () => {
 
 describe('a column written by a newer build', () => {
   test('is read as far as this one understands it', async () => {
-    env.db
-      .prepare('update spaces set bookmarks = ? where id = ?')
-      .run(JSON.stringify([note, { kind: 'tag', path: '', text: 'tea' }, 7]), space)
+    column(JSON.stringify([note, { kind: 'tag', path: '', text: 'tea' }, 7]))
 
     expect(await listed()).toEqual([note])
   })
 
   test('is read as nothing when it is not a list at all', async () => {
-    env.db.prepare('update spaces set bookmarks = ? where id = ?').run('not json', space)
+    column('not json')
     expect(await listed()).toEqual([])
 
-    env.db.prepare('update spaces set bookmarks = ? where id = ?').run('{"a":1}', space)
+    column('{"a":1}')
     expect(await listed()).toEqual([])
   })
 })

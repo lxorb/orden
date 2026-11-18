@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import os
 
@@ -73,8 +71,6 @@ AXE_RUN = """
 async () => {
   const found = await window.axe.run(document, {
     resultTypes: ['violations'],
-    // The plane keeps its own keyboard, which is what `role="application"` is
-    // for, and the rule that objects to one cannot tell that from a mistake.
     rules: { 'landmark-one-main': { enabled: true } },
   })
 
@@ -91,8 +87,6 @@ async () => {
       nodes: one.nodes.length,
       where: one.nodes.slice(0, 3).map((node) => node.target.join(' ')),
     }
-    // The serious and the critical are what a run is judged on; the rest are
-    // written down so a number that grows can be accounted for.
     const loose = one.id === 'region' && one.nodes.some((node) => !node.target.join(' ').match(/orden-(?:layer|screen)/))
     if (impact === 'critical' || impact === 'serious' || loose) named.push(said)
     else quieter.push({ id: one.id, impact, nodes: one.nodes.length })
@@ -121,8 +115,6 @@ RINGS = f"""
     }}
   }}
 
-  // At rest, all of them, before anything is focused: a style read after the focus
-  // has moved on is the style of something else.
   const resting = new Map(found.map((node) => [node, reads(node)]))
   const out = []
 
@@ -132,8 +124,6 @@ RINGS = f"""
 
     const before = resting.get(node)
     const now = reads(node)
-    // A box with a caret in it says so with the caret as well, which is the one
-    // answer no stylesheet draws and no measurement can see.
     const caret =
       node.isContentEditable ||
       node.tagName === 'TEXTAREA' ||
@@ -171,8 +161,6 @@ UNNAMED = f"""
       if (node.getAttribute('aria-labelledby')) return false
       if (node.getAttribute('title')?.trim()) return false
       if ([...(node.labels ?? [])].some((one) => (one.textContent ?? '').trim())) return false
-      // A field says what it is with its placeholder where it has no label, which
-      // axe counts and so does this.
       if (node.getAttribute('placeholder')?.trim()) return false
       return true
     }})
@@ -242,7 +230,6 @@ TARGETS = """
   for (const node of document.querySelectorAll('button, a[href], [role=tab], input')) {
     const box = node.getBoundingClientRect()
     if (box.width === 0 || box.height === 0) continue
-    // The row in a list is the target, not the mark inside it.
     if (node.closest('[aria-hidden=true]')) continue
     if (box.height < floor - 0.5 || box.width < floor - 0.5) {
       const cls = (node.className ?? '').toString().split(' ').filter(Boolean).slice(0, 2).join('.')
@@ -764,5 +751,4 @@ def main() -> int:
 
     return DRIVE.verdict("every surface answers a keyboard, and axe finds nothing serious")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

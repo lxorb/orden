@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 from playwright.sync_api import Browser, BrowserContext, Page
 
 from harness import Drive
@@ -277,5 +275,4 @@ def drive(browser: Browser) -> None:
     busy_launch(browser)
     say("a busy launch: held")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

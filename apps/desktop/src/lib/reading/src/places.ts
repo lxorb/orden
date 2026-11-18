@@ -1,4 +1,4 @@
-import { wordRows } from '@orden/markdown/links'
+import { headingRows } from '@orden/markdown/links'
 
 export interface Section {
   index: number
@@ -29,10 +29,4 @@ export function positionOf(section: Section, offsets: readonly number[], end: nu
   return Math.round(from + Math.min(1, Math.max(0, fraction)) * Math.max(0, next - from))
 }
 
-const ATX = /^ {0,3}#{1,6}(?:\s|$)/
-
-export function headingOffsets(text: string): number[] {
-  const found: number[] = []
-  for (const row of wordRows(text)) if (ATX.test(row.text)) found.push(row.from)
-  return found
-}
+export const headingOffsets = (text: string): number[] => headingRows(text).map((one) => one.from)

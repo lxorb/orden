@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Item } from '@orden/pass/types'
-  import { message } from '../../ui-kit/src/api'
-  import { said } from '../../ui-kit/src/api'
+  import { message, said } from '../../ui-kit/src/api'
   import ItemMark from './ItemMark.svelte'
   import { pass } from '../../pass-sync/src/api'
 

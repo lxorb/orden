@@ -1,0 +1,134 @@
+use orden_base::Held as _;
+use std::collections::HashMap;
+use std::sync::{Mutex, Once};
+
+use block2::RcBlock;
+use objc2::rc::Retained;
+use objc2::runtime::Bool;
+use objc2_foundation::{NSArray, NSError, NSString};
+use objc2_user_notifications::{
+    UNAuthorizationOptions, UNMutableNotificationContent, UNNotificationAction,
+    UNNotificationActionOptions, UNNotificationRequest, UNNotificationResponse,
+    UNNotificationSound, UNTextInputNotificationAction, UNTextInputNotificationResponse,
+    UNUserNotificationCenter,
+};
+use tauri::AppHandle;
+
+use super::{Act, Notice};
+
+pub const CATEGORY: &str = "orden.notice.reply";
+const SEND: &str = "send";
+
+const PREFIX: &str = "notice.";
+
+static ASKED: Once = Once::new();
+
+static SHOWING: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
+
+fn in_showing<T>(alter: impl FnOnce(&mut HashMap<String, String>) -> T) -> T {
+    let mut held = SHOWING.held();
+    alter(held.get_or_insert_with(HashMap::new))
+}
+
+pub fn reply_action(placeholder: &str, send: &str) -> Retained<UNNotificationAction> {
+    let action =
+        UNTextInputNotificationAction::actionWithIdentifier_title_options_textInputButtonTitle_textInputPlaceholder(
+            &NSString::from_str(SEND),
+            &NSString::from_str(send),
+            UNNotificationActionOptions::empty(),
+            &NSString::from_str(send),
+            &NSString::from_str(placeholder),
+        );
+    Retained::into_super(action)
+}
+
+pub fn show(app: &AppHandle, notice: &Notice) -> Result<(), String> {
+    use crate::reminders::macos as centre_of;
+
+    if !centre_of::bundled() {
+        return Err("not a bundle, so no notification centre".into());
+    }
+    centre_of::listen(app);
+    let centre = UNUserNotificationCenter::currentNotificationCenter();
+    ASKED.call_once(|| {
+        let asked = RcBlock::new(|_granted: Bool, _error: *mut NSError| {});
+        centre.requestAuthorizationWithOptions_completionHandler(
+            UNAuthorizationOptions::Alert | UNAuthorizationOptions::Sound,
+            &asked,
+        );
+    });
+
+    let content = UNMutableNotificationContent::new();
+    content.setTitle(&NSString::from_str(&notice.title));
+    content.setBody(&NSString::from_str(&notice.body));
+    content.setThreadIdentifier(&NSString::from_str(&notice.tag));
+    if let Some(reply) = &notice.reply {
+        centre_of::reply_words(&reply.placeholder, &reply.send);
+        content.setCategoryIdentifier(&NSString::from_str(CATEGORY));
+    }
+    if !notice.silent {
+        let sound = UNNotificationSound::defaultSound();
+        content.setSound(Some(&*sound));
+    }
+
+    let name = format!("{PREFIX}{}", notice.id);
+    if let Some(before) = in_showing(|showing| showing.insert(notice.tag.clone(), name.clone())) {
+        centre.removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&[
+            NSString::from_str(&before),
+        ]));
+    }
+    let request = UNNotificationRequest::requestWithIdentifier_content_trigger(
+        &NSString::from_str(&name),
+        &content,
+        None,
+    );
+    centre.addNotificationRequest_withCompletionHandler(&request, None);
+    Ok(())
+}
+
+pub fn answer(app: &AppHandle, response: &UNNotificationResponse, name: &str) -> bool {
+    let Some(id) = name.strip_prefix(PREFIX) else {
+        return false;
+    };
+    let action = response.actionIdentifier().to_string();
+    if action == SEND {
+        let text = response
+            .downcast_ref::<UNTextInputNotificationResponse>()
+            .map(|typed| typed.userText().to_string());
+        super::answered(app, id, Act::Reply, text);
+    } else {
+        super::answered(app, id, Act::Open, None);
+        if let (None, Some(host)) = (orden_base::labels::host(app), crate::reminders::host()) {
+            (host.reopen)(app);
+        }
+    }
+    true
+}
+
+pub fn clear(tag: &str) {
+    if !crate::reminders::macos::bundled() {
+        return;
+    }
+    if let Some(name) = in_showing(|showing| showing.remove(tag)) {
+        UNUserNotificationCenter::currentNotificationCenter()
+            .removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&[
+                NSString::from_str(&name),
+            ]));
+    }
+}
+
+pub fn clear_all() {
+    if !crate::reminders::macos::bundled() {
+        return;
+    }
+    let names: Vec<Retained<NSString>> = in_showing(|showing| {
+        showing
+            .drain()
+            .map(|(_, name)| NSString::from_str(&name))
+            .collect()
+    });
+    if !names.is_empty() {
+        UNUserNotificationCenter::currentNotificationCenter()
+            .removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&names));
+    }
+}

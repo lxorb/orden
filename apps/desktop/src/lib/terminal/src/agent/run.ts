@@ -16,11 +16,11 @@ import {
   stopRefused,
   stopSignal,
 } from '../../../agent-verbs/src/api'
-import { MOST_LINE, onTheList, osOf, plainOf, startsOnlyOne, Tail } from './shell-text'
+import { MOST_LINE, onTheList, osOf, plainOf, programOf, startsOnlyOne, Tail } from './shell-text'
+import { shutNothingFor } from './free'
 
 const WAIT = 60_000
 const MOST_WAIT = 600_000
-
 const MOST_OUTPUT = 100_000
 const KEPT = MOST_OUTPUT * 4
 
@@ -47,7 +47,11 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const shell = shells.chosen
   if (!shell) throw new Refused('unsupported_on_this_engine', 'there is no shell on this machine')
 
-  const allowed = startsOnlyOne(command) && onTheList(command, agent.programs, osOf(platform()))
+  const os = osOf(platform())
+  const allowed =
+    startsOnlyOne(command) &&
+    onTheList(command, agent.programs, os) &&
+    (await shutNothingFor(programOf(command, os), folder, os))
   const question = await asked(call, allowed ? null : 'terminal', command)
   if (question) return question
 

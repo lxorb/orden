@@ -7,7 +7,6 @@ import { pressedByKey } from '../press'
 import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/door'
 import { isAiLanguage } from '../ai/block'
 import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
-import { noteIndex } from '../wikilink/notes'
 import { later } from '../shared'
 
 export class BulletWidget extends OrdenWidget {
@@ -50,13 +49,6 @@ export class CheckboxWidget extends OrdenWidget {
     box.addEventListener('mousedown', (event) => {
       event.preventDefault()
       if (view.state.readOnly) return
-      const help = view.state.facet(noteIndex).tasks
-      if (help) {
-        const { doc } = view.state
-        const line = doc.lineAt(this.from).number
-        void import('../task-tick').then(({ tickLines }) => tickLines(view, help, doc, [line]))
-        return
-      }
       view.dispatch({
         changes: { from: this.from, to: this.to, insert: this.checked ? '[ ]' : '[x]' },
       })
@@ -292,9 +284,8 @@ export class FenceHeaderWidget extends OrdenWidget {
   }
 
   private askButton(view: EditorView): HTMLElement {
-    if (this.asking) {
+    if (this.asking)
       return this.glyphButton('Stop', 'Stop', 'M4 4h6v6H4z', () => stopAskAt(view, this.blockFrom))
-    }
 
     return this.glyphButton('Ask', 'Ask the model', 'M4 2.6l7 4.4-7 4.4z', () => {
       const fence = aiFenceAt(view.state, this.blockFrom)

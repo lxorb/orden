@@ -61,8 +61,8 @@ export function accrue(
   }
 }
 
-export function sum(usages: readonly Usage[]): Usage {
-  return usages.reduce(
+export const sum = (usages: readonly Usage[]): Usage =>
+  usages.reduce(
     (total, one) => ({
       awakeS: total.awakeS + one.awakeS,
       cpuS: total.cpuS + one.cpuS,
@@ -72,31 +72,24 @@ export function sum(usages: readonly Usage[]): Usage {
     }),
     NONE,
   )
-}
 
-export function spend(usage: Usage, storedBytes = 0): number {
-  return (
-    usage.cpuS * PRICES.vcpuS +
-    usage.memGibS * PRICES.memGibS +
-    usage.diskGbS * PRICES.diskGbS +
-    (usage.egressBytes / GB) * PRICES.egressGb +
-    usage.awakeS * PRICES.objectGb * PRICES.objectGbS +
-    (storedBytes / GB) * PRICES.storedGbMonth
-  )
-}
+export const spend = (usage: Usage, storedBytes = 0): number =>
+  usage.cpuS * PRICES.vcpuS +
+  usage.memGibS * PRICES.memGibS +
+  usage.diskGbS * PRICES.diskGbS +
+  (usage.egressBytes / GB) * PRICES.egressGb +
+  usage.awakeS * PRICES.objectGb * PRICES.objectGbS +
+  (storedBytes / GB) * PRICES.storedGbMonth
 
-export function budgetLeft(ceiling: number, usage: Usage, storedBytes = 0): number {
-  return ceiling - spend(usage, storedBytes)
-}
+export const budgetLeft = (ceiling: number, usage: Usage, storedBytes = 0): number =>
+  ceiling - spend(usage, storedBytes)
 
-export function usedOf(usage: Usage, homeBytes: number): Allowance {
-  return {
-    awakeS: usage.awakeS,
-    cpuS: usage.cpuS,
-    homeBytes,
-    egressBytes: usage.egressBytes,
-  }
-}
+export const usedOf = (usage: Usage, homeBytes: number): Allowance => ({
+  awakeS: usage.awakeS,
+  cpuS: usage.cpuS,
+  homeBytes,
+  egressBytes: usage.egressBytes,
+})
 
 export function shares(used: Allowance, limit: Allowance): Allowance {
   const share = (one: number, of: number) => (of > 0 ? Math.min(1, Math.max(0, one / of)) : 1)
@@ -110,9 +103,8 @@ export function shares(used: Allowance, limit: Allowance): Allowance {
 
 const NEAR = 0.8
 
-export function near(used: Allowance, limit: Allowance): boolean {
-  return shares(used, limit).awakeS >= NEAR
-}
+export const near = (used: Allowance, limit: Allowance): boolean =>
+  shares(used, limit).awakeS >= NEAR
 
 export function monthOf(at: number): string {
   const date = new Date(at)

@@ -81,9 +81,8 @@ const shapes = layer({
     for (const range of view.state.selection.ranges) {
       if (range.empty) continue
 
-      for (const block of selectionBlocks(rectsFor(view, range), radius)) {
+      for (const block of selectionBlocks(rectsFor(view, range), radius))
         markers.push(new Shape(block))
-      }
     }
 
     return markers
@@ -105,6 +104,4 @@ const style = EditorView.baseTheme({
   '.cm-selectionBackground': { display: 'none' },
 })
 
-export function ordenSelection(): Extension {
-  return [drawSelection(), shapes, style]
-}
+export const ordenSelection = (): Extension => [drawSelection(), shapes, style]

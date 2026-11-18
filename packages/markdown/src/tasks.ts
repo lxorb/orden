@@ -6,7 +6,7 @@ export interface TaskItem {
   indent: number
 }
 
-const TASK = /^([ \t]*)(?:[-*+]|\d{1,9}[.)])([ \t]+)\[(.)\](?:[ \t]+|$)/
+const TASK = /^([ \t]*)(?:[-*+]|\d{1,9}[.)])([ \t]+)\[([^\]])\](?:[ \t]+|$)/u
 
 export function taskAt(line: string): TaskItem | null {
   const found = TASK.exec(line)

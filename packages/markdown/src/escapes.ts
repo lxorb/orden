@@ -2,24 +2,14 @@ import { backpedal } from './backpedal'
 import { codeAndWords, PUNCTUATION } from './tags'
 import { OPENS_MARKUP } from './words'
 
-function bracketsOf(text: string): string {
-  return text.replace(OPENS_MARKUP, '\\<')
-}
-
+const bracketsOf = (text: string): string => text.replace(OPENS_MARKUP, '\\<')
 const WORD = /[\p{L}\p{N}]/u
-
 const BLANK = /\s/
-
 const A_BLOCK = /^(?:-(?=[\s-]|$)|\+ |>|~~~|=+|#{1,6} )/
-
 const A_NUMBER = /^(\d+)([.)]) /
-
 const A_CODE_SPAN = /(`{1,3})([^`]+)\1(?!`)/y
-
 const A_STRONG = /(\*\*|__)([^`*_[\]\\<%$=]+)\1/y
-
 const A_URL = /(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)(?:[a-zA-Z0-9-]+\.?)+[^\s<]*/y
-
 const AN_ADDRESS = /[hHfFw]/
 
 function addressAt(text: string, at: number): string | null {
@@ -55,13 +45,8 @@ function keptAt(text: string, at: number): string | null {
   return null
 }
 
-function isWord(one: string | undefined): boolean {
-  return one !== undefined && WORD.test(one)
-}
-
-function isBlank(one: string | undefined): boolean {
-  return one !== undefined && BLANK.test(one)
-}
+const isWord = (one: string | undefined): boolean => one !== undefined && WORD.test(one)
+const isBlank = (one: string | undefined): boolean => one !== undefined && BLANK.test(one)
 
 function escapeAt(text: string, at: number, midLine: boolean): string {
   const one = text[at] ?? ''
@@ -100,7 +85,6 @@ export function escapeText(
   const out: string[] = []
   const numbered = A_NUMBER.exec(text)
   const block = numbered ? null : A_BLOCK.exec(text)
-
   let escaped = numbered ? `${numbered[1]}\\${numbered[2]} ` : block ? `\\${block[0]}` : ''
   let at = (numbered?.[0] ?? block?.[0] ?? '').length
   let midLine = at > 0
@@ -180,11 +164,10 @@ function columnsOf(indent: string): number {
 
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 
-export function shownWords(text: string): string {
-  return codeAndWords(text)
+export const shownWords = (text: string): string =>
+  codeAndWords(text)
     .map((one) => (one.code ? one.text : one.text.replace(AN_ESCAPE, '$1')))
     .join('')
-}
 
 export function unescapedAt(text: string): number[] {
   const out: number[] = []
@@ -204,12 +187,10 @@ export function unescapedAt(text: string): number[] {
   return out
 }
 
-export function typedWords(text: string): string {
-  return typedChars(text).join('')
-}
+export const typedWords = (text: string): string => typedChars(text).join('')
 
-function typedChars(text: string): string[] {
-  return codeAndWords(text).flatMap((one) => {
+const typedChars = (text: string): string[] =>
+  codeAndWords(text).flatMap((one) => {
     const words = one.text
     if (one.code) return words.split('')
     const out: string[] = []
@@ -227,7 +208,6 @@ function typedChars(text: string): string[] {
     }
     return out
   })
-}
 
 function shownChars(text: string): { shown: string; written: string }[] {
   return codeAndWords(text).flatMap((one) => {
@@ -281,8 +261,8 @@ export function editedWords(line: string, edited: string): string {
 
 const HELD = 0xe000
 
-export function heldEscapes(text: string): string {
-  return codeAndWords(text)
+export const heldEscapes = (text: string): string =>
+  codeAndWords(text)
     .map((one) =>
       one.code
         ? one.text
@@ -291,11 +271,9 @@ export function heldEscapes(text: string): string {
           ),
     )
     .join('')
-}
 
-export function released(text: string, asWritten = false): string {
-  return text.replace(/[-]/g, (one) => {
+export const released = (text: string, asWritten = false): string =>
+  text.replace(/[-]/g, (one) => {
     const char = String.fromCharCode(one.charCodeAt(0) - HELD)
     return asWritten ? `\\${char}` : char
   })
-}

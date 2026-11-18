@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import io
 import re
 
@@ -222,5 +220,4 @@ def drive(browser: Browser) -> None:
 
         page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "glass takes every page's colour and every word on it reads"))
+raise SystemExit(DRIVE.run(drive, "glass takes every page's colour and every word on it reads"))

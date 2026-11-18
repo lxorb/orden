@@ -1,19 +1,12 @@
 <script lang="ts">
   import { MEMORABLE_WORDS, RANDOM_LENGTH, SEPARATORS } from '@orden/pass/generate'
   import RefreshCw from 'lucide/dist/esm/icons/refresh-cw.mjs'
-  import { Select } from '../../ui-controls/src/api'
-  import { Sheet } from '../../ui-controls/src/api'
+  import { Select, Sheet } from '../../ui-controls/src/api'
   import { segmented } from '../../ui-kit/src/api'
   import { copyField } from '../../pass-sync/src/api'
   import { separatorLabel } from '../../pass-sync/src/api'
   import GeneratedText from './GeneratedText.svelte'
-  import {
-    type GeneratorMode,
-    generated,
-    keepPrefs,
-    MODES,
-    readPrefs,
-  } from '../../pass-sync/src/api'
+  import { generated, keepPrefs, MODES, readPrefs } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
   import StrengthMeter from './StrengthMeter.svelte'
   import SwitchRow from './SwitchRow.svelte'
@@ -35,16 +28,7 @@
     result = generated(now)
   })
 
-  function modeName(mode: GeneratorMode): string {
-    switch (mode) {
-      case 'random':
-        return 'Random'
-      case 'memorable':
-        return 'Memorable'
-      case 'username':
-        return 'Username'
-    }
-  }
+  const MODE_NAMES = { random: 'Random', memorable: 'Memorable', username: 'Username' }
 
   const separators = $derived(SEPARATORS.map((one) => ({ value: one, label: separatorLabel(one) })))
   const usernameSeparators = $derived([
@@ -52,9 +36,7 @@
     ...separators,
   ])
 
-  function close() {
-    ui.sheet = null
-  }
+  const close = () => (ui.sheet = null)
 
   function use() {
     const chosen = asked?.use
@@ -107,7 +89,7 @@
           role="radio"
           aria-checked={prefs.mode === mode}
           class:on={prefs.mode === mode}
-          onclick={() => (prefs.mode = mode)}>{modeName(mode)}</button
+          onclick={() => (prefs.mode = mode)}>{MODE_NAMES[mode]}</button
         >
       {/each}
     </div>
@@ -247,10 +229,6 @@
   }
 
   .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
     overflow: hidden;
   }
 

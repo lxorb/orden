@@ -1,6 +1,7 @@
-from __future__ import annotations
-
+import base64
 import json
+import struct
+import zlib
 
 from playwright.sync_api import Browser, Page
 
@@ -108,5 +109,76 @@ def drive(browser: Browser) -> None:
         say("ok   [pen] zoomed out, the stroke is as wide as it shows")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the plane goes back to 100% from the bar, and a pen is as wide as it shows zoomed in and out"))
+def png(width: int, height: int) -> str:
+    raw = b"".join(b"\x00" + bytes((230, 90, 12)) * width for _ in range(height))
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        body = kind + data
+        return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
+
+    head = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return base64.b64encode(
+        b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", head) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+    ).decode()
+
+PASTE = """(data) => {
+  const carried = new DataTransfer()
+  const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0))
+  carried.items.add(new File([bytes], 'far picture.png', { type: 'image/png' }))
+  const plane = document.querySelector('.canvas')
+  plane.focus()
+  plane.dispatchEvent(new ClipboardEvent('paste', { clipboardData: carried, bubbles: true, cancelable: true }))
+}"""
+
+FAR_LOOK = """() => ({
+  scale: window.ordenApp.workspace.active.camera.scale,
+  far: !!document.querySelector('canvas[data-far]'),
+  cards: document.querySelectorAll('.canvas .node').length,
+  words: [...document.querySelectorAll('.canvas .node')].map((one) => one.textContent.trim()).filter(Boolean),
+  pictures: [...document.querySelectorAll('.canvas .node img')].filter((one) => one.complete && one.naturalWidth > 0).length,
+})"""
+
+def drive_far(browser: Browser) -> None:
+    page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
+    DRIVE.open(page)
+    wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
+    root = page.evaluate("() => window.ordenApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    nodes = [
+        {"id": f"t{at}", "type": "text", "text": f"# Plan {at}\n\nWords to read from afar", "x": (at % 4) * 520,
+         "y": (at // 4) * 360, "width": 460, "height": 300}
+        for at in range(7)
+    ]
+    page.evaluate(
+        "async ([root, board]) => { const ws = window.ordenApp.workspace; const tasks = await window.ordenApp.tasks();"
+        " await tasks.writeFile(`${root}/Far.canvas`, board);"
+        " await ws.loadTree(); await ws.openEntry(`${root}/Far.canvas`, { activate: true }) }",
+        [root, json.dumps({"nodes": nodes, "edges": []})],
+    )
+    wait_for(page, "!!document.querySelector('.canvas .node')", "the board")
+    page.evaluate(PASTE, png(400, 300))
+    wait_for(
+        page,
+        "[...document.querySelectorAll('.canvas img.picture')].some((one) => one.complete && one.naturalWidth > 0)",
+        "the pasted picture",
+    )
+    for scale in (0.3, 0.15, 0.06):
+        page.evaluate(
+            "(scale) => { const tab = window.ordenApp.workspace.active; tab.camera = { x: 1000, y: 360, scale } }", scale
+        )
+        page.wait_for_timeout(1200)
+        seen = page.evaluate(FAR_LOOK)
+        say(f"[far {scale}] {json.dumps(seen)}")
+        shot(page, f"far-{int(scale * 100)}")
+        if seen["far"] or seen["cards"] != 8:
+            wrong(f"[far {scale}] the cards are drawn as boxes: {seen['cards']} cards, far {seen['far']}")
+        elif sum("Words to read from afar" in one for one in seen["words"]) != 7 or seen["pictures"] != 1:
+            wrong(f"[far {scale}] words or picture missing: {seen}")
+        else:
+            say(f"ok   [far {scale}] every card shows its words and picture")
+    page.close()
+
+def drive_both(browser: Browser) -> None:
+    drive(browser)
+    drive_far(browser)
+
+raise SystemExit(DRIVE.run(drive_both, "the plane goes back to 100% from the bar, and a pen is as wide as it shows zoomed in and out"))

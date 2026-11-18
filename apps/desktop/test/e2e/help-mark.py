@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -21,11 +19,10 @@ MEASURE = """
 (kinds) => {
   const canvas = document.createElement('canvas').getContext('2d')
   const rows = []
-  for (const mark of document.querySelectorAll('[role="dialog"] .orden-mark')) {
+  for (const mark of document.querySelectorAll('[role="region"][aria-label="Settings"] .orden-mark')) {
     const svg = mark.querySelector('svg')
     const drawn = svg?.getBoundingClientRect()
     if (!drawn || !drawn.width) continue
-    // The words the mark follows: the last text with letters in it before the mark.
     const walker = document.createTreeWalker(mark.parentElement, NodeFilter.SHOW_TEXT)
     let words = null
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -42,20 +39,14 @@ MEASURE = """
     const style = getComputedStyle(words.parentElement)
     canvas.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
     const x = canvas.measureText('x')
-    // The text's box is its font's ascent and descent; the baseline is the ascent down.
     const baseline = last.top + x.fontBoundingBoxAscent
     const middle = baseline - x.actualBoundingBoxAscent / 2
     const centre = drawn.top + drawn.height / 2
-    // The words on the glyph's line, wherever bidi put them: the gap is to the end of
-    // that line in the label's direction, not to the last letter in memory.
     range.selectNodeContents(words)
     const line = [...range.getClientRects()].filter((one) => one.width && centre > one.top && centre < one.bottom)
     const gap = !line.length ? NaN : drawn.left - Math.max(...line.map((one) => one.right))
-    // Inside the box the words are in, which keeps the end of the line for the glyph.
     const box = mark.parentElement.getBoundingClientRect()
     const outside = drawn.right - box.right
-    // Glued to the last word: a word joiner straight after it, and not even a space
-    // between, which would widen the gap. Svelte's anchors are comments, and no text.
     let before = mark.previousSibling
     while (before?.nodeType === Node.COMMENT_NODE) before = before.previousSibling
     const glued = mark.firstChild?.nodeType === Node.TEXT_NODE && mark.firstChild.textContent === '\\u2060'
@@ -96,7 +87,6 @@ def styled(page: Page, size: int | None, face: str | None) -> None:
             style.id = 'help-mark-look'
             document.head.append(style)
           }
-          // Every row, and whatever else holds a mark: a caption, a link.
           style.textContent = '.orden-setting, .orden-setting *, :has(> .orden-mark), :has(> .orden-mark) * {' +
             (size ? `font-size: ${size}px !important;` : '') +
             (face ? `font-family: '${face}' !important;` : '') + '}'
@@ -159,12 +149,12 @@ def wrapped(page: Page, tag: str, section: str, kinds: tuple[str, ...]) -> None:
             """(width) => {
               const style = document.getElementById('help-mark-wrap') ?? document.createElement('style')
               style.id = 'help-mark-wrap'
-              style.textContent = `[role="dialog"] .orden-setting .name { flex: none !important;
+              style.textContent = `[role="region"][aria-label="Settings"] .orden-setting .name { flex: none !important;
                 inline-size: ${width}px !important; min-inline-size: 0 !important }
-                [role="dialog"] :is(.hint.caption, .steps .link) {
+                [role="region"][aria-label="Settings"] :is(.hint.caption, .steps .link) {
                   max-inline-size: ${Math.max(width, 110)}px !important }`
               document.head.append(style)
-              return Math.max(...[...document.querySelectorAll('[role="dialog"] .orden-mark')]
+              return Math.max(...[...document.querySelectorAll('[role="region"][aria-label="Settings"] .orden-mark')]
                 .map((mark) => mark.parentElement.getBoundingClientRect().height))
             }""",
             width,
@@ -182,7 +172,7 @@ def look(browser: Browser, tag: str, scale: int = 1, touch: bool = False, scheme
     if touch:
         page.evaluate("() => document.documentElement.toggleAttribute('data-touch', true)")
     page.evaluate("() => window.ordenApp.settings.show('general')")
-    wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] .explain')", "the settings")
+    wait_for(page, "() => !!document.querySelector('[role=\"region\"][aria-label=\"Settings\"] .explain')", "the settings")
     panes(page, tag, PANES)
     wrapped(page, tag, "general", ("?",))
     page.evaluate("() => { window.ordenApp.account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' } }")
@@ -196,5 +186,4 @@ def drive(browser: Browser) -> None:
     look(browser, "hidpi", scale=2)
     look(browser, "touch", touch=True)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))
+raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))

@@ -5,47 +5,15 @@ import os
 import subprocess
 import sys
 import time
-import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from carry_page import NOTE, PANE, TITLES, WORDS, field_of, heard, into_field, put_note, row_box, wrong_drop, zone_of  # noqa: E402
+from carry_page import NOTE, PANE, TITLES, WORDS, field_of, heard, into_field, put_note, row_box, wrong_drop, zone_of
+from linux_app import run
 
 OUT, APP = Path(sys.argv[1]), sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 CARRIED = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / os.environ.get("DRIVEN_ID", "so.orden.Orden") / "carried"
 POINTER = OUT / "pointer.fifo"
 URL = "http://127.0.0.1:8765/carry.html"
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
-def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=10) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
 
 def until(code, seconds=30):
     for _ in range(seconds * 4):
@@ -105,7 +73,7 @@ def fail(what):
 subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
 time.sleep(2)
 
-root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
+root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 note = put_note(run, root)
@@ -114,7 +82,7 @@ if not isinstance(note, str):
 if not until(f"void orden.workspace.loadTree(), !!orden.workspace.entryAt({json.dumps(note)})"):
     sys.exit("::error::the file list never showed the note put in the space")
 
-run(f"nib.workspace.openPage({json.dumps(URL)}); true")
+run(f"orden.workspace.openPage({json.dumps(URL)}); true")
 if not until(f"({TITLES}) !== ''", 40):
     sys.exit("::error::the page never loaded")
 time.sleep(2)

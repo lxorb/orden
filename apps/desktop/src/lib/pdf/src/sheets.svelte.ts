@@ -3,7 +3,6 @@ import { pathKey, windows } from '../../platform/src/api'
 import { SIDECAR } from './highlights'
 
 const SAID = 'marks-written'
-
 const written = new SvelteMap<string, number>()
 
 function heard(path: string): void {
@@ -20,9 +19,7 @@ export function sheetArrived(path: string): void {
   if (path.endsWith(SIDECAR)) marksWritten(path.slice(0, -SIDECAR.length))
 }
 
-export function marksFromOutside(path: string): number {
-  return written.get(pathKey(path)) ?? 0
-}
+export const marksFromOutside = (path: string): number => written.get(pathKey(path)) ?? 0
 
 windows.hear(SAID, ({ path }) => {
   if (typeof path === 'string') heard(path)

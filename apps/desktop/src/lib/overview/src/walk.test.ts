@@ -2,7 +2,6 @@ import { expect, test } from 'vitest'
 import { walk, wayOf } from './walk'
 
 const box = (x: number, y: number) => ({ x, y, w: 100, h: 60 })
-
 const boxes = [box(0, 0), box(120, 0), box(0, 80), box(400, 40)]
 
 test('an arrow goes to the nearest window that way', () => {

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import os
 import random
@@ -128,5 +126,4 @@ def drive(browser: Browser) -> None:
     say("trail tail " + json.dumps(trail[-10:]))
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

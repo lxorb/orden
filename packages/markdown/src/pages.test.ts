@@ -54,7 +54,6 @@ describe('a page note as a file', () => {
   test('a blank one is one A4 page', () => {
     const canvas = readCanvas(blankPages())
     const pages = pagesOf(canvas)
-
     expect(pages).toHaveLength(1)
     expect(pages[0]?.width).toBe(PAPERS.a4.width)
     expect(pages[0]?.height).toBe(PAPERS.a4.height)
@@ -64,7 +63,6 @@ describe('a page note as a file', () => {
   test('starts on the paper it was asked for, which is what a new one is given', () => {
     for (const paper of ['a4', 'letter', 'long'] as const) {
       const pages = pagesOf(readCanvas(blankPages(paper)))
-
       expect(pages).toHaveLength(1)
       expect(pages[0]?.paper, paper).toBe(paper)
       expect(pages[0]?.width, paper).toBe(PAPERS[paper].width)
@@ -77,7 +75,6 @@ describe('a page note as a file', () => {
       nodes: { id: string; type: string; label?: string }[]
       orden: { pages: { id: string }[] }
     }
-
     expect(written.nodes).toHaveLength(1)
     expect(written.nodes[0]?.type).toBe('group')
     expect(written.nodes[0]?.label).toBe('Page 1')
@@ -90,32 +87,23 @@ describe('a page note as a file', () => {
       { width: 600, height: 800 },
       { width: 600, height: 800 },
     ])
-
     const written = JSON.parse(writeCanvas(canvas)) as {
       nodes: { type: string; file?: string; subpath?: string }[]
     }
-
     expect(written.nodes.map((node) => node.type)).toEqual(['file', 'file'])
     expect(written.nodes[0]?.file).toBe('Paper.pdf')
     expect(written.nodes[0]?.subpath).toBe('#page=1')
     expect(written.nodes[1]?.subpath).toBe('#page=2')
   })
 
-  test('reads back everything it wrote, whole', () => {
+  test('reads back everything it wrote, whole; written back byte for byte; a canvas with no pages is written exactly as it was, with no pages key', () => {
     const paper = pagesFromPdf('Paper.pdf', [{ width: 600, height: 800 }])
     const first = pagesOf(paper)[0]
     if (!first) throw new Error('no page')
-
     const before = reshaped(added(paper).canvas, first.id, { pattern: 'grid' })
     expect(pagesOf(readCanvas(writeCanvas(before)))).toEqual(pagesOf(before))
-  })
-
-  test('written back byte for byte', () => {
     const once = writeCanvas(pagesFromPdf('Paper.pdf', [{ width: 600, height: 800 }]))
     expect(writeCanvas(readCanvas(once))).toBe(once)
-  })
-
-  test('a canvas with no pages is written exactly as it was, with no pages key', () => {
     const plain = writeCanvas(emptyCanvas())
     expect(plain).not.toContain('pages')
   })
@@ -126,7 +114,6 @@ describe('a page note as a file', () => {
       edges: [],
       orden: { version: 1, pages: [{ id: 'a', paper: 'a4', pattern: 'lines' }] },
     })
-
     const canvas = readCanvas(file)
     expect(pagesOf(canvas)).toHaveLength(0)
     expect(canvas.nodes[0]?.type).toBe('text')
@@ -137,7 +124,6 @@ describe('a page note as a file', () => {
       nodes: [{ id: 'a', type: 'group', x: 0, y: 0, width: 794, height: 1123, label: 'Page 1' }],
       edges: [],
     })
-
     const canvas = readCanvas(file)
     expect(pagesOf(canvas)).toHaveLength(0)
     expect(canvas.nodes[0]?.type).toBe('group')
@@ -155,10 +141,8 @@ describe('a page note as a file', () => {
       height: 40,
       text: 'x',
     }
-
     const both = { ...canvas, nodes: [...canvas.nodes, card] }
     const back = readCanvas(writeCanvas(both))
-
     expect(back.nodes.map((node) => node.id)).toEqual([sheet?.id, 'card'])
   })
 })
@@ -166,26 +150,18 @@ describe('a page note as a file', () => {
 describe('the column', () => {
   test('lays the pages out top to bottom with a gutter between them', () => {
     const laid = laidOut([page('a'), page('b'), page('c')])
-
     expect(laid[0]?.y).toBe(0)
     expect(laid[1]?.y).toBe(PAPERS.a4.height + GUTTER)
     expect(laid[2]?.y).toBe(2 * (PAPERS.a4.height + GUTTER))
   })
 
-  test('centres every page on the same middle, whatever their sizes', () => {
+  test('centres every page on the same middle, whatever their sizes; hands back the very same pages when nothing moved; a canvas already settled is handed straight back', () => {
     const laid = laidOut([page('a'), page('b', { width: 500 })])
-
     expect(laid[0]?.x).toBe(-PAPERS.a4.width / 2)
     expect(laid[1]?.x).toBe(-250)
-  })
-
-  test('hands back the very same pages when nothing moved', () => {
     const pages = laidOut([page('a'), page('b')])
     expect(laidOut(pages)).toEqual(pages)
     expect(laidOut(pages)[0]).toBe(pages[0])
-  })
-
-  test('a canvas already settled is handed straight back', () => {
     const canvas = emptyPages()
     expect(settled(canvas)).toBe(canvas)
   })
@@ -200,7 +176,6 @@ describe('adding and taking away', () => {
   test('a page goes on the end and the note is laid out round it', () => {
     const { canvas, id } = added(emptyPages())
     const pages = pagesOf(canvas)
-
     expect(pages).toHaveLength(2)
     expect(pages[1]?.id).toBe(id)
     expect(pages[1]?.y).toBe(PAPERS.a4.height + GUTTER)
@@ -210,7 +185,6 @@ describe('adding and taking away', () => {
     const three = added(added(emptyPages()).canvas).canvas
     const first = pagesOf(three)[0]
     const { canvas, id } = added(three, first?.id)
-
     expect(pagesOf(canvas).map((one) => one.id)[1]).toBe(id)
   })
 
@@ -218,7 +192,6 @@ describe('adding and taking away', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
     if (!sheet) throw new Error('no page')
-
     const { canvas } = added(reshaped(start, sheet.id, { pattern: 'lines' }))
     expect(pagesOf(canvas)[1]?.pattern).toBe('lines')
   })
@@ -228,7 +201,6 @@ describe('adding and taking away', () => {
     const pages = pagesOf(two)
     const second = pages[1]
     if (!second) throw new Error('no second page')
-
     const withInk = {
       ...two,
       nodes: [
@@ -253,7 +225,6 @@ describe('adding and taking away', () => {
         },
       ],
     }
-
     const left = removed(withInk, second.id)
     expect(pagesOf(left)).toHaveLength(1)
     expect(left.nodes.some((node) => node.id === 'card')).toBe(false)
@@ -283,11 +254,9 @@ describe('adding and taking away', () => {
       ...emptyCanvas(),
       nodes: [...three, card('low', first.y + first.height - 150), card('high', second.y - 50)],
     }
-
     const left = removed(plane, 'b')
     expect(left.nodes.map((node) => node.id)).toEqual(['a', 'c', 'low'])
     expect(left.nodes.find((node) => node.id === 'low')?.y).toBe(first.y + first.height - 150)
-
     const gone = removed(plane, 'a')
     const high = gone.nodes.find((node) => node.id === 'high')
     expect(gone.nodes.map((node) => node.id)).toEqual(['b', 'c', 'high'])
@@ -307,9 +276,7 @@ describe('adding and taking away', () => {
       points: [at(second.y - 20), at(second.y + 300)],
     }
     const plane = { ...emptyCanvas(), nodes: three, ink: [stroke] }
-
     expect(removed(plane, 'b').ink).toEqual([])
-
     const moved = removed(plane, 'a').ink[0]?.points[0]?.y
     expect(moved).toBe((pagesOf(removed(plane, 'a'))[0]?.y ?? 0) - 20)
   })
@@ -326,7 +293,6 @@ describe('reordering', () => {
     const pages = pagesOf(two)
     const second = pages[1]
     if (!second) throw new Error('no second page')
-
     const withCard = {
       ...two,
       nodes: [
@@ -342,26 +308,18 @@ describe('reordering', () => {
         },
       ],
     }
-
     const swapped = moved(withCard, second.id, 0)
     const card = swapped.nodes.find((node) => node.id === 'card')
-
     expect(pagesOf(swapped)[0]?.id).toBe(second.id)
     expect(card?.y).toBe(20)
   })
 
-  test('every page that moves in a reorder carries what is on it', () => {
+  test('every page that moves in a reorder carries what is on it; a page already where it is asked to go comes back unchanged; an id that names no page changes nothing', () => {
     const turned = moved(carrying([page('a'), page('b'), page('c')]), 'a', 2)
     expect(pagesOf(turned).map((one) => one.id)).toEqual(['b', 'c', 'a'])
     expect(strays(turned)).toEqual([])
-  })
-
-  test('a page already where it is asked to go comes back unchanged', () => {
     const two = added(emptyPages()).canvas
     expect(moved(two, pagesOf(two)[0]?.id ?? '', 0)).toBe(two)
-  })
-
-  test('an id that names no page changes nothing', () => {
     const one = emptyPages()
     expect(moved(one, 'nothing', 3)).toBe(one)
   })
@@ -372,26 +330,20 @@ describe('a long page', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
     if (!sheet) throw new Error('no page')
-
     const endless = reshaped(start, sheet.id, { paper: 'long' })
     const taller = grown(endless, new Map([[sheet.id, PAPERS.a4.height + 400]]))
     const height = pagesOf(taller)[0]?.height ?? 0
-
     expect(height).toBeGreaterThan(PAPERS.a4.height)
     expect((height - PAPERS.a4.height) % GROWTH).toBe(0)
   })
 
-  test('the page under one that grew takes what is on it along', () => {
+  test('the page under one that grew takes what is on it along; a page with nothing reaching past it is left where it is', () => {
     const long = carrying([page('a', { paper: 'long' }), page('b', { paper: 'long' })])
     const taller = grown(long, new Map([['a', PAPERS.long.height + 400]]))
     expect(strays(taller)).toEqual([])
-  })
-
-  test('a page with nothing reaching past it is left where it is', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
     if (!sheet) throw new Error('no page')
-
     const endless = reshaped(start, sheet.id, { paper: 'long' })
     expect(grown(endless, new Map([[sheet.id, 10]]))).toBe(endless)
   })
@@ -400,7 +352,6 @@ describe('a long page', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
     if (!sheet) throw new Error('no page')
-
     expect(grown(start, new Map([[sheet.id, 9_000]]))).toBe(start)
   })
 
@@ -408,11 +359,9 @@ describe('a long page', () => {
     const start = emptyPages()
     const sheet = pagesOf(start)[0]
     if (!sheet) throw new Error('no page')
-
     const endless = reshaped(start, sheet.id, { paper: 'long' })
     const taller = grown(endless, new Map([[sheet.id, PAPERS.a4.height + 900]]))
     const back = reshaped(taller, sheet.id, { paper: 'a4' })
-
     expect(pagesOf(back)[0]?.height).toBe(PAPERS.a4.height)
   })
 })
@@ -422,7 +371,6 @@ describe('which page a thing is on', () => {
     const pages = laidOut([page('a'), page('b')])
     const second = pages[1]
     if (!second) throw new Error('no second page')
-
     expect(pageAt(pages, { x: 0, y: 10 })?.id).toBe('a')
     expect(pageAt(pages, { x: 0, y: second.y + 10 })?.id).toBe('b')
     expect(pageAt(pages, { x: 0, y: PAPERS.a4.height + 5 })).toBeNull()
@@ -432,7 +380,6 @@ describe('which page a thing is on', () => {
     const pages = laidOut([page('a'), page('b')])
     const first = pages[0]
     if (!first) throw new Error('no page')
-
     const box = { x: first.x, y: first.y, width: first.width, height: first.height }
     const over = {
       points: [
@@ -440,14 +387,12 @@ describe('which page a thing is on', () => {
         { x: 0, y: first.height + 200 },
       ],
     }
-
     expect(onPage(over, box)).toBe(true)
     expect(onPage({ points: [] }, box)).toBe(false)
   })
 
   test('the page being looked at is the one under the middle of the view', () => {
     const pages = laidOut([page('a'), page('b'), page('c')])
-
     expect(pageShowing(pages, 0, 600)).toBe(1)
     expect(pageShowing(pages, PAPERS.a4.height + GUTTER, 600)).toBe(2)
     expect(pageShowing(pages, 99_999, 600)).toBe(3)
@@ -635,7 +580,6 @@ describe('a page out of a PDF', () => {
       { width: 800, height: 600 },
     ])
     const pages = pagesOf(canvas)
-
     expect(pages[0]).toMatchObject({ width: 600, height: 800, file: 'Paper.pdf', page: 1 })
     expect(pages[1]).toMatchObject({ width: 800, height: 600, file: 'Paper.pdf', page: 2 })
   })
@@ -647,23 +591,16 @@ describe('a page out of a PDF', () => {
       { width: 400, height: 1200 },
     ])
     const pages = pagesOf(canvas)
-
     expect(pages.map((one) => one.paper)).toEqual(['letter', 'a4', 'a4'])
     expect(pages[2]).toMatchObject({ width: 400, height: 1200 })
   })
 
-  test('a page named Letter keeps Letter when the file is read back', () => {
+  test('a page named Letter keeps Letter when the file is read back; a paper with no pages still gives somewhere to write; one page is a page and nothing else', () => {
     const once = pagesFromPdf('Paper.pdf', [
       { width: PAPERS.letter.width, height: PAPERS.letter.height },
     ])
     expect(pagesOf(readCanvas(writeCanvas(once)))[0]?.paper).toBe('letter')
-  })
-
-  test('a paper with no pages still gives somewhere to write', () => {
     expect(pagesOf(pagesFromPdf('Paper.pdf', []))).toHaveLength(1)
-  })
-
-  test('one page is a page and nothing else', () => {
     const one = pdfPage('Paper.pdf', 3, 600, 800)
     expect(isPage(one)).toBe(true)
     expect(one.page).toBe(3)
@@ -675,15 +612,10 @@ describe('a page out of a PDF', () => {
   })
 })
 
-describe('the paper a page note holds', () => {
-  test('is the note with .pdf after it', () => {
-    expect(paperOf('/s/Lecture 4.pages')).toBe('/s/Lecture 4.pages.pdf')
-  })
-
-  test('names the note it belongs to, and nothing else does', () => {
-    expect(holderOf('/s/Lecture 4.pages.pdf')).toBe('/s/Lecture 4.pages')
-    expect(holderOf('/s/Lecture 4.PAGES.PDF')).toBe('/s/Lecture 4.PAGES')
-    expect(holderOf('/s/Lecture 4.pdf')).toBeNull()
-    expect(holderOf('/s/Lecture 4.pages')).toBeNull()
-  })
+test('the paper a page note holds: is the note with .pdf after it; names the note it belongs to, and nothing else does', () => {
+  expect(paperOf('/s/Lecture 4.pages')).toBe('/s/Lecture 4.pages.pdf')
+  expect(holderOf('/s/Lecture 4.pages.pdf')).toBe('/s/Lecture 4.pages')
+  expect(holderOf('/s/Lecture 4.PAGES.PDF')).toBe('/s/Lecture 4.PAGES')
+  expect(holderOf('/s/Lecture 4.pdf')).toBeNull()
+  expect(holderOf('/s/Lecture 4.pages')).toBeNull()
 })

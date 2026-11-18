@@ -27,25 +27,12 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 vi.mock('./http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./http')>()),
-  listChats: () =>
-    account.heard
-      ? Promise.resolve({
-          chats: account.chats.map((id) => ({
-            id,
-            space: account.space,
-            role: 'owner',
-            members: 1,
-            lastSeq: 0,
-            lastAt: null,
-            lastBy: null,
-            readSeq: 0,
-            mentions: 0,
-            notify: null,
-            mutedUntil: null,
-            meta: { topic: '', posting: 'writers', slowmode: 0 },
-          })),
-        })
-      : Promise.reject(new Error('offline')),
+  listChats: async () => {
+    const { chatRow } = await import('./test-account')
+    if (!account.heard) throw new Error('offline')
+    const more = { space: account.space, role: 'owner' as const, members: 1 }
+    return { chats: account.chats.map((id) => chatRow(id, more)) }
+  },
   eventsOf: () => Promise.resolve(null),
   moveChat: (chat: string, space: string) => {
     moves.push(`${chat} ${space}`)
@@ -88,14 +75,16 @@ const { workspace } = await import('../../workspace/src/api')
 const { chatsCarried } = await import('./leaving')
 const { prompt } = await import('../../ui-kit/src/prompt.svelte')
 
+const SPACES = [
+  { id: 'space-1', name: 'Space', root: '/space' },
+  { id: 'space-2', name: 'Other', root: '/other' },
+  { id: 'space-3', name: 'Third', root: '/third' },
+]
+
 beforeEach(async () => {
   account.space = 'space-1'
   account.heard = true
-  workspace.spaces = [
-    { id: 'space-1', name: 'Space', root: '/space' },
-    { id: 'space-2', name: 'Other', root: '/other' },
-    { id: 'space-3', name: 'Third', root: '/third' },
-  ]
+  workspace.spaces = [...SPACES]
   await chats.forget()
   account.chats = [CHAT]
   disk.pointers = new Map([[POINTER, CHAT]])
@@ -106,11 +95,7 @@ beforeEach(async () => {
 
 const paths = () => chats.list.map((one) => one.path)
 const rescan = () => (chats as unknown as { lookForPointers(): Promise<void> }).lookForPointers()
-const OTHER_FIRST = [
-  { id: 'space-2', name: 'Other', root: '/other' },
-  { id: 'space-1', name: 'Space', root: '/space' },
-  { id: 'space-3', name: 'Third', root: '/third' },
-]
+const OTHER_FIRST = [1, 0, 2].flatMap((at) => SPACES.slice(at, at + 1))
 
 async function came(path: string) {
   disk.pointers.set(path, CHAT)
@@ -245,24 +230,18 @@ test('after a relaunch, the original beside a duplicate carried away carries its
   expect(moves).toEqual([`${CHAT} space-2`])
 })
 
-test('a move into another space undone before the listing has heard brings the chat back', async () => {
+test.each([
+  ['a move into another space undone before the listing has heard brings the chat back', 'space'],
+  ['a move on into a third space before the listing has heard takes the chat along', 'third'],
+])('%s', async (_, to) => {
   expect((await carried(POINTER, '/other', 'chat')).asked).not.toBeNull()
   account.space = 'space-2'
   account.heard = false
   await moved(POINTER, '/other/Plans.chat')
-  expect((await carried('/other/Plans.chat', '/space', 'chat')).asked).not.toBeNull()
+  expect((await carried('/other/Plans.chat', `/${to}`, 'chat')).asked).not.toBeNull()
 
-  expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} space-1`])
-})
-
-test('a move on into a third space before the listing has heard takes the chat along', async () => {
-  expect((await carried(POINTER, '/other', 'chat')).asked).not.toBeNull()
-  account.space = 'space-2'
-  account.heard = false
-  await moved(POINTER, '/other/Plans.chat')
-  expect((await carried('/other/Plans.chat', '/third', 'chat')).asked).not.toBeNull()
-
-  expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} space-3`])
+  const space = SPACES.find((one) => one.root === `/${to}`)?.id
+  expect(moves).toEqual([`${CHAT} space-2`, `${CHAT} ${space}`])
 })
 
 test('a chat the listing had not heard of yet is carried by its pointer', async () => {
@@ -306,12 +285,9 @@ async function carried(path: string, folder: string, answer: string | null) {
 
 const QUESTION = 'Move the chat Plans to Other?'
 
-async function freshDevice() {
+async function freshDevice(pointers: [string, string][] = [[COPY, CHAT]]) {
   await chats.forget()
-  disk.pointers = new Map([
-    [POINTER, CHAT],
-    [COPY, CHAT],
-  ])
+  disk.pointers = new Map([[POINTER, CHAT], ...pointers])
   await chats.start(`account-${Math.random()}`)
 }
 
@@ -425,12 +401,9 @@ test('a duplicate made before the launch scan is not taken for the original', as
   expect(moves).toEqual([])
 })
 
-test('a folder holding a chat twice, own pointer not known, asks once', async () => {
+async function folderOf(pointers: [string, string][]) {
   await chats.forget()
-  disk.pointers = new Map([
-    ['/space/F/Plans.chat', CHAT],
-    ['/space/F/Plans copy.chat', CHAT],
-  ])
+  disk.pointers = new Map(pointers)
   await chats.start(`account-${Math.random()}`)
   const leaf = (path: string) => ({
     path,
@@ -438,16 +411,19 @@ test('a folder holding a chat twice, own pointer not known, asks once', async ()
     is_dir: false,
     children: [],
   })
-  const tree = vi.spyOn(workspace, 'entryAt').mockImplementation((path: string) =>
-    path === '/space/F'
-      ? ({
-          path,
-          name: 'F',
-          is_dir: true,
-          children: [leaf('/space/F/Plans copy.chat'), leaf('/space/F/Plans.chat')],
-        } as never)
-      : null,
-  )
+  const children = pointers.map(([path]) => leaf(path))
+  return vi
+    .spyOn(workspace, 'entryAt')
+    .mockImplementation((path: string) =>
+      path === '/space/F' ? ({ path, name: 'F', is_dir: true, children } as never) : null,
+    )
+}
+
+test('a folder holding a chat twice, own pointer not known, asks once', async () => {
+  const tree = await folderOf([
+    ['/space/F/Plans copy.chat', CHAT],
+    ['/space/F/Plans.chat', CHAT],
+  ])
   const choose = vi.spyOn(prompt, 'choose').mockResolvedValue('chat')
   await chatsCarried('/space/F', '/other')
   const asked = choose.mock.calls.length
@@ -460,29 +436,11 @@ test('a folder holding a chat twice, own pointer not known, asks once', async ()
 
 test('a folder holding two chats asks once, naming both', async () => {
   const second = `c_${'3'.repeat(32)}`
-  await chats.forget()
   account.chats = [CHAT, second]
-  disk.pointers = new Map([
+  const tree = await folderOf([
     ['/space/F/Plans.chat', CHAT],
     ['/space/F/Trip.chat', second],
   ])
-  await chats.start(`account-${Math.random()}`)
-  const leaf = (path: string) => ({
-    path,
-    name: path.split('/').pop(),
-    is_dir: false,
-    children: [],
-  })
-  const tree = vi.spyOn(workspace, 'entryAt').mockImplementation((path: string) =>
-    path === '/space/F'
-      ? ({
-          path,
-          name: 'F',
-          is_dir: true,
-          children: [leaf('/space/F/Plans.chat'), leaf('/space/F/Trip.chat')],
-        } as never)
-      : null,
-  )
   const { asked } = await carried('/space/F', '/other', 'file')
   tree.mockRestore()
 

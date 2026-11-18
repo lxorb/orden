@@ -63,6 +63,8 @@ function store(notes: Record<string, string>) {
   const ws = {
     notes: Object.keys(notes).map((path) => ({ path, name: path.split('/').pop() ?? path })),
     activeSpace: { id: 's', name: 'Space', root: SPACE },
+    protection: { copied: () => undefined },
+    rootHolding: () => SPACE,
     entryAt: (path: string) => (disk.has(path) ? ({ path } as Entry) : null),
     documentAt: (path: string) => (open.has(path) ? ({ path } as unknown as NoteDoc) : null),
     freeNameOnDisk: async (dir: string, wanted: string) => {
@@ -76,15 +78,15 @@ function store(notes: Record<string, string>) {
     },
     showEntry: (entry: Entry) => void shown.push(entry.path),
     freshEntry: (path: string, isFolder: boolean) => ({ path, is_dir: isFolder }) as Entry,
-    fileGone: (path: string) => {
-      told.push(`gone ${path}`)
+    fileGone: (path: string, _kind: string, back?: string) => {
+      told.push(`gone ${path} from ${back ?? 'nowhere'}`)
       return Promise.resolve()
     },
     loadTree: () => Promise.resolve(),
     bin: (path: string) => {
       binned.push(path)
       disk.delete(path)
-      return Promise.resolve(null)
+      return Promise.resolve({ trashId: `bin-${path}` })
     },
   }
 
@@ -105,14 +107,32 @@ describe('a note that is a website', () => {
 
   test('is written as a shortcut beside it, and the note goes', async () => {
     const { ws, shown } = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })
-
     const target = await asShortcut(ws, NOTE)
 
     expect(target).toBe(`${SPACE}/Svelte docs.url`)
     expect(disk.get(target ?? '')).toContain('URL=https://svelte.dev')
     expect(disk.has(NOTE)).toBe(false)
     expect(shown).toEqual([`${SPACE}/Svelte docs.url`])
-    expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE}`])
+    expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE} from bin-${NOTE}`])
+  })
+
+  test('locked, leaves a shortcut as locked', async () => {
+    const { Protection } = await import('../../protect/src/protection.svelte')
+    const protection = new Protection()
+    protection.set(SPACE, NOTE, 'password')
+    const { ws } = store({ [NOTE]: urlNote('https://bank.example/?session=s3cret', 'Bank') })
+    const target = await asShortcut({ ...ws, protection }, NOTE)
+
+    expect(protection.agentsMay(target)).toBe(false)
+    protection.set(SPACE, NOTE, null)
+    protection.set(SPACE, target ?? '', null)
+  })
+
+  test('that cannot be put in Recently deleted keeps its lock where it stays', async () => {
+    const made = store({ [NOTE]: urlNote('https://bank.example/?session=s3cret', 'Bank') })
+    await asShortcut({ ...made.ws, bin: () => Promise.reject(new Error('no trash')) }, NOTE)
+
+    expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`])
   })
 
   test('and its file goes the way a deleted note goes', async () => {
@@ -134,7 +154,6 @@ describe('a note in a space that is not on screen', () => {
       [`${SPACE}/Svelte docs.url`]: "somebody else's file",
     })
     const away = { ...ws, entryAt: () => null } as Converts
-
     const target = await asShortcut(away, NOTE)
 
     expect(target).toBe(`${SPACE}/Svelte docs 2.url`)

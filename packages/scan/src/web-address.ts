@@ -13,13 +13,9 @@ export function isWebAddress(url: string): boolean {
 
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false
 
-  return ![
-    'tauri.localhost',
-    'ipc.localhost',
-    'asset.localhost',
-    'orden.localhost',
-    'nib.localhost',
-  ].includes(parsed.hostname.toLowerCase().replace(/\.+$/, ''))
+  return !['tauri.localhost', 'ipc.localhost', 'asset.localhost', 'orden.localhost'].includes(
+    parsed.hostname.toLowerCase().replace(/\.+$/, ''),
+  )
 }
 
 export function isExtensionPage(url: string): boolean {
@@ -45,6 +41,14 @@ export function readable(host: string): string {
   return host
 }
 
+export function shownHost(url: string): string {
+  try {
+    return readable(new URL(url).hostname).replace(/^www\./i, '') || url
+  } catch {
+    return url
+  }
+}
+
 function origin(url: string, read: (host: string) => string): string {
   if (SOURCE.test(url)) return `view-source:${origin(url.replace(SOURCE, ''), read)}`
 
@@ -61,13 +65,9 @@ function origin(url: string, read: (host: string) => string): string {
   return parsed.protocol === 'http:' ? `http://${host}` : host
 }
 
-export function plainOrigin(url: string): string {
-  return origin(url, readable)
-}
+export const plainOrigin = (url: string): string => origin(url, readable)
 
-export function originKey(url: string): string {
-  return origin(url, (host) => host)
-}
+export const originKey = (url: string): string => origin(url, (host) => host)
 
 export function favicon(address: string): string | null {
   try {

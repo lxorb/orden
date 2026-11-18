@@ -93,6 +93,12 @@ class Server {
   get words(): string {
     return this.doc.getText(TEXT).toJSON()
   }
+
+  whoIsHere(): unknown[] {
+    return [...this.awareness.getStates()]
+      .filter(([id]) => id !== this.doc.clientID)
+      .map(([, state]) => (state as { who?: unknown }).who)
+  }
 }
 
 function socketOf(): InstanceType<typeof sockets.FakeSocket> {
@@ -359,6 +365,23 @@ describe('a note nobody touched while the room was answering', () => {
 
     expect(note.text.toString()).toBe('one\ntwo from elsewhere\n')
     expect(server.words).toBe(note.text.toString())
+
+    room.leave()
+  })
+})
+
+describe('who the others see in the room', () => {
+  test('wears the account’s picture once it is known, after the room was joined', () => {
+    const { room, server, socket } = joining('one\n', 'one\n')
+    socket.arrive()
+    const face = 'a'.repeat(64)
+
+    room.rename('Ada', { id: 'u1', face })
+    for (const message of socket.take()) server.answer(message)
+
+    expect(server.whoIsHere()).toEqual([
+      { name: 'Mac', accent: 'blue', person: 'Ada', id: 'u1', face },
+    ])
 
     room.leave()
   })

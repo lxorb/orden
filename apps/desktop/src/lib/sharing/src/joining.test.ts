@@ -93,6 +93,8 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
         return Promise.resolve()
       },
       signOut: () => Promise.resolve(),
+      verifyCode: (email: string) =>
+        Promise.resolve({ token: 'session', user: { id: 'u1', email, name: null } }),
       me: () => Promise.resolve({ guest: { id: 'g1', name: 'Windows wren' } }),
       listSpaces: () => Promise.resolve({ spaces: [], deleted: [] }),
       shared: () => Promise.resolve({ shared: world.shared }),
@@ -217,20 +219,34 @@ const approval = { ...open, asks: true }
 describe('a mailed invitation', () => {
   beforeEach(() => {
     world.about = invite
-    world.through = {
-      token: 'session',
-      user: { id: 'u1', email: 'ada@example.com', name: null },
-      space,
-    }
+    world.through = { code: true, email: 'ada@example.com', resendIn: 30 }
   })
 
-  test('opens the space with nothing shown and nothing asked', async () => {
+  async function walkedIn() {
+    await joining.start()
+    world.through = { space }
+    expect(await account.code('123456')).toBe(true)
+    const { settleLocalNotes } = await import('../../sync-mirror/src/settling')
+    await settleLocalNotes()
+    await joining.walkThrough()
+  }
+
+  test('signs nobody in, and asks for the code mailed to the invited address', async () => {
     await joining.start()
 
     expect(joining.step).toBeNull()
-    expect(account.signedIn).toBe(true)
+    expect(account.signedIn).toBe(false)
+    expect(account.open).toBe(true)
+    expect(account.step).toBe('code')
+    expect(account.email).toBe('ada@example.com')
+    expect(world.shown).toBeNull()
+  })
+
+  test('opens the space once the code is typed, walking the link as the account', async () => {
+    await walkedIn()
+
     expect(account.user?.email).toBe('ada@example.com')
-    expect(world.shown).toBe('here')
+    expect(world.asked.map((one) => one.options.token)).toEqual([undefined, 'session'])
   })
 
   test('takes the token out of the address bar before anything else', async () => {
@@ -239,12 +255,12 @@ describe('a mailed invitation', () => {
   })
 
   test('brings the space down in one pass', async () => {
-    await joining.start()
+    await walkedIn()
     expect(world.passes).toBe(1)
   })
 
   test('settles the notes already here before the space arrives', async () => {
-    await joining.start()
+    await walkedIn()
 
     expect(account.settling).toBe(false)
     expect(account.syncable).toBe(true)

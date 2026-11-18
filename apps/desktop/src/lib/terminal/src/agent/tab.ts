@@ -5,7 +5,7 @@ import { shellRunning } from '../running'
 import { readSpec } from '../spec'
 import { isOnlineTab } from '../../../online-terms/src/api'
 import type { Session } from '../sessions.svelte'
-import { platform } from '../../../platform/src/api'
+import { protection } from '../../../protect/src/api'
 import type { Tab } from '../../../documents/src/api'
 import {
   asked,
@@ -20,17 +20,14 @@ import {
   stopRefused,
   stopSignal,
 } from '../../../agent-verbs/src/api'
-import { KEY_NAMES, keyBytes, linesFrom, linesOf, shellOs, typesFreely } from './keys'
+import { KEY_NAMES, keyBytes, linesFrom, linesOf, typesFreely } from './keys'
 
 const MOST_KEYS = 100
-
 const LINES = 200
 const MOST_LINES = 5000
-
 const WAIT = 2000
 const MOST_WAIT = 30_000
 const QUIET = 300
-
 const STARTING = 5000
 const READY_QUIET = 1000
 const PROMPT_WAIT = 20_000
@@ -119,12 +116,21 @@ async function startedOffScreen(session: Session, signal?: AbortSignal): Promise
   }
 }
 
+function unlocked(tab: Tab): void {
+  if (tab.path === null || protection.agentsMay(tab.path)) return
+  throw new Refused(
+    'protected',
+    `${tab.shown} is protected: the reader has to unlock it and choose Let agents read in its menu`,
+  )
+}
+
 function about(tab: Tab) {
   return { tab: tab.id, title: tab.shown, running: running(tab) }
 }
 
 export async function readTerminal(call: Call): Promise<AgentAnswer> {
   const { tab } = namedTab(call, ['terminal'], 'a terminal')
+  unlocked(tab)
   const most = count(call, 'lines', LINES, MOST_LINES)
 
   if (isOnlineTab(tab) && !running(tab)) {
@@ -216,6 +222,7 @@ async function typed(
   if (agent === null) throw new Refused('by_hand', 'the command line does not type into a shell')
 
   const { tab } = namedTab(call, ['terminal'], 'a terminal')
+  unlocked(tab)
   if (/[\r\n]/.test(text)) throw new Refused('bad_arguments', 'one line at a time')
   if (text.length > MOST_LINE) {
     throw new Refused('bad_arguments', `a line is at most ${MOST_LINE} characters`)
@@ -234,7 +241,7 @@ async function typed(
     throw new Refused('bad_arguments', `${judged.unknown} is not a key: ${KEY_NAMES.join(', ')}`)
   }
 
-  const free = typesFreely(text, enter, keys, agent.programs, shellOs(isOnlineTab(tab), platform()))
+  const free = typesFreely(text, enter, keys)
   const shown = [text, enter ? 'Enter' : '', ...keys].filter(Boolean).join(' + ')
   const question = await asked(call, free ? null : 'terminal', `${tab.shown}: ${shown}`)
   if (question) return question

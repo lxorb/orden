@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { CARD_BRANDS, type Card, type CardBrand } from '@orden/pass/types'
+  import { CARD_BRANDS, type Card } from '@orden/pass/types'
   import { Select } from '../../ui-controls/src/api'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
-  import { FIELD_ICONS } from '../../pass-sync/src/api'
-  import { brandLabel, brandOf } from '../../pass-sync/src/api'
+  import { FIELD_ICONS, brandLabel, brandOf } from '../../pass-sync/src/api'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { content = $bindable(), oninput }: { content: Card; oninput: () => void } = $props()
@@ -22,10 +21,6 @@
     const digits = content.expiry.replace(/\D/g, '').slice(0, 4)
     content.expiry = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits
     oninput()
-  }
-
-  function brandIn(value: string): CardBrand {
-    return CARD_BRANDS.find((brand) => brand === value) ?? 'other'
   }
 </script>
 
@@ -46,7 +41,7 @@
       value={content.brand}
       options={brands}
       onchange={(value: string) => {
-        content.brand = brandIn(value)
+        content.brand = CARD_BRANDS.find((brand) => brand === value) ?? 'other'
         oninput()
       }}
     />

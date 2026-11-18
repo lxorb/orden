@@ -1,13 +1,11 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { providePort, workspaceNotes } from '@orden/contracts'
 import { pressQueryRow, queryRowsHtml, readsWords, serveLinks, spaceLinks } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
-const ROOT = join(HERE, '../../../../..')
-const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '/index.ts']
 
 function sources(folder: string): string[] {
   return readdirSync(folder).flatMap((name) => {
@@ -15,11 +13,6 @@ function sources(folder: string): string[] {
     if (statSync(path).isDirectory()) return sources(path)
     return /\.(ts|svelte)$/.test(name) && !name.includes('.test.') ? [path] : []
   })
-}
-
-function pendingOf(): string[] {
-  const json = JSON.parse(readFileSync(join(HERE, 'module.json'), 'utf8')) as { pending?: string[] }
-  return json.pending ?? []
 }
 
 const reachedApis = () =>
@@ -31,38 +24,19 @@ const reachedApis = () =>
     ].map((found) => found[1]),
   )
 
-describe('the module stands on its own', () => {
-  test('nothing under src reaches past a module api or a file still listed as pending', () => {
-    const pending = pendingOf()
-    const reaching = sources(SRC).flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'(\.[^']*)'/g)].flatMap(
-        (found) => {
-          const target = resolve(dirname(file), found[1] ?? '')
-          if (target.startsWith(SRC)) return []
-          if (/\/[a-z-]+\/src\/api$/.test(target)) return []
-          const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one))
-          const named = path === undefined ? target : relative(ROOT, path)
-          return pending.includes(named) ? [] : [`${relative(SRC, file)}: ${found[1]}`]
-        },
-      ),
-    )
-    expect(reaching).toEqual([])
-  })
-
-  test('reads the workspace, the search, the reading view, the bases and the canvas through no file of theirs', () => {
-    expect([...new Set(reachedApis())].sort()).toEqual([
-      'graph',
-      'launch',
-      'link-format',
-      'platform',
-      'sharing',
-      'ui-kit',
-    ])
-    const text = sources(SRC)
-      .map((file) => readFileSync(file, 'utf8'))
-      .join('\n')
-    expect(text).not.toMatch(/(?:from |import\()'[^']*workspace/)
-  })
+test('the module stands on its own reads the workspace, the search, the reading view, the bases and the canvas through no file of theirs', () => {
+  expect([...new Set(reachedApis())].sort()).toEqual([
+    'graph',
+    'launch',
+    'link-format',
+    'platform',
+    'sharing',
+    'ui-kit',
+  ])
+  const text = sources(SRC)
+    .map((file) => readFileSync(file, 'utf8'))
+    .join('\n')
+  expect(text).not.toMatch(/(?:from |import\()'[^']*workspace/)
 })
 
 describe('the link index', () => {

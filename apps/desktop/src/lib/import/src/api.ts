@@ -1,6 +1,3 @@
-export { applyImport } from './apply'
-export { foundBrowsers } from './browsers'
-export { landBrowser } from './browser-landing'
 export type { Carried } from './carry'
 export { converted } from './convert'
 export { folderNameFor, onMac } from './folder-name'
@@ -9,9 +6,7 @@ export { safeName, titleFrom } from './names'
 export type { ImportPlan, Planned } from './plan'
 export { detect, readAs } from './read'
 export { insideFolder, pickedFolder, type Source, sourcesFrom, tooMuch } from './sources'
-export { vaults, vaultSources } from './vaults'
-export { landZen } from './zen-landing'
-export { zenProfiles } from './zen-profiles'
+export { vaults } from './vaults'
 
 export const macNotes = () => import('./apple')
 
@@ -27,7 +22,7 @@ export const importingStore = () =>
     ? Promise.reject(new Error('no import in the Even Realities plugin'))
     : import('./importing.svelte')
 
-export const migratingStore = () =>
+const migratingStore = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no import in the Even Realities plugin'))
     : import('./migrating.svelte')

@@ -18,13 +18,10 @@
   import { hand } from './hand.svelte'
   import { DEFAULT_INK, shownInk } from '../../plane/src/api'
   import { nearestDock, pens, upright } from './pens.svelte'
-  import { frameOf } from '../../ui-kit/src/api'
+  import { frameOf, closeOnBack, overlays, viewport } from '../../ui-kit/src/api'
   import { type Tool } from './pointer'
   import { shortcuts } from '../../shortcuts/src/api'
   import { tools } from './tools.svelte'
-  import { closeOnBack } from '../../ui-kit/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import { viewport } from '../../ui-kit/src/api'
 
   const {
     canundo,
@@ -53,9 +50,7 @@
   )
 
   const early = $derived(viewport.device === 'phone')
-
   let scroller = $state<HTMLElement>()
-
   const follows = (..._values: unknown[]) => undefined
   let fades = $state({ start: false, end: false })
 
@@ -86,17 +81,12 @@
 
   type Panel = 'pen' | 'rub' | 'catch' | 'put' | 'colour'
   let open = $state<Panel | null>(null)
-
   let popAt = $state(0)
   let cluster = $state<HTMLElement>()
-
   const A_TWITCH = 12
-
   const nib = $derived(pens.current)
   const drawing = $derived(tools.which === 'draw')
-
   const putting = $derived(PLACING.find((one) => one.id === tools.which))
-
   const movable = $derived(viewport.touch || hand.penSeen)
 
   $effect(() =>
@@ -229,7 +219,6 @@
   }
 
   const standing = $derived(upright(pens.dock))
-
   const swatch = $derived(shownInk(nib.colour))
 </script>
 

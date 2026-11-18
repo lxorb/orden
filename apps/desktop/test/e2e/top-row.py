@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any
 
 from harness import Drive
@@ -33,7 +31,6 @@ MEASURE = """
   }))
   const lead = bar.querySelector(':scope > .lead')
   const end = bar.querySelector(':scope > .end')
-  // What a press lands on in the room between two strips, half way down the bar.
   const between = []
   const sorted = [...strips].sort((a, b) => a.slot.left - b.slot.left)
   for (let at = 1; at < sorted.length; at++) {
@@ -130,5 +127,4 @@ def drive(browser: Any) -> None:
     page.set_viewport_size({"width": 900, "height": 600})
     check(page, "07-narrow")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

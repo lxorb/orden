@@ -264,9 +264,8 @@ export function parseRule(written: string): Rule | null {
 
 const timesText = (count: number) => `${count} time${count === 1 ? '' : 's'}`
 
-export function fewerTimes(written: string, count: number): string {
-  return written.replace(/ for \d+ times?(?= when done$|$)/i, ` for ${timesText(count)}`)
-}
+export const fewerTimes = (written: string, count: number): string =>
+  written.replace(/ for \d+ times?(?= when done$|$)/i, ` for ${timesText(count)}`)
 
 function nthText(nth: number): string {
   if (nth === -1) return 'last'
@@ -281,11 +280,10 @@ const sameDays = (a: readonly { day: number; nth?: number }[], days: readonly nu
 
 const mondayFirst = (day: number) => (day + 6) % 7
 
-function joined(parts: readonly string[], last = ' and '): string {
-  return parts.length < 2
+const joined = (parts: readonly string[], last = ' and '): string =>
+  parts.length < 2
     ? (parts[0] ?? '')
     : `${parts.slice(0, -1).join(', ')}${last}${parts.at(-1) ?? ''}`
-}
 
 function untilText(iso: string): string {
   const parts = civil(iso)

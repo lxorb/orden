@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import hashlib
 import json
 import re
@@ -139,8 +137,6 @@ WATCH = """
       window.ordenApp.account.signedIn ? 1 : 0,
       window.ordenApp.account.settling ? 1 : 0,
       window.ordenApp.sync.status,
-      // What the foot actually said, which is the thing under test: the store
-      // being right and the row being wrong are two different failures.
       (document.querySelector('aside .foot .coming')?.innerText ?? '').trim(),
     ])
     if (window.__nib.length < 600) setTimeout(tick, 200)
@@ -353,5 +349,4 @@ def main() -> int:
     print("\nsigning in said so, counted, lifted on its own, and never trapped anybody", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

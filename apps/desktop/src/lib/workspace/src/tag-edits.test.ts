@@ -21,6 +21,15 @@ describe('renaming a tag in one note', () => {
     expect(made?.after).toContain('about #work/core and one about #work/core/canvas')
   })
 
+  test('keeps the case of the parents it did not rename', () => {
+    const body =
+      '---\ntags: [ProjectX/Notes, Reading]\n---\n\n#ProjectX/Notes and #ProjectX/Plans\n'
+    expect(change('projectx/notes', 'projectx/docs', body)?.after).toBe(
+      '---\ntags: [ProjectX/docs, Reading]\n---\n\n#ProjectX/docs and #ProjectX/Plans\n',
+    )
+    expect(change('projectx/notes', 'projectx', body)?.after).toContain('#ProjectX and')
+  })
+
   test('and leaves a tag that only starts the same way', () => {
     expect(change('work/orden', 'work/core')?.after).toContain('#working')
   })
@@ -38,9 +47,7 @@ describe('renaming a tag in one note', () => {
   })
 
   test('with the way back, so undoing it moves no caret', () => {
-    const made = change('work/orden', 'work/core')
-    if (!made) throw new Error('nothing changed')
-
+    const made = change('work/orden', 'work/core')!
     let out = ''
     let at = 0
     for (const edit of made.back) {
@@ -73,9 +80,7 @@ describe('taking a tag away', () => {
   })
 
   test('with the way back, which puts every one of them back', () => {
-    const made = change('work/orden', null)
-    if (!made) throw new Error('nothing changed')
-
+    const made = change('work/orden', null)!
     let out = ''
     let at = 0
     for (const edit of made.back) {
@@ -97,7 +102,6 @@ describe('across a space', () => {
     const made = await tagChanges(Object.keys(notes), 'work/orden', 'work/core', (path) =>
       Promise.resolve(notes[path] ?? null),
     )
-
     expect(made.map((one) => one.path)).toEqual(['/space/a.md', '/space/c.md'])
     expect(made[0]?.after).toBe('about #work/core\n')
     expect(made[1]?.after).toContain('- work/core/canvas')
@@ -163,5 +167,30 @@ describe('next to an address and inside marks', () => {
       'Shipped\n\nMore #a\n',
     )
     expect(change('todo', null, 'Done ==#todo== and **#todo** now\n')?.after).toBe('Done and now\n')
+  })
+})
+
+describe('two tags taken away side by side', () => {
+  test('both go, wherever they stand', () => {
+    expect(change('work', null, '#work #work/sub\n')?.after).toBe('\n')
+    expect(change('todo', null, '#todo #todo\n')?.after).toBe('\n')
+    expect(change('work', null, '**#work**, #work\n')?.after).toBe('\n')
+    expect(change('work', null, '---\ntags: [work, work/sub]\n---\n')?.after).toBe(
+      '---\ntags: []\n---\n',
+    )
+    expect(change('work', null, '---\ntags: work, work/sub\n---\n')?.after).toBe(
+      '---\ntags: \n---\n',
+    )
+  })
+
+  test('a comma right before another mark stays, so that mark makes no new tag', () => {
+    expect(change('home', null, '#home,#plan\n')?.after).toBe(',#plan\n')
+    expect(change('work', null, '#work,#work/sub\n')?.after).toBe(',#work/sub\n')
+  })
+
+  test('a space before the comma that follows goes with the tag', () => {
+    expect(change('work', null, '---\ntags: [work , home]\n---\n')?.after).toBe(
+      '---\ntags: [home]\n---\n',
+    )
   })
 })

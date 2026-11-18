@@ -40,9 +40,7 @@ interface Last {
 }
 
 const LAST = 'last'
-
 const MOST_ROUNDS = 4
-
 const NOTHING = Y.encodeStateVector(new Y.Doc())
 
 function keptOf(value: unknown): Kept | null {
@@ -61,11 +59,10 @@ function keptOf(value: unknown): Kept | null {
   return kept
 }
 
-function lastOf(value: unknown): Last | null {
-  return isRecord(value) && typeof value.owner === 'string' && typeof value.text === 'string'
+const lastOf = (value: unknown): Last | null =>
+  isRecord(value) && typeof value.owner === 'string' && typeof value.text === 'string'
     ? { owner: value.owner, text: value.text }
     : null
-}
 
 function folded(words: Y.Text, to: string): boolean {
   const from = words.toJSON()

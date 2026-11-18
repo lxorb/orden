@@ -11,13 +11,10 @@ import { connected, movedBy, removed, withLabel, withNode, withText } from '../.
 import { settled } from '@orden/markdown/pages'
 import { hasPages, pageIn, pageOperation, placeOnPage } from './pages-ops'
 import { Refused } from '../../agent-verbs/src/api'
+import { isRecord } from '../../platform/src/api'
 
 export function readable(canvas: Canvas) {
   return { nodes: canvas.nodes, edges: canvas.edges, ink: canvas.ink.length }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function numberOf(op: Record<string, unknown>, key: string): number | null {

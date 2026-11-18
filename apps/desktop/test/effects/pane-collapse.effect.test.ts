@@ -1,6 +1,7 @@
-import { flushSync, mount, tick, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { warmWindow } from './warm-window'
+import { settle } from './settle'
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
@@ -10,22 +11,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 }))
 
 vi.mock('../../src/lib/start', () => ({ start: () => () => undefined }))
-
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
 
 Element.prototype.animate = function animate() {
   return {
@@ -99,14 +84,6 @@ afterEach(async () => {
   viewport.device = 'desktop'
   await vi.dynamicImportSettled()
 })
-
-async function settle() {
-  for (let turn = 0; turn < 6; turn++) {
-    await tick()
-    await new Promise((done) => setTimeout(done, 0))
-    flushSync()
-  }
-}
 
 async function sideBySide(focus: 'left' | 'right') {
   workspace.openBlank('Left', '# Left\n\nWords.')

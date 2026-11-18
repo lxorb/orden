@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { outermost, Selection } from './selection.svelte'
 
 const ROWS = ['/a.md', '/f', '/f/b.md', '/f/c.md', '/d.md']
-
 let picked: Selection
 
 beforeEach(() => {
@@ -86,12 +85,10 @@ describe('what a drag carries', () => {
   })
 })
 
-describe('rows that have gone away', () => {
-  test('take themselves out', () => {
-    picked.all(ROWS)
-    picked.keepOnly((path) => path !== '/f/b.md')
-    expect(picked.paths).toEqual(['/a.md', '/f', '/f/c.md', '/d.md'])
-  })
+test('rows that have gone away take themselves out', () => {
+  picked.all(ROWS)
+  picked.keepOnly((path) => path !== '/f/b.md')
+  expect(picked.paths).toEqual(['/a.md', '/f', '/f/c.md', '/d.md'])
 })
 
 describe('the outermost of a set of rows', () => {
@@ -105,6 +102,13 @@ describe('the outermost of a set of rows', () => {
 
   test('leaves out a row several folders down, and the folders between', () => {
     expect(outermost(['/f', '/f/g', '/f/g/h', '/f/g/h/i.md', '/a.md'])).toEqual(['/f', '/a.md'])
+  })
+
+  test('leaves out what a Windows folder takes along', () => {
+    expect(outermost(['C:\\n\\A', 'C:\\n\\A\\b.md', 'C:\\n\\Ab.md'])).toEqual([
+      'C:\\n\\A',
+      'C:\\n\\Ab.md',
+    ])
   })
 
   test('keeps the deeper row where the folder above it is not picked', () => {

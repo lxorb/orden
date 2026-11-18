@@ -31,21 +31,17 @@ function sources(folder: string): string[] {
 const note = (text: string, path: string | null = null) =>
   new NoteDoc({ kind: 'note', path, name: 'Untitled', text, dirty: false }, () => undefined)
 
-describe('the module stands on its own', () => {
-  test('nothing under src reaches past a module api, and no workspace file at all', () => {
-    const reaching = sources(SRC).flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'(\.[^']*)'/g)].flatMap(
-        (found) => {
-          const target = resolve(dirname(file), found[1] ?? '')
-          if (target.startsWith(SRC)) return []
-          if (/\/[a-z-]+\/src\/api$/.test(target)) return []
-          const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one))
-          return [`${relative(SRC, file)}: ${path === undefined ? target : relative(ROOT, path)}`]
-        },
-      ),
-    )
-    expect(reaching).toEqual([])
-  })
+test('the module stands on its own nothing under src reaches past a module api, and no workspace file at all', () => {
+  const reaching = sources(SRC).flatMap((file) =>
+    [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'(\.[^']*)'/g)].flatMap((found) => {
+      const target = resolve(dirname(file), found[1] ?? '')
+      if (target.startsWith(SRC)) return []
+      if (/\/[a-z-]+\/src\/api$/.test(target)) return []
+      const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one))
+      return [`${relative(SRC, file)}: ${path === undefined ? target : relative(ROOT, path)}`]
+    }),
+  )
+  expect(reaching).toEqual([])
 })
 
 describe('an open document', () => {

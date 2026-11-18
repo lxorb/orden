@@ -1,11 +1,10 @@
 <script lang="ts">
-  import type { Message } from '@orden/chats'
-  import { may } from '@orden/chats'
+  import { may, type Message } from '@orden/chats'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { localNumber } from '../../../platform/src/api'
-  import { dur, fly } from '../../../platform/src/api'
+  import { dur, fly, localNumber } from '../../../platform/src/api'
   import { menu } from '../../../ui-kit/src/api'
+  import type { Shown } from '../shapes'
   import type { ChatPage } from './chat.svelte'
   import Composer from './Composer.svelte'
   import { Glyph } from '../../../chat-kit/src/api'
@@ -97,18 +96,18 @@
     >
   </header>
   <div class="list orden-scrolls" bind:this={scroller}>
-    {#if replies.parent}
+    {#snippet row(message: Shown, head: boolean, pending: boolean, arrivedAfter: number)}
       <MessageRow
-        message={replies.parent}
-        head
-        pending={false}
+        {message}
+        {head}
+        {pending}
         seen={[]}
         {page}
         {space}
         column={width - 72}
         lit={false}
         flashed={false}
-        arrivedAfter={Number.MAX_SAFE_INTEGER}
+        {arrivedAfter}
         {canPost}
         inReplies
         onreply={() => composer?.focus()}
@@ -117,28 +116,13 @@
         onmenu={showMenu}
         {onfiles}
       />
+    {/snippet}
+    {#if replies.parent}
+      {@render row(replies.parent, true, false, Number.MAX_SAFE_INTEGER)}
       <div class="rule" role="separator"><span>{localNumber(replies.messages.length)}</span></div>
     {/if}
     {#each items as item (item.key)}
-      <MessageRow
-        message={item.message}
-        head={item.head}
-        pending={item.pending}
-        seen={[]}
-        {page}
-        {space}
-        column={width - 72}
-        lit={false}
-        flashed={false}
-        arrivedAfter={0}
-        {canPost}
-        inReplies
-        onreply={() => composer?.focus()}
-        onreact={(message: Message, from: HTMLElement) =>
-          onpicker(from, (emoji) => page.react(message, emoji))}
-        onmenu={showMenu}
-        {onfiles}
-      />
+      {@render row(item.message, item.head, item.pending, 0)}
     {/each}
   </div>
   {#if canPost}

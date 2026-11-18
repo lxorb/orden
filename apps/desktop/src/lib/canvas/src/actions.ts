@@ -171,10 +171,10 @@ export const run = {
     store.pickAll([...cardsInLasso(store.canvas.nodes, points, partly), ...ink])
   },
 
-  remove(store: CanvasStore) {
-    if (!store.picked.length) return
+  remove(store: CanvasStore, ids: readonly string[] = store.picked) {
+    if (!ids.length) return
 
-    store.edit(removed(store.canvas, store.picked))
+    store.edit(removed(store.canvas, ids))
     store.clearPicked()
   },
 
@@ -541,9 +541,8 @@ export const run = {
   },
 }
 
-export function toolPressed(event: KeyboardEvent): Tool | null {
-  return TOOL_KEYS.find(([id]) => shortcuts.pressed(id, event))?.[1] ?? null
-}
+export const toolPressed = (event: KeyboardEvent): Tool | null =>
+  TOOL_KEYS.find(([id]) => shortcuts.pressed(id, event))?.[1] ?? null
 
 const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.select', 'select'],
@@ -566,17 +565,15 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.elbow', 'elbow'],
 ]
 
-function keystroke(event: KeyboardEvent): Keystroke {
-  return {
-    key: event.key,
-    code: event.code,
-    ctrlKey: event.ctrlKey,
-    metaKey: event.metaKey,
-    altKey: event.altKey,
-    shiftKey: event.shiftKey,
-    isComposing: event.isComposing,
-  }
-}
+const keystroke = (event: KeyboardEvent): Keystroke => ({
+  key: event.key,
+  code: event.code,
+  ctrlKey: event.ctrlKey,
+  metaKey: event.metaKey,
+  altKey: event.altKey,
+  shiftKey: event.shiftKey,
+  isComposing: event.isComposing,
+})
 
 const NUDGES: readonly (readonly [string, number, number])[] = [
   ['canvas.nudge.left', -1, 0],
@@ -743,9 +740,7 @@ export interface Putting {
   path: string | null
 }
 
-function canvasRoot(store: CanvasStore): string | null {
-  return workspace.rootHolding(store.path)
-}
+const canvasRoot = (store: CanvasStore): string | null => workspace.rootHolding(store.path)
 
 export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
   const size = ownSize(tool)
@@ -845,11 +840,8 @@ export interface MenuView extends KeyView {
   locked: string | null
 }
 
-function sections(...groups: readonly MenuEntry[][]): MenuEntry[] {
-  return groups
-    .filter((one) => one.length)
-    .flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
-}
+const sections = (...groups: readonly MenuEntry[][]): MenuEntry[] =>
+  groups.filter((one) => one.length).flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
 
 export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuEntry[] {
   const picked = store.picked.length > 0
@@ -933,8 +925,8 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   )
 }
 
-function arrangeRows(store: CanvasStore, several: boolean, many: boolean): MenuEntry[] {
-  return sections(
+const arrangeRows = (store: CanvasStore, several: boolean, many: boolean): MenuEntry[] =>
+  sections(
     [
       { label: 'Bring to front', run: () => run.order(store, 'front') },
       { label: 'Bring forward', run: () => run.order(store, 'forward') },
@@ -958,7 +950,6 @@ function arrangeRows(store: CanvasStore, several: boolean, many: boolean): MenuE
         ]
       : [],
   )
-}
 
 async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' | 'pdf') {
   const drawing = {

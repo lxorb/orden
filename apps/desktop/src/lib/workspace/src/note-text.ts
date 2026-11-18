@@ -1,5 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { oneEdit } from '@orden/markdown/edits'
+import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 import { isTagName } from '@orden/markdown/tags'
 import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
@@ -127,6 +128,7 @@ async function toggled(
   }
   const from = starts[line]
   if (from === undefined) return false
+  if (inFence(before, line)) return false
 
   const next = starts[line + 1]
   const task = taskAt(before.slice(from, next === undefined ? before.length : next - 1))
@@ -139,17 +141,26 @@ async function toggled(
   return (await replaceInNotes(ws, [changeOf(path, before, edits)])) > 0
 }
 
+function inFence(text: string, line: number): boolean {
+  const rows = text.split('\n')
+  const code = new CodeBlocks()
+  for (const row of rows.slice(0, line)) code.line(row)
+  return code.line(rows[line] ?? '') !== WORDS
+}
+
 export async function writeNoteText(
   ws: HoldsNotes,
   path: string,
   before: string,
   after: string,
   keeping: Keeping = {},
-): Promise<void> {
+): Promise<boolean> {
   const edit = oneEdit(before, after)
-  if (!edit) return
+  if (!edit) return true
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })
+  return (
+    (await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })) > 0
+  )
 }
 
 type Undone = Extract<FileAction, { kind: 'replace' }>['notes'][number]

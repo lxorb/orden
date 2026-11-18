@@ -4,11 +4,9 @@
   import type { Shown } from '../shapes'
   import { cubicOut } from 'svelte/easing'
   import { downloadStarted } from '../../../downloads/src/api'
-  import { localNumber } from '../../../platform/src/api'
-  import { dur, fly } from '../../../platform/src/api'
+  import { dur, fly, localNumber } from '../../../platform/src/api'
   import { followHref, workspace } from '../../../workspace/src/api'
-  import { Avatar } from '../../../accounts-ui/src/api'
-  import { showProfile } from '../../../accounts-ui/src/api'
+  import { Avatar, showProfile } from '../../../accounts-ui/src/api'
   import { links } from '../../../link-index/src/api'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
   import { drawing, Glyph } from '../../../chat-kit/src/api'
@@ -84,13 +82,7 @@
 
   function words(
     node: HTMLElement,
-    said: {
-      body: string
-      edited: boolean
-      from: string | null
-      version: number
-      drawn: number
-    },
+    said: { body: string; edited: boolean; from: string | null; version: number; drawn: number },
   ) {
     let untip: { destroy: () => void } | null = null
     const draw = (next: { body: string; edited: boolean; from: string | null }) => {

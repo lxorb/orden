@@ -1,11 +1,11 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import {
   blockIdOf,
+  blockSpan,
   blockSpanAt,
-  headingText,
+  headingRows,
   lines,
   slugify,
-  wordRows,
 } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
@@ -162,8 +162,6 @@ function quoted(anchor: Extract<Anchor, { quote: string }>, text: string): Place
   return { from: at, to: at + quote.length, shape: 'words' }
 }
 
-const HEADING = /^\s{0,3}(#{1,6})\s+(.*)$/
-
 export interface HeadingAt {
   level: number
   title: string
@@ -185,14 +183,14 @@ export function headingsIn(text: string): HeadingAt[] {
     }
   }
 
-  const seen = new Set([...wordRows(text)].map((row) => row.line))
+  const starts = new Map(headingRows(text).map((one) => [one.line, one]))
   for (const row of lines(text)) {
-    const hashes = seen.has(row.line) ? HEADING.exec(row.text)?.[1] : undefined
-    if (hashes) {
-      close(hashes.length)
+    const start = starts.get(row.line)
+    if (start) {
+      close(start.level)
       const heading: HeadingAt = {
-        level: hashes.length,
-        title: headingText(row.text),
+        level: start.level,
+        title: start.text,
         path: open.map((one) => one.title),
         line: row.line,
         from: row.from,
@@ -261,13 +259,15 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
 
 function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): Place {
   const rows = [...lines(text)]
-  const marked = rows.filter((row) => !row.code && blockIdOf(row.text) === anchor.block)
+  const marked = rows.filter(
+    (row) => !row.matter && (row.code ? row.fenceName : blockIdOf(row.text)) === anchor.block,
+  )
   const row = one(marked, anchor, undefined)
 
   const alone = row.text.trim() === `^${anchor.block}`
-  const { start: first, end: last } = blockSpanAt(text, row.line)
-  const start = rows[first] ?? row
-  const end = rows[last] ?? row
+  const span = blockSpan(rows, row.line)
+  const start = rows[span.first] ?? row
+  const end = alone ? row : (rows[span.last] ?? row)
   const apart = alone && row.line > 0 && !rows[row.line - 1]?.text.trim()
   const indent = leadOf(start.text)
   const keep = alone
@@ -314,4 +314,13 @@ function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Pla
     ...(id ? { keep: ` ^${id}` } : {}),
     ...(indent ? { indent } : {}),
   }
+}
+
+export function taskIn<T extends { anchor: Anchor }>(rows: readonly T[], value: unknown): T {
+  const anchor = readAnchor(value)
+  if (!('task' in anchor)) throw new DocError('bad_anchor', value, 'at is {task, nth?}')
+
+  const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
+  const found = rows.filter((row) => 'task' in row.anchor && row.anchor.task === wanted)
+  return one(found, anchor, anchor.nth)
 }

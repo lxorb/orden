@@ -6,8 +6,8 @@ import { askMachine } from '../src/sync-server-machines/src/machines/ask'
 import { HOLD_GRACE, HOLD_QUIET, MOST_SOCKETS, PING_EVERY, QUIET_FOR } from '@orden/online/wire'
 import { Machine, resumeOf } from '../src/sync-server-machines/src/machines/machine'
 import { reachAgain } from '../src/sync-server-machines/src/machines/reach'
-import { eraseAccount } from '../src/sync-server/src/erase'
-import { purgeExpired } from '../src/sync-server/src/trash'
+import { eraseAccount } from '../src/sync-server-engine/src/erase'
+import { purgeExpired } from '../src/sync-server-engine/src/trash'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import {
   doorway,
@@ -446,24 +446,6 @@ describe('the door', () => {
     door.asked.length = 0
     await call(env, '/v1/auth/signout', { method: 'POST', token: writer })
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(writer)] }])
-
-    const tablet = await session(OWNER)
-    const tabletSession = (
-      env.db.prepare('select id from sessions where token_hash = ?').get(await sha256(tablet)) as {
-        id: string
-      }
-    ).id
-    env.db
-      .prepare(
-        `insert into devices (id, user_id, session_id, name, platform, created_at)
-         values ('device-tablet', ?, ?, 'Tablet', 'ios', 1)`,
-      )
-      .run(idOf(OWNER), tabletSession)
-    door.asked.length = 0
-    expect(
-      (await call(env, '/v2/devices/device-tablet', { method: 'DELETE', token: phone })).status,
-    ).toBe(200)
-    expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(tablet)] }])
   })
 
   test('a guest signing out tells the machine of the terminal it may be watching', async () => {
@@ -2053,6 +2035,71 @@ describe('a machine on a server of its own', () => {
     expect(await running.machine.state()).toBe('awake')
   })
 
+  const resize = (running: Running, type: string) =>
+    running.machine.fetch(
+      new Request('https://machine.invalid/resize', {
+        headers: { 'x-orden-machine': 'resize', 'x-orden-type': type, 'x-orden-who': user },
+      }),
+    )
+
+  async function settled(running: Running) {
+    for (let tries = 0; tries < 12 && (await running.machine.state()) === 'starting'; tries++) {
+      vi.setSystemTime(Date.now() + 10_000)
+      await fire(running)
+    }
+  }
+
+  test('a resize lets go of the link, steps the server through it, and waits for it', async () => {
+    const running = await server()
+    const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    const link = running.host.link_
+    await resize(running, 'cx53')
+    expect(link?.closed).toBe(true)
+    expect(await running.machine.state()).toBe('starting')
+    expect(socket.of('machine').at(-1)).toEqual({ t: 'machine', state: 'starting' })
+
+    await running.machine.wake()
+    await resize(running, 'ccx33')
+    await settled(running)
+    expect(running.host.calls.filter((one) => /^(start|resize)/.test(one))).toEqual([
+      'start machine',
+      'resize cx53',
+      'resize cx53',
+    ])
+    expect(running.host.calls).not.toContain('reboot')
+    expect(await running.machine.state()).toBe('awake')
+    expect(events()).toContain('resize cx53')
+  })
+
+  test('a resize Hetzner refuses goes back to the type it had and starts it', async () => {
+    env.db.prepare("update machines set size = 'cx43' where id = ?").run(ID)
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    running.host.failResize = new Error('invalid_input')
+    await resize(running, 'cx23')
+    await settled(running)
+    expect(running.host.calls.filter((one) => one.startsWith('resize'))).toEqual([
+      'resize cx23',
+      'resize cx43',
+      'resize cx43',
+    ])
+    expect(await running.machine.state()).toBe('awake')
+    expect(events()).toContainEqual(expect.stringMatching(/^failed resize: Error invalid_input/))
+  })
+
+  test('a server that never comes back resized is given up on, asleep', async () => {
+    const running = await server()
+    await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
+    running.host.resizeSteps = 1000
+    await resize(running, 'cx53')
+    for (let tries = 0; tries < 200 && (await running.machine.state()) === 'starting'; tries++) {
+      vi.setSystemTime(Date.now() + 10_000)
+      await fire(running)
+    }
+    expect(await running.machine.state()).toBe('asleep')
+    expect(running.host.calls).toContain('resize cx53 hard')
+  })
+
   test('a disk nearly full is said under every screen, and to whoever joins', async () => {
     const running = await server()
     const socket = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
@@ -2254,16 +2301,11 @@ describe('the hub’s machine frame', () => {
     expect(laptop.take()).toEqual([{ t: 'machine', state: 'starting' }])
     expect(guest.take()).toEqual([])
 
-    const { hubFrameOf } = await import('@orden/sync-core')
-    expect(hubFrameOf({ t: 'machine', state: 'awake' })).toEqual({ t: 'machine', state: 'awake' })
-    expect(hubFrameOf({ t: 'machine', state: 'melting' })).toBeNull()
-
     await made.fetch(
       new Request('https://hub.invalid/terms', { headers: { 'x-orden-hub': 'terms' } }),
     )
     expect(laptop.take()).toEqual([{ t: 'terms' }])
     expect(guest.take()).toEqual([])
-    expect(hubFrameOf({ t: 'terms' })).toEqual({ t: 'terms' })
   })
 })
 

@@ -20,14 +20,13 @@ const NOTE = [
   '',
 ].join('\n')
 
-function stateOf(doc: string) {
-  return parsed(
+const stateOf = (doc: string) =>
+  parsed(
     EditorState.create({
       doc,
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-}
 
 function carried(state: EditorState, words: string, pos: number, upper: boolean) {
   const span = blockAt(state, state.doc.toString().indexOf(words))

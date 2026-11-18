@@ -95,9 +95,8 @@ function wordsOf(value: Value | undefined): string[] {
   return [text(value).toLowerCase()]
 }
 
-function matches(value: Value | undefined, is: string): boolean {
-  return wordsOf(value).includes(is.trim().toLowerCase())
-}
+const matches = (value: Value | undefined, is: string): boolean =>
+  wordsOf(value).includes(is.trim().toLowerCase())
 
 function triggered(when: Trigger, before: Row | undefined, after: Row): boolean {
   if ('added' in when) return before === undefined

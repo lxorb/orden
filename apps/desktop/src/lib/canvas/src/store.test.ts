@@ -19,10 +19,17 @@ const { pens } = await import('./pens.svelte')
 type Canvas = import('@orden/markdown/canvas').Canvas
 type CanvasNode = import('@orden/markdown/canvas').CanvasNode
 type Shared = import('@orden/markdown/plane').SharedPlane
+type Pushed = import('@orden/markdown/plane').Pushed
 
-function card(id: string, x = 0): CanvasNode {
-  return { id, type: 'text', x, y: 0, width: 250, height: 60, text: id }
-}
+const card = (id: string, x = 0): CanvasNode => ({
+  id,
+  type: 'text',
+  x,
+  y: 0,
+  width: 250,
+  height: 60,
+  text: id,
+})
 
 function opened(text = blankCanvas()) {
   const note = new NoteDoc(
@@ -34,12 +41,14 @@ function opened(text = blankCanvas()) {
   return { store: new CanvasStore(tab), note, tab }
 }
 
-function room(): Shared & { pushed: Canvas[]; undone: number } {
+function room(): Shared & { pushed: Canvas[]; hows: Pushed[]; undone: number } {
   return {
     pushed: [],
+    hows: [],
     undone: 0,
-    push(_before: Canvas, after: Canvas) {
+    push(_before: Canvas, after: Canvas, how: Pushed = 'step') {
       this.pushed.push(after)
+      this.hows.push(how)
     },
     undo() {
       this.undone++
@@ -56,39 +65,35 @@ function room(): Shared & { pushed: Canvas[]; undone: number } {
 
 const ids = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
 
-describe('a plane arriving from a room', () => {
-  test('says nothing about the icon, so the file keeps it and its colour', () => {
-    const { store } = opened(
+test('a plane arriving from a room says nothing about the icon, so the file keeps it and its colour', () => {
+  const { store } = opened(
+    JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }),
+  )
+  store.arrived({ ...blank(), nodes: [card('a')] })
+  expect(store.canvas.icon).toBe('star')
+  expect(store.canvas.iconColor).toBe('red')
+})
+
+test('a plane written down after a room spoke does not take its own write for news, so nothing writes again', () => {
+  vi.useFakeTimers()
+  try {
+    const { store, note } = opened(
       JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }),
     )
     store.arrived({ ...blank(), nodes: [card('a')] })
-    expect(store.canvas.icon).toBe('star')
-    expect(store.canvas.iconColor).toBe('red')
-  })
-})
+    vi.runOnlyPendingTimers()
+    const revision = note.revision
+    const text = note.text
+    expect(JSON.parse(text).orden.iconColor).toBe('red')
 
-describe('a plane written down after a room spoke', () => {
-  test('does not take its own write for news, so nothing writes again', () => {
-    vi.useFakeTimers()
-    try {
-      const { store, note } = opened(
-        JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }),
-      )
-      store.arrived({ ...blank(), nodes: [card('a')] })
-      vi.runOnlyPendingTimers()
-      const revision = note.revision
-      const text = note.text
-      expect(JSON.parse(text).orden.iconColor).toBe('red')
-
-      expect(store.follow()).toBe(false)
-      vi.runOnlyPendingTimers()
-      expect(vi.getTimerCount()).toBe(0)
-      expect(note.revision).toBe(revision)
-      expect(note.text).toBe(text)
-    } finally {
-      vi.useRealTimers()
-    }
-  })
+    expect(store.follow()).toBe(false)
+    vi.runOnlyPendingTimers()
+    expect(vi.getTimerCount()).toBe(0)
+    expect(note.revision).toBe(revision)
+    expect(note.text).toBe(text)
+  } finally {
+    vi.useRealTimers()
+  }
 })
 
 describe('a plane in a space somebody shared to read', () => {
@@ -101,6 +106,21 @@ describe('a plane in a space somebody shared to read', () => {
     expect(store.canvas.nodes).toEqual([])
     expect(readCanvas(note.text).nodes).toEqual([])
     expect(note.dirty).toBe(false)
+  })
+
+  test('nor an undo or redo of what was done before it became read only', () => {
+    const { store, note } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.undo()
+    store.edit({ ...store.canvas, nodes: [card('b')] })
+    store.readOnly = true
+    const before = note.text
+
+    store.undo()
+    expect(ids(store.canvas)).toEqual(['b'])
+    store.redo()
+    expect(ids(store.canvas)).toEqual(['b'])
+    expect(note.text).toBe(before)
   })
 
   test('while one nobody shared takes every edit', () => {
@@ -137,6 +157,20 @@ describe('a gesture that edits as it goes', () => {
     expect(ids(store.canvas)).toEqual(['a', 'b', 'c'])
     expect(store.canRedo).toBe(false)
     expect(store.canUndo).toBe(true)
+  })
+
+  test('an undo ends the drag, so what the same drag does next is a step of its own', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] }, 'width')
+    store.undo()
+    expect(ids(store.canvas)).toEqual([])
+
+    store.edit({ ...store.canvas, nodes: [card('b')] }, 'width')
+    expect(store.canRedo).toBe(false)
+    store.undo()
+    expect(ids(store.canvas)).toEqual([])
+    store.redo()
+    expect(ids(store.canvas)).toEqual(['b'])
   })
 
   test('and only that drag, never one before it or what came after it', () => {
@@ -251,21 +285,19 @@ describe('a gesture that edits as it goes', () => {
   })
 })
 
-describe('picked ink given another width (#432)', () => {
-  test('widens every picked stroke, and one undo takes the drag back', async () => {
-    const { sized } = await import('../../plane/src/api')
-    const { store } = opened()
-    const points = [{ x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }]
-    const stroke = (id: string) => ({ id, tool: 'pen' as const, color: '#000000', size: 2, points })
-    store.edit({ ...store.canvas, ink: [stroke('a'), stroke('b'), stroke('c')] })
+test('picked ink given another width (#432) widens every picked stroke, and one undo takes the drag back', async () => {
+  const { sized } = await import('../../plane/src/api')
+  const { store } = opened()
+  const points = [{ x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }]
+  const stroke = (id: string) => ({ id, tool: 'pen' as const, color: '#000000', size: 2, points })
+  store.edit({ ...store.canvas, ink: [stroke('a'), stroke('b'), stroke('c')] })
 
-    store.edit(sized(store.canvas, ['a', 'b'], 4), 'width:1')
-    store.edit(sized(store.canvas, ['a', 'b'], 6), 'width:1')
-    expect(store.canvas.ink.map((one) => one.size)).toEqual([6, 6, 2])
+  store.edit(sized(store.canvas, ['a', 'b'], 4), 'width:1')
+  store.edit(sized(store.canvas, ['a', 'b'], 6), 'width:1')
+  expect(store.canvas.ink.map((one) => one.size)).toEqual([6, 6, 2])
 
-    store.undo()
-    expect(store.canvas.ink.map((one) => one.size)).toEqual([2, 2, 2])
-  })
+  store.undo()
+  expect(store.canvas.ink.map((one) => one.size)).toEqual([2, 2, 2])
 })
 
 describe('the stroke eraser', () => {
@@ -352,9 +384,7 @@ describe('a plane that is in a room', () => {
   })
 })
 
-function blank(): Canvas {
-  return { nodes: [], edges: [], ink: [], at: {}, gone: {} }
-}
+const blank = (): Canvas => ({ nodes: [], edges: [], ink: [], at: {}, gone: {} })
 
 describe('a plane written after it opens', () => {
   function drawnPlane(count: number): string {
@@ -495,6 +525,94 @@ describe('a version put back from the history (#533)', () => {
   })
 })
 
+describe('undo while a room comes and goes (#2173)', () => {
+  test('has nothing from before the room to take back once the room is gone', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('before')] })
+    store.shared = room()
+    store.edit({ ...store.canvas, nodes: [card('before'), card('in-the-room', 300)] })
+    store.shared = null
+
+    expect(store.canUndo).toBe(false)
+    store.undo()
+    expect(ids(store.canvas)).toEqual(['before', 'in-the-room'])
+  })
+
+  test('has nothing to take back in a room just joined', () => {
+    const { store } = opened()
+    store.shared = room()
+    store.historyIs({ undo: true, redo: true })
+    store.shared = room()
+
+    expect(store.canUndo).toBe(false)
+    expect(store.canRedo).toBe(false)
+  })
+
+  test('hands the room the steps of one drag as one step', () => {
+    const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a')] }))
+    const shared = room()
+    store.shared = shared
+    for (const x of [10, 20, 30]) store.edit({ ...store.canvas, nodes: [card('a', x)] }, 'drag')
+    store.edit({ ...store.canvas, nodes: [card('a', 40)] })
+
+    expect(shared.hows).toEqual(['step', 'more', 'more', 'step'])
+  })
+})
+
+describe('a rename the plane follows (#2173)', () => {
+  const linked = (file: string): CanvasNode => ({
+    id: 'f',
+    type: 'file',
+    file,
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 400,
+  })
+  const renamed = (canvas: Canvas): Canvas => ({
+    ...canvas,
+    nodes: canvas.nodes.map((node) => (node.id === 'f' ? linked('New.md') : node)),
+  })
+  const files = (canvas: Canvas) =>
+    canvas.nodes.map((node) => (node.type === 'file' ? node.file : node.id))
+
+  test('is no step undo takes back', () => {
+    const { store } = opened(
+      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }),
+    )
+    store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('a')] })
+    store.relinked(renamed)
+    store.undo()
+
+    expect(files(store.canvas)).toEqual(['New.md'])
+  })
+
+  test('and the steps undo goes back to point at the new name too', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [linked('Old.md')] })
+    store.edit({ ...store.canvas, nodes: [linked('Old.md'), card('a')] })
+    store.relinked(renamed)
+
+    store.undo()
+    expect(files(store.canvas)).toEqual(['New.md'])
+    store.undo()
+    expect(files(store.canvas)).toEqual([])
+    store.redo()
+    expect(files(store.canvas)).toEqual(['New.md'])
+  })
+
+  test('goes to a room aside, where undo does not reach it', () => {
+    const { store } = opened(
+      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }),
+    )
+    const shared = room()
+    store.shared = shared
+    store.relinked(renamed)
+
+    expect(shared.hows).toEqual(['aside'])
+  })
+})
+
 describe('an edit another window made meanwhile (#1847)', () => {
   function edited() {
     const { store, note } = opened(
@@ -554,22 +672,20 @@ describe('an edit another window made meanwhile (#1847)', () => {
   })
 })
 
-describe('ink pasted on its own', () => {
-  test('lands centred on the pointer, as cards do', async () => {
-    const { run } = await import('./actions')
-    const { strokeBox } = await import('../../plane/src/api')
-    const { store } = opened()
-    const at = (x: number, y: number) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
-    const points = [at(0, 0), at(100, 0), at(100, 100)]
-    const incoming = { nodes: [], edges: [], at: {}, gone: {} }
-    const ink = [{ id: 's', tool: 'pen' as const, color: '#000000', size: 4, points }]
+test('ink pasted on its own lands centred on the pointer, as cards do', async () => {
+  const { run } = await import('./actions')
+  const { strokeBox } = await import('../../plane/src/api')
+  const { store } = opened()
+  const at = (x: number, y: number) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
+  const points = [at(0, 0), at(100, 0), at(100, 100)]
+  const incoming = { nodes: [], edges: [], at: {}, gone: {} }
+  const ink = [{ id: 's', tool: 'pen' as const, color: '#000000', size: 4, points }]
 
-    run.paste(store, { ...incoming, ink }, '', { x: 1000, y: 2000 })
+  run.paste(store, { ...incoming, ink }, '', { x: 1000, y: 2000 })
 
-    const box = strokeBox(store.canvas.ink[0]!)
-    expect(Math.round(box.x + box.width / 2)).toBe(1000)
-    expect(Math.round(box.y + box.height / 2)).toBe(2000)
-  })
+  const box = strokeBox(store.canvas.ink[0]!)
+  expect(Math.round(box.x + box.width / 2)).toBe(1000)
+  expect(Math.round(box.y + box.height / 2)).toBe(2000)
 })
 
 describe('words pasted onto a plane', () => {
@@ -772,45 +888,41 @@ describe('a plane with something on it this app does not read', () => {
   })
 })
 
-describe('what is picked, asked by id', () => {
-  test('answers what the list says, through every way of picking', () => {
-    const { store } = opened(
-      writeCanvas({
-        ...readCanvas(blankCanvas()),
-        nodes: [card('a'), card('b', 300), card('c', 600)],
-      }),
-    )
-    const answers = () => ['a', 'b', 'c'].filter((id) => store.isPicked(id))
+test('what is picked, asked by id answers what the list says, through every way of picking', () => {
+  const { store } = opened(
+    writeCanvas({
+      ...readCanvas(blankCanvas()),
+      nodes: [card('a'), card('b', 300), card('c', 600)],
+    }),
+  )
+  const answers = () => ['a', 'b', 'c'].filter((id) => store.isPicked(id))
 
-    store.pickAll(['a', 'c'])
-    expect(answers()).toEqual(['a', 'c'])
-    store.pick('b', true)
-    expect(answers()).toEqual(['a', 'b', 'c'])
-    store.pick('a', true)
-    expect(answers()).toEqual(['b', 'c'])
-    store.pick('c')
-    expect(answers()).toEqual(['c'])
-    store.picked = []
-    expect(answers()).toEqual([])
-    expect([...store.pickedSet]).toEqual([])
-  })
+  store.pickAll(['a', 'c'])
+  expect(answers()).toEqual(['a', 'c'])
+  store.pick('b', true)
+  expect(answers()).toEqual(['a', 'b', 'c'])
+  store.pick('a', true)
+  expect(answers()).toEqual(['b', 'c'])
+  store.pick('c')
+  expect(answers()).toEqual(['c'])
+  store.picked = []
+  expect(answers()).toEqual([])
+  expect([...store.pickedSet]).toEqual([])
 })
 
-describe('leaving the card being written in', () => {
-  test('asks it for its words first', async () => {
-    const { providePort } = await import('@orden/contracts')
-    const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a')] }))
-    const handed: string[] = []
-    const release = providePort('edits.held', { flush: () => handed.push('handed') })
-    try {
-      store.editing = 'a'
-      expect(handed).toEqual([])
-      store.editing = null
-      expect(handed).toEqual(['handed'])
-    } finally {
-      release()
-    }
-  })
+test('leaving the card being written in asks it for its words first', async () => {
+  const { holdEdits } = await import('@orden/contracts')
+  const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a')] }))
+  const handed: string[] = []
+  const release = holdEdits(() => handed.push('handed'))
+  try {
+    store.editing = 'a'
+    expect(handed).toEqual([])
+    store.editing = null
+    expect(handed).toEqual(['handed'])
+  } finally {
+    release()
+  }
 })
 
 describe('ink deleted while picked', () => {
@@ -840,21 +952,19 @@ describe('ink deleted while picked', () => {
   })
 })
 
-describe('framing what is picked', () => {
-  test('a picked arrow alone frames the two cards it joins, not the whole plane', () => {
-    const { store } = opened()
-    const far = { ...card('far', 20000), y: 20000 }
-    store.edit({
-      ...store.canvas,
-      nodes: [card('a'), card('b', 600), far],
-      edges: [{ id: 'e', fromNode: 'a', toNode: 'b', label: 'pays' }],
-    })
-    store.pick('e')
-    store.frame(800, 600)
-
-    expect(store.camera.x).toBeCloseTo(425)
-    expect(store.camera.y).toBeCloseTo(30)
+test('framing what is picked a picked arrow alone frames the two cards it joins, not the whole plane', () => {
+  const { store } = opened()
+  const far = { ...card('far', 20000), y: 20000 }
+  store.edit({
+    ...store.canvas,
+    nodes: [card('a'), card('b', 600), far],
+    edges: [{ id: 'e', fromNode: 'a', toNode: 'b', label: 'pays' }],
   })
+  store.pick('e')
+  store.frame(800, 600)
+
+  expect(store.camera.x).toBeCloseTo(425)
+  expect(store.camera.y).toBeCloseTo(30)
 })
 
 describe('the menu of a canvas with thousands picked', () => {

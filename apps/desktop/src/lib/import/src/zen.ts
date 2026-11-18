@@ -1,6 +1,6 @@
 import { readBookmarks } from './firefox'
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
-import { type FolderWords, isObject, list, Made, type Said, siteMark, text } from './sidebar-made'
+import { isObject, list, Made, type Said, siteMark, text } from './sidebar-made'
 
 export type ZenSession = Sidebar
 
@@ -34,11 +34,7 @@ export function readZenSession(said: unknown, places: ZenPlaces | null = null): 
   return pinnedIn(spaces, folders, tabs, list(places.pins))
 }
 
-export function withBookmarks(
-  sidebar: ZenSession,
-  places: ZenPlaces | null,
-  words: FolderWords,
-): ZenSession {
+export function withBookmarks(sidebar: ZenSession, places: ZenPlaces | null): ZenSession {
   const [first] = sidebar.spaces
   if (!first || !places || !isObject(places.bookmarks)) return sidebar
 
@@ -53,7 +49,7 @@ export function withBookmarks(
   }
 
   const made = new Made(first.id)
-  readBookmarks(places.bookmarks, made, words, (guid, around) =>
+  readBookmarks(places.bookmarks, made, (guid, around) =>
     guid === null ? around : (shown.get(guid) ?? around),
   )
   return {
@@ -64,8 +60,8 @@ export function withBookmarks(
   }
 }
 
-function inOrder(spaces: Said[]): Said[] {
-  return spaces
+const inOrder = (spaces: Said[]): Said[] =>
+  spaces
     .map((one, at) => ({ one, at, position: Number(one.position) }))
     .sort(
       (a, b) =>
@@ -73,7 +69,6 @@ function inOrder(spaces: Said[]): Said[] {
           (Number.isFinite(b.position) ? b.position : b.at) || a.at - b.at,
     )
     .map(({ one }) => one)
-}
 
 function fromWindows(windows: Said[]): Said | null {
   const normal = windows.filter((one) => !one.isPrivate && !one.isPopup && !one.isTaskbarTab)
@@ -87,16 +82,14 @@ function fromWindows(windows: Said[]): Said | null {
   }
 }
 
-function spaceRow(row: Said): Said {
-  return {
-    uuid: row.uuid,
-    name: row.name,
-    icon: row.icon,
-    position: row.position,
-    containerTabId: row.container_id,
-    theme: { gradientColors: parsed(row.theme_colors) },
-  }
-}
+const spaceRow = (row: Said): Said => ({
+  uuid: row.uuid,
+  name: row.name,
+  icon: row.icon,
+  position: row.position,
+  containerTabId: row.container_id,
+  theme: { gradientColors: parsed(row.theme_colors) },
+})
 
 function parsed(value: unknown): unknown {
   if (typeof value !== 'string') return value
@@ -146,13 +139,8 @@ function folderOf(one: Said): SidebarFolder | null {
   }
 }
 
-function flag(value: unknown): boolean {
-  return value === true || value === 'true' || value === 1
-}
-
-function idOf(one: Said): string | null {
-  return text(one.zenSyncId) ?? text(one.zenPinnedId)
-}
+const flag = (value: unknown): boolean => value === true || value === 'true' || value === 1
+const idOf = (one: Said): string | null => text(one.zenSyncId) ?? text(one.zenPinnedId)
 
 function tabsOf(tabs: Said[]): SidebarTab[] {
   const kept = new Map<string, SidebarTab | null>()

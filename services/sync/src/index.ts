@@ -18,45 +18,17 @@ import {
   NAME_LIMIT,
   failed,
   programMayReach,
-  people,
-  ownProfile,
-  presentOwnProfile,
   push,
   sendDue,
-  fillFronts,
-  sweepLeftovers,
-  finishErasing,
-  sweepAnswers,
   sweepVersions,
   expireGuests,
   guestMayReach,
   presentGuest,
   renameGuest,
-  notes,
-  rooms,
-  devices,
-  hubDoor,
   settings,
   protectedRoutes,
-  v2Docs,
-  v2Spaces,
-  sweepMisnamed,
-  v2Blobs,
-  v2Files,
-  v2Maps,
-  sweepTreeOps,
-  spaces,
-  join,
   usage,
-  recheckDomains,
-  expireRequests,
-  sharedWithMe,
   themes,
-  time,
-  inbox,
-  pad,
-  purgeExpired,
-  trash,
   QUOTA,
   usedBytes,
   steadyEnv,
@@ -66,7 +38,37 @@ import {
   type Whoever,
 } from './sync-server/src/api'
 import {
+  people,
+  ownProfile,
+  presentOwnProfile,
+  fillFronts,
+  sweepLeftovers,
+  finishErasing,
+  sweepAnswers,
+  notes,
+  rooms,
+  devices,
+  hubDoor,
+  v2Docs,
+  v2Spaces,
+  sweepMisnamed,
+  v2Blobs,
+  v2Files,
+  sweepTreeOps,
+  spaces,
+  join,
+  recheckDomains,
+  expireRequests,
+  sharedWithMe,
+  time,
+  inbox,
+  pad,
+  purgeExpired,
+  trash,
+} from './sync-server-engine/src/api'
+import {
   account,
+  addressUndo,
   accountById,
   auth,
   forgetHalfDone,
@@ -112,6 +114,20 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 app.onError(failed)
 
+const ACCOUNT_ONLY = /^\/(?:v1|v2|oauth|\.well-known|mcp|rooms|even)(?:\/|$)/
+
+app.use('*', async (context, next) => {
+  if (
+    ACCOUNT_ONLY.test(context.req.path) &&
+    !isAppHost(context.env, context.req.url) &&
+    (await spaceForHost(context.env, new URL(context.req.url).host))
+  ) {
+    return context.text('Not found', 404)
+  }
+  await next()
+  return undefined
+})
+
 const appOrigins = cors({
   origin: (origin, context: Context<{ Bindings: Env }>) =>
     /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/.test(
@@ -153,6 +169,7 @@ app.route('/v2/online/machine', machineBundle)
 app.route('/v1/join', join)
 
 app.route('/v1/account/left', left)
+app.route('/v1/account/undo', addressUndo)
 
 app.route('/v1/feedback', feedback)
 
@@ -174,14 +191,14 @@ const guard: MiddlewareHandler<{ Bindings: Env; Variables: Variables }> = async 
   context.set('who', who)
 
   if (who.kind === 'guest') {
-    const path = new URL(context.req.url).pathname
+    const path = context.req.path
     if (!guestMayReach(context.req.method, path)) {
       return context.json({ error: SIGN_IN_TO_DO_THAT }, 403)
     }
     context.set('guest', who.guest)
   } else {
     if (who.program) {
-      const path = new URL(context.req.url).pathname
+      const path = context.req.path
       if (!programMayReach(context.req.method, path, who.readOnly === true)) {
         return context.json({ error: 'that is not something a token can do' }, 403)
       }
@@ -281,7 +298,6 @@ app.route('/v2/ai', aiVault)
 app.route('/v2/pass', pass)
 
 app.route('/v2/spaces', v2Spaces)
-app.route('/v2/spaces', v2Maps)
 app.route('/v2/docs', v2Docs)
 app.route('/v2/files', v2Files)
 app.route('/v2/blobs', v2Blobs)
@@ -400,7 +416,7 @@ function serve(request: Request, env: Env, context?: ExecutionContext) {
 
 export default { fetch: serve, scheduled }
 
-export { NoteRoom } from './sync-server/src/api'
-export { AccountHub } from './sync-server/src/api'
+export { NoteRoom } from './sync-server-engine/src/api'
+export { AccountHub } from './sync-server-engine/src/api'
 export { ChatLog } from './sync-server-chats/src/api'
 export { AppRelay } from './sync-server-machines/src/api'

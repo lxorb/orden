@@ -26,9 +26,14 @@ const { editHighlights, loadHighlights } = await import('./sidecar')
 const { readSheet } = await import('./highlights')
 import type { Highlight } from './highlights'
 
-function mark(id: string): Highlight {
-  return { id, page: 1, text: id, quads: [[0, 0, 1, 0, 0, 1, 1, 1]], colour: 0, created: 1 }
-}
+const mark = (id: string): Highlight => ({
+  id,
+  page: 1,
+  text: id,
+  quads: [[0, 0, 1, 0, 0, 1, 1, 1]],
+  colour: 0,
+  created: 1,
+})
 
 beforeEach(() => {
   disk.refuse = false

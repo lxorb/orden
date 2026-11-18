@@ -8,8 +8,7 @@ import {
   randomPassword,
   SEPARATORS,
 } from '@orden/pass/generate'
-import type { UsernameRule } from '@orden/pass/username'
-import { DEFAULT_USERNAME, username } from '@orden/pass/username'
+import { DEFAULT_USERNAME, username, type UsernameRule } from '@orden/pass/username'
 import { WORDS } from '@orden/pass/words'
 import { isRecord, keepJson, stored } from '../../platform/src/api'
 

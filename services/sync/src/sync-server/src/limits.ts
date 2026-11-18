@@ -11,7 +11,29 @@ const ADDRESSES_A_DAY = 500
 
 export function machineOf(headers: { header(name: string): string | undefined }): string | null {
   const said = headers.header('cf-connecting-ip')?.trim()
-  return said && said.length <= 64 ? said : null
+  if (!said || said.length > 64) return null
+  return said.includes(':') ? (networkOf(said) ?? said) : said
+}
+
+const GROUP = /^[0-9a-f]{1,4}$/
+
+function networkOf(address: string): string | null {
+  const plain = address.toLowerCase().split('%')[0] ?? ''
+  const halves = plain.split('::')
+  if (halves.length > 2) return null
+  const groupsOf = (half: string | undefined) => (half ? half.split(':') : [])
+  const head = groupsOf(halves[0])
+  const tail = groupsOf(halves[1])
+  const last = tail.at(-1) ?? head.at(-1)
+  if (last?.includes('.')) return plain
+  const missing = 8 - head.length - tail.length
+  if (halves.length === 1 ? missing !== 0 : missing < 1) return null
+  const groups = [...head, ...Array<string>(Math.max(0, missing)).fill('0'), ...tail]
+  if (!groups.every((one) => GROUP.test(one))) return null
+  return `${groups
+    .slice(0, 4)
+    .map((one) => one.replace(/^0+(?=.)/, ''))
+    .join(':')}::/64`
 }
 
 async function counted(env: Env, scope: string, key: string, window: number): Promise<number> {

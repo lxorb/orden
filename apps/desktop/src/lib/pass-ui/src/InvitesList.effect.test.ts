@@ -1,7 +1,7 @@
 import type { VaultMeta } from '@orden/pass/types'
 import type { Invite } from '@orden/pass/wire'
-import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { button, closed, draw, landed, target } from '../test/drawn'
 
 const fake = vi.hoisted(() => ({
   pass: {
@@ -44,9 +44,6 @@ const invite = (vault: string, more: Partial<Invite> = {}): Invite => ({
   ...more,
 })
 
-let target: HTMLElement
-let close: (() => void) | undefined
-
 beforeEach(() => {
   for (const one of [
     fake.pass.inviteMeta,
@@ -61,34 +58,19 @@ beforeEach(() => {
   )
   fake.pass.inviterCode.mockResolvedValue('1a2b 3c4d')
   fake.passSync.refresh.mockResolvedValue(undefined)
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
 })
 
-afterEach(() => {
-  close?.()
-  close = undefined
-  target.remove()
-})
+afterEach(closed)
 
 function shown(invites: Invite[]) {
   fake.passSync.invites = invites
-  const drawn = mount(InvitesList, { target, intro: false })
-  close = () => void unmount(drawn)
-  flushSync()
+  draw(InvitesList, {})
 }
 
 function row(vault: string): HTMLElement {
   const found = target.querySelector<HTMLElement>(`[data-invite="${vault}"]`)
   if (!found) throw new Error(`no invite ${vault}`)
-  return found
-}
-
-function button(within: HTMLElement, name: string): HTMLButtonElement {
-  const found = [...within.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name,
-  )
-  if (!found) throw new Error(`no ${name} button`)
   return found
 }
 
@@ -110,7 +92,7 @@ describe('invitations to a vault', () => {
     fake.pass.acceptInvite.mockResolvedValue(undefined)
     shown([invite('v1'), invite('v2', { role: 'viewer' })])
     await vi.waitFor(() => expect(row('v1').textContent).toContain('Family'))
-    button(row('v1'), 'Accept').click()
+    button('Accept', row('v1')).click()
     await vi.waitFor(() =>
       expect(fake.pass.acceptInvite).toHaveBeenCalledWith(expect.objectContaining({ vault: 'v1' })),
     )
@@ -122,7 +104,7 @@ describe('invitations to a vault', () => {
   test('are declined', async () => {
     fake.pass.declineInvite.mockResolvedValue(undefined)
     shown([invite('v1')])
-    button(row('v1'), 'Decline').click()
+    button('Decline', row('v1')).click()
     await vi.waitFor(() => expect(fake.pass.declineInvite).toHaveBeenCalledWith('v1'))
     expect(fake.pass.acceptInvite).not.toHaveBeenCalled()
   })
@@ -134,14 +116,14 @@ describe('invitations to a vault', () => {
     expect(one.textContent).toContain('A shared vault')
     expect(one.textContent).toContain('ada@example.com invited you: Can edit')
     expect(one.textContent).toContain('Waiting for them to confirm you')
-    expect(button(one, 'Accept').disabled).toBe(true)
-    expect(button(one, 'Decline').disabled).toBe(false)
+    expect(button('Accept', one).disabled).toBe(true)
+    expect(button('Decline', one).disabled).toBe(false)
   })
 
   test('say what went wrong', async () => {
     fake.pass.acceptInvite.mockRejectedValue(new Error('pass: no such invitation'))
     shown([invite('v1')])
-    button(row('v1'), 'Accept').click()
+    button('Accept', row('v1')).click()
     await vi.waitFor(() =>
       expect(target.querySelector('[role="alert"]')?.textContent).toContain('no such invitation'),
     )

@@ -116,9 +116,8 @@ describe("the cover's stylesheets", () => {
   })
 
   test('give the blocks over a note no margin of their own, outside the box the editor measures', () => {
-    for (const selector of ['#write .orden-cover-block', '.orden-toc']) {
+    for (const selector of ['#write .orden-cover-block', '.orden-toc'])
       expect(body(sheet('editor.css'), selector), selector).not.toMatch(/\bmargin/)
-    }
   })
 
   test('make the block hold its margins inside the box the editor measures', () => {

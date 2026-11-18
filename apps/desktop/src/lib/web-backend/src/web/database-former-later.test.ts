@@ -1,17 +1,17 @@
 import 'fake-indexeddb/auto'
 import { expect, test, vi } from 'vitest'
 
-function opened(name: string) {
+function opened(name: string, version = 1) {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(name, 1)
+    const request = indexedDB.open(name, version)
     request.onupgradeneeded = () => request.result.createObjectStore('meta')
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('not opened'))
   })
 }
 
-async function kept(name: string, key: string, value: string) {
-  const db = await opened(name)
+async function kept(name: string, key: string, value: string, version = 1) {
+  const db = await opened(name, version)
   await new Promise<void>((resolve) => {
     const writing = db.transaction('meta', 'readwrite')
     writing.objectStore('meta').put(value, key)
@@ -72,4 +72,88 @@ test('with no other tab at all the older store is carried and deleted', async ()
   expect(await tab.databaseName('former-c', 'new-c', 'former-c')).toBe('new-c')
   expect(await names()).not.toContain('former-c')
   expect(await names()).toContain('new-c')
+})
+
+test('with no older store at all, no older tab is waited for', async () => {
+  const older = olderTab('former-d:windows')
+  older.onmessage = () => {
+    throw new Error('an older tab was asked about a store that is not there')
+  }
+
+  const tab = await freshTab()
+  const started = Date.now()
+  expect(await tab.databaseName('former-d', 'new-d', 'former-d')).toBe('new-d')
+  expect(Date.now() - started).toBeLessThan(200)
+  expect(await names()).not.toContain('former-d')
+  older.close()
+})
+
+test('a tab left on the older store by a carry that did not finish keeps it, and the next tab or worker joins it there', async () => {
+  await kept('former-e', 'note', 'written before', 2)
+  const holding = await new Promise<IDBDatabase>((resolve) => {
+    const request = indexedDB.open('new-e', 1)
+    request.onsuccess = () => resolve(request.result)
+  })
+  holding.onversionchange = () => undefined
+
+  const first = await freshTab()
+  expect(await first.databaseName('former-e', 'new-e', 'former-e')).toBe('former-e')
+  holding.close()
+
+  const later = await freshTab()
+  expect(await later.databaseName('former-e', 'new-e', 'former-e')).toBe('former-e')
+  expect(await names()).toContain('former-e')
+})
+
+test('a tab staying on one older store does not keep a new tab on another older store', async () => {
+  await kept('former-g', 'note', 'written before', 2)
+  const holding = await new Promise<IDBDatabase>((resolve) => {
+    const request = indexedDB.open('new-g', 1)
+    request.onsuccess = () => resolve(request.result)
+  })
+  holding.onversionchange = () => undefined
+  const first = await freshTab()
+  expect(await first.databaseName('former-g', 'new-g', 'shared-g')).toBe('former-g')
+  holding.close()
+
+  await kept('former-h', 'note', 'written before')
+  await kept('new-h', 'note', 'written before')
+  const later = await freshTab()
+  expect(await later.databaseName('former-h', 'new-h', 'shared-g')).toBe('new-h')
+})
+
+test('a tab that stayed on the older store stays there when it asks again, beside a tab that joined it', async () => {
+  await kept('former-i', 'note', 'written before', 2)
+  const holding = await new Promise<IDBDatabase>((resolve) => {
+    const request = indexedDB.open('new-i', 1)
+    request.onsuccess = () => resolve(request.result)
+  })
+  holding.onversionchange = () => undefined
+  const first = await freshTab()
+  expect(await first.databaseName('former-i', 'new-i', 'former-i')).toBe('former-i')
+  const joined = await freshTab()
+  expect(await joined.databaseName('former-i', 'new-i', 'former-i')).toBe('former-i')
+  holding.close()
+
+  expect(await first.databaseName('former-i', 'new-i', 'former-i')).toBe('former-i')
+})
+
+test('an answer about some other older store does not send a tab past one staying on its own', async () => {
+  await kept('former-j', 'note', 'written before', 2)
+  const other = new BroadcastChannel('shared-j:windows')
+  other.onmessage = (event: MessageEvent<{ kind?: string }>) => {
+    if (event.data.kind === 'hello') other.postMessage({ kind: 'here', from: 'w', stays: ['x'] })
+  }
+  const holding = await new Promise<IDBDatabase>((resolve) => {
+    const request = indexedDB.open('new-j', 1)
+    request.onsuccess = () => resolve(request.result)
+  })
+  holding.onversionchange = () => undefined
+  const first = await freshTab()
+  expect(await first.databaseName('former-j', 'new-j', 'shared-j')).toBe('former-j')
+  holding.close()
+
+  const later = await freshTab()
+  expect(await later.databaseName('former-j', 'new-j', 'shared-j')).toBe('former-j')
+  other.close()
 })

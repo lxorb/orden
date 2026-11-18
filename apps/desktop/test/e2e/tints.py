@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import functools
 import hashlib
 import time
@@ -154,5 +152,4 @@ def drive() -> None:
 
     say("every colour crossed")
 
-if __name__ == "__main__":
-    drive()
+drive()

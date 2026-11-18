@@ -14,8 +14,7 @@
   } from '@orden/pass/types'
   import { normalizeUrl } from '@orden/pass/urls'
   import { untrack } from 'svelte'
-  import { Cross } from '../../ui-kit/src/api'
-  import { message } from '../../ui-kit/src/api'
+  import { Cross, message } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
   import AddField from './AddField.svelte'
   import AliasEdit from './AliasEdit.svelte'
@@ -185,7 +184,7 @@
   </div>
 
   <div class="body" data-scrolls>
-    {#if error}<p class="wrong" role="alert">{error}</p>{/if}
+    {#if error}<p class="pass-wrong" role="alert">{error}</p>{/if}
 
     <EditCard>
       <EditField
@@ -309,11 +308,5 @@
     gap: var(--space-3);
     overflow-y: auto;
     padding: 0 var(--space-4) var(--space-6);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>

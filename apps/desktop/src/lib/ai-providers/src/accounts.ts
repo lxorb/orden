@@ -53,7 +53,7 @@ export function vendorOf(account: Pick<Provider, 'id' | 'kind'>): Vendor {
 
 function isKind(value: unknown): value is ProviderKind {
   if (value === 'claude-code' && !__CLAUDE_CODE__) return false
-  return value === 'compatible' || (isString(value) && value in FIRST)
+  return value === 'compatible' || (isString(value) && Object.hasOwn(FIRST, value))
 }
 
 function isId(value: unknown): value is string {
@@ -151,8 +151,7 @@ export function isActive(state: Accounts, id: string): boolean {
   return !!account && activeOf(state, vendorOf(account))?.id === id
 }
 
-function nextId(state: Accounts, kind: ProviderKind): string {
-  const taken = (id: string) => state.accounts.some((one) => one.id === id)
+export function freshId(kind: ProviderKind, taken: (id: string) => boolean): string {
   if (kind !== 'compatible' && !taken(FIRST[kind])) return FIRST[kind]
   const stem = kind === 'compatible' ? 'compatible' : FIRST[kind]
   for (let number = kind === 'compatible' ? 1 : 2; ; number++) {
@@ -182,7 +181,7 @@ export function added(state: Accounts, kind: ProviderKind): { state: Accounts; a
   const held = repeatable(kind) ? undefined : state.accounts.find((one) => one.kind === kind)
   if (held) return { state, account: held }
 
-  const id = nextId(state, kind)
+  const id = freshId(kind, (one) => state.accounts.some((there) => there.id === one))
   const account: Account = {
     id,
     kind,
@@ -209,6 +208,23 @@ export function updated(
   return {
     ...state,
     accounts: state.accounts.map((one) => (one.id === id ? { ...one, ...change } : one)),
+  }
+}
+
+export function renamed(state: Accounts, from: string, to: string): Accounts {
+  const account = state.accounts.find((one) => one.id === from)
+  if (!account) return state
+  const moved = { ...account, id: to }
+  const vendor = (one: Vendor) => (one === vendorOf(account) ? vendorOf(moved) : one)
+  return {
+    accounts: state.accounts.map((one) => (one === account ? moved : one)),
+    active: Object.fromEntries(
+      Object.entries(state.active).map(([one, id]) => [vendor(one), id === from ? to : id]),
+    ),
+    defaultVendor: vendor(state.defaultVendor),
+    uses: Object.fromEntries(
+      Object.entries(state.uses).map(([feature, one]) => [feature, vendor(one)]),
+    ),
   }
 }
 

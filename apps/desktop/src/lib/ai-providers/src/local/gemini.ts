@@ -1,6 +1,6 @@
 import { eventIn, type Heard, saysLimit, saysSignedOut } from './heard'
 
-const OWN = /^mcp_(?:orden|nib)_/
+const OWN = /^mcp_orden_/
 
 const QUOTA = /quota|resource_exhausted|\b429\b/i
 

@@ -67,56 +67,39 @@ describe('the crash report question', () => {
     )
   })
 
-  test('turns usage data on only when ticked', async () => {
+  test.each([
+    [true, 'true'],
+    [false, null],
+  ])('turns usage data on only when ticked (%s)', async (ticked, kept) => {
     await launch()
     const { usageChoice } = await import('../../usage/src/api')
-    usageBox()?.click()
+    if (ticked) usageBox()?.click()
     flushSync()
     goOn()
-    expect(usageChoice.helping).toBe(true)
-    expect(localStorage.getItem(HELPING)).toBe('true')
+    expect(usageChoice.helping).toBe(ticked)
+    expect(localStorage.getItem(HELPING)).toBe(kept)
   })
 
-  test('leaves usage data off when left unticked', async () => {
-    await launch()
-    const { usageChoice } = await import('../../usage/src/api')
-    goOn()
-    expect(usageChoice.helping).toBe(false)
-    expect(localStorage.getItem(HELPING)).toBeNull()
-  })
+  test.each([true, false])(
+    'keeps reports as ticked (%s), the same setting Settings shows, and does not ask again',
+    async (ticked) => {
+      const first = await launch()
+      if (!ticked) box()?.click()
+      flushSync()
+      expect(box()?.checked).toBe(ticked)
+      goOn()
+      expect(first.crashReports.asking).toBe(false)
+      expect(first.crashReports.on).toBe(ticked)
+      expect(localStorage.getItem(SENDING)).toBe(String(ticked))
+      expect(localStorage.getItem(ASKED)).toBe('true')
+      close()
 
-  test('keeps reports on when left ticked, and does not ask again', async () => {
-    const first = await launch()
-    goOn()
-    expect(first.crashReports.asking).toBe(false)
-    expect(first.crashReports.on).toBe(true)
-    expect(localStorage.getItem(SENDING)).toBe('true')
-    expect(localStorage.getItem(ASKED)).toBe('true')
-    close()
-
-    const again = await launch()
-    expect(again.due).toBe(false)
-    expect(again.crashReports.on).toBe(true)
-    expect(dialog()).toBeNull()
-  })
-
-  test('turns reports off when unticked, the same setting Settings shows, and does not ask again', async () => {
-    const first = await launch()
-    const tick = box()
-    if (!tick) throw new Error('no checkbox')
-    tick.click()
-    flushSync()
-    expect(tick.checked).toBe(false)
-    goOn()
-    expect(first.crashReports.on).toBe(false)
-    expect(localStorage.getItem(SENDING)).toBe('false')
-    close()
-
-    const again = await launch()
-    expect(again.due).toBe(false)
-    expect(again.crashReports.on).toBe(false)
-    expect(dialog()).toBeNull()
-  })
+      const again = await launch()
+      expect(again.due).toBe(false)
+      expect(again.crashReports.on).toBe(ticked)
+      expect(dialog()).toBeNull()
+    },
+  )
 
   test('takes Escape as the choice shown, not as a way to skip the question', async () => {
     const first = await launch()
@@ -130,21 +113,18 @@ describe('the crash report question', () => {
     expect(localStorage.getItem(SENDING)).toBe('false')
   })
 
-  test('is not asked of someone an older version already told about reports', async () => {
-    localStorage.setItem(ASKED, 'true')
-    const { due, crashReports } = await launch()
-    expect(due).toBe(false)
-    crashReports.ask()
-    expect(crashReports.asking).toBe(false)
-    expect(crashReports.on).toBe(true)
-  })
-
-  test('is not asked of someone who already chose in Settings', async () => {
-    localStorage.setItem(SENDING, 'false')
-    const { due, crashReports } = await launch()
-    expect(due).toBe(false)
-    crashReports.ask()
-    expect(crashReports.asking).toBe(false)
-    expect(crashReports.on).toBe(false)
-  })
+  test.each([
+    [ASKED, 'true', true],
+    [SENDING, 'false', false],
+  ])(
+    'is not asked of someone already told or who chose in Settings (%s)',
+    async (key, value, on) => {
+      localStorage.setItem(key, value)
+      const { due, crashReports } = await launch()
+      expect(due).toBe(false)
+      crashReports.ask()
+      expect(crashReports.asking).toBe(false)
+      expect(crashReports.on).toBe(on)
+    },
+  )
 })

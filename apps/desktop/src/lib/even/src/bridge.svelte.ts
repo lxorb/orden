@@ -111,7 +111,7 @@ class Bridge {
   private panel: Panel | null = null
   private shell: Shell | null = null
   private readonly todayList = new Today({
-    load: async () => (await import('../../tasks-model/src/api')).listed().tasks,
+    load: async () => (await (await import('../../tasks-model/src/api')).listed()).tasks,
     tick: async (id, done) => (await import('../../tasks-model/src/api')).tickTask(id, done),
     redraw: () => this.act('draw'),
   })
@@ -255,7 +255,7 @@ class Bridge {
       settings: 'Settings',
       reset: 'Reset glasses settings',
       done: 'Done',
-      today: 'Today',
+      today: 'Todos',
     }
   }
 

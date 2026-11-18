@@ -1,22 +1,8 @@
-import { readable } from '@orden/scan/web-address'
+import { midnightOf } from '../../platform/src/api'
 import type { Visit } from '@orden/scan/visits'
 
 export type HistoryRow =
   { kind: 'day'; key: string; day: number } | { kind: 'visit'; key: string; visit: Visit }
-
-export function dayOf(time: number): number {
-  const date = new Date(time)
-  date.setHours(0, 0, 0, 0)
-  return date.getTime()
-}
-
-export function hostOf(url: string): string {
-  try {
-    return readable(new URL(url).host).replace(/^www\./i, '')
-  } catch {
-    return url
-  }
-}
 
 const wordsOf = (typed: string) => typed.toLowerCase().split(/\s+/).filter(Boolean)
 
@@ -34,11 +20,10 @@ export function answers(visit: Visit, typed: string): boolean {
 export function historyRows(list: readonly Visit[], typed: string): HistoryRow[] {
   const words = wordsOf(typed)
   const found = list.filter((one) => holds(one, words)).sort((one, other) => other.last - one.last)
-
   const rows: HistoryRow[] = []
   let day = Number.NaN
   for (const visit of found) {
-    const its = dayOf(visit.last)
+    const its = midnightOf(visit.last)
     if (its !== day) {
       day = its
       rows.push({ kind: 'day', key: `day:${String(its)}`, day: its })
@@ -54,9 +39,9 @@ export function dayName(
   locale: string,
   words: { today: string; yesterday: string },
 ): string {
-  const today = dayOf(now)
+  const today = midnightOf(now)
   if (day === today) return words.today
-  if (day === dayOf(today - 1)) return words.yesterday
+  if (day === midnightOf(today - 1)) return words.yesterday
 
   return new Intl.DateTimeFormat(locale, {
     weekday: 'long',

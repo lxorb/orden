@@ -33,9 +33,8 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
     if (typeof value === 'function') {
       const named = (value as { name?: unknown }).name
       const name = typeof named === 'string' ? named : ''
-      if (/^\s*class[\s{]/.test(String(value))) {
+      if (/^\s*class[\s{]/.test(String(value)))
         return name ? '[class ' + name + ']' : '[class (anonymous)]'
-      }
       return name ? '[Function: ' + name + ']' : '[Function (anonymous)]'
     }
 
@@ -47,9 +46,8 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
       return object.message ? name + ': ' + clip(object.message) : name
     }
     if (object instanceof RegExp) return String(object)
-    if (object instanceof Date) {
+    if (object instanceof Date)
       return Number.isNaN(object.getTime()) ? 'Invalid Date' : object.toISOString()
-    }
 
     if (depth >= MAX_DEPTH) {
       if (Array.isArray(object)) return '[Array]'
@@ -60,9 +58,8 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
     try {
       if (Array.isArray(object)) {
         const parts = object.slice(0, MAX_ITEMS).map((item) => describe(item, depth + 1))
-        if (object.length > MAX_ITEMS) {
+        if (object.length > MAX_ITEMS)
           parts.push('… ' + String(object.length - MAX_ITEMS) + ' more')
-        }
         return '[' + parts.join(', ') + ']'
       }
 
@@ -72,9 +69,8 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
           if (parts.length === MAX_ITEMS) break
           parts.push(describe(name, depth + 1) + ' => ' + describe(held, depth + 1))
         }
-        if (object.size > parts.length) {
+        if (object.size > parts.length)
           parts.push('… ' + String(object.size - parts.length) + ' more')
-        }
         const size = String(object.size)
         return 'Map(' + size + ')' + (parts.length ? ' { ' + parts.join(', ') + ' }' : ' {}')
       }
@@ -85,9 +81,8 @@ export function formatRunValues(values: unknown[], quoteStrings = false): string
           if (parts.length === MAX_ITEMS) break
           parts.push(describe(held, depth + 1))
         }
-        if (object.size > parts.length) {
+        if (object.size > parts.length)
           parts.push('… ' + String(object.size - parts.length) + ' more')
-        }
         const size = String(object.size)
         return 'Set(' + size + ')' + (parts.length ? ' { ' + parts.join(', ') + ' }' : ' {}')
       }

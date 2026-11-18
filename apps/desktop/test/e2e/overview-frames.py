@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import io
 
 from PIL import Image, ImageChops, ImageStat
@@ -131,5 +129,4 @@ def drive(browser: Browser) -> None:
     shot(page, "home")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the overview's frames: none flashes, a web tab drawn once"))
+raise SystemExit(DRIVE.run(drive, "the overview's frames: none flashes, a web tab drawn once"))

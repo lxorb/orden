@@ -1,15 +1,13 @@
-import type { KdfParams } from '@orden/pass/crypto'
-import { kdfParamsIn } from '@orden/pass/crypto'
+import { kdfParamsIn, type KdfParams } from '@orden/pass/crypto'
+import { isRecord } from '../../platform/src/api'
 import type { DeviceSeal } from '@orden/pass/device'
-import type { Keyring } from '@orden/pass/keys'
-import { keyringIn } from '@orden/pass/keys'
+import { keyringIn, type Keyring } from '@orden/pass/keys'
 import type { Role } from '@orden/pass/types'
 import type { Accepted, Handover, KeyProof } from '@orden/pass/wire'
 
 const NAME = 'orden-pass'
 const VERSION = 2
 const THIS = 'this'
-
 const KEPT_VERSIONS = 30
 export const KEPT_AFTER_DELETE = 30 * 24 * 60 * 60 * 1000
 
@@ -135,22 +133,23 @@ async function read<T>(name: StoreName, ask: (store: IDBObjectStore) => IDBReque
   return await answer(ask(db.transaction(name, 'readonly').objectStore(name)))
 }
 
-async function put(name: StoreName, value: unknown, key?: IDBValidKey): Promise<void> {
+async function changed(name: StoreName, run: (store: IDBObjectStore) => void): Promise<void> {
   const db = await database()
-  const change = db.transaction(name, 'readwrite')
-  const done = finished(change)
-  const store = change.objectStore(name)
-  if (value === null && key !== undefined) store.delete(key)
-  else store.put(value, key)
+  const writing = db.transaction(name, 'readwrite')
+  const done = finished(writing)
+  run(writing.objectStore(name))
   await done
+}
+
+async function put(name: StoreName, value: unknown, key?: IDBValidKey): Promise<void> {
+  await changed(name, (store) => {
+    if (value === null && key !== undefined) store.delete(key)
+    else store.put(value, key)
+  })
 }
 
 function versionsOf(vault: string, id: string): IDBKeyRange {
   return IDBKeyRange.bound([vault, id, -Infinity], [vault, id, Infinity])
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function deviceSealIn(value: unknown): DeviceSeal | null {
@@ -189,38 +188,28 @@ function deviceRowIn(row: unknown): DeviceRow | null {
   return seal === null || kdf === null ? null : { seal, kdf }
 }
 
-export async function spendPinTry(): Promise<DeviceRow | null> {
-  const db = await database()
-  const writing = db.transaction('device', 'readwrite')
-  const done = finished(writing)
-  const store = writing.objectStore('device')
+async function pinTries(next: (seal: DeviceSeal) => number | null): Promise<DeviceRow | null> {
   let row: DeviceRow | null = null
-  const reading = store.get(THIS)
-  reading.onsuccess = () => {
-    row = deviceRowIn(reading.result)
-    if (row?.seal.way !== 'pin') return
-    row = { ...row, seal: { ...row.seal, tries: row.seal.tries + 1 } }
-    store.put(row, THIS)
-  }
-  await done
+  await changed('device', (store) => {
+    const reading = store.get(THIS)
+    reading.onsuccess = () => {
+      const found = deviceRowIn(reading.result)
+      row = found
+      const tries = found?.seal.way === 'pin' ? next(found.seal) : null
+      if (!found || tries === null) return
+      row = { ...found, seal: { ...found.seal, tries } }
+      store.put(row, THIS)
+    }
+  })
   return row
 }
 
-export async function clearPinTries(sealed: string): Promise<DeviceRow | null> {
-  const db = await database()
-  const writing = db.transaction('device', 'readwrite')
-  const done = finished(writing)
-  const store = writing.objectStore('device')
-  let row: DeviceRow | null = null
-  const reading = store.get(THIS)
-  reading.onsuccess = () => {
-    row = deviceRowIn(reading.result)
-    if (row?.seal.way !== 'pin' || row.seal.sealed !== sealed) return
-    row = { ...row, seal: { ...row.seal, tries: 0 } }
-    store.put(row, THIS)
-  }
-  await done
-  return row
+export function spendPinTry(): Promise<DeviceRow | null> {
+  return pinTries((seal) => seal.tries + 1)
+}
+
+export function clearPinTries(sealed: string): Promise<DeviceRow | null> {
+  return pinTries((seal) => (seal.sealed === sealed ? 0 : null))
 }
 
 export async function readVaults(): Promise<VaultRow[]> {
@@ -262,20 +251,13 @@ export async function readFileParts(item: string, file: string): Promise<FilePar
 }
 
 export async function writeFileParts(rows: readonly FilePartRow[]): Promise<void> {
-  const db = await database()
-  const writing = db.transaction('files', 'readwrite')
-  const done = finished(writing)
-  const store = writing.objectStore('files')
-  for (const row of rows) store.put(row)
-  await done
+  await changed('files', (store) => {
+    for (const row of rows) store.put(row)
+  })
 }
 
 export async function dropFileParts(item: string, file?: string): Promise<void> {
-  const db = await database()
-  const writing = db.transaction('files', 'readwrite')
-  const done = finished(writing)
-  writing.objectStore('files').delete(partsOf(item, file))
-  await done
+  await changed('files', (store) => store.delete(partsOf(item, file)))
 }
 
 function prune(store: IDBObjectStore, ref: ItemRef): void {

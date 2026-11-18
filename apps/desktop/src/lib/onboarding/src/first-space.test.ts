@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Listed } from '../../space-pairing/src/seed-space'
+import { memoryStorage } from '../../../../test/disk'
 
 const notes = new Map<string, string>()
 let reading: (() => void) | null = null
@@ -51,19 +52,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => undefined } }))
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../../workspace/src/api')
@@ -177,11 +165,18 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${WELCOME}mine\n`)).toBe(false)
   })
 
-  test('nor is the one an earlier version wrote', () => {
+  test.each([
+    ['Nib', true],
+    ['Orden', false],
+    ['Nib', false],
+    ['nibeditor', false],
+  ])('nor is the one an earlier version wrote, called %s (in a browser: %s)', (name, browser) => {
     const earlier = [
-      '# Welcome to Nib',
+      `# Welcome to ${name}`,
       '',
-      'This is the browser version. Your notes live in this browser until you sign in',
+      browser
+        ? 'This is the browser version. Your notes live in this browser until you sign in'
+        : 'Your notes live on this device until you sign in',
       'and turn on syncing, and then they follow you everywhere.',
       '',
       '- Everything is markdown, and nothing else',
@@ -194,32 +189,7 @@ describe('the welcome note, untouched', () => {
       '',
       '| What | Where |',
       '| ---- | ----- |',
-      '| Notes | this browser |',
-      '| Synced notes | your account |',
-      '',
-    ].join('\n')
-
-    expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
-  })
-
-  test('nor the one that said everything is markdown, before it named to-dos, bases and boards', () => {
-    const earlier = [
-      '# Welcome to Orden',
-      '',
-      'Your notes live on this device until you sign in',
-      'and turn on syncing, and then they follow you everywhere.',
-      '',
-      '- Everything is markdown, and nothing else',
-      '- **Bold**, *italic*, ==highlight==, `code`',
-      '- $E = mc^2$ renders as you type',
-      '',
-      '```js',
-      "const hello = 'world'",
-      '```',
-      '',
-      '| What | Where |',
-      '| ---- | ----- |',
-      '| Notes | this device |',
+      `| Notes | ${browser ? 'this browser' : 'this device'} |`,
       '| Synced notes | your account |',
       '',
     ].join('\n')
@@ -241,32 +211,6 @@ describe('the welcome note, untouched', () => {
     expect(earlier).not.toBe(WELCOME)
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
-  })
-
-  test.each(['Nib', 'nibeditor'])('nor the one written while it was called %s', (name) => {
-    const earlier = [
-      `# Welcome to ${name}`,
-      '',
-      'Your notes live on this device until you sign in',
-      'and turn on syncing, and then they follow you everywhere.',
-      '',
-      '- Everything is markdown, and nothing else',
-      '- **Bold**, *italic*, ==highlight==, `code`',
-      '- $E = mc^2$ renders as you type',
-      '',
-      '```js',
-      "const hello = 'world'",
-      '```',
-      '',
-      '| What | Where |',
-      '| ---- | ----- |',
-      '| Notes | this device |',
-      '| Synced notes | your account |',
-      '',
-    ].join('\n')
-
-    expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, earlier)).toBe(true)
-    expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
   })
 
   test('nor the one that linked to Import', () => {

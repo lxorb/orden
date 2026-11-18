@@ -39,9 +39,8 @@ function type(
   } as unknown as EditorView
 
   const { from, to } = state.selection.main
-  for (const handler of state.facet(EditorView.inputHandler)) {
+  for (const handler of state.facet(EditorView.inputHandler))
     if (handler(view, from, to, character, () => state.update({}))) return state
-  }
 
   return state.update({
     changes: { from, to, insert: character },
@@ -118,13 +117,10 @@ describe('a mark typed over words that start or end with inline code', () => {
 })
 
 describe('in code a mark is a character', () => {
-  test('inside an inline span', () => {
-    expect(typeOver('run `one two` now', 'one', '*')).toBe('run `*| two` now')
-  })
-
-  test('a backtick does not double into a longer span', () => {
-    expect(typeOver('a `word` b', 'word', '`')).toBe('a ``|` b')
-  })
+  test.each([
+    ['run `one two` now', 'run `*| two` now', 'one', '*'],
+    ['a `word` b', 'a ``|` b', 'word', '`'],
+  ])('%j', (input, wanted, extra, last) => expect(typeOver(input, extra, last)).toEqual(wanted))
 
   for (const mark of MARKS) {
     test(`${mark} inside a fence`, () => {

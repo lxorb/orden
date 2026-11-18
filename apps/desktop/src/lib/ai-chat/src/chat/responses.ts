@@ -1,4 +1,4 @@
-import { conversationUrl } from '../../../ai-providers/src/api'
+import { conversationUrl, type ToolOutput, type Usage } from '../../../ai-providers/src/api'
 import { wireEffort } from './effort'
 import { learnt } from './learned'
 import type { Call, Step } from './transcript'
@@ -9,13 +9,13 @@ import {
   type Ask,
   bareName,
   type Heard,
+  PartsReader,
   type Reader,
   record,
   text,
   type ToolDef,
   type Wire,
 } from './wire'
-import type { Part, ToolOutput, Usage } from '../../../ai-providers/src/api'
 
 const NAMESPACE = 'orden'
 
@@ -147,16 +147,13 @@ export const responses: Wire = {
   },
 }
 
-class ResponsesReader implements Reader {
-  readonly parts: Part[] = []
+class ResponsesReader extends PartsReader implements Reader {
   private readonly drawn = new Map<number, number>()
   private readonly started = new Map<number, number>()
   private readonly items = new Map<number, Item>()
   private usage: Usage | undefined
   private incomplete = ''
   private over = false
-
-  constructor(private readonly window: number | null) {}
 
   heard(event: unknown): Heard {
     const said = record(event)
@@ -197,32 +194,25 @@ class ResponsesReader implements Reader {
 
   private added(index: number, item: Item): Heard {
     this.started.set(index, Date.now())
-    let part: Part | null = null
-    if (item.type === 'function_call') {
-      part = {
-        kind: 'tool',
-        id: text(item.call_id),
-        verb: bareName(text(item.name)),
-        args: {},
-        state: 'running',
-      }
-    } else if (item.type === 'web_search_call') {
-      part = { kind: 'tool', id: text(item.id), verb: 'web_search', args: {}, state: 'running' }
-    }
-    if (!part) return { changed: [] }
-    this.parts.push(part)
-    this.drawn.set(index, this.parts.length - 1)
-    return { changed: [this.parts.length - 1] }
+    const [id = '', verb] =
+      item.type === 'function_call'
+        ? [text(item.call_id), bareName(text(item.name))]
+        : item.type === 'web_search_call'
+          ? [text(item.id), 'web_search']
+          : []
+    if (verb === undefined) return { changed: [] }
+    const at = this.add({ kind: 'tool', id, verb, args: {}, state: 'running' })
+    this.drawn.set(index, at)
+    return { changed: [at] }
   }
 
   private grew(index: number, kind: 'text' | 'thinking', words: string): Heard {
     let at = this.drawn.get(index)
     if (at === undefined) {
       if (!words) return { changed: [] }
-      this.parts.push(
+      at = this.add(
         kind === 'text' ? { kind: 'text', text: '' } : { kind: 'thinking', text: '', ms: 0 },
       )
-      at = this.parts.length - 1
       this.drawn.set(index, at)
     }
     const part = this.parts[at]

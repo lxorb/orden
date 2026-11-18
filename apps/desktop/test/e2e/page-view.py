@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -117,5 +115,4 @@ def drive(browser: Browser) -> None:
     check(page, "canvas", board, ".canvas", other)
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a page note and a canvas come back where they were left"))
+raise SystemExit(DRIVE.run(drive, "a page note and a canvas come back where they were left"))

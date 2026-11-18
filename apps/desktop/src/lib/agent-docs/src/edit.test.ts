@@ -6,8 +6,18 @@ import { SHOWN_FOR } from './presence'
 import { SCRATCHPAD_TAB } from './desk'
 import { DocError } from './problem'
 import { revOf } from './rev'
-import { deskWith } from './test-desk'
+import { deskOpen, deskWith, type Pane } from './test-desk'
 import { touchedBy } from './touched'
+
+const ENDPOINT_PATIENCE = 30_000
+const DELIVERY = 5000
+const PLAN = { path: 'plan.md' }
+
+function deadlineIn(ms: number): AbortSignal {
+  const due = new AbortController()
+  setTimeout(() => due.abort(), ms)
+  return due.signal
+}
 
 let made = 0
 function anAgent(name = 'Claude Code') {
@@ -25,16 +35,34 @@ async function refusal(pending: Promise<unknown>): Promise<string> {
   return 'applied'
 }
 
+function timed(pending: Promise<unknown>) {
+  const started = Date.now()
+  return refusal(pending).then((said) => ({ said, after: Date.now() - started }))
+}
+
+async function typing(pane: Pane, at: number, words: string, times: number) {
+  for (let one = 0; one < times; one++) {
+    pane.type(at, words)
+    await vi.advanceTimersByTimeAsync(500)
+  }
+}
+
+function onPlan(text: string) {
+  const at = deskOpen('plan.md', text)
+  const edit = (
+    edits: unknown,
+    agent = anAgent(),
+    ...rest: [ifRev?: string, deadline?: AbortSignal]
+  ) => editNote(at.desk, agent, PLAN, edits, ...rest)
+  return { ...at, edit }
+}
+
 describe('an edit to an open note', () => {
   test('lands in the live words as one change, the reader’s caret carried with them', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'alpha beta gamma' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { pane, edit } = onPlan('alpha beta gamma')
     pane.select(16, 16)
 
-    const answer = await editNote(desk, anAgent(), { path: 'plan.md' }, [
-      { at: { quote: 'alpha' }, replace: 'ALPHA ONE' },
-    ])
+    const answer = await edit([{ at: { quote: 'alpha' }, replace: 'ALPHA ONE' }])
 
     expect(pane.text).toBe('ALPHA ONE beta gamma')
     expect(pane.caret).toBe(20)
@@ -45,22 +73,16 @@ describe('an edit to an open note', () => {
   test('tells the live agents which tabs show the note it changed', async () => {
     const told: [string, readonly string[]][] = []
     const stop = providePort('agents.writes', { wrote: (agent, tabs) => told.push([agent, tabs]) })
-    const { desk } = deskWith({ 'plan.md': 'alpha' }, ['plan.md'])
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { quote: 'alpha' }, replace: 'beta' }])
+    await onPlan('alpha').edit([{ at: { quote: 'alpha' }, replace: 'beta' }], agent)
     stop()
     expect(told).toEqual([[agent.id, ['front']]])
   })
 
   test('is one Ctrl+Z of its own, apart from what the reader typed either side', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'one' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
-
+    const { pane, edit } = onPlan('one')
     pane.type(3, ' two')
-    await editNote(desk, anAgent(), { path: 'plan.md' }, [
-      { at: { start: true }, insert_before: 'AGENT' },
-    ])
+    await edit([{ at: { start: true }, insert_before: 'AGENT' }])
     pane.type(pane.text.length, ' three')
 
     pane.undo()
@@ -70,57 +92,34 @@ describe('an edit to an open note', () => {
   })
 
   test('is refused when the words changed since the agent read them, if it asked', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'one' }, ['plan.md'])
-    const read = revOf('one')
-    panes['plan.md']?.type(3, '!')
-
+    const { pane, edit } = onPlan('one')
+    pane.type(3, '!')
     expect(
-      await refusal(
-        editNote(
-          desk,
-          anAgent(),
-          { path: 'plan.md' },
-          [{ at: { end: true }, insert_after: 'x' }],
-          read,
-        ),
-      ),
+      await refusal(edit([{ at: { end: true }, insert_after: 'x' }], anAgent(), revOf('one'))),
     ).toBe('rev_changed')
   })
 
   test('uses the reader’s selection in the note in front of them', async () => {
-    const { desk, panes, inFront } = deskWith({ 'plan.md': 'make this better' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { pane, edit, inFront } = onPlan('make this better')
     pane.select(5, 9)
     inFront(pane)
-
-    await editNote(desk, anAgent(), { path: 'plan.md' }, [
-      { at: { selection: true }, replace: 'THAT' },
-    ])
-
+    await edit([{ at: { selection: true }, replace: 'THAT' }])
     expect(pane.text).toBe('make THAT better')
   })
 
   test('keeps the version before the agent’s first edit, once, and says whose', async () => {
-    const { desk, kept } = deskWith({ 'plan.md': 'before' }, ['plan.md'])
+    const { kept, edit } = onPlan('before')
     const agent = anAgent()
-
-    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { end: true }, insert_after: ' one' }])
-    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { end: true }, insert_after: ' two' }])
-
+    await edit([{ at: { end: true }, insert_after: ' one' }], agent)
+    await edit([{ at: { end: true }, insert_after: ' two' }], agent)
     expect(kept).toEqual([{ path: '/space/plan.md', content: 'before', source: 'Claude Code' }])
   })
 
   test('shows the agent’s caret where it wrote, gone after a few seconds', async () => {
     vi.useFakeTimers()
     try {
-      const { desk, panes } = deskWith({ 'plan.md': 'one two' }, ['plan.md'])
-      const pane = panes['plan.md']
-      if (!pane) throw new Error('open')
-
-      await editNote(desk, anAgent('Codex'), { path: 'plan.md' }, [
-        { at: { quote: 'one' }, replace: 'uno' },
-      ])
+      const { pane, edit } = onPlan('one two')
+      await edit([{ at: { quote: 'one' }, replace: 'uno' }], anAgent('Codex'))
       expect(pane.agents.map((one) => [one.name, one.head])).toEqual([['Codex', 3]])
 
       pane.type(0, '>> ')
@@ -144,15 +143,11 @@ describe('the reader’s typing wins', () => {
   })
 
   test('an edit where they are writing waits for them to pause, then lands on what they wrote', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'the plan is simple' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { pane, edit } = onPlan('the plan is simple')
     pane.type(12, 'very ')
 
     let done = false
-    const editing = editNote(desk, anAgent(), { path: 'plan.md' }, [
-      { at: { quote: 'simple' }, replace: 'late' },
-    ]).then(() => (done = true))
+    const editing = edit([{ at: { quote: 'simple' }, replace: 'late' }]).then(() => (done = true))
 
     await vi.advanceTimersByTimeAsync(1000)
     expect(done).toBe(false)
@@ -164,16 +159,10 @@ describe('the reader’s typing wins', () => {
   })
 
   test('and says so when what it was for is gone once they pause', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'the plan is simple' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { pane, edit } = onPlan('the plan is simple')
     pane.type(12, 'very ')
 
-    const editing = refusal(
-      editNote(desk, anAgent(), { path: 'plan.md' }, [
-        { at: { quote: 'simple' }, replace: 'late' },
-      ]),
-    )
+    const editing = refusal(edit([{ at: { quote: 'simple' }, replace: 'late' }]))
     await vi.advanceTimersByTimeAsync(500)
     pane.erase(12, 23)
     pane.type(12, 'done')
@@ -184,31 +173,19 @@ describe('the reader’s typing wins', () => {
   })
 
   test('an edit somewhere else lands at once', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': '# Plan\n\nwriting here' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { pane, edit } = onPlan('# Plan\n\nwriting here')
     pane.type(pane.text.length, ' now')
-
-    await editNote(desk, anAgent(), { path: 'plan.md' }, [
-      { at: { quote: 'Plan' }, replace: 'Plans' },
-    ])
-
+    await edit([{ at: { quote: 'Plan' }, replace: 'Plans' }])
     expect(pane.text).toBe('# Plans\n\nwriting here now')
   })
 
   test('an agent’s next edit waits its turn behind one that is waiting', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'a b' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { pane, edit } = onPlan('a b')
     pane.type(1, 'a')
     const agent = anAgent()
 
-    const first = editNote(desk, agent, { path: 'plan.md' }, [
-      { at: { quote: 'aa' }, replace: 'A' },
-    ])
-    const second = editNote(desk, agent, { path: 'plan.md' }, [
-      { at: { quote: 'b' }, replace: 'B' },
-    ])
+    const first = edit([{ at: { quote: 'aa' }, replace: 'A' }], agent)
+    const second = edit([{ at: { quote: 'b' }, replace: 'B' }], agent)
     await vi.advanceTimersByTimeAsync(10)
     expect(pane.text).toBe('aa b')
 
@@ -218,34 +195,78 @@ describe('the reader’s typing wins', () => {
   })
 
   test('and gives up, saying so, when they never pause', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'word' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { pane, edit } = onPlan('word')
     pane.type(4, '!')
-
-    const editing = refusal(
-      editNote(desk, anAgent(), { path: 'plan.md' }, [
-        { at: { quote: 'word' }, insert_after: '?' },
-      ]),
-    )
-    for (let at = 0; at < PATIENCE / 500 + 4; at++) {
-      pane.type(4, '!')
-      await vi.advanceTimersByTimeAsync(500)
-    }
-
+    const editing = refusal(edit([{ at: { quote: 'word' }, insert_after: '?' }]))
+    await typing(pane, 4, '!', PATIENCE / 500 + 4)
     expect(await editing).toBe('reader_typing')
+  })
+
+  test('answers well before the endpoint stops waiting on the window, however long they type, as does one that waited its turn', async () => {
+    for (const asks of [1, 2]) {
+      const { pane, edit } = onPlan('word')
+      pane.type(4, '!')
+      const agent = anAgent()
+      const answers = ['?', '#']
+        .slice(0, asks)
+        .map((mark) => timed(edit([{ at: { quote: 'word' }, insert_after: mark }], agent)))
+      await typing(pane, 4, '!', 57)
+      await vi.advanceTimersByTimeAsync(ENDPOINT_PATIENCE)
+
+      for (const one of await Promise.all(answers)) {
+        expect(one.said).toBe('reader_typing')
+        expect(one.after).toBeLessThan(ENDPOINT_PATIENCE - DELIVERY)
+      }
+    }
+  })
+
+  test('stops waiting on them when the window’s deadline comes, and answers then', async () => {
+    const { pane, edit } = onPlan('word')
+    pane.type(4, '!')
+    const editing = timed(
+      edit(
+        [{ at: { quote: 'word' }, insert_after: '?' }],
+        anAgent(),
+        undefined,
+        deadlineIn(PATIENCE / 2),
+      ),
+    )
+    await typing(pane, 4, '!', PATIENCE / 500 + 4)
+
+    const { said, after } = await editing
+    expect(said).toBe('reader_typing')
+    expect(after).toBeLessThanOrEqual(PATIENCE / 2 + 100)
+  })
+
+  test('one whose deadline passed while it waited its turn answers then, and is never made', async () => {
+    const { pane, edit } = onPlan('x b')
+    pane.type(1, 'a')
+    const agent = anAgent()
+
+    const first = edit([{ at: { quote: 'x' }, replace: 'X' }], agent)
+    const second = timed(
+      edit([{ at: { quote: 'b' }, replace: 'B' }], agent, undefined, deadlineIn(3000)),
+    )
+    await typing(pane, 1, 'a', 10)
+    await vi.advanceTimersByTimeAsync(3000)
+    await first
+
+    const { said, after } = await second
+    expect(said).toBe('timeout')
+    expect(after).toBeLessThanOrEqual(3100)
+    expect(pane.text).toBe(`X${'a'.repeat(11)} b`)
   })
 })
 
 describe('an edit to a closed note', () => {
+  const LOG = { path: 'log.md' }
+
   test('goes in through the write every closed note takes, keeping the version once', async () => {
     const { desk, written, fileOf } = deskWith({ 'log.md': '- [ ] one\n' })
     const agent = anAgent()
 
     await editNote(desk, agent, { path: 'log' }, [{ at: { task: 'one' }, replace: '- [x] one' }])
-    await editNote(desk, agent, { path: 'log.md' }, [
-      { at: { task: 'one' }, insert_after: '- [ ] two' },
-    ])
+    await editNote(desk, agent, LOG, [{ at: { task: 'one' }, insert_after: '- [ ] two' }])
 
     expect(fileOf('log.md')).toBe('- [x] one\n- [ ] two\n')
     expect(written.map((one) => one.keeping)).toEqual([
@@ -260,11 +281,11 @@ describe('an edit to a closed note', () => {
     const edit = [{ at: { task: 'one' }, replace: '- [x] one' }]
 
     refusing.next = true
-    expect(await refusal(editNote(desk, agent, { path: 'log.md' }, edit))).toBe('rev_changed')
+    expect(await refusal(editNote(desk, agent, LOG, edit))).toBe('rev_changed')
     expect(fileOf('log.md')).toBe('- [ ] one\n')
-    expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 0 })
+    expect(await undoAgent(desk, agent, LOG)).toEqual({ undone: 0 })
 
-    await editNote(desk, agent, { path: 'log.md' }, edit)
+    await editNote(desk, agent, LOG, edit)
     expect(written.map((one) => one.keeping?.snapshot)).toEqual([true])
   })
 
@@ -274,60 +295,49 @@ describe('an edit to a closed note', () => {
       disk.delete('/space/log.md')
       return Promise.resolve(0)
     }
-
     const edit = [{ at: { end: true }, insert_after: ' two' }]
-    expect(await refusal(editNote(desk, anAgent(), { path: 'log.md' }, edit))).toBe('no_such_note')
+    expect(await refusal(editNote(desk, anAgent(), LOG, edit))).toBe('no_such_note')
   })
 
   test('says nothing was taken back when that write is refused', async () => {
     const { desk, fileOf, refusing } = deskWith({ 'log.md': 'one' })
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'log.md' }, [{ at: { end: true }, insert_after: ' two' }])
+    await editNote(desk, agent, LOG, [{ at: { end: true }, insert_after: ' two' }])
 
     refusing.next = true
-    expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 0 })
+    expect(await undoAgent(desk, agent, LOG)).toEqual({ undone: 0 })
     expect(fileOf('log.md')).toBe('one\n\n two')
 
-    expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 1 })
+    expect(await undoAgent(desk, agent, LOG)).toEqual({ undone: 1 })
     expect(fileOf('log.md')).toBe('one')
   })
 
   test('is resolved against the words with one line ending, whatever the file has', async () => {
     const { desk, fileOf } = deskWith({ 'crlf.md': '# Title\r\n\r\nline one\r\nline two\r\n' })
-
     const answer = await editNote(desk, anAgent(), { path: 'crlf.md' }, [
       { at: { quote: 'one\r\nline' }, replace: 'one\nand' },
     ])
-
     expect(fileOf('crlf.md')).toBe('# Title\n\nline one\nand two\n')
     expect(answer.lines).toEqual([2])
   })
 
-  test('refuses what is not a note in the space', async () => {
+  test.each([
+    [{ path: '../outside.md' }, 'no_such_note'],
+    [{ path: 'board.canvas' }, 'not_a_note'],
+    [{ path: 'missing.md' }, 'no_such_note'],
+    [{ path: 'a.md', space: 'Elsewhere' }, 'no_such_space'],
+  ])('refuses what is not a note in the space: %o', async (at, code) => {
     const { desk } = deskWith({ 'a.md': '' })
-    const agent = anAgent()
     const edit = [{ at: { end: true }, insert_after: 'x' }]
-
-    expect(await refusal(editNote(desk, agent, { path: '../outside.md' }, edit))).toBe(
-      'no_such_note',
-    )
-    expect(await refusal(editNote(desk, agent, { path: 'board.canvas' }, edit))).toBe('not_a_note')
-    expect(await refusal(editNote(desk, agent, { path: 'missing.md' }, edit))).toBe('no_such_note')
-    expect(await refusal(editNote(desk, agent, { path: 'a.md', space: 'Elsewhere' }, edit))).toBe(
-      'no_such_space',
-    )
+    expect(await refusal(editNote(desk, anAgent(), at, edit))).toBe(code)
   })
 })
 
 describe('the whole of a note, written', () => {
   test('goes in as the one span it differs by, so the reader’s caret stays', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'the plan for monday, then lunch' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane } = onPlan('the plan for monday, then lunch')
     pane.select(31, 31)
-
-    await writeNote(desk, anAgent(), { path: 'plan.md' }, 'the plan for tuesday, then lunch')
-
+    await writeNote(desk, anAgent(), PLAN, 'the plan for tuesday, then lunch')
     expect(pane.text).toBe('the plan for tuesday, then lunch')
     expect(pane.caret).toBe(32)
   })
@@ -336,11 +346,9 @@ describe('the whole of a note, written', () => {
 describe('taking an agent’s edits back', () => {
   test('keeps every character the reader typed in between, even inside what it wrote', async () => {
     vi.useFakeTimers()
-    const { desk, panes } = deskWith({ 'plan.md': 'Intro.\n\nBody text here.\n' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane, edit: editAs } = onPlan('Intro.\n\nBody text here.\n')
     const agent = anAgent()
-    const edit = (edits: unknown) => editNote(desk, agent, { path: 'plan.md' }, edits)
+    const edit = (edits: unknown) => editAs(edits, agent)
 
     await edit([{ at: { quote: 'Intro.' }, insert_after: ' Agent adds this.' }])
     pane.type(0, 'Reader: ')
@@ -354,72 +362,56 @@ describe('taking an agent’s edits back', () => {
     vi.useRealTimers()
     pane.type(pane.text.length, 'P.S.')
 
-    expect(await undoAgent(desk, agent, { path: 'plan.md' })).toEqual({ undone: 3 })
+    expect(await undoAgent(desk, agent, PLAN)).toEqual({ undone: 3 })
     expect(pane.text).toBe('Reader: Intro.kindly \n\nBody text here.\nP.S.')
     expect(touchedBy('/space/plan.md').filter((one) => one.id === agent.id)).toEqual([])
   })
 
   test('two edits of the same words come back out without a trace', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'one two three' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane, edit } = onPlan('one two three')
     const agent = anAgent()
-
-    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { quote: 'two' }, replace: 'abc' }])
-    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { quote: 'b' }, replace: 'XYZ' }])
+    await edit([{ at: { quote: 'two' }, replace: 'abc' }], agent)
+    await edit([{ at: { quote: 'b' }, replace: 'XYZ' }], agent)
     expect(pane.text).toBe('one aXYZc three')
 
-    await undoAgent(desk, agent, { path: 'plan.md' })
+    await undoAgent(desk, agent, PLAN)
     expect(pane.text).toBe('one two three')
   })
 
   test('is one Ctrl+Z, which puts them all back', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'a' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane, edit } = onPlan('a')
     const agent = anAgent()
-
-    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { end: true }, insert_after: 'b' }])
-    await editNote(desk, agent, { path: 'plan.md' }, [{ at: { end: true }, insert_after: 'c' }])
-    await undoAgent(desk, agent, { path: 'plan.md' })
+    await edit([{ at: { end: true }, insert_after: 'b' }], agent)
+    await edit([{ at: { end: true }, insert_after: 'c' }], agent)
+    await undoAgent(desk, agent, PLAN)
     expect(pane.text).toBe('a')
 
     pane.undo()
     expect(pane.text).toBe('a\n\nb\n\nc')
-    await undoAgent(desk, agent, { path: 'plan.md' })
+    await undoAgent(desk, agent, PLAN)
     expect(pane.text).toBe('a')
   })
 
   test('leaves alone what the reader already took back with Ctrl+Z', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'base' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane, edit } = onPlan('base')
     const agent = anAgent()
-
-    await editNote(desk, agent, { path: 'plan.md' }, [
-      { at: { quote: 'base' }, insert_before: 'one ' },
-    ])
-    await editNote(desk, agent, { path: 'plan.md' }, [
-      { at: { quote: 'base' }, insert_after: ' two' },
-    ])
+    await edit([{ at: { quote: 'base' }, insert_before: 'one ' }], agent)
+    await edit([{ at: { quote: 'base' }, insert_after: ' two' }], agent)
     pane.undo()
     expect(pane.text).toBe('one base')
     const mine = touchedBy('/space/plan.md').filter((one) => one.id === agent.id)
     expect(mine.map((one) => one.edits)).toEqual([1])
 
-    expect(await undoAgent(desk, agent, { path: 'plan.md' })).toEqual({ undone: 1 })
+    expect(await undoAgent(desk, agent, PLAN)).toEqual({ undone: 1 })
     expect(pane.text).toBe('base')
   })
 
   test('only this agent’s, never another’s', async () => {
-    const { desk, panes } = deskWith({ 'plan.md': 'x' }, ['plan.md'])
-    const pane = panes['plan.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane, edit } = onPlan('x')
     const one = anAgent('One')
     const other = anAgent('Other')
-
-    await editNote(desk, one, { path: 'plan.md' }, [{ at: { quote: 'x' }, insert_before: '1' }])
-    await editNote(desk, other, { path: 'plan.md' }, [{ at: { quote: 'x' }, insert_after: '2' }])
+    await edit([{ at: { quote: 'x' }, insert_before: '1' }], one)
+    await edit([{ at: { quote: 'x' }, insert_after: '2' }], other)
     const mine = (agent: { id: string }) => agent.id === one.id || agent.id === other.id
     expect(
       touchedBy('/space/plan.md')
@@ -427,14 +419,13 @@ describe('taking an agent’s edits back', () => {
         .map((agent) => agent.name),
     ).toEqual(['One', 'Other'])
 
-    await undoAgent(desk, one, { path: 'plan.md' })
+    await undoAgent(desk, one, PLAN)
     expect(pane.text).toBe('x2')
   })
 
   test('in a closed note, through what was written there since', async () => {
     const { desk, disk, fileOf } = deskWith({ 'log.md': 'first\n' })
     const agent = anAgent()
-
     await editNote(desk, agent, { path: 'log.md' }, [
       { at: { end: true }, insert_after: 'agent line' },
     ])
@@ -445,44 +436,38 @@ describe('taking an agent’s edits back', () => {
   })
 
   test('in a note closed and opened again since', async () => {
-    const { desk, panes, open, close } = deskWith({ 'plan.md': 'words' }, ['plan.md'])
+    const { desk, pane, edit, open, close } = onPlan('words')
     const agent = anAgent()
-
-    await editNote(desk, agent, { path: 'plan.md' }, [
-      { at: { quote: 'words' }, insert_after: ' more' },
-    ])
-    panes['plan.md']?.type(0, 'my ')
+    await edit([{ at: { quote: 'words' }, insert_after: ' more' }], agent)
+    pane.type(0, 'my ')
     close('plan.md')
     const again = open('plan.md')
     again.type(again.text.length, '!')
 
-    await undoAgent(desk, agent, { path: 'plan.md' })
+    await undoAgent(desk, agent, PLAN)
     expect(again.text).toBe('my words!')
   })
 })
 
 describe('a note with no file yet', () => {
+  const DRAFT = { path: '', tab: 'tab-1' }
+
   test('is read and edited by its tab, as one step, and keeps no version', async () => {
     const { desk, draft, kept } = deskWith({})
     const pane = draft('tab-1', '# Plan\n\nfirst')
     const agent = anAgent()
 
-    const read = await readNote(desk, { path: '', tab: 'tab-1' })
-    expect(read.text).toBe('# Plan\n\nfirst')
-
-    await editNote(desk, agent, { path: '', tab: 'tab-1' }, [
-      { at: { end: true }, insert_after: 'second' },
-    ])
+    expect((await readNote(desk, DRAFT)).text).toBe('# Plan\n\nfirst')
+    await editNote(desk, agent, DRAFT, [{ at: { end: true }, insert_after: 'second' }])
 
     expect(pane.text).toBe('# Plan\n\nfirst\n\nsecond')
     expect(kept).toEqual([])
-    expect(await undoAgent(desk, agent, { path: '', tab: 'tab-1' })).toEqual({ undone: 1 })
+    expect(await undoAgent(desk, agent, DRAFT)).toEqual({ undone: 1 })
     expect(pane.text).toBe('# Plan\n\nfirst')
   })
 
   test('is refused by a tab that holds none', async () => {
     const { desk } = deskWith({})
-
     expect(await refusal(readNote(desk, { path: '', tab: 'nope' }))).toBe('no_such_note')
   })
 })
@@ -531,7 +516,6 @@ describe('the scratchpad', () => {
 
   test('is not there without its place', async () => {
     const { desk } = deskWith({})
-
     expect(await refusal(readNote(desk, { path: '', tab: SCRATCHPAD_TAB }))).toBe('no_such_note')
   })
 })
@@ -544,19 +528,16 @@ describe('a note agents may not read', () => {
     )
     shut('locked/plan.md')
     const agent = anAgent()
+    const at = { path: 'locked/plan.md' }
 
-    expect(await refusal(readNote(desk, { path: 'locked/plan.md' }))).toBe('protected')
-    expect(
-      await refusal(
-        editNote(desk, agent, { path: 'locked/plan.md' }, [
-          { at: { end: true }, insert_after: 'x' },
-        ]),
-      ),
-    ).toBe('protected')
-    expect(await refusal(writeNote(desk, agent, { path: 'locked/plan.md' }, 'gone'))).toBe(
-      'protected',
-    )
-    expect(await refusal(undoAgent(desk, agent, { path: 'locked/plan.md' }))).toBe('protected')
+    for (const tried of [
+      () => readNote(desk, at),
+      () => editNote(desk, agent, at, [{ at: { end: true }, insert_after: 'x' }]),
+      () => writeNote(desk, agent, at, 'gone'),
+      () => undoAgent(desk, agent, at),
+    ]) {
+      expect(await refusal(tried())).toBe('protected')
+    }
     expect(panes['locked/plan.md']?.text).toBe('secret words')
     expect(fileOf('locked/plan.md')).toBe('secret words')
     expect(await refusal(writeNote(desk, agent, { path: 'open.md' }, 'still mine'))).toBe('applied')

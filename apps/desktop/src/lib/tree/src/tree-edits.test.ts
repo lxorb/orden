@@ -2,21 +2,7 @@ import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree } from './tree-order'
-
-function file(path: string): Entry {
-  return {
-    name: path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1),
-    path,
-    is_dir: false,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
-
-function folder(path: string, children: Entry[] = []): Entry {
-  return { ...file(path), is_dir: true, children }
-}
+import { file, folder } from './entries'
 
 function root(): Entry {
   return folder('/N', [
@@ -26,9 +12,8 @@ function root(): Entry {
   ])
 }
 
-function shape(entry: Entry): string[] {
-  return entry.children.flatMap((child) => [child.path, ...shape(child)])
-}
+const shape = (entry: Entry): string[] =>
+  entry.children.flatMap((child) => [child.path, ...shape(child)])
 
 describe('the rows a space has archived, left out of the list', () => {
   test('go at any depth, and a folder takes everything under it', () => {
@@ -143,13 +128,11 @@ describe('a row renamed or moved before the disk answers', () => {
   })
 })
 
-describe('finding a row', () => {
-  test('at the top, deep down, and not at all', () => {
-    expect(entryAt(root(), '/N/a.md')?.path).toBe('/N/a.md')
-    expect(entryAt(root(), '/N/Deep/inner.md')?.path).toBe('/N/Deep/inner.md')
-    expect(entryAt(root(), '/N/nope.md')).toBeNull()
-    expect(entryAt(null, '/N/a.md')).toBeNull()
-  })
+test('finding a row at the top, deep down, and not at all', () => {
+  expect(entryAt(root(), '/N/a.md')?.path).toBe('/N/a.md')
+  expect(entryAt(root(), '/N/Deep/inner.md')?.path).toBe('/N/Deep/inner.md')
+  expect(entryAt(root(), '/N/nope.md')).toBeNull()
+  expect(entryAt(null, '/N/a.md')).toBeNull()
 })
 
 describe('rows for notes the account has named and not sent yet', () => {

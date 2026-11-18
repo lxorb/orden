@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 const world = vi.hoisted(() => ({
   is: false,
@@ -50,12 +51,6 @@ Element.prototype.animate = () =>
 let host: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 
-async function settled() {
-  for (let round = 0; round < 5; round++) await Promise.resolve()
-  await vi.waitFor(() => undefined)
-  flushSync()
-}
-
 function open() {
   shown = mount(DefaultBrowser, { target: host })
   flushSync()
@@ -92,14 +87,14 @@ test('shows nothing until the system has answered', async () => {
   expect(button()).toBeNull()
   expect(tick()).toBeNull()
 
-  await settled()
+  await settle()
   expect(button()?.textContent.trim()).toBe('Make default')
 })
 
 test('a browser already set says so with the tick and offers nothing to press', async () => {
   world.is = true
   open()
-  await settled()
+  await settle()
 
   expect(tick()?.getAttribute('aria-label')).toBe('Default')
   expect(button()).toBeNull()
@@ -107,33 +102,33 @@ test('a browser already set says so with the tick and offers nothing to press', 
 
 test('the press asks the system, and the row asks again when the window comes back', async () => {
   open()
-  await settled()
+  await settle()
   await listening()
 
   button()?.click()
-  await settled()
+  await settle()
   expect(world.asked).toEqual(['default_browser', 'make_default_browser', 'default_browser'])
   expect(button()).not.toBeNull()
 
   world.is = true
   world.focus?.({ payload: true })
-  await settled()
+  await settle()
   expect(tick()).not.toBeNull()
   expect(button()).toBeNull()
 
   const asked = world.asked.length
   world.focus?.({ payload: false })
-  await settled()
+  await settle()
   expect(world.asked.length).toBe(asked)
 })
 
 test('a press the build refuses says why, and the row stays as it was', async () => {
   world.refuse = 'only the installed app can be the default browser'
   open()
-  await settled()
+  await settle()
 
   button()?.click()
-  await settled()
+  await settle()
 
   expect(settings.error).toBe('only the installed app can be the default browser')
   expect(button()).not.toBeNull()
@@ -141,7 +136,7 @@ test('a press the build refuses says why, and the row stays as it was', async ()
 
 test('closing the settings stops listening to the window', async () => {
   open()
-  await settled()
+  await settle()
   await listening()
 
   if (shown) void unmount(shown)

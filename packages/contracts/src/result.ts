@@ -24,9 +24,7 @@ export function ok<Value>(value: Value): Result<Value, never> {
   return { ok: true, value }
 }
 
-export function err<Failure>(error: Failure): Result<never, Failure> {
-  return { ok: false, error }
-}
+export const err = <Failure>(error: Failure): Result<never, Failure> => ({ ok: false, error })
 
 export function failure(
   module: string,
@@ -56,9 +54,8 @@ export function mapResult<Value, Next, Failure>(
   return result.ok ? { ok: true, value: next(result.value) } : result
 }
 
-export function unwrapOr<Value, Failure>(result: Result<Value, Failure>, fallback: Value): Value {
-  return result.ok ? result.value : fallback
-}
+export const unwrapOr = <Value, Failure>(result: Result<Value, Failure>, fallback: Value): Value =>
+  result.ok ? result.value : fallback
 
 export function attempt<Value>(
   module: string,

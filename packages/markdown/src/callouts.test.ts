@@ -3,13 +3,10 @@ import { calloutIcon, calloutIconParts, calloutOf } from './callouts'
 import { renderMarkdown } from './index'
 
 describe('a callout’s opening line', () => {
-  test('is nothing at all for a quote that names no type', () => {
+  test('is nothing at all for a quote that names no type; names its type however it was capitalised', () => {
     expect(calloutOf('Just a quote.')).toBeNull()
     expect(calloutOf('[not a callout] really')).toBeNull()
     expect(calloutOf('[!] empty')).toBeNull()
-  })
-
-  test('names its type however it was capitalised', () => {
     expect(calloutOf('[!NOTE]')?.type).toBe('note')
     expect(calloutOf('[!Warning]')?.type).toBe('warning')
   })
@@ -27,15 +24,12 @@ describe('a callout’s opening line', () => {
     expect(found?.label).toBe('Recipe')
   })
 
-  test('leaves a type an object would answer from its prototype without a look', () => {
+  test('leaves a type an object would answer from its prototype without a look; folds the two GitHub alert kinds in, the way Obsidian does', () => {
     for (const word of ['constructor', 'Constructor', '__proto__', 'toString', 'hasOwnProperty']) {
       const found = calloutOf(`[!${word}] T`)
       expect(found?.type).toBe(word.toLowerCase())
       expect(found?.look).toBeNull()
     }
-  })
-
-  test('folds the two GitHub alert kinds in, the way Obsidian does', () => {
     expect(calloutOf('[!important]')?.look).toBe('tip')
     expect(calloutOf('[!important]')?.type).toBe('important')
     expect(calloutOf('[!caution]')?.look).toBe('warning')
@@ -43,23 +37,11 @@ describe('a callout’s opening line', () => {
   })
 
   test('knows the thirteen types Obsidian has, and every alias of them', () => {
-    const types = [
-      'note',
-      'abstract',
-      'info',
-      'todo',
-      'tip',
-      'success',
-      'question',
-      'warning',
-      'failure',
-      'danger',
-      'bug',
-      'example',
-      'quote',
-    ]
+    const types =
+      'note abstract info todo tip success question warning failure danger bug example quote'.split(
+        ' ',
+      )
     for (const type of types) expect(calloutOf(`[!${type}]`)?.look, type).toBe(type)
-
     const aliases: Record<string, string> = {
       summary: 'abstract',
       tldr: 'abstract',
@@ -81,58 +63,39 @@ describe('a callout’s opening line', () => {
     }
   })
 
-  test('says the words that are not words in capitals', () => {
+  test('says the words that are not words in capitals; reads the fold sign, and reads none as none; takes the rest of the line as the title', () => {
     expect(calloutOf('[!tldr]')?.label).toBe('TLDR')
     expect(calloutOf('[!faq]')?.label).toBe('FAQ')
     expect(calloutOf('[!abstract]')?.label).toBe('Abstract')
-  })
-
-  test('reads the fold sign, and reads none as none', () => {
     expect(calloutOf('[!note]')).toMatchObject({ foldable: false, folded: false })
     expect(calloutOf('[!note]+')).toMatchObject({ foldable: true, folded: false })
     expect(calloutOf('[!note]-')).toMatchObject({ foldable: true, folded: true })
-  })
-
-  test('takes the rest of the line as the title', () => {
     expect(calloutOf('[!tip] Mind the gap')?.title).toBe('Mind the gap')
     expect(calloutOf('[!tip]-   Mind the gap  ')?.title).toBe('Mind the gap')
     expect(calloutOf('[!tip]')?.title).toBe('')
   })
 
-  test('measures the marker line so the words after it can be cut off exactly', () => {
+  test('measures the marker line so the words after it can be cut off exactly; leaves nothing behind for a marker on a line of its own; reads a marker the writer indented', () => {
     const found = calloutOf('[!tip]- Mind the gap\nBelow it.')
     expect(found?.taken).toBe('[!tip]- Mind the gap\n'.length)
     expect(found?.rest).toBe('Below it.')
-  })
-
-  test('leaves nothing behind for a marker on a line of its own', () => {
     expect(calloutOf('[!note]')?.rest).toBe('')
     expect(calloutOf('[!note]\nUnder it.')?.rest).toBe('Under it.')
-  })
-
-  test('reads a marker the writer indented', () => {
     expect(calloutOf('  [!note] Titled')?.taken).toBe('  [!note] Titled'.length)
   })
 })
 
 describe('a callout’s icon', () => {
-  test('is one svg with every child closed, so an EPUB can be parsed', () => {
+  test('is one svg with every child closed, so an EPUB can be parsed; is nothing for a type nothing knows; is nothing for those, and the note around them still renders', () => {
     const icon = calloutIcon('warning')
-
     expect(icon.startsWith('<svg')).toBe(true)
     expect(icon.endsWith('</svg>')).toBe(true)
     expect(icon).toContain(' />')
     expect(/<(?!svg|\/svg)[a-z]+[^>]*[^/]>/.exec(icon)).toBeNull()
-  })
-
-  test('is nothing for a type nothing knows', () => {
     expect(calloutIcon(null)).toBe('')
     expect(calloutIcon('recipe')).toBe('')
     expect(calloutIcon('constructor')).toBe('')
     expect(calloutIconParts('__proto__')).toBeNull()
-  })
-
-  test('is nothing for those, and the note around them still renders', () => {
     for (const word of ['constructor', '__proto__', 'Constructor']) {
       const html = renderMarkdown(`> [!${word}] T\n> body\n`, { escapeHtml: true })
       expect(html).toContain(`data-callout="${word.toLowerCase()}"`)

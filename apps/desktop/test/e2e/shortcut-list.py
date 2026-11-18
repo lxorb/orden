@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -137,5 +135,4 @@ def drive(browser: Browser) -> None:
 
         page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the shortcut list scrolls in its own box"))
+raise SystemExit(DRIVE.run(drive, "the shortcut list scrolls in its own box"))

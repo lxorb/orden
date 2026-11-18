@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import hashlib
 import json
 import time
@@ -191,5 +189,4 @@ def main() -> int:
     return DRIVE.verdict("the scratchpad is one on every device of the account")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

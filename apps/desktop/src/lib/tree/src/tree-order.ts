@@ -23,12 +23,10 @@ export const SORT_MODES: readonly SortMode[] = [
 
 export const FIRST_MODE: SortMode = 'name'
 
-export function isSortMode(value: unknown): value is SortMode {
-  return SORT_MODES.some((one) => one === value)
-}
+export const isSortMode = (value: unknown): value is SortMode =>
+  SORT_MODES.some((one) => one === value)
 
 const READING = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
-
 const EXACTLY = new Intl.Collator(undefined, { numeric: true })
 
 export function byName(one: string, other: string): number {
@@ -103,13 +101,11 @@ export function ordered<T extends Shown>(
   return [...group(folders, mode, listed), ...group(files, mode, listed)]
 }
 
-export function shownNames(
+export const shownNames = (
   children: readonly Shown[],
   mode: SortMode,
   listed: readonly string[],
-): string[] {
-  return ordered(children, mode, listed).map((one) => one.name)
-}
+): string[] => ordered(children, mode, listed).map((one) => one.name)
 
 export function orderedTree(
   tree: Entry,

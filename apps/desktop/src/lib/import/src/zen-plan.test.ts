@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { readShortcut } from '@orden/scan/shortcut'
 import { readZenSession, type ZenSession } from './zen'
 import { SIDEBAR } from './zen.fixture'
@@ -13,9 +12,7 @@ function session(): ZenSession {
   return read
 }
 
-function spaces() {
-  return zenImport(session(), NOW).spaces
-}
+const spaces = () => zenImport(session(), NOW).spaces
 
 describe("Zen's spaces as Orden's", () => {
   test('is a space for every Zen space, named, dressed and in order', () => {

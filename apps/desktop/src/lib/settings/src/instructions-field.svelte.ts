@@ -6,7 +6,7 @@ export interface FieldHands {
   space(path: string): Promise<boolean>
   read(path: string): Promise<string | null>
   there(path: string): Promise<boolean>
-  write(path: string, before: string, after: string, first: boolean): Promise<void>
+  write(path: string, before: string, after: string, first: boolean): Promise<boolean>
   make(path: string, text: string): Promise<void>
 }
 
@@ -111,12 +111,12 @@ export class InstructionsField {
       const crossed = held !== this.base
       const words = crossed ? await merged(this.base, after, held) : after
       if (words !== held) {
-        await this.hands.write(this.path, before, words, crossed || !this.wrote)
+        if (!(await this.hands.write(this.path, before, words, crossed || !this.wrote))) return
         this.wrote = true
       }
       this.settled(after, words)
     } catch {
-      // Still owed, and still in the field; leaving it or the next pause tries again.
+      return
     }
   }
 

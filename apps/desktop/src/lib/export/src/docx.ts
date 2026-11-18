@@ -45,23 +45,16 @@ import type { Picture } from './pictures'
 import { legalXml } from './xml-legal'
 
 const MONOSPACE = 'Consolas'
-
 const INK = '1A1A1A'
 const CODE_INK = '3F3F46'
 const CODE_FILL = 'F5F5F5'
 const HEAD_FILL = 'EFEFEF'
 const LINE = 'BFBFBF'
-
 const STEP = 720
-
 const ORDERED = 'orden-ordered'
-
 const RUNGS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-
 const DEEPEST_RUNG = RUNGS.length - 1
-
 const PER_INCH = 96
-
 const CHECKS = { open: '☐ ', done: '☑ ' }
 
 const HEADINGS = [
@@ -182,9 +175,8 @@ interface Size {
   height: number
 }
 
-function reader(bytes: Uint8Array): DataView {
-  return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-}
+const reader = (bytes: Uint8Array): DataView =>
+  new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 
 function pngSize(bytes: Uint8Array): Size | null {
   if (bytes.length < 24) return null
@@ -282,9 +274,7 @@ function drawnPicture(span: Span, writer: Writer): Drawn | null {
   return { picture, type, size: fitted(sizedPicture(size, span), writer.column) }
 }
 
-function pictureWords(span: Span): string {
-  return span.text ? `[${span.text}]` : '[picture]'
-}
+const pictureWords = (span: Span): string => (span.text ? `[${span.text}]` : '[picture]')
 
 function pictureRun(span: Span, drawn: Drawn | null): ParagraphChild {
   if (drawn === null) return new TextRun({ text: pictureWords(span) })
@@ -308,17 +298,15 @@ const HIGHLIGHTS: Record<number, (typeof HighlightColor)[keyof typeof HighlightC
   6: HighlightColor.MAGENTA,
 }
 
-function marksOf(span: Span): IRunPropertiesOptions {
-  return {
-    ...(span.bold ? { bold: true } : {}),
-    ...(span.italic ? { italics: true } : {}),
-    ...(span.strike ? { strike: true } : {}),
-    ...(span.mark ? { highlight: HIGHLIGHTS[span.tone ?? 0] ?? HighlightColor.YELLOW } : {}),
-    ...(span.sup ? { superScript: true } : {}),
-    ...(span.sub ? { subScript: true } : {}),
-    ...(span.code ? { style: 'Code' } : span.href === undefined ? {} : { style: 'Hyperlink' }),
-  }
-}
+const marksOf = (span: Span): IRunPropertiesOptions => ({
+  ...(span.bold ? { bold: true } : {}),
+  ...(span.italic ? { italics: true } : {}),
+  ...(span.strike ? { strike: true } : {}),
+  ...(span.mark ? { highlight: HIGHLIGHTS[span.tone ?? 0] ?? HighlightColor.YELLOW } : {}),
+  ...(span.sup ? { superScript: true } : {}),
+  ...(span.sub ? { subScript: true } : {}),
+  ...(span.code ? { style: 'Code' } : span.href === undefined ? {} : { style: 'Hyperlink' }),
+})
 
 function textRuns(span: Span): TextRun[] {
   const marks = marksOf(span)
@@ -346,7 +334,12 @@ function noteRuns(span: Span, writer: Writer): ParagraphChild[] {
 function runsOf(spans: readonly Span[], writer: Writer): ParagraphChild[] {
   return spans.flatMap((span) => {
     if (span.picture !== undefined) {
-      return [pictureRun(span, drawnPicture(span, writer))]
+      const drawn = pictureRun(span, drawnPicture(span, writer))
+      return [
+        span.href === undefined
+          ? drawn
+          : new ExternalHyperlink({ children: [drawn], link: span.href }),
+      ]
     }
     if (span.note !== undefined) return noteRuns(span, writer)
     if (span.maths === true) return mathsRuns(span)
@@ -358,9 +351,7 @@ function runsOf(spans: readonly Span[], writer: Writer): ParagraphChild[] {
   })
 }
 
-function wordsOf(spans: readonly Span[]): string {
-  return spans.map((span) => span.text).join('')
-}
+const wordsOf = (spans: readonly Span[]): string => spans.map((span) => span.text).join('')
 
 function alignmentOf(align: Align) {
   if (align === 'center') return AlignmentType.CENTER
@@ -369,12 +360,10 @@ function alignmentOf(align: Align) {
   return AlignmentType.LEFT
 }
 
-function nested(nesting: Nesting): IParagraphPropertiesOptions {
-  return {
-    ...(nesting.level > 0 ? { indent: { left: STEP * nesting.level } } : {}),
-    ...(nesting.style === null ? {} : { style: nesting.style }),
-  }
-}
+const nested = (nesting: Nesting): IParagraphPropertiesOptions => ({
+  ...(nesting.level > 0 ? { indent: { left: STEP * nesting.level } } : {}),
+  ...(nesting.style === null ? {} : { style: nesting.style }),
+})
 
 const CELL_EDGE = { style: BorderStyle.SINGLE, size: 2, color: LINE }
 const CELL_BORDERS = { top: CELL_EDGE, bottom: CELL_EDGE, left: CELL_EDGE, right: CELL_EDGE }
@@ -539,9 +528,8 @@ function blockChildren(block: Block, writer: Writer, nesting: Nesting): FileChil
   }
 }
 
-function childrenOf(blocks: readonly Block[], writer: Writer, nesting: Nesting): FileChild[] {
-  return blocks.flatMap((block) => blockChildren(block, writer, nesting))
-}
+const childrenOf = (blocks: readonly Block[], writer: Writer, nesting: Nesting): FileChild[] =>
+  blocks.flatMap((block) => blockChildren(block, writer, nesting))
 
 function titleChildren(doc: Doc): FileChild[] {
   const first = doc.blocks[0]
@@ -568,23 +556,21 @@ function columnPixels(paper: PaperTwips): number {
   return Math.max(PER_INCH, Math.round(((width - 2 * paper.margin) * PER_INCH) / TWIPS_PER_INCH))
 }
 
-function pageOf(paper: PaperTwips): ISectionPropertiesOptions {
-  return {
-    page: {
-      size: {
-        width: paper.width,
-        height: paper.height,
-        orientation: paper.landscape ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT,
-      },
-      margin: {
-        top: paper.margin,
-        right: paper.margin,
-        bottom: paper.margin,
-        left: paper.margin,
-      },
+const pageOf = (paper: PaperTwips): ISectionPropertiesOptions => ({
+  page: {
+    size: {
+      width: paper.width,
+      height: paper.height,
+      orientation: paper.landscape ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT,
     },
-  }
-}
+    margin: {
+      top: paper.margin,
+      right: paper.margin,
+      bottom: paper.margin,
+      left: paper.margin,
+    },
+  },
+})
 
 function runningOf(paper: PaperTwips) {
   const line = (text: string) =>

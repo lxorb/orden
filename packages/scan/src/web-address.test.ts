@@ -5,7 +5,7 @@ import { droppedAddress, favicon, isWebAddress, keysOf, plainOrigin } from './we
 test('the app’s own origins are refused with a trailing dot too', () => {
   for (const url of [
     'http://tauri.localhost./',
-    'https://nib.localhost../',
+    'https://orden.localhost../',
     'http://IPC.localhost./',
   ]) {
     expect(isWebAddress(url), url).toBe(false)
@@ -13,11 +13,6 @@ test('the app’s own origins are refused with a trailing dot too', () => {
 })
 
 describe('what a web tab may open', () => {
-  test('takes http and https', () => {
-    expect(isWebAddress('https://example.com/a')).toBe(true)
-    expect(isWebAddress('http://example.com')).toBe(true)
-  })
-
   test('takes the source of a page it would take', () => {
     expect(isWebAddress('view-source:https://example.com/a')).toBe(true)
     expect(isWebAddress('view-source:file:///C:/notes/Idea.md')).toBe(false)
@@ -25,47 +20,6 @@ describe('what a web tab may open', () => {
     expect(isWebAddress('view-source:view-source:https://example.com/')).toBe(false)
     expect(webAddress('view-source:https://example.com/')).toBe('view-source:https://example.com/')
     expect(plainOrigin('view-source:https://www.example.com/a')).toBe('view-source:example.com')
-  })
-
-  test('refuses every other scheme', () => {
-    expect(isWebAddress('file:///C:/notes/Idea.md')).toBe(false)
-    expect(isWebAddress('javascript:alert(1)')).toBe(false)
-    expect(isWebAddress('data:text/html,<p>hi')).toBe(false)
-    expect(isWebAddress('mailto:someone@example.com')).toBe(false)
-    expect(isWebAddress('orden://open')).toBe(false)
-  })
-
-  test('refuses the app itself', () => {
-    expect(isWebAddress('http://tauri.localhost/index.html')).toBe(false)
-    expect(isWebAddress('https://TAURI.localhost/')).toBe(false)
-    expect(isWebAddress('http://ipc.localhost/x')).toBe(false)
-    expect(isWebAddress('http://asset.localhost/a.png')).toBe(false)
-  })
-
-  test('refuses what is not an address at all', () => {
-    expect(isWebAddress('')).toBe(false)
-    expect(isWebAddress('example.com')).toBe(false)
-  })
-})
-
-describe('the origin, plainly', () => {
-  test('is the host', () => {
-    expect(plainOrigin('https://svelte.dev/docs/introduction')).toBe('svelte.dev')
-    expect(plainOrigin('orden://history')).toBe('orden://history')
-    expect(plainOrigin('nib://history')).toBe('nib://history')
-    expect(plainOrigin('https://docs.example.org:8443/a')).toBe('docs.example.org:8443')
-  })
-
-  test('drops www, the way every browser does', () => {
-    expect(plainOrigin('https://www.bbc.co.uk/news')).toBe('bbc.co.uk')
-  })
-
-  test('says so when the page is not over https', () => {
-    expect(plainOrigin('http://example.com/a')).toBe('http://example.com')
-  })
-
-  test('answers with what it was given when that is not an address', () => {
-    expect(plainOrigin('not an address')).toBe('not an address')
   })
 })
 
@@ -112,4 +66,34 @@ describe('a link dragged onto the strip from another app', () => {
     expect(droppedAddress(drop({ 'text/uri-list': 'file:///C:/notes/a.md' }))).toBeNull()
     expect(droppedAddress(drop({ 'text/plain': 'javascript:alert(1)' }))).toBeNull()
   })
+})
+
+test.each<[unknown, ...Parameters<typeof isWebAddress>]>([
+  [true, 'https://example.com/a'],
+  [true, 'http://example.com'],
+  [false, 'file:///C:/notes/Idea.md'],
+  [false, 'javascript:alert(1)'],
+  [false, 'data:text/html,<p>hi'],
+  [false, 'mailto:someone@example.com'],
+  [false, 'orden://open'],
+  [false, 'http://tauri.localhost/index.html'],
+  [false, 'https://TAURI.localhost/'],
+  [false, 'http://ipc.localhost/x'],
+  [false, 'http://asset.localhost/a.png'],
+  [false, ''],
+  [false, 'example.com'],
+])('%j from %j', (expected, ...args) => {
+  expect(isWebAddress(...args)).toBe(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof plainOrigin>]>([
+  ['svelte.dev', 'https://svelte.dev/docs/introduction'],
+  ['orden://history', 'orden://history'],
+  ['nib://history', 'nib://history'],
+  ['docs.example.org:8443', 'https://docs.example.org:8443/a'],
+  ['bbc.co.uk', 'https://www.bbc.co.uk/news'],
+  ['http://example.com', 'http://example.com/a'],
+  ['not an address', 'not an address'],
+])('%j from %j', (expected, ...args) => {
+  expect(plainOrigin(...args)).toBe(expected)
 })

@@ -85,7 +85,7 @@ export function clearOf(hole: Rect, layers: readonly Layer[]): { box: Rect; laye
   }
 }
 
-function boxOf(node: Element): Rect {
+export function boxOf(node: Element): Rect {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
@@ -156,7 +156,6 @@ export function bringsLayer(
 }
 
 const SHOWN_BY = ['class', 'style', 'hidden', 'data-covers']
-
 const told = new Set<() => void>()
 let arriving: MutationObserver | null = null
 

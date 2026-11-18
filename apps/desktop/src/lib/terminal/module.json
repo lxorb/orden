@@ -3,6 +3,7 @@
   "layer": "features",
   "dependsOn": [
     "contracts",
+    "protect",
     "accounts",
     "crate",
     "markdown",

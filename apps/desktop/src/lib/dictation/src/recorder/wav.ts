@@ -35,11 +35,6 @@ export function resampled(samples: Float32Array, from: number, to: number): Floa
   return out
 }
 
-function sixteenBit(sample: number): number {
-  const held = Math.max(-1, Math.min(1, sample))
-  return Math.round(held * (held < 0 ? 0x8000 : 0x7fff))
-}
-
 export function wavOf(samples: Float32Array, rate: number): Uint8Array<ArrayBuffer> {
   const bytes = new Uint8Array(HEADER + samples.length * 2)
   const view = new DataView(bytes.buffer)
@@ -62,18 +57,15 @@ export function wavOf(samples: Float32Array, rate: number): Uint8Array<ArrayBuff
   view.setUint32(40, samples.length * 2, true)
 
   for (let at = 0; at < samples.length; at++) {
-    view.setInt16(HEADER + at * 2, sixteenBit(samples[at] ?? 0), true)
+    const held = Math.max(-1, Math.min(1, samples[at] ?? 0))
+    view.setInt16(HEADER + at * 2, Math.round(held * (held < 0 ? 0x8000 : 0x7fff)), true)
   }
 
   return bytes
 }
 
-function samplesIn(seconds: number, rate: number): number {
-  return Math.max(1, Math.round(seconds * rate))
-}
-
 export function pieces(samples: Float32Array, rate: number, seconds: number): Float32Array[] {
-  const most = samplesIn(seconds, rate)
+  const most = Math.max(1, Math.round(seconds * rate))
   if (samples.length <= most) return samples.length ? [samples] : []
 
   const out: Float32Array[] = []

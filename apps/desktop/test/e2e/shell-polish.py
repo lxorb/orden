@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import io
 import sys
 
@@ -47,12 +45,9 @@ async () => {
   if (ws.panel !== 'tree') ws.showPanel('tree')
 
   await ws.noteFrom('# Deep work\\n\\nthe first line\\n', root)
-  // Not `users`: a note wearing the shared mark as the icon it chose for itself
-  // is a picture nobody could read.
   await ws.noteFrom('---\\nicon: notebook-pen\\n---\\n\\n# With Nina\\n\\nours\\n', root)
   await ws.openEntry(at('Deep work.md'))
 
-  // The open space wears a stroked mark, which is the one Emil measured.
   ws.setIcon(ws.activeSpaceId, 'square-check-big')
   return { root, spaces: ws.spaces.map((one) => one.name), icon: ws.iconFor(ws.activeSpaceId) }
 }
@@ -75,15 +70,6 @@ MORE_SPACES = """
   ws.setIcon('space-emoji', '\\u{1F4D3}')
   ws.setIcon('space-shared', 'notebook-pen')
 
-  // `isShared` asks two things: which remote space a folder mirrors, and what
-  // the account holds for it. There is no Worker behind this run, so both are
-  // stood in for; it is the only way a drive can see a shared row at all.
-  //
-  // A whole mirror each, not just the id: every row in the file list asks
-  // `sync.tracked` whether it is a file shared on its own, and that walks the
-  // mirrors and reads each one's root. A mirror without one threw, and an
-  // exception in a row takes the whole sidebar with it. See newMirror in
-  // sync-mirror/src/mirror.ts for the shape.
   const stand = (spaceId, root) => ({
     spaceId,
     root,
@@ -120,10 +106,6 @@ BADGES = """
   for (const badge of document.querySelectorAll('.spaces .orden-badge')) {
     const box = badge.getBoundingClientRect()
 
-    // Down to what is really drawn. A box that is centred can still hold a glyph
-    // that is not: an svg is an inline element, so it sits on the text baseline of
-    // whatever wraps it and the line box's descender pushes it off centre. That is
-    // the pixel Emil saw, and it is only visible at the innermost element.
     let drawn = badge
     for (;;) {
       const next = drawn.querySelector(':scope > svg, :scope > .glyph, :scope > span')
@@ -132,7 +114,6 @@ BADGES = """
     }
 
     const inner = drawn.getBoundingClientRect()
-    // Where the ink is, which for a stroked mark is tighter than its box.
     const ink = drawn.tagName.toLowerCase() === 'svg' ? drawn.getBBox?.() : null
     out.push({
       row: badge.closest('.orden-row')?.textContent.trim() ?? '?',
@@ -189,8 +170,6 @@ BAR = """
 
 TOGGLE = """
 () => {
-  // Wherever it is drawn: the title bar on a desktop, the drawer's own head under
-  // a thumb. One component, drawn once; see mobile-header.test.ts.
   const button = document.querySelector('.toggle')
   if (!button) return null
 
@@ -242,8 +221,6 @@ HEAD = """
       }
     })
 
-  // What stands between the switcher and each end of the row, whichever way the
-  // row is laid out: the nearest thing on that side, or the row's own padding.
   const before = others.filter((one) => one.right <= box.left + 1)
   const after = others.filter((one) => one.left >= box.right - 1)
   const leftOf = before.length ? Math.max(...before.map((one) => one.right)) : inner.left
@@ -396,8 +373,6 @@ SEGMENTED = """
   const track = document.querySelector('.orden-segmented')
   if (!track) return { none: true }
 
-  // The surface belongs to the thumb wherever one slides, and to the chosen
-  // button where none does; see `.orden-segmented.has-thumb button.on`.
   const raised = track.querySelector('.orden-segmented-thumb') ?? track.querySelector('button.on')
   if (!raised) return { none: true }
 
@@ -449,8 +424,6 @@ FORMAT_MARKS = """
       }
     }
 
-    // The `.low` span where there is one, which is the element the transform is on,
-    // so its own box is where the letter ended up.
     const held = one.querySelector('span') ?? one
     const text = (held.textContent ?? '').trim()
     if (!text) return { name, as: 'nothing', off: null, size: null }
@@ -863,5 +836,4 @@ def main() -> int:
 
     return DRIVE.verdict("the bar is one row and every mark is centred")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

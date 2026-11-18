@@ -1,4 +1,4 @@
-import { untrusted } from '@orden/chats/agent'
+import { defused, untrusted } from '@orden/chats/agent'
 import type {
   Api,
   Attachment,
@@ -25,6 +25,26 @@ export interface Call {
   args: unknown
 }
 
+export function modelTurn({ provider, model, effort }: Thread): Turn {
+  return {
+    id: crypto.randomUUID(),
+    role: 'model',
+    at: Date.now(),
+    parts: [],
+    provider,
+    model,
+    effort,
+  }
+}
+
+export function youTurn(thread: Thread, draft: Draft, more: Partial<Turn> = {}): Turn {
+  const { effort } = thread
+  return { id: crypto.randomUUID(), role: 'you', at: Date.now(), draft, parts: [], effort, ...more }
+}
+
+export const errorText = (error: unknown) =>
+  error instanceof Error ? error.message : String(error)
+
 const MARK = 'untrusted'
 
 function attribute(label: string): string {
@@ -34,35 +54,46 @@ function attribute(label: string): string {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/[\r\n\t]/g, ' ')
+    .replace(/[\p{Cc}\p{Zl}\p{Zp}]/gu, ' ')
 }
 
 export { untrusted }
 
 const OPENED = `<${MARK} source="`
 
+export const SUMMED_OUTSIDE = 'outside'
+
 export function readOutside(turns: readonly Turn[]): boolean {
-  return turns.some((turn) =>
-    turn.role === 'you'
-      ? turn.draft?.web === true ||
-        (turn.draft?.attachments ?? []).some(
-          (one) => one.untrusted === true || (one.text?.includes(OPENED) ?? false),
-        )
-      : turn.parts.some(
-          (part) => part.kind === 'tool' && (part.result?.text.includes(OPENED) ?? false),
-        ),
+  return (
+    turns.some((turn) =>
+      turn.role === 'you'
+        ? turn.draft?.web === true ||
+          (turn.draft?.attachments ?? []).some(
+            (one) => one.untrusted === true || (one.text?.includes(OPENED) ?? false),
+          )
+        : turn.parts.some(
+            (part) =>
+              (part.kind === 'notice' &&
+                part.code === 'compacted' &&
+                part.text === SUMMED_OUTSIDE) ||
+              (part.kind === 'tool' &&
+                (part.verb.startsWith('browser_') ||
+                  !!part.result?.images.length ||
+                  (part.result?.text.includes(OPENED) ?? false))),
+          ),
+    ) || turns.some((turn) => turn.context?.includes(OPENED) ?? false)
   )
 }
 
 function attached(one: Attachment): string {
   if (!one.text) return ''
   if (one.untrusted) return untrusted(one.label, one.text)
-  return `<attached label="${attribute(one.label)}">\n${one.text}\n</attached>`
+  return `<attached label="${attribute(one.label)}">\n${defused(one.text)}\n</attached>`
 }
 
 export function userStep(draft: Draft, context = ''): Extract<Step, { role: 'user' }> {
   const texts = draft.attachments.map(attached).filter(Boolean)
-  const where = context ? [`<reader-context>\n${context}\n</reader-context>`] : []
+  const where = context ? [`<reader-context>\n${defused(context)}\n</reader-context>`] : []
   return {
     role: 'user',
     text: [...where, ...texts, draft.text].join('\n\n'),
@@ -127,14 +158,22 @@ export function sinceCompaction(
   return at < 0 ? [...turns] : turns.slice(at + 1)
 }
 
-function compactionStep(compaction: Compaction, api: Api, model: string): Step | null {
+function compactionStep(
+  compaction: Compaction,
+  api: Api,
+  model: string,
+  outside: boolean,
+): Step | null {
   if (compaction.kind === api && compaction.model === model && compaction.block !== undefined) {
     return { role: 'compacted', block: compaction.block }
   }
   if (!compaction.summary) return null
+  const said = outside
+    ? untrusted('a summary of a conversation that read others’ words', compaction.summary)
+    : defused(compaction.summary)
   return {
     role: 'user',
-    text: `<summary of="the conversation so far">\n${compaction.summary}\n</summary>`,
+    text: `<summary of="the conversation so far">\n${said}\n</summary>`,
     images: [],
   }
 }
@@ -145,7 +184,9 @@ export function stepsOf(
   model: string,
   perMessage = false,
 ): Step[] {
-  const head = thread.compaction ? compactionStep(thread.compaction, api, model) : null
+  const head = thread.compaction
+    ? compactionStep(thread.compaction, api, model, readOutside(thread.turns))
+    : null
   const turns = head ? sinceCompaction(thread.turns, thread.compaction) : thread.turns
   const steps: Step[] = head ? [head] : []
   let effort: Effort | undefined

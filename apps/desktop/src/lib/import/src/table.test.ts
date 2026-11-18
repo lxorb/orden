@@ -1,26 +1,16 @@
 import { readBase } from '@orden/bases'
 import { renderMarkdown } from '@orden/markdown'
+import { scanNote } from '@orden/scan/note'
 import { describe, expect, test } from 'vitest'
-
-import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
+import { sourceOf } from './sources'
 import { readTable, rowNote, tableOf } from './table'
+import { file, noteAt } from './fixtures'
 
 const CSV = [
   'Name,Status,Pages,Created,Notes',
   'Dune,Read,412,January 2 2026,"Long, and worth it"',
   'Ubik,Reading,224,March 4 2026,',
 ].join('\n')
-
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
 
 describe('a CSV as one table', () => {
   test('is one note holding every row', async () => {
@@ -139,13 +129,11 @@ describe('a CSV as one note per row', () => {
   })
 })
 
-describe('a file with no rows in it', () => {
-  test('says so rather than making an empty note', async () => {
-    const plan = await readTable([file('Empty.csv', '')])
+test('a file with no rows in it says so rather than making an empty note', async () => {
+  const plan = await readTable([file('Empty.csv', '')])
 
-    expect(plan.files).toHaveLength(0)
-    expect(plan.lost).toHaveLength(1)
-  })
+  expect(plan.files).toHaveLength(0)
+  expect(plan.lost).toHaveLength(1)
 })
 
 describe('what a spreadsheet holds that a database does not', () => {
@@ -165,6 +153,17 @@ describe('what a spreadsheet holds that a database does not', () => {
       'note.status-2',
       'note.column-6',
     ])
+  })
+
+  test('a column of tags is a list of tags, each kept whole', async () => {
+    const plan = await readTable(
+      [file('Books.csv', 'Name,Tags,Labels\nDune,"sci-fi, Science Fiction",classic\n')],
+      'notes',
+    )
+
+    const text = noteAt(plan, 'Books/Dune.md')
+    expect(scanNote('Books/Dune.md', text).tags).toEqual(['sci-fi', 'science-fiction', 'classic'])
+    expect(readBase(noteAt(plan, 'Books.base')).views[0]?.order).toEqual(['file.name', 'note.tags'])
   })
 
   test('a date column holding less than a day is not made into one', () => {

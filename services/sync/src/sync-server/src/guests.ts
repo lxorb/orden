@@ -120,12 +120,8 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'DELETE', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'GET', path: /^\/v1\/notes\/[^/]+\/paper$/ },
   { method: 'DELETE', path: /^\/v1\/spaces\/[^/]+\/share\/me$/ },
-  {
-    method: 'GET',
-    path: /^\/v2\/spaces\/[^/]+\/(feed|snapshot|maps)$/,
-  },
+  { method: 'GET', path: /^\/v2\/spaces\/[^/]+\/feed$/ },
   { method: 'POST', path: /^\/v2\/spaces\/[^/]+\/(prepare|ops|index|search)$/ },
-  { method: 'PATCH', path: /^\/v2\/spaces\/[^/]+\/maps$/ },
   { method: 'POST', path: /^\/v2\/docs\/(pull|push|keep)$/ },
   { method: 'GET', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
   { method: 'PUT', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
@@ -170,14 +166,6 @@ export async function claimGuest(env: Env, guestId: string, user: User): Promise
   }
 
   await forgetEmptyGuest(env, guestId)
-}
-
-export async function claimGuestsAt(env: Env, user: User): Promise<void> {
-  const { results } = await env.DB.prepare('select id from guests where email = ? limit 50')
-    .bind(user.email)
-    .all<{ id: string }>()
-
-  for (const one of results) await claimGuest(env, one.id, user)
 }
 
 export async function forgetEmptyGuest(env: Env, guestId: string): Promise<void> {

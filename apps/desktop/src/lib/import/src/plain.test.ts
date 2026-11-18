@@ -1,18 +1,8 @@
 import { describe, expect, test } from 'vitest'
-
-import { counts, type ImportPlan } from './plan'
+import { counts } from './plan'
 import { readPlain } from './plain'
-import { sourceOf, type Source } from './sources'
-
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
+import { sourceOf } from './sources'
+import { file, noteAt } from './fixtures'
 
 describe('a folder of markdown', () => {
   test('keeps its folders, its notes and its pictures', async () => {
@@ -179,17 +169,15 @@ describe('a folder of markdown', () => {
   })
 })
 
-describe('a TextBundle', () => {
-  test('becomes the note it holds, named after the bundle, with its assets', async () => {
-    const plan = await readPlain([
-      file('Trips/Iceland.textbundle/info.json', '{"version":2}'),
-      file('Trips/Iceland.textbundle/text.md', '# Iceland\n\n![](assets/shot.png)\n'),
-      file('Trips/Iceland.textbundle/assets/shot.png', 'PNG'),
-    ])
+test('a TextBundle becomes the note it holds, named after the bundle, with its assets', async () => {
+  const plan = await readPlain([
+    file('Trips/Iceland.textbundle/info.json', '{"version":2}'),
+    file('Trips/Iceland.textbundle/text.md', '# Iceland\n\n![](assets/shot.png)\n'),
+    file('Trips/Iceland.textbundle/assets/shot.png', 'PNG'),
+  ])
 
-    expect(plan.files.map((one) => one.path)).toEqual(['Trips/Iceland.md', 'assets/shot.png'])
-    expect(noteAt(plan, 'Trips/Iceland.md')).toContain('![](../assets/shot.png)')
-  })
+  expect(plan.files.map((one) => one.path)).toEqual(['Trips/Iceland.md', 'assets/shot.png'])
+  expect(noteAt(plan, 'Trips/Iceland.md')).toContain('![](../assets/shot.png)')
 })
 
 describe('a folder of HTML', () => {

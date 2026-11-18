@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 import shutil
 import subprocess
@@ -136,5 +134,4 @@ def main() -> int:
         context.close()
     return DRIVE.verdict("the web app moves between its two builds from Settings")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -3,7 +3,6 @@ export { pages, siteMark } from './pages.svelte'
 export type { Page, Step } from './pages.svelte'
 
 const away = <T>(): Promise<T> => new Promise<never>(() => undefined)
-
 export const loadWebTab = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./WebTab.svelte')>() : import('./WebTab.svelte')
 
@@ -15,9 +14,6 @@ export const webDownloads = () =>
 
 export const siteDropping = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./dropped-site')>() : import('./dropped-site')
-
-export const siteMuting = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./mute')>() : import('./mute')
 
 export const privateWindows = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./private')>() : import('./private')
@@ -41,7 +37,6 @@ export const webLending = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./lending')>() : import('./lending')
 
 export const webNotes = () => (__EVEN_PLUGIN__ ? away<typeof import('./note')>() : import('./note'))
-
 export const siteMaking = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./new-site')>() : import('./new-site')
 

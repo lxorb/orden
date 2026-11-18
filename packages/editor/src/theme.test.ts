@@ -8,16 +8,14 @@ import { ordenHighlightStyle, ordenEditorTheme } from './theme'
 
 const BOLD = 600
 
-function rulesOf(extension: Extension): string {
-  return EditorState.create({ extensions: [extension] })
+const rulesOf = (extension: Extension): string =>
+  EditorState.create({ extensions: [extension] })
     .facet(EditorView.styleModule)
     .map((one) => one.getRules())
     .join('\n')
-}
 
-function blockFor(rules: string, className: string): string {
-  return new RegExp(`\\.${className}\\s*\\{([^}]*)\\}`).exec(rules)?.[1] ?? ''
-}
+const blockFor = (rules: string, className: string): string =>
+  new RegExp(`\\.${className}\\s*\\{([^}]*)\\}`).exec(rules)?.[1] ?? ''
 
 function classesOver(doc: string, word: string): string {
   const state = EditorState.create({

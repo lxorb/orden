@@ -5,22 +5,6 @@ import Editor from '../../src/lib/pane-tree/src/Editor.svelte'
 import { type Tab, workspace } from '../../src/lib/workspace/src/api'
 import { reactive } from './runes.svelte'
 
-class NoLayout {
-  observe() {
-    // Said above.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 let target: HTMLElement
 let close: (() => void) | undefined
 

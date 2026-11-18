@@ -3,10 +3,8 @@
   import { rewriting } from './rewriting.svelte'
   import { diffCount, lineDiff, trimmed } from '@orden/markdown/line-diff'
   import { dur, fade } from '../../platform/src/api'
-  import { scrollbar } from '../../ui-kit/src/api'
-  import { Select } from '../../ui-controls/src/api'
-  import { Sheet } from '../../ui-controls/src/api'
-  import { viewport } from '../../ui-kit/src/api'
+  import { scrollbar, viewport } from '../../ui-kit/src/api'
+  import { Select, Sheet } from '../../ui-controls/src/api'
 
   const answer = $derived(rewriting.after.trim())
   const difference = $derived(answer ? lineDiff(rewriting.before, answer) : [])

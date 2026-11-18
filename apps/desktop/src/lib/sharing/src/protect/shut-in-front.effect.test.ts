@@ -1,6 +1,7 @@
-import { flushSync, mount, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { registerCommandRows } from '@orden/contracts'
+import { idle } from '../../../../../test/effects/settle'
 
 vi.mock('../../../history/src/versions', () => ({
   versionsOf: () => Promise.resolve([{ at: 1, size: 20, path: null, by: '' }]),
@@ -87,10 +88,7 @@ describe('a shut note in front', () => {
     const target = document.createElement('div')
     document.body.append(target)
     const shown = mount(History, { target, props: { open: true }, intro: false })
-    for (let i = 0; i < 5; i++) {
-      await new Promise((done) => setTimeout(done, 10))
-      flushSync()
-    }
+    await idle(50)
     expect(document.body.textContent).not.toContain('what nobody may read')
     expect(document.querySelector('[role=dialog]')).toBeNull()
     void unmount(shown)

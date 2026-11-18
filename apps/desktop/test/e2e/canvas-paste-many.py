@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import json
 import struct
@@ -84,5 +82,4 @@ def drive(browser: Browser) -> None:
     shot(page, "pasted-three")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "pictures pasted together onto a canvas each become a card"))
+raise SystemExit(DRIVE.run(drive, "pictures pasted together onto a canvas each become a card"))

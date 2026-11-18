@@ -22,14 +22,13 @@ export interface ImageSpan extends ImageSpec {
 
 const IMAGE_NODES = new Set(['Image', 'HTMLTag', 'HTMLBlock'])
 
-function unescapeAttr(value: string): string {
-  return value
+const unescapeAttr = (value: string): string =>
+  value
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
-}
 
 interface Attribute {
   lead: string
@@ -85,13 +84,15 @@ export function parseHtmlImage(tag: string): ImageSpec | null {
   return spec
 }
 
-export function withZoom(image: ImageSpec, zoom: number): ImageSpec {
-  return { src: image.src, alt: image.alt, title: image.title, zoom }
-}
+export const withZoom = (image: ImageSpec, zoom: number): ImageSpec => ({
+  src: image.src,
+  alt: image.alt,
+  title: image.title,
+  zoom,
+})
 
-function bareAddress(url: string): string {
-  return url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
-}
+const bareAddress = (url: string): string =>
+  url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
 
 function writtenAddress(src: string): string {
   return /[\s<>()]/.test(src) ? `<${src}>` : src
@@ -164,9 +165,8 @@ export function imageOfNode(state: EditorState, node: SyntaxNode): ImageSpan | n
 }
 
 function imageNode(state: EditorState, pos: number, side: -1 | 1): SyntaxNode | null {
-  for (const node of enclosing(syntaxTree(state).resolveInner(pos, side))) {
+  for (const node of enclosing(syntaxTree(state).resolveInner(pos, side)))
     if (IMAGE_NODES.has(node.name) && (side > 0 ? node.from : node.to) === pos) return node
-  }
   return null
 }
 

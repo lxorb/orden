@@ -6,7 +6,7 @@ import { isScratchpad, scratchpadHits } from '../../scratchpad/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { isEmpty, parseQuery } from '@orden/scan/search/query'
 import type { SearchOrdering, SearchSort } from '@orden/contracts'
-import { selectedWords } from './seed'
+import { asWritten, selectedWords } from './seed'
 import { searchSpace } from './space'
 import {
   isMarkdownPath,
@@ -18,17 +18,11 @@ import {
 } from '../../platform/src/api'
 
 const WAIT = 140
-
 const MOST = 200
-
 const SHORTEST = 2
-
-const keyOf = (hit: Hit) => `${hit.path}:${hit.line}`
-
+export const hitKey = (hit: Hit) => `${hit.path}:${hit.page ?? ''}:${hit.line}`
 const SORT_KEY = 'orden:search-sort'
-
 const AS_ASKED: SearchOrdering = { sort: 'relevance', descending: false }
-
 const SORTS: readonly SearchSort[] = ['relevance', 'name', 'modified', 'created']
 
 function readOrdering(): SearchOrdering {
@@ -115,16 +109,16 @@ class Search {
         !hit.bare &&
         isMarkdownPath(hit.path) &&
         !isScratchpad(hit.path) &&
-        !this.skipped.has(keyOf(hit)),
+        !this.skipped.has(hitKey(hit)),
     ),
   )
 
   keeps(hit: Hit): boolean {
-    return !hit.bare && !this.skipped.has(keyOf(hit))
+    return !hit.bare && !this.skipped.has(hitKey(hit))
   }
 
   toggle(hit: Hit) {
-    const key = keyOf(hit)
+    const key = hitKey(hit)
     if (this.skipped.has(key)) this.skipped.delete(key)
     else this.skipped.add(key)
   }
@@ -177,7 +171,7 @@ class Search {
   }
 
   private async run() {
-    const round = this.round
+    const round = ++this.round
     const root = workspace.activeSpace?.root
 
     if (!root) {
@@ -185,6 +179,7 @@ class Search {
       return
     }
 
+    this.running = true
     this.empty()
     this.skipped.clear()
 
@@ -218,17 +213,16 @@ class Search {
 
   async replace() {
     const root = workspace.activeSpace?.root
-    const chosen = this.chosen
+    const { chosen, query, replacement } = this
     if (!root || !chosen.length) return
 
     const { changesFor } = await import('./apply')
-    const changes = await changesFor(this.query, chosen, this.replacement, root, (path) =>
+    const changes = await changesFor(query, chosen, replacement, root, (path) =>
       workspace.noteText(path),
     )
 
     await workspace.replaceInNotes(changes)
 
-    this.round++
     await this.run()
   }
 }
@@ -237,7 +231,7 @@ export const search = new Search()
 
 export function searchFrom(view: EditorView | undefined): void {
   const words = view?.hasFocus ? selectedWords(view.state) : null
-  if (words) search.ask(words)
+  if (words) search.ask(asWritten(words))
 
   revealPanel('search')
 }

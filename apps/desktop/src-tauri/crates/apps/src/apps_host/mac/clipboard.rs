@@ -1,0 +1,91 @@
+use orden_base::Held as _;
+use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
+use std::sync::{Arc, Mutex, Weak};
+use std::time::Duration;
+
+use objc2_app_kit::{NSPasteboard, NSPasteboardTypeString, NSWorkspace};
+use objc2_foundation::NSString;
+
+use crate::apps_host::clipped;
+const EVERY: Duration = Duration::from_millis(250);
+
+pub type Listener = Arc<dyn Fn(String) + Send + Sync>;
+
+pub struct Clipboard {
+    pid: i32,
+    listener: Mutex<Option<Listener>>,
+    ours: AtomicIsize,
+    ended: AtomicBool,
+}
+
+impl Clipboard {
+    pub fn open(pid: i32) -> Arc<Clipboard> {
+        let clipboard = Arc::new(Clipboard {
+            pid,
+            listener: Mutex::new(None),
+            ours: AtomicIsize::new(-1),
+            ended: AtomicBool::new(false),
+        });
+        let watched = Arc::downgrade(&clipboard);
+        let _ = std::thread::Builder::new()
+            .name("app clipboard".to_owned())
+            .spawn(move || watch(&watched));
+        clipboard
+    }
+
+    pub fn listen(&self, listener: Option<Listener>) {
+        *self.listener.held() = listener;
+    }
+
+    pub fn give(&self, text: &str) {
+        let board = NSPasteboard::generalPasteboard();
+        board.clearContents();
+        board.setString_forType(&NSString::from_str(clipped(text)), unsafe_string_type());
+        self.ours.store(board.changeCount(), Ordering::SeqCst);
+    }
+}
+
+impl Drop for Clipboard {
+    fn drop(&mut self) {
+        self.ended.store(true, Ordering::SeqCst);
+    }
+}
+
+#[allow(unsafe_code)]
+fn unsafe_string_type() -> &'static NSString {
+    unsafe { NSPasteboardTypeString }
+}
+
+fn watch(clipboard: &Weak<Clipboard>) {
+    let mut seen = NSPasteboard::generalPasteboard().changeCount();
+    loop {
+        std::thread::sleep(EVERY);
+        let Some(clipboard) = clipboard.upgrade() else {
+            return;
+        };
+        if clipboard.ended.load(Ordering::SeqCst) {
+            return;
+        }
+        let board = NSPasteboard::generalPasteboard();
+        let count = board.changeCount();
+        if count == seen {
+            continue;
+        }
+        seen = count;
+        if count == clipboard.ours.load(Ordering::SeqCst) || !in_front(clipboard.pid) {
+            continue;
+        }
+        let listener = clipboard.listener.held().clone();
+        let (Some(listener), Some(text)) = (listener, board.stringForType(unsafe_string_type()))
+        else {
+            continue;
+        };
+        listener(clipped(&text.to_string()).to_owned());
+    }
+}
+
+fn in_front(pid: i32) -> bool {
+    NSWorkspace::sharedWorkspace()
+        .frontmostApplication()
+        .is_some_and(|one| one.processIdentifier() == pid)
+}

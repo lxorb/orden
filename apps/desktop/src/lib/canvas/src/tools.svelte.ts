@@ -4,7 +4,6 @@ import { DEFAULT_INK } from '../../plane/src/api'
 import { type Tool } from './pointer'
 
 export const HOLD = 250
-
 const SPRUNG: ReadonlySet<Tool> = new Set<Tool>(['lasso'])
 
 interface Held {
@@ -70,8 +69,7 @@ class Tools {
   }
 }
 
-function drawn(tool: Tool): boolean {
-  return tool === 'draw' || tool === 'erase' || tool === 'lasso' || tool === 'hand'
-}
+const drawn = (tool: Tool): boolean =>
+  tool === 'draw' || tool === 'erase' || tool === 'lasso' || tool === 'hand'
 
 export const tools = new Tools()

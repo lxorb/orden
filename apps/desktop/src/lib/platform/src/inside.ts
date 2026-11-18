@@ -15,8 +15,24 @@ export function insideOnly(said: string): string | null {
   if (!steps.length) return null
   if (steps.some((step) => step === '..')) return null
   if (steps.some(isReserved)) return null
+  if (onWindows() && steps.some((step) => /[. ]$/.test(step))) return null
 
   return steps.join('/')
+}
+
+const SHORT_NAME = /^([^\s.~]{0,6}~\d{1,6})(\.[^\s.]{1,3})?$/
+
+function shortName(step: string): boolean {
+  const base = SHORT_NAME.exec(step.replace(/[. ]+$/, ''))?.[1]
+  return base !== undefined && base.length <= 8
+}
+
+export const namesByShortName = (path: string): boolean => path.split(/[\\/]/).some(shortName)
+
+function onWindows(): boolean {
+  const os = (globalThis as { window?: { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } } })
+    .window?.__TAURI_OS_PLUGIN_INTERNALS__
+  return os?.platform === 'windows'
 }
 
 function holdsUnnameable(path: string): boolean {

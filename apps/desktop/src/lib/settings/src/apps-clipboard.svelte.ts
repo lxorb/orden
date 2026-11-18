@@ -1,4 +1,4 @@
-import { keep, storedText } from '../../platform/src/api'
+import { heardElsewhere, keep, storedText } from '../../platform/src/api'
 
 const KEY = 'orden:apps-clipboard'
 
@@ -9,6 +9,12 @@ class ClipboardSharing {
     this.on = on
     keep(KEY, on ? 'yes' : 'no')
   }
+
+  heard() {
+    this.on = storedText(KEY) !== 'no'
+  }
 }
 
 export const clipboardSharing = new ClipboardSharing()
+
+heardElsewhere([KEY], () => clipboardSharing.heard())

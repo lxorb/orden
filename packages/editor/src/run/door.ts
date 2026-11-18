@@ -6,9 +6,8 @@ import { openViews } from '../open-views'
 
 const RUNNABLE = new Set(['js', 'javascript', 'mjs', 'cjs'])
 
-export function isRunnableLanguage(language: string): boolean {
-  return RUNNABLE.has(language.trim().toLowerCase())
-}
+export const isRunnableLanguage = (language: string): boolean =>
+  RUNNABLE.has(language.trim().toLowerCase())
 
 export interface RunnableFence {
   from: number
@@ -43,9 +42,7 @@ const loadRunner = door(() =>
   }),
 )
 
-export function runExtension(): Extension {
-  return runs.of(loaded ? loaded.runExtension : [])
-}
+export const runExtension = (): Extension => runs.of(loaded ? loaded.runExtension : [])
 
 export function runFence(view: EditorView, fence: RunnableFence): boolean {
   if (runs.get(view.state) === undefined) return false

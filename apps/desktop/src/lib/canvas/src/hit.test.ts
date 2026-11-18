@@ -3,27 +3,30 @@ import type { Canvas, CanvasEdge, CanvasNode } from '@orden/markdown/canvas'
 import { edgeEnds, edgeMiddle, boxOf } from '../../plane/src/api'
 import { hitAt, type Where } from './hit'
 
-function card(id: string, x: number, y: number): CanvasNode {
-  return { id, type: 'text', x, y, width: 250, height: 60, text: id }
-}
+const card = (id: string, x: number, y: number): CanvasNode => ({
+  id,
+  type: 'text',
+  x,
+  y,
+  width: 250,
+  height: 60,
+  text: id,
+})
 
 const NODES = [card('a', 0, 0), card('b', 600, 400)]
 const EDGE: CanvasEdge = { id: 'e', fromNode: 'a', toNode: 'b' }
-
 const CANVAS: Canvas = { nodes: NODES, edges: [EDGE], ink: [], at: {}, gone: {} }
 
-function where(over: Partial<Where> = {}): Where {
-  return {
-    canvas: CANVAS,
-    picked: [],
-    box: null,
-    scale: 1,
-    ported: null,
-    coarse: false,
-    lassoed: false,
-    ...over,
-  }
-}
+const where = (over: Partial<Where> = {}): Where => ({
+  canvas: CANVAS,
+  picked: [],
+  box: null,
+  scale: 1,
+  ported: null,
+  coarse: false,
+  lassoed: false,
+  ...over,
+})
 
 describe('what a point is on', () => {
   test('is the card the point is inside', () => {

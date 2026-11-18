@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import os
 
@@ -133,5 +131,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a page note's find meets a PDF word broken over a line end, and a changed word marks nothing as current"))
+raise SystemExit(DRIVE.run(drive, "a page note's find meets a PDF word broken over a line end, and a changed word marks nothing as current"))

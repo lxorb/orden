@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -84,5 +82,4 @@ def drive(browser: Browser) -> None:
     laptop(browser)
     phone(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the Mobile section is a phone's, and a laptop's once there is one"))
+raise SystemExit(DRIVE.run(drive, "the Mobile section is a phone's, and a laptop's once there is one"))

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from harness import Drive
 from shell import PHONE_AGENT, SEED
 
@@ -57,5 +55,4 @@ def main() -> int:
 
     return DRIVE.verdict("a shut drawer casts no shadow onto the screen")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

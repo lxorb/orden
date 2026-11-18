@@ -1,12 +1,9 @@
-import { linkTo } from '../../link-format/src/api'
 import { isRecord, isNumber, isString } from '../../platform/src/api'
 
 export { PDF_SIDECAR as SIDECAR } from '@orden/markdown/links'
 
 const VERSION = 1
-
 export type Quad = readonly [number, number, number, number, number, number, number, number]
-
 export const COLOURS = ['var(--accent)', 'var(--success)', 'var(--callout-warning)'] as const
 
 export interface Highlight {
@@ -26,17 +23,11 @@ export interface Sheet {
   held?: Held
 }
 
-export function emptySheet(): Sheet {
-  return { version: VERSION, highlights: [] }
-}
+export const emptySheet = (): Sheet => ({ version: VERSION, highlights: [] })
+export const leftAlone = (held: Held): Sheet => ({ version: VERSION, highlights: [], held })
 
-export function leftAlone(held: Held): Sheet {
-  return { version: VERSION, highlights: [], held }
-}
-
-export function frozen(sheet: Sheet): Held | null {
-  return sheet.held ?? (sheet.version > VERSION ? 'newer' : null)
-}
+export const frozen = (sheet: Sheet): Held | null =>
+  sheet.held ?? (sheet.version > VERSION ? 'newer' : null)
 
 function readQuad(value: unknown): Quad | null {
   if (!Array.isArray(value) || value.length !== 8) return null
@@ -91,12 +82,11 @@ export function readSheet(text: string): Sheet {
   }
 }
 
-function sorted(highlights: readonly Highlight[]): Highlight[] {
-  return [...highlights].sort(
+const sorted = (highlights: readonly Highlight[]): Highlight[] =>
+  [...highlights].sort(
     (one, other) =>
       one.page - other.page || one.created - other.created || (one.id < other.id ? -1 : 1),
   )
-}
 
 export function writeSheet(sheet: Sheet): string {
   if (!sheet.highlights.length) return ''
@@ -112,34 +102,20 @@ export interface Box {
 }
 
 export type Point = (x: number, y: number) => readonly [number, number]
-
 export type Transform = readonly [number, number, number, number, number, number]
 
-export function matrixOf(values: readonly number[]): Transform {
-  return [
-    values[0] ?? 1,
-    values[1] ?? 0,
-    values[2] ?? 0,
-    values[3] ?? 1,
-    values[4] ?? 0,
-    values[5] ?? 0,
-  ]
-}
+export const matrixOf = (values: readonly number[]): Transform => [
+  values[0] ?? 1,
+  values[1] ?? 0,
+  values[2] ?? 0,
+  values[3] ?? 1,
+  values[4] ?? 0,
+  values[5] ?? 0,
+]
 
 export function toViewport(matrix: Transform): Point {
   const [a, b, c, d, e, f] = matrix
   return (x, y) => [a * x + c * y + e, b * x + d * y + f]
-}
-
-export function toPdf(matrix: Transform): Point {
-  const [a, b, c, d, e, f] = matrix
-  const determinant = a * d - b * c
-  if (!determinant) return () => [0, 0]
-
-  return (x, y) => [
-    (d * (x - e) - c * (y - f)) / determinant,
-    (a * (y - f) - b * (x - e)) / determinant,
-  ]
 }
 
 export function boxOf(quad: Quad, toViewport: Point): Box {
@@ -161,57 +137,4 @@ export function boxOf(quad: Quad, toViewport: Point): Box {
     width: xs.reduce((high, one) => Math.max(high, one), -Infinity) - left,
     height: ys.reduce((high, one) => Math.max(high, one), -Infinity) - top,
   }
-}
-
-export function quadOf(box: Box, toPdf: Point): Quad {
-  const right = box.left + box.width
-  const bottom = box.top + box.height
-
-  const [x1, y1] = toPdf(box.left, box.top)
-  const [x2, y2] = toPdf(right, box.top)
-  const [x3, y3] = toPdf(right, bottom)
-  const [x4, y4] = toPdf(box.left, bottom)
-
-  return [x1, y1, x2, y2, x3, y3, x4, y4]
-}
-
-const SAME_LINE = 1.5
-
-export function joinRuns(boxes: readonly Box[]): Box[] {
-  const out: Box[] = []
-
-  for (const box of [...boxes].sort((one, other) => one.top - other.top || one.left - other.left)) {
-    if (box.width <= 0 || box.height <= 0) continue
-
-    const last = out[out.length - 1]
-    const sameLine =
-      last !== undefined &&
-      Math.abs(last.top - box.top) < SAME_LINE &&
-      Math.abs(last.height - box.height) < SAME_LINE &&
-      box.left <= last.left + last.width + SAME_LINE
-
-    if (last && sameLine) {
-      const right = Math.max(last.left + last.width, box.left + box.width)
-      last.left = Math.min(last.left, box.left)
-      last.width = right - last.left
-      continue
-    }
-
-    out.push({ ...box })
-  }
-
-  return out
-}
-
-export function citation(name: string, page: number, text: string): string {
-  const link = linkTo(name, null, { fragment: `page=${page}` })
-  const words = text.trim()
-  if (!words) return `${link}\n`
-
-  const quoted = words
-    .split('\n')
-    .map((line) => `> ${line.trim()}`)
-    .join('\n')
-
-  return `${quoted}\n\n${link}\n`
 }

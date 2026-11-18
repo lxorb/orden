@@ -1,13 +1,14 @@
 import { gatherLast, joinLast } from '../../file-undo/src/api'
 import type { Row } from '@orden/bases'
 import { oneEdit } from '@orden/markdown/edits'
-import { rows } from '../../rows/src/api'
-import { changed, type RowChange } from '../../rows/src/api'
+import { blockIds, freeBlockId } from '@orden/markdown/links'
+import { rows, changed, type RowChange } from '../../rows/src/api'
 import { type Change, changeOf } from '@orden/scan/search/replace'
 import { insideSpace } from '../../platform/src/api'
 import { noteText, replaceInNotes, workspace } from '../../workspace/src/api'
 import { type Said, undoToast } from '../../undo-toast/src/api'
 import type { Drop } from './drop'
+import { duplicatedTask, withoutTask } from './task-block'
 
 function pathOf(row: Row): string | null {
   const space = workspace.spaces.find((one) => one.name === row.space)
@@ -43,9 +44,7 @@ export async function asOneUndo(steps: readonly (() => Promise<unknown>)[]): Pro
   for (; made > 1; made--) if (!(await gatherLast(workspace.undone))) return
 }
 
-export function writeRow(row: Row, change: RowChange): Promise<boolean> {
-  return rows.write(row, change)
-}
+export const writeRow = (row: Row, change: RowChange): Promise<boolean> => rows.write(row, change)
 
 export async function writeEach(
   pairs: readonly { row: Row; change: RowChange }[],
@@ -77,9 +76,7 @@ export async function writeEach(
   return true
 }
 
-export function dropRow(row: Row, drop: Drop): Promise<boolean> {
-  return writeRow(row, drop.change)
-}
+export const dropRow = (row: Row, drop: Drop): Promise<boolean> => writeRow(row, drop.change)
 
 export async function pressRow(row: Row, change: RowChange): Promise<boolean> {
   const path = pathOf(row)
@@ -87,4 +84,34 @@ export async function pressRow(row: Row, change: RowChange): Promise<boolean> {
   return rewrite(path, (before) =>
     Object.keys(change.note ?? {}).length ? changed(before, row, change) : before,
   )
+}
+
+async function rewriteTask(
+  row: Row,
+  after: (before: string, anchor: { line: number; hash: string }) => string | null,
+  said?: Said,
+): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!row.task || !anchor || path === null) return false
+  const before = await noteText(workspace, path)
+  if (before === null) return false
+  const next = after(before, anchor)
+  const edit = next === null ? null : oneEdit(before, next)
+  if (!edit) return false
+  return replaced([changeOf(path, before, [edit])], said)
+}
+
+export const deleteTask = (row: Row): Promise<boolean> => rewriteTask(row, withoutTask, 'deleted')
+export const duplicateTask = (row: Row): Promise<boolean> => rewriteTask(row, duplicatedTask)
+
+export async function linkToTask(row: Row): Promise<string | null> {
+  const note = row.path.replace(/\.md$/i, '')
+  if (row.task?.block) return `[[${note}#^${row.task.block}]]`
+  let id = ''
+  const named = await rewriteTask(row, (before) => {
+    id = freeBlockId(new Set(blockIds(before).map((one) => one.id)))
+    return changed(before, row, { task: { block: id } })
+  })
+  return named ? `[[${note}#^${id}]]` : null
 }

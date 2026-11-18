@@ -17,7 +17,7 @@
     setFind,
     setReadOnlyMode,
   } from '@orden/editor'
-  import { untrack } from 'svelte'
+  import { type Component, untrack } from 'svelte'
   import {
     Door,
     dragged,
@@ -43,6 +43,7 @@
   import {
     type Pane,
     panesIn,
+    paneToward,
     topRow,
     type Landing,
     EDGE,
@@ -64,7 +65,7 @@
   import { modes } from '../../modes/src/api'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { commandRowsLoaded, settingsWindow, type OpenHow } from '@orden/contracts'
+  import { commandRowsLoaded, type OpenHow, sayNotice } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -117,6 +118,9 @@
       !alone.on &&
       !panesIn(topRow(workspace.panes.frame)).some((one) => one.id === pane.id),
   )
+  const atLeft = $derived(!paneToward(workspace.panes.frame, pane.id, 'left'))
+  const atRight = $derived(!paneToward(workspace.panes.frame, pane.id, 'right'))
+  const atFoot = $derived(!paneToward(workspace.panes.frame, pane.id, 'down'))
   const ownSurface = $derived(
     !!tab && (TAB_KINDS[tab.kind].takesDrops || (isDesktop && tab.kind === 'web')),
   )
@@ -141,6 +145,12 @@
   const edged = $derived(keepsMiddle ? '' : undefined)
 
   const columnViews = $state<Record<string, EditorView | undefined>>({})
+
+  function takeColumn(id: string) {
+    if (id === pane.activeTabId && workspace.panes.focusedId === pane.id) return
+    workspace.focusPane(pane.id)
+    workspace.activate(id)
+  }
 
   $effect(() => {
     if (!stacking) return
@@ -291,7 +301,7 @@
       return src
     } catch (error) {
       void usage.refresh()
-      settingsWindow().error = message(error, 'That image does not fit in your storage.')
+      sayNotice(message(error, 'That image does not fit in your storage.'))
       return null
     }
   }
@@ -300,13 +310,13 @@
     try {
       return await busy.run('Storing the file', () => storeAttachment(file, into.path))
     } catch (error) {
-      settingsWindow().error = message(error, 'That file could not be kept.')
+      sayNotice(message(error, 'That file could not be kept.'))
       return null
     }
   }
 
-  function resolveImage(src: string, from: Tab): string {
-    return notePicture(src, from.path, from.doc)
+  function resolveImage(src: string, from: Tab, wikilink = false): string {
+    return notePicture(src, from.path, from.doc, wikilink)
   }
 
   function nameBlock(path: string, line: number, from: Tab): Promise<string | null> {
@@ -364,6 +374,9 @@
   class="pane"
   class:lifted={tabOverview.lifted.includes(pane.id)}
   class:straight={!stripped && flushFirst(pane.id)}
+  class:at-left={atLeft}
+  class:at-right={atRight}
+  class:at-foot={atFoot}
   data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   use:dropOver={over}
@@ -438,29 +451,11 @@
       {@render unreachable()}
     {/await}
   {:else if tab?.kind === 'canvas'}
-    {#key tab.id}
-      {#await canvasSurface() then Canvas}
-        <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(canvasSurface, tab)}
   {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
-    {#key tab.id}
-      {#await pagesSurface() then Pages}
-        <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(pagesSurface, tab)}
   {:else if tab?.kind === 'web'}
-    {#key tab.id}
-      {#await webSurface() then WebTab}
-        <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(webSurface, tab)}
   {:else if tab?.kind === 'view' && tab.path === null}
     {#key tab.id}
       {#await todosBoard() then TodosBoard}
@@ -470,63 +465,29 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'view'}
-    {#key tab.id}
-      {#await viewSurface() then ViewTab}
-        <ViewTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(viewSurface, tab)}
   {:else if tab?.kind === 'channel'}
-    {#key tab.id}
-      {#await chatSurface() then ChatTab}
-        <ChatTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(chatSurface, tab)}
   {:else if tab?.kind === 'chat'}
-    {#await askPanel() then ChatPanel}
-      <ChatPanel wide />
-    {:catch}
-      {@render unreachable()}
-    {/await}
-  {:else if tab?.kind === 'terminal'}
     {#key tab.id}
-      {#await terminalSurface() then TerminalTab}
-        <TerminalTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {#await askPanel() then ChatPanel}
+        <ChatPanel wide {tab} />
       {:catch}
         {@render unreachable()}
       {/await}
     {/key}
+  {:else if tab?.kind === 'terminal'}
+    {@render surface(terminalSurface, tab)}
   {:else if tab?.kind === 'application'}
     {#if appsOn()}
-      {#key tab.id}
-        {#await applicationSurface() then ApplicationTab}
-          <ApplicationTab {tab} />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
+      {@render surface(applicationSurface, tab)}
     {/if}
   {:else if tab?.kind === 'explorer'}
     {#if explorerOn()}
-      {#key tab.id}
-        {#await explorerSurface() then ExplorerTab}
-          <ExplorerTab {tab} focused={workspace.panes.focusedId === pane.id} />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
+      {@render surface(explorerSurface, tab)}
     {/if}
   {:else if tab?.kind === 'pass'}
-    {#key tab.id}
-      {#await passSurface() then PassTab}
-        <PassTab {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(passSurface, tab)}
   {:else if tab?.kind === 'settings'}
     {#key tab.id}
       {#await settingsSurface() then SettingsPanel}
@@ -536,13 +497,7 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'time'}
-    {#key tab.id}
-      {#await timeSurface() then TimeTab}
-        <TimeTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(timeSurface, tab)}
   {:else if tab?.coming}
     <div class="coming" role="status">
       {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
@@ -550,18 +505,16 @@
         : 'Loading…'}
     </div>
   {:else if tab?.reading}
-    {#key tab.id}
-      {#await readingSurface() then Reading}
-        <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(readingSurface, tab)}
   {:else if stacking}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="stack" data-region="editor">
       {#each columns as one (one.id)}
-        <section class="column" class:is-active={one.id === pane.activeTabId}>
+        <section
+          class="column"
+          class:is-active={one.id === pane.activeTabId}
+          onfocusin={() => takeColumn(one.id)}
+        >
           <button
             class="spine"
             title={one.shown}
@@ -648,6 +601,16 @@
   {/if}
 </div>
 
+{#snippet surface(load: () => Promise<Component<{ tab: Tab; focused: boolean }>>, shown: Tab)}
+  {#key shown.id}
+    {#await load() then Surface}
+      <Surface tab={shown} focused={workspace.panes.focusedId === pane.id} />
+    {:catch}
+      {@render unreachable()}
+    {/await}
+  {/key}
+{/snippet}
+
 {#snippet unreachable()}
   <div class="coming" role="alert">
     <button class="orden-button" onclick={() => location.reload()}>Reload</button>
@@ -668,6 +631,22 @@
     box-shadow:
       var(--card-shadow),
       0 0 0 1px var(--card-edge);
+    transition: border-radius var(--dur-base) var(--ease-out);
+  }
+
+  .pane.at-left {
+    border-top-left-radius: var(--left-edge, var(--card-radius));
+    border-bottom-left-radius: var(--left-edge, var(--card-radius));
+  }
+
+  .pane.at-right {
+    border-top-right-radius: var(--right-edge, var(--card-radius));
+    border-bottom-right-radius: var(--right-edge, var(--card-radius));
+  }
+
+  .pane.at-foot {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .pane.straight {

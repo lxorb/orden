@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 from collections.abc import Callable
 
 from playwright.sync_api import Browser, Error as PlaywrightError, Page
@@ -18,8 +16,6 @@ WATCH = """
   const armed = sessionStorage.getItem('launch-close');
   if (!armed) return;
   sessionStorage.removeItem('launch-close');
-  // The session written as the window goes, and nothing after it: the page goes on running
-  // for a moment after a reload is asked for, and a launch ending in that moment shows nothing.
   const go = (ws) => {
     ws.persist();
     ws.persist = () => true;
@@ -121,5 +117,4 @@ def drive(browser: Browser) -> None:
     kept_through(page, "list up", True, total)
     kept_through(page, "set building", True, total)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

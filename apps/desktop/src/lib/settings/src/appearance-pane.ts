@@ -70,7 +70,6 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
       step: setting.step,
       unit: setting.unit,
       initial: setting.initial,
-      ...(setting.least ? { least: setting.least } : {}),
       get: () => Number(get() ?? setting.initial),
       preview: (value) => theme.try(setting.id, value),
       set: put,
@@ -82,7 +81,7 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
       ...common,
       kind: 'switch',
       initial: setting.initial,
-      get: () => get() === true,
+      get: () => (get() ?? setting.initial) === true,
       set: put,
     }
   }

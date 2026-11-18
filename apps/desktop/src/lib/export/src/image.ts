@@ -12,7 +12,6 @@ export interface ImageOptions {
 
 const DEFAULT_WIDTH = 800
 const DEFAULT_SCALE = 2
-
 const XHTML = 'http://www.w3.org/1999/xhtml'
 
 export interface Page {
@@ -94,8 +93,8 @@ async function measuredHeight(html: string, width: number): Promise<number> {
   }
 }
 
-function loadedPicture(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+const loadedPicture = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
     const picture = new Image()
     picture.addEventListener('load', () => {
       resolve(picture)
@@ -105,7 +104,6 @@ function loadedPicture(url: string): Promise<HTMLImageElement> {
     })
     picture.src = url
   })
-}
 
 interface Paper {
   width: number

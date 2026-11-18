@@ -648,6 +648,22 @@ pub(crate) fn read(lib: &Path, target: Target) -> Crate {
         ..Gathered::default()
     };
     gathered.file("crate", lib, true);
+    let crates = lib
+        .parent()
+        .and_then(Path::parent)
+        .map(|app| app.join("crates"));
+    for one in crates
+        .and_then(|dir| fs::read_dir(dir).ok())
+        .into_iter()
+        .flatten()
+        .flatten()
+    {
+        let source = one.path().join("src").join("lib.rs");
+        if source.exists() {
+            let name = one.file_name().to_string_lossy().replace('-', "_");
+            gathered.file(&format!("orden_{name}"), &source, true);
+        }
+    }
     gathered.resolved()
 }
 
@@ -708,6 +724,17 @@ struct Found {
     bounds: Bounds,
     closures: Closures,
     drops: Drops,
+}
+
+impl Found {
+    fn place(&self) -> Place<'_> {
+        (
+            &self.module,
+            Some(&self.scope),
+            self.owner.as_deref(),
+            Some(&self.bounds),
+        )
+    }
 }
 
 type Bounds = HashMap<String, Vec<Vec<String>>>;
@@ -1329,16 +1356,7 @@ impl Gathered {
             let called: Vec<String> = found
                 .calls
                 .iter()
-                .flat_map(|path| {
-                    self.absolute(
-                        &found.module,
-                        Some(&found.scope),
-                        found.owner.as_deref(),
-                        path,
-                        0,
-                    )
-                })
-                .flat_map(|path| self.landing(&path, 0))
+                .flat_map(|path| self.resolve(found, path))
                 .collect();
 
             let typed = self.typed(found, &found.methods);
@@ -1518,12 +1536,7 @@ impl Gathered {
         if depth > TYPED_DEEPEST {
             return false;
         }
-        let place = (
-            &*found.module,
-            Some(&found.scope),
-            found.owner.as_deref(),
-            Some(&found.bounds),
-        );
+        let place = found.place();
         let mut owned = match &chain.root {
             Root::Built(_) => true,
             Root::Call(path, _) => {
@@ -1789,7 +1802,7 @@ impl Gathered {
             steps: steps.to_vec(),
         };
         let tys = self.types(found, &receiver, &mut Vec::new(), 0);
-        if method == "lock" {
+        if method == "lock" || method == "held" {
             if tys.iter().any(|one| !self.targets(one, "lock").is_empty()) {
                 return Taken::Own(receiver);
             }
@@ -1813,16 +1826,10 @@ impl Gathered {
     }
 
     fn resolve(&self, found: &Found, path: &[String]) -> Vec<String> {
-        self.absolute(
-            &found.module,
-            Some(&found.scope),
-            found.owner.as_deref(),
-            path,
-            0,
-        )
-        .into_iter()
-        .flat_map(|one| self.landing(&one, 0))
-        .collect()
+        self.absolute_in(found, path)
+            .into_iter()
+            .flat_map(|one| self.landing(&one, 0))
+            .collect()
     }
 
     fn resolve_all(&self, found: &Found, calls: &[Vec<String>]) -> HashSet<String> {
@@ -1836,13 +1843,7 @@ impl Gathered {
         match key {
             Key::Named(name) => name.clone(),
             Key::Path(path) => self
-                .absolute(
-                    &found.module,
-                    Some(&found.scope),
-                    found.owner.as_deref(),
-                    path,
-                    0,
-                )
+                .absolute_in(found, path)
                 .into_iter()
                 .next()
                 .unwrap_or_else(|| joined(&found.module, path)),
@@ -2092,16 +2093,7 @@ impl Gathered {
     }
 
     fn ty_of(&self, found: &Found, raw: &syn::Type) -> Option<Ty> {
-        self.ty_in(
-            (
-                &found.module,
-                Some(&found.scope),
-                found.owner.as_deref(),
-                Some(&found.bounds),
-            ),
-            raw,
-            0,
-        )
+        self.ty_in(found.place(), raw, 0)
     }
 
     fn def_ty(&self, owner: &str, raw: &syn::Type) -> Option<Ty> {
@@ -2162,12 +2154,7 @@ impl Gathered {
         visiting: &mut Vec<String>,
         depth: usize,
     ) -> Vec<Ty> {
-        let place = (
-            &*found.module,
-            Some(&found.scope),
-            found.owner.as_deref(),
-            Some(&found.bounds),
-        );
+        let place = found.place();
         match root {
             Root::Me => found.owner.as_deref().map(Ty::plain).into_iter().collect(),
             Root::Var(name) => {
@@ -2272,12 +2259,7 @@ impl Gathered {
             }
             _ => {}
         }
-        let place = (
-            &*found.module,
-            Some(&found.scope),
-            found.owner.as_deref(),
-            Some(&found.bounds),
-        );
+        let place = found.place();
         match path {
             [.., last] if last.starts_with(char::is_uppercase) => self.def_named(place, path),
             [shape @ .., last] if !shape.is_empty() && (last == "default" || last == "new") => {
@@ -2366,6 +2348,16 @@ impl Gathered {
         std_method(ty, method).map(|one| vec![one])
     }
 
+    fn absolute_in(&self, found: &Found, path: &[String]) -> Vec<String> {
+        self.absolute(
+            &found.module,
+            Some(&found.scope),
+            found.owner.as_deref(),
+            path,
+            0,
+        )
+    }
+
     fn absolute(
         &self,
         module: &str,
@@ -2382,7 +2374,10 @@ impl Gathered {
         }
 
         match first.as_str() {
-            "crate" => vec![joined("crate", &segments[1..])],
+            "crate" => vec![joined(
+                module.split("::").next().unwrap_or(module),
+                &segments[1..],
+            )],
             "self" => vec![joined(module, &segments[1..])],
             "Self" => owner
                 .map(|owner| joined(owner, &segments[1..]))
@@ -2397,6 +2392,7 @@ impl Gathered {
                 }
                 vec![joined(base, rest)]
             }
+            root if self.owners.contains(root) => vec![joined(root, &segments[1..])],
             _ => self.named(module, local, segments, depth),
         }
     }
@@ -4119,8 +4115,8 @@ fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
         )
         | (
             "Mutex" | "RwLock",
-            "lock" | "read" | "write" | "try_lock" | "try_read" | "try_write" | "blocking_lock"
-            | "blocking_read" | "blocking_write" | "get_mut" | "into_inner",
+            "lock" | "held" | "read" | "write" | "try_lock" | "try_read" | "try_write"
+            | "blocking_lock" | "blocking_read" | "blocking_write" | "get_mut" | "into_inner",
         )
         | (
             "RefCell",
@@ -4179,7 +4175,7 @@ fn std_method(ty: &Ty, method: &str) -> Option<Ty> {
 }
 
 fn locked(call: &syn::ExprMethodCall) -> bool {
-    ["lock", "read", "write"]
+    ["lock", "held", "read", "write"]
         .iter()
         .any(|one| call.method == one)
         && call.args.is_empty()

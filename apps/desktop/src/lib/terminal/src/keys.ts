@@ -21,28 +21,14 @@ export interface Keystroke {
   shiftKey: boolean
 }
 
-const APP_KEYS = new Set([
-  'app.reopen',
-  'app.new-window',
-  'app.next-note',
-  'app.previous-note',
-  'app.next-note.alt',
-  'app.previous-note.alt',
-  'app.move-tab-left',
-  'app.move-tab-right',
-  'app.palette',
-  'app.palette.alt',
-  'app.commands',
-  'app.commands.alt',
-  'app.settings',
-  'app.fullscreen',
-  'app.fill-tab',
-  'app.region-next',
-  'app.region-previous',
-])
+const APP_KEYS = new Set(
+  `app.reopen app.new-window app.next-note app.previous-note
+  app.next-note.alt app.previous-note.alt app.move-tab-left app.move-tab-right app.palette
+  app.palette.alt app.commands app.commands.alt app.settings app.fullscreen app.fill-tab
+  app.region-next app.region-previous`.split(/\s+/),
+)
 
 const NEITHER = new Set(['app.close-window'])
-
 const SHELL_FIRST = new Set(['app.reload'])
 
 const SHELL_KEYS = new Set([

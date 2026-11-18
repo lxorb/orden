@@ -34,7 +34,6 @@ Object.defineProperty(document, 'visibilityState', {
 })
 
 const Window = (await import('./Window.svelte')).default
-
 let target: HTMLDivElement
 let drawn: ReturnType<typeof mount>
 

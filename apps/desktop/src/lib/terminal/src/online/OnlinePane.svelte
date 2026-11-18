@@ -1,13 +1,11 @@
 <script lang="ts">
-  import { Facts } from '../../../ui-kit/src/api'
-  import { region } from '../../../platform/src/api'
-  import { localDate, localNumber } from '../../../platform/src/api'
+  import { Facts, prompt } from '../../../ui-kit/src/api'
+  import { localDate, localNumber, spaceHolding } from '../../../platform/src/api'
   import { diskNear, diskShare, shares } from '@orden/online'
-  import { prompt } from '../../../ui-kit/src/api'
-  import { within } from '../../../platform/src/api'
   import { runner } from '../../../sync-client/src/api'
   import { workspace } from '../../../workspace/src/api'
-  import { cityOf } from './calls'
+  import { summaryOf } from './choosing'
+  import MachinePicker from './MachinePicker.svelte'
   import { opens, rowsOf, type SessionRow } from './listing'
   import { machine } from './machine.svelte'
   import { sessions } from './sessions.svelte'
@@ -39,7 +37,7 @@
     [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null)
 
   async function open(path: string) {
-    const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+    const space = spaceHolding(workspace.spaces, path)
     if (space && space.id !== workspace.activeSpaceId) await workspace.showSpace(space.id)
     await workspace.openEntry(path, { activate: true })
   }
@@ -58,43 +56,35 @@
   const awake = $derived(state === 'awake' || state === 'starting')
   const server = $derived(known?.machine?.host === 'hetzner')
 
-  const gb = (value: number) => `${localNumber(Math.round(value))} GB`
-
   function bytes(value: number): string {
     const [amount, unit] = value >= 1e9 ? [value / 1e9, 'GB'] : [value / 1e6, 'MB']
     const shown = amount < 10 ? Math.round(amount * 10) / 10 : Math.round(amount)
     return `${localNumber(shown)} ${unit}`
   }
 
-  const spec = $derived.by(() => {
-    const about = known?.machine?.server
-    if (!about) return null
-    const parts = [
-      about.type.toUpperCase(),
-      ...(about.location ? [cityOf(about.location)] : []),
-      `${localNumber(about.cores)} vCPU`,
-      gb(about.memoryGb),
-      gb(about.diskGb),
-    ]
-    if (about.price !== null && about.currency) {
-      const price = new Intl.NumberFormat(region(), {
-        style: 'currency',
-        currency: about.currency,
-      }).format(about.price)
-      parts.push(`${price} a month`)
-    }
-    return parts.map((part) => part.replaceAll(' ', '\u00a0'))
+  const about = $derived(known?.machine?.server ?? null)
+  const summary = $derived(about ? summaryOf(about) : null)
+
+  const allowed = $derived(known?.allowed === true)
+
+  $effect(() => {
+    if (allowed) void machine.offer()
   })
 
-  const stateWords = $derived(
-    state === 'awake'
-      ? 'Awake'
-      : state === 'starting'
-        ? 'Starting'
-        : state === 'stopping'
-          ? 'Stopping'
-          : 'Asleep',
+  const offers = $derived(machine.offers)
+
+  const choosable = $derived(
+    offers !== null && (!known?.machine || known.machine.host === 'hetzner'),
   )
+
+  const running = $derived((sessions.list ?? []).filter((one) => one.alive === true).length)
+
+  const STATES: Record<string, string> = {
+    awake: 'Awake',
+    starting: 'Starting',
+    stopping: 'Stopping',
+  }
+  const stateWords = $derived(STATES[state ?? ''] ?? 'Asleep')
 
   const hours = (seconds: number) =>
     localNumber(Math.round(seconds / (seconds < 36_000 ? 360 : 3600)) / (seconds < 36_000 ? 10 : 1))
@@ -103,52 +93,31 @@
 
   const disk = $derived(known?.machine?.disk ?? null)
 
+  const meter = (label: string, share: number, words: string, near = false) => ({
+    label,
+    share,
+    near,
+    words,
+  })
+  const time = (used: number, limit: number) => `${hours(used)} / ${hours(limit)} h`
+  const room = (used: number, limit: number) => `${bytes(used)} / ${bytes(limit)}`
+
   const diskMeter = $derived(
-    disk
-      ? [
-          {
-            label: 'Disk',
-            share: diskShare(disk),
-            near: diskNear(disk),
-            words: `${bytes(disk.used)} / ${bytes(disk.total)}`,
-          },
-        ]
-      : [],
+    disk ? [meter('Disk', diskShare(disk), room(disk.used, disk.total), diskNear(disk))] : [],
   )
 
-  const meters = $derived(
-    server
-      ? diskMeter
-      : known && share
-        ? [
-            {
-              label: 'Hours',
-              share: share.awakeS,
-              near: machine.near,
-              words: `${hours(known.used.awakeS)} / ${hours(known.limit.awakeS)} h`,
-            },
-            {
-              label: 'CPU',
-              share: share.cpuS,
-              near: false,
-              words: `${hours(known.used.cpuS)} / ${hours(known.limit.cpuS)} h`,
-            },
-            {
-              label: 'Home',
-              share: share.homeBytes,
-              near: false,
-              words: `${bytes(known.used.homeBytes)} / ${bytes(known.limit.homeBytes)}`,
-            },
-            {
-              label: 'Web',
-              share: share.egressBytes,
-              near: false,
-              words: `${bytes(known.used.egressBytes)} / ${bytes(known.limit.egressBytes)}`,
-            },
-            ...diskMeter,
-          ]
-        : [],
-  )
+  const meters = $derived.by(() => {
+    if (server) return diskMeter
+    if (!known || !share) return []
+    const { used, limit } = known
+    return [
+      meter('Hours', share.awakeS, time(used.awakeS, limit.awakeS), machine.near),
+      meter('CPU', share.cpuS, time(used.cpuS, limit.cpuS)),
+      meter('Home', share.homeBytes, room(used.homeBytes, limit.homeBytes)),
+      meter('Web', share.egressBytes, room(used.egressBytes, limit.egressBytes)),
+      ...diskMeter,
+    ]
+  })
 
   const refusal = $derived(
     machine.known?.allowed === false
@@ -160,15 +129,28 @@
 </script>
 
 <div class="online">
-  {#if known?.machine}
+  {#if known?.machine ?? choosable}
     <div class="card">
       <div class="orden-setting setting">
         <span class="name">
           Machine
-          {#if spec}<small><Facts parts={spec} /></small>{/if}
+          {#if summary}
+            <small class="summary"><Facts parts={summary.about} /></small>
+            {#if summary.cost.length}<small class="summary"><Facts parts={summary.cost} /></small
+              >{/if}
+          {/if}
         </span>
         <div class="row">
           <span class="hint">{stateWords}</span>
+          {#if choosable}
+            <button
+              class="orden-chip"
+              aria-expanded={machine.picking}
+              disabled={state === 'starting' || state === 'stopping'}
+              onclick={() => (machine.picking = !machine.picking)}
+              >{about?.made ? 'Change' : 'Choose'}</button
+            >
+          {/if}
           <button
             class="orden-chip"
             disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
@@ -177,6 +159,12 @@
           >
         </div>
       </div>
+    </div>
+  {/if}
+
+  {#if machine.picking && offers}
+    <div class="card">
+      <MachinePicker {offers} server={about} {running} chosen={() => machine.chosen()} />
     </div>
   {/if}
 

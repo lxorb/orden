@@ -11,6 +11,7 @@ const disk = vi.hoisted(() => ({
   reactive: false,
   heard: null as ((path: string, words: string) => void) | null,
   held: null as Promise<void> | null,
+  shut: false,
 }))
 
 vi.mock('../../platform/src/tauri', async (original) => ({
@@ -22,6 +23,7 @@ vi.mock('../../platform/src/on-disk', () => ({
   onDisk: (path: string) => Promise.resolve(disk.files.has(path) || !path.endsWith('.md')),
 }))
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => disk.writable }))
+vi.mock('../../protect/src/api', () => ({ protection: { locked: () => disk.shut } }))
 vi.mock('../../link-index/src/api', () => ({
   links: {
     hearSaves: (hear: (path: string, words: string) => void) => {
@@ -49,7 +51,7 @@ vi.mock('../../workspace/src/api', () => ({
   writeNoteText: (_: unknown, path: string, _before: string, after: string) => {
     disk.writes.push({ path, after })
     disk.files.set(path, after)
-    return Promise.resolve()
+    return Promise.resolve(true)
   },
 }))
 vi.mock('../../file-writes/src/api', async (original) => ({
@@ -98,6 +100,7 @@ beforeEach(() => {
   disk.reads = 0
   disk.reactive = false
   disk.held = null
+  disk.shut = false
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -137,7 +140,6 @@ describe('Settings > Space', () => {
     let box = await shown()
     expect(document.activeElement).not.toBe(box)
     close?.()
-
     settings.landsOnField = true
     box = await shown()
     expect(document.activeElement).toBe(box)
@@ -217,12 +219,10 @@ describe('Settings > Space', () => {
     const box = await shown()
     typed(box, '# Rules, typing')
     const reads = disk.reads
-
     settings.section = settings.section === 'space' ? 'general' : 'space'
     flushSync()
     await settled()
     flushSync()
-
     expect(disk.reads).toBe(reads)
     expect(box.value).toBe('# Rules, typing')
     expect(target.querySelector('textarea')).toBe(box)
@@ -232,7 +232,6 @@ describe('Settings > Space', () => {
     disk.files.set('/space/AGENTS.md', '# Rules')
     const box = await shown()
     typed(box, '# Rules, last keys')
-
     settleUp()
     expect(stillWriting()).toBe(true)
     await settled()
@@ -263,5 +262,16 @@ describe('Settings > Space', () => {
     await settled()
     expect(disk.made).toEqual(['/space/AGENTS.md'])
     expect(reads).toHaveBeenCalled()
+  })
+
+  test('neither shows nor takes the instructions of a locked space', async () => {
+    disk.files.set('/space/AGENTS.md', '# Private rules')
+    disk.shut = true
+    const box = await shown()
+    expect(box.value).toBe('')
+    expect(box.readOnly).toBe(true)
+    typed(box, 'mine')
+    await settled()
+    expect(disk.writes).toEqual([])
   })
 })

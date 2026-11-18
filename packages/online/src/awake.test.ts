@@ -39,8 +39,8 @@ interface Case {
   budgetLeft?: number
 }
 
-function ask(given: Case): AwakeAnswer {
-  return awake(
+const ask = (given: Case): AwakeAnswer =>
+  awake(
     NOW,
     given.watchers ?? [],
     given.recent ?? [],
@@ -49,7 +49,6 @@ function ask(given: Case): AwakeAnswer {
     given.limit ?? FREE,
     given.budgetLeft ?? 30,
   )
-}
 
 describe('awake: somebody using a terminal', () => {
   it.each<[string, Watcher[], AwakeAnswer]>([

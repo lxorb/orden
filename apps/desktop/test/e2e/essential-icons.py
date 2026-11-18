@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import sys
 
@@ -223,5 +221,4 @@ def main() -> int:
     return DRIVE.verdict("every kind of essential chooses, wears and puts down an icon")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -21,7 +21,6 @@
   import DefaultBrowser from './DefaultBrowser.svelte'
   import FontPicker from './FontPicker.svelte'
   import {
-    settingFieldsIn,
     type SettingsPart,
     type SettingsPartHost,
     settingsPartsIn,
@@ -30,7 +29,7 @@
   import { Outward } from '../../ui-controls/src/api'
   import { Icon } from '../../glyphs/src/api'
   import { localDate } from '../../platform/src/api'
-  import { Security } from '../../accounts-ui/src/api'
+  import { Addresses, Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { holdScroll } from '../../panes/src/api'
@@ -40,6 +39,7 @@
   import {
     CATEGORIES,
     doubleTaps,
+    offeredHere,
     type Preset,
     runnable,
     SHORTCUTS,
@@ -51,6 +51,7 @@
   import { globalKeys, noteFor } from './global-keys.svelte'
   import { landing } from './landing.svelte'
   import { places as paneRows } from './places'
+  import { offers } from './ask-settings'
   import { ICONS, sectionGroups } from './sections'
   import { type Place, search } from './settings-search'
   import { sync } from '../../sync-store/src/api'
@@ -64,7 +65,7 @@
   import { dur, fly, slide } from '../../platform/src/api'
   import { waited } from '../../platform/src/api'
 
-  let customBad = $state(false)
+  let refused = $state<string | null>(null)
 
   let leaving = $state(false)
 
@@ -97,7 +98,7 @@
   const places = $derived.by((): Place[] => {
     const all: Place[] = [
       ...paneRows(),
-      ...SHORTCUTS.map((one): Place => ({
+      ...SHORTCUTS.filter(offeredHere).map((one): Place => ({
         section: 'shortcuts',
         label: one.label(),
         text: [shortcuts.hint(one.id) ?? '', 'Shortcuts'],
@@ -170,6 +171,13 @@
     settings.listing = false
   }
 
+  const offered = () => offers(panes, places, titleOf)
+
+  function goTo(section: SettingsSectionId, label: string) {
+    go(section)
+    landing.label = label || null
+  }
+
   async function rename(name: string) {
     settings.error = null
     try {
@@ -187,14 +195,15 @@
     input: HTMLInputElement,
     kept: boolean,
   ) {
-    const least = field.least?.() ?? field.min
-    let value = Number(input.value)
-    if (value < least) {
-      value = least
-      input.value = String(least)
-    }
+    const value = Number(input.value)
     if (kept || !field.preview) field.set(value)
     else field.preview(value)
+  }
+
+  function typed(field: Extract<Field, { kind: 'text' }>, value: string) {
+    const wrong = (field.check?.(value) ?? null) !== null
+    refused = wrong ? field.label : null
+    if (!wrong) field.set(value)
   }
 
   function placing(side: PictureSide, press: PointerEvent) {
@@ -264,9 +273,7 @@
     return CATEGORIES.map((category) => ({
       id: category.id,
       label: category.label(),
-      rows: SHORTCUTS.filter(
-        (one) => one.category === category.id && one.shown?.() !== false,
-      ).filter(
+      rows: SHORTCUTS.filter((one) => one.category === category.id && offeredHere(one)).filter(
         (one) =>
           !needle ||
           has(one.label()) ||
@@ -379,6 +386,8 @@
     <nav data-scrolls use:scrollbar in:fly={enter(-24)}>
       {#if !stacked}
         <h1>Settings</h1>
+      {:else}
+        {@render asker()}
       {/if}
 
       <label class="orden-field search">
@@ -427,6 +436,9 @@
       use:scrollbar={settings.section}
       in:fly={enter(24)}
     >
+      {#if !stacked}
+        {@render asker()}
+      {/if}
       {#if query && !stacked}
         <div class="pane">
           <h2>Search settings</h2>
@@ -451,6 +463,14 @@
 </div>
 
 <ThemeStore />
+
+{#snippet asker()}
+  {#if !__EVEN_PLUGIN__}
+    {#await import('./AskSettings.svelte') then { default: AskSettings }}
+      <AskSettings offers={offered} ongo={goTo} />
+    {/await}
+  {/if}
+{/snippet}
 
 {#snippet results()}
   {#if found.length}
@@ -491,7 +511,7 @@
 {/snippet}
 
 {#snippet row(field: Field, where?: string)}
-  {#if field.kind === 'switch'}
+  {#if field.shown?.() === false}{:else if field.kind === 'switch'}
     {@const held = field.get()}
     {@const locked = field.locked?.() ?? false}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -511,23 +531,19 @@
       />
     </div>
   {:else if field.kind === 'slider'}
-    {@const least = field.least?.() ?? field.min}
-    {@const held = Math.max(field.get(), least)}
+    {@const held = field.get()}
     <div class="orden-setting setting sliding">
       {@render named(field, where)}
       <span class="value">{held}{field.unit ?? ''}</span>
       <input
         class="slider orden-slider"
-        class:floored={least > field.min}
         type="range"
         min={field.min}
         max={field.max}
         step={field.step}
         value={held}
         aria-label={field.label}
-        aria-valuemin={least}
         style:--fill="{fraction(field, held)}%"
-        style:--least="{fraction(field, least)}%"
         oninput={(event) => dialled(field, event.currentTarget, false)}
         onchange={(event) => dialled(field, event.currentTarget, true)}
       />
@@ -641,8 +657,9 @@
           spellcheck="false"
           autocapitalize="off"
           autocomplete="off"
-          oninput={field.live ? (event) => field.set(event.currentTarget.value) : undefined}
-          onchange={field.live ? undefined : (event) => field.set(event.currentTarget.value)}
+          aria-invalid={refused === field.label}
+          oninput={field.live ? (event) => typed(field, event.currentTarget.value) : undefined}
+          onchange={field.live ? undefined : (event) => typed(field, event.currentTarget.value)}
         />
       </label>
     {/if}
@@ -662,46 +679,17 @@
   {/if}
 {/snippet}
 
-{#snippet browserRow()}
-  <h3>Browser</h3>
-  <div class="card">
-    <div class="orden-setting setting">
-      <span class="name"
-        ><span class="what"
-          >Default browser<Hint
-            text="Makes Orden the browser that links from other programs open in."
-          /></span
-        ></span
-      >
-      <DefaultBrowser />
-    </div>
-    {#each settingFieldsIn('general', 'Browser') as field (field.key)}
-      {#if field.kind === 'text'}
-        {#if !field.shown || field.shown()}
-          <label class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
-            {@render named(field)}
-            <input
-              class="orden-field is-value"
-              type="url"
-              value={field.get()}
-              placeholder={field.placeholder}
-              spellcheck="false"
-              autocapitalize="off"
-              autocomplete="off"
-              aria-invalid={customBad}
-              onchange={(event) => {
-                customBad = (field.check?.(event.currentTarget.value) ?? null) !== null
-                if (!customBad) field.set(event.currentTarget.value)
-              }}
-            />
-          </label>
-        {/if}
-      {:else}
-        {@render row(field)}
-      {/if}
-    {/each}
+{#snippet defaultBrowser()}
+  <div class="orden-setting setting">
+    <span class="name"
+      ><span class="what"
+        >Default browser<Hint
+          text="Makes Orden the browser that links from other programs open in."
+        /></span
+      ></span
+    >
+    <DefaultBrowser />
   </div>
-  {@render parts('general')}
 {/snippet}
 
 {#snippet parts(section: SettingsSectionId)}
@@ -729,6 +717,7 @@
       <h3>{group.title}</h3>
       {#if group.fields.length}
         <div class="card">
+          {#if group.title === 'Browser'}{@render defaultBrowser()}{/if}
           {#each group.fields as field, index (index)}
             {@render row(field)}
             {#if field.key === 'appearance.mode'}{@render themeTools()}{/if}
@@ -751,7 +740,7 @@
     {/each}
 
     {#if !__EVEN_PLUGIN__ && settings.section === 'general' && isDesktop}
-      {@render browserRow()}
+      {@render parts('general')}
     {/if}
 
     {#if settings.section === 'experimental' && glassesOn()}
@@ -783,10 +772,7 @@
             onchange={(event) => void rename(event.currentTarget.value)}
           />
         </label>
-        <div class="orden-setting setting">
-          <span class="name">Email</span>
-          <span class="orden-field is-value is-read">{account.user.email}</span>
-        </div>
+        <Addresses />
       </div>
 
       {#if !__EVEN_PLUGIN__}
@@ -974,7 +960,7 @@
                   disabled={!shortcuts.changed(entry.id)}
                   title="Reset"
                   aria-label="Reset"
-                  onclick={() => shortcuts.reset(entry.id)}
+                  onclick={() => rebind.reset(entry.id)}
                 >
                   <svg viewBox="0 0 16 16">
                     <path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.6v2.6h2.6" />
@@ -1552,20 +1538,6 @@
     align-self: flex-start;
   }
 
-  .row {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .slider.floored::-webkit-slider-runnable-track {
-    background:
-      linear-gradient(var(--line-strong), var(--line-strong)) left / var(--least) 100% no-repeat,
-      linear-gradient(var(--accent), var(--accent)) left / var(--fill) 100% no-repeat,
-      var(--surface-3);
-  }
-
   .pictures {
     display: flex;
     align-items: center;
@@ -1817,20 +1789,6 @@
   .sheet.phone .setting.sliding {
     flex-wrap: wrap;
     padding-bottom: 6px;
-  }
-
-  .sheet.phone .setting.keyed {
-    flex-wrap: wrap;
-    row-gap: var(--space-1);
-  }
-
-  .sheet.phone .setting.keyed .row {
-    flex: 1 0 100%;
-    flex-wrap: wrap;
-  }
-
-  .sheet.phone .setting.keyed .hint {
-    margin-inline-end: auto;
   }
 
   .sheet.phone .setting .value {

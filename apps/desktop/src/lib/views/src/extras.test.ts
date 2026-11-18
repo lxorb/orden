@@ -13,7 +13,6 @@ import { parentOf } from './columns'
 const TODAY = '2026-10-05'
 const filling = { today: TODAY, time: '09:30' }
 const day = (iso: string) => new Date(`${iso}T09:00:00`).getTime()
-
 const base = readBase(`filters:
   and:
     - file.inFolder("Bugs")

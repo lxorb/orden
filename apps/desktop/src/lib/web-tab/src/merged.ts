@@ -7,15 +7,13 @@ import {
   invoke,
   isDesktop,
 } from '../../platform/src/api'
-import { hostOf } from '@orden/scan/visits'
-import { isWebData, siteOf, storeName, type WebData } from './web-data'
+import { hostOf, type Visit } from '@orden/scan/visits'
+import { isWebData, originOf, siteOf, storeName, type WebData } from './web-data'
 import { HISTORY } from './web-data.svelte'
 import { bounded } from './visits'
-import type { Visit } from '@orden/scan/visits'
 
 const OLD = 'orden:web-data'
 const OLD_UP = 'orden:web-data-up'
-
 export const MERGED = 'orden:web-data-merged'
 
 interface Merge {
@@ -34,15 +32,6 @@ export function oldChoices(saved: unknown): Record<string, Exclude<WebData, 'glo
 
 export function oldHistory(space: string): string {
   return `${HISTORY}:${space}`
-}
-
-function originOf(url: string): string | null {
-  try {
-    const at = new URL(url)
-    return at.protocol === 'https:' || at.protocol === 'http:' ? at.origin : null
-  } catch {
-    return null
-  }
 }
 
 export function planned(

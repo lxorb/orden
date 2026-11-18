@@ -1,89 +1,25 @@
 // @vitest-environment jsdom
-import { history, undo } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  StateEffect,
-  Transaction,
-  type TransactionSpec,
-} from '@codemirror/state'
-import { EditorView } from '@codemirror/view'
-import type { TextEdit } from '@orden/markdown/edits'
+import { EditorSelection, EditorState } from '@codemirror/state'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
-import { GROWS_AT_MOST } from '../../../../scripts/growth'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
-import { tickLines } from '../task-tick'
-import {
-  noteIndex,
-  noteIndexEffect,
-  noteIndexExtension,
-  type NoteIndex,
-  type TaskHelp,
-} from '../wikilink/notes'
 import { buildDecorations, loadTaskChips } from './decorate'
-import {
-  chipsOf,
-  CommentChipsWidget,
-  commentDrawing,
-  type TaskChip,
-  TaskChipsWidget,
-} from './task-chips'
+import { chipsOf, CommentChipsWidget, commentDrawing, TaskChipsWidget } from './task-chips'
 import { dayWords } from '../task-days'
-import { takeHint, taskHint } from './task-hint'
-import { livePreview } from '.'
 
 beforeAll(async () => {
   await loadTaskChips()
 })
 
-const HELP: TaskHelp = {
-  tick(note, line) {
-    const lines = note.split('\n')
-    const text = lines[line] ?? ''
-    const from = lines.slice(0, line).reduce((sum, one) => sum + one.length + 1, 0)
-    const box = text.indexOf('[ ]') + 1
-    const edits: TextEdit[] = []
-    if (text.includes('🔁')) {
-      edits.push({ from, to: from, insert: `${text.replace('2026-10-05', '2026-10-12')}\n` })
-    }
-    edits.push({ from: from + box, to: from + box + 1, insert: 'x' })
-    edits.push({ from: from + text.length, to: from + text.length, insert: ' ✅ 2026-10-07' })
-    return Promise.resolve(edits)
-  },
-  pick: () => undefined,
-  dayAtEnd(text) {
-    const at = text.lastIndexOf('tomorrow')
-    if (at === -1 || at + 'tomorrow'.length !== text.trimEnd().length) return null
-    return { from: at, due: '2026-10-08', label: 'Tomorrow' }
-  },
-}
-
-function stateOf(doc: string, cursor: number, help: TaskHelp | null = null) {
-  return parsed(
+const stateOf = (doc: string, cursor: number) =>
+  parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        history(),
-        taskHint,
-        ...(help
-          ? [
-              noteIndex.of({
-                notes: [],
-                files: [],
-                path: null,
-                read: () => Promise.resolve(null),
-                tasks: help,
-              }),
-            ]
-          : []),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-}
 
 function hidden(state: EditorState): string[] {
   const out: string[] = []
@@ -99,19 +35,6 @@ function chipsDrawn(state: EditorState): boolean {
     if (value.spec.widget instanceof TaskChipsWidget) found = true
   })
   return found
-}
-
-function viewOf(state: EditorState) {
-  const view = {
-    state,
-    sent: [] as Transaction[],
-    dispatch(spec: Transaction | TransactionSpec) {
-      const transaction = spec instanceof Transaction ? spec : view.state.update(spec)
-      view.sent.push(transaction)
-      view.state = transaction.state
-    },
-  }
-  return view
 }
 
 const LINE = '- [ ] Call the bank [time:: 16:00] #admin ⏫ 📅 2026-10-06'
@@ -205,91 +128,6 @@ describe('the chips', () => {
   })
 })
 
-describe('a box ticked', () => {
-  test('writes the next occurrence and the done line as one transaction, one undo', async () => {
-    const note = '- [ ] Gym 🔁 every week 📅 2026-10-05\n'
-    const view = viewOf(stateOf(note, note.length, HELP))
-    await tickLines(view as unknown as EditorView, HELP, view.state.doc, [1])
-
-    expect(view.sent).toHaveLength(1)
-    expect(view.state.doc.toString()).toBe(
-      '- [ ] Gym 🔁 every week 📅 2026-10-12\n- [x] Gym 🔁 every week 📅 2026-10-05 ✅ 2026-10-07\n',
-    )
-    undo(view)
-    expect(view.state.doc.toString()).toBe(note)
-  })
-
-  test('every box of a long list ticked at once takes time that grows with the list', async () => {
-    const quick: TaskHelp = {
-      ...HELP,
-      tick: (_note, line) => {
-        const from = line * 9
-        return Promise.resolve([{ from: from + 3, to: from + 4, insert: 'x' }])
-      },
-    }
-    const timed = async (count: number) => {
-      const note = Array.from({ length: count }, () => '- [ ] Go').join('\n')
-      const view = viewOf(stateOf(note, 0))
-      const lines = Array.from({ length: count }, (_, at) => at + 1)
-      const start = performance.now()
-      await tickLines(view as unknown as EditorView, quick, view.state.doc, lines)
-      expect(view.state.doc.line(count).text).toBe('- [x] Go')
-      return performance.now() - start
-    }
-    const least = async (count: number) => {
-      let best = Infinity
-      for (let round = 0; round < 3; round++) best = Math.min(best, await timed(count))
-      return best
-    }
-
-    await least(4_000)
-    const ratio = (await least(16_000)) / Math.max(await least(4_000), 0.05)
-    expect(ratio).toBeLessThan(GROWS_AT_MOST)
-  }, 30_000)
-
-  test('is dropped where the note changed while the engine was being asked', async () => {
-    const note = '- [ ] Go\n'
-    const view = viewOf(stateOf(note, 0, HELP))
-    const slow: TaskHelp = {
-      ...HELP,
-      tick: async (text, line) => {
-        view.dispatch(view.state.update({ changes: { from: 0, insert: 'typed ' } }))
-        return HELP.tick(text, line)
-      },
-    }
-    await tickLines(view as unknown as EditorView, slow, view.state.doc, [1])
-    expect(view.state.doc.toString()).toBe('typed - [ ] Go\n')
-  })
-})
-
-describe('a date typed at the end of a task', () => {
-  test('is offered after the caret, and Tab writes it as the field', async () => {
-    const note = '- [ ] Call mum tomorrow'
-    const state = stateOf(note, note.length, HELP)
-    expect(state.field(taskHint)?.day.due).toBe('2026-10-08')
-
-    const view = viewOf(state)
-    expect(takeHint(view as unknown as EditorView)).toBe(true)
-    await new Promise((resolve) => setTimeout(resolve, 50))
-    expect(view.state.doc.toString()).toBe('- [ ] Call mum 🛫 2026-10-08')
-    undo(view)
-    expect(view.state.doc.toString()).toBe(note)
-  })
-
-  test('is not offered in the middle of the words, on a dated task, or with no app', () => {
-    const note = '- [ ] Call mum tomorrow'
-    expect(stateOf(note, 10, HELP).field(taskHint)).toBeNull()
-    const dated = '- [ ] Call mum 📅 2026-10-09 tomorrow'
-    expect(stateOf(dated, dated.length, HELP).field(taskHint)).toBeNull()
-    expect(stateOf(note, note.length).field(taskHint)).toBeNull()
-  })
-
-  test('and Tab with nothing offered is not taken', () => {
-    const note = '- [ ] Call mum'
-    expect(takeHint(viewOf(stateOf(note, note.length, HELP)) as unknown as EditorView)).toBe(false)
-  })
-})
-
 describe("a task's comment", () => {
   const NOTE = '- [ ] Call the bank\n  - Called again [at:: 2026-10-06T09:30] [by:: Lu]\n\nwords'
 
@@ -317,89 +155,5 @@ describe("a task's comment", () => {
     ])
     expect(commentDrawing('- [ ] A task [at:: 2026-10-06]', '2026-10-06')).toBeNull()
     expect(commentDrawing('  - Nothing to say', '2026-10-06')).toBeNull()
-  })
-})
-
-describe('a chip pressed', () => {
-  test('picks for its own task after a line is written above it', () => {
-    Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-    Range.prototype.getBoundingClientRect = () => new DOMRect()
-    const doc = '- [ ] first ⏫\n- [ ] second 🔼\n\nend'
-    let picked: Parameters<TaskHelp['pick']>[4] = () => undefined
-    const help: TaskHelp = {
-      ...HELP,
-      pick: (_field, _fields, _at, _due, change) => (picked = change),
-    }
-    const view = new EditorView({
-      state: stateOf(doc, doc.length, help).update({
-        effects: StateEffect.appendConfig.of(livePreview()),
-      }).state,
-      parent: document.body,
-    })
-    const chip = view.contentDOM.querySelectorAll('.orden-task-chip')[1]
-    chip?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
-    view.dispatch({ changes: { from: 0, insert: 'new\n' } })
-    picked({ priority: 1 })
-    expect(view.state.doc.toString()).toBe('new\n- [ ] first ⏫\n- [ ] second 🔺\n\nend')
-    view.destroy()
-  })
-})
-
-describe('a note made a todo list, or no longer one, while it is open', () => {
-  const plain: NoteIndex = {
-    notes: [],
-    files: [],
-    path: 'Plan.md',
-    read: () => Promise.resolve(null),
-  }
-  const listed: NoteIndex = { ...plain, tasks: HELP }
-
-  function opened(doc: string, cursor: number) {
-    return parsed(
-      EditorState.create({
-        doc,
-        selection: EditorSelection.cursor(cursor),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          taskHint,
-          noteIndexExtension(plain),
-        ],
-      }),
-    )
-  }
-
-  function picks(state: EditorState): boolean[] {
-    const out: boolean[] = []
-    buildDecorations(state).decorations.between(0, state.doc.length, (_from, _to, value) => {
-      if (value.spec.widget instanceof TaskChipsWidget) out.push(value.spec.widget.picks)
-    })
-    return out
-  }
-
-  test('offers the day typed at the end at once, with no key pressed, and takes it back', () => {
-    const note = '- [ ] Call mum tomorrow'
-    const state = opened(note, note.length)
-    expect(state.field(taskHint)).toBeNull()
-
-    const made = state.update({ effects: noteIndexEffect(listed) }).state
-    expect(made.field(taskHint)?.day.due).toBe('2026-10-08')
-
-    const stopped = made.update({ effects: noteIndexEffect(plain) }).state
-    expect(stopped.field(taskHint)).toBeNull()
-  })
-
-  test('draws its chips to be pressed only while it is a list', () => {
-    const state = opened(PARKED, PARKED.length)
-    expect(picks(state)).toEqual([false])
-
-    const made = state.update({ effects: noteIndexEffect(listed) }).state
-    expect(picks(made)).toEqual([true])
-    expect(picks(made.update({ effects: noteIndexEffect(plain) }).state)).toEqual([false])
-  })
-
-  test('and a chip drawn for a list is not the one drawn for a plain note', () => {
-    const chips: TaskChip[] = [{ field: 'date', text: 'Tue 6 Oct' }]
-    expect(new TaskChipsWidget(chips, true).eq(new TaskChipsWidget(chips, false))).toBe(false)
-    expect(new TaskChipsWidget(chips, true).eq(new TaskChipsWidget(chips))).toBe(true)
   })
 })

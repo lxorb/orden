@@ -4,20 +4,17 @@
   import { MARKS, PEN_ICONS, PEN_NAMES } from './glyphs'
   import { INK_TOOLS, type InkTool } from '@orden/markdown/canvas'
   import { hand } from './hand.svelte'
-  import { INK_STYLES } from '../../plane/src/api'
+  import { INK_STYLES, DEFAULT_INK, shownInk } from '../../plane/src/api'
   import { samplePath } from './nibs'
-  import { DEFAULT_INK, shownInk } from '../../plane/src/api'
   import { LEAST_WIDTH, MOST_WIDTH, type Nib, nibFor, pens } from './pens.svelte'
 
   const { nib }: { nib: Nib } = $props()
 
   const WIDE = 288
   const TALL = 62
-
   const line = $derived(samplePath(nib, WIDE, TALL))
   const ink = $derived(shownInk(nib.colour))
   const multiply = $derived(INK_STYLES[nib.tool].multiply)
-
   const shown = $derived(nib.colour === 'ink' ? null : nib.colour)
 
   function setTool(tool: InkTool) {

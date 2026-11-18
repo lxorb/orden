@@ -1,0 +1,6 @@
+{
+  "name": "browsers",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base"]
+}

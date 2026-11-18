@@ -9,14 +9,13 @@ import {
   isWhen,
 } from '@orden/bases'
 import { bare, isNoteProperty } from './columns'
+import { dayIn, isDateValue } from './values'
 
 const DEFAULT_SIZE: CardSize = 'medium'
-
 export const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
 
-export function sizeOf(size: CardSize | undefined, notes: boolean): CardSize {
-  return size ?? (notes ? DEFAULT_SIZE : 'small')
-}
+export const sizeOf = (size: CardSize | undefined, notes: boolean): CardSize =>
+  size ?? (notes ? DEFAULT_SIZE : 'small')
 
 const LINES: Record<CardSize, { title: number; props: number }> = {
   small: { title: 1, props: 1 },
@@ -43,15 +42,14 @@ export function cardHeight(lines: { title: number; props: number }, touch: boole
   return PAD + lines.title * TITLE_LINE + props + 2 + GAP + (touch ? 12 : 0)
 }
 
-export function cardProperties(
+export const cardProperties = (
   columns: readonly string[],
   groupBy: string | undefined,
   sub: string | undefined,
-): string[] {
-  return columns.filter(
+): string[] =>
+  columns.filter(
     (one) => one !== 'task.text' && one !== 'file.name' && one !== groupBy && one !== sub,
   )
-}
 
 export function checklists(rows: readonly Row[]): Map<string, { done: number; total: number }> {
   const out = new Map<string, { done: number; total: number }>()
@@ -65,7 +63,6 @@ export function checklists(rows: readonly Row[]): Map<string, { done: number; to
 }
 
 export const noteKey = (row: Pick<Row, 'space' | 'path'>): string => `${row.space}\n${row.path}`
-
 export const cardKey = (row: Row): string => `${row.space}:${rowId(row)}`
 
 export function isDoneGroup(base: Base | null, property: string | undefined, key: Value): boolean {
@@ -241,13 +238,13 @@ export function orderAfter(ids: readonly string[], id: string, index: number): s
   return order
 }
 
-export function indexWithout(index: number, was: number): number {
-  return was !== -1 && was < index ? index - 1 : index
-}
+export const indexWithout = (index: number, was: number): number =>
+  was !== -1 && was < index ? index - 1 : index
 
-function someOf<T>(values: readonly T[], most: number): { shown: T[]; more: number } {
-  return { shown: values.slice(0, most), more: Math.max(0, values.length - most) }
-}
+const someOf = <T>(values: readonly T[], most: number): { shown: T[]; more: number } => ({
+  shown: values.slice(0, most),
+  more: Math.max(0, values.length - most),
+})
 
 export type CardLine =
   | { kind: 'pills'; pills: { text: string; tone: string | null }[]; more: number }
@@ -282,13 +279,6 @@ export function cardLine(
   }
   const text = words(value)
   if (!text) return null
-  const late =
-    !done &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    'kind' in value &&
-    value.kind === 'date' &&
-    typeof value.iso === 'string' &&
-    value.iso.slice(0, 10) < today
+  const late = !done && isDateValue(value) && (dayIn(value) ?? '') < today
   return { kind: 'words', text, late }
 }

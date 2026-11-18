@@ -9,6 +9,7 @@ import {
   watchFirstInput,
 } from './lib/platform/src/api'
 import './lib/launch/src/renamed.svelte'
+import './lib/sync-base-ports'
 import './lib/sync-ports'
 import './lib/theme-ports'
 import './lib/sharing-ports'
@@ -46,6 +47,10 @@ if (!target) throw new Error('index.html has no #app to mount into')
 if (isMobile && (await (await import('./lib/workspace/src/moved')).spacesMoved())) {
   location.reload()
   await new Promise<never>(() => undefined)
+}
+
+if ((window as { ordenOldDatabases?: boolean }).ordenOldDatabases) {
+  await (await import('./lib/handoff/src/api')).carryOldDatabases().catch(() => undefined)
 }
 
 const outside: unknown = await (window as { ordenOutside?: Promise<unknown> }).ordenOutside

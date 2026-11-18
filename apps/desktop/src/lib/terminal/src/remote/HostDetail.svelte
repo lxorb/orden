@@ -1,8 +1,6 @@
 <script lang="ts">
   import { prompt } from '../../../ui-kit/src/api'
-  import { Select } from '../../../ui-controls/src/api'
-  import { Swatches } from '../../../ui-controls/src/api'
-  import { Switch } from '../../../ui-controls/src/api'
+  import { Select, Swatches, Switch } from '../../../ui-controls/src/api'
   import { invoke } from '../../../platform/src/api'
   import HostMark from './HostMark.svelte'
   import {
@@ -57,7 +55,9 @@
     const wanted = destinationOf(typed)
     if (!wanted) {
       problem = 'Not an address'
-      field.value = host.detail ?? host.hostname ?? ''
+      field.value = host.hostname
+        ? said({ user: host.user, hostname: host.hostname, port: host.port })
+        : ''
       return
     }
     problem = ''

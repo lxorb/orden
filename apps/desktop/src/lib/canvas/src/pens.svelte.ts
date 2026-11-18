@@ -1,7 +1,6 @@
-import { keepJson, stored } from '../../platform/src/api'
+import { keepJson, stored, isRecord } from '../../platform/src/api'
 import { clampOpacity, type InkTool, isInkTool } from '@orden/markdown/canvas'
-import { INK_STYLES } from '../../plane/src/api'
-import { DEFAULT_INK } from '../../plane/src/api'
+import { INK_STYLES, DEFAULT_INK } from '../../plane/src/api'
 
 export interface Nib {
   tool: InkTool
@@ -12,10 +11,7 @@ export interface Nib {
 
 export const DOCKS = ['top', 'bottom', 'left', 'right'] as const
 export type Dock = (typeof DOCKS)[number]
-
-export function upright(dock: Dock): boolean {
-  return dock === 'left' || dock === 'right'
-}
+export const upright = (dock: Dock): boolean => dock === 'left' || dock === 'right'
 
 export function nearestDock(at: { x: number; y: number }, width: number, height: number): Dock {
   const away: [Dock, number][] = [
@@ -38,12 +34,9 @@ export function nearestDock(at: { x: number; y: number }, width: number, height:
 }
 
 export const PEN_SLOTS = 3
-
 export const MOST_RECENT = 6
-
 export const LEAST_WIDTH = 0.5
 export const MOST_WIDTH = 30
-
 export const LEAST_RUB = 2
 export const MOST_RUB = 64
 export const RUB = 10
@@ -74,9 +67,7 @@ export function nibFor(tool: InkTool, colour = DEFAULT_INK): Nib {
   return { tool, size: style.size, opacity: style.opacity, colour }
 }
 
-function fresh(): Nib[] {
-  return [nibFor('pen'), nibFor('pencil'), nibFor('highlighter')]
-}
+const fresh = (): Nib[] => [nibFor('pen'), nibFor('pencil'), nibFor('highlighter')]
 
 function three(held: Nib[]): Nib[] {
   const row = fresh()
@@ -99,25 +90,19 @@ interface Kept {
 
 const KEY = 'orden:pens'
 
-function blank(): Kept {
-  return {
-    pens: fresh(),
-    at: 0,
-    recent: [],
-    dock: 'bottom',
-    shut: false,
-    whole: false,
-    rub: RUB,
-    strokeRub: STROKE_RUB,
-    straighten: true,
-    box: false,
-    partly: false,
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
+const blank = (): Kept => ({
+  pens: fresh(),
+  at: 0,
+  recent: [],
+  dock: 'bottom',
+  shut: false,
+  whole: false,
+  rub: RUB,
+  strokeRub: STROKE_RUB,
+  straighten: true,
+  box: false,
+  partly: false,
+})
 
 function oneNib(held: unknown): Nib[] {
   if (!isRecord(held) || !isInkTool(held.tool)) return []

@@ -1,7 +1,6 @@
 import { settingsWindow } from '@orden/contracts'
 import { localDate, invoke } from '../../../platform/src/api'
-import { isLocal, KIND_NAMES, type Provider } from '../../../ai-providers/src/api'
-import type { Thread } from '../../../ai-providers/src/api'
+import { isLocal, KIND_NAMES, type Provider, type Thread } from '../../../ai-providers/src/api'
 import { filled } from '../chat/usage'
 import { engineFor } from '../chat/engine'
 

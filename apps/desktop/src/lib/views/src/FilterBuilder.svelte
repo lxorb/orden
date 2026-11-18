@@ -12,6 +12,7 @@
     type Operator,
     OPERATORS,
     rowsOf,
+    withProperty,
     takesValue,
   } from './filter-rows'
   import type { Kit } from './kit'
@@ -25,7 +26,6 @@
   const rows = $derived(rowsOf(view?.filters, holds))
   const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
-
   let typed = $state('')
   const EXAMPLE = 'today & #work | overdue'
 
@@ -136,7 +136,7 @@
           value: one,
           label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
         }))}
-        onchange={(property: string) => changeRow(at, { ...row, property })}
+        onchange={(property: string) => changeRow(at, withProperty(row, property))}
       />
       <Select
         label="Compare"

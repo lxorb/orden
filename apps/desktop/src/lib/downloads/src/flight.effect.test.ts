@@ -77,10 +77,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function glyph(tab: string): Element {
-  return document.querySelector(`[data-tab="${tab}"]`)!
-}
-
+const glyph = (tab: string): Element => document.querySelector(`[data-tab="${tab}"]`)!
 const flights = () => played.filter((one) => one.node.parentElement === document.body)
 const answers = (node: Element) => played.filter((one) => one.node === node)
 

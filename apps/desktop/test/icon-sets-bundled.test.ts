@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
@@ -17,20 +18,12 @@ const DATA = [
   'emojilib/emojis.json',
 ]
 
-function sources(dir: string, found: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) sources(path, found)
-    else if (/\.(ts|svelte)$/.test(name) && !name.endsWith('.d.ts')) found.push(path)
-  }
-
-  return found
-}
-
-const files = sources(SOURCE).map((path) => ({
-  name: path.slice(SOURCE.length).replace(/\\/g, '/'),
-  text: readFileSync(path, 'utf8'),
-}))
+const files = walk(SOURCE, (path) => /\.(ts|svelte)$/.test(path) && !path.endsWith('.d.ts')).map(
+  (path) => ({
+    name: path.slice(SOURCE.length).replace(/\\/g, '/'),
+    text: readFileSync(path, 'utf8'),
+  }),
+)
 
 describe('the icon sets that are data rather than drawing', () => {
   test('are asked for, so somewhere in the app knows their names', () => {

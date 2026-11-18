@@ -1,6 +1,3 @@
-import type { Scope } from './spaces/share'
-import type { Reached } from './spaces/space'
-
 export interface Env {
   DB: D1Database
   NOTES: R2Bucket
@@ -151,6 +148,22 @@ export interface Note {
   deleted_in?: number | null
   paper?: string | null
   meta?: string | null
+}
+
+export type Role = 'owner' | 'write' | 'read'
+
+export interface Reached extends Space {
+  role: Role
+}
+
+export interface Scope {
+  id: string
+  path: string | null
+}
+
+export interface SpaceFile {
+  path: string
+  hash: string
 }
 
 export interface Variables {

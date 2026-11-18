@@ -16,9 +16,8 @@ interface Made {
   name?: string
 }
 
-function doc(text: string, { path = null, kind = 'note', name = UNTITLED }: Made = {}) {
-  return new NoteDoc({ kind, path, name, text, dirty: false }, () => undefined)
-}
+const doc = (text: string, { path = null, kind = 'note', name = UNTITLED }: Made = {}) =>
+  new NoteDoc({ kind, path, name, text, dirty: false }, () => undefined)
 
 describe('a draft', () => {
   test('is a document with words of its own and no file for them', () => {

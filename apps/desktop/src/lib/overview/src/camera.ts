@@ -35,7 +35,6 @@ export function lookingAt(what: Box, room: Box): Camera {
 
 const READABLE = 240
 const OPENS_FARTHEST = 0.2
-
 type Span = readonly [start: number, size: number]
 
 function along(here: Span, whole: Span, room: Span, zoom: number): number {
@@ -64,9 +63,11 @@ export function zoomedAt(camera: Camera, point: Point, factor: number): Camera {
   return { x: point.x - at.x * zoom, y: point.y - at.y * zoom, zoom }
 }
 
-export function moved(camera: Camera, dx: number, dy: number): Camera {
-  return { ...camera, x: camera.x + dx, y: camera.y + dy }
-}
+export const moved = (camera: Camera, dx: number, dy: number): Camera => ({
+  ...camera,
+  x: camera.x + dx,
+  y: camera.y + dy,
+})
 
 export interface Turn {
   deltaX: number
@@ -81,15 +82,13 @@ export interface Turn {
 const PINCH = 0.01
 const MOST = 40
 
-export function isNotch(turn: Turn): boolean {
-  return turn.deltaMode !== 0 || (Math.abs(turn.deltaY) >= 50 && Number.isInteger(turn.deltaY))
-}
+export const isNotch = (turn: Turn): boolean =>
+  turn.deltaMode !== 0 || (Math.abs(turn.deltaY) >= 50 && Number.isInteger(turn.deltaY))
 
 const NOTCH = 0.002
 
-export function notched(goal: number, turn: Turn): number {
-  return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-wheelPixels(turn).y * NOTCH)))
-}
+export const notched = (goal: number, turn: Turn): number =>
+  Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-wheelPixels(turn).y * NOTCH)))
 
 const EASE = 0.08
 const FOLLOW = 0.035
@@ -113,11 +112,10 @@ function fingered(goal: number, turn: Turn): number {
   return Math.min(NEAREST, Math.max(FARTHEST, goal * Math.exp(-step * rate)))
 }
 
-export function aimed(goal: number, turn: Turn): { zoom: number; ease: number } {
-  return isNotch(turn)
+export const aimed = (goal: number, turn: Turn): { zoom: number; ease: number } =>
+  isNotch(turn)
     ? { zoom: notched(goal, turn), ease: EASE }
     : { zoom: fingered(goal, turn), ease: FOLLOW }
-}
 
 export function turned(camera: Camera, turn: Turn): Camera {
   return zoomedAt(camera, turn, fingered(camera.zoom, turn) / camera.zoom)

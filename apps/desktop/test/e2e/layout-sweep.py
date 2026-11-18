@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import json
 import os
@@ -10,7 +8,7 @@ from typing import Any
 
 from urllib.parse import urlsplit
 
-from harness import LAUNCHED, Drive, harmless
+from harness import BUILT_IN, LAUNCHED, Drive, harmless
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -90,13 +88,9 @@ CHECK = r"""
     return s
   }
 
-  // What a person reads in, and what is somebody's own writing: the note, a
-  // drawing, a picture. Their layout is the note's, not the app's.
   const OWN = '.cm-editor, #write, .orden-write, canvas, svg, iframe, video, img, [aria-hidden="true"], [inert], .orden-scrim, .sr-only'
   const own = (el) => !!el.closest(OWN)
 
-  // Where an element is a person can see: its box, cut by every ancestor that clips
-  // what is outside it, up to the window's edge or to a fixed layer.
   const clipped = (el, withWindow = true) => {
     const r = el.getBoundingClientRect()
     let box = { l: r.left, t: r.top, r: r.right, b: r.bottom }
@@ -113,10 +107,6 @@ CHECK = r"""
     return box
   }
 
-  // Drawn and somewhere a person could see it. A box squeezed to no width at all is
-  // still drawn - its words spill out of it a letter to a line, which is the very
-  // thing this drive is for - so it counts as shown when its edge is in view, and not
-  // only when it has an area there.
   const shown = (el) => {
     if (own(el)) return false
     if (!el.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false
@@ -126,8 +116,6 @@ CHECK = r"""
     return box.r >= box.l && box.b >= box.t && (box.r > box.l || box.b > box.t)
   }
 
-  // A name for an element a person can find: what it is, its classes without the
-  // ones the compiler adds, its first words, and the two boxes it sits in.
   const named = (el) => {
     const one = (e) => {
       const classes = [...e.classList].filter((c) => !c.startsWith('svelte-')).slice(0, 3)
@@ -149,15 +137,10 @@ CHECK = r"""
   const visible = elements.filter(shown)
   const isShown = new Set(visible)
 
-  // ── The page itself never scrolls sideways ─────────────────────────────
   const page = document.scrollingElement
   if (page.scrollWidth > page.clientWidth + 1)
     say(`the page scrolls sideways: ${page.scrollWidth}px of content in ${page.clientWidth}px`)
 
-  // ── No word is broken across lines ─────────────────────────────────────
-  // Word by word, off the boxes the browser drew each one in: a word on two tops is a
-  // word split. Short words only - an address or a path longer than a line is allowed
-  // to be broken where it has to be, and is not what this is about.
   const WORD = /[\p{L}\p{N}]{2,24}/gu
   for (const el of visible) {
     for (const node of el.childNodes) {
@@ -180,7 +163,6 @@ CHECK = r"""
     }
   }
 
-  // ── Nothing reaches past the window, spills out of its box, or is cut off ──
   const flagged = new Set()
   const inFlow = (el) => {
     const s = css(el)
@@ -196,14 +178,12 @@ CHECK = r"""
       return false
     })()
 
-    // Past the window's edge, partly: wholly outside is a drawer parked out of sight.
     if (!ancestorFlagged && ((box.r > vw + 1 && box.l < vw - 1) || (box.l < -1 && box.r > 1))) {
       flagged.add(el)
       say(`${named(el)} reaches past the window's edge (${px(box.l)} to ${px(box.r)} of ${vw}px)`)
       continue
     }
 
-    // Out of the box it is in, sideways, where that box shows what spills.
     const parent = el.parentElement
     if (!ancestorFlagged && parent && isShown.has(parent) && inFlow(el) && parent !== document.body) {
       const p = parent.getBoundingClientRect()
@@ -218,11 +198,8 @@ CHECK = r"""
       }
     }
 
-    // Words cut off at the edge of a box that hides what does not fit, with nothing to
-    // say there is more: an ellipsis says it, a bare edge does not.
     const s = css(el)
     const ownWords = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())
-    // A fade says it too: a tab's name runs out under a mask rather than a full stop.
     const faded = (() => {
       for (let a = el, n = 0; a && n < 3; a = a.parentElement, n++) {
         const m = css(a).maskImage || css(a).webkitMaskImage
@@ -235,7 +212,6 @@ CHECK = r"""
     }
   }
 
-  // ── No two things in a row are drawn over each other ───────────────────
   for (const el of visible) {
     const s = css(el)
     if (!s.display.includes('flex') || s.flexDirection.startsWith('column')) continue
@@ -253,14 +229,11 @@ CHECK = r"""
     }
   }
 
-  // ── Every control has a size, and an empty field can be seen ───────────
   const CONTROLS = 'input:not([type="hidden"]), select, textarea, button, [role="switch"], [role="slider"], [role="checkbox"], [role="radio"], [role="combobox"], [contenteditable="true"]'
   const clear = (colour) => colour === 'transparent' || /rgba?\([^)]*,\s*0\)$/.test(colour) || /\/\s*0\)$/.test(colour)
   for (const el of visible) {
     if (!el.matches(CONTROLS)) continue
     const r = el.getBoundingClientRect()
-    // A control hidden on purpose for a reader that cannot see - a pixel square cut by
-    // a clip - is not one drawn at no size.
     if (r.width <= 1 && r.height <= 1) continue
     if (r.width < 6 || r.height < 6) {
       say(`${named(el)} is drawn at ${px(r.width)} by ${px(r.height)}`)
@@ -276,10 +249,6 @@ CHECK = r"""
     }
   }
 
-  // ── A box to tick is a box, and its words one line beside it ───────────
-  // The question Ctrl+N raises in a terminal drew "Always ask" as an empty pill the
-  // width of a field, its two words wrapped under each other (#317): a rule for the
-  // sheet's text field that caught its checkbox too.
   for (const el of visible) {
     if (!el.matches('input[type="checkbox"]')) continue
     const r = el.getBoundingClientRect()
@@ -290,8 +259,6 @@ CHECK = r"""
     if (!label || label.querySelector('input, select, textarea, button') !== el) continue
     const words = [...label.childNodes].filter((one) => one !== el).map((one) => one.textContent).join(' ').trim()
     if (!words || words.length > 40) continue
-    // The lines its words are drawn on, off each text's own boxes: two tops more than a
-    // few pixels apart are two lines.
     const tops = []
     const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT)
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -305,34 +272,22 @@ CHECK = r"""
     if (tops.length > 1) say(`the words "${words}" beside a box to tick wrap over ${tops.length} lines in ${named(label)}`)
   }
 
-  // ── A box inset in a layer is inset at its foot too ────────────────────
-  // The quick question (#360) held its field a space in from the top and the sides of
-  // its sheet and set it on the sheet's bottom edge. A layer's first thing standing
-  // clear of the top is the layer's inset, and its last thing keeps at least half of
-  // it below; a layer that starts on its own edge - a list, a bar - is not asked.
   for (const sheet of visible) {
     if (!sheet.classList.contains('orden-screen')) continue
     const kids = [...sheet.children].filter((k) => isShown.has(k) && inFlow(k))
     if (!kids.length) continue
     const s = css(sheet)
     const box = sheet.getBoundingClientRect()
-    // From the sheet's border to what is drawn in its first and last box: the sheet's
-    // padding, a margin and the box's own padding are all the one inset.
     const inner = { t: box.top + parseFloat(s.borderTopWidth), b: box.bottom - parseFloat(s.borderBottomWidth) }
     const first = kids[0]
     const last = kids[kids.length - 1]
     const top = first.getBoundingClientRect().top + parseFloat(css(first).borderTopWidth) + parseFloat(css(first).paddingTop) - inner.t
     const foot = inner.b - (last.getBoundingClientRect().bottom - parseFloat(css(last).borderBottomWidth) - parseFloat(css(last).paddingBottom))
-    // A layer that scrolls is cut at its foot by its height, and its last thing is
-    // wherever the scroll left it.
     if (sheet.scrollHeight > sheet.clientHeight + 1) continue
     if (top >= 8 && foot < top / 2)
       say(`${named(kids[kids.length - 1])} stands ${px(foot)} from the foot of ${named(sheet).split(' < ')[0]}, whose top is ${px(top)} in`)
   }
 
-  // ── The tab in front stays in sight in its strip ─────────────────────────
-  // Both sidebars open on a window 520px wide squeezed the one tab to 14px under the
-  // buttons that sit over the strip, and the plus scrolled half out beside it (#1572).
   for (const lane of visible) {
     if (lane.dataset.region !== 'tabs') continue
     const front = lane.querySelector('.tab.active')
@@ -350,7 +305,6 @@ CHECK = r"""
     }
   }
 
-  // ── A row of settings keeps a name a person can read ───────────────────
   for (const row of visible) {
     if (!row.classList.contains('orden-setting')) continue
     const name = row.querySelector(':scope > .name')
@@ -397,6 +351,7 @@ class Browser:
             reduced_motion="reduce",
             service_workers="allow",
         )
+        await context.add_init_script(BUILT_IN)
         if self.signed_in:
             await context.add_init_script("try { localStorage.setItem('orden:session', 'sweep') } catch {}")
         own = re.escape(urlsplit(DRIVE.origin).netloc)
@@ -802,5 +757,4 @@ def main() -> int:
     say(f"swept in {time.monotonic() - started:.0f}s")
     return DRIVE.verdict()
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

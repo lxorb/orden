@@ -161,3 +161,10 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     fileOf: (path: string) => disk.get(`${SPACE.root}/${path}`),
   }
 }
+
+export function deskOpen(path: string, text: string) {
+  const at = deskWith({ [path]: text }, [path])
+  const pane = at.panes[path]
+  if (!pane) throw new Error('open')
+  return { ...at, pane }
+}

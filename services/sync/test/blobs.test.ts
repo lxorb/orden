@@ -1,7 +1,7 @@
 import { diagramKey } from '@orden/markdown/diagrams'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { createHash } from 'node:crypto'
-import { call, file, mail, signIn, testEnv, type TestEnv } from './harness'
+import { call, file, joined, signIn, type TestEnv, testEnv } from './harness'
 import { QUOTA } from '../src/sync-server/src/storage'
 
 let env: TestEnv
@@ -243,21 +243,6 @@ describe('bytes under a hash that is not theirs', () => {
       })
       expect(sent.status).toBe(400)
     }
-    const started = await call<{ upload: string }>(env, '/v2/blobs/parts', {
-      token: stranger,
-      body: { hash: key, size: named.length },
-    })
-    const part = await call<{ part: number; etag: string }>(
-      env,
-      `/v2/blobs/parts/${started.json.upload}/1`,
-      { method: 'PUT', token: stranger, raw: named },
-    )
-    const done = await call(env, `/v2/blobs/parts/${started.json.upload}`, {
-      token: stranger,
-      body: { parts: [part.json] },
-    })
-    expect(done.status).toBe(400)
-
     const stored = await env.NOTES.get(`blobs/${key}`)
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(drawing)
     expect(stored!.httpMetadata?.contentType).toBe('image/svg+xml')
@@ -359,6 +344,69 @@ describe('giving an image back', () => {
 
     expect((await call(env, `/i/${sized(2048).hash}.png`)).status).toBe(200)
   })
+  for (const route of ['/v1/blobs', '/v2/blobs']) {
+    test(`keeps the bytes for an account storing them on ${route} while the last other holder gives them back`, async () => {
+      const other = await signIn(env, 'other@b.dev')
+      const picture = sized(2048)
+      await upload(picture, { token: other })
+
+      const get = env.NOTES.get.bind(env.NOTES)
+      let handedBack = false
+      env.NOTES.get = async (...args: Parameters<typeof get>) => {
+        const found = await get(...args)
+        if (!handedBack && args[0] === `blobs/${picture.hash}`) {
+          handedBack = true
+          await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token: other })
+        }
+        return found
+      }
+
+      const stored = await call(env, `${route}/${picture.hash}`, {
+        method: 'PUT',
+        token,
+        raw: picture.bytes,
+        headers: { 'content-type': 'image/png' },
+      })
+      env.NOTES.get = get
+
+      expect(handedBack).toBe(true)
+      expect(stored.status).toBe(201)
+      expect(await env.NOTES.get(`blobs/${picture.hash}`)).not.toBeNull()
+    })
+  }
+
+  for (const route of ['/v1/blobs', '/v2/blobs']) {
+    test(`keeps the bytes an account puts on ${route} while the last other holder's give-back deletes them`, async () => {
+      const other = await signIn(env, 'other@b.dev')
+      const picture = sized(2048)
+      await upload(picture, { token: other })
+      env.db.prepare('delete from blobs where hash = ?').run(picture.hash)
+
+      const put = env.NOTES.put.bind(env.NOTES)
+      let deleted = false
+      env.NOTES.put = (async (...args: Parameters<typeof put>) => {
+        const done = await put(...args)
+        if (!deleted && args[0] === `blobs/${picture.hash}`) {
+          deleted = true
+          await env.NOTES.delete(`blobs/${picture.hash}`)
+        }
+        return done
+      }) as typeof env.NOTES.put
+
+      const stored = await call(env, `${route}/${picture.hash}`, {
+        method: 'PUT',
+        token,
+        raw: picture.bytes,
+        headers: { 'content-type': 'image/png' },
+      })
+      env.NOTES.put = put
+
+      expect(deleted).toBe(true)
+      expect(stored.status).toBe(201)
+      expect(await env.NOTES.get(`blobs/${picture.hash}`)).not.toBeNull()
+    })
+  }
+
   test('hands it to the owner of a space that still uses it, rather than deleting it', async () => {
     const owner = await signIn(env, 'owner@b.dev')
     const theirs = (
@@ -367,16 +415,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
 
     const picture = sized(2048)
     await upload(picture)
@@ -425,16 +464,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
 
     const picture = sized(2048)
     await upload(picture)
@@ -458,16 +488,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
 
     const picture = sized(2048)
     await upload(picture)
@@ -494,16 +515,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
     for (let at = 0; at < 260; at++) {
       env.db
         .prepare(
@@ -647,16 +659,7 @@ describe('a writer who deletes their account', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
     const lecture = (
       await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
         token: owner,
@@ -675,8 +678,8 @@ describe('a writer who deletes their account', () => {
       id: string
       email: string
     }
-    const { eraseAccount } = await import('../src/sync-server/src/erase')
-    const { sweepLeftovers } = await import('../src/sync-server/src/leftovers')
+    const { eraseAccount } = await import('../src/sync-server-engine/src/erase')
+    const { sweepLeftovers } = await import('../src/sync-server-engine/src/leftovers')
     await eraseAccount(env, { id: writer.id, email: writer.email, name: null, created_at: 1 })
     await sweepLeftovers(env)
 

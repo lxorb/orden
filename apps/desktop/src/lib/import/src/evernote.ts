@@ -1,26 +1,39 @@
-import { fromBase64 } from '../../platform/src/api'
+import { fromBase64, MIME_TYPES } from '../../platform/src/api'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
-
-import { dayOf, noteText, type Meta } from './meta'
+import { taskLine } from '@orden/markdown/task-edits'
+import { NO_PRIORITY, plainTaskWords, type Remind } from '@orden/markdown/task-line'
+import { dayOf, noteText, wallClock, type Meta } from './meta'
 import { md5 } from './md5'
 import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
-import { encodeTarget } from './rewrite'
+import { encodeTarget } from '@orden/markdown/links'
 import type { Source } from './sources'
 import { closingOf, element, elements, plainText, textOf, textsOf } from './xml'
 
 const ASSETS = 'assets'
 
-const EXTENSIONS: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/gif': 'gif',
-  'image/webp': 'webp',
-  'application/pdf': 'pdf',
-  'audio/mpeg': 'mp3',
-  'audio/mp4': 'm4a',
-  'video/mp4': 'mp4',
+const EXTENSIONS: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(
+    Object.entries(MIME_TYPES)
+      .reverse()
+      .map(([extension, mime]) => [mime, extension]),
+  ),
+  'audio/x-m4a': 'm4a',
+  'audio/m4a': 'm4a',
+  'audio/x-wav': 'wav',
+  'audio/wave': 'wav',
+  'audio/amr': 'amr',
   'text/plain': 'txt',
+  'text/html': 'html',
+  'text/csv': 'csv',
+  'application/rtf': 'rtf',
+  'application/zip': 'zip',
+  'application/msword': 'doc',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
 }
 
 interface Attachment {
@@ -72,7 +85,9 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
         attachments.set(hash, { path, mime })
       }
 
+      const groups = tasksOf(note.inner)
       const enml = withoutEvernote(content, attachments, !!notebook)
+      const placed = withTaskGroups(enml.html, groups)
       encrypted += enml.encrypted
 
       missing += Math.max(unreadable, enml.missing)
@@ -80,12 +95,16 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
       const attributes = element(note.inner, 'note-attributes')?.inner ?? ''
       if (hadReminder(attributes)) reminders += 1
 
-      const words = htmlToMarkdown(enml.html, {
-        fileTargets: true,
-        appTargets: true,
-        mediaLinks: true,
-        plainTasks: true,
-      })
+      const words = withTasks(
+        htmlToMarkdown(placed.html, {
+          fileTargets: true,
+          appTargets: true,
+          mediaLinks: true,
+          plainTasks: true,
+        }),
+        placed.order,
+        groups,
+      )
       const said = textOf(note.inner, 'title')?.trim()
       const title = (said ? safeName(said) : titleFrom(words)) ?? 'Untitled'
       const path = names.free(`${notebook ? `${notebook}/` : ''}${title}.md`)
@@ -144,19 +163,129 @@ function fileName(said: string | null, mime: string, hash: string): string {
   const whole = said?.trim() ?? ''
   const own = /^(?:[A-Za-z]:)?[\\/]/.test(whole) ? (whole.split(/[\\/]/).pop() ?? '') : whole
   const named = own ? safeName(own) : ''
-  if (named && /\.[A-Za-z0-9]{1,5}$/.test(named)) return named
+  if (named && /\.[A-Za-z0-9]*[A-Za-z][A-Za-z0-9]*$/.test(named)) return named
 
-  const extension = EXTENSIONS[mime] ?? mime.split('/')[1]?.replace(/[^a-z0-9]/g, '') ?? 'bin'
+  const subtype = mime.split('/')[1]?.replace(/^x-/, '') ?? ''
+  const extension = EXTENSIONS[mime] ?? (/^[a-z0-9]{1,8}$/.test(subtype) ? subtype : 'bin')
   return named ? `${named}.${extension}` : `${hash.slice(0, 16)}.${extension}`
 }
 
-const VOID = /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i
-
-const CHECKED = /checked\s*=\s*["']?true/i
-
-function box(checked: boolean): string {
-  return `<input type="checkbox"${checked ? ' checked' : ''}>`
+interface EvernoteTask {
+  line: string
+  weight: string
 }
+
+const TASK_GROUP = /<div\b([^>]*--en-task-group:\s*true[^>]*?)\s*(?:\/>|>\s*<\/div>)/gi
+const PLACE = '\uE001'
+
+function tasksOf(note: string): Map<string, string[]> {
+  const groups = new Map<string, EvernoteTask[]>()
+  for (const task of elements(note, 'task')) {
+    const group = textOf(task.inner, 'taskGroupNoteLevelID')?.trim() ?? ''
+    const held = groups.get(group) ?? []
+    held.push(taskOf(task.inner))
+    groups.set(group, held)
+  }
+
+  return new Map(
+    [...groups].map(([group, tasks]) => [
+      group,
+      tasks
+        .map((task, at) => ({ task, at }))
+        .sort((one, other) =>
+          one.task.weight === other.task.weight
+            ? one.at - other.at
+            : one.task.weight < other.task.weight
+              ? -1
+              : 1,
+        )
+        .map(({ task }) => task.line),
+    ]),
+  )
+}
+
+function taskOf(inner: string): EvernoteTask {
+  const own = inner.replace(/<reminder\b[\s\S]*?<\/reminder>/gi, '')
+  const zone = zoneIn(own)
+  const done = textOf(own, 'taskStatus')?.trim().toLowerCase() === 'completed'
+  const due = momentOf(textOf(own, 'dueDate'))
+  const local = due ? (wallClock(due, zone) ?? wallClock(due)) : null
+  const time = textOf(own, 'dueDateUIOption')?.trim() === 'date_time' ? local?.time : undefined
+  const completed = done ? dayOf(textOf(own, 'statusUpdated')?.trim()) : null
+
+  const remind: Remind[] = []
+  for (const reminder of elements(inner, 'reminder')) {
+    const at = momentOf(textOf(reminder.inner, 'reminderDate'))
+    const shown = at ? wallClock(at, zoneIn(reminder.inner) ?? zone) : null
+    if (shown) remind.push({ at: shown.day, time: shown.time })
+  }
+
+  const line = taskLine({
+    text: plainTaskWords((textOf(own, 'title') ?? '').replace(/\s+/g, ' ').trim()),
+    status: done ? 'x' : ' ',
+    done,
+    cancelled: false,
+    remind,
+    priority: NO_PRIORITY,
+    tags: [],
+    dependsOn: [],
+    fields: {},
+    ...(local ? { start: local.day } : {}),
+    ...(time ? { time } : {}),
+    ...(time && zone ? { zone } : {}),
+    ...(completed ? { completed } : {}),
+  })
+
+  return { line, weight: textOf(own, 'sortWeight')?.trim() ?? '' }
+}
+
+function zoneIn(xml: string): string | undefined {
+  const said = textOf(xml, 'timeZone')?.trim()
+  return said === '' ? undefined : said
+}
+
+function momentOf(said: string | null): Date | null {
+  const found = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/.exec(said?.trim() ?? '')
+  if (!found) return null
+  const [, year, month, day, hour, minute, second] = found
+  const moment = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`)
+  return Number.isNaN(moment.getTime()) ? null : moment
+}
+
+function withTaskGroups(
+  html: string,
+  groups: ReadonlyMap<string, readonly string[]>,
+): { html: string; order: string[] } {
+  const order: string[] = []
+  const placed = html.replace(TASK_GROUP, (_whole, said: string) => {
+    const group = /--en-id:\s*([^;"']+)/i.exec(said)?.[1]?.trim() ?? ''
+    if (!groups.has(group) || order.includes(group)) return ''
+    order.push(group)
+    return `<div>${PLACE}${order.length - 1}${PLACE}</div>`
+  })
+  return { html: placed, order }
+}
+
+function withTasks(
+  words: string,
+  order: readonly string[],
+  groups: ReadonlyMap<string, readonly string[]>,
+): string {
+  const shown = new Set<string>()
+  const placed = words.replace(new RegExp(`${PLACE}(\\d+)${PLACE}`, 'g'), (_whole, at: string) => {
+    const group = order[Number(at)] ?? ''
+    shown.add(group)
+    return (groups.get(group) ?? []).join('\n')
+  })
+
+  const rest = [...groups].filter(([group]) => !shown.has(group)).flatMap(([, lines]) => lines)
+  if (!rest.length) return placed
+  return `${placed.trimEnd()}${placed.trim() ? '\n\n' : ''}${rest.join('\n')}`
+}
+
+const VOID = /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i
+const CHECKED = /checked\s*=\s*["']?true/i
+const box = (checked: boolean): string => `<input type="checkbox"${checked ? ' checked' : ''}>`
 
 function withoutEvernote(
   enml: string,

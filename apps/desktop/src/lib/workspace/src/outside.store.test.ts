@@ -41,12 +41,10 @@ describe('the watch of the spaces', () => {
     watch.settle()
     await settle()
     expect(watching.roots).toEqual([['/s']])
-
     workspace.spaces = [...workspace.spaces, { id: 'T', name: 't', root: '/t' }]
     watch.settle()
     await settle()
     expect(watching.roots).toEqual([['/s'], ['/s', '/t']])
-
     watch.settle()
     await settle()
     expect(watching.roots.length).toBe(2)
@@ -62,12 +60,10 @@ describe('the watch of the spaces', () => {
     await settle()
     expect(watching.roots).toEqual([])
     expect(watching.stops).toBe(0)
-
     account.user = null
     watch.settle()
     await settle()
     expect(watching.roots).toEqual([['/s', '/t']])
-
     await unwatchSpaces()
     await settle()
     expect(watching.roots).toEqual([

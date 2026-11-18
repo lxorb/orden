@@ -1,5 +1,20 @@
 import { describe, expect, test } from 'vitest'
-import { retargetCanvas, rewriteCanvasLinks } from './canvas-rewrite'
+import type { FoundLink } from '@orden/markdown/links'
+import { retargetCanvas } from './canvas-rewrite'
+import type { Move } from './link-rewrite'
+
+const rewriteCanvasLinks = (
+  text: string,
+  source: string,
+  move: Move,
+  points: (link: FoundLink) => boolean,
+): string | null =>
+  retargetCanvas(
+    text,
+    source,
+    (file) => (file === move.from ? move.to : null),
+    (link) => (points(link) ? move.to : null),
+  )
 
 const move = { from: 'Old.md', to: 'New.md' }
 const namesOld = (link: { target: string }) => link.target === 'Old' || link.target === 'Old.md'

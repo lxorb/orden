@@ -1,0 +1,6 @@
+{
+  "name": "notes",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base"]
+}

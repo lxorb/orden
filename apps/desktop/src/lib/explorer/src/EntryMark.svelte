@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { fileMark } from '../../marks/src/api'
-  import { FileMark } from '../../marks/src/api'
+  import { fileMark, FileMark } from '../../marks/src/api'
   import { nameOf } from '../../platform/src/api'
   import { kindIcons } from './kind-icons'
   import { ordenOpens } from './open'

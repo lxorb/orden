@@ -42,8 +42,8 @@
     PullMark,
   } from './lib/frame/src/api'
   import { Sidebar } from './lib/sidebar/src/api'
-  import { UpdateNotice, updates } from './lib/updates/src/api'
-  import { startup } from './lib/launch/src/api'
+  import { loadWhatsNew, UpdateNotice, updates } from './lib/updates/src/api'
+  import { startup, Stops } from './lib/launch/src/api'
   import { renamed } from './lib/launch/src/renamed.svelte'
   import { account, arriving, usage } from './lib/accounts/src/api'
   import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
@@ -65,7 +65,7 @@
   import { paintCodePalette } from './lib/highlight/src/api'
   import { recovery } from './lib/history/src/api'
   import { pages } from './lib/pages/src/api'
-  import { inRooms, rooms } from './lib/collab/src/api'
+  import { inRooms, personFace, rooms } from './lib/collab/src/api'
   import { search } from './lib/search/src/api'
   import { settings } from './lib/settings/src/api'
   import { paletteDoor } from './lib/palette/src/api'
@@ -172,6 +172,8 @@
   const rightOpen = $derived(
     padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
   )
+  const leftShut = $derived(viewport.drawer || workspace.openOn('left') === null)
+  const rightShut = $derived(viewport.drawer || !rightOpen)
   const docked = $derived(
     viewport.drawer || bare || filled
       ? 0
@@ -200,6 +202,8 @@
     if (joining.step) void joinSheet.ask()
     if (joining.aside) void joinPending.ask()
     if (viewport.touch && viewport.typing) void formatBarDoor.ask()
+    if (palette) void paletteDoor.ask()
+    if (prompt.open) void promptSheet.ask()
   })
 
   onDestroy(start())
@@ -280,7 +284,7 @@
 
   $effect(() => watchTextSize())
 
-  $effect(() => workspace.oneDocument())
+  $effect(() => workspace.onePane())
 
   $effect(() => {
     const who = account.user?.id
@@ -356,13 +360,7 @@
     }),
   )
   $effect(() => {
-    if (palette) void paletteDoor.ask()
-  })
-  $effect(() => {
     if (paletteWords.words !== null) palette = true
-  })
-  $effect(() => {
-    if (prompt.open) void promptSheet.ask()
   })
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 
@@ -400,7 +398,7 @@
     }
   })
 
-  $effect(() => rooms.rename(account.name ?? undefined))
+  $effect(() => rooms.rename(account.name ?? undefined, personFace()))
 
   $effect(() => {
     const open = account.syncable && startup.reached('rooms') ? workspace.openNotes : []
@@ -443,7 +441,6 @@
         terminals: () => import('./lib/terminal/src/api').then((one) => one.sessions()),
       },
     })
-    Object.assign(window, { nibApp: (window as unknown as { ordenApp: object }).ordenApp })
 
     void Promise.all([
       import('./lib/import/src/api').then((one) => one.importingStore()),
@@ -587,7 +584,7 @@
   }
 
   function land(on: EditorView, line: number) {
-    if (viewport.drawer) workspace.closePanel()
+    workspace.showNote()
 
     landOnLine(on, line)
     on.focus()
@@ -672,12 +669,12 @@
     if (!shortcuts.handle(event, appContext())) shortcuts.writeKey(event)
   }
 
-  let untap: (() => void) | undefined
+  const later = new Stops()
   void startup
     .turn('doors')
     .then(doubleTaps)
-    .then(({ hear }) => (untap = hear(appContext)))
-  onDestroy(() => untap?.())
+    .then(({ hear }) => later.keep(hear(appContext)))
+  onDestroy(() => later.end())
 
   async function showCommands() {
     await paletteDoor.ask()
@@ -781,6 +778,8 @@
       class="document"
       inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}
       class:open={!!workspace.panel}
+      class:left-shut={leftShut}
+      class:right-shut={rightShut}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
       class:settling={drawer.settle !== null}
@@ -1016,6 +1015,11 @@
     <ShareSheet />
   {/await}
 {/if}
+{#if updates.news}
+  {#await loadWhatsNew() then { default: WhatsNew }}
+    <WhatsNew {...updates.news} onclose={() => (updates.news = null)} />
+  {/await}
+{/if}
 {#if publishSheet.asked}
   {#await publishSheet.asked then PublishSheet}
     <PublishSheet />
@@ -1127,7 +1131,18 @@
     min-width: 0;
     min-height: 0;
     display: flex;
-    padding: 0 var(--card-inset) var(--card-inset);
+    padding: 0 var(--right-inset, var(--card-inset)) 0 var(--left-inset, var(--card-inset));
+    transition: padding var(--dur-base) var(--ease-out);
+  }
+
+  .document.left-shut {
+    --left-inset: 0px;
+    --left-edge: 0px;
+  }
+
+  .document.right-shut {
+    --right-inset: 0px;
+    --right-edge: 0px;
   }
 
   .panes.under-pad {

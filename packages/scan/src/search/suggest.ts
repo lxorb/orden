@@ -81,7 +81,8 @@ export function chosen(
   at: Completing,
   value: string,
 ): { text: string; caret: number } {
-  const written = !at.quoted && /\s/.test(value) ? `"${value}"` : value
+  const escaped = value.replace(/[\\"]/g, '\\$&')
+  const written = at.quoted ? escaped : /[\s"\\()]/.test(value) ? `"${escaped}"` : value
   const closed = source.charAt(at.to) === '"'
   const tail = at.quoted && !closed ? '"' : ''
 

@@ -14,9 +14,7 @@ import { noteIndex, resolveLink } from './notes'
 import { renderNote } from './preview'
 
 const DELAY = 300
-
 const MOST_PREVIEWED = 4000
-
 const MOST_EDITED = 40_000
 
 export interface PreviewNote {
@@ -85,8 +83,9 @@ export const notePreviews = hoverTooltip(
   },
 )
 
-function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
-  return (view: EditorView): TooltipView => {
+const cardFor =
+  (link: LinkSpan, path: string | null, side: -1 | 1) =>
+  (view: EditorView): TooltipView => {
     const dom = document.createElement('div')
     dom.className = 'orden-note-preview'
 
@@ -187,7 +186,6 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
       },
     }
   }
-}
 
 const NAMED_END = /[ \t]+\^[A-Za-z0-9-]+[ \t]*$/
 

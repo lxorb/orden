@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const muted: { tab: string; muted: boolean }[] = []
 
@@ -9,21 +10,6 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     return Promise.resolve(undefined)
   },
 }))
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 
 vi.stubGlobal('localStorage', memoryStorage())
 
@@ -44,22 +30,13 @@ beforeEach(() => {
 })
 
 test('reads the three things a page is said to be doing, and nothing else', () => {
-  expect(readSaid({ tab: 'a', said: 'sound', playing: true, muted: false })).toEqual({
-    tab: 'a',
-    said: 'sound',
-    playing: true,
-    muted: false,
-  })
-  expect(readSaid({ tab: 'a', said: 'fill', on: true })).toEqual({
-    tab: 'a',
-    said: 'fill',
-    on: true,
-  })
-  expect(readSaid({ tab: 'a', said: 'zoom', factor: 1.5 })).toEqual({
-    tab: 'a',
-    said: 'zoom',
-    factor: 1.5,
-  })
+  for (const said of [
+    { tab: 'a', said: 'sound', playing: true, muted: false },
+    { tab: 'a', said: 'fill', on: true },
+    { tab: 'a', said: 'zoom', factor: 1.5 },
+  ]) {
+    expect(readSaid({ ...said })).toEqual(said)
+  }
 
   expect(readSaid({ tab: 'a', said: 'zoom', factor: 0 })).toBe(null)
   expect(readSaid({ tab: 'a', said: 'shout' })).toBe(null)
@@ -119,32 +96,19 @@ test('a zoom made inside the page is the size the site is kept at', () => {
 
 test('reads how a page arrived, and why it did not', () => {
   const arrived = { tab: 'a', said: 'arrived', url: 'https://a.example/' } as const
-  expect(readSaid({ ...arrived, failure: null })).toEqual({
-    ...arrived,
-    failure: null,
-    bare: false,
-    reason: null,
-  })
+  const plain = { ...arrived, failure: null, bare: false, reason: null }
+  expect(readSaid({ ...arrived, failure: null })).toEqual(plain)
   expect(readSaid({ ...arrived, failure: 'unreachable' })).toEqual({
-    ...arrived,
+    ...plain,
     failure: 'unreachable',
-    bare: false,
-    reason: null,
   })
-  expect(readSaid({ ...arrived, failure: 'x' })).toEqual({
-    ...arrived,
-    failure: null,
-    bare: false,
-    reason: null,
-  })
+  expect(readSaid({ ...arrived, failure: 'x' })).toEqual(plain)
   expect(readSaid({ ...arrived, failure: 'other', bare: true, reason: 'No such server.' })).toEqual(
     { ...arrived, failure: 'other', bare: true, reason: 'No such server.' },
   )
   expect(readSaid({ ...arrived, failure: 'other', bare: 'yes', reason: 4 })).toEqual({
-    ...arrived,
+    ...plain,
     failure: 'other',
-    bare: false,
-    reason: null,
   })
   expect(readSaid({ tab: 'a', said: 'arrived' })).toBe(null)
 })

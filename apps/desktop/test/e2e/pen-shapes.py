@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 import time
 
@@ -629,5 +627,4 @@ def main() -> int:
 
     return DRIVE.verdict("every pen the drive could emulate behaves")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

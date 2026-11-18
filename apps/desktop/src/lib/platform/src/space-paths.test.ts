@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
   folderOf,
   insideAnyOf,
@@ -7,11 +7,21 @@ import {
   nameOf,
   noteName,
   notePath,
+  pathKey,
   placesOf,
   relativePath,
   relativeTo,
   rootedAt,
+  samePath,
+  within,
 } from './space-paths'
+
+const os = vi.hoisted(() => ({ name: '' }))
+
+vi.mock('./tauri', async (original) => ({
+  ...(await original<typeof import('./tauri')>()),
+  platform: () => os.name,
+}))
 
 describe('a path as the space speaks of it', () => {
   test('drops the root and the platform separators', () => {
@@ -226,5 +236,26 @@ describe('a space kept here', () => {
     expect(keptShaped('C:\\spaces\\.orden\\Plans\\Plans\\')).toBe(true)
     expect(keptShaped('/spaces/Plans')).toBe(false)
     expect(keptShaped('/spaces/.orden/Plans/Other')).toBe(false)
+  })
+})
+
+describe('a name Windows ends with a dot or a space', () => {
+  afterEach(() => {
+    os.name = ''
+  })
+
+  test('is the name without them, as Windows opens it', () => {
+    os.name = 'windows'
+    expect(within('C:\\Notes\\Private', 'C:\\Notes\\Private.\\Diary.md')).toBe('Diary.md')
+    expect(samePath('C:\\Notes\\Diary.md', 'C:\\Notes\\Diary.md. .')).toBe(true)
+    expect(pathKey('C:\\Notes\\Private.\\Diary.md ')).toBe(pathKey('C:\\Notes\\Private\\Diary.md'))
+    expect(within('C:\\Notes\\Private', 'C:\\Notes\\Private..\\Diary.md')).toBeNull()
+    expect(samePath('C:\\Notes\\...', 'C:\\Notes')).toBe(false)
+  })
+
+  test('is a name of its own elsewhere', () => {
+    os.name = 'linux'
+    expect(within('/notes/Private', '/notes/Private./Diary.md')).toBeNull()
+    expect(samePath('/notes/Diary.md', '/notes/Diary.md.')).toBe(false)
   })
 })

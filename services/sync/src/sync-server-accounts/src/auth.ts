@@ -2,10 +2,8 @@ import { Hono } from 'hono'
 import {
   askHub,
   claimGuest,
-  claimGuestsAt,
   codeMessage,
   deviceIn,
-  devicesEnded,
   type Env,
   equals,
   forgetEndedTargets,
@@ -16,7 +14,6 @@ import {
   mailCeilings,
   mailer,
   mailNotSent,
-  makeFirstSpace,
   mayTryCode,
   newId,
   NOT_AN_EMAIL,
@@ -26,11 +23,9 @@ import {
   randomToken,
   readBody,
   refusedMail,
-  roomsSignedOut,
   said,
   type Session,
   sha256,
-  startingVersion,
   tokenIn,
   TOOK_TOO_LONG,
   TRY_IN_AN_HOUR,
@@ -39,6 +34,14 @@ import {
   type Whoever,
   WRONG_CODE,
 } from '../../sync-server/src/api'
+import {
+  devicesEnded,
+  makeFirstSpace,
+  ownProfile,
+  presentOwnProfile,
+  roomsSignedOut,
+  startingVersion,
+} from '../../sync-server-engine/src/api'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 
 const CODE_TTL = 10 * 60 * 1000
@@ -104,10 +107,11 @@ async function openSession(env: Env, userId: string, device = ''): Promise<strin
   return token
 }
 
+const BY_ADDRESS = `select id, email, name, created_at from users
+  where email = ?1 or id = (select user_id from user_addresses where email = ?1)`
+
 async function accountFor(env: Env, address: string): Promise<User> {
-  const held = await env.DB.prepare('select id, email, name, created_at from users where email = ?')
-    .bind(address)
-    .first<User>()
+  const held = await env.DB.prepare(BY_ADDRESS).bind(address).first<User>()
 
   if (held) return held
 
@@ -120,10 +124,7 @@ async function accountFor(env: Env, address: string): Promise<User> {
     .bind(user.id, user.email, user.created_at, await startingVersion(env))
     .run()
 
-  const account =
-    (await env.DB.prepare('select id, email, name, created_at from users where email = ?')
-      .bind(address)
-      .first<User>()) ?? user
+  const account = (await env.DB.prepare(BY_ADDRESS).bind(address).first<User>()) ?? user
 
   if (wrote.meta.changes > 0) {
     try {
@@ -142,8 +143,6 @@ async function accountFor(env: Env, address: string): Promise<User> {
 async function claimWhatWasGuested(env: Env, user: User, held: string | null): Promise<void> {
   const guest = held ? await guestForToken(env, held) : null
   if (guest) await claimGuest(env, guest.id, user)
-
-  await claimGuestsAt(env, user)
 }
 
 export async function signingIn(
@@ -158,7 +157,14 @@ export async function signingIn(
 }
 
 export async function sessionFor(env: Env, user: User, device = ''): Promise<Session> {
-  return { token: await openSession(env, user.id, device), user: presentUser(user) }
+  const [token, profile] = await Promise.all([
+    openSession(env, user.id, device),
+    ownProfile(env, user.id),
+  ])
+  return {
+    token,
+    user: { ...presentUser(user), ...(profile ? presentOwnProfile(profile, Date.now()) : {}) },
+  }
 }
 
 export async function sendCode(
@@ -413,6 +419,10 @@ sessions.delete('/', async (context) => {
     .bind(user.id, mine)
     .all<Ended>()
 
+  await context.env.DB.batch([
+    context.env.DB.prepare('delete from oauth_grants where user_id = ?').bind(user.id),
+    context.env.DB.prepare('delete from oauth_codes where user_id = ?').bind(user.id),
+  ])
   await sessionsEnded(context.env, user.id, ending)
 
   return context.json({ ended: ending.length })

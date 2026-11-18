@@ -240,7 +240,7 @@ export function generalPane(): Pane {
                   label: 'Show other tabs as icons',
                   hint: 'Every tab but the one in front shows only its icon; pointing at one shows its name.',
                   words: ['icon', 'compact', 'pinned', 'title', 'tabs'],
-                  initial: true,
+                  initial: false,
                   get: () => iconTabs.on,
                   set: (on) => iconTabs.set(on),
                 },
@@ -307,19 +307,7 @@ export function generalPane(): Pane {
       },
       {
         title: 'Add task',
-        fields: [
-          ...settingFieldsIn('general', 'Add task'),
-          {
-            kind: 'switch',
-            key: 'general.undatedInToday',
-            label: 'Show tasks without a start date in Today',
-            hint: 'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
-            words: ['tasks', 'today', 'start date', 'undated', 'no date', 'todoist'],
-            initial: DEFAULTS.undatedInToday,
-            get: () => modes.undatedInToday,
-            set: (on) => modes.setUndatedInToday(on),
-          },
-        ],
+        fields: [...settingFieldsIn('general', 'Add task')],
       },
       ...(__EVEN_PLUGIN__
         ? []
@@ -412,6 +400,9 @@ export function generalPane(): Pane {
           versionField(),
         ],
       },
+      ...(!__EVEN_PLUGIN__ && isDesktop
+        ? [{ title: 'Browser', fields: settingFieldsIn('general', 'Browser') }]
+        : []),
     ],
   }
 }

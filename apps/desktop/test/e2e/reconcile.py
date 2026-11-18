@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib.util
 import json
 import time
@@ -176,5 +174,4 @@ def main() -> int:
 
     return 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

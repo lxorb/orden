@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import re
 import sys
@@ -200,5 +198,4 @@ def main() -> int:
     print("\na shared canvas carries every card to every device, the guest's and the phones'", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

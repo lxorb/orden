@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -93,5 +91,4 @@ def drive(browser: Browser) -> None:
     for device in ("desktop", "phone", "tablet"):
         one(browser, device)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a phone and a tablet have no AI panel, and a desktop keeps it"))
+raise SystemExit(DRIVE.run(drive, "a phone and a tablet have no AI panel, and a desktop keeps it"))

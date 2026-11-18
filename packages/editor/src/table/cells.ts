@@ -30,13 +30,10 @@ export function collapsedAt(cell: HTMLElement, offset: number): boolean {
   return selection !== null && selection.from === offset && selection.to === offset
 }
 
-export function attached(node: Node): boolean {
-  return node.isConnected
-}
+export const attached = (node: Node): boolean => node.isConnected
 
-export function sameCell(a: CellAddress, b: CellAddress | undefined): boolean {
-  return a.row === b?.row && a.column === b.column
-}
+export const sameCell = (a: CellAddress, b: CellAddress | undefined): boolean =>
+  a.row === b?.row && a.column === b.column
 
 export function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string) {
   const node = document.createElement(tag)

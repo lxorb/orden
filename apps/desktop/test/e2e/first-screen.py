@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -50,8 +48,6 @@ new MutationObserver(() => {
   if (first.editor === null && [...document.querySelectorAll('.cm-editor')].some((one) => !one.closest('.panes > .first'))) first.editor = now
   if (first.drawn !== null && first.gone === null && !drawing) first.gone = now
 }).observe(document, { childList: true, subtree: true })
-// Every frame, whether the editor has a heading on screen still showing its marks: the
-// note drawn as the characters it is made of rather than as it reads.
 first.raw = 0
 first.rawSeen = 0
 const look = () => {
@@ -179,5 +175,4 @@ def drive(browser: Browser) -> None:
     else:
         say("a screen kept of other words was not drawn")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the note was on screen in the first frame and its editor took over in place"))
+raise SystemExit(DRIVE.run(drive, "the note was on screen in the first frame and its editor took over in place"))

@@ -7,9 +7,12 @@ const LEFT = 60
 const RIGHT = 500
 const RADIUS = 6
 
-function rect(left: number, top: number, width: number, height = LINE): SelectionRect {
-  return { left, top, width, height }
-}
+const rect = (left: number, top: number, width: number, height = LINE): SelectionRect => ({
+  left,
+  top,
+  width,
+  height,
+})
 
 function overLines(from: number, to: number, lines = 3): SelectionRect[] {
   const middle = TOP + LINE
@@ -179,9 +182,10 @@ describe('several rows', () => {
 })
 
 describe('what is not there', () => {
-  test('nothing selected is nothing drawn', () => {
-    expect(selectionBlocks([], RADIUS)).toEqual([])
-  })
+  test.each([
+    [[], [], RADIUS],
+    [[rect(LEFT, TOP, 0)], [], RADIUS],
+  ])('%j', (input, wanted, extra) => expect(selectionBlocks(input, extra)).toEqual(wanted))
 
   test('a row of no width is dropped, and the block starts below it', () => {
     const rects = [...overLines(180, 260), rect(LEFT, TOP + LINE * 3, 0)]
@@ -194,10 +198,6 @@ describe('what is not there', () => {
     const block = only([rect(120, TOP, 90), rect(120, TOP + LINE, 90, 0)])
 
     expect(block.height).toBe(LINE)
-  })
-
-  test('only rows of no width is no block at all', () => {
-    expect(selectionBlocks([rect(LEFT, TOP, 0)], RADIUS)).toEqual([])
   })
 
   test('a radius of nothing is a box with hard corners', () => {

@@ -1,9 +1,8 @@
-import { isRecord, isString, keepJson, stored } from '../../platform/src/api'
+import { heardElsewhere, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 import { SEARCH } from '@orden/scan/typed'
 import { engineById, engineHome, isEngineAddress } from '@orden/scan/engines'
 
 const KEY = 'orden:search-engine'
-
 export const CUSTOM = 'custom'
 
 interface Choice {
@@ -58,6 +57,11 @@ class SearchEngine {
     return true
   }
 
+  heard() {
+    this.choice = read()
+    this.made = isRecord(stored(KEY))
+  }
+
   private write(next: Choice) {
     this.choice = next
     this.made = true
@@ -66,3 +70,5 @@ class SearchEngine {
 }
 
 export const searchEngine = new SearchEngine()
+
+heardElsewhere([KEY], () => searchEngine.heard())

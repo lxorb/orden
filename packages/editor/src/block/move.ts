@@ -108,9 +108,8 @@ function landingOf(
   return to >= block.first.from && to <= end ? null : to
 }
 
-export function landing(state: EditorState, span: BlockSpan, at: number): number | null {
-  return landingOf(state, span, measure(state, span), at)
-}
+export const landing = (state: EditorState, span: BlockSpan, at: number): number | null =>
+  landingOf(state, span, measure(state, span), at)
 
 function bodyAt(
   state: EditorState,
@@ -131,16 +130,13 @@ function caretIn(state: EditorState, block: Measured, taken: number[], caret: nu
   const line = doc.lineAt(caret)
   let offset = 0
 
-  for (let number = block.first.number; number < line.number; number++) {
+  for (let number = block.first.number; number < line.number; number++)
     offset += doc.line(number).length - (taken[number - block.first.number] ?? 0) + 1
-  }
 
   return offset + Math.max(0, caret - line.from - (taken[line.number - block.first.number] ?? 0))
 }
 
-function breaks(text: string): number {
-  return text.split('\n').length
-}
+const breaks = (text: string): number => text.split('\n').length
 
 function cut(state: EditorState, block: Measured): ChangeSpec & { from: number; insert: string } {
   const doc = state.doc

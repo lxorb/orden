@@ -31,7 +31,6 @@
 
 {#snippet corner(ui: PassUi)}
   <SidebarFoot
-    theming={false}
     scratch={false}
     onwho={(event: MouseEvent) => showPassAccount(event, ui)}
     onsettings={() => void ui.goTo('settings')}

@@ -22,6 +22,7 @@ import {
   keep,
   keepJson,
   recordOf,
+  heardElsewhere,
   stored,
   storedText,
   invoke,
@@ -29,7 +30,7 @@ import {
   platform,
 } from '../../platform/src/api'
 import { chrome } from './chrome.svelte'
-import { groundUnknown, rememberGround, standAsBefore, stoodOnNothing } from './ground'
+import { rememberGround } from './ground'
 import {
   type ChosenSettings,
   declares,
@@ -51,7 +52,6 @@ interface ThemeInfo {
   path?: string
   css?: string
   load?: () => Promise<string>
-  translucent?: boolean
   pictured?: boolean
   own?: () => Promise<() => ThemeSetting[]>
   stamp?: Stamp
@@ -106,10 +106,6 @@ export function chosenFirst(css: string): string {
   })
 }
 
-function hasMaterial(): boolean {
-  return isDesktop && platform() === 'windows'
-}
-
 function looks(): Promise<ThemeLooksPort> {
   const found = portOf('theme.looks')
   return found.ok ? Promise.resolve(found.value) : Promise.reject(new Error(found.error.message))
@@ -119,7 +115,6 @@ const GLASS: ThemeInfo = {
   id: GLASS_THEME,
   name: 'Glass',
   variants: ['dark', 'light'],
-  translucent: true,
   load: () => import('@orden/themes/glass').then((module) => module.glassCss),
   own: () => looks().then((port) => port.glassSettings()),
 }
@@ -157,6 +152,15 @@ function isValue(one: unknown): one is ThemeValue {
   return isString(one) || isNumber(one) || isBoolean(one)
 }
 
+function storedSettings(): ChosenSettings {
+  return Object.fromEntries(
+    Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
+      owner,
+      recordOf(values, isValue),
+    ]),
+  )
+}
+
 function earlySheet(): { id: string; css: string } | null {
   const held = stored(SHEET_KEY)
   if (!isRecord(held) || typeof held.id !== 'string' || typeof held.css !== 'string') return null
@@ -190,7 +194,7 @@ class Themes {
   private declared = $state<ThemeSetting[]>([])
   private owned = $state<{ id: string; list: () => ThemeSetting[] } | null>(null)
   private loaded = $state<Record<string, string>>({})
-  private material = false
+  private owns = true
   files = $state<ThemeInfo[]>([])
   private preferred = $state<Scheme>('dark')
   offerContrast = $state(false)
@@ -223,7 +227,8 @@ class Themes {
     ),
   )
 
-  init() {
+  init(owns = true) {
+    this.owns = owns
     const light = window.matchMedia(LIGHT)
     this.preferred = light.matches ? 'light' : 'dark'
     light.addEventListener('change', (event) => {
@@ -231,15 +236,63 @@ class Themes {
       if (this.scheme === 'system') this.apply()
     })
 
-    const unwritten = storedText(STORAGE_KEY) === null
-    const first = this.restoreChoice()
-    this.offerTheContrastTheme()
-    this.restoreSettings(first, unwritten)
+    if (owns) {
+      const unwritten = storedText(STORAGE_KEY) === null
+      const first = this.restoreChoice()
+      this.offerTheContrastTheme()
+      this.restoreSettings(first, unwritten)
+    } else this.readChosen()
     this.early = earlySheet()
-    if (this.active.translucent === true) standAsBefore()
-    this.material = stoodOnNothing() || groundUnknown()
     this.apply()
+    this.listed = this.reload({ atLaunch: true }).catch(() => undefined)
+    this.hearOthers()
+  }
+
+  private heardOn: Window | null = null
+  private hearOthers() {
+    if (this.heardOn === window) return
+    this.heardOn = window
+    heardElsewhere([STORAGE_KEY, SCHEME_KEY, SETTINGS_KEY, ACCENT_KEY], (key) => {
+      if (key === STORAGE_KEY || key === SCHEME_KEY) this.heardChoice()
+      else if (key === SETTINGS_KEY) {
+        const ended = this.id === this.keptId && this.trying.accent === this.kept.accent
+        if (ended) this.trying = without(this.trying, 'accent')
+        this.unkept = false
+        this.chosen = this.storedDrawers()
+        this.paintSettings()
+        this.apply()
+      } else this.chosenElsewhere()
+    })
+  }
+
+  private chosenElsewhere() {
+    this.readChosen()
     this.listed = this.reload().catch(() => undefined)
+  }
+
+  private heardChoice() {
+    const saved = storedText(STORAGE_KEY)
+    const scheme = storedText(SCHEME_KEY)
+    if (saved && saved !== 'null' && !isSchemeChoice(saved)) {
+      this.id = saved
+      this.keptId = saved
+      if (!this.all.some((one) => one.id === saved)) void this.reload().catch(() => undefined)
+    }
+    if (isSchemeChoice(scheme)) {
+      this.scheme = scheme
+      this.keptScheme = scheme
+    }
+    this.apply()
+  }
+
+  private storedDrawers(): ChosenSettings {
+    return this.withOldAccent(storedSettings())
+  }
+
+  private unkept = false
+
+  private get writtenDrawers(): ChosenSettings {
+    return stored(SETTINGS_KEY) === null || this.unkept ? this.chosen : this.storedDrawers()
   }
 
   private withLoaded(theme: ThemeInfo): ThemeInfo {
@@ -262,13 +315,20 @@ class Themes {
     return css
   }
 
+  private readChosen() {
+    this.readChoice()
+    this.chosen = this.withOldAccent(this.ownValues(storedSettings()))
+    this.trying = {}
+  }
+
+  private withOldAccent(drawers: ChosenSettings): ChosenSettings {
+    const accent = storedText(ACCENT_KEY)
+    if (accent === null || drawers[SHARED]?.accent !== undefined) return drawers
+    return { ...drawers, [SHARED]: { ...drawers[SHARED], accent } }
+  }
+
   private restoreSettings(first: boolean, unwritten: boolean) {
-    const drawers: ChosenSettings = Object.fromEntries(
-      Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
-        owner,
-        recordOf(values, isValue),
-      ]),
-    )
+    const drawers = this.storedDrawers()
 
     const app = drawers[SHARED]
     if (app) {
@@ -278,11 +338,6 @@ class Themes {
         drawers[SHARED] = kept
         keepJson(SETTINGS_KEY, drawers)
       }
-    }
-
-    const accent = storedText(ACCENT_KEY)
-    if (accent !== null && drawers[SHARED]?.accent === undefined) {
-      drawers[SHARED] = { ...drawers[SHARED], accent }
     }
 
     this.giveAccent(drawers, first, unwritten)
@@ -309,50 +364,38 @@ class Themes {
     return storedText(STORAGE_KEY) !== null && this.id !== DEFAULT_ID
   }
 
-  adoptTranslucency() {
-    if (this.id === DEFAULT_ID && !__EVEN_PLUGIN__ && hasMaterial()) this.wearId(GLASS_THEME)
-  }
-
-  private restoreChoice(): boolean {
+  private readChoice(): boolean {
     const saved = storedText(STORAGE_KEY)
     const chosen = storedText(SCHEME_KEY)
     const id = !saved || saved === 'null' || isSchemeChoice(saved) ? DEFAULT_ID : saved
-    const moved = saved && storedText(MOVED_KEY)
+    const look = FIRST_LOOK
+    const first = look !== null && id === DEFAULT_ID && !(saved && storedText(MOVED_KEY))
 
     this.scheme = isSchemeChoice(chosen) ? chosen : isSchemeChoice(saved) ? saved : 'system'
     this.keptScheme = this.scheme
+    this.id = first ? look.theme : id
+    this.keptId = this.id
+    return first
+  }
+
+  private restoreChoice(): boolean {
+    const first = this.readChoice()
     keep(SCHEME_KEY, this.scheme)
     keep(MOVED_KEY, 'yes')
-
-    if (FIRST_LOOK && id === DEFAULT_ID && !moved) {
-      this.id = FIRST_LOOK.theme
-      this.keptId = this.id
-      forget(STORAGE_KEY)
-      return true
-    }
-
-    this.id = id
-    this.keptId = id
-    keep(STORAGE_KEY, this.id)
-    return false
+    if (first) forget(STORAGE_KEY)
+    else keep(STORAGE_KEY, this.id)
+    return first
   }
 
   private offerTheContrastTheme() {
-    if (storedText(OFFERED_KEY)) return
-
-    if (!window.matchMedia(MORE).matches) return
-
-    if (this.chose()) {
-      keep(OFFERED_KEY, 'yes')
-      return
-    }
-
+    if (storedText(OFFERED_KEY) || !window.matchMedia(MORE).matches) return
     keep(OFFERED_KEY, 'yes')
+    if (this.chose()) return
     this.offerContrast = true
     this.wearId(CONTRAST_THEME)
   }
 
-  async reload() {
+  async reload({ atLaunch = false } = {}) {
     let found: ThemeFile[]
 
     try {
@@ -385,15 +428,15 @@ class Themes {
         ...file,
         ...(stamp ? { name: stamp.name, stamp } : {}),
         variants: variantsOf(css),
-        ...(css.includes('[data-translucent]') ? { translucent: true } : {}),
         ...(whole ? { css } : {}),
       }
     })
 
     const copy = this.files.find((file) => file.id === this.id && copiesBuiltIn(file))
     if (copy?.stamp) this.wearId(copy.stamp.id)
-    else if (!this.all.some((theme) => theme.id === this.id)) this.wearId(DEFAULT_ID)
-    else this.apply()
+    else if (this.all.some((theme) => theme.id === this.id)) this.apply()
+    else if (atLaunch) this.wearId(DEFAULT_ID)
+    else this.select(DEFAULT_ID)
 
     await this.loadCustom()
   }
@@ -402,19 +445,7 @@ class Themes {
     const css = await invoke<string>('read_custom_css')
       .then(carriedCss)
       .catch(() => '')
-    let style = document.getElementById(CUSTOM_ID)
-
-    if (!css.trim()) {
-      style?.remove()
-      return
-    }
-
-    if (!style) {
-      style = document.createElement('style')
-      style.id = CUSTOM_ID
-      document.head.append(style)
-    }
-    style.textContent = everySurface(css)
+    styleTag(CUSTOM_ID, css.trim() && everySurface(css))
   }
 
   select(id: string) {
@@ -426,7 +457,7 @@ class Themes {
     this.id = id
     this.keptId = id
     this.apply()
-    keep(STORAGE_KEY, id)
+    if (this.owns) keep(STORAGE_KEY, id)
   }
 
   readonly kept = $derived({
@@ -466,7 +497,7 @@ class Themes {
       return
 
     this.chosen = values
-    keepJson(SETTINGS_KEY, values)
+    this.unkept = !keepJson(SETTINGS_KEY, values)
     keep(GIVEN_KEY, '')
     this.keptScheme = look.scheme
     keep(SCHEME_KEY, look.scheme)
@@ -574,19 +605,22 @@ class Themes {
         return
       }
     }
-    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
-    keepJson(SETTINGS_KEY, this.chosen)
+    this.keepValue(drawer, id, value)
     this.tellPicked()
+  }
+
+  private keepValue(drawer: string, id: string, value: ThemeValue) {
+    const held = this.writtenDrawers
+    this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
+    this.unkept = !keepJson(SETTINGS_KEY, this.chosen)
   }
 
   set(id: string, value: ThemeValue) {
     const setting = this.settings.find((one) => one.id === id)
     if (!setting) return
 
-    const drawer = this.drawerOf(setting)
-    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
-    this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
-    keepJson(SETTINGS_KEY, this.chosen)
+    this.keepValue(this.drawerOf(setting), id, value)
+    this.trying = without(this.trying, id)
     if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()
@@ -638,6 +672,7 @@ class Themes {
   private early: { id: string; css: string } | null = null
 
   private apply(kept = true) {
+    kept &&= this.owns
     const theme = this.active
     const applying = ++this.applied
 
@@ -647,37 +682,25 @@ class Themes {
     this.early = null
 
     if (theme.css !== undefined) this.wear(theme.css, kept)
-    else if (theme.load) {
-      if (early !== undefined) this.wear(early, false)
-      void this.fetched(theme)
-        .then(carriedCss)
-        .then((css) => this.wear(applying === this.applied ? css : null, kept))
-        .catch(() => this.wear(applying === this.applied ? '' : null, kept))
-    } else if (!theme.path) this.wear('', kept)
+    else if (!theme.load && !theme.path) this.wear('', kept)
     else {
       if (early !== undefined) this.wear(early, false)
-      void invoke<string>('read_theme', { path: theme.path })
+      void (theme.load ? this.fetched(theme) : invoke<string>('read_theme', { path: theme.path }))
         .then(carriedCss)
         .then((css) => this.wear(applying === this.applied ? css : null, kept))
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
     }
 
-    if (!__EVEN_PLUGIN__ && theme.pictured === true) this.wakeWallpaper()
-
-    if (!__EVEN_PLUGIN__) this.followWhatIsOpen(theme.id === GLASS_THEME, kept)
-
-    const translucent = theme.translucent === true
-    if (!__EVEN_PLUGIN__ && isDesktop && (translucent || this.material)) {
-      this.material = true
-      const dark = this.current === 'dark'
-      const kind = theme.path ? 'clear' : this.materialAsked()
-      void import('./material').then(({ wearMaterial }) =>
-        wearMaterial(translucent, dark, kept, kind),
-      )
-    }
+    if (!__EVEN_PLUGIN__ && this.owns) this.wearAround(theme, kept)
 
     this.paintSystemBars()
     if (kept) rememberGround()
+  }
+
+  private wearAround(theme: ThemeInfo, kept: boolean) {
+    if (theme.pictured === true) this.wakeWallpaper()
+
+    this.followWhatIsOpen(theme.id === GLASS_THEME, kept)
   }
 
   private woken = false
@@ -690,11 +713,6 @@ class Themes {
       .then(() => looks())
       .then((port) => (this.active.pictured === true ? port.wakeWallpaper() : undefined))
       .catch(() => undefined)
-  }
-
-  private materialAsked(): string {
-    const said = this.values.material ?? this.keptFor(GLASS_THEME, 'material')
-    return typeof said === 'string' ? said : 'mica-alt'
   }
 
   private followWhatIsOpen(glass: boolean, kept: boolean) {
@@ -714,7 +732,7 @@ class Themes {
     if (css === null) return
 
     this.inject(css)
-    if (isDesktop) void invoke('wear_page_styles', { css }).catch(() => undefined)
+    if (isDesktop && this.owns) void invoke('wear_page_styles', { css }).catch(() => undefined)
     const sheet = css.replace(STAMP_LINE, '')
     if (sheet !== this.sheet && (this.wearing !== this.id || !declares(sheet))) this.declared = []
     this.wearing = this.id
@@ -770,7 +788,7 @@ class Themes {
   private toldWindow: Scheme | null | undefined = undefined
 
   private paintWindow() {
-    if (!isDesktop || platform() !== 'macos') return
+    if (!isDesktop || !this.owns || platform() !== 'macos') return
 
     const told = this.scheme === 'system' ? null : this.current
     if (told === this.toldWindow) return
@@ -783,23 +801,23 @@ class Themes {
       })
   }
 
-  private inject(css: string | null) {
-    if (css === null) return
-
-    let style = document.getElementById(STYLE_ID)
-
-    if (!css) {
-      style?.remove()
-      return
-    }
-
-    if (!style) {
-      style = document.createElement('style')
-      style.id = STYLE_ID
-      document.head.insertBefore(style, document.getElementById(CUSTOM_ID))
-    }
-    style.textContent = everySurface(chosenFirst(css))
+  private inject(css: string) {
+    styleTag(STYLE_ID, css && everySurface(chosenFirst(css)), document.getElementById(CUSTOM_ID))
   }
+}
+
+function styleTag(id: string, css: string, before: Element | null = null) {
+  let style = document.getElementById(id)
+  if (!css) {
+    style?.remove()
+    return
+  }
+  if (!style) {
+    style = document.createElement('style')
+    style.id = id
+    document.head.insertBefore(style, before)
+  }
+  style.textContent = css
 }
 
 export const theme = new Themes()

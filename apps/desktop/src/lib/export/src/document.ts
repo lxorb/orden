@@ -155,7 +155,7 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'wikilink':
     case 'embed': {
       const link = token.link as Wikilink | undefined
-      if (link?.embed && embedKind(link.target) === 'image') {
+      if (link?.embed === true && embedKind(link.target) === 'image') {
         const size = embedSize(link.alias)
         const named = size === null ? (link.alias ?? '') : ''
         return [{ ...marks, text: named, picture: link.target, ...sizeOf(size) }]
@@ -208,9 +208,8 @@ function itemOf(token: Tokens.ListItem, notes: Footnote[]): Item {
   }
 }
 
-function alignOf(value: string | null | undefined): Align {
-  return value === 'left' || value === 'center' || value === 'right' ? value : null
-}
+const alignOf = (value: string | null | undefined): Align =>
+  value === 'left' || value === 'center' || value === 'right' ? value : null
 
 function callout(blocks: Block[]): { label: string | null; blocks: Block[] } {
   const first = blocks[0]
@@ -502,9 +501,8 @@ function paragraphsOfHtml(source: string): Span[][] {
   return out
 }
 
-export function titleOf(source: string, name: string): string {
-  return frontMatterValue(source, 'title') ?? documentTitle(source) ?? stemOf(name)
-}
+export const titleOf = (source: string, name: string): string =>
+  frontMatterValue(source, 'title') ?? documentTitle(source) ?? stemOf(name)
 
 export interface DocumentOptions {
   hardBreaks?: boolean
@@ -537,11 +535,8 @@ function flowing(text: string, hard: boolean): string {
   return text.replace(/[ \t]*\n[ \t]*/gu, hard ? '\n' : ' ')
 }
 
-function flowedSpans(spans: Span[], hard: boolean): Span[] {
-  return spans.map((span) =>
-    span.text === '\n' ? span : { ...span, text: flowing(span.text, hard) },
-  )
-}
+const flowedSpans = (spans: Span[], hard: boolean): Span[] =>
+  spans.map((span) => (span.text === '\n' ? span : { ...span, text: flowing(span.text, hard) }))
 
 function flowed(blocks: Block[], hard: boolean): Block[] {
   const spans = (one: Span[]) => flowedSpans(one, hard)

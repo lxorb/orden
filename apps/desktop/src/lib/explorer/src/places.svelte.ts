@@ -24,13 +24,10 @@ const SHOWN: Record<PlaceKind, { name: () => string; mark: IconNode }> = {
   disk: { name: () => '', mark: HardDrive },
 }
 
-export function placeName(place: Place): string {
-  return place.kind === 'disk' ? (place.name ?? place.path) : SHOWN[place.kind].name()
-}
+export const placeName = (place: Place): string =>
+  place.kind === 'disk' ? (place.name ?? place.path) : SHOWN[place.kind].name()
 
-export function placeMark(place: Place): IconNode {
-  return SHOWN[place.kind].mark
-}
+export const placeMark = (place: Place): IconNode => SHOWN[place.kind].mark
 
 class Places {
   list = $state<Place[]>([])

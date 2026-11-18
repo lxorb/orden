@@ -30,6 +30,38 @@ describe('a folder Orden keeps', () => {
     expect(await folder.readText('work/plan.md')).toBe('ship it')
   })
 
+  test('a write that lands while its note is renamed goes into the renamed note and leaves no second name on it', async () => {
+    let release = (): void => undefined
+    const held = new Promise<void>((done) => (release = done))
+    class Slow extends MemoryBytes {
+      override async writeText(key: string, text: string) {
+        if (text === 'two') await held
+        return super.writeText(key, text)
+      }
+    }
+    const folder = await opened(new Slow())
+    await folder.write('A.md', 'one')
+
+    const writing = folder.write('A.md', 'two')
+    await folder.move('A.md', 'B.md')
+    release()
+    await writing
+
+    expect(await folder.at('A.md')).toBeNull()
+    expect(await folder.readText('B.md')).toBe('two')
+    expect((await folder.list()).map((one) => one.path)).toEqual(['B.md'])
+  })
+
+  test('moves a folder named in another Unicode spelling with everything inside it', async () => {
+    const folder = await opened()
+    await folder.write('Caf\u00e9/Menu.md', 'soup')
+
+    await folder.move('Cafe\u0301', 'Bistro')
+
+    expect(await folder.readText('Bistro/Menu.md')).toBe('soup')
+    expect(await folder.at('BistroMenu.md')).toBeNull()
+  })
+
   test('moves a folder by its index alone: every key stays and no byte is written', async () => {
     const bytes = new MemoryBytes()
     const folder = await opened(bytes)
@@ -156,6 +188,21 @@ describe('a folder Orden keeps', () => {
     await one.write('More.md', 'more')
     expect((await opened(bytes)).atNow('Ship.md')).not.toBeNull()
     expect(heard).toContain('created')
+  })
+
+  test('a window that takes its turn before word of the last change reaches it reads that change first', async () => {
+    const bytes = new MemoryBytes()
+    const windows = sharedWindows(true)
+    const one = await opened(bytes, windows.world())
+    const two = await opened(bytes, windows.world())
+
+    await one.write('Plan.md', 'from one')
+    await two.write('Goals.md', 'from two')
+    await windows.settled()
+
+    const after = await opened(bytes)
+    expect(after.atNow('Plan.md')).not.toBeNull()
+    expect(after.atNow('Goals.md')).not.toBeNull()
   })
 
   test('writes when a file was last written down a moment after, or with the next change', async () => {

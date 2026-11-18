@@ -59,9 +59,7 @@ const pageWorld: PeerWorld = {
     typeof RTCPeerConnection === 'function' ? new RTCPeerConnection({ iceServers: servers }) : null,
   after: (ms, run) => {
     const timer = setTimeout(run, ms)
-    return () => {
-      clearTimeout(timer)
-    }
+    return () => clearTimeout(timer)
   },
   now: () => Date.now(),
   copy: (text) => {
@@ -188,9 +186,7 @@ export class Picture {
         .catch(() => undefined)
       cancel = this.world.after(1000, tick)
     }
-    this.measuring = () => {
-      cancel()
-    }
+    this.measuring = () => cancel()
     tick()
   }
 

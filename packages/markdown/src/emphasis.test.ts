@@ -74,16 +74,14 @@ describe('a long paragraph rendered again', () => {
   }, 60_000)
 })
 
-describe('emphasis that closes', () => {
-  test('reads as marked reads it', () => {
-    expect(renderMarkdown('*a* **b** ***c*** _d_ __e__')).toBe(
-      '<p><em>a</em> <strong>b</strong> <em><strong>c</strong></em> <em>d</em> <strong>e</strong></p>\n',
-    )
-    expect(renderMarkdown('*a **b** c* and a*b*c but not a_b_c')).toBe(
-      '<p><em>a <strong>b</strong> c</em> and a<em>b</em>c but not a_b_c</p>\n',
-    )
-    expect(renderMarkdown('*a\n*b* c')).toBe('<p>*a\n<em>b</em> c</p>\n')
-    expect(renderMarkdown('**a*')).toBe('<p>*<em>a</em></p>\n')
-    expect(renderMarkdown('*😀*')).toBe('<p><em>😀</em></p>\n')
-  })
+test('emphasis that closes: reads as marked reads it', () => {
+  expect(renderMarkdown('*a* **b** ***c*** _d_ __e__')).toBe(
+    '<p><em>a</em> <strong>b</strong> <em><strong>c</strong></em> <em>d</em> <strong>e</strong></p>\n',
+  )
+  expect(renderMarkdown('*a **b** c* and a*b*c but not a_b_c')).toBe(
+    '<p><em>a <strong>b</strong> c</em> and a<em>b</em>c but not a_b_c</p>\n',
+  )
+  expect(renderMarkdown('*a\n*b* c')).toBe('<p>*a\n<em>b</em> c</p>\n')
+  expect(renderMarkdown('**a*')).toBe('<p>*<em>a</em></p>\n')
+  expect(renderMarkdown('*😀*')).toBe('<p><em>😀</em></p>\n')
 })

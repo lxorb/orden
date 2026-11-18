@@ -1,22 +1,10 @@
-import 'fake-indexeddb/auto'
 import { newKeyring } from '@orden/pass/keys'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { closed, draw, landed, target, until } from '../test/drawn'
+import { FAST, PASSWORD, pass } from '../test/opened'
 import type { Account } from '../../accounts/src/routes'
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
+import { idle } from '../../../../test/effects/settle'
 
 vi.mock('../../gates/src/api', async (original) => ({
   ...(await original<typeof import('../../gates/src/api')>()),
@@ -24,34 +12,12 @@ vi.mock('../../gates/src/api', async (original) => ({
 }))
 
 const { account } = await import('../../accounts/src/account.svelte')
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const PassTab = (await import('./PassTab.svelte')).default
 
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
-
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 let setupSeen = 0
 const watcher = new MutationObserver(() => {
   if (target.textContent.includes('Set up Pass')) setupSeen++
 })
-
-async function settled(): Promise<void> {
-  for (let tries = 0; tries < 10; tries++) {
-    flushSync()
-    await new Promise((done) => setTimeout(done, 20))
-  }
-}
-
-async function until(ready: () => boolean, what: string): Promise<void> {
-  for (let tries = 0; tries < 200; tries++) {
-    flushSync()
-    if (ready()) return
-    await new Promise((done) => setTimeout(done, 20))
-  }
-  throw new Error(`never: ${what}`)
-}
 
 function signedInAs(id: string): void {
   account.token = `token-${id}`
@@ -60,23 +26,20 @@ function signedInAs(id: string): void {
 }
 
 beforeAll(() => {
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
   watcher.observe(target, { childList: true, subtree: true, characterData: true })
   signedInAs('ada')
-  shown = mount(PassTab, { target, props: { tab: null, focused: true }, intro: false })
-  flushSync()
+  draw(PassTab, { tab: null, focused: true })
 })
 
 afterAll(() => {
   watcher.disconnect()
-  if (shown) void unmount(shown)
-  target.remove()
+  closed()
 })
 
 describe('Pass before the account has answered', () => {
   test('waits instead of offering setup while the account is unheard', async () => {
-    await settled()
+    await idle(200)
     expect(pass.state).toBe('loading')
     expect(target.querySelector('input[type=password]')).toBeNull()
     expect(setupSeen).toBe(0)
@@ -92,13 +55,13 @@ describe('Pass before the account has answered', () => {
     signedInAs('grace')
     await until(() => pass.state === 'loading', 'waiting for the other account')
     setupSeen = 0
-    await settled()
+    await idle(200)
     expect(setupSeen).toBe(0)
-    const made = await newKeyring('correct horse battery staple', FAST)
+    const made = await newKeyring(PASSWORD, FAST)
     pass.tookKeyring({ keyring: made.keyring, rev: 1, pending: false })
     pass.accountHeard('grace')
     await until(() => pass.state === 'locked', 'the lock')
-    await settled()
+    await idle(200)
     expect(pass.state).toBe('locked')
     expect(setupSeen).toBe(0)
   })

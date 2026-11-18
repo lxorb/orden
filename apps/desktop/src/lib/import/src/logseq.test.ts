@@ -1,18 +1,6 @@
 import { describe, expect, test } from 'vitest'
-
 import { logseqNote, readLogseq } from './logseq'
-import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
-
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
+import { file, noteAt } from './fixtures'
 
 describe('a Logseq graph', () => {
   test('keeps its pages and dates its journals properly', async () => {
@@ -177,6 +165,26 @@ describe('a Logseq graph', () => {
     expect(text).not.toContain('type::')
   })
 
+  test('references, embeds and links written as code stay as they were written', async () => {
+    const id = '650c1a2b-1111-2222-3333-444455556666'
+    const code = [
+      `\`((${id}))\``,
+      `\`[words](((${id})))\``,
+      `\`{{embed ((${id}))}}\``,
+      '`{{embed [[Sep 11th, 2026]]}}`',
+      '`[words]([[Sep 11th, 2026]])`',
+      '``[[Sep 11th, 2026]]``',
+      '`![a](b.png){:height 10}`',
+    ].join(' ')
+    const plan = await readLogseq([
+      file('journals/2026_09_11.md', `- Woke up\n  id:: ${id}\n`),
+      file('pages/A.md', `- ${code} but ((${id})) and [[Sep 11th, 2026]]\n`),
+    ])
+
+    expect(noteAt(plan, 'A.md')).toContain(`- ${code} but Woke up and [[2026-09-11]]`)
+    expect(plan.lost).toEqual(['1 block references were written out as the words they pointed at'])
+  })
+
   test('a link to a journal follows it to the date it is now', async () => {
     const plan = await readLogseq([
       file('journals/2026_09_11.md', '- Woke up\n'),
@@ -321,5 +329,47 @@ describe('a Logseq graph', () => {
     const said = logseqNote('filters:: {"journal" false}\ntype:: book\n\n- Words\n')
 
     expect(said.meta.extra).toEqual([['type', 'book']])
+  })
+
+  test('a page name with a comma in it stays one tag and one alias', () => {
+    const said = logseqNote(
+      'alias:: [[Smith, John]], JS\ntags:: [[Guns, Germs, and Steel]], history, #[[Nov 15th, 2026]]\n\n- body\n',
+    )
+
+    expect(said.aliases).toEqual(['Smith, John', 'JS'])
+    expect(said.meta.tags).toEqual(['Guns, Germs, and Steel', 'history', 'Nov 15th, 2026'])
+  })
+
+  test('a highlight is a highlight, and in code stays as it was written', () => {
+    const said = logseqNote('- this is ^^important^^ now, and `^^not^^` in code\n')
+
+    expect(said.body).toBe('- this is ==important== now, and `^^not^^` in code\n')
+  })
+
+  test('a block reference reads the page, not a copy Logseq keeps of it', async () => {
+    const id = '650c1a2b-1111-2222-3333-444455556666'
+    const plan = await readLogseq([
+      file('journals/2026_11_15.md', `- Ship on Friday\n  id:: ${id}\n`),
+      file(
+        'logseq/bak/journals/2026_11_15/2026-11-14T10_00_00.000Z.Desktop.md',
+        `- Ship on Monday\n  id:: ${id}\n`,
+      ),
+      file('logseq/version-files/base/journals/2026_11_15.md', `- Ship on Tuesday\n  id:: ${id}\n`),
+      file('.recycle/pages/Old.md', `- Ship on Sunday\n  id:: ${id}\n`),
+      file('pages/Plan.md', `- As agreed: ((${id}))\n`),
+    ])
+
+    expect(noteAt(plan, 'Plan.md')).toContain('As agreed: Ship on Friday')
+  })
+
+  test('a block reference in a graph zipped up whole skips the copies too', async () => {
+    const id = '650c1a2b-1111-2222-3333-444455556666'
+    const plan = await readLogseq([
+      file('My graph/pages/Source.md', `- Ship on Friday\n  id:: ${id}\n`),
+      file('My graph/logseq/bak/pages/Source/2026.md', `- Ship on Monday\n  id:: ${id}\n`),
+      file('My graph/pages/Plan.md', `- As agreed: ((${id}))\n`),
+    ])
+
+    expect(noteAt(plan, 'Plan.md')).toContain('As agreed: Ship on Friday')
   })
 })

@@ -1,22 +1,10 @@
+import { base64, unbase64 } from '@orden/pass/bytes'
 import { invoke, isNative } from '../../platform/src/api'
 
 export interface StretchParams {
   m: number
   t: number
   p: number
-}
-
-function base64(bytes: Uint8Array): string {
-  let said = ''
-  for (const one of bytes) said += String.fromCharCode(one)
-  return btoa(said)
-}
-
-function bytesOf(text: string): Uint8Array<ArrayBuffer> {
-  const said = atob(text)
-  const bytes = new Uint8Array(said.length)
-  for (let at = 0; at < said.length; at++) bytes[at] = said.charCodeAt(at)
-  return bytes
 }
 
 export function nativeStretch(
@@ -31,5 +19,5 @@ export function nativeStretch(
     m: params.m,
     t: params.t,
     p: params.p,
-  }).then(bytesOf)
+  }).then(unbase64)
 }

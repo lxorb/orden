@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser
 
 from harness import Drive
@@ -67,5 +65,4 @@ def drive(browser: Browser) -> None:
         wrong(f"no note says it came from {URL}")
     shot(page, "03-saved")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the scissors are gone and the dots save the page as a note"))
+raise SystemExit(DRIVE.run(drive, "the scissors are gone and the dots save the page as a note"))

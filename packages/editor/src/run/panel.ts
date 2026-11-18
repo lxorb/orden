@@ -34,9 +34,7 @@ export const openRun = StateEffect.define<{
 }>()
 
 export const addRunLines = StateEffect.define<{ run: number; lines: readonly RunLine[] }>()
-
 export const closeRun = StateEffect.define<{ run: number; status: RunStatus; elapsed: number }>()
-
 export const dropRun = StateEffect.define<number>()
 
 function mapPanels(panels: readonly RunPanel[], transaction: Transaction): RunPanel[] {
@@ -92,9 +90,7 @@ function applyEffect(panels: readonly RunPanel[], effect: StateEffect<unknown>):
     )
   }
 
-  if (effect.is(dropRun)) {
-    return panels.filter((panel) => panel.run !== effect.value)
-  }
+  if (effect.is(dropRun)) return panels.filter((panel) => panel.run !== effect.value)
 
   return null
 }
@@ -263,9 +259,7 @@ class RunPanelWidget extends OrdenWidget {
     const panel = this.panel
     if (panel.status === 'running') return 'Running…'
     if (panel.status === 'stopped') return 'Stopped'
-    if (panel.status === 'timeout') {
-      return `Timed out after ${Math.round(panel.elapsed / 1000)} s`
-    }
+    if (panel.status === 'timeout') return `Timed out after ${Math.round(panel.elapsed / 1000)} s`
     return ''
   }
 }

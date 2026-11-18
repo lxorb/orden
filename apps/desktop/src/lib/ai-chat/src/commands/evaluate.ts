@@ -1,5 +1,4 @@
-import type { Message } from '../../../ai-providers/src/api'
-import type { Part, Thread, Turn } from '../../../ai-providers/src/api'
+import type { Message, Part, Thread, Turn } from '../../../ai-providers/src/api'
 
 export interface Verdict {
   verdict: 'met' | 'not_yet' | 'impossible'
@@ -67,8 +66,13 @@ export function verdictIn(answer: string): Verdict {
   }
   const word = (typeof said.verdict === 'string' ? said.verdict : answer).toLowerCase()
   const reason = typeof said.reason === 'string' ? said.reason.trim() : ''
-  if (/\bimpossible\b|\bunmet\b/.test(word)) return { verdict: 'impossible', reason }
-  if (/\bnot[_ ]yet\b/.test(word)) return { verdict: 'not_yet', reason }
+  if (/\bimpossible\b/.test(word)) return { verdict: 'impossible', reason }
+  if (
+    /\bnot[_ ]yet\b|\bunmet\b|(?:\bnot|\bcannot|n't|\bnever)\b[^.:;]{0,24}\b(?:met|achieved)\b/.test(
+      word,
+    )
+  )
+    return { verdict: 'not_yet', reason }
   if (/\bmet\b|\bachieved\b/.test(word)) return { verdict: 'met', reason }
   return { verdict: 'not_yet', reason }
 }

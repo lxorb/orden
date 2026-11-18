@@ -4,6 +4,8 @@ import type { Ended } from '../commands/types'
 import type { Provider } from '../../../ai-providers/src/providers'
 
 const { helpers, DEPTH, MINUTES, PER_ROOT } = await import('./helpers.svelte')
+const { newThread } = await import('../chat/threads')
+
 type Roads = Parameters<typeof helpers.start>[1]
 
 const model = (id: string): ModelInfo => ({
@@ -43,15 +45,8 @@ function roads() {
 }
 
 const parent = (id: string, provider = CLAUDE.id): Thread => ({
+  ...newThread('Notes', provider, 'opus', 'auto', 'full'),
   id,
-  space: 'Notes',
-  title: '',
-  provider,
-  model: 'opus',
-  effort: 'auto',
-  mode: 'full',
-  turns: [],
-  usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null },
   created: 0,
   updated: 0,
 })
@@ -115,6 +110,22 @@ describe('a helper', () => {
       refused: 'no model called "gemini" is offered. Models: opus, sonnet, gpt-6-astra',
     })
     expect(runs).toHaveLength(0)
+  })
+
+  test('with no model asked runs an API provider’s own model, and a local one its default', async () => {
+    const API: Provider = { id: 'anthropic', kind: 'anthropic', name: '', model: 'claude-opus-5-5' }
+    const { made, runs } = roads()
+    const onApi: Roads = {
+      ...made,
+      offered: () => Promise.resolve([{ provider: API, models: [] }]),
+    }
+    const started = await helpers.start(asked(null, ''), onApi)
+    if ('refused' in started) throw new Error(started.refused)
+    expect(started).toMatchObject({ provider: 'anthropic', model: 'claude-opus-5-5' })
+    expect(runs[0]?.thread.model).toBe('claude-opus-5-5')
+
+    await helpers.start(asked(parent('p11'), ''), made)
+    expect(runs[1]?.thread).toMatchObject({ provider: 'claude-code', model: '' })
   })
 
   test('still running after the wait is said as running', async () => {

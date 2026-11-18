@@ -100,6 +100,49 @@ test('the words in a card can be asked for before the caret has left it', () => 
   expect(given).toEqual(['one and more'])
 })
 
+test('two cards written in at once both hand their words, and the first still does once the other closes', () => {
+  const written = (id: string, text: string) =>
+    mount(CanvasNode, {
+      target,
+      props: {
+        node: { id, type: 'text', x: 0, y: 0, width: 200, height: 80, text },
+        canvasPath: `/space/${id}.canvas`,
+        trusted: false,
+        root: '/space',
+        picked: true,
+        editing: true,
+        offset: { x: 0, y: 0 },
+        ontext: (words: string) => {
+          given.push(words)
+        },
+      },
+    })
+  const first = written('a', 'one')
+  flushSync()
+  const second = written('b', 'two')
+  flushSync()
+  close = () => {
+    void unmount(first, { outro: false })
+    void unmount(second, { outro: false })
+  }
+  const [one, two] = [...target.querySelectorAll('.editor')].map((box) =>
+    EditorView.findFromDOM(box as HTMLElement),
+  )
+  if (!one || !two) throw new Error('the cards put no editors up')
+
+  one.dispatch({ changes: { from: one.state.doc.length, insert: ' more' } })
+  two.dispatch({ changes: { from: two.state.doc.length, insert: ' more' } })
+  flushHeldEdits()
+  expect([...given].sort()).toEqual(['one more', 'two more'])
+
+  void unmount(second, { outro: false })
+  close = () => void unmount(first, { outro: false })
+  flushSync()
+  one.dispatch({ changes: { from: one.state.doc.length, insert: ' again' } })
+  flushHeldEdits()
+  expect(given.at(-1)).toBe('one more again')
+})
+
 test('and Escape is the card leaving, which goes no further', () => {
   const box = card()
 

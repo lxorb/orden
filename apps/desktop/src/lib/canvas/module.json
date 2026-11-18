@@ -22,6 +22,8 @@
     "workspace",
     "modes",
     "marks",
-    "link-format"
+    "link-format",
+    "panes",
+    "bases"
   ]
 }

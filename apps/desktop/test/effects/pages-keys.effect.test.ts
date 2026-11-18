@@ -6,6 +6,7 @@ import { writeCanvas } from '@orden/markdown/canvas'
 import { CanvasStore } from '../../src/lib/canvas/src/store.svelte'
 import { tools } from '../../src/lib/canvas/src/tools.svelte'
 import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
+import { idle } from './settle'
 
 Element.prototype.animate = () =>
   ({
@@ -14,18 +15,6 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 Element.prototype.hasPointerCapture = () => false
-globalThis.ResizeObserver = class {
-  observe() {
-    // jsdom does no layout: nothing is measured here.
-  }
-  unobserve() {
-    // Said above.
-  }
-  disconnect() {
-    // Said above.
-  }
-}
-
 let host: HTMLElement
 let tab: Tab
 let close: () => void
@@ -229,7 +218,7 @@ test('a pen stroke the browser cancels ends once the pen tip says nothing more',
   pointer('pointerdown', 4, 'pen', 100, 360, 1)
   for (let x = 110; x <= 150; x += 10) pointer('pointermove', 4, 'pen', x, 360, 1)
   pointer('pointercancel', 4, 'pen', 150, 360, 0)
-  await new Promise((done) => setTimeout(done, 400))
+  await idle(400)
   pointer('pointermove', 4, 'pen', 200, 360, 1)
   pointer('pointerup', 4, 'pen', 200, 360, 0)
 

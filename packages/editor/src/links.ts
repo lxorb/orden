@@ -49,22 +49,16 @@ export function bareTarget(written: string, after: string): string {
 
 export const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
 
-export function linkTitle(href: string): string {
-  return `${href}\n${MAC ? '⌘-click to open the link' : 'Ctrl+Click to open the link'}`
-}
+export const linkTitle = (href: string): string =>
+  `${href}\n${MAC ? '⌘-click to open the link' : 'Ctrl+Click to open the link'}`
 
 export interface Modified {
   ctrlKey: boolean
   metaKey: boolean
 }
 
-export function modifier(event: Modified): boolean {
-  return MAC ? event.metaKey : event.ctrlKey
-}
-
-export function modifierHeld(): boolean {
-  return held
-}
+export const modifier = (event: Modified): boolean => (MAC ? event.metaKey : event.ctrlKey)
+export const modifierHeld = (): boolean => held
 
 let held = false
 

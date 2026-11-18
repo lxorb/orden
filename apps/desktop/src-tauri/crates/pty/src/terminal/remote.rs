@@ -1,0 +1,1106 @@
+use orden_base::Held as _;
+use std::collections::BTreeMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+use serde::{Deserialize, Serialize};
+use tauri::{Manager, Webview};
+
+use super::session::Fresh;
+use super::shells::Launch;
+use super::ssh_config::{self, ConfigHost};
+
+pub const PREFIX: &str = "ssh:";
+
+const OWN: &str = "n-";
+
+pub(super) const CONNECT_TIMEOUT: &str = "ConnectTimeout=15";
+
+const ALIVE: [&str; 4] = [
+    "-o",
+    "ServerAliveInterval=10",
+    "-o",
+    "ServerAliveCountMax=3",
+];
+
+const FAREWELL: &str = "\u{1b}[9001~";
+
+const MOST_HOSTS: usize = 500;
+const MOST_WORDS: usize = 200;
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Own {
+    pub id: String,
+    pub name: String,
+    pub hostname: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct About {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub colour: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub group: Option<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub pinned: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last: Option<u64>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Kept {
+    #[serde(default)]
+    pub own: Vec<Own>,
+    #[serde(default)]
+    pub about: BTreeMap<String, About>,
+    #[serde(default)]
+    pub order: Vec<String>,
+    #[serde(default)]
+    pub groups: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+pub struct Destination {
+    pub user: Option<String>,
+    pub hostname: String,
+    pub port: Option<u16>,
+}
+
+const SSH_VALUED: &[u8] = b"BbcDEeFIiJLlmOoPpQRSWw";
+const SSH_NO_SESSION: &[u8] = b"fFGNOPQSsVW";
+
+pub fn ssh_destination(program: &str, args: &[String]) -> Option<Destination> {
+    if program != "ssh" {
+        return None;
+    }
+
+    let mut user = None;
+    let mut port = None;
+    let mut target = None;
+    let mut words = args.iter();
+    let mut options = true;
+
+    while let Some(word) = words.next() {
+        if options && word == "--" {
+            options = false;
+            continue;
+        }
+        if options && word.len() > 1 && word.starts_with('-') {
+            let flags = &word.as_bytes()[1..];
+            for (at, &flag) in flags.iter().enumerate() {
+                if SSH_NO_SESSION.contains(&flag) {
+                    return None;
+                }
+                if SSH_VALUED.contains(&flag) {
+                    let attached = word.get(2 + at..)?;
+                    let value = if attached.is_empty() {
+                        words.next()?.clone()
+                    } else {
+                        attached.to_owned()
+                    };
+                    let (key, value) = match flag {
+                        b'o' => ssh_setting(&value)?,
+                        _ => (String::new(), value),
+                    };
+                    match (flag, key.as_str()) {
+                        (b'l', _) | (b'o', "user") => {
+                            user.get_or_insert(value);
+                        }
+                        (b'p', _) | (b'o', "port") => {
+                            let number = value.parse::<u16>().ok().filter(|one| *one > 0)?;
+                            port.get_or_insert(number);
+                        }
+                        (b'o', "hostname") => return None,
+                        (b'o', "sessiontype") if !value.eq_ignore_ascii_case("default") => {
+                            return None
+                        }
+                        (b'o', "controlpath" | "proxycommand" | "remotecommand")
+                            if !value.eq_ignore_ascii_case("none") =>
+                        {
+                            return None
+                        }
+                        (b'o', "forkafterauthentication") if value.eq_ignore_ascii_case("yes") => {
+                            return None
+                        }
+                        _ => {}
+                    }
+                    break;
+                }
+            }
+            continue;
+        }
+        if target.is_some() {
+            return None;
+        }
+        let found = destination_of(word)?;
+        if let Some(one) = found.user.clone() {
+            user.get_or_insert(one);
+        }
+        if let Some(one) = found.port {
+            port.get_or_insert(one);
+        }
+        target = Some(found);
+    }
+
+    let destination = Destination {
+        user,
+        port,
+        ..target?
+    };
+    let fits = is_address(&destination.hostname) && destination.user.as_deref().is_none_or(is_user);
+    fits.then_some(destination)
+}
+
+fn ssh_setting(setting: &str) -> Option<(String, String)> {
+    let setting = setting.trim_start();
+    let at = setting.find(|one: char| one == '=' || one.is_whitespace())?;
+    let key = setting[..at].to_ascii_lowercase();
+    if key.is_empty() || !key.bytes().all(|one| one.is_ascii_alphabetic()) {
+        return None;
+    }
+    let value = setting[at..]
+        .trim_start_matches(|one: char| one.is_whitespace())
+        .strip_prefix('=')
+        .unwrap_or_else(|| setting[at..].trim_start())
+        .trim()
+        .to_owned();
+    Some((key, value))
+}
+
+fn destination_of(target: &str) -> Option<Destination> {
+    let (rest, uri) = match target.strip_prefix("ssh://") {
+        Some(rest) => (rest, true),
+        None => (target, false),
+    };
+    let (user, address) = match rest.rfind('@') {
+        Some(at) => (Some(rest[..at].to_owned()), &rest[at + 1..]),
+        None => (None, rest),
+    };
+    if !uri {
+        return Some(Destination {
+            user,
+            hostname: address.to_owned(),
+            port: None,
+        });
+    }
+
+    let address = address.strip_suffix('/').unwrap_or(address);
+    let (hostname, port) = if let Some(inner) = address.strip_prefix('[') {
+        let (hostname, after) = inner.split_once(']')?;
+        (hostname, after.strip_prefix(':'))
+    } else {
+        match address.rsplit_once(':') {
+            Some((hostname, port)) if !hostname.contains(':') => (hostname, Some(port)),
+            _ => (address, None),
+        }
+    };
+    let port = match port {
+        Some(port) => Some(port.parse::<u16>().ok().filter(|one| *one > 0)?),
+        None => None,
+    };
+    Some(Destination {
+        user,
+        hostname: hostname.to_owned(),
+        port,
+    })
+}
+
+#[derive(Serialize)]
+pub struct Hosts {
+    config: Vec<ConfigHost>,
+    kept: Kept,
+    file: Option<String>,
+}
+
+pub fn host_id(shell: &str) -> Option<&str> {
+    shell.strip_prefix(PREFIX).filter(|one| !one.is_empty())
+}
+
+fn plain(word: &str) -> bool {
+    !word.trim().is_empty()
+        && word.chars().count() <= MOST_WORDS
+        && !word.chars().any(char::is_control)
+}
+
+pub fn is_address(address: &str) -> bool {
+    !address.is_empty()
+        && address.len() <= 253
+        && !address.starts_with('-')
+        && address.bytes().all(|one| {
+            one.is_ascii_alphanumeric() || matches!(one, b'.' | b'-' | b'_' | b':' | b'%')
+        })
+}
+
+pub fn is_user(user: &str) -> bool {
+    !user.is_empty()
+        && user.len() <= 64
+        && !user.starts_with('-')
+        && user.bytes().all(|one| {
+            one.is_ascii_alphanumeric() || matches!(one, b'.' | b'-' | b'_' | b'@' | b'\\' | b'$')
+        })
+}
+
+fn is_own_id(id: &str) -> bool {
+    id.starts_with(OWN)
+        && id.len() <= 64
+        && id[OWN.len()..]
+            .bytes()
+            .all(|one| one.is_ascii_alphanumeric() || one == b'-' || one == b'_')
+        && id.len() > OWN.len()
+}
+
+pub fn checked(kept: Kept) -> Result<Kept, String> {
+    if kept.own.len() > MOST_HOSTS || kept.about.len() > MOST_HOSTS * 2 {
+        return Err("too many hosts".to_owned());
+    }
+    for own in &kept.own {
+        let fits = is_own_id(&own.id)
+            && plain(&own.name)
+            && is_address(&own.hostname)
+            && own.user.as_deref().is_none_or(is_user)
+            && own.port.is_none_or(|port| port > 0);
+        if !fits {
+            return Err(format!("{:?} is not a host", own.name));
+        }
+    }
+    for (id, about) in &kept.about {
+        let fits = plain(id)
+            && about
+                .colour
+                .as_deref()
+                .is_none_or(|one| matches!(one, "1" | "2" | "3" | "4" | "5" | "6"))
+            && about.group.as_deref().is_none_or(plain);
+        if !fits {
+            return Err(format!("{id:?} is not a host"));
+        }
+    }
+    let words_fit = kept.order.len() <= MOST_HOSTS * 2
+        && kept.groups.len() <= MOST_HOSTS
+        && kept.order.iter().chain(&kept.groups).all(|one| plain(one));
+    if !words_fit {
+        return Err("not an order of hosts".to_owned());
+    }
+    Ok(kept)
+}
+
+fn merged(mut kept: Kept, before: &Kept) -> Kept {
+    for (id, was) in &before.about {
+        let Some(last) = was.last else { continue };
+        let now = kept.about.entry(id.clone()).or_default();
+        now.last = Some(now.last.map_or(last, |one| one.max(last)));
+    }
+    kept
+}
+
+pub fn arguments(target: &Target, config: Option<&Path>) -> Vec<String> {
+    let mut args = Vec::new();
+    if let Some(config) = config {
+        args.extend(["-F".to_owned(), config.to_string_lossy().into_owned()]);
+    }
+    match target {
+        Target::Config(alias) => args.extend(["--".to_owned(), (*alias).to_owned()]),
+        Target::Own(own) => {
+            if let Some(user) = &own.user {
+                args.extend(["-l".to_owned(), user.clone()]);
+            }
+            if let Some(port) = own.port {
+                args.extend(["-p".to_owned(), port.to_string()]);
+            }
+            args.extend(["--".to_owned(), own.hostname.clone()]);
+        }
+    }
+    args
+}
+
+pub enum Target<'a> {
+    Config(&'a str),
+    Own(&'a Own),
+}
+
+fn target<'a>(id: &'a str, config: &[ConfigHost], kept: &'a Kept) -> Option<Target<'a>> {
+    if is_own_id(id) {
+        if let Some(own) = kept.own.iter().find(|one| one.id == id) {
+            return Some(Target::Own(own));
+        }
+    }
+    config
+        .iter()
+        .any(|one| one.id == id)
+        .then_some(Target::Config(id))
+}
+
+struct Places {
+    home: PathBuf,
+    config: PathBuf,
+    elsewhere: bool,
+    kept: PathBuf,
+}
+
+fn places(webview: &Webview) -> Result<Places, String> {
+    let home = dirs::home_dir().ok_or_else(|| "no home folder".to_owned())?;
+    let own = std::env::var_os("ORDEN_SSH_CONFIG").filter(|one| !one.is_empty());
+    let config = own
+        .clone()
+        .map_or_else(|| home.join(".ssh").join("config"), PathBuf::from);
+    let data = webview
+        .app_handle()
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("could not find the app's data folder: {error}"))?;
+    Ok(Places {
+        home,
+        config,
+        elsewhere: own.is_some(),
+        kept: data.join("remote").join("hosts.json"),
+    })
+}
+
+static WRITING: Mutex<()> = Mutex::new(());
+
+fn read_kept(path: &Path) -> Kept {
+    fs::read(path)
+        .ok()
+        .filter(|bytes| bytes.len() <= 1 << 20)
+        .and_then(|bytes| serde_json::from_slice::<Kept>(&bytes).ok())
+        .and_then(|kept| checked(kept).ok())
+        .unwrap_or_default()
+}
+
+fn write_kept(path: &Path, kept: &Kept) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| "the hosts have a folder".to_owned())?;
+    fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    let bytes = serde_json::to_vec_pretty(kept).map_err(|error| error.to_string())?;
+    let part = path.with_extension("part");
+    fs::write(&part, bytes).map_err(|error| error.to_string())?;
+    fs::rename(&part, path).map_err(|error| {
+        let _ = fs::remove_file(&part);
+        error.to_string()
+    })
+}
+
+fn ssh_program() -> Option<PathBuf> {
+    if let Some(own) = std::env::var_os("ORDEN_SSH").filter(|one| !one.is_empty()) {
+        return Some(PathBuf::from(own));
+    }
+    std::env::var_os("SystemRoot")
+        .filter(|_| cfg!(windows))
+        .map(|root| Path::new(&root).join(r"System32\OpenSSH\ssh.exe"))
+        .filter(|one| one.is_file())
+        .or_else(|| orden_base::program::which("ssh"))
+}
+
+fn sets_timeout(resolved: &str) -> bool {
+    resolved.lines().any(|line| {
+        line.strip_prefix("connecttimeout ")
+            .is_some_and(|value| value.trim() != "none")
+    })
+}
+
+fn keeps_alive(resolved: &str) -> bool {
+    resolved.lines().any(|line| {
+        line.strip_prefix("serveraliveinterval ")
+            .is_some_and(|value| value.trim() != "0")
+    })
+}
+
+fn bounded(program: &Path, args: Vec<String>, alive: bool) -> Vec<String> {
+    let resolved = std::process::Command::new(program)
+        .arg("-G")
+        .args(&args)
+        .stdin(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()
+        .filter(|done| done.status.success())
+        .map(|done| String::from_utf8_lossy(&done.stdout).into_owned())
+        .unwrap_or_default();
+    let mut options: Vec<String> = Vec::new();
+    if !sets_timeout(&resolved) {
+        options.extend(["-o".to_owned(), CONNECT_TIMEOUT.to_owned()]);
+    }
+    if alive && !keeps_alive(&resolved) {
+        options.extend(ALIVE.map(str::to_owned));
+    }
+    options.into_iter().chain(args).collect()
+}
+
+pub fn held_command(key: &str) -> String {
+    let name = format!("orden-{key}");
+    let steps: [&[&str]; 12] = [
+        &["start-server"],
+        &["set", "-gq", "status", "off"],
+        &["set", "-gq", "prefix", "None"],
+        &["set", "-gq", "prefix2", "None"],
+        &["set", "-sq", "escape-time", "0"],
+        &["set", "-sq", "set-clipboard", "on"],
+        &["set", "-sq", "default-terminal", "screen-256color"],
+        &["set", "-saq", "terminal-overrides", ",*:smcup@:rmcup@:Tc"],
+        &["set", "-sq", "user-keys[0]", FAREWELL],
+        &["bind", "-n", "User0", "kill-session"],
+        &["setw", "-gq", "allow-passthrough", "on"],
+        &["new-session", "-A", "-s", &name],
+    ];
+    let quoted = |words: &[&str]| {
+        words
+            .iter()
+            .map(|word| format!("'{word}'"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let steps = steps.map(quoted).join(" ';' ");
+    format!(
+        "{} {steps}",
+        quoted(&["tmux", "-L", "orden", "-f", "/dev/null"])
+    )
+}
+
+fn ending_command(key: &str) -> String {
+    [
+        "tmux",
+        "-L",
+        "orden",
+        "kill-session",
+        "-t",
+        &format!("=orden-{key}"),
+    ]
+    .map(|word| format!("'{word}'"))
+    .join(" ")
+}
+
+pub fn connect(
+    webview: &Webview,
+    id: &str,
+    key: &str,
+    plain: bool,
+    label: super::hold::Label,
+) -> Result<Fresh, String> {
+    let places = places(webview)?;
+    let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
+
+    let args = {
+        let kept = read_kept(&places.kept);
+        let target = target(id, &config, &kept).ok_or_else(|| format!("no host {id} here"))?;
+        arguments(&target, places.elsewhere.then_some(places.config.as_path()))
+    };
+    let program = ssh_program().ok_or_else(|| "no ssh on this machine".to_owned())?;
+    let mut args = bounded(&program, args, !plain);
+    if !plain {
+        args.insert(0, "-t".to_owned());
+        args.push(held_command(key));
+    }
+
+    {
+        let _writing = WRITING.held();
+        let mut kept = read_kept(&places.kept);
+        kept.about.entry(id.to_owned()).or_default().last = Some(orden_base::clock::now());
+        let _ = write_kept(&places.kept, &kept);
+    }
+
+    Ok(Fresh {
+        launch: Launch {
+            program,
+            args,
+            folder: Some(places.home),
+            env: vec![
+                ("TERM".to_owned(), "xterm-256color".to_owned()),
+                ("COLORTERM".to_owned(), "truecolor".to_owned()),
+            ],
+        },
+        farewell: if plain {
+            Vec::new()
+        } else {
+            FAREWELL.as_bytes().to_vec()
+        },
+        label,
+    })
+}
+
+#[tauri::command]
+pub async fn remote_end(webview: Webview, host: String, key: String) -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
+        super::owner(&webview)?;
+        super::usable(&key)?;
+        let (program, args) = reach(&webview, &host)?;
+        let mut args = bounded(&program, args, false);
+        args.splice(0..0, ["-T", "-o", "BatchMode=yes"].map(str::to_owned));
+        args.push(ending_command(&key));
+        let mut ending = std::process::Command::new(program)
+            .args(args)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .map_err(|error| error.to_string())?;
+        std::thread::spawn(move || {
+            let _ = ending.wait();
+        });
+        Ok(())
+    })
+    .await
+}
+
+pub(super) fn reach(webview: &Webview, id: &str) -> Result<(PathBuf, Vec<String>), String> {
+    let places = places(webview)?;
+    let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
+    let kept = read_kept(&places.kept);
+    let target = target(id, &config, &kept).ok_or_else(|| format!("no host {id} here"))?;
+    let args = arguments(&target, places.elsewhere.then_some(places.config.as_path()));
+    let program = ssh_program().ok_or_else(|| "no ssh on this machine".to_owned())?;
+    Ok((program, args))
+}
+
+#[tauri::command(async)]
+pub fn remote_hosts(webview: Webview) -> Result<Hosts, String> {
+    super::owner(&webview)?;
+    let places = places(&webview)?;
+    let config = ssh_config::hosts(&places.config, &places.home, &ssh_config::Disk);
+    let file = places
+        .config
+        .is_file()
+        .then(|| places.config.to_string_lossy().into_owned());
+    Ok(Hosts {
+        config,
+        kept: read_kept(&places.kept),
+        file,
+    })
+}
+
+#[tauri::command(async)]
+pub fn remote_keep(webview: Webview, kept: Kept) -> Result<Kept, String> {
+    super::owner(&webview)?;
+    let places = places(&webview)?;
+    let kept = checked(kept)?;
+
+    let _writing = WRITING.held();
+    let kept = merged(kept, &read_kept(&places.kept));
+    write_kept(&places.kept, &kept)?;
+    Ok(kept)
+}
+
+#[tauri::command]
+pub async fn remote_config_open(webview: Webview) -> Result<(), String> {
+    orden_base::lane::off_the_runtime(move || -> Result<(), String> {
+        super::owner(&webview)?;
+        let path = places(&webview)?.config;
+        if !path.is_file() {
+            return Err("there is no ssh config".to_owned());
+        }
+
+        let mut command = if cfg!(windows) {
+            let mut notepad = std::process::Command::new("notepad.exe");
+            notepad.arg(&path);
+            notepad
+        } else if cfg!(target_os = "macos") {
+            let mut open = std::process::Command::new("open");
+            open.arg("-t").arg(&path);
+            open
+        } else {
+            let mut open = std::process::Command::new("xdg-open");
+            open.arg(&path);
+            open
+        };
+        command
+            .spawn()
+            .map(orden_base::printed::left_running)
+            .map_err(|error| error.to_string())
+    })
+    .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn own(id: &str, hostname: &str) -> Own {
+        Own {
+            id: id.to_owned(),
+            name: "Box".to_owned(),
+            hostname: hostname.to_owned(),
+            user: None,
+            port: None,
+        }
+    }
+
+    #[test]
+    fn a_host_is_named_in_the_shell_id() {
+        assert_eq!(host_id("ssh:pi"), Some("pi"));
+        assert_eq!(host_id("ssh:"), None);
+        assert_eq!(host_id("pwsh"), None);
+    }
+
+    #[test]
+    fn nothing_kept_can_be_read_as_an_option() {
+        for bad in ["-oProxyCommand=calc", "", "a b", "a;b", "host/x", "a\nb"] {
+            assert!(!is_address(bad), "{bad:?} was an address");
+        }
+        for good in [
+            "pi",
+            "10.0.0.5",
+            "fe80::1%eth0",
+            "box.example.com",
+            "my_host",
+        ] {
+            assert!(is_address(good), "{good:?} was refused");
+        }
+        for bad in ["-l", "", "a b", "a;b", "me:x"] {
+            assert!(!is_user(bad), "{bad:?} was a user");
+        }
+        for good in ["emil", "DOMAIN\\emil", "emil@corp.example", "build$"] {
+            assert!(is_user(good), "{good:?} was refused");
+        }
+    }
+
+    #[test]
+    fn a_kept_file_is_held_to_what_it_may_hold() {
+        let mut kept = Kept::default();
+        kept.own.push(own("n-abc", "box.example.com"));
+        assert!(checked(kept.clone()).is_ok());
+
+        let mut bad = kept.clone();
+        bad.own[0].hostname = "-oProxyCommand=calc".to_owned();
+        assert!(checked(bad).is_err());
+
+        let mut not_ours = kept.clone();
+        not_ours.own[0].id = "pi".to_owned();
+        assert!(checked(not_ours).is_err());
+
+        let mut colour = kept.clone();
+        colour.about.insert(
+            "pi".to_owned(),
+            About {
+                colour: Some("red".to_owned()),
+                ..About::default()
+            },
+        );
+        assert!(checked(colour).is_err());
+
+        let mut fine = kept;
+        fine.about.insert(
+            "pi".to_owned(),
+            About {
+                colour: Some("4".to_owned()),
+                group: Some("Home".to_owned()),
+                pinned: true,
+                last: Some(1),
+            },
+        );
+        assert!(checked(fine).is_ok());
+    }
+
+    #[test]
+    fn the_destination_goes_after_the_options_end() {
+        let config = arguments(&Target::Config("pi"), None);
+        assert_eq!(config, vec!["--", "pi"]);
+
+        let mut made = own("n-abc", "10.0.0.5");
+        made.user = Some("emil".to_owned());
+        made.port = Some(2222);
+        assert_eq!(
+            arguments(&Target::Own(&made), None),
+            vec!["-l", "emil", "-p", "2222", "--", "10.0.0.5"]
+        );
+
+        let elsewhere = arguments(&Target::Config("pi"), Some(Path::new("/tmp/config")));
+        assert_eq!(elsewhere[..2], ["-F".to_owned(), "/tmp/config".to_owned()]);
+    }
+
+    #[test]
+    fn a_timeout_from_the_ssh_config_is_left_as_it_is() {
+        assert!(!sets_timeout("user emil\nconnecttimeout none\nport 22\n"));
+        assert!(sets_timeout("user emil\nconnecttimeout 60\n"));
+        assert!(!sets_timeout(""));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_host_that_never_answers_is_given_up_on() {
+        let dir = tempfile::tempdir().unwrap();
+        let fake = dir.path().join("ssh");
+        let config = dir.path().join("config");
+        fs::write(
+            &fake,
+            "#!/bin/sh\ngrep -q ConnectTimeout \"$3\" && echo 'connecttimeout 60' || echo 'connecttimeout none'\n",
+        )
+        .unwrap();
+        fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+
+        fs::write(&config, "Host pi\n").unwrap();
+        let args = arguments(&Target::Config("pi"), Some(&config));
+        assert_eq!(
+            bounded(&fake, args.clone(), false)[..2],
+            ["-o", CONNECT_TIMEOUT]
+        );
+
+        fs::write(&config, "Host pi\n    ConnectTimeout 60\n").unwrap();
+        assert_eq!(bounded(&fake, args.clone(), false), args);
+
+        assert_eq!(
+            bounded(&dir.path().join("gone"), args.clone(), false)[..2],
+            ["-o", CONNECT_TIMEOUT]
+        );
+    }
+
+    #[test]
+    fn a_held_link_is_kept_alive_unless_the_config_already_does() {
+        assert!(!keeps_alive("serveraliveinterval 0\n"));
+        assert!(keeps_alive("user emil\nserveraliveinterval 30\n"));
+        assert!(!keeps_alive(""));
+    }
+
+    #[test]
+    fn a_held_session_is_the_hosts_own_tmux_on_a_server_of_its_own() {
+        let line = held_command("0-abc123");
+        assert!(line.starts_with("'tmux' '-L' 'orden' '-f' '/dev/null' 'start-server' ';' "));
+        assert!(line.ends_with(" ';' 'new-session' '-A' '-s' 'orden-0-abc123'"));
+        assert!(line.contains("'set' '-gq' 'prefix' 'None'"));
+        assert!(line.contains(&format!(
+            "'user-keys[0]' '{FAREWELL}' ';' 'bind' '-n' 'User0' 'kill-session'"
+        )));
+        assert_eq!(line.matches('\'').count() % 2, 0);
+        assert_eq!(
+            ending_command("0-abc123"),
+            "'tmux' '-L' 'orden' 'kill-session' '-t' '=orden-0-abc123'"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_held_session_runs_in_any_posix_shell_as_its_words() {
+        let line = held_command("k1");
+        for shell in ["sh", "bash", "zsh", "dash"] {
+            let Ok(done) = std::process::Command::new(shell)
+                .args(["-c", &format!("printf '%s\\n' {line}")])
+                .output()
+            else {
+                continue;
+            };
+            let words = String::from_utf8_lossy(&done.stdout).into_owned();
+            let words: Vec<&str> = words.lines().collect();
+            assert_eq!(
+                words[..5],
+                ["tmux", "-L", "orden", "-f", "/dev/null"],
+                "{shell}"
+            );
+            assert!(words.contains(&"user-keys[0]"), "{shell}: {words:?}");
+            assert!(words.contains(&FAREWELL), "{shell}: {words:?}");
+            assert!(words.contains(&",*:smcup@:rmcup@:Tc"), "{shell}: {words:?}");
+            assert_eq!(words.last(), Some(&"orden-k1"), "{shell}");
+        }
+    }
+
+    #[cfg(unix)]
+    fn heard_until(
+        heard: &std::sync::mpsc::Receiver<super::super::session::Out>,
+        wanted: &str,
+    ) -> (String, Option<i64>) {
+        use super::super::session::Out;
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(20);
+        let mut seen = Vec::new();
+        while let Ok(out) =
+            heard.recv_timeout(until.saturating_duration_since(std::time::Instant::now()))
+        {
+            match out {
+                Out::Bytes(more) | Out::Screen(more, _, _) => {
+                    seen.extend(more);
+                    if String::from_utf8_lossy(&seen).contains(wanted) {
+                        break;
+                    }
+                }
+                Out::Writer(_) => {}
+                Out::Exit(code) => {
+                    return (String::from_utf8_lossy(&seen).into_owned(), Some(code))
+                }
+            }
+        }
+        (String::from_utf8_lossy(&seen).into_owned(), None)
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_held_session_outlives_its_link_and_ends_with_its_tab() {
+        use super::super::hold;
+        use super::super::session::{Fresh, Place, Session};
+
+        let Ok(found) = std::process::Command::new("tmux").arg("-V").output() else {
+            return;
+        };
+        if !found.status.success() {
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let fake = dir.path().join("ssh");
+        fs::write(
+            &fake,
+            "#!/bin/sh\nfor last; do :; done\nexec sh -c \"$last\"\n",
+        )
+        .unwrap();
+        fs::set_permissions(&fake, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+        let sockets = dir.path().join("tmux");
+        fs::create_dir_all(&sockets).unwrap();
+        let place = Place {
+            folder: dir.path().join("held"),
+            starter: hold::tests::starter(),
+        };
+        let launch = || {
+            Ok(Fresh {
+                launch: Launch {
+                    program: fake.clone(),
+                    args: vec![
+                        "-t".to_owned(),
+                        "--".to_owned(),
+                        "pi".to_owned(),
+                        held_command("r1"),
+                    ],
+                    folder: Some(dir.path().to_path_buf()),
+                    env: vec![
+                        ("TERM".to_owned(), "xterm-256color".to_owned()),
+                        (
+                            "TMUX_TMPDIR".to_owned(),
+                            sockets.to_string_lossy().into_owned(),
+                        ),
+                        ("SHELL".to_owned(), "/bin/sh".to_owned()),
+                        ("TMUX".to_owned(), String::new()),
+                    ],
+                },
+                farewell: FAREWELL.as_bytes().to_vec(),
+                label: hold::Label::default(),
+            })
+        };
+        let open = || {
+            let (session, started) =
+                Session::open(&place, "r1", 80, 24, launch).expect("a session");
+            let (tell, heard) = std::sync::mpsc::channel();
+            let tell = std::sync::Mutex::new(tell);
+            started.run(
+                Box::new(move |out| {
+                    let _ = tell.lock().expect("the channel").send(out);
+                }),
+                |_| {},
+            );
+            (session, heard)
+        };
+        let listed = || {
+            std::process::Command::new("tmux")
+                .env("TMUX_TMPDIR", &sockets)
+                .args(["-L", "orden", "has-session", "-t", "=orden-r1"])
+                .status()
+                .is_ok_and(|done| done.success())
+        };
+
+        let (first, heard) = open();
+        first.write(b"echo orden-\"\"kept\n".to_vec());
+        let (said, _) = heard_until(&heard, "orden-kept");
+        assert!(said.contains("orden-kept"), "tmux printed: {said:?}");
+        assert!(listed(), "no tmux session of its own");
+
+        let link = i32::try_from(first.pid().expect("a pid")).expect("a pid");
+        std::process::Command::new("kill")
+            .args(["-9", &link.to_string()])
+            .status()
+            .expect("the link cut");
+        let (_, code) = heard_until(&heard, "\u{0}never");
+        assert!(code.is_some(), "the cut link was not noticed");
+        assert!(listed(), "the session went with its link");
+
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while super::super::session::held(&place, "r1") && std::time::Instant::now() < until {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        let (again, heard) = open();
+        assert!(again.fresh());
+        let (said, _) = heard_until(&heard, "orden-kept");
+        assert!(
+            said.contains("orden-kept"),
+            "the same session was not shown again: {said:?}"
+        );
+
+        again.end();
+        let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while listed() && std::time::Instant::now() < until {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        assert!(
+            !listed(),
+            "closing the tab left the session running on the host"
+        );
+    }
+
+    #[test]
+    fn an_id_names_a_host_of_the_config_or_one_made_here_and_nothing_else() {
+        let config = vec![ConfigHost {
+            id: "pi".to_owned(),
+            ..ConfigHost::default()
+        }];
+        let mut kept = Kept::default();
+        kept.own.push(own("n-abc", "box"));
+
+        assert!(matches!(
+            target("pi", &config, &kept),
+            Some(Target::Config("pi"))
+        ));
+        assert!(matches!(
+            target("n-abc", &config, &kept),
+            Some(Target::Own(_))
+        ));
+        assert!(target("n-gone", &config, &kept).is_none());
+        assert!(target("other", &config, &kept).is_none());
+    }
+
+    #[test]
+    fn a_connection_noted_down_is_never_set_back() {
+        let mut before = Kept::default();
+        before.about.insert(
+            "pi".to_owned(),
+            About {
+                last: Some(20),
+                ..About::default()
+            },
+        );
+        let mut saving = Kept::default();
+        saving.about.insert(
+            "pi".to_owned(),
+            About {
+                last: Some(10),
+                pinned: true,
+                ..About::default()
+            },
+        );
+
+        let kept = merged(saving, &before);
+        assert_eq!(kept.about["pi"].last, Some(20));
+        assert!(kept.about["pi"].pinned);
+    }
+
+    fn ssh(args: &[&str]) -> Option<Destination> {
+        let args: Vec<String> = args.iter().map(|one| (*one).to_owned()).collect();
+        ssh_destination("ssh", &args)
+    }
+
+    fn at(user: Option<&str>, hostname: &str, port: Option<u16>) -> Destination {
+        Destination {
+            user: user.map(str::to_owned),
+            hostname: hostname.to_owned(),
+            port,
+        }
+    }
+
+    #[test]
+    fn an_ssh_session_is_read_off_its_arguments() {
+        assert_eq!(ssh(&["pi"]), Some(at(None, "pi", None)));
+        assert_eq!(
+            ssh(&["emil@10.0.0.5"]),
+            Some(at(Some("emil"), "10.0.0.5", None))
+        );
+        assert_eq!(
+            ssh(&["-p", "2222", "-l", "emil", "box"]),
+            Some(at(Some("emil"), "box", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["-p2222", "-tt", "box"]),
+            Some(at(None, "box", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["-A", "-i", "/home/emil/.ssh/id", "-J", "jump", "pi"]),
+            Some(at(None, "pi", None))
+        );
+        assert_eq!(
+            ssh(&["-vl", "emil", "pi"]),
+            Some(at(Some("emil"), "pi", None))
+        );
+        assert_eq!(
+            ssh(&["-l", "root", "emil@pi"]),
+            Some(at(Some("root"), "pi", None))
+        );
+        assert_eq!(
+            ssh(&["-p", "1111", "ssh://pi:2222"]),
+            Some(at(None, "pi", Some(1111)))
+        );
+        assert_eq!(
+            ssh(&["-l", "a", "-l", "b", "-p", "1111", "-p", "3333", "pi"]),
+            Some(at(Some("a"), "pi", Some(1111)))
+        );
+        assert_eq!(
+            ssh(&["pi", "-p", "4444", "-l", "zed"]),
+            Some(at(Some("zed"), "pi", Some(4444)))
+        );
+        assert_eq!(ssh(&["pi", "-tA"]), Some(at(None, "pi", None)));
+        assert_eq!(
+            ssh(&["emil@pi", "-l", "zed", "-oUser=x"]),
+            Some(at(Some("emil"), "pi", None))
+        );
+        assert_eq!(
+            ssh(&["ssh://a@pi:2222", "-p", "1111", "-oPort=33"]),
+            Some(at(Some("a"), "pi", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["-o", "SessionType=default", "-oRemoteCommand=none", "pi"]),
+            Some(at(None, "pi", None))
+        );
+        assert_eq!(
+            ssh(&["-oUser=ou", "-l", "lu", "-o", "Port 5555", "pi"]),
+            Some(at(Some("ou"), "pi", Some(5555)))
+        );
+        assert_eq!(
+            ssh(&["-o", "port = 22", "-oProxyJump=jump", "pi"]),
+            Some(at(None, "pi", Some(22)))
+        );
+        assert_eq!(
+            ssh(&["ssh://emil@box.example.com:2222"]),
+            Some(at(Some("emil"), "box.example.com", Some(2222)))
+        );
+        assert_eq!(
+            ssh(&["ssh://[fe80::1]:22"]),
+            Some(at(None, "fe80::1", Some(22)))
+        );
+        assert_eq!(ssh(&["--", "pi"]), Some(at(None, "pi", None)));
+    }
+
+    #[test]
+    fn ssh_that_opens_no_session_here_is_none() {
+        assert_eq!(ssh(&["pi", "uptime"]), None);
+        assert_eq!(ssh(&["pi", "-v", "uptime"]), None);
+        assert_eq!(ssh(&["--", "pi", "-p", "1"]), None);
+        assert_eq!(ssh(&["pi", "-N"]), None);
+        assert_eq!(ssh(&["-oHostName=10.0.0.5", "pi"]), None);
+        assert_eq!(ssh(&["-o", "SessionType=none", "pi"]), None);
+        assert_eq!(ssh(&["-o", "RemoteCommand=uptime", "pi"]), None);
+        assert_eq!(ssh(&["-oForkAfterAuthentication=yes", "pi"]), None);
+        assert_eq!(ssh(&["-F", "/home/emil/work.conf", "pi"]), None);
+        assert_eq!(ssh(&["-P", "work", "pi"]), None);
+        assert_eq!(ssh(&["-S", "/tmp/sock-for-a", "pi"]), None);
+        assert_eq!(ssh(&["-o=HostName=10.0.0.5", "pi"]), None);
+        assert_eq!(ssh(&["-o", "\"RemoteCommand\" uptime", "pi"]), None);
+        assert_eq!(ssh(&["-o", "Host\"Name\" 1.2.3.4", "pi"]), None);
+        assert_eq!(ssh(&["-oControlPath=/tmp/sock", "pi"]), None);
+        assert_eq!(ssh(&["-o", "ProxyCommand=ssh -W a:22 jump", "pi"]), None);
+        assert_eq!(
+            ssh(&["-oControlPath=none", "-oProxyCommand=none", "pi"]),
+            Some(at(None, "pi", None))
+        );
+        assert_eq!(ssh(&["-o", "User"]), None);
+        assert_eq!(ssh(&["-N", "-L", "8080:localhost:80", "pi"]), None);
+        assert_eq!(ssh(&["-fN", "pi"]), None);
+        assert_eq!(ssh(&["-W", "host:22", "jump"]), None);
+        assert_eq!(ssh(&["-G", "pi"]), None);
+        assert_eq!(ssh(&["-V"]), None);
+        assert_eq!(ssh(&["-O", "check", "pi"]), None);
+        assert_eq!(ssh(&[]), None);
+        assert_eq!(ssh(&["-p"]), None);
+        assert_eq!(ssh(&["-p", "zero", "pi"]), None);
+        assert_eq!(ssh(&["-l", "-oProxyCommand=x", "pi"]), None);
+        assert_eq!(ssh(&["--", "-oProxyCommand=x"]), None);
+        assert_eq!(ssh(&["@pi"]), None);
+        assert_eq!(
+            ssh_destination("scp", &["pi".to_owned()]),
+            None,
+            "only ssh itself"
+        );
+    }
+}

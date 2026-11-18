@@ -8,246 +8,27 @@ export interface StrengthOf {
 }
 
 export const STRENGTH_BITS = { weak: 40, strong: 70 } as const
-
-export const COMMON_PASSWORDS: readonly string[] = `123456
-password
-123456789
-12345678
-12345
-qwerty
-1234567
-111111
-1234567890
-123123
-abc123
-1234
-password1
-iloveyou
-1q2w3e4r
-000000
-qwerty123
-zaq12wsx
-dragon
-sunshine
-princess
-letmein
-654321
-monkey
-27653
-1qaz2wsx
-123321
-qwertyuiop
-superman
-asdfghjkl
-football
-baseball
-welcome
-admin
-master
-shadow
-michael
-jennifer
-jordan
-hunter
-trustno1
-batman
-starwars
-whatever
-freedom
-passw0rd
-login
-access
-mustang
-charlie
-donald
-loveme
-hello
-flower
-hottie
-secret
-summer
-winter
-spring
-autumn
-qazwsx
-ninja
-azerty
-solo
-abc
-password123
-admin123
-root
-toor
-changeme
-default
-guest
-test
-test123
-pass
-pass123
-qwer
-asdf
-zxcvbnm
-asdfgh
-iloveu
-lovely
-love
-monkey123
-michelle
-daniel
-jessica
-ashley
-amanda
-andrew
-joshua
-thomas
-robert
-matthew
-anthony
-william
-soccer
-hockey
-killer
-pepper
-cheese
-cookie
-chocolate
-banana
-orange
-purple
-silver
-golden
-diamond
-ginger
-tigger
-buster
-maggie
-bailey
-harley
-ranger
-thunder
-yankees
-dallas
-chelsea
-liverpool
-arsenal
-barcelona
-computer
-internet
-samsung
-google
-apple
-microsoft
-facebook
-twitter
-youtube
-pokemon
-minecraft
-fortnite
-naruto
-blink182
-metallica
-nirvana
-matrix
-merlin
-wizard
-dragonball
-spiderman
-ironman
-superstar
-sweetheart
-angel
-babygirl
-princess1
-iloveyou1
-lovelove
-forever
-friends
-family
-heaven
-jesus
-christ
-blessed
-qwerty1
-abcd1234
-1qaz
-zaq1
-zaq1zaq1
-q1w2e3r4
-1q2w3e
-a1b2c3
-aa123456
-abcdef
-abcdefg
-abcdefgh
-qwertz
-qwertzuiop
-azertyuiop
-passwort
-hallo
-schatz
-geheim
-motdepasse
-soleil
-bonjour
-doudou
-contrasena
-senha
-parola
-haslo
-salasana
-wachtwoord
-lol123
-letmein1
-welcome1
-monday
-friday
-sunday
-january
-august
-october
-december
-starfish
-butterfly
-rainbow
-unicorn
-peanut
-snoopy
-garfield
-mickey
-minnie
-batman1
-superman1
-hello123
-hellokitty
-whatever1
-nothing
-something
-mypassword
-mypass
-yourpassword
-secret123
-private
-qweasd
-qweasdzxc
-1qazxsw2
-asdasd
-qweqwe
-zxczxc
-112233
-121212
-131313
-123654
-147258
-159753
-159357
-741852
-753951
-789456
-987654
-password12
-pa55word
-p4ssword`.split('\n')
+export const COMMON_PASSWORDS: readonly string[] = `123456 password 123456789 12345678 12345 qwerty
+1234567 111111 1234567890 123123 abc123 1234 password1 iloveyou 1q2w3e4r 000000 qwerty123 zaq12wsx
+dragon sunshine princess letmein 654321 monkey 27653 1qaz2wsx 123321 qwertyuiop superman asdfghjkl
+football baseball welcome admin master shadow michael jennifer jordan hunter trustno1 batman
+starwars whatever freedom passw0rd login access mustang charlie donald loveme hello flower hottie
+secret summer winter spring autumn qazwsx ninja azerty solo abc password123 admin123 root toor
+changeme default guest test test123 pass pass123 qwer asdf zxcvbnm asdfgh iloveu lovely love
+monkey123 michelle daniel jessica ashley amanda andrew joshua thomas robert matthew anthony william
+soccer hockey killer pepper cheese cookie chocolate banana orange purple silver golden diamond
+ginger tigger buster maggie bailey harley ranger thunder yankees dallas chelsea liverpool arsenal
+barcelona computer internet samsung google apple microsoft facebook twitter youtube pokemon
+minecraft fortnite naruto blink182 metallica nirvana matrix merlin wizard dragonball spiderman
+ironman superstar sweetheart angel babygirl princess1 iloveyou1 lovelove forever friends family
+heaven jesus christ blessed qwerty1 abcd1234 1qaz zaq1 zaq1zaq1 q1w2e3r4 1q2w3e a1b2c3 aa123456
+abcdef abcdefg abcdefgh qwertz qwertzuiop azertyuiop passwort hallo schatz geheim motdepasse soleil
+bonjour doudou contrasena senha parola haslo salasana wachtwoord lol123 letmein1 welcome1 monday
+friday sunday january august october december starfish butterfly rainbow unicorn peanut snoopy
+garfield mickey minnie batman1 superman1 hello123 hellokitty whatever1 nothing something mypassword
+mypass yourpassword secret123 private qweasd qweasdzxc 1qazxsw2 asdasd qweqwe zxczxc 112233 121212
+131313 123654 147258 159753 159357 741852 753951 789456 987654 password12 pa55word
+p4ssword`.split(/\s/)
 
 const KEYBOARD_ROWS = [
   '`1234567890-=',

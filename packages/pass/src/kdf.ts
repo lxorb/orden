@@ -8,7 +8,6 @@ export const PASSWORD_KDF: KdfParams = { m: 65536, t: 3, p: 1 }
 export const PIN_KDF: KdfParams = { m: 19456, t: 2, p: 1 }
 export const MOST_KDF_MEMORY = 262144
 export const MOST_KDF_PASSES = 10
-
 const WRITTEN_MEMORY = 4194304
 const WRITTEN_PASSES = 1000
 

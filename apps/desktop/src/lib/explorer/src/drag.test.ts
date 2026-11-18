@@ -34,16 +34,15 @@ function transfer() {
   } as unknown as DataTransfer
 }
 
-function dragEvent(dataTransfer: DataTransfer, keys: Partial<DragEvent> = {}) {
-  return {
+const dragEvent = (dataTransfer: DataTransfer, keys: Partial<DragEvent> = {}) =>
+  ({
     dataTransfer,
     ctrlKey: false,
     altKey: false,
     shiftKey: false,
     preventDefault: vi.fn(),
     ...keys,
-  } as unknown as DragEvent
-}
+  }) as unknown as DragEvent
 
 describe("a file explorer's drag", () => {
   test('carries its paths, and a file list drag too where all of them are in a space', () => {
@@ -66,15 +65,15 @@ describe("a file explorer's drag", () => {
     expect(landing(dragEvent(outside), 'linux')).toBe('copy')
   })
 
-  test('moves between explorers, and copies with Ctrl or out of a space', () => {
+  test('moves what it carries, a note of a space too, and copies only with Ctrl', () => {
     const outside = transfer()
     startDrag(dragEvent(outside), ['/home/me/Downloads/a.zip'])
     expect(dropHow(dragEvent(outside))).toBe('move')
     expect(dropHow(dragEvent(outside, { ctrlKey: true }))).toBe('copy')
     const inside = transfer()
     startDrag(dragEvent(inside), ['/home/me/Orden/Work/plan.md'])
-    expect(dropHow(dragEvent(inside))).toBe('copy')
-    expect(dropHow(dragEvent(inside, { shiftKey: true }))).toBe('move')
+    expect(dropHow(dragEvent(inside))).toBe('move')
+    expect(dropHow(dragEvent(inside, { ctrlKey: true }))).toBe('copy')
   })
 
   test('lands in the folder it was let go over', () => {

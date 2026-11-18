@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const sent = vi.hoisted(() => [] as { root: string; sort: string }[])
 vi.mock('../../space-kept/src/api', async (importOriginal) => ({
@@ -15,12 +16,8 @@ vi.mock('../../space-kept/src/api', async (importOriginal) => ({
   },
 }))
 
-const store = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => store.get(key) ?? null,
-  setItem: (key: string, value: string) => void store.set(key, value),
-  removeItem: (key: string) => void store.delete(key),
-})
+const store = memoryStorage()
+vi.stubGlobal('localStorage', store)
 
 const { SpaceSorting, SORT_KEY: STORAGE_KEY } = await import('../../tree/src/api')
 
@@ -46,18 +43,20 @@ describe('the order a space is read in', () => {
   })
 
   test('what this machine chose before is taken over once, from where it kept it', () => {
-    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'modified-desc', '/other': 'sideways' }))
+    store.setItem(
+      'orden:list-order',
+      JSON.stringify({ [ROOT]: 'modified-desc', '/other': 'sideways' }),
+    )
     const sorting = made()
     expect(sorting.of(ROOT)).toBe('modified-desc')
     expect(sorting.of('/other')).toBe('name')
-    expect(JSON.parse(store.get(STORAGE_KEY) ?? '{}')[ROOT].mode).toBe('modified-desc')
-
-    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'created-asc' }))
+    expect(JSON.parse(store.getItem(STORAGE_KEY) ?? '{}')[ROOT].mode).toBe('modified-desc')
+    store.setItem('orden:list-order', JSON.stringify({ [ROOT]: 'created-asc' }))
     expect(made().of(ROOT)).toBe('modified-desc')
   })
 
   test('meets an account that has none: this machine’s stands, and is sent up', async () => {
-    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'manual' }))
+    store.setItem('orden:list-order', JSON.stringify({ [ROOT]: 'manual' }))
     const sorting = made()
     sorting.adopt(ROOT, 'name', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
@@ -68,7 +67,6 @@ describe('the order a space is read in', () => {
     const sorting = made()
     sorting.adopt(ROOT, 'manual', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
-
     sorting.adopt(ROOT, 'created-desc', 'account')
     expect(sorting.of(ROOT)).toBe('created-desc')
     expect(sent).toEqual([])
@@ -106,13 +104,12 @@ describe('a choice the account has not heard yet', () => {
 
 describe('an account whose listing says nothing of the order', () => {
   test('is not folded with nor sent to, and the order chosen here stands until it does', async () => {
-    store.set('orden:list-order', JSON.stringify({ [ROOT]: 'manual' }))
+    store.setItem('orden:list-order', JSON.stringify({ [ROOT]: 'manual' }))
     const sorting = made()
     for (let pass = 0; pass < 3; pass++) sorting.adopt(ROOT, undefined, 'account')
     expect(sorting.of(ROOT)).toBe('manual')
     await new Promise((settled) => setTimeout(settled, 50))
     expect(sent).toEqual([])
-
     sorting.adopt(ROOT, 'name', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
     await vi.waitFor(() => expect(sent).toEqual([{ root: ROOT, sort: 'manual' }]))

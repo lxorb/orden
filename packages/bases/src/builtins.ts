@@ -7,11 +7,9 @@ export interface BuiltinParams {
   inboxes?: { space: string; path: string }[]
   tag?: string
   space?: string
-  undated?: boolean
 }
 
 const TODAY = 'task.date <= today() || task.deadline <= today()'
-const UNDATED = '!task.start && !task.scheduled'
 
 const quote = (text: string) => JSON.stringify(text)
 
@@ -19,15 +17,9 @@ const BY_DEADLINE =
   'if(task.deadline < today(), "overdue", if(task.deadline == today(), "today", if(task.deadline == today() + "1d", "tomorrow", "later")))'
 
 export const WHEN = `if(!task.deadline, null, ${BY_DEADLINE})`
-const WHEN_UNDATED = `if(!task.deadline, if(${UNDATED}, "today", null), ${BY_DEADLINE})`
 
-const whenFormula = (undated: boolean) => (undated ? WHEN_UNDATED : WHEN)
-export const isWhenFormula = (text: string | undefined) => text === WHEN || text === WHEN_UNDATED
-
-export const WHEN_ASIDE = 'ordenWhen'
-export function isWhen(property: string | undefined): boolean {
-  return property === 'formula.when' || property === `formula.${WHEN_ASIDE}`
-}
+export const isWhen = (property: string | undefined): boolean =>
+  property === 'formula.when' || property === 'formula.ordenWhen'
 
 export const WHEN_GROUPS = ['overdue', 'today', 'tomorrow', 'later']
 
@@ -69,7 +61,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
           groupBy: { property: 'formula.when', direction: 'ASC' },
           orden: { rows: 'tasks', groups: [...WHEN_GROUPS], kept: {} },
         },
-        { when: whenFormula(params.undated === true) },
+        { when: WHEN },
       )
     case 'inbox': {
       const inboxes = params.inboxes ?? []
@@ -89,9 +81,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         {
           type: 'list',
           name: 'Today',
-          filters: {
-            and: ['task.started', params.undated ? `${UNDATED} || ${TODAY}` : TODAY],
-          },
+          filters: { and: ['task.started', TODAY] },
           sort: [
             { property: 'task.priority', direction: 'ASC' },
             { property: 'task.time', direction: 'ASC' },
@@ -156,30 +146,4 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
         ],
       })
   }
-}
-
-function swapped(filter: Filter, from: string, to: string): Filter {
-  if (typeof filter === 'string') return filter === from ? to : filter
-  if ('and' in filter) return { and: filter.and.map((one) => swapped(one, from, to)) }
-  if ('or' in filter) return { or: filter.or.map((one) => swapped(one, from, to)) }
-  return { not: filter.not.map((one) => swapped(one, from, to)) }
-}
-
-export function todayAs(base: Base, undated: boolean): Base {
-  const now = undated ? `${UNDATED} || ${TODAY}` : TODAY
-  const other = undated ? TODAY : `${UNDATED} || ${TODAY}`
-  return {
-    ...base,
-    views: base.views.map((view) =>
-      view.filters ? { ...view, filters: swapped(view.filters, other, now) } : view,
-    ),
-  }
-}
-
-export function whenAs(base: Base, undated: boolean): Base {
-  const formulas = { ...base.formulas }
-  for (const name of ['when', WHEN_ASIDE]) {
-    if (isWhenFormula(formulas[name])) formulas[name] = whenFormula(undated)
-  }
-  return { ...base, formulas }
 }

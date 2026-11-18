@@ -9,9 +9,7 @@ export function setSnippets(next: Record<string, string>) {
   table = next
 }
 
-export function snippets(): Record<string, string> {
-  return table
-}
+export const snippets = (): Record<string, string> => table
 
 function summarise(body: string): string {
   const first = (body.split('\n')[0] ?? '').trim()

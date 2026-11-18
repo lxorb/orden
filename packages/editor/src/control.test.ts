@@ -12,25 +12,19 @@ function refused(typed: string): boolean {
 }
 
 describe('a control character typed', () => {
-  test('is not text: Ctrl+Q, Ctrl+R and Ctrl+^ on a Mac type nothing', () => {
-    expect(refused('\u0011')).toBe(true)
-    expect(refused('\u0012')).toBe(true)
-    expect(refused('\u001e')).toBe(true)
-    expect(refused('\u007f')).toBe(true)
-  })
-
-  test('but tab and the line breaks are', () => {
-    expect(refused('\t')).toBe(false)
-    expect(refused('\n')).toBe(false)
-    expect(refused('\r\n')).toBe(false)
-  })
-
-  test('and so is anything with a printable character in it', () => {
-    expect(refused('a')).toBe(false)
-    expect(refused('´')).toBe(false)
-    expect(refused('\u0011a')).toBe(false)
-    expect(refused(' ')).toBe(false)
-  })
+  test.each([
+    ['\u0011', true],
+    ['\u0012', true],
+    ['\u001e', true],
+    ['\u007f', true],
+    ['\t', false],
+    ['\n', false],
+    ['\r\n', false],
+    ['a', false],
+    ['´', false],
+    ['\u0011a', false],
+    [' ', false],
+  ])('%j', (input, wanted) => expect(refused(input)).toEqual(wanted))
 
   test('and nothing at all is not typing', () => {
     expect(unprintable('')).toBe(false)

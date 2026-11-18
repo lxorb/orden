@@ -40,7 +40,8 @@ vi.mock('../../../search/src/api', async (importOriginal) => ({
 
 const { helpers } = await import('./helpers.svelte')
 const { batch, fork, subtask } = await import('../commands/helpers')
-const { branchThread } = await import('../chat/threads')
+const { branchThread, newThread } = await import('../chat/threads')
+
 const { changesOf } = await import('../review/changes')
 type Roads = Parameters<typeof helpers.start>[1]
 type Tree = Thread & { helpers?: string[] }
@@ -89,15 +90,8 @@ const host = {
 } as unknown as Host
 
 const top = (): Tree => ({
+  ...newThread('Notes', CLAUDE.id, 'opus', 'auto', 'full'),
   id: `top-${crypto.randomUUID()}`,
-  space: 'Notes',
-  title: '',
-  provider: CLAUDE.id,
-  model: 'opus',
-  effort: 'auto',
-  mode: 'full',
-  turns: [],
-  usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null },
   created: 0,
   updated: 0,
 })

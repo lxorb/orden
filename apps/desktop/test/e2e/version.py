@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import subprocess
 
@@ -95,5 +93,4 @@ def drive(browser: Browser) -> None:
             searched(page, label, VERSION)
         page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the version is in Settings and the search, and copies"))
+raise SystemExit(DRIVE.run(drive, "the version is in Settings and the search, and copies"))

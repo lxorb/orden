@@ -7,7 +7,6 @@ export interface Point {
 }
 
 type Take = (row: Row, at: Point, place: HTMLElement, from: Value | undefined) => void
-
 const SLOP = 4
 export const HOLD = 350
 export const THUMB_SLOP = SLOP * 2
@@ -42,7 +41,6 @@ class Dragging {
 }
 
 export const dragging = new Dragging()
-
 const ghosts: symbol[] = []
 let drawing = $state<symbol | null>(null)
 

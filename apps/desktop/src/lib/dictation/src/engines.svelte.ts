@@ -1,3 +1,4 @@
+import { shownHost } from '@orden/scan/web-address'
 import { account } from '../../accounts/src/api'
 import { transcriberNow } from '../../ai-providers/src/api'
 import type { Provider } from '../../ai-providers/src/api'
@@ -22,14 +23,9 @@ const NETWORK: readonly Taken[] = ['provider', 'account']
 
 const KEY = 'orden:dictation-engine'
 
-function read(): Engine | null {
-  const kept = storedText(KEY)
-  return ENGINES.find((one) => one === kept) ?? null
-}
-
 export function whereTo(provider: Provider): { local: boolean; host: string } {
   if (provider.kind !== 'compatible') return { local: false, host: 'OpenAI' }
-  const host = hostOf(provider.baseUrl ?? '')
+  const host = shownHost(provider.baseUrl ?? '')
   const local = /^(?:localhost|127\.0\.0\.1|\[::1\]|::1)$/i.test(host)
   return { local, host }
 }
@@ -40,16 +36,8 @@ export function deviceHears(): boolean {
   return !!speechRecogniser()
 }
 
-function hostOf(address: string): string {
-  try {
-    return new URL(address).hostname
-  } catch {
-    return address
-  }
-}
-
 class Engines {
-  chosen = $state<Engine | null>(read())
+  chosen = $state<Engine | null>(ENGINES.find((one) => one === storedText(KEY)) ?? null)
 
   usable(engine: Engine): boolean {
     if (engine === 'auto' || engine === 'local') return local.fits
@@ -85,4 +73,8 @@ export const engines = new Engines()
 
 export function canDictate(): boolean {
   return engines.offered().length > 0
+}
+
+export function showsDictateButton(): boolean {
+  return !(isNative && platform() === 'macos') && canDictate()
 }

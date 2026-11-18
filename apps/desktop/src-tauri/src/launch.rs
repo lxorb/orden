@@ -1,11 +1,11 @@
+use orden_base::handed::BACKGROUND_FLAG;
+use orden_base::labels::{document_windows, MAIN};
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 
 static WINDOWS: AtomicU32 = AtomicU32::new(0);
-
-const MAIN: &str = "main";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Handed {
@@ -89,7 +89,7 @@ impl Pending {
 }
 
 pub fn handed_by(args: &[String]) -> Vec<String> {
-    crate::web_handed::pages_in(args)
+    orden_web::web_handed::pages_in(args)
 }
 
 pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path::Path) {
@@ -99,8 +99,11 @@ pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path
             .map(|one| one.to_string_lossy().into_owned())
             .collect();
         pending.hold(Handed::Pages, handed_by(&words));
-        let pdfs = crate::handed_pdfs::pdfs_in(args, cwd);
-        pending.hold(Handed::Pdfs, crate::handed_pdfs::admit_handed(app, pdfs));
+        let pdfs = orden_documents::handed_pdfs::pdfs_in(args, cwd);
+        pending.hold(
+            Handed::Pdfs,
+            orden_documents::handed_pdfs::admit_handed(app, pdfs),
+        );
     }
 }
 
@@ -144,9 +147,9 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
 
     let reminder = argv
         .iter()
-        .any(|one| crate::reminders::link::is_reminder(one));
+        .any(|one| orden_reminders::reminders::link::is_reminder(one));
     if let Some(window) = app.get_window(MAIN).filter(|_| !reminder) {
-        if crate::placement::away().is_none() {
+        if orden_placement::placement::away().is_none() {
             let _ = window.show();
         }
         bring_forward(&window);
@@ -155,11 +158,11 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
     hand_over(app, Handed::Pages, handed_by(argv));
     let (app, argv, cwd) = (app.clone(), argv.clone(), cwd.to_owned());
     std::thread::spawn(move || {
-        let pdfs = crate::handed_pdfs::pdfs_in(&argv, std::path::Path::new(&cwd));
+        let pdfs = orden_documents::handed_pdfs::pdfs_in(&argv, std::path::Path::new(&cwd));
         hand_over(
             &app,
             Handed::Pdfs,
-            crate::handed_pdfs::admit_handed(&app, pdfs),
+            orden_documents::handed_pdfs::admit_handed(&app, pdfs),
         );
     });
 }
@@ -167,7 +170,7 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
 pub fn page_up(app: &AppHandle, label: &str) -> bool {
     app.try_state::<Pending>()
         .is_some_and(|pending| pending.is_listening(label))
-        && !crate::stall::page_gone(label)
+        && !orden_crashes::stall::page_gone(label)
 }
 
 fn token_in(argv: &[String]) -> Option<String> {
@@ -205,15 +208,13 @@ fn restarted_with(args: &[std::ffi::OsString]) -> Vec<std::ffi::OsString> {
     let flags = args
         .iter()
         .skip(1)
-        .take_while(|one| one.as_os_str() != crate::web_handed::LINK_FLAG)
+        .take_while(|one| one.as_os_str() != orden_base::handed::LINK_FLAG)
         .filter(|one| {
             let said = one.to_string_lossy();
             said.starts_with("--") && without_ours(&[said.into_owned()]).len() == 1
         });
     args.iter().take(1).chain(flags).cloned().collect()
 }
-
-pub const BACKGROUND_FLAG: &str = "--background";
 
 pub fn in_background<A: AsRef<std::ffi::OsStr>>(argv: &[A]) -> bool {
     argv.iter()
@@ -248,7 +249,7 @@ pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
 }
 
 pub fn brought_up(window: &tauri::Window) {
-    if crate::placement::away().is_none() {
+    if orden_placement::placement::away().is_none() {
         let _ = window.show();
     }
     bring_forward(window);
@@ -305,21 +306,24 @@ fn open_again(app: &AppHandle) -> Result<(), String> {
     if label != MAIN {
         return open_window(app, &label);
     }
-    opened(crate::placement::reopened(app, window_builder(app, MAIN)))
+    opened(orden_placement::placement::reopened(
+        app,
+        window_builder(app, MAIN),
+    ))
 }
 
 fn window_builder<'a>(
     app: &'a AppHandle,
     label: &str,
-) -> WebviewWindowBuilder<'a, crate::Engine, AppHandle> {
+) -> WebviewWindowBuilder<'a, orden_base::Engine, AppHandle> {
     let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::default())
-        .initialization_script(crate::old_home::script())
+        .initialization_script(orden_carry::old_home::script())
         .title("Orden")
         .inner_size(1180.0, 760.0)
         .min_inner_size(520.0, 400.0);
     #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
-    let builder = match crate::ground::worn() {
+    let builder = match orden_system::ground::worn() {
         Some(colour) => builder.background_color(colour),
         None => builder,
     };
@@ -332,17 +336,17 @@ fn window_builder<'a>(
     builder
 }
 
-fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result<(), String> {
-    let building = crate::appearance::own_frame(builder);
-    let window = crate::placement::built(building)
+fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> Result<(), String> {
+    let building = orden_system::appearance::own_frame(builder);
+    let window = orden_placement::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
-    crate::pinch::let_through(window.as_ref());
-    crate::dropped_paths::hear(window.as_ref());
+    orden_web::pinch::let_through(window.as_ref());
+    orden_documents::dropped_paths::hear(window.as_ref());
 
     #[cfg(target_os = "macos")]
     {
-        crate::lights::hold(&window);
-        if crate::placement::away().is_none() {
+        orden_system::lights::hold(&window);
+        if orden_placement::placement::away().is_none() {
             window
                 .show()
                 .map_err(|error| format!("could not show the window: {error}"))?;
@@ -362,22 +366,8 @@ fn reopened_label(app: &AppHandle) -> String {
     }
 }
 
-pub fn document_windows(app: &AppHandle) -> Vec<tauri::Window> {
-    app.windows()
-        .into_values()
-        .filter(|window| is_document_window(window.label()))
-        .collect()
-}
-
-pub(crate) fn is_document_window(label: &str) -> bool {
-    label == MAIN
-        || label
-            .strip_prefix("orden-")
-            .is_some_and(|number| !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit()))
-}
-
 fn bring_forward(window: &tauri::Window) {
-    crate::placement::raised(window);
+    orden_placement::placement::raised(window);
 }
 
 #[tauri::command]
@@ -435,8 +425,8 @@ fn free_label(app: &AppHandle) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        handed_by, in_background, is_document_window, receiver, restarted_with, token_in,
-        unread_link, without_ours, Handed, Handover, Pending, Seen, BACKGROUND_FLAG,
+        handed_by, in_background, receiver, restarted_with, token_in, unread_link, without_ours,
+        Handed, Handover, Pending, Seen, BACKGROUND_FLAG,
     };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
@@ -475,17 +465,6 @@ mod tests {
     fn with_no_window_at_all_one_is_opened_once_the_launch_is_through() {
         assert_eq!(receiver(&[], false), Handover::Hold);
         assert_eq!(receiver(&[], true), Handover::HoldAndOpen);
-    }
-
-    #[test]
-    fn a_document_window_is_main_or_a_numbered_one() {
-        assert!(is_document_window("main"));
-        assert!(is_document_window("orden-2"));
-        assert!(is_document_window("orden-12"));
-        assert!(!is_document_window("orden-quick-add"));
-        assert!(!is_document_window("orden-"));
-        assert!(!is_document_window("orden-2a"));
-        assert!(!is_document_window("web-1"));
     }
 
     #[test]
@@ -608,31 +587,14 @@ mod tests {
 
     #[test]
     fn every_webview_takes_its_own_drops() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        let mut sources = vec![root.clone()];
         let mut taken = Vec::new();
-        while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at)
-                .expect("the crate's source")
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    sources.push(path);
-                    continue;
-                }
-                let name = path
-                    .strip_prefix(&root)
-                    .expect("under the source")
-                    .to_string_lossy()
-                    .replace('\\', "/");
-                let text = std::fs::read_to_string(&path).unwrap_or_default();
-                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
-                let built = text.matches("WebviewWindowBuilder::new(").count()
-                    + text.matches("WebviewBuilder::new(").count();
-                if text.matches(".disable_drag_drop_handler()").count() < built {
-                    taken.push(name);
-                }
+        for (name, path) in crate::sources() {
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+            let built = text.matches("WebviewWindowBuilder::new(").count()
+                + text.matches("WebviewBuilder::new(").count();
+            if text.matches(".disable_drag_drop_handler()").count() < built {
+                taken.push(name);
             }
         }
         taken.sort();

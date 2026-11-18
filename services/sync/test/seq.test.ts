@@ -57,12 +57,9 @@ async function newSpace(name: string, prepared: boolean): Promise<string> {
 }
 
 function numbered(space: string) {
-  const rows = env.db
-    .prepare(
-      `select seq from notes where space_id = ?1 union all
-       select seq from space_entries where space_id = ?1`,
-    )
-    .all(space) as { seq: number }[]
+  const rows = env.db.prepare('select seq from notes where space_id = ?1').all(space) as {
+    seq: number
+  }[]
   const next = (
     env.db.prepare('select next from space_cursor where space_id = ?').get(space) as {
       next: number
@@ -96,7 +93,27 @@ describe('the cursor of a space', () => {
     expect(Math.max(...seqs)).toBe(next - 1)
   })
 
-  test('moves with the row when a file is replaced and a map is written (sync v2)', async () => {
+  test("stays put when a space's settings are written (#2183)", async () => {
+    const space = await newSpace('Settings', true)
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'a.md', content: 'one' } })
+    const before = numbered(space).next
+
+    const writes: [string, Record<string, unknown>][] = [
+      ['bookmarks', { bookmarks: [{ kind: 'note', path: 'a.md', text: '' }] }],
+      ['icons', { icons: { Work: 'Folder' } }],
+      ['arranged', { arranged: { '': ['a.md'] } }],
+      ['graph', { graph: { arrows: true } }],
+      ['excluded', { excluded: ['Work'] }],
+    ]
+    for (const [route, body] of writes) {
+      const said = await call(env, `/v1/spaces/${space}/${route}`, { method: 'PUT', token, body })
+      expect(said.status).toBe(200)
+    }
+
+    expect(numbered(space).next).toBe(before)
+  })
+
+  test('moves with the row when a file is replaced (sync v2)', async () => {
     const space = await newSpace('Two', true)
     const bytes = (seed: number) => Uint8Array.from({ length: 64 }, (_, at) => (at + seed) % 251)
     const hashOf = async (data: Uint8Array) =>
@@ -131,16 +148,6 @@ describe('the cursor of a space', () => {
       body: { hash: await hashOf(second), base: await hashOf(first) },
     })
     expect(replaced.json.ok).toBe(true)
-    const mapped = await call<{ cursor: number }>(env, `/v2/spaces/${space}/maps`, {
-      method: 'PATCH',
-      token,
-      body: {
-        entries: [
-          { map: 'bookmark', key: 'b1', value: { kind: 'note', path: 'a.bin', text: 'a', at: 1 } },
-          { map: 'bookmark', key: 'b2', value: { kind: 'note', path: 'a.bin', text: 'b', at: 2 } },
-        ],
-      },
-    })
 
     expect(alone).toEqual([])
     const { seqs, next } = numbered(space)
@@ -150,6 +157,5 @@ describe('the cursor of a space', () => {
       seq: number
     }
     expect(replaced.json.seq).toBe(file.seq)
-    expect(mapped.json.cursor).toBe(next - 1)
   })
 })

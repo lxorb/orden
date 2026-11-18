@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import re
 import sys
@@ -81,7 +79,6 @@ COUNTS = """
     pages: count('.embed-page'),
     blocks: count('.embed-html'),
     frames: count('iframe'),
-    // The tag itself, which must never reach the page as a tag.
     tags: document.querySelector('#write')?.innerHTML.includes('<iframe src=') ?? false,
   }
 }
@@ -348,5 +345,4 @@ def main() -> int:
     )
     return 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

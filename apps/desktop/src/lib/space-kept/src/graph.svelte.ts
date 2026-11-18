@@ -125,16 +125,22 @@ export function sameGraph(one: GraphSettings, other: GraphSettings): boolean {
 
 interface Kept extends Folded {
   settings: GraphSettings
+  sent: boolean
 }
 
 function read(): Record<string, Kept> {
-  return readSpaces(STORAGE_KEY, (one) => ({ settings: graphSettingsOf(one.settings) }))
+  return readSpaces(STORAGE_KEY, (one) => ({
+    settings: graphSettingsOf(one.settings),
+    sent: one.sent !== false,
+  }))
 }
 
 const SETTINGS: Folding<GraphSettings> = {
   fold: (theirs, mine) => (sameGraph(theirs, DEFAULT_GRAPH) ? mine : theirs),
   same: sameGraph,
 }
+
+const UNSENT: Folding<GraphSettings> = { fold: (_theirs, mine) => mine, same: sameGraph }
 
 export class SpaceGraphSettings {
   private spaces = $state<Record<string, Kept>>(read())
@@ -210,10 +216,20 @@ export class SpaceGraphSettings {
   adopt(root: string, theirs: unknown, accountId: string) {
     const account = graphSettingsOf(theirs)
     const kept = this.spaces[root]
-    const met = meet(kept, accountId, kept?.settings ?? DEFAULT_GRAPH, account, SETTINGS)
+    const unsent = kept?.sent === false && kept.account === accountId
+    const met = meet(
+      kept,
+      accountId,
+      kept?.settings ?? DEFAULT_GRAPH,
+      account,
+      unsent ? UNSENT : SETTINGS,
+    )
     if (!met) return
 
-    this.spaces = { ...this.spaces, [root]: { settings: met.value, account: accountId } }
+    this.spaces = {
+      ...this.spaces,
+      [root]: { settings: met.value, account: accountId, sent: true },
+    }
     this.write()
 
     if (met.tell) void this.push(root)
@@ -222,7 +238,7 @@ export class SpaceGraphSettings {
   private put(root: string, settings: GraphSettings) {
     this.spaces = {
       ...this.spaces,
-      [root]: { settings, account: this.spaces[root]?.account ?? null },
+      [root]: { settings, account: this.spaces[root]?.account ?? null, sent: false },
     }
     this.soon(root)
   }
@@ -252,7 +268,20 @@ export class SpaceGraphSettings {
 
   private async push(root: string) {
     const { push } = await import('./pushing')
-    await push(root, (api, token, spaceId) => api.saveGraphSettings(token, spaceId, this.of(root)))
+    const settings = this.of(root)
+    await push(
+      root,
+      (api, token, spaceId) => api.saveGraphSettings(token, spaceId, settings),
+      (landed) => this.said(root, landed, settings),
+    )
+  }
+
+  private said(root: string, landed: boolean, settings: GraphSettings) {
+    const held = this.spaces[root]
+    if (!held || held.sent === landed || (landed && !sameGraph(held.settings, settings))) return
+
+    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
+    this.write()
   }
 
   private write() {

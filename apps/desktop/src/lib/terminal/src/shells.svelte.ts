@@ -1,4 +1,5 @@
 import {
+  heardElsewhere,
   withOrWithout,
   isRecord,
   keep,
@@ -109,6 +110,16 @@ class Shells {
     keep(RESTORE_KEY, on ? 'yes' : 'no')
     if (!on) void import('./history').then((one) => one.forgetHistories())
   }
+
+  heard() {
+    this.preferred = storedText(SHELL_KEY) ?? ''
+    this.size = sizeOf(storedText(SIZE_KEY))
+    this.restoring = storedText(RESTORE_KEY) !== 'no'
+    this.themed = storedText(THEMED_KEY) !== 'no'
+    this.ways = waysOf(stored(WAYS_KEY))
+  }
 }
 
 export const shells = new Shells()
+
+heardElsewhere([SHELL_KEY, SIZE_KEY, RESTORE_KEY, WAYS_KEY, THEMED_KEY], () => shells.heard())

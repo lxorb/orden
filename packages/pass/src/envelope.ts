@@ -1,17 +1,3 @@
-import type {
-  Attachment,
-  Content,
-  ContentOf,
-  Envelope,
-  Field,
-  Folder,
-  IdentityKey,
-  ItemKind,
-  Passkey,
-  Section,
-  VaultMeta,
-  Website,
-} from './types'
 import {
   ALIAS_PROVIDERS,
   CARD_BRANDS,
@@ -22,6 +8,18 @@ import {
   VAULT_COLORS,
   VAULT_ICONS,
   WIFI_SECURITY,
+  type Attachment,
+  type Content,
+  type ContentOf,
+  type Envelope,
+  type Field,
+  type Folder,
+  type IdentityKey,
+  type ItemKind,
+  type Passkey,
+  type Section,
+  type VaultMeta,
+  type Website,
 } from './types'
 
 type Raw = Record<string, unknown>

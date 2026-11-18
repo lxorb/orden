@@ -2,81 +2,11 @@ import { describe, expect, test } from 'vitest'
 import { tagCuts, tagsIn, tagSpans, tagUses } from './tags'
 
 describe('the tags in a note', () => {
-  test('are the words after a hash, once per use', () => {
-    expect(tagsIn('#work and #work again, plus #other')).toEqual(['#work', '#work', '#other'])
-  })
-
-  test('and a heading is not one of them', () => {
-    expect(tagsIn('# Heading\n\n## Another')).toEqual([])
-  })
-
-  test('nor is a number, nor a hash inside a word', () => {
-    expect(tagsIn('#42 and a#b')).toEqual([])
-  })
-
-  test('a name holds marks and emoji, and is never all digits', () => {
-    expect(tagsIn('#हिन्दी #café #tag👍')).toEqual(['#हिन्दी', '#café', '#tag👍'])
-    expect(tagsIn('#2024-review #2024')).toEqual(['#2024-review'])
-  })
-
-  test('and a slash is part of the tag, to any depth', () => {
-    expect(tagsIn('#work/orden/canvas/deep/deeper')).toEqual(['#work/orden/canvas/deep/deeper'])
-    expect(tagsIn('#a-b #c_d #e/f')).toEqual(['#a-b', '#c_d', '#e/f'])
-  })
-
-  test('and code fences hold none', () => {
-    expect(tagsIn('#yes\n```\n#no\n```\n#also')).toEqual(['#yes', '#also'])
-  })
-
-  test('and nor does inline code', () => {
-    expect(tagsIn('run `a #no` and #yes, `#not` ``x `#b` y`` #also')).toEqual(['#yes', '#also'])
-  })
-
-  test('and inline code runs on across the lines of a paragraph', () => {
-    expect(tagsIn('`a\nb` #x `c`')).toEqual(['#x'])
-    expect(tagsIn('`a\n#b\nc`')).toEqual([])
-  })
-
-  test('but not past the end of a block', () => {
-    expect(tagsIn('a `b\n\nc` #t')).toEqual(['#t'])
-    expect(tagsIn('- a `x\n- b` #t')).toEqual(['#t'])
-    expect(tagsIn('# A `x\nb` #t')).toEqual(['#t'])
-  })
-
-  test('though a backtick that opens no code is just a backtick', () => {
-    expect(tagsIn('\\` #yes ` #too')).toEqual(['#yes', '#too'])
-  })
-
   test('nor does a fence inside a quote or a callout', () => {
     const note = '> [!example] Button\n> ```css\n> .button { color: #fff; }\n> ```\n> #after\n'
     expect(tagsIn(note)).toEqual(['#after'])
     expect(tagsIn('> ```\n> #no\n\n#yes')).toEqual(['#yes'])
     expect(tagsIn('- item\n\n  ```\n  #no\n  ```\n#yes')).toEqual(['#yes'])
-  })
-
-  test('nor does indented code', () => {
-    expect(tagsIn('Notes\n\n    #include <stdio.h>\n\n#yes')).toEqual(['#yes'])
-    expect(tagsIn('- item\n\n      #define X\n#yes')).toEqual(['#yes'])
-    expect(tagsIn('> words\n>\n>     #no')).toEqual([])
-  })
-
-  test('but a paragraph runs on over an indented line, which is no code', () => {
-    expect(tagsIn('words\n    #yes')).toEqual(['#yes'])
-  })
-
-  test('a fence closes only on the same mark, at least as long, with nothing after it', () => {
-    expect(tagsIn('````md\n```\n#todo\n```\n````\n#yes')).toEqual(['#yes'])
-    expect(tagsIn('```\n~~~\n#no\n```\n#yes')).toEqual(['#yes'])
-    expect(tagsIn('```\n``` ts\n#no\n```\n#yes')).toEqual(['#yes'])
-  })
-
-  test('a fence opens at three spaces of indent but not four', () => {
-    expect(tagsIn('   ```\n#no\n```\n#yes')).toEqual(['#yes'])
-    expect(tagsIn('words\n    ```\n#yes')).toEqual(['#yes'])
-  })
-
-  test('backticks with a backtick after them open no fence', () => {
-    expect(tagsIn('```a`a\n#yes')).toEqual(['#yes'])
   })
 
   test('and a link to a heading is no tag, though a tag next to it is', () => {
@@ -100,15 +30,6 @@ describe('the tags in a note', () => {
       ['| x | y |\n| - | - |\n|#f|#g|', ['#f', '#g']],
     ]
     for (const [source, tags] of rows) expect(tagsIn(`${source}\n`), source).toEqual(tags)
-  })
-
-  test('inside emphasis, strike, highlight or a cell, where the page draws one', () => {
-    expect(tagsIn('**#a** *#b* ~~#d~~ ==#e== call\n')).toEqual(['#a', '#b', '#d', '#e'])
-    expect(tagsIn('| x | y |\n| - | - |\n|#f|#g|\n')).toEqual(['#f', '#g'])
-  })
-
-  test('a fence in a quote ends with the quote', () => {
-    expect(tagsIn('> ```\n> #no\n#yes')).toEqual(['#yes'])
   })
 })
 
@@ -143,13 +64,30 @@ describe('the tags in the front matter', () => {
     expect(front('status: done # not a tag')).toEqual([])
   })
 
-  test('and both halves of a note count', () => {
-    expect(tagsIn('---\ntags: [work]\n---\n\nwords #orden\n')).toEqual(['#work', '#orden'])
+  test('but not from a comment after the value', () => {
+    expect(front('tags:\n  - project # active')).toEqual(['#project'])
+    expect(front('tags: [a] # old')).toEqual(['#a'])
+    expect(front('tags: a, b # c')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - project # active\r\n---\r\n')).toEqual(['#project'])
   })
 
-  test('in a note written with CRLF endings, as tags.rs reads it', () => {
-    expect(tagsIn('---\r\ntags: [a, b]\r\n---\r\nx\r\n')).toEqual(['#a', '#b'])
-    expect(tagsIn('---\r\ntags:\r\n  - a\r\n  - b\r\n---\r\nx #c\r\n')).toEqual(['#a', '#b', '#c'])
+  test('and from items past a blank line or a comment between them', () => {
+    expect(front('tags:\n  - a\n\n  - b')).toEqual(['#a', '#b'])
+    expect(front('tags:\n  - a\n  # c\n  - b\nother: x')).toEqual(['#a', '#b'])
+    expect(tagsIn('---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n')).toEqual(['#a', '#b'])
+  })
+
+  test('and in the body a cut before the next tag leaves one space', () => {
+    const note = 'Tags: #work, #home\n'
+    const [cut] = tagCuts(note, 'work')
+    expect(cut ? note.slice(0, cut.from) + note.slice(cut.to) : note).toBe('Tags: #home\n')
+  })
+
+  test('and a tag cut from before a comment keeps the comment a comment', () => {
+    const note = '---\ntags: [a, # c\n  b]\n---\n'
+    const [cut] = tagCuts(note, 'a')
+    const after = cut ? note.slice(0, cut.from) + note.slice(cut.to) : note
+    expect(after).toBe('---\ntags: [ # c\n  b]\n---\n')
   })
 })
 
@@ -185,6 +123,20 @@ describe('where a tag sits', () => {
 
   test('folded, because the operator is', () => {
     expect(tagSpans('#Work/Orden', 'work/orden')).toEqual([{ from: 1, to: 11 }])
+  })
+
+  test('and a slash nobody meant is read the way the tag tree reads it', () => {
+    const body = '#a//b and #a//b/c'
+    expect(tagSpans(body, 'a/b').map((span) => body.slice(span.from, span.to))).toEqual([
+      'a//b',
+      'a//b',
+    ])
+  })
+
+  test('as long as the name is written, even where folding makes it longer', () => {
+    const body = '#İstanbul trip and #İstanbul/old'
+    const spans = tagSpans(body, 'İstanbul')
+    expect(spans.map((span) => body.slice(span.from, span.to))).toEqual(['İstanbul', 'İstanbul'])
   })
 })
 
@@ -231,6 +183,12 @@ describe('what taking a tag away has to cut', () => {
     expect(tagSpans('    #include <stdio.h>\n', 'include')).toEqual([])
   })
 
+  test('and the quotes a tag was written in', () => {
+    expect(without('---\ntags: ["a", "b"]\n---\n', 'a')).toBe('---\ntags: ["b"]\n---\n')
+    expect(without("---\ntags: ['a']\n---\n", 'a')).toBe('---\ntags: []\n---\n')
+    expect(without('---\ntags:\n  - "a"\n  - b\n---\n', 'a')).toBe('---\ntags:\n  - b\n---\n')
+  })
+
   test('while one of several on a line leaves the line', () => {
     expect(without('---\ntags: [work, other]\n---\n', 'work')).toBe('---\ntags: [other]\n---\n')
   })
@@ -274,4 +232,40 @@ describe('a tag after a comment in a flow list across lines', () => {
       expect(cut && note.slice(cut.from, cut.to)).not.toContain('comment')
     }
   })
+})
+
+test.each<[unknown, ...Parameters<typeof tagsIn>]>([
+  [['#work', '#work', '#other'], '#work and #work again, plus #other'],
+  [[], '# Heading\n\n## Another'],
+  [[], '#42 and a#b'],
+  [['#हिन्दी', '#café', '#tag👍'], '#हिन्दी #café #tag👍'],
+  [['#2024-review'], '#2024-review #2024'],
+  [['#work/orden/canvas/deep/deeper'], '#work/orden/canvas/deep/deeper'],
+  [['#a-b', '#c_d', '#e/f'], '#a-b #c_d #e/f'],
+  [['#yes', '#also'], '#yes\n```\n#no\n```\n#also'],
+  [['#yes', '#also'], 'run `a #no` and #yes, `#not` ``x `#b` y`` #also'],
+  [['#x'], '`a\nb` #x `c`'],
+  [[], '`a\n#b\nc`'],
+  [['#t'], 'a `b\n\nc` #t'],
+  [['#t'], '- a `x\n- b` #t'],
+  [['#t'], '# A `x\nb` #t'],
+  [['#yes', '#too'], '\\` #yes ` #too'],
+  [['#yes'], 'Notes\n\n    #include <stdio.h>\n\n#yes'],
+  [['#yes'], '- item\n\n      #define X\n#yes'],
+  [[], '> words\n>\n>     #no'],
+  [['#yes'], 'words\n    #yes'],
+  [['#yes'], '````md\n```\n#todo\n```\n````\n#yes'],
+  [['#yes'], '```\n~~~\n#no\n```\n#yes'],
+  [['#yes'], '```\n``` ts\n#no\n```\n#yes'],
+  [['#yes'], '   ```\n#no\n```\n#yes'],
+  [['#yes'], 'words\n    ```\n#yes'],
+  [['#yes'], '```a`a\n#yes'],
+  [['#a', '#b', '#d', '#e'], '**#a** *#b* ~~#d~~ ==#e== call\n'],
+  [['#f', '#g'], '| x | y |\n| - | - |\n|#f|#g|\n'],
+  [['#yes'], '> ```\n> #no\n#yes'],
+  [['#work', '#orden'], '---\ntags: [work]\n---\n\nwords #orden\n'],
+  [['#a', '#b'], '---\r\ntags: [a, b]\r\n---\r\nx\r\n'],
+  [['#a', '#b', '#c'], '---\r\ntags:\r\n  - a\r\n  - b\r\n---\r\nx #c\r\n'],
+])('%j from %j', (expected, ...args) => {
+  expect(tagsIn(...args)).toEqual(expected)
 })

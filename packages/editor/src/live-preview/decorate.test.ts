@@ -24,112 +24,79 @@ function state(doc: string, cursor: number, trusted = false) {
   )
 }
 
-function concealed(doc: string, cursor?: number, trusted = false): string[] {
-  const full = cursor === undefined ? doc + PARK : doc
-  const pos = cursor ?? full.length
-  const { atomic } = buildDecorations(state(full, pos, trusted))
-
-  const out: string[] = []
-  atomic.between(0, full.length, (from, to) => {
-    out.push(full.slice(from, to))
-  })
-  return out
-}
-
-function blocks(doc: string, cursor?: number, trusted = false): string[] {
-  const full = cursor === undefined ? doc + PARK : doc
-  const pos = cursor ?? full.length
-
-  const out: string[] = []
-  buildBlockDecorations(state(full, pos, trusted)).between(0, full.length, (from, to) => {
-    out.push(full.slice(from, to))
-  })
-  return out
-}
-
-function revealedMeta(doc: string, cursor: number): string[] {
-  const { decorations } = buildDecorations(state(doc, cursor))
-  const out: string[] = []
-  decorations.between(0, doc.length, (from, to, value) => {
-    if (value.spec.class === 'md-meta') out.push(doc.slice(from, to))
-  })
-  return out
-}
-
-function marked(doc: string, className: string, cursor?: number): string[] {
-  const full = cursor === undefined ? doc + PARK : doc
-  const pos = cursor ?? full.length
-
-  const out: string[] = []
-  buildDecorations(state(full, pos)).decorations.between(0, full.length, (from, to, value) => {
-    if (value.spec.class === className) out.push(full.slice(from, to))
-  })
-  return out
-}
-
 interface Spec {
   class?: string
   widget?: unknown
   attributes?: Record<string, string>
 }
 
-function lineAttrs(doc: string): string[] {
-  const full = doc + PARK
+type Pick = (text: string, spec: Spec, from: number, to: number) => string | string[] | undefined
+
+function walk(
+  doc: string,
+  cursor: number | undefined,
+  pick: Pick,
+  layer = 'decorations',
+  trusted = false,
+) {
+  const full = cursor === undefined ? doc + PARK : doc
+  const built = state(full, cursor ?? full.length, trusted)
+  const set =
+    layer === 'blocks'
+      ? buildBlockDecorations(built)
+      : buildDecorations(built)[layer === 'atomic' ? 'atomic' : 'decorations']
   const out: string[] = []
-  buildDecorations(state(full, full.length)).decorations.between(
-    0,
-    full.length,
-    (from, to, value) => {
-      const spec = value.spec as Spec
-      const written = spec.attributes?.['data-callout']
-      if (from === to && !spec.widget && written) out.push(written)
-    },
-  )
+  set.between(0, full.length, (from, to, value) => {
+    out.push(...[pick(full.slice(from, to), value.spec as Spec, from, to) ?? []].flat())
+  })
   return out
 }
 
-function lineClasses(doc: string): string[] {
-  const full = doc + PARK
-  const out: string[] = []
-  buildDecorations(state(full, full.length)).decorations.between(
-    0,
-    full.length,
-    (from, to, value) => {
-      const spec = value.spec as Spec
-      if (from === to && !spec.widget && spec.class) out.push(...spec.class.split(' '))
-    },
+const concealed = (doc: string, cursor?: number, trusted = false) =>
+  walk(doc, cursor, (text) => text, 'atomic', trusted)
+const blocks = (doc: string, cursor?: number, trusted = false) =>
+  walk(doc, cursor, (text) => text, 'blocks', trusted)
+const marked = (doc: string, className: string, cursor?: number) =>
+  walk(doc, cursor, (text, spec) => (spec.class === className ? text : undefined))
+const revealedMeta = (doc: string, cursor: number) => marked(doc, 'md-meta', cursor)
+const lineAttrs = (doc: string) =>
+  walk(doc, undefined, (_, spec, from, to) =>
+    from === to && !spec.widget
+      ? (spec.attributes?.['data-callout'] ?? '') || undefined
+      : undefined,
   )
-  return out
-}
+const lineClasses = (doc: string) =>
+  walk(doc, undefined, (_, spec, from, to) =>
+    from === to && !spec.widget && spec.class ? spec.class.split(' ') : undefined,
+  )
+
+const conceals = (rows: [string, string[], (number | undefined)?, boolean?][]) =>
+  test.each(rows)('%j', (doc, wanted, ...rest) => expect(concealed(doc, ...rest)).toEqual(wanted))
+const blocksOf = (rows: [string, string[], (number | undefined)?, boolean?][]) =>
+  test.each(rows)('%j', (doc, wanted, ...rest) => expect(blocks(doc, ...rest)).toEqual(wanted))
 
 describe('headings', () => {
-  test('hides the hash and its trailing space when the caret is elsewhere', () => {
-    expect(concealed('# Title')).toEqual(['# '])
-  })
+  conceals([
+    ['# Title', ['# ']],
+    ['###### Six', ['###### ']],
+  ])
 
   test('reveals the hash when the caret is on the heading line', () => {
     expect(concealed('# Title\n\nbody', 3)).toEqual([])
     expect(revealedMeta('# Title\n\nbody', 3)).toEqual(['# '])
   })
-
-  test('covers all six levels', () => {
-    expect(concealed('###### Six')).toEqual(['###### '])
-  })
 })
 
 describe('inline emphasis', () => {
-  test('hides both markers of an inactive bold span', () => {
-    expect(concealed('a **bold** b')).toEqual(['**', '**'])
-  })
+  conceals([
+    ['a **bold** b', ['**', '**']],
+    ['_i_ ~~s~~ H~2~O X^2^', ['_', '_', '~~', '~~', '~', '~', '^', '^']],
+  ])
 
   test('reveals only the span the caret sits in', () => {
     const doc = '**one** and **two**'
     expect(revealedMeta(doc, 3)).toEqual(['**', '**'])
     expect(concealed(doc, 3)).toEqual(['**', '**'])
-  })
-
-  test('handles italic, strikethrough, subscript and superscript', () => {
-    expect(concealed('_i_ ~~s~~ H~2~O X^2^')).toEqual(['_', '_', '~~', '~~', '~', '~', '^', '^'])
   })
 })
 
@@ -147,29 +114,20 @@ describe('links', () => {
 })
 
 describe('code', () => {
-  test('hides inline backticks', () => {
-    expect(concealed('run `npm i` first')).toEqual(['`', '`'])
-  })
-
-  test('hides fence markers and the language tag', () => {
-    expect(concealed('```js\nlet x\n```')).toEqual(['```', 'js', '```'])
-  })
+  conceals([
+    ['run `npm i` first', ['`', '`']],
+    ['```js\nlet x\n```', ['```', 'js', '```']],
+    ['```js\nlet x\n```', ['```', 'js', '```']],
+  ])
 
   test('reveals both fence markers when the caret is on the opening line', () => {
     expect(revealedMeta('```js\nlet x\n```\n', 2)).toEqual(['```', 'js', '```'])
   })
 
-  test('reveals both fence markers from inside the code', () => {
-    expect(concealed('```js\nlet x\n```\n', 8)).toEqual([])
-  })
-
-  test('reveals both fence markers from the closing line', () => {
-    expect(concealed('```js\nlet x\n```\n', 14)).toEqual([])
-  })
-
-  test('hides them again once the caret leaves the block', () => {
-    expect(concealed('```js\nlet x\n```')).toEqual(['```', 'js', '```'])
-  })
+  conceals([
+    ['```js\nlet x\n```\n', [], 8],
+    ['```js\nlet x\n```\n', [], 14],
+  ])
 
   test('leaves a neighbouring fence hidden', () => {
     const doc = '```js\na\n```\n\n```py\nb\n```\n'
@@ -202,21 +160,16 @@ describe('code line numbers', () => {
     return gutter(doc).map((line) => line.number)
   }
 
-  test('numbers the code and not the fences around it', () => {
-    expect(numbers('```js\nlet a = 1\nlet b = 2\n```')).toEqual([null, '1', '2', null])
-  })
+  test.each([
+    ['```js\nlet a = 1\nlet b = 2\n```', [null, '1', '2', null]],
+    ['text\n\n    a\n    b\n    c', ['1', '2', '3']],
+    ['```\na\n\nb\n```', [null, '1', '2', '3', null]],
+    ['```mermaid\ngraph TD\nA-->B\n```', []],
+  ])('%j', (input, wanted) => expect(numbers(input)).toEqual(wanted))
 
   test('counts from one per block rather than per note', () => {
     const doc = 'words\n\n```\na\nb\n```\n\nmore\n\n```\nc\n```'
     expect(numbers(doc)).toEqual([null, '1', '2', null, null, '1', null])
-  })
-
-  test('numbers every line of an indented block, its first included', () => {
-    expect(numbers('text\n\n    a\n    b\n    c')).toEqual(['1', '2', '3'])
-  })
-
-  test('a blank line inside a fence is a line like any other', () => {
-    expect(numbers('```\na\n\nb\n```')).toEqual([null, '1', '2', '3', null])
   })
 
   test('the column is as wide as the block needs and no wider', () => {
@@ -250,74 +203,46 @@ describe('code line numbers', () => {
 
     expect(carried).toBe(1)
   })
-
-  test('a rendered diagram has no lines to number', () => {
-    expect(numbers('```mermaid\ngraph TD\nA-->B\n```')).toEqual([])
-  })
 })
 
 describe('an <iframe> in the text', () => {
   const TAG = '<iframe src="https://field.example.test/plan"></iframe>'
 
-  test('is replaced by the card that stands for it', () => {
-    expect(concealed(TAG)).toEqual([TAG])
-  })
+  conceals([
+    [TAG, [TAG]],
+    [`See ${TAG} here.`, [TAG.slice(0, -9), '</iframe>']],
+    ['<iframe src="javascript:alert(1)"></iframe>', []],
+    ['<iframe></iframe>', []],
+  ])
 
-  test('and is the tag again while the caret is in it', () => {
-    expect(concealed(TAG, 10)).toEqual([])
-  })
-
-  test('inside a sentence the closing half goes with it', () => {
-    expect(concealed(`See ${TAG} here.`)).toEqual([TAG.slice(0, -9), '</iframe>'])
-  })
-
-  test('and both halves come back with the caret in either', () => {
-    expect(concealed(`See ${TAG} here.`, 10)).toEqual([])
-    expect(concealed(`See ${TAG} here.`, 4 + TAG.length - 4)).toEqual([])
-  })
-
-  test('a tag a browser would not frame is left as it was written', () => {
-    expect(concealed('<iframe src="javascript:alert(1)"></iframe>')).toEqual([])
-    expect(concealed('<iframe></iframe>')).toEqual([])
-  })
+  conceals([
+    [TAG, [], 10],
+    [`See ${TAG} here.`, [], 10],
+    [`See ${TAG} here.`, [], 4 + TAG.length - 4],
+  ])
 })
 
 describe('escapes', () => {
-  test('hides the backslash and keeps the character', () => {
-    expect(concealed('a \\* b')).toEqual(['\\'])
-    expect(concealed('a \\< b')).toEqual(['\\'])
-    expect(concealed('a \\[x] b')).toEqual(['\\'])
-  })
+  conceals([
+    ['a \\* b', ['\\']],
+    ['a \\< b', ['\\']],
+    ['a \\[x] b', ['\\']],
+    ['a \\ b', []],
+    ['`a \\* b`', ['`', '`']],
+  ])
 
   test('shows it again with the caret on it', () => {
     expect(concealed('a \\* b', 3)).toEqual([])
   })
-
-  test('leaves a lone backslash alone', () => {
-    expect(concealed('a \\ b')).toEqual([])
-  })
-
-  test('a backslash inside code is code', () => {
-    expect(concealed('`a \\* b`')).toEqual(['`', '`'])
-  })
 })
 
 describe('blocks', () => {
-  test('hides the quote marker', () => {
-    expect(concealed('> quoted')).toEqual(['> '])
-  })
-
-  test('replaces a horizontal rule', () => {
-    expect(concealed('a\n\n---')).toEqual(['---'])
-  })
-
-  test('replaces a bullet marker', () => {
-    expect(concealed('- one\n- two')).toEqual(['-', '-'])
-  })
-
-  test('replaces the task marker and the bullet before it', () => {
-    expect(concealed('- [x] done')).toEqual(['- ', '[x]'])
-  })
+  conceals([
+    ['> quoted', ['> ']],
+    ['a\n\n---', ['---']],
+    ['- one\n- two', ['-', '-']],
+    ['- [x] done', ['- ', '[x]']],
+  ])
 
   test('replaces the whole table with a rendered one', () => {
     expect(blocks('| a |\n| - |\n| 1 |')).toEqual(['| a |\n| - |\n| 1 |'])
@@ -330,19 +255,21 @@ describe('blocks', () => {
 })
 
 describe('images', () => {
-  test('replaces the whole image with a rendered widget', () => {
-    expect(concealed('![alt](pic.png)')).toEqual(['![alt](pic.png)'])
-  })
+  conceals([
+    ['![alt](pic.png)', ['![alt](pic.png)']],
+    ['text <span>plain</span> more', []],
+    ['![](https://example.test/a.png)', ['![](https://example.test/a.png)']],
+  ])
 
   test('shows the source once the caret enters it', () => {
     expect(concealed('![alt](pic.png)', 3)).toEqual([])
     expect(revealedMeta('![alt](pic.png)', 3)).toEqual(['![', ']', '(', 'pic.png', ')'])
   })
 
-  test('stays a picture with the caret beside it', () => {
-    expect(concealed('![alt](pic.png)', 0)).toEqual(['![alt](pic.png)'])
-    expect(concealed('![alt](pic.png)', 15)).toEqual(['![alt](pic.png)'])
-  })
+  conceals([
+    ['![alt](pic.png)', ['![alt](pic.png)'], 0],
+    ['![alt](pic.png)', ['![alt](pic.png)'], 15],
+  ])
 
   test('stays a picture while it is selected', () => {
     const doc = '![alt](pic.png)'
@@ -361,94 +288,69 @@ describe('images', () => {
     expect(out).toEqual([doc])
   })
 
-  test('renders a resized image written as an img tag', () => {
-    const tag = '<img src="pic.png" alt="a" style="zoom:60%" />'
-    expect(concealed(`text ${tag} more`)).toEqual([tag])
-  })
+  test.each([
+    [
+      'text <img src="pic.png" alt="a" style="zoom:60%" /> more',
+      ['<img src="pic.png" alt="a" style="zoom:60%" />'],
+    ],
+    [
+      'a\n\n<div style="page-break-after: always;"></div>\n\nb',
+      ['<div style="page-break-after: always;"></div>'],
+    ],
+  ])('%j', (input, wanted) => expect(concealed(input)).toEqual(wanted))
 
-  test('leaves other inline HTML alone', () => {
-    expect(concealed('text <span>plain</span> more')).toEqual([])
-  })
-
-  test('renders a page break', () => {
-    const tag = '<div style="page-break-after: always;"></div>'
-    expect(concealed(`a\n\n${tag}\n\nb`)).toEqual([tag])
-  })
-
-  test('treats a flow fence as a diagram', () => {
-    expect(blocks('```flow\nst=>start: Go\n```')).toEqual(['```flow\nst=>start: Go\n```'])
-  })
-
-  test('draws a chart fence, and leaves one holding no chart as code', () => {
-    const chart = '```chart\nseries:\n  - data: [1, 2]\n```'
-    expect(blocks(chart)).toEqual([chart])
-    expect(blocks('```chart\nnot a chart\n```')).toEqual([])
-  })
+  test.each([
+    ['```flow\nst=>start: Go\n```', ['```flow\nst=>start: Go\n```']],
+    ['```chart\nseries:\n  - data: [1, 2]\n```', ['```chart\nseries:\n  - data: [1, 2]\n```']],
+    ['```chart\nnot a chart\n```', []],
+  ])('%j', (input, wanted) => expect(blocks(input)).toEqual(wanted))
 
   test('an address a provider answers for is that page, not a picture', () => {
     const written = '![](https://youtu.be/dQw4w9WgXcQ)'
     expect(concealed(written)).toEqual([written])
     expect(concealed(written, 4)).toEqual([])
   })
-
-  test('an address nobody answers for is still a picture', () => {
-    expect(concealed('![](https://example.test/a.png)')).toEqual([
-      '![](https://example.test/a.png)',
-    ])
-  })
 })
 
 describe('extensions', () => {
-  test('replaces inline math with a rendered widget', () => {
-    expect(concealed('mass $E=mc^2$ here')).toEqual(['$E=mc^2$'])
-  })
+  conceals([
+    ['mass $E=mc^2$ here', ['$E=mc^2$']],
+    ['ship it :rocket: now', [':rocket:']],
+    ['a :not_an_emoji_name: b', []],
+    ['a ==marked== b', ['==', '==']],
+    ['text[^1] more', ['[^', ']']],
+    ['> [!NOTE]\n> careful', ['> ', '[!NOTE]', '> ']],
+    ['> [!warning]- Shut\n> behind it', ['> ', '[!warning]-', '> ']],
+    ['> [!warning]+ Open\n> in front', ['> ', '[!warning]+', '> ']],
+    ['<!-- a note -->', ['<!-- a note -->']],
+    ['words <!-- aside --> more', ['<!-- aside -->']],
+    ['%% a note %%', ['%% a note %%']],
+    ['words %% aside %% more', ['%% aside %%']],
+    ['a 50%% b', []],
+    ['```js\nlet x\n```', ['```', 'js', '```']],
+  ])
 
   test('reveals math source when the caret enters it', () => {
     expect(revealedMeta('mass $E=mc^2$ here', 8)).toEqual(['$', '$'])
   })
 
-  test('replaces a block math fence', () => {
-    expect(blocks('$$\nE = mc^2\n$$')).toEqual(['$$\nE = mc^2\n$$'])
-  })
+  blocksOf([
+    ['$$\nE = mc^2\n$$', ['$$\nE = mc^2\n$$']],
+    ['$$E = mc^2$$', ['$$E = mc^2$$']],
+    ['```mermaid\ngraph TD;\nA-->B;\n```', ['```mermaid\ngraph TD;\nA-->B;\n```']],
+  ])
 
-  test('replaces a whole line of $$…$$ the same way', () => {
-    expect(blocks('$$E = mc^2$$')).toEqual(['$$E = mc^2$$'])
-  })
-
-  test('replaces a known emoji shortcode', () => {
-    expect(concealed('ship it :rocket: now')).toEqual([':rocket:'])
-  })
-
-  test('leaves an unknown shortcode alone', () => {
-    expect(concealed('a :not_an_emoji_name: b')).toEqual([])
-  })
-
-  test('shows the shortcode when the caret is on it', () => {
-    expect(concealed('ship :rocket: now', 8)).toEqual([])
-  })
-
-  test('hides highlight markers', () => {
-    expect(concealed('a ==marked== b')).toEqual(['==', '=='])
-  })
-
-  test('hides footnote reference brackets', () => {
-    expect(concealed('text[^1] more')).toEqual(['[^', ']'])
-  })
+  conceals([
+    ['ship :rocket: now', [], 8],
+    ['%% a note %%\n\nbody', [], 4],
+    ['<!-- a note -->\n\nbody', [], 6],
+  ])
 
   test('writes front matter out as it is, fences and all, the caret in it or not', () => {
     const note = '---\ntitle: Hi\n---\n\nbody'
     expect(blocks(note)).toEqual([])
     expect(blocks(note, 6)).toEqual([])
     expect(concealed(note)).toEqual([])
-  })
-
-  test('replaces a callout tag with its label', () => {
-    expect(concealed('> [!NOTE]\n> careful')).toEqual(['> ', '[!NOTE]', '> '])
-  })
-
-  test('takes the fold sign with the tag: it says how a callout opens, not a word', () => {
-    expect(concealed('> [!warning]- Shut\n> behind it')).toEqual(['> ', '[!warning]-', '> '])
-    expect(concealed('> [!warning]+ Open\n> in front')).toEqual(['> ', '[!warning]+', '> '])
   })
 
   test('marks a callout with the look it wears, an alias resolved', () => {
@@ -461,27 +363,13 @@ describe('extensions', () => {
     expect(classes.some((one) => one.startsWith('orden-callout-'))).toBe(false)
   })
 
-  test('carries the type as written, so a theme can reach any of them', () => {
-    expect(lineAttrs('> [!recipe]\n> flour and water')).toContain('recipe')
-    expect(lineAttrs('> [!TLDR]\n> the short of it')).toContain('tldr')
-  })
+  test.each([
+    ['> [!recipe]\n> flour and water', 'recipe'],
+    ['> [!TLDR]\n> the short of it', 'tldr'],
+  ])('%j', (input, wanted) => expect(lineAttrs(input)).toContain(wanted))
 
   test('leaves a quote that names no type a quote', () => {
     expect(lineClasses('> just a quote')).not.toContain('orden-callout')
-  })
-
-  test('hides an HTML comment, block or inline', () => {
-    expect(concealed('<!-- a note -->')).toEqual(['<!-- a note -->'])
-    expect(concealed('words <!-- aside --> more')).toEqual(['<!-- aside -->'])
-  })
-
-  test('hides Obsidian’s comment the same way', () => {
-    expect(concealed('%% a note %%')).toEqual(['%% a note %%'])
-    expect(concealed('words %% aside %% more')).toEqual(['%% aside %%'])
-  })
-
-  test('shows Obsidian’s comment again while the caret is inside it', () => {
-    expect(concealed('%% a note %%\n\nbody', 4)).toEqual([])
   })
 
   test('shows a comment written across lines rather than hiding it', () => {
@@ -514,26 +402,8 @@ describe('extensions', () => {
     }
   })
 
-  test('leaves a lone pair of percents alone', () => {
-    expect(concealed('a 50%% b')).toEqual([])
-  })
-
-  test('shows the comment again while the caret is inside it', () => {
-    expect(concealed('<!-- a note -->\n\nbody', 6)).toEqual([])
-  })
-
-  test('replaces a mermaid fence with a diagram', () => {
-    expect(blocks('```mermaid\ngraph TD;\nA-->B;\n```')).toEqual([
-      '```mermaid\ngraph TD;\nA-->B;\n```',
-    ])
-  })
-
   test('leaves a diagram fence as source while the caret is inside', () => {
     expect(blocks('```mermaid\ngraph TD;\n```', 14)).toEqual([])
-  })
-
-  test('leaves a normal code fence as code', () => {
-    expect(concealed('```js\nlet x\n```')).toEqual(['```', 'js', '```'])
   })
 })
 
@@ -578,13 +448,10 @@ describe('definition lists and abbreviations', () => {
 })
 
 describe('inline code', () => {
-  test('frames the span so it reads apart from prose', () => {
-    expect(marked('run `npm test` now', 'orden-inline-code')).toEqual(['`npm test`'])
-  })
-
-  test('leaves a fenced block to the block styling', () => {
-    expect(marked('```\nnpm test\n```', 'orden-inline-code')).toEqual([])
-  })
+  test.each([
+    ['run `npm test` now', ['`npm test`'], 'orden-inline-code'],
+    ['```\nnpm test\n```', [], 'orden-inline-code'],
+  ])('%j', (input, wanted, ...more) => expect(marked(input, ...more)).toEqual(wanted))
 
   test('still hides its backticks when the caret is away', () => {
     expect(concealed('a `code` b')).toEqual(['`', '`'])
@@ -593,9 +460,8 @@ describe('inline code', () => {
 
 describe('headings', () => {
   test('every depth styles its line as that depth', () => {
-    for (let depth = 1; depth <= 6; depth++) {
+    for (let depth = 1; depth <= 6; depth++)
       expect(lineClasses(`${'#'.repeat(depth)} Title`)).toContain(`orden-h${depth}`)
-    }
   })
 
   test('a line with = or - under it is no heading, only a hash makes one', () => {
@@ -649,6 +515,28 @@ describe('links', () => {
     return out
   }
 
+  test.each([
+    ['see [docs](https://x.dev) now', [{ text: 'docs', href: 'https://x.dev' }]],
+    [
+      'see https://a.test/?b=\\[1\\] now',
+      [{ text: 'https://a.test/?b=\\[1\\]', href: 'https://a.test/?b=[1]' }],
+    ],
+    [
+      'see https://a.test/a\\`b now',
+      [{ text: 'https://a.test/a\\`b', href: 'https://a.test/a`b' }],
+    ],
+    [
+      '(see https://a.test/a_b\\_) now',
+      [{ text: 'https://a.test/a_b\\', href: 'https://a.test/a_b' }],
+    ],
+    [
+      'see <https://a.test/\\[1\\]> now',
+      [{ text: 'https://a.test/\\[1\\]', href: 'https://a.test/\\[1\\]' }],
+    ],
+    ['see www.w.dev now', [{ text: 'www.w.dev', href: 'https://www.w.dev' }]],
+    ['see [below](#heading) now', [{ text: 'below', href: null }]],
+    ['see [other](notes/other.md) now', []],
+  ])('%j', (input, wanted) => expect(linkMarks(input)).toEqual(wanted))
   test('words in brackets with nothing defined for them keep their brackets', () => {
     const doc = 'He said [sic] it, see [1] and [TODO].'
     expect(concealed(doc)).toEqual([])
@@ -683,45 +571,10 @@ describe('links', () => {
     ])
   })
 
-  test('a bare address is followed without the escapes written into it', () => {
-    expect(linkMarks('see https://a.test/?b=\\[1\\] now')).toEqual([
-      { text: 'https://a.test/?b=\\[1\\]', href: 'https://a.test/?b=[1]' },
-    ])
-    expect(linkMarks('see https://a.test/a\\`b now')).toEqual([
-      { text: 'https://a.test/a\\`b', href: 'https://a.test/a`b' },
-    ])
-  })
-
-  test('a bare address is followed without an escape that comes right after it', () => {
-    expect(linkMarks('(see https://a.test/a_b\\_) now')).toEqual([
-      { text: 'https://a.test/a_b\\', href: 'https://a.test/a_b' },
-    ])
-  })
-
-  test('an autolink keeps its backslashes', () => {
-    expect(linkMarks('see <https://a.test/\\[1\\]> now')).toEqual([
-      { text: 'https://a.test/\\[1\\]', href: 'https://a.test/\\[1\\]' },
-    ])
-  })
-
   test('an autolink hides its brackets and shows the address', () => {
     const doc = 'see <https://angle.dev> now'
     expect(concealed(doc)).toEqual(['<', '>'])
     expect(linkMarks(doc)).toEqual([{ text: 'https://angle.dev', href: 'https://angle.dev' }])
-  })
-
-  test('a www address gets its scheme', () => {
-    expect(linkMarks('see www.w.dev now')).toEqual([
-      { text: 'www.w.dev', href: 'https://www.w.dev' },
-    ])
-  })
-
-  test('an anchor in the same document is styled but is not a browser link', () => {
-    expect(linkMarks('see [below](#heading) now')).toEqual([{ text: 'below', href: null }])
-  })
-
-  test('a target inside the space is a link between notes, not a browser link', () => {
-    expect(linkMarks('see [other](notes/other.md) now')).toEqual([])
   })
 })
 
@@ -808,20 +661,14 @@ describe('what a keystroke in a note full of code costs', () => {
 describe('an interactive block of HTML', () => {
   const BLOCK = '<div id="here"></div>\n<script>document.body.textContent = 1</script>'
 
-  test('is replaced by the card that stands for it', () => {
-    expect(blocks(BLOCK, undefined, true)).toEqual([BLOCK])
-  })
-
-  test('is the markup again while the caret is in it', () => {
-    expect(blocks(BLOCK, 4, true)).toEqual([])
-  })
+  blocksOf([
+    [BLOCK, [BLOCK], undefined, true],
+    [BLOCK, [], 4, true],
+    ['<div class="card">\n  <p>Wind.</p>\n</div>', [], undefined, true],
+  ])
 
   test('stays the characters it is made of where the HTML is not trusted', () => {
     expect(blocks(BLOCK)).toEqual([])
-  })
-
-  test('leaves a block that only shows something alone', () => {
-    expect(blocks('<div class="card">\n  <p>Wind.</p>\n</div>', undefined, true)).toEqual([])
   })
 
   test('is the card whatever the note wrote around the script', () => {

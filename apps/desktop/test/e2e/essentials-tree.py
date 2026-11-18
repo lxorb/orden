@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
@@ -125,5 +123,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("a file is in the Essentials or in the file list, never both")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

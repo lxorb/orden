@@ -8,6 +8,7 @@ import {
   type Clash,
   clashesIn,
   deleteForGood,
+  type Failed,
   listFolder,
   makeIn,
   peekAt,
@@ -29,25 +30,21 @@ function record(steps: OutsideStep[]) {
   if (steps.length) workspace.undone.record({ kind: 'outside', steps })
 }
 
-function split(paths: readonly string[]): { inside: string[]; outside: string[] } {
-  return {
-    inside: paths.filter((one) => inASpace(one)),
-    outside: paths.filter((one) => !inASpace(one)),
-  }
-}
+const split = (paths: readonly string[]): { inside: string[]; outside: string[] } => ({
+  inside: paths.filter((one) => inASpace(one)),
+  outside: paths.filter((one) => !inASpace(one)),
+})
 
 export function changeable(view: ExplorerView): boolean {
   const listing = view.listing
   return !!listing && !listing.own && (!listing.spaces || inASpace(listing.path))
 }
 
-export function takenNames(names: readonly string[]): Set<string> {
-  return new Set(names.map((one) => one.toLowerCase()))
-}
+export const takenNames = (names: readonly string[]): Set<string> =>
+  new Set(names.map((one) => one.toLowerCase()))
 
-export function freeName(taken: ReadonlySet<string>, name: string): string {
-  return freePath(name, (candidate) => taken.has(candidate.toLowerCase()))
-}
+export const freeName = (taken: ReadonlySet<string>, name: string): string =>
+  freePath(name, (candidate) => taken.has(candidate.toLowerCase()))
 
 export async function newFolder(view: ExplorerView) {
   const folder = view.listing?.path
@@ -96,6 +93,9 @@ export async function renamePath(view: ExplorerView, from: string, name: string)
   }
 }
 
+const stayedSaid = (failed: readonly Failed[] | undefined): string | null =>
+  failed?.length ? failed.map((one) => one.why).join('; ') : null
+
 export async function trash(view: ExplorerView, paths: readonly string[]) {
   if (!paths.length || !changeable(view)) return
   const { inside, outside } = split(paths)
@@ -107,7 +107,7 @@ export async function trash(view: ExplorerView, paths: readonly string[]) {
     } catch (error) {
       const stopped = error as Partial<Trashing>
       if (stopped.went?.length) record([{ op: 'trashed', tickets: stopped.went }])
-      view.tell(message(stopped.why ?? error, 'could not move this to the trash'))
+      view.tell(stayedSaid(stopped.failed) ?? message(error, 'could not move this to the trash'))
     }
   })
   await view.reload()
@@ -129,7 +129,8 @@ export async function removeForGood(view: ExplorerView, paths: readonly string[]
   try {
     await deleteForGood(outside)
   } catch (error) {
-    view.tell(message(error, 'could not delete this'))
+    const stayed = Array.isArray(error) ? (error as Failed[]) : undefined
+    view.tell(stayedSaid(stayed) ?? message(error, 'could not delete this'))
   }
   await view.reload()
 }
@@ -163,6 +164,7 @@ export async function carry(
   sources: readonly string[],
   folder: string,
   how: 'copy' | 'move',
+  fenced = false,
 ) {
   const { inside, outside } = split(sources)
   const tell = (said: string) => view?.tell(said)
@@ -178,19 +180,29 @@ export async function carry(
     const clash = await clashFor([...inside, ...outside], folder)
     if (clash === null) return
     const staying = how === 'move' ? inside : []
-    const stayed = await across([...outside, ...inside], folder, how, clash, tell, staying)
+    const stayed = await across(
+      [...outside, ...inside],
+      folder,
+      { how, clash, staying, fenced },
+      tell,
+    )
     if (stayed.length) await workspace.removeMany(stayed)
   })
   await view?.reload()
 }
 
+interface Carrying {
+  how: 'copy' | 'move'
+  clash: Clash
+  staying: readonly string[]
+  fenced: boolean
+}
+
 async function across(
   sources: readonly string[],
   folder: string,
-  how: 'copy' | 'move',
-  clash: Clash,
+  { how, clash, staying, fenced }: Carrying,
   tell: (said: string) => void,
-  staying: readonly string[],
 ): Promise<string[]> {
   const label =
     how === 'move'
@@ -202,7 +214,7 @@ async function across(
         : `Copying ${sources.length} items`
   let done: Transferred
   try {
-    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying))
+    done = await jobs.run(label, (id) => transfer(id, sources, folder, how, clash, staying, fenced))
   } catch (error) {
     tell(message(error, 'could not copy this'))
     return []

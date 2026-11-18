@@ -5,9 +5,8 @@ import { enclosingNamed } from './nodes'
 
 const CODE = new Set(['InlineCode', 'CodeText', 'CodeMark', 'CodeInfo', 'FencedCode', 'CodeBlock'])
 
-export function inCode(state: EditorState, pos: number, side: -1 | 1 = 1): boolean {
-  return enclosingNamed(syntaxTree(state).resolveInner(pos, side), CODE) !== null
-}
+export const inCode = (state: EditorState, pos: number, side: -1 | 1 = 1): boolean =>
+  enclosingNamed(syntaxTree(state).resolveInner(pos, side), CODE) !== null
 
 export function insideCode(state: EditorState, pos: number, side: -1 | 1 = 1): boolean {
   const node = enclosingNamed(syntaxTree(state).resolveInner(pos, side), CODE)

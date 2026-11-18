@@ -37,7 +37,6 @@
 
   const how = $derived(TAB_KINDS[tab.kind].preview)
   const locked = $derived(protection.locked(noteBehind(tab)))
-
   const START = 6000
 
   const reading = $derived.by(() => {
@@ -95,7 +94,6 @@
     if (!flying) shot = now
   })
   let decodedShot = $state<string | null>(null)
-
   let kept = $state(untrack(() => face))
   $effect.pre(() => {
     const now = face

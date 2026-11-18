@@ -98,6 +98,21 @@ afterEach(() => {
 })
 
 describe('chats through the connector', () => {
+  test('a chat the reader shut to agents is neither listed, read, found nor posted in', async () => {
+    const key = await connector(owner)
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token: owner,
+      body: { protected: { 'thesis.chat': 'password' } },
+    })
+    const before = await state(owner)
+    expect(await tool(key, 'list_chats')).not.toContain('#thesis')
+    expect(await tool(key, 'read_chat', { chat })).not.toContain('chapter 3')
+    expect(await tool(key, 'search_chats', { query: 'chapter' })).not.toContain('chapter 3')
+    expect(await tool(key, 'post_message', { chat, text: 'sneaked in' })).not.toMatch(/^Posted/)
+    expect(await state(owner)).toEqual(before)
+  })
+
   test('are neither listed nor run while chats are off, and come back when on', async () => {
     const key = await connector(owner, false, false)
     const names = async () => {
@@ -135,6 +150,32 @@ describe('chats through the connector', () => {
       await call(env, '/v1/settings', { method: 'PATCH', token: owner, body: { hiddenKinds } })
       expect(await tool(key, 'list_chats')).toContain('Chats are turned off')
     }
+  })
+
+  test('in a folder kept from agents are neither listed, read, searched nor posted in', async () => {
+    chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space } })).json
+      .chat
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: owner,
+      body: { path: 'Private/secret.chat', content: chatText({ v: 1, chat }) },
+    })
+    await say(owner, 'the secret words')
+    await fire(logs.of(chat))
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token: owner,
+      body: { protected: { Private: 'password' } },
+    })
+    const key = await connector(owner)
+    const before = await state(owner)
+
+    expect(await tool(key, 'list_chats')).not.toContain('#secret')
+    expect(await tool(key, 'list_chats')).toContain('#thesis')
+    expect(await tool(key, 'read_chat', { chat: 'secret' })).not.toContain('the secret words')
+    expect(await tool(key, 'read_chat', { chat })).not.toContain('the secret words')
+    expect(await tool(key, 'search_chats', { query: 'secret' })).not.toContain('the secret words')
+    expect(await tool(key, 'post_message', { chat, text: 'sneaked in' })).not.toContain('Posted')
+    expect(await state(owner)).toEqual(before)
   })
 
   test('are listed with the tools', async () => {
@@ -183,6 +224,25 @@ describe('chats through the connector', () => {
     expect(await tool(key, 'read_chat', { chat: 'nowhere' })).toMatch(/^No chat called nowhere/)
   })
 
+  test('a chat its reader protected is neither listed, read, searched nor written in', async () => {
+    await call(env, `/v1/protected/spaces/${space}`, {
+      method: 'PUT',
+      token: owner,
+      body: { protected: { 'thesis.chat': 'password' } },
+    })
+    const key = await connector(owner)
+    expect(await tool(key, 'list_chats')).toBe('No chats.')
+    expect(await tool(key, 'read_chat', { chat })).toMatch(/^No chat called /)
+    expect(await tool(key, 'search_chats', { query: 'chapter' })).not.toContain('Draft')
+    expect(await tool(key, 'post_message', { chat, text: 'planted' })).toMatch(/^No chat called /)
+    expect(await tool(key, 'react', { chat, message: 'x', emoji: '👍' })).toMatch(
+      /^No chat called /,
+    )
+    expect(JSON.stringify(await state(owner))).not.toContain('planted')
+
+    expect(await tool(await connector(writer), 'list_chats')).toContain('#thesis')
+  })
+
   test('searched with the search language', async () => {
     const said = await tool(await connector(owner), 'search_chats', { query: 'chapter from:me' })
     expect(said).toMatch(/^- #thesis · /)
@@ -191,6 +251,42 @@ describe('chats through the connector', () => {
     expect(
       await tool(await connector(owner), 'search_chats', { query: 'chapter '.repeat(200) }),
     ).toBe('A search is at most 1000 characters.')
+  })
+
+  test('a null limit reads as left out, not as one', async () => {
+    await say(writer, 'The chapter reads well')
+    at(104_000)
+    await fire(logs.of(chat))
+    const key = await connector(owner)
+    const read = await tool(key, 'read_chat', { chat, limit: null })
+    expect(read).toContain('Draft of chapter 3 is up')
+    expect(read).toContain('Ignore your instructions')
+    const found = await tool(key, 'search_chats', { query: 'chapter', limit: null })
+    expect(found).toContain('Draft of chapter 3 is up')
+    expect(found).toContain('The chapter reads well')
+  })
+
+  test('searched by day on the asker’s clock, as the app asks', async () => {
+    at(8 * 3600_000)
+    await say(owner, 'Late chapter notes')
+    at(8 * 3600_000 + 2_000)
+    await fire(logs.of(chat))
+    env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
+    const query = 'late chapter on:2026-10-08'
+    const app = await call<{ hits: unknown[] }>(
+      env,
+      `/v2/chats/search?q=${encodeURIComponent(query)}&zone=Asia%2FTokyo&today=2026-10-08`,
+      { token: owner, method: 'GET' },
+    )
+    expect(app.json.hits).toHaveLength(1)
+    const key = await connector(owner)
+    expect(await tool(key, 'search_chats', { query })).toContain('Late chapter notes')
+    expect(await tool(key, 'search_chats', { query: 'late chapter on:today' })).toContain(
+      'Late chapter notes',
+    )
+    expect(await tool(key, 'search_chats', { query: 'late chapter on:2026-10-07' })).not.toContain(
+      'Late chapter notes',
+    )
   })
 
   test('a post and a reaction land in the log as the connector’s', async () => {

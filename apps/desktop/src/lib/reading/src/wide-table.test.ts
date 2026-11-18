@@ -5,6 +5,7 @@ import { expect, test, vi } from 'vitest'
 vi.mock('../../link-index/src/api', () => ({
   links: { spaceOf: () => null, targetOf: () => null, embedNote: () => Promise.resolve(null) },
   notePicture: (src: string) => src,
+  picturesOf: () => () => null,
   queryRowsHtml: () => Promise.resolve(null),
 }))
 

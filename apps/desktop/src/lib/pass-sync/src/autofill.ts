@@ -1,7 +1,6 @@
 import { blank } from '@orden/pass/envelope'
 import { DEFAULT_RANDOM, randomPassword } from '@orden/pass/generate'
-import type { LoginItem } from '@orden/pass/monitor'
-import { isLoginItem } from '@orden/pass/monitor'
+import { isLoginItem, type LoginItem } from '@orden/pass/monitor'
 import { code, totpIn } from '@orden/pass/totp'
 import type { Content, Item, Login } from '@orden/pass/types'
 import { hostOf, isSecurePage, normalizeUrl, rank, siteOf } from '@orden/pass/urls'
@@ -26,13 +25,10 @@ import {
 } from './fill-values'
 import { subtitleOf } from './list'
 import { newAlias } from './new-alias'
-import type { Pause, Paused } from './settings'
-import { PAUSES } from './settings'
+import { PAUSES, type Pause, type Paused } from './settings'
 import { savingOf } from './saving'
-import type { Flow, Step } from './sign-in-flow'
-import { FLOW_WINDOW, flowGoes, isSignInKind, pageOf } from './sign-in-flow'
-import type { PassStore } from './store.svelte'
-import { pass } from './store.svelte'
+import { FLOW_WINDOW, flowGoes, isSignInKind, pageOf, type Flow, type Step } from './sign-in-flow'
+import { pass, type PassStore } from './store.svelte'
 import { passOn } from '../../gates/src/api'
 
 const STEP_PAUSE = 700
@@ -310,16 +306,14 @@ export class Autofill {
   }
 
   private async listen(): Promise<void> {
+    const on =
+      <T>(run: (said: T) => Promise<void>) =>
+      (said: T) =>
+        void (passOn() && run(said))
     await Promise.all([
-      onForms((said) => {
-        if (passOn()) void this.heardForms(said)
-      }),
-      onMark((said) => {
-        if (passOn()) void this.heardMark(said)
-      }),
-      onSubmitted((said) => {
-        if (passOn()) void this.heardSubmitted(said)
-      }),
+      onForms(on((said) => this.heardForms(said))),
+      onMark(on((said) => this.heardMark(said))),
+      onSubmitted(on((said) => this.heardSubmitted(said))),
     ])
   }
 

@@ -1,64 +1,22 @@
-import 'fake-indexeddb/auto'
 import { blank, newEnvelope } from '@orden/pass/envelope'
-import type { Content, Item, Vault } from '@orden/pass/types'
-import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
+import type { Content, Item } from '@orden/pass/types'
+import { flushSync } from 'svelte'
+import { afterEach, beforeAll, describe, expect, test } from 'vitest'
+import { closed, showing, target, vaultAs } from '../test/drawn'
+import { opened, pass } from '../test/opened'
 
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
-
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const { menu } = await import('../../ui-kit/src/api')
 const ItemView = (await import('./ItemView.svelte')).default
 
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
-
 const SECRET = 'wifi-pass-hidden-1'
 const TOTP = 'JBSWY3DPEHPK3PXP'
-
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
-
-function vaultHeldAs(id: string, role: Vault['role'], hide: boolean): Vault {
-  return {
-    v: 1,
-    id,
-    rev: 1,
-    role,
-    members: 2,
-    shared: true,
-    name: id,
-    description: '',
-    color: 'blue',
-    icon: 'home',
-    folders: [],
-    hidePasswordsFromViewers: hide,
-  }
-}
 
 function itemIn(vault: string, content: Content): Item {
   return { ...newEnvelope(content, 1), id: `${vault}-${content.kind}`, vault, rev: 1 }
 }
 
-function viewing(item: Item) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(ItemView, { target, props: { ui: new PassUi(null), item }, intro: false })
-  flushSync()
-}
+const viewing = (item: Item) => showing(ItemView, { ui: new PassUi(null), item })
 
 function menuLabels(): string[] {
   target.querySelector<HTMLButtonElement>('button[aria-label="More"]')?.click()
@@ -69,20 +27,13 @@ function menuLabels(): string[] {
 }
 
 beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup('correct horse battery staple')
+  await opened()
   pass.vaults = [
     ...pass.vaults,
-    vaultHeldAs('hidden', 'viewer', true),
-    vaultHeldAs('open', 'viewer', false),
+    { ...vaultAs('viewer', true), id: 'hidden' },
+    { ...vaultAs('viewer'), id: 'open' },
   ]
 })
-
-function closed() {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
-}
 
 afterEach(closed)
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { whenLoaded } from '@orden/contracts'
   import { flagsOf, report, type Flag } from '@orden/pass/monitor'
   import type { Item } from '@orden/pass/types'
   import { hostOf } from '@orden/pass/urls'
@@ -9,10 +8,10 @@
   import ExternalLink from 'lucide/dist/esm/icons/external-link.mjs'
   import Pin from 'lucide/dist/esm/icons/pin.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
-  import { localDate } from '../../platform/src/api'
+  import { localDate, dur, fade } from '../../platform/src/api'
   import { iconChoice } from '../../icon-picker/src/api'
   import { DIVIDER, menu, type MenuEntry, prompt, said } from '../../ui-kit/src/api'
-  import { dur, fade } from '../../platform/src/api'
+  import { QrCode } from '../../ui-controls/src/api'
   import AliasPanel from './AliasPanel.svelte'
   import AttachmentsView from './AttachmentsView.svelte'
   import FieldRow from './FieldRow.svelte'
@@ -42,38 +41,25 @@
   const reusedWith = $derived(monitored.reused.get(item.id)?.length ?? 0)
   const note = $derived(content.note.trim() === '' ? '' : noteHtml(content.note))
 
-  let qr = $state<string | null>(null)
   let showingQr = $state(false)
 
-  $effect(() => {
-    if (!showingQr || sealed || content.kind !== 'wifi') {
-      qr = null
-      return
-    }
-    const uri = wifiUri(content.ssid, content.password, content.security)
-    return whenLoaded(
-      () => import('uqr'),
-      ({ renderSVG }) => (qr = renderSVG(uri, { border: 1, pixelSize: 6 })),
-      () => undefined,
-    )
-  })
+  const wifiCode = $derived(
+    showingQr && !sealed && content.kind === 'wifi'
+      ? wifiUri(content.ssid, content.password, content.security)
+      : null,
+  )
 
-  function flagWord(flag: Flag): string {
-    switch (flag) {
-      case 'compromised':
-        return 'This password was found in a data breach'
-      case 'weak':
-        return 'This password is weak'
-      case 'reused':
-        return reusedWith === 1
+  const flagWord = (flag: Flag): string =>
+    ({
+      compromised: 'This password was found in a data breach',
+      weak: 'This password is weak',
+      reused:
+        reusedWith === 1
           ? 'This password is used for 1 other login'
-          : `This password is used for ${reusedWith} other logins`
-      case 'inactive2fa':
-        return 'This site offers two-factor authentication'
-      case 'excluded':
-        return 'Left out of Monitor'
-    }
-  }
+          : `This password is used for ${reusedWith} other logins`,
+      inactive2fa: 'This site offers two-factor authentication',
+      excluded: 'Left out of Monitor',
+    })[flag]
 
   function linkPressed(event: MouseEvent) {
     const link = event.target instanceof Element ? event.target.closest('a[href]') : null
@@ -232,7 +218,7 @@
     {/each}
 
     {#each groups as group (group.id)}
-      <section class="card" aria-label={group.name || null}>
+      <section class="pass-card" aria-label={group.name || null}>
         {#if group.name}<h3 class="orden-section">
             <span class="group" dir="auto">{group.name}</span>
           </h3>{/if}
@@ -265,21 +251,20 @@
     {/if}
 
     {#if content.kind === 'wifi' && !sealed}
-      <section class="card">
+      <section class="pass-card">
         <button class="line is-pressable" type="button" onclick={() => (showingQr = !showingQr)}>
           <span>{showingQr ? 'Hide QR code' : 'Show QR code'}</span>
         </button>
-        {#if qr}
-          <div class="qr" aria-label="QR code to join {content.ssid}">
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -- the square uqr drew from the network's own name and password -->
-            {@html qr}
+        {#if wifiCode}
+          <div class="qr">
+            <QrCode value={wifiCode} label="QR code to join {content.ssid}" />
           </div>
         {/if}
       </section>
     {/if}
 
     {#if content.kind === 'login' && content.websites.length}
-      <section class="card">
+      <section class="pass-card">
         <h3 class="orden-section">Websites</h3>
         {#each content.websites as website, index (index)}
           <button
@@ -299,7 +284,7 @@
     {/if}
 
     {#if note}
-      <section class="card">
+      <section class="pass-card">
         <h3 class="orden-section">Note</h3>
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note rendered with every tag of its own escaped -->
@@ -401,13 +386,7 @@
     padding: 0 var(--space-4) var(--space-5);
   }
 
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > .orden-section {
+  .pass-card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }
@@ -475,13 +454,7 @@
     display: grid;
     place-items: center;
     padding: var(--space-3);
-  }
-
-  .qr :global(svg) {
-    width: 180px;
-    height: 180px;
-    border-radius: var(--radius-md);
-    background: #fff;
+    --qr-size: 180px;
   }
 
   .note {

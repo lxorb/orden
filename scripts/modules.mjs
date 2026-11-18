@@ -111,6 +111,30 @@ function workspacePackages(root) {
   return names
 }
 
+function crateProblems(module, json) {
+  const cargo = readFileSync(join(module.absolute, 'Cargo.toml'), 'utf8')
+  const found = []
+  if (/^name = "([^"]+)"$/m.exec(cargo)?.[1] !== `orden-${json.name}`)
+    found.push(`${module.dir}/Cargo.toml: the crate is named orden-${json.name}`)
+  const reached = new Set()
+  for (const [, crate, folder] of cargo.matchAll(
+    /^orden-([a-z0-9-]+) = \{[^}]*path = "\.\.\/([a-z0-9-]+)"/gm,
+  )) {
+    if (crate !== folder)
+      found.push(`${module.dir}/Cargo.toml: orden-${crate} lives in ../${crate}, not ../${folder}`)
+    reached.add(folder)
+  }
+  for (const one of reached)
+    if (!json.dependsOn.includes(one))
+      found.push(
+        `${module.dir}/Cargo.toml: depends on orden-${one}, which module.json does not declare`,
+      )
+  for (const one of json.dependsOn)
+    if (!reached.has(one))
+      found.push(`${module.file}: declares '${one}', which Cargo.toml does not depend on`)
+  return found
+}
+
 function contractTestOf(module) {
   return CONTRACT_TESTS[module.lang].find((one) => existsSync(join(module.absolute, one))) ?? null
 }
@@ -161,6 +185,83 @@ function standsAlone(module, test, problems, modules) {
     problems.push(
       `${module.dir}/${test}: imports '${specifier}'; a contract test takes vitest, node and its own module only`,
     )
+  }
+}
+
+function sourcesOf(dir, found = []) {
+  if (!existsSync(dir)) return found
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (SKIPPED.has(entry.name)) continue
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) sourcesOf(path, found)
+    else if (/\.(?:ts|svelte)$/.test(entry.name) && !entry.name.includes('.test.')) found.push(path)
+  }
+  return found
+}
+
+const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
+
+function reachesOnlyApis(module, root, problems, modules) {
+  if (module.lang !== 'ts') return
+  const src = join(module.absolute, 'src')
+  for (const file of sourcesOf(src)) {
+    for (const specifier of importsOf(readFileSync(file, 'utf8'))) {
+      if (!specifier?.startsWith('.')) continue
+      const target = resolve(dirname(file), specifier.replace(/\?.*$/, ''))
+      if (target === module.absolute || target.startsWith(module.absolute + sep)) continue
+      const other = moduleOf(target, modules)
+      const api = other && join(other.absolute, other.api).replace(/\.ts$/, '')
+      if (api && target.replace(/\.ts$/, '') === api) {
+        if (!module.dependsOn.includes(other.name))
+          problems.push(
+            `${relative(root, file).split(sep).join('/')}: reaches '${other.name}', which ${module.file} does not declare`,
+          )
+        continue
+      }
+      const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one)) ?? target
+      if (module.pending.includes(relative(root, path).split(sep).join('/'))) continue
+      problems.push(
+        `${relative(root, file).split(sep).join('/')}: reaches '${specifier}', past a module api`,
+      )
+    }
+  }
+}
+
+const TYPES_ONLY = /(?:^|\n)\s*(?:import|export)\s+type\s[^;'"]*?from\s*['"][^'"]+['"]/g
+
+const LAZY = /import\(\s*['"](\.[^'"]+)['"]\s*\)/g
+
+function fileAt(target) {
+  return (
+    ENDINGS.map((one) => target + one).find((one) => existsSync(one) && !one.endsWith(sep)) ?? null
+  )
+}
+
+function doorsStayShut(module, root, problems) {
+  if (module.lang !== 'ts') return
+  const api = join(module.absolute, module.api)
+  if (!existsSync(api)) return
+  const text = readFileSync(api, 'utf8')
+  const doors = [...text.matchAll(LAZY)].map((one) => fileAt(resolve(dirname(api), one[1])))
+  if (!doors.length) return
+  const eager = new Set()
+  const queue = [api]
+  while (queue.length) {
+    const file = queue.shift()
+    if (eager.has(file)) continue
+    eager.add(file)
+    const source = readFileSync(file, 'utf8').replace(LAZY, '').replace(TYPES_ONLY, '')
+    for (const specifier of importsOf(source)) {
+      if (!specifier?.startsWith('.')) continue
+      const next = fileAt(resolve(dirname(file), specifier.replace(/\?.*$/, '')))
+      if (next && next.startsWith(module.absolute + sep)) queue.push(next)
+    }
+  }
+  for (const door of doors) {
+    if (door && eager.has(door))
+      problems.push(
+        `${module.dir}/${module.api}: opens ${relative(module.absolute, door).split(sep).join('/')} through a door, but loads it eagerly too`,
+      )
   }
 }
 
@@ -232,6 +333,8 @@ export function check(root = ROOT) {
     }
     if (module.lang === 'rust' && !existsSync(join(module.absolute, 'Cargo.toml'))) {
       problems.push(`${module.dir}: a Rust module is one crate, with its own Cargo.toml`)
+    } else if (module.lang === 'rust') {
+      problems.push(...crateProblems(module, json))
     }
     if (!existsSync(join(module.absolute, module.api)))
       problems.push(`${module.dir}: missing its api, ${module.api}`)
@@ -272,6 +375,8 @@ export function check(root = ROOT) {
       }
     }
     if (module.test) standsAlone(module, module.test, problems, [...byName.values()])
+    reachesOnlyApis(module, root, problems, [...byName.values()])
+    doorsStayShut(module, root, problems)
     for (const path of module.pending) {
       const inside = moduleOf(join(root, path), [...byName.values()])
       if (inside && inside !== module) {
@@ -314,12 +419,12 @@ export function moduleOf(file, modules) {
   return found
 }
 
-function runContracts(root) {
+function runContracts(root, lang) {
   const { modules, problems } = check(root)
   if (problems.length > 0) return 1
   let failed = 0
   for (const module of modules) {
-    if (!module.test) continue
+    if (!module.test || (lang && module.lang !== lang)) continue
     const command =
       module.lang === 'rust'
         ? [
@@ -357,14 +462,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       )
     }
   } else if (mode === '--contracts') {
-    process.exitCode = runContracts(ROOT)
+    process.exitCode = runContracts(ROOT, process.argv[3])
   } else if (mode === '--check') {
     const { modules, problems } = check()
     for (const problem of problems) console.error(`modules: ${problem}`)
     if (problems.length > 0) process.exitCode = 1
     else console.log(`modules: ${modules.length} module${modules.length === 1 ? '' : 's'} in order`)
   } else {
-    console.error('usage: node scripts/modules.mjs [--check | --list | --contracts]')
+    console.error('usage: node scripts/modules.mjs [--check | --list | --contracts [ts | rust]]')
     process.exitCode = 2
   }
 }

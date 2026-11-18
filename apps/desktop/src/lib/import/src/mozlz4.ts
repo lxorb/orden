@@ -1,7 +1,5 @@
 const MAGIC = [0x6d, 0x6f, 0x7a, 0x4c, 0x7a, 0x34, 0x30, 0x00]
-
 const MOST_BYTES = 256 * 1024 * 1024
-
 const SHORTEST_MATCH = 4
 
 export function unmozLz4(bytes: Uint8Array): Uint8Array {

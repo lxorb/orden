@@ -5,7 +5,7 @@
 <script lang="ts">
   import { agoShort } from '../../ui-controls/src/api'
   import { Icon } from '../../glyphs/src/api'
-  import { brandIcon, readIcon } from '../../ui-kit/src/api'
+  import { brandIcon, carryAiChat, readIcon } from '../../ui-kit/src/api'
   import { region } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'
   import { ai, providerBrand, type SessionState, type ThreadHead } from '../../ai-providers/src/api'
@@ -64,6 +64,8 @@
     {role}
     aria-selected={role === 'option' ? lit : undefined}
     onpointermove={onpoint}
+    draggable="true"
+    ondragstart={(event) => carryAiChat(event.dataTransfer, { id: head.id, title: head.title })}
     onclick={onopen}
     oncontextmenu={onmenu}
   >

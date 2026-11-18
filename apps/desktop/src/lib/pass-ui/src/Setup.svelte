@@ -35,7 +35,9 @@
 <Gate
   icon={ShieldCheck}
   title="Set up Pass"
-  line="Your Pass password encrypts everything in Pass. Nobody can reset it for you."
+  line={pass.leftBehind
+    ? 'Some of Pass on this device could not be carried over from the previous version of Orden. What was synced comes back once Pass is open; changes made here and not yet synced are gone.'
+    : 'Your Pass password encrypts everything in Pass. Nobody can reset it for you.'}
 >
   <form onsubmit={made}>
     <input

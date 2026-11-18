@@ -7,7 +7,6 @@ const names = (list: { name: string }[]) => list.map((one) => one.name)
 describe('a language list', () => {
   test('keeps the system default first', () => {
     const list = [...rows('Polski', 'Deutsch'), { id: 'system', name: 'Wie das System' }]
-
     expect(inLanguageOrder(list).map((one) => one.id)).toEqual(['system', 'Deutsch', 'Polski'])
   })
 
@@ -23,7 +22,6 @@ describe('a language list', () => {
       'Polski',
       'Català',
     )
-
     expect(names(inLanguageOrder(list))).toEqual([
       'Català',
       'Čeština',
@@ -51,7 +49,6 @@ describe('a language list', () => {
       'Ąžuolas',
       'Українська',
     )
-
     expect(names(inLanguageOrder(list))).toEqual([
       'Ąžuolas',
       'Zulu',
@@ -67,18 +64,14 @@ describe('a language list', () => {
     ])
   })
 
-  test('sorts the names inside one script', () => {
+  test('sorts the names inside one script; leaves the list it was given as it was', () => {
     expect(names(inLanguageOrder(rows('Українська', 'Русский', 'Беларуская')))).toEqual([
       'Беларуская',
       'Русский',
       'Українська',
     ])
-  })
-
-  test('leaves the list it was given as it was', () => {
     const list = rows('Polski', 'Deutsch')
     inLanguageOrder(list)
-
     expect(names(list)).toEqual(['Polski', 'Deutsch'])
   })
 })

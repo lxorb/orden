@@ -1,6 +1,6 @@
 import { renderMarkdown } from '@orden/markdown'
 import { readTask } from '@orden/markdown/task-line'
-import { plainWords } from '@orden/markdown/task-reminders'
+import { heldEscapes, released } from '@orden/markdown/escapes'
 import type { Arrived, SharedItem } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import {
@@ -15,13 +15,20 @@ import {
   sharedWords,
 } from './shared'
 
-function item(one: Partial<SharedItem>): SharedItem {
-  return { name: '', mime: '', size: 0, text: null, ...one }
-}
+const item = (one: Partial<SharedItem>): SharedItem => ({
+  name: '',
+  mime: '',
+  size: 0,
+  text: null,
+  ...one,
+})
 
-function arrived(one: Partial<Arrived>): Arrived {
-  return { action: 'android.intent.action.SEND', subject: '', items: [], ...one }
-}
+const arrived = (one: Partial<Arrived>): Arrived => ({
+  action: 'android.intent.action.SEND',
+  subject: '',
+  items: [],
+  ...one,
+})
 
 const bytes = (text: string) => new TextEncoder().encode(text)
 
@@ -158,7 +165,7 @@ describe('a share as a task', () => {
       expect(task?.priority).toBe(4)
       expect(task?.recurrence).toBeUndefined()
       expect(task?.fields).toEqual({})
-      expect(plainWords(task?.text ?? '').replace(/\u2060/g, '')).toBe(said)
+      expect(released(heldEscapes(task?.text ?? '')).replace(/\u2060/g, '')).toBe(said)
     }
     const line = `- [ ] ${sharedTask(arrived({ items: [item({ text: 'Read later #tips' })] }))}`
     expect(renderMarkdown(line, { tagHref: (tag) => `#${tag}` })).toContain('Read later #tips</li>')
@@ -314,6 +321,25 @@ describe('what a share becomes', () => {
     expect(plan.files).toEqual([{ kind: 'note', path: 'Kit list.md', text: '# Kit\n\nA tent' }])
   })
 
+  test('a text file in another encoding is the words it holds', () => {
+    const plan = sharedPlan(
+      arrived({
+        items: [
+          item({ name: 'Café.txt', mime: 'text/plain', size: 4 }),
+          item({ name: 'Wide.txt', mime: 'text/plain', size: 6 }),
+        ],
+      }),
+      new Map([
+        [0, Uint8Array.from([0x43, 0x61, 0x66, 0xe9])],
+        [1, Uint8Array.from([0xff, 0xfe, 0x57, 0x00, 0xe9, 0x00])],
+      ]),
+      day,
+      'assets',
+    )
+
+    expect(plan.files.map((one) => (one.kind === 'note' ? one.text : null))).toEqual(['Café', 'Wé'])
+  })
+
   test('words and pictures and a file, in one note', () => {
     const plan = sharedPlan(
       arrived({
@@ -344,6 +370,41 @@ describe('what a share becomes', () => {
     expect(text).toContain('![](assets/tent.png)')
     expect(text).toContain('[route.pdf](assets/route.pdf)')
     expect(text).not.toContain('source:')
+  })
+
+  test('two pictures of one name, in any case, are two files the note draws', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'Trip',
+        items: [
+          item({ name: 'image.jpg', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'image.jpg', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'Photo.JPG', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'photo.jpg', mime: 'image/jpeg', size: 3 }),
+          item({ name: 'Kit.md', mime: 'text/markdown', size: 3 }),
+          item({ name: 'kit.md', mime: 'text/markdown', size: 3 }),
+        ],
+      }),
+      new Map([0, 1, 2, 3, 4, 5].map((at) => [at, bytes(`file ${at}`)])),
+      day,
+      'assets',
+    )
+
+    expect(plan.files.map((one) => one.path)).toEqual([
+      'Trip.md',
+      'Kit.md',
+      'kit 2.md',
+      'assets/image.jpg',
+      'assets/image 2.jpg',
+      'assets/Photo.JPG',
+      'assets/photo 2.jpg',
+    ])
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('![](assets/image.jpg)')
+    expect(text).toContain('![](assets/image%202.jpg)')
+    expect(text).toContain('![](assets/Photo.JPG)')
+    expect(text).toContain('![](assets/photo%202.jpg)')
   })
 
   test('a file nothing carried bytes for is left out entirely', () => {

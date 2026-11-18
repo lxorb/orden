@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { AliasFetcher } from './aliases'
-import { aliasClient, AliasRefused } from './aliases'
+import { aliasClient, AliasRefused, type AliasFetcher } from './aliases'
 
 interface Asked {
   method: string
@@ -145,36 +144,29 @@ describe('SimpleLogin', () => {
     const { fetcher, asked } = fake({ 'DELETE /api/aliases/3': [200, { deleted: true }] })
     await aliasClient('simplelogin', 'k', fetcher).remove('3')
     expect(asked[0]?.method).toBe('DELETE')
+    expect(asked[0]?.url).toBe('https://app.simplelogin.io/api/aliases/3')
   })
 
   test('counts the last 14 days of activity across pages and stops at older ones', async () => {
     const now = 100 * 86_400_000
     const at = (days: number) => (now - days * 86_400_000) / 1000
+    const pages = [
+      [
+        ['forward', 1],
+        ['forward', 2],
+        ['reply', 3],
+      ],
+      [
+        ['block', 5],
+        ['bounced', 6],
+        ['forward', 20],
+      ],
+    ] as const
     const { fetcher, asked } = fake({
       'GET /api/aliases/3/activities': (one) => {
-        const page = new URL(one.url).searchParams.get('page_id')
-        if (page === '0') {
-          return [
-            200,
-            {
-              activities: [
-                { action: 'forward', timestamp: at(1) },
-                { action: 'forward', timestamp: at(2) },
-                { action: 'reply', timestamp: at(3) },
-              ],
-            },
-          ]
-        }
-        return [
-          200,
-          {
-            activities: [
-              { action: 'block', timestamp: at(5) },
-              { action: 'bounced', timestamp: at(6) },
-              { action: 'forward', timestamp: at(20) },
-            ],
-          },
-        ]
+        const page = new URL(one.url).searchParams.get('page_id') === '0' ? 0 : 1
+        const activities = pages[page].map(([action, days]) => ({ action, timestamp: at(days) }))
+        return [200, { activities }]
       },
     })
     const stats = await aliasClient('simplelogin', 'k', fetcher).stats('3', now)

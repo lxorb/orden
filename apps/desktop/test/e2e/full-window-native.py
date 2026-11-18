@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import ctypes
 import http.server
 import importlib.util
@@ -175,5 +173,4 @@ def drive(_browser: object) -> None:
     if not near(after, before):
         wrong(f"back, the page is {after} rather than where it was, {before}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the page fills the window in one step", browser=False))
+raise SystemExit(DRIVE.run(drive, "the page fills the window in one step", browser=False))

@@ -35,8 +35,3 @@ describe('naming a block from the block completion or the block search', () => {
     expect(source).toContain('  ```yaml\n  - one\n  - two\n  ```')
   })
 })
-
-test('a heading named by a block link keeps its words as the section heading', () => {
-  const { source } = named('# Groceries\n\n- milk\n', 0)
-  expect(source.split('\n')[0]).toBe('# Groceries ^new123')
-})

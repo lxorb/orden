@@ -3,6 +3,7 @@
   import { invoke } from '../../../platform/src/api'
   import HostDetail from './HostDetail.svelte'
   import HostMark from './HostMark.svelte'
+  import SessionsCard from './SessionsCard.svelte'
   import { destinationOf, moved } from './hosts'
   import { remote } from './hosts.svelte'
 
@@ -68,6 +69,8 @@
       {#if host}
         <HostDetail {host} onback={() => (chosen = null)} />
       {:else}
+        <SessionsCard />
+        {#if remote.hosts.length}<h3>Hosts</h3>{/if}
         <div class="card">
           {#each remote.hosts as one, at (one.id)}
             {@const about = [one.detail, one.group].filter(Boolean)}

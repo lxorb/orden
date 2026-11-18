@@ -41,6 +41,46 @@ describe('an edit', () => {
   })
 })
 
+describe('a block right below the front matter or a fence', () => {
+  test('is only its own paragraph', () => {
+    const text = '---\ntags: [keep]\nstatus: open\n---\nThe idea here ^idea\n\nAfter\n'
+    expect(edited(text, [{ at: { block: 'idea' }, replace: 'New words' }])).toBe(
+      '---\ntags: [keep]\nstatus: open\n---\nNew words ^idea\n\nAfter\n',
+    )
+    expect(edited(text, [{ at: { block: 'idea' }, delete: true }])).toContain(
+      '---\ntags: [keep]\nstatus: open\n---\n',
+    )
+  })
+
+  test('named by an id in its words leaves a fence right above or below it', () => {
+    expect(
+      edited('```\ncode\n```\nThe idea here ^idea\n', [
+        { at: { block: 'idea' }, replace: 'New words' },
+      ]),
+    ).toBe('```\ncode\n```\nNew words ^idea\n')
+    expect(
+      edited('The idea here ^idea\n```\ncode\n```\n', [{ at: { block: 'idea' }, delete: true }]),
+    ).toBe('```\ncode\n```\n')
+  })
+
+  test('named by an id on its own line under a fence is the fence, not the words above it', () => {
+    expect(
+      edited('Intro:\n```\ncode\n```\n\n^snip\n', [{ at: { block: 'snip' }, delete: true }]),
+    ).toBe('Intro:\n')
+  })
+
+  test('named by an id on its own line is the block above it, a table or a fence', () => {
+    const table = '| a | b |\n| - | - |\n| 1 | 2 |\n\n^table\n\nAfter\n'
+    expect(edited(table, [{ at: { block: 'table' }, delete: true }])).toBe('After\n')
+    expect(edited(table, [{ at: { block: 'table' }, replace: '| c |\n| - |\n| 3 |' }])).toBe(
+      '| c |\n| - |\n| 3 |\n\n^table\n\nAfter\n',
+    )
+    expect(edited('```\ncode\n```\n^snip\n', [{ at: { block: 'snip' }, replace: 'new' }])).toBe(
+      'new\n^snip\n',
+    )
+  })
+})
+
 describe('several edits in one call', () => {
   const TEXT = '# Plan\n\n- [ ] one\n- [ ] two\n\n# Log\nnothing yet\n'
 
@@ -109,6 +149,76 @@ describe('what goes in beside a line or a paragraph', () => {
     expect(
       edited('x\n\nthe idea ^idea\n\ny', [{ at: { block: 'idea' }, replace: 'a better idea' }]),
     ).toBe('x\n\na better idea ^idea\n\ny')
+  })
+
+  test('a block named on a list item is that item alone', () => {
+    const list = 'Steps:\n\n- Buy milk\n- Pay rent ^p\n  by Friday\n- Call mum\n\nAfter.\n'
+    expect(edited(list, [{ at: { block: 'p' }, delete: true }])).toBe(
+      'Steps:\n\n- Buy milk\n- Call mum\n\nAfter.\n',
+    )
+    expect(edited(list, [{ at: { block: 'p' }, replace: '- Pay rent and water' }])).toBe(
+      'Steps:\n\n- Buy milk\n- Pay rent and water ^p\n- Call mum\n\nAfter.\n',
+    )
+  })
+
+  test('a block named on a list item with code under it takes the code, not the next item', () => {
+    const note = '1. Install: ^x\n   ```bash\n   npm i\n\n   npm run build\n   ```\n2. Run it\n'
+    expect(edited(note, [{ at: { block: 'x' }, delete: true }])).toBe('2. Run it\n')
+  })
+
+  test('a paragraph named above a list is that paragraph alone', () => {
+    const note = 'Shopping: ^x\n- milk\n- eggs\n\nAfter.\n'
+    expect(edited(note, [{ at: { block: 'x' }, replace: 'Groceries:' }])).toBe(
+      'Groceries: ^x\n- milk\n- eggs\n\nAfter.\n',
+    )
+  })
+
+  test('a block named apart under it is the table above the name', () => {
+    const note = 'Intro\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n^tbl\n\nAfter.\n'
+    expect(edited(note, [{ at: { block: 'tbl' }, replace: '| c |\n|---|\n| 3 |' }])).toBe(
+      'Intro\n\n| c |\n|---|\n| 3 |\n\n^tbl\n\nAfter.\n',
+    )
+    expect(edited(note, [{ at: { block: 'tbl' }, delete: true }])).not.toContain('| 1 | 2 |')
+  })
+
+  test('a block next to front matter, maths, indented code or a heading is that block alone', () => {
+    expect(
+      edited('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', [
+        { at: { block: 'p' }, replace: 'New first' },
+      ]),
+    ).toBe('---\ntitle: Plan\n---\nNew first ^p\n\nMore\n')
+    expect(
+      edited('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n\ntext\n', [
+        { at: { block: 'm' }, replace: '$$\nc\n$$' },
+      ]),
+    ).toBe('Intro\n\n$$\nc\n$$\n\n^m\n\n# Next\n\ntext\n')
+    expect(
+      edited('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n\nAfter\n', [
+        { at: { block: 't' }, delete: true },
+      ]),
+    ).toContain('    code line')
+    expect(
+      edited('Intro\n## Goals ^g\nShip it.\n\nAfter\n', [{ at: { block: 'g' }, delete: true }]),
+    ).toContain('Intro')
+  })
+
+  test('a paragraph over maths, and a pre, are each edited alone', () => {
+    expect(
+      edited('Intro ^i\n$$\na\n\nb\n$$\n\nAfter\n', [{ at: { block: 'i' }, delete: true }]),
+    ).toContain('$$\na\n\nb\n$$')
+    expect(
+      edited('<pre>\nx <b>y</b>\n\nz\n</pre>\n\n^p\n\nAfter\n', [
+        { at: { block: 'p' }, replace: '<pre>\nw\n</pre>' },
+      ]),
+    ).toBe('<pre>\nw\n</pre>\n\n^p\n\nAfter\n')
+  })
+
+  test('a code block named on its closing fence is found and replaced whole', () => {
+    expect(
+      edited('a\n\n```\nx\n``` ^abc123\n\nb\n', [
+        { at: { block: 'abc123' }, replace: '```\ny\n```' },
+      ]),
+    ).toBe('a\n\n```\ny\n``` ^abc123\n\nb\n')
   })
 
   test('a deleted task takes its line with it', () => {

@@ -1,63 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { readArchived } from '../src/sync-server/src/spaces/archived'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { describe, expect, test } from 'vitest'
+import { readArchived } from '../src/sync-server-engine/src/spaces/archived'
+import { spaceField } from './space-field'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
-
-function put(archived: unknown) {
-  return call(env, `/v1/spaces/${space}/archived`, { method: 'PUT', token, body: { archived } })
-}
-
-async function listed() {
-  const { json } = await call(env, '/v1/spaces', { token })
-  return json.spaces.find((one) => one.id === space)?.archived
-}
-
-function column(raw: string) {
-  env.db.prepare('update spaces set archived = ? where id = ?').run(raw, space)
-}
+const { put, listed, column, kept, owned } = spaceField('archived')
 
 const PUT_AWAY = { 'Old/2019': 1_700_000_000_000, 'Plan.md': 1_700_000_500_000 }
 
-describe('what a space has archived', () => {
-  test('starts as nothing', async () => {
-    expect(await listed()).toEqual({})
-  })
-
-  test('is kept whole, restores included, and rides the space listing', async () => {
-    const map = { ...PUT_AWAY, 'Taken back.md': -1_700_000_900_000 }
-    const set = await put(map)
-    expect(set.status).toBe(200)
-    expect(set.json.archived).toEqual(map)
-
-    expect(await listed()).toEqual(map)
-  })
-
-  test('is replaced by what arrives: the app has met the two copies already', async () => {
-    await put(PUT_AWAY)
-    await put({ 'Plan.md': -1_700_000_600_000 })
-
-    expect(await listed()).toEqual({ 'Plan.md': -1_700_000_600_000 })
-  })
-
-  test('marks the space as changed, so another device notices', async () => {
-    const before = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-    await put(PUT_AWAY)
-    const after = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-
-    expect(after).toBeGreaterThanOrEqual(before)
-  })
-})
+kept({}, { ...PUT_AWAY, 'Taken back.md': -1_700_000_900_000 }, { 'Plan.md': -1_700_000_600_000 })
+owned({}, PUT_AWAY)
 
 describe('what may be in it', () => {
   test('is a map, and never a list or a word', async () => {

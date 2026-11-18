@@ -30,6 +30,7 @@ jobs:
       version: ${{ steps.decide.outputs.version }}
       tag: ${{ steps.decide.outputs.tag }}
       rolling: ${{ steps.decide.outputs.rolling }}
+      notes: ${{ steps.notes.outputs.notes }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -38,6 +39,16 @@ jobs:
       - id: decide
         shell: bash
         run: bash scripts/build-version.sh
+
+      - id: notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          {
+            echo 'notes<<NOTES_END'
+            node scripts/release-notes.mjs "$GITHUB_REF_NAME"
+            echo 'NOTES_END'
+          } >>"$GITHUB_OUTPUT"
 
   draft:
     needs: version
@@ -50,9 +61,11 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Make the draft
+        env:
+          NOTES: ${{ needs.version.outputs.notes }}
         run: |
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "$TAG" --notes ""
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "$TAG" --notes "$NOTES"
 
   settle:
     if: github.event_name == 'push' && github.ref == 'refs/heads/unstable'

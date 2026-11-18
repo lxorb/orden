@@ -1,7 +1,6 @@
 import type { Todo } from './todo'
 
 export const SORTS = ['deadline', 'priority', 'manual'] as const
-
 export type Sort = (typeof SORTS)[number]
 
 export const isSort = (value: unknown): value is Sort =>
@@ -10,6 +9,7 @@ export const isSort = (value: unknown): value is Sort =>
 export interface Filter {
   readonly onlySpace: boolean
   readonly space: string | null
+  readonly spaceAlso?: readonly string[]
   readonly label: string | null
   readonly today: string
 }
@@ -23,8 +23,12 @@ export function dayOf(at: number | Date = new Date()): string {
   return `${date.getFullYear()}-${month}-${day}`
 }
 
-const inSpace = (todo: Todo, filter: Pick<Filter, 'onlySpace' | 'space'>): boolean =>
-  !filter.onlySpace || todo.space === filter.space
+type SpaceFilter = Pick<Filter, 'onlySpace' | 'space' | 'spaceAlso'>
+
+const inSpace = (todo: Todo, filter: SpaceFilter): boolean =>
+  !filter.onlySpace ||
+  todo.space === filter.space ||
+  (todo.space !== null && (filter.spaceAlso?.includes(todo.space) ?? false))
 
 const started = (todo: Todo, today: string): boolean => todo.start === null || todo.start <= today
 
@@ -34,21 +38,20 @@ const hasLabel = (todo: Todo, label: string | null): boolean =>
 const stillShown = (todo: Todo, today: string): boolean =>
   !todo.done || (todo.doneAt !== null && dayOf(todo.doneAt) === today)
 
-export function shownTodos(todos: readonly Todo[], filter: Filter): Todo[] {
-  return todos.filter(
+export const shownTodos = (todos: readonly Todo[], filter: Filter): Todo[] =>
+  todos.filter(
     (todo) =>
       inSpace(todo, filter) &&
       stillShown(todo, filter.today) &&
       started(todo, filter.today) &&
       hasLabel(todo, filter.label),
   )
-}
 
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })
 
 export function labelsOf(
   todos: readonly Todo[],
-  filter: Pick<Filter, 'onlySpace' | 'space' | 'today'>,
+  filter: SpaceFilter & Pick<Filter, 'today'>,
 ): string[] {
   const seen = new Set<string>()
   for (const todo of todos) {
@@ -66,9 +69,7 @@ const deadlineOrder = (a: Todo, b: Todo): number => {
 }
 
 const priorityOrder = (a: Todo, b: Todo): number => b.priority - a.priority
-
 const manualOrder = (a: Todo, b: Todo): number => a.order - b.order || a.created - b.created
-
 const doneLast = (a: Todo, b: Todo): number => Number(a.done) - Number(b.done)
 
 export function sortedTodos(todos: readonly Todo[], sort: Sort): Todo[] {

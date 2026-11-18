@@ -88,11 +88,20 @@ export type AgentAnswer =
   | { ok: true; status: 'needs_approval'; approval: string; summary: string }
   | { ok: false; status: 'error'; code: string; message: string; error: string }
 
-export function agentRefusal(code: string, message: string): AgentAnswer {
-  return { ok: false, status: 'error', code, message, error: message }
-}
+export const agentRefusal = (code: string, message: string): AgentAnswer => ({
+  ok: false,
+  status: 'error',
+  code,
+  message,
+  error: message,
+})
 
-export type AgentVerb = (name: string, args: AgentSaid, caller: AgentCaller) => Promise<AgentAnswer>
+export type AgentVerb = (
+  name: string,
+  args: AgentSaid,
+  caller: AgentCaller,
+  deadline?: AbortSignal,
+) => Promise<AgentAnswer>
 
 export type AgentVerbs = Readonly<Record<string, AgentVerb>>
 
@@ -116,18 +125,17 @@ async function verbsLoaded(): Promise<ReadonlyMap<string, AgentVerb>> {
   return held
 }
 
-export async function agentVerbNames(): Promise<string[]> {
-  return [...(await verbsLoaded()).keys()]
-}
+export const agentVerbNames = async (): Promise<string[]> => [...(await verbsLoaded()).keys()]
 
 export async function runAgentVerb(
   name: string,
   args: AgentSaid,
   caller: AgentCaller,
+  deadline?: AbortSignal,
 ): Promise<AgentAnswer> {
   const verb = (await verbsLoaded()).get(name)
   if (!verb) return agentRefusal('bad_arguments', `there is no verb called ${name}`)
-  return verb(name, args, caller).catch((error: unknown) =>
+  return verb(name, args, caller, deadline).catch((error: unknown) =>
     agentRefusal('failed', error instanceof Error ? error.message : String(error)),
   )
 }
@@ -153,9 +161,8 @@ export function registerAgentTabKind(kind: string, load: () => Promise<AgentTabK
   }
 }
 
-export function agentTabKindParts(kind: string): AgentTabKind {
-  return tabKindsHeld.get(kind) ?? NO_AGENT_TAB_KIND
-}
+export const agentTabKindParts = (kind: string): AgentTabKind =>
+  tabKindsHeld.get(kind) ?? NO_AGENT_TAB_KIND
 
 export async function agentTabKindLoaded(kind: string): Promise<AgentTabKind> {
   const load = tabKindLoads.get(kind)

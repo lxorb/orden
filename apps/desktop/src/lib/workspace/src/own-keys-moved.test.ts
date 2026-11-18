@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const held = vi.hoisted(() => ({
   texts: new Map<string, string>(),
@@ -23,12 +24,7 @@ vi.mock('../../link-index/src/api', () => ({
   },
 }))
 
-const stored = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => stored.get(key) ?? null,
-  setItem: (key: string, value: string) => void stored.set(key, value),
-  removeItem: (key: string) => void stored.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const { ItemMetaStore } = await import('../../space-kept/src/api')
 const { moveOwnKeysSoon } = await import('./own-keys-moved')
@@ -45,8 +41,7 @@ const workspace = {
 const PLAN = '/space/Plan.md'
 
 async function moved(root = held.root) {
-  moveOwnKeysSoon(root, workspace, held.signedIn)
-  await new Promise((done) => setTimeout(done, 20))
+  await moveOwnKeysSoon(root, workspace, held.signedIn)
 }
 
 beforeEach(() => {
@@ -63,7 +58,6 @@ describe("a space's notes from before Orden kept its own metadata", () => {
     )
     held.texts.set('/space/Bare.md', '# Bare\n')
     await moved()
-
     expect(workspace.itemMeta.of(PLAN)).toEqual({
       icon: 'rocket',
       'icon-color': 'red',
@@ -72,7 +66,6 @@ describe("a space's notes from before Orden kept its own metadata", () => {
     expect(held.texts.get(PLAN)).toBe('---\ntitle: Plan\n---\n\n# Plan\n')
     expect(held.texts.get('/space/Bare.md')).toBe('# Bare\n')
     expect(workspace.itemMeta.movedFromText('/space')).toBe(true)
-
     held.texts.set('/space/Imported.md', '---\nicon: leaf\n---\n\n# From Obsidian\n')
     await moved()
     expect(held.texts.get('/space/Imported.md')).toBe('---\nicon: leaf\n---\n\n# From Obsidian\n')

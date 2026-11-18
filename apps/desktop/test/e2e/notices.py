@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -32,7 +30,6 @@ WHAT_IS_OVER = """
     for (const y of [0.08, 0.5, 0.92]) {
       const on = document.elementFromPoint(rect.x + rect.width * x, rect.y + rect.height * y)
       if (on && web && (on === web || web.contains(on))) continue
-      // A card of the notices row, which the page is cut round; see web-tab/src/covers.ts.
       if (on && on.closest('[data-notices] > *')) continue
 
       const name = on === null ? 'nothing' : on.tagName
@@ -181,5 +178,4 @@ def main() -> int:
 
     return DRIVE.verdict("nothing of the app's is over the page")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

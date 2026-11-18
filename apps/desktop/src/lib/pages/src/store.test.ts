@@ -1,19 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 
@@ -332,5 +318,27 @@ describe('a glide to a page that is still going', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.stubGlobal('localStorage', memoryStorage())
+  })
+})
+
+test('where a page’s paper is read from names the note it is shared as, when it is shared on its own', () => {
+  const note = new NoteDoc(
+    {
+      kind: 'pages',
+      path: null,
+      name: 'Lecture.pages',
+      text: blankPages(),
+      dirty: false,
+      shared: 'note-1',
+    },
+    () => undefined,
+  )
+  const store = new PagesStore(new Tab(note, 'pane'))
+
+  expect(store.paperAt('Lecture.pdf', null)).toEqual({
+    file: 'Lecture.pdf',
+    note: null,
+    root: null,
+    shared: 'note-1',
   })
 })

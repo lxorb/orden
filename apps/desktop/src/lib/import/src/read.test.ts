@@ -1,11 +1,8 @@
 import { describe, expect, test } from 'vitest'
-
 import { detect, readAs } from './read'
 import { sourceOf, type Source } from './sources'
 
-function file(path: string, body = 'x'): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body = 'x'): Source => sourceOf(path, new TextEncoder().encode(body))
 
 describe('which app an export came out of', () => {
   test('an Evernote file says so by its extension', async () => {

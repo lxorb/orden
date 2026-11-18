@@ -2,9 +2,19 @@ import type { InputEvent } from '@orden/online/apps'
 import type { AgentAnswer } from '@orden/contracts'
 import { shownName, nameOf } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from '../../workspace/src/api'
 import { appsOn } from '../../gates/src/api'
-import { asked, type Call, done, gatedBy, need, Refused, verbsOf } from '../../agent-verbs/src/api'
+import { protection } from '../../protect/src/api'
+import {
+  asked,
+  type Call,
+  done,
+  gatedBy,
+  need,
+  Refused,
+  tabsInReach,
+  tabWithId,
+  verbsOf,
+} from '../../agent-verbs/src/api'
 import type { AppSession as Session } from './session.svelte'
 
 const MOST_EVENTS = 200
@@ -27,8 +37,8 @@ export async function applicationTabs(call: Call): Promise<AgentAnswer> {
   const { appSessionIfAny } = await import('./session.svelte')
   if (op === 'list') {
     return done({
-      applications: workspace.tabs
-        .filter((tab) => tab.kind === 'application')
+      applications: tabsInReach(call)
+        .filter((tab) => tab.kind === 'application' && open(tab))
         .map((tab) => listed(tab, appSessionIfAny(tab))),
     })
   }
@@ -72,12 +82,19 @@ export async function applicationTabs(call: Call): Promise<AgentAnswer> {
   throw new Refused('bad_arguments', 'op is list, start, stop, restart, picture or input')
 }
 
+const open = (tab: Tab) => tab.path === null || protection.agentsMay(tab.path)
+
 function applicationTab(call: Call): Tab {
   const id = need(call, 'tab')
-  const tab = workspace.tabs.find((one) => one.id === id)
-  if (!tab) throw new Refused('no_such_tab', `there is no tab ${id}: op list names them`)
+  const tab = tabWithId(call, id)
   if (tab.kind !== 'application') {
     throw new Refused('bad_arguments', `tab ${id} is a ${tab.kind} tab, not an application`)
+  }
+  if (!open(tab)) {
+    throw new Refused(
+      'protected',
+      `${named(tab)} is protected: the reader has to unlock it and choose Let agents read in its menu`,
+    )
   }
   return tab
 }
@@ -109,17 +126,12 @@ function listed(tab: Tab, session: Session | null) {
   }
 }
 
-function named(tab: Tab): string {
-  return tab.path ? shownName(nameOf(tab.path)) : tab.id
-}
+const named = (tab: Tab): string => (tab.path ? shownName(nameOf(tab.path)) : tab.id)
 
-function siteOf(tab: Tab): string {
-  return `application:${tab.path ?? tab.id}`
-}
+const siteOf = (tab: Tab): string => `application:${tab.path ?? tab.id}`
 
-function word(op: 'start' | 'stop' | 'restart'): string {
-  return op === 'start' ? 'Start' : op === 'stop' ? 'Stop' : 'Restart'
-}
+const word = (op: 'start' | 'stop' | 'restart'): string =>
+  op === 'start' ? 'Start' : op === 'stop' ? 'Stop' : 'Restart'
 
 export function inputOf(said: unknown): InputEvent[] {
   if (!Array.isArray(said) || said.length === 0) {
@@ -192,28 +204,10 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
   }
 }
 
-const NAMED = [
-  'Enter',
-  'Backspace',
-  'Tab',
-  'Escape',
-  'Delete',
-  'Insert',
-  'Home',
-  'End',
-  'PageUp',
-  'PageDown',
-  'ArrowLeft',
-  'ArrowUp',
-  'ArrowRight',
-  'ArrowDown',
-  'CapsLock',
-  'NumLock',
-  'ScrollLock',
-  'Pause',
-  'PrintScreen',
-  'ContextMenu',
-]
+const NAMED = (
+  'Enter Backspace Tab Escape Delete Insert Home End PageUp PageDown ArrowLeft ArrowUp ' +
+  'ArrowRight ArrowDown CapsLock NumLock ScrollLock Pause PrintScreen ContextMenu'
+).split(' ')
 
 const ALIASES: Readonly<Record<string, string>> = {
   space: ' ',

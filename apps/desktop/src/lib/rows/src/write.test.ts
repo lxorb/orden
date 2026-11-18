@@ -38,16 +38,14 @@ const { lineOfTask: taskLine } = await import('@orden/bases')
 const { FileActions } = await import('../../file-undo/src/api')
 const { NoteDoc } = await import('../../documents/src/api')
 type HoldsNotes = import('../../workspace/src/note-text').HoldsNotes
-
 const PATH = '/space/Plan.md'
 
-function rowsFor(text: string): Row[] {
-  return rowsOf('Space', {
+const rowsFor = (text: string): Row[] =>
+  rowsOf('Space', {
     ...scanNote('Plan.md', text),
     ...scanRows(text),
     stamp: null,
   })
-}
 
 const noteRow = (text: string) => {
   const [found] = rowsFor(text)
@@ -109,6 +107,11 @@ describe('a property written from a view', () => {
       changed(text, note, { note: { due: { kind: 'date', iso: '2026-10-06' }, done: true } }),
     ).toBe('---\nstatus: open\ndue: 2026-10-06\ndone: true\n---\n# Plan\n')
     expect(changed(text, note, { note: { status: null } })).toBe('# Plan\n')
+    expect(
+      changed(text, note, {
+        note: { due: { kind: 'date', iso: '2026-03-11', time: '00:30:00', zone: '+09:00' } },
+      }),
+    ).toBe('---\nstatus: open\ndue: 2026-03-11T00:30:00+09:00\n---\n# Plan\n')
     expect(
       changed(text, note, {
         note: { tags: ['a', 'b'], project: { kind: 'link', target: 'Thesis' } },

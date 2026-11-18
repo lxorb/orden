@@ -200,3 +200,17 @@ describe('the versions kept while a note is being written in', () => {
     expect(recovery.days).toBe(DEFAULT_DAYS)
   })
 })
+
+describe('another window', () => {
+  test('choosing how long versions are kept is what this window sweeps by', () => {
+    const stop = recovery.start()
+    sent.calls = []
+    localStorage.setItem('orden:recovery', JSON.stringify({ every: 0, days: 30 }))
+    recovery.heard()
+    stop()
+
+    expect(recovery.days).toBe(30)
+    expect(recovery.every).toBe(0)
+    expect(sent.calls).toContainEqual({ command: 'purge_snapshots', args: { days: 30 } })
+  })
+})

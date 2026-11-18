@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import sys
 
@@ -316,5 +314,4 @@ def main() -> int:
 
     return DRIVE.verdict("a finger can move a note and reorder the spaces")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

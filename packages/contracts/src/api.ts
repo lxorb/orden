@@ -54,15 +54,7 @@ export {
   type ItemMeta,
   type MetaPatch,
 } from './item'
-export {
-  type Heading,
-  type HeldEditPort,
-  type NoteContent,
-  type NotePorts,
-  type NoteStart,
-  UNTITLED,
-  unixLines,
-} from './note'
+export { type Heading, type NoteContent, type NoteStart, UNTITLED, unixLines } from './note'
 export {
   type Account,
   type AccountPorts,
@@ -190,6 +182,7 @@ export {
   askSheet,
   flushHeldEdits,
   focusEditorRegion,
+  holdEdits,
   mayStop,
   type PortMap,
   type PortName,
@@ -197,6 +190,7 @@ export {
   portOf,
   portProvided,
   providePort,
+  sayNotice,
   searching,
   settingsWindow,
   showQuickAdd,
@@ -219,6 +213,7 @@ export {
   type SearchPort,
   type SearchSort,
   type AppCommandsPort,
+  type NoticePort,
   type ShellFocusPort,
   registerSurfaces,
   type SheetId,
@@ -226,6 +221,7 @@ export {
   type SurfaceId,
   type SurfacePorts,
   surfaceLoad,
+  whenNoSurface,
 } from './surfaces'
 export {
   type AgentAnswer,
@@ -308,7 +304,7 @@ export {
   type StopAskingPort,
   type StopReason,
 } from './quitting'
-export type { SettingsPorts, SettingsWindowPort } from './settings'
+export type { SettingsAskPort, SettingsPorts, SettingsWindowPort } from './settings'
 export type { SharingPorts, SharingSpacesPort } from './sharing'
 export { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, type Paper, PAPER_SIZES } from './page'
 export type { VoicePort, VoicePorts, VoiceRecording } from './voice'

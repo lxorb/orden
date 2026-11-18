@@ -1,5 +1,5 @@
 import { message } from '../../ui-kit/src/api'
-import { settingsWindow } from '@orden/contracts'
+import { sayNotice } from '@orden/contracts'
 import { engines } from './engines.svelte'
 import type { Hooks, Listening } from './listening'
 import type { Field } from './spot'
@@ -119,7 +119,7 @@ class Voice {
 
   private say(owner: Dictates, said: string): void {
     if (owner.trouble) owner.trouble(said)
-    else settingsWindow().error = said
+    else sayNotice(said)
   }
 }
 

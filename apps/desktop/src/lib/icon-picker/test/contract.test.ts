@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { registerTabKind } from '@orden/contracts'
-import { loadIconPicker } from '../src/api'
 
 const { tintOf, wear, wornBy } = await import('../src/icon-target')
 
@@ -11,10 +10,6 @@ afterEach(() => {
 })
 
 describe('the icon picker', () => {
-  test('is behind its door', () => {
-    expect(typeof loadIconPicker).toBe('function')
-  })
-
   test('reads and wears a tab’s icon through the part its tab kind registers', async () => {
     const worn = new Map<string, [string | null, string | null]>([['t1', ['star', 'red']]])
     const { tabKindLoaded } = await import('@orden/contracts')
@@ -32,7 +27,6 @@ describe('the icon picker', () => {
     )
     await tabKindLoaded('terminal')
     const target = { kind: 'terminal', tab: 't1' } as const
-
     expect(wornBy(target)).toBe('star')
     expect(tintOf(target)).toBe('red')
     wear(target, 'rocket', null)

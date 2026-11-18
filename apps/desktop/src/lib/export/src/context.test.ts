@@ -31,6 +31,13 @@ vi.mock('../../link-index/src/api', () => ({
     relativeTarget: () => null,
     spaceRead: () => Promise.resolve(),
   },
+  picturesOf: () => () => null,
+  pictureBeside: () => (path: string) => path,
+  picturesWrittenOut: (source: string) => source,
+  picturePath: (src: string) =>
+    ({ 'R&D.png': '/space/Notes/R&D.png', 'attachments/cat.png': '/space/attachments/cat.png' })[
+      src
+    ] ?? null,
 }))
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
@@ -42,15 +49,13 @@ const { openTarget, renderOptions } = await import('./context')
 
 const open = (path: string | null) => ({ doc: '# Plan', name: 'Plan.md', path, note: {} })
 
-describe('the open note', () => {
-  test('is read after everything holding words of its own has handed them over', () => {
-    world.active = open('Notes/plan.canvas')
-    const before = world.asked
+test('the open note is read after everything holding words of its own has handed them over', () => {
+  world.active = open('Notes/plan.canvas')
+  const before = world.asked
 
-    openTarget()
+  openTarget()
 
-    expect(world.asked).toBe(before + 1)
-  })
+  expect(world.asked).toBe(before + 1)
 })
 
 describe('the render options for the open note', () => {
@@ -61,10 +66,27 @@ describe('the render options for the open note', () => {
     expect((await renderOptions(openTarget())).escapeHtml).toBe(true)
   })
 
+  test('find a picture where the note shows it, and leave one nowhere as written', async () => {
+    world.active = open('/space/Notes/Day/plan.md')
+    const { resolveImage } = await renderOptions(openTarget())
+
+    expect(resolveImage?.('attachments/cat.png')).toBe('/space/attachments/cat.png')
+    expect(resolveImage?.('gone.png')).toBe('gone.png')
+  })
+
   test('leave it markup when it is the reader’s own', async () => {
     world.active = open('Notes/plan.md')
     world.trusts = true
 
     expect((await renderOptions(openTarget())).escapeHtml).toBe(false)
+  })
+
+  test('look a picture up by the name it has, not as the page writes it', async () => {
+    world.active = open('Notes/plan.md')
+    world.trusts = true
+
+    expect((await renderOptions(openTarget())).resolveImage?.('R&amp;D.png')).toBe(
+      '/space/Notes/R&D.png',
+    )
   })
 })

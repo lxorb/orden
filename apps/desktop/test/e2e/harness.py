@@ -89,6 +89,12 @@ CHATS_ON = (
     " catch {}"
 )
 
+SIGNED_IN = (
+    "() => { const account = window.ordenApp.account;"
+    " account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' };"
+    " account.token = 'drive' }"
+)
+
 EXPERIMENTAL_SWITCH = '[role=switch][aria-label="Enable experimental features"]'
 
 
@@ -115,6 +121,27 @@ if os.environ.get("ORDEN_HANG_AFTER"):
 for _stream in (sys.stdout, sys.stderr):
     with contextlib.suppress(AttributeError, ValueError):
         _stream.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
+
+class Lost:
+    def __init__(self, page: Any, pieces: Sequence[str]) -> None:
+        self.context = page.context
+        self.pieces = list(pieces)
+        self.asked = 0
+        for piece in self.pieces:
+            self.context.route(piece, self.refuse)
+
+    def refuse(self, route: Any) -> None:
+        self.asked += 1
+        route.abort("connectionreset")
+
+    def found(self) -> None:
+        for piece in self.pieces:
+            self.context.unroute(piece, self.refuse)
+
+
+def lose(page: Any, *pieces: str) -> Lost:
+    return Lost(page, pieces)
+
 
 def answering(browser: Any) -> Any:
     made_context = browser.new_context
@@ -465,6 +492,18 @@ class _Closing:
         sys.stdout.flush()
         os._exit(code)
 
+ASYNC = re.compile(r"\s*async\b")
+
+def awaited(page: Any, expression: str, what: str, patience: float) -> Any:
+    until = time.monotonic() + patience
+    while True:
+        answer = page.evaluate(expression)
+        if answer:
+            return answer
+        if time.monotonic() >= until:
+            raise SystemExit(f"gave up waiting for {what}")
+        page.wait_for_timeout(50)
+
 WRITE = """async ([files]) => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
@@ -542,6 +581,8 @@ class Drive:
         return path
 
     def wait_for(self, page: Any, expression: str, what: str, patience: float = PATIENCE) -> Any:
+        if ASYNC.match(expression):
+            return awaited(page, expression, what, patience)
         try:
             came = page.wait_for_function(expression, timeout=patience * 1000, polling=50)
         except Exception as error:
@@ -586,6 +627,10 @@ class Drive:
     ) -> None:
         page.goto(f"{origin or self.origin}{path}", wait_until="domcontentloaded", timeout=patience * 1000)
         self.ready(page, patience)
+
+    def sign_in(self, page: Any) -> None:
+        page.evaluate(SIGNED_IN)
+        self.wait_for(page, "window.ordenApp.account.accountToken", "the account")
 
     def ready(self, page: Any, patience: float = PATIENCE) -> None:
         self.wait_for(page, "window.ordenApp", "the app", patience)

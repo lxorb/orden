@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import hashlib
 import json
 import sys
@@ -179,5 +177,4 @@ def main() -> int:
         shot(laptop, "07-laptop-alone")
     return DRIVE.verdict("the AI accounts carried from one device to another, end to end")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

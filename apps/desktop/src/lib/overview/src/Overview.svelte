@@ -1,11 +1,8 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
-  import { closeOnBack } from '../../ui-kit/src/api'
-  import { chorded } from '../../ui-kit/src/api'
-  import { stillness } from '../../platform/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import { Cross } from '../../ui-kit/src/api'
-  import { Select } from '../../ui-controls/src/api'
+  import { closeOnBack, chorded, overlays, Cross, prompt } from '../../ui-kit/src/api'
+  import { stillness, keep, storedText } from '../../platform/src/api'
+  import { Select, trap } from '../../ui-controls/src/api'
   import {
     mayCarry,
     movingOf,
@@ -16,11 +13,8 @@
     workspace,
   } from '../../workspace/src/api'
   import { TabMark } from '../../marks/src/api'
-  import { trap } from '../../ui-controls/src/api'
-  import { prompt } from '../../ui-kit/src/api'
   import { webPages, whenLoaded } from '@orden/contracts'
-  import { isDraft } from '../../documents/src/api'
-  import type { Tab } from '../../documents/src/api'
+  import { isDraft, type Tab } from '../../documents/src/api'
   import {
     aimed,
     boxToCanvas,
@@ -41,7 +35,6 @@
   import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
   import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
-  import { keep, storedText } from '../../platform/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
@@ -49,7 +42,7 @@
   import { faces } from './faces.svelte'
   import { type Corners, drawn, Flight, paneDrawn, type Pose } from './flight'
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
-  import { keptAt, readsBefore, roomFor, settled, stripLanding } from './free'
+  import { keptAt, readsBefore, roomFor, settled, stripLanding, stripPlace } from './free'
   import { meets, packed, pushedAside } from './pack'
   import {
     around,
@@ -67,13 +60,10 @@
 
   let shown = $state(false)
   let out = $state(false)
-
   let width = $state(window.innerWidth)
   let height = $state(window.innerHeight)
-
   const MARGIN = 56
   const ROW = 60
-
   let barBottom = $state(0)
 
   function barOf(): number {
@@ -82,7 +72,6 @@
   }
 
   const roomTop = $derived((barBottom > 0 ? barBottom : ROW) + MARGIN / 2)
-
   let panes = $state<Record<string, { w: number; h: number }>>({})
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
   const panesAsWindows = new Map<
@@ -92,7 +81,6 @@
   let asPanes = $state<Record<string, true>>({})
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
   let ridersDrawn = $state<Record<string, HTMLElement>>({})
-
   const frame = $derived(workspace.panes.frame)
   const screenRoom = $derived<Box>({
     x: MARGIN,
@@ -123,9 +111,8 @@
     return wide[Math.floor(wide.length / 2)] ?? screenRoom.w * WIDEST
   }
 
-  function wholeOf(cells: readonly Cell[]): Box {
-    return around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
-  }
+  const wholeOf = (cells: readonly Cell[]): Box =>
+    around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
 
   const CELLS_APART = 4
 
@@ -138,9 +125,8 @@
     return wide * SPACE_NAMES_MOST
   }
 
-  function outlineFor(key: string, boxes: readonly Box[]): Outline | null {
-    return outlineOf(boxes.map(captioned), NAME_ROOM, nameWide(key))
-  }
+  const outlineFor = (key: string, boxes: readonly Box[]): Outline | null =>
+    outlineOf(boxes.map(captioned), NAME_ROOM, nameWide(key))
 
   function outlineAt(key: string): Outline | null {
     const inside = resting.filter((slot) => cellOf.get(slot.id) === key && !heldIds.has(slot.id))
@@ -152,7 +138,7 @@
     const panesOf = key === spaceKey ? frame : sets?.frameOf(key)
     if (!panesOf) return null
     const corner = { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h }
-    const slots = lay(panesOf, corner, { tabsOf, shapeOf }).slots
+    const slots = lay(panesOf, corner, { tabsOf, shapeOf, named: CAPTION_ROOM }).slots
     if (slots.length) return outlineFor(key, slots)
     return outlineOf([standIn(corner)], NAME_ROOM, nameWide(key))
   }
@@ -163,9 +149,7 @@
     return { x: place.x + (place.w - w) / 2, y: place.y + (place.h - h) / 2, w, h }
   }
 
-  function placeOf(key: string): Box {
-    return key === spaceKey ? room : (places.at(key) ?? room)
-  }
+  const placeOf = (key: string): Box => (key === spaceKey ? room : (places.at(key) ?? room))
 
   function packedPlaces(keys: readonly string[], taken: readonly Outline[], middle: Point) {
     const cells = keys.flatMap((key) => {
@@ -246,9 +230,10 @@
     flyFrame = 0
   }
 
-  const NAME_ROOM = 72
+  const NAMES_MOST = 2.5
   const SPACE_NAMES_MOST = 2
-  const NAMES_MOST = 1.8
+  const NAME_ROOM = 72
+  const CAPTION_ROOM = 8 + 20 * NAMES_MOST
 
   const shapeOf = (paneId: string): number => {
     const measured = shownBox(paneId)
@@ -349,7 +334,7 @@
         {
           key,
           frame: panesOf,
-          slots: lay(panesOf, place, { tabsOf, shapeOf }).slots,
+          slots: lay(panesOf, place, { tabsOf, shapeOf, named: CAPTION_ROOM }).slots,
         },
       ]
     }),
@@ -388,10 +373,7 @@
   })
 
   let aside = $state<Record<string, Point>>({})
-
-  function offsetOf(key: string): Point | null {
-    return aside[key] ?? null
-  }
+  const offsetOf = (key: string): Point | null => aside[key] ?? null
 
   function pushAside() {
     const whole = held?.whole
@@ -454,12 +436,7 @@
     return { w: slot.w * 3, h: slot.h * 3 }
   }
 
-  const CAPTION_ROOM = 44
-
-  function captioned(box: Box): Box {
-    return { ...box, h: box.h + CAPTION_ROOM }
-  }
-
+  const captioned = (box: Box): Box => ({ ...box, h: box.h + CAPTION_ROOM })
   const CAPTION_NEAR = 60
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -547,10 +524,8 @@
   }
 
   let at = $state<string | null>(null)
-
   let frameAsked = 0
   let last = 0
-
   const READY = 250
   const LONGEST_FRAME = 1 / 30
   let unready = 0
@@ -635,7 +610,6 @@
   let top = $state<HTMLElement>()
   let under = $state<HTMLElement>()
   let bar: HTMLElement | null = null
-
   let opens: HTMLElement[] = []
   let slides: HTMLElement[] = []
 
@@ -662,7 +636,6 @@
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const homes = new Map<string, Pose>()
-
   const NEAR = 14
 
   function fromHome(id: string): number | null {
@@ -845,11 +818,8 @@
 
   let corner = 0
 
-  function cardCorner(): number {
-    return (
-      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-radius')) || 0
-    )
-  }
+  const cardCorner = (): number =>
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-radius')) || 0
 
   function cornersOf(node: HTMLElement): Corners {
     const style = getComputedStyle(node)
@@ -1344,16 +1314,12 @@
     }
     const id = ids[0]
     if (!id) return
-    const strip = tabsOf(landing.paneId)
-    const back = strip.filter((one) => one !== id)
-    const into = landing.before === null ? back.length : back.indexOf(landing.before)
-    if (strip.indexOf(id) === into && byId.get(id)?.paneId === landing.paneId) return
+    const into = stripPlace(tabsOf(landing.paneId), id, landing.before)
+    if (into === null) return
 
-    const held = workspace.heldIn(landing.paneId).filter((one) => one.id !== id)
-    const before = landing.before === null ? -1 : held.findIndex((one) => one.id === landing.before)
     const fronts = workspace.panes.all.map((one) => [one.id, one.activeTabId] as const)
     const working = workspace.activeTabId
-    workspace.moveTab(id, landing.paneId, before < 0 ? held.length : before)
+    workspace.moveTab(id, landing.paneId, into)
     const paneOf = (tab: string | null) => workspace.tabs.find((one) => one.id === tab)?.paneId
     for (const [pane, front] of fronts)
       if (front && paneOf(front) === pane) workspace.panes.activate(pane, front)
@@ -1392,7 +1358,6 @@
   }
 
   const spaces = $derived(workspace.shownSpaces)
-
   let zoomGoal: { zoom: number; at: Point; ease: number } | null = null
   let zoomFrame = 0
   let zoomLast = 0

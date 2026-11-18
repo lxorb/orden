@@ -15,7 +15,6 @@ import type { MenuItem } from '../../ui-kit/src/api'
 import { PANDOC_FORMATS, EXPORT_FORMATS } from '../../export-formats/src/api'
 
 export const SETUP = 'page-setup'
-
 type Shelf = 'documents' | 'text' | 'web' | 'pictures' | 'other'
 
 const SHELVES: readonly { id: Shelf; label: string }[] = [
@@ -129,6 +128,5 @@ export function shelved(choices: readonly Choice[], first: string | null = null)
   return [held, ...full.filter((one) => one !== held)]
 }
 
-export function commandFor(tile: Tile, optioned: boolean): string {
-  return tile.option && optioned ? tile.option.command : `export-${tile.id}`
-}
+export const commandFor = (tile: Tile, optioned: boolean): string =>
+  tile.option && optioned ? tile.option.command : `export-${tile.id}`

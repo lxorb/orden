@@ -1,0 +1,81 @@
+import { listIn, LONGEST_PATH, staysInside } from '../../../sync-server/src/api'
+import { columnRoute } from './space'
+
+const MOST = 60
+const LONGEST_TEXT = 200
+
+const KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group', 'graph'] as const
+type Kind = (typeof KINDS)[number]
+
+const LONGEST_PARENT = 100
+
+const LONGEST_VIEW = 400
+
+export interface Bookmark {
+  kind: Kind
+  path: string
+  text: string
+  parent?: string
+  view?: string
+  id?: string
+}
+
+const LONGEST_ID = 64
+
+function bookmarkId(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID ? value : null
+}
+
+function wrong(value: unknown): string | null {
+  if (!Array.isArray(value)) return 'bookmarks must be a list'
+  if (value.length > MOST) return `bookmarks holds at most ${MOST} entries`
+
+  for (const one of value) {
+    if (!one || typeof one !== 'object' || Array.isArray(one)) return 'a bookmark must be an object'
+
+    const { kind, path, text } = one as Record<string, unknown>
+    if (!KINDS.some((known) => known === kind)) return 'a bookmark must say what kind it is'
+    if (typeof path !== 'string' || path.length > LONGEST_PATH) {
+      return `a bookmark's path must be text of at most ${LONGEST_PATH} characters`
+    }
+    if (typeof text !== 'string' || text.length > LONGEST_TEXT) {
+      return `a bookmark's text must be text of at most ${LONGEST_TEXT} characters`
+    }
+
+    const { parent, view } = one as Record<string, unknown>
+    if (parent !== undefined && (typeof parent !== 'string' || parent.length > LONGEST_PARENT)) {
+      return `a bookmark's group must be text of at most ${LONGEST_PARENT} characters`
+    }
+    if (view !== undefined && (typeof view !== 'string' || view.length > LONGEST_VIEW)) {
+      return `a bookmarked view must be text of at most ${LONGEST_VIEW} characters`
+    }
+    if (!staysInside(path)) return 'a bookmark points inside its own space'
+  }
+
+  return null
+}
+
+export function readBookmarks(raw: string): Bookmark[] {
+  const held = listIn(raw)
+  if (!held) return []
+
+  return held.filter((one): one is Bookmark => wrong([one]) === null).slice(0, MOST)
+}
+
+export const bookmarks = columnRoute(
+  'bookmarks',
+  wrong,
+  (sent: Bookmark[]) =>
+    sent.map(({ kind, path, text, parent, view, id }) => {
+      const entry = bookmarkId(id)
+      return {
+        kind,
+        path,
+        text,
+        ...(parent ? { parent } : {}),
+        ...(view ? { view } : {}),
+        ...(entry ? { id: entry } : {}),
+      }
+    }),
+  'that is more bookmarks than a space holds',
+)

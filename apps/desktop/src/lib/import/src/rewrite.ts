@@ -1,5 +1,12 @@
+import { baseUnder } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { foldName } from '@orden/markdown/links'
+import {
+  encodeTarget,
+  findLinks,
+  foldName,
+  type FoundLink,
+  isWebTarget,
+} from '@orden/markdown/links'
 
 import { linkTo } from '../../link-format/src/api'
 import { folderOf, isMarkdownPath, relativePath } from '../../platform/src/api'
@@ -10,32 +17,11 @@ export interface Found {
 }
 
 export type Resolver = (target: string, from: string) => Found | null
-
 export type Reaching = (found: Found, from: string) => boolean
-
-const LINK =
-  /(!?)(?<!\\)\[((?!\[)(?:[^[\]\\\n]|\n(?![ \t>]*\n)|\\.|\[(?:[^[\]\\\n]|\n(?![ \t>]*\n)|\\.)*\])*)\]\(((?:[^()\n]|\([^()\n]*\))*)\)/g
-
-const WIKILINK = /(?<!\\)!?\[\[([^\]\n|]+)(\|[^\]\n]*)?\]\]/g
-
-const DEFINITION =
-  /^( {0,3}\[(?!\^)(?:[^[\]\\\n]|\\.)+\]:[ \t]*)(<[^<>\n]*>|[^\s<]\S*)((?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\r?)$/gm
-
 const UNLINKABLE = /[[\]|]/
-
 const SIZE = /^\d+(?:x\d+)?$/
-
 const DIVIDER = /^ {0,3}\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/
-
 const QUOTED = /^(?: {0,3}>[ \t]?)*/
-
-const INDENTED = /^(?: {4}| {0,3}\t)/
-
-const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/
-
-const LISTED_FENCE = /^[ \t]*(`{3,}|~{3,})(.*)$/
-
-const LIST_ITEM = /^ {0,3}(?:[-+*]|\d{1,9}[.)])(?:[ \t]|$)/
 
 export interface Rewriting {
   was: string
@@ -49,128 +35,162 @@ export function rewriteLinks(
   reaches: Reaching = () => true,
 ): string {
   const folder = folderOf(at.now)
-  const code = withMath(text, codeRanges(text))
   const tables = tableRanges(text)
-
-  function markdownLink(
-    whole: string,
-    bang: string,
-    label: string,
-    inside: string,
-    offset: number,
-  ): string {
-    if (inCode(code, offset)) return whole
-
-    const words = label.replace(LINK, (one, inner: string, said: string, held: string) =>
-      markdownLink(one, inner, said, held, offset),
-    )
-    const kept = words === label ? whole : `${bang}[${words}](${inside})`
-
-    const { target, title } = splitTarget(inside)
-    if (!target || isAddress(target)) return kept
-
-    const { path: written, fragment } = splitFragment(target)
-    const found = find(decoded(written), at.was)
-    if (!found) return kept
-
-    if (
-      isMarkdownPath(found.path) &&
-      !UNLINKABLE.test(found.name) &&
-      !/[[\]\n]/.test(words) &&
-      reaches(found, at.now)
-    ) {
-      const link = linkTo(found.name, words, {
-        path: found.path,
-        from: at.now,
-        embed: bang === '!',
-        fragment: fragment === null ? null : decoded(fragment),
-      })
-      return inCode(tables, offset) ? inCell(link) : link
-    }
-
-    const path = relativePath(folder, found.path)
-    const anchor = fragment === null ? '' : `#${fragment}`
-    return `${bang}[${words}](${encodeTarget(path)}${anchor}${title})`
-  }
-
-  const rewritten: [number, number][] = []
-  let moved = 0
-
-  const linked = text.replace(
-    LINK,
-    (whole, bang: string, label: string, inside: string, offset: number) => {
-      const link = markdownLink(whole, bang, label, inside, offset)
-      if (link !== whole) rewritten.push([offset + moved, offset + moved + link.length])
-      moved += link.length - whole.length
-      return link
-    },
-  )
-
-  const stillCode = withMath(linked, codeRanges(linked))
-  const stillTables = tableRanges(linked)
-  const properties = propertiesTo(linked)
-  const wikilinked = linked.replace(
-    WIKILINK,
-    (whole, target: string, shown: string | undefined, offset: number) => {
-      if (inCode(stillCode, offset) || inCode(rewritten, offset)) return whole
-
-      const named = shown === undefined ? target : target.replace(/\\$/, '')
-      const { path, fragment } = splitFragment(named.trim())
-      const found = find(path, at.was)
-      if (!found) return whole
-
-      const name = foldName(found.name) === foldName(path) ? path : found.name
-      const words = shown?.slice(1) ?? null
-      const embed = whole.startsWith('!')
-      const sized = embed && !isMarkdownPath(found.path) && SIZE.test(words?.trim() ?? '')
-      const property = offset < properties
-      const elsewhere = !property && isMarkdownPath(found.path) && !reaches(found, at.now)
-      const atTop = { ...found, name: withoutExtension(found.path) }
-      const pathed = elsewhere && found.path.includes('/') && reaches(atTop, at.now)
-      const written = pathed
-        ? linkTo(atTop.name, words ?? (embed || fragment ? null : path), {
-            path: found.path,
-            from: at.now,
-            embed,
-            fragment,
-          })
-        : linkTo(
-            name,
-            words,
-            { path: found.path, from: at.now, embed, fragment },
-            sized || property ? 'wikilink' : elsewhere ? 'relative' : undefined,
-          )
-      return inCode(stillTables, offset) ? inCell(written) : written
-    },
-  )
-
-  return definitionsFollowed(wikilinked, (path) => {
+  const properties = propertiesTo(text)
+  const follow = (path: string) => {
     const found = find(path, at.was)
     return found ? relativePath(folder, found.path) : null
+  }
+
+  return linksWritten(text, (link, words, spot) => {
+    const whole = text.slice(link.from, link.to)
+    if (spot.defined) return definitionFollowed(text, link, properties, follow)
+
+    if (link.kind === 'markdown') {
+      const bang = link.embed ? '!' : ''
+      const label = text.slice(spot.labelFrom, spot.labelTo)
+      const inside = text.slice(spot.labelTo + 2, link.to - 1)
+      const kept = words === label ? whole : `${bang}[${words}](${inside})`
+
+      const { target, title } = splitTarget(inside)
+      if (!target || isAddress(target)) return kept
+
+      const { path: written, fragment } = splitFragment(target)
+      const found = find(decoded(written), at.was)
+      if (!found) return kept
+
+      if (
+        isMarkdownPath(found.path) &&
+        !UNLINKABLE.test(found.name) &&
+        !/[[\]\n]/.test(words) &&
+        reaches(found, at.now)
+      ) {
+        const made = linkTo(found.name, words, {
+          path: found.path,
+          from: at.now,
+          embed: link.embed,
+          fragment: fragment === null ? null : decoded(fragment),
+        })
+        return inCode(tables, link.from) ? inCell(made) : made
+      }
+
+      const path = relativePath(folder, found.path)
+      const anchor = fragment === null ? '' : `#${fragment}`
+      return `${bang}[${words}](${encodeTarget(path)}${anchor}${title})`
+    }
+
+    const { target, shown } = wikilinkParts(whole)
+    const named = shown === undefined ? target : target.replace(/\\$/, '')
+    const { path, fragment } = splitFragment(named.trim())
+    const found = find(path, at.was)
+    if (!found) return whole
+
+    const name = foldName(found.name) === foldName(path) ? path : found.name
+    const said = shown?.slice(1) ?? null
+    const embed = link.embed
+    const sized = embed && !isMarkdownPath(found.path) && SIZE.test(said?.trim() ?? '')
+    const property = link.from < properties
+    const elsewhere = !property && isMarkdownPath(found.path) && !reaches(found, at.now)
+    const atTop = { ...found, name: withoutExtension(found.path) }
+    const pathed = elsewhere && found.path.includes('/') && reaches(atTop, at.now)
+    const written = pathed
+      ? linkTo(atTop.name, said ?? (embed || fragment ? null : path), {
+          path: found.path,
+          from: at.now,
+          embed,
+          fragment,
+        })
+      : linkTo(
+          name,
+          said,
+          { path: found.path, from: at.now, embed, fragment },
+          sized || property ? 'wikilink' : elsewhere ? 'relative' : undefined,
+        )
+    return inCode(tables, link.from) ? inCell(written) : written
   })
 }
 
-function definitionsFollowed(text: string, follow: (path: string) => string | null): string {
-  const code = withMath(text, codeRanges(text))
-  const properties = propertiesTo(text)
-
-  return text.replace(
-    DEFINITION,
-    (whole, label: string, said: string, title: string, offset: number) => {
-      if (offset < properties || inCode(code, offset)) return whole
-      const target = said.replace(/^<|>$/g, '')
-      if (!target || isAddress(target)) return whole
-
-      const { path, fragment } = splitFragment(target)
-      const now = follow(decoded(path))
-      if (now === null) return whole
-      const anchor = fragment === null ? '' : `#${fragment}`
-      return `${label}${encodeTarget(now)}${anchor}${title}`
-    },
-  )
+interface Spot {
+  labelFrom: number
+  labelTo: number
+  defined: boolean
 }
 
-export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, string>): Uint8Array {
+type Write = (link: FoundLink, words: string, spot: Spot) => string
+
+function spotOf(text: string, link: FoundLink): Spot {
+  const labelFrom = link.from + (link.embed ? 2 : 1)
+  if (link.kind === 'wikilink') return { labelFrom, labelTo: labelFrom, defined: false }
+  const inline = text.lastIndexOf('](', link.targetFrom)
+  const defined = text.lastIndexOf(']:', link.targetFrom)
+  return defined > inline && defined >= labelFrom
+    ? { labelFrom, labelTo: defined, defined: true }
+    : { labelFrom, labelTo: Math.max(inline, labelFrom), defined: false }
+}
+
+const linksWritten = (text: string, write: Write): string =>
+  written(text, findLinks(text, true), 0, text.length, write)
+
+function written(
+  text: string,
+  links: readonly FoundLink[],
+  from: number,
+  to: number,
+  write: Write,
+): string {
+  let out = ''
+  let at = from
+  for (const link of links) {
+    if (link.from < at || link.to > to) continue
+    const spot = spotOf(text, link)
+    const inner = links.filter(
+      (one) => one !== link && one.from >= spot.labelFrom && one.to <= spot.labelTo,
+    )
+    const words = inner.length
+      ? written(text, inner, spot.labelFrom, spot.labelTo, write)
+      : text.slice(spot.labelFrom, spot.labelTo)
+    out += text.slice(at, link.from) + write(link, words, spot)
+    at = link.to
+  }
+  return out + text.slice(at, to)
+}
+
+function wikilinkParts(whole: string): { target: string; shown: string | undefined } {
+  const inner = whole.replace(/^!?\[\[/, '').replace(/\]\]$/, '')
+  const bar = inner.indexOf('|')
+  return bar === -1
+    ? { target: inner, shown: undefined }
+    : { target: inner.slice(0, bar), shown: inner.slice(bar) }
+}
+
+function definitionFollowed(
+  text: string,
+  link: FoundLink,
+  properties: number,
+  follow: (path: string) => string | null,
+): string {
+  const whole = text.slice(link.from, link.to)
+  if (link.from < properties) return whole
+  const angled = text[link.targetFrom - 1] === '<'
+  const saidFrom = angled ? link.targetFrom - 1 : link.targetFrom
+  const rest = text.slice(saidFrom, link.to)
+  const said = angled ? rest.slice(0, rest.indexOf('>') + 1) : (/^\S*/.exec(rest)?.[0] ?? '')
+  const target = said.replace(/^<|>$/g, '')
+  if (!target || isAddress(target)) return whole
+
+  const { path, fragment } = splitFragment(target)
+  const now = follow(decoded(path))
+  if (now === null) return whole
+  const anchor = fragment === null ? '' : `#${fragment}`
+  const head = text.slice(link.from, saidFrom)
+  return `${head}${encodeTarget(now)}${anchor}${text.slice(saidFrom + said.length, link.to)}`
+}
+
+export function canvasFollowed(
+  bytes: Uint8Array,
+  moved: ReadonlyMap<string, string>,
+  under = '',
+): Uint8Array {
   let text: string
   try {
     text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
@@ -181,8 +201,9 @@ export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, str
   const followed = text.replace(
     /("(?:file|background)"\s*:\s*)("(?:[^"\\]|\\.)*")/g,
     (whole, key: string, said: string) => {
-      const now = moved.get(jsonString(said) ?? '')
-      return now === undefined ? whole : `${key}${JSON.stringify(now)}`
+      const was = jsonString(said) ?? ''
+      const now = moved.get(was) ?? (under && isSpacePath(was) ? was : undefined)
+      return now === undefined ? whole : `${key}${JSON.stringify(under ? `${under}/${now}` : now)}`
     },
   )
   return followed === text ? bytes : new TextEncoder().encode(followed)
@@ -193,74 +214,120 @@ export function linksFollowed(
   was: string,
   moved: ReadonlyMap<string, string>,
   paths: readonly string[],
+  under = '',
+  space: ReadonlyMap<string, string[]> = new Map(),
 ): string {
   const here = folderOf(was)
   const movedFolded = new Map([...moved].map(([from, to]) => [foldName(from), to] as const))
   const called = calledBy(paths)
-  const code = withMath(text, codeRanges(text))
+  const known = new Set(paths.map(foldName))
+  const movedTo = (path: string) => moved.get(path) ?? movedFolded.get(foldName(path))
+  const landed = (path: string) => `${under ? `${under}/` : ''}${movedTo(path) ?? path}`
 
-  function markdownLink(
-    whole: string,
-    bang: string,
-    label: string,
-    inside: string,
-    offset: number,
-  ): string {
-    if (inCode(code, offset)) return whole
-
-    const words = label.replace(LINK, (one, inner: string, said: string, held: string) =>
-      markdownLink(one, inner, said, held, offset),
-    )
-    const kept = words === label ? whole : `${bang}[${words}](${inside})`
-
-    const { target, title } = splitTarget(inside)
-    if (!target || isAddress(target)) return kept
-    const { path: written, fragment } = splitFragment(target)
-    const path = decoded(written)
-    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
-    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
-    if (now === undefined) return kept
-
-    const anchor = fragment === null ? '' : `#${fragment}`
-    return `${bang}[${words}](${encodeTarget(relativePath(here, now))}${anchor}${title})`
+  let notesCalled: ReadonlyMap<string, string[]> | null = null
+  const alongFolder = (said: string) => {
+    notesCalled ??= calledBy(paths.filter(namesNote))
+    return nearest(joined(here, said), was, notesCalled)
   }
 
-  const linked = text.replace(LINK, markdownLink)
-  const stillCode = withMath(linked, codeRanges(linked))
+  const byName = (said: string): string | null => {
+    const meant = alongFolder(said) ?? nearest(said, was, called)
+    if (meant === undefined) return null
+    const landing = landed(meant)
+    const from = landed(was)
+    const held = (path: string) => path !== landing && holds(path, space)
+    const along = fitting(joined(folderOf(from), said), space)
+    const reachedAlong = namesNote(landing) && along.includes(landing)
+    const taken =
+      movedTo(meant) !== undefined ||
+      along.some((path) => path !== landing) ||
+      held(said) ||
+      (!reachedAlong && captured(said, landing, from, space))
+    return taken ? relativePath(folderOf(from), landing) : null
+  }
 
-  const wikilinked = linked.replace(
-    WIKILINK,
-    (whole, target: string, shown: string | undefined, offset: number) => {
-      if (inCode(stillCode, offset)) return whole
+  const follow = (path: string): string | null => {
+    const top = path.replace(/^\/+/, '')
+    const beside = joined(here, path)
+    const dotted = /^\.{1,2}(\/|$)/.test(path)
+    const fromTop =
+      path.startsWith('/') || (!dotted && !known.has(foldName(beside)) && known.has(foldName(top)))
+    if (!fromTop) {
+      const now = movedTo(beside)
+      if (now !== undefined) return relativePath(here, now)
+      return dotted || known.has(foldName(beside)) ? null : byName(path)
+    }
+    if (!path.startsWith('/')) {
+      const landing = landed(top)
+      const from = folderOf(landed(was))
+      const near = joined(from, landing)
+      if (near !== landing && holds(near, space)) return relativePath(from, landing)
+    }
+    const now = movedTo(top) ?? (under && known.has(foldName(top)) ? top : undefined)
+    if (now === undefined) return null
+    if (path.startsWith('/') && !under) return relativePath(here, now)
+    return `${path.startsWith('/') ? '/' : ''}${under ? `${under}/` : ''}${now}`
+  }
 
-      const cell = shown !== undefined && target.endsWith('\\')
-      const named = cell ? target.slice(0, -1) : target
-      const { path, fragment } = splitFragment(named)
-      const said = path.trim()
-      const meant = nearest(said, was, called)
-      const now = meant === undefined ? undefined : moved.get(meant)
-      if (meant === undefined || now === undefined) return whole
+  const tables = tableRanges(text)
+  const properties = propertiesTo(text)
 
-      const renamed = respelled(said, meant, now)
-      if (renamed === null) return whole
-      const bang = whole.startsWith('!') ? '!' : ''
+  return linksWritten(text, (link, words, spot) => {
+    const whole = text.slice(link.from, link.to)
+    if (spot.defined) return definitionFollowed(text, link, properties, follow)
+
+    if (link.kind === 'markdown') {
+      const bang = link.embed ? '!' : ''
+      const label = text.slice(spot.labelFrom, spot.labelTo)
+      const inside = text.slice(spot.labelTo + 2, link.to - 1)
+      const kept = words === label ? whole : `${bang}[${words}](${inside})`
+
+      const { target, title } = splitTarget(inside)
+      if (!target || isAddress(target)) return kept
+      const { path: written, fragment } = splitFragment(target)
+      const now = follow(decoded(written))
+      if (now === null) return kept
+
       const anchor = fragment === null ? '' : `#${fragment}`
-      return `${bang}[[${path.replace(said, renamed)}${anchor}${cell ? '\\' : ''}${shown ?? ''}]]`
-    },
-  )
+      return `${bang}[${words}](${encodeTarget(now)}${anchor}${title})`
+    }
 
-  return definitionsFollowed(wikilinked, (path) => {
-    const meant = path.startsWith('/') ? path.replace(/^\/+/, '') : joined(here, path)
-    const now = moved.get(meant) ?? movedFolded.get(foldName(meant))
-    return now === undefined ? null : relativePath(here, now)
+    const { target, shown } = wikilinkParts(whole)
+    const cell = shown !== undefined && target.endsWith('\\')
+    const named = cell ? target.slice(0, -1) : target
+    const { path, fragment } = splitFragment(named)
+    const said = path.trim()
+    const meant = nearest(said, was, called)
+    if (meant === undefined) return whole
+    const now = moved.get(meant)
+    const respelt = now === undefined ? said : respelled(said, meant, now)
+    if (respelt === null) return whole
+
+    const renamed =
+      under && said.startsWith('/') ? `/${under}/${respelt.replace(/^\/+/, '')}` : respelt
+    const landing = landed(meant)
+    const top = isMarkdownPath(landing) ? withoutExtension(landing) : landing
+    const from = landed(was)
+    const reached = !captured(renamed, landing, from, space)
+      ? renamed
+      : captured(top, landing, from, space)
+        ? `/${top}`
+        : top
+    if (reached === said) return whole
+    const bang = link.embed ? '!' : ''
+    const anchor = fragment === null ? '' : `#${fragment}`
+    const pipe = inCode(tables, link.from) ? '\\|' : '|'
+    const shownWords =
+      shown ?? (reached === renamed || bang || fragment !== null ? '' : `${pipe}${renamed}`)
+    return `${bang}[[${path.replace(said, () => reached)}${anchor}${cell ? '\\' : ''}${shownWords}]]`
   })
 }
 
-function calledBy(paths: readonly string[]): Map<string, string[]> {
+export function calledBy(paths: readonly string[]): Map<string, string[]> {
   const called = new Map<string, string[]>()
   for (const path of paths) {
     const name = path.split('/').pop() ?? path
-    const names = isMarkdownPath(path) ? [name, withoutExtension(name)] : [name]
+    const names = namesNote(path) ? [name, withoutExtension(name)] : [name]
     for (const one of names) {
       const key = foldName(one)
       const gathered = called.get(key)
@@ -271,18 +338,49 @@ function calledBy(paths: readonly string[]): Map<string, string[]> {
   return called
 }
 
+function fitting(said: string, called: ReadonlyMap<string, string[]>): string[] {
+  const wanted = foldName(said.replace(/^\/+/, ''))
+  return (called.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {
+    const whole = foldName(path)
+    const bare = namesNote(path) ? foldName(withoutExtension(path)) : whole
+    return [whole, bare].some((one) => one === wanted || one.endsWith(`/${wanted}`))
+  })
+}
+
+function holds(path: string, space: ReadonlyMap<string, string[]>): boolean {
+  const wanted = foldName(path)
+  return fitting(path, space).some(
+    (one) =>
+      foldName(namesNote(one) ? withoutExtension(one) : one) === wanted || foldName(one) === wanted,
+  )
+}
+
+function captured(
+  said: string,
+  meant: string,
+  from: string,
+  space: ReadonlyMap<string, string[]>,
+): boolean {
+  if (said.startsWith('/')) return false
+  const note = namesNote(meant)
+  const here = foldName(folderOf(from))
+  const depth = (path: string) => path.split('/').length
+  const beside = (path: string) => (foldName(folderOf(path)) === here ? 0 : 1)
+  return fitting(said, space).some(
+    (path) =>
+      namesNote(path) === note &&
+      (beside(path) - beside(meant) || depth(path) - depth(meant) || (path < meant ? -1 : 1)) < 0,
+  )
+}
+
+const namesNote = (path: string): boolean => isMarkdownPath(path) || isWebTarget(path)
+
 function nearest(
   said: string,
   from: string,
   called: ReadonlyMap<string, string[]>,
 ): string | undefined {
-  const wanted = foldName(said.replace(/^\/+/, ''))
-  const fits = (called.get(wanted.split('/').pop() ?? '') ?? []).filter((path) => {
-    const whole = foldName(path)
-    const bare = isMarkdownPath(path) ? foldName(withoutExtension(path)) : whole
-    return [whole, bare].some((one) => one === wanted || one.endsWith(`/${wanted}`))
-  })
-
+  const fits = fitting(said, called)
   const here = folderOf(from)
   const depth = (path: string) => path.split('/').length
   const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
@@ -293,7 +391,8 @@ function nearest(
 }
 
 function respelled(said: string, from: string, to: string): string | null {
-  const parts = said.split('/')
+  const lead = /^\/*/.exec(said)?.[0] ?? ''
+  const parts = said.slice(lead.length).split('/')
   const last = parts.pop() ?? said
   const whole = from.split('/').pop() ?? from
   const name = [whole, withoutExtension(whole)].find((one) => foldName(one) === foldName(last))
@@ -302,7 +401,54 @@ function respelled(said: string, from: string, to: string): string | null {
   const fresh = to.split('/').pop() ?? to
   const after = name === whole ? fresh : withoutExtension(fresh)
   const spelled = after.startsWith(name) ? last + after.slice(name.length) : after
-  return [...parts, spelled].join('/')
+  const was = from.split('/').slice(0, -1)
+  const now = to.split('/').slice(0, -1)
+  const folders = parts.map((part, at) => {
+    const back = parts.length - at
+    const before = was[was.length - back]
+    const moved = now[now.length - back]
+    return moved === undefined || foldName(before ?? '') === foldName(moved) ? part : moved
+  })
+  return `${lead}${[...folders, spelled].join('/')}`
+}
+
+export function baseFollowed(
+  bytes: Uint8Array,
+  under: string,
+  moved?: (path: string) => string,
+): Uint8Array {
+  let text: string
+  try {
+    text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
+  } catch {
+    return bytes
+  }
+
+  const followed = baseUnder(text, under, moved)
+  return followed === text ? bytes : new TextEncoder().encode(followed)
+}
+
+const BASE_FENCE = /^(`{3,}|~{3,})[ \t]*base(?:[ \t][^\r\n]*)?\r?\n([\s\S]*?)^\1[`~]*[ \t]*\r?$/gm
+
+export function basesFollowed(
+  text: string,
+  under: string,
+  moved?: (path: string) => string,
+): string {
+  return text.replace(BASE_FENCE, (whole, _fence: string, yaml: string) => {
+    const lines = yaml.replace(/\r\n/g, '\n')
+    const followed = baseUnder(lines, under, moved)
+    if (followed === lines) return whole
+    return whole.replace(yaml, () => (lines === yaml ? followed : followed.replace(/\n/g, '\r\n')))
+  })
+}
+
+export function isBase(path: string): boolean {
+  return /\.base$/i.test(path)
+}
+
+function isSpacePath(path: string): boolean {
+  return path !== '' && !/^[/\\]/.test(path) && !/^[a-z][a-z0-9+.-]*:/i.test(path)
 }
 
 function jsonString(said: string): string | null {
@@ -361,140 +507,6 @@ function splitFragment(target: string): { path: string; fragment: string | null 
   return { path: target.slice(0, at), fragment: target.slice(at + 1) }
 }
 
-function codeRanges(text: string): [number, number][] {
-  const code = codeOnly(text)
-  return [...code, ...htmlRanges(text, code)]
-}
-
-const HTML_BLOCK = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/gim
-
-function htmlRanges(text: string, code: readonly [number, number][]): [number, number][] {
-  const ranges: [number, number][] = []
-  const outside = (at: number) =>
-    !inCode(code, at) && !ranges.some(([from, to]) => at >= from && at < to)
-
-  for (const opened of text.matchAll(HTML_BLOCK)) {
-    if (!outside(opened.index)) continue
-    const close = new RegExp(`</${opened[1] ?? 'pre'}>`, 'i').exec(text.slice(opened.index))
-    ranges.push([opened.index, close ? opened.index + close.index + close[0].length : text.length])
-  }
-
-  for (let at = text.indexOf('<!--'); at >= 0; at = text.indexOf('<!--', at + 4)) {
-    if (!outside(at)) continue
-    const close = text.indexOf('-->', at + 4)
-    if (close >= 0) ranges.push([at, close + 3])
-    else if (/(?:^|\n) {0,3}$/.test(text.slice(0, at))) ranges.push([at, text.length])
-  }
-
-  return ranges
-}
-
-function codeOnly(text: string): [number, number][] {
-  const ranges: [number, number][] = []
-  const lines = text.split('\n')
-  const properties = propertiesEnd(lines)
-  let fence: { mark: string; from: number; loose: boolean; depth: number } | null = null
-  let indented: { from: number; to: number } | null = null
-  let blank = true
-  let listed = false
-  let prose = 0
-  let at = 0
-
-  for (const [index, whole] of lines.entries()) {
-    const quoted = QUOTED.exec(whole)?.[0] ?? ''
-    const depth = quoted.split('>').length - 1
-    const line = whole.slice(quoted.length).replace(/\r$/, '')
-    const empty = !line.trim()
-
-    if (fence && depth < fence.depth) {
-      ranges.push([fence.from, at])
-      fence = null
-      prose = at
-    }
-
-    const item: RegExpExecArray | null = fence ? null : LIST_ITEM.exec(line)
-    const loose: boolean = fence ? fence.loose : listed || item !== null
-    const marked: RegExpExecArray | null = (loose ? LISTED_FENCE : FENCE).exec(
-      item ? line.slice(item[0].length) : line,
-    )
-    const mark: string = marked?.[1] ?? ''
-    const rest: string = marked?.[2] ?? ''
-
-    if (index < properties) {
-      prose = at + whole.length + 1
-    } else if (fence) {
-      if (
-        mark &&
-        mark.startsWith(fence.mark.charAt(0)) &&
-        mark.length >= fence.mark.length &&
-        !rest.trim()
-      ) {
-        ranges.push([fence.from, at + whole.length])
-        fence = null
-        prose = at + whole.length
-      }
-    } else {
-      if (indented && !empty && INDENTED.test(line)) indented.to = at + whole.length
-      else if (indented && !empty) {
-        ranges.push([indented.from, indented.to])
-        prose = indented.to
-        indented = null
-      }
-
-      if (indented) {
-        // Still in the block.
-      } else if (mark && !(mark.startsWith('`') && rest.includes('`'))) {
-        spans(text, prose, at, ranges)
-        fence = { mark, from: at, loose, depth }
-        if (!INDENTED.test(line)) listed = item !== null
-      } else if (!empty && INDENTED.test(line) && blank && !listed) {
-        spans(text, prose, at, ranges)
-        indented = { from: at, to: at + whole.length }
-      } else if (!empty && !INDENTED.test(line)) {
-        listed = LIST_ITEM.test(line)
-      }
-    }
-
-    blank = empty
-    at += whole.length + 1
-  }
-
-  if (fence) {
-    ranges.push([fence.from, text.length])
-    return ranges
-  }
-
-  if (indented) {
-    ranges.push([indented.from, indented.to])
-    prose = indented.to
-  }
-  spans(text, prose, text.length, ranges)
-  return ranges
-}
-
-const MATH =
-  /(?<!\\)\$\$(?:[^$\\]|\\[\s\S]|\$(?!\$))*\$\$|(?<![\\$])\$(?![\s$])(?:[^$\n\\]|\\.|\n(?![ \t>]*\n))*?(?<![\s\\])\$(?!\d)/g
-
-function withMath(text: string, code: [number, number][]): [number, number][] {
-  if (!text.includes('$')) return code
-
-  const parts: string[] = []
-  let at = 0
-  for (const [from, to] of [...code].sort((one, other) => one[0] - other[0])) {
-    if (to <= at) continue
-    const start = Math.max(from, at)
-    parts.push(text.slice(at, start), text.slice(start, to).replace(/[^\n]/g, ' '))
-    at = to
-  }
-  const plain = parts.join('') + text.slice(at)
-
-  const math = [...plain.matchAll(MATH)].map((one): [number, number] => [
-    one.index,
-    one.index + one[0].length,
-  ])
-  return [...code, ...math]
-}
-
 function propertiesEnd(lines: readonly string[]): number {
   const text = lines.join('\n')
   const block = frontMatterBlock(text)
@@ -506,39 +518,8 @@ function propertiesTo(text: string): number {
   return lines.slice(0, propertiesEnd(lines)).join('\n').length
 }
 
-function spans(text: string, from: number, to: number, ranges: [number, number][]) {
-  let paragraph = from
-  let at = from
-  for (const line of text.slice(from, to).split('\n')) {
-    if (!line.replace(QUOTED, '').trim()) {
-      paired(text, paragraph, at, ranges)
-      paragraph = at + line.length + 1
-    }
-    at += line.length + 1
-  }
-  paired(text, paragraph, to, ranges)
-}
-
-function paired(text: string, from: number, to: number, ranges: [number, number][]) {
-  if (from >= to) return
-  const runs = [...text.slice(from, to).matchAll(/`+/g)]
-
-  for (let one = 0; one < runs.length; one++) {
-    const open = runs[one]
-    if (!open) continue
-    const close = runs.findIndex((run, at) => at > one && run[0].length === open[0].length)
-    if (close < 0) continue
-
-    const shut = runs[close]
-    if (!shut) continue
-    ranges.push([from + open.index, from + shut.index + shut[0].length])
-    one = close
-  }
-}
-
-function inCode(ranges: readonly [number, number][], offset: number): boolean {
-  return ranges.some(([from, to]) => offset >= from && offset < to)
-}
+const inCode = (ranges: readonly [number, number][], offset: number): boolean =>
+  ranges.some(([from, to]) => offset >= from && offset < to)
 
 function splitTarget(inside: string): { target: string; title: string } {
   const said = inside.trim()
@@ -561,15 +542,6 @@ function decoded(target: string): string {
   } catch {
     return target
   }
-}
-
-export function encodeTarget(path: string): string {
-  return path
-    .replace(/%/g, '%25')
-    .replace(/#/g, '%23')
-    .replace(/ /g, '%20')
-    .replace(/\(/g, '%28')
-    .replace(/\)/g, '%29')
 }
 
 export class ExportFiles {

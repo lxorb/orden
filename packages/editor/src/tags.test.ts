@@ -13,9 +13,13 @@ const TAGS: SpaceTag[] = [
   { tag: 'reading', notes: 4 },
 ]
 
-function index(tags: readonly SpaceTag[] = TAGS): NoteIndex {
-  return { notes: [], files: [], path: null, tags, read: () => Promise.resolve(null) }
-}
+const index = (tags: readonly SpaceTag[] = TAGS): NoteIndex => ({
+  notes: [],
+  files: [],
+  path: null,
+  tags,
+  read: () => Promise.resolve(null),
+})
 
 function state(doc: string, at: number, space = index()): EditorState {
   const built = EditorState.create({
@@ -30,23 +34,20 @@ function state(doc: string, at: number, space = index()): EditorState {
   return built.update({}).state
 }
 
-function rowsAt(doc: string, at = doc.length, space = index()): CompletionResult | null {
-  return tagCompletions(new CompletionContext(state(doc, at, space), at, false))
-}
+const rowsAt = (doc: string, at = doc.length, space = index()): CompletionResult | null =>
+  tagCompletions(new CompletionContext(state(doc, at, space), at, false))
 
-function labels(found: CompletionResult | null): string[] {
-  return (found?.options ?? []).map((one) => one.label)
-}
+const labels = (found: CompletionResult | null): string[] =>
+  (found?.options ?? []).map((one) => one.label)
 
 describe('a hash in the middle of a line', () => {
-  test('offers every tag the space uses, most carried first', () => {
-    expect(labels(rowsAt('Filed under #'))).toEqual([
-      'work',
-      'work/ink',
-      'work/ink/canvas',
-      'reading',
-    ])
-  })
+  test.each([
+    [rowsAt('Filed under #'), ['work', 'work/ink', 'work/ink/canvas', 'reading']],
+    [rowsAt('#work/'), ['work/ink', 'work/ink/canvas']],
+    [rowsAt('#work/ink/'), ['work/ink/canvas']],
+    [rowsAt('#canvas'), ['work/ink/canvas']],
+    [rowsAt('(#read'), ['reading']],
+  ])('%j', (input, wanted) => expect(labels(input)).toEqual(wanted))
 
   test('says how many notes carry each one', () => {
     expect(rowsAt('Filed under #')?.options.map((one) => one.detail)).toEqual(['12', '7', '2', '4'])
@@ -58,30 +59,12 @@ describe('a hash in the middle of a line', () => {
     expect(labels(found)).toEqual(['work', 'work/ink', 'work/ink/canvas'])
   })
 
-  test('narrows to the level under a slash, segment by segment', () => {
-    expect(labels(rowsAt('#work/'))).toEqual(['work/ink', 'work/ink/canvas'])
-    expect(labels(rowsAt('#work/ink/'))).toEqual(['work/ink/canvas'])
-  })
-
-  test('finds a nested one by its last segment alone', () => {
-    expect(labels(rowsAt('#canvas'))).toEqual(['work/ink/canvas'])
-  })
-
-  test('answers after an opening bracket as well, which is where a tag can sit', () => {
-    expect(labels(rowsAt('(#read'))).toEqual(['reading'])
-  })
-
-  test('is not a tag in the middle of a word', () => {
-    expect(rowsAt('C#')).toBeNull()
-    expect(rowsAt('https://orden.dev/#read')).toBeNull()
-  })
+  test.each([['C#'], ['https://orden.dev/#read'], ['#work orden']])('%j', (input) =>
+    expect(rowsAt(input)).toBeNull(),
+  )
 
   test('offers nothing until the app has said what the tags are', () => {
     expect(rowsAt('Filed under #', 13, index([]))).toBeNull()
-  })
-
-  test('closes once what is typed is no longer a name', () => {
-    expect(rowsAt('#work orden')).toBeNull()
   })
 })
 
@@ -92,35 +75,20 @@ describe('a hash that opens a line', () => {
     expect(labels(rowsAt('#w'))).toEqual(['work', 'work/ink', 'work/ink/canvas'])
   })
 
-  test('and is nothing at all once the space after it makes it a heading', () => {
-    expect(rowsAt('# ')).toBeNull()
-    expect(rowsAt('# Heading')).toBeNull()
-  })
+  test.each([['# '], ['# Heading']])('%j', (input) => expect(rowsAt(input)).toBeNull())
 })
 
 describe('where the characters are not prose', () => {
-  test('not in a fence, where a hash is a comment', () => {
-    const fenced = '```py\n# work\n```'
-    expect(rowsAt(fenced, fenced.indexOf('# work') + 6)).toBeNull()
-  })
+  test.each([
+    ['```py\n# work\n```', '```py\n# work\n```'.indexOf('# work') + 6],
+    ['`#work`', 6],
+    ['$a #work$', 8],
+    ['[a](note.md#work', 16],
+  ])('%j', (input, extra) => expect(rowsAt(input, extra)).toBeNull())
 
-  test('not in inline code', () => {
-    expect(rowsAt('`#work`', 6)).toBeNull()
-  })
-
-  test('not in maths, where a hash is a hash', () => {
-    expect(rowsAt('$a #work$', 8)).toBeNull()
-  })
-
-  test('not in a link target', () => {
-    expect(rowsAt('[a](note.md#work', 16)).toBeNull()
-  })
-
-  test('not inside a wikilink, where a hash means a heading', () => {
-    expect(rowsAt('[[Plan#')).toBeNull()
-    expect(rowsAt('[[Plan#wo')).toBeNull()
-    expect(rowsAt('[[#')).toBeNull()
-  })
+  test.each([['[[Plan#'], ['[[Plan#wo'], ['[[#']])('%j', (input) =>
+    expect(rowsAt(input)).toBeNull(),
+  )
 })
 
 describe('the front matter', () => {
@@ -134,23 +102,25 @@ describe('the front matter', () => {
     expect(found?.from).toBe(FRONT.indexOf('tags: work') + 'tags: '.length)
   })
 
-  test('offers them under an item of the list as well', () => {
-    const listed = '---\ntags:\n  - work\n  - re\n---\n\nwords\n'
-    expect(labels(rowsAt(listed, listed.indexOf('- re') + 4))).toEqual(['reading'])
-  })
+  test.each([
+    [
+      rowsAt(
+        '---\ntags:\n  - work\n  - re\n---\n\nwords\n',
+        '---\ntags:\n  - work\n  - re\n---\n\nwords\n'.indexOf('- re') + 4,
+      ),
+      ['reading'],
+    ],
+    [
+      rowsAt(
+        '---\ntags: [work, re\n---\n\nwords\n',
+        '---\ntags: [work, re\n---\n\nwords\n'.indexOf('re') + 2,
+      ),
+      ['reading'],
+    ],
+  ])('%j', (input, wanted) => expect(labels(input)).toEqual(wanted))
 
-  test('offers them after a comma in a written-out list', () => {
-    const written = '---\ntags: [work, re\n---\n\nwords\n'
-    expect(labels(rowsAt(written, written.indexOf('re') + 2))).toEqual(['reading'])
-  })
-
-  test('says nothing under any other key', () => {
-    const at = FRONT.indexOf('other: yes') + 'other: ye'.length
-    expect(rowsAt(FRONT, at)).toBeNull()
-  })
-
-  test('and nothing for a hash there, which YAML reads as a comment', () => {
-    const hashed = '---\ntitle: a #wo\n---\n\nwords\n'
-    expect(rowsAt(hashed, hashed.indexOf('#wo') + 3)).toBeNull()
-  })
+  test.each([
+    [FRONT, FRONT.indexOf('other: yes') + 'other: ye'.length],
+    ['---\ntitle: a #wo\n---\n\nwords\n', '---\ntitle: a #wo\n---\n\nwords\n'.indexOf('#wo') + 3],
+  ])('%j', (input, extra) => expect(rowsAt(input, extra)).toBeNull())
 })

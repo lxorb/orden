@@ -1,10 +1,8 @@
-export function appSocketPath(app: string): string {
-  return `/v2/apps/${encodeURIComponent(app)}/socket`
-}
+export const appSocketPath = (app: string): string => `/v2/apps/${encodeURIComponent(app)}/socket`
 
 export const UNKNOWN_APP = 'no such application on this account'
 
-export const HOST_PROTOCOL = 'nib.role.host'
+export const HOST_PROTOCOL = 'orden.role.host'
 
 export const HOST_PROTOCOLS: readonly string[] = ['orden.role.host', 'nib.role.host']
 
@@ -68,9 +66,8 @@ export type RelayToHost =
 
 type Fields = Record<string, unknown>
 
-function isRecord(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Fields =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 function parsed(raw: string): unknown {
   try {
@@ -80,9 +77,8 @@ function parsed(raw: string): unknown {
   }
 }
 
-function isSize(value: unknown, most: number): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= most
-}
+const isSize = (value: unknown, most: number): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= most
 
 export function viewOf(value: unknown): View | null {
   if (!isRecord(value)) return null
@@ -232,9 +228,8 @@ export interface AppFile {
 
 const LONGEST = 4096
 
-function isText(value: unknown, most = LONGEST): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= most
-}
+const isText = (value: unknown, most = LONGEST): value is string =>
+  typeof value === 'string' && value.length > 0 && value.length <= most
 
 function runOfFile(value: unknown): AppRun | null {
   if (!isRecord(value)) return null
@@ -326,9 +321,7 @@ export interface CandidateLine {
 
 export type ToHost = { offer: string } | { candidate: CandidateLine } | { bye: true }
 
-export function toHostText(said: ToHost): string {
-  return JSON.stringify(said)
-}
+export const toHostText = (said: ToHost): string => JSON.stringify(said)
 
 export type FromHost = { answer: string } | { cannot: NoPicture | null }
 
@@ -351,9 +344,7 @@ export type InputEvent =
   | { t: 'share'; clipboard: boolean }
   | { t: 'ping'; at: number }
 
-export function inputText(event: InputEvent): string {
-  return JSON.stringify(event)
-}
+export const inputText = (event: InputEvent): string => JSON.stringify(event)
 
 export const MOST_POINTER = 256 * 1024
 
@@ -384,18 +375,16 @@ export function usageOf(value: unknown): Usage | null {
   return { cpu, memory, ...(isTime(gpu) ? { gpu } : {}) }
 }
 
-function isTime(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
-}
+const isTime = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0
 
 export type PointerShape =
   { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
 
 const POINTER_PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/
 
-function isSpot(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 1024
-}
+const isSpot = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 1024
 
 export function fromPictureOf(data: unknown): FromPicture | null {
   if (typeof data !== 'string' || data.length > MOST_POINTER + 1024) return null

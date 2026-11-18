@@ -2,7 +2,16 @@ import type { ChangeSpec, EditorState, Line, StateCommand } from '@codemirror/st
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
-import { blockIdOf, freeBlockId, blockIds, ownLine, rowsOf } from '@orden/markdown/links'
+import {
+  blockIdOf,
+  freeBlockId,
+  blockIds,
+  itemLines,
+  layoutOf,
+  openFenceIn,
+  ownLine,
+  rowsOf,
+} from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
 import { landInWords } from '../live-preview/item-start'
@@ -107,15 +116,20 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 
   const rows = rowsOf(doc.toString())
   const verbatim = verbatimLines(view.state, span.from, span.to)
-  if (rows[first.number - 1]?.code) {
-    for (let at = first.number - 1; rows[at]?.code; at++) {
-      const old = rows[at]?.fenceName
+  const at = first.number - 1
+  const { held, runOf } = layoutOf(rows)
+  if (rows[at]?.code || held.has(at)) {
+    for (let line = at; rows[at]?.code && runOf[line] === runOf[at]; line++) {
+      const old = rows[line]?.fenceName
       if (old) return `#^${old}`
     }
-    if (!verbatim.has(first.number)) return null
+    const item = itemLines(rows, at)
+    if (item && item.first !== at) return blockTarget(view, doc.line(item.first + 1).from)
+    if (rows[at]?.code && !verbatim.has(first.number)) return null
   }
 
   const last = doc.lineAt(ownEnd(view.state, span))
+  if (openFenceIn(rows, at, last.number - 1)) return null
   const under = writtenLine(view.state, last.number + 1, 1)
   const already = ownLine(last.text)
     ? blockIdOf(last.text)
@@ -369,13 +383,11 @@ function overBlocks(view: EditorView, pos: number, command: StateCommand): boole
   return ran
 }
 
-export function indentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, indentItems)
-}
+export const indentBlocks = (view: EditorView, pos: number): boolean =>
+  overBlocks(view, pos, indentItems)
 
-export function outdentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, outdentItems)
-}
+export const outdentBlocks = (view: EditorView, pos: number): boolean =>
+  overBlocks(view, pos, outdentItems)
 
 function nextWritten(state: EditorState, from: number, delta: -1 | 1): number | null {
   const doc = state.doc

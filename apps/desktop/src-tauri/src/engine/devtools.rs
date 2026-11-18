@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::sync::mpsc::{sync_channel, SyncSender};
-use std::sync::{Arc, LazyLock, Mutex, PoisonError};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -39,17 +40,8 @@ fn page_in(
     label: &str,
     register: impl FnOnce(&Arc<Page>) -> Result<(), String>,
 ) -> Result<Arc<Page>, String> {
-    let found = Arc::clone(
-        pages
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .entry(label.to_string())
-            .or_default(),
-    );
-    let mut observed = found
-        .observed
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner);
+    let found = Arc::clone(pages.held().entry(label.to_string()).or_default());
+    let mut observed = found.observed.held();
     if !*observed {
         register(&found)?;
         *observed = true;
@@ -61,11 +53,7 @@ fn page_in(
 fn read(page: &Page, message: &Value) {
     let session = message.get("sessionId").and_then(Value::as_str);
     if let Some(id) = message.get("id").and_then(Value::as_i64) {
-        let waiting = page
-            .waiting
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(&id);
+        let waiting = page.waiting.held().remove(&id);
         if let Some(waiting) = waiting {
             let _ = waiting.try_send(answer(message));
         }
@@ -75,11 +63,7 @@ fn read(page: &Page, message: &Value) {
         return;
     };
     let params = message.get("params").cloned().unwrap_or(Value::Null);
-    let hearing = page
-        .hearing
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .clone();
+    let hearing = page.hearing.held().clone();
     for one in hearing {
         one(method, session, &params);
     }
@@ -117,10 +101,7 @@ pub fn call(
             .map_err(|_| "the page's agent has answered all it will".to_string())?,
     );
     let (answered, waiting) = sync_channel(1);
-    page.waiting
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .insert(id, answered);
+    page.waiting.held().insert(id, answered);
 
     let sent = view
         .send_dev_tools_message(asking(id, method, params, session).to_string().as_bytes())
@@ -130,10 +111,7 @@ pub fn call(
             .recv_timeout(patience)
             .map_err(|_| format!("the page did not answer {method}"))?
     });
-    page.waiting
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .remove(&id);
+    page.waiting.held().remove(&id);
     outcome
 }
 
@@ -155,11 +133,7 @@ pub fn hear(
     view: &Webview,
     heard: impl Fn(&str, Option<&str>, &Value) + Send + Sync + 'static,
 ) -> Result<(), String> {
-    page(view)?
-        .hearing
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .push(Arc::new(heard));
+    page(view)?.hearing.held().push(Arc::new(heard));
     Ok(())
 }
 
@@ -168,10 +142,7 @@ pub fn let_go_of(label: &str) {
 }
 
 fn forget(pages: &Pages, label: &str) {
-    pages
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .remove(label);
+    pages.held().remove(label);
 }
 
 #[cfg(test)]

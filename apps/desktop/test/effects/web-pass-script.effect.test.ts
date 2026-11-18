@@ -1,8 +1,9 @@
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { JSDOM } from 'jsdom'
-import { expect, test } from 'vitest'
-import script from '../../src-tauri/src/web_pass.js?raw'
+import { expect, test, vi } from 'vitest'
+import script from '../../src-tauri/crates/web/src/web_pass.js?raw'
+import { idle } from './settle'
 
 const jsdomUtils = createRequire(join(process.cwd(), 'package.json'))(
   'jsdom/lib/generated/idl/utils.js',
@@ -106,10 +107,6 @@ function at(form: Form, index: number): string {
   return field.field
 }
 
-async function settled() {
-  await new Promise((done) => setTimeout(done, 400))
-}
-
 test('a page with a username and a password is a login, said before anyone types', async () => {
   const { only, roles, said } = await page(`
     <form action="/session">
@@ -133,9 +130,10 @@ test('a login asking for its username first, then its password, is two forms', a
       innerHTML: '<input type="password" name="Passwd"><button>Next</button>',
     }),
   )
-  await settled()
-  expect(only().kind).toBe('password')
-  expect(roles()).toEqual(['password'])
+  await vi.waitFor(() => {
+    expect(only().kind).toBe('password')
+    expect(roles()).toEqual(['password'])
+  })
 })
 
 test('a username page holding a hidden password field is the first of two', async () => {
@@ -337,7 +335,7 @@ test('fields inside open shadow roots are found, each in a design system element
     root.append(field)
     form.append(host)
   }
-  return settled().then(() => {
+  return vi.waitFor(() => {
     expect(only().kind).toBe('login')
     expect(roles()).toEqual(['username', 'password'])
   })
@@ -350,8 +348,7 @@ test('a form a single-page app draws late is said once it is there', async () =>
     const app = document.getElementById('app')!
     app.innerHTML = '<form><input name="user"><input type="password" name="pw"></form>'
   }, 20)
-  await settled()
-  expect(forms().map((one) => one.kind)).toEqual(['login'])
+  await vi.waitFor(() => expect(forms().map((one) => one.kind)).toEqual(['login']))
 })
 
 test('a form is said again only when what it is changes', async () => {
@@ -359,7 +356,7 @@ test('a form is said again only when what it is changes', async () => {
   const before = said.length
   document.body.setAttribute('class', 'busy')
   document.querySelector('form')?.setAttribute('class', 'x')
-  await settled()
+  await idle(400)
   expect(said.length).toBe(before)
 })
 
@@ -495,7 +492,7 @@ test('what a person typed is read only when the form is sent', async () => {
   input('[name=user]').value = 'bob'
   input('[name=pw]').value = 'swordfish'
   document.body.append(document.createElement('p'))
-  await settled()
+  await idle(400)
   expect(JSON.stringify(said)).not.toContain('swordfish')
 
   trusted(
@@ -529,11 +526,12 @@ test('a sign-in a single-page app takes away once it is sent is said as sent', a
   input('[name=user]').value = 'dan'
   input('[name=pw]').value = 'secret'
   document.getElementById('app')?.replaceChildren(document.createElement('main'))
-  await settled()
-  const sent = said.filter((one) => one.kind === 'submitted')
-  expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([
-    ['login', 'dan', 'secret'],
-  ])
+  await vi.waitFor(() => {
+    const sent = said.filter((one) => one.kind === 'submitted')
+    expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([
+      ['login', 'dan', 'secret'],
+    ])
+  })
 })
 
 test('a message waits for the channel when the engine has not put it in yet', async () => {
@@ -546,6 +544,7 @@ test('a message waits for the channel when the engine has not put it in yet', as
   inside.eval(script)
   const said: string[] = []
   inside.ordenPass = (words: string) => void said.push(words)
-  await settled()
-  expect(said.map((one) => (JSON.parse(one) as Said).kind)).toEqual(['forms'])
+  await vi.waitFor(() =>
+    expect(said.map((one) => (JSON.parse(one) as Said).kind)).toEqual(['forms']),
+  )
 })

@@ -2,14 +2,13 @@ import { describe, expect, test } from 'vitest'
 import { locate, placesOf } from '@orden/scan/search/find'
 import { placesOnPaper, runsOfItems, spansOver, textOfRuns, wordsOfRuns } from './find'
 
-function divs(...runs: (string | null)[]): HTMLElement[] {
-  return runs.map(
+const divs = (...runs: (string | null)[]): HTMLElement[] =>
+  runs.map(
     (run) =>
       ({
         firstChild: run === null ? null : { nodeType: 3, data: run },
       }) as unknown as HTMLElement,
   )
-}
 
 describe("a page's words", () => {
   test('are its runs, joined', () => {

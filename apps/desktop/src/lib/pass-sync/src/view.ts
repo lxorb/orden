@@ -1,6 +1,5 @@
 import { isRecord } from '../../platform/src/api'
-import type { Scope, Sort, TypeFilter } from './list'
-import { SORTS, TYPE_FILTERS } from './list'
+import { SORTS, TYPE_FILTERS, type Scope, type Sort, type TypeFilter } from './list'
 
 const PAGES = ['items', 'monitor', 'settings', 'links'] as const
 export type Page = (typeof PAGES)[number]

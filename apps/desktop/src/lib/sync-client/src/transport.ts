@@ -23,7 +23,7 @@ export class Refused extends Error {
 
 const OCTETS = 'application/octet-stream'
 
-const FULL = 507
+export const FULL = 507
 
 function pathOf(route: Route, space: string, body: unknown): string {
   const at = encodeURIComponent(space)
@@ -61,7 +61,7 @@ export function accountOver(reaching: Reaching): Account {
         headers: {
           authorization: `Bearer ${token}`,
           accept: OCTETS,
-          'x-nib-device': reaching.device(),
+          'x-orden-device': reaching.device(),
           ...(reading ? {} : { 'content-type': OCTETS }),
         },
         ...(reading ? {} : { body: new Uint8Array(frame(body)) }),
@@ -73,7 +73,7 @@ export function accountOver(reaching: Reaching): Account {
       } catch {
         return null
       }
-      if (passing(response.status)) return null
+      if (response.status !== FULL && passing(response.status)) return null
       if (!response.ok) {
         const said: unknown = await response.json().catch(() => null)
         const error =
@@ -95,7 +95,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
     if (!token) return null
     const headers = new Headers(init.headers)
     headers.set('authorization', `Bearer ${token}`)
-    headers.set('x-nib-device', reaching.device())
+    headers.set('x-orden-device', reaching.device())
     try {
       const response = await reaching.fetch(
         new Request(`${reaching.base}${path}`, { ...init, headers }),
@@ -130,11 +130,11 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       if (!response.ok) return 'gone'
       return new Uint8Array(await response.arrayBuffer())
     },
-    async have(hashes) {
+    async have(space, hashes) {
       const response = await send('/v2/blobs/have', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ hashes }),
+        body: JSON.stringify({ space, hashes }),
       })
       if (!response?.ok) return null
       const said: unknown = await response.json().catch(() => null)
@@ -155,7 +155,8 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       if (response.status === 404 || response.status === 403) {
         const said: unknown = await response.json().catch(() => null)
         if (typeof said !== 'object' || said === null || !('error' in said)) return null
-        return response.status === 404 ? { gone: true } : { refused: 'role' }
+        if (response.status === 403) return { refused: 'role' }
+        return 'blob' in said ? { lost: true } : { gone: true }
       }
       if (!response.ok) return null
       const said: unknown = await response.json().catch(() => null)
@@ -184,7 +185,7 @@ export function readingOver(reaching: Reaching): Reading {
           headers: {
             authorization: `Bearer ${token}`,
             'content-type': 'application/json',
-            'x-nib-device': reaching.device(),
+            'x-orden-device': reaching.device(),
           },
           body: JSON.stringify(body),
         }),

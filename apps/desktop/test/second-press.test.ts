@@ -1,22 +1,7 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
-
-function sources(): string[] {
-  const out: string[] = []
-  const walk = (dir: string) => {
-    for (const name of readdirSync(dir)) {
-      const path = join(dir, name)
-      if (statSync(path).isDirectory()) walk(path)
-      else if (/\.(svelte|ts)$/.test(name) && !name.endsWith('.test.ts')) out.push(path)
-    }
-  }
-  walk(SOURCE)
-  return out
-}
+import { code, SOURCE, walk } from './files'
 
 const NOT_LAYERS: Record<string, string> = {
   'lib/ui-controls/src/spent-click.ts': 'spends the click a catch took the press of',
@@ -29,6 +14,7 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/ui-kit/src/select-all.ts':
     'a press inside a name field leaves its second take of the words alone',
   'lib/panes/src/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
+  'site/site.ts': 'a published page has no layer stack; a tap past a link card hides it',
 }
 
 const NOT_YET = new Set(['lib/web-tab/src/WebExtensionPopup.svelte'])
@@ -37,7 +23,7 @@ const PRESS = /(?:window|document)\.addEventListener\(\s*'(?:pointerdown|mousedo
 
 describe('a layer closed by a press past it', () => {
   test('is on the stack overlays.ts keeps, and does not listen to the window itself', () => {
-    const wrong = sources()
+    const wrong = walk(SOURCE, code)
       .map((path) => relative(SOURCE, path).replace(/\\/g, '/'))
       .filter((name) => !(name in NOT_LAYERS) && !NOT_YET.has(name))
       .filter((name) => !name.startsWith('lib/back-swipe/'))
@@ -60,7 +46,9 @@ describe('a layer closed by a press past it', () => {
   })
 
   test('and the lists of exceptions name files that are there', () => {
-    const all = new Set(sources().map((path) => relative(SOURCE, path).replace(/\\/g, '/')))
+    const all = new Set(
+      walk(SOURCE, code).map((path) => relative(SOURCE, path).replace(/\\/g, '/')),
+    )
     for (const name of [...Object.keys(NOT_LAYERS), ...NOT_YET])
       expect(all.has(name), name).toBe(true)
   })

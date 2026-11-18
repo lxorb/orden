@@ -13,22 +13,21 @@ import {
   FIRST_MODE,
   modeIn,
   isSessionState,
+  movedSince,
   type SessionState,
+  type Compaction,
+  type Effort,
+  type Mode,
+  type NoticeCode,
+  type Part,
+  type Thread,
+  type ThreadHead,
+  type ToolOutput,
+  type ToolState,
+  type Turn,
+  type Usage,
 } from '../../../ai-providers/src/api'
 import { isEffort } from './effort'
-import type {
-  Compaction,
-  Effort,
-  Mode,
-  NoticeCode,
-  Part,
-  Thread,
-  ThreadHead,
-  ToolOutput,
-  ToolState,
-  Turn,
-  Usage,
-} from '../../../ai-providers/src/api'
 import { noUsage } from './usage'
 import { webMeta } from '../../../web-backend/src/api'
 
@@ -416,6 +415,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     isRecord(value.compaction) && isString(value.compaction.upTo)
       ? (value.compaction as unknown as Compaction)
       : undefined
+  const updated = isNumber(value.updated) ? value.updated : 0
   const always = Array.isArray(value.always) ? value.always.filter(isString) : []
   const kept = Array.isArray(value.without) ? value.without.filter(isString) : []
   const rest = [
@@ -439,7 +439,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
     ...timesIn(value),
     ...placeIn(value),
-    provider,
+    provider: movedSince(provider, updated),
     model,
     effort: isEffort(effort) ? effort : 'auto',
     mode: modeIn(mode) ?? FIRST_MODE,
@@ -448,7 +448,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
     turns,
     usage: usageIn(value.usage),
     created: isNumber(value.created) ? value.created : 0,
-    updated: isNumber(value.updated) ? value.updated : 0,
+    updated,
     ...(compaction ? { compaction } : {}),
     ...(elsewhere ? { elsewhere } : {}),
   }
@@ -470,14 +470,15 @@ function placeIn(value: Record<string, unknown>): { state?: SessionState; pinned
 
 function headIn(value: unknown): ThreadHead | null {
   if (!isRecord(value) || !isString(value.id)) return null
+  const updated = isNumber(value.updated) ? value.updated : 0
   return {
     id: value.id,
     title: isString(value.title) ? value.title : '',
     ...(isString(value.parent) && value.parent ? { parent: value.parent } : {}),
     ...timesIn(value),
-    provider: isString(value.provider) ? value.provider : '',
+    provider: isString(value.provider) ? movedSince(value.provider, updated) : '',
     model: isString(value.model) ? value.model : '',
-    updated: isNumber(value.updated) ? value.updated : 0,
+    updated,
     ...(value.archived === true ? { archived: true } : {}),
     ...placeIn(value),
     ...(answeredElsewhere(value) ? { elsewhere: true } : {}),
@@ -505,8 +506,7 @@ async function web() {
     const raw = await meta.get(listKey(space))
     try {
       const read: unknown = raw ? JSON.parse(raw) : []
-      const list: unknown[] = Array.isArray(read) ? read : []
-      return list
+      return Array.isArray(read) ? (read as unknown[]) : []
     } catch {
       return []
     }
@@ -585,13 +585,10 @@ export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
 }
 
 export async function readThread(space: string, id: string): Promise<Thread | null> {
-  let text: string | null
-  if (isNative) {
-    text = await invoke<string | null>('ai_thread_read', { space, id })
-  } else {
-    const store = await web()
-    text = (await store.meta.get(store.threadKey(space, id))) ?? null
-  }
+  const store = isNative ? null : await web()
+  const text = store
+    ? await store.meta.get(store.threadKey(space, id))
+    : await invoke<string | null>('ai_thread_read', { space, id })
   if (!text) return null
   let value: unknown
   try {

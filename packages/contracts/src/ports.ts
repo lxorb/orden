@@ -5,12 +5,12 @@ import type { BackendPorts } from './backend'
 import type { ChatPorts } from './chats'
 import type { FilePorts } from './files'
 import type { ImportPorts } from './import'
-import type { HeldEditPort, NotePorts } from './note'
 import type { PreviewPorts } from './previews'
 import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
 import type { SettingsPorts, SettingsWindowPort } from './settings'
 import type { SharingPorts } from './sharing'
 import type {
+  NoticePort,
   QuickAddPort,
   QuickAddPrefill,
   SearchPort,
@@ -37,7 +37,6 @@ export type PortMap = AccountPorts &
   BackendPorts &
   ChatPorts &
   FilePorts &
-  NotePorts &
   ImportPorts &
   PreviewPorts &
   QuittingPorts &
@@ -81,9 +80,7 @@ export function needPort<Name extends PortName>(name: Name): PortMap[Name] {
   return found.value
 }
 
-export function portProvided(name: PortName): boolean {
-  return provided.has(name)
-}
+export const portProvided = (name: PortName): boolean => provided.has(name)
 
 export function whenPortProvided<Name extends PortName>(
   name: Name,
@@ -99,8 +96,18 @@ export function whenPortProvided<Name extends PortName>(
   waiting.set(name, uses)
 }
 
+const heldEdits = new Set<() => void>()
+
+export function holdEdits(flush: () => void): () => void {
+  const held = () => flush()
+  heldEdits.add(held)
+  return () => {
+    heldEdits.delete(held)
+  }
+}
+
 export function flushHeldEdits(): void {
-  ;(provided.get('edits.held') as HeldEditPort | undefined)?.flush()
+  for (const flush of [...heldEdits]) flush()
 }
 
 export function mayStop(why: StopReason): Promise<boolean> {
@@ -108,37 +115,28 @@ export function mayStop(why: StopReason): Promise<boolean> {
   return port ? port.mayStop(why) : Promise.resolve(true)
 }
 
-export function syncStore(): SyncStorePort | null {
-  return (provided.get('sync.store') as SyncStorePort | undefined) ?? null
-}
+export const syncStore = (): SyncStorePort | null =>
+  (provided.get('sync.store') as SyncStorePort | undefined) ?? null
 
-export function searching(): SearchPort | null {
-  return (provided.get('search') as SearchPort | undefined) ?? null
-}
+export const searching = (): SearchPort | null =>
+  (provided.get('search') as SearchPort | undefined) ?? null
 
-export function webPages(): WebPagesPort {
-  return (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
-}
+export const webPages = (): WebPagesPort =>
+  (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
 
-export function workspaceNotes(): WorkspaceNotesPort {
-  return (provided.get('workspace.notes') as WorkspaceNotesPort | undefined) ?? NO_WORKSPACE_NOTES
-}
+export const workspaceNotes = (): WorkspaceNotesPort =>
+  (provided.get('workspace.notes') as WorkspaceNotesPort | undefined) ?? NO_WORKSPACE_NOTES
 
-export function workspaceView(): WorkspaceViewPort {
-  return (provided.get('workspace.view') as WorkspaceViewPort | undefined) ?? NO_WORKSPACE_VIEW
-}
+export const workspaceView = (): WorkspaceViewPort =>
+  (provided.get('workspace.view') as WorkspaceViewPort | undefined) ?? NO_WORKSPACE_VIEW
 
-export function settingsWindow(): SettingsWindowPort {
-  return (
-    (provided.get('settings.window') as SettingsWindowPort | undefined) ?? {
-      open: false,
-      error: null,
-      at: null,
-      historyOpen: false,
-      show: () => undefined,
-    }
-  )
-}
+export const settingsWindow = (): SettingsWindowPort =>
+  (provided.get('settings.window') as SettingsWindowPort | undefined) ?? {
+    open: false,
+    at: null,
+    historyOpen: false,
+    show: () => undefined,
+  }
 
 export function askSheet(id: SheetId): Promise<void> {
   const port = provided.get('shell.sheets') as SheetsPort | undefined
@@ -149,6 +147,9 @@ export function showQuickAdd(prefill?: QuickAddPrefill): void {
   ;(provided.get('quick-add.show') as QuickAddPort | undefined)?.show(prefill)
 }
 
-export function focusEditorRegion(): boolean {
-  return (provided.get('shell.focus') as ShellFocusPort | undefined)?.editor() ?? false
+export function sayNotice(words: string): void {
+  ;(provided.get('shell.notice') as NoticePort | undefined)?.say(words)
 }
+
+export const focusEditorRegion = (): boolean =>
+  (provided.get('shell.focus') as ShellFocusPort | undefined)?.editor() ?? false

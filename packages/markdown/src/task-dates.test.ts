@@ -20,34 +20,25 @@ const line = (text: string) => {
 describe("in a space of Orden's own", () => {
   test('a 📅 is the start date Orden wrote before it said start dates', () => {
     const task = line('Call the bank 📅 2026-10-06')
-
     expect(startOf(task)).toBe('2026-10-06')
     expect(deadlineOf(task)).toBeUndefined()
     expect(hasStarted(task, TODAY)).toBe(true)
     expect(isLate(task, TODAY)).toBe(false)
   })
 
-  test('a start date still to come keeps the task out of sight', () => {
+  test('a start date still to come keeps the task out of sight; only a deadline makes a task late', () => {
     expect(hasStarted(line('Book the trip 🛫 2026-11-02'), TODAY)).toBe(false)
     expect(hasStarted(line('Book the trip 📅 2026-11-02'), TODAY)).toBe(false)
-  })
-
-  test('only a deadline makes a task late', () => {
     const task = line('Hand in the essay [deadline:: 2026-10-17] 🛫 2026-10-01')
-
     expect(isLate(task, TODAY)).toBe(true)
     expect(dayOf(task)).toBe('2026-10-01')
   })
 
-  test('beside a 🛫 of its own, a 📅 is the deadline, as the plugin writes them', () => {
+  test('beside a 🛫 of its own, a 📅 is the deadline, as the plugin writes them; a date set again is written where the date already is', () => {
     const task = line('Draft 🛫 2026-10-01 📅 2026-10-15')
-
     expect(startOf(task)).toBe('2026-10-01')
     expect(deadlineOf(task)).toBe('2026-10-15')
     expect(deadlineField(task)).toBe('due')
-  })
-
-  test('a date set again is written where the date already is', () => {
     expect(startField(line('A 📅 2026-10-06'))).toBe('due')
     expect(startField(line('A 🛫 2026-10-06'))).toBe('start')
     expect(startField(line('A ⏳ 2026-10-06'))).toBe('scheduled')
@@ -59,7 +50,6 @@ describe("in a space of Orden's own", () => {
 describe('in an Obsidian vault', () => {
   test("a 📅 is the Tasks plugin's due date: a deadline, late once past", () => {
     const task = line('Call the bank 📅 2026-10-06')
-
     expect(startOf(task, 'deadline')).toBeUndefined()
     expect(deadlineOf(task, 'deadline')).toBe('2026-10-06')
     expect(isLate(task, TODAY, 'deadline')).toBe(true)
@@ -68,7 +58,6 @@ describe('in an Obsidian vault', () => {
 
   test('a 🛫 is its start, and a deadline set on a 📅 stays a 📅', () => {
     const task = line('Draft 🛫 2026-11-01 📅 2026-11-20')
-
     expect(hasStarted(task, TODAY, 'deadline')).toBe(false)
     expect(startField(task, 'deadline')).toBe('start')
     expect(deadlineField(task, 'deadline')).toBe('due')
@@ -76,12 +65,9 @@ describe('in an Obsidian vault', () => {
   })
 })
 
-describe('a scheduled date', () => {
-  test('places a task on its day and never makes it late', () => {
-    const task = line('Water the plants ⏳ 2026-10-01')
-
-    expect(dayOf(task)).toBe('2026-10-01')
-    expect(hasStarted(task, TODAY)).toBe(true)
-    expect(isLate(task, TODAY)).toBe(false)
-  })
+test('a scheduled date: places a task on its day and never makes it late', () => {
+  const task = line('Water the plants ⏳ 2026-10-01')
+  expect(dayOf(task)).toBe('2026-10-01')
+  expect(hasStarted(task, TODAY)).toBe(true)
+  expect(isLate(task, TODAY)).toBe(false)
 })

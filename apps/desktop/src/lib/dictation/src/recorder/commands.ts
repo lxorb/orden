@@ -8,15 +8,7 @@ import { workspace } from '../../../workspace/src/api'
 import { canDictate, dictating, toggleDictation } from '../phone/dictation'
 import { canRecordHere } from './container'
 
-type Recorder = (typeof import('./recording.svelte'))['recorder']
-let woken: Recorder | null = null
-
-async function wake(): Promise<Recorder> {
-  const { recorder } = await import('./recording.svelte')
-  woken = recorder
-
-  return recorder
-}
+let woken: (typeof import('./recording.svelte'))['recorder'] | null = null
 
 export function canRecord(view?: EditorView): boolean {
   const space = workspace.activeSpace
@@ -25,10 +17,6 @@ export function canRecord(view?: EditorView): boolean {
   const open = workspace.active
   const into = open?.kind === 'note' && open.path && isMarkdownPath(open.path) ? open.path : null
   return canWriteAt(into ?? space.root)
-}
-
-function recordLabel(): string {
-  return woken?.on ? 'Stop recording' : 'Record'
 }
 
 export function recordRows(view?: object): CommandExtension[] {
@@ -45,10 +33,11 @@ export function recordRows(view?: object): CommandExtension[] {
     },
     {
       id: 'record',
-      label: recordLabel(),
+      label: woken?.on ? 'Stop recording' : 'Record',
       byHand: true,
       disabled: !canRecord(editor),
-      run: () => void record(),
+      run: () =>
+        void import('./recording.svelte').then(({ recorder }) => (woken = recorder).toggle()),
     },
   ]
 }
@@ -83,8 +72,4 @@ export function transcribeRows(spot?: object): CommandExtension[] {
   if (!recordingAt(view, at)) return []
 
   return [{ id: 'transcribe', label: 'Transcribe', run: () => void transcribeEmbed(view, at) }]
-}
-
-async function record() {
-  ;(await wake()).toggle()
 }

@@ -87,7 +87,6 @@ describe('a space written with underlined headings', () => {
       [`${SPACE}/b.md`]: '# Already\n\ntext\n\n---\n',
       [`${SPACE}/c.md`]: '```\nnot\n---\n```\n',
     })
-
     expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(1)
     expect(disk.get(`${SPACE}/a.md`)).toBe('# Title\n\nwords\n\n## Part\n')
     expect(disk.get(`${SPACE}/b.md`)).toBe('# Already\n\ntext\n\n---\n')
@@ -112,7 +111,6 @@ describe('a space written with underlined headings', () => {
       ...ws,
       documentAt: (path: string) => open.find((one) => one.path === path) ?? null,
     } as unknown as HoldsNotes
-
     expect(await dropSetext(writing, SPACE, signedOut, 0)).toBe(1)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
     expect(disk.get(`${SPACE}/b.md`)).toBe('# Other\n')
@@ -123,7 +121,6 @@ describe('a space written with underlined headings', () => {
   test('is not walked again once it has been', async () => {
     const ws = space({ [`${SPACE}/a.md`]: 'Title\n=====\n' })
     kept.set(SETEXT_GONE, [SPACE])
-
     expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
   })
@@ -133,7 +130,6 @@ describe('a space written with underlined headings', () => {
       { [`${SPACE}/a.md`]: 'A rule since\n\n---\n', [`${SPACE}/b.md`]: 'Words\n---\n' },
       { 'old.md': { [SETEXT_KEY]: 'gone' } },
     )
-
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
     expect(disk.get(`${SPACE}/b.md`)).toBe('Words\n---\n')
     expect(kept.get(SETEXT_GONE)).toEqual([SPACE])
@@ -142,7 +138,6 @@ describe('a space written with underlined headings', () => {
 
   test('marks a note for the other devices even when nothing needed rewriting', async () => {
     const ws = space({ [`${SPACE}/a.md`]: '# Fine\n', [`${SPACE}/b.md`]: 'also fine\n' })
-
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
     expect(marked).toEqual([{ 'a.md': { [SETEXT_KEY]: 'gone' } }])
     expect(kept.get(SETEXT_GONE)).toEqual([SPACE])
@@ -150,7 +145,6 @@ describe('a space written with underlined headings', () => {
 
   test('waits, signed in, until the account says what its notes are marked with', async () => {
     const ws = space({ [`${SPACE}/a.md`]: 'Title\n=====\n' }, {}, false)
-
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Title\n=====\n')
     expect(kept.get(SETEXT_GONE)).toBeUndefined()
@@ -162,9 +156,7 @@ describe('the mark a rewritten space carries', () => {
   test('is put back on a note when every note that held it has been deleted', () => {
     kept.set(SETEXT_GONE, [SPACE])
     const ws = space({ [`${SPACE}/new.md`]: 'A rule since\n---\n' })
-
     keepSetextMarked(ws, SPACE)
-
     expect(marked).toEqual([{ 'new.md': { [SETEXT_KEY]: 'gone' } }])
   })
 
@@ -179,7 +171,6 @@ describe('the mark a rewritten space carries', () => {
       for (const [at, patch] of Object.entries(patches)) items[at] = patch as ItemMeta
     }
     keepSetextMarked(ws, SPACE)
-
     kept.clear()
     expect(await dropSetext(ws, SPACE, signedIn, 0)).toBe(0)
     expect(disk.get(`${SPACE}/new.md`)).toBe('A rule since\n---\n')
@@ -191,7 +182,6 @@ describe('the mark a rewritten space carries', () => {
       space({ [`${SPACE}/a.md`]: 'x\n' }, { 'b.md': { [SETEXT_KEY]: 'gone' } }),
       SPACE,
     )
-
     expect(marked).toEqual([])
   })
 
@@ -199,7 +189,6 @@ describe('the mark a rewritten space carries', () => {
     keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }), SPACE)
     kept.set(SETEXT_GONE, [SPACE])
     keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }, {}, false), SPACE)
-
     expect(marked).toEqual([])
   })
 })
@@ -228,7 +217,6 @@ describe('a space whose notes the browser keeps away', () => {
     }
     const ws = space({ [`${SPACE}/a.md`]: 'Here\n----\n', ...texts })
     away(texts)
-
     expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(2)
     expect([...new Set(read)].sort()).toEqual([`${SPACE}/a.md`, `${SPACE}/u.md`])
     expect(disk.get(`${SPACE}/u.md`)).toBe('# Away\n')
@@ -239,7 +227,6 @@ describe('a space whose notes the browser keeps away', () => {
     const texts = { [`${SPACE}/u.md`]: 'Away\n====\n' }
     const ws = space({ [`${SPACE}/a.md`]: 'Here\n----\n', ...texts })
     away(texts, false)
-
     expect(await dropSetext(ws, SPACE, signedOut, 0)).toBe(0)
     expect(read).toEqual([])
     expect(kept.get(SETEXT_GONE)).toBeUndefined()

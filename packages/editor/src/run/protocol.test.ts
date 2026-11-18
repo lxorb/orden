@@ -24,23 +24,17 @@ describe('reading a message from the sandbox', () => {
     expect(first).toMatchObject({ ready: true, done: false, lines: [] })
   })
 
-  test('ignores a message from a run that has been replaced', () => {
-    expect(parseRunMessage(message(), 8)).toBeNull()
-  })
-
-  test('ignores anything else on the page that posts messages', () => {
-    expect(parseRunMessage({ type: 'webpackHot' }, 7)).toBeNull()
-    expect(parseRunMessage(message({ orden: 'something-else' }), 7)).toBeNull()
-    expect(parseRunMessage('hello', 7)).toBeNull()
-    expect(parseRunMessage(null, 7)).toBeNull()
-  })
-
-  test('ignores a message whose lines are not lines', () => {
-    expect(parseRunMessage(message({ lines: 'hi' }), 7)).toBeNull()
-    expect(parseRunMessage(message({ lines: [{ level: 'log' }] }), 7)).toBeNull()
-    expect(parseRunMessage(message({ lines: [{ level: 'shout', text: 'hi' }] }), 7)).toBeNull()
-    expect(parseRunMessage(message({ lines: [null] }), 7)).toBeNull()
-  })
+  test.each([
+    [message(), 8],
+    [{ type: 'webpackHot' }, 7],
+    [message({ orden: 'something-else' }), 7],
+    ['hello', 7],
+    [null, 7],
+    [message({ lines: 'hi' }), 7],
+    [message({ lines: [{ level: 'log' }] }), 7],
+    [message({ lines: [{ level: 'shout', text: 'hi' }] }), 7],
+    [message({ lines: [null] }), 7],
+  ])('%j', (input, extra) => expect(parseRunMessage(input, extra)).toBeNull())
 
   test('reads a batch with no lines in it, which is how a run ends quietly', () => {
     expect(parseRunMessage(message({ lines: [], done: true }), 7)?.done).toBe(true)
@@ -48,7 +42,6 @@ describe('reading a message from the sandbox', () => {
 })
 
 const SCRIPT = 'window.ranTheFrameScript = true'
-
 const made = (code: string, run = 1) => runnerDocument(code, run, SCRIPT)
 const programOf = (html: string) =>
   /<script type="text\/plain" id="orden-frame">([\s\S]*?)<\/script>/.exec(html)?.[1]

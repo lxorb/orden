@@ -85,36 +85,17 @@ beforeEach(() => {
 })
 
 describe('a key that writes', () => {
-  test('a character, Enter, Backspace, Delete, a composition and a dead key', () => {
-    for (const one of [
-      'a',
-      'Z',
-      ' ',
-      'é',
-      '😀',
-      'Enter',
-      'Backspace',
-      'Delete',
-      'Process',
-      'Dead',
-    ]) {
-      expect(writes(key({ key: one }), false), one).toBe(true)
-    }
-  })
+  test.each(['a', 'Z', ' ', 'é', '😀', 'Enter', 'Backspace', 'Delete', 'Process', 'Dead'])(
+    '%j writes, as a character, a composition or a dead key does',
+    (one) => expect(writes(key({ key: one }), false)).toBe(true),
+  )
 
-  test('not a key that moves or commands', () => {
-    for (const one of [
-      'ArrowLeft',
-      'Home',
-      'PageDown',
-      'Tab',
-      'Escape',
-      'F5',
-      'Shift',
-      'Control',
-    ]) {
-      expect(writes(key({ key: one }), false), one).toBe(false)
-    }
+  test.each(['ArrowLeft', 'Home', 'PageDown', 'Tab', 'Escape', 'F5', 'Shift', 'Control'])(
+    '%j moves or commands, and writes nothing',
+    (one) => expect(writes(key({ key: one }), false)).toBe(false),
+  )
+
+  test('not a key that commands', () => {
     expect(writes(key({ key: 's', ctrlKey: true }), false)).toBe(false)
     expect(writes(key({ key: 'c', metaKey: true }), true)).toBe(false)
     expect(writes(key({ key: '1', altKey: true }), false)).toBe(false)
@@ -137,7 +118,6 @@ describe('what takes words', () => {
     const locked = Object.assign(new FakeInput(), { readOnly: true })
     const box = Object.assign(new FakeInput(), { type: 'checkbox' })
     const off = Object.assign(new FakeTextArea(), { disabled: true })
-
     for (const one of [locked, box, off, new FakeElement(), null]) {
       expect(takesWords(one as unknown as EventTarget)).toBe(false)
     }
@@ -147,19 +127,15 @@ describe('what takes words', () => {
 describe('the pointer', () => {
   test('hides on a key that writes into a note, and listens for the move only then', () => {
     expect(listened.has('pointermove')).toBe(false)
-
     typing.handleEvent(key({ key: 'a' }))
-
     expect(hidden()).toBe(true)
     expect(listened.has('pointermove')).toBe(true)
   })
 
   test('comes back on the first move that moves, and stops listening for it', () => {
     typing.handleEvent(key({ key: 'a' }))
-
     typing.handleEvent(pointer('pointermove'))
     expect(hidden()).toBe(true)
-
     typing.handleEvent(pointer('pointermove', { movementX: 1 }))
     expect(hidden()).toBe(false)
     expect(listened.has('pointermove')).toBe(false)
@@ -167,11 +143,9 @@ describe('the pointer', () => {
 
   test('comes back on a move an engine says moved nothing, by where the pointer is', () => {
     typing.handleEvent(key({ key: 'a' }))
-
     typing.handleEvent(pointer('pointermove', { clientX: 40, clientY: 10 }))
     typing.handleEvent(pointer('pointermove', { clientX: 40, clientY: 10 }))
     expect(hidden()).toBe(true)
-
     typing.handleEvent(pointer('pointermove', { clientX: 60, clientY: 12 }))
     expect(hidden()).toBe(false)
   })
@@ -180,7 +154,6 @@ describe('the pointer', () => {
     typing.handleEvent(key({ key: 'a' }))
     typing.handleEvent(pointer('pointerdown'))
     expect(hidden()).toBe(false)
-
     typing.handleEvent(pointer('pointerup'))
     typing.handleEvent(key({ key: 'b' }))
     typing.handleEvent({ type: 'blur' } as Event)
@@ -191,7 +164,6 @@ describe('the pointer', () => {
     typing.handleEvent(key({ key: 's', ctrlKey: true }))
     typing.handleEvent(key({ key: 'ArrowDown' }))
     typing.handleEvent(key({ key: 'a', target: new FakeElement() }))
-
     expect(hidden()).toBe(false)
   })
 
@@ -199,7 +171,6 @@ describe('the pointer', () => {
     typing.handleEvent(pointer('pointerdown'))
     typing.handleEvent(key({ key: 'a' }))
     expect(hidden()).toBe(false)
-
     typing.handleEvent(pointer('pointerup'))
     typing.handleEvent(key({ key: 'a' }))
     expect(hidden()).toBe(true)
@@ -210,11 +181,9 @@ describe('the pointer', () => {
     typing.handleEvent(pointer('pointerup', { pointerType: 'touch' }))
     typing.handleEvent(key({ key: 'a' }))
     expect(hidden()).toBe(false)
-
     typing.handleEvent(pointer('pointerdown', { pointerType: 'pen' }))
     typing.handleEvent(key({ key: 'a' }))
     expect(hidden()).toBe(false)
-
     typing.handleEvent(pointer('pointerdown'))
     typing.handleEvent(pointer('pointerup'))
     typing.handleEvent(key({ key: 'a' }))
@@ -228,9 +197,7 @@ describe('the pointer', () => {
     })
     const counted = new TypingPointer(listening, false)
     counted.handleEvent(pointer('pointerover', {}, counting))
-
     for (let n = 0; n < 100; n++) counted.handleEvent(key({ key: 'a' }))
-
     expect(changes).toBe(1)
   })
 
@@ -264,15 +231,12 @@ describe('the pointer', () => {
     watched.handleEvent(pointer('pointerover', { clientX: 40, clientY: 70 }))
     watched.handleEvent(key({ key: 'a' }))
     expect(hidden()).toBe(true)
-
     watching.changed?.()
     expect(asked).toEqual([])
-
     Object.assign(under, { isConnected: false })
     watching.changed?.()
     expect(asked).toEqual([[40, 70]])
     expect(after.worn.has(HIDDEN)).toBe(true)
-
     watched.handleEvent(pointer('pointerdown'))
     expect(after.worn.size).toBe(0)
     expect(watching.changed).toBeNull()
@@ -284,12 +248,10 @@ describe('the pointer', () => {
     typing.handleEvent(pointer('pointerover', {}, next))
     expect(next.worn.has(HIDDEN)).toBe(true)
     expect(hidden()).toBe(false)
-
     const after = new FakeElement()
     typing.handleEvent(pointer('pointermove', {}, after))
     expect(after.worn.has(HIDDEN)).toBe(true)
     expect(next.worn.size).toBe(0)
-
     typing.handleEvent(pointer('pointermove', { movementX: 2 }, after))
     expect(after.worn.size).toBe(0)
   })

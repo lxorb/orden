@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -277,5 +275,4 @@ def main() -> int:
 
     return DRIVE.verdict("everything the drive checked was right")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

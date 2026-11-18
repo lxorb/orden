@@ -1,13 +1,11 @@
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords } from '@orden/markdown/task-line'
-
 import { dayOf, noteText, type Meta } from './meta'
 import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 const ASSETS = 'assets'
-
 const ARCHIVE = 'Archive'
 
 interface KeepNote {
@@ -174,9 +172,8 @@ interface Item {
   text: string
 }
 
-function taskLine(item: Item): string {
-  return `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
-}
+const taskLine = (item: Item): string =>
+  `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
 
 function linksOf(said: unknown, text: string): string[] {
   if (!Array.isArray(said)) return []
@@ -231,9 +228,8 @@ function filePaths(said: unknown): string[] {
   return paths
 }
 
-function asNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
+const asNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
 
 function beside(
   files: ReadonlyMap<string, Source>,

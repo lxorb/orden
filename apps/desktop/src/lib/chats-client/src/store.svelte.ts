@@ -16,7 +16,15 @@ import {
 import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
 import { chatPokeOf } from '@orden/chats/wire'
 import { account } from '../../accounts/src/api'
-import { samePath, within, keep, storedText, isNative, joinPath } from '../../platform/src/api'
+import {
+  samePath,
+  within,
+  spaceHolding,
+  keep,
+  storedText,
+  isNative,
+  joinPath,
+} from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
 import { workspace } from '../../workspace/src/api'
 import type {
@@ -37,6 +45,7 @@ import { chatName, findPointers, makePointer, type Place, readPointer } from './
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
 import { isRetiredChat } from '../../documents/src/api'
 import { type Host, View } from './view.svelte'
+import { dayOf } from './view/when'
 
 const RECEIPTS = 'orden:chat-receipts'
 
@@ -62,12 +71,6 @@ function remoteFor(id: string): Remote {
 
 function newId(): string {
   return ulid(Date.now(), Math.random)
-}
-
-function dayOf(at: number): string {
-  const date = new Date(at)
-  const pad = (one: number) => String(one).padStart(2, '0')
-  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 function startOf(day: string): number {
@@ -295,18 +298,15 @@ class ChatsStore implements Chats {
   }
 
   private async count(chat: string): Promise<void> {
-    {
-      this.counting.delete(chat)
-      const engine = this.engine
-      const me = this.me
-      const row = engine?.chats.get(chat)?.row
-      if (!engine || !me || !row || !this.cache) return
-      const count = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
-      this.countedAt.set(chat, row.readSeq)
-      if (this.unread.get(chat) === count) return
-      this.unread.set(chat, count)
-      this.drawList()
-    }
+    this.counting.delete(chat)
+    const me = this.me
+    const row = this.engine?.chats.get(chat)?.row
+    if (!me || !row || !this.cache) return
+    const count = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
+    this.countedAt.set(chat, row.readSeq)
+    if (this.unread.get(chat) === count) return
+    this.unread.set(chat, count)
+    this.drawList()
   }
 
   private async lookForPointers(): Promise<void> {
@@ -459,15 +459,9 @@ class ChatsStore implements Chats {
   }
 
   async remove(chat: string, message: string): Promise<void> {
-    const engine = this.engine
-    const waiting = engine?.pending(chat).filter((row) => {
-      const event = row.event
-      return event.kind === 'post'
-        ? event.message === message
-        : 'target' in event && event.target === message
-    })
-    if (engine && waiting?.some((row) => row.event.kind === 'post')) {
-      await engine.drop(waiting.map((row) => row.id))
+    const waiting = this.rowsAbout(chat, message)
+    if (this.engine && waiting.some((row) => row.event.kind === 'post')) {
+      await this.engine.drop(waiting.map((row) => row.id))
       return
     }
     await this.send(chat, { kind: 'delete', id: newId(), target: message })
@@ -516,8 +510,9 @@ class ChatsStore implements Chats {
   private rowsAbout(chat: string, message: string) {
     return (this.engine?.pending(chat) ?? []).filter((row) => {
       const event = row.event
-      if (event.kind === 'post') return event.message === message
-      return 'target' in event && event.target === message
+      return event.kind === 'post'
+        ? event.message === message
+        : 'target' in event && event.target === message
     })
   }
 
@@ -532,10 +527,9 @@ class ChatsStore implements Chats {
 
   async notifyFor(chat: string, notify: Notify | null, mutedUntil: number | null): Promise<void> {
     await http.putMe(chat, notify, mutedUntil)
-    const row = this.engine?.chats.get(chat)?.row
-    const engineChat = this.engine?.chats.get(chat)
-    if (row && engineChat) {
-      engineChat.row = { ...row, notify, mutedUntil }
+    const held = this.engine?.chats.get(chat)
+    if (held?.row) {
+      held.row = { ...held.row, notify, mutedUntil }
       this.drawList()
     }
   }
@@ -679,7 +673,7 @@ class ChatsStore implements Chats {
   }
 
   private remoteNote(path: string): { space: string; note: string } | null {
-    const root = workspace.spaces.find((one) => within(one.root, path) !== null)?.root
+    const root = spaceHolding(workspace.spaces, path)?.root
     const space = root ? this.remoteOf(root) : null
     const note = sync.tracked(path)?.id
     return space && note ? { space, note } : null
@@ -782,9 +776,7 @@ class ChatsStore implements Chats {
     if (before && !chat) this.gone.add(before[0])
     if (chat) this.gone.delete(chat)
     const row = chat ? (this.engine?.chats.get(chat)?.row ?? null) : null
-    const root = to
-      ? (workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null)
-      : null
+    const root = to ? (spaceHolding(workspace.spaces, to)?.root ?? null) : null
     const moved =
       before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
     if ((before && !chat) || (chat !== null && !row) || moved) {

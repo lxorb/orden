@@ -44,6 +44,7 @@ export interface Note {
 
 export interface RunOptions extends HtmlOptions {
   link?: (link: FoundLink) => string | null
+  picturesWritten?: (source: string) => string
   background?: string
   now?: string
 }
@@ -58,9 +59,8 @@ function labelFor(id: Exportable): string {
   return variant ? variant.label : id
 }
 
-async function pageOf(note: Note, options: RunOptions, pictures?: readonly Picture[]) {
-  return renderNote(note.source, note.name, options, pictures)
-}
+const pageOf = async (note: Note, options: RunOptions, pictures?: readonly Picture[]) =>
+  renderNote(note.source, note.name, options, pictures)
 
 async function partsOf(note: Note, options: RunOptions) {
   const prepared = await prepareNote(note.source, options.scheme ?? 'light', options.readNote)
@@ -69,9 +69,8 @@ async function partsOf(note: Note, options: RunOptions) {
   return { body, css: buildStyles(body, note.source, options) }
 }
 
-function picturesOf(sources: readonly string[], options: RunOptions) {
-  return readPictures(sources, options.resolveImage ?? ((src) => src))
-}
+const picturesOf = (sources: readonly string[], options: RunOptions) =>
+  readPictures(sources, options.resolveImage ?? ((src) => src))
 
 function paperFor(note: Note, options: RunOptions, title: string): PaperTwips {
   const setup = pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP)
@@ -257,6 +256,13 @@ async function withKept(note: Note): Promise<Note> {
   return source === note.source ? note : { ...note, source }
 }
 
+const WRITES_PICTURES = new Set<Exportable>(['md', 'textbundle', 'md-assets', 'docx', 'rtf'])
+
+function picturesWrittenIn(note: Note, options: RunOptions): Note {
+  const source = options.picturesWritten?.(note.source) ?? note.source
+  return source === note.source ? note : { ...note, source }
+}
+
 export async function runExport(
   id: Exportable,
   given: Note,
@@ -267,9 +273,10 @@ export async function runExport(
 
   if (id === 'pdf') return exportPdf(note, options)
   if (id === 'jpg' || id === 'png') return exportPicture(id, note, options)
-  if (id === 'textbundle') return exportBundle(note, options)
-  if (id === 'md-assets') return exportMarkdownWithPictures(note, options)
+  const written = WRITES_PICTURES.has(id) ? picturesWrittenIn(note, options) : note
+  if (id === 'textbundle') return exportBundle(written, options)
+  if (id === 'md-assets') return exportMarkdownWithPictures(written, options)
 
-  const payload = await payloadFor(id, note, options)
+  const payload = await payloadFor(id, written, options)
   return deliver(note.name, extensionFor(id), labelFor(id), payload)
 }

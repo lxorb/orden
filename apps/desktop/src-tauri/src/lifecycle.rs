@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::{Condvar, Mutex, PoisonError};
@@ -5,6 +6,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, ExitRequestApi, Manager, RunEvent, WindowEvent};
 
 use crate::launch;
+use orden_base::labels::document_windows;
 
 const QUIT: &str = "orden://quit";
 
@@ -50,7 +52,7 @@ impl Installer {
     }
 
     fn closing(&self, label: &str, others: impl IntoIterator<Item = String>) -> usize {
-        let mut closing = self.closing.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut closing = self.closing.held();
         closing.insert(label.to_owned());
         others
             .into_iter()
@@ -69,10 +71,7 @@ impl Installer {
     }
 
     fn gone(&self, label: &str) {
-        self.closing
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(label);
+        self.closing.held().remove(label);
         self.heard(label);
     }
 
@@ -85,13 +84,11 @@ impl Installer {
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, HashSet<String>> {
-        self.unanswered
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+        self.unanswered.held()
     }
 }
 
-pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
+pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     builder
         .manage(Quitting::default())
         .manage(Installer::default())
@@ -104,15 +101,15 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             launch::hand_over(
                 app,
                 launch::Handed::Pages,
-                crate::web_handed::pages_among(&urls),
+                orden_web::web_handed::pages_among(&urls),
             );
             let app = app.clone();
             std::thread::spawn(move || {
-                let pdfs = crate::handed_pdfs::pdfs_among(&urls);
+                let pdfs = orden_documents::handed_pdfs::pdfs_among(&urls);
                 launch::hand_over(
                     &app,
                     launch::Handed::Pdfs,
-                    crate::handed_pdfs::admit_handed(&app, pdfs),
+                    orden_documents::handed_pdfs::admit_handed(&app, pdfs),
                 );
             });
         }
@@ -126,21 +123,27 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => launch::reopen(app),
 
-        RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
+        RunEvent::ExitRequested { code, api, .. } => {
+            #[cfg(target_os = "macos")]
+            if code == Some(tauri::RESTART_EXIT_CODE) {
+                front_to_the_next();
+            }
+            exit_requested(app, code, &api);
+        }
 
         RunEvent::Exit => {
-            crate::crashes::ended_well();
-            crate::terminal::end_all(app);
-            crate::apps_host::end_all(app);
-            crate::ai_cli::end_all(app);
-            crate::agents::stop::quitting();
-            crate::notices::clear_all(app);
+            orden_crashes::crashes::ended_well();
+            orden_pty::terminal::end_all(app);
+            orden_apps::apps_host::end_all(app);
+            orden_ai::ai_cli::end_all(app);
+            orden_agents::stop::quitting();
+            orden_reminders::notices::clear_all(app);
         }
 
         RunEvent::WindowEvent {
             event: WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }),
             ..
-        } => crate::dropped_paths::dropped(app, &paths),
+        } => orden_documents::dropped_paths::dropped(app, &paths),
 
         RunEvent::WindowEvent {
             label,
@@ -148,9 +151,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => {
             if let Some(window) = app.get_window(&label) {
-                crate::keyboard::no_hidden_menu(&window);
+                orden_web::keyboard::no_hidden_menu(&window);
             }
-            crate::keyboard::window_came_back(app, &label);
+            orden_web::keyboard::window_came_back(app, &label);
         }
 
         RunEvent::WindowEvent {
@@ -161,14 +164,19 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(pending) = app.try_state::<launch::Pending>() {
                 pending.forget(&label);
             }
-            app.state::<crate::endpoint::Waiting>().forget(&label);
+            app.state::<orden_agents::endpoint::Waiting>()
+                .forget(&label);
             app.state::<Installer>().gone(&label);
-            crate::crashes::window_gone(&label);
-            crate::terminal::window_gone(app, &label);
-            crate::explorer::watch::window_gone(app, &label);
-            crate::ai_cli::window_gone(app, &label);
+            orden_crashes::crashes::window_gone(&label);
+            orden_pty::terminal::window_gone(
+                app,
+                &label,
+                !leaving(app) && !document_windows(app).is_empty(),
+            );
+            orden_explorer::explorer::watch::window_gone(app, &label);
+            orden_ai::ai_cli::window_gone(app, &label);
             let now = state(app).now();
-            if (now == ASKING || now == CONFIRMING) && launch::document_windows(app).is_empty() {
+            if (now == ASKING || now == CONFIRMING) && document_windows(app).is_empty() {
                 leave(app);
             }
         }
@@ -214,7 +222,7 @@ pub fn update_settled(webview: tauri::Webview) {
 }
 
 pub fn before_installer(app: &AppHandle, from: &str) {
-    crate::placement::note_every_window(app);
+    orden_placement::placement::note_every_window(app);
 
     let installer = app.state::<Installer>();
     let others: Vec<String> = listening_windows(app, Some(from))
@@ -227,7 +235,7 @@ pub fn before_installer(app: &AppHandle, from: &str) {
     }
     let left = installer.wait(SETTLE_WAIT);
     if !left.is_empty() {
-        crate::trace::mark("update: installer starting with a window not settled");
+        orden_base::trace::mark("update: installer starting with a window not settled");
     }
 }
 
@@ -258,7 +266,7 @@ pub fn quit(app: &AppHandle) {
 
 fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window> {
     let pending = app.try_state::<launch::Pending>();
-    launch::document_windows(app)
+    document_windows(app)
         .into_iter()
         .filter(|window| Some(window.label()) != except)
         .filter(|window| {
@@ -272,7 +280,7 @@ fn listening_windows(app: &AppHandle, except: Option<&str>) -> Vec<tauri::Window
 #[tauri::command(async)]
 pub fn quit_confirmed(webview: tauri::Webview) {
     let app = webview.app_handle();
-    if launch::is_document_window(webview.label()) && state(app).now() == CONFIRMING {
+    if orden_base::labels::is_document_window(webview.label()) && state(app).now() == CONFIRMING {
         quit_now(app);
     }
 }
@@ -288,24 +296,24 @@ pub fn quit_others(webview: tauri::Webview) -> Vec<String> {
 #[tauri::command(async)]
 pub fn quit_show(webview: tauri::Webview) {
     let window = webview.window();
-    if !launch::is_document_window(window.label()) {
+    if !orden_base::labels::is_document_window(window.label()) {
         return;
     }
     #[cfg(any(windows, target_os = "macos"))]
     if !window.is_visible().unwrap_or(true) {
-        crate::agents::shell::open(webview.app_handle());
+        orden_agents::shell::open(webview.app_handle());
         return;
     }
-    crate::placement::raised(&window);
+    orden_placement::placement::raised(&window);
 }
 
 pub fn quit_now(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
 
-    crate::placement::note_every_window(app);
+    orden_placement::placement::note_every_window(app);
 
-    let windows = launch::document_windows(app);
+    let windows = document_windows(app);
     if windows.is_empty() {
         leave(app);
         return;
@@ -327,7 +335,7 @@ pub fn quit_now(app: &AppHandle) {
             }
         };
 
-        crate::web_cookies::kept(&window, ask);
+        orden_web::web_cookies::kept(&window, ask);
     }
 }
 
@@ -342,18 +350,44 @@ pub fn keep_running(app: AppHandle) {
 }
 
 #[cfg(target_os = "macos")]
+fn front_to_the_next() {
+    use objc2::sel;
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::NSApplication;
+    use objc2_foundation::{NSBundle, NSObjectProtocol};
+
+    let Some(main) = MainThreadMarker::new() else {
+        return;
+    };
+    let app = NSApplication::sharedApplication(main);
+    let yields = app.respondsToSelector(sel!(yieldActivationToApplicationWithBundleIdentifier:));
+    if !yields || !app.isActive() {
+        return;
+    }
+    if let Some(ours) = NSBundle::mainBundle().bundleIdentifier() {
+        app.yieldActivationToApplicationWithBundleIdentifier(&ours);
+    }
+}
+
+#[cfg(target_os = "macos")]
 mod asked_to_quit {
     use objc2::runtime::{AnyObject, Imp, Sel};
     use objc2::{ffi, sel, MainThreadMarker};
-    use objc2_app_kit::NSApplication;
+    use objc2_app_kit::{NSApplication, NSEventMask, NSEventModifierFlags, NSEventType};
+    use objc2_foundation::{NSDate, NSString};
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::OnceLock;
-    use tauri::AppHandle;
+    use tauri::{AppHandle, Emitter as _};
 
     static APP: OnceLock<AppHandle> = OnceLock::new();
 
+    const CANCEL: usize = 0;
     const NOW: usize = 1;
     const LATER: usize = 2;
+
+    const HOLD: f64 = 1.0;
+
+    const QUIT_HOLD: &str = "orden://quit-hold";
 
     static WAITING: AtomicBool = AtomicBool::new(false);
 
@@ -395,6 +429,10 @@ mod asked_to_quit {
         if super::state(app).now() == super::LEAVING {
             return NOW;
         }
+        if let_go_early() {
+            hold_to_quit(app);
+            return CANCEL;
+        }
 
         super::quit(app);
         if super::state(app).now() == super::LEAVING {
@@ -403,6 +441,55 @@ mod asked_to_quit {
 
         WAITING.store(true, Ordering::SeqCst);
         LATER
+    }
+
+    fn let_go_early() -> bool {
+        let Some(main) = MainThreadMarker::new() else {
+            return false;
+        };
+        let application = NSApplication::sharedApplication(main);
+        let Some(pressed) = application.currentEvent() else {
+            return false;
+        };
+        if pressed.r#type() != NSEventType::KeyDown
+            || !pressed
+                .modifierFlags()
+                .contains(NSEventModifierFlags::Command)
+        {
+            return false;
+        }
+        let key = pressed.keyCode();
+        let until = NSDate::dateWithTimeIntervalSinceNow(HOLD);
+        let mode = NSString::from_str("kCFRunLoopDefaultMode");
+        let heard = NSEventMask::KeyDown | NSEventMask::KeyUp | NSEventMask::FlagsChanged;
+        while let Some(event) = application.nextEventMatchingMask_untilDate_inMode_dequeue(
+            heard,
+            Some(&until),
+            &mode,
+            true,
+        ) {
+            let still = match event.r#type() {
+                NSEventType::KeyDown => event.isARepeat() && event.keyCode() == key,
+                NSEventType::FlagsChanged => event
+                    .modifierFlags()
+                    .contains(NSEventModifierFlags::Command),
+                _ => false,
+            };
+            if !still {
+                application.postEvent_atStart(&event, true);
+                return true;
+            }
+        }
+        false
+    }
+
+    fn hold_to_quit(app: &AppHandle) {
+        if let Some(window) = orden_base::labels::document_windows(app)
+            .into_iter()
+            .find(|window| window.is_focused().unwrap_or(false))
+        {
+            let _ = app.emit_to(window.label(), QUIT_HOLD, ());
+        }
     }
 
     pub fn answer(app: &AppHandle, yes: bool) -> bool {
@@ -450,6 +537,11 @@ fn exit_requested(app: &AppHandle, code: Option<i32>, api: &ExitRequestApi) {
 
 fn state(app: &AppHandle) -> tauri::State<'_, Quitting> {
     app.state::<Quitting>()
+}
+
+pub fn leaving(app: &AppHandle) -> bool {
+    app.try_state::<Quitting>()
+        .is_some_and(|quitting| matches!(quitting.now(), ASKING | LEAVING))
 }
 
 #[derive(Debug, PartialEq, Eq)]

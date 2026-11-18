@@ -1,19 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Draft, Session } from '../../session/src/api'
-
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-  return {
-    get length() {
-      return held.size
-    },
-    clear: () => held.clear(),
-    getItem: (key) => held.get(key) ?? null,
-    key: (at) => [...held.keys()][at] ?? null,
-    removeItem: (key) => void held.delete(key),
-    setItem: (key, value) => void held.set(key, value),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 
@@ -85,6 +72,12 @@ describe('the words a first screen is kept against', () => {
 describe('the note in front of the sitting', () => {
   test('is the lone pane’s showing note', () => {
     expect(frontOf(lone(draft()))?.path).toBe(PATH)
+  })
+
+  test('is nothing when the tab in front was not one the pane keeps', () => {
+    const kept = lone(draft())
+    if (kept.layout?.frame.kind === 'pane') kept.layout.frame.pane.active = -1
+    expect(frontOf(kept)).toBeNull()
   })
 
   test('is nothing for a split, a stack, a canvas or a note being read', () => {

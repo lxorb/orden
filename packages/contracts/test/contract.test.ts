@@ -14,6 +14,8 @@ import {
   ENTRY_KINDS,
   err,
   failure,
+  flushHeldEdits,
+  holdEdits,
   isEntryId,
   isEntryKind,
   isEventName,
@@ -51,6 +53,7 @@ import {
   portOf,
   portProvided,
   providePort,
+  sayNotice,
   runCommand,
   startHearings,
   spaceId,
@@ -280,6 +283,15 @@ describe('ports', () => {
     expect(portProvided('sync.clock')).toBe(false)
   })
 
+  it('says a notice where the shell shows one, and nowhere before it is bound', () => {
+    expect(() => sayNotice('lost')).not.toThrow()
+    const said: string[] = []
+    const unbind = providePort('shell.notice', { say: (words) => said.push(words) })
+    sayNotice('That image does not fit in your storage.')
+    unbind()
+    expect(said).toEqual(['That image does not fit in your storage.'])
+  })
+
   it('throws for a needed port nothing bound, naming it, and hands over the bound one', () => {
     expect(() => needPort('sync.clock')).toThrow("no module has provided the port 'sync.clock' yet")
     const clock = { now: () => 3, waited: () => Promise.resolve() }
@@ -300,6 +312,22 @@ describe('ports', () => {
     ).toBe(2)
     second()
     expect(portProvided('sync.clock')).toBe(false)
+  })
+
+  it('asks every writer still holding words for them, and leaves the others when one lets go', () => {
+    const asked: string[] = []
+    const first = holdEdits(() => asked.push('first'))
+    const second = holdEdits(() => asked.push('second'))
+    flushHeldEdits()
+    expect(asked).toEqual(['first', 'second'])
+
+    second()
+    flushHeldEdits()
+    expect(asked).toEqual(['first', 'second', 'first'])
+
+    first()
+    flushHeldEdits()
+    expect(asked).toEqual(['first', 'second', 'first'])
   })
 
   it('answers the web pages with blank ones and nothing held until the web tab binds them', async () => {
@@ -621,6 +649,26 @@ describe('loads', () => {
     pages()
     pdfs()
     expect(await startHearings()).toEqual([])
+  })
+
+  it('starts every other hearing when one fails to load or to start', async () => {
+    const heard: string[] = []
+    const unloaded = registerHearing(() => Promise.reject(new Error('the chunk is gone')))
+    const refusing = registerHearing(() =>
+      Promise.resolve(() => Promise.reject(new Error('no listener'))),
+    )
+    const pdfs = registerHearing(() =>
+      Promise.resolve(() => {
+        heard.push('start pdfs')
+        return Promise.resolve(() => void heard.push('stop pdfs'))
+      }),
+    )
+    const stops = await startHearings()
+    for (const stop of stops) stop()
+    expect(heard).toEqual(['start pdfs', 'stop pdfs'])
+    unloaded()
+    refusing()
+    pdfs()
   })
 
   it('reads command rows of a place once loaded, with the view handed in, and none for a failed load', async () => {

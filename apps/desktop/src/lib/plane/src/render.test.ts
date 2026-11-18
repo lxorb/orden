@@ -10,7 +10,7 @@ vi.mock('../../link-index/src/api', async () => {
         path,
         read: () => Promise.resolve(null),
       }),
-      targetOf: (_from: string | null, link: { target: string }) =>
+      reachedOf: (_from: string | null, link: { target: string }) =>
         link.target.toLowerCase() === 'plan' ? 'Plan.md' : null,
     },
     notePicture: (src: string, notePath: string | null, source: string) =>

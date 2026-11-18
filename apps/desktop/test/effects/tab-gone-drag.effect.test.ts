@@ -8,22 +8,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-class NoLayout {
-  observe() {
-    // Nothing ever moves in jsdom, so nothing is ever reported.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 document.elementFromPoint = () => null
 document.elementsFromPoint = () => []
 

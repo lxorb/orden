@@ -34,27 +34,12 @@ const said = (doc: string) => {
 }
 
 describe('what a fence says', () => {
-  test('a language on its own', () => {
-    expect(said('```js\nlet a = 1\n```')).toEqual({ language: 'js', caption: '' })
-  })
-
-  test('the words after the language are what the block is', () => {
-    expect(said('```ts src/main.ts\nlet a = 1\n```')).toEqual({
-      language: 'ts',
-      caption: 'src/main.ts',
-    })
-  })
-
-  test('a language is one word however the caption is written', () => {
-    expect(said('```js title="setup.js"\nlet a = 1\n```')).toEqual({
-      language: 'js',
-      caption: 'setup.js',
-    })
-  })
-
-  test('a fence with no info string says nothing', () => {
-    expect(said('```\nplain\n```')).toEqual({ language: '', caption: '' })
-  })
+  test.each([
+    ['```js\nlet a = 1\n```', { language: 'js', caption: '' }],
+    ['```ts src/main.ts\nlet a = 1\n```', { language: 'ts', caption: 'src/main.ts' }],
+    ['```js title="setup.js"\nlet a = 1\n```', { language: 'js', caption: 'setup.js' }],
+    ['```\nplain\n```', { language: '', caption: '' }],
+  ])('%j', (input, wanted) => expect(said(input)).toEqual(wanted))
 
   test('the code is the code either way', () => {
     const { state, node } = fence('```ts src/main.ts\nlet a = 1\nlet b = 2\n```')

@@ -8,7 +8,6 @@ export interface Mounted {
 }
 
 const mounted = new Map<string, Mounted>()
-
 const spelled = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '')
 
 export function mountRoot(one: Mounted): () => void {

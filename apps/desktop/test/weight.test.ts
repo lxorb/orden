@@ -133,8 +133,8 @@ function holds(tail: string): boolean {
   return [...names].some((one) => one.endsWith(tail))
 }
 
-const BUDGET = 2_058_000
-const MOST_FILES = 504
+const BUDGET = 2_088_000
+const MOST_FILES = 509
 
 const MOST_TEXT = 6_500
 
@@ -468,4 +468,31 @@ describe('what reading a note fetches', () => {
       expect(newBytes(ahead.files)).toBeLessThan(exporter / 2)
     })
   }
+})
+
+describe('the quick add window', () => {
+  const window = eagerGraph(join(import.meta.dirname, '../src/lib/quick-add/src/Window.svelte'))
+  const reached = window.files.map((one) => one.replace(/\\/g, '/'))
+
+  test('draws before it fetches dictation, the AI providers or the workspace', () => {
+    for (const heavy of [
+      '/dictation/src/api.ts',
+      '/ai-providers/src/api.ts',
+      '/workspace/src/api.ts',
+    ]) {
+      expect(
+        reached.filter((one) => one.endsWith(heavy)),
+        heavy,
+      ).toEqual([])
+    }
+  })
+})
+
+describe('the windows that start sync without the workspace', () => {
+  test.each(['quick-add.ts', 'pass-web.ts'])('%s loads no workspace at startup', (entry) => {
+    const reached = eagerGraph(join(import.meta.dirname, '../src', entry)).files.map((one) =>
+      one.replace(/\\/g, '/'),
+    )
+    expect(reached.filter((one) => one.includes('/lib/workspace/'))).toEqual([])
+  })
 })

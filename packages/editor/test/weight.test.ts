@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
 const MARKDOWN = fileURLToPath(new URL('../../markdown/src/', import.meta.url))
-
 const DOOR = join(import.meta.dirname, '../../lang-html/src/index.ts')
 
 function graphOf(entry: string): { files: string[]; packages: Set<string> } {
@@ -35,9 +34,8 @@ describe('what showing a note loads', () => {
   test('no formula engine, no chemistry pack and no emoji table: the renderer asks for them', () => {
     const { packages, files } = graphOf(resolve(MARKDOWN, 'index.ts'))
 
-    for (const heavy of ['katex', 'katex/contrib/mhchem', 'node-emoji']) {
+    for (const heavy of ['katex', 'katex/contrib/mhchem', 'node-emoji'])
       expect(packages, heavy).not.toContain(heavy)
-    }
     expect(names(files)).toContain('engines.ts')
   })
 

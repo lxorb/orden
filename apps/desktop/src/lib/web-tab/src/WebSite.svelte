@@ -1,16 +1,13 @@
 <script lang="ts">
-  import { Facts } from '../../ui-kit/src/api'
+  import Glyph from './Glyph.svelte'
+  import { Facts, overlays } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
-  import { localDate } from '../../platform/src/api'
+  import { localDate, invoke, dur, fly } from '../../platform/src/api'
   import { shownSite } from './idn'
-  import { invoke } from '../../platform/src/api'
-  import { dur, fly } from '../../platform/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import type { Ask } from './permissions.svelte'
-  import { ASKS, grants } from './permissions.svelte'
+  import { ASKS, grants, type Ask } from './permissions.svelte'
 
   const {
     url,
@@ -70,14 +67,12 @@
   }
 
   const https = $derived(url?.startsWith('https:') === true)
-
   let certificate = $state<Certificate | null>(null)
   let asked = $state(false)
   $effect(() => {
-    if (!https || !url) {
-      certificate = null
-      return
-    }
+    certificate = null
+    asked = false
+    if (!https || !url) return
     let gone = false
     void invoke<Certificate | null>('web_certificate', { tab, address: url })
       .then((said) => {
@@ -93,14 +88,11 @@
   let chosen = $state(0)
   const at = $derived(certificate && chosen < certificate.chain.length ? chosen : 0)
   const shown = $derived(certificate?.chain[at])
-
   const secure = $derived(certificate ? certificate.secure : https)
-
   const named = (party: Party) => [party.name, ...party.organization]
   const day = (when: number) => localDate(when, { dateStyle: 'long' })
   const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
-
   let bubble = $state<HTMLElement>()
   $effect(() =>
     overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="site"]')]),
@@ -115,11 +107,7 @@
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
   {#snippet how()}
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each secure ? Lock : TriangleAlert as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
+    <Glyph icon={secure ? Lock : TriangleAlert} />
     <span class="said">{secure ? 'Connection is secure' : 'Connection is not secure'}</span>
   {/snippet}
 

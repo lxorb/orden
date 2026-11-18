@@ -31,21 +31,11 @@ import type {
   Wording,
 } from './types'
 
-export function socketPath(chat: string): string {
-  return `/v2/chats/${encodeURIComponent(chat)}/socket`
-}
+export const socketPath = (chat: string): string => `/v2/chats/${encodeURIComponent(chat)}/socket`
 
-export type Refusal = 'role' | 'gone' | 'posting' | 'slow' | 'rate' | 'large' | 'invalid'
+export const REFUSALS = ['role', 'gone', 'posting', 'slow', 'rate', 'large', 'invalid'] as const
 
-export const REFUSALS: readonly Refusal[] = [
-  'role',
-  'gone',
-  'posting',
-  'slow',
-  'rate',
-  'large',
-  'invalid',
-]
+export type Refusal = (typeof REFUSALS)[number]
 
 export type ClientFrame =
   | { t: 'hello'; since?: number }
@@ -63,9 +53,7 @@ export type ServerFrame =
   | { t: 'here'; who: Who[] }
   | { t: 'profile'; who: Who }
 
-export function text(frame: ClientFrame | ServerFrame | ChatPoke): string {
-  return JSON.stringify(frame)
-}
+export const text = (frame: ClientFrame | ServerFrame | ChatPoke): string => JSON.stringify(frame)
 
 export interface ChatPoke {
   t: 'chat'
@@ -145,53 +133,38 @@ const MOST_HISTORY = 100
 
 type Fields = Record<string, unknown>
 
-function isRecord(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Fields =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-function isId(value: unknown): value is string {
-  return typeof value === 'string' && ID.test(value)
-}
+const isId = (value: unknown): value is string => typeof value === 'string' && ID.test(value)
 
-export function isWho(value: unknown): value is Who {
-  return typeof value === 'string' && WHO.test(value)
-}
+export const isWho = (value: unknown): value is Who => typeof value === 'string' && WHO.test(value)
 
-function isMention(value: unknown): value is Mention {
-  return value === 'here' || value === 'everyone' || isWho(value)
-}
+const isMention = (value: unknown): value is Mention =>
+  value === 'here' || value === 'everyone' || isWho(value)
 
-function isHash(value: unknown): value is string {
-  return typeof value === 'string' && HASH.test(value)
-}
+const isHash = (value: unknown): value is string => typeof value === 'string' && HASH.test(value)
 
-function isCount(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-}
+const isCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
-function isTime(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
-}
+const isTime = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0
 
-function isText(value: unknown, most: number): value is string {
-  return typeof value === 'string' && value.length <= most
-}
+const isText = (value: unknown, most: number): value is string =>
+  typeof value === 'string' && value.length <= most
 
-function isLine(value: unknown, most: number): value is string {
-  return isText(value, most) && value.trim().length > 0
-}
+const isLine = (value: unknown, most: number): value is string =>
+  isText(value, most) && value.trim().length > 0
 
-function isEmoji(value: unknown): value is string {
-  return isLine(value, LONGEST_EMOJI) && !/\s/.test(value)
-}
+const isEmoji = (value: unknown): value is string =>
+  isLine(value, LONGEST_EMOJI) && !/\s/.test(value)
 
-function isUrl(value: unknown): value is string {
-  return isText(value, LONGEST_URL) && /^https?:\/\/\S+$/i.test(value)
-}
+const isUrl = (value: unknown): value is string =>
+  isText(value, LONGEST_URL) && /^https?:\/\/\S+$/i.test(value)
 
-function oneOf<T>(list: readonly T[], value: unknown): value is T {
-  return list.some((one) => one === value)
-}
+const oneOf = <T>(list: readonly T[], value: unknown): value is T =>
+  list.some((one) => one === value)
 
 function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | null): T[] | null {
   if (!Array.isArray(value) || value.length > most) return null
@@ -204,25 +177,27 @@ function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | nu
   return out
 }
 
-function optional<T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined {
-  return value === undefined ? undefined : check(value)
+const optional = <T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined =>
+  value === undefined ? undefined : check(value)
+
+function filled<T extends object>(
+  base: T,
+  extra: { [K in keyof T]?: T[K] | null | undefined },
+): T | null {
+  const given = Object.entries(extra)
+  if (given.some(([, one]) => one === null)) return null
+  for (const [key, one] of given) if (one !== undefined) Object.assign(base, { [key]: one })
+  return base
 }
 
-function idOf(value: unknown): string | null {
-  return isId(value) ? value : null
-}
+const idOf = (value: unknown): string | null => (isId(value) ? value : null)
 
-function whoOf(value: unknown): Who | null {
-  return isWho(value) ? value : null
-}
+const whoOf = (value: unknown): Who | null => (isWho(value) ? value : null)
 
-function mentionOf(value: unknown): Mention | null {
-  return isMention(value) ? value : null
-}
+const mentionOf = (value: unknown): Mention | null => (isMention(value) ? value : null)
 
-function answerOf(value: unknown): number | null {
-  return isCount(value) && value < MOST_ANSWERS ? value : null
-}
+const answerOf = (value: unknown): number | null =>
+  isCount(value) && value < MOST_ANSWERS ? value : null
 
 function parsed(raw: string): unknown {
   try {
@@ -237,40 +212,32 @@ export function fileRefOf(value: unknown): FileRef | null {
   const { hash, name, size, type } = value
   if (!isHash(hash) || !isLine(name, LONGEST_NAME) || !isLine(type, LONGEST_NAME)) return null
   if (!isCount(size) || size > MOST_FILE_BYTES) return null
-  const file: FileRef = { hash, name, size, type }
-
   const side = (one: unknown) => (isCount(one) && one > 0 && one <= MOST_PIXELS ? one : null)
-  const width = optional(value.width, side)
-  const height = optional(value.height, side)
-  const preview = optional(value.preview, (one) => (isHash(one) ? one : null))
-  const seconds = optional(value.seconds, (one) =>
-    isTime(one) && one <= MOST_SECONDS ? one : null,
+  return filled<FileRef>(
+    { hash, name, size, type },
+    {
+      width: optional(value.width, side),
+      height: optional(value.height, side),
+      preview: optional(value.preview, (one) => (isHash(one) ? one : null)),
+      seconds: optional(value.seconds, (one) => (isTime(one) && one <= MOST_SECONDS ? one : null)),
+      wave: optional(value.wave, (one) => {
+        const bars = listOf(one, WAVE_BARS, (bar) => (isCount(bar) && bar <= 255 ? bar : null))
+        return bars?.length === WAVE_BARS ? bars : null
+      }),
+    },
   )
-  const wave = optional(value.wave, (one) => {
-    const bars = listOf(one, WAVE_BARS, (bar) => (isCount(bar) && bar <= 255 ? bar : null))
-    return bars?.length === WAVE_BARS ? bars : null
-  })
-  if (width === null || height === null || preview === null || seconds === null || wave === null)
-    return null
-  if (width !== undefined) file.width = width
-  if (height !== undefined) file.height = height
-  if (preview !== undefined) file.preview = preview
-  if (seconds !== undefined) file.seconds = seconds
-  if (wave !== undefined) file.wave = wave
-  return file
 }
 
 function previewOf(value: unknown): Preview | null {
   if (!isRecord(value) || !isUrl(value.url) || !isLine(value.title, LONGEST_TITLE)) return null
-  const preview: Preview = { url: value.url, title: value.title }
-  const site = optional(value.site, (one) => (isLine(one, LONGEST_SITE) ? one : null))
-  const words = optional(value.text, (one) => (isText(one, LONGEST_TEXT) ? one : null))
-  const picture = optional(value.picture, (one) => (isHash(one) ? one : null))
-  if (site === null || words === null || picture === null) return null
-  if (site !== undefined) preview.site = site
-  if (words !== undefined) preview.text = words
-  if (picture !== undefined) preview.picture = picture
-  return preview
+  return filled<Preview>(
+    { url: value.url, title: value.title },
+    {
+      site: optional(value.site, (one) => (isLine(one, LONGEST_SITE) ? one : null)),
+      text: optional(value.text, (one) => (isText(one, LONGEST_TEXT) ? one : null)),
+      picture: optional(value.picture, (one) => (isHash(one) ? one : null)),
+    },
+  )
 }
 
 function pollOf(value: unknown): Poll | null {
@@ -280,22 +247,20 @@ function pollOf(value: unknown): Poll | null {
     isLine(one, LONGEST_ANSWER) ? one : null,
   )
   if (!answers || answers.length < FEWEST_ANSWERS) return null
-  const poll: Poll = { question: value.question, answers, several: value.several }
-  const ends = optional(value.ends, (one) => (isTime(one) ? one : null))
-  if (ends === null) return null
-  if (ends !== undefined) poll.ends = ends
-  return poll
+  return filled<Poll>(
+    { question: value.question, answers, several: value.several },
+    { ends: optional(value.ends, (one) => (isTime(one) ? one : null)) },
+  )
 }
 
 function viaOf(value: unknown): { agent: string } | null {
-  return isRecord(value) && isLine(value.agent, LONGEST_AGENT) ? { agent: value.agent } : null
+  if (!isRecord(value) || !isLine(value.agent, LONGEST_AGENT)) return null
+  return /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(value.agent) ? null : { agent: value.agent }
 }
 
 function postOf(value: Fields): Post | null {
   const { id, message, body } = value
   if (!isId(id) || !isId(message) || !isText(body, MOST_BODY)) return null
-  const post: Post = { kind: 'post', id, message, body }
-
   const parent = optional(value.parent, idOf)
   const quote = optional(value.quote, idOf)
   const files = optional(value.files, (one) => listOf(one, MOST_FILES, fileRefOf))
@@ -304,20 +269,21 @@ function postOf(value: Fields): Post | null {
   const via = optional(value.via, viaOf)
   const also = optional(value.alsoToChat, (one) => (typeof one === 'boolean' ? one : null))
   const mentions = optional(value.mentions, (one) => listOf(one, MOST_MEMBERS + 2, mentionOf))
-  if (parent === null || quote === null || files === null || poll === null) return null
-  if (preview === null || via === null || also === null || mentions === null) return null
-
   if (!body.trim() && !files?.length && !poll) return null
   if (also !== undefined && parent === undefined) return null
-  if (parent !== undefined) post.parent = parent
-  if (quote !== undefined) post.quote = quote
-  if (files !== undefined) post.files = files
-  if (poll) post.poll = poll
-  if (preview) post.preview = preview
-  if (via) post.via = via
-  if (also !== undefined) post.alsoToChat = also
-  if (mentions) post.mentions = [...new Set(mentions)]
-  return post
+  return filled<Post>(
+    { kind: 'post', id, message, body },
+    {
+      parent,
+      quote,
+      files,
+      poll,
+      preview,
+      via,
+      alsoToChat: also,
+      mentions: mentions && [...new Set(mentions)],
+    },
+  )
 }
 
 function metaKeysOf(value: Fields): Partial<Meta> | null {
@@ -328,12 +294,7 @@ function metaKeysOf(value: Fields): Partial<Meta> | null {
   const slowmode = optional(value.slowmode, (one) =>
     isCount(one) && one <= MOST_SLOWMODE ? one : null,
   )
-  if (topic === null || posting === null || slowmode === null) return null
-  const meta: Partial<Meta> = {}
-  if (topic !== undefined) meta.topic = topic
-  if (posting !== undefined) meta.posting = posting
-  if (slowmode !== undefined) meta.slowmode = slowmode
-  return meta
+  return filled<Partial<Meta>>({}, { topic, posting, slowmode })
 }
 
 export function eventOf(value: unknown): Event | null {
@@ -357,10 +318,10 @@ export function eventOf(value: unknown): Event | null {
     case 'edit': {
       if (!isText(value.body, MOST_BODY)) return null
       const files = optional(value.files, (one) => listOf(one, MOST_FILES, fileRefOf))
-      if (files === null) return null
-      return files === undefined
-        ? { kind: 'edit', id, target, body: value.body }
-        : { kind: 'edit', id, target, body: value.body, files }
+      return filled<Extract<Event, { kind: 'edit' }>>(
+        { kind: 'edit', id, target, body: value.body },
+        { files },
+      )
     }
     case 'delete':
       return { kind: 'delete', id, target }
@@ -387,17 +348,13 @@ export function loggedOf(value: unknown): Logged | null {
   if (madeAt !== undefined && !isTime(madeAt)) return null
   const event = eventOf(value)
   if (!event) return null
-  const logged: Logged = { ...event, seq, at, author }
-  if (device !== undefined) logged.device = device
-  if (madeAt !== undefined) logged.madeAt = madeAt
-  return logged
+  return filled<Logged>({ ...event, seq, at, author }, { device, madeAt })
 }
 
-function wordingOf(value: unknown): Wording | null {
-  return isRecord(value) && isText(value.body, MOST_BODY) && isTime(value.at)
+const wordingOf = (value: unknown): Wording | null =>
+  isRecord(value) && isText(value.body, MOST_BODY) && isTime(value.at)
     ? { body: value.body, at: value.at }
     : null
-}
 
 function votesOf(value: unknown): Record<Who, number[]> | null {
   if (!isRecord(value)) return null
@@ -466,15 +423,7 @@ export function messageOf(value: unknown): Message | null {
     const votes = isRecord(one) ? votesOf(one.votes) : null
     return asked && votes && { ...asked, votes }
   })
-  if ([parent, quote, preview, via, editedAt, lastReplyAt, poll].includes(null)) return null
-  if (parent) message.parent = parent
-  if (quote) message.quote = quote
-  if (preview) message.preview = preview
-  if (via) message.via = via
-  if (editedAt !== undefined && editedAt !== null) message.editedAt = editedAt
-  if (lastReplyAt !== undefined && lastReplyAt !== null) message.lastReplyAt = lastReplyAt
-  if (poll) message.poll = poll
-  return message
+  return filled(message, { parent, quote, preview, via, editedAt, lastReplyAt, poll })
 }
 
 function metaOf(value: unknown): Meta | null {
@@ -595,9 +544,8 @@ export function chatListOf(value: unknown): ChatList | null {
   return { chats }
 }
 
-export function newChatOf(value: unknown): NewChat | null {
-  return isRecord(value) && isLine(value.space, LONGEST_DEVICE) ? { space: value.space } : null
-}
+export const newChatOf = (value: unknown): NewChat | null =>
+  isRecord(value) && isLine(value.space, LONGEST_DEVICE) ? { space: value.space } : null
 
 export function eventsPageOf(value: unknown): EventsPage | null {
   if (!isRecord(value) || typeof value.more !== 'boolean') return null

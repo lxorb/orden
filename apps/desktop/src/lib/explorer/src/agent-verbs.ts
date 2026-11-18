@@ -10,6 +10,7 @@ import {
   type Call,
   done,
   gatedBy,
+  inTime,
   maybe,
   need,
   Refused,
@@ -99,6 +100,7 @@ async function changed(
   const question = await asked(call, category, summary(op, paths, to, maybe(call, 'name')), folder)
   if (question) return question
 
+  inTime(call, `the ${op} began`)
   const said: string[] = []
   const tell = view.tell.bind(view)
   view.tell = (words: string) => {
@@ -120,7 +122,7 @@ async function changed(
     } else if (to) {
       const { listFolder } = await import('./commands')
       await listFolder(to)
-      await carry(view, paths, to, op === 'move' ? 'move' : 'copy')
+      await carry(view, paths, to, op === 'move' ? 'move' : 'copy', true)
     }
   } catch (error) {
     if (error instanceof Refused) throw error
@@ -174,8 +176,17 @@ async function looked(call: Call, folder: string): Promise<string | AgentAnswer>
   return listing.path
 }
 
+function stepsAside(path: string): boolean {
+  return (
+    /^\\\\[?.]\\/.test(path) || path.split(/[\\/]/).some((step) => step === '.' || step === '..')
+  )
+}
+
 async function absolute(asked: string): Promise<string> {
   const said = asked.trim()
+  if (stepsAside(said)) {
+    throw new Refused('bad_arguments', `${asked} steps aside with . or ..: say the path itself`)
+  }
   if (said === '~' || /^~[\\/]/.test(said)) {
     const { places } = await import('./places.svelte')
     const home = await places.home()
@@ -216,9 +227,11 @@ async function pathsOf(call: Call, view: View): Promise<string[]> {
   }
   const out: string[] = []
   for (const one of raw) {
-    out.push(
-      /^(~|\/|[A-Za-z]:[\\/]|\\\\)/.test(one.trim()) ? await absolute(one) : view.pathOf(one),
-    )
+    const named = one.trim()
+    if (/^(~|\/|[A-Za-z]:[\\/]|\\\\)/.test(named)) out.push(await absolute(one))
+    else if (/[\\/]/.test(named) || named === '.' || named === '..') {
+      throw new Refused('bad_arguments', `${one} is not a name in the tab’s folder`)
+    } else out.push(view.pathOf(one))
   }
   return out
 }
@@ -233,17 +246,15 @@ function explorerTab(call: Call): Tab {
   return tab
 }
 
-function listed(tab: Tab, view: View) {
-  return {
-    tab: tab.id,
-    folder: view.listing?.path ?? view.folder,
-    picked: view.chosen,
-    view: view.search ? 'search' : 'folder',
-  }
-}
+const listed = (tab: Tab, view: View) => ({
+  tab: tab.id,
+  folder: view.listing?.path ?? view.folder,
+  picked: view.chosen,
+  view: view.search ? 'search' : 'folder',
+})
 
-function shown(tab: Tab, view: View): AgentAnswer {
-  return done(
+const shown = (tab: Tab, view: View): AgentAnswer =>
+  done(
     {
       ...listed(tab, view),
       entries: view.rows.slice(0, 500).map((one) => ({
@@ -256,7 +267,6 @@ function shown(tab: Tab, view: View): AgentAnswer {
     },
     `the names of files in ${view.listing?.path ?? 'a folder'}`,
   )
-}
 
 export const explorerVerbs = verbsOf({
   explorer_tabs: gatedBy(() => explorerOn(), 'the file explorer is', explorerTabs),

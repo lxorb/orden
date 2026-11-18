@@ -1,3 +1,4 @@
+import { shownHost } from '@orden/scan/web-address'
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords, taskWords } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
@@ -6,11 +7,11 @@ import { busy } from '../../ui-kit/src/api'
 import { isPicturePath } from '../../platform/src/api'
 import { applyImport } from './apply'
 import { dayOf, noteText } from './meta'
-import { safeName, titleFrom } from './names'
+import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
+import { decoded } from './sources'
 
 const NOTES = /\.(md|markdown|mdown|mkd|txt|text)$/i
-
 const ADDRESS = /https?:\/\/[^\s<>"')]+/
 
 export function arrivedFrom(json: string): Arrived | null {
@@ -67,26 +68,24 @@ export function isNote(item: SharedItem): boolean {
   return item.mime.includes('markdown') || NOTES.test(item.name)
 }
 
-export function sharedWords(arrived: Arrived): string {
-  return arrived.items
+export const sharedWords = (arrived: Arrived): string =>
+  arrived.items
     .map((one) => one.text)
     .filter((one): one is string => one !== null)
     .join('\n\n')
     .trim()
-}
 
 function saysMarkdown(item: SharedItem): boolean {
   return item.mime.includes('markdown') || /\.(md|markdown|mdown|mkd)$/i.test(item.name)
 }
 
-export function sharedMarkdown(arrived: Arrived): string {
-  return arrived.items
+export const sharedMarkdown = (arrived: Arrived): string =>
+  arrived.items
     .flatMap((one) =>
       one.text === null ? [] : [saysMarkdown(one) ? one.text : plainWords(one.text)],
     )
     .join('\n\n')
     .trim()
-}
 
 export function sharedTitle(arrived: Arrived): string {
   const subject = arrived.subject.trim()
@@ -101,7 +100,7 @@ export function sharedTitle(arrived: Arrived): string {
 
   const first = arrived.items.find((one) => one.text === null)
   if (first?.name) return safeName(first.name.replace(/\.[^.]+$/, ''))
-  if (address) return safeName(hostOf(address))
+  if (address) return safeName(shownHost(address))
 
   return 'Shared'
 }
@@ -113,11 +112,6 @@ export function sharedTask(arrived: Arrived): string {
   return address
     ? `[${taskWords(escapeText(title, { addresses: false }))}](${address})`
     : plainTaskWords(title)
-}
-
-function hostOf(address: string): string {
-  const found = /^https?:\/\/([^/?#]+)/.exec(address)
-  return found?.[1]?.replace(/^www\./, '') ?? 'Shared'
 }
 
 export function embedFor(item: SharedItem, src: string): string {
@@ -154,19 +148,20 @@ export function sharedPlan(
   const notes: Planned[] = []
   const beside: Planned[] = []
   const under = folder.replace(/^\/+|\/+$/g, '')
+  const names = new Names()
 
   arrived.items.forEach((item, at) => {
     const held = bytes.get(at)
     if (item.text !== null || !held?.length) return
 
     if (isNote(item)) {
-      const name = `${safeName(item.name.replace(/\.[^.]+$/, ''))}.md`
-      notes.push({ kind: 'note', path: name, text: new TextDecoder().decode(held) })
+      const name = names.free(`${safeName(item.name.replace(/\.[^.]+$/, ''))}.md`)
+      notes.push({ kind: 'note', path: name, text: decoded(held) })
       return
     }
 
     const name = safeName(item.name) || 'shared'
-    const path = under ? `${under}/${name}` : name
+    const path = names.free(under ? `${under}/${name}` : name)
     beside.push({ kind: 'file', path, bytes: held })
     embeds.push(embedFor(item, path))
   })
@@ -176,7 +171,7 @@ export function sharedPlan(
     const title = sharedTitle(arrived)
     about.push({
       kind: 'note',
-      path: `${title}.md`,
+      path: names.free(`${title}.md`),
       text: noteText(title, body, {
         date: dayOf(on.getTime()),
         ...(address ? { extra: [['source', address]] as const } : {}),

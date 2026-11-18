@@ -97,12 +97,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus poppler-utils python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder
-      - name: The .deb runs as orden, and as nib for the release after the rename
+      - name: The .deb runs as orden only
         run: |
           test -x /usr/bin/orden
-          test -x /usr/bin/nib
-          grep -qx 'exec /usr/bin/orden "$@"' /usr/bin/nib
-          grep -qx 'exec /usr/bin/orden "$@"' /usr/share/Orden/nib
+          test ! -e /usr/bin/nib
+          test ! -e /usr/share/Orden/nib
       - name: The .deb gives no file type an icon or a definition, Orden owning none
         run: |
           if dpkg-deb -c packages/deb/*.deb | grep -E '/mimetypes/|/mime/packages/'; then
@@ -219,15 +218,6 @@ jobs:
         env:
           OUT: wayland-out/pass
           PASS: '1'
-        run: |
-          pkill -f /usr/share/Orden/orden || true
-          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
-      - name: A private tab's permission answer kept from normal tabs, under sway
-        if: always()
-        env:
-          OUT: wayland-out/grants
-          GRANTS: '1'
         run: |
           pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
@@ -597,12 +587,11 @@ jobs:
         run: |
           dnf install -y ./packages/rpm/*.rpm sway xorg-x11-server-Xwayland mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
-      - name: The .rpm runs as orden, and as nib for the release after the rename
+      - name: The .rpm runs as orden only
         run: |
           test -x /usr/bin/orden
-          test -x /usr/bin/nib
-          grep -qx 'exec /usr/bin/orden "$@"' /usr/bin/nib
-          grep -qx 'exec /usr/bin/orden "$@"' /usr/share/Orden/nib
+          test ! -e /usr/bin/nib
+          test ! -e /usr/share/Orden/nib
       - name: The .rpm gives no file type an icon or a definition, Orden owning none
         run: |
           if rpm -qlp packages/rpm/*.rpm | grep -E '/mimetypes/|/mime/packages/'; then

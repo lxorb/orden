@@ -38,6 +38,7 @@
     "marks",
     "glyphs",
     "link-format",
-    "sidebar"
+    "sidebar",
+    "pass"
   ]
 }

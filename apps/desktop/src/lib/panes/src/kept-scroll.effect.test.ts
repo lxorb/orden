@@ -8,12 +8,7 @@ import {
   scrollKeyOf,
 } from './kept-scroll'
 import type { TabKind } from '@orden/contracts'
-
-const frames = async (count = 3) => {
-  for (let one = 0; one < count; one += 1) {
-    await new Promise((done) => requestAnimationFrame(() => done(null)))
-  }
-}
+import { settle } from '../../../../test/effects/settle'
 
 function scrolling(element: HTMLElement, height = 5000) {
   let top = 0
@@ -66,7 +61,7 @@ test.each([...SCROLL_KEPT])(
 
     const back = drawn(kind)
     const again = keepsScroll(back.root, key)
-    await frames()
+    await settle()
     expect(back.scroller.scrollTop).toBe(1234)
     expect(back.inner.scrollTop).toBe(77)
     again.destroy()
@@ -80,7 +75,7 @@ test('switching tabs in one pane hands each tab its own scroll', async () => {
 
   keeping.update('0:settings:')
   root.querySelector('section')!.replaceWith(drawn('settings').root.querySelector('section')!)
-  await frames()
+  await settle()
   const settings = scrolling(root.querySelector<HTMLElement>('.body')!)
   expect(settings.scrollTop).toBe(0)
   scrollTo(settings, 300)
@@ -88,7 +83,7 @@ test('switching tabs in one pane hands each tab its own scroll', async () => {
   keeping.update('0:pass:')
   root.querySelector('section')!.replaceWith(drawn('pass').root.querySelector('section')!)
   const pass = scrolling(root.querySelector<HTMLElement>('.body')!)
-  await frames()
+  await settle()
   expect(pass.scrollTop).toBe(900)
   keeping.destroy()
 })
@@ -97,22 +92,22 @@ test('each Settings page keeps its own scroll as the pages change under one scro
   const { root, scroller } = drawn('settings')
   scroller.dataset.scrollKey = 'general'
   const keeping = keepsScroll(root, '0:settings:')
-  await frames()
+  await settle()
   scrollTo(scroller, 600)
 
   scroller.dataset.scrollKey = 'appearance'
   scroller.scrollTop = 0
-  await frames()
+  await settle()
   expect(scroller.scrollTop).toBe(0)
   scrollTo(scroller, 250)
 
   scroller.dataset.scrollKey = 'general'
   scroller.scrollTop = 0
-  await frames()
+  await settle()
   expect(scroller.scrollTop).toBe(600)
 
   scroller.dataset.scrollKey = 'appearance'
-  await frames()
+  await settle()
   expect(scroller.scrollTop).toBe(250)
   keeping.destroy()
 })
@@ -130,7 +125,7 @@ test('two windows keep their own scroll for the same tab', async () => {
 
   const b = drawn(kind)
   const there = keepsScroll(b.root, other)
-  await frames()
+  await settle()
   expect(b.scroller.scrollTop).toBe(0)
   there.destroy()
 })
@@ -149,7 +144,7 @@ test('a scroll is kept across a restart', async () => {
 
   const after = drawn('time')
   const again = keepsScroll(after.root, '0:time:')
-  await frames()
+  await settle()
   expect(after.scroller.scrollTop).toBe(1500)
   again.destroy()
 })
@@ -158,7 +153,7 @@ test('a deep link that scrolls to a setting is not undone by the kept scroll', a
   const first = drawn('settings')
   first.scroller.dataset.scrollKey = 'general'
   const keeping = keepsScroll(first.root, '0:settings:')
-  await frames()
+  await settle()
   scrollTo(first.scroller, 2000)
   keeping.destroy()
 
@@ -167,7 +162,7 @@ test('a deep link that scrolls to a setting is not undone by the kept scroll', a
   holdScroll(back.scroller)
   back.scroller.scrollTop = 140
   const again = keepsScroll(back.root, '0:settings:')
-  await frames()
+  await settle()
   expect(back.scroller.scrollTop).toBe(140)
   again.destroy()
 })
@@ -186,7 +181,7 @@ test('a scroller that keeps its own place, a note or a reading view is left alon
   const back = drawn('channel')
   back.scroller.dataset.ownScroll = ''
   const again = keepsScroll(back.root, '0:channel:')
-  await frames()
+  await settle()
   expect(back.scroller.scrollTop).toBe(0)
   again.destroy()
 })
@@ -200,20 +195,20 @@ test('content that arrives late is scrolled once it is tall enough, and a hand o
   const back = drawn('explorer')
   const short = scrolling(back.scroller, 1000)
   const again = keepsScroll(back.root, '0:explorer:')
-  await frames()
+  await settle()
   expect(short.scrollTop).toBe(600)
   scrolling(back.scroller, 6000)
-  await frames()
+  await settle()
   expect(back.scroller.scrollTop).toBe(3000)
   again.destroy()
 
   const third = drawn('explorer')
   scrolling(third.scroller, 1000)
   const later = keepsScroll(third.root, '0:explorer:')
-  await frames()
+  await settle()
   third.root.dispatchEvent(new Event('wheel'))
   scrolling(third.scroller, 6000)
-  await frames()
+  await settle()
   expect(third.scroller.scrollTop).toBe(0)
   later.destroy()
 })

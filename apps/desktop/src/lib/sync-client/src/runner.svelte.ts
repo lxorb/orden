@@ -11,10 +11,11 @@ import {
   oneWriteAt,
   type Said,
   windows,
+  isRecord,
 } from '../../platform/src/api'
-import { notePass, readMirror, type Mirror } from '../../sync-mirror/src/api'
+import { MIRRORS_KEY, mirrorsFor, notePass } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
-import { isRecord } from './shape'
+import { calledAlso, revived } from './revived'
 import {
   type SyncFileDoer,
   type SyncFileOp,
@@ -98,27 +99,18 @@ const NUDGE = 2_000
 const FALLBACK = 30_000
 const HIDDEN_FALLBACK = 5 * 60_000
 
-const MIRRORS = 'orden:mirrors'
-
 const FIRST = 'first:'
 
 function v1Spaces(accountId: string): Map<string, V1Space> {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once by the first pass; nothing renders from it
   const out = new Map<string, V1Space>()
-  const saved = stored(MIRRORS)
-  if (!isRecord(saved)) return out
-  if (typeof saved.account === 'string' && saved.account !== accountId) return out
-  const held = isRecord(saved.mirrors) ? saved.mirrors : saved
-  for (const [root, one] of Object.entries(held)) {
-    const mirror: Mirror | null = readMirror(root, one)
-    if (mirror) {
-      out.set(mirror.spaceId, {
-        cursor: mirror.cursor,
-        notes: mirror.notes,
-        ...(mirror.moving ? { moving: mirror.moving } : {}),
-        ...(mirror.untold ? { untold: mirror.untold } : {}),
-      })
-    }
+  for (const mirror of Object.values(mirrorsFor(stored(MIRRORS_KEY), accountId))) {
+    out.set(mirror.spaceId, {
+      cursor: mirror.cursor,
+      notes: mirror.notes,
+      ...(mirror.moving ? { moving: mirror.moving } : {}),
+      ...(mirror.untold ? { untold: mirror.untold } : {}),
+    })
   }
   return out
 }
@@ -140,7 +132,7 @@ class Runner {
   lastSyncedAt = $state<number | null>(null)
   heldNotes = $state.raw<readonly Held[]>([])
 
-  private current: Engine | null = null
+  private current = $state.raw<Engine | null>(null)
 
   get engine(): Engine | null {
     return this.local ? null : this.current
@@ -172,7 +164,7 @@ class Runner {
   private binding = Promise.resolve()
   private watched: Watched | null = null
 
-  private local = false
+  private local = $state(false)
 
   private lane: Promise<unknown> = Promise.resolve()
 
@@ -583,7 +575,7 @@ class Runner {
       )
       const done = new Set([...kept].filter((id) => !gone.has(id)))
       const mirrors = await this.mirrorsNow(engine, user.id, listings, done, gone)
-      back = keepJson(MIRRORS, { account: user.id, seen: true, mirrors })
+      back = keepJson(MIRRORS_KEY, { account: user.id, seen: true, mirrors })
       return back
     } catch (error) {
       log('warn', `sync: the way back to v1 waits - ${String(error)}`)
@@ -633,13 +625,8 @@ class Runner {
     gone: ReadonlySet<string> = new Set(),
   ): Promise<Record<string, unknown>> {
     const out: Record<string, unknown> = {}
-    const saved = stored(MIRRORS)
-    if (isRecord(saved) && (typeof saved.account !== 'string' || saved.account === accountId)) {
-      const held = isRecord(saved.mirrors) ? saved.mirrors : saved
-      for (const [root, one] of Object.entries(held)) {
-        const mirror = readMirror(root, one)
-        if (mirror && !done.has(mirror.spaceId) && !gone.has(mirror.spaceId)) out[root] = one
-      }
+    for (const [root, mirror] of Object.entries(mirrorsFor(stored(MIRRORS_KEY), accountId))) {
+      if (!done.has(mirror.spaceId) && !gone.has(mirror.spaceId)) out[root] = mirror
     }
     return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
   }
@@ -688,7 +675,7 @@ class Runner {
       try {
         const done = await this.kept(engine)
         const mirrors = done.size ? await this.mirrorsNow(engine, accountId, null, done) : null
-        if (mirrors) keepJson(MIRRORS, { account: accountId, seen: true, mirrors })
+        if (mirrors) keepJson(MIRRORS_KEY, { account: accountId, seen: true, mirrors })
       } catch (error) {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
@@ -972,7 +959,7 @@ class Runner {
       const paired = pairing.pairs()
       const local = workspace().spaces.map((space) => space.root)
       const remote = account().spaces.map((space) => ({ id: space.id, role: space.role }))
-      for (const one of pairsFromV1(stored(MIRRORS), this.accountId, local, remote, paired)) {
+      for (const one of pairsFromV1(stored(MIRRORS_KEY), this.accountId, local, remote, paired)) {
         changes.push(...core.addSpace(one.spaceId, one.root, one.role))
       }
     }
@@ -1007,19 +994,23 @@ class Runner {
         this.own.delete(`moved:${from}`)
       }
     },
-    gone: async (path, kind) => {
+    gone: async (path, kind, back) => {
       this.own.add(`removed:${path}`)
       try {
-        await workspace().fileGone(path, kind)
+        await workspace().fileGone(path, kind, back)
         workspace().heardGone(path)
         this.treeStale()
       } finally {
         this.own.delete(`removed:${path}`)
       }
     },
-    written: (path) => {
+    written: (path, fresh) => {
       this.treeStale()
       workspace().fileWritten(path)
+      if (fresh) {
+        const roots = workspace().spaces.map((one) => one.root)
+        void revived(path, (one) => this.tracked(one)?.id, roots).catch(() => undefined)
+      }
     },
     writing: async (path, text, write) => {
       if (windows.alone) {
@@ -1052,8 +1043,11 @@ class Runner {
         })
       } else {
         await engine.removing(op.path, async () => {
-          const back = await run()
-          return typeof back === 'string' && back ? back : op.back
+          const id = this.tracked(op.path)?.id
+          const ran = await run()
+          const back = typeof ran === 'string' && ran ? ran : op.back
+          if (id && back) await calledAlso(back, id)
+          return back
         })
       }
     } finally {
@@ -1325,7 +1319,7 @@ class Runner {
     return names?.get(device) ?? ''
   }
 
-  private seen: Rows = { spaces: [], notes: [] }
+  private seen = $state.raw<Rows>({ spaces: [], notes: [] })
   private seenAt = $state.raw(new Map<string, { id: string; version: number; hash: string }>())
   private readonly relay = new LiveRelay((kind, what) => this.say(kind, what))
   private readonly mirrors = new Mirrors({

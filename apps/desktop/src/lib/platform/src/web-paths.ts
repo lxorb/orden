@@ -17,9 +17,7 @@ export function normalise(path: string): string {
   return `/${out.join('/')}`
 }
 
-export function basename(path: string): string {
-  return normalise(path).split('/').pop() ?? ''
-}
+export const basename = (path: string): string => normalise(path).split('/').pop() ?? ''
 
 export function parent(path: string): string {
   const parts = normalise(path).split('/')
@@ -27,9 +25,7 @@ export function parent(path: string): string {
   return parts.join('/') || '/'
 }
 
-export function join(dir: string, name: string): string {
-  return normalise(`${normalise(dir)}/${name}`)
-}
+export const join = (dir: string, name: string): string => normalise(`${normalise(dir)}/${name}`)
 
 export function hiddenUnder(root: string, path: string): boolean {
   const base = normalise(root)
@@ -43,21 +39,13 @@ export function under(root: string, path: string): boolean {
   return base === '/' || normalise(path).startsWith(`${base}/`)
 }
 
-export function isMarkdown(path: string): boolean {
-  return MARKDOWN.test(path)
-}
+export const isMarkdown = (path: string): boolean => MARKDOWN.test(path)
 
-export function isPdf(path: string): boolean {
-  return /\.pdf$/i.test(path)
-}
+export const isPdf = (path: string): boolean => /\.pdf$/i.test(path)
 
-export function isCanvas(path: string): boolean {
-  return /\.canvas$/i.test(path)
-}
+export const isCanvas = (path: string): boolean => /\.canvas$/i.test(path)
 
-export function isPages(path: string): boolean {
-  return /\.pages$/i.test(path)
-}
+export const isPages = (path: string): boolean => /\.pages$/i.test(path)
 
 export function spaceOf(path: string): string {
   const segment = normalise(path).split('/')[1]
@@ -65,13 +53,13 @@ export function spaceOf(path: string): string {
 }
 
 export function safeName(input: string): string | null {
+  const ends = /^[.\s]+|[.\s]+$/g
   const cleaned = input
-    .split('')
-    .map((c) => (c < ' ' || `<>:"/\\|?*`.includes(c) ? ' ' : c))
-    .join('')
-
-  const collapsed = cleaned.split(/\s+/).filter(Boolean).join(' ')
-  const trimmed = collapsed.replace(/^[.\s]+|[.\s]+$/g, '')
-
-  return trimmed ? trimmed.slice(0, 64) : null
+    .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(' ')
+    .replace(ends, '')
+  const cut = Array.from(cleaned).slice(0, 64).join('').replace(ends, '')
+  return cut || null
 }

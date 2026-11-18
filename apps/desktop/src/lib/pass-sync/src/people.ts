@@ -1,6 +1,7 @@
 import { fingerprintOf } from '@orden/pass/crypto'
 import { isSignPub } from '@orden/pass/shape'
 import { safetyCodeOf } from '@orden/pass/trust'
+import { isFields } from './sync'
 import type { DeviceRows } from './synced'
 
 export interface PersonKey {
@@ -28,10 +29,6 @@ export class PersonChanged extends Error {
     super('Their key is not the one this device knew. Check their safety code with them again.')
     this.name = 'PersonChanged'
   }
-}
-
-function isFields(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function pinnedIn(value: unknown): Pinned | null {

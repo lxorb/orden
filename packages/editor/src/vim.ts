@@ -18,9 +18,7 @@ export function setVimCommands(next: VimCommands) {
   commands = next
 }
 
-export function vimCommands(): VimCommands | null {
-  return commands
-}
+export const vimCommands = (): VimCommands | null => commands
 
 export type VimReport = (view: EditorView, mode: VimMode | null) => void
 
@@ -30,9 +28,7 @@ export function onVimMode(next: VimReport) {
   report = next
 }
 
-export function vimReport(): VimReport | null {
-  return report
-}
+export const vimReport = (): VimReport | null => report
 
 export function modeOf(mode: string | undefined): VimMode {
   const first = (mode ?? '').split(' ')[0]
@@ -53,9 +49,7 @@ export const loadVim: () => Promise<void> = door(async () => {
   for (const view of openViews()) view.dispatch({ effects: vimEffect(true) })
 })
 
-export function vimExtensions() {
-  return [modal.of([]), enrolled]
-}
+export const vimExtensions = () => [modal.of([]), enrolled]
 
 export function vimEffect(on: boolean): StateEffect<unknown> {
   wanted = on

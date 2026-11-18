@@ -10,9 +10,8 @@ import { isOnlineTab } from '../../online-terms/src/api'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 
-export function isDraft(note: NoteDoc): boolean {
-  return note.path === null && note.shared === null && holdsWords(note.kind)
-}
+export const isDraft = (note: NoteDoc): boolean =>
+  note.path === null && note.shared === null && holdsWords(note.kind)
 
 export function isUnsaved(note: NoteDoc): boolean {
   if (isDraft(note)) return true
@@ -20,21 +19,8 @@ export function isUnsaved(note: NoteDoc): boolean {
   return note.kind === 'web' || isOnlineTab({ kind: note.kind, path: null, doc: note.text })
 }
 
-export function hasWords(note: NoteDoc): boolean {
-  return note.kind === 'note' ? !note.blank : note.dirty
-}
-
-export function worthAFile(note: NoteDoc): boolean {
-  if (!hasWords(note)) return false
-  if (note.kind !== 'note') return true
-
-  return (
-    note.live.text
-      .sliceString(0, 4096)
-      .replace(/^[ \t]*(?:>[ \t]?)*(?:#{1,6}|[-*+]|\d+[.)])?(?:[ \t]+\[[ xX]\])?[ \t]*/gmu, '')
-      .replace(/[\s\u200B-\u200D\u2060\uFEFF]/gu, '') !== ''
-  )
-}
+export const hasWords = (note: NoteDoc): boolean =>
+  note.kind === 'note' ? !note.blank : note.dirty
 
 export function fileNamed(name: string, kind: TabKind): string {
   const extension = TAB_KINDS[kind].extension
@@ -45,9 +31,8 @@ export function fileNamed(name: string, kind: TabKind): string {
   return already ? name : `${name}${extension}`
 }
 
-export function namedByWords(note: NoteDoc): boolean {
-  return note.kind === 'note' && note.name === UNTITLED
-}
+export const namedByWords = (note: NoteDoc): boolean =>
+  note.kind === 'note' && note.name === UNTITLED
 
 export function offeredName(note: NoteDoc, title?: string): string {
   if (note.kind === 'web') return nameFromTitle(title?.trim() ? title : note.name) ?? UNTITLED
@@ -56,6 +41,4 @@ export function offeredName(note: NoteDoc, title?: string): string {
   return nameFromContent(note.live.text.sliceString(0, TITLE_CHARS)) ?? UNTITLED
 }
 
-export function draftFile(note: NoteDoc): string {
-  return fileNamed(offeredName(note), note.kind)
-}
+export const draftFile = (note: NoteDoc): string => fileNamed(offeredName(note), note.kind)

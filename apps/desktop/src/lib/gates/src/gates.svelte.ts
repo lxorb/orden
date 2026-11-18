@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
 import { modes } from '../../modes/src/api'
-import { isDesktop, stored, stringList } from '../../platform/src/api'
+import { heardElsewhere, isDesktop, stored, stringList } from '../../platform/src/api'
 import { viewport } from '../../ui-kit/src/api'
 
 export const KINDS_KEY = 'orden:hidden-kinds'
@@ -10,6 +10,7 @@ export type KindName =
   | 'canvas'
   | 'pages'
   | 'chat'
+  | 'ai'
   | 'terminal'
   | 'remote'
   | 'online'
@@ -19,12 +20,13 @@ export type KindName =
   | 'web'
   | 'private'
 
-export function kindsHere(): KindName[] {
-  if (__EVEN_PLUGIN__) return ['note', 'canvas', 'pages']
+export function kindsHere(plugin = __EVEN_PLUGIN__): KindName[] {
+  if (plugin) return ['note']
 
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken && chatsOn()) here.push('chat')
+  if (web) here.push('ai')
   if (isDesktop && modes.coder) here.push('terminal', 'remote')
   if (modes.coder) here.push('online')
   if (appsOn()) here.push('application')
@@ -67,6 +69,8 @@ class HiddenKinds {
 }
 
 export const hiddenKinds = new HiddenKinds()
+
+heardElsewhere([KINDS_KEY], () => hiddenKinds.restore())
 
 export const EXPERIMENTAL_WORD = 'experimental'
 

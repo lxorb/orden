@@ -8,40 +8,33 @@ const KEYBOARDS = ['Default', 'Notion', 'Obsidian', 'Vim']
 const at = (from: Walk, key: string, moment = 1000) => walk(key, moment, KEYBOARDS, from)
 
 describe('opening the list', () => {
-  test('puts the keyboard on the row the value is', () => {
+  test('puts the keyboard on the row the value is, or on none where the list does not hold it', () => {
     expect(opensAt(2)).toEqual({ cursor: 2, typed: '', typedAt: 0 })
-  })
-
-  test('puts it on no row at all where the list does not hold the value', () => {
     expect(opensAt(-1).cursor).toBeNull()
   })
 })
 
 describe('walking it', () => {
-  test('steps down and wraps at the end', () => {
-    expect(at(opensAt(2), 'ArrowDown').walk.cursor).toBe(3)
-    expect(at(opensAt(3), 'ArrowDown').walk.cursor).toBe(0)
-  })
-
-  test('steps up and wraps at the start', () => {
-    expect(at(opensAt(1), 'ArrowUp').walk.cursor).toBe(0)
-    expect(at(opensAt(0), 'ArrowUp').walk.cursor).toBe(3)
-  })
-
-  test('goes to either end', () => {
-    expect(at(opensAt(2), 'Home').walk.cursor).toBe(0)
-    expect(at(opensAt(0), 'End').walk.cursor).toBe(3)
-  })
-
-  test('starts at one end when it was on no row', () => {
-    expect(at(opensAt(-1), 'ArrowDown').walk.cursor).toBe(0)
-    expect(at(opensAt(-1), 'ArrowUp').walk.cursor).toBe(3)
-  })
+  test.each([
+    [2, 'ArrowDown', 3],
+    [3, 'ArrowDown', 0],
+    [1, 'ArrowUp', 0],
+    [0, 'ArrowUp', 3],
+    [2, 'Home', 0],
+    [0, 'End', 3],
+    [-1, 'ArrowDown', 0],
+    [-1, 'ArrowUp', 3],
+    [1, 'z', 1],
+  ])(
+    'from row %i, %s steps, wraps, goes to an end, or stays for a word no row starts with',
+    (from, key, to) => {
+      expect(at(opensAt(from), key).walk.cursor).toBe(to)
+    },
+  )
 
   test('jumps to what is being spelled, letters in a row counting as one word', () => {
     const first = at(opensAt(0), 'o')
     expect(first.walk.cursor).toBe(2)
-
     const second = walk('b', 1300, KEYBOARDS, first.walk)
     expect(second.walk.cursor).toBe(2)
     expect(second.walk.typed).toBe('ob')
@@ -50,13 +43,8 @@ describe('walking it', () => {
   test('and starts the word again after a pause', () => {
     const first = at(opensAt(0), 'o')
     const later = walk('v', 4000, KEYBOARDS, first.walk)
-
     expect(later.walk.typed).toBe('v')
     expect(later.walk.cursor).toBe(3)
-  })
-
-  test('stays where it is for a word no row starts with', () => {
-    expect(at(opensAt(1), 'z').walk.cursor).toBe(1)
   })
 
   test('leaves a key that is nobody else’s alone', () => {
@@ -99,7 +87,6 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
 
   test('and one whose value it does not hold chooses nothing at all', () => {
     const step = at(opensAt(-1), 'Enter')
-
     expect(step.chose).toBeUndefined()
     expect(step.shut).toBe(true)
   })
@@ -113,7 +100,6 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
     const source = readFileSync(join(import.meta.dirname, '../../ui-controls/src/Select.svelte'), {
       encoding: 'utf8',
     })
-
     expect(source).toContain('onmouseenter={() => (hovered = index)}')
     expect(source).not.toMatch(/onmouseenter=\{\(\) => \(walking/)
     expect(source).toContain('aria-activedescendant={open && walking.cursor !== null')
@@ -138,28 +124,20 @@ describe('spelling a name', () => {
     return { found, typed: state.typed }
   }
 
-  test('lands on the first row that starts with the letter', () => {
-    expect(say('j').found).toBe(1)
-    expect(say('w').found).toBe(4)
-  })
-
-  test('narrows as more letters arrive', () => {
-    expect(say('n').found).toBe(2)
-    expect(say('note').found).toBe(2)
-    expect(say('notes.').found).toBe(3)
-  })
-
-  test('and pays no attention to case, in the word or in the row', () => {
-    expect(say('N').found).toBe(2)
-    expect(say('GRO').found).toBe(0)
-  })
-
-  test('starts a fresh word after a pause', () => {
-    expect(say('jw', 900).found).toBe(4)
-    expect(say('jw', 900).typed).toBe('w')
-  })
-
-  test('and leaves the keyboard where it was on a word no row starts with', () => {
-    expect(say('zz').found).toBe(-1)
-  })
+  test.each([
+    ['j', 100, 1, 'j'],
+    ['w', 100, 4, 'w'],
+    ['n', 100, 2, 'n'],
+    ['note', 100, 2, 'note'],
+    ['notes.', 100, 3, 'notes.'],
+    ['N', 100, 2, 'n'],
+    ['GRO', 100, 0, 'gro'],
+    ['jw', 900, 4, 'w'],
+    ['zz', 100, -1, 'zz'],
+  ])(
+    '%j typed %i ms apart lands on row %i, narrowing, in any case, afresh after a pause',
+    (letters, gap, found, typed) => {
+      expect(say(letters, gap)).toEqual({ found, typed })
+    },
+  )
 })

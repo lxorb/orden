@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { elapse } from '../../../../test/effects/settle'
 
 const system = vi.hoisted(() => ({ asked: [] as unknown[][], answer: null as string | null }))
 
@@ -133,7 +134,7 @@ describe('where the system updates the install', () => {
     show(true, true)
 
     buttons()[1]?.click()
-    await vi.advanceTimersByTimeAsync(0)
+    await elapse(0)
     await vi.dynamicImportSettled()
 
     expect(system.asked).toEqual([['1.4.0', 'unstable']])
@@ -144,7 +145,7 @@ describe('where the system updates the install', () => {
     show(true, true)
 
     buttons()[1]?.click()
-    await vi.advanceTimersByTimeAsync(0)
+    await elapse(0)
     await vi.dynamicImportSettled()
     flushSync()
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Glyph from './Glyph.svelte'
   import { cubicOut } from 'svelte/easing'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
@@ -37,11 +38,7 @@
     {#if one.picture}
       <img src={one.picture} alt="" draggable="false" />
     {:else}
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        {#each Puzzle as [tag, attrs], index (index)}
-          <svelte:element this={tag} {...attrs} />
-        {/each}
-      </svg>
+      <Glyph icon={Puzzle} />
     {/if}
   </button>
 {/each}
@@ -54,11 +51,7 @@
     onclick={(event) => onadd(event.currentTarget)}
     transition:scale={{ start: 0.6, duration: dur(160), easing: cubicOut }}
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each Plus as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
+    <Glyph icon={Plus} />
     Add
   </button>
 {/if}
@@ -71,11 +64,7 @@
   aria-haspopup="dialog"
   onclick={(event) => onlist(event.currentTarget)}
 >
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    {#each Puzzle as [tag, attrs], index (index)}
-      <svelte:element this={tag} {...attrs} />
-    {/each}
-  </svg>
+  <Glyph icon={Puzzle} />
 </button>
 
 <style>

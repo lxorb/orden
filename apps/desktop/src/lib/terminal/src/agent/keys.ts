@@ -1,9 +1,3 @@
-import { type Os, onTheList, osOf, startsOnlyOne } from './shell-text'
-
-export function shellOs(online: boolean, platform: string): Os {
-  return online ? 'unix' : osOf(platform)
-}
-
 const KEYS: Record<string, string> = {
   Enter: '\r',
   Tab: '\t',
@@ -20,9 +14,7 @@ const KEYS: Record<string, string> = {
 }
 
 export const KEY_NAMES = Object.keys(KEYS)
-
 const ARROWS = new Set(['Up', 'Down', 'Right', 'Left'])
-
 const FREE = new Set(['Ctrl+C'])
 
 export function keyBytes(
@@ -39,17 +31,8 @@ export function keyBytes(
   return { bytes }
 }
 
-export function typesFreely(
-  text: string,
-  enter: boolean,
-  keys: readonly string[],
-  programs: readonly string[],
-  os: Os,
-): boolean {
-  if (!text && !enter) return keys.length > 0 && keys.every((name) => FREE.has(name))
-  if (keys.length || !enter || !text.trim() || !startsOnlyOne(text)) return false
-
-  return onTheList(text, programs, os)
+export function typesFreely(text: string, enter: boolean, keys: readonly string[]): boolean {
+  return !text && !enter && keys.length > 0 && keys.every((name) => FREE.has(name))
 }
 
 export interface Row {

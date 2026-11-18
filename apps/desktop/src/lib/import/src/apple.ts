@@ -1,3 +1,4 @@
+import { findLinks } from '@orden/markdown/links'
 import { fromBase64 } from '../../platform/src/api'
 import { message } from '../../ui-kit/src/api'
 import { folderPlan } from './folder'
@@ -30,7 +31,6 @@ export interface AppleNotes {
 }
 
 const NO_ACCESS = 'no access'
-
 const NO_DATABASE = 'no database'
 
 export function notesFault(error: unknown): { noAccess: boolean; said: string } {
@@ -70,13 +70,27 @@ export async function planFor(read: AppleNotes): Promise<ImportPlan> {
       const to = names.free(safeParts(source.path))
       if (!said) return { to }
 
-      return { to, read: (text) => ({ text, title: said.title, meta: said.meta }) }
+      return {
+        to,
+        read: (text) => ({ text: fromTheTop(text), title: said.title, meta: said.meta }),
+      }
     },
   })
 
   plan.lost.push(...lost(read))
 
   return plan
+}
+
+const FROM_HERE = /^(?:[a-z][a-z0-9+.-]*:|[/#<]|\.\.?\/)/i
+
+function fromTheTop(text: string): string {
+  let out = text
+  for (const link of findLinks(text).reverse()) {
+    if (link.kind !== 'markdown' || FROM_HERE.test(text.slice(link.targetFrom))) continue
+    out = `${out.slice(0, link.targetFrom)}/${out.slice(link.targetFrom)}`
+  }
+  return out
 }
 
 function lost(read: AppleNotes): ImportPlan['lost'] {

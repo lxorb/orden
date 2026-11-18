@@ -48,7 +48,6 @@ export type SettingControl =
       step: number
       unit?: string
       initial?: number
-      least?: () => number
       get(): number
       preview?(value: number): void
       set(value: number): void
@@ -224,9 +223,8 @@ export function registerPaletteKind<Id extends PaletteKindId>(
   }
 }
 
-export function paletteKind<Id extends PaletteKindId>(id: Id): PaletteKinds[Id] {
-  return (kindsLoaded.get(id) as PaletteKinds[Id] | undefined) ?? NONE[id]
-}
+export const paletteKind = <Id extends PaletteKindId>(id: Id): PaletteKinds[Id] =>
+  (kindsLoaded.get(id) as PaletteKinds[Id] | undefined) ?? NONE[id]
 
 export function registerSettingFields(fields: SettingFields): () => void {
   fieldSets.add(fields)
@@ -236,20 +234,18 @@ export function registerSettingFields(fields: SettingFields): () => void {
   }
 }
 
-export function settingFieldsIn(section: SettingsSectionId, group: string): SettingField[] {
-  return [...fieldSets]
+export const settingFieldsIn = (section: SettingsSectionId, group: string): SettingField[] =>
+  [...fieldSets]
     .filter((one) => one.section === section && one.group === group)
     .flatMap((one) => [...(fieldsLoaded.get(one)?.() ?? [])])
-}
 
 export function registerSettingsPart(part: SettingsPart): () => void {
   parts.add(part)
   return () => void parts.delete(part)
 }
 
-export function settingsPartsIn(section?: SettingsSectionId): SettingsPart[] {
-  return [...parts].filter((one) => section === undefined || one.section === section)
-}
+export const settingsPartsIn = (section?: SettingsSectionId): SettingsPart[] =>
+  [...parts].filter((one) => section === undefined || one.section === section)
 
 export async function registered(): Promise<void> {
   await Promise.all(

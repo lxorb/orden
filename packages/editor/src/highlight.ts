@@ -47,9 +47,8 @@ function highlighted(
 
   const text = doc.sliceString(from, to)
 
-  if (text.length >= MARK.length * 2 && text.startsWith(MARK) && text.endsWith(MARK)) {
+  if (text.length >= MARK.length * 2 && text.startsWith(MARK) && text.endsWith(MARK))
     return { from, to, inner: text.slice(MARK.length, text.length - MARK.length) }
-  }
 
   return null
 }

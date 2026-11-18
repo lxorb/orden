@@ -5,11 +5,10 @@ import os
 import subprocess
 import sys
 import time
-import urllib.request
 from pathlib import Path
+import linux_app
 
 OUT, PHASE, NAME = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 failures = []
 
 FIREFOX = "https://addons.mozilla.org/en-US/firefox/addon/sponsorblock/"
@@ -19,35 +18,9 @@ def fail(what):
     print(f"::error::{PHASE}: {what}")
     failures.append(what)
 
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
 def run(code, timeout=10):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=timeout) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else said.get("error")
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
+    answer = linux_app.said(code, timeout)
+    return None if answer is None else answer.get("value") if answer.get("ok") else answer.get("error")
 
 def listed():
     said = run("window.__TAURI_INTERNALS__.invoke('extensions_list').then((all) => JSON.stringify(all))", 40)
@@ -122,7 +95,7 @@ def opened_as_a_tab(address, pane, what, seconds=20):
         fail(f"{what}: windows not under {CLASS}, or Chromium's: {sorted(strange)}")
     if panes != [pane]:
         fail(f"{what}: not one tab in the reader's pane {pane}, but in {panes}")
-        for log in [*Path.home().rglob("orden.log"), *Path.home().rglob("nib.log")]:
+        for log in Path.home().rglob("orden.log"):
             if "so.orden.Orden" in str(log):
                 said = [line for line in log.read_text(errors="replace").splitlines() if "extensions" in line]
                 print(f"{log}: {said[-10:]}")

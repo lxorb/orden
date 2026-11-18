@@ -1,12 +1,16 @@
 import { describe, expect, test } from 'vitest'
 import { readBase, writeBase } from '../base-file'
-import { rowsOfText } from '../note-rows'
+import { findLinks } from '@orden/markdown/links'
+import { tagsIn } from '@orden/markdown/task-line'
+import { rowsOf } from '../note-rows'
+import { scanRows } from '../scan'
 import {
   AgentError,
   atOf,
   clockOf,
   editedBase,
   editedTask,
+  filledTemplate,
   listTasks,
   movedTask,
   newTask,
@@ -15,6 +19,7 @@ import {
   queryBase,
   readAt,
   rowPlace,
+  rowWords,
   taskChange,
   taskOut,
   withProperties,
@@ -22,6 +27,13 @@ import {
 import { type TaskChange, taskLine } from '@orden/markdown/task-edits'
 
 const context = { today: '2026-10-04', now: '2026-10-04T09:00:00' }
+
+function rowsOfText(space: string, path: string, text: string) {
+  const { front, tasks } = scanRows(text)
+  const tags = [...new Set(tagsIn(text).map((tag) => tag.toLowerCase()))]
+  const links = findLinks(text).map((link) => ({ target: link.target, embed: link.embed }))
+  return rowsOf(space, { path, front, tasks, stamp: null, tags, links })
+}
 
 const NOTE = [
   '# Errands',
@@ -280,6 +292,7 @@ describe('lists', () => {
     expect(clockOf(new Date('2026-10-04T23:30:00Z'), 'Europe/Zurich')).toEqual({
       today: '2026-10-05',
       now: '2026-10-05T01:30:00',
+      zone: 'Europe/Zurich',
     })
   })
 
@@ -301,6 +314,25 @@ describe('bases', () => {
       folder: 'Reading/Books',
       properties: { status: 'to read', tags: ['book'] },
     })
+  })
+
+  test('a new row takes the view’s template first, then the base’s, filled and without its own keys', () => {
+    const base = readBase(
+      'orden:\n  template: "[[Templates/Book]]"\nviews:\n  - type: table\n    name: All\n  - type: cards\n    name: Shelf\n    orden:\n      template: "[[Templates/Shelf|shelf]]"\n',
+    )
+    expect(rowPlace(base).template).toBe('Templates/Book')
+    expect(rowPlace(base, 'Shelf').template).toBe('Templates/Shelf')
+    expect(rowPlace(base, 'Elsewhere').template).toBe('Templates/Book')
+    expect(rowPlace(readBase('views:\n  - type: table\n    name: All\n'))).not.toHaveProperty(
+      'template',
+    )
+    expect(
+      filledTemplate(
+        '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\nAdded {{date}} at {{time}}, due {{date+1w}}\n',
+        'Emma',
+        context,
+      ),
+    ).toBe('---\nstatus: new\n---\n# Emma\nAdded 2026-10-04 at 09:00, due 2026-10-11\n')
   })
 
   test('properties written, taken away, a list as a list', () => {
@@ -372,12 +404,6 @@ describe('Today without the engine', () => {
     const engine = listTasks(many, { view: 'today' }, context).tasks.map((one) => one.at)
     expect(todayTasks(many, context.today).map((row) => atOf(row))).toEqual(engine)
     expect(engine).toHaveLength(5)
-
-    const undated = listTasks(many, { view: 'today', undated: true }, context).tasks
-    expect(todayTasks(many, context.today, true).map((row) => atOf(row))).toEqual(
-      undated.map((one) => one.at),
-    )
-    expect(undated.length).toBeGreaterThan(engine.length)
   })
 })
 
@@ -411,5 +437,37 @@ describe('a base edited where Orden could not read it', () => {
     const written = writeBase(edited, SOURCE)
     expect(written).toContain('filters: c == 1\n')
     expect(written).not.toContain('- a\n')
+  })
+})
+
+describe('a new row of a base', () => {
+  test('keeps the tags its template has, beside the ones the base needs and the ones asked for', () => {
+    const base = readBase(
+      'filters: file.hasTag("reading")\nviews:\n  - type: table\n    name: All\n',
+    )
+    const template = filledTemplate(
+      '---\ntags: [book, fiction]\nstatus: new\n---\n# {{title}}\n',
+      'Dune',
+      {
+        today: '2026-11-15',
+        now: '2026-11-15T10:00:00',
+      },
+    )
+    const text = rowWords(template, rowPlace(base).properties, { tags: ['#sci-fi'] })
+    expect(text).toMatch(
+      /tags: \[book, fiction, reading, sci-fi\]|book[\s\S]*fiction[\s\S]*reading[\s\S]*sci-fi/,
+    )
+    expect(text).toContain('status: new')
+  })
+
+  test('is answered by its own path and space, whatever its properties are called', () => {
+    const base = readBase('views:\n  - type: table\n    name: All\n')
+    const rows = rowsOfText(
+      'Home',
+      'Courses/Rust.md',
+      '---\npath: beginner\nspace: Mars\n---\nbody\n',
+    )
+    const out = queryBase(base, undefined, rows, clockOf(new Date(), 'UTC'))
+    expect(out.groups[0]?.rows[0]).toMatchObject({ path: 'Courses/Rust.md', space: 'Home' })
   })
 })

@@ -13,18 +13,6 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 Element.prototype.hasPointerCapture = () => false
-globalThis.ResizeObserver = class {
-  observe() {
-    // jsdom does no layout: nothing is measured here.
-  }
-  unobserve() {
-    // Said above.
-  }
-  disconnect() {
-    // Said above.
-  }
-}
-
 const WIDE = 20
 
 let host: HTMLElement

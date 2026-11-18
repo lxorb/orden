@@ -120,12 +120,12 @@
 {#snippet button(id: string, label: string, press: () => void)}
   {@const now = states[id] ?? 'idle'}
   {#if now === 'in'}
-    <span class="done" role="status" aria-label="Connected">
+    <span class="o-done" role="status" aria-label="Connected">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
     </span>
   {:else}
     <button
-      class="orden-chip end"
+      class="orden-chip o-end"
       type="button"
       disabled={now !== 'idle'}
       aria-busy={now !== 'idle'}
@@ -138,8 +138,8 @@
 
 <Screen
   title="Connect your AI"
-  primary={{ label: 'Continue', disabled: !connected, onclick: () => setup.next() }}
-  quiet={{ label: 'Skip', onclick: () => setup.next() }}
+  primary={{ label: 'Continue', disabled: !connected, onclick: () => setup.next('ai') }}
+  quiet={{ label: 'Skip', onclick: () => setup.next('ai') }}
 >
   <div class="o-list rise">
     {#each offered as one (one.id)}
@@ -217,7 +217,7 @@
         bind:this={field}
         bind:value={typed}
         oninput={typing}
-        class="field"
+        class="o-field"
         type="password"
         placeholder="API key"
         aria-label="API key"
@@ -231,7 +231,7 @@
     >
   {/if}
 
-  {#if trouble}<p class="error" role="alert">{trouble}</p>{/if}
+  {#if trouble}<p class="o-error" role="alert">{trouble}</p>{/if}
 </Screen>
 
 <style>
@@ -299,37 +299,6 @@
     overflow-y: auto;
   }
 
-  .end {
-    margin-inline-start: auto;
-    min-width: 74px;
-    min-height: 30px;
-    display: inline-grid;
-    place-items: center;
-  }
-
-  .done {
-    margin-inline-start: auto;
-    min-width: 30px;
-    height: 30px;
-    display: inline-grid;
-    place-items: center;
-    flex: none;
-    color: var(--success);
-    font-size: 13.5px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .done svg {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
   .spin {
     width: 14px;
     height: 14px;
@@ -351,29 +320,11 @@
     justify-content: center;
   }
 
-  .field {
-    width: min(360px, 100%);
-    height: 50px;
-    border-radius: 12px;
-    border: 1px solid var(--line-strong);
-    background: var(--card);
-    padding: 0 16px;
-    font: inherit;
-    font-size: 16px;
-    color: var(--text);
-  }
-
   .skip {
     color: var(--accent);
     font-size: 15px;
   }
 
-  .error {
-    margin: 0;
-    color: var(--danger);
-    font-size: 14px;
-    text-align: center;
-  }
   @media (prefers-reduced-motion: reduce) {
     .spin {
       animation: none;

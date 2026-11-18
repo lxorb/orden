@@ -1,6 +1,7 @@
-import type { FieldKind, IdentityKey } from '../types'
+import type { Content, FieldKind, IdentityKey } from '../types'
 import {
   Collector,
+  type Extra,
   cardOf,
   dateOf,
   fieldsOf,
@@ -22,12 +23,6 @@ interface EnpassField {
   type: string
   value: string
   sensitive: boolean
-}
-
-interface Extra {
-  name: string
-  value: string
-  kind?: FieldKind
 }
 
 const IDENTITY_LABELS: Record<string, IdentityKey> = {
@@ -112,25 +107,25 @@ export function parseEnpass(text: string): Imported {
       trashed: Boolean(item.trashed),
       folder: paths.get(folderId) ?? null,
     }
+    const add = (content: Content): void => {
+      into.add(itemOf(content, parts))
+    }
     const hasLogin = fields.some((one) => one.type === 'password' || one.type === 'username')
     if (category === 'creditcard') {
-      into.add(
-        itemOf(
-          cardOf({
-            title,
-            note,
-            holder: takeFirst(fields, 'ccName'),
-            number: takeFirst(fields, 'ccNumber'),
-            code: takeFirst(fields, 'ccCvc'),
-            pin: takeFirst(fields, 'ccPin'),
-            expiry: takeFirst(fields, 'ccExpiry'),
-            fields: fieldsOf(fields.map(extraOf)),
-          }),
-          parts,
-        ),
+      add(
+        cardOf({
+          title,
+          note,
+          holder: takeFirst(fields, 'ccName'),
+          number: takeFirst(fields, 'ccNumber'),
+          code: takeFirst(fields, 'ccCvc'),
+          pin: takeFirst(fields, 'ccPin'),
+          expiry: takeFirst(fields, 'ccExpiry'),
+          fields: fieldsOf(fields.map(extraOf)),
+        }),
       )
     } else if (category === 'note') {
-      into.add(itemOf(noteOf(title, note, fieldsOf(fields.map(extraOf))), parts))
+      add(noteOf(title, note, fieldsOf(fields.map(extraOf))))
     } else if (category === 'identity') {
       const values: Partial<Record<IdentityKey, string>> = {}
       const rest: Extra[] = []
@@ -139,7 +134,7 @@ export function parseEnpass(text: string): Imported {
         if (key !== undefined && values[key] === undefined) values[key] = field.value
         else rest.push(extraOf(field))
       }
-      into.add(itemOf(identityOf({ title, note, values, extra: rest }), parts))
+      add(identityOf({ title, note, values, extra: rest }))
     } else if (category === 'login' || category === 'password' || hasLogin) {
       const username = takeFirst(fields, 'username')
       const email = takeFirst(fields, 'email')
@@ -148,20 +143,17 @@ export function parseEnpass(text: string): Imported {
       const urls: string[] = []
       for (let url = takeFirst(fields, 'url'); url !== ''; url = takeFirst(fields, 'url'))
         urls.push(url)
-      into.add(
-        itemOf(
-          loginOf({
-            title,
-            note,
-            username,
-            email,
-            password,
-            totp,
-            urls,
-            fields: fieldsOf(fields.map(extraOf)),
-          }),
-          parts,
-        ),
+      add(
+        loginOf({
+          title,
+          note,
+          username,
+          email,
+          password,
+          totp,
+          urls,
+          fields: fieldsOf(fields.map(extraOf)),
+        }),
       )
       if (category !== 'login' && category !== 'password') {
         into.skip(`Kept as a login: Orden has no kind for Enpass's "${category}".`, title)

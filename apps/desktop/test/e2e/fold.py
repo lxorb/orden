@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -78,8 +76,6 @@ PLACEMENT = """
     text: line.textContent.trim().slice(0, 22),
     gap: Math.round(box.left - mark.right),
     left: Math.round(box.left),
-    // How far below the top of the block the chevron's middle sits, against the
-    // height of one row of it: on the first row, or not.
     into: Math.round(mark.top + mark.height / 2 - box.top),
     row: Math.round(row),
   }
@@ -109,14 +105,10 @@ PRESS = """
 (selector) => {
   const hinge = document.querySelector(selector).querySelector('.orden-fold-hinge')
   const box = hinge.getBoundingClientRect()
-  // Where the pointer would be, because the press reaches the editor as well as
-  // the chevron and an event at 0,0 would leave a selection behind it.
   const where = {
     bubbles: true,
     button: 0,
     buttons: 1,
-    // One press. Without it the event carries a count of none, which the editor
-    // reads as something other than a click and answers with a selection.
     detail: 1,
     clientX: box.left + box.width / 2,
     clientY: box.top + box.height / 2,
@@ -502,5 +494,4 @@ def main() -> int:
 
     return DRIVE.verdict("a note folds, stays folded, and comes back folded")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

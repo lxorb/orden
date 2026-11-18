@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -150,5 +148,4 @@ def main() -> int:
 
     return DRIVE.verdict("a tab can go back where it came from")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

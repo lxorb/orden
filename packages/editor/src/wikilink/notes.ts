@@ -1,7 +1,4 @@
-import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
-import type { TextEdit } from '@orden/markdown/edits'
-import type { TaskChange } from '@orden/markdown/task-edits'
-import type { TaskFields } from '@orden/markdown/task-line'
+import { type EditorState, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import {
   decodeFragment,
@@ -54,27 +51,7 @@ export interface NoteIndex {
   pressRow?: ((target: EventTarget | null) => boolean) | undefined
   render?: ((source: string, path: string | null) => Promise<string>) | undefined
   drawFile?: ((card: HTMLElement, file: FileDrawing) => () => void) | undefined
-  tasks?: TaskHelp | undefined
   mountBase?: ((host: HTMLElement, ask: BaseAsk) => () => void) | undefined
-}
-
-export interface DayTyped {
-  from: number
-  due: string
-  time?: string
-  label: string
-}
-
-export interface TaskHelp {
-  tick(note: string, line: number): Promise<readonly TextEdit[]>
-  pick(
-    field: string,
-    fields: TaskFields,
-    at: DOMRect,
-    due: 'start' | 'deadline',
-    change: (change: TaskChange) => void,
-  ): void
-  dayAtEnd(text: string): DayTyped | null
 }
 
 export type BaseAsk = { code: string } | { target: string; view: string | null }
@@ -90,21 +67,16 @@ const setIndex = StateEffect.define<NoteIndex>()
 const indexField = StateField.define<NoteIndex>({
   create: () => EMPTY,
   update(value, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(setIndex)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(setIndex)) return effect.value
     return value
   },
   provide: (field) => noteIndex.from(field),
 })
 
-export function noteIndexExtension(index: NoteIndex | undefined): Extension {
-  return indexField.init(() => index ?? EMPTY)
-}
+export const noteIndexExtension = (index: NoteIndex | undefined): Extension =>
+  indexField.init(() => index ?? EMPTY)
 
-export function noteIndexEffect(index: NoteIndex): StateEffect<unknown> {
-  return setIndex.of(index)
-}
+export const noteIndexEffect = (index: NoteIndex): StateEffect<unknown> => setIndex.of(index)
 
 export function setNoteIndex(view: EditorView, index: NoteIndex) {
   view.dispatch({ effects: setIndex.of(index) })
@@ -116,6 +88,7 @@ export interface NoteJump {
   heading: string | null
   block: string | null
   page: number | null
+  kind?: LinkKind
 }
 
 export type NoteOpener = (jump: NoteJump, press?: LinkPress) => void
@@ -126,9 +99,12 @@ export const noteOpener = Facet.define<NoteOpener, NoteOpener>({
 
 export interface LinkWrite {
   name: string
+  markdown?: string | null
   path?: string | null
   from?: string | null
   fragment?: string | null
+  shown?: string | null
+  file?: string | null
 }
 
 export const linkWriter = Facet.define<
@@ -137,7 +113,8 @@ export const linkWriter = Facet.define<
 >({ combine: (values) => values[0] ?? wikilinkFor })
 
 function wikilinkFor(target: LinkWrite): string {
-  return `[[${target.fragment ? `${target.name}#${target.fragment}` : target.name}]]`
+  const inner = target.fragment ? `${target.name}#${target.fragment}` : target.name
+  return `[[${inner}${target.shown ? `|${target.shown}` : ''}]]`
 }
 
 export function fuzzy(text: string, needle: string): boolean {
@@ -156,10 +133,7 @@ export function fuzzy(text: string, needle: string): boolean {
 }
 
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
-
-function comparable(path: string): string {
-  return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
-}
+const comparable = (path: string): string => foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 
 function folderOf(path: string): string {
   const at = path.replace(/\\/g, '/').lastIndexOf('/')
@@ -171,51 +145,67 @@ function targetOf(folded: string): { wanted: string; anchored: boolean } {
   return { wanted: anchored ? folded.slice(1) : folded, anchored }
 }
 
-function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef | null {
-  const here = from === null ? null : folderOf(from)
-  const depth = (path: string) => path.split('/').length
-  const beside = (note: NoteRef) => (folderOf(note.path) === here ? 0 : 1)
-
-  return (
-    [...candidates].sort(
-      (one, other) =>
-        beside(one) - beside(other) ||
-        depth(one.path) - depth(other.path) ||
-        (one.path < other.path ? -1 : 1),
-    )[0] ?? null
-  )
+interface Lookup {
+  size: number
+  paths: Map<string, NoteRef[]>
+  ends: Map<string, NoteRef[]>
+  aliases: Map<string, NoteRef[]>
 }
 
-interface Lookup {
-  whole: Map<string, NoteRef[]>
-  ending: Map<string, NoteRef[]>
-  aliased: Map<string, NoteRef[]>
+interface Order {
+  top: NoteRef | null
+  byFolder: Map<string, NoteRef>
 }
 
 const lookups = new WeakMap<readonly NoteRef[], Lookup>()
+const orders = new WeakMap<readonly NoteRef[], Order>()
 
-function filed(into: Map<string, NoteRef[]>, key: string, note: NoteRef) {
-  const known = into.get(key)
-  if (known) known.push(note)
-  else into.set(key, [note])
+function filed(map: Map<string, NoteRef[]>, key: string, note: NoteRef) {
+  const held = map.get(key)
+  if (!held) map.set(key, [note])
+  else if (held.at(-1) !== note) held.push(note)
 }
 
 function lookupOf(notes: readonly NoteRef[]): Lookup {
-  const known = lookups.get(notes)
-  if (known) return known
+  const kept = lookups.get(notes)
+  if (kept?.size === notes.length) return kept
 
-  const lookup: Lookup = { whole: new Map(), ending: new Map(), aliased: new Map() }
+  const made: Lookup = { size: notes.length, paths: new Map(), ends: new Map(), aliases: new Map() }
   for (const note of notes) {
     const path = comparable(note.path)
-    filed(lookup.whole, path, note)
-    filed(lookup.ending, path, note)
-    for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
-      filed(lookup.ending, path.slice(at + 1), note)
-    }
-    for (const alias of new Set(note.aliases.map(comparable))) filed(lookup.aliased, alias, note)
+    filed(made.paths, path, note)
+    filed(made.ends, path, note)
+    for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1))
+      filed(made.ends, path.slice(at + 1), note)
+    for (const alias of note.aliases) filed(made.aliases, comparable(alias), note)
   }
-  lookups.set(notes, lookup)
-  return lookup
+  lookups.set(notes, made)
+  return made
+}
+
+function orderOf(candidates: readonly NoteRef[]): Order {
+  const kept = orders.get(candidates)
+  if (kept) return kept
+
+  const depth = (path: string) => path.split('/').length
+  const sorted = [...candidates].sort(
+    (one, other) => depth(one.path) - depth(other.path) || (one.path < other.path ? -1 : 1),
+  )
+  const byFolder = new Map<string, NoteRef>()
+  for (const note of sorted) {
+    const folder = folderOf(note.path)
+    if (!byFolder.has(folder)) byFolder.set(folder, note)
+  }
+
+  const made: Order = { top: sorted[0] ?? null, byFolder }
+  orders.set(candidates, made)
+  return made
+}
+
+function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef | null {
+  const order = orderOf(candidates)
+  const beside = from === null ? undefined : order.byFolder.get(folderOf(from))
+  return beside ?? order.top
 }
 
 export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
@@ -223,20 +213,29 @@ export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
   if (!wanted) return null
 
   const lookup = lookupOf(index.notes)
-  const found = (anchored ? lookup.whole : lookup.ending).get(wanted)
-  if (found?.length) return nearest(found, index.path)
+  const found = (anchored ? lookup.paths : lookup.ends).get(wanted)
+  if (found) return nearest(found, index.path)
   if (anchored) return null
 
-  const named = lookup.aliased.get(wanted)
-  return named?.length ? nearest(named, index.path) : null
+  const named = lookup.aliases.get(wanted)
+  return named ? nearest(named, index.path) : null
+}
+
+export function shortestReaching(path: string, reaches: (written: string) => boolean): string {
+  const parts = path.split('/')
+  for (let from = parts.length - 1; from >= 0; from--) {
+    const written = parts.slice(from).join('/')
+    if (reaches(written)) return written
+  }
+  return `/${path}`
 }
 
 export function resolveRelative(index: NoteIndex, target: string): NoteRef | null {
   const parts = relativeParts(index, target)
   if (!parts.length) return null
   const whole = resolveNote(index, `/${parts.join('/')}`)
-  if (whole || target.replace(/\\/g, '/').startsWith('/')) return whole
-  return resolveNote(index, parts.join('/'))
+  if (whole || !freelyWritten(target)) return whole
+  return resolveNote(index, `/${target}`) ?? resolveNote(index, target)
 }
 
 export function spacePathOf(index: NoteIndex, written: string): string {
@@ -255,6 +254,9 @@ export function fileLinkName(index: NoteIndex, path: string): string {
   return shared && path && !LINK_MARKS.test(path) ? path : name
 }
 
+const freelyWritten = (target: string): boolean =>
+  !/^\.{1,2}(?:[/\\]|$)/.test(target.trim()) && !/^[/\\]/.test(target.trim())
+
 function relativeParts(index: NoteIndex, target: string): string[] {
   const written = target.replace(/\\/g, '/')
   const parts =
@@ -272,29 +274,29 @@ function relativeParts(index: NoteIndex, target: string): string[] {
 }
 
 export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
-  const { wanted, anchored } = targetOf(
-    foldName(
-      kind === 'markdown'
-        ? relativeParts(index, target).join('/')
-        : target.trim().replace(/\\/g, '/'),
-    ),
+  const written = target.trim().replace(/\\/g, '/')
+  if (kind !== 'markdown') return fileAt(index, written)
+  return (
+    fileAt(index, `/${relativeParts(index, target).join('/')}`) ??
+    (/^\.{0,2}\//.test(written) ? null : (fileAt(index, `/${written}`) ?? fileAt(index, written)))
   )
+}
+
+function fileAt(index: NoteIndex, target: string): string | null {
+  const { wanted, anchored } = targetOf(foldName(target))
   if (!wanted) return null
 
-  const whole = kind === 'markdown' || anchored
+  const here = index.path === null ? null : folderOf(index.path)
   const found = index.files.filter((path) => {
     const held = foldName(path)
-    return held === wanted || (!whole && held.endsWith(`/${wanted}`))
+    return held === wanted || (!anchored && held.endsWith(`/${wanted}`))
   })
 
-  const own = index.path?.replace(/\\/g, '/') ?? ''
-  const folder = own.slice(0, Math.max(0, own.lastIndexOf('/')))
-  const beside = foldName(folder ? `${folder}/${wanted}` : wanted)
-  const near = (path: string) => (foldName(path) === beside ? 0 : 1)
+  const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
   return (
     [...found].sort(
       (one, other) =>
-        near(one) - near(other) ||
+        beside(one) - beside(other) ||
         one.split('/').length - other.split('/').length ||
         (one < other ? -1 : 1),
     )[0] ?? null
@@ -326,15 +328,29 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
       heading: null,
       block: null,
       page: pageFragment(link.heading),
+      kind,
     }
   }
 
+  if (!link.target) {
+    return {
+      path: index.path,
+      target: '',
+      heading: link.heading,
+      block: link.block,
+      page: null,
+      kind,
+    }
+  }
+  const note = resolveLink(index, link, kind)?.path ?? null
+  const file = note === null ? resolveFile(index, link.target, kind) : null
   return {
-    path: link.target ? (resolveLink(index, link, kind)?.path ?? null) : index.path,
+    path: note ?? file,
     target: link.target,
-    heading: link.heading,
-    block: link.block,
+    heading: file === null ? link.heading : null,
+    block: file === null ? link.block : null,
     page: null,
+    kind,
   }
 }
 
@@ -358,4 +374,32 @@ export function jumpForHref(index: NoteIndex, href: string, wiki: boolean): Note
 
   const block = said?.startsWith('^') ? said.slice(1) : null
   return { path: found.path, target, heading: block === null ? said : null, block, page: null }
+}
+
+const MARKDOWN_NAME = /\.(md|markdown|mdown|mkd)$/i
+
+export function nameFor(index: NoteIndex, note: NoteRef): string {
+  const own = MARKDOWN_NAME.exec(note.path)?.[0] ?? ''
+  const spelled = (written: string) => (isTabFile(written) ? `${written}${own}` : written)
+  const opened = index.files.includes(note.path)
+  const reaches = (written: string) =>
+    (opened && isTabFile(written)
+      ? resolveFile(index, written, 'wikilink')
+      : resolveNote(index, written)?.path) === note.path
+  const name = spelled(note.name)
+  if (reaches(name)) return name.normalize('NFC')
+
+  const parts = note.path.replace(MARKDOWN_NAME, '').split('/')
+  for (let from = parts.length - 1; from >= 0; from--) {
+    const written = spelled(parts.slice(from).join('/'))
+    if (reaches(written)) return written.normalize('NFC')
+  }
+  const fromTop = spelled(`/${parts.join('/')}`)
+  return (reaches(fromTop) ? fromTop : name).normalize('NFC')
+}
+
+export function linkNameAt(state: EditorState, path: string): string | null {
+  const index = state.facet(noteIndex)
+  const note = index.notes.find((one) => one.path === path)
+  return note ? nameFor(index, note) : null
 }

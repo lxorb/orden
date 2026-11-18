@@ -2,11 +2,9 @@
 import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { createEditor } from '../editor'
+import { noRects } from '../../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
+beforeAll(noRects)
 
 const open: EditorView[] = []
 

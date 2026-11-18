@@ -9,7 +9,13 @@ import { isDraft } from '../../documents/src/api'
 import { writeIfAbsent } from '../../file-writes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import { DocError, type NoteRead, SCRATCHPAD_TAB } from '../../agent-docs/src/api'
+import {
+  DocError,
+  type NoteRead,
+  SCRATCHPAD_TAB,
+  startsBefore,
+  taskIn,
+} from '../../agent-docs/src/api'
 import { SCRATCHPAD } from '../../scratchpad/src/api'
 import {
   asked,
@@ -21,6 +27,7 @@ import {
   text,
   writerOf,
   Refused,
+  ranOut,
   namedTab,
   tabsOwnSpace,
   judged,
@@ -123,7 +130,14 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
     )
   }
 
-  return done(read, sharedSource(place, relative))
+  const linkedFrom = (read.backlinks ?? []).flatMap((one) =>
+    isRecord(one) && typeof one.path === 'string' ? [one.path] : [],
+  )
+  const marked =
+    sharedSource(place, relative) ??
+    linkedFrom.map((one) => sharedSource(place, one)).find((one) => one !== null) ??
+    null
+  return done(read, marked)
 }
 
 export async function editNote(call: Call): Promise<AgentAnswer> {
@@ -132,7 +146,9 @@ export async function editNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Edit ${relative} in ${place.space.name}`)
   if (question) return question
 
-  return done(await notes.editNote(writerOf(call), at(named), call.args.edits, ifRev(call)))
+  return done(
+    await notes.editNote(writerOf(call), at(named), call.args.edits, ifRev(call), call.deadline),
+  )
 }
 
 export async function writeNote(call: Call): Promise<AgentAnswer> {
@@ -144,10 +160,17 @@ export async function writeNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Write ${relative} in ${place.space.name}`)
   if (question) return question
 
-  const written = () => notes.writeNote(writerOf(call), at(named), words, ifRev(call))
+  const written = () =>
+    notes.writeNote(writerOf(call), at(named), words, ifRev(call), call.deadline)
   if (named.tab) return done(await written())
   return done(
-    await madeOrChanged(place, relative, () => made(place, relative, words, null), written),
+    await madeOrChanged(
+      place,
+      relative,
+      () => made(place, relative, words, null),
+      written,
+      call.deadline,
+    ),
   )
 }
 
@@ -162,9 +185,17 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
 
   const under = maybe(call, 'under')
   const edit = { at: under === null ? { end: true } : { heading: under }, insert_after: words }
-  const added = () => notes.editNote(writerOf(call), at(named), [edit])
+  const added = () => notes.editNote(writerOf(call), at(named), [edit], undefined, call.deadline)
   if (named.tab) return done(await added())
-  return done(await madeOrChanged(place, relative, () => made(place, relative, words, null), added))
+  return done(
+    await madeOrChanged(
+      place,
+      relative,
+      () => made(place, relative, words, null),
+      added,
+      call.deadline,
+    ),
+  )
 }
 
 function yamlOf(value: unknown): string | null {
@@ -215,7 +246,7 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
 
     const after = words.slice(0, edit.from) + edit.insert + words.slice(edit.to)
     try {
-      const wrote = await notes.writeNote(writerOf(call), at(named), after, read.rev)
+      const wrote = await notes.writeNote(writerOf(call), at(named), after, read.rev, call.deadline)
       return done({ ...wrote, key, value, changed: true })
     } catch (error) {
       if (!(error instanceof DocError && error.code === 'rev_changed') || tries > 2) throw error
@@ -226,26 +257,15 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
 export async function setTask(call: Call): Promise<AgentAnswer> {
   const note = noteOf(call, true)
   const { relative } = note
-  const anchor = call.args.at
-  if (typeof anchor !== 'object' || anchor === null || !('task' in anchor)) {
-    throw new Refused('bad_arguments', 'at is {task, nth?}')
-  }
   const wanted = flag(call, 'done')
 
   const read = await notes.readNote(at(note), ['text', 'tasks'])
-  const named = anchor as { task: unknown; nth?: unknown }
-  const row = read.tasks?.find(
-    (one) =>
-      'task' in one.anchor &&
-      one.anchor.task === named.task &&
-      (named.nth === undefined || one.anchor.nth === named.nth),
-  )
-  if (!row) throw new Refused('not_found', `there is no task ${String(named.task)} in ${relative}`)
+  const row = taskIn(read.tasks ?? [], call.args.at)
   if (row.done === wanted) return done({ path: relative, rev: read.rev, changed: false })
 
   const line = (read.text ?? '').split('\n')[row.line] ?? ''
   const task = taskAt(line)
-  if (!task) throw new Refused('not_found', `the task ${String(named.task)} has moved`)
+  if (!task) throw new Refused('not_found', `that task has moved in ${relative}`)
 
   const question = await asked(call, null, `${wanted ? 'Tick' : 'Clear'} a task in ${relative}`)
   if (question) return question
@@ -253,7 +273,7 @@ export async function setTask(call: Call): Promise<AgentAnswer> {
   const box = task.box + 1
   const ticked = line.slice(0, box) + (wanted ? 'x' : ' ') + line.slice(box + 1)
   const edit = { at: row.anchor, replace: ticked }
-  return done(await notes.editNote(writerOf(call), at(note), [edit], read.rev))
+  return done(await notes.editNote(writerOf(call), at(note), [edit], read.rev, call.deadline))
 }
 
 export async function createNote(call: Call): Promise<AgentAnswer> {
@@ -287,18 +307,33 @@ export function madeOrChanged<Made, Changed>(
   relative: string,
   make: () => Promise<Made>,
   change: () => Promise<Changed>,
+  deadline?: AbortSignal,
 ): Promise<Made | Changed> {
   const path = onDisk(place, relative)
-  const turn = (making.get(path) ?? Promise.resolve())
-    .catch(() => undefined)
-    .then(async () => {
-      if ((await workspace.noteText(path)) !== null) return change()
+  const late = () => ranOut(`${relative} was reached`)
+  const inTime = () => {
+    if (deadline?.aborted) throw late()
+  }
+  return startsBefore(
+    deadline,
+    late,
+    (go) => inTurnAt(path, go),
+    async () => {
+      const there = (await workspace.noteText(path)) !== null
+      inTime()
+      if (there) return change()
       return make().catch(async (error: unknown) => {
         const came = error instanceof Refused && error.code === 'exists'
-        if (came && (await workspace.noteText(path)) !== null) return change()
-        throw error
+        if (!came || (await workspace.noteText(path)) === null) throw error
+        inTime()
+        return change()
       })
-    })
+    },
+  )
+}
+
+function inTurnAt<T>(path: string, run: () => Promise<T>): Promise<T> {
+  const turn = (making.get(path) ?? Promise.resolve()).catch(() => undefined).then(run)
   making.set(path, turn)
   void turn
     .catch(() => undefined)

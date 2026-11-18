@@ -13,6 +13,39 @@ import { keepsRow } from './fold'
 
 export const CHAT = `c_${'a'.repeat(32)}`
 
+export const messageOf = (seq: number, more: Partial<Message> = {}): Message => ({
+  id: `m${seq}`,
+  seq,
+  at: seq * 1000,
+  author: 'user:ana',
+  body: `words ${seq}`,
+  alsoToChat: false,
+  files: [],
+  mentions: [],
+  reactions: {},
+  pinned: false,
+  history: [],
+  deleted: false,
+  replies: 0,
+  ...more,
+})
+
+export const chatRow = (id: string, more: Partial<ChatRow> = {}): ChatRow => ({
+  id,
+  space: 'space',
+  role: 'write',
+  members: 3,
+  lastSeq: 0,
+  lastAt: null,
+  lastBy: null,
+  readSeq: 0,
+  mentions: 0,
+  notify: null,
+  mutedUntil: null,
+  meta: { topic: '', posting: 'writers', slowmode: 0 },
+  ...more,
+})
+
 export function random(seed: number): () => number {
   let state = seed >>> 0 || 1
   return () => {
@@ -59,20 +92,12 @@ export class Account {
   }
 
   remote(who: Who, online: () => boolean): Remote {
-    const head = (): ChatRow => ({
-      id: CHAT,
-      space: 'space',
-      role: 'write',
-      members: 3,
-      lastSeq: this.head(),
-      lastAt: this.log.at(-1)?.at ?? null,
-      lastBy: this.log.at(-1)?.author ?? null,
-      readSeq: 0,
-      mentions: 0,
-      notify: null,
-      mutedUntil: null,
-      meta: { topic: '', posting: 'writers', slowmode: 0 },
-    })
+    const head = () =>
+      chatRow(CHAT, {
+        lastSeq: this.head(),
+        lastAt: this.log.at(-1)?.at ?? null,
+        lastBy: this.log.at(-1)?.author ?? null,
+      })
     const reach = <T>(answer: () => T): Promise<T | null> =>
       Promise.resolve(online() ? answer() : null)
     return {

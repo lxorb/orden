@@ -1,0 +1,244 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use serde::{Deserialize, Serialize};
+use tauri::Webview;
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Cookie {
+    pub name: String,
+    pub value: String,
+    pub domain: String,
+    pub path: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expires: Option<f64>,
+    #[serde(default)]
+    pub http_only: bool,
+    #[serde(default)]
+    pub secure: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub same_site: Option<SameSite>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub priority: Option<Priority>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub partition: Option<Partition>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_scheme: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_port: Option<i64>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SameSite {
+    Strict,
+    Lax,
+    None,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Priority {
+    Low,
+    Medium,
+    High,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Partition {
+    pub top_level_site: String,
+    #[serde(default)]
+    pub cross_site_ancestor: bool,
+}
+
+pub const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
+
+fn until(cookie: &Cookie, now: f64) -> f64 {
+    cookie.expires.unwrap_or(now + KEPT_FOR)
+}
+
+pub fn now() -> f64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0.0, |since| since.as_secs_f64())
+}
+
+pub async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
+    engine::all(view).await
+}
+
+pub async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), String> {
+    engine::set(view, cookies, now()).await
+}
+
+pub mod engine {
+    use serde_json::{json, Map, Value};
+    use tauri::Webview;
+
+    use super::super::cdp;
+    use super::{until, Cookie, Partition, Priority, SameSite};
+
+    pub(super) async fn all(view: &Webview) -> Result<Vec<Cookie>, String> {
+        let answered = cdp::call(view, "Network.getAllCookies", &json!({})).await?;
+        Ok(cookies_in(&answered))
+    }
+
+    pub(super) async fn set(view: &Webview, cookies: &[&Cookie], now: f64) -> Result<(), String> {
+        if cookies.is_empty() {
+            return Ok(());
+        }
+        let list: Vec<Value> = cookies.iter().map(|one| to_devtools(one, now)).collect();
+        cdp::call(view, "Network.setCookies", &json!({ "cookies": list }))
+            .await
+            .map(|_| ())
+    }
+
+    pub fn cookies_in(answered: &Value) -> Vec<Cookie> {
+        answered["cookies"]
+            .as_array()
+            .map(|list| list.iter().filter_map(from_devtools).collect())
+            .unwrap_or_default()
+    }
+
+    fn partition_key(partition: &Partition) -> Value {
+        json!({
+            "topLevelSite": partition.top_level_site,
+            "hasCrossSiteAncestor": partition.cross_site_ancestor,
+        })
+    }
+
+    pub fn from_devtools(said: &Value) -> Option<Cookie> {
+        let text = |key: &str| said[key].as_str().map(str::to_owned);
+        let partition = match &said["partitionKey"] {
+            Value::String(site) => Some(Partition {
+                top_level_site: site.clone(),
+                cross_site_ancestor: false,
+            }),
+            Value::Object(key) => Some(Partition {
+                top_level_site: key.get("topLevelSite")?.as_str()?.to_owned(),
+                cross_site_ancestor: key
+                    .get("hasCrossSiteAncestor")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
+            }),
+            _ => None,
+        };
+        let session = said["session"].as_bool().unwrap_or(false);
+        Some(Cookie {
+            name: text("name")?,
+            value: text("value").unwrap_or_default(),
+            domain: text("domain")?,
+            path: text("path").unwrap_or_else(|| "/".to_owned()),
+            expires: if session {
+                None
+            } else {
+                said["expires"].as_f64()
+            },
+            http_only: said["httpOnly"].as_bool().unwrap_or(false),
+            secure: said["secure"].as_bool().unwrap_or(false),
+            same_site: match said["sameSite"].as_str() {
+                Some("Strict") => Some(SameSite::Strict),
+                Some("Lax") => Some(SameSite::Lax),
+                Some("None") => Some(SameSite::None),
+                _ => None,
+            },
+            priority: match said["priority"].as_str() {
+                Some("Low") => Some(Priority::Low),
+                Some("Medium") => Some(Priority::Medium),
+                Some("High") => Some(Priority::High),
+                _ => None,
+            },
+            partition,
+            source_scheme: text("sourceScheme"),
+            source_port: said["sourcePort"].as_i64(),
+        })
+    }
+
+    pub fn to_devtools(cookie: &Cookie, now: f64) -> Value {
+        let mut out = Map::new();
+        out.insert("name".into(), json!(cookie.name));
+        out.insert("value".into(), json!(cookie.value));
+        if cookie.domain.starts_with('.') {
+            out.insert("domain".into(), json!(cookie.domain));
+        } else {
+            let scheme = if cookie.secure { "https" } else { "http" };
+            out.insert(
+                "url".into(),
+                json!(format!("{scheme}://{}{}", cookie.domain, cookie.path)),
+            );
+        }
+        out.insert("path".into(), json!(cookie.path));
+        out.insert("secure".into(), json!(cookie.secure));
+        out.insert("httpOnly".into(), json!(cookie.http_only));
+        out.insert("expires".into(), json!(until(cookie, now)));
+        if let Some(same_site) = cookie.same_site {
+            out.insert("sameSite".into(), json!(same_site));
+        }
+        if let Some(priority) = cookie.priority {
+            out.insert("priority".into(), json!(priority));
+        }
+        if let Some(partition) = &cookie.partition {
+            out.insert("partitionKey".into(), partition_key(partition));
+        }
+        if let Some(scheme) = &cookie.source_scheme {
+            out.insert("sourceScheme".into(), json!(scheme));
+        }
+        if let Some(port) = cookie.source_port {
+            out.insert("sourcePort".into(), json!(port));
+        }
+        Value::Object(out)
+    }
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use serde_json::json;
+
+    use super::engine::{from_devtools, to_devtools};
+    use super::KEPT_FOR;
+
+    #[test]
+    fn a_cookie_round_trips_through_the_protocol() {
+        let said = json!({
+            "name": "__Host-sid", "value": "v", "domain": "moodle.ethz.ch", "path": "/",
+            "expires": 1_900_000_000.25, "size": 10, "httpOnly": true, "secure": true,
+            "session": false, "sameSite": "Strict", "priority": "High",
+            "sourceScheme": "Secure", "sourcePort": 443,
+            "partitionKey": { "topLevelSite": "https://ethz.ch", "hasCrossSiteAncestor": true },
+        });
+        let cookie = from_devtools(&said).expect("a cookie");
+        assert_eq!(cookie.expires, Some(1_900_000_000.25));
+        let back = to_devtools(&cookie, 0.0);
+        assert_eq!(back["url"], "https://moodle.ethz.ch/");
+        assert!(
+            back.get("domain").is_none(),
+            "a host-only cookie is set by address"
+        );
+        assert_eq!(back["expires"], 1_900_000_000.25);
+        assert_eq!(back["sameSite"], "Strict");
+        assert_eq!(back["priority"], "High");
+        assert_eq!(back["partitionKey"]["topLevelSite"], "https://ethz.ch");
+        assert_eq!(back["partitionKey"]["hasCrossSiteAncestor"], true);
+        assert_eq!(back["sourcePort"], 443);
+    }
+
+    #[test]
+    fn a_session_cookie_is_written_to_last() {
+        let said = json!({
+            "name": "sid", "value": "1", "domain": ".ethz.ch", "path": "/",
+            "expires": -1, "session": true, "partitionKey": "https://ethz.ch",
+        });
+        let cookie = from_devtools(&said).expect("a cookie");
+        assert_eq!(cookie.expires, None);
+        assert_eq!(
+            cookie
+                .partition
+                .as_ref()
+                .map(|one| one.top_level_site.as_str()),
+            Some("https://ethz.ch")
+        );
+        let back = to_devtools(&cookie, 1000.0);
+        assert_eq!(back["domain"], ".ethz.ch");
+        assert!(back.get("url").is_none());
+        assert_eq!(back["expires"], 1000.0 + KEPT_FOR);
+    }
+}

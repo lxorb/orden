@@ -24,13 +24,11 @@ const FileMark = (await import('./FileMark.svelte')).default
 
 iconLibrary.set = await loadIcons()
 
-function strokes(icon: readonly (readonly [string, Record<string, unknown>])[]): string[] {
-  return icon.flatMap(([, attrs]) => (typeof attrs.d === 'string' ? [attrs.d] : []))
-}
+const strokes = (icon: readonly (readonly [string, Record<string, unknown>])[]): string[] =>
+  icon.flatMap(([, attrs]) => (typeof attrs.d === 'string' ? [attrs.d] : []))
 
-function drawn(mark: Mark, path?: string): string {
-  return render(FileMark, { props: path === undefined ? { mark } : { mark, path } }).body
-}
+const drawn = (mark: Mark, path?: string): string =>
+  render(FileMark, { props: path === undefined ? { mark } : { mark, path } }).body
 
 const rocket = strokes(iconLibrary.shape('rocket') ?? [])
 

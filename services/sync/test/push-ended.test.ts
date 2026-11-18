@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { momentOf } from '@orden/markdown/task-reminders'
 import { sha256 } from '../src/sync-server/src/crypto'
 import { forgetAccess } from '../src/sync-server/src/push/fcm'
 import { sendDue } from '../src/sync-server/src/push/reminders'
@@ -8,7 +7,7 @@ import { computer, type Hubs, hubs } from './hub-fakes'
 
 const EMAIL = 'phone@example.com'
 const ZONE = 'Europe/Zurich'
-const AT = momentOf({ date: '2099-01-05', time: '09:00' }, ZONE)
+const AT = Date.UTC(2099, 0, 5, 8)
 
 let env: TestEnv
 let running: Hubs
@@ -99,21 +98,6 @@ describe('a device no longer signed in', () => {
     const sent = fcm()
     expect(await sendDue(env, AT, sent.send)).toBe(1)
     expect(sent.tokens.sort()).toEqual(['laptop-token', 'lost-phone-token'])
-  })
-
-  test('is pushed nothing once it is ended from the devices list', async () => {
-    const { phone, laptop } = await setUp()
-    const ended = await call(env, `/v2/devices/${phone.id}`, {
-      method: 'DELETE',
-      token: laptop.token,
-    })
-    expect(ended.status).toBe(200)
-    expect((await call(env, '/v1/me', { token: phone.token })).status).toBe(401)
-    expect(targets()).toEqual(['laptop-token'])
-
-    const sent = fcm()
-    await sendDue(env, AT, sent.send)
-    expect(sent.tokens).toEqual(['laptop-token'])
   })
 
   test('nor once its session is ended from the sessions list', async () => {

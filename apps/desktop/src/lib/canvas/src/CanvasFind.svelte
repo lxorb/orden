@@ -25,7 +25,6 @@
   let term = $state('')
   let at = $state(-1)
   let field = $state<HTMLInputElement>()
-
   const found = $derived(hits ?? matches(canvas, term))
   const shown = 12
   const first = $derived(Math.floor(Math.max(at, 0) / shown) * shown)

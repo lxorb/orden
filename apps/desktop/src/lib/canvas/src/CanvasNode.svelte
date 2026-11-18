@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { providePort } from '@orden/contracts'
+  import { holdEdits } from '@orden/contracts'
   import { onDestroy } from 'svelte'
   import {
     createEditor,
@@ -20,10 +20,13 @@
     keptByAccount,
     pageOfFile,
     shownColour,
+    type Box,
+    isLineShape,
+    shapeLine,
+    shapePath,
   } from '../../plane/src/api'
   import { account } from '../../accounts/src/api'
   import CanvasPdf from './CanvasPdf.svelte'
-  import { type Box, isLineShape, shapeLine, shapePath } from '../../plane/src/api'
   import { pickedLink } from '../../link-format/src/api'
   import { links } from '../../link-index/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
@@ -64,7 +67,6 @@
   } = $props()
 
   const colour = $derived(shownColour(node.color))
-
   let source = $state<EmbeddedNote | null>(null)
 
   $effect(() => {
@@ -149,7 +151,6 @@
 
   let editor: EditorView | undefined
   let typed = ''
-
   let handed: string | null = null
 
   function hand() {
@@ -173,6 +174,7 @@
       notes: links.index(canvasPath, canvasPath === null && !trusted),
       writeLink: pickedLink,
       trustedMarkup: trusted,
+      ...(canvasPath ? { place: canvasPath } : {}),
       ...(onfollow
         ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) }
         : {}),
@@ -181,7 +183,7 @@
     })
     if (readOnly) setReadOnlyMode(editor, true)
     editor.focus()
-    const release = providePort('edits.held', { flush: hand })
+    const release = holdEdits(hand)
 
     return {
       destroy: () => {

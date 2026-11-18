@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const { time } = await import('./time.svelte')
 const TimePanel = (await import('./TimePanel.svelte')).default
 const TimeTab = (await import('./TimeTab.svelte')).default
-
 let target: HTMLElement
 let close: (() => void) | undefined
 

@@ -3,8 +3,13 @@ import type { Message, Who } from './types'
 const TAG = 'untrusted'
 
 export function untrusted(source: string, words: string): string {
-  return `<${TAG} source="${attribute(source)}">\n${inert(words)}\n</${TAG}>`
+  return `<${TAG} source="${attribute(source)}">\n${inert(words, EVERY_TAG)}\n</${TAG}>`
 }
+
+const PROMPT_TAGS = /^\s*[/\u2215\u2044]?\s*(attached|summary|reader-context)/
+const EVERY_TAG = /^\s*[/\u2215\u2044]?\s*(untrusted|attached|summary|reader-context)/
+
+export const defused = (words: string): string => inert(words, PROMPT_TAGS)
 
 const HIDDEN = /^[\p{Cf}\u034F\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u
 
@@ -54,28 +59,26 @@ function seenAfter(words: string, from: number): string {
   return Array.from(out.normalize('NFKC').toLowerCase(), (one) => LATIN[one] ?? one).join('')
 }
 
-function inert(words: string): string {
-  return words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) =>
-    /^\s*[/\u2215\u2044]?\s*untrusted/.test(seenAfter(words, at + 1)) ? '&lt;' : one,
+const inert = (words: string, tags: RegExp): string =>
+  words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) =>
+    tags.test(seenAfter(words, at + 1)) ? '&lt;' : one,
   )
-}
 
-function attribute(source: string): string {
-  return Array.from(source)
+const attribute = (source: string): string =>
+  Array.from(source)
     .slice(0, 300)
     .map((one) => {
       if (one === '&') return '&amp;'
       if (one === '"') return '&quot;'
       if (one === '<') return '&lt;'
       if (one === '>') return '&gt;'
-      return /\p{Cc}/u.test(one) ? ' ' : one
+      return /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one) ? ' ' : one
     })
     .join('')
-}
 
-export function momentOf(at: number): string {
-  return `${new Date(at).toISOString().slice(0, 16)}Z`
-}
+export const oneLine = (text: string): string => text.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
+
+export const momentOf = (at: number): string => `${new Date(at).toISOString().slice(0, 16)}Z`
 
 export interface Reading {
   me: Who | null
@@ -97,9 +100,9 @@ export function chatsText(chats: readonly Listed[]): string {
   return chats
     .map((one) =>
       [
-        `#${one.name}`,
+        `#${oneLine(one.name)}`,
         one.id,
-        one.space,
+        oneLine(one.space),
         `${String(one.members)} people`,
         ...(one.unread === 'some'
           ? ['unread']
@@ -122,8 +125,8 @@ function messageText(chat: string, message: Message, reading: Reading): string {
   const head = [
     message.id,
     momentOf(message.at),
-    mine ? `${name} (you)` : name,
-    ...(message.via ? [`via ${message.via.agent}`] : []),
+    mine ? `${oneLine(name)} (you)` : oneLine(name),
+    ...(message.via ? [`via ${oneLine(message.via.agent)}`] : []),
     ...(message.parent ? [`reply to ${message.parent}`] : []),
     ...(message.quote ? [`quoting ${message.quote}`] : []),
     ...(message.replies ? [`${String(message.replies)} replies`] : []),
@@ -142,17 +145,25 @@ function messageText(chat: string, message: Message, reading: Reading): string {
     ...(message.poll
       ? [`[poll: ${message.poll.question} | ${message.poll.answers.join(' | ')}]`]
       : []),
-    ...(message.preview ? [`[link: ${message.preview.title} ${message.preview.url}]`] : []),
+    ...(message.preview && !mine
+      ? [`[link: ${message.preview.title} ${message.preview.url}]`]
+      : []),
   ]
     .filter(Boolean)
     .join('\n')
-  if (mine) return `- ${head}\n${words}`
+  if (mine) {
+    const preview = message.preview
+    const link = preview
+      ? [untrusted(`link preview ${preview.url}`, `[link: ${preview.title} ${preview.url}]`)]
+      : []
+    return [`- ${head}`, words, ...link].filter(Boolean).join('\n')
+  }
   return `- ${head}\n${untrusted(`chat:${chat} from:${name}`, words)}`
 }
 
 export function messagesText(chat: string, messages: readonly Message[], reading: Reading): string {
-  if (!messages.length) return `#${chat} has no messages here.`
-  return [`#${chat}`, ...messages.map((one) => messageText(chat, one, reading))].join('\n')
+  if (!messages.length) return `#${oneLine(chat)} has no messages here.`
+  return [`#${oneLine(chat)}`, ...messages.map((one) => messageText(chat, one, reading))].join('\n')
 }
 
 export function hitsText(
@@ -161,6 +172,8 @@ export function hitsText(
 ): string {
   if (!hits.length) return 'Nothing found.'
   return hits
-    .map((one) => `- #${one.chat} · ${messageText(one.chat, one.message, reading).slice(2)}`)
+    .map(
+      (one) => `- #${oneLine(one.chat)} · ${messageText(one.chat, one.message, reading).slice(2)}`,
+    )
     .join('\n')
 }

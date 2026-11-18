@@ -1,26 +1,7 @@
 import { hostsReadBy } from '@orden/scan/web-address'
 
-const WITH_MARKS = [
-  'Arabic',
-  'Bengali',
-  'Devanagari',
-  'Ethiopic',
-  'Georgian',
-  'Gujarati',
-  'Gurmukhi',
-  'Hebrew',
-  'Kannada',
-  'Khmer',
-  'Lao',
-  'Malayalam',
-  'Myanmar',
-  'Oriya',
-  'Sinhala',
-  'Tamil',
-  'Telugu',
-  'Thai',
-  'Tibetan',
-]
+const WITH_MARKS = `Arabic Bengali Devanagari Ethiopic Georgian Gujarati Gurmukhi Hebrew Kannada
+  Khmer Lao Malayalam Myanmar Oriya Sinhala Tamil Telugu Thai Tibetan`.split(/\s+/)
 
 const WITHOUT_MARKS = ['Armenian', 'Cyrillic', 'Greek']
 
@@ -90,7 +71,6 @@ function decoded(input: string): string | null {
   const dash = input.lastIndexOf('-')
   const out = dash > 0 ? Array.from(input.slice(0, dash), (one) => one.charCodeAt(0)) : []
   let [n, i, bias] = [INITIAL_N, 0, INITIAL_BIAS]
-
   let at = dash > 0 ? dash + 1 : 0
   while (at < input.length) {
     const before = i

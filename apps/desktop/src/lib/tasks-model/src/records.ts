@@ -41,6 +41,13 @@ export function keptOver(was: Kept | undefined, item: Kept): Kept {
 }
 
 const MOST_PAGES = 50
+const STAMP_TIME = 9
+
+function justAfter(stamp: string | undefined): number {
+  if (stamp === undefined) return 0
+  const at = parseInt(stamp.slice(0, STAMP_TIME), 36)
+  return Number.isFinite(at) ? at + 1 : 0
+}
 
 export class TodoRecords {
   private held = new Map<string, Kept>()
@@ -89,8 +96,10 @@ export class TodoRecords {
     return many
   }
 
-  private stamp(): string {
+  private stamp(over: readonly (string | undefined)[] = []): string {
+    const floor = over.reduce((most, one) => Math.max(most, justAfter(one)), 0)
     const at = this.now()
+    if (floor > Math.max(at, this.last)) return inboxStamp(floor, 0, this.device)
     if (at > this.last) {
       this.last = at
       this.count = 0
@@ -107,11 +116,11 @@ export class TodoRecords {
     if (!changes.length) return
     const touched: Kept[] = []
     for (const change of changes) {
-      const stamp = this.stamp()
+      const was = this.held.get(change.id)
+      const stamp = this.stamp(Object.keys(change.fields).map((key) => was?.stamps[key]))
       const stamps: InboxStamps = Object.fromEntries(
         Object.keys(change.fields).map((key) => [key, stamp]),
       )
-      const was = this.held.get(change.id)
       const merged = mergedInbox(was ?? null, { fields: change.fields, stamps })
       const dirty = [...new Set([...(was?.dirty ?? []), ...Object.keys(change.fields)])]
       const kept: Kept = { id: change.id, fields: merged.fields, stamps: merged.stamps, dirty }

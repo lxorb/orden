@@ -13,10 +13,7 @@ vi.mock('../../platform/src/tauri', () => ({
   },
 }))
 
-const account = vi.hoisted(() => ({
-  signedIn: true,
-  spaces: [] as { id: string; role: string }[],
-}))
+const account = vi.hoisted(() => ({ signedIn: true, spaces: [] as { id: string; role: string }[] }))
 vi.mock('../../accounts/src/account.svelte', () => ({ account }))
 
 const remote = new Map<string, string>()
@@ -64,7 +61,6 @@ beforeEach(() => {
 describe('a space of your own deleted signed in', () => {
   test('that the account holds whole is left to the account', async () => {
     await deleteSpace(store(), 'w')
-
     expect(sent).toContain('delete_space')
     expect(sent).not.toContain('trash_item')
   })
@@ -72,7 +68,6 @@ describe('a space of your own deleted signed in', () => {
   test('with a note not pushed yet goes to this device’s trash', async () => {
     unpushed.add('/s/Work/a.md')
     await deleteSpace(store(), 'w')
-
     expect(sent).toContain('trash_item')
     expect(sent).not.toContain('delete_space')
   })
@@ -83,7 +78,6 @@ describe('a space of your own deleted signed in', () => {
       at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/.git', [at('/s/Work/.git/HEAD')])]),
     )
     await deleteSpace(store(), 'w')
-
     expect(sent).toContain('trash_item')
     expect(sent).not.toContain('delete_space')
   })
@@ -91,7 +85,6 @@ describe('a space of your own deleted signed in', () => {
   test('never pushed, so the account has no id for it, goes to this device’s trash', async () => {
     remote.clear()
     await deleteSpace(store(), 'w')
-
     expect(sent).toContain('trash_item')
     expect(sent).not.toContain('delete_space')
   })
@@ -100,7 +93,6 @@ describe('a space of your own deleted signed in', () => {
 test('a space somebody else owns goes to this device’s trash', async () => {
   account.spaces = [{ id: 'r1', role: 'writer' }]
   await deleteSpace(store(), 'w')
-
   expect(sent).toContain('trash_item')
   expect(sent).not.toContain('delete_space')
 })

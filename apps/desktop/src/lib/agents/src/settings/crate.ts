@@ -100,21 +100,7 @@ const RULES: readonly SiteRule[] = ['allow', 'deny', 'agent-store']
 
 export function readGrant(value: unknown): Grant | null {
   if (!isRecord(value)) return null
-  const {
-    id,
-    name,
-    client,
-    scopes,
-    spaces,
-    sites,
-    scripts,
-    mode,
-    asks,
-    always,
-    programs,
-    limits,
-    created,
-  } = value
+  const { id, name, client, sites, asks, always, limits } = value
   if (typeof id !== 'string' || typeof name !== 'string' || typeof client !== 'string') return null
 
   const limited = isRecord(limits) ? limits : {}
@@ -122,16 +108,16 @@ export function readGrant(value: unknown): Grant | null {
     id,
     name,
     client,
-    scopes: strings(scopes).flatMap((one) => known(SCOPES, one) ?? []),
-    spaces: spaces === 'all' ? 'all' : strings(spaces),
+    scopes: strings(value.scopes).flatMap((one) => known(SCOPES, one) ?? []),
+    spaces: value.spaces === 'all' ? 'all' : strings(value.spaces),
     sites: Object.fromEntries(
       Object.entries(isRecord(sites) ? sites : {}).flatMap(([site, rule]) => {
         const said = known(RULES, rule)
         return said ? [[site, said]] : []
       }),
     ),
-    scripts: strings(scripts),
-    mode: mode === 'confirm' ? 'confirm' : 'unsupervised',
+    scripts: strings(value.scripts),
+    mode: value.mode === 'confirm' ? 'confirm' : 'unsupervised',
     asks: Object.fromEntries(
       Object.entries(isRecord(asks) ? asks : {}).flatMap(([category, on]) =>
         known(CATEGORIES, category) && typeof on === 'boolean' ? [[category, on]] : [],
@@ -143,14 +129,14 @@ export function readGrant(value: unknown): Grant | null {
         strings(categories).flatMap((one) => known(CATEGORIES, one) ?? []),
       ]),
     ),
-    programs: strings(programs),
+    programs: strings(value.programs),
     limits: {
       tabs: count(limited.tabs, 4),
       calls: count(limited.calls, 600),
       navigations: count(limited.navigations, 60),
       memory: count(limited.memory, 0),
     },
-    created: count(created, 0),
+    created: count(value.created, 0),
   }
 }
 

@@ -60,8 +60,6 @@ const { workspace } = await import('../../workspace/src/api')
 const ExplorerColumn = (await import('./ExplorerColumn.svelte')).default
 const { viewOf } = await import('./view.svelte')
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
 let close: (() => void) | undefined
 
 afterEach(() => {
@@ -80,24 +78,25 @@ test('a folder is watched only once its changes can be heard, and the column bes
   document.body.append(target)
   const made = mount(ExplorerColumn, { target, props: { view, folder: '/home/me/letters' } })
   close = () => void unmount(made)
-  await wait(250)
-  expect(ears.calls).toEqual(['list /home/me', 'list /home/me/letters'])
+  await vi.waitFor(() => expect(ears.calls).toEqual(['list /home/me', 'list /home/me/letters']))
 
   ears.open?.()
-  await wait(10)
-  expect([...ears.calls].sort()).toEqual([
-    'list /home/me',
-    'list /home/me/letters',
-    'watch /home/me',
-    'watch /home/me/letters',
-  ])
+  await vi.waitFor(() =>
+    expect([...ears.calls].sort()).toEqual([
+      'list /home/me',
+      'list /home/me/letters',
+      'watch /home/me',
+      'watch /home/me/letters',
+    ]),
+  )
 
   ears.disk.set('/home/me/letters', ['a.txt', 'b.txt'])
   ears.heard?.({ payload: { folders: ['/home/me/letters'] } })
-  await wait(250)
-  flushSync()
-  const names = [...target.querySelectorAll('.orden-row-label')].map((one) => one.textContent)
-  expect(names).toEqual(['a.txt', 'b.txt'])
+  await vi.waitFor(() => {
+    flushSync()
+    const names = [...target.querySelectorAll('.orden-row-label')].map((one) => one.textContent)
+    expect(names).toEqual(['a.txt', 'b.txt'])
+  })
 
   close()
   close = undefined

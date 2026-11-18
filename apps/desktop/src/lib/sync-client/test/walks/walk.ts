@@ -1,17 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { type Crowd, crowded, simulate } from '@orden/sync-core/sim'
+import { type Crowd, crowded, failedSeeds, simulate } from '@orden/sync-core/sim'
 import { EngineDevice } from '../sim-device'
 
-export async function walked(from: number, count: number, mix?: Crowd): Promise<string[]> {
-  const failed: string[] = []
-  for (let seed = from; seed < from + count && failed.length < 5; seed++) {
-    const report = await simulate({
+export function walked(from: number, count: number, mix?: Crowd): Promise<string[]> {
+  return failedSeeds(from, count, (seed) =>
+    simulate({
       ...(mix ? crowded(seed, mix) : { seed }),
       device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
-    })
-    if (report.failures.length) failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
-  }
-  return failed
+    }),
+  )
 }
 
 const QUARTERS = 4

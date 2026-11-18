@@ -28,18 +28,12 @@ describe('the entry a page starts from', () => {
 })
 
 describe('what a missing piece calls for', () => {
-  test('a newer build under the page is a reload', () => {
-    expect(verdict('/assets/index-old.js', '/assets/index-new.js', null)).toBe('reload')
-  })
-
-  test('the same build is an offer: the network lost the piece', () => {
-    expect(verdict('/assets/index-old.js', '/assets/index-old.js', null)).toBe('offer')
-  })
-
-  test('a build a reload already went for and did not get is an offer, not a loop', () => {
-    expect(verdict('/assets/index-old.js', '/assets/index-new.js', '/assets/index-new.js')).toBe(
-      'offer',
-    )
+  test.each([
+    ['/assets/index-new.js', null, 'reload'],
+    ['/assets/index-old.js', null, 'offer'],
+    ['/assets/index-new.js', '/assets/index-new.js', 'offer'],
+  ])('a page on index-old under %s, having gone for %s, is a %s', (served, went, said) => {
+    expect(verdict('/assets/index-old.js', served, went)).toBe(said)
   })
 })
 
@@ -110,11 +104,9 @@ function failedImport() {
 describe('a piece that did not arrive', () => {
   test('under a newer build, reloads once the hands are off', async () => {
     const { reloading } = await watching()
-
     failedImport()
     await vi.advanceTimersByTimeAsync(HANDS_OFF - 1)
     expect(reload).not.toHaveBeenCalled()
-
     await vi.advanceTimersByTimeAsync(1)
     expect(reload).toHaveBeenCalledOnce()
     expect(reloading.offered).toBe(false)
@@ -123,103 +115,104 @@ describe('a piece that did not arrive', () => {
 
   test('asks the site once however many pieces failed', async () => {
     await watching()
-
     failedImport()
     failedImport()
     failedImport()
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
-
     expect(serve).toHaveBeenCalledOnce()
     expect(reload).toHaveBeenCalledOnce()
   })
 
   test('waits for a key, and for the pause after it', async () => {
     await watching()
-
     failedImport()
     await vi.advanceTimersByTimeAsync(HANDS_OFF - 500)
     events.dispatchEvent(new Event('keydown'))
     await vi.advanceTimersByTimeAsync(HANDS_OFF - 1)
     expect(reload).not.toHaveBeenCalled()
-
     await vi.advanceTimersByTimeAsync(1)
     expect(reload).toHaveBeenCalledOnce()
   })
 
-  test('never goes while a button is held', async () => {
+  test.each([
+    [
+      'while a button is held',
+      () => {
+        failedImport()
+        events.dispatchEvent(new Event('pointerdown'))
+        return () => events.dispatchEvent(new Event('pointerup'))
+      },
+    ],
+    [
+      'from under something open over the note',
+      async () => {
+        const close = (await import('./overlays')).overlays.show(() => undefined)
+        failedImport()
+        return close
+      },
+    ],
+    [
+      'from under a field being typed in',
+      () => {
+        const field = {
+          closest: () => null,
+          matches: (selector: string) => selector.includes('input'),
+        }
+        doc.activeElement = field as unknown as Element
+        failedImport()
+        return () => (doc.activeElement = null)
+      },
+    ],
+    [
+      'while something holds the page',
+      async () => {
+        let recording = true
+        ;(await import('./reloading.svelte')).reloading.holds(() => recording)
+        failedImport()
+        return () => (recording = false)
+      },
+    ],
+    [
+      'while something holds the page until it lets go',
+      async () => {
+        const release = (await import('./reloading.svelte')).reloading.holds(() => true)
+        failedImport()
+        return release
+      },
+    ],
+  ])('never goes %s', async (_, hold) => {
     await watching()
-
-    failedImport()
-    events.dispatchEvent(new Event('pointerdown'))
+    const release = await hold()
     await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
     expect(reload).not.toHaveBeenCalled()
-
-    events.dispatchEvent(new Event('pointerup'))
-    await vi.advanceTimersByTimeAsync(HANDS_OFF)
-    expect(reload).toHaveBeenCalledOnce()
-  })
-
-  test('never goes from under something open over the note', async () => {
-    const { overlays } = await watching()
-    const close = overlays.show(() => undefined)
-
-    failedImport()
-    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-    expect(reload).not.toHaveBeenCalled()
-
-    close()
-    await vi.advanceTimersByTimeAsync(HANDS_OFF)
-    expect(reload).toHaveBeenCalledOnce()
-  })
-
-  test('never goes from under a field being typed in', async () => {
-    await watching()
-    const field = { closest: () => null, matches: (selector: string) => selector.includes('input') }
-    doc.activeElement = field as unknown as Element
-
-    failedImport()
-    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-    expect(reload).not.toHaveBeenCalled()
-
-    doc.activeElement = null
-    await vi.advanceTimersByTimeAsync(HANDS_OFF)
-    expect(reload).toHaveBeenCalledOnce()
-  })
-
-  test('never goes while something holds the page', async () => {
-    const { reloading } = await watching()
-    let recording = true
-    reloading.holds(() => recording)
-
-    failedImport()
-    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-    expect(reload).not.toHaveBeenCalled()
-
-    recording = false
-    await vi.advanceTimersByTimeAsync(HANDS_OFF)
-    expect(reload).toHaveBeenCalledOnce()
-  })
-
-  test('stops being held by what let go of the page', async () => {
-    const { reloading } = await watching()
-    const release = reloading.holds(() => true)
-
-    failedImport()
-    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-    expect(reload).not.toHaveBeenCalled()
-
     release()
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
     expect(reload).toHaveBeenCalledOnce()
   })
 
+  test.each([
+    [
+      'the same build',
+      () => serve.mockImplementation(() => Promise.resolve(new Response(page(RUNNING)))),
+    ],
+    [
+      'a build a reload already went for',
+      () => storage.set('orden:reloaded-for', '/assets/index-new.js'),
+    ],
+  ])('under %s, offers Reload and never reloads by itself', async (_, given) => {
+    given()
+    const { reloading } = await watching()
+    failedImport()
+    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
+    expect(reloading.offered).toBe(true)
+    expect(reload).not.toHaveBeenCalled()
+  })
+
   test('goes at once when the page is out of sight', async () => {
     await watching()
     doc.hidden = true
-
     failedImport()
     await vi.advanceTimersByTimeAsync(0)
-
     expect(reload).toHaveBeenCalledOnce()
   })
 
@@ -227,47 +220,21 @@ describe('a piece that did not arrive', () => {
     const owed = [false, true]
     const settled = vi.fn(() => Promise.resolve(owed.shift() ?? true))
     await watching(settled)
-
     failedImport()
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
     expect(reload).not.toHaveBeenCalled()
-
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
     expect(settled).toHaveBeenCalledTimes(2)
     expect(reload).toHaveBeenCalledOnce()
   })
 
-  test('under the same build, offers Reload and never reloads by itself', async () => {
-    serve.mockImplementation(() => Promise.resolve(new Response(page(RUNNING))))
-    const { reloading } = await watching()
-
-    failedImport()
-    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-
-    expect(reloading.offered).toBe(true)
-    expect(reload).not.toHaveBeenCalled()
-  })
-
-  test('under a build a reload already went for, offers rather than reloading again', async () => {
-    storage.set('orden:reloaded-for', '/assets/index-new.js')
-    const { reloading } = await watching()
-
-    failedImport()
-    await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-
-    expect(reloading.offered).toBe(true)
-    expect(reload).not.toHaveBeenCalled()
-  })
-
   test('with the site out of reach, offers nothing and asks again when the network is back', async () => {
     serve.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')))
     const { reloading } = await watching()
-
     failedImport()
     await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
     expect(reloading.offered).toBe(false)
     expect(reload).not.toHaveBeenCalled()
-
     events.dispatchEvent(new Event('online'))
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
     expect(serve).toHaveBeenCalledTimes(2)
@@ -279,10 +246,8 @@ describe('a piece that did not arrive', () => {
       throw new TypeError('Failed to fetch dynamically imported module')
     })
     const { reloading } = await watching()
-
     failedImport()
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
-
     expect(reloading.offered).toBe(true)
     expect(serve).not.toHaveBeenCalled()
     vi.doUnmock('./reload-when')
@@ -290,10 +255,8 @@ describe('a piece that did not arrive', () => {
 
   test('the network coming back asks nothing when nothing went missing', async () => {
     await watching()
-
     events.dispatchEvent(new Event('online'))
     await vi.advanceTimersByTimeAsync(HANDS_OFF)
-
     expect(serve).not.toHaveBeenCalled()
   })
 })
@@ -308,10 +271,8 @@ describe('an error thrown inside the first step after a piece arrived', () => {
   ])('is %s, not a missing piece: nothing is asked, offered or reloaded', async (_, error) => {
     await import('./reload-when')
     const { reloading } = await watching()
-
     const event = preloadError(error)
     await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-
     expect(event.defaultPrevented).toBe(false)
     expect(serve).not.toHaveBeenCalled()
     expect(reloading.offered).toBe(false)
@@ -321,11 +282,9 @@ describe('an error thrown inside the first step after a piece arrived', () => {
   test('does not stand in for a missing piece when the network comes back', async () => {
     await import('./reload-when')
     await watching()
-
     preloadError(new Error('no such note'))
     events.dispatchEvent(new Event('online'))
     await vi.advanceTimersByTimeAsync(HANDS_OFF * 5)
-
     expect(serve).not.toHaveBeenCalled()
   })
 })
@@ -341,7 +300,6 @@ describe('a piece that did not arrive, as each engine says it', () => {
     ['a stylesheet', new Error('Unable to preload CSS for /assets/Palette-9f.css')],
   ])('in %s, is a missing piece', async (_, error) => {
     await watching()
-
     preloadError(error)
     await vi.waitFor(async () => {
       await vi.advanceTimersByTimeAsync(HANDS_OFF)

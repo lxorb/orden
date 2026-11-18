@@ -37,6 +37,7 @@ export interface Draft {
   zoom?: number | undefined
   address?: string | undefined
   apart?: string | undefined
+  behind?: string | undefined
   space?: string | undefined
 }
 
@@ -117,19 +118,14 @@ function isSpace(value: unknown): value is WorkspaceSpace {
 function readFolds(value: unknown): readonly FoldLines[] | null {
   if (!Array.isArray(value)) return null
 
-  const out: FoldLines[] = []
-  for (const one of value as unknown[]) {
-    if (!Array.isArray(one) || one.length !== 2) continue
-
-    const pair = one as unknown[]
-    const head = pair[0]
-    const last = pair[1]
-    if (!isNumber(head) || !isNumber(last)) continue
-    if (!Number.isInteger(head) || !Number.isInteger(last)) continue
-    if (head < 1 || last <= head) continue
-    out.push([head, last])
-  }
-
+  const out = value.filter(
+    (one): one is FoldLines =>
+      Array.isArray(one) &&
+      one.length === 2 &&
+      one.every(Number.isInteger) &&
+      one[0] >= 1 &&
+      one[1] > one[0],
+  )
   return out.length ? out : null
 }
 
@@ -137,7 +133,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value) || isRetiredTab(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, address, space, source, apart, base } = value
+  const { folds, page, zoom, address, space, source, apart, behind, base } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -164,6 +160,7 @@ export function readDraft(value: unknown): Draft | null {
     ...(isString(address) ? { address } : {}),
     ...(path === null && isString(space) ? { space } : {}),
     ...(path === null && isString(apart) ? { apart } : {}),
+    ...(path === null && isString(behind) ? { behind } : {}),
   }
 }
 
@@ -238,14 +235,12 @@ export function readPosition(value: unknown): Position | null {
 
 function readPositions(value: unknown): Record<string, Position> {
   if (!isRecord(value)) return {}
-
-  const out: Record<string, Position> = {}
-  for (const [path, one] of Object.entries(value)) {
-    const place = readPosition(one)
-    if (place) out[path] = place
-  }
-
-  return out
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([path, one]) => {
+      const place = readPosition(one)
+      return place ? [[path, place]] : []
+    }),
+  )
 }
 
 export function readClosed(value: unknown): ClosedTab | null {
@@ -293,13 +288,12 @@ export function arrivingWith(read: Layout, now: Layout): Layout {
     .flatMap((one) => one.tabs)
     .filter((tab) => tab.dirty || !held.some((one) => one.path && samePath(one.path, tab.path)))
   const into = (panes.find((one) => one.id === read.focused) ?? panes[0])?.id
-  const behind = (frame: FrameDraft): FrameDraft => {
-    if (frame.kind === 'split')
-      return { ...frame, sides: [behind(frame.sides[0]), behind(frame.sides[1])] }
-    if (frame.pane.id !== into) return frame
-    return { kind: 'pane', pane: { ...frame.pane, tabs: [...frame.pane.tabs, ...open] } }
-  }
-  return { ...read, panel: now.panel, frame: open.length ? behind(read.frame) : read.frame }
+  const frame = open.length
+    ? eachPane(read.frame, (one) =>
+        one.id === into ? { ...one, tabs: [...one.tabs, ...open] } : one,
+      )
+    : read.frame
+  return { ...read, panel: now.panel, frame }
 }
 
 export function readSession(value: unknown): Session | null {
@@ -384,36 +378,28 @@ export function frameDraft(
   }
 }
 
-export function withoutText(layout: Layout): Layout {
-  return { ...layout, frame: bareFrame(layout.frame) }
+function eachPane(frame: FrameDraft, change: (pane: PaneDraft) => PaneDraft): FrameDraft {
+  return frame.kind === 'split'
+    ? { ...frame, sides: [eachPane(frame.sides[0], change), eachPane(frame.sides[1], change)] }
+    : { kind: 'pane', pane: change(frame.pane) }
 }
 
-function bareFrame(frame: FrameDraft): FrameDraft {
-  if (frame.kind === 'split') {
-    return { ...frame, sides: [bareFrame(frame.sides[0]), bareFrame(frame.sides[1])] }
-  }
+const eachTab = (layout: Layout, change: (draft: Draft) => Draft): Layout => ({
+  ...layout,
+  frame: eachPane(layout.frame, (pane) => ({ ...pane, tabs: pane.tabs.map(change) })),
+})
 
-  const tabs = frame.pane.tabs.map((draft) => {
-    if (!draft.path || !draft.doc) return draft
-    const bare: Draft = { ...draft, doc: '', dirty: false }
-    delete bare.base
-    return bare
-  })
+const unbased = ({ base: _base, ...draft }: Draft): Draft => draft
 
-  return { kind: 'pane', pane: { ...frame.pane, tabs } }
-}
+export const withoutText = (layout: Layout): Layout =>
+  eachTab(layout, (draft) =>
+    draft.path && draft.doc ? { ...unbased(draft), doc: '', dirty: false } : draft,
+  )
 
-function withoutBases(layout: Layout): Layout | null {
-  if (!panesOf(layout.frame).some((pane) => pane.tabs.some((tab) => tab.base !== undefined)))
-    return null
-  const bare = (frame: FrameDraft): FrameDraft => {
-    if (frame.kind === 'split')
-      return { ...frame, sides: [bare(frame.sides[0]), bare(frame.sides[1])] }
-    const tabs = frame.pane.tabs.map(({ base: _base, ...draft }) => draft)
-    return { ...frame, pane: { ...frame.pane, tabs } }
-  }
-  return { ...layout, frame: bare(layout.frame) }
-}
+const withoutBases = (layout: Layout): Layout | null =>
+  panesOf(layout.frame).some((pane) => pane.tabs.some((tab) => tab.base !== undefined))
+    ? eachTab(layout, unbased)
+    : null
 
 export function writeSession(key: string, state: Session): boolean {
   if (put(key, state)) return true

@@ -11,17 +11,19 @@ export interface Picture {
   to: number
   src: string
   alt: string
+  wikilink: boolean
 }
 
 export function pictureAt(state: EditorState, pos: number): Picture | null {
   const image = imageAt(state, pos)
-  if (image) return { from: image.from, to: image.to, src: image.src, alt: image.alt }
+  if (image)
+    return { from: image.from, to: image.to, src: image.src, alt: image.alt, wikilink: false }
 
   const link = linkAt(state, pos)
   if (!link?.embed || link.from !== pos || embedKind(link.target) !== 'image') return null
 
   const alt = link.alias !== null && !embedSize(link.alias) ? link.alias : ''
-  return { from: link.from, to: link.to, src: link.target, alt }
+  return { from: link.from, to: link.to, src: link.target, alt, wikilink: true }
 }
 
 export function pressedPicture(view: EditorView, target: EventTarget | null): Picture | null {
@@ -32,16 +34,16 @@ export function pressedPicture(view: EditorView, target: EventTarget | null): Pi
   return pictureAt(view.state, view.posAtDOM(drawn))
 }
 
-export function pictureUrl(state: EditorState, picture: Picture): string {
-  return state.facet(imageResolver)(picture.src)
-}
+export const pictureUrl = (state: EditorState, picture: Picture): string =>
+  state.facet(imageResolver)(picture.src, picture.wikilink)
 
 export function showPicture(view: EditorView, picture: Picture) {
   openLightbox(view, pictureUrl(view.state, picture), picture.alt)
 }
 
-export function deletePicture(picture: Picture): StateCommand {
-  return ({ state, dispatch }) => {
+export const deletePicture =
+  (picture: Picture): StateCommand =>
+  ({ state, dispatch }) => {
     const still = pictureAt(state, picture.from)
     if (state.readOnly || still?.to !== picture.to) return false
 
@@ -54,4 +56,3 @@ export function deletePicture(picture: Picture): StateCommand {
     )
     return true
   }
-}

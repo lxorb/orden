@@ -1,14 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const KEY = 'orden:setup'
 
-const kept = new Map<string, string>()
-
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => kept.get(key) ?? null,
-  setItem: (key: string, value: string) => void kept.set(key, value),
-  removeItem: (key: string) => void kept.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 async function fresh() {
   vi.resetModules()
@@ -26,7 +21,7 @@ async function relaunched() {
   return setup
 }
 
-beforeEach(() => kept.clear())
+beforeEach(() => localStorage.clear())
 
 describe('the first-launch setup', () => {
   test('stays away from people who used Orden before it existed', async () => {
@@ -35,7 +30,7 @@ describe('the first-launch setup', () => {
   })
 
   test('stays away from people who finished it, even on a fresh start', async () => {
-    kept.set(KEY, JSON.stringify('done'))
+    localStorage.setItem(KEY, JSON.stringify('done'))
     const setup = await relaunched()
     setup.begin(false)
     expect(setup.showing).toBe(false)
@@ -47,7 +42,7 @@ describe('the first-launch setup', () => {
     expect(setup.showing).toBe(true)
     expect(setup.step).toBe('account')
 
-    kept.clear()
+    localStorage.clear()
     const signed = await fresh()
     signed.begin(true)
     expect(signed.step).toBe('appearance')
@@ -56,8 +51,8 @@ describe('the first-launch setup', () => {
   test('comes back at the step it was left on, with its answers', async () => {
     const setup = await fresh()
     setup.begin(false)
-    setup.next()
-    setup.next()
+    setup.next(setup.step)
+    setup.next(setup.step)
     setup.answer({ code: 'no' })
     expect(setup.step).toBe('heard')
 
@@ -71,8 +66,8 @@ describe('the first-launch setup', () => {
     const setup = await fresh()
     setup.begin(false)
     expect(setup.canGoBack).toBe(false)
-    setup.next()
-    setup.next()
+    setup.next(setup.step)
+    setup.next(setup.step)
     setup.back()
     expect(setup.step).toBe('appearance')
     setup.back()
@@ -80,12 +75,39 @@ describe('the first-launch setup', () => {
     expect(setup.step).toBe('account')
   })
 
+  test('never goes back to the log in once signed in', async () => {
+    const setup = await fresh()
+    setup.begin(false)
+    setup.signedIn = true
+    setup.next(setup.step)
+    expect(setup.step).toBe('appearance')
+    expect(setup.canGoBack).toBe(false)
+    setup.back()
+    expect(setup.step).toBe('appearance')
+
+    setup.next(setup.step)
+    setup.back()
+    expect(setup.step).toBe('appearance')
+  })
+
+  test('moves on late only from the step that asked for it', async () => {
+    const setup = await fresh()
+    setup.begin(false)
+    setup.next(setup.step)
+    setup.next(setup.step)
+    setup.back()
+    setup.next('heard')
+    expect(setup.step).toBe('appearance')
+    setup.next('appearance')
+    expect(setup.step).toBe('heard')
+  })
+
   test('is over for good once finished', async () => {
     const setup = await fresh()
     setup.begin(false)
     setup.finish()
     expect(setup.showing).toBe(false)
-    expect(kept.get(KEY)).toBe(JSON.stringify('done'))
+    expect(localStorage.getItem(KEY)).toBe(JSON.stringify('done'))
 
     const again = await relaunched()
     again.begin(false)

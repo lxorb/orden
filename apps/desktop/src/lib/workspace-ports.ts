@@ -86,6 +86,4 @@ if (!__EVEN_PLUGIN__) {
   )
 }
 
-providePort('spaces.archived', {
-  listed: async () => (await spaceArchiving()).listed(),
-})
+providePort('spaces.archived', { listed: async () => (await spaceArchiving()).listed() })

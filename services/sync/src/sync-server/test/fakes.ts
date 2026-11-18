@@ -142,6 +142,15 @@ function bucket() {
         customMetadata: held.customMetadata,
       })
     },
+    head(key: string) {
+      const held = store.get(key)
+      if (!held) return Promise.resolve(null)
+      return Promise.resolve({
+        size: bytesOf(held.value).length,
+        httpMetadata: { contentType: held.contentType },
+        customMetadata: held.customMetadata,
+      })
+    },
     createMultipartUpload(key: string, options?: { httpMetadata?: { contentType?: string } }) {
       const uploadId = `upload-${String(++uploadsMade)}`
       uploads.set(uploadId, { key, parts: new Map(), options })

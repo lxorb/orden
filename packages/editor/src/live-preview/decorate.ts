@@ -119,6 +119,7 @@ class Decorator {
 
     const lineClass = LINE_CLASS[name]
     if (lineClass) {
+      if (HEADING_LEVEL[name] && !this.spaced(node.firstChild)) return false
       this.markLines(node, lineClass, false, this.headingNumber(node))
       return name !== 'FrontMatter'
     }
@@ -489,7 +490,7 @@ class Decorator {
   }
 
   private listMark(node: SyntaxNode) {
-    if (node.parent?.getChild('Task')) return
+    if (node.parent?.getChild('Task') || !this.spaced(node)) return
 
     const ordered = /\d/.test(this.state.doc.sliceString(node.from, node.to))
     if (ordered) {
@@ -527,7 +528,7 @@ class Decorator {
     if (shown || !drawn.chips.length) return
     this.marks.push(
       Decoration.widget({
-        widget: new chips.TaskChipsWidget(drawn.chips, index.tasks !== undefined),
+        widget: new chips.TaskChipsWidget(drawn.chips),
         side: 1,
       }).range(line.to),
     )
@@ -585,9 +586,8 @@ class Decorator {
       this.conceal(node.from, node.to, shown)
       this.conceal(next.from, next.to, shown)
       this.claimed.push({ from: next.from, to: next.to })
-      if (node.to < next.from) {
+      if (node.to < next.from)
         this.marks.push(Decoration.mark({ class: 'orden-underline' }).range(node.to, next.from))
-      }
       return true
     }
     return false
@@ -646,6 +646,10 @@ class Decorator {
     this.marks.push(Decoration.mark({ class: 'orden-table-pipe' }).range(node.from, node.to))
   }
 
+  private spaced(mark: SyntaxNode | null): boolean {
+    return !!mark && /[ \t]/.test(this.state.doc.sliceString(mark.to, mark.to + 1))
+  }
+
   private eatSpace(pos: number): number {
     const doc = this.state.doc
     const line = doc.lineAt(pos)
@@ -656,9 +660,8 @@ class Decorator {
 
   private depth(node: SyntaxNode): number {
     let depth = 0
-    for (let parent = node.parent; parent; parent = parent.parent) {
+    for (let parent = node.parent; parent; parent = parent.parent)
       if (parent.name === 'BulletList') depth++
-    }
     return Math.max(depth - 1, 0)
   }
 
@@ -745,7 +748,6 @@ export function buildDecorations(
 }
 
 const enginesLanded = StateEffect.define()
-
 const COMPOSITION_SETTLES = 50
 
 export const livePreviewDecorations = ViewPlugin.fromClass(

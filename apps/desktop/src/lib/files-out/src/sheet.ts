@@ -30,7 +30,6 @@ const contentPolicy = (pictures: string) =>
   ].join('; ')
 
 export const CONTENT_POLICY = contentPolicy('')
-
 export const SHEET_POLICY = contentPolicy(' asset: http://asset.localhost')
 
 export function localSources(html: string): string[] {
@@ -84,7 +83,6 @@ export async function writtenPdf(
 }
 
 const PLACED = /(<(?:img|audio|video|source)\b[^>]*?\bsrc="|<image\b[^>]*?\bhref=")([^"]*)(")/g
-
 const AWAY = /^(?:data:|blob:|https?:|\/\/)/i
 
 function localOf(html: string): string[] {
@@ -118,12 +116,11 @@ export function pageWith(html: string, pictures: readonly Placed[]): Blob {
   return new Blob(placed(html, wanted), { type: 'text/html' })
 }
 
-function swapped(html: string, links: ReadonlyMap<string, string>): string {
-  return html.replace(PLACED, (whole: string, before: string, src: string, after: string) => {
+const swapped = (html: string, links: ReadonlyMap<string, string>): string =>
+  html.replace(PLACED, (whole: string, before: string, src: string, after: string) => {
     const link = links.get(src)
     return link === undefined ? whole : `${before}${link}${after}`
   })
-}
 
 async function pictureOf(path: string, mime: string): Promise<Blob | null> {
   if (isNative) {

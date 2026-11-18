@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser
 
 from harness import Drive
@@ -56,5 +54,4 @@ def drive(browser: Browser) -> None:
     if any(abs(one - STANDARD) > 1 for one in widths):
         wrong(f"with the switch off the tabs are {widths}, not all the standard width")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "tabs as wide as their names"))
+raise SystemExit(DRIVE.run(drive, "tabs as wide as their names"))

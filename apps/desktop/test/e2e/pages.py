@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Page
@@ -28,8 +26,6 @@ def complain(label: str, message) -> None:
     fail(f"[{label}] console error: {message.text}")
 
 PREPARE = """
-// What is handed to the print engine, kept where the drive can read it: printing goes
-// through a frame's `srcdoc`, and the dialog it opens is not something a drive sees.
 (() => {
   const own = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc');
   Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', {
@@ -1188,8 +1184,6 @@ DARK_ON_SHEETS = """
 
     const data = context.getImageData(0, 0, sheet.width, sheet.height).data
     let dark = 0
-    // Every fortieth pixel, which is thousands of them on a page and quick enough to
-    // ask for on every sheet in the note.
     for (let at = 0; at < data.length; at += 160) {
       if (data[at + 3] > 8 && data[at] < 100 && data[at + 1] < 100 && data[at + 2] < 100) dark++
     }
@@ -1435,5 +1429,4 @@ def main() -> int:
 
     return DRIVE.verdict("everything the drive checked was right")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

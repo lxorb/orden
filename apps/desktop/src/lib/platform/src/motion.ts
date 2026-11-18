@@ -17,17 +17,11 @@ const query =
     ? window.matchMedia(STILL)
     : null
 
-export function stillness(): boolean {
-  return query?.matches ?? false
-}
+export const stillness = (): boolean => query?.matches ?? false
 
-export function dur(ms: number): number {
-  return stillness() ? 0 : ms
-}
+export const dur = (ms: number): number => (stillness() ? 0 : ms)
 
-export function calm(ms: number): number {
-  return ms
-}
+export const calm = (ms: number): number => ms
 
 export const LAYER = {
   get fade(): number {

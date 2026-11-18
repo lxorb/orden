@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import json
 
@@ -147,5 +145,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a PDF's contents and highlights show beside and on its pages"))
+raise SystemExit(DRIVE.run(drive, "a PDF's contents and highlights show beside and on its pages"))

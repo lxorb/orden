@@ -13,6 +13,7 @@
     "ui-kit",
     "link-index",
     "modes",
-    "workspace"
+    "workspace",
+    "scan"
   ]
 }

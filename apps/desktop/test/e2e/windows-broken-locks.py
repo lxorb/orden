@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 import time
 
 from playwright.sync_api import Browser, Page
@@ -46,5 +44,4 @@ def drive(browser: Browser) -> None:
         say(f"{mode}: held")
         ctx.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

@@ -1,14 +1,10 @@
 <script lang="ts">
   import type { Look } from './looks'
 
-  const {
-    looks,
-    desk = false,
-    pictured = false,
-  }: { looks: readonly Look[]; desk?: boolean; pictured?: boolean } = $props()
+  const { looks, pictured = false }: { looks: readonly Look[]; pictured?: boolean } = $props()
 </script>
 
-<span class="mini" class:desk class:pictured aria-hidden="true">
+<span class="mini" class:pictured aria-hidden="true">
   {#each looks as look, index (index)}
     <span
       class="window"
@@ -153,19 +149,6 @@
     height: 100%;
     border-radius: 2px;
     background: var(--mini-accent);
-  }
-
-  .desk .window {
-    background: linear-gradient(135deg, var(--canvas-5), var(--canvas-6) 55%, var(--canvas-2));
-  }
-
-  .desk .bar,
-  .desk .side {
-    background: color-mix(in srgb, var(--mini-frame) 64%, transparent);
-  }
-
-  .desk .note {
-    background: var(--mini-ground);
   }
 
   .pictured .window {

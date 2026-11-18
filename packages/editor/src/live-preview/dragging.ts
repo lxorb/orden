@@ -6,16 +6,13 @@ export const setDragging = StateEffect.define<boolean>()
 export const dragging = StateField.define<boolean>({
   create: () => false,
   update(value, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(setDragging)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(setDragging)) return effect.value
     return value
   },
 })
 
-export function dragsSelection(button: number, pointer: string): boolean {
-  return button === 0 && pointer === 'mouse'
-}
+export const dragsSelection = (button: number, pointer: string): boolean =>
+  button === 0 && pointer === 'mouse'
 
 const watcher = ViewPlugin.fromClass(
   class {
@@ -36,9 +33,8 @@ const watcher = ViewPlugin.fromClass(
     }
 
     private end() {
-      if (this.view.state.field(dragging, false)) {
+      if (this.view.state.field(dragging, false))
         this.view.dispatch({ effects: setDragging.of(false) })
-      }
     }
   },
   {

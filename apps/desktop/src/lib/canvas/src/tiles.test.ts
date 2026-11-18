@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import type { InkStroke } from '@orden/markdown/canvas'
-import type { Box } from '../../plane/src/api'
-import { strokeBox } from '../../plane/src/api'
+import { type Box, strokeBox } from '../../plane/src/api'
 
 class CountingPath {
   static traced = 0
@@ -247,22 +246,20 @@ function plane(count: number, across = 100, spacing = 120): InkStroke[] {
   return strokes
 }
 
-function drawn(id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'): InkStroke {
-  return {
-    id,
-    tool,
-    color: 'ink',
-    size: 3,
-    points: [0, 1, 2, 3].map((step) => ({
-      x: x + step * 10,
-      y,
-      pressure: 0.5,
-      tiltX: 0,
-      tiltY: 0,
-      t: step * 10,
-    })),
-  }
-}
+const drawn = (id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'): InkStroke => ({
+  id,
+  tool,
+  color: 'ink',
+  size: 3,
+  points: [0, 1, 2, 3].map((step) => ({
+    x: x + step * 10,
+    y,
+    pressure: 0.5,
+    tiltX: 0,
+    tiltY: 0,
+    t: step * 10,
+  })),
+})
 
 const view = (x: number, y: number, scale = 1) => ({
   camera: { x, y, scale },
@@ -272,7 +269,6 @@ const view = (x: number, y: number, scale = 1) => ({
 })
 
 const whole = view(6000, 6000, 0.05)
-
 const palette = {}
 
 function settle(paint: () => boolean, most = 400): number[] {

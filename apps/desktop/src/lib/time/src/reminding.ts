@@ -7,7 +7,6 @@ import { dueOf } from './goals'
 import { time } from './time.svelte'
 
 const TOLD = 'orden:time-told'
-
 const KEPT = 100
 
 function toldNow(): Set<string> {
@@ -35,8 +34,8 @@ function look(): void {
   if (due.length) keepJson(TOLD, [...told].slice(-KEPT))
 }
 
-export function remind(): Promise<void> {
-  return inTurn(
+export const remind = (): Promise<void> =>
+  inTurn(
     () => TOLD,
     () => {
       look()
@@ -44,6 +43,5 @@ export function remind(): Promise<void> {
     },
     MINUTE,
   )
-}
 
 setInterval(() => void remind(), MINUTE)

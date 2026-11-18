@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 import json
 
 from harness import Drive
@@ -115,5 +113,4 @@ def drive(browser: Browser) -> None:
     )
     pane(browser, "draft to note", [("blank",), ("keys", "one"), ("open", "Bbb"), ("keys", "YBY")])
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

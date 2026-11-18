@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from harness import Drive
@@ -162,5 +160,4 @@ def drive(browser) -> None:
     quiet(page)
     check("an old link to Agents lands on AI", page.locator(".sheet").get_by_text("Accounts", exact=True).count() == 1)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "settings > ai holds several accounts of a provider"))
+raise SystemExit(DRIVE.run(drive, "settings > ai holds several accounts of a provider"))

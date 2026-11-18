@@ -268,7 +268,6 @@ function reordered(reorder: (lines: string[]) => string[]): StateCommand {
 }
 
 export const sortLines = reordered((lines) => [...lines].sort(compare))
-
 export const reverseLines = reordered((lines) => [...lines].reverse())
 
 export const deleteLine: StateCommand = ({ state, dispatch }) => {

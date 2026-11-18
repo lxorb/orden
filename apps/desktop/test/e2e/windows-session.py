@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 from playwright.sync_api import Browser
 
 from harness import Drive
@@ -64,5 +62,4 @@ def drive(browser: Browser) -> None:
         wrong(f"a reload left {many} tabs of the two drafts")
     c.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

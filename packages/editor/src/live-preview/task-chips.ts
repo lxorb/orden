@@ -1,5 +1,3 @@
-import type { EditorView } from '@codemirror/view'
-import { writeTask } from '@orden/markdown/task-edits'
 import {
   type FieldToken,
   type ParsedTask,
@@ -9,7 +7,6 @@ import {
 } from '@orden/markdown/task-line'
 import { dayWords, timeWords, todayHere } from '../task-days'
 import { deadlineOf, type DueReads, startOf } from '@orden/markdown/task-dates'
-import { noteIndex } from '../wikilink/notes'
 import { OrdenWidget } from './widget'
 
 export interface TaskChip {
@@ -87,27 +84,23 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
     })
   }
   if (fields.assignee) out.push({ field: 'assignee', text: `+${fields.assignee}` })
-  if (fields.completed !== undefined) {
+  if (fields.completed !== undefined)
     out.push({ field: 'done', text: `done ${day(fields.completed)}` })
-  }
   return out
 }
 
 export class TaskChipsWidget extends OrdenWidget {
-  constructor(
-    private readonly chips: readonly TaskChip[],
-    readonly picks = true,
-  ) {
+  constructor(private readonly chips: readonly TaskChip[]) {
     super()
   }
 
   override eq(other: TaskChipsWidget) {
-    return other.picks === this.picks && JSON.stringify(other.chips) === JSON.stringify(this.chips)
+    return JSON.stringify(other.chips) === JSON.stringify(this.chips)
   }
 
-  toDOM(view: EditorView) {
+  toDOM() {
     const row = document.createElement('span')
-    row.className = this.picks ? 'orden-task-chips' : 'orden-task-chips orden-task-chips-still'
+    row.className = 'orden-task-chips orden-task-chips-still'
     for (const chip of this.chips) {
       const one = document.createElement('span')
       one.className = 'orden-task-chip'
@@ -116,38 +109,6 @@ export class TaskChipsWidget extends OrdenWidget {
       one.textContent = chip.text
       row.append(one)
     }
-
-    const press = (event: MouseEvent) => {
-      const target = event.target instanceof Element ? event.target.closest('[data-field]') : null
-      const help = view.state.facet(noteIndex).tasks
-      if (!(target instanceof HTMLElement) || !help || view.state.readOnly) return
-      event.preventDefault()
-      const line = view.state.doc.lineAt(view.posAtDOM(row))
-      const parsed = parseTask(line.text)
-      if (!parsed) return
-      help.pick(
-        target.dataset.field ?? '',
-        parsed.fields,
-        target.getBoundingClientRect(),
-        view.state.facet(noteIndex).dueReads ?? 'start',
-        (change) => {
-          if (!row.isConnected) return
-          const now = view.state.doc.lineAt(view.posAtDOM(row))
-          const edits = writeTask(now.text, change)
-          if (!edits.length) return
-          view.dispatch({
-            changes: edits.map((edit) => ({
-              from: now.from + edit.from,
-              to: now.from + edit.to,
-              insert: edit.insert,
-            })),
-            userEvent: 'input',
-          })
-        },
-      )
-    }
-    row.addEventListener('mousedown', press)
-    this.onDestroy(row, () => row.removeEventListener('mousedown', press))
     return row
   }
 
@@ -166,7 +127,6 @@ export function taskDrawing(
 }
 
 const COMMENT_FIELD = /[ \t]*\[(at|by)::[ \t]*([^\]]*?)[ \t]*\]/g
-
 const TASK_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[.\]/
 
 export function commentDrawing(

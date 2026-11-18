@@ -7,28 +7,37 @@ import {
   type Pattern,
   readCanvas,
 } from '@orden/markdown/canvas'
-import { INK_STYLES, inkOpacity, outlineOf } from '../../plane/src/api'
-import { inkColour, type Palette } from '../../plane/src/api'
-import { DEFAULT_INK, paletteOf } from '../../plane/src/api'
-import { drawnNode, inlinedSvg, styles } from '../../plane/src/api'
-import { type Faces, pdfFaces } from '../../plane/src/api'
-import { inkSvg } from '../../plane/src/api'
-import { type Box } from '../../plane/src/api'
+import {
+  INK_STYLES,
+  inkOpacity,
+  outlineOf,
+  inkColour,
+  type Palette,
+  DEFAULT_INK,
+  paletteOf,
+  drawnNode,
+  inlinedSvg,
+  styles,
+  type Faces,
+  pdfFaces,
+  inkSvg,
+  type Box,
+} from '../../plane/src/api'
 import { busy } from '../../ui-kit/src/api'
 import {
   pngData,
   cssColour,
   loading,
+  paperBytesOf,
   paperIsLocked,
   paperPicture,
-  paperPlaces,
   paperUnder,
   PDF_TO_CSS,
   pdfjs,
   sharpness,
   svgToPng,
 } from '../../pdf/src/api'
-import { fileBytes, isDesktop } from '../../platform/src/api'
+import { isDesktop } from '../../platform/src/api'
 import {
   chooseTarget,
   download,
@@ -56,9 +65,9 @@ export interface PagesOut {
   faces?: Faces
 }
 
-function allCards(canvas: Canvas): CanvasNode[] {
-  return [...new Set(pagesOf(canvas).flatMap((page) => cardsOn(canvas, page)))]
-}
+const allCards = (canvas: Canvas): CanvasNode[] => [
+  ...new Set(pagesOf(canvas).flatMap((page) => cardsOn(canvas, page))),
+]
 
 async function facedOf(out: PagesOut): Promise<PagesOut> {
   if (out.faces) return out
@@ -84,40 +93,36 @@ export async function laidOf(given: PagesOut): Promise<PagesOut> {
   return { ...out, laid }
 }
 
-export function pagesOutOf(open: {
+export const pagesOutOf = (open: {
   text: string
   name: string
   path: string | null
   root: string | null
   shared?: string | null
   trusted?: boolean
-}): PagesOut {
-  return {
-    canvas: readCanvas(open.text),
-    palette: paletteOf('light'),
-    path: open.path,
-    root: open.root,
-    shared: open.shared ?? null,
-    name: open.name,
-    trusted: open.trusted ?? false,
-  }
-}
+}): PagesOut => ({
+  canvas: readCanvas(open.text),
+  palette: paletteOf('light'),
+  path: open.path,
+  root: open.root,
+  shared: open.shared ?? null,
+  name: open.name,
+  trusted: open.trusted ?? false,
+})
 
 function stem(name: string): string {
   return name.replace(/\.[^.]+$/, '') || 'Pages'
 }
 
-function numbered(at: number, of: number): string {
-  return String(at).padStart(String(of).length, '0')
-}
+const numbered = (at: number, of: number): string => String(at).padStart(String(of).length, '0')
 
 function inkOn(canvas: Canvas, page: PageNode): InkStroke[] {
   const box = { x: page.x, y: page.y, width: page.width, height: page.height }
   return canvas.ink.filter((stroke) => onPage(stroke, box))
 }
 
-function cardsOn(canvas: Canvas, page: PageNode): CanvasNode[] {
-  return canvas.nodes.filter(
+const cardsOn = (canvas: Canvas, page: PageNode): CanvasNode[] =>
+  canvas.nodes.filter(
     (node) =>
       node.type !== 'page' &&
       node.x + node.width > page.x &&
@@ -125,19 +130,16 @@ function cardsOn(canvas: Canvas, page: PageNode): CanvasNode[] {
       node.y + node.height > page.y &&
       node.y < page.y + page.height,
   )
-}
 
-function paperPalette(palette: Palette): Palette {
-  return {
-    [DEFAULT_INK]: '#0b0d10',
-    text: '#1a1d23',
-    line: '#d6d9de',
-    dot: '#d5dce5',
-    ...palette,
-    surface: '#ffffff',
-    bg: '#ffffff',
-  }
-}
+const paperPalette = (palette: Palette): Palette => ({
+  [DEFAULT_INK]: '#0b0d10',
+  text: '#1a1d23',
+  line: '#d6d9de',
+  dot: '#d5dce5',
+  ...palette,
+  surface: '#ffffff',
+  bg: '#ffffff',
+})
 
 const LINES = 30
 const GRID = 19
@@ -233,12 +235,10 @@ async function paperBehind(out: PagesOut, page: PageNode): Promise<string | null
   return paper ? paperPicture(paper.at, paper.number) : null
 }
 
-function moved(stroke: InkStroke, byX: number, byY: number): InkStroke {
-  return {
-    ...stroke,
-    points: stroke.points.map((point) => ({ ...point, x: point.x + byX, y: point.y + byY })),
-  }
-}
+const moved = (stroke: InkStroke, byX: number, byY: number): InkStroke => ({
+  ...stroke,
+  points: stroke.points.map((point) => ({ ...point, x: point.x + byX, y: point.y + byY })),
+})
 
 async function handOver(
   name: string,
@@ -319,7 +319,10 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
 
   const papers = new Set(pages.map((page) => page.file).filter((one): one is string => !!one))
   const source = papers.size === 1 ? [...papers][0] : null
-  const bytes = source ? await paperBytes(paperPlaces(source, out.path, out.root)) : null
+  const shared = out.shared ?? null
+  const bytes = source
+    ? await paperBytesOf({ file: source, note: out.path, root: out.root, shared })
+    : null
 
   const opened = bytes ? await PDFDocument.load(bytes, { ignoreEncryption: true }) : null
   if (opened?.isEncrypted) {
@@ -425,7 +428,6 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
 type PdfLib = typeof import('pdf-lib')
 type Sheet = import('pdf-lib').PDFPage
 type Font = import('pdf-lib').PDFFont
-
 type Six = [number, number, number, number, number, number]
 
 function placeOf(scale: number, turn: number, x: number, y: number): Six {
@@ -658,9 +660,8 @@ async function wordsPdf(
   sheet.pushOperators(lib.popGraphicsState())
 }
 
-function rgb1(lib: PdfLib, colour: { r: number; g: number; b: number }) {
-  return lib.rgb(colour.r, colour.g, colour.b)
-}
+const rgb1 = (lib: PdfLib, colour: { r: number; g: number; b: number }) =>
+  lib.rgb(colour.r, colour.g, colour.b)
 
 const PRINT_SCALE = 2
 
@@ -792,12 +793,4 @@ function hexOf(colour: string): { r: number; g: number; b: number } {
     g: ((value >> 8) & 0xff) / 255,
     b: (value & 0xff) / 255,
   }
-}
-
-async function paperBytes(places: readonly string[]): Promise<Uint8Array | null> {
-  for (const path of places) {
-    const bytes = await fileBytes(path).catch(() => null)
-    if (bytes) return bytes
-  }
-  return null
 }

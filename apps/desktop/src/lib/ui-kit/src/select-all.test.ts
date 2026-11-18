@@ -46,9 +46,7 @@ describe('a name field as it arrives', () => {
     const { node, focus, select } = field()
     selectAll(node)
     expect(focus).toHaveBeenCalledTimes(1)
-
     around.frame()
-
     expect(focus).toHaveBeenCalledTimes(2)
     expect(select).toHaveBeenCalledTimes(2)
   })
@@ -56,10 +54,8 @@ describe('a name field as it arrives', () => {
   test.each(['keydown', 'pointerdown'])('leaves it alone after a %s inside the frame', (kind) => {
     const { node, focus } = field()
     selectAll(node)
-
     around.does(kind)
     around.frame()
-
     expect(focus).toHaveBeenCalledTimes(1)
   })
 
@@ -69,7 +65,6 @@ describe('a name field as it arrives', () => {
     around.frame()
     expect(around.listening()).toBe(0)
     passed.destroy()
-
     const gone = selectAll(field().node)
     gone.destroy()
     expect(around.listening()).toBe(0)

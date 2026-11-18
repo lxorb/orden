@@ -1,10 +1,7 @@
 import { describe, expect, test } from 'vitest'
-
 import { md5 } from './md5'
 
-function hashOf(text: string): string {
-  return md5(new TextEncoder().encode(text))
-}
+const hashOf = (text: string): string => md5(new TextEncoder().encode(text))
 
 describe('md5', () => {
   test('answers the hashes the algorithm is defined by', () => {

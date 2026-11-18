@@ -18,16 +18,13 @@ import {
   takeParsed,
 } from '@orden/markdown/canvas'
 import { strokeBox } from '../../plane/src/api'
-import type { KeptView } from '../../canvas/src/api'
-import { CanvasStore } from '../../canvas/src/api'
-import type { Highlight, PdfHeading } from '../../pdf/src/api'
+import { type KeptView, CanvasStore } from '../../canvas/src/api'
+import type { Highlight, PaperAt, PdfHeading } from '../../pdf/src/api'
 import { stillness } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 
 const MARGIN = 28
-
 export const PEEK = 88
-
 const SETTLE = 420
 
 export class PagesStore extends CanvasStore {
@@ -48,6 +45,10 @@ export class PagesStore extends CanvasStore {
 
   private set chose(chosen: boolean) {
     this.tab.zoomChosen = chosen
+  }
+
+  paperAt(file: string, root: string | null): PaperAt {
+    return { file, note: this.path, root, shared: this.tab.note.shared }
   }
 
   measured(width: number, height: number) {

@@ -10,7 +10,7 @@ import {
   invoke,
   isDesktop,
 } from '../../platform/src/api'
-import { isExtensionPage, isWebAddress, keysOf, originKey } from '@orden/scan/web-address'
+import { isExtensionPage, isWebAddress, keysOf } from '@orden/scan/web-address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
 import type { NotArrived } from './heard'
@@ -27,26 +27,17 @@ function stores(): Promise<typeof import('./web-data.svelte').webData> {
   return import('./web-data.svelte').then((module) => module.webData)
 }
 
-function pageDialogs(): Promise<typeof import('./dialogs.svelte')> {
-  return import('./dialogs.svelte')
-}
-
-function dropDialogs(tab: string): void {
-  if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
-}
-
 function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
   return import('./permissions.svelte')
 }
 
-function dropGrants(tab: string, privateLeft: boolean): void {
-  if (!__EVEN_PLUGIN__)
-    void pagePermissions().then(({ grants }) => grants.dropped(tab, privateLeft))
+function leftPrivate(privateLeft: boolean): void {
+  if (!__EVEN_PLUGIN__ && !privateLeft)
+    void pagePermissions().then(({ grants }) => grants.leftPrivate())
 }
 
-function leftPage(tab: string): void {
-  dropGrants(tab, true)
-  dropDialogs(tab)
+function shut(tab: string, keep: boolean): Promise<unknown> {
+  return invoke('web_close', { tab, keep }).catch(() => undefined)
 }
 
 function sleeping() {
@@ -54,13 +45,9 @@ function sleeping() {
 }
 
 export const OUT_OF_THE_WAY = 20_000
-
 const SHOT_KEEPS = 400
-
 const LOOK_WAITS = 500
-
 const SHOT_WAITS = 300
-
 const ARRIVES = 3000
 
 export interface Rect {
@@ -84,7 +71,6 @@ export interface Over {
 }
 
 const WHOLE: Cut = { all: true, hollows: [] }
-
 const NOTHING: Over = { cut: null, frame: null }
 
 interface Placement {
@@ -115,6 +101,12 @@ interface Looked {
   edited?: boolean
 }
 
+interface Clipped {
+  url: string
+  title: string
+  html: string
+}
+
 export type Step = 'back' | 'forward' | 'reload' | 'fresh' | 'stop'
 
 interface Wanted {
@@ -135,16 +127,12 @@ interface Moved {
   loading: boolean
 }
 
-function readMoved(value: unknown): Moved | null {
-  if (typeof value !== 'object' || value === null) return null
-
-  const said = value as Record<string, unknown>
-  if (typeof said.tab !== 'string' || typeof said.url !== 'string') return null
-
+function readMoved(said: unknown): Moved | null {
+  if (!isRecord(said) || !isString(said.tab) || !isString(said.url)) return null
   return {
     tab: said.tab,
     url: said.url,
-    title: typeof said.title === 'string' ? said.title : '',
+    title: isString(said.title) ? said.title : '',
     back: said.back === true,
     forward: said.forward === true,
     loading: said.loading === true,
@@ -156,13 +144,10 @@ interface Iconed {
   icon: string
 }
 
-function readIconed(value: unknown): Iconed | null {
-  if (typeof value !== 'object' || value === null) return null
-
-  const said = value as Record<string, unknown>
-  if (typeof said.tab !== 'string' || typeof said.icon !== 'string') return null
-
-  return { tab: said.tab, icon: said.icon }
+function readIconed(said: unknown): Iconed | null {
+  return isRecord(said) && isString(said.tab) && isString(said.icon)
+    ? { tab: said.tab, icon: said.icon }
+    : null
 }
 
 interface Opening {
@@ -172,11 +157,7 @@ interface Opening {
 }
 
 export function readChosen(value: unknown): string | null {
-  return typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { tab?: unknown }).tab === 'string'
-    ? (value as { tab: string }).tab
-    : null
+  return isRecord(value) && isString(value.tab) ? value.tab : null
 }
 
 export async function chooseTab(tab: string): Promise<void> {
@@ -188,17 +169,19 @@ export async function chooseTab(tab: string): Promise<void> {
 export function cardCorner(within?: Element | null): number {
   if (typeof document === 'undefined') return 0
   const card = within?.closest('[data-pane]')
-  if (card) return parseFloat(getComputedStyle(card).getPropertyValue('--card-radius')) || 0
+  if (card) {
+    const { borderBottomLeftRadius, borderBottomRightRadius } = getComputedStyle(card)
+    return Math.min(
+      parseFloat(borderBottomLeftRadius) || 0,
+      parseFloat(borderBottomRightRadius) || 0,
+    )
+  }
   const panes = document.querySelector('main') ?? document.documentElement
   return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
 }
 
-export function readOpening(value: unknown): Opening | null {
-  if (typeof value !== 'object' || value === null) return null
-
-  const said = value as Record<string, unknown>
-  if (typeof said.tab !== 'string' || typeof said.url !== 'string') return null
-
+export function readOpening(said: unknown): Opening | null {
+  if (!isRecord(said) || !isString(said.tab) || !isString(said.url)) return null
   return isWebAddress(said.url) || isExtensionPage(said.url)
     ? { tab: said.tab, url: said.url, behind: said.behind === true }
     : null
@@ -221,53 +204,31 @@ export class Page {
   failure = $state<NotArrived | null>(null)
   rebuilding = false
   framing = $state<Framing>('card')
-
   live = $state(false)
-
   opening = false
-
   wanted: Wanted | null = null
-
   placing: Latest<Placement> | null = null
-
   sent: Placement | null = null
-
   upgrade: Upgrade | null = null
-
   typing = $state(false)
-
   shot = $state<string | null>(null)
   layering = $state<Layering>('hide')
   heldAt = $state.raw<Placement | null>(null)
   shotAt = 0
   shooting: Promise<void> | null = null
-
   shown = false
-
   path: string | null = null
-
   at: string | null = null
-
   landed: string | null = null
-
   titled = false
-
   space: string | null = null
-
   own: string | null = null
-
   pane: Rect | null = null
-
   notice = $state<string | null>(null)
-
   unplayable = $state(false)
-
   blocked = $state<string | null>(null)
-
   looked = Date.now()
-
   resting: ReturnType<typeof setTimeout> | undefined
-
   frozen = false
   lulling = Promise.resolve()
   edited = false
@@ -286,9 +247,7 @@ export class Page {
   }
 
   onScreen = false
-
   lent = false
-
   playing = $state(false)
   muted = $state(false)
   filling = $state(false)
@@ -304,6 +263,10 @@ class Pages {
   private readonly held = new Map<string, Page>()
 
   private readonly gone = new Set<string>()
+
+  private readonly goingTo = new WeakMap<Page, string>()
+
+  private readonly movedWhileTyping = new WeakSet<Page>()
 
   private listening: Promise<void> | null = null
 
@@ -414,6 +377,10 @@ class Pages {
       page.opening = false
     }
 
+    const goingTo = this.goingTo.get(page)
+    this.goingTo.delete(page)
+    if (goingTo && handed) void this.go(tabId, goingTo, page.upgrade)
+
     const wanted = page.wanted
     page.wanted = null
     if (!wanted) return
@@ -440,6 +407,7 @@ class Pages {
     page.pane = pane
     const tried = page.url
     const forOwn = page.own
+    this.goingTo.delete(page)
 
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
@@ -468,7 +436,7 @@ class Pages {
         }, ASK_AGAIN)
         return
       }
-      await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
+      await shut(tabId, false)
       if (page.rebuilding) {
         page.rebuilding = false
         page.crashed = true
@@ -476,6 +444,10 @@ class Pages {
     } finally {
       page.opening = false
     }
+
+    const goingTo = this.goingTo.get(page)
+    this.goingTo.delete(page)
+    if (goingTo) page.url = goingTo
 
     const wanted = page.wanted
     page.wanted = null
@@ -491,11 +463,13 @@ class Pages {
 
     if (this.held.get(tabId) !== page) {
       page.live = false
-      await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
+      await shut(tabId, false)
       return
     }
 
     if (page.own !== forOwn && !page.inPrivate) void this.rehouse(tabId, page.own)
+
+    if (goingTo && goingTo !== tried) void this.go(tabId, goingTo, page.upgrade)
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
@@ -721,8 +695,7 @@ class Pages {
     page.loading = false
     page.playing = false
     clearTimeout(page.resting)
-    leftPage(tabId)
-    await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
+    await shut(tabId, true)
   }
 
   async ended(tabId: string): Promise<void> {
@@ -739,8 +712,7 @@ class Pages {
     page.forward = false
     page.shot = null
     clearTimeout(page.resting)
-    leftPage(tabId)
-    await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
+    await shut(tabId, true)
   }
 
   async failed(tabId: string, not: NotArrived): Promise<void> {
@@ -771,14 +743,10 @@ class Pages {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || page.frozen) return null
 
-    try {
-      return await Promise.race([
-        invoke<Looked>('web_look', { tab: tabId }),
-        new Promise<null>((go) => setTimeout(() => go(null), LOOK_WAITS)),
-      ])
-    } catch {
-      return null
-    }
+    return Promise.race([
+      invoke<Looked>('web_look', { tab: tabId }),
+      new Promise<null>((go) => setTimeout(() => go(null), LOOK_WAITS)),
+    ]).catch(() => null)
   }
 
   async stepAddress(tabId: string, by: -1 | 1): Promise<string | null> {
@@ -839,9 +807,20 @@ class Pages {
     ;(await sleeping()).bound(this)
   }
 
+  typing(tabId: string, on: boolean) {
+    const page = this.held.get(tabId)
+    if (!page) return
+    page.typing = on
+    if (on || !this.movedWhileTyping.has(page)) return
+    this.movedWhileTyping.delete(page)
+    if (page.at) page.url = page.at
+  }
+
   async go(tabId: string, url: string, upgrade: Upgrade | null = null): Promise<void> {
     const page = this.of(tabId)
     if (!isWebAddress(url)) return
+
+    this.movedWhileTyping.delete(page)
 
     page.upgrade = upgrade
     page.url = url
@@ -857,9 +836,9 @@ class Pages {
       return
     }
 
+    if (page.opening) this.goingTo.set(page, url)
     if (!page.live) return
 
-    leftPage(tabId)
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
@@ -871,7 +850,7 @@ class Pages {
   async step(tabId: string, step: Step, by = 1): Promise<void> {
     const page = this.held.get(tabId)
     if (page?.crashed && (step === 'reload' || step === 'fresh')) {
-      await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
+      await shut(tabId, true)
       page.rebuilding = true
       page.crashed = false
       page.failure = null
@@ -879,7 +858,6 @@ class Pages {
     }
     if (!isDesktop || !page?.live) return
     page.upgrade = null
-    if (step !== 'stop') leftPage(tabId)
 
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
   }
@@ -903,21 +881,9 @@ class Pages {
     await invoke('web_print', { tab: tabId }).catch(() => undefined)
   }
 
-  async read(
-    tabId: string,
-    selection: boolean,
-  ): Promise<{ url: string; title: string; html: string } | null> {
-    const page = this.held.get(tabId)
-    if (!isDesktop || !page?.live) return null
-
-    try {
-      return await invoke<{ url: string; title: string; html: string }>('web_clip', {
-        tab: tabId,
-        selection,
-      })
-    } catch {
-      return null
-    }
+  async read(tabId: string, selection: boolean): Promise<Clipped | null> {
+    if (!isDesktop || !this.held.get(tabId)?.live) return null
+    return invoke<Clipped>('web_clip', { tab: tabId, selection }).catch(() => null)
   }
 
   private async saw(tabId: string, url: string, title: string): Promise<void> {
@@ -976,9 +942,8 @@ class Pages {
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
-      dropGrants(tabId, this.anyPrivate())
-      dropDialogs(tabId)
-      if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
+      leftPrivate(this.anyPrivate())
+      if (isDesktop) void shut(tabId, false)
       return
     }
 
@@ -989,16 +954,13 @@ class Pages {
     await this.look(tabId)
 
     this.held.delete(tabId)
-    dropGrants(tabId, this.anyPrivate())
-    dropDialogs(tabId)
-    await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
+    leftPrivate(this.anyPrivate())
+    await shut(tabId, false)
   }
 
   keepOnly(ids: readonly string[]) {
     const kept = new Set(ids)
-    for (const tabId of [...this.held.keys()]) {
-      if (!kept.has(tabId)) this.forget(tabId)
-    }
+    for (const tabId of [...this.held.keys()]) if (!kept.has(tabId)) this.forget(tabId)
   }
 
   private readonly asked = new Map<string, string>()
@@ -1030,21 +992,6 @@ class Pages {
     if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
     this.listening ??= (async () => {
       const { hearHere: listen } = await import('../../windows/src/api')
-
-      const { grants, readAsked } = await pagePermissions()
-      await listen('orden://web-ask', (event) => {
-        const said = readAsked(event.payload)
-        const page = said ? this.held.get(said.tab) : undefined
-        if (said && page) grants.heard({ ...said, privately: page.inPrivate })
-        else if (said) grants.refused(said.id)
-      })
-
-      const { dialogs, readDialog } = await pageDialogs()
-      await listen('orden://web-dialog', (event) => {
-        const said = readDialog(event.payload)
-        if (said && this.held.has(said.tab)) dialogs.heard(said)
-        else if (said) dialogs.refused(said.id)
-      })
 
       await listen('orden://web-open', (event) => {
         const said = readOpening(event.payload)
@@ -1106,8 +1053,6 @@ class Pages {
 
         const was = page.loading
         const moved = said.url !== '' && said.url !== page.at
-        const elsewhere = moved && originKey(said.url) !== originKey(page.at ?? '')
-        if ((said.loading && !was) || elsewhere) leftPage(said.tab)
         if (moved || (said.loading && !was)) {
           page.unplayable = false
           page.blocked = null
@@ -1118,6 +1063,7 @@ class Pages {
         page.forward = said.forward
         if (said.url) page.at = said.url
         if (said.url && !page.typing) page.url = said.url
+        else if (said.url && said.url !== page.url) this.movedWhileTyping.add(page)
         if (said.title) {
           page.title = said.title
           page.titled = true

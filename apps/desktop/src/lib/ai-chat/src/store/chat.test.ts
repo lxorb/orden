@@ -3,10 +3,18 @@ import type { Draft, EngineEvent, Part, Thread, Turn } from '../../../ai-provide
 
 const { memoryStorage } = await import('../../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal(
+  'BroadcastChannel',
+  class {
+    onmessage = null
+    postMessage = () => undefined
+    close = () => undefined
+  },
+)
 
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
-const refusing = vi.hoisted(() => ({ delete: false, after: Promise.resolve() }))
+const refusing = vi.hoisted(() => ({ delete: false, write: false, after: Promise.resolve() }))
 
 vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../platform/src/tauri')>()),
@@ -20,6 +28,7 @@ vi.mock('../../../platform/src/tauri', async (importOriginal) => ({
     if (command === 'ai_thread_read')
       return Promise.resolve(shelf.get(String(args.id))?.body ?? null)
     if (command === 'ai_thread_write') {
+      if (refusing.write) return Promise.reject(new Error('the disk is full'))
       shelf.set(String(args.id), { head: args.head, body: String(args.body) })
       return Promise.resolve(null)
     }
@@ -124,6 +133,36 @@ async function launched() {
   return (await import('./chat.svelte')).chat
 }
 
+async function opened(spaces = ['work'], here = 'work') {
+  const chat = await launched()
+  chat.here(here)
+  chat.know(spaces)
+  return chat
+}
+
+beforeEach(() => {
+  kept.clear()
+  deleted.length = 0
+  localStorage.clear()
+})
+
+async function asked(spaces = ['work'], provider = 'p', more: Turn[] = []) {
+  const { keepThread, newThread } = await import('../chat/threads')
+  const thread = newThread('work', provider, 'm')
+  thread.title = 'Plan'
+  const draft = { text: 'old question', attachments: [] }
+  thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [], draft }, ...more]
+  await keepThread(thread)
+  const chat = await opened(spaces)
+  await chat.openThread(thread.id, false)
+  return chat
+}
+
+function answerTurns(thread: Thread, draft: Draft) {
+  thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+  thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+}
+
 async function had(space: string, title: string, updated: number) {
   const { keepThread, newThread } = await import('../chat/threads')
   const thread = newThread(space, 'p', 'm')
@@ -135,21 +174,13 @@ async function had(space: string, title: string, updated: number) {
 }
 
 describe('the panel’s chats', () => {
-  beforeEach(() => {
-    kept.clear()
-    deleted.length = 0
-    localStorage.clear()
-  })
-
   test('are one list of every space’s, newest first, each still kept where it was asked', async () => {
     await had('work', 'Quarterly plan', 1_000)
     await had('home', 'Garden', 3_000)
     await had('home', 'Recipes', 2_000)
     localStorage.setItem('orden:ai-sidebar', JSON.stringify({ open: { home: 'none-left' } }))
 
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await vi.waitFor(() => expect(chat.heads).toHaveLength(3))
 
     expect(chat.heads.map((one) => [one.title, one.space])).toEqual([
@@ -159,13 +190,46 @@ describe('the panel’s chats', () => {
     ])
   })
 
+  test('move a chat open on an account the vault moved to a fresh id along with it', async () => {
+    const plan = await had('work', 'Quarterly plan', 1_000)
+    const chat = await opened()
+    await chat.openThread(plan.id, false)
+    await vi.waitFor(() => expect(chat.heads).toHaveLength(1))
+    chat.models = { p: [] }
+
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ p: 'p-2' })
+
+    expect(chat.thread?.provider).toBe('p-2')
+    expect(chat.head?.provider).toBe('p-2')
+    expect(chat.heads.map((one) => one.provider)).toEqual(['p-2'])
+    expect(chat.models).toEqual({ 'p-2': [] })
+  })
+
+  test('drop a model list asked before the vault moved its account off that id', async () => {
+    const chat = await launched()
+    chat.know(['work'])
+    let answer: (list: never[]) => void = () => undefined
+    const asked = vi
+      .spyOn(engine, 'models')
+      .mockReturnValueOnce(new Promise((done) => (answer = done)))
+    const listing = chat.loadModels({ id: 'p', kind: 'compatible', model: 'm', name: 'Fake' })
+    await vi.waitFor(() => expect(asked).toHaveBeenCalled())
+
+    const { keepMoves } = await import('../../../ai-providers/src/api')
+    keepMoves({ p: 'p-3' })
+    answer([{ id: 'theirs', name: 'Theirs' } as never])
+    await listing
+
+    asked.mockRestore()
+    expect(chat.models.p).toBeUndefined()
+  })
+
   test('let go of a chat read once another is open, so a long session holds only what it shows', async () => {
     const names = Array.from({ length: 12 }, (_, at) => `Chat ${String(at)}`)
     const made = []
     for (const [at, name] of names.entries()) made.push(await had('work', name, 1_000 + at))
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     for (const one of made) await chat.openThread(one.id, false)
 
     const held = (chat as unknown as { live: Map<string, unknown> }).live
@@ -177,9 +241,7 @@ describe('the panel’s chats', () => {
   test('stay as they are when the space changes: the open one, its draft, its space', async () => {
     const plan = await had('work', 'Quarterly plan', 5_000)
     await had('home', 'Garden', 4_000)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await chat.openThread(plan.id, false)
     chat.text = 'and the budget for'
 
@@ -196,9 +258,7 @@ describe('the panel’s chats', () => {
   })
 
   test('start a new one in the space in front, and an empty one follows the reader', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     chat.newThread()
     expect(chat.thread?.space).toBe('work')
 
@@ -207,14 +267,10 @@ describe('the panel’s chats', () => {
   })
 
   test('start a new one on the model last picked, the next time too', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await chat.chooseModel('p', 'picked')
 
-    const next = await launched()
-    next.here('work')
-    next.know(['work', 'home'])
+    const next = await opened(['work', 'home'])
     expect(next.head?.model).toBe('picked')
   })
 
@@ -222,33 +278,24 @@ describe('the panel’s chats', () => {
     const garden = await had('home', 'Garden', 1_000)
     await had('work', 'Quarterly plan', 9_000)
     localStorage.setItem('orden:ai-sidebar', JSON.stringify({ last: garden.id }))
-    const fresh = await launched()
-
-    fresh.here('work')
-    fresh.know(['work', 'home'])
+    const fresh = await opened(['work', 'home'])
     await vi.waitFor(() => expect(fresh.head?.id).toBe(garden.id))
   })
 
   test('open a new one where a new one was open when the panel was left', async () => {
     const garden = await had('home', 'Garden', 1_000)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await chat.openThread(garden.id, false)
     chat.newThread()
 
-    const next = await launched()
-    next.here('work')
-    next.know(['work', 'home'])
+    const next = await opened(['work', 'home'])
     await vi.waitFor(() => expect(next.heads).toHaveLength(1))
     expect(next.head?.kept).toBe(false)
   })
 
   test('delete a thread from the space it is kept in', async () => {
     const garden = await had('home', 'Garden', 1_000)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home', 'more'])
+    const chat = await opened(['work', 'home', 'more'])
     await vi.waitFor(() => expect(chat.heads.some((one) => one.id === garden.id)).toBe(true))
 
     await chat.remove(garden.id)
@@ -258,9 +305,7 @@ describe('the panel’s chats', () => {
   })
 
   test('take a task done with AI as one more, sent in its mode while the open one stays', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     const open = chat.thread
     void chat.startAside('home', 'Book the dentist', 'auto', 'Do this task')
 
@@ -272,9 +317,7 @@ describe('the panel’s chats', () => {
   })
 
   test('say which space a running thread works in, for its calls that name none', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     const { callerOf, threadSpaceOf } = await import('../../../automation/src/api')
     const aside = chat.startAside('home', 'Book the dentist', 'auto', 'Do this task')
     const task = chat.running[0] ?? ''
@@ -287,9 +330,7 @@ describe('the panel’s chats', () => {
 
   test('at the plan’s limit, send the message again once it resets, in another chat too', async () => {
     engine.send.mockClear()
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     chat.text = 'go on'
     chat.submit({ front: null, selection: '' })
     const asked = chat.thread
@@ -312,9 +353,7 @@ describe('the panel’s chats', () => {
   })
 
   test('wait no longer for the plan to reset once the wait is taken back', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     engine.send.mockClear()
     chat.text = 'go on'
     chat.submit({ front: null, selection: '' })
@@ -330,26 +369,6 @@ describe('the panel’s chats', () => {
 })
 
 describe('the field while a message is changed', () => {
-  beforeEach(() => {
-    kept.clear()
-    localStorage.clear()
-  })
-
-  async function asked() {
-    const { keepThread, newThread } = await import('../chat/threads')
-    const thread = newThread('work', 'p', 'm')
-    thread.title = 'Plan'
-    thread.turns = [
-      { id: 'u1', role: 'you', at: 1, parts: [], draft: { text: 'old question', attachments: [] } },
-    ]
-    await keepThread(thread)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
-    await chat.openThread(thread.id, false)
-    return chat
-  }
-
   const note = { kind: 'note', path: '/notes/Work/Plan.md', name: 'Plan' } as never
 
   test('keeps the draft aside while an earlier message is edited, and gives it back on Escape', async () => {
@@ -700,6 +719,20 @@ describe('the field while a message is changed', () => {
 
     await vi.waitFor(() => expect(sentWords()).toEqual(['second']))
   })
+  test('says a compaction failed only in the thread it failed in', async () => {
+    const chat = await asked()
+    let fail: (error: Error) => void = () => undefined
+    const compact = vi.fn(() => new Promise<void>((_, reject) => (fail = reject)))
+    ;(engine as unknown as { compact: unknown }).compact = compact
+    chat.compact()
+    await vi.waitFor(() => expect(compact).toHaveBeenCalled())
+    chat.newThread()
+    fail(new Error('too long'))
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(chat.trouble).toBeNull()
+  })
+
   test('sends a queued message taken after an earlier one as itself, not as the earlier one changed', async () => {
     const chat = await asked()
     edits.length = 0
@@ -764,16 +797,12 @@ describe('the field while a message is changed', () => {
 
 describe('a note made of a thread', () => {
   beforeEach(() => {
-    kept.clear()
-    localStorage.clear()
     place.noteFrom.mockClear()
   })
 
   async function openIn(space: string, front: string) {
     const thread = await had(space, 'Plan', 1_000)
-    const chat = await launched()
-    chat.here(space)
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'], space)
     await chat.openThread(thread.id, false)
     chat.here(front)
     place.activeSpaceId = front
@@ -818,9 +847,6 @@ describe('a note made of a thread', () => {
 
 describe('a chat while it answers', () => {
   beforeEach(() => {
-    kept.clear()
-    deleted.length = 0
-    localStorage.clear()
     engine.send.mockReset()
     engine.steer = vi.fn((_thread: Thread, _text: string) => Promise.resolve(false))
   })
@@ -828,23 +854,8 @@ describe('a chat while it answers', () => {
   const around = { front: null, selection: '' }
   const settled = () => new Promise((resolve) => setTimeout(resolve, 30))
 
-  async function asked() {
-    const { keepThread, newThread } = await import('../chat/threads')
-    const thread = newThread('work', 'p', 'm')
-    thread.title = 'Plan'
-    thread.turns = [
-      { id: 'u1', role: 'you', at: 1, parts: [], draft: { text: 'old question', attachments: [] } },
-    ]
-    await keepThread(thread)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
-    await chat.openThread(thread.id, false)
-    return chat
-  }
-
   test('a deleted chat stops all the work it started', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const id = String(chat.thread?.id)
     const { tasks } = await import('../commands/tasks.svelte')
     const { helpers } = await import('../helpers/helpers.svelte')
@@ -871,7 +882,7 @@ describe('a chat while it answers', () => {
   })
 
   test('Stop and delete end a run_agent helper on the panel’s road', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const id = String(chat.thread?.id)
     await settled()
     const { helpers } = await import('../helpers/helpers.svelte')
@@ -881,8 +892,7 @@ describe('a chat while it answers', () => {
     engine.send.mockImplementation(
       (thread: Thread, draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) =>
         new Promise<void>((resolve) => {
-          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          answerTurns(thread, draft)
           if (signal) signals.push(signal)
           signal?.addEventListener('abort', () => {
             on({ type: 'done', stop: 'stopped' })
@@ -926,7 +936,7 @@ describe('a chat while it answers', () => {
   })
 
   test('a delete refused leaves the work the chat started running', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const id = String(chat.thread?.id)
     await settled()
     const { tasks } = await import('../commands/tasks.svelte')
@@ -943,7 +953,7 @@ describe('a chat while it answers', () => {
   })
 
   test('Stop stops the work the open chat started', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const id = String(chat.thread?.id)
     const { tasks } = await import('../commands/tasks.svelte')
     const fork = vi.fn()
@@ -955,21 +965,23 @@ describe('a chat while it answers', () => {
     expect(tasks.of(id)).toEqual([])
   })
 
-  test('stays deleted once deleted while it answers', async () => {
-    const chat = await asked()
-    const id = String(chat.thread?.id)
+  async function answeringOn() {
+    const chat = await asked(['work', 'home'])
     engine.send.mockImplementationOnce(
       (thread: Thread, draft: Draft, _on: unknown, signal?: AbortSignal) =>
         new Promise<void>((resolve) => {
-          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          answerTurns(thread, draft)
           signal?.addEventListener('abort', () => resolve())
         }),
     )
     chat.text = 'go on'
     chat.submit(around)
     await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    return { chat, id: String(chat.thread?.id) }
+  }
 
+  test('stays deleted once deleted while it answers', async () => {
+    const { chat, id } = await answeringOn()
     await chat.remove(id)
     await settled()
 
@@ -979,20 +991,7 @@ describe('a chat while it answers', () => {
   })
 
   test('stays deleted once deleted in another window while it answers here', async () => {
-    const chat = await asked()
-    const id = String(chat.thread?.id)
-    engine.send.mockImplementationOnce(
-      (thread: Thread, draft: Draft, _on: unknown, signal?: AbortSignal) =>
-        new Promise<void>((resolve) => {
-          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
-          signal?.addEventListener('abort', () => resolve())
-        }),
-    )
-    chat.text = 'go on'
-    chat.submit(around)
-    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
-
+    const { chat, id } = await answeringOn()
     kept.get('work')?.delete(id)
     const { windows } = await import('../../../platform/src/windows')
     ;(windows as unknown as { heard(said: unknown): void }).heard({
@@ -1009,17 +1008,14 @@ describe('a chat while it answers', () => {
   })
 
   test('keeps a first message on its way in the space it was asked in', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await settled()
     let go: () => void = () => undefined
     const gate = new Promise<void>((resolve) => (go = resolve))
     engine.send.mockImplementationOnce(
       async (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
         await gate
-        thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-        thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+        answerTurns(thread, draft)
         on({ type: 'done', stop: 'end' })
       },
     )
@@ -1038,18 +1034,13 @@ describe('a chat while it answers', () => {
   })
 
   test('keeps the message and its answer on Ask again where the provider is gone', async () => {
-    const { keepThread, newThread } = await import('../chat/threads')
-    const thread = newThread('work', 'gone', 'm')
-    thread.title = 'Plan'
-    thread.turns = [
-      { id: 'u1', role: 'you', at: 1, parts: [], draft: { text: 'old question', attachments: [] } },
-      { id: 'm1', role: 'model', at: 2, parts: [{ kind: 'text', text: 'the answer' }] },
-    ]
-    await keepThread(thread)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
-    await chat.openThread(thread.id, false)
+    const answer: Turn = {
+      id: 'm1',
+      role: 'model',
+      at: 2,
+      parts: [{ kind: 'text', text: 'the answer' }],
+    }
+    const chat = await asked(['work'], 'gone', [answer])
     const { ai } = await import('../../../ai-providers/src/store.svelte')
     const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
 
@@ -1061,8 +1052,68 @@ describe('a chat while it answers', () => {
     expect(engine.send).not.toHaveBeenCalled()
   })
 
+  test('a branch the disk will not keep still opens, and its refusal is handled', async () => {
+    const chat = await asked(['work', 'home'])
+    const from = chat.thread!.id
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    onTestFinished(() => {
+      process.off('unhandledRejection', unhandled)
+      refusing.write = false
+    })
+    refusing.write = true
+
+    chat.branch()
+    await settled()
+
+    expect(chat.thread?.id).not.toBe(from)
+    expect(unhandled).not.toHaveBeenCalled()
+  })
+
+  test('Ask again sends the message at its first time, so what the first try changed is its own', async () => {
+    const chat = await asked(['work', 'home'])
+    const thread = chat.thread!
+    thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
+    engine.send.mockImplementationOnce((into, draft, on) => {
+      const you: Turn = { id: 'u2', role: 'you', at: 5_000, parts: [], draft }
+      into.turns.push(you)
+      on({ type: 'turn', turn: you })
+      on({ type: 'done', stop: 'end' })
+      return Promise.resolve()
+    })
+
+    chat.retry()
+
+    await vi.waitFor(() => expect(thread.turns.map((one) => one.id)).toEqual(['u2']))
+    expect(thread.turns[0]?.at).toBe(1)
+  })
+
+  test('Ask again tells the engine the chat was cut before it sends the message again', async () => {
+    const chat = await asked(['work', 'home'])
+    const thread = chat.thread!
+    thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
+    const order: string[] = []
+    const rewound = vi.fn((cut: Thread) => {
+      order.push(`rewound:${cut.turns.length}`)
+    })
+    ;(engine as unknown as { rewound: unknown }).rewound = rewound
+    onTestFinished(() => {
+      delete (engine as unknown as { rewound?: unknown }).rewound
+    })
+    engine.send.mockImplementationOnce((into, _draft, on) => {
+      order.push(`send:${into.turns.length}`)
+      on({ type: 'done', stop: 'end' })
+      return Promise.resolve()
+    })
+
+    chat.retry()
+
+    await vi.waitFor(() => expect(order).toEqual(['rewound:0', 'send:0']))
+    expect(rewound).toHaveBeenCalledWith(thread)
+  })
+
   test('keeps the message and its answer on Ask again refused before any turn', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const thread = chat.thread!
     thread.turns.push({ id: 'm1', role: 'model', at: 2, parts: [] })
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
@@ -1086,8 +1137,7 @@ describe('a chat while it answers', () => {
     engine.send.mockImplementationOnce(
       (thread: Thread, draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) =>
         new Promise<void>((resolve) => {
-          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          answerTurns(thread, draft)
           const end = () => {
             on({ type: 'done', stop: 'stopped' })
             resolve()
@@ -1102,7 +1152,7 @@ describe('a chat while it answers', () => {
     (thread?.turns ?? []).filter((one) => one.role === 'you').map((one) => one.draft?.text)
 
   test('keeps a message stopped while it is gathered', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     await settled()
     const go = held()
     stoppable()
@@ -1121,9 +1171,7 @@ describe('a chat while it answers', () => {
   })
 
   test('starts a new chat while the first message of the open one is gathered', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     chat.newThread()
     const first = String(chat.thread?.id)
     const go = held()
@@ -1140,7 +1188,7 @@ describe('a chat while it answers', () => {
   })
 
   test('asks nothing of a chat deleted while its message is gathered', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const id = String(chat.thread?.id)
     await settled()
     const go = held()
@@ -1156,14 +1204,13 @@ describe('a chat while it answers', () => {
   })
 
   test('sends next the words steered in that the answer never took', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     await settled()
     let answer: () => void = () => undefined
     engine.send.mockImplementationOnce(
       (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
         new Promise<void>((resolve) => {
-          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          answerTurns(thread, draft)
           answer = () => {
             on({ type: 'done', stop: 'end' })
             resolve()
@@ -1185,9 +1232,7 @@ describe('a chat while it answers', () => {
   })
 
   test('follows the reader again once a first message refused before any turn is back', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await settled()
     const go = held()
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
@@ -1203,7 +1248,7 @@ describe('a chat while it answers', () => {
   })
 
   test('keeps writing a chat whose delete was refused', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const id = String(chat.thread?.id)
     await settled()
     refusing.delete = true
@@ -1217,7 +1262,7 @@ describe('a chat while it answers', () => {
     expect(kept.get('work')?.get(id)?.body).toContain('Plan, still here')
   })
   test('sends next only the steered words the answer never took, once', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     await settled()
     const go = held()
     let ready = false
@@ -1226,8 +1271,7 @@ describe('a chat while it answers', () => {
     engine.send.mockImplementationOnce(
       (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
         new Promise<void>((resolve) => {
-          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          answerTurns(thread, draft)
           ready = true
           hear = on
           answer = () => {
@@ -1271,9 +1315,7 @@ describe('a chat while it answers', () => {
   })
 
   test('keeps the provider picked for a fresh chat whose first message is refused', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await settled()
     await chat.chooseModel('other', 'm2')
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
@@ -1286,7 +1328,7 @@ describe('a chat while it answers', () => {
   })
 
   test('keeps the message of a chat whose delete was refused while it was gathered', async () => {
-    const chat = await asked()
+    const chat = await asked(['work', 'home'])
     const id = String(chat.thread?.id)
     await settled()
     const go = held()
@@ -1312,12 +1354,6 @@ describe('a chat while it answers', () => {
 })
 
 describe('the panel’s chats and their helpers (#1062)', () => {
-  beforeEach(() => {
-    kept.clear()
-    deleted.length = 0
-    localStorage.clear()
-  })
-
   test('list and count only the chats the reader started; a helper opens from its parent', async () => {
     const parent = await had('work', 'Serie 6', 3_000)
     const { keepThread } = await import('../chat/threads')
@@ -1326,9 +1362,7 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     await keepThread(helper)
     await had('home', 'Garden', 2_000)
 
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await vi.waitFor(() => expect(chat.every).toHaveLength(3))
 
     expect(chat.heads.map((one) => one.title)).toEqual(['Serie 6', 'Garden'])
@@ -1342,9 +1376,7 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     helper.parent = 'deleted-long-ago'
     await keepThread(helper)
 
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['↳ Aufgabe 5']))
   })
 
@@ -1360,9 +1392,7 @@ describe('the panel’s chats and their helpers (#1062)', () => {
     await keepThread(parent)
     await keepThread(helper)
 
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() =>
       expect(chat.heads.map((one) => one.title)).toEqual(['Serie 6', 'Serie 6']),
     )
@@ -1375,16 +1405,8 @@ describe('the panel’s chats and their helpers (#1062)', () => {
 })
 
 describe('a chat’s unread mark (#1064)', () => {
-  beforeEach(() => {
-    kept.clear()
-    deleted.length = 0
-    localStorage.clear()
-  })
-
   test('comes with an answer, goes once seen, and both outlast a restart', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     chat.text = 'how far is the moon'
     chat.submit({ front: null, selection: '' })
     const asked = String(chat.thread?.id)
@@ -1419,9 +1441,7 @@ describe('a chat’s unread mark (#1064)', () => {
         return new Promise<void>((done) => (release = done))
       },
     )
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     chat.text = 'tidy Birds'
     chat.submit({ front: null, selection: '' })
     const asked = String(chat.thread?.id)
@@ -1436,9 +1456,7 @@ describe('a chat’s unread mark (#1064)', () => {
     const helper = await had('work', '↳ Aufgabe 5', 4_000)
     helper.parent = parent.id
     await keepThread(helper)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() => expect(chat.every).toHaveLength(2))
     expect(chat.unread.size).toBe(0)
 
@@ -1455,9 +1473,7 @@ describe('a chat’s unread mark (#1064)', () => {
   test('archiving a chat takes its mark down, and a listed one keeps its own until seen (#2050)', async () => {
     const shelved = await had('work', 'Serie 6', 3_000)
     const listed = await had('work', 'Serie 7', 4_000)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() => expect(chat.every).toHaveLength(2))
     chat.answered(shelved)
     chat.answered(listed)
@@ -1472,15 +1488,8 @@ describe('a chat’s unread mark (#1064)', () => {
 })
 
 describe('an answer on its way', () => {
-  beforeEach(() => {
-    kept.clear()
-    localStorage.clear()
-  })
-
   async function answering() {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     const model: Turn = { id: 'answer', role: 'model', at: 2, parts: [] }
     const engaged: { on: (event: EngineEvent) => void; end: () => void; thread: Thread }[] = []
     engine.send.mockImplementation(
@@ -1580,9 +1589,7 @@ describe('an answer on its way', () => {
   })
 
   test('is written with the thread’s own mode and model, not a one-shot send’s', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     const { newThread, readThread } = await import('../chat/threads')
     const thread = newThread('work', 'p', 'm', 'auto', 'approve')
     const model: Turn = { id: 'answer', role: 'model', at: 2, parts: [] }
@@ -1816,20 +1823,11 @@ describe('an answer on its way', () => {
 
 describe('where a chat stands', () => {
   beforeEach(() => {
-    kept.clear()
-    localStorage.clear()
     engine.send.mockReset()
     ticking.asked.length = 0
   })
 
   const around = { front: null, selection: '' }
-
-  async function opened() {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
-    return chat
-  }
 
   const answers = (stop: 'end' | 'stopped' | 'error', ask = false) =>
     engine.send.mockImplementation(
@@ -1863,8 +1861,7 @@ describe('where a chat stands', () => {
     const chat = await opened()
     engine.send.mockImplementation(
       (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
-        thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
-        thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+        answerTurns(thread, draft)
         on({ type: 'limit', limit: { state: 'reached', until, untilWords: null } })
         on({ type: 'done', stop: 'error', error: 'At its limit' })
         return Promise.resolve()
@@ -1960,16 +1957,12 @@ describe('where a chat stands', () => {
 
 describe('switching a chat to another model', () => {
   beforeEach(() => {
-    kept.clear()
-    localStorage.clear()
     ticking.asked.length = 0
     ticking.answer = { id: 'switch', ticked: false }
   })
 
   async function long() {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     const thread = chat.ensure()
     thread.usage = { ...thread.usage, input: 50_000, output: 1_000 }
     return { chat, thread }
@@ -2034,9 +2027,7 @@ describe('switching a chat to another model', () => {
   })
 
   test('and never on a short one', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     chat.ensure()
     await chat.chooseModel('p', 'other')
     expect(ticking.asked).toEqual([])
@@ -2046,15 +2037,11 @@ describe('switching a chat to another model', () => {
 
 describe('where a chat stands', () => {
   beforeEach(() => {
-    kept.clear()
-    localStorage.clear()
     engine.send.mockReset()
   })
 
   async function answering() {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     let tell: (part: Part, index: number) => void = () => undefined
     let finish: () => void = () => undefined
     engine.send.mockImplementationOnce(
@@ -2117,9 +2104,7 @@ describe('where a chat stands', () => {
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
     await keepThread(thread)
 
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() => expect(chat.every.map((one) => one.state)).toEqual(['interrupted']))
     await chat.openThread(thread.id, false)
     expect(chat.thread?.state).toBe('interrupted')
@@ -2148,9 +2133,7 @@ describe('where a chat stands', () => {
     thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
     await keepThread(thread)
 
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() =>
       expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running'),
     )
@@ -2167,9 +2150,7 @@ describe('where a chat stands', () => {
     onTestFinished(() => unclaimAnswer(thread.id))
     await keepThread(thread)
 
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() => expect(chat.every.map((one) => one.id)).toEqual([thread.id]))
     await chat.openThread(thread.id, false)
     expect(chat.every.find((one) => one.id === thread.id)?.state).toBe('running')
@@ -2180,12 +2161,6 @@ describe('where a chat stands', () => {
 })
 
 describe('a chat in the list the moment it changes (#1111)', () => {
-  beforeEach(() => {
-    kept.clear()
-    deleted.length = 0
-    localStorage.clear()
-  })
-
   function holding() {
     let answer: () => void = () => undefined
     engine.send.mockImplementationOnce((thread: Thread, draft: Draft, on) => {
@@ -2200,9 +2175,7 @@ describe('a chat in the list the moment it changes (#1111)', () => {
   }
 
   test('is there at once when it is made and left with Back, the answer still to come', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() => expect(chat.head).not.toBeNull())
     const answer = holding()
     chat.text = 'plan the week'
@@ -2221,9 +2194,7 @@ describe('a chat in the list the moment it changes (#1111)', () => {
   })
 
   test('is there at once while its first message is still gathered', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     let open: () => void = () => undefined
     gathering.gate = new Promise((done) => {
       open = done
@@ -2237,9 +2208,7 @@ describe('a chat in the list the moment it changes (#1111)', () => {
   })
 
   test('started from elsewhere is there at once', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     const aside = chat.startAside('home', 'Book the dentist', 'auto', 'Do this task')
 
     expect(chat.heads.map((one) => one.title)).toEqual(['Book the dentist'])
@@ -2249,9 +2218,7 @@ describe('a chat in the list the moment it changes (#1111)', () => {
   test('renamed, pinned, archived and deleted, is so in the list at once', async () => {
     const garden = await had('home', 'Garden', 1_000)
     const plan = await had('work', 'Plan', 2_000)
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     await vi.waitFor(() => expect(chat.heads).toHaveLength(2))
     const line = (id: string) => chat.heads.find((one) => one.id === id)
 
@@ -2275,17 +2242,12 @@ describe('a chat in the list the moment it changes (#1111)', () => {
 
 describe('a chat started outside the panel', () => {
   beforeEach(() => {
-    kept.clear()
-    deleted.length = 0
-    localStorage.clear()
     place.activeSpaceId = 'work'
   })
 
   test('is a chat like one typed into the panel: its engine, its provider, what was in front', async () => {
     engine.send.mockClear()
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work', 'home'])
+    const chat = await opened(['work', 'home'])
     const front = { path: 'Plan.md', name: 'Plan', text: 'ship on Friday' }
 
     const { thread, ended } = chat.startHere('When do we ship?', [], {
@@ -2304,9 +2266,7 @@ describe('a chat started outside the panel', () => {
   })
 
   test('is in the list at once, and the chat open in the panel stays open', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     await vi.waitFor(() => expect(chat.head).not.toBeNull())
     const open = chat.thread
     let gate: () => void = () => undefined
@@ -2340,9 +2300,7 @@ describe('a chat started outside the panel', () => {
   })
 
   test('is drawn where it is watched, and a follow-up goes on in it', async () => {
-    const chat = await launched()
-    chat.here('work')
-    chat.know(['work'])
+    const chat = await opened()
     const { thread, ended } = chat.startHere('First', [], {
       front: null,
       selection: '',
@@ -2350,12 +2308,28 @@ describe('a chat started outside the panel', () => {
     })
     chat.watch(thread)
     await ended
-    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(2))
+    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(2))
 
     await chat.sendIn(thread, 'Second', [], { front: null, selection: '', picked: null })
-    await vi.waitFor(() => expect(chat.watched?.turns.length).toBe(4))
-    expect(chat.watched?.turns[2]?.draft?.text).toBe('Second')
-    chat.watch(null)
-    expect(chat.watched).toBeNull()
+    await vi.waitFor(() => expect(chat.watched[thread.id]?.length).toBe(4))
+    expect(chat.watched[thread.id]?.[2]?.draft?.text).toBe('Second')
+    chat.unwatch(thread)
+    expect(chat.watched).toEqual({})
+  })
+
+  test('draws two watched chats at once, each as it goes on', async () => {
+    const chat = await opened()
+    const none = { front: null, selection: '', picked: null }
+    const one = chat.startHere('One', [], none)
+    const two = chat.startHere('Two', [], none)
+    chat.watch(one.thread)
+    chat.watch(two.thread)
+    await Promise.all([one.ended, two.ended])
+
+    await vi.waitFor(() => expect(chat.watched[one.thread.id]?.length).toBe(2))
+    await vi.waitFor(() => expect(chat.watched[two.thread.id]?.length).toBe(2))
+    chat.unwatch(one.thread)
+    expect(Object.keys(chat.watched)).toEqual([two.thread.id])
+    chat.unwatch(two.thread)
   })
 })

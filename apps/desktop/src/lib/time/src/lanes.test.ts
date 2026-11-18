@@ -109,42 +109,36 @@ describe('what happened in a stretch', () => {
   })
 })
 
-describe('the minutes, gathered for a lane', () => {
-  test('say how much of each stretch was seen, busy and away, and the machine in it', () => {
-    const day = [
-      ...minutes(0, 10 * MINUTE, { active: 60, cpu: 0.2, battery: 0.9 }),
-      ...minutes(10 * MINUTE, 15 * MINUTE, { locked: true, active: 0, cpu: 0.4, battery: 0.8 }),
-    ]
-    const [first, second, third] = bucketsOf(day, 0, 30 * MINUTE, 10 * MINUTE)
-    expect(first).toMatchObject({ seen: 1, active: 1, away: 0, battery: 0.9 })
-    expect(first?.cpu).toBeCloseTo(0.2)
-    expect(second).toMatchObject({ seen: 0.5, active: 0, away: 0.5, battery: 0.8 })
-    expect(third).toMatchObject({ seen: 0, active: 0, cpu: null, battery: null })
-  })
+test('the minutes, gathered for a lane say how much of each stretch was seen, busy and away, and the machine in it', () => {
+  const day = [
+    ...minutes(0, 10 * MINUTE, { active: 60, cpu: 0.2, battery: 0.9 }),
+    ...minutes(10 * MINUTE, 15 * MINUTE, { locked: true, active: 0, cpu: 0.4, battery: 0.8 }),
+  ]
+  const [first, second, third] = bucketsOf(day, 0, 30 * MINUTE, 10 * MINUTE)
+  expect(first).toMatchObject({ seen: 1, active: 1, away: 0, battery: 0.9 })
+  expect(first?.cpu).toBeCloseTo(0.2)
+  expect(second).toMatchObject({ seen: 0.5, active: 0, away: 0.5, battery: 0.8 })
+  expect(third).toMatchObject({ seen: 0, active: 0, cpu: null, battery: null })
 })
 
-describe('the hours a day is drawn across', () => {
-  test('are the working day at least, and reach out to whatever happened outside it', () => {
-    expect(hoursShown(0, DAY, [])).toEqual([8 * HOUR, 18 * HOUR])
-    expect(hoursShown(0, DAY, [6.5 * HOUR, 21.2 * HOUR])).toEqual([6 * HOUR, 22 * HOUR])
-    expect(hoursShown(0, DAY, [-HOUR, 30 * HOUR])).toEqual([8 * HOUR, 18 * HOUR])
-    expect(hoursShown(0, DAY, [23.5 * HOUR])).toEqual([8 * HOUR, DAY])
-  })
+test('the hours a day is drawn across are the working day at least, and reach out to whatever happened outside it', () => {
+  expect(hoursShown(0, DAY, [])).toEqual([8 * HOUR, 18 * HOUR])
+  expect(hoursShown(0, DAY, [6.5 * HOUR, 21.2 * HOUR])).toEqual([6 * HOUR, 22 * HOUR])
+  expect(hoursShown(0, DAY, [-HOUR, 30 * HOUR])).toEqual([8 * HOUR, 18 * HOUR])
+  expect(hoursShown(0, DAY, [23.5 * HOUR])).toEqual([8 * HOUR, DAY])
 })
 
-describe('entries drawn side by side', () => {
-  test('share the room only where they overlap', () => {
-    const laid = stacked([
-      { id: 'a', from: 0, to: 10 },
-      { id: 'b', from: 5, to: 15 },
-      { id: 'c', from: 12, to: 20 },
-      { id: 'd', from: 30, to: 40 },
-    ])
-    expect(laid.map((one) => [one.item.id, one.row, one.rows])).toEqual([
-      ['a', 0, 2],
-      ['b', 1, 2],
-      ['c', 0, 2],
-      ['d', 0, 1],
-    ])
-  })
+test('entries drawn side by side share the room only where they overlap', () => {
+  const laid = stacked([
+    { id: 'a', from: 0, to: 10 },
+    { id: 'b', from: 5, to: 15 },
+    { id: 'c', from: 12, to: 20 },
+    { id: 'd', from: 30, to: 40 },
+  ])
+  expect(laid.map((one) => [one.item.id, one.row, one.rows])).toEqual([
+    ['a', 0, 2],
+    ['b', 1, 2],
+    ['c', 0, 2],
+    ['d', 0, 1],
+  ])
 })

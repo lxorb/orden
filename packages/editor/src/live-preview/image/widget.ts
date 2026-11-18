@@ -67,10 +67,7 @@ export interface Parts {
 }
 
 const PARTS = new WeakMap<HTMLElement, Parts>()
-
-export function partsOf(frame: HTMLElement): Parts | null {
-  return PARTS.get(frame) ?? null
-}
+export const partsOf = (frame: HTMLElement): Parts | null => PARTS.get(frame) ?? null
 
 export function imageOfFrame(view: EditorView, frame: HTMLElement): ImageSpan | null {
   if (!view.contentDOM.contains(frame)) return null
@@ -360,17 +357,15 @@ export class ImageWidget extends OrdenWidget {
     }
 
     const size = button('orden-image-size', '', '', (image) => {
-      if (image.zoom !== 100 || image.width) {
+      if (image.zoom !== 100 || image.width)
         rewrite(view, image, withZoom(image, 100), 'input.image.resize')
-      }
       view.focus()
     })
 
     button('orden-image-open', 'Open image', icon(ICONS.open), (image) => {
       const picture = partsOf(frame)?.image
-      if (picture && !frame.classList.contains('is-broken')) {
+      if (picture && !frame.classList.contains('is-broken'))
         openLightbox(view, picture.src, image.alt)
-      }
     })
 
     const copy = button('orden-image-copy', 'Copy link', icon(ICONS.link), (image) => {

@@ -24,6 +24,7 @@ export {
   trustAgain,
   trustsHtmlAt,
   trustsHtmlIn,
+  whoIs,
 } from './sharing.svelte'
 
 export const loadLockScreen = () => import('./protect/LockScreen.svelte')

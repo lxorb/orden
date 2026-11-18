@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 import base64
 
 from playwright.sync_api import Browser, Page
@@ -178,5 +176,4 @@ def drive(browser: Browser) -> None:
     canvas_pictures(browser)
     page_note_at_once(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

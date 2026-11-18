@@ -45,11 +45,7 @@ export function keyEvent(
   event: Pick<KeyboardEvent, 'key' | 'code' | 'isComposing'>,
   down: boolean,
 ): InputEvent | null {
-  const unsent =
-    event.isComposing ||
-    event.key === 'Dead' ||
-    event.key === 'Process' ||
-    event.key === 'Unidentified'
+  const unsent = event.isComposing || ['Dead', 'Process', 'Unidentified'].includes(event.key)
   if (down && unsent) return null
   return { t: 'key', key: event.key, code: event.code, down }
 }
@@ -57,17 +53,14 @@ export function keyEvent(
 export function isPaste(
   event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey'>,
 ): boolean {
-  const v = event.key === 'v' || event.key === 'V'
+  const v = event.key.toLowerCase() === 'v'
   return ((event.ctrlKey || event.metaKey) && v) || (event.shiftKey && event.key === 'Insert')
 }
 
-export function textEvent(text: string | null | undefined): InputEvent | null {
-  return text ? { t: 'text', text } : null
-}
+export const textEvent = (text: string | null | undefined): InputEvent | null =>
+  text ? { t: 'text', text } : null
 
-export function drivesPointer(event: Pick<PointerEvent, 'isPrimary'>): boolean {
-  return event.isPrimary
-}
+export const drivesPointer = (event: Pick<PointerEvent, 'isPrimary'>): boolean => event.isPrimary
 
 export class HeldKeys {
   private readonly held = new Set<string>()

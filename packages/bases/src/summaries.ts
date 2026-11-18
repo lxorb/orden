@@ -26,11 +26,8 @@ const isEmptyValue = (value: Val) =>
 const numbers = (values: readonly Val[]) =>
   values.filter((one): one is number => typeof one === 'number')
 
-function dates(values: readonly Val[]): DateValue[] {
-  return values
-    .map((one) => (typeof one === 'number' ? null : asDate(one)))
-    .filter((one) => one !== null)
-}
+const dates = (values: readonly Val[]): DateValue[] =>
+  values.map((one) => (typeof one === 'number' ? null : asDate(one))).filter((one) => one !== null)
 
 const least = (values: readonly number[]) =>
   values.reduce((low, one) => Math.min(low, one), Infinity)
@@ -69,14 +66,14 @@ function defaultSummary(name: string, values: readonly Val[], scope: Scope): Val
     case 'Range': {
       const days = dates(values)
       if (!all.length && days.length) {
-        const sorted = days.map(msOf).sort((a, b) => a - b)
+        const sorted = days.map((day) => msOf(day, scope.context.zone)).sort((a, b) => a - b)
         return { kind: 'duration', ms: (sorted.at(-1) ?? 0) - (sorted[0] ?? 0), months: 0 }
       }
       return all.length ? most(all) - least(all) : null
     }
     case 'Earliest':
     case 'Latest': {
-      const sorted = dates(values).sort(sortCompare)
+      const sorted = dates(values).sort((a, b) => sortCompare(a, b, scope.context.zone))
       return (name === 'Earliest' ? sorted[0] : sorted.at(-1)) ?? null
     }
     case 'Checked':

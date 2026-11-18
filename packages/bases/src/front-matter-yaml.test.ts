@@ -78,8 +78,8 @@ function mapping(r: (n: number) => number): Record<string, unknown> {
   return out
 }
 
-function spelled(r: (n: number) => number, map: Record<string, unknown>, style?: 'block'): string {
-  return stringify(map, {
+const spelled = (r: (n: number) => number, map: Record<string, unknown>, style?: 'block'): string =>
+  stringify(map, {
     indentSeq: r(2) === 0,
     collectionStyle: style ?? (['any', 'block', 'flow'] as const)[r(3)] ?? 'any',
     lineWidth: [0, 20, 80][r(3)] ?? 0,
@@ -88,7 +88,6 @@ function spelled(r: (n: number) => number, map: Record<string, unknown>, style?:
       'PLAIN',
     aliasDuplicateObjects: false,
   })
-}
 
 function reads(body: string): boolean {
   const doc = parseDocument(body)

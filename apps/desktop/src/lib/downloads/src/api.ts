@@ -6,10 +6,7 @@ export interface Press {
 }
 
 let last: Press | null = null
-
-export function lastPress(): Press | null {
-  return last
-}
+export const lastPress = (): Press | null => last
 
 function heard(event: PointerEvent | MouseEvent) {
   const target = event.target instanceof Element ? event.target : null

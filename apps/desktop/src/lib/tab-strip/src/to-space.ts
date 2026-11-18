@@ -12,18 +12,15 @@ import {
 
 const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.includes(one.id))
 
-export function spacesOf(tabs: readonly Tab[]): Space[] {
-  return spacesFor(tabs.map(movingOf), workspace, canWriteAt, mayCarry).filter(
+const spacesOfMoving = (moving: Parameters<typeof spacesFor>[0]): Space[] =>
+  spacesFor(moving, workspace, canWriteAt, mayCarry).filter(
     (one) => !workspace.archivedSpaces.has(one.root),
   )
-}
 
-export function spacesOfPaths(paths: readonly string[]): Space[] {
-  const moving = paths.map((path) => ({ path, home: null, shared: null }))
-  return spacesFor(moving, workspace, canWriteAt, mayCarry).filter(
-    (one) => !workspace.archivedSpaces.has(one.root),
-  )
-}
+export const spacesOf = (tabs: readonly Tab[]) => spacesOfMoving(tabs.map(movingOf))
+
+export const spacesOfPaths = (paths: readonly string[]) =>
+  spacesOfMoving(paths.map((path) => ({ path, home: null, shared: null })))
 
 export async function toSpace(ids: readonly string[], space: string): Promise<void> {
   const { moveToSpace } = await spaceMoving()

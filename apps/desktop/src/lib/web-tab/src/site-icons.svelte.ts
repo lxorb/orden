@@ -2,13 +2,9 @@ import { account, api } from '../../accounts/src/api'
 import { isNumber, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden:site-icons'
-
 const MOST_SITES = 300
-
 const MOST_TEXT = 1024 * 1024
-
 const AGAIN_MS = 30_000
-
 const QUIET_MS = 10 * 60_000
 
 function unknownTo(error: unknown): boolean {
@@ -105,6 +101,7 @@ class SiteIcons {
 
   private told = new Map<string, string>()
   private asked = 0
+  private cleared = 0
   private asking: Promise<void> | null = null
   private quietUntil = 0
 
@@ -135,6 +132,7 @@ class SiteIcons {
   }
 
   private async fetch(token: string) {
+    const clearing = this.cleared
     let sites
     try {
       sites = (await api.siteIcons(token)).sites
@@ -157,7 +155,7 @@ class SiteIcons {
             : await api.siteIconPicture(token, one.site).catch(() => was?.picture ?? null)
       next.push({ site: one.site, label: one.label, seen: one.seen, hash: one.hash, picture })
     }
-    if (account.accountToken !== token) return
+    if (account.accountToken !== token || this.cleared !== clearing) return
 
     this.write(next)
     await this.dropBroken()
@@ -168,10 +166,10 @@ class SiteIcons {
     const token = account.accountToken
     if (!site || !token || this.quiet()) return
     const label = labelOf(url, title)
-
     const said = icon ?? ''
     if (this.told.get(site) === said) return
     this.told.set(site, said)
+    const clearing = this.cleared
 
     try {
       const { site: row } = await api.sawSite(token, { site, label, icon, seen: Date.now() })
@@ -184,7 +182,7 @@ class SiteIcons {
           : row.hash === null
             ? null
             : await api.siteIconPicture(token, row.site).catch(() => null)
-      if (account.accountToken !== token) return
+      if (account.accountToken !== token || this.cleared !== clearing) return
       this.write([
         { site: row.site, label: row.label, seen: row.seen, hash: row.hash, picture },
         ...this.list.filter((one) => one.site !== row.site),
@@ -206,6 +204,7 @@ class SiteIcons {
   }
 
   async forgetSince(since: number) {
+    this.cleared += 1
     this.write(this.list.filter((one) => one.seen < since))
     this.told.clear()
     const token = account.accountToken

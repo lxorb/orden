@@ -15,11 +15,9 @@ export interface MathsSpan {
 }
 
 function mathsNode(tree: Tree, pos: number): SyntaxNode | null {
-  for (const side of [-1, 1] as const) {
-    for (let node: SyntaxNode | null = tree.resolveInner(pos, side); node; node = node.parent) {
+  for (const side of [-1, 1] as const)
+    for (let node: SyntaxNode | null = tree.resolveInner(pos, side); node; node = node.parent)
       if (node.name === 'InlineMath' || node.name === 'BlockMath') return node
-    }
-  }
   return null
 }
 
@@ -51,12 +49,8 @@ export function mathsAtCaret(state: EditorState): MathsSpan | null {
   return spanOf((from, to) => state.doc.sliceString(from, to), node)
 }
 
-export function mathsInText(text: string, offset: number): MathsSpan | null {
-  return spanOf(
-    (from, to) => text.slice(from, to),
-    mathsNode(ordenMarkdownParser.parse(text), offset),
-  )
-}
+export const mathsInText = (text: string, offset: number): MathsSpan | null =>
+  spanOf((from, to) => text.slice(from, to), mathsNode(ordenMarkdownParser.parse(text), offset))
 
 export interface Placement {
   top: number
@@ -151,9 +145,9 @@ function cellRange(cell: HTMLElement, from: number, to: number): Range {
   return range
 }
 
-function boxOf(rect: DOMRect | { top: number; bottom: number; left: number; right: number }): Box {
-  return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right }
-}
+const boxOf = (
+  rect: DOMRect | { top: number; bottom: number; left: number; right: number },
+): Box => ({ top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right })
 
 class Preview implements PluginValue {
   readonly dom: HTMLElement

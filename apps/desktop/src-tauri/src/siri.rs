@@ -9,7 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use security_framework::os::macos::code_signing::{Flags, SecCode, SecRequirement};
 use tauri::{AppHandle, Emitter as _};
 
-use crate::paths::{config_dir, inside, made, spaces_dir, write_atomically, TRASH};
+use orden_base::paths::{config_dir, inside, made, spaces_dir, write_atomically, TRASH};
 
 const INBOX: &str = ".Inbox.md";
 
@@ -44,7 +44,7 @@ pub extern "C" fn orden_add_to_inbox(text: *const c_char) -> i32 {
         return 1;
     }
     let text = unsafe { CStr::from_ptr(text) }.to_string_lossy();
-    let added = crate::mcp::home::config_dir()
+    let added = orden_ai::mcp::home::config_dir()
         .ok_or_else(|| "no settings folder".to_owned())
         .and_then(|dir| queued(&dir.join(ADDED), &text));
     match added {
@@ -63,7 +63,7 @@ fn told() {
     let Some(app) = APP.get() else {
         return;
     };
-    if let Some(window) = crate::agents::shell::host(app) {
+    if let Some(window) = orden_base::labels::host(app) {
         let _ = app.emit_to(window.label(), ADDED_EVENT, ());
     }
 }

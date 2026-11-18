@@ -47,7 +47,6 @@ interface Vetting {
 }
 
 const vetted = StateEffect.define<Text>()
-
 const refused = StateEffect.define()
 
 const vetting = StateField.define<Vetting>({
@@ -65,13 +64,8 @@ const vetting = StateField.define<Vetting>({
 })
 
 const NOTHING = new SearchQuery({ search: '' })
-
 const MULTILINE = /\\[sWDnr]|\n|\r|\[\^/
-
-function flagsOf(query: SearchQuery): string {
-  return query.caseSensitive ? 'gmu' : 'gmui'
-}
-
+const flagsOf = (query: SearchQuery): string => (query.caseSensitive ? 'gmu' : 'gmui')
 const tried = new WeakMap<Text, Map<string, Promise<number | null>>>()
 
 function costOn(query: SearchQuery, doc: Text): Promise<number | null> {
@@ -161,10 +155,7 @@ export function cleared(state: EditorState): boolean {
   return !query.regexp || !query.valid || state.field(vetting, false)?.doc === state.doc
 }
 
-export function slow(state: EditorState): boolean {
-  return state.field(vetting, false)?.slow === true
-}
-
+export const slow = (state: EditorState): boolean => state.field(vetting, false)?.slow === true
 const running = new WeakMap<EditorView, Promise<boolean>>()
 
 export function clear(view: EditorView): Promise<boolean> {
@@ -273,9 +264,12 @@ const findHighlighter = ViewPlugin.fromClass(
   { decorations: (plugin) => plugin.decorations },
 )
 
-export function searching(): Extension {
-  return [search(), vetting, findHighlighter, highlightSelectionMatches()]
-}
+export const searching = (): Extension => [
+  search(),
+  vetting,
+  findHighlighter,
+  highlightSelectionMatches(),
+]
 
 function keptAsTyped(replacement: string): string {
   return replacement.replace(/\\/g, '\\\\')
@@ -310,9 +304,7 @@ export async function setQuery(view: EditorView, spec: FindSpec): Promise<void> 
   })
 }
 
-export function asked(state: EditorState): boolean {
-  return getSearchQuery(state).valid
-}
+export const asked = (state: EditorState): boolean => getSearchQuery(state).valid
 
 function unfolding<Target extends Parameters<StateCommand>[0]>(
   command: (target: Target) => boolean,

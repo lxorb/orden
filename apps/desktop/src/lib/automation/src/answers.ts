@@ -7,7 +7,14 @@ import { relativeTo, currentWindow } from '../../platform/src/api'
 import { views } from '../../panes/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { Said } from './args'
-import { noteFor, spaceFor } from './space'
+import { type Note, noteFor, spaceFor } from './space'
+
+const onNote =
+  (answer: (note: Note) => object | Promise<object>) =>
+  async (args: Said): Promise<unknown> => {
+    const note = await noteFor(args)
+    return { path: note.relative, ...(await answer(note)) }
+  }
 
 export async function listFiles(args: Said): Promise<unknown> {
   const space = await spaceFor(args)
@@ -23,23 +30,21 @@ export async function listFiles(args: Said): Promise<unknown> {
   }
 }
 
-export async function readFile(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
-  return { path: note.relative, text: note.text }
-}
+export const readFile = onNote((note) => ({ text: note.text }))
 
-export async function listLinks(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
-  return { path: note.relative, links: links.outgoing(note.path) }
-}
+export const listLinks = onNote(async (note) => {
+  await links.scanned()
+  return { links: links.outgoing(note.path) }
+})
 
-export async function listBacklinks(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
-  return { path: note.relative, backlinks: links.backlinks(note.path) }
-}
+export const listBacklinks = onNote(async (note) => {
+  await links.scanned()
+  return { backlinks: links.backlinks(note.path) }
+})
 
 export async function listOrphans(args: Said): Promise<unknown> {
   await spaceFor(args)
+  await links.scanned()
 
   return {
     orphans: links.graph.nodes
@@ -55,26 +60,18 @@ export async function listTags(args: Said): Promise<unknown> {
   return { tags: workspace.tags }
 }
 
-export async function readNoteProperties(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
+export const readNoteProperties = onNote((note) => ({
+  properties: readProperties(note.text) ?? [],
+}))
 
-  return { path: note.relative, properties: readProperties(note.text) ?? [] }
-}
-
-export async function readOutline(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
-  return { path: note.relative, headings: scanHeadings(note.text) }
-}
+export const readOutline = onNote((note) => ({ headings: scanHeadings(note.text) }))
 
 export async function listBookmarks(args: Said): Promise<unknown> {
   const space = await spaceFor(args)
   return { bookmarks: workspace.bookmarks.of(space.root) }
 }
 
-export async function countWords(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
-  return { path: note.relative, ...countText(note.text) }
-}
+export const countWords = onNote((note) => countText(note.text))
 
 export async function listCommands(): Promise<unknown> {
   await commandRowsLoaded()

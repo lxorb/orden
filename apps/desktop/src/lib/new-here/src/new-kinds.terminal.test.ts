@@ -1,12 +1,8 @@
 import { providePort } from '@orden/contracts'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
-const store = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => store.get(key) ?? null,
-  setItem: (key: string, value: string) => void store.set(key, value),
-  removeItem: (key: string) => void store.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const opened: (string | undefined)[] = []
 
@@ -48,11 +44,13 @@ afterEach(() => {
 })
 
 describe('a terminal, as a kind a new tab can be', () => {
-  test('starts the second line, with Remote and Online after it', () => {
+  test('starts the terminals, with Remote and Online after it', () => {
     expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
       ['note', 'canvas', 'pages'],
-      ['terminal', 'remote', 'online', 'application', 'explorer', 'pass'],
+      ['ai'],
+      ['terminal', 'remote', 'online'],
       ['web', 'private'],
+      ['application', 'explorer', 'pass'],
     ])
   })
 
@@ -62,8 +60,9 @@ describe('a terminal, as a kind a new tab can be', () => {
     try {
       expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
         ['note', 'canvas', 'pages'],
-        ['application', 'explorer', 'pass'],
+        ['ai'],
         ['web', 'private'],
+        ['application', 'explorer', 'pass'],
       ])
     } finally {
       modes.developer = null

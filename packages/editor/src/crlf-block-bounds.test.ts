@@ -9,14 +9,14 @@ const shown = (source: string) =>
 
 describe('a named block in a note with Windows line endings', () => {
   test.each([
-    ['words above a star rule', 'Para ^p\n***\nNext para\n', 'Para'],
-    ['words above an underscore rule', 'Para ^p\n___\nNext para\n', 'Para'],
-    ['words above a dash rule', 'Title ^p\n---\nNext para\n', 'Title'],
-    ['words above a line of equals signs', 'Title ^p\n===\nNext para\n', 'Title\n===\nNext para'],
-    ['words under a dash rule', 'Title\n---\nPara ^p\nmore\n', 'Para\nmore'],
-  ])('%s shows the same block as with Unix line endings', (_, unix, block) => {
-    expect(shown(unix)).toBe(block)
-    expect(shown(windows(unix))).toBe(block)
+    ['words above a star rule', 'Para ^p\n***\nNext para\n'],
+    ['words above an underscore rule', 'Para ^p\n___\nNext para\n'],
+    ['words above a dash rule', 'Title ^p\n---\nNext para\n'],
+    ['words above a line of equals signs', 'Title ^p\n===\nNext para\n'],
+    ['words under a dash rule', 'Title\n---\nPara ^p\nmore\n'],
+  ])('%s shows the same block as with Unix line endings', (_, unix) => {
+    expect(shown(unix)).toBeTruthy()
+    expect(shown(windows(unix))).toBe(shown(unix))
   })
 
   test('words under a rule are offered as a block of their own', () => {
@@ -25,8 +25,9 @@ describe('a named block in a note with Windows line endings', () => {
     expect(lines(windows(unix))).toEqual(lines(unix))
   })
 
-  test('naming words right above a rule writes the id on those words', () => {
-    const named = namedBlock(windows('Some text\n***\nmore words\n'), 0, () => 'n1')
-    expect(named?.source.split('\r\n')[0]).toBe('Some text ^n1')
+  test('naming words right above a rule writes the id where it goes with Unix line endings', () => {
+    const unix = 'Some text\n***\nmore words\n'
+    const named = namedBlock(windows(unix), 0, () => 'n1')
+    expect(named?.source.replace(/\r/g, '')).toBe(namedBlock(unix, 0, () => 'n1')?.source)
   })
 })

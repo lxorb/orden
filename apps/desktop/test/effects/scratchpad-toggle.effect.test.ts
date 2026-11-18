@@ -20,20 +20,6 @@ const PAD = '/app/Scratchpad.md'
 Range.prototype.getClientRects = () => [] as unknown as DOMRectList
 Range.prototype.getBoundingClientRect = () => new DOMRect()
 Element.prototype.scrollIntoView = () => undefined
-globalThis.ResizeObserver = class {
-  observe() {
-    // Nothing to measure.
-  }
-
-  unobserve() {
-    // Nothing to measure.
-  }
-
-  disconnect() {
-    // Nothing to measure.
-  }
-}
-
 const { Disk } = await import('../disk')
 const { Titlebar } = await import('../../src/lib/titlebar/src/api')
 const { default: Sidebar } = await import('../../src/lib/sidebar/src/Sidebar.svelte')

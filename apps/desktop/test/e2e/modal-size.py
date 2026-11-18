@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from harness import Drive
@@ -48,8 +46,6 @@ WRAPPED = """
     'kbd',
   ].join(',')
 
-  // Per run of words rather than per element: a card's name and the letter in its
-  // corner are two runs on two lines by design, and one name on two lines is a wrap.
   const lines = (element) => {
     let most = 0
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
@@ -67,8 +63,6 @@ WRAPPED = """
     return most
   }
 
-  // A row that is itself a button holds a name and a control, each of which is
-  // judged on its own; the row is allowed its two lines of name and value.
   const isRow = (element) =>
     element.matches('button.setting, button.orden-setting, .orden-row:has(.orden-row-label)')
 
@@ -122,8 +116,6 @@ FRAME = """
   if (!mode) return null
   const row = mode.cloneNode(true)
   row.dataset.stand = 'frame'
-  // The sliding surface is the action's, which a copy does not have: without it the
-  // chosen half draws its own, which is what a control without the action looks like.
   row.querySelector('.orden-segmented-thumb')?.remove()
   row.querySelector('.orden-segmented')?.classList.remove('has-thumb')
   row.querySelector('.name .what').firstChild.textContent = 'Frame'
@@ -405,5 +397,4 @@ def drive(browser) -> None:
 
         page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

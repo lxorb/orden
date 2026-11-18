@@ -12,9 +12,9 @@ import { join } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import type { Entry, Found, Listing } from './commands'
+import { idle, settle } from '../../../../test/effects/settle'
 
 type Heard = (event: { payload: unknown }) => void
-
 const ears = vi.hoisted(() => ({ heard: new Map<string, Heard>() }))
 
 vi.mock('../../platform/src/tauri', async (original) => ({
@@ -44,15 +44,14 @@ function described(path: string, name: string): Entry {
   }
 }
 
-function below(root: string, folder: string, query: string): Found[] {
-  return readdirSync(folder).flatMap((name) => {
+const below = (root: string, folder: string, query: string): Found[] =>
+  readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
     const here = name.toLowerCase().includes(query)
       ? [{ ...described(path, name), within: folder }]
       : []
     return statSync(path).isDirectory() ? [...here, ...below(root, path, query)] : here
   })
-}
 
 vi.mock('./commands', async (original) => ({
   ...(await original<typeof import('./commands')>()),
@@ -83,13 +82,6 @@ const ExplorerTab = (await import('./ExplorerTab.svelte')).default
 const { viewOf } = await import('./view.svelte')
 const { explorerPrefs } = await import('./prefs.svelte')
 
-const settled = async (ms = 0) => {
-  for (let round = 0; round < 5; round++) await new Promise((resolve) => setTimeout(resolve))
-  if (ms) await new Promise((resolve) => setTimeout(resolve, ms))
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  flushSync()
-}
-
 let root: string
 const DAY = 86_400_000
 const BASE = Date.UTC(2026, 0, 1)
@@ -117,7 +109,7 @@ beforeAll(async () => {
   ]
   for (const [name, bytes, day] of steps) {
     made(name, bytes, day)
-    await new Promise((resolve) => setTimeout(resolve, 15))
+    await idle(15)
   }
   writeFileSync(join(root, 'folder 9', 'inner 2.txt'), 'xx')
   writeFileSync(join(root, 'Folder 10', 'inner 1.txt'), 'xxxx')
@@ -141,7 +133,7 @@ async function explorer() {
   )
   const shown = mount(ExplorerTab, { target, props: { tab, focused: true } })
   close = () => void unmount(shown)
-  await settled()
+  await settle()
   return viewOf(tab)
 }
 
@@ -154,23 +146,22 @@ afterEach(() => {
   explorerPrefs.sortTurned(false)
 })
 
-function place(one: HTMLElement): [number, number] {
-  return [parseFloat(one.style.top) || 0, parseFloat(one.style.insetInlineStart) || 0]
-}
+const place = (one: HTMLElement): [number, number] => [
+  parseFloat(one.style.top) || 0,
+  parseFloat(one.style.insetInlineStart) || 0,
+]
 
-function shown(): string[] {
-  return [...target.querySelectorAll<HTMLElement>('.entry')]
+const shown = (): string[] =>
+  [...target.querySelectorAll<HTMLElement>('.entry')]
     .sort((one, other) => {
       const [top, start] = place(one)
       const [otherTop, otherStart] = place(other)
       return top - otherTop || start - otherStart
     })
     .map((one) => one.querySelector('.orden-row-label')?.textContent ?? '')
-}
 
-function heads(): string[] {
-  return [...target.querySelectorAll('.head .column')].map((one) => one.textContent.trim())
-}
+const heads = (): string[] =>
+  [...target.querySelectorAll('.head .column')].map((one) => one.textContent.trim())
 
 function header(at: string) {
   target.querySelector<HTMLElement>(`.head .column.${at}`)?.click()
@@ -193,7 +184,6 @@ const FOLDERS_BY_MODIFIED = ['Folder 10', 'folder 9']
 const BY_KIND = ['File 2.md', 'Ärger.pdf', 'photo.PNG', 'file 10.txt', '日記.txt']
 const BY_KIND_DOWN = ['file 10.txt', '日記.txt', 'photo.PNG', 'Ärger.pdf', 'File 2.md']
 const BY_CREATED = ['file 10.txt', 'File 2.md', 'photo.PNG', 'Ärger.pdf', '日記.txt']
-
 const back = (names: string[]) => [...names].reverse()
 
 describe('sorting a real folder in the file explorer', () => {
@@ -228,7 +218,7 @@ describe('sorting a real folder in the file explorer', () => {
   test('the sort menu sorts by when each was made, both ways, in the grid as in the list', async () => {
     await explorer()
     explorerPrefs.show('grid')
-    await settled()
+    await settle()
     expect(target.querySelector('.head')).toBeNull()
     const order = born ? BY_CREATED : BY_MODIFIED
     const folders = born ? ['Folder 10', 'folder 9'] : FOLDERS_BY_MODIFIED
@@ -247,18 +237,24 @@ describe('sorting a real folder in the file explorer', () => {
     const view = await explorer()
     await view.go(join(root, 'folder 9'))
     explorerPrefs.show('columns')
-    await settled(300)
+    await vi.waitFor(() => {
+      flushSync()
+      expect(target.querySelectorAll('div.column li').length).toBeGreaterThan(0)
+    })
     chosen('Modified')
-    const above = [...target.querySelectorAll<HTMLElement>('div.column li')]
-      .sort((one, other) => place(one)[0] - place(other)[0])
-      .map((one) => one.textContent.trim())
-    expect(above).toEqual([...back(FOLDERS_BY_MODIFIED), ...back(BY_MODIFIED)])
+    await vi.waitFor(() => {
+      flushSync()
+      const above = [...target.querySelectorAll<HTMLElement>('div.column li')]
+        .sort((one, other) => place(one)[0] - place(other)[0])
+        .map((one) => one.textContent.trim())
+      expect(above).toEqual([...back(FOLDERS_BY_MODIFIED), ...back(BY_MODIFIED)])
+    })
   })
 
   test('found files sort by their own name and by their folder, not by the path below the search', async () => {
     const view = await explorer()
     view.searchBelow('e')
-    await settled()
+    await settle()
     expect(heads()[3]).toBe('Folder')
     const files = ['Ärger.pdf', 'File 2.md', 'file 10.txt']
     expect(shown()).toEqual([...FOLDERS_BY_NAME, ...files, 'inner 1.txt', 'inner 2.txt'])
@@ -284,18 +280,20 @@ describe('sorting a real folder in the file explorer', () => {
     made('new 3.txt', 5_000, 8)
     writeFileSync(join(root, 'Ärger.pdf'), 'x'.repeat(3_000_000))
     ears.heard.get('explorer://changed')?.({ payload: { folders: [root] } })
-    await settled(300)
-    expect(shown()).toEqual([
-      ...FOLDERS_BY_NAME,
-      'Ärger.pdf',
-      'file 10.txt',
-      '日記.txt',
-      'new 3.txt',
-      'photo.PNG',
-      'File 2.md',
-    ])
+    await vi.waitFor(() => {
+      flushSync()
+      expect(shown()).toEqual([
+        ...FOLDERS_BY_NAME,
+        'Ärger.pdf',
+        'file 10.txt',
+        '日記.txt',
+        'new 3.txt',
+        'photo.PNG',
+        'File 2.md',
+      ])
+    })
     await view.reload()
-    await settled()
+    await settle()
     expect(heads()[2]).toBe('Size ↓')
     expect(shown()[2]).toBe('Ärger.pdf')
     writeFileSync(join(root, 'Ärger.pdf'), 'x'.repeat(40))

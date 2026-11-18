@@ -4,22 +4,6 @@ import type { EditorView } from '@orden/editor'
 import FormatBar from '../../src/lib/surfaces/src/FormatBar.svelte'
 import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 
-class NoLayout {
-  observe() {
-    // Said above.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 let target: HTMLElement
 let note: HTMLElement
 let field: HTMLInputElement

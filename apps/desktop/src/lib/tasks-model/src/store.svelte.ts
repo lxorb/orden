@@ -1,7 +1,16 @@
 import { err, failure, ok, type Result } from '@orden/contracts'
 import { type Kept, TodoRecords, type TodoDisk, type TodoServer } from './records'
 import { nextOrder } from './query'
-import { checkedPatch, fieldsOf, KIND, newId, type Todo, todoOf, type TodoPatch } from './todo'
+import {
+  checkedPatch,
+  fieldsOf,
+  fitsOneChange,
+  KIND,
+  newId,
+  type Todo,
+  todoOf,
+  type TodoPatch,
+} from './todo'
 
 const SEND_AFTER = 1500
 
@@ -167,7 +176,10 @@ export class TodoStore {
       order: nextOrder(this.todos),
       ...checked.value,
     })
-    await records.change([{ id, fields: { ...fields, kind: KIND, created: now, doneAt: null } }])
+    const whole = { ...fields, kind: KIND, created: now, doneAt: null }
+    const fits = fitsOneChange(id, whole, this.device)
+    if (!fits.ok) return fits
+    await records.change([{ id, fields: whole }])
     this.wrote()
     const made = this.todo(id)
     return made ? ok(made) : missing('the todo was not kept')
@@ -185,6 +197,8 @@ export class TodoStore {
       fields.doneAt = checked.value.done ? this.world.now() : null
     }
     if (!Object.keys(fields).length) return ok(was)
+    const fits = fitsOneChange(id, { ...records.fieldsOf(id), ...fields }, this.device)
+    if (!fits.ok) return fits
     await records.change([{ id, fields }])
     this.wrote()
     const now = this.todo(id)

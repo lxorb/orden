@@ -84,43 +84,28 @@ function nodes(doc: string, name: string): string[] {
 }
 
 describe('the parser sees a wikilink', () => {
-  test('in every spelling', () => {
-    expect(nodes('a [[Note]] b', 'Wikilink')).toEqual(['[[Note]]'])
-    expect(nodes('[[Note|shown]]', 'Wikilink')).toEqual(['[[Note|shown]]'])
-    expect(nodes('[[Note#Heading]]', 'Wikilink')).toEqual(['[[Note#Heading]]'])
-    expect(nodes('[[Note#^abc]]', 'Wikilink')).toEqual(['[[Note#^abc]]'])
-    expect(nodes('![[Note]]', 'Wikilink')).toEqual(['![[Note]]'])
-    expect(nodes('[[folder/A Note.md]]', 'Wikilink')).toEqual(['[[folder/A Note.md]]'])
-  })
-
-  test('with the marks around the words a reader sees', () => {
-    expect(nodes('[[Note]]', 'WikilinkMark')).toEqual(['[[', ']]'])
-    expect(nodes('[[Note|shown]]', 'WikilinkMark')).toEqual(['[[Note|', ']]'])
-    expect(nodes('![[Note]]', 'WikilinkMark')).toEqual(['![[', ']]'])
-    expect(nodes('[[ Note ]]', 'WikilinkMark')).toEqual(['[[ ', ' ]]'])
-    expect(nodes('[[Note| ]]', 'WikilinkMark')).toEqual(['[[', '| ]]'])
-  })
-
-  test('and does not see one where there is none', () => {
-    expect(nodes('[[]]', 'Wikilink')).toEqual([])
-    expect(nodes('[[a]b]]', 'Wikilink')).toEqual([])
-    expect(nodes('[[a\nb]]', 'Wikilink')).toEqual([])
-    expect(nodes('[single]', 'Wikilink')).toEqual([])
-  })
-
-  test('a backslash makes it text, as it does for any bracket', () => {
-    expect(nodes('\\[[Note]]', 'Wikilink')).toEqual([])
-  })
-
-  test('code holds no links', () => {
-    expect(nodes('`[[Note]]`', 'Wikilink')).toEqual([])
-    expect(nodes('```\n[[Note]]\n```', 'Wikilink')).toEqual([])
-  })
-
-  test('the brackets are not read as a link or an image as well', () => {
-    expect(nodes('[[Note]]', 'Link')).toEqual([])
-    expect(nodes('![[pic.png]]', 'Image')).toEqual([])
-  })
+  test.each([
+    ['a [[Note]] b', ['[[Note]]'], 'Wikilink'],
+    ['[[Note|shown]]', ['[[Note|shown]]'], 'Wikilink'],
+    ['[[Note#Heading]]', ['[[Note#Heading]]'], 'Wikilink'],
+    ['[[Note#^abc]]', ['[[Note#^abc]]'], 'Wikilink'],
+    ['![[Note]]', ['![[Note]]'], 'Wikilink'],
+    ['[[folder/A Note.md]]', ['[[folder/A Note.md]]'], 'Wikilink'],
+    ['[[Note]]', ['[[', ']]'], 'WikilinkMark'],
+    ['[[Note|shown]]', ['[[Note|', ']]'], 'WikilinkMark'],
+    ['![[Note]]', ['![[', ']]'], 'WikilinkMark'],
+    ['[[ Note ]]', ['[[ ', ' ]]'], 'WikilinkMark'],
+    ['[[Note| ]]', ['[[', '| ]]'], 'WikilinkMark'],
+    ['[[]]', [], 'Wikilink'],
+    ['[[a]b]]', [], 'Wikilink'],
+    ['[[a\nb]]', [], 'Wikilink'],
+    ['[single]', [], 'Wikilink'],
+    ['\\[[Note]]', [], 'Wikilink'],
+    ['`[[Note]]`', [], 'Wikilink'],
+    ['```\n[[Note]]\n```', [], 'Wikilink'],
+    ['[[Note]]', [], 'Link'],
+    ['![[pic.png]]', [], 'Image'],
+  ])('%j', (input, wanted, extra) => expect(nodes(input, extra)).toEqual(wanted))
 })
 
 function linkMarks(doc: string, cursor?: number, notes = SPACE) {
@@ -197,38 +182,21 @@ describe('a wikilink in the live preview', () => {
     expect(concealed('see [[Plan|the plan]] now')).toEqual(['[[Plan|', ']]'])
   })
 
-  test('keeps a heading and a block in what it shows', () => {
-    expect(linkMarks('[[Plan#Today]]')).toEqual([
-      { text: 'Plan#Today', note: 'Plan#Today', missing: false },
-    ])
-    expect(linkMarks('[[Plan#^abc]]')).toEqual([
-      { text: 'Plan#^abc', note: 'Plan#^abc', missing: false },
-    ])
-  })
-
-  test('a name nothing answers to is drawn muted', () => {
-    expect(linkMarks('[[Nowhere]]')).toEqual([{ text: 'Nowhere', note: 'Nowhere', missing: true }])
-  })
-
-  test('a link into this note is never missing', () => {
-    expect(linkMarks('[[#Today]]')).toEqual([{ text: '#Today', note: '#Today', missing: false }])
-  })
+  test.each([
+    ['[[Plan#Today]]', [{ text: 'Plan#Today', note: 'Plan#Today', missing: false }]],
+    ['[[Plan#^abc]]', [{ text: 'Plan#^abc', note: 'Plan#^abc', missing: false }]],
+    ['[[Nowhere]]', [{ text: 'Nowhere', note: 'Nowhere', missing: true }]],
+    ['[[#Today]]', [{ text: '#Today', note: '#Today', missing: false }]],
+    [
+      'see [the plan](ideas/Plan.md) now',
+      [{ text: 'the plan', note: 'ideas/Plan.md', missing: false }],
+    ],
+    ['see [docs](https://x.dev) now', [{ text: 'docs', note: null, missing: false }]],
+  ])('%j', (input, wanted) => expect(linkMarks(input)).toEqual(wanted))
 
   test('the caret inside shows the whole link as source', () => {
     const doc = 'see [[Plan|the plan]] now'
     expect(concealed(doc, 10)).toEqual([])
-  })
-
-  test('a markdown link into the space reads as a link between notes', () => {
-    expect(linkMarks('see [the plan](ideas/Plan.md) now')).toEqual([
-      { text: 'the plan', note: 'ideas/Plan.md', missing: false },
-    ])
-  })
-
-  test('a markdown link out at the web is left to links.ts', () => {
-    expect(linkMarks('see [docs](https://x.dev) now')).toEqual([
-      { text: 'docs', note: null, missing: false },
-    ])
   })
 
   test('unicode and spaces in a name survive', () => {
@@ -242,29 +210,19 @@ describe('a wikilink in the live preview', () => {
 })
 
 describe('the name a block carries', () => {
-  test('is hidden, with the space that separated it', () => {
-    expect(concealed('A paragraph. ^abc123')).toEqual([' ^abc123'])
-    expect(concealed('^on-its-own')).toEqual(['^on-its-own'])
-  })
+  test.each([
+    ['A paragraph. ^abc123', [' ^abc123']],
+    ['^on-its-own', ['^on-its-own']],
+    ['x^2 is a square', []],
+    ['a^b', []],
+    ['```\nxor eax ^abc\n```', ['```', '```']],
+    ['see [[Plan#^abc]]', ['[[', ']]']],
+  ])('%j', (input, wanted) => expect(concealed(input)).toEqual(wanted))
 
-  test('comes back while the caret is on its line', () => {
-    const doc = 'A paragraph. ^abc123\n\nmore'
-    expect(concealed(doc, 3)).toEqual([])
-    expect(concealed(doc, 24)).toEqual([' ^abc123'])
-  })
-
-  test('is nothing where there is no name', () => {
-    expect(concealed('x^2 is a square')).toEqual([])
-    expect(concealed('a^b')).toEqual([])
-  })
-
-  test('a caret inside code is code', () => {
-    expect(concealed('```\nxor eax ^abc\n```')).toEqual(['```', '```'])
-  })
-
-  test('a block link is not read as one', () => {
-    expect(concealed('see [[Plan#^abc]]')).toEqual(['[[', ']]'])
-  })
+  test.each([
+    ['A paragraph. ^abc123\n\nmore', [], 3],
+    ['A paragraph. ^abc123\n\nmore', [' ^abc123'], 24],
+  ])('%j', (input, wanted, extra) => expect(concealed(input, extra)).toEqual(wanted))
 })
 
 describe('which note a name means', () => {
@@ -307,10 +265,10 @@ describe('which note a name means', () => {
     expect(resolveFile({ ...files, files: ['B/paper.pdf'] }, '/paper.pdf', 'wikilink')).toBeNull()
   })
 
-  test('nothing at all is nothing', () => {
-    expect(resolveNote(SPACE, 'Nowhere')).toBeNull()
-    expect(resolveNote(SPACE, '   ')).toBeNull()
-  })
+  test.each([
+    [SPACE, 'Nowhere'],
+    [SPACE, '   '],
+  ])('%j', (input, extra) => expect(resolveNote(input, extra)).toBeNull())
 
   test('a website answers to its name, with the extension or without', () => {
     const space = index([note('Svelte docs.url'), note('Plan.md')])
@@ -350,6 +308,76 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, '/B/Road.md')?.path).toBe('B/Road.md')
     expect(resolveFile(here, '/pic.png', 'markdown')).toBe('pic.png')
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
+  })
+
+  test('a markdown target written from the top or by name alone still finds its note', () => {
+    const here = index([note('ideas/Plan.md'), note('Plan B.md')], 'journal/Monday.md', {}, [
+      'files/pic.png',
+    ])
+    expect(resolveRelative(here, 'ideas/Plan.md')?.path).toBe('ideas/Plan.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('ideas/Plan.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveFile(here, 'files/pic.png', 'markdown')).toBe('files/pic.png')
+    expect(resolveFile(here, 'pic.png', 'markdown')).toBe('files/pic.png')
+    expect(resolveFile(here, './pic.png', 'markdown')).toBeNull()
+  })
+
+  test('a markdown target by name alone reaches the note at the top before a deeper one ending in the same folders', () => {
+    const here = index([note('Plan.md'), note('Archive/Projects/Plan.md')], 'Projects/n.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('Plan.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Archive/Projects/Plan.md')?.path).toBe(
+      'Archive/Projects/Plan.md',
+    )
+  })
+
+  test('a path written from the top of the space, as Obsidian writes one, still names it', () => {
+    const here = index([note('Projects/Plan.md'), note('Notes/Plan.md')], 'Notes/Day/x.md')
+    expect(resolveRelative(here, 'Projects/Plan.md')?.path).toBe('Projects/Plan.md')
+    expect(resolveRelative(here, '../Plan.md')?.path).toBe('Notes/Plan.md')
+
+    const beside = index([note('Projects/Plan.md'), note('Notes/Projects/Plan.md')], 'Notes/x.md')
+    expect(resolveRelative(beside, 'Projects/Plan.md')?.path).toBe('Notes/Projects/Plan.md')
+  })
+
+  test('a name alone, as the shortest link is written, names the note of that name', () => {
+    const here = index([note('Projects/Plan.md'), note('Inbox/Vault/Trips/Kit.md')], 'Notes/x.md')
+    expect(resolveRelative(here, 'Plan.md')?.path).toBe('Projects/Plan.md')
+    expect(resolveRelative(here, 'Trips/Kit.md')?.path).toBe('Inbox/Vault/Trips/Kit.md')
+    expect(resolveRelative(here, 'Nothing.md')).toBeNull()
+  })
+
+  test.each([
+    [
+      index([], 'Trips/Paris.md', {}, ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']),
+      'Trips/cover.jpg',
+      'cover.jpg',
+      'wikilink' as const,
+    ],
+    [
+      index([], 'Notes/x.md', {}, ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']),
+      'Home/cover.jpg',
+      'cover.jpg',
+      'wikilink' as const,
+    ],
+  ])('%j', (input, wanted, extra, last) => expect(resolveFile(input, extra, last)).toBe(wanted))
+
+  test('a file a markdown link names from the top of the space or by name alone', () => {
+    const here = index([], 'Notes/Day/x.md', {}, ['attachments/report.pdf', 'Notes/report.pdf'])
+    expect(resolveFile(here, 'attachments/report.pdf', 'markdown')).toBe('attachments/report.pdf')
+    expect(resolveFile(here, 'report.pdf', 'markdown')).toBe('Notes/report.pdf')
+    expect(resolveFile(here, '../report.pdf', 'markdown')).toBe('Notes/report.pdf')
+    expect(resolveFile(here, './report.pdf', 'markdown')).toBeNull()
+    expect(resolveFile(here, '/report.pdf', 'markdown')).toBeNull()
+    expect(resolveFile(here, '../attachments/report.pdf', 'markdown')).toBeNull()
+  })
+
+  test('a link written as relative names only what is there, never a namesake elsewhere', () => {
+    const here = index([note('Archive/Plan.md'), note('Projects/Plan.md')], 'Notes/Day/x.md')
+    expect(resolveRelative(here, './Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../Projects/Plan.md')).toBeNull()
+    expect(resolveRelative(here, '../../Projects/Plan.md')?.path).toBe('Projects/Plan.md')
   })
 
   test('a path from the top names that path or nothing', () => {
@@ -411,15 +439,47 @@ describe('where a link goes', () => {
     embed: false,
   })
 
-  test('to the note it names, with the heading it names', () => {
-    expect(jumpFor(SPACE, wiki('ideas/Spark', 'Later'), 'wikilink')).toEqual({
-      path: 'ideas/Spark.md',
-      target: 'ideas/Spark',
-      heading: 'Later',
-      block: null,
-      page: null,
-    })
-  })
+  test.each([
+    [
+      SPACE,
+      {
+        path: 'ideas/Spark.md',
+        target: 'ideas/Spark',
+        heading: 'Later',
+        block: null,
+        page: null,
+        kind: 'wikilink',
+      },
+      wiki('ideas/Spark', 'Later'),
+      'wikilink' as const,
+    ],
+    [
+      SPACE,
+      {
+        path: 'paper.pdf',
+        target: 'paper.pdf',
+        heading: null,
+        block: null,
+        page: 3,
+        kind: 'wikilink',
+      },
+      wiki('paper.pdf', 'page=3'),
+      'wikilink' as const,
+    ],
+    [
+      SPACE,
+      {
+        path: 'reading/Deep Learning.pdf',
+        target: 'Deep Learning.pdf',
+        heading: null,
+        block: null,
+        page: null,
+        kind: 'wikilink',
+      },
+      wiki('Deep Learning.pdf'),
+      'wikilink' as const,
+    ],
+  ])('%j', (input, wanted, extra, last) => expect(jumpFor(input, extra, last)).toEqual(wanted))
 
   test('to nowhere for a name nothing answers to, which is the cue to make it', () => {
     expect(jumpFor(SPACE, wiki('Nowhere'), 'wikilink').path).toBeNull()
@@ -430,32 +490,31 @@ describe('where a link goes', () => {
     expect(jumpFor(SPACE, wiki('', 'Today'), 'wikilink').path).toBe('Plan.md')
   })
 
-  test('to a PDF in the space, at the page it names', () => {
-    expect(jumpFor(SPACE, wiki('paper.pdf', 'page=3'), 'wikilink')).toEqual({
-      path: 'paper.pdf',
-      target: 'paper.pdf',
-      heading: null,
-      block: null,
-      page: 3,
-    })
-  })
-
-  test('to a PDF with no page for a link that names none', () => {
-    expect(jumpFor(SPACE, wiki('Deep Learning.pdf'), 'wikilink')).toEqual({
-      path: 'reading/Deep Learning.pdf',
-      target: 'Deep Learning.pdf',
-      heading: null,
-      block: null,
-      page: null,
-    })
-  })
-
   test('a markdown link to a PDF folds against the note it was written in', () => {
     const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['reading/paper.pdf'])
     expect(jumpFor(here, wiki('../reading/paper.pdf', 'page=2'), 'markdown')).toMatchObject({
       path: 'reading/paper.pdf',
       page: 2,
+      kind: 'markdown',
     })
+  })
+
+  test('to a file the space holds that opens in no tab, rather than to a note to make', () => {
+    expect(jumpFor(SPACE, wiki('shot.png'), 'wikilink')).toEqual({
+      path: 'shot.png',
+      target: 'shot.png',
+      heading: null,
+      block: null,
+      page: null,
+      kind: 'wikilink',
+    })
+    const here = index([note('ideas/Note.md')], 'ideas/Note.md', {}, ['files/spec.docx'])
+    expect(jumpFor(here, wiki('../files/spec.docx'), 'markdown').path).toBe('files/spec.docx')
+  })
+
+  test('a note named with a dot is still the note before any file', () => {
+    const here = index([note('v1.2.md')], null, {}, ['v1.2'])
+    expect(jumpFor(here, wiki('v1.2'), 'wikilink').path).toBe('v1.2.md')
   })
 
   test('a PDF the space does not hold is not a note to make', () => {
@@ -465,14 +524,11 @@ describe('where a link goes', () => {
     expect(resolves(SPACE, wiki('missing.pdf'), 'wikilink')).toBe(false)
   })
 
-  test('a PDF the space holds resolves, so the link is not drawn as missing', () => {
-    expect(resolves(SPACE, wiki('paper.pdf'), 'wikilink')).toBe(true)
-    expect(resolves(SPACE, wiki('PAPER.PDF'), 'wikilink')).toBe(true)
-  })
-
-  test('a file Orden cannot open stays unresolved', () => {
-    expect(resolves(SPACE, wiki('shot.png'), 'wikilink')).toBe(false)
-  })
+  test.each([
+    [SPACE, true, wiki('paper.pdf'), 'wikilink' as const],
+    [SPACE, true, wiki('PAPER.PDF'), 'wikilink' as const],
+    [SPACE, false, wiki('shot.png'), 'wikilink' as const],
+  ])('%j', (input, wanted, extra, last) => expect(resolves(input, extra, last)).toEqual(wanted))
 
   test('what a click on one would do, read off the document', () => {
     const doc = 'see [[ideas/Spark#Later]] and [[Nowhere]] and plain words'
@@ -484,6 +540,7 @@ describe('where a link goes', () => {
       heading: 'Later',
       block: null,
       page: null,
+      kind: 'wikilink',
     })
     expect(jumpAt(where, doc.indexOf('Nowhere'))).toEqual({
       path: null,
@@ -491,6 +548,7 @@ describe('where a link goes', () => {
       heading: null,
       block: null,
       page: null,
+      kind: 'wikilink',
     })
     expect(jumpAt(where, doc.indexOf('plain'))).toBeNull()
   })
@@ -499,9 +557,8 @@ describe('where a link goes', () => {
 describe('the link under a position', () => {
   test('is found from inside it and from either edge', () => {
     const doc = 'see [[Plan#Today]] now'
-    for (const at of [4, 8, 18]) {
+    for (const at of [4, 8, 18])
       expect(linkAt(state(doc, 0), at)).toMatchObject({ target: 'Plan', heading: 'Today' })
-    }
   })
 
   test('is nothing where there is no link', () => {
@@ -540,9 +597,13 @@ function blocks(doc: string, cursor?: number): string[] {
 }
 
 describe('an embed', () => {
-  test('alone between blank lines is drawn as the note', () => {
-    expect(blocks('one\n\n![[Plan]]\n\ntwo')).toEqual(['![[Plan]]'])
-  })
+  test.each([
+    ['one\n\n![[Plan]]\n\ntwo', ['![[Plan]]']],
+    ['one\n![[Plan]]\ntwo', []],
+    ['one\n\n![[paper.pdf#page=3]]\n\ntwo', ['![[paper.pdf#page=3]]']],
+    ['one\n\n![[Board.canvas]]\n\ntwo', ['![[Board.canvas]]']],
+    ['see ![[paper.pdf]] here', []],
+  ])('%j', (input, wanted) => expect(blocks(input)).toEqual(wanted))
 
   test('with words beside it stays a link', () => {
     expect(blocks('see ![[Plan]] here')).toEqual([])
@@ -584,12 +645,6 @@ describe('an embed', () => {
       expect(blocks(doc), name).toEqual([])
       expect(concealed(doc), name).toEqual([`![[${name}]]`])
     }
-  })
-
-  test('a paper and a plane are cards of their own, which needs a line to itself', () => {
-    expect(blocks('one\n\n![[paper.pdf#page=3]]\n\ntwo')).toEqual(['![[paper.pdf#page=3]]'])
-    expect(blocks('one\n\n![[Board.canvas]]\n\ntwo')).toEqual(['![[Board.canvas]]'])
-    expect(blocks('see ![[paper.pdf]] here')).toEqual([])
   })
 
   test('and every kind is source again while the caret is in it', () => {

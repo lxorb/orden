@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { flushSync, mount, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 import '../../src/lib/theme-ports'
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
@@ -17,22 +18,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 vi.mock('@orden/themes/glass', () => ({
   glassCss: readFileSync(resolve('../../packages/themes/src/glass.css'), 'utf8'),
 }))
-
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
 
 Element.prototype.animate = () =>
   ({
@@ -71,14 +56,6 @@ let shown: ReturnType<typeof mount> | null = null
 
 let tints: string[] = []
 let watching: MutationObserver | null = null
-
-async function settle() {
-  await vi.dynamicImportSettled()
-  for (let turn = 0; turn < 4; turn++) {
-    await new Promise((go) => setTimeout(go, 0))
-    flushSync()
-  }
-}
 
 function tint(): string {
   return document.documentElement.style.getPropertyValue('--glass-tint')
@@ -231,21 +208,6 @@ test('a note’s tab inside a strip turned dark by a page keeps the paper’s wo
   expect(chrome.theme).toBe('dark')
   expect(chrome.tabTheme('some-note')).toBe('light')
   expect(chrome.tabTheme(black)).toBeUndefined()
-})
-
-test('the wash is worked out again over whatever the root says the window stands on', async () => {
-  const black = workspace.openPage(BLACK) ?? ''
-  grounds.said(black, BLACK, '#ffffff')
-  workspace.activate(black)
-  await settle()
-  const opaque = document.documentElement.style.getPropertyValue('--glass-tinted')
-
-  document.documentElement.dataset.translucent = 'acrylic'
-  await settle()
-  expect(chrome.material).toBe('acrylic')
-  expect(document.documentElement.style.getPropertyValue('--glass-tinted')).not.toBe(opaque)
-  delete document.documentElement.dataset.translucent
-  await settle()
 })
 
 test('leaving glass takes every colour and word it put on the window away', async () => {

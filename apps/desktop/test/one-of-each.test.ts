@@ -2,8 +2,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { SOURCE } from './files'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
 function componentFiles(dir: string): string[] {
@@ -235,7 +235,6 @@ describe('the ring a keyboard leaves', () => {
       'lib/pass-ui/src/PassFill.svelte',
       'lib/reading/src/Reading.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
-      'lib/web-tab/src/WebAsk.svelte',
     ])
   })
 
@@ -588,8 +587,6 @@ describe('the bubble a sentence appears in', () => {
       'lib/sidebar/src/NameField.svelte',
       'lib/tab-strip/src/TabCard.svelte',
       'lib/ui-controls/src/Hint.svelte',
-      'lib/web-tab/src/WebAsk.svelte',
-      'lib/web-tab/src/WebDialog.svelte',
       'lib/web-tab/src/WebDownloads.svelte',
       'lib/web-tab/src/WebExtensionPopup.svelte',
       'lib/web-tab/src/WebExtensions.svelte',

@@ -1,31 +1,13 @@
-import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
 import type { Alias, Item } from '@orden/pass/types'
-import { type Component, flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { button, closed, showing, target, typed } from '../test/drawn'
+import { opened, pass } from '../test/opened'
 
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
-
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const SettingsAliases = (await import('./SettingsAliases.svelte')).default
 const ItemEdit = (await import('./ItemEdit.svelte')).default
 const ItemView = (await import('./ItemView.svelte')).default
-
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
 
 interface Asked {
   method: string
@@ -35,7 +17,6 @@ interface Asked {
 
 let asked: Asked[] = []
 let answers: Record<string, [number, unknown]> = {}
-
 const SL = 'https://app.simplelogin.io'
 
 const OPTIONS: [number, unknown] = [
@@ -54,13 +35,10 @@ const MAILBOXES: [number, unknown] = [
   { mailboxes: [{ id: 1, email: 'me@example.com', default: true }] },
 ]
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 let vault = ''
 
 beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup('correct horse battery staple')
+  await opened()
   vault = pass.vaults[0]?.id ?? ''
 })
 
@@ -85,33 +63,9 @@ beforeEach(async () => {
 })
 
 afterEach(() => {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
+  closed()
   vi.unstubAllGlobals()
 })
-
-function showing<P extends Record<string, unknown>>(component: Component<P>, props: P) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(component, { target, props, intro: false })
-  flushSync()
-}
-
-function typed(field: HTMLInputElement | null, text: string) {
-  if (!field) throw new Error('no field')
-  field.value = text
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  flushSync()
-}
-
-function buttonNamed(name: string): HTMLButtonElement {
-  const button = [...target.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name,
-  )
-  if (!button) throw new Error(`no ${name}`)
-  return button
-}
 
 describe('Settings > Aliases', () => {
   test('tests a key, connects it and keeps it sealed, then disconnects', async () => {
@@ -122,16 +76,16 @@ describe('Settings > Aliases', () => {
       return field
     })
     typed(key, 'sl-key')
-    buttonNamed('Test connection').click()
+    button('Test connection').click()
     await vi.waitFor(() => expect(target.textContent).toContain('Connected. 1 mailboxes.'))
     expect(await pass.aliasProvider()).toBeNull()
 
     target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
-    await vi.waitFor(() => expect(buttonNamed('Disconnect')).toBeTruthy())
+    await vi.waitFor(() => expect(button('Disconnect')).toBeTruthy())
     expect(await pass.aliasProvider()).toMatchObject({ provider: 'simplelogin', key: 'sl-key' })
     await vi.waitFor(() => expect(target.textContent).toContain('me@example.com'))
 
-    buttonNamed('Disconnect').click()
+    button('Disconnect').click()
     await vi.waitFor(() => expect(target.querySelector('input[type="password"]')).not.toBeNull())
     expect(await pass.aliasProvider()).toBeNull()
   })

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import EXPERIMENTAL_SWITCH, Drive
@@ -126,5 +124,4 @@ def drive(browser: Browser) -> None:
     say("master on again brings each back; each turns off on its own")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "The Experimental section turns the master and each feature on and off"))
+raise SystemExit(DRIVE.run(drive, "The Experimental section turns the master and each feature on and off"))

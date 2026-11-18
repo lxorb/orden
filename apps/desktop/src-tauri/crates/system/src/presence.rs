@@ -1,0 +1,176 @@
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Input {
+    pub idle_ms: u64,
+    pub front: bool,
+}
+
+#[tauri::command(async)]
+pub fn input_idle() -> Option<Input> {
+    platform::system_input()
+}
+
+#[tauri::command]
+pub async fn device_name() -> Option<String> {
+    orden_base::lane::off_the_runtime(|| -> Option<String> {
+        platform::computer_name().and_then(|name| shown(&name))
+    })
+    .await
+}
+
+const LONGEST: usize = 60;
+
+fn shown(name: &str) -> Option<String> {
+    let one_line: String = name
+        .chars()
+        .map(|character| {
+            if character.is_control() {
+                ' '
+            } else {
+                character
+            }
+        })
+        .collect();
+    let trimmed = one_line.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    Some(
+        trimmed
+            .chars()
+            .take(LONGEST)
+            .collect::<String>()
+            .trim_end()
+            .to_owned(),
+    )
+}
+
+#[cfg(windows)]
+mod platform {
+    use windows::Win32::System::SystemInformation::GetTickCount;
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
+    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
+
+    use super::Input;
+
+    pub fn system_input() -> Option<Input> {
+        let mut last = LASTINPUTINFO {
+            cbSize: u32::try_from(std::mem::size_of::<LASTINPUTINFO>()).ok()?,
+            dwTime: 0,
+        };
+        let mut process = 0u32;
+
+        #[allow(unsafe_code)]
+        let (read, now) = unsafe {
+            let read = GetLastInputInfo(&raw mut last).as_bool();
+            let front = GetForegroundWindow();
+            if !front.is_invalid() {
+                GetWindowThreadProcessId(front, Some(&raw mut process));
+            }
+            (read, GetTickCount())
+        };
+        if !read {
+            return None;
+        }
+
+        Some(Input {
+            idle_ms: u64::from(now.wrapping_sub(last.dwTime)),
+            front: process != 0 && process == std::process::id(),
+        })
+    }
+
+    pub fn computer_name() -> Option<String> {
+        None
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod platform {
+    use objc2_app_kit::NSRunningApplication;
+
+    use super::Input;
+
+    const COMBINED: i32 = 0;
+    const ANY_INPUT: u32 = !0;
+
+    #[allow(unsafe_code)]
+    #[link(name = "CoreGraphics", kind = "framework")]
+    unsafe extern "C" {
+        fn CGEventSourceSecondsSinceLastEventType(state: i32, event: u32) -> f64;
+    }
+
+    pub fn system_input() -> Option<Input> {
+        #[allow(unsafe_code)]
+        let seconds = unsafe { CGEventSourceSecondsSinceLastEventType(COMBINED, ANY_INPUT) };
+        if !seconds.is_finite() || seconds < 0.0 {
+            return None;
+        }
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let idle_ms = (seconds * 1000.0) as u64;
+
+        Some(Input {
+            idle_ms,
+            front: NSRunningApplication::currentApplication().isActive(),
+        })
+    }
+
+    pub fn computer_name() -> Option<String> {
+        let out = orden_base::printed::output(
+            std::process::Command::new("scutil").args(["--get", "ComputerName"]),
+            std::time::Duration::from_secs(3),
+        )
+        .ok()?;
+        out.status
+            .success()
+            .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+}
+
+#[cfg(target_os = "linux")]
+mod platform {
+    use super::Input;
+
+    pub fn system_input() -> Option<Input> {
+        crate::front_x::input().map(|said| Input {
+            idle_ms: said.idle_ms,
+            front: said.front,
+        })
+    }
+
+    pub fn computer_name() -> Option<String> {
+        None
+    }
+}
+
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
+mod platform {
+    use super::Input;
+
+    pub fn system_input() -> Option<Input> {
+        None
+    }
+
+    pub fn computer_name() -> Option<String> {
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::shown;
+
+    #[test]
+    fn a_name_is_one_readable_line() {
+        assert_eq!(shown("  Emil's laptop\n").as_deref(), Some("Emil's laptop"));
+        assert_eq!(shown("a\tb").as_deref(), Some("a b"));
+        assert_eq!(shown("   "), None);
+        assert_eq!(shown(&"x".repeat(200)).map(|one| one.len()), Some(60));
+    }
+
+    #[test]
+    fn the_system_is_asked_without_trouble() {
+        let _ = super::input_idle();
+    }
+}

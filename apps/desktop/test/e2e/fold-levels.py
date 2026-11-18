@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -156,5 +154,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "a note folds one level at a time, and comes back the same way")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

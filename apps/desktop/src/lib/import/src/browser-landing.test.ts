@@ -1,6 +1,5 @@
 import { providePort, webPages } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import { toBase64 } from '../../platform/src/bytes'
 import { readShortcut } from '@orden/scan/shortcut'
 import { SIDEBAR as ARC } from './arc.fixture'
@@ -18,10 +17,8 @@ let arc: unknown = null
 let marksOf: Record<string, string> = {}
 let history: unknown[] = []
 const asked: string[] = []
-
 const brought: { rows: unknown }[] = []
 const engine = { id: 'google', custom: '', chosen: false }
-
 const written: { root: string; files: Planned[] }[] = []
 const spaces: { id: string; name: string; root: string }[] = []
 const said: string[] = []

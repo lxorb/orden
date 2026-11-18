@@ -4,6 +4,7 @@ import DeleteAccount from '../../src/lib/accounts-ui/src/DeleteAccount.svelte'
 import { account } from '../../src/lib/accounts/src/account.svelte'
 import { warmCalls } from '../../src/lib/accounts/src/client'
 import type { RemoteSpace } from '../../src/lib/accounts/src/routes'
+import { idle, settle } from './settle'
 
 await warmCalls()
 
@@ -52,13 +53,6 @@ const SIGNED_OUT: Record<string, Answer> = {
 function open() {
   shown = mount(DeleteAccount, { target: host, props: { onend: () => (ended += 1) } })
   flushSync()
-}
-
-async function settled() {
-  for (let round = 0; round < 3; round++) {
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    flushSync()
-  }
 }
 
 function type(label: string, value: string) {
@@ -110,7 +104,7 @@ test('pressing it mails a code; a wrong one is said, and nothing is deleted', as
   })
 
   open()
-  await settled()
+  await settle()
 
   expect(asked).toEqual([
     { route: 'POST /v1/account/delete/code', body: {}, token: 'Bearer session' },
@@ -121,7 +115,7 @@ test('pressing it mails a code; a wrong one is said, and nothing is deleted', as
 
   type('Code', '111111')
   submit()
-  await settled()
+  await settle()
 
   expect(host.textContent).toContain('that code is not right')
   expect(asked.map((one) => one.route)).not.toContain('DELETE /v1/account')
@@ -142,12 +136,12 @@ test('the codes, the second one, the last question, and then signed out and quie
   })
 
   open()
-  await settled()
+  await settle()
 
   type('Code', '123456')
   type('App code to delete', '654321')
   submit()
-  await settled()
+  await settle()
 
   expect(asked[1]).toEqual({
     route: 'POST /v1/account/delete/verify',
@@ -157,7 +151,7 @@ test('the codes, the second one, the last question, and then signed out and quie
   expect(asked.map((one) => one.route)).not.toContain('DELETE /v1/account')
 
   press('Delete now')
-  await settled()
+  await settle()
 
   expect(asked.map((one) => one.route)).toEqual([
     'POST /v1/account/delete/code',
@@ -172,8 +166,7 @@ test('the codes, the second one, the last question, and then signed out and quie
   expect(ended).toBe(1)
 
   const before = asked.length
-  await new Promise((resolve) => setTimeout(resolve, 50))
-  await settled()
+  await idle(50)
   expect(asked.length).toBe(before)
 })
 
@@ -191,12 +184,12 @@ test('the last question names the spaces other people lose, and only those', asy
   })
 
   open()
-  await settled()
+  await settle()
   expect(host.textContent).not.toContain('Also gone')
 
   type('Code', '123456')
   submit()
-  await settled()
+  await settle()
 
   expect(host.textContent).toContain('Also gone for everyone in')
   expect(host.textContent).toContain('Plans')
@@ -207,13 +200,13 @@ test('the last question names the spaces other people lose, and only those', asy
 
 async function deleteNow() {
   open()
-  await settled()
+  await settle()
   type('Code', '123456')
   submit()
-  await settled()
+  await settle()
   press('Delete now')
-  await settled()
-  await settled()
+  await settle()
+  await settle()
 }
 
 const SESSION_GONE: Record<string, Answer> = {
@@ -271,9 +264,9 @@ test('Cancel ends it with nothing deleted', async () => {
   serve({ 'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }] })
 
   open()
-  await settled()
+  await settle()
   press('Cancel')
-  await settled()
+  await settle()
 
   expect(ended).toBe(1)
   expect(asked.map((one) => one.route)).toEqual(['POST /v1/account/delete/code'])

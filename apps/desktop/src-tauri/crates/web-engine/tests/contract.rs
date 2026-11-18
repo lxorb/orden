@@ -8,7 +8,7 @@ use orden_contracts::{FailureKind, Outcome};
 use orden_web_engine::{
     allowed, app_host, becomes, debug_port, embed_allowed, frame_may_open, from_run, handed_out,
     internal, once_built, one_at_a_time, overlay_scrollbars, signs_in, switches, tab_may_open,
-    with_extensions, Asked, Becomes, Cookie, Download, Edge, Embed, EngineSettings, NativeWindow,
+    with_extensions, Becomes, Cookie, Download, Edge, Embed, EngineSettings, NativeWindow,
     NoExtensions, Outbox, Picture, Plain, Profiles, SandboxPolicy, Sending, StoreName, Url,
     WebEngine, WebPage, WindowSystem, APP_PROFILE, ENGINE_SWIPE, LONGEST_STORE_NAME,
     LOWEST_DEBUG_PORT, ROOT, STORE_PROFILE,
@@ -176,6 +176,10 @@ impl WebEngine for Fake {
     }
 }
 
+fn url(text: &str) -> Url {
+    Url::parse(text).expect(text)
+}
+
 fn embed_of(label: &str, url: &str) -> Embed {
     Embed {
         label: label.to_owned(),
@@ -269,23 +273,23 @@ fn the_app_s_own_hosts_are_no_web_page() {
     }
     assert!(!app_host("localhost"));
     assert!(!app_host("example.com"));
-    let url = |text: &str| Url::parse(text).expect(text);
-    assert!(allowed(&url("https://example.com/a")));
-    assert!(allowed(&url("http://127.0.0.1:8080/")));
-    assert!(!allowed(&url("http://tauri.localhost/index.html")));
-    assert!(!allowed(&url("file:///etc/passwd")));
-    assert!(!allowed(&url("javascript:alert(1)")));
-    assert!(!allowed(&url("chrome-extension://abc/popup.html")));
-    assert!(allowed(&url("view-source:https://example.com/")));
-    assert!(!allowed(&url(
-        "view-source:view-source:https://example.com/"
-    )));
-    assert!(!allowed(&url("view-source:http://ipc.localhost/")));
+    for (page, fine) in [
+        ("https://example.com/a", true),
+        ("http://127.0.0.1:8080/", true),
+        ("http://tauri.localhost/index.html", false),
+        ("file:///etc/passwd", false),
+        ("javascript:alert(1)", false),
+        ("chrome-extension://abc/popup.html", false),
+        ("view-source:https://example.com/", true),
+        ("view-source:view-source:https://example.com/", false),
+        ("view-source:http://ipc.localhost/", false),
+    ] {
+        assert_eq!(allowed(&url(page)), fine, "{page}");
+    }
 }
 
 #[test]
 fn an_extension_s_own_pages_open_as_tabs_and_frames_take_what_a_page_embeds() {
-    let url = |text: &str| Url::parse(text).expect(text);
     let known = |one: &Url| one.scheme() == "chrome-extension" && one.host_str() == Some("abc");
     assert!(tab_may_open(
         &url("chrome-extension://abc/popup.html"),
@@ -299,110 +303,49 @@ fn an_extension_s_own_pages_open_as_tabs_and_frames_take_what_a_page_embeds() {
         &url("chrome-extension://abc/popup.html"),
         &NoExtensions
     ));
-    assert!(frame_may_open(&url("about:blank"), &NoExtensions));
-    assert!(frame_may_open(&url("about:srcdoc"), &NoExtensions));
-    assert!(!frame_may_open(&url("about:settings"), &NoExtensions));
-    assert!(frame_may_open(
-        &url("data:text/html,<p>x</p>"),
-        &NoExtensions
-    ));
-    assert!(frame_may_open(
-        &url("blob:https://example.com/1234"),
-        &NoExtensions
-    ));
-    assert!(!frame_may_open(
-        &url("blob:http://ipc.localhost/1234"),
-        &NoExtensions
-    ));
-    assert!(!frame_may_open(
-        &url("blob:blob:https://example.com/1"),
-        &NoExtensions
-    ));
-    assert!(frame_may_open(&url("https://example.com/"), &NoExtensions));
-    assert!(!frame_may_open(&url("file:///x"), &NoExtensions));
+    for (page, opens) in [
+        ("about:blank", true),
+        ("about:srcdoc", true),
+        ("about:settings", false),
+        ("data:text/html,<p>x</p>", true),
+        ("blob:https://example.com/1234", true),
+        ("blob:http://ipc.localhost/1234", false),
+        ("blob:blob:https://example.com/1", false),
+        ("https://example.com/", true),
+        ("file:///x", false),
+    ] {
+        assert_eq!(frame_may_open(&url(page), &NoExtensions), opens, "{page}");
+    }
 }
 
 #[test]
-fn a_new_window_becomes_a_tab_a_window_a_blocked_popup_or_nothing() {
-    let url = |text: &str| Url::parse(text).expect(text);
+fn a_new_window_becomes_a_tab_a_window_or_nothing() {
     let site = url("https://example.com/page");
-    let asked = Asked::default();
     assert_eq!(
-        becomes(&site, asked, &NoExtensions),
+        becomes(&site, false, &NoExtensions),
         Becomes::Tab(site.to_string())
     );
+    assert_eq!(becomes(&site, true, &NoExtensions), Becomes::Window);
     assert_eq!(
-        becomes(
-            &site,
-            Asked {
-                sized: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
+        becomes(&url("https://accounts.example.com/x"), false, &NoExtensions),
         Becomes::Window
     );
     assert_eq!(
-        becomes(&url("https://accounts.example.com/x"), asked, &NoExtensions),
+        becomes(&url("about:blank"), false, &NoExtensions),
         Becomes::Window
-    );
-    assert_eq!(
-        becomes(&url("about:blank"), asked, &NoExtensions),
-        Becomes::Window
-    );
-    assert_eq!(
-        becomes(
-            &site,
-            Asked {
-                said: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
-        Becomes::Tab(site.to_string())
-    );
-    assert_eq!(
-        becomes(
-            &site,
-            Asked {
-                unasked: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
-        Becomes::Blocked(site.to_string())
     );
     let app = url("http://ipc.localhost/x");
-    assert_eq!(becomes(&app, asked, &NoExtensions), Becomes::Nothing);
-    assert_eq!(
-        becomes(
-            &app,
-            Asked {
-                unasked: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
-        Becomes::Nothing
-    );
+    assert_eq!(becomes(&app, false, &NoExtensions), Becomes::Nothing);
     let known = |one: &Url| one.scheme() == "chrome-extension";
     let popup = url("chrome-extension://abc/popup.html");
     assert_eq!(
-        becomes(
-            &popup,
-            Asked {
-                sized: true,
-                ..asked
-            },
-            &known
-        ),
+        becomes(&popup, true, &known),
         Becomes::Tab(popup.to_string())
     );
 }
 
 #[test]
 fn a_sign_in_page_is_known_by_its_host_or_its_path() {
-    let url = |text: &str| Url::parse(text).expect(text);
     for yes in [
         "https://accounts.google.com/o/x",
         "https://login.microsoftonline.com/",
@@ -732,4 +675,18 @@ fn a_plain_window_system_leaves_moves_to_the_platform_and_refuses_nothing_else()
     system.bare(NativeWindow(1));
     system.hide(NativeWindow(1));
     assert_eq!(system.desktop_scale(), None);
+}
+
+#[test]
+fn a_site_s_address_is_http_or_https_with_a_host() {
+    assert!(orden_web_engine::from_a_site(&url("https://example.com/")));
+    assert!(orden_web_engine::from_a_site(&url("http://[::1]:8/")));
+    for not in [
+        "file:///etc/passwd",
+        "about:blank",
+        "blob:https://a.example/x",
+        "data:,x",
+    ] {
+        assert!(!orden_web_engine::from_a_site(&url(not)), "{not}");
+    }
 }

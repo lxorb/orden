@@ -6,9 +6,11 @@
     carriedMark,
     Cross,
     dragged,
+    draggedAiChat,
     draggedBookmark,
     dropOver,
     initial,
+    isAiChatDrag,
     isBookmarkDrag,
     isTreeDrag,
     longPress,
@@ -30,7 +32,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { privateMark, syncMark } from '../../surfaces/src/api'
   import { soundMark } from '../../spaces/src/api'
-  import { TabMark, chosenIcon } from '../../marks/src/api'
+  import { TabMark, chosenIcon, initialOf } from '../../marks/src/api'
   import { askPlace } from '../../save-place/src/api'
   import { arrival, handOver, keyOf, picks, register, stripOf, TabDrag } from './drag.svelte'
   import type { Block } from './picking.svelte'
@@ -71,7 +73,7 @@
   } from './shell-parts'
   import { fitTabs, iconTabs } from './icon-tabs.svelte'
   import { flushStart } from './flush'
-  import { initialOf, siteLook, twins } from './twins'
+  import { siteLook, twins } from './twins'
   import { revealed } from './scroll'
   import { wheelAlong } from './wheel'
   import { insideSpace, nameOf, shownName, dur, fade, stillness } from '../../platform/src/api'
@@ -669,7 +671,10 @@
   }
 
   const takes = (transfer: DataTransfer | null) =>
-    isTreeDrag(transfer) || isBookmarkDrag(transfer) || mayCarryAddress(transfer?.types ?? [])
+    isTreeDrag(transfer) ||
+    isBookmarkDrag(transfer) ||
+    isAiChatDrag(transfer) ||
+    mayCarryAddress(transfer?.types ?? [])
 
   function over(event: DragEvent) {
     if (!takes(event.dataTransfer)) return
@@ -678,7 +683,9 @@
     event.stopPropagation()
     if (
       event.dataTransfer &&
-      (isTreeDrag(event.dataTransfer) || isBookmarkDrag(event.dataTransfer))
+      (isTreeDrag(event.dataTransfer) ||
+        isBookmarkDrag(event.dataTransfer) ||
+        isAiChatDrag(event.dataTransfer))
     ) {
       event.dataTransfer.dropEffect = 'move'
     }
@@ -704,6 +711,12 @@
       void here(essentialDropping()).then(({ droppedEssential }) =>
         droppedEssential(mark, paneId, at),
       )
+      return
+    }
+
+    const asked = draggedAiChat(transfer)
+    if (asked) {
+      workspace.moveTab(workspace.openChat(asked.id, asked.title || 'Untitled'), paneId, at)
       return
     }
 

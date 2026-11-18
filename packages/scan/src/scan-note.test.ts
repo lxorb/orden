@@ -16,6 +16,57 @@ describe('reading a note for the index', () => {
     expect(note.links.map((link) => link.target)).toEqual(['Other', '../notes/Third.md'])
   })
 
+  test('says when it holds a database, as the Rust scan does, and only then', () => {
+    const holds = (body: string) => scanNote('Dash.md', body).bases === true
+
+    expect(holds('# Dash\n\n```base\nviews: []\n```\n')).toBe(true)
+    expect(holds('> ~~~~ base\n> views: []\n> ~~~~\n')).toBe(true)
+    expect(holds('# Dash\n\n```baseball\n```\n')).toBe(false)
+    expect(holds('# Dash\n\nbase\n')).toBe(false)
+    expect('bases' in scanNote('Plain.md', '# Plain\n')).toBe(false)
+  })
+
+  test('counts definitions, pictures in a label and labels over two lines, and nothing in HTML or maths, as the Rust scan does', () => {
+    const links = scanNote(
+      'Note.md',
+      `Intro [one](One.md) and a picture link [![chart](chart.png)](Two.md).
+
+A label that [runs over
+a line](Three.md) ends here.
+
+[four]: Four.md "The fourth"
+[^note]: Not.md
+[web]: https://example.com
+
+<!-- [hidden](Hidden1.md) -->
+
+<pre>
+[hidden](Hidden2.md)
+</pre>
+
+$$
+[hidden](Hidden3.md)
+$$
+
+Inline $[hidden](Hidden4.md)$ maths and a comment <!-- [hidden](Hidden5.md) --> here, and [[Five]].
+
+Costs $5 and [six](Six.md) $10.
+`,
+    ).links
+
+    expect(links.map((one) => one.target)).toEqual([
+      'One.md',
+      'Two.md',
+      'chart.png',
+      'Three.md',
+      'Four.md',
+      'Five',
+      'Six.md',
+    ])
+    expect(links.find((one) => one.target === 'Three.md')?.line).toBe(2)
+    expect(links.find((one) => one.target === 'Four.md')?.alias).toBe('four')
+  })
+
   test('reads the other names the note gives itself, whichever way they are written', () => {
     const aliases = (body: string) => scanNote('Plan.md', body).aliases
 
@@ -25,6 +76,10 @@ describe('reading a note for the index', () => {
       'The plan',
     ])
     expect(aliases('---\naliases:\n- Roadmap\n---\n')).toEqual(['Roadmap'])
+    expect(aliases('---\r\naliases:\r\n  - Foo\r\n  - Bar\r\n---\r\nbody\r\n')).toEqual([
+      'Foo',
+      'Bar',
+    ])
     expect(aliases('---\naliases: Roadmap\n---\n')).toEqual(['Roadmap'])
     expect(aliases('---\naliases: ["One", \'Two\']\n---\n')).toEqual(['One', 'Two'])
   })
@@ -72,7 +127,7 @@ describe('reading a canvas for the index', () => {
   test('reads each file node as one link out of it', () => {
     const links = scanCanvas('Board.canvas', canvas).links
 
-    expect(links.map((link) => link.target)).toEqual(['ideas/Plan.md', 'Notes.md', 'x.md'])
+    expect(links.map((link) => link.target)).toEqual(['/ideas/Plan.md', '/Notes.md', '/x.md'])
     expect(links.every((link) => link.kind === 'wikilink')).toBe(true)
   })
 
@@ -155,7 +210,7 @@ describe('reading a canvas for the index', () => {
     const whole = readCanvas(plane)
     expect(read.icon).toBe(whole.icon)
     expect(read.iconColor).toBe(whole.iconColor)
-    expect(read.links.map((link) => [link.target, link.heading])).toEqual([['Plan.md', 'Later']])
+    expect(read.links.map((link) => [link.target, link.heading])).toEqual([['/Plan.md', 'Later']])
   })
 
   test('stops at the icon of a plane in the order this app writes one', () => {
@@ -166,7 +221,7 @@ describe('reading a canvas for the index', () => {
 
     expect(read.icon).toBe('rocket')
     expect(read.iconColor).toBe('violet')
-    expect(read.links.map((link) => link.target)).toEqual(['Plan.md'])
+    expect(read.links.map((link) => link.target)).toEqual(['/Plan.md'])
   })
 
   test('and walks the whole of one in any other order', () => {

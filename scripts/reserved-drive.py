@@ -1,44 +1,15 @@
 #!/usr/bin/env python3
 
 import json
-import os
 import sys
 import time
-import urllib.request
 from pathlib import Path
+import linux_app
 
 OUT = Path(sys.argv[1])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
 
 def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=20) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
+    return linux_app.run(code, 20)
 
 def until(code, seconds=20):
     for _ in range(seconds * 4):
@@ -60,7 +31,7 @@ def there(path):
 def text_of(path):
     return run(f"nib.invoke('read_note', {{ path: {json.dumps(str(path))} }}).catch(() => null)")
 
-root = until("nib.workspace.activeSpace && orden.workspace.activeSpace.root")
+root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:
     sys.exit("::error::no space is open")
 folder = Path(root)
@@ -90,7 +61,7 @@ refused("copied to conin$.md", "copy_path", {"from": str(plan), "to": str(folder
 if not there(plan):
     failures.append("the note asked to be renamed is gone")
 
-saved = run("nib.workspace.noteFrom('# NUL\\n\\nwords').then((path) => path)")
+saved = run("orden.workspace.noteFrom('# NUL\\n\\nwords').then((path) => path)")
 print(f"reserved: a note made from words headed NUL is saved as {Path(saved).name if saved else saved!r}")
 if not saved or Path(saved).name.split(".")[0].strip().upper() == "NUL":
     failures.append(f"a note headed NUL was saved under the device's name: {saved!r}")

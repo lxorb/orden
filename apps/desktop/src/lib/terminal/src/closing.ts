@@ -1,8 +1,7 @@
 import { termOf } from '@orden/online/term'
 import { isOnlineTab } from '../../online-terms/src/api'
 import { invoke } from '../../platform/src/api'
-import type { Tab } from '../../documents/src/api'
-import { isUnsaved } from '../../documents/src/api'
+import { isUnsaved, type Tab } from '../../documents/src/api'
 import { ptyOf, sessionEnded } from './running'
 
 export async function mayEnd(

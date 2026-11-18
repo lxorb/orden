@@ -153,6 +153,29 @@ describe('which notes a site publishes', () => {
   })
 })
 
+describe('a site in a space of many notes', () => {
+  test('serves and counts the pages its rules publish, however many notes come before them', async () => {
+    const insert = env.db.prepare(
+      `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, kind)
+       values (?, ?, ?, 1, 1, 1, 0, 0, '', 'note')`,
+    )
+    for (let at = 0; at < 2001; at++) {
+      insert.run(crypto.randomUUID(), space, `Journal/${String(at).padStart(4, '0')}.md`)
+    }
+    await note('Zettel/Post.md', '# Post\n\nPublished.\n')
+    await publish()
+    await setSite({ rules: { include: ['Zettel'], otherwise: 'none' } })
+
+    expect((await page('/zettel/post')).status).toBe(200)
+    expect((await page('/')).text).toContain('Post')
+    const asked = await call(env, `/v1/spaces/${space}/site/preview`, {
+      token,
+      body: { rules: { include: ['Zettel'], otherwise: 'none' } },
+    })
+    expect(asked.json.pages).toBe(1)
+  })
+})
+
 describe('a site with rules', () => {
   beforeEach(async () => {
     await note('Public/One.md', '# One\n\nFirst.\n')

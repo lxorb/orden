@@ -7,27 +7,25 @@ import { AgentError, type TaskOut, taskOut } from './tasks'
 
 export const VIEWS = ['todos', 'inbox', 'today', 'upcoming', 'logbook'] as const
 
-function everything(filters?: Filter): Base {
-  return {
-    formulas: {},
-    properties: {},
-    summaries: {},
-    views: [
-      {
-        type: 'list',
-        name: '',
-        ...(filters === undefined ? {} : { filters }),
-        order: [],
-        sort: [{ property: 'task.date', direction: 'ASC' }],
-        summaries: {},
-        orden: { rows: 'tasks', kept: {} },
-        options: {},
-      },
-    ],
-    orden: { properties: {}, kept: {} },
-    kept: {},
-  }
-}
+const everything = (filters?: Filter): Base => ({
+  formulas: {},
+  properties: {},
+  summaries: {},
+  views: [
+    {
+      type: 'list',
+      name: '',
+      ...(filters === undefined ? {} : { filters }),
+      order: [],
+      sort: [{ property: 'task.date', direction: 'ASC' }],
+      summaries: {},
+      orden: { rows: 'tasks', kept: {} },
+      options: {},
+    },
+  ],
+  orden: { properties: {}, kept: {} },
+  kept: {},
+})
 
 function narrowed(base: Base, filter: Filter): Base {
   const [view, ...rest] = base.views
@@ -47,7 +45,6 @@ export interface ListAsk {
   base?: { base: Base; view?: string }
   limit?: number
   inboxes?: { space: string; path: string }[]
-  undated?: boolean
   isNote?: TodoistOptions['isNote']
 }
 
@@ -66,10 +63,7 @@ export function listTasks(
     if (!(VIEWS as readonly string[]).includes(name)) {
       throw new AgentError('bad_arguments', `view is ${VIEWS.join(', ')} or a .base path`)
     }
-    base = builtinView(name as BuiltinName, {
-      inboxes: ask.inboxes ?? [],
-      ...(ask.undated ? { undated: true } : {}),
-    })
+    base = builtinView(name as BuiltinName, { inboxes: ask.inboxes ?? [] })
   } else {
     base = everything()
   }
@@ -120,7 +114,8 @@ export function plainValue(value: Value): unknown {
   if (Array.isArray(value)) return value.map(plainValue)
   if ('kind' in value) {
     if (value.kind === 'date' && typeof value.iso === 'string') {
-      return typeof value.time === 'string' ? `${value.iso} ${value.time}` : value.iso
+      if (typeof value.time !== 'string') return value.iso
+      return `${value.iso} ${value.time}${typeof value.zone === 'string' ? value.zone : ''}`
     }
     if (value.kind === 'link' && typeof value.target === 'string') return value.target
     if (value.kind === 'duration' && typeof value.ms === 'number')
@@ -167,7 +162,7 @@ export function queryBase(
     } else {
       for (const [key, value] of Object.entries(row.note)) values[key] = plainValue(value)
     }
-    return { path: row.path, space: row.space, ...values }
+    return { ...values, path: row.path, space: row.space }
   }
   const summed = (summaries: Record<string, Value>) =>
     Object.keys(summaries).length

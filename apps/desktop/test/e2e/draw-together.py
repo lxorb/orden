@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import sys
 import time
@@ -578,5 +576,4 @@ def big_canvas(strokes: int, per: int) -> str:
         + "\n"
     )
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

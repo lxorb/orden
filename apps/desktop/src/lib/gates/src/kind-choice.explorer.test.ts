@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
-const store = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => store.get(key) ?? null,
-  setItem: (key: string, value: string) => void store.set(key, value),
-  removeItem: (key: string) => void store.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 vi.mock('../../platform/src/tauri', async (actual) => ({
   ...(await actual<typeof import('../../platform/src/tauri')>()),
@@ -32,7 +28,7 @@ vi.mock('../../explorer/src/api', () => ({
 }))
 
 const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } =
-  await import('./api')
+  await import('./gates.svelte')
 const { receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds } = await import('../../new-here/src/api')
 const { kindOfLetter } = await import('../../new-here/src/api')
@@ -51,10 +47,10 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
-  store.clear()
+  localStorage.clear()
   saved.length = 0
   opened.length = 0
-  store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
+  localStorage.setItem(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
 })
 
@@ -104,7 +100,7 @@ describe('the file explorer, under Experimental', () => {
   })
 
   test('stays off for a reader who had it on before it was experimental', () => {
-    store.set(KINDS_KEY, JSON.stringify(['canvas', 'shown-explorer']))
+    localStorage.setItem(KINDS_KEY, JSON.stringify(['canvas', 'shown-explorer']))
     hiddenKinds.restore()
 
     expect(hiddenKinds.offers('explorer')).toBe(false)
@@ -123,7 +119,10 @@ describe('the file explorer, under Experimental', () => {
 
   test('stays on for the next run, and goes when turned off', () => {
     field().set(true)
-    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, EXPLORER_WORD])
+    expect(JSON.parse(localStorage.getItem(KINDS_KEY) ?? '[]')).toEqual([
+      EXPERIMENTAL_WORD,
+      EXPLORER_WORD,
+    ])
 
     hiddenKinds.hidden = []
     hiddenKinds.restore()
@@ -131,11 +130,11 @@ describe('the file explorer, under Experimental', () => {
 
     field().set(false)
     expect(hiddenKinds.offers('explorer')).toBe(false)
-    expect(JSON.parse(store.get(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
+    expect(JSON.parse(localStorage.getItem(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD])
   })
 
   test('keeps what else the reader chose when it is turned on and off', () => {
-    store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD, 'canvas']))
+    localStorage.setItem(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD, 'canvas']))
     hiddenKinds.restore()
 
     field().set(true)
@@ -148,10 +147,11 @@ describe('the file explorer, under Experimental', () => {
     expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas'])
   })
 
-  test('is told to the account, and followed from it', () => {
+  test('is told to the account, and followed from it once the account heard it', async () => {
     token = 'token'
     field().set(true)
     expect(saved).toEqual([{ hiddenKinds: [EXPERIMENTAL_WORD, EXPLORER_WORD] }])
+    await new Promise((done) => setTimeout(done, 0))
 
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('explorer')).toBe(false)

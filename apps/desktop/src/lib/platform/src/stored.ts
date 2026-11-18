@@ -18,9 +18,7 @@ export function storedText(key: string): string | null {
   }
 }
 
-export function stored(key: string): unknown {
-  return parsed(storedText(key))
-}
+export const stored = (key: string): unknown => parsed(storedText(key))
 
 export function keep(key: string, value: string): boolean {
   try {
@@ -32,9 +30,7 @@ export function keep(key: string, value: string): boolean {
   }
 }
 
-export function keepJson(key: string, value: unknown): boolean {
-  return keep(key, JSON.stringify(value))
-}
+export const keepJson = (key: string, value: unknown): boolean => keep(key, JSON.stringify(value))
 
 let told = false
 
@@ -74,6 +70,20 @@ export class Shared<T> {
   }
 }
 
+export function heardElsewhere(
+  keys: readonly string[],
+  heard: (key: string | null) => void,
+): () => void {
+  if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') {
+    return () => undefined
+  }
+  const hear = (event: StorageEvent) => {
+    if (event.key === null || keys.includes(event.key)) heard(event.key)
+  }
+  window.addEventListener('storage', hear)
+  return () => window.removeEventListener('storage', hear)
+}
+
 export function forget(key: string): void {
   try {
     localStorage.removeItem(key)
@@ -82,9 +92,8 @@ export function forget(key: string): void {
   }
 }
 
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 export function stringList(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null
@@ -102,14 +111,9 @@ export function recordOf<T>(value: unknown, check: (one: unknown) => one is T): 
   return out
 }
 
-export function isString(value: unknown): value is string {
-  return typeof value === 'string'
-}
+export const isString = (value: unknown): value is string => typeof value === 'string'
 
-export function isBoolean(value: unknown): value is boolean {
-  return typeof value === 'boolean'
-}
+export const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
 
-export function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
-}
+export const isNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value)

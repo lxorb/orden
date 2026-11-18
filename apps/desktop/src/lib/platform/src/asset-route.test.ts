@@ -103,8 +103,10 @@ describe('the worker and the page agree', () => {
     expect(source).toContain(`const UNKNOWN_TYPE = '${UNKNOWN_TYPE}'`)
   })
 
-  test('and it serves nothing else at all', () => {
-    expect(source).not.toContain('caches')
+  test("and it keeps nothing but the app's own page and code, and never all of it at once", () => {
+    const kept = [...source.matchAll(/caches\.(?:open|delete)\(([^)]*)\)/g)].map((one) => one[1])
+    expect(kept.length).toBeGreaterThan(0)
+    for (const name of kept) expect(name).toMatch(/^(PAGES|`\$\{CODE\}.*`|first)$/)
     expect(source).not.toContain('addAll')
   })
 })

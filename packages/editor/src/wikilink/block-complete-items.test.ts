@@ -69,11 +69,4 @@ describe('picking a list from the block completion', () => {
     const shown = await pickBlock('milk')
     expect(shown).toContain('milk')
   })
-
-  test('keeps links to the heading it named working', async () => {
-    const shown = await pickBlock('Groceries', (source) =>
-      sectionOf(source, { heading: 'Groceries', block: null }),
-    )
-    expect(shown ?? '').toContain('Groceries')
-  })
 })

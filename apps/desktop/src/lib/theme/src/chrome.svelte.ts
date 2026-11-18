@@ -11,8 +11,6 @@ export interface Worn {
   tint: string
   second?: string
   wash: number
-  paper?: number
-  terminal?: number
 }
 
 interface Kept extends Worn {
@@ -23,14 +21,7 @@ interface Kept extends Worn {
 
 const KEY = 'orden:glass-chrome'
 
-const PAINTED = [
-  '--glass-tint',
-  '--glass-tint-2',
-  '--glass-tinted',
-  '--content-alpha',
-  '--terminal-alpha',
-  '--content-inner',
-] as const
+const PAINTED = ['--glass-tint', '--glass-tint-2', '--glass-tinted'] as const
 
 function percent(fraction: number): string {
   return `${Math.round(fraction * 100)}%`
@@ -52,8 +43,6 @@ function kept(): Kept | null {
     tint: said.tint,
     ...(isString(said.second) && HEX.test(said.second) ? { second: said.second } : {}),
     wash: said.wash,
-    ...(isNumber(said.paper) ? { paper: said.paper } : {}),
-    ...(isNumber(said.terminal) ? { terminal: said.terminal } : {}),
     tab: isString(said.tab) ? said.tab : null,
     bar: isGround(said.bar) ? said.bar : null,
   }
@@ -65,9 +54,6 @@ class Chrome {
   frame = $state<Scheme | null>(null)
   bars = $state<Record<string, Ground>>({})
   terminal = $state<string | null>(null)
-  material = $state<string | null>(null)
-  floor = $state(0)
-  private standing: MutationObserver | null = null
 
   readonly theme = $derived<Scheme | undefined>(
     this.on && this.frame !== null && this.frame !== this.app ? this.frame : undefined,
@@ -96,14 +82,6 @@ class Chrome {
     this.on = true
     const root = document.documentElement
     root.dataset.tinted = ''
-    const stands = () => {
-      this.material = root.dataset.translucent ?? null
-    }
-    stands()
-    if (typeof MutationObserver === 'function') {
-      this.standing = new MutationObserver(stands)
-      this.standing.observe(root, { attributes: true, attributeFilter: ['data-translucent'] })
-    }
     const last = kept()
     if (last?.app !== app) return
 
@@ -116,8 +94,6 @@ class Chrome {
     if (!this.on) return
 
     this.on = false
-    this.standing?.disconnect()
-    this.standing = null
     this.frame = null
     this.bars = {}
     const root = document.documentElement
@@ -159,9 +135,6 @@ class Chrome {
       '--glass-tint': worn.tint,
       '--glass-tint-2': worn.second ?? worn.tint,
       '--glass-tinted': percent(worn.wash),
-      '--content-alpha': percent(worn.paper ?? 1),
-      '--terminal-alpha': percent(worn.terminal ?? 1),
-      '--content-inner': (worn.paper ?? 1) < 1 ? 'transparent' : 'initial',
     }
     for (const token of PAINTED) {
       if (style.getPropertyValue(token) !== said[token]) style.setProperty(token, said[token])

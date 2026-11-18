@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page, Route
 
 from harness import Drive
@@ -35,7 +33,7 @@ def late(page: Page) -> None:
         page.wait_for_timeout(LATE)
         route.continue_()
 
-    page.route("**/assets/carrying-*.js", held)
+    page.context.route("**/assets/carrying-*.js", held)
 
 def typed(page: Page, words: str) -> None:
     page.evaluate("() => window.ordenApp.workspace.openBlank()")
@@ -221,5 +219,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("a tab with no file waits for a place, and a web note is open once")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

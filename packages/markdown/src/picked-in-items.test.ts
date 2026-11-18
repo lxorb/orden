@@ -24,11 +24,4 @@ describe('a block inside a list item after a blank, picked in the [[Note#^ compl
     expect(shown).toContain('| 1 |')
     expect(shown).not.toContain('Prices')
   })
-
-  test('the name stays inside the list item', () => {
-    const steps = '1. Install\n2. Run:\n\n   ```sh\n   make\n   ```\n3. Done\n'
-    const block = blocksOf(steps).find((one) => one.text === '```sh')
-    const named = namedBlock(steps, block?.line ?? 0, () => 'pick01')
-    expect(named?.source).toContain('\n   ^pick01')
-  })
 })

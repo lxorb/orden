@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import http.server
 import io
 import json
@@ -165,5 +163,4 @@ def drive(browser: Browser) -> None:
     wait_for(page, "document.querySelector('.quick .acts')", "the quick answer")
     every_look(page, "quick", ".quick .said")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

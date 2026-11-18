@@ -9,14 +9,11 @@ function drawn(source: string, options: Parameters<typeof renderMarkdown>[1] = {
 }
 
 describe('what a tag is', () => {
-  test('a letter after the hash, then letters, digits and the joining three', () => {
+  test('a letter after the hash, then letters, digits and the joining three; marks and emoji are in a name, which is never all digits', () => {
     expect(tagNameAt('#work', 0)).toBe('work')
     expect(tagNameAt('#work/orden-2_b, then', 0)).toBe('work/orden-2_b')
     expect(tagNameAt('#Überblick', 0)).toBe('Überblick')
     expect(tagNameAt('#日本語', 0)).toBe('日本語')
-  })
-
-  test('marks and emoji are in a name, which is never all digits', () => {
     expect(tagNameAt('#हिन्दी', 0)).toBe('हिन्दी')
     expect(tagNameAt('#กิน', 0)).toBe('กิน')
     expect(tagNameAt('#café', 0)).toBe('café')
@@ -25,14 +22,11 @@ describe('what a tag is', () => {
     expect(tagNameAt('#2024', 0)).toBeNull()
   })
 
-  test('not a number, not a heading, not a bare hash', () => {
+  test('not a number, not a heading, not a bare hash; only where a word opens', () => {
     expect(tagNameAt('#42', 0)).toBeNull()
     expect(tagNameAt('# Heading', 0)).toBeNull()
     expect(tagNameAt('#', 0)).toBeNull()
     expect(tagNameAt('work', 0)).toBeNull()
-  })
-
-  test('only where a word opens', () => {
     expect(opensTag('')).toBe(true)
     expect(opensTag(' ')).toBe(true)
     expect(opensTag('\n')).toBe(true)
@@ -41,17 +35,11 @@ describe('what a tag is', () => {
     expect(opensTag('/')).toBe(false)
   })
 
-  test('and inside emphasis, strike, highlight or a cell', () => {
+  test('and inside emphasis, strike, highlight or a cell; but a mark in the middle of a word opens nothing; but not as the target of a link, which is a heading in the note', () => {
     for (const before of ['*', '_', '~~', '==', 'x **', '(**']) expect(opensTag(before)).toBe(true)
-  })
-
-  test('but a mark in the middle of a word opens nothing', () => {
     for (const before of ['a*', 'a=', 'color=', 'snake_', '3*', 'a~', 'a|', '?q=', 'Note|']) {
       expect(opensTag(before)).toBe(false)
     }
-  })
-
-  test('but not as the target of a link, which is a heading in the note', () => {
     expect(opensTag('](')).toBe(false)
     expect(opensTag(' (')).toBe(true)
   })
@@ -72,17 +60,11 @@ const PARITY: [string, string[]][] = [
 ]
 
 describe('a tag on a page', () => {
-  test('is drawn as a tag, the hash with it', () => {
+  test('is drawn as a tag, the hash with it; nested is one tag; opening a paragraph, a heading, an item, a cell and a bracket', () => {
     expect(renderMarkdown('Filed under #work.')).toBe(
       '<p>Filed under <span class="tag" data-tag="work">#work</span>.</p>\n',
     )
-  })
-
-  test('nested is one tag', () => {
     expect(drawn('Under #work/orden/canvas today')).toEqual(['work/orden/canvas'])
-  })
-
-  test('opening a paragraph, a heading, an item, a cell and a bracket', () => {
     expect(drawn('#first words')).toEqual(['first'])
     expect(drawn('## A heading #in-it')).toEqual(['in-it'])
     expect(drawn('- #item\n- two')).toEqual(['item'])
@@ -90,13 +72,10 @@ describe('a tag on a page', () => {
     expect(drawn('words (#aside) more')).toEqual(['aside'])
   })
 
-  test('inside emphasis, strike, highlight or a cell, and never as a link target', () => {
+  test('inside emphasis, strike, highlight or a cell, and never as a link target; alike on the page and in the index, row by row', () => {
     expect(drawn('**#a** *#b* ~~#d~~ ==#e== call')).toEqual(['a', 'b', 'd', 'e'])
     expect(drawn('| x | y |\n| - | - |\n|#f|#g|')).toEqual(['f', 'g'])
     expect(drawn('See [setup](#setup) and ![x](#y). Real #setup.')).toEqual(['setup'])
-  })
-
-  test('alike on the page and in the index, row by row', () => {
     for (const [source, tags] of PARITY) expect(drawn(source), source).toEqual(tags)
   })
 
@@ -111,7 +90,6 @@ describe('a tag on a page', () => {
 
   test('a link on a surface that says where one goes, and words everywhere else', () => {
     const html = renderMarkdown('A #work/orden tag', { tagHref: (tag) => `#tag:${tag}` })
-
     expect(html).toContain(
       '<a class="tag" href="#tag:work/orden" data-tag="work/orden">#work/orden</a>',
     )
@@ -123,7 +101,6 @@ describe('a tag on a page', () => {
   test('says its words to a reader of the tokens that has never heard of a tag', () => {
     const [paragraph] = lexMarkdown('Filed #work')
     const inline = (paragraph as { tokens?: { type: string; text?: string }[] }).tokens ?? []
-
     expect(inline.map((one) => [one.type, one.text])).toEqual([
       ['text', 'Filed '],
       ['hashtag', '#work'],

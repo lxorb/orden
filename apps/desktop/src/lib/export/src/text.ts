@@ -1,27 +1,29 @@
 import type { Block, Doc, Item, Span } from './document'
 
 const STEP = '  '
-
 const CHECKS = { true: '[x] ', false: '[ ] ' }
 
 function spanText(span: Span): string {
   if (span.picture !== undefined) return span.text ? `[${span.text}]` : '[picture]'
   if (span.note !== undefined) return `[${span.note}]`
-
-  if (span.href !== undefined && span.href !== span.text) return `${span.text} (${span.href})`
-
   return span.text
 }
 
 function textOf(spans: readonly Span[]): string {
-  return spans.map(spanText).join('')
+  const runs: { href: string | undefined; words: string }[] = []
+  for (const span of spans) {
+    const href = span.href
+    const last = runs.at(-1)
+    if (href !== undefined && last?.href === href) last.words += spanText(span)
+    else runs.push({ href, words: spanText(span) })
+  }
+  return runs
+    .map(({ href, words }) => (href !== undefined && href !== words ? `${words} (${href})` : words))
+    .join('')
 }
 
 const GRAPHEMES = new Intl.Segmenter()
-
-function shownWidth(text: string): number {
-  return [...GRAPHEMES.segment(text)].length
-}
+const shownWidth = (text: string): number => [...GRAPHEMES.segment(text)].length
 
 function widths(rows: readonly string[][]): number[] {
   const out: number[] = []
@@ -129,9 +131,8 @@ function pushAll(out: string[], lines: readonly string[]) {
   for (const line of lines) out.push(line)
 }
 
-function wrapped(text: string, indent: string): string[] {
-  return text.split('\n').map((line) => `${indent}${line}`.trimEnd())
-}
+const wrapped = (text: string, indent: string): string[] =>
+  text.split('\n').map((line) => `${indent}${line}`.trimEnd())
 
 export function toPlainText(doc: Doc): string {
   const lines: string[] = []

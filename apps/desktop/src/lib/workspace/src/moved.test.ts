@@ -1,19 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 
@@ -68,7 +54,6 @@ describe('saying a stored path again under the new folder', () => {
       other: '/somewhere/else/Notes/a.md',
       sibling: `${OLD}er/Notes/a.md`,
     })
-
     expect(JSON.parse(rebased(text, OLD, NEW))).toEqual({
       root: `${NEW}/Notes`,
       tab: `${NEW}/Notes/Read me.md`,
@@ -82,7 +67,6 @@ describe('saying a stored path again under the new folder', () => {
     const was = 'C:\\Users\\a\\Documents\\Orden'
     const now = 'D:\\Users\\a\\Documents\\Orden'
     const text = JSON.stringify({ tab: `${was}\\Notes\\a.md` })
-
     expect(JSON.parse(rebased(text, was, now))).toEqual({ tab: `${now}\\Notes\\a.md` })
   })
 
@@ -91,7 +75,6 @@ describe('saying a stored path again under the new folder', () => {
     localStorage.setItem('orden:recent', JSON.stringify([`${OLD}/Notes/a.md`]))
     localStorage.setItem('orden:theme', 'dark')
     localStorage.setItem('other', JSON.stringify([`${OLD}/Notes/a.md`]))
-
     expect(restate(OLD, NEW)).toBe(2)
     expect(localStorage.getItem('orden:recent')).toBe(JSON.stringify([`${NEW}/Notes/a.md`]))
     expect(localStorage.getItem('orden:theme')).toBe('dark')
@@ -102,7 +85,6 @@ describe('saying a stored path again under the new folder', () => {
 describe('settling where the folder is', () => {
   test('a move rewrites what was stored, notes the new folder and says so', () => {
     localStorage.setItem('orden:mirrors', JSON.stringify({ [`${OLD}/Notes`]: { spaceId: 's1' } }))
-
     expect(settleRoot(NEW, [`${OLD}/Notes`], [`${NEW}/Notes`])).toBe(OLD)
     expect(JSON.parse(localStorage.getItem('orden:mirrors')!)).toEqual({
       [`${NEW}/Notes`]: { spaceId: 's1' },
@@ -112,7 +94,6 @@ describe('settling where the folder is', () => {
 
   test('no move notes the folder and rewrites nothing', () => {
     localStorage.setItem('orden:recent', JSON.stringify([`${NEW}/Notes/a.md`]))
-
     expect(settleRoot(NEW, [`${NEW}/Notes`], [`${NEW}/Notes`])).toBeNull()
     expect(localStorage.getItem(SPACES_ROOT)).toBe(NEW)
     expect(localStorage.getItem('orden:recent')).toBe(JSON.stringify([`${NEW}/Notes/a.md`]))
@@ -133,12 +114,9 @@ describe('restating a record kept under both the old and the new folder', () => 
         [`${NEW}/Notes`]: { items: { 'b.md': { icon: 'b' } } },
       }),
     )
-
     expect(restate(OLD, NEW)).toBe(1)
     expect(JSON.parse(localStorage.getItem('orden:item-meta')!)).toEqual({
-      [`${NEW}/Notes`]: {
-        items: { 'a.md': { icon: 'a' }, 'b.md': { icon: 'b' } },
-      },
+      [`${NEW}/Notes`]: { items: { 'a.md': { icon: 'a' }, 'b.md': { icon: 'b' } } },
     })
   })
 
@@ -147,7 +125,6 @@ describe('restating a record kept under both the old and the new folder', () => 
       'orden:recent',
       JSON.stringify([`${NEW}/Notes/a.md`, `${OLD}/Notes/a.md`, 1, 1]),
     )
-
     restate(OLD, NEW)
     expect(JSON.parse(localStorage.getItem('orden:recent')!)).toEqual([`${NEW}/Notes/a.md`, 1, 1])
   })

@@ -26,29 +26,20 @@ const typeOf = (document: string, text: string) =>
   tokens(document).find(([token]) => token === text)?.[1]
 
 describe('highlighting a graphql fence', () => {
-  test('marks the words that open a definition', () => {
-    expect(typeOf('type User {', 'type')).toBe('keyword')
-    expect(typeOf('query Hero {', 'query')).toBe('keyword')
-    expect(typeOf('fragment Fields on User {', 'fragment')).toBe('keyword')
-    expect(typeOf('fragment Fields on User {', 'on')).toBe('keyword')
-  })
-
-  test('a type is named where a type belongs', () => {
-    expect(typeOf('type User {', 'User')).toBe('typeName')
-    expect(typeOf('fragment Fields on User {', 'User')).toBe('typeName')
-    expect(typeOf('  id: ID!', 'ID')).toBe('typeName')
-    expect(typeOf('  posts: [Post!]!', 'Post')).toBe('typeName')
-  })
-
-  test('and everything else in that position is a field', () => {
-    expect(typeOf('  id: ID!', 'id')).toBe('propertyName')
-    expect(typeOf('  posts: [Post!]!', 'posts')).toBe('propertyName')
-  })
-
-  test('marks variables and directives', () => {
-    expect(typeOf('query Hero($id: ID!) {', '$id')).toBe('variableName.special')
-    expect(typeOf('  name @include(if: $yes)', '@include')).toBe('variableName.function')
-  })
+  test.each([
+    ['type User {', 'keyword', 'type'],
+    ['query Hero {', 'keyword', 'query'],
+    ['fragment Fields on User {', 'keyword', 'fragment'],
+    ['fragment Fields on User {', 'keyword', 'on'],
+    ['type User {', 'typeName', 'User'],
+    ['fragment Fields on User {', 'typeName', 'User'],
+    ['  id: ID!', 'typeName', 'ID'],
+    ['  posts: [Post!]!', 'typeName', 'Post'],
+    ['  id: ID!', 'propertyName', 'id'],
+    ['  posts: [Post!]!', 'propertyName', 'posts'],
+    ['query Hero($id: ID!) {', 'variableName.special', '$id'],
+    ['  name @include(if: $yes)', 'variableName.function', '@include'],
+  ])('%j', (input, wanted, extra) => expect(typeOf(input, extra)).toEqual(wanted))
 
   test('marks comments, strings and numbers', () => {
     expect(tokens('# a comment')[0]?.[1]).toBe('comment')
@@ -57,17 +48,14 @@ describe('highlighting a graphql fence', () => {
     expect(typeOf('  name(all: true)', 'true')).toBe('atom')
   })
 
-  test('a block string runs to its closing quotes and no further', () => {
-    const document = '"""\nA user.\n"""\ntype User {'
-
-    expect(typeOf(document, 'A user.')).toBe('string')
-    expect(typeOf(document, 'type')).toBe('keyword')
-    expect(typeOf(document, 'User')).toBe('typeName')
-  })
+  test.each([
+    ['"""\nA user.\n"""\ntype User {', 'string', 'A user.'],
+    ['"""\nA user.\n"""\ntype User {', 'keyword', 'type'],
+    ['"""\nA user.\n"""\ntype User {', 'typeName', 'User'],
+  ])('%j', (input, wanted, extra) => expect(typeOf(input, extra)).toBe(wanted))
 
   test('always moves forward, whatever it is given', () => {
-    for (const line of ['', '   ', '{}', '$', '@', '...', '"""', '"unclosed', '「」']) {
+    for (const line of ['', '   ', '{}', '$', '@', '...', '"""', '"unclosed', '「」'])
       expect(() => tokens(line)).not.toThrow()
-    }
   })
 })

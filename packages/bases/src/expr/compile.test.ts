@@ -197,7 +197,7 @@ describe('properties', () => {
     ['file.hasLink("Other")', false],
     ['file.hasProperty("price")', true],
     ['file.hasProperty("nope")', false],
-    ['file.asLink()', { kind: 'link', target: 'Books/Dune.md' }],
+    ['file.asLink()', { kind: 'link', target: 'Books/Dune.md', exact: true }],
     ['file.properties.status', 'reading'],
     ['file.links[0]', { kind: 'link', target: 'Textbook' }],
     ['categories.contains(link("Books"))', true],
@@ -305,12 +305,6 @@ describe('what Object.prototype holds is no property', () => {
     'note.meta.constructor',
   ])('%s is null', (source) => {
     expect(run(source)).toBeNull()
-  })
-
-  test('file.hasProperty asks the note and nothing behind it', () => {
-    expect(run('file.hasProperty("toString")')).toBe(false)
-    expect(run('file.hasProperty("__proto__")')).toBe(false)
-    expect(run('file.hasProperty("status")')).toBe(true)
   })
 })
 
@@ -459,4 +453,12 @@ describe('a pattern in a base somebody else could have written', () => {
     const base = readBase('views:\n  - type: table\n    name: T\n')
     expect(writeBase({ ...base, guarded: true })).toBe(writeBase(base))
   })
+})
+
+test.each<[unknown, ...Parameters<typeof run>]>([
+  [false, 'file.hasProperty("toString")'],
+  [false, 'file.hasProperty("__proto__")'],
+  [true, 'file.hasProperty("status")'],
+])('%j from %j', (expected, ...args) => {
+  expect(run(...args)).toBe(expected)
 })

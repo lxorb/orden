@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { kindOf, notionDate, pagesIn, valueAs } from './notion-database'
 
 describe('a Notion date', () => {
@@ -25,6 +24,12 @@ describe('a relation', () => {
         'Plan (Projects%20aaaa/Plan%201a2b3c4d5e6f78901a2b3c4d5e6f7890.md), Kit, tent (Kit%2C%20tent.md)',
       ),
     ).toEqual(['Plan', 'Kit, tent'])
+  })
+
+  test('is the page named with brackets, whose link keeps them as written', () => {
+    expect(
+      pagesIn('Plan (v2) (Plan%20(v2)%201a2b3c4d5e6f78901a2b3c4d5e6f7890.md), Kit (Kit.md)'),
+    ).toEqual(['Plan (v2)', 'Kit'])
   })
 
   test('is nothing for words that happen to hold brackets', () => {

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { idle } from './settle'
 
 const asked: string[] = []
 let output: { onmessage: ((message: unknown) => void) | null } | null = null
@@ -119,7 +120,7 @@ test('a program still running keeps what it asked for', async () => {
   await printed(session, `${PROMPT}claude\r\n`)
   await printed(session, `${PROGRAM_ON}the program's screen`)
 
-  await new Promise((settle) => setTimeout(settle, 400))
+  await idle(400)
   expect(asked).not.toContain('pty_busy')
   expect(session.term.modes.mouseTrackingMode).toBe('any')
   expect(session.term.modes.applicationCursorKeysMode).toBe(true)
@@ -130,8 +131,7 @@ test('a shell that marks no prompts is asked whether it is in front again', asyn
   await printed(session, `${PROGRAM_ON}vim`)
 
   busy = true
-  await new Promise((settle) => setTimeout(settle, 400))
-  expect(asked).toContain('pty_busy')
+  await vi.waitFor(() => expect(asked).toContain('pty_busy'))
   expect(session.term.modes.mouseTrackingMode, 'the program is in front').toBe('any')
 
   busy = false

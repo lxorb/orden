@@ -32,6 +32,18 @@ describe('the panes of a window', () => {
     expect(changed).toBe(2)
   })
 
+  test('folding every pane into one keeps the one kept as it was, its stacked tabs too', () => {
+    const panes = new Panes(() => undefined)
+    const first = panesIn(panes.frame)[0]?.id ?? ''
+    const made = panes.split('row', first)?.id ?? ''
+    panes.activate(made, 't')
+    panes.setStacked(made, true)
+    panes.collapse()
+    expect(panesIn(panes.frame)).toEqual([
+      { kind: 'pane', id: made, activeTabId: 't', linked: false, stacked: true },
+    ])
+  })
+
   test('a lone pane has nothing toward any side', () => {
     expect(paneToward(pane('a'), 'a', 'left')).toBeNull()
   })

@@ -62,6 +62,14 @@ class Tab implements NoteTab {
   }
 }
 
+function pane() {
+  const states = new EditorStates()
+  const view = new Surface()
+  return { states, view, show: (tab: Tab) => states.show(view, tab, () => tab.state()) }
+}
+
+const twin = (live: SharedDoc): Tab => Object.assign(new Tab(''), { note: { live, arrivals: 0 } })
+
 function shows(view: Surface, tab: Tab) {
   expect(documentOf(view)).toBe(tab.note.live)
   expect(view.state.doc.toString()).toBe(tab.note.live.text.toString())
@@ -69,60 +77,56 @@ function shows(view: Surface, tab: Tab) {
 
 describe('the states a pane keeps', () => {
   test('builds one the first time it shows a note and keeps it after that', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const alpha = new Tab('Alpha')
     const beta = new Tab('Beta')
 
-    expect(states.show(view, alpha, () => alpha.state())).toBe(true)
-    expect(states.show(view, beta, () => beta.state())).toBe(true)
-    expect(states.show(view, alpha, () => alpha.state())).toBe(false)
+    expect(show(alpha)).toBe(true)
+    expect(show(beta)).toBe(true)
+    expect(show(alpha)).toBe(false)
 
     expect(states.count).toBe(2)
     shows(view, alpha)
   })
 
   test('a note switched away from and back to keeps its place', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { view, show } = pane()
     const alpha = new Tab('one\ntwo\nthree')
     const beta = new Tab('Beta')
 
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
     view.at = 8
-    states.show(view, beta, () => beta.state())
+    show(beta)
     shows(view, beta)
 
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
 
     shows(view, alpha)
     expect(view.at).toBe(8)
   })
 
   test('a note not on show still hears every change made to it', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { view, show } = pane()
     const alpha = new Tab('Alpha')
     const beta = new Tab('Beta')
 
-    states.show(view, alpha, () => alpha.state())
-    states.show(view, beta, () => beta.state())
+    show(alpha)
+    show(beta)
 
     alpha.note.live.replace('Alpha renamed')
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
 
     shows(view, alpha)
     expect(view.state.doc.toString()).toBe('Alpha renamed')
   })
 
   test('a tab that closes lets its document go', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, show } = pane()
     const alpha = new Tab('Alpha')
     const beta = new Tab('Beta')
 
-    states.show(view, alpha, () => alpha.state())
-    states.show(view, beta, () => beta.state())
+    show(alpha)
+    show(beta)
     expect(alpha.note.live.panes).toBe(1)
 
     states.keepOnly([beta])
@@ -132,11 +136,10 @@ describe('the states a pane keeps', () => {
   })
 
   test('the note on show stays even when the list forgets to mention it', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, show } = pane()
     const alpha = new Tab('Alpha')
 
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
     states.keepOnly([])
 
     expect(states.count).toBe(1)
@@ -144,69 +147,65 @@ describe('the states a pane keeps', () => {
   })
 
   test('a note closed and opened again is built afresh, at the top', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const alpha = new Tab('one\ntwo\nthree')
     const beta = new Tab('Beta')
 
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
     view.at = 8
-    states.show(view, beta, () => beta.state())
+    show(beta)
     states.keepOnly([beta])
 
     const again = new Tab('one\ntwo\nthree')
     view.at = 0
-    expect(states.show(view, again, () => again.state())).toBe(true)
+    expect(show(again)).toBe(true)
     expect(view.at).toBe(0)
   })
 
   test('what a state is dressed for is remembered against its tab', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, show } = pane()
     const alpha = new Tab('Alpha')
     const beta = new Tab('Beta')
 
     expect(states.fitted(alpha)).toBeUndefined()
 
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
     states.fit(alpha, 'modes and keys')
 
     expect(states.fitted(alpha)).toBe('modes and keys')
 
-    states.show(view, beta, () => beta.state())
+    show(beta)
     states.keepOnly([beta])
 
     expect(states.fitted(alpha)).toBeUndefined()
   })
 
   test('the note the view was built on is settled once, not on every look', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const alpha = new Tab('one\ntwo\nthree')
     view.setState(editorState({ shared: alpha.note.live }))
     alpha.note.live.join(view)
     view.transactions = 0
 
     states.started(alpha, view, scrolledTo.of(8))
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
     expect(view.at).toBe(8)
     expect(view.transactions).toBe(1)
 
     view.at = 40
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
 
     expect(view.at).toBe(40)
     expect(view.transactions).toBe(1)
   })
 
   test('a pane that goes lets go of everything it held, the view included', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const alpha = new Tab('Alpha')
     const beta = new Tab('Beta')
 
-    states.show(view, alpha, () => alpha.state())
-    states.show(view, beta, () => beta.state())
+    show(alpha)
+    show(beta)
     states.releaseAll(view)
 
     expect(states.count).toBe(0)
@@ -218,31 +217,29 @@ describe('the states a pane keeps', () => {
 
 describe('which note a state is a state of', () => {
   test('a note renamed is still the same note', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, show } = pane()
     const tab = new Tab('# Draft')
 
-    states.show(view, tab, () => tab.state())
+    show(tab)
     tab.note.live.replace('# Named')
 
     expect(states.shows(tab)).toBe(true)
-    expect(states.show(view, tab, () => tab.state())).toBe(false)
+    expect(show(tab)).toBe(false)
     expect(states.count).toBe(1)
   })
 
   test('the preview moving on to another note is another note', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const preview = new Tab('First')
     const kept = new Tab('Kept')
 
-    states.show(view, preview, () => preview.state())
+    show(preview)
     view.at = 4
-    states.show(view, kept, () => kept.state())
+    show(kept)
 
     preview.adopt('Second')
     view.scrollDOM.scrollTop = 1200
-    expect(states.show(view, preview, () => preview.state())).toBe(true)
+    expect(show(preview)).toBe(true)
 
     shows(view, preview)
     expect(view.state.doc.toString()).toBe('Second')
@@ -252,15 +249,14 @@ describe('which note a state is a state of', () => {
   })
 
   test('the preview moving on while it is the note on show is another note', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const preview = new Tab('First')
 
-    states.show(view, preview, () => preview.state())
+    show(preview)
     preview.adopt('Second')
 
     expect(states.shows(preview)).toBe(false)
-    expect(states.show(view, preview, () => preview.state())).toBe(true)
+    expect(show(preview)).toBe(true)
 
     shows(view, preview)
     expect(states.count).toBe(1)
@@ -268,30 +264,28 @@ describe('which note a state is a state of', () => {
   })
 
   test('a tab pointed at another document is another note', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const tab = new Tab('First')
     const already = new SharedDoc('Second')
 
-    states.show(view, tab, () => tab.state())
+    show(tab)
     tab.note = { live: already, arrivals: 0 }
 
     expect(states.shows(tab)).toBe(false)
-    expect(states.show(view, tab, () => tab.state())).toBe(true)
+    expect(show(tab)).toBe(true)
 
     shows(view, tab)
     expect(states.count).toBe(1)
   })
 
   test('two tabs on one note are two states of it', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const note = new SharedDoc('Shared')
-    const here: Tab = Object.assign(new Tab(''), { note: { live: note, arrivals: 0 } })
-    const there: Tab = Object.assign(new Tab(''), { note: { live: note, arrivals: 0 } })
+    const here = twin(note)
+    const there = twin(note)
 
-    states.show(view, here, () => here.state())
-    states.show(view, there, () => there.state())
+    show(here)
+    show(there)
 
     expect(states.count).toBe(2)
     shows(view, there)
@@ -300,18 +294,17 @@ describe('which note a state is a state of', () => {
 
 describe('a pane switching between notes', () => {
   test('a website and a note, back and forth', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { view, show } = pane()
     const note = new Tab('# The note')
     const site = new Tab('[InternetShortcut]\nURL=https://a.example\n')
 
-    states.show(view, note, () => note.state())
+    show(note)
     shows(view, note)
 
-    states.show(view, site, () => site.state())
+    show(site)
     shows(view, site)
 
-    states.show(view, note, () => note.state())
+    show(note)
     shows(view, note)
 
     site.note.live.replace('[InternetShortcut]\nURL=https://b.example\n', false)
@@ -348,8 +341,8 @@ describe('a pane switching between notes', () => {
     const here = new Surface()
     const there = new Surface()
     const note = new SharedDoc('Shared')
-    const one: Tab = Object.assign(new Tab(''), { note: { live: note, arrivals: 0 } })
-    const two: Tab = Object.assign(new Tab(''), { note: { live: note, arrivals: 0 } })
+    const one = twin(note)
+    const two = twin(note)
 
     left.show(here, one, () => one.state())
     right.show(there, two, () => two.state())
@@ -360,8 +353,7 @@ describe('a pane switching between notes', () => {
   })
 
   test('two documents over one file are two notes wearing one name', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { view, show } = pane()
     const first = new Tab('# The note\n')
     const second = new Tab('# The note\n')
 
@@ -369,9 +361,9 @@ describe('a pane switching between notes', () => {
     first.note.live.onChange = (doc) => written.push(doc.toString())
     second.note.live.onChange = (doc) => written.push(doc.toString())
 
-    states.show(view, first, () => first.state())
+    show(first)
     view.type('written here\n')
-    states.show(view, second, () => second.state())
+    show(second)
     view.type('and written there\n')
 
     expect(documentOf(view)).toBe(second.note.live)
@@ -382,14 +374,13 @@ describe('a pane switching between notes', () => {
   })
 
   test('closing the tab that is showing leaves the view on the next note', () => {
-    const states = new EditorStates()
-    const view = new Surface()
+    const { states, view, show } = pane()
     const alpha = new Tab('Alpha')
     const beta = new Tab('Beta')
 
-    states.show(view, alpha, () => alpha.state())
-    states.show(view, beta, () => beta.state())
-    states.show(view, alpha, () => alpha.state())
+    show(alpha)
+    show(beta)
+    show(alpha)
     states.keepOnly([alpha])
 
     shows(view, alpha)

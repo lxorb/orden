@@ -40,7 +40,7 @@ function askerOf(call: Call) {
   const agent = call.caller.agent
   const mode: Mode = agent ? modeOfGrant(agent.mode) : 'auto'
   const thread = 'thread' in call.caller ? (call.caller.thread ?? null) : null
-  return { thread, mode }
+  return { thread, mode, ...(agent ? { reach: agent } : {}) }
 }
 
 async function answered(
@@ -48,17 +48,18 @@ async function answered(
 ): Promise<AgentAnswer> {
   const said = await ask(await helperRun())
   if (typeof said === 'object' && said !== null && 'refused' in said) {
-    return answerOf(new Refused('bad_arguments', String(said.refused)))
+    const code = 'late' in said && said.late === true ? 'timeout' : 'bad_arguments'
+    return answerOf(new Refused(code, String(said.refused)))
   }
   return done(said)
 }
 
 export async function runAgent(call: Call): Promise<AgentAnswer> {
   reachesAsFar(call)
-  return await answered((helpers) => helpers.runAgent(call.args, askerOf(call)))
+  return await answered((helpers) => helpers.runAgent(call.args, askerOf(call), call.deadline))
 }
 
 export async function agentResult(call: Call): Promise<AgentAnswer> {
   reachesAsFar(call)
-  return await answered((helpers) => helpers.agentResult(call.args))
+  return await answered((helpers) => helpers.agentResult(call.args, call.deadline))
 }

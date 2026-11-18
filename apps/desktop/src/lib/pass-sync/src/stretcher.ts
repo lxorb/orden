@@ -1,5 +1,4 @@
-import type { Stretcher } from '@orden/pass/crypto'
-import { stretch, useStretcher } from '@orden/pass/crypto'
+import { stretch, useStretcher, type Stretcher } from '@orden/pass/crypto'
 import { isNative } from '../../platform/src/api'
 import { nativeStretch } from './stretch'
 

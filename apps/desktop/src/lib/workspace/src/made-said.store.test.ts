@@ -26,8 +26,7 @@ const wrote: string[] = []
 let stop: () => void = () => undefined
 
 beforeEach(async () => {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   one.reset()
   one.files.set(`${ROOT}/Plan.md`, '# Plan\n')
   one.folders.add(`${ROOT}/Work`)
@@ -40,10 +39,7 @@ beforeEach(async () => {
   wrote.length = 0
   stop = hearWrites({
     there: (path) => onDisk(path),
-    made: (path) => {
-      made.push(path)
-      return Promise.resolve()
-    },
+    made: async (path) => void made.push(path),
     wrote: (path, content) => void wrote.push(`${path}: ${content}`),
   })
 })

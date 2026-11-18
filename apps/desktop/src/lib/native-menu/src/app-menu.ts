@@ -21,7 +21,7 @@ import {
   undoEdit,
   unfoldEverything,
 } from '@orden/editor'
-import { commandRows, runCommand } from '@orden/contracts'
+import { commandRows } from '@orden/contracts'
 import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
 import { account } from '../../accounts/src/api'
 import {
@@ -44,8 +44,7 @@ import {
   printable,
 } from '../../export-formats/src/api'
 import { modes } from '../../modes/src/api'
-import { shortcuts } from '../../shortcuts/src/api'
-import { toggleFill } from '../../tab-fill/src/api'
+import { type AppContext, runEntry, shortcuts } from '../../shortcuts/src/api'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL, updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 
@@ -53,6 +52,7 @@ interface Context {
   view?: EditorView | undefined
   onpalette(): void
   onhistory(): void
+  app?: AppContext
 }
 
 function exportRows(): MenuRow[] {
@@ -99,16 +99,34 @@ function run(view: EditorView | undefined, command: StateCommand) {
 
 export function appMenu(context: Context): MenuGroup[] {
   const { view } = context
+  const app: AppContext = context.app ?? {
+    view,
+    palette: () => context.onpalette(),
+    fullscreen: () => void fullscreen.toggle(workspace.panes),
+  }
+  const entry = (id: string) => () => void runEntry(id, app)
   const hasNote = !!workspace.active
   const selected = !!view && !view.state.selection.main.empty
   const writable = !!view && !view.state.readOnly
 
-  const edit = (id: string, label: string, command: StateCommand): MenuItem => ({
+  const edit = (id: string | null, label: string, command: StateCommand): MenuItem => ({
     label,
-    ...keyed(id),
+    ...(id ? keyed(id) : {}),
     disabled: !writable,
     run: () => run(view, command),
   })
+  const go = (id: string, label: string, more: Partial<MenuItem> = {}): MenuItem => ({
+    label,
+    ...keyed(id),
+    run: entry(id),
+    ...more,
+  })
+  const fold = (id: string, label: string, command: StateCommand): MenuItem => ({
+    label,
+    ...keyed(id),
+    run: () => run(view, command),
+  })
+  const unlessTouch = (rows: MenuRow[]) => (viewport.touch ? [] : rows)
 
   const onView = (command: (one: EditorView) => boolean) => () => {
     if (view) command(view)
@@ -140,13 +158,10 @@ export function appMenu(context: Context): MenuGroup[] {
         { label: 'Export', rows: exportRows() },
         ...(canPrint
           ? [
-              {
-                label: 'Print',
-                ...keyed('app.print'),
+              go('app.print', 'Print', {
                 asks: true,
                 disabled: !printable(workspace.active?.kind) || shut(),
-                run: () => void runCommand('export.print'),
-              },
+              }),
             ]
           : []),
         DIVIDER,
@@ -182,18 +197,8 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !selected || !writable,
           run: cutSelection,
         },
-        {
-          label: 'Copy',
-          ...keyed('fixed.copy'),
-          disabled: !selected,
-          run: copySelection,
-        },
-        {
-          label: 'Paste',
-          ...keyed('fixed.paste'),
-          disabled: !writable,
-          run: onView(pasteHere),
-        },
+        { label: 'Copy', ...keyed('fixed.copy'), disabled: !selected, run: copySelection },
+        { label: 'Paste', ...keyed('fixed.paste'), disabled: !writable, run: onView(pasteHere) },
         {
           label: 'Paste as plain text',
           ...keyed('edit.paste-plain'),
@@ -222,27 +227,21 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !writable,
           run: onView(openReplace),
         },
-        ...(viewport.touch
-          ? []
-          : [
-              {
-                label: 'Find next',
-                ...keyed('edit.find-next'),
-                disabled: !view,
-                run: onView(findNext),
-              },
-              {
-                label: 'Find previous',
-                ...keyed('edit.find-previous'),
-                disabled: !view,
-                run: onView(findPrevious),
-              },
-            ]),
-        {
-          label: 'Search',
-          ...keyed('app.search'),
-          run: () => workspace.showPanel('search'),
-        },
+        ...unlessTouch([
+          {
+            label: 'Find next',
+            ...keyed('edit.find-next'),
+            disabled: !view,
+            run: onView(findNext),
+          },
+          {
+            label: 'Find previous',
+            ...keyed('edit.find-previous'),
+            disabled: !view,
+            run: onView(findPrevious),
+          },
+        ]),
+        go('app.search', 'Search'),
       ],
     },
 
@@ -274,30 +273,10 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'format',
       label: 'Format',
       rows: [
-        {
-          label: 'Bold',
-          ...keyed('format.bold'),
-          disabled: !writable,
-          run: () => run(view, toggleWrap('**')),
-        },
-        {
-          label: 'Italic',
-          ...keyed('format.italic'),
-          disabled: !writable,
-          run: () => run(view, toggleWrap('*')),
-        },
-        {
-          label: 'Strikethrough',
-          ...keyed('format.strikethrough'),
-          disabled: !writable,
-          run: () => run(view, toggleWrap('~~')),
-        },
-        {
-          label: 'Highlight',
-          ...keyed('format.highlight'),
-          disabled: !writable,
-          run: () => run(view, highlightSelection),
-        },
+        edit('format.bold', 'Bold', toggleWrap('**')),
+        edit('format.italic', 'Italic', toggleWrap('*')),
+        edit('format.strikethrough', 'Strikethrough', toggleWrap('~~')),
+        edit('format.highlight', 'Highlight', highlightSelection),
         {
           label: 'Highlight colour',
           disabled: !writable,
@@ -311,30 +290,15 @@ export function appMenu(context: Context): MenuGroup[] {
           })),
         },
         DIVIDER,
-        {
-          label: 'Code',
-          ...keyed('format.code'),
-          disabled: !writable,
-          run: () => run(view, toggleWrap('`')),
-        },
-        { label: 'Inline math', disabled: !writable, run: () => run(view, toggleWrap('$')) },
-        { label: 'Superscript', disabled: !writable, run: () => run(view, toggleWrap('^')) },
-        { label: 'Subscript', disabled: !writable, run: () => run(view, toggleWrap('~')) },
+        edit('format.code', 'Code', toggleWrap('`')),
+        edit(null, 'Inline math', toggleWrap('$')),
+        edit(null, 'Superscript', toggleWrap('^')),
+        edit(null, 'Subscript', toggleWrap('~')),
         DIVIDER,
-        {
-          label: 'Link',
-          ...keyed('format.link'),
-          disabled: !writable,
-          run: () => run(view, insertLink),
-        },
+        edit('format.link', 'Link', insertLink),
         edit('format.comment', 'Comment', insertComment),
         DIVIDER,
-        {
-          label: 'Clear formatting',
-          ...keyed('format.clear'),
-          disabled: !writable,
-          run: () => run(view, clearFormatting),
-        },
+        edit('format.clear', 'Clear formatting', clearFormatting),
       ],
     },
 
@@ -342,61 +306,28 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'view',
       label: 'View',
       rows: [
-        {
-          label: 'Command palette',
-          ...keyed('app.palette'),
-          asks: true,
-          run: () => context.onpalette(),
-        },
+        go('app.palette', 'Command palette', { asks: true }),
         DIVIDER,
-        {
-          label: 'Reading',
-          ...keyed('app.reading'),
+        go('app.reading', 'Reading', {
           checked: !!workspace.active?.reading,
           disabled: workspace.active?.kind !== 'note',
-          run: () => workspace.toggleReading(),
-        },
-        {
-          label: 'Read-only',
-          ...keyed('app.read-only'),
-          checked: modes.readOnly,
-          run: () => modes.toggleReadOnly(view),
-        },
-        {
-          label: 'Source mode',
-          ...keyed('app.source'),
-          checked: modes.sourceIn(view),
-          run: () => modes.toggleSource(view),
-        },
-        {
-          label: 'Typewriter mode',
-          ...keyed('app.typewriter'),
-          checked: modes.typewriter,
-          run: () => modes.toggleTypewriter(view),
-        },
-        {
-          label: 'Focus mode',
-          ...keyed('app.focus'),
-          checked: modes.focus,
-          run: () => modes.toggleFocus(view),
-        },
+        }),
+        go('app.read-only', 'Read-only', { checked: modes.readOnly }),
+        go('app.source', 'Source mode', { checked: modes.sourceIn(view) }),
+        go('app.typewriter', 'Typewriter mode', { checked: modes.typewriter }),
+        go('app.focus', 'Focus mode', { checked: modes.focus }),
         {
           label: 'Fullscreen',
           ...keyed('app.fullscreen'),
           checked: fullscreen.on,
-          run: () => void fullscreen.toggle(workspace.panes),
+          run: entry('app.fullscreen'),
         },
-        ...(viewport.touch
-          ? []
-          : [
-              {
-                label: 'Full window',
-                ...keyed('app.fill-tab'),
-                checked: workspace.panes.fills !== null,
-                disabled: workspace.panes.fills === null && !workspace.activeTabId,
-                run: () => void toggleFill(),
-              },
-            ]),
+        ...unlessTouch([
+          go('app.fill-tab', 'Full window', {
+            checked: workspace.panes.fills !== null,
+            disabled: workspace.panes.fills === null && !workspace.activeTabId,
+          }),
+        ]),
         ...(isDesktop
           ? [
               {
@@ -407,89 +338,30 @@ export function appMenu(context: Context): MenuGroup[] {
             ]
           : []),
         DIVIDER,
-        ...(viewport.touch
-          ? []
-          : [
-              {
-                label: 'Split right',
-                ...keyed('pane.split-right'),
-                disabled: !workspace.canSplit('row'),
-                run: () => workspace.split('row'),
-              },
-              {
-                label: 'Split down',
-                ...keyed('pane.split-down'),
-                disabled: !workspace.canSplit('column'),
-                run: () => workspace.split('column'),
-              },
-              {
-                label: 'Other pane',
-                ...keyed('pane.focus-next'),
-                disabled: workspace.panes.count < 2,
-                run: () => workspace.panes.focusNext(),
-              },
-              DIVIDER,
-            ]),
-        {
-          label: 'Left sidebar',
-          ...keyed('app.sidebar'),
-          checked: !!workspace.panel,
-          run: () => workspace.toggleSidebar(),
-        },
-        {
-          label: 'Right sidebar',
-          ...keyed('app.right-sidebar'),
+        ...unlessTouch([
+          go('pane.split-right', 'Split right', { disabled: !workspace.canSplit('row') }),
+          go('pane.split-down', 'Split down', { disabled: !workspace.canSplit('column') }),
+          go('pane.focus-next', 'Other pane', { disabled: workspace.panes.count < 2 }),
+          DIVIDER,
+        ]),
+        go('app.sidebar', 'Left sidebar', { checked: !!workspace.panel }),
+        go('app.right-sidebar', 'Right sidebar', {
           checked: !!workspace.openOn('right'),
           disabled: !workspace.right.length,
-          run: () => workspace.toggleSidebar('right'),
-        },
-        {
-          label: 'Files',
-          ...keyed('app.files'),
-          run: () => workspace.showPanel('tree'),
-        },
+        }),
+        go('app.files', 'Files'),
         { label: 'Outline', run: () => workspace.showPanel('outline') },
-        ...(viewport.touch
-          ? []
-          : [{ label: 'Ask', ...keyed('app.ask'), run: () => workspace.showPanel('ask') }]),
+        ...unlessTouch([go('app.ask', 'Ask')]),
         DIVIDER,
-        { label: 'Fold', ...keyed('view.fold'), run: () => run(view, toggleFold) },
-        {
-          label: 'Fold everything',
-          ...keyed('view.fold-all'),
-          run: () => run(view, foldHeadings),
-        },
-        {
-          label: 'Fold more',
-          ...keyed('view.fold-more'),
-          run: () => run(view, foldMore),
-        },
-        {
-          label: 'Fold less',
-          ...keyed('view.fold-less'),
-          run: () => run(view, foldLess),
-        },
-        {
-          label: 'Unfold everything',
-          ...keyed('view.unfold-all'),
-          run: () => run(view, unfoldEverything),
-        },
+        fold('view.fold', 'Fold', toggleFold),
+        fold('view.fold-all', 'Fold everything', foldHeadings),
+        fold('view.fold-more', 'Fold more', foldMore),
+        fold('view.fold-less', 'Fold less', foldLess),
+        fold('view.unfold-all', 'Unfold everything', unfoldEverything),
         DIVIDER,
-        {
-          label: 'Zoom in',
-          ...keyed('app.zoom-in'),
-          run: () => workspace.zoomPage('in') || modes.stepZoom(1),
-        },
-        {
-          label: 'Zoom out',
-          ...keyed('app.zoom-out'),
-          run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
-        },
-        {
-          label: 'Actual size',
-          ...keyed('app.zoom-reset'),
-          run: () => workspace.zoomPage('reset') || modes.resetZoom(),
-        },
+        go('app.zoom-in', 'Zoom in'),
+        go('app.zoom-out', 'Zoom out'),
+        go('app.zoom-reset', 'Actual size'),
       ],
     },
 

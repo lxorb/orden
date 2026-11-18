@@ -273,48 +273,44 @@ describe('the ruling of a page', () => {
   })
 })
 
-describe('what else is on a page', () => {
-  test('goes into the PDF as a picture: a shape, a link, a picture', async () => {
-    raster.drawn = []
-    const canvas = note()
-    const page = canvas.nodes[0] as PageNode
-    const at = { x: page.x + 40, y: page.y + 300, width: 120, height: 80 }
-    canvas.nodes.push(
-      { id: 's', type: 'shape', shape: 'rect', ...at },
-      { id: 'l', type: 'link', url: 'https://example.com', ...at, y: at.y + 100 },
-    )
-    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+test('what else is on a page goes into the PDF as a picture: a shape, a link, a picture', async () => {
+  raster.drawn = []
+  const canvas = note()
+  const page = canvas.nodes[0] as PageNode
+  const at = { x: page.x + 40, y: page.y + 300, width: 120, height: 80 }
+  canvas.nodes.push(
+    { id: 's', type: 'shape', shape: 'rect', ...at },
+    { id: 'l', type: 'link', url: 'https://example.com', ...at, y: at.y + 100 },
+  )
+  const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
 
-    expect(raster.drawn).toHaveLength(2)
-    expect(first.match(/ Do$/gm)).toHaveLength(2)
-  })
+  expect(raster.drawn).toHaveLength(2)
+  expect(first.match(/ Do$/gm)).toHaveLength(2)
 })
 
-describe('ink in the pen with no colour of its own (B571)', () => {
-  test('is the dark ink of white paper, whatever theme is on', () => {
-    const sheet = document.createElement('style')
-    sheet.textContent = [
-      "[data-theme='dark'] { --text-strong: #f4f7fb; --text: #dde2ea; --canvas-dot: #2b323d }",
-      "[data-theme='light'] { --text-strong: #0b0d10; --text: #1a1d23; --canvas-dot: #d5dce5 }",
-    ].join('\n')
-    document.head.append(sheet)
-    document.documentElement.dataset.theme = 'dark'
+test('ink in the pen with no colour of its own (B571) is the dark ink of white paper, whatever theme is on', () => {
+  const sheet = document.createElement('style')
+  sheet.textContent = [
+    "[data-theme='dark'] { --text-strong: #f4f7fb; --text: #dde2ea; --canvas-dot: #2b323d }",
+    "[data-theme='light'] { --text-strong: #0b0d10; --text: #1a1d23; --canvas-dot: #d5dce5 }",
+  ].join('\n')
+  document.head.append(sheet)
+  document.documentElement.dataset.theme = 'dark'
 
-    const canvas = note('lines')
-    const page = canvas.nodes[0] as PageNode
-    const point = { x: page.x + 50, y: page.y + 50, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
-    canvas.ink = [{ id: 'i', tool: 'pen', color: 'ink', size: 3, points: [point] }]
-    const open = pagesOutOf({ text: writeCanvas(canvas), name: 'P', path: null, root: null })
-    const svg = pageSvg(open, page, 1)
+  const canvas = note('lines')
+  const page = canvas.nodes[0] as PageNode
+  const point = { x: page.x + 50, y: page.y + 50, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }
+  canvas.ink = [{ id: 'i', tool: 'pen', color: 'ink', size: 3, points: [point] }]
+  const open = pagesOutOf({ text: writeCanvas(canvas), name: 'P', path: null, root: null })
+  const svg = pageSvg(open, page, 1)
 
-    sheet.remove()
-    delete document.documentElement.dataset.theme
+  sheet.remove()
+  delete document.documentElement.dataset.theme
 
-    expect(svg).toContain('#0b0d10')
-    expect(svg).not.toContain('#f4f7fb')
-    expect(svg).toContain('#d5dce5')
-    expect(svg).not.toContain('#2b323d')
-  })
+  expect(svg).toContain('#0b0d10')
+  expect(svg).not.toContain('#f4f7fb')
+  expect(svg).toContain('#d5dce5')
+  expect(svg).not.toContain('#2b323d')
 })
 
 describe('a group', () => {
@@ -340,21 +336,19 @@ describe('a group', () => {
   })
 })
 
-describe('a PDF laid on a page', () => {
-  test('is drawn as its first page, not as its name', async () => {
-    const canvas = note()
-    const page = canvas.nodes[0] as PageNode
-    canvas.nodes.push({
-      id: 'f',
-      type: 'file',
-      file: 'Reading.pdf',
-      x: page.x + 20,
-      y: page.y + 20,
-      width: 200,
-      height: 260,
-    })
-    const svg = pageSvg(await laidOf(out(canvas)), page, 1)
-    expect(svg).toMatch(/<image [^>]*href="data:image\/png;base64,UEFHRQ=="/)
-    expect(svg).not.toContain('>Reading.pdf<')
+test('a PDF laid on a page is drawn as its first page, not as its name', async () => {
+  const canvas = note()
+  const page = canvas.nodes[0] as PageNode
+  canvas.nodes.push({
+    id: 'f',
+    type: 'file',
+    file: 'Reading.pdf',
+    x: page.x + 20,
+    y: page.y + 20,
+    width: 200,
+    height: 260,
   })
+  const svg = pageSvg(await laidOf(out(canvas)), page, 1)
+  expect(svg).toMatch(/<image [^>]*href="data:image\/png;base64,UEFHRQ=="/)
+  expect(svg).not.toContain('>Reading.pdf<')
 })

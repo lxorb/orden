@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from harness import Drive
@@ -77,5 +75,4 @@ def drive(browser: Browser) -> None:
     shot(a, "two-windows")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "two windows edit one canvas read without times, and neither loses the other's edit"))
+raise SystemExit(DRIVE.run(drive, "two windows edit one canvas read without times, and neither loses the other's edit"))

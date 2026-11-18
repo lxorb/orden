@@ -201,7 +201,6 @@ export interface RowChange {
 }
 
 const CHANNEL = 'orden:rows'
-
 let channel: BroadcastChannel | null = null
 
 function bus(): BroadcastChannel | null {
@@ -266,7 +265,6 @@ const ASSETS_WITH_STATS = ['assets', 'stats'] as const
 
 const ownFiles = {
   get: (path: string) => run<FileRow | undefined>('files', 'readonly', (s) => s.get(path)),
-  all: () => run<FileRow[]>('files', 'readonly', (s) => s.getAll()),
   paths: () => run<string[]>('files', 'readonly', (s) => s.getAllKeys()),
   each: (visit: (row: FileRow) => void) => walk('files', visit),
   between: (from: string, to: string) =>
@@ -315,7 +313,6 @@ const ownFiles = {
 
 const ownAssets = {
   get: (path: string) => run<AssetRow | undefined>('assets', 'readonly', (s) => s.get(path)),
-  all: () => run<AssetRow[]>('assets', 'readonly', (s) => s.getAll()),
   paths: () => run<string[]>('assets', 'readonly', (s) => s.getAllKeys()),
   put: (row: AssetRow) =>
     batch(ASSETS_WITH_STATS, (change) => {
@@ -372,6 +369,7 @@ export interface Trashed {
   from: string
   trashedAt: number
   apart?: boolean
+  arrived?: boolean
 }
 
 export interface TreeRows {
@@ -394,7 +392,6 @@ export interface Rows {
 }
 
 const OWN: Rows = { files: ownFiles, assets: ownAssets, stats: ownStats }
-
 const OWN_HERE: Rows | null = native() ? null : OWN
 
 function native(): boolean {
@@ -470,11 +467,6 @@ const own = (path: string) => path
 
 export const files: Rows['files'] = {
   get: (path) => rowsAt(path).files.get(path),
-  all: () =>
-    together(
-      (rows) => rows.files.all(),
-      (row) => row.path,
-    ),
   paths: () => together((rows) => rows.files.paths(), own),
   each: async (visit) => {
     for (const rows of everyRows()) await rows.files.each(visit)
@@ -498,11 +490,6 @@ export const files: Rows['files'] = {
 
 export const assets: Rows['assets'] = {
   get: (path) => rowsAt(path).assets.get(path),
-  all: () =>
-    together(
-      (rows) => rows.assets.all(),
-      (row) => row.path,
-    ),
   paths: () => together((rows) => rows.assets.paths(), own),
   put: (row) => rowsAt(row.path).assets.put(row),
   remove: (path) => rowsAt(path).assets.remove(path),

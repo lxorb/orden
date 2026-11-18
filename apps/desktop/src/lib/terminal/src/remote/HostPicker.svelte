@@ -2,13 +2,10 @@
   import { cubicOut } from 'svelte/easing'
   import { tick } from 'svelte'
   import { closeOnBack, longPress, menu, overlays, roving } from '../../../ui-kit/src/api'
-  import { region } from '../../../platform/src/api'
-  import { fade, LAYER, scale } from '../../../platform/src/api'
+  import { region, fade, LAYER, scale } from '../../../platform/src/api'
   import { pieces } from '../../../matching/src/api'
-  import { isNumber, ListTyping } from '../../../space-pick/src/api'
-  import { SpacePlace } from '../../../space-pick/src/api'
-  import { trap } from '../../../ui-controls/src/api'
-  import { relativeStep } from '../../../ui-controls/src/api'
+  import { isNumber, ListTyping, SpacePlace } from '../../../space-pick/src/api'
+  import { trap, relativeStep } from '../../../ui-controls/src/api'
   import HostMark from './HostMark.svelte'
   import {
     destinationOf,
@@ -19,6 +16,7 @@
     plainlyDestination,
     said,
     searchName,
+    withAbout,
   } from './hosts'
   import { remote } from './hosts.svelte'
   import { hostPicker } from './picker.svelte'
@@ -93,11 +91,7 @@
     menu.show(event, [
       {
         label: host.pinned ? 'Unpin' : 'Pin',
-        run: () =>
-          void remote.keep((kept) => ({
-            ...kept,
-            about: { ...kept.about, [host.id]: { ...kept.about[host.id], pinned: !host.pinned } },
-          })),
+        run: () => void remote.keep((kept) => withAbout(kept, host.id, { pinned: !host.pinned })),
       },
       { label: 'Settings', run: () => hostPicker.manage() },
     ])

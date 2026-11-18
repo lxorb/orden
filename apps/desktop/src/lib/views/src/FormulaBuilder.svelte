@@ -8,12 +8,10 @@
   const { kit, column }: { kit: Kit; column?: string | undefined } = $props()
 
   const EXAMPLE = 'pages > 400'
-
   const live = $derived(kit.live)
   const base = $derived(live.base)
   let made = $state<string | undefined>(undefined)
   const name = $derived(made ?? (column?.startsWith('formula.') ? column.slice(8) : undefined))
-
   let typed = $derived(name !== undefined ? (base?.formulas[name] ?? '') : '')
   let caret = $state(0)
 

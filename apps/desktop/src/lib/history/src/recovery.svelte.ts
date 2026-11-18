@@ -6,7 +6,7 @@ import {
   SNAPSHOT_MINUTES,
   snapshotMinutes,
 } from '../../snapshots/src/api'
-import { isRecord, keepJson, stored, invoke } from '../../platform/src/api'
+import { heardElsewhere, isRecord, keepJson, stored, invoke } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 
 export const STORAGE_KEY = 'orden:recovery'
@@ -29,13 +29,22 @@ class Recovery {
     this.days = keepDays(saved.days)
   }
 
+  heard() {
+    this.restore()
+    if (this.sweeper === undefined) return
+    this.retime()
+    void this.sweep()
+  }
+
   start(): () => void {
     this.taken = {}
     this.retime()
     void this.sweep()
     this.sweeper = setInterval(() => void this.sweep(), DAY)
+    const unheard = heardElsewhere([STORAGE_KEY], () => this.heard())
 
     return () => {
+      unheard()
       clearInterval(this.ticker)
       clearInterval(this.sweeper)
       this.ticker = undefined

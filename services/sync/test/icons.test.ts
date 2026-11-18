@@ -1,97 +1,18 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { isIcon, isTint } from '../src/sync-server/src/spaces/icons'
-import { call, mail, signIn, testEnv, type TestEnv } from './harness'
+import { describe, expect, test } from 'vitest'
+import { isIcon, isTint } from '../src/sync-server-engine/src/spaces/icons'
+import { spaceField } from './space-field'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
-
-function put(icons: unknown, options: { as?: string; id?: string; tints?: unknown } = {}) {
-  return call(env, `/v1/spaces/${options.id ?? space}/icons`, {
-    method: 'PUT',
-    token: options.as ?? token,
-    body: { icons, tints: options.tints },
-  })
-}
-
-async function listed(as = token) {
-  const { json } = await call(env, '/v1/spaces', { token: as })
-  return json.spaces.find((one) => one.id === space)?.icons
-}
-
-async function tinted(as = token) {
-  const { json } = await call(env, '/v1/spaces', { token: as })
-  return json.spaces.find((one) => one.id === space)?.tints
-}
-
-function column(raw: string, which: 'icons' | 'tints' = 'icons') {
-  env.db.prepare(`update spaces set ${which} = ? where id = ?`).run(raw, space)
-}
-
-async function reader(): Promise<string> {
-  const sent = await mail(() =>
-    call(env, `/v1/spaces/${space}/share/invite`, {
-      token,
-      body: { email: 'c@d.dev', role: 'read' },
-    }),
-  )
-
-  const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-  if (!link) throw new Error(`no invitation was sent:\n${sent}`)
-
-  const theirs = await signIn(env, 'c@d.dev')
-  await call(env, `/v1/join/${link}`, { method: 'POST', token: theirs })
-  return theirs
-}
+const { at, put, listed, column, reader, kept, owned } = spaceField('icons')
 
 const DRESSED = { Work: 'Briefcase', 'Work/Ideas': 'folder-open' }
 
+kept({}, DRESSED, { Work: 'Folder' })
+owned({}, DRESSED)
+
 describe("a space's folder icons", () => {
-  test('start empty', async () => {
-    expect(await listed()).toEqual({})
-  })
-
-  test('are kept whole, and ride the space listing', async () => {
-    const set = await put(DRESSED)
-    expect(set.status).toBe(200)
-    expect(set.json.icons).toEqual(DRESSED)
-
-    expect(await listed()).toEqual(DRESSED)
-  })
-
-  test('are replaced by the map that arrives, which is how a folder is undressed', async () => {
-    await put(DRESSED)
-    await put({ Work: 'Folder' })
-
-    expect(await listed()).toEqual({ Work: 'Folder' })
-  })
-
-  test('go away when an empty map is sent', async () => {
-    await put(DRESSED)
-    await put({})
-
-    expect(await listed()).toEqual({})
-  })
-
   test('take an emoji, which is what a vault imported from Iconize brings', async () => {
     expect((await put({ Work: '📚', Travel: '🇩🇪' })).status).toBe(200)
     expect(await listed()).toEqual({ Work: '📚', Travel: '🇩🇪' })
-  })
-
-  test('mark the space as changed, so another device notices', async () => {
-    const before = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-    await put(DRESSED)
-    const after = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-
-    expect(after).toBeGreaterThanOrEqual(before)
   })
 })
 
@@ -175,16 +96,6 @@ describe('a map that is not one', () => {
     expect((await put(undefined)).status).toBe(400)
   })
 
-  test('is refused when the body is not an object at all', async () => {
-    const sent = await call(env, `/v1/spaces/${space}/icons`, {
-      method: 'PUT',
-      token,
-      body: [DRESSED],
-    })
-
-    expect(sent.status).toBe(400)
-  })
-
   test('says what is wrong with it', async () => {
     expect((await put('Briefcase')).json.error).toBe('icons must be a map')
   })
@@ -238,42 +149,11 @@ describe('a column written by a newer build', () => {
   })
 })
 
-describe('the icons are the space’s', () => {
-  test('so everybody in it reads the same ones', async () => {
-    const theirs = await reader()
-    await put(DRESSED)
-
-    expect(await listed(theirs)).toEqual(DRESSED)
-  })
-
-  test('and dressing a folder is writing in the space, which a reader may not', async () => {
-    const theirs = await reader()
-
-    expect((await put({ Work: 'Briefcase' }, { as: theirs })).status).toBe(403)
-    expect(await listed()).toEqual({})
-  })
-
-  test('are not another account’s to write', async () => {
-    const other = await signIn(env, 'e@f.dev')
-
-    expect((await put(DRESSED, { as: other })).status).toBe(404)
-    expect(await listed()).toEqual({})
-  })
-
-  test('need a session at all', async () => {
-    expect((await call(env, `/v1/spaces/${space}/icons`, { method: 'PUT' })).status).toBe(401)
-  })
-
-  test('answer 404 for a space that is not there', async () => {
-    expect((await put(DRESSED, { id: 'nope' })).status).toBe(404)
-  })
-})
-
 describe('the colour a folder’s icon is drawn in', () => {
   const PAINTED = { Work: 'violet', 'Work/Ideas': 'teal' }
 
   test('starts empty', async () => {
-    expect(await tinted()).toEqual({})
+    expect(await listed(at.token, 'tints')).toEqual({})
   })
 
   test('is written beside the icons and rides the same listing', async () => {
@@ -281,7 +161,7 @@ describe('the colour a folder’s icon is drawn in', () => {
 
     expect(set.status).toBe(200)
     expect(set.json.tints).toEqual(PAINTED)
-    expect(await tinted()).toEqual(PAINTED)
+    expect(await listed(at.token, 'tints')).toEqual(PAINTED)
     expect(await listed()).toEqual(DRESSED)
   })
 
@@ -289,14 +169,14 @@ describe('the colour a folder’s icon is drawn in', () => {
     await put(DRESSED, { tints: PAINTED })
     await put(DRESSED, { tints: { Work: 'violet' } })
 
-    expect(await tinted()).toEqual({ Work: 'violet' })
+    expect(await listed(at.token, 'tints')).toEqual({ Work: 'violet' })
   })
 
   test('goes away when an empty map is sent', async () => {
     await put(DRESSED, { tints: PAINTED })
     await put(DRESSED, { tints: {} })
 
-    expect(await tinted()).toEqual({})
+    expect(await listed(at.token, 'tints')).toEqual({})
   })
 
   test('stays as it was when a request says nothing about it', async () => {
@@ -304,7 +184,7 @@ describe('the colour a folder’s icon is drawn in', () => {
     const again = await put({ Work: 'Folder' })
 
     expect(again.json.tints).toEqual(PAINTED)
-    expect(await tinted()).toEqual(PAINTED)
+    expect(await listed(at.token, 'tints')).toEqual(PAINTED)
   })
 
   test('drops an entry that is not a folder of this space wearing a colour', async () => {
@@ -330,24 +210,24 @@ describe('the colour a folder’s icon is drawn in', () => {
 
   test('is read as far as this build understands a column a newer one wrote', async () => {
     column(JSON.stringify({ ...PAINTED, '../elsewhere': 'violet', Travel: 7 }), 'tints')
-    expect(await tinted()).toEqual(PAINTED)
+    expect(await listed(at.token, 'tints')).toEqual(PAINTED)
 
     column('not json', 'tints')
-    expect(await tinted()).toEqual({})
+    expect(await listed(at.token, 'tints')).toEqual({})
   })
 
   test('is the space’s, so everybody in it reads the same colours', async () => {
     const theirs = await reader()
     await put(DRESSED, { tints: PAINTED })
 
-    expect(await tinted(theirs)).toEqual(PAINTED)
+    expect(await listed(theirs, 'tints')).toEqual(PAINTED)
   })
 
   test('is not a reader’s to write, the same as the icons', async () => {
     const theirs = await reader()
 
     expect((await put(DRESSED, { as: theirs, tints: PAINTED })).status).toBe(403)
-    expect(await tinted()).toEqual({})
+    expect(await listed(at.token, 'tints')).toEqual({})
   })
 })
 

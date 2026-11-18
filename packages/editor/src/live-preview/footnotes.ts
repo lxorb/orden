@@ -83,12 +83,11 @@ export function definitionOf(state: EditorState, label: string): FootnotePart | 
   )
 }
 
-export function definitionWords(state: EditorState, definition: FootnotePart): string {
-  return state
+export const definitionWords = (state: EditorState, definition: FootnotePart): string =>
+  state
     .sliceDoc(definition.labelTo, definition.to)
     .replace(/^\]:[ \t]*/, '')
     .trim()
-}
 
 const cameFrom = new WeakMap<EditorView, { label: string; at: number }>()
 

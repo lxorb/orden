@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import os
 
@@ -333,5 +331,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a PDF's words in a page note can be chosen and copied, and stay sharp at any zoom"))
+raise SystemExit(DRIVE.run(drive, "a PDF's words in a page note can be chosen and copied, and stay sharp at any zoom"))
