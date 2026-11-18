@@ -570,7 +570,7 @@ pub fn hashed(token: &str) -> String {
     hex(&Sha256::digest(token.as_bytes()))
 }
 
-fn hex(bytes: &[u8]) -> String {
+pub(crate) fn hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     let mut out = String::with_capacity(bytes.len() * 2);
     for byte in bytes {

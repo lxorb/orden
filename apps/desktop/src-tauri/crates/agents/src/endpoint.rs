@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::fmt::Write as _;
 use std::fs;
 use std::io::{Read, Write as _};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
@@ -282,16 +281,7 @@ fn fresh_secret() -> Result<String, String> {
     getrandom::fill(&mut bytes)
         .map_err(|error| format!("no randomness to make a secret from: {error}"))?;
 
-    Ok(as_hex(&bytes))
-}
-
-fn as_hex(bytes: &[u8]) -> String {
-    let mut out = String::with_capacity(bytes.len() * 2);
-    for byte in bytes {
-        let _ = write!(out, "{byte:02x}");
-    }
-
-    out
+    Ok(crate::grants::hex(&bytes))
 }
 
 fn answer(
@@ -758,30 +748,18 @@ fn bearer(said: Option<&str>) -> Option<&str> {
 }
 
 fn same_secret(said: Option<&str>, secret: &str) -> bool {
-    let Some(token) = bearer(said) else {
-        return false;
-    };
-
-    if token.len() != secret.len() {
-        return false;
-    }
-
-    let mut differences = 0_u8;
-    for (one, other) in token.bytes().zip(secret.bytes()) {
-        differences |= one ^ other;
-    }
-
-    differences == 0
+    bearer(said).is_some_and(|token| crate::grants::same(token, secret))
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        as_hex, asked_of_one, awaited, find, is_json, is_local, listening_patience, parse_head,
+        asked_of_one, awaited, find, is_json, is_local, listening_patience, parse_head,
         read_request, reason, refused, same_secret, stamped, window_patience, Admitted, Kept,
         Request, Waiting, DELIVERY, MOST_AT_ONCE, MOST_BYTES, PATIENCE, SECRET_BYTES, SLOWEST,
         TERMINAL_STARTING,
     };
+    use crate::grants::hex;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::sync_channel;
     use std::time::{Duration, Instant};
@@ -961,7 +939,7 @@ mod tests {
 
     #[test]
     fn only_the_secret_itself_gets_in() {
-        let secret = as_hex(&[7_u8; SECRET_BYTES]);
+        let secret = hex(&[7_u8; SECRET_BYTES]);
 
         assert!(same_secret(Some(&format!("Bearer {secret}")), &secret));
         assert!(same_secret(Some(&format!("bearer {secret}")), &secret));
@@ -970,14 +948,14 @@ mod tests {
         assert!(!same_secret(Some(&format!("Bearer {secret}x")), &secret));
         assert!(!same_secret(None, &secret));
 
-        let wrong = as_hex(&[8_u8; SECRET_BYTES]);
+        let wrong = hex(&[8_u8; SECRET_BYTES]);
         assert!(!same_secret(Some(&format!("Bearer {wrong}")), &secret));
     }
 
     #[test]
     fn a_secret_is_two_characters_a_byte() {
-        assert_eq!(as_hex(&[0_u8, 15, 16, 255]), "000f10ff");
-        assert_eq!(as_hex(&[0_u8; SECRET_BYTES]).len(), SECRET_BYTES * 2);
+        assert_eq!(hex(&[0_u8, 15, 16, 255]), "000f10ff");
+        assert_eq!(hex(&[0_u8; SECRET_BYTES]).len(), SECRET_BYTES * 2);
     }
 
     #[test]

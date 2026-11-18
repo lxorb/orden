@@ -3219,19 +3219,11 @@ fn takes_words(attributes: &[&str]) -> bool {
         .copied()
         .unwrap_or_default()
         .to_ascii_lowercase();
-    !matches!(
-        kind.as_str(),
-        "hidden"
-            | "submit"
-            | "button"
-            | "image"
-            | "reset"
-            | "checkbox"
-            | "radio"
-            | "file"
-            | "range"
-            | "color"
-    )
+    ![
+        "hidden", "submit", "button", "image", "reset", "checkbox", "radio", "file", "range",
+        "color",
+    ]
+    .contains(&kind.as_str())
 }
 
 fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
