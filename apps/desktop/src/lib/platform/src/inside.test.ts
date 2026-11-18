@@ -72,20 +72,17 @@ describe('a path a link may be joined to a space by', () => {
   })
 })
 
-describe('a path that names a folder or file by its Windows short name', () => {
-  test('is told apart from the full names it stands for', () => {
-    expect(namesByShortName('PRIVAT~1/Diary.md')).toBe(true)
-    expect(namesByShortName('THERAP~1.MD')).toBe(true)
-    expect(namesByShortName('Work/priva~12/Diary.md')).toBe(true)
-    expect(namesByShortName('Private Journal/Diary.md')).toBe(false)
-    expect(namesByShortName('Plan ~2.md')).toBe(false)
-    expect(namesByShortName('Notes~ideas.md')).toBe(false)
-  })
-
-  test('also with the dots and spaces Windows drops after it, and in a full path', () => {
-    expect(namesByShortName('PRIVAT~1./Diary.md')).toBe(true)
-    expect(namesByShortName('Notes/DIARY~1.MD. .')).toBe(true)
-    expect(namesByShortName('C:\\Users\\me\\Orden\\Work\\PRIVAT~1')).toBe(true)
-    expect(namesByShortName('C:\\Users\\me\\Orden\\Work\\Private')).toBe(false)
-  })
+test.each<[unknown, ...Parameters<typeof namesByShortName>]>([
+  [true, 'PRIVAT~1/Diary.md'],
+  [true, 'THERAP~1.MD'],
+  [true, 'Work/priva~12/Diary.md'],
+  [false, 'Private Journal/Diary.md'],
+  [false, 'Plan ~2.md'],
+  [false, 'Notes~ideas.md'],
+  [true, 'PRIVAT~1./Diary.md'],
+  [true, 'Notes/DIARY~1.MD. .'],
+  [true, 'C:\\Users\\me\\Orden\\Work\\PRIVAT~1'],
+  [false, 'C:\\Users\\me\\Orden\\Work\\Private'],
+])('%j from %j', (expected, ...args) => {
+  expect(namesByShortName(...args)).toBe(expected)
 })

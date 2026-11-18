@@ -105,33 +105,9 @@ describe('the extension a commit puts back', () => {
     expect(nameToWrite('Archive', '')).toBe('Archive')
   })
 
-  test('is markdown for a note that somehow has none', () => {
-    expect(extensionOf('Readme', false)).toBe('.md')
-  })
-
-  test('is not added twice when the field already holds it', () => {
-    expect(nameToWrite('paper.pdf', '.pdf')).toBe('paper.pdf')
-    expect(nameToWrite('other', '.pdf')).toBe('other.pdf')
-  })
-
-  test('is the one the file wrote, whatever case the field holds it in', () => {
-    expect(nameToWrite('paper.PDF', '.pdf')).toBe('paper.pdf')
-    expect(nameToWrite('NOTE.md', '.MD')).toBe('NOTE.MD')
-    expect(nameToWrite('Note.MD', '.md')).toBe('Note.md')
-  })
-
   test('is nothing a dot in the middle of a name made up', () => {
     expect(extensionOf('v1.2 plan.md', false)).toBe('.md')
     expect(nameToWrite('v1.3 plan', extensionOf('v1.2 plan.md', false))).toBe('v1.3 plan.md')
-  })
-
-  test('is the ending the list leaves off', () => {
-    expect(extensionOf('Board.canvas', false)).toBe('.canvas')
-    expect(extensionOf('Sketch.pages', false)).toBe('.pages')
-    expect(extensionOf('Svelte docs.url', false)).toBe('.url')
-    expect(extensionOf('report.pdf', false)).toBe('.pdf')
-    expect(extensionOf('NOTE.MD', false)).toBe('.MD')
-    expect(extensionOf('a.canvas.md', false)).toBe('.md')
   })
 })
 
@@ -248,4 +224,26 @@ describe('the name AGENTS, which a space keeps for its agent instructions', () =
   test('writes nothing', () => {
     expect(nameToCommit({ ...naming, typed: 'AGENTS', was: 'Plan', current: 'Plan.md' })).toBeNull()
   })
+})
+
+test.each<[unknown, ...Parameters<typeof extensionOf>]>([
+  ['.md', 'Readme', false],
+  ['.canvas', 'Board.canvas', false],
+  ['.pages', 'Sketch.pages', false],
+  ['.url', 'Svelte docs.url', false],
+  ['.pdf', 'report.pdf', false],
+  ['.MD', 'NOTE.MD', false],
+  ['.md', 'a.canvas.md', false],
+])('%j from %j', (expected, ...args) => {
+  expect(extensionOf(...args)).toBe(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof nameToWrite>]>([
+  ['paper.pdf', 'paper.pdf', '.pdf'],
+  ['other.pdf', 'other', '.pdf'],
+  ['paper.pdf', 'paper.PDF', '.pdf'],
+  ['NOTE.MD', 'NOTE.md', '.MD'],
+  ['Note.md', 'Note.MD', '.md'],
+])('%j from %j', (expected, ...args) => {
+  expect(nameToWrite(...args)).toBe(expected)
 })
