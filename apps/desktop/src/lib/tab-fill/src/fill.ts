@@ -1,14 +1,15 @@
 import { tick } from 'svelte'
 import { focusEditor, workspace } from '../../workspace/src/api'
-import { viewport } from '../../ui-kit/src/api'
+import { fullscreen, viewport } from '../../ui-kit/src/api'
 import { chromeGoes, chromeStays } from './chrome'
 import { mayFill } from './rules'
 
 let going = false
 
 export async function toggleFill(tabId?: string): Promise<void> {
-  if (workspace.panes.fills !== null) unfill()
-  else await fill(tabId)
+  if (fullscreen.on) await fullscreen.leave()
+  else if (workspace.panes.fills === null) return fill(tabId)
+  unfill()
 }
 
 async function fill(tabId?: string): Promise<void> {
