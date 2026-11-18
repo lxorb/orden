@@ -1,7 +1,14 @@
 import { sayNotice, type Scheme } from '@orden/contracts'
 import { accentColour, theme, type ThemeValue } from '../../../theme/src/api'
 import { chooseFiles, PICTURES } from '../../../ui-controls/src/api'
-import { fileBytes, forget, keepJson, afterQuiet, onceAFrame } from '../../../platform/src/api'
+import {
+  fileBytes,
+  forget,
+  heardElsewhere,
+  keepJson,
+  afterQuiet,
+  onceAFrame,
+} from '../../../platform/src/api'
 import { message } from '../../../ui-kit/src/api'
 import {
   DARK_KEY,
@@ -298,12 +305,12 @@ function clamp(value: number): number {
 
 export const wallpaper = new Wallpaper()
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    const slot = SLOTS.find((one) => KEYS[one] === event.key)
-    if (slot) wallpaper.heard(slot)
-  })
-}
+heardElsewhere(
+  SLOTS.map((one) => KEYS[one]),
+  (key) => {
+    for (const slot of SLOTS) if (key === null || KEYS[slot] === key) wallpaper.heard(slot)
+  },
+)
 
 $effect.root(() => {
   let making = false

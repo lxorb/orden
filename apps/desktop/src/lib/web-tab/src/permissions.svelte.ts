@@ -1,4 +1,4 @@
-import { withOrWithout, isRecord, Shared } from '../../platform/src/api'
+import { heardElsewhere, withOrWithout, isRecord, Shared } from '../../platform/src/api'
 import { originKey } from '@orden/scan/web-address'
 
 const STORAGE_KEY = 'orden:web-grants'
@@ -58,10 +58,7 @@ class Grants {
   private privately = $state<Table>({})
 
   constructor() {
-    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY || event.key === null) this.changed++
-    })
+    heardElsewhere([STORAGE_KEY], () => this.changed++)
   }
 
   private by(): Table {

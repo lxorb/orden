@@ -1,4 +1,12 @@
-import { movedTo, relativeTo, samePath, keep, storedText, isDesktop } from '../../platform/src/api'
+import {
+  heardElsewhere,
+  movedTo,
+  relativeTo,
+  samePath,
+  keep,
+  storedText,
+  isDesktop,
+} from '../../platform/src/api'
 import type { Lock } from './protection.svelte'
 
 const RELOCK_KEY = 'orden:protect-relock'
@@ -203,8 +211,4 @@ class Unlocks {
 
 export const unlocks = new Unlocks()
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === RELOCK_KEY) unlocks.heardRelock()
-  })
-}
+heardElsewhere([RELOCK_KEY], () => unlocks.heardRelock())

@@ -8,7 +8,15 @@ import {
   type UsageEvent,
 } from '@orden/sync-core'
 import { account, request } from '../../accounts/src/api'
-import { systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
+import {
+  heardElsewhere,
+  systemLocale,
+  log,
+  keepJson,
+  stored,
+  isMobile,
+  isNative,
+} from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { HELP_IMPROVE, USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
@@ -168,10 +176,7 @@ export function watchUsage(sending: boolean): () => void {
     send()
   }
   usageChoice.changes.add(chose)
-  const heard = (event: StorageEvent) => {
-    if (event.key === HELP_IMPROVE) usageChoice.heard()
-  }
-  window.addEventListener('storage', heard)
+  const unheard = heardElsewhere([HELP_IMPROVE], () => usageChoice.heard())
 
   return () => {
     saveTallies()
@@ -182,6 +187,6 @@ export function watchUsage(sending: boolean): () => void {
     window.removeEventListener('pagehide', saveTallies)
     window.removeEventListener('online', send)
     usageChoice.changes.delete(chose)
-    window.removeEventListener('storage', heard)
+    unheard()
   }
 }

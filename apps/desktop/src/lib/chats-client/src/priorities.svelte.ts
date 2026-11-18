@@ -10,7 +10,14 @@ import {
   suggestionAsk,
   suggestionIn,
 } from '@orden/chats/priority'
-import { isNumber, isRecord, isString, keepJson, stored } from '../../platform/src/api'
+import {
+  heardElsewhere,
+  isNumber,
+  isRecord,
+  isString,
+  keepJson,
+  stored,
+} from '../../platform/src/api'
 
 const KEY = 'orden:chat-priorities'
 const MOST_LESSONS = 50
@@ -176,8 +183,4 @@ export class Priorities {
 
 export const priorities = new Priorities()
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === KEY) priorities.restore()
-  })
-}
+heardElsewhere([KEY], () => priorities.restore())

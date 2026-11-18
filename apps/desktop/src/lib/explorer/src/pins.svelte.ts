@@ -1,4 +1,11 @@
-import { movedTo, samePath, keepJson, stored, stringList } from '../../platform/src/api'
+import {
+  heardElsewhere,
+  movedTo,
+  samePath,
+  keepJson,
+  stored,
+  stringList,
+} from '../../platform/src/api'
 
 const PINNED = 'orden:explorer-pinned'
 
@@ -10,10 +17,7 @@ class Pins {
   list = $state<string[]>(read())
 
   constructor() {
-    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
-    window.addEventListener('storage', (event) => {
-      if (event.key === PINNED) this.list = read()
-    })
+    heardElsewhere([PINNED], () => (this.list = read()))
   }
 
   has(path: string): boolean {

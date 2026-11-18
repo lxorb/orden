@@ -1,4 +1,5 @@
 import {
+  heardElsewhere,
   withOrWithout,
   isRecord,
   keep,
@@ -121,10 +122,4 @@ class Shells {
 
 export const shells = new Shells()
 
-const KEYS: ReadonlySet<string> = new Set([SHELL_KEY, SIZE_KEY, RESTORE_KEY, WAYS_KEY, THEMED_KEY])
-
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    if (event.key !== null && KEYS.has(event.key)) shells.heard()
-  })
-}
+heardElsewhere([SHELL_KEY, SIZE_KEY, RESTORE_KEY, WAYS_KEY, THEMED_KEY], () => shells.heard())

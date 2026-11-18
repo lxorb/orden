@@ -1,4 +1,4 @@
-import { isRecord, isString, keepJson, stored } from '../../platform/src/api'
+import { heardElsewhere, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 import { SEARCH } from '@orden/scan/typed'
 import { engineById, engineHome, isEngineAddress } from '@orden/scan/engines'
 
@@ -72,8 +72,4 @@ class SearchEngine {
 
 export const searchEngine = new SearchEngine()
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === KEY) searchEngine.heard()
-  })
-}
+heardElsewhere([KEY], () => searchEngine.heard())
