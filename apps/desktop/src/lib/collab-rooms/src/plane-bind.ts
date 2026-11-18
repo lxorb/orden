@@ -2,7 +2,7 @@ import { merged } from '@orden/markdown/canvas-merge'
 import { planeIsEmpty, pushPlane, readPlane, rootsOf } from '@orden/rooms/plane'
 import * as Y from 'yjs'
 import type { Canvas } from '@orden/markdown/canvas'
-import type { PlaneSurface } from '@orden/markdown/plane'
+import type { PlaneSurface, Pushed } from '@orden/markdown/plane'
 import { moved } from './bind'
 import { HERE } from './door'
 
@@ -27,7 +27,7 @@ export class PlaneBinding {
 
     this.history = new Y.UndoManager(this.watched, {
       trackedOrigins: new Set([HERE]),
-      captureTimeout: 0,
+      captureTimeout: Infinity,
     })
 
     this.told = () => {
@@ -64,13 +64,17 @@ export class PlaneBinding {
     this.surface.arrived(readPlane(this.doc))
   }
 
-  push(before: Canvas, after: Canvas) {
+  push(before: Canvas, after: Canvas, how: Pushed = 'step') {
     if (!this.holds()) {
       moved('an edit made in it')
       return
     }
 
-    this.doc.transact(() => pushPlane(this.doc, before, after), HERE)
+    if (how === 'step') this.history.stopCapturing()
+    this.doc.transact(
+      () => pushPlane(this.doc, before, after),
+      how === 'aside' ? this.joinedBy : HERE,
+    )
   }
 
   undo(): boolean {

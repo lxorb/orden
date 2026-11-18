@@ -18,8 +18,10 @@ export interface Reachable {
   redo: boolean
 }
 
+export type Pushed = 'step' | 'more' | 'aside'
+
 export interface SharedPlane {
-  push: (before: Canvas, after: Canvas) => void
+  push: (before: Canvas, after: Canvas, how?: Pushed) => void
   undo: () => boolean
   redo: () => boolean
   hand: (at: Point | null, drawing: InkStroke | null) => void
