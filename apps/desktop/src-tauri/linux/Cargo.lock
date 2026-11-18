@@ -4194,6 +4194,7 @@ dependencies = [
  "orden-dictation",
  "orden-documents",
  "orden-explorer",
+ "orden-extensions",
  "orden-import",
  "orden-notes",
  "orden-placement",
@@ -4409,6 +4410,25 @@ dependencies = [
  "tempfile",
  "trash",
  "windows 0.58.0",
+]
+
+[[package]]
+name = "orden-extensions"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "flate2",
+ "orden-base",
+ "orden-crashes",
+ "orden-placement",
+ "orden-web",
+ "reqwest",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tauri",
+ "tempfile",
 ]
 
 [[package]]

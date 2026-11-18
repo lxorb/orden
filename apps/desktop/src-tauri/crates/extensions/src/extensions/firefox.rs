@@ -14,7 +14,7 @@ const POLYFILL_JS: &str = include_str!("firefox/browser-polyfill.js");
 const BRIDGE_JS: &str = include_str!("firefox/bridge.js");
 const HOST_JS: &str = include_str!("firefox/host.js");
 
-const ICON_PNG: &[u8] = include_bytes!("../../icons/128x128.png");
+const ICON_PNG: &[u8] = include_bytes!("../../../../icons/128x128.png");
 
 const PAGE_SCRIPTS: &str = r#"<script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;
 const BACKGROUND_SCRIPTS: &str = r#"<script src="/orden/bridge.js"></script><script src="/orden/firefox.js"></script><script src="/orden/browser-polyfill.js"></script>"#;

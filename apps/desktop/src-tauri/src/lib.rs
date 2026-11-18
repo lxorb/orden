@@ -5,8 +5,6 @@ mod calls;
 #[cfg(desktop)]
 mod engine;
 #[cfg(desktop)]
-mod extensions;
-#[cfg(desktop)]
 mod handover;
 #[cfg(desktop)]
 mod hotkeys;
@@ -311,16 +309,16 @@ macro_rules! desktop_commands {
             shortcuts::shortcuts_added_taken,
             shortcuts::shortcuts_left_inbox,
             orden_web::web_tabs::web_open,
-            extensions::extensions_list,
-            extensions::extensions_install,
-            extensions::extensions_set,
-            extensions::extensions_remove,
-            extensions::extensions_update,
-            extensions::extensions_page,
-            extensions::extensions_named,
-            extensions::popup::extension_popup_open,
-            extensions::popup::extension_popup_place,
-            extensions::popup::extension_popup_close,
+            orden_extensions::extensions::extensions_list,
+            orden_extensions::extensions::extensions_install,
+            orden_extensions::extensions::extensions_set,
+            orden_extensions::extensions::extensions_remove,
+            orden_extensions::extensions::extensions_update,
+            orden_extensions::extensions::extensions_page,
+            orden_extensions::extensions::extensions_named,
+            orden_extensions::extensions::popup::extension_popup_open,
+            orden_extensions::extensions::popup::extension_popup_place,
+            orden_extensions::extensions::popup::extension_popup_close,
             orden_web::web_tabs::web_place,
             orden_web::keyboard::keyboard_watch,
             orden_web::keyboard::keyboard_pressed,
@@ -646,8 +644,10 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
         profile: engine::own_profile,
         call: engine::devtools::call,
     });
-    extensions::tabs::start(handle);
-    extensions::preinstall(handle);
+    orden_extensions::extensions::tabs::start(handle, |app, urls| {
+        launch::hand_over(app, launch::Handed::Pages, urls);
+    });
+    orden_extensions::extensions::preinstall(handle);
 }
 
 #[cfg(desktop)]
@@ -962,7 +962,7 @@ mod tests {
         "orden_crashes::crashes::exit::ended_well",
         "orden_placement::placement::keep",
         "orden_placement::placement::read",
-        "crate::extensions::webview2::reconcile",
+        "orden_extensions::extensions::webview2::reconcile",
         "orden_web::engine::web_store",
         "crate::agents::quiet::destination",
     ];

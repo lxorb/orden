@@ -1,0 +1,6 @@
+{
+  "name": "extensions",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base", "crashes", "placement", "web"]
+}

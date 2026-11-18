@@ -8,7 +8,10 @@ import { describe, expect, test } from 'vitest'
 
 const read = (name: string) =>
   readFileSync(
-    new URL(`../../../../src-tauri/src/extensions/firefox/${name}`, import.meta.url),
+    new URL(
+      `../../../../src-tauri/crates/extensions/src/extensions/firefox/${name}`,
+      import.meta.url,
+    ),
     'utf8',
   )
 const FIREFOX = read('firefox.js')

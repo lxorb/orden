@@ -76,7 +76,7 @@ fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
 
 #[test]
 fn nothing_moves_a_window_but_moved_as_it_is() {
-    let excused = ["quick_add.rs", "extensions/popup.rs"];
+    let excused = ["quick_add.rs", "crates/extensions/src/extensions/popup.rs"];
     let calls = [".set_position(", ".set_size(", ".set_outer_position("];
     let mut found = Vec::new();
     for (name, path) in crate::sources() {

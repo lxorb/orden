@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex, PoisonError, RwLock};
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter as _, Url};
+use tauri::{AppHandle, Emitter as _};
 
 mod amo;
 mod fetch;
