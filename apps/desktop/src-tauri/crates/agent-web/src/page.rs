@@ -7,15 +7,15 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 
 use crate::cdp::{self, Heard, Whence};
-use crate::engines::{self, Engine, Gate, Page, Tree, SETTLED, UNREAD};
+use crate::engines::{self, Gate, Page, Tree, SETTLED, UNREAD};
 use crate::scripts::{self, paint_over, png_size, CARET_ALL, CARET_END};
 use crate::snapshot::{self, Part};
 use orden_agents::grants::Grant;
 use orden_agents::keys::{self, Key};
 use orden_agents::policy::{self, Facts, Field};
 use orden_agents::verbs::{
-    Answer, Code, ConsoleLine, ConsoleLines, Cookie, FieldValue, Match, Moment, Picture, ReadAs,
-    Request, Requests, Store, Until,
+    Answer, Code, ConsoleLine, ConsoleLines, Cookie, FieldValue, Match, Moment, Picture, Request,
+    Requests, Store, Until,
 };
 use orden_documents::pdf::{printing, PdfPage};
 
@@ -43,7 +43,6 @@ const NATIVE: &str = "const read = (one, key) => Reflect.get(Object.getPrototype
 const TALLEST: f64 = 16_384.0;
 
 const FIELDS: &str = r"
-  // What is read of an element, through its interface and past its own properties: a form's named field is its own property, in every world, and would answer for `nodeType`, `elements` or `parentElement`.
   const read = (one, key) => Reflect.get(Object.getPrototypeOf(one), key, one)
   const call = (one, key, ...args) => read(one, key).apply(one, args)
   const text = (one) => String(one || '').replace(/\s+/g, ' ').trim()
@@ -86,29 +85,23 @@ const FIELDS: &str = r"
 ";
 
 const FACTS_BODY: &str = r"
-  // A pseudo-element answers a hit test and has no node of its own, a root or a document
-  // none that is an element. What is left says nothing, which the crate asks about.
   let el = read(this, 'nodeType') === 1 ? this : read(this, 'parentElement') || this.element || this.host || this.documentElement
   if (!el || read(el, 'nodeType') !== 1) return {}
-  // A part of a field the engine draws itself (a date's picker button) is that field.
   const root = call(el, 'getRootNode')
   if (root && root.host && ['INPUT', 'SELECT', 'TEXTAREA'].includes(root.host.tagName)) el = root.host
   const tag = read(el, 'tagName').toLowerCase()
   const kind = tag === 'input' ? String(read(el, 'type') || 'text').toLowerCase() : ''
-  // Its label's control, which is what a press on the label's words presses.
   const labelled = () => {
     const held = call(el, 'closest', 'label')
     return held && read(held, 'control') && call(read(held, 'control'), 'matches', CONTROLS) ? read(held, 'control') : null
   }
   const control = call(el, 'closest', CONTROLS) || labelled()
   const pressed = control || el
-  // A button named by its picture says so through the picture: what the engine's tree names it too.
   const pictured = (one) => {
     const said = []
     for (const kid of call(one, 'querySelectorAll', 'img[alt], input[alt], area[alt], [aria-label], [title], svg title')) said.push(call(kid, 'getAttribute', 'alt') || call(kid, 'getAttribute', 'aria-label') || call(kid, 'getAttribute', 'title') || read(kid, 'textContent'))
     return said.join(' ')
   }
-  // What is no control has no name in what it holds: a column of cards is not called Pay rent, nor a mail's row Delete for an icon in it. Its own words, down through what is plainly part of them, and only if they are short enough to be a name.
   const INLINE = ['SPAN', 'B', 'I', 'EM', 'STRONG', 'SMALL', 'U', 'MARK', 'ABBR', 'FONT', 'LABEL']
   const ownWords = (one) => {
     let said = ''
@@ -126,7 +119,6 @@ const FACTS_BODY: &str = r"
     const words = text(ownWords(one))
     return text(labelOf(one) || (words.length > 60 ? '' : words) || (read(one, 'tagName') === 'INPUT' && ['button', 'submit', 'reset', 'image'].includes(String(read(one, 'type')).toLowerCase()) ? read(one, 'value') : '') || call(one, 'getAttribute', 'title') || call(one, 'getAttribute', 'alt') || (words ? '' : onlyPicture(one)))
   }
-  // A design system's inner button, with its label on the host round its shadow root.
   const hostLabel = (one) => {
     for (let at = call(one, 'getRootNode').host; at; at = call(at, 'getRootNode').host) {
       const said = text(call(at, 'getAttribute', 'aria-label') || call(at, 'getAttribute', 'title'))
@@ -135,7 +127,6 @@ const FACTS_BODY: &str = r"
     return ''
   }
   const controlName = (one) => {
-    // A `<label>` elsewhere and its words both: that is no way to hide what it says.
     const label = labelOf(one)
     const words = text(read(one, 'innerText'))
     const both = label && words && !call(one, 'hasAttribute', 'aria-label') && !label.toLowerCase().includes(words.toLowerCase()) ? label + ' ' + words : label || words
@@ -143,7 +134,6 @@ const FACTS_BODY: &str = r"
     return said || hostLabel(one)
   }
   const nameOf = (one) => (call(one, 'matches', CONTROLS) ? controlName(one) : plainName(one)).slice(0, 200)
-  // What is pressed where no control holds the press: what listens round it, the nearest that says it takes a press (a handler, a place in the tab order, a widget's role, or `heard`, which the engine found listening), or the outermost that shows a pointer, which its children inherit. A field is its own.
   const above = (one) => read(one, 'parentElement') || call(one, 'getRootNode').host || null
   const acting = () => {
     if (control || ['INPUT', 'SELECT', 'TEXTAREA'].includes(read(el, 'tagName')) || read(el, 'isContentEditable')) return null
@@ -155,7 +145,6 @@ const FACTS_BODY: &str = r"
     }
     return null
   }
-  // Its lines as they show, short of a control of its own, which is pressed for itself: a mail's row is not called Delete for the icon in it. Through a shadow root: an open one, and the one the hit itself is in, closed or not. The words of its pseudo-elements, which is all some labels are.
   const rootOf = (one) => {
     if (read(one, 'shadowRoot')) return read(one, 'shadowRoot')
     for (let at = call(el, 'getRootNode'); at && at.host; at = at.host.getRootNode()) if (at.host === one) return at
@@ -183,7 +172,6 @@ const FACTS_BODY: &str = r"
           seen += read(node, 'textContent').length
         }
         if (read(node, 'tagName') === 'BR') lines.push('')
-        // Nor a field's words, which may be a secret's and are not what the page says: these lines are quoted to whoever asks.
         if (read(node, 'nodeType') !== 1 || node === leaving || call(node, 'matches', CONTROLS) || call(node, 'matches', OWN_WORDS) || ['SCRIPT', 'STYLE'].includes(read(node, 'tagName'))) continue
         const style = read(one, 'ownerDocument').defaultView.getComputedStyle(node)
         if (String(style.webkitTextSecurity || 'none') !== 'none') continue
@@ -199,7 +187,6 @@ const FACTS_BODY: &str = r"
     walk(read(rootOf(one) || one, 'childNodes'))
     return lines.map(text).filter(Boolean)
   }
-  // What it says for itself, with the words of the hit. Its lines are the policy's to read, with what is too long to be a name left out: built to be pressed, any of them may say what it does, as a Pay tile says Order summary and then Pay now; a row, or what only a listener round it or a place in the tab order says takes a press, by its first alone, as a row is not called Pay for its second cell and an app's root not Delete for its menu. Too many controls and it is no one control, as a column of cards is not.
   const SHORT = 60
   const actingName = (one) => text(labelOf(one) || call(one, 'getAttribute', 'title') || (linesOf(one).length ? '' : onlyPicture(one)))
   const heldBy = (one) => {
@@ -217,7 +204,6 @@ const FACTS_BODY: &str = r"
     return own.includes(hit) ? own : text(own + ' ' + hit)
   }
   const name = (actor ? named() : nameOf(pressed)).slice(0, 200)
-  // Through the shadow roots it is in: a design system's button is in the form round its host.
   const formOf = () => {
     if (read(el, 'form')) return read(el, 'form')
     for (let at = el; at; at = call(at, 'getRootNode').host) {
@@ -229,21 +215,13 @@ const FACTS_BODY: &str = r"
   const form = formOf()
   const buttonType = read(pressed, 'tagName') === 'BUTTON' ? String(call(pressed, 'getAttribute', 'type') || 'submit').toLowerCase() : ''
   const submit = !!form && ((read(pressed, 'tagName') === 'BUTTON' && buttonType === 'submit') || (read(pressed, 'tagName') === 'INPUT' && ['submit', 'image'].includes(String(read(pressed, 'type')).toLowerCase())))
-  // One that only goes: a Rails or Turbo delete, a link that says it is a button, and one with a handler do more than that. A listener no attribute shows is the crate's to see.
   const link = read(pressed, 'tagName') === 'A' && !/^\s*(#|javascript:|$)/i.test(String(call(pressed, 'getAttribute', 'href') || '')) && !call(pressed, 'matches', '[data-method], [data-turbo-method], [role=button], [onclick], [onmousedown], [onmouseup], [onpointerdown], [onpointerup]')
   const said = String(call(el, 'getAttribute', 'role') || '').toLowerCase()
   const editable = !!(read(el, 'isContentEditable') || tag === 'textarea' || said === 'textbox' || said === 'searchbox' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
-  // What Enter in the form presses: its first submit button, in the order the form holds them.
   const first = form && read(form, 'elements') ? Array.from(read(form, 'elements')).find((one) => ['BUTTON', 'INPUT'].includes(read(one, 'tagName')) && ['submit', 'image'].includes(String(read(one, 'type')).toLowerCase())) : null
-  // A closed shadow root's host: it has the keyboard and shows nothing to read, not even that it has a root.
   const native = ['input', 'select', 'textarea', 'button', 'a', 'area', 'summary', 'body', 'html', 'iframe', 'frame', 'object', 'embed', 'img', 'video', 'audio', 'canvas']
-  // And what draws its own face and acts on a press: a canvas, or a component showing nothing that can be read. An empty div with a listener is a backdrop, or a tile nobody named, and goes.
   const drawn = !!actor && !name && !held.length && (tag === 'canvas' || tag.includes('-')) && !read(el, 'children').length && !text(read(el, 'innerText'))
   const opaque = drawn || (!native.includes(tag) && !read(el, 'shadowRoot') && !read(el, 'children').length && !text(read(el, 'innerText')) && !name && !!root && root.activeElement === el)
-  // The form's fields, or the page's when it is in none: a webmail's Send and a chat
-  // widget's are in no form, and their message box is an editable region.
-  // Into the open shadow roots under it; a closed one is the crate's (`closed_fields`).
-  // So far and no further on a page of a million nodes or a form of hundreds of fields, and it says so: a submit then asks.
   const fields = []
   let walked = 0
   const fieldsIn = (under) => {
@@ -255,7 +233,6 @@ const FACTS_BODY: &str = r"
     }
   }
   fieldsIn(form || read(el, 'ownerDocument'))
-  // What the dialog a press is in says: its label and its own lines. Its Confirm does what the dialog says.
   const dialogOf = () => {
     if (!control && !actor && !editable) return ''
     for (let at = el; at; at = call(at, 'getRootNode').host) {
@@ -268,7 +245,6 @@ const FACTS_BODY: &str = r"
     }
     return ''
   }
-  // The document it is in and the origins round it, which is the frame it is in.
   const place = read(el, 'ownerDocument').location
   const at = place ? [place.href, ...Array.from(place.ancestorOrigins || [])] : []
   return { at, cut: walked >= 50000 || fields.length >= 200, control: !!control, tag, type: kind, name, autocomplete: String(call(el, 'getAttribute', 'autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el), default_button: first ? nameOf(first) : '', opaque, dialog: dialogOf(), held }
@@ -607,11 +583,11 @@ impl Page<'_> {
         .map_err(|why| stale(&why))
     }
 
-    fn url(&self) -> String {
+    pub(crate) fn url(&self) -> String {
         self.view.url()
     }
 
-    fn element(&self, reference: &str) -> Result<Element, Answer> {
+    pub(crate) fn element(&self, reference: &str) -> Result<Element, Answer> {
         let Some((frame, backend)) = snapshot::parse_ref(reference) else {
             return Err(Answer::error(
                 Code::NoSuchRef,
@@ -821,12 +797,12 @@ impl Page<'_> {
             .unwrap_or_default())
     }
 
-    fn facts(&self, element: &Element) -> Result<Facts, Answer> {
+    pub(crate) fn facts(&self, element: &Element) -> Result<Facts, Answer> {
         let said = self.run_on(element, &FACTS, &[])?;
         Ok(self.facts_from(element, &said))
     }
 
-    fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
+    pub(crate) fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
         let mut facts = self.facts(element)?;
         if facts.link && self.link_listens(element) {
             facts.link = false;
@@ -1025,7 +1001,7 @@ impl Page<'_> {
         .ok()
     }
 
-    fn active_facts(&self) -> Result<Option<Facts>, Answer> {
+    pub(crate) fn active_facts(&self) -> Result<Option<Facts>, Answer> {
         let Some((facts, object)) = self.active_in(None, None)? else {
             return Ok(None);
         };
@@ -1184,7 +1160,7 @@ impl Page<'_> {
         Ok(frame)
     }
 
-    fn settle(&self, navigations_before: u64) {
+    pub(crate) fn settle(&self, navigations_before: u64) {
         let started = Instant::now();
         let navigated = loop {
             let navigations = self.heard().held().navigations;
@@ -1230,7 +1206,7 @@ impl Page<'_> {
         orden_agents::stop::cancelled(self.since) || crate::quiet::dialog_of(&self.label).is_some()
     }
 
-    fn navigations(&self) -> u64 {
+    pub(crate) fn navigations(&self) -> u64 {
         self.heard().held().navigations
     }
 
@@ -1304,7 +1280,7 @@ impl Page<'_> {
         }
     }
 
-    fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
+    pub(crate) fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
         let point = self.point(element)?;
         self.struck(element, point)
     }
@@ -1368,7 +1344,7 @@ impl Page<'_> {
         holder().unwrap_or(backend)
     }
 
-    fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
+    pub(crate) fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
         let backend = self
             .node_at(point)
             .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))?;
@@ -1580,7 +1556,7 @@ impl Page<'_> {
         .map(|_| ())
     }
 
-    fn click(
+    pub(crate) fn click(
         &self,
         element: &Element,
         button: &str,
@@ -1607,7 +1583,7 @@ impl Page<'_> {
         Ok(())
     }
 
-    fn click_at(
+    pub(crate) fn click_at(
         &self,
         point: (f64, f64),
         judged: &Element,
@@ -1712,12 +1688,17 @@ impl Page<'_> {
         .is_ok_and(|said| said.pointer("/result/value").and_then(Value::as_bool) != Some(false))
     }
 
-    fn hover(&self, element: &Element) -> Result<(), Answer> {
+    pub(crate) fn hover(&self, element: &Element) -> Result<(), Answer> {
         let point = self.point(element)?;
         self.mouse("mouseMoved", point, "none", 0, 0)
     }
 
-    fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
+    pub(crate) fn type_text(
+        &self,
+        element: &Element,
+        text: &str,
+        replace: bool,
+    ) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
@@ -1789,7 +1770,11 @@ impl Page<'_> {
         }
     }
 
-    fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
+    pub(crate) fn select(
+        &self,
+        element: &Element,
+        values: &[String],
+    ) -> Result<Vec<String>, Answer> {
         let said = self.run_in_page(
             element,
             r"function (values) {
@@ -1822,7 +1807,12 @@ impl Page<'_> {
             .unwrap_or_default())
     }
 
-    fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer> {
+    pub(crate) fn fill(
+        &self,
+        element: &Element,
+        value: &FieldValue,
+        gate: Gate<'_>,
+    ) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
@@ -1849,12 +1839,12 @@ impl Page<'_> {
         }
     }
 
-    fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
+    pub(crate) fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
         let now = self.run_on(element, "function () { return this.checked }", &[])?;
         Ok(now.as_bool() != Some(wanted))
     }
 
-    fn press(&self, key: &Key) -> Result<(), Answer> {
+    pub(crate) fn press(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let before = self.navigations();
         self.press_key(key)?;
@@ -1862,7 +1852,7 @@ impl Page<'_> {
         Ok(())
     }
 
-    fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
+    pub(crate) fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
         self.may_press(key)?;
         let found = self.call(
             "Runtime.evaluate",
@@ -1905,7 +1895,7 @@ impl Page<'_> {
         Ok(())
     }
 
-    fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
+    pub(crate) fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
         if let Some(element) = element {
             self.call_on(
                 element,
@@ -1947,7 +1937,7 @@ impl Page<'_> {
         Ok(())
     }
 
-    fn drag(
+    pub(crate) fn drag(
         &self,
         (from, picked): (&Element, &Element),
         (to, dropped): (&Element, &Element),
@@ -1995,7 +1985,12 @@ impl Page<'_> {
         dragged
     }
 
-    fn upload(&self, element: &Element, files: &[String], gate: Gate<'_>) -> Result<(), Answer> {
+    pub(crate) fn upload(
+        &self,
+        element: &Element,
+        files: &[String],
+        gate: Gate<'_>,
+    ) -> Result<(), Answer> {
         let facts = self.facts(element)?;
         let input = if facts.kind == "file" {
             element.clone()
@@ -2062,7 +2057,7 @@ impl Page<'_> {
             .unwrap_or(1.0)
     }
 
-    fn screenshot(
+    pub(crate) fn screenshot(
         &self,
         element: Option<&Element>,
         full: bool,
@@ -2233,7 +2228,7 @@ impl Page<'_> {
         Ok(prefixes)
     }
 
-    fn parts(&self) -> Result<Tree, Answer> {
+    pub(crate) fn parts(&self) -> Result<Tree, Answer> {
         let started = Instant::now();
         let _ = self.nested_followed();
         let own = self.call("Accessibility.getFullAXTree", &json!({}))?;
@@ -2535,7 +2530,7 @@ impl Page<'_> {
         ))
     }
 
-    fn read(
+    pub(crate) fn read(
         &self,
         app: &tauri::AppHandle,
         shape: orden_agents::verbs::ReadAs,
@@ -2549,7 +2544,7 @@ impl Page<'_> {
         Ok(scripts::words(app, shape, &said))
     }
 
-    fn title(&self) -> String {
+    pub(crate) fn title(&self) -> String {
         self.isolated("document.title")
             .ok()
             .and_then(|one| one.as_str().map(str::to_string))
@@ -2600,7 +2595,7 @@ impl Page<'_> {
             .ok_or_else(|| Answer::error(Code::Failed, "the engine printed nothing"))
     }
 
-    fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
+    pub(crate) fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
         let started = Instant::now();
         loop {
             let done = match until {
@@ -2668,7 +2663,7 @@ impl Page<'_> {
         }
     }
 
-    fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
+    pub(crate) fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
         if !page_world {
             return self.isolated(expression);
         }
@@ -2683,7 +2678,7 @@ impl Page<'_> {
             .unwrap_or_default())
     }
 
-    fn navigate(&self, url: &str) -> Result<(), Answer> {
+    pub(crate) fn navigate(&self, url: &str) -> Result<(), Answer> {
         let loads = self.heard().held().loads;
         let went = self.call("Page.navigate", &json!({ "url": url }))?;
         if let Some(error) = went
@@ -2700,7 +2695,7 @@ impl Page<'_> {
         Ok(())
     }
 
-    fn step(&self, by: i64) -> Result<(), Answer> {
+    pub(crate) fn step(&self, by: i64) -> Result<(), Answer> {
         let loads = self.heard().held().loads;
         if by == 0 {
             self.call("Page.reload", &json!({}))?;
@@ -2742,7 +2737,7 @@ impl Page<'_> {
         }
     }
 
-    fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
+    pub(crate) fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
         let said = self.call("Network.getCookies", &json!({ "urls": [self.url()] }))?;
         Ok(said
             .get("cookies")
@@ -2770,7 +2765,7 @@ impl Page<'_> {
             .collect())
     }
 
-    fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
+    pub(crate) fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
         if let Some(domain) = &cookie.domain {
             if !policy::host_of(&self.url()).is_some_and(|host| cookie_fits(domain, &host)) {
                 return Err(Answer::error(
@@ -2800,7 +2795,7 @@ impl Page<'_> {
         Ok(())
     }
 
-    fn clear(&self) -> Result<(), Answer> {
+    pub(crate) fn clear(&self) -> Result<(), Answer> {
         for cookie in self.cookies()? {
             let _ = self.call(
                 "Network.deleteCookies",
@@ -2817,12 +2812,12 @@ impl Page<'_> {
         Ok(())
     }
 
-    fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
+    pub(crate) fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
         let said = self.isolated("(() => { const out = {}; for (let at = 0; at < localStorage.length; at++) { const key = localStorage.key(at); out[key] = localStorage.getItem(key) } return out })()")?;
         Ok(said.as_object().cloned().unwrap_or_default())
     }
 
-    fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
+    pub(crate) fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
         let (parts, secret) = self.parts()?;
         Ok(snapshot::find(&parts, &secret, wanted))
     }
@@ -2831,84 +2826,20 @@ impl Page<'_> {
 const BODIES: usize = 20;
 const LONGEST_BODY: usize = 100_000;
 
-impl Engine for Page<'_> {
-    fn wake(&self) {
+impl Page<'_> {
+    pub(crate) fn wake(&self) {
         cdp::awake(self.view, &self.label, self.own);
     }
 
-    fn url(&self) -> String {
-        Page::url(self)
-    }
-
-    fn title(&self) -> String {
-        Page::title(self)
-    }
-
-    fn element(&self, reference: &str) -> Result<Element, Answer> {
-        Page::element(self, reference)
-    }
-
-    fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
-        Page::element_at(self, point)
-    }
-
-    fn facts(&self, element: &Element) -> Result<Facts, Answer> {
-        Page::facts(self, element)
-    }
-
-    fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer> {
-        Page::facts_of_press(self, element)
-    }
-
-    fn at_first_point(&self, element: &Element) -> Result<Element, Answer> {
-        Page::at_first_point(self, element)
-    }
-
-    fn aimed(&self, element: &Element) -> Result<Element, Answer> {
+    pub(crate) fn aimed(&self, element: &Element) -> Result<Element, Answer> {
         Ok(Page::aim(self, element)?.on)
     }
 
-    fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
-        self.frame_may_be_acted_in(facts)
-    }
-
-    fn limits_sites(&self) -> bool {
-        self.grant_limits_sites()
-    }
-
-    fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer> {
-        Page::tick_changes(self, element, wanted)
-    }
-
-    fn active_facts(&self) -> Result<Option<Facts>, Answer> {
-        Page::active_facts(self)
-    }
-
-    fn navigate(&self, url: &str) -> Result<(), Answer> {
-        Page::navigate(self, url)
-    }
-
-    fn step(&self, by: i64) -> Result<(), Answer> {
-        Page::step(self, by)
-    }
-
-    fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer> {
-        Page::wait(self, until, most)
-    }
-
-    fn settle(&self, navigations_before: u64) {
-        Page::settle(self, navigations_before);
-    }
-
-    fn navigations(&self) -> u64 {
-        Page::navigations(self)
-    }
-
-    fn opened(&self) -> Vec<String> {
+    pub(crate) fn opened(&self) -> Vec<String> {
         std::mem::take(&mut self.heard().held().opened)
     }
 
-    fn hosts(&self) -> Vec<String> {
+    pub(crate) fn hosts(&self) -> Vec<String> {
         let heard = self.heard();
         let held = heard.held();
         let (requests, _) = held.requests(None, None);
@@ -2924,104 +2855,7 @@ impl Engine for Page<'_> {
         hosts.into_iter().collect()
     }
 
-    fn parts(&self) -> Result<Tree, Answer> {
-        Page::parts(self)
-    }
-
-    fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
-        Page::find(self, wanted)
-    }
-
-    fn read(
-        &self,
-        app: &tauri::AppHandle,
-        shape: ReadAs,
-    ) -> Result<(String, String, String), Answer> {
-        Page::read(self, app, shape)
-    }
-
-    fn clip(&self) -> Result<(String, String, String), Answer> {
-        Page::clip(self)
-    }
-
-    fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
-        Page::pdf(self, paper)
-    }
-
-    fn click(
-        &self,
-        element: &Element,
-        button: &str,
-        count: u8,
-        modifiers: u8,
-        gate: Gate<'_>,
-    ) -> Result<(), Answer> {
-        Page::click(self, element, button, count, modifiers, gate)
-    }
-
-    fn click_at(
-        &self,
-        point: (f64, f64),
-        judged: &Element,
-        button: &str,
-        count: u8,
-        modifiers: u8,
-        gate: Gate<'_>,
-    ) -> Result<(), Answer> {
-        Page::click_at(self, point, judged, button, count, modifiers, gate)
-    }
-
-    fn hover(&self, element: &Element) -> Result<(), Answer> {
-        Page::hover(self, element)
-    }
-
-    fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer> {
-        Page::type_text(self, element, text, replace)
-    }
-
-    fn press(&self, key: &Key) -> Result<(), Answer> {
-        Page::press(self, key)
-    }
-
-    fn press_in_page(&self, key: &Key) -> Result<(), Answer> {
-        Page::press_in_page(self, key)
-    }
-
-    fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer> {
-        Page::scroll(self, element, dx, dy)
-    }
-
-    fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer> {
-        Page::select(self, element, values)
-    }
-
-    fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer> {
-        Page::fill(self, element, value, gate)
-    }
-
-    fn drag(
-        &self,
-        from: (&Element, &Element),
-        to: (&Element, &Element),
-        gates: (Gate<'_>, Gate<'_>),
-    ) -> Result<(), Answer> {
-        Page::drag(self, from, to, gates)
-    }
-
-    fn upload(&self, element: &Element, files: &[String], gate: Gate<'_>) -> Result<(), Answer> {
-        Page::upload(self, element, files, gate)
-    }
-
-    fn screenshot(
-        &self,
-        element: Option<&Element>,
-        full: bool,
-        scale: Option<f64>,
-    ) -> Result<Picture, Answer> {
-        Page::screenshot(self, element, full, scale)
-    }
-
-    fn console(&self, since: Option<u64>, level: Option<&str>) -> Result<ConsoleLines, Answer> {
+    pub(crate) fn console(&self, since: Option<u64>, level: Option<&str>) -> ConsoleLines {
         cdp::listen_to_console(self.view, &self.label);
         let (lines, next) = self.heard().held().console(since, level);
         let lines = lines
@@ -3029,15 +2863,15 @@ impl Engine for Page<'_> {
             .filter(|(one, whence)| line_readable(self.limits.as_ref(), one, whence))
             .map(|(one, _)| one)
             .collect();
-        Ok(ConsoleLines { lines, next })
+        ConsoleLines { lines, next }
     }
 
-    fn network(
+    pub(crate) fn network(
         &self,
         since: Option<u64>,
         matching: Option<&str>,
         bodies: bool,
-    ) -> Result<Requests, Answer> {
+    ) -> Requests {
         let heard = self.heard();
         let (requests, next) = heard.held().requests(since, matching);
         let mut requests: Vec<Request> = requests
@@ -3065,27 +2899,7 @@ impl Engine for Page<'_> {
                 }
             }
         }
-        Ok(Requests { requests, next })
-    }
-
-    fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer> {
-        Page::evaluate(self, expression, page_world)
-    }
-
-    fn cookies(&self) -> Result<Vec<Cookie>, Answer> {
-        Page::cookies(self)
-    }
-
-    fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer> {
-        Page::set_cookie(self, cookie)
-    }
-
-    fn clear(&self) -> Result<(), Answer> {
-        Page::clear(self)
-    }
-
-    fn local(&self) -> Result<serde_json::Map<String, Value>, Answer> {
-        Page::local(self)
+        Requests { requests, next }
     }
 }
 

@@ -647,6 +647,13 @@ mod tests {
         }
     }
 
+    fn written(text: &str) -> (tempfile::TempDir, PathBuf) {
+        let dir = tempfile::tempdir().expect("dir");
+        let path = dir.path().join("agents.json");
+        std::fs::write(&path, text).expect("write");
+        (dir, path)
+    }
+
     #[test]
     fn a_grant_round_trips_through_the_file_shape() {
         let mut grant = Grant::own("claude-code".into(), "Claude Code");
@@ -706,11 +713,7 @@ mod tests {
             "helpers": true,
         })
         .to_string();
-        let dir = std::env::temp_dir().join(format!("orden-grants-orden-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).expect("dir");
-        let path = dir.join("agents.json");
-        std::fs::write(&path, text).expect("write");
-
+        let (_dir, path) = written(&text);
         let read = read(&path);
         let labels: Vec<(&str, &str)> = read
             .iter()
@@ -733,7 +736,6 @@ mod tests {
         named[2].grant.name = "nib · mine".into();
         write(&path, &named).expect("write again");
         assert_eq!(super::read(&path)[2].grant.name, "nib · mine");
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -758,11 +760,7 @@ mod tests {
             "orden": true,
         })
         .to_string();
-        let dir = std::env::temp_dir().join(format!("orden-grants-dot-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).expect("dir");
-        let path = dir.join("agents.json");
-        std::fs::write(&path, text).expect("write");
-
+        let (_dir, path) = written(&text);
         let read = read(&path);
         let labels: Vec<(&str, &str, &str)> = read
             .iter()
@@ -783,7 +781,6 @@ mod tests {
             ]
         );
         assert!(read[0].grant.built_in);
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -804,11 +801,7 @@ mod tests {
             token: hashed("t"),
         };
         let text = serde_json::json!({ "agents": [kept(&own), kept(&other)] }).to_string();
-        let dir = std::env::temp_dir().join(format!("orden-grants-{}", std::process::id()));
-        std::fs::create_dir_all(&dir).expect("dir");
-        let path = dir.join("agents.json");
-        std::fs::write(&path, text).expect("write");
-
+        let (_dir, path) = written(&text);
         let read = read(&path);
         assert!(read[0].grant.holds(Scope::ChatsRead));
         assert!(!read[0].grant.holds(Scope::ChatsWrite));
@@ -818,7 +811,6 @@ mod tests {
         taken[0].grant.scopes.retain(|one| *one != Scope::ChatsRead);
         write(&path, &taken).expect("write again");
         assert!(!super::read(&path)[0].grant.holds(Scope::ChatsRead));
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

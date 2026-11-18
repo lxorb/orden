@@ -2,19 +2,15 @@ use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
-use std::time::Duration;
 
-use serde_json::{Map, Value};
+use serde_json::Value;
 use tauri::{AppHandle, Manager as _, Webview};
 
-use crate::snapshot::{Part, Wanted};
+use crate::snapshot::Part;
 use orden_agents::grants::Grant;
 use orden_agents::keys::Key;
 use orden_agents::policy::Facts;
-use orden_agents::verbs::{
-    Answer, Code, ConsoleLines, Cookie, FieldValue, Match, Picture, ReadAs, Requests, Store, Until,
-};
-use orden_documents::pdf::PdfPage;
+use orden_agents::verbs::{Answer, Code, Store};
 
 pub use crate::page::Element;
 
@@ -207,11 +203,11 @@ pub struct Page<'a> {
 }
 
 impl Page<'_> {
-    pub fn frame_may_be_acted_in(&self, facts: &Facts) -> Result<(), Answer> {
+    pub fn may_act_in(&self, facts: &Facts) -> Result<(), Answer> {
         acts_in(self.limits.as_ref(), facts)
     }
 
-    pub fn grant_limits_sites(&self) -> bool {
+    pub fn limits_sites(&self) -> bool {
         limits_sites(self.limits.as_ref())
     }
 }
@@ -288,83 +284,6 @@ impl Page<'_> {
         }
         Ok(())
     }
-}
-
-pub trait Engine {
-    fn wake(&self);
-    fn url(&self) -> String;
-    fn title(&self) -> String;
-    fn element(&self, reference: &str) -> Result<Element, Answer>;
-    fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer>;
-    fn facts(&self, element: &Element) -> Result<Facts, Answer>;
-    fn facts_of_press(&self, element: &Element) -> Result<Facts, Answer>;
-    fn at_first_point(&self, element: &Element) -> Result<Element, Answer>;
-    fn aimed(&self, element: &Element) -> Result<Element, Answer>;
-    fn may_act_in(&self, facts: &Facts) -> Result<(), Answer>;
-    fn limits_sites(&self) -> bool;
-    fn tick_changes(&self, element: &Element, wanted: bool) -> Result<bool, Answer>;
-    fn active_facts(&self) -> Result<Option<Facts>, Answer>;
-    fn navigate(&self, url: &str) -> Result<(), Answer>;
-    fn step(&self, by: i64) -> Result<(), Answer>;
-    fn wait(&self, until: &Until, most: Duration) -> Result<u64, Answer>;
-    fn settle(&self, navigations_before: u64);
-    fn navigations(&self) -> u64;
-    fn opened(&self) -> Vec<String>;
-    fn hosts(&self) -> Vec<String>;
-    fn parts(&self) -> Result<Tree, Answer>;
-    fn find(&self, wanted: &Wanted<'_>) -> Result<Vec<Match>, Answer>;
-    fn read(&self, app: &AppHandle, shape: ReadAs) -> Result<(String, String, String), Answer>;
-    fn clip(&self) -> Result<(String, String, String), Answer>;
-    fn pdf(&self, paper: &PdfPage) -> Result<String, Answer>;
-    fn click(
-        &self,
-        element: &Element,
-        button: &str,
-        count: u8,
-        modifiers: u8,
-        gate: Gate<'_>,
-    ) -> Result<(), Answer>;
-    fn click_at(
-        &self,
-        point: (f64, f64),
-        judged: &Element,
-        button: &str,
-        count: u8,
-        modifiers: u8,
-        gate: Gate<'_>,
-    ) -> Result<(), Answer>;
-    fn hover(&self, element: &Element) -> Result<(), Answer>;
-    fn type_text(&self, element: &Element, text: &str, replace: bool) -> Result<(), Answer>;
-    fn press(&self, key: &Key) -> Result<(), Answer>;
-    fn press_in_page(&self, key: &Key) -> Result<(), Answer>;
-    fn scroll(&self, element: Option<&Element>, dx: f64, dy: f64) -> Result<(), Answer>;
-    fn select(&self, element: &Element, values: &[String]) -> Result<Vec<String>, Answer>;
-    fn fill(&self, element: &Element, value: &FieldValue, gate: Gate<'_>) -> Result<(), Answer>;
-    fn drag(
-        &self,
-        from: (&Element, &Element),
-        to: (&Element, &Element),
-        gates: (Gate<'_>, Gate<'_>),
-    ) -> Result<(), Answer>;
-    fn upload(&self, element: &Element, files: &[String], gate: Gate<'_>) -> Result<(), Answer>;
-    fn screenshot(
-        &self,
-        element: Option<&Element>,
-        full: bool,
-        scale: Option<f64>,
-    ) -> Result<Picture, Answer>;
-    fn console(&self, since: Option<u64>, level: Option<&str>) -> Result<ConsoleLines, Answer>;
-    fn network(
-        &self,
-        since: Option<u64>,
-        matching: Option<&str>,
-        bodies: bool,
-    ) -> Result<Requests, Answer>;
-    fn evaluate(&self, expression: &str, page_world: bool) -> Result<Value, Answer>;
-    fn cookies(&self) -> Result<Vec<Cookie>, Answer>;
-    fn set_cookie(&self, cookie: &Cookie) -> Result<(), Answer>;
-    fn clear(&self) -> Result<(), Answer>;
-    fn local(&self) -> Result<Map<String, Value>, Answer>;
 }
 
 #[cfg(test)]

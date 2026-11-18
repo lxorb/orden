@@ -2,7 +2,7 @@ use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::browser_profiles::{once, Profile};
+use crate::browser_profiles::{once, present, Profile};
 use crate::firefox_profiles::BROWSERS_DIR;
 use orden_base::paths::folder_named;
 
@@ -223,25 +223,11 @@ fn is_profile_folder(folder: &str) -> bool {
 }
 
 fn files_of(profile: &Path) -> Vec<String> {
-    let mut found: Vec<String> = ["Bookmarks", "AccountBookmarks"]
-        .into_iter()
-        .filter(|name| profile.join(name).is_file())
-        .map(str::to_owned)
-        .collect();
+    let mut found = present(profile, &["Bookmarks", "AccountBookmarks"]);
     found.extend(newest(profile, "Sessions", SESSIONS_KEPT));
-    found.extend(
-        ["Current Session", "Last Session"]
-            .into_iter()
-            .filter(|name| profile.join(name).is_file())
-            .map(str::to_owned),
-    );
+    found.extend(present(profile, &["Current Session", "Last Session"]));
     found.extend(newest(profile, "Sessions_Encrypted", 1));
-    found.extend(
-        ["Preferences", "History", "Favicons"]
-            .into_iter()
-            .filter(|name| profile.join(name).is_file())
-            .map(str::to_owned),
-    );
+    found.extend(present(profile, &["Preferences", "History", "Favicons"]));
     found
 }
 

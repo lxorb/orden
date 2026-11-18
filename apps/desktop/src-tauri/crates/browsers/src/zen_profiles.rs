@@ -1,14 +1,14 @@
 use rusqlite::types::ValueRef;
 use rusqlite::Connection;
 use serde_json::{json, Map, Value};
-use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::browser_profiles::{
-    copied, ini_profiles, known as listed_file, once, read_listed, Profile,
-};
+use crate::browser_data::opened;
 #[cfg(test)]
 use crate::browser_profiles::{entries_in, installed_defaults};
+use crate::browser_profiles::{
+    ini_profiles, known as listed_file, newest, once, present, read_listed, Profile,
+};
 use crate::firefox_profiles::{tree_of, FAVICONS, PLACES, SEARCH};
 use orden_base::paths::folder_named;
 
@@ -39,13 +39,8 @@ pub fn read_zen_file(profile: String, file: String) -> Result<String, String> {
 
 #[tauri::command(async)]
 pub fn read_zen_places(profile: String) -> Result<String, String> {
-    let path = listed_file("Zen", &profile, PLACES, &listed())?;
-    let folder = path.parent().ok_or("a profile has a folder")?;
-    let copy =
-        copied(folder, PLACES).map_err(|error| format!("{PLACES} could not be copied: {error}"))?;
-    let db = Connection::open(copy.path().join(PLACES))
-        .map_err(|error| format!("{PLACES} could not be opened: {error}"))?;
-    Ok(places_of(&db).to_string())
+    let db = opened(&listed_file("Zen", &profile, PLACES, &listed())?, PLACES)?;
+    Ok(places_of(&db.connection).to_string())
 }
 
 fn places_of(db: &Connection) -> Value {
@@ -112,35 +107,19 @@ fn profiles_in(home: &Path) -> Vec<ZenProfile> {
 }
 
 fn files_of(profile: &Path) -> Vec<String> {
-    let mut found: Vec<String> = SESSIONS
-        .iter()
-        .filter(|name| profile.join(name).is_file())
-        .map(|name| (*name).to_owned())
-        .collect();
+    let mut found = present(profile, &SESSIONS);
     if found.is_empty() {
         return found;
     }
 
-    let newest = fs::read_dir(profile.join(BACKUPS))
-        .into_iter()
-        .flatten()
-        .flatten()
-        .filter_map(|entry| entry.file_name().to_str().map(str::to_owned))
-        .filter(|name| name.starts_with(BACKUP_PREFIX) && name.ends_with(BACKUP_SUFFIX))
-        .max();
-    if let Some(name) = newest {
+    if let Some(name) = newest(profile, BACKUPS, BACKUP_PREFIX, BACKUP_SUFFIX) {
         let at = found
             .iter()
             .position(|one| one.starts_with("sessionstore"))
             .unwrap_or(found.len());
-        found.insert(at, format!("{BACKUPS}/{name}"));
+        found.insert(at, name);
     }
-    found.extend(
-        [PLACES, FAVICONS, SEARCH]
-            .into_iter()
-            .filter(|name| profile.join(name).is_file())
-            .map(str::to_owned),
-    );
+    found.extend(present(profile, &[PLACES, FAVICONS, SEARCH]));
 
     found
 }
@@ -153,6 +132,7 @@ fn known(profile: &str, file: &str, listed: &[ZenProfile]) -> Result<PathBuf, St
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     const INI: &str = "[Install6F193CCC56814779]\r\nDefault=Profiles/b2.Default (release)\r\nLocked=1\r\n\r\n[Profile1]\r\nName=Default Profile\r\nIsRelative=1\r\nPath=Profiles/a1.default\r\nDefault=1\r\n\r\n[Profile0]\r\nName=Default (release)\r\nIsRelative=1\r\nPath=Profiles/b2.Default (release)\r\n\r\n[Profile2]\r\nName=Work\r\nIsRelative=1\r\nPath=Profiles/c3.Work\r\n\r\n[General]\r\nStartWithLastProfile=1\r\nVersion=2\r\n";
 
