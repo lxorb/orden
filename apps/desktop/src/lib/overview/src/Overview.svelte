@@ -1,11 +1,8 @@
 <script lang="ts">
   import { tick as laidOut, untrack } from 'svelte'
-  import { closeOnBack } from '../../ui-kit/src/api'
-  import { chorded } from '../../ui-kit/src/api'
-  import { stillness } from '../../platform/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import { Cross } from '../../ui-kit/src/api'
-  import { Select } from '../../ui-controls/src/api'
+  import { closeOnBack, chorded, overlays, Cross, prompt } from '../../ui-kit/src/api'
+  import { stillness, keep, storedText } from '../../platform/src/api'
+  import { Select, trap } from '../../ui-controls/src/api'
   import {
     mayCarry,
     movingOf,
@@ -16,11 +13,8 @@
     workspace,
   } from '../../workspace/src/api'
   import { TabMark } from '../../marks/src/api'
-  import { trap } from '../../ui-controls/src/api'
-  import { prompt } from '../../ui-kit/src/api'
   import { webPages, whenLoaded } from '@orden/contracts'
-  import { isDraft } from '../../documents/src/api'
-  import type { Tab } from '../../documents/src/api'
+  import { isDraft, type Tab } from '../../documents/src/api'
   import {
     aimed,
     boxToCanvas,
@@ -41,7 +35,6 @@
   import { type Cell, cellAt } from './cells'
   import Cells from './Cells.svelte'
   import { boundsOf, boxOutline, moved as shifted, type Outline, outlineOf } from './outline'
-  import { keep, storedText } from '../../platform/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'

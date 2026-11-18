@@ -1,8 +1,7 @@
 import { expect, test } from 'vitest'
 import { keptAt, overlaps, roomFor, settled, stripLanding, stripPlace } from './free'
 import { cellAt } from './cells'
-import { around } from './layout'
-import type { Slot } from './layout'
+import { around, type Slot } from './layout'
 
 const at = (id: string, x: number, y: number, paneId = 'p'): Slot => ({
   id,

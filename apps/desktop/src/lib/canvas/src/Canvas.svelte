@@ -58,15 +58,6 @@
     facingSide,
     SIDES,
     sidePoint,
-  } from '../../plane/src/api'
-  import {
-    type Canvas as Plane,
-    type InkPoint,
-    readCanvas,
-    type Shape,
-    writeCanvas,
-  } from '@orden/markdown/canvas'
-  import {
     type Box,
     boxOf,
     caught,
@@ -81,6 +72,13 @@
     rectBetween,
     shapePath,
   } from '../../plane/src/api'
+  import {
+    type Canvas as Plane,
+    type InkPoint,
+    readCanvas,
+    type Shape,
+    writeCanvas,
+  } from '@orden/markdown/canvas'
   import { cursorFor, type Over } from './cursor'
   import { hand } from './hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './lattice'

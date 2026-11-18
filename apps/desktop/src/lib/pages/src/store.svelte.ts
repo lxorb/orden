@@ -18,8 +18,7 @@ import {
   takeParsed,
 } from '@orden/markdown/canvas'
 import { strokeBox } from '../../plane/src/api'
-import type { KeptView } from '../../canvas/src/api'
-import { CanvasStore } from '../../canvas/src/api'
+import { type KeptView, CanvasStore } from '../../canvas/src/api'
 import type { Highlight, PaperAt, PdfHeading } from '../../pdf/src/api'
 import { stillness } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'

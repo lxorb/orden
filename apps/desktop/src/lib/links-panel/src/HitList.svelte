@@ -1,14 +1,11 @@
 <script lang="ts">
   import { tick } from 'svelte'
-  import { fileMark } from '../../marks/src/api'
-  import { FileMark } from '../../marks/src/api'
+  import { fileMark, FileMark } from '../../marks/src/api'
   import type { Outgoing, Reference } from '../../link-index/src/api'
   import { linkPieces, shownLine } from './link-line'
   import { roving } from '../../ui-kit/src/api'
-  import { shownName } from '../../platform/src/api'
-  import { offsetOf, type Rows, windowFor } from '../../windows/src/api'
-  import { ListView, measuredRow } from '../../windows/src/api'
-  import { folderOf, insideSpace } from '../../platform/src/api'
+  import { shownName, folderOf, insideSpace } from '../../platform/src/api'
+  import { offsetOf, type Rows, windowFor, ListView, measuredRow } from '../../windows/src/api'
   import { workspace, middleOpens } from '../../workspace/src/api'
 
   type Row = Reference | Outgoing

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Icon } from '../../glyphs/src/api'
-  import { iconLibrary } from '../../glyphs/src/api'
+  import { Icon, iconLibrary } from '../../glyphs/src/api'
   import { initial, readIcon } from '../../ui-kit/src/api'
   import { workspace } from '../../workspace/src/api'
 

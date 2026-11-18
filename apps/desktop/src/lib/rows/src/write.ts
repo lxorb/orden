@@ -1,5 +1,16 @@
-import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@orden/bases'
-import { lineOfTask, listAsWritten, noteValues, tick, todayOf } from '@orden/bases'
+import {
+  type DateValue,
+  type DurationValue,
+  type LinkValue,
+  type Row,
+  type TaskChange,
+  type Value,
+  lineOfTask,
+  listAsWritten,
+  noteValues,
+  tick,
+  todayOf,
+} from '@orden/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { type Property, keyCalled, readProperties } from '@orden/markdown/properties'
 import {

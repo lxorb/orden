@@ -1,7 +1,6 @@
 <script lang="ts">
   import { exportCommands } from './commands'
-  import { Sheet } from '../../ui-controls/src/api'
-  import { Switch } from '../../ui-controls/src/api'
+  import { Sheet, Switch } from '../../ui-controls/src/api'
   import { picker } from './picker.svelte'
   import { commandFor, SETUP, shelved, type Tile } from './tiles'
 

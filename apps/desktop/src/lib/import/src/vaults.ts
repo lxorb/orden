@@ -1,6 +1,5 @@
 import { fromBase64, invoke, isDesktop } from '../../platform/src/api'
-import type { Source } from './sources'
-import { decoded, tooMuch } from './sources'
+import { type Source, decoded, tooMuch } from './sources'
 
 export interface Vault {
   name: string

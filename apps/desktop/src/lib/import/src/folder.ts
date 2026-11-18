@@ -1,5 +1,4 @@
-import type { Meta } from './meta'
-import { keptText, noteText } from './meta'
+import { type Meta, keptText, noteText } from './meta'
 import type { FormatId, ImportPlan, Planned } from './plan'
 import { canvasFollowed, ExportFiles, isCanvas, rewriteLinks } from './rewrite'
 import type { Source } from './sources'

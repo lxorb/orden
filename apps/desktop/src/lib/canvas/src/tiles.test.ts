@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, test, vi } from 'vitest'
 import type { InkStroke } from '@orden/markdown/canvas'
-import type { Box } from '../../plane/src/api'
-import { strokeBox } from '../../plane/src/api'
+import { type Box, strokeBox } from '../../plane/src/api'
 
 class CountingPath {
   static traced = 0

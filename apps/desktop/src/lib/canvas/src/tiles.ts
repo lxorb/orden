@@ -1,8 +1,7 @@
 import type { InkStroke } from '@orden/markdown/canvas'
-import type { Box } from '../../plane/src/api'
-import { strokeBox } from '../../plane/src/api'
-import { InkGrid } from './ink-grid'
 import {
+  type Box,
+  strokeBox,
   fillInk,
   firstSeen,
   inkKind,
@@ -17,6 +16,7 @@ import {
   type View,
   wipe,
 } from '../../plane/src/api'
+import { InkGrid } from './ink-grid'
 import { hunksOf } from '@orden/markdown/canvas-merge'
 
 export const TILE = 256

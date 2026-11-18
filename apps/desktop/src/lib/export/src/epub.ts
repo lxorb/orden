@@ -1,6 +1,5 @@
 import { mapSources } from '@orden/markdown/sources'
-import { claimName } from '../../files-out/src/api'
-import { type ZipEntry as Entry, zipOf } from '../../files-out/src/api'
+import { claimName, type ZipEntry as Entry, zipOf } from '../../files-out/src/api'
 import { type Picture, suffixFor } from './pictures'
 import { legalCode, legalXml } from './xml-legal'
 
