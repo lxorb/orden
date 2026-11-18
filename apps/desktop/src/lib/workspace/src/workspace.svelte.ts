@@ -659,6 +659,9 @@ class Workspace {
     this.restoring = true
     try {
       await this.readSitting()
+    } catch (error) {
+      void startup.shown()
+      throw error
     } finally {
       this.spacesHeard()
       this.restored = true
