@@ -486,6 +486,18 @@ class _Closing:
         sys.stdout.flush()
         os._exit(code)
 
+ASYNC = re.compile(r"\s*async\b")
+
+def awaited(page: Any, expression: str, what: str, patience: float) -> Any:
+    until = time.monotonic() + patience
+    while True:
+        answer = page.evaluate(expression)
+        if answer:
+            return answer
+        if time.monotonic() >= until:
+            raise SystemExit(f"gave up waiting for {what}")
+        page.wait_for_timeout(50)
+
 WRITE = """async ([files]) => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root.replace(/[\\\\/]+$/, '')
@@ -563,6 +575,8 @@ class Drive:
         return path
 
     def wait_for(self, page: Any, expression: str, what: str, patience: float = PATIENCE) -> Any:
+        if ASYNC.match(expression):
+            return awaited(page, expression, what, patience)
         try:
             came = page.wait_for_function(expression, timeout=patience * 1000, polling=50)
         except Exception as error:
