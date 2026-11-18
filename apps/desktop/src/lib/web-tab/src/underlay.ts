@@ -1,3 +1,4 @@
+import { boxOf } from './covers'
 import type { Rect } from './pages.svelte'
 
 export interface Hollow extends Rect {
@@ -55,11 +56,6 @@ export function groundOf(box: Rect, round: number, pages: readonly Hollow[]): st
 
 function cutWithin(box: Rect, pages: readonly Hollow[]): boolean {
   return pages.some((one) => one.cut !== false && inside(one, box))
-}
-
-function boxOf(node: Element): Rect {
-  const box = node.getBoundingClientRect()
-  return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
 
 function painters(): HTMLElement[] {

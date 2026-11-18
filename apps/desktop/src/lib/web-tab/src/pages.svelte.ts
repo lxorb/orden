@@ -101,7 +101,11 @@ interface Looked {
   edited?: boolean
 }
 
-type Clipped = { url: string; title: string; html: string }
+interface Clipped {
+  url: string
+  title: string
+  html: string
+}
 
 export type Step = 'back' | 'forward' | 'reload' | 'fresh' | 'stop'
 
