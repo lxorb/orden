@@ -14,16 +14,27 @@ import { inCode } from './code'
 import { selectedLines } from './commands'
 import { enclosingNamed } from './nodes'
 
-const AN_ITEM = /^((?:[ \t]*>)+[ \t]?|)( *)(?:(\d+)([.)])|([-*+]))( +)/u
+const AN_ITEM = /^((?:[ \t]*>)+[ \t]?|)([ \t]*)(?:(\d+)([.)])|([-*+]))( +)/u
+
+const TAB_STOP = 4
 
 const QUOTE_MARK = /^[ \t]*>[ \t]?/u
 
 interface Item {
   quote: number
   indent: number
+  lead: number
+  tabs: boolean
   column: number
   number: number | null
   digits: number
+}
+
+function columnsOf(lead: string): number {
+  let columns = 0
+  for (const one of lead)
+    columns = one === '\t' ? columns + TAB_STOP - (columns % TAB_STOP) : columns + 1
+  return columns
 }
 
 function itemOf(text: string): Item | null {
@@ -31,10 +42,14 @@ function itemOf(text: string): Item | null {
   if (!found) return null
 
   const quote = found[1]?.length ?? 0
+  const lead = found[2] ?? ''
+  const indent = columnsOf(lead)
   return {
     quote,
-    indent: found[2]?.length ?? 0,
-    column: found[0].length - quote,
+    indent,
+    lead: lead.length,
+    tabs: lead.includes('\t'),
+    column: indent + found[0].length - quote - lead.length,
     number: found[3] === undefined ? null : Number(found[3]),
     digits: found[3]?.length ?? 0,
   }
@@ -87,7 +102,7 @@ function hanging(state: EditorState, line: Line, item: Item): Line[] {
       blanks.push(below)
       continue
     }
-    if (words.length - words.trimStart().length <= item.indent) break
+    if (columnsOf(words.slice(0, words.length - words.trimStart().length)) <= item.indent) break
 
     held.push(...blanks, below)
     blanks = []
@@ -95,14 +110,26 @@ function hanging(state: EditorState, line: Line, item: Item): Line[] {
   return held
 }
 
-function shifted(line: Line, by: number, marks = Infinity): ChangeSpec[] {
+function shifted(line: Line, by: number, marks = Infinity, tabs = false): ChangeSpec[] {
   const quote = quoteOf(line.text, marks) ?? 0
   const words = line.text.slice(quote)
   if (!words.trim() || by === 0) return []
-  if (by > 0) return [{ from: line.from + quote, insert: ' '.repeat(by) }]
 
   const blanks = words.length - words.trimStart().length
+  const lead = words.slice(0, blanks)
+  if (tabs || lead.includes('\t')) {
+    const wanted = Math.max(0, columnsOf(lead) + by)
+    const insert = '\t'.repeat(Math.floor(wanted / TAB_STOP)) + ' '.repeat(wanted % TAB_STOP)
+    return [{ from: line.from + quote, to: line.from + quote + blanks, insert }]
+  }
+  if (by > 0) return [{ from: line.from + quote, insert: ' '.repeat(by) }]
+
   return [{ from: line.from + quote, to: line.from + quote + Math.min(-by, blanks) }]
+}
+
+function tabbed(landing: number, item: Item, up: boolean): number {
+  if (!item.tabs) return landing
+  return (up ? Math.ceil(landing / TAB_STOP) : Math.floor(landing / TAB_STOP)) * TAB_STOP
 }
 
 function placeLines(
@@ -126,7 +153,7 @@ function placeLines(
 
     const landing = to(line, item)
     step = Math.abs(landing - item.indent)
-    changes.push(...shifted(line, landing - item.indent))
+    changes.push(...shifted(line, landing - item.indent, Infinity, item.tabs))
 
     let wider = 0
     if (item.number !== null && landing !== item.indent) {
@@ -138,14 +165,14 @@ function placeLines(
         const next = String((number ?? 0) + 1)
         counted.set(landing, Number(next))
         wider = next.length - item.digits
-        const from = line.from + item.quote + item.indent
+        const from = line.from + item.quote + item.lead
         changes.push({ from, to: from + item.digits, insert: next })
       }
     }
 
     for (const held of hanging(state, line, item)) {
       done.add(held.number)
-      changes.push(...shifted(held, landing - item.indent + wider, marksOf(item, line)))
+      changes.push(...shifted(held, landing - item.indent + wider, marksOf(item, line), item.tabs))
     }
   }
 
@@ -174,7 +201,8 @@ export const indentItems: StateCommand = placing(
   indentMore,
   (state, line, item, unit) => {
     const above = itemAbove(state, line.number, item.indent)
-    return above?.indent === item.indent ? above.column : item.indent + unit
+    const step = item.tabs ? TAB_STOP : unit
+    return tabbed(above?.indent === item.indent ? above.column : item.indent + step, item, true)
   },
   shifted,
   'input.indent',
@@ -184,7 +212,8 @@ export const outdentItems: StateCommand = placing(
   indentLess,
   (state, line, item, unit) => {
     const above = item.indent > 0 ? itemAbove(state, line.number, item.indent - 1) : null
-    return above ? above.indent : Math.max(0, item.indent - unit)
+    const step = item.tabs ? TAB_STOP : unit
+    return above ? above.indent : tabbed(Math.max(0, item.indent - step), item, false)
   },
   (line, step) => shifted(line, -step),
   'delete.dedent',

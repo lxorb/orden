@@ -1,6 +1,6 @@
 import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@orden/markdown'
 import { pageOfSubpath } from '@orden/markdown/canvas'
-import { embedKind, parseWikilink, sectionOf } from '@orden/markdown/links'
+import { embedKind, isTabFile, parseWikilink, sectionOf } from '@orden/markdown/links'
 import { BASE } from '../../accounts/src/api'
 import { accountAddress } from '../../workspace/src/api'
 import { isPicturePath, assetUrl, joinPath } from '../../platform/src/api'
@@ -65,8 +65,8 @@ export function fileShown(file: string): FileShown {
   const kind = embedKind(bare)
   if (kind === 'audio') return 'sound'
   if (kind === 'video') return 'film'
-  if (kind === 'canvas' || kind === 'base') return 'file'
-  return kind === 'pdf' ? 'pdf' : 'words'
+  if (kind === 'pdf') return 'pdf'
+  return isTabFile(bare) ? 'file' : 'words'
 }
 
 export async function fileSource(
