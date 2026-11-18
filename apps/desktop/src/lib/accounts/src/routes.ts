@@ -661,8 +661,9 @@ export const routes = {
   purgeNote: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/trash/notes/${id}`, { method: 'DELETE', token }),
   purgeSpace: (token: string, id: string) =>
-    request<{ ok: true }>(`/v1/trash/spaces/${id}`, { method: 'DELETE', token }),
-  emptyTrash: (token: string) => request<{ ok: true }>('/v1/trash', { method: 'DELETE', token }),
+    request<{ ok: true; more?: boolean }>(`/v1/trash/spaces/${id}`, { method: 'DELETE', token }),
+  emptyTrash: (token: string) =>
+    request<{ ok: true; more?: boolean }>('/v1/trash', { method: 'DELETE', token }),
 
   subdomainAvailable: (token: string, subdomain: string, space?: string) =>
     request<{ available: boolean; reason?: string }>(

@@ -31,6 +31,14 @@ interface DeviceEntry {
   arrived?: boolean
 }
 
+const ROUNDS = 40
+
+async function whileMore(purge: () => Promise<{ more?: boolean }>): Promise<void> {
+  for (let round = 0; round < ROUNDS; round++) {
+    if (!(await purge()).more) return
+  }
+}
+
 function kindOf(kind: string): TrashItem['kind'] {
   return kind === 'space' || kind === 'folder' ? kind : 'note'
 }
@@ -182,7 +190,7 @@ class Trash {
 
       const token = account.accountToken
       if (!token) return
-      if (item.kind === 'space') await api.purgeSpace(token, item.ref)
+      if (item.kind === 'space') await whileMore(() => api.purgeSpace(token, item.ref))
       else await api.purgeNote(token, item.ref)
     })
   }
@@ -200,7 +208,8 @@ class Trash {
       for (const item of this.items.filter((one) => one.source === 'device')) {
         await invoke('purge_trash', { id: item.ref }).catch(() => undefined)
       }
-      if (account.accountToken) await api.emptyTrash(account.accountToken)
+      const token = account.accountToken
+      if (token) await whileMore(() => api.emptyTrash(token))
     })
   }
 

@@ -461,9 +461,9 @@ trash.delete('/spaces/:id', async (context) => {
   if (!space) return context.json({ error: 'nothing to delete' }, 404)
 
   const started = now()
-  await purgeSpace(context.env, space, user.id)
+  const purged = await purgeSpace(context.env, space, user.id)
   await sweepUnused(context.env, RIGHT_AFTER, now(), { user: user.id, since: started })
-  return context.json({ ok: true })
+  return context.json({ ok: true, more: purged >= AT_ONCE })
 })
 
 trash.delete('/', async (context) => {
@@ -485,5 +485,5 @@ trash.delete('/', async (context) => {
   await sweepUnused(env, RIGHT_AFTER, now(), { user: user.id, since: started })
 
   if (failures.length) throw failures[0]
-  return context.json({ ok: true })
+  return context.json({ ok: true, more: budget <= 0 })
 })

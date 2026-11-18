@@ -96,6 +96,7 @@ vi.mock('../../sharing/src/api', async (importOriginal) => ({
 
 const remote = {
   landsAt: null as string | null,
+  moreAfter: 0,
   spaces: [] as { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[],
   notes: [] as {
     id: string
@@ -130,6 +131,10 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
     },
     emptyTrash: async () => {
       apiCalls.push('emptyTrash')
+      if (remote.moreAfter > 0) {
+        remote.moreAfter -= 1
+        return { ok: true, more: true }
+      }
       remote.notes = []
       remote.landsAt = null
       remote.spaces = []
@@ -626,6 +631,16 @@ describe('signed in', () => {
 
       expect(calls).toContain('purge_trash')
       expect(apiCalls).toEqual(['emptyTrash'])
+      expect(trash.items).toEqual([])
+    })
+
+    test('asks the account again while it says more is left, as a big trash takes more than one go', async () => {
+      vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
+      remote.moreAfter = 2
+
+      await trash.empty()
+
+      expect(apiCalls).toEqual(['emptyTrash', 'emptyTrash', 'emptyTrash'])
       expect(trash.items).toEqual([])
     })
 
