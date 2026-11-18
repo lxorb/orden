@@ -60,3 +60,11 @@ export const noSetextHeadings: MarkedExtension = {
     lheading: () => undefined,
   },
 }
+
+const LONE_PICTURE = /^ {0,3}<img\b[^>\n]*>[ \t]*(?:\n|$)/i
+
+export const picturesAsWords: MarkedExtension = {
+  tokenizer: {
+    html: (src: string) => (LONE_PICTURE.test(src) ? undefined : false),
+  },
+}

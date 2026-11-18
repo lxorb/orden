@@ -46,7 +46,7 @@ import {
   maths,
   scripts,
 } from './extensions'
-import { noSetextHeadings } from './blocks'
+import { noSetextHeadings, picturesAsWords } from './blocks'
 
 export interface RenderOptions {
   footnotes?: boolean
@@ -206,6 +206,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(
     noSetextHeadings,
+    picturesAsWords,
     maths,
     highlight,
     scripts,

@@ -71,9 +71,24 @@ export function about(index: NoteIndex, note: NoteRef): LinkWrite {
   return { name: nameFor(index, note), path: note.path, from: index.path }
 }
 
+const nameCounts = new WeakMap<readonly NoteRef[], Map<string, number>>()
+
+function countOf(notes: readonly NoteRef[], name: string): number {
+  let counts = nameCounts.get(notes)
+  if (!counts) {
+    counts = new Map()
+    for (const one of notes) {
+      const folded = foldName(one.name)
+      counts.set(folded, (counts.get(folded) ?? 0) + 1)
+    }
+    nameCounts.set(notes, counts)
+  }
+  return counts.get(foldName(name)) ?? 0
+}
+
 function nameFor(index: NoteIndex, note: NoteRef): string {
-  const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
-  return (same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name).normalize('NFC')
+  const shared = countOf(index.notes, note.name) > 1
+  return (shared ? note.path.replace(MARKDOWN, '') : note.name).normalize('NFC')
 }
 
 function folderOf(path: string): string | undefined {

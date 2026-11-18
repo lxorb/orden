@@ -348,14 +348,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       case 'html': {
         const html = String((token as Tokens.Generic).text ?? '')
         if (PAGE_BREAK.test(html)) out.push({ kind: 'break' })
-        const pictures = picturesOfHtml(html)
-        if (pictures.length) out.push({ kind: 'paragraph', spans: pictures })
-        for (const words of wordsOfHtml(html)) {
-          const spans = words
-            .split('\n')
-            .flatMap((text, at) => (at ? [{ text: '\n' }, { text }] : [{ text }]))
-          out.push({ kind: 'paragraph', spans })
-        }
+        for (const spans of paragraphsOfHtml(html)) out.push({ kind: 'paragraph', spans })
         break
       }
 
@@ -423,9 +416,28 @@ function entitiesRead(text: string): string {
   })
 }
 
-function wordsOfHtml(source: string): string[] {
-  const out: string[] = []
+function linesOf(text: string): Span[] {
+  return text
+    .split('\n')
+    .flatMap((part, at) => (at ? [{ text: '\n' }, { text: part }] : [{ text: part }]))
+    .filter((span) => span.text !== '')
+}
+
+function trimmedEnds(spans: readonly Span[]): Span[] {
+  const said = spans.map((span) =>
+    span.picture === undefined ? { text: span.text.replace(/[ \t]*\n[ \t]*/g, '\n') } : span,
+  )
+  const first = said[0]
+  if (first?.picture === undefined && first) said[0] = { text: first.text.trimStart() }
+  const last = said.at(-1)
+  if (last?.picture === undefined && last) said[said.length - 1] = { text: last.text.trimEnd() }
+  return said.flatMap((span) => (span.picture === undefined ? linesOf(span.text) : [span]))
+}
+
+function paragraphsOfHtml(source: string): Span[][] {
+  const out: Span[][] = []
   let line = ''
+  let spans: Span[] = []
   let skipping: { name: string; depth: number } | null = null
   let pre = 0
   let at = 0
@@ -434,10 +446,15 @@ function wordsOfHtml(source: string): string[] {
     if (skipping !== null) return
     line += entitiesRead(pre ? raw : raw.replace(/\s+/g, ' '))
   }
-  const end = () => {
-    const said = line.replace(/[ \t]*\n[ \t]*/g, '\n').trim()
-    if (said) out.push(said)
+  const words = () => {
+    if (line) spans.push({ text: line })
     line = ''
+  }
+  const end = () => {
+    words()
+    const said = trimmedEnds(spans)
+    if (said.length) out.push(said)
+    spans = []
   }
 
   const comment = source.lastIndexOf('<!--')
@@ -464,7 +481,10 @@ function wordsOfHtml(source: string): string[] {
     if (!closing && (HIDDEN.test(tag) || (NOT_SHOWN.test(name) && !drawn))) {
       if (!alone) skipping = { name, depth: 1 }
     } else if (name === 'br') line += '\n'
-    else if (STARTS_LINE.test(name)) {
+    else if (name === 'img' && !closing) {
+      words()
+      spans.push(...picturesOfHtml(tag))
+    } else if (STARTS_LINE.test(name)) {
       end()
       if (name === 'pre') pre += closing ? -1 : 1
     } else if (/^t[dh]$/.test(name) && !closing && line.trim()) line += ' '
