@@ -140,6 +140,15 @@ fn calculate_window_center_position(
   )
 }
 
+fn surface_on_screen(
+  outer: Option<PhysicalPosition<i32>>,
+  surface: PhysicalPosition<i32>,
+) -> PhysicalPosition<i32> {
+  outer.map_or(surface, |outer| {
+    PhysicalPosition::new(outer.x + surface.x, outer.y + surface.y)
+  })
+}
+
 fn find_monitor_for_position(
   monitors: impl Iterator<Item = MonitorHandle>,
   position: Position,
@@ -446,6 +455,23 @@ impl std::fmt::Debug for NativeWindowToken {
     formatter
       .debug_struct("NativeWindowToken")
       .finish_non_exhaustive()
+  }
+}
+
+#[cfg(test)]
+mod surface_tests {
+  use super::{PhysicalPosition, surface_on_screen};
+
+  #[test]
+  fn the_surface_is_placed_on_the_screen_by_the_window() {
+    assert_eq!(
+      surface_on_screen(Some(PhysicalPosition::new(300, 120)), PhysicalPosition::new(8, 31)),
+      PhysicalPosition::new(308, 151)
+    );
+    assert_eq!(
+      surface_on_screen(None, PhysicalPosition::new(0, 0)),
+      PhysicalPosition::new(0, 0)
+    );
   }
 }
 
@@ -958,7 +984,12 @@ impl<T: UserEvent> WinitCefApp<T> {
         let _ = tx.send(Ok(is_on_top));
       }
       WindowMessage::Title(tx) => _ = tx.send(Ok(window.title())),
-      WindowMessage::InnerPosition(tx) => _ = tx.send(Ok(window.surface_position())),
+      WindowMessage::InnerPosition(tx) => {
+        let _ = tx.send(Ok(surface_on_screen(
+          window.outer_position().ok(),
+          window.surface_position(),
+        )));
+      }
       WindowMessage::OuterPosition(tx) => {
         let pos = window
           .outer_position()
