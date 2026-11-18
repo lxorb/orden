@@ -37,7 +37,6 @@ import threading
 import time
 
 from probe_app import main_window, run_probe, sized
-from native_app import known
 
 HERE = pathlib.Path(__file__).resolve().parent
 
@@ -105,6 +104,13 @@ class Watch:
         return pump, beat, missed
 
 
+TURN_ON = (
+    "(() => { localStorage.setItem('orden:hidden-kinds', JSON.stringify(['experimental', 'experimental-explorer']));"
+    " setTimeout(() => location.reload(), 50); return true })()"
+)
+TURNED_ON = "!!orden.workspace && JSON.parse(localStorage.getItem('orden:hidden-kinds') || '[]').includes('experimental-explorer')"
+
+
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this drive is Windows only")
@@ -142,6 +148,9 @@ def main() -> int:
         port, secret = tabs.endpoint(args.identifier, 150, unlike=was)
         window = terminal.Window(port, secret)
         terminal.until(lambda: window.run("1 + 1") == 2, 30)
+        window.run(TURN_ON)
+        time.sleep(1)
+        terminal.until(lambda: window.run(TURNED_ON) is True, 60)
         watch = Watch(hwnd, port, secret)
         watch.start()
 
@@ -259,8 +268,7 @@ def main() -> int:
         scrolled = window.run(scroll)
         print("columns", scrolled, flush=True)
         if not isinstance(scrolled, list) or not scrolled:
-            known(2199, "the columns were never shown")
-            failed_columns = False
+            print("the columns were never shown", flush=True)
         else:
             failed_columns = any(long and shown == 0 for long, shown in scrolled)
             if failed_columns:
