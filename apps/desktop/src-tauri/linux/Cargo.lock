@@ -4166,7 +4166,6 @@ dependencies = [
 name = "orden"
 version = "0.16.0"
 dependencies = [
- "argon2",
  "base64 0.22.1",
  "block2",
  "cef",
@@ -4176,7 +4175,6 @@ dependencies = [
  "flate2",
  "fontdb",
  "getrandom 0.3.4",
- "keyring",
  "libc",
  "libloading 0.8.9",
  "objc2",
@@ -4186,9 +4184,7 @@ dependencies = [
  "objc2-core-media",
  "objc2-core-video",
  "objc2-foundation",
- "objc2-local-authentication",
  "objc2-screen-capture-kit",
- "objc2-ui-kit",
  "objc2-user-notifications",
  "orden-apps",
  "orden-base",
@@ -4200,6 +4196,7 @@ dependencies = [
  "orden-notes",
  "orden-pty",
  "orden-search",
+ "orden-secrets",
  "orden-store",
  "orden-system",
  "orden-web-engine",
@@ -4240,7 +4237,6 @@ dependencies = [
  "windows-registry",
  "x11rb",
  "zbus 5.19.0",
- "zeroize",
 ]
 
 [[package]]
@@ -4415,6 +4411,34 @@ dependencies = [
  "serde_json",
  "tauri",
  "tempfile",
+]
+
+[[package]]
+name = "orden-secrets"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "base64 0.22.1",
+ "block2",
+ "getrandom 0.3.4",
+ "keyring",
+ "objc2",
+ "objc2-foundation",
+ "objc2-local-authentication",
+ "orden-base",
+ "reqwest",
+ "ring",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tauri",
+ "tauri-plugin-opener",
+ "tempfile",
+ "tokio",
+ "windows 0.58.0",
+ "zbus 5.19.0",
+ "zeroize",
 ]
 
 [[package]]

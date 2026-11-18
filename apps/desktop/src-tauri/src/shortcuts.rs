@@ -35,7 +35,7 @@ pub async fn open_shortcuts() -> Result<(), String> {
 
 #[tauri::command(async)]
 pub fn shortcuts_added(webview: Webview) -> Result<Vec<serde_json::Value>, String> {
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     #[cfg(target_os = "macos")]
     {
         crate::siri::added(webview.app_handle())?
@@ -51,7 +51,7 @@ pub fn shortcuts_added(webview: Webview) -> Result<Vec<serde_json::Value>, Strin
 
 #[tauri::command(async)]
 pub fn shortcuts_added_taken(webview: Webview, id: String) -> Result<(), String> {
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     #[cfg(target_os = "macos")]
     {
         crate::siri::taken(webview.app_handle(), &id)
@@ -64,7 +64,7 @@ pub fn shortcuts_added_taken(webview: Webview, id: String) -> Result<(), String>
 
 #[tauri::command(async)]
 pub fn shortcuts_left_inbox(webview: Webview) -> Result<Option<String>, String> {
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     #[cfg(target_os = "macos")]
     {
         Ok(crate::siri::left_inbox(webview.app_handle())

@@ -17,9 +17,6 @@ mod browser_profiles;
 #[cfg(test)]
 mod calls;
 #[cfg(desktop)]
-#[cfg(desktop)]
-mod chatgpt;
-#[cfg(desktop)]
 mod chromium_profiles;
 #[cfg(target_os = "linux")]
 mod chromium_pump;
@@ -71,8 +68,6 @@ mod notices;
 pub mod old_engine;
 #[cfg(desktop)]
 pub mod old_home;
-#[cfg(any(desktop, target_os = "ios"))]
-mod owner;
 #[cfg(desktop)]
 mod page_carry;
 #[cfg(desktop)]
@@ -85,8 +80,6 @@ mod page_scale;
 mod page_scheme;
 #[cfg(desktop)]
 mod page_style;
-#[cfg(any(desktop, target_os = "ios"))]
-mod pass_stretch;
 #[cfg(desktop)]
 mod pinch;
 #[cfg(desktop)]
@@ -96,11 +89,7 @@ mod quick_add;
 #[cfg(desktop)]
 mod reminders;
 #[cfg(desktop)]
-mod retired_chats;
-#[cfg(desktop)]
 mod safari;
-#[cfg(any(desktop, target_os = "ios"))]
-mod secrets;
 #[cfg(desktop)]
 mod shortcuts;
 #[cfg(desktop)]
@@ -313,10 +302,10 @@ macro_rules! desktop_commands {
             ai_cli::ai_cli_close,
             ai_cli::ai_cli_models,
             ai_cli::ai_cli_usage,
-            chatgpt::chatgpt_sign_in,
-            chatgpt::chatgpt_account,
-            chatgpt::chatgpt_token,
-            chatgpt::chatgpt_sign_out,
+            orden_secrets::chatgpt::chatgpt_sign_in,
+            orden_secrets::chatgpt::chatgpt_account,
+            orden_secrets::chatgpt::chatgpt_token,
+            orden_secrets::chatgpt::chatgpt_sign_out,
             orden_system::link_preview::link_preview,
             appearance::set_frame,
             appearance::set_translucency,
@@ -395,13 +384,13 @@ macro_rules! desktop_commands {
             orden_documents::pdf::pdf_supported,
             orden_documents::pdf::print_pdf,
             orden_documents::pdf::print_page,
-            owner::owner_can,
-            owner::owner_check,
-            pass_stretch::pass_stretch,
-            secrets::secret_forget,
-            secrets::secret_read,
-            secrets::secret_write,
-            secrets::secrets_in_file,
+            orden_secrets::owner::owner_can,
+            orden_secrets::owner::owner_check,
+            orden_secrets::pass_stretch::pass_stretch,
+            orden_secrets::secrets::secret_forget,
+            orden_secrets::secrets::secret_read,
+            orden_secrets::secrets::secret_write,
+            orden_secrets::secrets::secrets_in_file,
             orden_pty::terminal::terminal_shells,
             orden_pty::terminal::pty_spawn,
             orden_pty::terminal::pty_write,
@@ -650,20 +639,20 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = builder
         .manage(ai_cli::Asks::default())
-        .manage(chatgpt::ChatGpt::default());
+        .manage(orden_secrets::chatgpt::ChatGpt::default());
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(named(desktop_commands!()));
 
     #[cfg(target_os = "ios")]
     let builder = builder.invoke_handler(commands![
-        owner::owner_can,
-        owner::owner_check,
-        pass_stretch::pass_stretch,
-        secrets::secret_forget,
-        secrets::secret_read,
-        secrets::secret_write,
-        secrets::secrets_in_file,
+        orden_secrets::owner::owner_can,
+        orden_secrets::owner::owner_check,
+        orden_secrets::pass_stretch::pass_stretch,
+        orden_secrets::secrets::secret_forget,
+        orden_secrets::secrets::secret_read,
+        orden_secrets::secrets::secret_write,
+        orden_secrets::secrets::secrets_in_file,
     ]);
     #[cfg(target_os = "android")]
     let builder = builder.invoke_handler(commands![]);
@@ -906,7 +895,7 @@ fn ready(
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
     default_browser::keep_registered(handle);
     ai_cli::keep_enrolled(handle);
-    retired_chats::clear_leftovers(handle);
+    orden_secrets::retired_chats::clear_leftovers(handle);
 }
 
 #[cfg(desktop)]

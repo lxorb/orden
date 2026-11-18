@@ -192,6 +192,7 @@ orden-base = { path = "crates/base" }
 orden-documents = { path = "crates/documents" }
 orden-notes = { path = "crates/notes" }
 orden-search = { path = "crates/search" }
+orden-secrets = { path = "crates/secrets" }
 orden-store = { path = "crates/store" }
 orden-web-engine = { path = "crates/web-engine" }
 tauri = { version = "=3.0.0-alpha.5", features = ["protocol-asset", "unstable", "custom-protocol"] }
@@ -204,8 +205,6 @@ tauri-plugin-deep-link = "=3.0.0-alpha.3"
 serde.workspace = true
 serde_json.workspace = true
 base64.workspace = true
-argon2 = { version = "0.5", default-features = false, features = ["alloc", "zeroize"] }
-zeroize = "1"
 flate2.workspace = true
 rusqlite.workspace = true
 getrandom.workspace = true
@@ -240,41 +239,8 @@ tokio.workspace = true
 libloading.workspace = true
 raw-window-handle = "0.6"
 
-[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
-keyring = { version = "3", default-features = false, features = [
-  "windows-native",
-  "sync-secret-service",
-  "crypto-rust",
-] }
-
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 tauri = { version = "=3.0.0-alpha.5", features = ["tray-icon"] }
-
-[target.'cfg(target_os = "ios")'.dependencies]
-keyring = { version = "3", default-features = false, features = ["apple-native"] }
-objc2.workspace = true
-block2.workspace = true
-objc2-foundation = { version = "0.3", default-features = false, features = [
-  "std",
-  "NSError",
-  "NSString",
-] }
-objc2-ui-kit = { version = "0.3", default-features = false, features = [
-  "std",
-  "block2",
-  "UIApplication",
-  "UIResponder",
-  "UIScene",
-  "UISceneOptions",
-  "UISceneSession",
-] }
-
-[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
-objc2-local-authentication = { version = "0.3", default-features = false, features = [
-  "std",
-  "block2",
-  "LAContext",
-] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3"

@@ -13,6 +13,8 @@ function rust(dir: string): string[] {
   })
 }
 
+const sources = () => [...rust(join(TAURI, 'src')), ...rust(join(TAURI, 'crates'))]
+
 function tables(manifest: string): { header: string; body: string }[] {
   const out: { header: string; body: string }[] = []
   for (const line of manifest.split('\n')) {
@@ -32,17 +34,19 @@ function readOnMac(header: string): boolean {
 
 describe('a Mac build and the keychain', () => {
   test('no table a Mac build reads asks for the keyring crate', () => {
-    const manifest = readFileSync(join(TAURI, 'Cargo.toml'), 'utf8')
+    const manifest = ['Cargo.toml', 'crates/secrets/Cargo.toml']
+      .map((one) => readFileSync(join(TAURI, one), 'utf8'))
+      .join('\n')
     const keyring = tables(manifest).filter((one) => /^keyring\s*=/m.test(one.body))
     expect(keyring.length).toBeGreaterThan(0)
     for (const one of keyring) expect(readOnMac(one.header), one.header).toBe(false)
   })
 
   test('the crate reaches the keyring in one place, which a Mac build leaves out', () => {
-    for (const path of rust(join(TAURI, 'src'))) {
+    for (const path of sources()) {
       const text = readFileSync(path, 'utf8')
       const name = path.slice(TAURI.length + 1)
-      if (name === 'src/secrets.rs') {
+      if (name === 'crates/secrets/src/secrets.rs') {
         const at = text.indexOf('use keyring::')
         expect(at, name).toBeGreaterThan(0)
         const before = text.slice(0, at)
@@ -57,7 +61,7 @@ describe('a Mac build and the keychain', () => {
   })
 
   test('nothing calls the keychain itself', () => {
-    for (const path of rust(join(TAURI, 'src'))) {
+    for (const path of sources()) {
       const text = readFileSync(path, 'utf8')
       const name = path.slice(TAURI.length + 1)
       expect(text, name).not.toMatch(

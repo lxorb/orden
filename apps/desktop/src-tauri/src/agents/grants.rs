@@ -585,7 +585,7 @@ pub(crate) fn same(one: &str, other: &str) -> bool {
 
 #[tauri::command(async)]
 pub fn agents_read(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Grant>, String> {
-    super::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     super::state(&app).grants.all(&app)
 }
 
@@ -595,7 +595,7 @@ pub fn agents_write(
     app: AppHandle,
     grants: Vec<Grant>,
 ) -> Result<Vec<Grant>, String> {
-    super::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     super::state(&app).grants.replace(&app, grants)
 }
 
@@ -605,7 +605,7 @@ pub fn agents_mint(
     app: AppHandle,
     name: String,
 ) -> Result<Minted, String> {
-    super::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     let name = name.trim();
     if name.is_empty() {
         return Err("an agent needs a name".into());

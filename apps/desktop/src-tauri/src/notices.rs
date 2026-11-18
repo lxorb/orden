@@ -111,7 +111,7 @@ fn probing() -> bool {
 
 #[tauri::command(async)]
 pub fn notice_show(webview: tauri::Webview, app: AppHandle, notice: Notice) -> Result<(), String> {
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     if !plain(&notice) {
         return Err("a notice is named by plain characters".into());
     }
@@ -129,7 +129,7 @@ pub fn notice_show(webview: tauri::Webview, app: AppHandle, notice: Notice) -> R
 
 #[tauri::command(async)]
 pub fn notice_clear(webview: tauri::Webview, app: AppHandle, tag: String) -> Result<(), String> {
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     #[cfg(windows)]
     windows::clear(&app, &tag)?;
     #[cfg(target_os = "macos")]
