@@ -441,7 +441,11 @@ fn note_tags(body: &str) -> Vec<String> {
     out
 }
 
-fn prose_lines(body: &str, words_from: usize, mut each: impl FnMut(usize, &str, Option<&str>)) {
+fn prose_lines<'a>(
+    body: &'a str,
+    words_from: usize,
+    mut each: impl FnMut(usize, &'a str, Option<&str>),
+) {
     let mut code = CodeBlocks::default();
 
     for (index, line) in body.lines().enumerate() {
@@ -468,8 +472,22 @@ fn prose(body: &str, words_from: usize) -> Prose {
     let mut section: Vec<(usize, String)> = Vec::new();
     let mut open: Vec<Open> = Vec::new();
     let mut paragraph = Paragraph::default();
+    let held = held_lines(body, words_from);
+    let mut group: Vec<(usize, &str)> = Vec::new();
 
     prose_lines(body, words_from, |index, line, fence_name| {
+        let joins = fence_name.is_none()
+            && index >= words_from
+            && !held.contains(&index)
+            && !line.trim().is_empty();
+        if !joins || group.last().is_some_and(|(last, _)| last + 1 != index) {
+            links_in(&group, &mut links);
+            group.clear();
+        }
+        if joins {
+            group.push((index, line));
+        }
+
         if let Some(id) = fence_name {
             blocks.push(id.to_string());
             return;
@@ -512,32 +530,19 @@ fn prose(body: &str, words_from: usize) -> Prose {
             blocks.push(id);
         }
 
-        if !line.as_bytes().contains(&b'[') {
+        if index >= words_from || !line.as_bytes().contains(&b'[') || links.len() >= MOST_LINKS {
             return;
         }
 
-        if links.len() >= MOST_LINKS {
-            return;
-        }
-
-        let read = if index < words_from {
-            front_matter::read_in_quotes(line)
-        } else {
-            Cow::Borrowed(line)
-        };
-        let mut found = links_on(&without_code(&read), MOST_LINKS - links.len());
-        if found.is_empty() {
-            return;
-        }
-
+        let read = front_matter::read_in_quotes(line);
         let context: String = line.trim().chars().take(LINE).collect();
-        for link in &mut found {
+        for (_, mut link) in links_on(&without_code(&read), MOST_LINKS - links.len()) {
             link.line = index;
             link.text.clone_from(&context);
+            links.push(link);
         }
-
-        links.append(&mut found);
     });
+    links_in(&group, &mut links);
 
     Prose {
         headings,
@@ -812,25 +817,34 @@ fn without_code(line: &str) -> Cow<'_, str> {
     Cow::Owned(out)
 }
 
-fn links_on(line: &str, most: usize) -> Vec<Link> {
-    let letters: Vec<char> = line.chars().collect();
-    let ends = label_ends(&letters);
+fn links_on(line: &str, most: usize) -> Vec<(usize, Link)> {
+    links_in_letters(&line.chars().collect::<Vec<char>>(), most)
+}
+
+fn links_in_letters(letters: &[char], most: usize) -> Vec<(usize, Link)> {
+    let ends = label_ends(letters);
     let mut found = Vec::new();
+    let mut after: Option<(usize, usize)> = None;
     let mut at = 0;
 
     while at < letters.len() && found.len() < most {
+        if let Some((_, end)) = after.filter(|(label, _)| at > *label) {
+            after = None;
+            at = at.max(end);
+            continue;
+        }
         if letters[at] != '[' || (at > 0 && letters[at - 1] == '\\') {
             at += 1;
             continue;
         }
 
-        let embed = at > 0 && letters[at - 1] == '!' && (at < 2 || letters[at - 2] != '\\');
+        let embed = is_image_open(letters, at);
 
         if letters.get(at + 1) == Some(&'[') {
-            if let Some(end) = closing_brackets(&letters, at + 2) {
+            if let Some(end) = closing_brackets(letters, at + 2) {
                 let inner: String = letters[at + 2..end].iter().collect();
                 if let Some(link) = wikilink(&inner, embed) {
-                    found.push(link);
+                    found.push((at - usize::from(embed), link));
                 }
                 at = end + 2;
                 continue;
@@ -839,18 +853,312 @@ fn links_on(line: &str, most: usize) -> Vec<Link> {
             continue;
         }
 
-        if let Some((end, label, target)) = markdown_link(&letters, at, &ends) {
+        if let Some((end, close, label, target)) = markdown_link(letters, at, &ends) {
             if let Some(link) = note_link(&label, &target, embed) {
-                found.push(link);
+                found.push((at - usize::from(embed), link));
             }
-            at = end;
-            continue;
+            after = after.or(Some((close, end)));
         }
 
         at += 1;
     }
 
     found
+}
+
+fn is_image_open(letters: &[char], at: usize) -> bool {
+    at > 0 && letters[at - 1] == '!' && (at < 2 || letters[at - 2] != '\\')
+}
+
+fn links_in(group: &[(usize, &str)], links: &mut Vec<Link>) {
+    let Some(&(first, _)) = group.first() else {
+        return;
+    };
+    if links.len() >= MOST_LINKS || !group.iter().any(|(_, line)| line.contains('[')) {
+        return;
+    }
+
+    let joined = group
+        .iter()
+        .map(|(_, line)| *line)
+        .collect::<Vec<_>>()
+        .join("\n");
+    let letters: Vec<char> = without_maths(&without_comments(&without_code(&joined)))
+        .chars()
+        .collect();
+    let mut starts = Vec::with_capacity(group.len());
+    let mut at = 0;
+    for (_, line) in group {
+        starts.push(at);
+        at += line.chars().count() + 1;
+    }
+
+    let mut found: Vec<(usize, usize, Link)> = Vec::new();
+    for (row, start) in starts.iter().enumerate() {
+        let end = starts.get(row + 1).map_or(letters.len(), |next| next - 1);
+        let line: String = letters[*start..end.max(*start)].iter().collect();
+        if let Some((open, link)) = definition(&line) {
+            found.push((start + open, row, link));
+        }
+    }
+    for (letter, link) in links_in_letters(&letters, MOST_LINKS - links.len()) {
+        let row = starts
+            .partition_point(|one| *one <= letter)
+            .saturating_sub(1);
+        found.push((letter, row, link));
+    }
+    found.sort_by_key(|(start, _, _)| *start);
+
+    for (_, row, mut link) in found.into_iter().take(MOST_LINKS - links.len()) {
+        link.line = first + row;
+        link.text = group
+            .get(row)
+            .map(|(_, line)| line.trim().chars().take(LINE).collect())
+            .unwrap_or_default();
+        links.push(link);
+    }
+}
+
+fn definition(line: &str) -> Option<(usize, Link)> {
+    let rest = line.trim_start_matches(' ');
+    let open = line.len() - rest.len();
+    if open > 3 || !rest.starts_with('[') || rest.starts_with("[^") {
+        return None;
+    }
+
+    let letters: Vec<char> = rest.chars().collect();
+    let mut at = 1;
+    while at < letters.len() && letters[at] != ']' {
+        match letters[at] {
+            '[' => return None,
+            '\\' => at += 2,
+            _ => at += 1,
+        }
+    }
+    if at <= 1 || at >= letters.len() || letters.get(at + 1) != Some(&':') {
+        return None;
+    }
+    let label: String = letters[1..at].iter().collect();
+
+    let mut scan = at + 2;
+    while matches!(letters.get(scan), Some(' ' | '\t')) {
+        scan += 1;
+    }
+    let (written, end) = if letters.get(scan) == Some(&'<') {
+        let close = letters[scan + 1..]
+            .iter()
+            .position(|one| matches!(one, '<' | '>'))
+            .map(|one| scan + 1 + one)
+            .filter(|close| letters[*close] == '>')?;
+        (
+            letters[scan + 1..close].iter().collect::<String>(),
+            close + 1,
+        )
+    } else {
+        let end = letters[scan..]
+            .iter()
+            .position(|one| one.is_whitespace())
+            .map_or(letters.len(), |one| scan + one);
+        if end == scan {
+            return None;
+        }
+        (letters[scan..end].iter().collect::<String>(), end)
+    };
+
+    let tail: String = letters[end..].iter().collect();
+    if !titled(tail.trim_end_matches([' ', '\t'])) {
+        return None;
+    }
+    note_link(&label, &written, false).map(|link| (open, link))
+}
+
+fn titled(tail: &str) -> bool {
+    if tail.is_empty() {
+        return true;
+    }
+    let title = tail.trim_start_matches([' ', '\t']);
+    if title.len() == tail.len() {
+        return false;
+    }
+    let mut letters = title.chars();
+    let (Some(first), Some(last)) = (letters.next(), title.chars().last()) else {
+        return false;
+    };
+    let inner = &title[first.len_utf8()..title.len() - last.len_utf8()];
+    title.chars().count() >= 2
+        && match (first, last) {
+            ('"', '"') => !inner.contains('"'),
+            ('\'', '\'') => !inner.contains('\''),
+            ('(', ')') => !inner.contains(['(', ')']),
+            _ => false,
+        }
+}
+
+fn blanked(letters: &mut [char], from: usize, to: usize) {
+    for one in &mut letters[from..to] {
+        if *one != '\n' {
+            *one = ' ';
+        }
+    }
+}
+
+fn without_comments(text: &str) -> String {
+    let mut out = text.to_string();
+    let mut from = 0;
+    while let Some(open) = out[from..].find("<!--").map(|one| from + one) {
+        let Some(close) = out[open + 4..].find("-->").map(|one| open + 4 + one + 3) else {
+            break;
+        };
+        let blank: String = out[open..close]
+            .chars()
+            .map(|one| if one == '\n' { '\n' } else { ' ' })
+            .collect();
+        out.replace_range(open..close, &blank);
+        from = open + blank.len();
+    }
+    out
+}
+
+fn without_maths(text: &str) -> String {
+    if !text.contains('$') {
+        return text.to_string();
+    }
+    let mut letters: Vec<char> = text.chars().collect();
+    let mut at = 0;
+    while at < letters.len() {
+        if letters[at] != '$' {
+            at += 1;
+            continue;
+        }
+        match maths_end(&letters, at) {
+            Some(end) => {
+                blanked(&mut letters, at, end);
+                at = end;
+            }
+            None => at += 1,
+        }
+    }
+    letters.into_iter().collect()
+}
+
+fn maths_end(letters: &[char], at: usize) -> Option<usize> {
+    let slashes = letters[..at]
+        .iter()
+        .rev()
+        .take_while(|one| **one == '\\')
+        .count();
+    if slashes % 2 == 1 {
+        return None;
+    }
+    if letters.get(at + 1) == Some(&'$') {
+        let mut one = at + 2;
+        while one < letters.len() {
+            if letters[one] == '\\' {
+                one += 2;
+                continue;
+            }
+            if letters[one] == '$' && letters.get(one + 1) == Some(&'$') {
+                return Some(one + 2);
+            }
+            one += 1;
+        }
+        return None;
+    }
+    if (at > 0 && letters[at - 1] == '$')
+        || letters
+            .get(at + 1)
+            .is_none_or(|next| next.is_whitespace() || *next == '$')
+    {
+        return None;
+    }
+    let mut one = at + 1;
+    while one < letters.len() {
+        if letters[one] == '\\' {
+            one += 2;
+            continue;
+        }
+        if letters[one] == '$' {
+            let fits = !letters[one - 1].is_whitespace()
+                && !letters.get(one + 1).is_some_and(char::is_ascii_digit);
+            return fits.then_some(one + 1);
+        }
+        one += 1;
+    }
+    None
+}
+
+fn held_lines(body: &str, words_from: usize) -> std::collections::HashSet<usize> {
+    let mut rows: Vec<(usize, &str)> = Vec::new();
+    prose_lines(body, words_from, |index, line, fence_name| {
+        if index >= words_from && fence_name.is_none() {
+            rows.push((index, line));
+        }
+    });
+
+    let mut held = std::collections::HashSet::new();
+    let mut missing: Vec<String> = Vec::new();
+    let mut at = 0;
+    while at < rows.len() {
+        let Some((key, rest)) = opener(rows[at].1) else {
+            at += 1;
+            continue;
+        };
+        if missing.contains(&key) || (key != "$$" && closes(&key, &rest)) {
+            at += 1;
+            continue;
+        }
+        let Some(last) = (at + 1..rows.len()).find(|one| closes(&key, rows[*one].1)) else {
+            missing.push(key);
+            at += 1;
+            continue;
+        };
+        for (index, _) in &rows[at..=last] {
+            held.insert(*index);
+        }
+        at = last + 1;
+    }
+    held
+}
+
+fn opener(line: &str) -> Option<(String, String)> {
+    let rest = line.trim_start();
+    if rest.trim_end() == "$$" {
+        return Some(("$$".to_string(), String::new()));
+    }
+    if let Some(after) = rest.strip_prefix("<!--") {
+        return Some(("<!--".to_string(), after.to_string()));
+    }
+    let lower = rest.to_ascii_lowercase();
+    ["pre", "script", "style", "textarea"]
+        .into_iter()
+        .find_map(|tag| {
+            let after = lower.strip_prefix('<')?.strip_prefix(tag)?;
+            let bounded = after
+                .chars()
+                .next()
+                .is_none_or(|one| !(one.is_alphanumeric() || one == '_'));
+            bounded.then(|| (tag.to_string(), rest[1 + tag.len()..].to_string()))
+        })
+}
+
+fn closes(key: &str, line: &str) -> bool {
+    match key {
+        "$$" => {
+            let rest = line.trim();
+            rest.strip_prefix("$$").is_some_and(|tail| {
+                let tail = tail.trim();
+                tail.is_empty()
+                    || tail.strip_prefix('^').is_some_and(|id| {
+                        !id.is_empty()
+                            && id
+                                .chars()
+                                .all(|one| one.is_alphanumeric() || one == '_' || one == '-')
+                    })
+            })
+        }
+        "<!--" => line.contains("-->"),
+        tag => line.to_ascii_lowercase().contains(&format!("</{tag}>")),
+    }
 }
 
 fn closing_brackets(letters: &[char], from: usize) -> Option<usize> {
@@ -894,7 +1202,7 @@ fn label_ends(letters: &[char]) -> Vec<Option<usize>> {
             ']' => {
                 if let Some(from) = open.pop() {
                     ends[from] = Some(at);
-                    if letters.get(at + 1) == Some(&'(') {
+                    if letters.get(at + 1) == Some(&'(') && !is_image_open(letters, from) {
                         open.clear();
                     }
                 }
@@ -942,7 +1250,7 @@ fn markdown_link(
     letters: &[char],
     at: usize,
     ends: &[Option<usize>],
-) -> Option<(usize, String, String)> {
+) -> Option<(usize, usize, String, String)> {
     let stop = letters.len().min(at + LONGEST_LINK);
     let skip_blanks = |from: usize| {
         let mut scan = from;
@@ -996,7 +1304,7 @@ fn markdown_link(
     }
 
     let label: String = letters[at + 1..close].iter().collect();
-    Some((scan + 1, label, written.iter().collect()))
+    Some((scan + 1, close, label, written.iter().collect()))
 }
 
 fn split_target(named: &str) -> (String, Option<String>, Option<String>) {
@@ -1540,9 +1848,9 @@ mod tests {
 
         assert_eq!(targets("[a[b](c.md)d](e.md)"), vec!["c.md"]);
         let image = links_in("[![i](p.png)](e.md)");
-        assert_eq!(image.len(), 1);
-        assert_eq!(image[0].target, "p.png");
-        assert!(image[0].embed);
+        assert_eq!(image.len(), 2);
+        assert_eq!((image[0].target.as_str(), image[0].embed), ("e.md", false));
+        assert_eq!((image[1].target.as_str(), image[1].embed), ("p.png", true));
 
         let wiki = links_in("[[a]](b.md)");
         assert_eq!(wiki.len(), 1);
@@ -1682,6 +1990,27 @@ mod tests {
             source.address.as_deref(),
             Some("view-source:https://a.example/")
         );
+    }
+
+    #[test]
+    fn counts_definitions_pictures_in_a_label_and_labels_over_two_lines_but_not_html_or_maths() {
+        let links = prose("Intro [one](One.md) and a picture link [![chart](chart.png)](Two.md).\n\nA label that [runs over\na line](Three.md) ends here.\n\n[four]: Four.md \"The fourth\"\n[^note]: Not.md\n[web]: https://example.com\n\n<!-- [hidden](Hidden1.md) -->\n\n<pre>\n[hidden](Hidden2.md)\n</pre>\n\n$$\n[hidden](Hidden3.md)\n$$\n\nInline $[hidden](Hidden4.md)$ maths and a comment <!-- [hidden](Hidden5.md) --> here, and [[Five]].\n\nCosts $5 and [six](Six.md) $10.\n", 0).links;
+        let targets: Vec<&str> = links.iter().map(|one| one.target.as_str()).collect();
+
+        assert_eq!(
+            targets,
+            [
+                "One.md",
+                "Two.md",
+                "chart.png",
+                "Three.md",
+                "Four.md",
+                "Five",
+                "Six.md"
+            ]
+        );
+        assert_eq!(links[3].line, 2);
+        assert_eq!(links[4].alias.as_deref(), Some("four"));
     }
 
     #[test]

@@ -37,9 +37,14 @@ function endsTarget(one: string): boolean {
 
 interface MarkdownLink {
   label: string
+  labelTo: number
   written: string
   writtenFrom: number
   to: number
+}
+
+function isImageOpen(line: string, open: number): boolean {
+  return line[open - 1] === '!' && line[open - 2] !== '\\'
 }
 
 export function labelEnds(line: string): Map<number, number> {
@@ -57,7 +62,7 @@ export function labelEnds(line: string): Map<number, number> {
       const from = open.pop()
       if (from === undefined) continue
       ends.set(from, at)
-      if (line[at + 1] === '(') open.length = 0
+      if (line[at + 1] === '(' && !isImageOpen(line, from)) open.length = 0
     }
   }
 
@@ -86,10 +91,27 @@ function bareTargetEnd(line: string, from: number, stop: number): number {
   return at < stop && depth === 0 ? at : -1
 }
 
+function looseTarget(line: string, from: number, stop: number): { to: number; end: number } | null {
+  let depth = 0
+  for (let at = from; at < stop; at++) {
+    const one = line[at]
+    if (one === '\n') return null
+    if (one === '\\') at++
+    else if (one === '(') depth++
+    else if (one === ')' && depth-- === 0) {
+      const said = line.slice(from, at)
+      const titled = /\s+(?:"[^"]*"|'[^']*')\s*$/.exec(said)
+      return { to: from + (titled ? titled.index : said.trimEnd().length), end: at }
+    }
+  }
+  return null
+}
+
 function markdownLinkAt(
   line: string,
   open: number,
   ends: ReadonlyMap<number, number>,
+  loose = false,
 ): MarkdownLink | null {
   const stop = Math.min(line.length, open + LONGEST_LINK)
   const skipBlanks = (from: number) => {
@@ -111,6 +133,16 @@ function markdownLinkAt(
     while (writtenTo < stop && line[writtenTo] !== '>' && line[writtenTo] !== '<') writtenTo++
     if (writtenTo >= stop || line[writtenTo] !== '>') return null
     at = writtenTo + 1
+  } else if (loose) {
+    const found = looseTarget(line, at, stop)
+    if (!found) return null
+    return {
+      label: line.slice(open + 1, close),
+      labelTo: close,
+      written: line.slice(writtenFrom, found.to),
+      writtenFrom,
+      to: found.end + 1,
+    }
   } else {
     writtenTo = bareTargetEnd(line, at, stop)
     if (writtenTo <= at) return null
@@ -129,6 +161,7 @@ function markdownLinkAt(
 
   return {
     label: line.slice(open + 1, close),
+    labelTo: close,
     written: line.slice(writtenFrom, writtenTo),
     writtenFrom,
     to: at + 1,
@@ -351,22 +384,146 @@ export function withoutCode(line: string): string {
   return out
 }
 
-export function findLinks(text: string): FoundLink[] {
+export function findLinks(text: string, loose = false): FoundLink[] {
   const found: FoundLink[] = []
-
-  for (const row of lines(text)) {
-    if (found.length >= MOST_LINKS) break
-    if (row.matter) collectInMatter(row, found)
-    else if (!row.code) collect(withoutCode(row.text), row.from, row.line, found)
+  const rows = rowsOf(text)
+  const held = heldBlocks(rows)
+  let group: Row[] = []
+  const flush = () => {
+    if (group.length) collectIn(group, found, loose)
+    group = []
   }
+
+  for (const [at, row] of rows.entries()) {
+    if (found.length >= MOST_LINKS) break
+    if (row.matter) {
+      flush()
+      collectInMatter(row, found, loose)
+    } else if (row.code || held.has(at) || row.text.trim() === '') {
+      flush()
+    } else {
+      group.push(row)
+    }
+  }
+  flush()
 
   return found.length > MOST_LINKS ? found.slice(0, MOST_LINKS) : found
 }
 
-function collectInMatter(row: Row, found: FoundLink[]) {
+function collectIn(group: readonly Row[], found: FoundLink[], loose: boolean) {
+  const [first] = group
+  if (!first) return
+  const words = mathsBlanked(commentsBlanked(withoutCode(group.map((row) => row.text).join('\n'))))
+  if (!words.includes('[')) return
+
+  const starts = group.map((row) => row.from - first.from)
+  const lineOf = (at: number) => {
+    let low = 0
+    let high = starts.length - 1
+    while (low < high) {
+      const middle = (low + high + 1) >> 1
+      if ((starts[middle] ?? 0) <= at) low = middle
+      else high = middle - 1
+    }
+    return group[low]?.line ?? first.line
+  }
+
+  const mine: FoundLink[] = []
+  for (const [at, row] of group.entries()) {
+    const start = starts[at] ?? 0
+    defined(words.slice(start, start + row.text.length), first.from + start, row.line, mine, loose)
+  }
+  collect(words, first.from, lineOf, mine, loose)
+  found.push(...mine.sort((one, other) => one.from - other.from))
+}
+
+const DEFINITION =
+  /^ {0,3}\[((?!\^)(?:[^[\]\\\n]|\\.)+)\]:[ \t]*(?:<([^<>\n]*)>|([^\s<]\S*))(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\r?$/
+
+function defined(line: string, offset: number, at: number, found: FoundLink[], loose: boolean) {
+  const said = DEFINITION.exec(line)
+  const written = said?.[2] ?? said?.[3]
+  if (!said || written === undefined || (!loose && !isNoteTarget(written))) return
+
+  const hash = written.indexOf('#')
+  const target = hash === -1 ? written : written.slice(0, hash)
+  const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
+  if (!target && !fragment) return
+
+  const open = line.indexOf('[')
+  const targetFrom = offset + line.indexOf(written, open + (said[1]?.length ?? 0) + 3)
+  const block = fragment.startsWith('^') ? fragment.slice(1) : null
+  found.push({
+    target: decodeTarget(target),
+    heading: block === null ? fragment || null : null,
+    block,
+    alias: said[1] ?? null,
+    embed: false,
+    kind: 'markdown',
+    from: offset + open,
+    to: offset + line.trimEnd().length,
+    targetFrom,
+    targetTo: targetFrom + target.length,
+    line: at,
+  })
+}
+
+function blanked(text: string, from: number, to: number): string {
+  return text.slice(0, from) + text.slice(from, to).replace(/[^\n]/g, ' ') + text.slice(to)
+}
+
+function commentsBlanked(text: string): string {
+  let out = text
+  for (let at = out.indexOf('<!--'); at !== -1; at = out.indexOf('<!--', at + 4)) {
+    const close = out.indexOf('-->', at + 4)
+    if (close === -1) break
+    out = blanked(out, at, close + 3)
+  }
+  return out
+}
+
+function mathsBlanked(text: string): string {
+  if (!text.includes('$')) return text
+  let out = text
+  let at = 0
+  while ((at = out.indexOf('$', at)) !== -1) {
+    const end = mathsEnd(out, at)
+    if (end === -1) {
+      at++
+      continue
+    }
+    out = blanked(out, at, end)
+    at = end
+  }
+  return out
+}
+
+function mathsEnd(text: string, at: number): number {
+  if (escaped(text, 0, at)) return -1
+  if (text[at + 1] === '$') {
+    for (let one = at + 2; one < text.length; one++) {
+      if (text[one] === '\\') one++
+      else if (text[one] === '$' && text[one + 1] === '$') return one + 2
+    }
+    return -1
+  }
+  if (text[at - 1] === '$' || /[\s$]/.test(text[at + 1] ?? ' ')) return -1
+  for (let one = at + 1; one < text.length; one++) {
+    if (text[one] === '\\') {
+      one++
+      continue
+    }
+    if (text[one] !== '$') continue
+    const fits = !/\s/.test(text[one - 1] ?? ' ') && !/\d/.test(text[one + 1] ?? '')
+    return fits ? one + 1 : -1
+  }
+  return -1
+}
+
+function collectInMatter(row: Row, found: FoundLink[], loose: boolean) {
   const read = readInQuotes(row.text)
   const local: FoundLink[] = []
-  collect(withoutCode(read.text), 0, row.line, local)
+  collect(withoutCode(read.text), 0, () => row.line, local, loose)
   const raw = (at: number) => row.from + (read.at[at] ?? row.text.length)
 
   for (const link of local) {
@@ -421,11 +578,23 @@ export function rowsOf(text: string): Row[] {
   return [...lines(text)]
 }
 
-function collect(line: string, offset: number, at: number, found: FoundLink[]) {
+function collect(
+  line: string,
+  offset: number,
+  lineOf: (at: number) => number,
+  found: FoundLink[],
+  loose = false,
+) {
   if (!line.includes('[')) return
   const ends = line.includes('](') ? labelEnds(line) : new Map<number, number>()
 
+  let after: { label: number; to: number } | null = null
   for (let open = line.indexOf('['); open !== -1; open = line.indexOf('[', open + 1)) {
+    if (after && open > after.label) {
+      open = after.to - 1
+      after = null
+      continue
+    }
     if (line[open - 1] === '\\') continue
 
     const embed = line[open - 1] === '!' && line[open - 2] !== '\\'
@@ -447,19 +616,19 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
           to: offset + closed,
           targetFrom,
           targetTo: targetFrom + link.target.length,
-          line: at,
+          line: lineOf(open),
         })
       }
       open = closed - 1
       continue
     }
 
-    const link = markdownLinkAt(line, open, ends)
+    const link = markdownLinkAt(line, open, ends, loose)
     if (!link) continue
 
     const { written, writtenFrom, label } = link
-    open = link.to - 1
-    if (!isNoteTarget(written)) continue
+    after ??= { label: link.labelTo, to: link.to }
+    if (!loose && !isNoteTarget(written)) continue
 
     const hash = written.indexOf('#')
     const target = hash === -1 ? written : written.slice(0, hash)
@@ -480,7 +649,7 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
       to: offset + link.to,
       targetFrom,
       targetTo: targetFrom + target.length,
-      line: at,
+      line: lineOf(open),
     })
   }
 }
@@ -505,8 +674,14 @@ export function decodeTarget(target: string): string {
   }
 }
 
+const MUST_ENCODE = /[%\\<>#?:()|`]|\s/gu
+
 export function encodeTarget(path: string): string {
-  return encodeURI(path).replace(/[#?()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+  return path.replace(MUST_ENCODE, (one) =>
+    one.charCodeAt(0) < 0x80
+      ? `%${one.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`
+      : encodeURIComponent(one),
+  )
 }
 
 export function decodeFragment(fragment: string): string {

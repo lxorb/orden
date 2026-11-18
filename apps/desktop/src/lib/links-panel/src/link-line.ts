@@ -16,6 +16,7 @@ export function linkPieces(line: string): LinePiece[] {
   }
 
   for (const link of findLinks(line)) {
+    if (link.from < at) continue
     words(link.from)
     pieces.push({ text: shownText(link), link: true })
     at = link.to
