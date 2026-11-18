@@ -1,13 +1,22 @@
 import type { Entry } from '@orden/contracts'
 import { readBase } from '@orden/bases'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { movedWords, orderMoved } from './order-paths'
 
 const notes = new Map<string, string>()
+const holding: string[] = []
+const read: string[] = []
+
+vi.mock('../../link-index/src/api', () => ({
+  links: { basesIn: (root: string) => (root === '/s' ? holding : []) },
+}))
 
 vi.mock('../../workspace/src/api', () => ({
   workspace: {},
-  noteText: (_: unknown, path: string) => Promise.resolve(notes.get(path) ?? null),
+  noteText: (_: unknown, path: string) => {
+    read.push(path)
+    return Promise.resolve(notes.get(path) ?? null)
+  },
   writeNoteText: (_: unknown, path: string, _before: string, after: string) => {
     notes.set(path, after)
     return Promise.resolve()
@@ -32,6 +41,12 @@ const BASE = `views:
           - Plans/Ship.md
           - Plans/Write.md
 `
+
+beforeEach(() => {
+  notes.clear()
+  holding.length = 0
+  read.length = 0
+})
 
 describe('a board following its cards', () => {
   test('renames a card in a .base file', () => {
@@ -70,6 +85,7 @@ describe('a board following its cards', () => {
     )
     notes.set('/s/Renamed/Plans/Plans.md', fenced('Work/Plans'))
     notes.set('/s/Renamed/Old/Deep/Deep.md', fenced('Work/Old/Deep'))
+    holding.push('/s/Work/Plans/Plans.md', '/s/Work/Old/Deep/Deep.md')
 
     await orderMoved(tree, '/s', '/s/Work', '/s/Renamed')
 
@@ -91,9 +107,29 @@ describe('a board following its cards', () => {
       ),
     )
     notes.set('/s/Renamed/Plans/Plans.md', fenced('Work/Plans'))
+    holding.push('/s/Renamed/Plans/Plans.md')
 
     await orderMoved(tree, '/s', '/s/Work', '/s/Renamed')
 
     expect(notes.get('/s/Renamed/Plans/Plans.md')).toContain('- Renamed/Plans/Ship.md')
+  })
+
+  test('and in a database written in any other note, reading only the notes that hold one', async () => {
+    const tree = folder(
+      '/s',
+      note('/s/Dashboard.md'),
+      note('/s/Diary.md'),
+      folder('/s/Plans', note('/s/Plans/Ship.md'), note('/s/Plans/Write.md')),
+      folder('/s/Done'),
+    )
+    notes.set('/s/Dashboard.md', `# Dashboard\n\n\`\`\`base\n${BASE}\`\`\`\n`)
+    notes.set('/s/Diary.md', 'Shipped Plans/Ship.md today.\n')
+    holding.push('/s/Dashboard.md')
+
+    await orderMoved(tree, '/s', '/s/Plans/Ship.md', '/s/Done/Ship.md')
+
+    expect(notes.get('/s/Dashboard.md')).toContain('- Done/Ship.md')
+    expect(notes.get('/s/Dashboard.md')).toContain('- Plans/Write.md')
+    expect(read).toEqual(['/s/Dashboard.md'])
   })
 })

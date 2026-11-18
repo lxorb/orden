@@ -16,6 +16,16 @@ describe('reading a note for the index', () => {
     expect(note.links.map((link) => link.target)).toEqual(['Other', '../notes/Third.md'])
   })
 
+  test('says when it holds a database, as the Rust scan does, and only then', () => {
+    const holds = (body: string) => scanNote('Dash.md', body).bases === true
+
+    expect(holds('# Dash\n\n```base\nviews: []\n```\n')).toBe(true)
+    expect(holds('> ~~~~ base\n> views: []\n> ~~~~\n')).toBe(true)
+    expect(holds('# Dash\n\n```baseball\n```\n')).toBe(false)
+    expect(holds('# Dash\n\nbase\n')).toBe(false)
+    expect('bases' in scanNote('Plain.md', '# Plain\n')).toBe(false)
+  })
+
   test('reads the other names the note gives itself, whichever way they are written', () => {
     const aliases = (body: string) => scanNote('Plan.md', body).aliases
 

@@ -140,6 +140,8 @@ pub struct Note {
     address: Option<String>,
     cover: Option<String>,
     bare: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    bases: bool,
     front: Option<String>,
     tasks: Vec<Task>,
     stamp: Option<Stamp>,
@@ -229,6 +231,7 @@ fn note_at(relative: String, body: &str) -> Note {
         address: None,
         cover: said("cover"),
         bare,
+        bases: body.lines().any(opens_base),
         front: block.as_ref().and_then(|one| {
             let lines = body.get(one.from..one.close)?;
             let lines = lines.strip_suffix('\n').unwrap_or(lines);
@@ -317,6 +320,7 @@ fn canvas_note(relative: String, body: &str) -> Note {
         address: None,
         cover: None,
         bare: false,
+        bases: false,
         front: None,
         tasks: Vec::new(),
         stamp: None,
@@ -342,6 +346,7 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         address: address_of(content),
         cover: None,
         bare: false,
+        bases: false,
         front: None,
         tasks: Vec::new(),
         stamp: None,
@@ -648,6 +653,21 @@ impl Paragraph {
         }
         found
     }
+}
+
+fn opens_base(line: &str) -> bool {
+    let rest = line.trim_start_matches([' ', '\t', '>']);
+    let Some(mark) = rest.chars().next().filter(|one| matches!(one, '`' | '~')) else {
+        return false;
+    };
+    let after = rest.trim_start_matches(mark);
+    if rest.len() - after.len() < 3 {
+        return false;
+    }
+    after
+        .trim_start_matches([' ', '\t'])
+        .strip_prefix("base")
+        .is_some_and(|tail| tail.is_empty() || tail.starts_with(char::is_whitespace))
 }
 
 fn underline_level(line: &str) -> Option<usize> {
@@ -1662,6 +1682,16 @@ mod tests {
             source.address.as_deref(),
             Some("view-source:https://a.example/")
         );
+    }
+
+    #[test]
+    fn a_note_that_holds_a_base_says_so() {
+        let holds = |body: &str| note_at("Dash.md".to_string(), body).bases;
+
+        assert!(holds("# Dash\n\n```base\nviews: []\n```\n"));
+        assert!(holds("> ~~~~ base\n> views: []\n> ~~~~\n"));
+        assert!(!holds("# Dash\n\n```baseball\n```\n"));
+        assert!(!holds("# Dash\n\nbase\n"));
     }
 
     #[test]

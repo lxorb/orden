@@ -1,11 +1,10 @@
 import { readBase, type Row, writeBase } from '@orden/bases'
-import { CodeBlocks, OPENS } from '@orden/markdown/fences'
-import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { links } from '../../link-index/src/api'
 import { rows } from '../../rows/src/api'
 import { insideSpace, samePath, within } from '../../platform/src/api'
 import { noteText, workspace, writeNoteText } from '../../workspace/src/api'
 import type { Shown, Source } from './live.svelte'
+import { drawnFences } from './drawn-fences'
 
 function spaceOf(path: string): { name: string; root: string } | null {
   return workspace.spaces.find((one) => within(one.root, path, one.root) !== null) ?? null
@@ -49,55 +48,6 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
     },
     watch: watchFile(path),
   }
-}
-
-interface DrawnFence {
-  words: string
-  from: number
-  to: number
-  margin: boolean
-}
-
-function drawnFences(text: string): DrawnFence[] {
-  const out: DrawnFence[] = []
-  const code = new CodeBlocks()
-  const matter = frontMatterBlock(text)
-  let at = matter ? matter.to : 0
-  let open: { from: number; prefix: number; lines: string[] } | null = null
-
-  const close = (to: number) => {
-    if (open) {
-      out.push({
-        words: open.lines.join('\n'),
-        from: open.from,
-        to,
-        margin: open.prefix === 0,
-      })
-    }
-    open = null
-  }
-
-  while (at < text.length) {
-    const end = text.indexOf('\n', at)
-    const next = end === -1 ? text.length : end + 1
-    const raw = text.slice(at, end === -1 ? text.length : end)
-    const kind = code.line(raw)
-
-    if (open && code.fence === null) close(at)
-    else if (open) {
-      const { prefix } = open
-      open.lines.push(prefix ? raw.replace(new RegExp(`^[ \\t>]{0,${prefix}}`), '') : raw)
-    }
-
-    if (kind === OPENS && code.fence !== null) {
-      const prefix = raw.indexOf(code.fence)
-      const info = raw.slice(prefix + code.fence.length).trim()
-      if (info.split(/\s+/)[0] === 'base') open = { from: next, prefix, lines: [] }
-    }
-    at = next
-  }
-  close(text.length)
-  return out
 }
 
 const fenceWords = (words: string) => words.replace(/\r/g, '').trimEnd()

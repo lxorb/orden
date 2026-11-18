@@ -218,6 +218,7 @@ export function indexedOf(value: unknown): IndexedNote | null {
     isTextOrNull(value.cover) &&
     typeof value.bare === 'boolean'
   if (!fields) return null
+  if (value.bases !== undefined && typeof value.bases !== 'boolean') return null
   if (value.front !== undefined && !isTextOrNull(value.front)) return null
   if (value.tasks !== undefined && !(Array.isArray(value.tasks) && value.tasks.every(isTask)))
     return null
