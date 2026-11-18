@@ -46,7 +46,10 @@ function fake(tagName: string, children: Fake[] = []): Fake {
   return one
 }
 
-function pretendDocument(body: Fake, root: Fake) {
+function page(rootSays?: string) {
+  const body = fake('BODY')
+  const root = fake('HTML')
+  if (rootSays) root.hasAttribute = (name) => name === rootSays
   vi.stubGlobal('document', {
     get activeElement() {
       return active
@@ -54,21 +57,22 @@ function pretendDocument(body: Fake, root: Fake) {
     body,
     documentElement: root,
   })
-}
-
-function pretendHTMLElement() {
   vi.stubGlobal('HTMLElement', {
     [Symbol.hasInstance]: (value: unknown) =>
       typeof value === 'object' && value !== null && 'focus' in value,
   })
+  return body
 }
 
-function layer(children: Fake[] = []): Fake {
-  return fake('DIV', children)
-}
+const layer = (children: Fake[] = []) => fake('DIV', children)
+const open = (node: Fake) => trap(node as unknown as HTMLElement)
 
-function open(node: Fake) {
-  return trap(node as unknown as HTMLElement)
+function openedFrom(rootSays?: string) {
+  const body = page(rootSays)
+  const opener = fake('BUTTON')
+  opener.focus()
+  const row = fake('BUTTON')
+  return { body, opener, row, held: open(layer([row])) }
 }
 
 afterEach(() => {
@@ -77,33 +81,18 @@ afterEach(() => {
 })
 
 describe('the keyboard while a layer is open', () => {
-  test('the first thing in the layer takes it', () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
+  test('the first thing in the layer takes it, or the layer itself with nothing to stand on', () => {
+    page()
     const row = fake('BUTTON')
-    pretendDocument(body, root)
-    pretendHTMLElement()
     open(layer([row]))
     expect(row.focused).toBe(1)
-  })
-
-  test('a layer with nothing to stand on takes it itself', () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
-    pretendDocument(body, root)
-    pretendHTMLElement()
     const node = layer()
-    node.tabIndex = 0
     open(node)
     expect(node.focused).toBe(1)
   })
 
   test('under a thumb a menu keeps it itself, and a sheet still hands it on', () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
-    root.hasAttribute = (name) => name === 'data-touch'
-    pretendDocument(body, root)
-    pretendHTMLElement()
+    page('data-touch')
     const row = fake('BUTTON')
     const menu = layer([row])
     menu.matches = (selector) => selector.startsWith('.orden-host')
@@ -118,43 +107,21 @@ describe('the keyboard while a layer is open', () => {
 
 describe('the keyboard once the layer has gone', () => {
   test('goes back to what opened it', () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
-    const opener = fake('BUTTON')
-    pretendDocument(body, root)
-    pretendHTMLElement()
-    opener.focus()
-    const row = fake('BUTTON')
-    const node = layer([row])
-    const held = open(node)
+    const { opener, row, held } = openedFrom()
     expect(row.focused).toBe(1)
     held.destroy()
     expect(opener.focused).toBe(2)
   })
 
   test('goes back when the keyboard has fallen to the page', () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
-    const opener = fake('BUTTON')
-    pretendDocument(body, root)
-    pretendHTMLElement()
-    opener.focus()
-    const node = layer([fake('BUTTON')])
-    const held = open(node)
+    const { body, opener, held } = openedFrom()
     active = body
     held.destroy()
     expect(opener.focused).toBe(2)
   })
 
   test('stays where something else has taken it', () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
-    const opener = fake('BUTTON')
-    pretendDocument(body, root)
-    pretendHTMLElement()
-    opener.focus()
-    const node = layer([fake('BUTTON')])
-    const held = open(node)
+    const { opener, held } = openedFrom()
     const field = fake('INPUT')
     field.focus()
     held.destroy()
@@ -163,32 +130,16 @@ describe('the keyboard once the layer has gone', () => {
     expect(active).toBe(field)
   })
 
-  test("nothing of the app's own takes it back from a site that had it", () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
-    root.hasAttribute = (name) => name === 'data-keyboard-in-page'
-    const opener = fake('BUTTON')
-    pretendDocument(body, root)
-    pretendHTMLElement()
-    opener.focus()
-    const held = open(layer([fake('BUTTON')]))
-    active = body
-    held.destroy()
-    expect(opener.focused).toBe(1)
-  })
-
-  test('nothing goes back to a row the layer itself deleted', () => {
-    const body = fake('BODY')
-    const root = fake('HTML')
-    const opener = fake('BUTTON')
-    pretendDocument(body, root)
-    pretendHTMLElement()
-    opener.focus()
-    const node = layer([fake('BUTTON')])
-    const held = open(node)
-    opener.isConnected = false
-    active = body
-    held.destroy()
-    expect(opener.focused).toBe(1)
+  test("nothing of the app's own takes it back from a site that had it, nor to a row the layer deleted", () => {
+    for (const [rootSays, gone] of [
+      ['data-keyboard-in-page', false],
+      [undefined, true],
+    ] as const) {
+      const { body, opener, held } = openedFrom(rootSays)
+      opener.isConnected = !gone
+      active = body
+      held.destroy()
+      expect(opener.focused).toBe(1)
+    }
   })
 })

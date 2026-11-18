@@ -78,3 +78,15 @@ describe('the Theme group in Appearance', () => {
     }
   })
 })
+
+test('every field of a theme not worn reads as its starting value on a fresh profile', async () => {
+  await import('../../theme-ports')
+  const fields = await (await import('./appearance-pane')).themeDeclarations()
+  expect(
+    fields.filter((one) => one.kind === 'switch' && one.initial === true).length,
+  ).toBeGreaterThan(0)
+  for (const one of fields) {
+    if (!('initial' in one) || one.initial === undefined) continue
+    expect([one.key, one.get()]).toEqual([one.key, one.initial])
+  }
+})
