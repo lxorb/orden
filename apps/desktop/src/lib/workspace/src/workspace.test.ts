@@ -1286,6 +1286,14 @@ async function beside(note: string) {
   if (copy) workspace.close(copy.id)
 }
 
+function hold(readPath?: string) {
+  let release: () => void = () => undefined
+  const held = new Promise<void>((resolve) => (release = resolve))
+  if (readPath === undefined) holding.write = held
+  else Object.assign(holding, { read: held, readPath })
+  return () => release()
+}
+
 function blank(words?: string) {
   workspace.openBlank()
   const tab = workspace.active!
@@ -2920,10 +2928,7 @@ describe('a note writes itself, wherever it is', () => {
   test('a file typed in while it was being written is written again', async () => {
     const tab = await typedIn('/space/a.md')
 
-    let release: () => void = () => undefined
-    holding.write = new Promise<void>((resolve) => {
-      release = resolve
-    })
+    const release = hold()
 
     const writing = workspace.writeNow()
     await vi.advanceTimersByTimeAsync(0)
@@ -2950,10 +2955,7 @@ describe('a note writes itself, wherever it is', () => {
   test('a rename during a write waits for it, and one file is left, with the words', async () => {
     const tab = await typedIn('/space/c.md')
 
-    let release: () => void = () => undefined
-    holding.write = new Promise<void>((resolve) => {
-      release = resolve
-    })
+    const release = hold()
 
     const writing = workspace.writeNow()
     await vi.advanceTimersByTimeAsync(0)
@@ -3242,11 +3244,7 @@ describe('a panel asked for while the session is still arriving', () => {
   test('is what stays, rather than what the arrangement said', async () => {
     workspace.panel = 'tree'
 
-    let release: () => void = () => undefined
-    holding.readPath = '/space/a.md'
-    holding.read = new Promise<void>((resolve) => {
-      release = resolve
-    })
+    const release = hold('/space/a.md')
 
     const arriving = workspace.applyLayout(laidOut([draft('/space/a.md')], 0, 'tree'), false)
     await Promise.resolve()
@@ -3466,11 +3464,7 @@ describe('a click in the file list landing inside a gesture that re-reads the no
     const tab = await preview('/space/a.md')
     expect(tab.note.text).toBe('# a')
 
-    let release: () => void = () => undefined
-    holding.readPath = '/space/a.md'
-    holding.read = new Promise<void>((resolve) => {
-      release = resolve
-    })
+    const release = hold('/space/a.md')
 
     const renaming = workspace.rename('/space/c.md', 'renamed.md')
     await Promise.resolve()
@@ -3684,15 +3678,6 @@ describe('a pane that lays its notes out as columns', () => {
 })
 
 describe('two opens of one path', () => {
-  function held(path: string): () => void {
-    let release: () => void = () => undefined
-    holding.readPath = path
-    holding.read = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    return release
-  }
-
   const over = (path: string) => workspace.documents.filter((one) => one.path === path)
 
   beforeEach(() => {
@@ -3708,7 +3693,7 @@ describe('two opens of one path', () => {
   })
 
   test('are one open, and come to one document', async () => {
-    const release = held('/space/a.md')
+    const release = hold('/space/a.md')
     const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
     release()
     await both
@@ -3719,7 +3704,7 @@ describe('two opens of one path', () => {
 
   test('the same for a website, which is the tab Emil was switching away from', async () => {
     notes['/space/site.url'] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
-    const release = held('/space/site.url')
+    const release = hold('/space/site.url')
     const both = Promise.all([
       workspace.openWeb('/space/site.url'),
       workspace.openWeb('/space/site.url'),
@@ -3731,7 +3716,7 @@ describe('two opens of one path', () => {
   })
 
   test('and for a plane', async () => {
-    const release = held('/space/plan.canvas')
+    const release = hold('/space/plan.canvas')
     const both = Promise.all([
       workspace.openCanvas('/space/plan.canvas'),
       workspace.openCanvas('/space/plan.canvas'),
@@ -3745,7 +3730,7 @@ describe('two opens of one path', () => {
   test('one of them from a session still being read', async () => {
     const drafted = laidOut([draft('/space/a.md')])
 
-    const release = held('/space/a.md')
+    const release = hold('/space/a.md')
     const arriving = workspace.applyLayout(drafted, false)
     await Promise.resolve()
     const clicked = workspace.open('/space/a.md')
@@ -3756,7 +3741,7 @@ describe('two opens of one path', () => {
   })
 
   test('so words arriving for the file reach every pane showing it', async () => {
-    const release = held('/space/a.md')
+    const release = hold('/space/a.md')
     const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
     release()
     await both
@@ -3771,7 +3756,7 @@ describe('two opens of one path', () => {
   })
 
   test('and one file is one room, because it is one document', async () => {
-    const release = held('/space/a.md')
+    const release = hold('/space/a.md')
     const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
     release()
     await both
@@ -3987,15 +3972,6 @@ describe('a preview landing on a note that is already open', () => {
 })
 
 describe('what a tab s own menu does to the strip', () => {
-  const entry = (path: string, children: Entry[] = [], isDir = false): Entry => ({
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: isDir,
-    modified: 0,
-    created: 0,
-    children,
-  })
-
   beforeEach(() => {
     onePane()
     inSpace()
@@ -4164,11 +4140,10 @@ describe('what a tab s own menu does to the strip', () => {
   })
 
   test('renames on the file s own row, with the file list out and its folder open', async () => {
-    workspace.tree = entry(
-      '/space',
-      [entry('/space/a.md'), entry('/space/f', [entry('/space/f/b.md')], true)],
-      true,
-    )
+    workspace.tree = folder('/space', [
+      note('/space/a.md'),
+      folder('/space/f', [note('/space/f/b.md')]),
+    ])
     workspace.closePanel('left')
     notes['/space/f/b.md'] = '# b'
     const id = await opened('/space/f/b.md')
@@ -4182,11 +4157,9 @@ describe('what a tab s own menu does to the strip', () => {
   })
 
   test('renames a folder s own note on the folder s row', async () => {
-    workspace.tree = entry(
-      '/space',
-      [entry('/space/f', [entry('/space/f/f.md'), entry('/space/f/c.md')], true)],
-      true,
-    )
+    workspace.tree = folder('/space', [
+      folder('/space/f', [note('/space/f/f.md'), note('/space/f/c.md')]),
+    ])
     notes['/space/f/f.md'] = '# f'
     const id = await opened('/space/f/f.md')
 
@@ -4197,7 +4170,7 @@ describe('what a tab s own menu does to the strip', () => {
   })
 
   test('offers no rename for a file with no row in the list', async () => {
-    workspace.tree = entry('/space', [entry('/space/a.md')], true)
+    workspace.tree = folder('/space', [note('/space/a.md')])
     await opened(OUTSIDE)
     const tab = workspace.active!
 
@@ -4208,6 +4181,13 @@ describe('what a tab s own menu does to the strip', () => {
 describe('a tab asked for with a modifier', () => {
   const strip = () => workspace.tabs.map((one) => one.path ?? one.address)
   const jump = (path: string) => ({ path, target: path, heading: null, block: null, page: null })
+  const readingA = async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')!
+    workspace.activate(reading.id)
+    return reading
+  }
 
   beforeEach(() => {
     onePane()
@@ -4219,10 +4199,7 @@ describe('a tab asked for with a modifier', () => {
   })
 
   test('behind opens it beside the tab in front, and leaves that tab in front', async () => {
-    await workspace.open('/space/a.md')
-    await workspace.open('/space/c.md')
-    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')!
-    workspace.activate(reading.id)
+    const reading = await readingA()
 
     await workspace.openEntry('/space/b.md', { activate: false, beside: true })
 
@@ -4232,10 +4209,7 @@ describe('a tab asked for with a modifier', () => {
   })
 
   test('a run of them from one tab keeps the order they were asked for in', async () => {
-    await workspace.open('/space/a.md')
-    await workspace.open('/space/c.md')
-    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')!
-    workspace.activate(reading.id)
+    const reading = await readingA()
 
     await workspace.openEntry('/space/b.md', { activate: false, beside: true })
     await workspace.openEntry('/space/plan.canvas', { activate: false, beside: true })
@@ -4245,10 +4219,7 @@ describe('a tab asked for with a modifier', () => {
   })
 
   test('in front opens it beside the tab and goes there', async () => {
-    await workspace.open('/space/a.md')
-    await workspace.open('/space/c.md')
-    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')!
-    workspace.activate(reading.id)
+    await readingA()
 
     await workspace.openEntry('/space/b.md', { beside: true })
 
@@ -4326,10 +4297,7 @@ describe('a tab asked for with a modifier', () => {
   })
 
   test('a page a link opened behind lands beside the tab it was pressed in', async () => {
-    await workspace.open('/space/a.md')
-    await workspace.open('/space/c.md')
-    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')!
-    workspace.activate(reading.id)
+    const reading = await readingA()
 
     workspace.openPage('https://example.com/', 'behind')
 
@@ -4355,10 +4323,7 @@ describe('a tab asked for with a modifier', () => {
   })
 
   test('a plain page still goes to the end and in front, as it did', async () => {
-    await workspace.open('/space/a.md')
-    await workspace.open('/space/c.md')
-    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')!
-    workspace.activate(reading.id)
+    await readingA()
 
     workspace.openPage('https://example.com/')
 
@@ -5170,11 +5135,7 @@ describe('a closed tab brought back while its pane goes', () => {
     if (going?.path !== '/space/c.md') throw new Error('c did not open beside')
     workspace.close(going.id)
 
-    let release: () => void = () => undefined
-    holding.readPath = '/space/c.md'
-    holding.read = new Promise<void>((resolve) => {
-      release = resolve
-    })
+    const release = hold('/space/c.md')
     const asked = given.length
     const back = workspace.reopenClosed()
     await vi.waitFor(() => {

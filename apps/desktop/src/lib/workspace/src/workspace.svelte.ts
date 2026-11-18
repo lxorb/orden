@@ -2478,29 +2478,20 @@ class Workspace {
   }
 
   goBack(id: string | null = this.activeTabId, ask: TabAsk = 'plain') {
-    const tab = this.tabs.find((one) => one.id === id)
-    if (!tab) return
-    if (ask !== 'plain') {
-      void this.stepAside(tab, -1, ask)
-      return
-    }
-
-    if (tab.kind === 'web') void webPages().step(tab.id, 'back')
-    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer') void services().explorerStep(tab, -1)
-    else void this.walk(tab.at - 1, tab.id)
+    this.goStep(-1, id, ask)
   }
 
   goForward(id: string | null = this.activeTabId, ask: TabAsk = 'plain') {
+    this.goStep(1, id, ask)
+  }
+
+  private goStep(by: -1 | 1, id: string | null, ask: TabAsk) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
-    if (ask !== 'plain') {
-      void this.stepAside(tab, 1, ask)
-      return
-    }
-
-    if (tab.kind === 'web') void webPages().step(tab.id, 'forward')
-    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer') void services().explorerStep(tab, 1)
-    else void this.walk(tab.at + 1, tab.id)
+    if (ask !== 'plain') void this.stepAside(tab, by, ask)
+    else if (tab.kind === 'web') void webPages().step(tab.id, by < 0 ? 'back' : 'forward')
+    else if (!__EVEN_PLUGIN__ && tab.kind === 'explorer') void services().explorerStep(tab, by)
+    else void this.walk(tab.at + by, tab.id)
   }
 
   private async stepAside(tab: Tab, by: -1 | 1, ask: TabAsk) {
