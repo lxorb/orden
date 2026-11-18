@@ -1,9 +1,11 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorState, type TransactionSpec } from '@codemirror/state'
+import { EditorState, StateEffect, type TransactionSpec } from '@codemirror/state'
 import { afterEach, describe, expect, test } from 'vitest'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
-import { SharedDoc } from '../shared'
+import { isExternal } from '../external'
+import { HeldState } from '../held'
+import { documentOf, SharedDoc } from '../shared'
 import { ANSWER_CLOSE, ANSWER_OPEN } from './block'
 import {
   aiExtension,
@@ -40,6 +42,27 @@ class Fake {
 
   get asking(): boolean {
     return askingAt(this.state, this.text.indexOf('```ai'))
+  }
+}
+
+const SCROLLED = StateEffect.define()
+
+class Pane extends Fake {
+  readonly scrollDOM = { scrollTop: 0 }
+
+  override dispatch = (spec: TransactionSpec) => {
+    const made = this.state.update(spec)
+    this.state = made.state
+    if (made.changes.empty || isExternal(made)) return
+    documentOf(this)?.local(made.changes, made.state.selection, this)
+  }
+
+  setState(next: EditorState) {
+    this.state = next
+  }
+
+  scrollSnapshot() {
+    return SCROLLED.of(null)
   }
 }
 
@@ -266,6 +289,49 @@ describe('asking', () => {
     await settled(view)
 
     expect(view.text).toContain(`*answered by m, ${dated()}*`)
+  })
+})
+
+describe('an answer while the pane turns to another note', () => {
+  function switched() {
+    const runner = held()
+    const first = new SharedDoc(NOTE)
+    const second = new SharedDoc(PLAIN)
+    const pane = new Pane(NOTE)
+    first.join(pane)
+    askAiFence(pane, aiFenceAt(pane.state, NOTE.indexOf('Summarise'))!)
+    runner.ask.started('gpt-test')
+    runner.ask.wrote('Herons ')
+
+    const away = HeldState.shownIn(first, pane)
+    away.take(pane)
+    HeldState.waiting(second, new Fake(PLAIN).state).give(pane)
+    return { runner, first, second, pane, away }
+  }
+
+  test('goes on into its own note, whole, and leaves the note shown alone', async () => {
+    const { runner, first, pane, away } = switched()
+    runner.ask.wrote('stand still.')
+    runner.finish()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(first.text.toString()).toBe(
+      'A note about herons.\n\n```ai\nSummarise @note\n```\n\n' +
+        `${ANSWER_OPEN}\n*answered by gpt-test, ${dated()}*\n\nHerons stand still.\n${ANSWER_CLOSE}` +
+        '\n\nAfter it.\n',
+    )
+    expect(away.state.doc.toString()).toBe(first.text.toString())
+    expect(pane.text).toBe(PLAIN)
+    expect(askingAt(away.state, NOTE.indexOf('```ai'))).toBe(false)
+    expect(runner.aborted).toBe(false)
+  })
+
+  test('stops the model once its note is closed', () => {
+    const { runner, away } = switched()
+    away.release()
+    runner.ask.wrote('more')
+
+    expect(runner.aborted).toBe(true)
   })
 })
 

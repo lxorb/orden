@@ -1,5 +1,6 @@
 import { EditorSelection, type Extension, Facet } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { later } from '../shared'
 import { linkWriter, noteIndex } from './notes'
 
 export const noteCarrier = Facet.define<
@@ -27,21 +28,23 @@ export const noteDrops: Extension = EditorView.domEventHandlers({
 
     event.preventDefault()
     const at = view.posAtCoords({ x: event.clientX, y: event.clientY }, false)
+    const land = later(view)
     view.focus()
 
-    void noteLinksCode().then(({ noteLinks }) => {
-      const { state } = view
-      if (state.readOnly) return
+    void noteLinksCode().then(({ noteLinks }) =>
+      land((state, placed) => {
+        if (state.readOnly) return null
 
-      const text = noteLinks(state.facet(noteIndex), paths, state.facet(linkWriter))
-      const from = Math.min(at, state.doc.length)
+        const text = noteLinks(state.facet(noteIndex), paths, state.facet(linkWriter))
+        const from = placed(at)
 
-      view.dispatch({
-        changes: { from, insert: text },
-        selection: EditorSelection.cursor(from + text.length),
-        userEvent: 'input.drop',
-      })
-    })
+        return {
+          changes: { from, insert: text },
+          selection: EditorSelection.cursor(from + text.length),
+          userEvent: 'input.drop',
+        }
+      }),
+    )
     return true
   },
 })
