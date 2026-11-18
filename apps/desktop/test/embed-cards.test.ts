@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+import { ROOT } from './files'
 
 function source(path: string): string {
   return readFileSync(`${ROOT}${path}`, 'utf8')

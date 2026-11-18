@@ -2,9 +2,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { SOURCE } from './files'
 import { everySurface } from '@orden/themes/write'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const EDITOR = fileURLToPath(new URL('../../../packages/editor/src/', import.meta.url))
 const CONFIG = join(import.meta.dirname, '../vite.config.ts')
 

@@ -1,11 +1,9 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { ROOT } from './files'
 import { inText, type Kind, oldNames } from '../../../scripts/old-name'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 const MOVED_PACKAGES: readonly string[] = execFileSync('git', ['ls-files', '*package.json'], {
   cwd: ROOT,

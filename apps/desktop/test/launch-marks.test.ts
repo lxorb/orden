@@ -1,10 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { walk } from './files'
+import { ROOT, walk } from './files'
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const SRC = join(ROOT, 'apps', 'desktop', 'src')
 
 const TRACE = readFileSync(join(SRC, 'lib', 'platform', 'src', 'trace.ts'), 'utf8')

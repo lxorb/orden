@@ -1,9 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { code, walk } from './files'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+import { code, SOURCE, walk } from './files'
 
 const sources = walk(SOURCE, code).map((path) => ({
   name: path.slice(SOURCE.length).replace(/\\/g, '/'),

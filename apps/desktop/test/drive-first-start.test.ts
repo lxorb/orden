@@ -1,9 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { ROOT } from './files'
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const SCRIPTS = join(ROOT, 'scripts')
 const WORKFLOWS = join(ROOT, '.github', 'workflows')
 

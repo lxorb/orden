@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { walk } from './files'
+import { ROOT, walk } from './files'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { openerFor } from '../src/lib/workspace/src/openers'
 import { kindOfName } from '../src/lib/sync-client/src/create'
@@ -50,7 +49,6 @@ describe('a meeting note already on a disk', () => {
   })
 })
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const APP = join(ROOT, 'apps/desktop/src')
 
 const read = (path: string) => readFileSync(path, 'utf8')

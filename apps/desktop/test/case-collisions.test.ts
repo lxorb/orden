@@ -1,8 +1,6 @@
 import { execFileSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+import { ROOT } from './files'
 
 const TRACKED = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
   .split('\n')

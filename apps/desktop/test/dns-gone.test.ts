@@ -1,9 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+import { ROOT } from './files'
 
 const SKIP = /^(?:node_modules|target|dist|gen|\.[^.]+)$/
 

@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { expect, test, vi } from 'vitest'
-import { code, walk } from './files'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+import { code, SOURCE, walk } from './files'
 
 test('a store hears another window write its key through heardElsewhere, not a listener of its own', () => {
   const own = walk(SOURCE, code)

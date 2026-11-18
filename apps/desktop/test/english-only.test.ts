@@ -2,8 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+import { ROOT } from './files'
 
 const PLACES = ['apps/desktop/src', 'apps/desktop/test', 'apps/cli', 'packages', 'services/sync']
 
