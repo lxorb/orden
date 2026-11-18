@@ -7,6 +7,7 @@
 :root {
   --window-ground: var(--bg);
   --shell-ground: var(--window-ground);
+  interpolate-size: allow-keywords;
 }
 
 html,
@@ -71,10 +72,7 @@ button {
   outline-offset: var(--focus-ring-offset);
 }
 
-.orden-host:focus-visible {
-  outline: none;
-}
-
+.orden-host:focus-visible,
 .cm-content:focus-visible {
   outline: none;
 }
@@ -1533,9 +1531,6 @@ select:focus-visible,
 .orden-segmented button {
   position: relative;
   z-index: var(--z-raised);
-}
-
-.orden-segmented button {
   min-height: var(--row-height);
   display: flex;
   align-items: center;
@@ -2129,10 +2124,6 @@ select:focus-visible,
 
 #write details.callout[open] > .callout-title .callout-fold {
   transform: rotate(90deg);
-}
-
-:root {
-  interpolate-size: allow-keywords;
 }
 
 #write details::details-content {

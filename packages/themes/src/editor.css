@@ -327,7 +327,8 @@
   pointer-events: none;
 }
 
-.orden-fence-copy {
+.orden-fence-copy,
+.orden-fence-run {
   display: grid;
   place-items: center;
   width: 22px;
@@ -347,12 +348,16 @@
 .orden-fence-header.orden-fence-hover .orden-fence-copy,
 .orden-fence-controls:hover .orden-fence-copy,
 .orden-fence-copy:focus-visible,
-.orden-fence-copy.orden-fence-copied {
+.orden-fence-copy.orden-fence-copied,
+.orden-fence-header.orden-fence-hover .orden-fence-run,
+.orden-fence-controls:hover .orden-fence-run,
+.orden-fence-run:focus-visible {
   opacity: 1;
 }
 
 @media (hover: none) {
-  .orden-fence-copy {
+  .orden-fence-copy,
+  .orden-fence-run {
     opacity: 1;
   }
 }
@@ -373,35 +378,6 @@
 
 .orden-fence-copy.orden-fence-copied {
   color: var(--success);
-}
-
-.orden-fence-run {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--muted);
-  opacity: 0;
-  cursor: default;
-  transition:
-    opacity var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-
-.orden-fence-header.orden-fence-hover .orden-fence-run,
-.orden-fence-controls:hover .orden-fence-run,
-.orden-fence-run:focus-visible {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  .orden-fence-run {
-    opacity: 1;
-  }
 }
 
 .orden-fence-run svg {
@@ -971,20 +947,14 @@
   display: none;
 }
 
-.orden-read-only .orden-checkbox {
-  pointer-events: none;
-}
-
+.orden-read-only .orden-checkbox,
 .orden-read-only .orden-fence-language {
   pointer-events: none;
 }
 
 .orden-read-only .orden-table-rows,
 .orden-read-only .orden-table-columns,
-.orden-read-only .orden-table-resize {
-  display: none;
-}
-
+.orden-read-only .orden-table-resize,
 .orden-read-only .orden-image-alt,
 .orden-read-only .orden-image-size,
 .orden-read-only .orden-image-source,
