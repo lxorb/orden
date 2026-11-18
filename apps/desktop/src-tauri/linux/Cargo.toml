@@ -215,6 +215,7 @@ percent-encoding.workspace = true
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 orden-agents = { path = "crates/agents" }
+orden-ai = { path = "crates/ai" }
 orden-apps = { path = "crates/apps" }
 orden-browsers = { path = "crates/browsers" }
 orden-crashes = { path = "crates/crashes" }

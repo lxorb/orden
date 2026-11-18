@@ -7,19 +7,19 @@ use super::server::{defaults, INSTRUCTIONS};
 use super::tools::{self, Tool};
 use orden_agents::grants::Grant;
 
-pub(crate) fn instructions() -> &'static str {
+pub fn instructions() -> &'static str {
     INSTRUCTIONS
 }
 
-pub(crate) fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static Tool> {
+pub fn listed(grant: &Grant, window: Option<&BTreeSet<String>>) -> Vec<&'static Tool> {
     tools::listed(grant, window)
 }
 
-pub(crate) fn shown(tool: &Tool) -> Value {
+pub fn shown(tool: &Tool) -> Value {
     tool.listed()
 }
 
-pub(crate) fn reads_only(tool: &Tool) -> bool {
+pub fn reads_only(tool: &Tool) -> bool {
     tool.annotations
         .as_ref()
         .and_then(|one| one.get("readOnlyHint"))
@@ -27,16 +27,16 @@ pub(crate) fn reads_only(tool: &Tool) -> bool {
         .unwrap_or(false)
 }
 
-pub(crate) fn with_defaults(tool: &str, args: Value) -> Value {
+pub fn with_defaults(tool: &str, args: Value) -> Value {
     defaults(tool, args)
 }
 
-pub(crate) fn rendered(tool: &str, args: &Value, status: u16, body: &str) -> Value {
+pub fn rendered(tool: &str, args: &Value, status: u16, body: &str) -> Value {
     let said = serde_json::from_str(body).unwrap_or_else(|_| Value::String(body.to_owned()));
     written(tool, args, &Outcome::from_endpoint(status, &said))
 }
 
-pub(crate) fn categorized(
+pub fn categorized(
     rendered: &mut Value,
     category_of: impl Fn(&str) -> Option<(orden_agents::verbs::Category, Option<String>)>,
 ) {

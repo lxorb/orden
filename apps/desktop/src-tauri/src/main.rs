@@ -20,7 +20,11 @@ fn main() {
         .nth(1)
         .is_some_and(|first| first == "mcp")
     {
-        std::process::exit(orden::mcp::serve());
+        orden_ai::mcp::home::name(orden_ai::mcp::home::Named {
+            identifier: env!("ORDEN_IDENTIFIER"),
+            version: env!("ORDEN_VERSION"),
+        });
+        std::process::exit(orden_ai::mcp::serve());
     }
     orden::run();
 }

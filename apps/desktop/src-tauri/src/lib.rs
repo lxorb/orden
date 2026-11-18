@@ -1,9 +1,5 @@
 #[cfg(desktop)]
 mod agents;
-#[cfg(desktop)]
-mod ai_agent;
-#[cfg(desktop)]
-mod ai_cli;
 #[cfg(test)]
 mod calls;
 #[cfg(target_os = "linux")]
@@ -28,8 +24,6 @@ mod keyboard;
 mod launch;
 #[cfg(desktop)]
 mod lifecycle;
-#[cfg(desktop)]
-pub mod mcp;
 #[cfg(desktop)]
 pub mod old_engine;
 #[cfg(desktop)]
@@ -240,21 +234,21 @@ macro_rules! desktop_commands {
             orden_reminders::reminders::reminders_quietly,
             orden_reminders::notices::notice_show,
             orden_reminders::notices::notice_clear,
-            mcp::program::mcp_program,
-            ai_agent::ai_agent_tools,
-            ai_agent::ai_agent_call,
-            ai_agent::ai_agent_context,
-            ai_cli::ai_cli_status,
-            ai_cli::ai_cli_forget,
-            ai_cli::ai_cli_enroll_read,
-            ai_cli::ai_cli_enroll_write,
-            ai_cli::ai_cli_ask,
-            ai_cli::ai_cli_stop,
-            ai_cli::ai_cli_open,
-            ai_cli::ai_cli_say,
-            ai_cli::ai_cli_close,
-            ai_cli::ai_cli_models,
-            ai_cli::ai_cli_usage,
+            orden_ai::mcp::program::mcp_program,
+            orden_ai::ai_agent::ai_agent_tools,
+            orden_ai::ai_agent::ai_agent_call,
+            orden_ai::ai_agent::ai_agent_context,
+            orden_ai::ai_cli::ai_cli_status,
+            orden_ai::ai_cli::ai_cli_forget,
+            orden_ai::ai_cli::ai_cli_enroll_read,
+            orden_ai::ai_cli::ai_cli_enroll_write,
+            orden_ai::ai_cli::ai_cli_ask,
+            orden_ai::ai_cli::ai_cli_stop,
+            orden_ai::ai_cli::ai_cli_open,
+            orden_ai::ai_cli::ai_cli_say,
+            orden_ai::ai_cli::ai_cli_close,
+            orden_ai::ai_cli::ai_cli_models,
+            orden_ai::ai_cli::ai_cli_usage,
             orden_secrets::chatgpt::chatgpt_sign_in,
             orden_secrets::chatgpt::chatgpt_account,
             orden_secrets::chatgpt::chatgpt_token,
@@ -589,7 +583,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 
     #[cfg(desktop)]
     let builder = builder
-        .manage(ai_cli::Asks::default())
+        .manage(orden_ai::ai_cli::Asks::default())
         .manage(orden_secrets::chatgpt::ChatGpt::default());
 
     #[cfg(desktop)]
@@ -655,7 +649,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
             if let Some(waiting) = webview.try_state::<orden_agents::endpoint::Waiting>() {
                 waiting.forget(webview.label());
             }
-            ai_cli::page_started(webview.app_handle(), webview.label());
+            orden_ai::ai_cli::page_started(webview.app_handle(), webview.label());
         }
     });
     builder
@@ -730,9 +724,13 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
 fn first_of_all(handle: &tauri::AppHandle) {
     orden_crashes::crashes::start(handle);
     trace::mark("crash reports");
+    orden_ai::mcp::home::name(orden_ai::mcp::home::Named {
+        identifier: env!("ORDEN_IDENTIFIER"),
+        version: env!("ORDEN_VERSION"),
+    });
     orden_agents::hand(orden_agents::Host {
         answer: agents::answer,
-        lent: ai_agent::lent,
+        lent: orden_ai::ai_agent::lent,
         close_tabs: |app| agents::tabs::close_all(app, None),
         page_up: launch::page_up,
         hold_stop: |app, key| hotkeys::hold(app, hotkeys::Which::StopAgents, key),
@@ -864,7 +862,7 @@ fn ready(
 #[cfg(desktop)]
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
     orden_system::default_browser::keep_registered(handle);
-    ai_cli::keep_enrolled(handle);
+    orden_ai::ai_cli::keep_enrolled(handle);
     orden_secrets::retired_chats::clear_leftovers(handle);
 }
 

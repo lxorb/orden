@@ -1,3 +1,4 @@
+use orden_base::handed::BACKGROUND_FLAG;
 use orden_base::labels::{document_windows, MAIN};
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -214,8 +215,6 @@ fn restarted_with(args: &[std::ffi::OsString]) -> Vec<std::ffi::OsString> {
         });
     args.iter().take(1).chain(flags).cloned().collect()
 }
-
-pub const BACKGROUND_FLAG: &str = "--background";
 
 pub fn in_background<A: AsRef<std::ffi::OsStr>>(argv: &[A]) -> bool {
     argv.iter()

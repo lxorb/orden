@@ -78,7 +78,7 @@ describe('a Mac build and the keychain', () => {
   })
 
   test('a Codex home of Orden’s keeps its login in a file on a Mac', () => {
-    const home = readFileSync(join(TAURI, 'src/ai_cli/home.rs'), 'utf8')
+    const home = readFileSync(join(TAURI, 'crates/ai/src/ai_cli/home.rs'), 'utf8')
     expect(home).toMatch(
       /#\[cfg\(target_os = "macos"\)\]\nconst CODEX_CONFIG: &str = "cli_auth_credentials_store = \\"file\\"\\n";/,
     )

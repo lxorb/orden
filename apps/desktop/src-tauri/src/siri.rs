@@ -44,7 +44,7 @@ pub extern "C" fn orden_add_to_inbox(text: *const c_char) -> i32 {
         return 1;
     }
     let text = unsafe { CStr::from_ptr(text) }.to_string_lossy();
-    let added = crate::mcp::home::config_dir()
+    let added = orden_ai::mcp::home::config_dir()
         .ok_or_else(|| "no settings folder".to_owned())
         .and_then(|dir| queued(&dir.join(ADDED), &text));
     match added {

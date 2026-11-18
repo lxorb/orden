@@ -2,7 +2,7 @@
 of anybody?
 
 `orden mcp` is the installed app's own binary as a Model Context Protocol server (see
-apps/desktop/src-tauri/src/mcp). The release exe is a GUI-subsystem binary, so the first
+apps/desktop/src-tauri/crates/ai/src/mcp). The release exe is a GUI-subsystem binary, so the first
 thing this drive proves is the one a unit test cannot: that a client which starts it with
 three pipes, the way Claude Code and Codex do, reads JSON-RPC on its stdout and nothing
 else. Then it plays the client through everything the lane promises:

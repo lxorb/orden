@@ -3736,6 +3736,7 @@ dependencies = [
  "objc2-foundation",
  "objc2-screen-capture-kit",
  "orden-agents",
+ "orden-ai",
  "orden-apps",
  "orden-base",
  "orden-browsers",
@@ -3773,7 +3774,6 @@ dependencies = [
  "tauri-plugin-deep-link",
  "tauri-plugin-dialog",
  "tauri-plugin-global-shortcut",
- "tauri-plugin-notification",
  "tauri-plugin-opener",
  "tauri-plugin-os",
  "tauri-plugin-process",
@@ -3799,16 +3799,35 @@ dependencies = [
  "orden-crashes",
  "orden-placement",
  "orden-web-engine",
+ "png 0.18.1",
  "reqwest",
  "rustls",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "tauri",
+ "tauri-plugin-notification",
  "tauri-plugin-opener",
  "tauri-plugin-os",
  "tempfile",
  "windows 0.58.0",
+]
+
+[[package]]
+name = "orden-ai"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "getrandom 0.3.4",
+ "orden-agents",
+ "orden-base",
+ "orden-placement",
+ "orden-store",
+ "orden-system",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tempfile",
 ]
 
 [[package]]

@@ -11,7 +11,10 @@ function launchers(text: string): string[] {
 
 describe('an agent connecting and the reader’s window', () => {
   test('orden mcp starts the app asking for no window, on every desktop', () => {
-    const app = read('mcp/app.rs')
+    const app = readFileSync(
+      fileURLToPath(new URL('../src-tauri/crates/ai/src/mcp/app.rs', import.meta.url)),
+      'utf8',
+    )
     const each = launchers(app)
     expect(each.length).toBe(3)
     for (const one of each) {
