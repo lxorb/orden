@@ -805,20 +805,22 @@ class Links {
   private readingOther = new Map<string, Promise<void>>()
 
   private readOther(root: string): Promise<void> {
-    const reading = this.readOtherNow(root).finally(() => this.readingOther.delete(root))
+    this.others.set(root, 'reading')
+    const reading: Promise<void> = invoke<SpaceLinks>('scan_links', { root })
+      .catch(() => null)
+      .then((found) => {
+        if (this.readingOther.get(root) !== reading || this.others.get(root) !== 'reading') return
+        this.others.set(root, {
+          refs: (found?.notes ?? []).map(refOf),
+          files: found?.files ?? [],
+        })
+        this.changed()
+      })
+      .finally(() => {
+        if (this.readingOther.get(root) === reading) this.readingOther.delete(root)
+      })
     this.readingOther.set(root, reading)
     return reading
-  }
-
-  private async readOtherNow(root: string) {
-    this.others.set(root, 'reading')
-    const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
-    if (this.others.get(root) !== 'reading') return
-    this.others.set(root, {
-      refs: (found?.notes ?? []).map(refOf),
-      files: found?.files ?? [],
-    })
-    this.changed()
   }
 
   private otherSaved(path: string, content: string) {
