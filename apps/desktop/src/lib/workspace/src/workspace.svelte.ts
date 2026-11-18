@@ -1251,15 +1251,6 @@ class Workspace {
     this.scheduleSession()
   }
 
-  notePdf(id: string, page: number, zoom: number | undefined) {
-    const tab = this.tabs.find((one) => one.id === id)
-    if (!tab || (tab.page === page && tab.zoom === zoom)) return
-
-    tab.page = page
-    tab.zoom = zoom
-    this.scheduleSession()
-  }
-
   notePlace(id: string, scroll: number, anchor: number) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
