@@ -1550,11 +1550,15 @@ export function known(id: string): boolean {
   return !!entry && entry.scope === 'app' && !!entry.run
 }
 
+export function offeredHere(entry: Shortcut): boolean {
+  return (isDesktop || !entry.desktop) && entry.shown?.() !== false
+}
+
 export function runnable(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
 
   const entry = BY_ID.get(id)
-  return !!entry && known(id) && (isDesktop || !entry.desktop) && entry.shown?.() !== false
+  return !!entry && known(id) && offeredHere(entry)
 }
 
 export const SYSTEM_KEYS: Record<Platform, string[]> = {

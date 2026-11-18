@@ -1,7 +1,7 @@
 import { DoubleTap, type Modifier, tapOf } from '../../double-tap/src/api'
 import { fromPage } from '../../ui-kit/src/api'
 import { ran } from '../../usage/src/api'
-import { type AppContext, SHORTCUTS } from './registry'
+import { type AppContext, offeredHere, SHORTCUTS } from './registry'
 import { shortcuts } from './shortcuts.svelte'
 
 type Hearer = (key: Modifier) => void
@@ -56,7 +56,7 @@ export function listenForTaps(target: Window = window): () => void {
 export function runTap(key: Modifier, context: AppContext): boolean {
   for (const entry of SHORTCUTS) {
     const held = shortcuts.keyFor(entry.id)
-    if (entry.scope !== 'app' || !entry.run || !held) continue
+    if (entry.scope !== 'app' || !entry.run || !held || !offeredHere(entry)) continue
     if (tapOf(held, shortcuts.platform) !== key) continue
 
     ran(entry.id, 'shortcut')

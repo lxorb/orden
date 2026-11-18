@@ -5,6 +5,7 @@ export {
   CATEGORIES,
   FIXED_ENTRIES,
   hearAgain,
+  offeredHere,
   runEntry,
   runnable,
   SHORTCUTS,

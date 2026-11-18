@@ -29,6 +29,7 @@ import {
   BY_ID,
   DICTATION_TAPS,
   FIXED_ENTRIES,
+  offeredHere,
   SHORTCUTS,
   type Shortcut,
   SYSTEM_KEYS,
@@ -285,7 +286,7 @@ class Shortcuts {
     if (event.defaultPrevented) return false
 
     for (const entry of SHORTCUTS) {
-      if (entry.scope !== 'app' || !entry.run || entry.shown?.() === false) continue
+      if (entry.scope !== 'app' || !entry.run || !offeredHere(entry)) continue
 
       const key = this.keyFor(entry.id)
       if (!key || !matchesCombination(key, event, this.platform)) continue
