@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 from harness import Drive
 
 DRIVE = Drive(__file__)

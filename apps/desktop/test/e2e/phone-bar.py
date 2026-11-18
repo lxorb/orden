@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 import harness
@@ -46,7 +44,6 @@ BAR = """
     marks: buttons.map((one) => (one.textContent ?? '').trim()).filter(Boolean),
     names: buttons.map((one) => one.getAttribute('aria-label')),
     height: Math.round(bar.getBoundingClientRect().height),
-    // Every one of them is something a thumb lands on.
     smallest: Math.min(...buttons.map((one) => Math.round(one.getBoundingClientRect().height))),
   }
 }
@@ -212,8 +209,6 @@ async ({ down, across, hold }) => {
     )
 
   send('touchstart', finger(x, y))
-  // In steps, the way a finger arrives: the handler claims the gesture on one of
-  // them and follows the rest.
   for (const part of [0.3, 0.6, 1]) {
     send('touchmove', finger(x + across * part, y + down * part))
     await new Promise((done) => requestAnimationFrame(done))
@@ -221,7 +216,6 @@ async ({ down, across, hold }) => {
 
   const at = window.ordenApp.pull.at
   const ready = window.ordenApp.pull.ready
-  // Held, so the mark can be looked at: the lift is `LIFT`, next door.
   if (!hold) send('touchend', null)
   window.__pullFinger = () => send('touchend', null)
 

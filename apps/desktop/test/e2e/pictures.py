@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import json
 import struct
@@ -143,8 +141,6 @@ DRAWN = """
   return {
     controlled: navigator.serviceWorker.controller !== null,
     images: seen,
-    // The editor's own placeholder, which is what a picture that did not load
-    // leaves behind. Nothing here should be wearing it.
     broken: document.querySelectorAll('.orden-image-frame.is-broken').length,
     loading: document.querySelectorAll('.orden-image-frame.is-loading').length,
   }

@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 import base64
 
 from playwright.sync_api import Browser, Page

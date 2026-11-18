@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import time
 
@@ -75,9 +73,6 @@ async () => {
     notes: links.index(null).notes.map((one) => one.path),
   }
 
-  // Written while the new space is still being read, which is where a note lands
-  // for the whole of a launch: the reading must come back around it rather than
-  // over it.
   const path = await ws.noteFrom('# Over here\\n\\nthe other space\\n')
   await links.scanned()
 

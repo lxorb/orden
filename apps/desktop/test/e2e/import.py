@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import tempfile
 import zipfile
@@ -215,8 +213,6 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
 
     held = page.evaluate(
         """async () => {
-          // No version asked for: the page's own store decides which it is on, and
-          // asking for an older one is an error that never resolves.
           const open = indexedDB.open('orden')
           const db = await new Promise((resolve, reject) => {
             open.onsuccess = () => resolve(open.result)

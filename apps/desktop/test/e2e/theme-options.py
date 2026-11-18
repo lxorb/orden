@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import io
 import json
 import os
@@ -93,8 +91,6 @@ BOXES = """
   const lines = [...document.querySelectorAll('.cm-line')].map((one) => one.getBoundingClientRect())
   const editor = document.querySelector('.cm-editor')?.getBoundingClientRect()
   const last = Math.max(0, ...lines.map((r) => r.bottom))
-  // Each ink as the part it is written on resolves it: under glass a part of the frame
-  // may wear the other scheme's words.
   const ink = (name, where = document.body) => {
     const probe = document.createElement('span')
     probe.style.color = `var(${name})`

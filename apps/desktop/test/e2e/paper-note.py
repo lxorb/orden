@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 
 from playwright.sync_api import Browser, Page
@@ -37,8 +35,6 @@ async ({ base64, name }) => {
   const bytes = new Uint8Array(binary.length)
   for (let at = 0; at < binary.length; at++) bytes[at] = binary.charCodeAt(at)
 
-  // The store alone, without the sheet: a sheet that mounts mid-read can be closed by
-  // the focus moving, and a sheet closed while reading starts over.
   const importing = window.ordenApp.importing
   importing.root = window.ordenApp.workspace.activeSpace.root
   await importing.take([new File([bytes], name, { type: 'application/pdf' })])

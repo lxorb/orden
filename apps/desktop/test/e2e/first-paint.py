@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import statistics
 from pathlib import Path
@@ -47,13 +45,6 @@ async (count) => {
   const tags = ['#wind', '#ink', '#paper', '#kestrel', '#plan']
   const now = Date.now()
 
-  // A note with front matter, an icon, an alias, tags and links out of it, so the
-  // scan that reads every body has every kind of thing to find - and long enough to
-  // be a note somebody wrote rather than a stub. Four kilobytes is a page and a
-  // half, which over three thousand notes is the twelve megabytes a space of this
-  // size actually weighs; a stub each would have measured the listing against a
-  // store small enough for reading all of it to cost nothing, which is not the
-  // space anybody has.
   const body = (at) => {
     const tag = tags[at % tags.length]
     const to = (at + 7) % count
@@ -94,8 +85,6 @@ async (count) => {
     return `/Big/${folder}note-${String(at).padStart(4, '0')}.md`
   }
 
-  // In batches, because one transaction of three thousand puts is a minute of
-  // waiting and several hundred is not.
   const SIZE = 250
   for (let from = 0; from < count; from += SIZE) {
     await new Promise((go, no) => {
@@ -133,14 +122,8 @@ const look = () => {
   }
 }
 
-// On the document itself, which exists before there is an element in it: this runs
-// before the app's first script, and a watch that waited for the body would miss
-// whatever the first paint already held.
 new MutationObserver(look).observe(document, { childList: true, subtree: true })
 
-// And the longest single task the launch spends, once the list is on screen: the
-// frame gap says the same thing more roughly, and a gap is easy to blame on
-// whatever else the machine was doing.
 new PerformanceObserver((list) => {
   if (marks.tree === null) return
   for (const one of list.getEntries()) marks.task = Math.max(marks.task, one.duration)
@@ -148,8 +131,6 @@ new PerformanceObserver((list) => {
 
 let last = performance.now()
 const tick = (at) => {
-  // Only once the list is up: the gap before that is the launch itself, which the
-  // moments above already say, and this number is about what comes after it.
   if (marks.tree !== null) {
     marks.frames += 1
     marks.worst = Math.max(marks.worst, at - last)
@@ -193,7 +174,6 @@ async (rounds) => {
 
   for (let round = 0; round < rounds; round++) {
     const started = performance.now()
-    // Told it is of nowhere first, so the build is a build rather than a no-op.
     links.clear()
     await links.build(root)
     for (const one of ws.notes.slice(0, 3)) links.iconOf(one.path)
@@ -229,8 +209,6 @@ async () => {
   }
   requestAnimationFrame(tick)
 
-  // Half a panel at a time, from the top of the space to the bottom: what reading
-  // a space of three thousand notes down actually asks of the list.
   const most = box.scrollHeight - box.clientHeight
   const step = Math.max(1, Math.floor(box.clientHeight / 2))
   let seen = resting

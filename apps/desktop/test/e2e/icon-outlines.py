@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import io
 import math
 import sys
@@ -47,7 +45,6 @@ CELLS = """
     if (box.top < at.top || box.bottom > at.top + grid.clientHeight) return []
     const drawn = cell.querySelector('svg')
     return [{
-      // The emoji's outlines are drawn in a box 32 units wide, a line and a logo in 24.
       outline: drawn?.getAttribute('viewBox')?.startsWith('0 0 32 ') ?? false,
       label: cell.getAttribute('aria-label'),
       kind: cell.querySelector('.emoji') ? 'emoji' : cell.querySelector('img') ? 'picture' : drawn ? 'drawn' : 'none',

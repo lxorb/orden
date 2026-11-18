@@ -167,12 +167,6 @@ async (plan) => {
   const folders = ['Field notes', 'Reading', 'Work', 'Work/Q3', 'Archive']
   const tags = ['#wind', '#ink', '#paper', '#kestrel', '#plan']
 
-  // A note with front matter, an icon, an alias, tags, tasks and links out of it,
-  // so every operator has something to find and the scan that reads every body has
-  // every kind of thing in it. Four kilobytes is a page and a half, which over five
-  // thousand notes is the twenty megabytes a space of this size actually weighs: a
-  // stub each would have measured the search against a store small enough for
-  // reading all of it to cost nothing, which is not the space anybody has.
   const body = (at) => {
     const tag = tags[at % tags.length]
     const to = (at + 7) % notes
@@ -188,17 +182,9 @@ async (plan) => {
       '',
       `${tag} and a line about the wind, written on the ${at}th of the month.`,
       '',
-      // The one word in the space that names this note and nothing else: a query
-      // for it is a hit the walk cannot stop early on, which is the search every
-      // other one is faster than.
       `Filed under marker-${String(at).padStart(4, '0')}.`,
       '',
       `See [[note-${String(to).padStart(4, '0')}]] and [the plan](Work/Q3/plan.md).`,
-      // Every fifth note points at one note, so the space holds a note a thousand
-      // others link to. A space where every note has exactly one link in is a space
-      // where the Links panel is never asked a hard question, and the hard question
-      // is the one somebody with a hub note - an index, a person, a project - asks
-      // every time they open it. See `part_links`.
       ...(at % 5 === 0 ? [`Filed under [[hub]].`, ''] : []),
       '',
       '- [ ] Pressure on the pen',
@@ -226,20 +212,13 @@ async (plan) => {
 
   for (let at = 0; at < notes; at++) add(pathOf(at), body(at), at)
 
-  // The folder marker, so a space with no notes in it is still a space.
   add(`${space}/.keep`, '', notes)
 
-  // One small note, so every space has an editor to reach - the empty one too.
   add(`${space}/first.md`, '# First\n\nA short note, opened at launch.\n', notes + 1)
 
-  // The note a fifth of the space points at. Short itself: what is being measured
-  // when it is opened is the panel finding what points here, not the editor.
   add(`${space}/hub.md`, '# Hub\n\nThe note everything is filed under.\n', notes + 5)
   add(`${space}/second.md`, '# Second\n\nThe other tab.\n', notes + 2)
 
-  // The big note: twenty thousand lines with headings, links, tasks and tags
-  // through it, so the editor has the work a long note of somebody's actually is
-  // rather than one paragraph repeated.
   if (lines) {
     const long = ['# The long one', '']
     for (let line = 0; long.length < lines; line++) {
@@ -252,9 +231,6 @@ async (plan) => {
     add(`${space}/long.md`, long.join('\n'), notes + 3)
   }
 
-  // And the canvas: ten thousand strokes of ink, spread over a plane wide enough
-  // that panning brings new ones into view, plus a handful of cards so the plane is
-  // a plane rather than a drawing.
   if (strokes) {
     const ink = []
     for (let at = 0; at < strokes; at++) {
@@ -292,8 +268,6 @@ async (plan) => {
     add(`${space}/plane.canvas`, JSON.stringify({ nodes, edges: [], orden: { version: 1, ink } }), notes + 4)
   }
 
-  // In batches, because one transaction of five thousand puts is a minute of
-  // waiting and several hundred is not.
   const SIZE = 200
   for (let from = 0; from < rows.length; from += SIZE) {
     await new Promise((go, no) => {
@@ -325,9 +299,6 @@ const look = () => {
   if (marks.editor === null && document.querySelector('.cm-content')) marks.editor = performance.now()
 }
 
-// On the document itself, which exists before there is an element in it: this runs
-// before the app's first script, and a watch that waited for the body would miss
-// whatever the first paint already held.
 new MutationObserver(look).observe(document, { childList: true, subtree: true })
 
 new PerformanceObserver((list) => {
@@ -340,9 +311,6 @@ new PerformanceObserver((list) => {
   for (const one of list.getEntries()) marks.tasks.push({ at: one.startTime, ms: one.duration })
 }).observe({ entryTypes: ['longtask'] })
 
-// The long animation frames, with what the browser blames: a frame's own length,
-// how much of it blocked, how long style and layout were forced inside it, and the
-// three longest scripts by name. This is the attribution the profile is read from.
 if (typeof PerformanceObserver.supportedEntryTypes !== 'undefined'
     && PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')) {
   new PerformanceObserver((list) => {
@@ -369,8 +337,6 @@ if (typeof PerformanceObserver.supportedEntryTypes !== 'undefined'
   }).observe({ type: 'long-animation-frame', buffered: true })
 }
 
-// Frames, collected only while something is being driven: the gap between two of
-// them is the length of whatever sat in between, which is the frame a reader lost.
 window.__frames = { list: [], on: false, last: 0 }
 const tick = (at) => {
   const frames = window.__frames
@@ -415,7 +381,6 @@ LAUNCH = r"""
   const after = marks.editor ?? 0
   const tasks = marks.tasks.filter((one) => one.at + one.ms > after)
 
-  // The first moment with nothing long enough to eat a frame for `quiet` after it.
   let settled = after
   for (const one of tasks.sort((a, b) => a.at - b.at)) {
     if (one.at - settled >= quiet) break
@@ -433,9 +398,6 @@ LAUNCH = r"""
     worst,
     tasks: tasks.filter((one) => one.ms >= 50).length,
     memory: Math.round(memory / 1e6),
-    // Every long frame of the launch, not only the ones after the editor: what
-    // holds the first paint up is before it by definition, and a profile that
-    // started at the editor could not see it.
     loaf: marks.loaf.filter((one) => one.ms >= 60),
   }
 }
@@ -446,7 +408,6 @@ async (path) => {
   const ws = window.ordenApp.workspace
   const started = window.__since()
   await ws.open(path)
-  // The editor catches up on the frame after the tab does.
   for (let spin = 0; spin < 240; spin++) {
     await window.__painted()
     if (ws.active?.path === path && document.querySelector('.cm-content')) break
@@ -496,8 +457,6 @@ async (plan) => {
     setTimeout(look, 4)
   })
   const ms = performance.now() - started - wait
-  // The worker says what it is holding after it has answered, which is a message
-  // back to the page: give it the turn it needs to land.
   await new Promise((go) => setTimeout(go, 120))
 
   return { ms, hits: search.hits.length, read: readOf(held()) - Math.max(0, before), warmth: held() }
@@ -620,20 +579,6 @@ TYPING_READY = r"""
 () => {
   window.__keys = []
 
-  // The key going down, and the second frame after it: the first callback runs
-  // before the paint it was scheduled for, so the second is the first moment the
-  // letter is on screen. The same two frames everything else here calls painted.
-  //
-  // Not the Event Timing entry, which is what this used to read. That API will not
-  // report an event whose duration is under sixteen milliseconds however low
-  // `durationThreshold` is set - the spec floors it - so a keystroke that landed in
-  // its own frame produced no entry at all, and a round of twelve fast keystrokes
-  // looked like a round where the keys went nowhere and was thrown away. What was
-  // left was the median of the keystrokes slow enough to be reported, which is a
-  // number that can only ever look bad and cannot show an improvement: the same
-  // build read 432ms in one lane and 560 in the other off one or two rounds each.
-  // The entry is still read for the handler time beside it, which is the one thing
-  // a clock around the frame cannot see.
   addEventListener('keydown', () => {
     const down = performance.now()
     requestAnimationFrame(() =>
@@ -666,9 +611,6 @@ TYPING = r"""
   const paint = middle(keys.map((one) => one.ms))
   const handler = middle(window.__handlers ?? [])
   return {
-    // How many keystrokes were actually seen, so a round where the keys went
-    // somewhere else is a round with nothing in it rather than a nought: a nought
-    // read as "no wait at all" and dragged the median of every other round down.
     keys: keys.length,
     'type-paint': paint.middle,
     'type-worst': paint.worst,
@@ -685,10 +627,6 @@ async () => {
   const started = window.__since()
   ws.toggleReading()
 
-  // The page painted - and the render's own measure beside it, which is what the
-  // renderer already takes for exactly this question; see `MEASURE` in
-  // lib/reading/src/render.ts. A spin on a selector that never matched measured the
-  // spin, which is how the first run of this said twenty-five seconds.
   for (let spin = 0; spin < 900; spin++) {
     await window.__painted()
     if (document.querySelector('.read #write')?.childElementCount) break
@@ -786,20 +724,10 @@ async () => {
   const started = window.__since()
   ws.showPanel('search')
 
-  // Two moments, because they are two questions. The panel is on screen when the
-  // field is there to type in; the tag tree above it says what the space is tagged
-  // with, and where that comes from is the thing being measured - off the disk, which
-  // costs a read of every note, or off the index, which costs nothing and is not
-  // answerable until the space has been scanned once.
   let panel = 0
   let tags = 0
   let asked = started
   for (let spin = 0; spin < 900 && !(panel && tags); spin++) {
-    // Asked again where it did not take, and the clock started again with it. A
-    // window whose sitting was still being read back put the file list over the top
-    // of the panel this had just asked for, and a run that only waited waited its
-    // whole timeout and took the lane's numbers with it. Once a second is often
-    // enough to get past that and rare enough not to be what is measured.
     if (!panel && spin && spin % 60 === 0 && ws.panel !== 'search') {
       ws.showPanel('search')
       asked = performance.now()

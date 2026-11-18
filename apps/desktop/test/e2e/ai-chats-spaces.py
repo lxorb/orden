@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -51,7 +49,6 @@ STATE = """
     field: document.querySelector('.ask textarea')?.value ?? null,
     scroll: talk ? Math.round(talk.scrollTop) : null,
     space: window.ordenApp.workspace.activeSpace?.name ?? null,
-    // In the page is not on the screen: a shut side keeps its panel built, and inert.
     seen: !!document.querySelector('.ask')?.checkVisibility({ visibilityProperty: true }),
   }
 }

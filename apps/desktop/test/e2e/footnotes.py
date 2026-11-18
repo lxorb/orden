@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from settling import HIDE_CARET, quiet

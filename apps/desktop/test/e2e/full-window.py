@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -46,8 +44,6 @@ LOOK = """
     fills: window.ordenApp.workspace.panes.fills,
     sidebar: !!document.querySelector('aside'),
     panes: [...document.querySelectorAll('[data-pane]')].map((one) => one.dataset.pane),
-    // A pane's own, or its strip in the window's top row (#1037), but not the one in the
-    // bar a filled window brings down from the top edge.
     strips: [...document.querySelectorAll('[data-pane] > .head, header [data-top-strip]')]
       .filter((one) => !one.closest('.bar')).length,
     status: !!document.querySelector('[data-region="status"]'),

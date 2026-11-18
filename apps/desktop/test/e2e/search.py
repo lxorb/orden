@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 
@@ -34,14 +32,10 @@ async () => {
   await note('# Kestrel\\n\\n#later\\n\\n- [ ] watch the kestrel again\\n\\nA kestrel hangs on the wind above the field.')
   await note('# Everything open\\n\\nWhat is still to do, everywhere:\\n\\n```query\\ntask-todo:\\n```\\n\\nAnd the long papers:\\n\\n```query\\n[pages:>200]\\n```')
 
-  // The archive is a note, because that is all a folder is: moving something into
-  // it is what makes it one, and `moveMany` nests the note first. See
-  // folder-notes.ts.
   await note('# Archive\\n\\nWhat is done with.')
   await note('# Old plan\\n\\nThe plan as it was, with a kestrel in it.')
   await ws.loadTree()
 
-  // The last note into the archive, so there is something to leave out.
   const old = ws.notes.find((one) => one.name.startsWith('Old plan'))
   if (old) await ws.moveMany([old.path], ws.activeSpace.root + '/Archive')
   await ws.loadTree()
@@ -52,8 +46,6 @@ async () => {
 
 SEED_MANY = """
 async ({ count, root }) => {
-  // No version: the app has already opened the database at whichever one it is at,
-  // and asking for an older one is a VersionError rather than a seed.
   const open = indexedDB.open('orden')
   const db = await new Promise((resolve, reject) => {
     open.onsuccess = () => resolve(open.result)
@@ -66,8 +58,6 @@ async ({ count, root }) => {
 
   for (let batch = 0; batch < count; batch += 500) {
     await new Promise((resolve, reject) => {
-      // The listing is a store of its own now, and a note written without its
-      // stat is a note the file list cannot see; see web/store.ts.
       const write = db.transaction(['files', 'stats'], 'readwrite')
       const store = write.objectStore('files')
       const listing = write.objectStore('stats')
@@ -108,9 +98,6 @@ async ({ count, root }) => {
 
   await window.ordenApp.workspace.loadTree()
 
-  // The rows went in behind the app's back, so they are called out the way the
-  // store would have called them out: the search worker holds the space between
-  // two searches and hears about every row that is written. See web/store.ts.
   const rows = await new Promise((resolve, reject) => {
     const ask = db.transaction('files', 'readonly').objectStore('files').getAll()
     ask.onsuccess = () => resolve(ask.result)

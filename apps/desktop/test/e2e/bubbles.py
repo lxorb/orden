@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -44,10 +42,8 @@ def sentence_of(page: Page, index: int) -> dict | None:
           glyph.focus()
           await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
           await new Promise((done) => setTimeout(done, 200))
-          // The newest: the one before may still be fading out after it.
           const bubble = [...document.querySelectorAll('.orden-bubble.sentence')].pop()
           if (!bubble) return { missing: true }
-          // Measured where it rests, not part of the way through its rise.
           await Promise.all(bubble.getAnimations().map((one) => one.finished.catch(() => null)))
           const mark = glyph.closest('.explain').getBoundingClientRect()
           const sheet = glyph.closest('[role="region"][aria-label="Settings"]')
@@ -131,7 +127,6 @@ def at_the_foot(page: Page, tag: str) -> None:
           let pane = glyph.parentElement
           while (pane && !(pane.scrollHeight > pane.clientHeight + 4 &&
                  ['auto', 'scroll'].includes(getComputedStyle(pane).overflowY))) pane = pane.parentElement
-          // The glyph's row at the very foot of what the pane shows.
           const held = pane.getBoundingClientRect()
           pane.scrollTop += glyph.getBoundingClientRect().bottom - held.bottom + 2
           await new Promise((done) => setTimeout(done, 100))
@@ -140,7 +135,6 @@ def at_the_foot(page: Page, tag: str) -> None:
           const bubble = document.querySelector('.orden-bubble.sentence')
           const foot = window.__whole(bubble)
           const room = innerHeight - glyph.getBoundingClientRect().bottom
-          // And the glyph scrolled out of sight with its sentence up.
           pane.scrollTop -= held.height + 200
           await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
           const away = window.__whole(bubble)

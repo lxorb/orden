@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any
 
 from harness import Drive
@@ -33,7 +31,6 @@ MEASURE = """
   }))
   const lead = bar.querySelector(':scope > .lead')
   const end = bar.querySelector(':scope > .end')
-  // What a press lands on in the room between two strips, half way down the bar.
   const between = []
   const sorted = [...strips].sort((a, b) => a.slot.left - b.slot.left)
   for (let at = 1; at < sorted.length; at++) {

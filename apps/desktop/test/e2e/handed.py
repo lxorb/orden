@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 import json
 import struct
@@ -69,8 +67,6 @@ ACTIVITY = """
 
   window.__ORDEN_SYSTEM__ = {
     insets: () => '{"top":24,"right":0,"bottom":48,"left":0}',
-    // Into the page itself, whoever asked, which is what makes it a word only the
-    // page has: the activity runs this line in the main frame.
     askForTheFrame: () => window.__ordenFrame?.(held.word),
     bars: () => undefined,
     handed: (said) => {
@@ -310,14 +306,9 @@ def shared_at_a_cold_start(page: Page) -> str:
 
     drawn = page.evaluate(
         """() => {
-             // The editor's own image, and not the empty one-pixel buffers CodeMirror
-             // puts either side of every widget it draws.
              const image = document.querySelector('.cm-content img.orden-image')
              if (!image) return null
 
-             // The address as the page resolved it, and as the note wrote it: an
-             // `<img>` the resolver has not answered for yet has the second and
-             // not the first.
              let where = image.getAttribute('src') ?? ''
              try {
                where = new URL(image.src, location.href).pathname

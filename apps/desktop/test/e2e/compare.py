@@ -27,8 +27,6 @@ than the exit code when a floor is in play.
 Needs Pillow, which is the only thing here that is not the standard library.
 """
 
-from __future__ import annotations
-
 import hashlib
 import sys
 from pathlib import Path

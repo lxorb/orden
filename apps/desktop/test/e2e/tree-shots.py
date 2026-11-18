@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Browser, Page
@@ -28,7 +26,6 @@ async () => {
   const root = ws.activeSpace.root
   const at = (name) => (root.endsWith('/') ? root + name : root + '/' + name)
 
-  // The drawer opens on nothing until somebody asks for a panel.
   if (ws.panel !== 'tree') ws.showPanel('tree')
 
   await ws.noteFrom('# Deep work\\n\\nthe first line\\n', root)
@@ -38,8 +35,6 @@ async () => {
   const paper = await ws.noteFrom('# paper\\n', at('Reading'))
   await ws.rename(paper, 'Deep Learning.pdf')
 
-  // Named outright: with a name in hand the file is written at once, rather than a
-  // row waiting to be typed into. See `createCanvas`.
   await ws.createCanvas(root, 'Roadmap.canvas')
 
   ws.toggleFolder(at('Reading'))

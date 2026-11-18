@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, ConsoleMessage, Frame, Page
@@ -79,9 +77,6 @@ INSIDE = """
   const video = document.querySelector('video')
   const words = (document.body?.innerText ?? '').trim().replace(/\\s+/g, ' ')
 
-  // What the token actually buys the frame, asked directly. With it the frame has
-  // its own origin and its own storage; without it the origin is opaque and the
-  // first line of somebody's player bundle throws.
   const reaching = (read) => {
     try {
       read()
@@ -101,7 +96,6 @@ INSIDE = """
     time: video ? Math.round(video.currentTime * 100) / 100 : null,
     paused: video?.paused ?? null,
     duration: video && Number.isFinite(video.duration) ? Math.round(video.duration) : null,
-    // What a player puts where the video should be when it will not play.
     broken: [
       ...document.querySelectorAll('.ytp-error, .vp-sidedock .error, [class*="error-message"]'),
     ]

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 import harness
@@ -48,7 +46,6 @@ MEASURED = """
     foot: box('[data-region="foot"]'),
     tabs: box('[data-region="tabs"]'),
     editor: box('[data-region="editor"]'),
-    // And whether there is a right side in the page at all.
     right: document.querySelectorAll('.panels.right').length,
     toggles: document.querySelectorAll('button.toggle').length,
   }

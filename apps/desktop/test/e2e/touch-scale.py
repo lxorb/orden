@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import sys
 
@@ -55,8 +53,6 @@ async () => {
   const paper = await ws.noteFrom('# paper\\n', at('Reading'))
   await ws.rename(paper, 'Deep Learning.pdf')
   await ws.noteFrom('# Archived\\n\\nolder words\\n', at('Reading/Archive'))
-  // Named outright: with a name in hand the file is written at once, rather than a
-  // row waiting to be typed into. See `createCanvas`.
   await ws.createCanvas(root, 'Roadmap.canvas')
 
   ws.bookmarks.toggle({ kind: 'note', path: 'Deep work.md', text: '' })
