@@ -1,19 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
+import '../test/no-device'
 
 const { pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')

@@ -3,20 +3,7 @@ import { blank } from '@orden/pass/envelope'
 import type { Content } from '@orden/pass/types'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
+import '../test/no-device'
 
 const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const PassTab = (await import('./PassTab.svelte')).default
