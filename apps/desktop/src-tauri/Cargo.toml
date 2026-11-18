@@ -151,7 +151,7 @@ tauri-plugin-notification = "~2.4"
 raw-window-handle = "0.6"
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
-notify = "8"
+notify = "8.2.2"
 file-id = "0.2"
 sha2 = "0.10"
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
