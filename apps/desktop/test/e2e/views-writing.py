@@ -246,12 +246,13 @@ def phone(browser):
 
     tap(page, page.locator("button.fab"))
     DRIVE.wait_for(page, f"() => {named % 'Shopping list'}", "the draft to be written down")
-    DRIVE.wait_for(page, f"() => {tabs}.length === 1", "the draft's tab to go")
-    if page.evaluate(f"() => {tabs}[0].doc"):
+    kept = f"() => {tabs}.some((one) => one.path?.includes('Shopping list'))"
+    DRIVE.wait_for(page, kept, "the draft to stay a tab")
+    if page.evaluate("() => window.ordenApp.workspace.active.doc"):
         wrong("the new tab is not empty")
-    say("ok: a draft the plus put away is a note")
+    say("ok: a draft the plus put away is a note, and still a tab")
 
-    page.locator(".cm-content").first.click()
+    page.evaluate("() => window.orden.focus()")
     page.keyboard.type("Second thought")
     page.wait_for_timeout(1000)
     if page.evaluate("() => window.orden.state.doc.toString()") != "Second thought":

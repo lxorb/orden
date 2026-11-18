@@ -152,18 +152,53 @@ describe('a phone and a tablet', () => {
     expect(workspace.active?.shown).toBe('One')
   })
 
-  test('a draft with words stays a tab, and nothing is written for it', async () => {
+  const typed = (words: string) =>
+    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: words }])
+
+  test.each([
+    [
+      'put away by the plus',
+      () => {
+        workspace.openBlank()
+        return Promise.resolve()
+      },
+    ],
+    ['left by opening another note', () => workspace.open('/space/One.md')],
+    [
+      'left by turning to another tab',
+      async () => {
+        const { turnTab } = await tabSwipe()
+        turnTab(90, 0)
+      },
+    ],
+  ])('a draft with words %s is written down and stays a tab', async (_, leave) => {
     viewport.device = 'phone'
-    const before = notes.size
+    await workspace.open('/space/One.md')
 
     workspace.openBlank()
-    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: 'Shopping list\nmilk and eggs' }])
-    await workspace.open('/space/One.md')
+    typed('Shopping list\nmilk and eggs')
+    await leave()
+
+    await vi.waitFor(() =>
+      expect(notes.get('/space/Shopping list.md')).toBe('Shopping list\nmilk and eggs'),
+    )
+    expect(workspace.tabs.map((tab) => tab.path)).toContain('/space/Shopping list.md')
+    expect(workspace.closed.any).toBe(false)
+  })
+
+  test('the draft that is shown is not written, nor one left on a desktop', async () => {
+    const before = notes.size
+    workspace.openBlank()
+    typed('Desk words')
+    workspace.openBlank()
+
+    viewport.device = 'phone'
+    workspace.activate(workspace.tabs[0]?.id ?? '')
+    typed('Phone ')
     await new Promise((done) => setTimeout(done, 50))
 
-    expect(workspace.tabs.map((tab) => tab.doc)).toEqual(['Shopping list\nmilk and eggs', '# One'])
     expect(notes.size).toBe(before)
-    expect(workspace.closed.any).toBe(false)
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual([null, null])
   })
 
   test('never split a pane, however it is asked', async () => {
