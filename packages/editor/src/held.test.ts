@@ -35,6 +35,10 @@ class Surface implements StateView {
   }
 }
 
+class Composing extends Surface {
+  composing = true
+}
+
 function stateFor(doc: string, cursor = 0): EditorState {
   return EditorState.create({
     doc,
@@ -237,5 +241,45 @@ describe('a view moving from one note to another', () => {
 
     expect(view.state.doc.toString()).toBe('four')
     expect(first.state.doc.toString()).toBe('one\ntwo\nthree\nfour')
+  })
+})
+
+describe('a note put away while somebody composes in it (#2176)', () => {
+  test('takes the words the room held back for the composition', () => {
+    const note = new SharedDoc('hello')
+    const pane = new Composing('hello')
+    note.join(pane)
+    note.arrived([{ from: 5, to: 5, insert: ' world' }])
+
+    const held = HeldState.shownIn(note, pane)
+    held.take(pane)
+
+    expect(note.text.toString()).toBe('hello world')
+    expect(held.state.doc.toString()).toBe('hello world')
+  })
+
+  test('and hands back the words the note holds', () => {
+    const note = new SharedDoc('hello')
+    const pane = new Composing('hello')
+    note.join(pane)
+    note.arrived([{ from: 5, to: 5, insert: ' world' }])
+    const held = HeldState.shownIn(note, pane)
+    held.take(pane)
+
+    const next = new Surface('')
+    held.give(next)
+    expect(next.state.doc.toString()).toBe(note.text.toString())
+  })
+
+  test('passes what is written into it on to the note', () => {
+    const note = new SharedDoc('hello')
+    const held = HeldState.waiting(note, stateFor('hello'))
+    const other = new Surface('hello')
+    note.join(other)
+
+    held.dispatch({ changes: { from: 5, insert: '!' } })
+
+    expect(note.text.toString()).toBe('hello!')
+    expect(other.state.doc.toString()).toBe('hello!')
   })
 })

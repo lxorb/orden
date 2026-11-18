@@ -30,25 +30,34 @@ export function documentOf(view: DocView): SharedDoc | null {
 
 export function later(
   view: DocView,
-): (write: (state: EditorState) => TransactionSpec | null) => boolean {
+): (
+  write: (state: EditorState, placed: (at: number) => number) => TransactionSpec | null,
+) => boolean {
   const asked = view.state
   const note = documentOf(view)
 
   return (write) => {
     if (documentOf(view) === note) {
-      const spec = write(view.state)
+      const { state } = view
+      const since = state.doc === asked.doc ? null : (note?.since(asked.doc.toString()) ?? null)
+      const spec = write(state, (at) => Math.min(since ? since.mapPos(at) : at, state.doc.length))
       if (spec) view.dispatch(spec)
       return spec !== null
     }
 
     if (!note?.text.eq(asked.doc)) return true
-    const spec = write(asked)
+    const spec = write(asked, (at) => at)
     if (!spec) return false
 
     const made = asked.update(spec)
     note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
     return true
   }
+}
+
+export function stillOn(view: object): () => boolean {
+  const note = onDocument.get(view as DocView)
+  return () => onDocument.get(view as DocView) === note
 }
 
 export function letGo(view: DocView) {
@@ -226,6 +235,7 @@ export class SharedDoc {
     }
 
     this.state = documentState(text)
+    this.held = null
     this.recent = []
     this.ownUndo = 0
     this.ownRedo = 0
@@ -264,11 +274,12 @@ export class SharedDoc {
 
   handOver(leaving: DocView, taking: DocView, move: () => void) {
     const followed = onDocument.get(leaving) === this
-    this.leave(leaving)
+    this.drop(leaving)
     move()
 
     if (!followed) {
       this.join(taking)
+      this.settle()
       return
     }
 
@@ -279,12 +290,22 @@ export class SharedDoc {
     if (sharedOf(taking.state) !== this) {
       taking.dispatch({ effects: setShared.of(this), annotations: external.of(true) })
     }
+    this.settle()
+  }
+
+  holding(holds: (state: EditorState) => boolean): DocView | null {
+    for (const view of this.views) if (holds(view.state)) return view
+    return null
   }
 
   leave(view: DocView) {
+    this.drop(view)
+    this.settle()
+  }
+
+  private drop(view: DocView) {
     this.views.delete(view)
     if (onDocument.get(view) === this) onDocument.delete(view)
-    this.settle()
   }
 
   local(changes: ChangeSet, selection: EditorSelection, from: DocView, userEvent?: string) {
@@ -322,7 +343,7 @@ export class SharedDoc {
 
     const made = this.state.update({
       changes: change,
-      ...(recorded ? {} : { annotations: Transaction.addToHistory.of(false) }),
+      annotations: recorded ? isolateHistory.of('full') : Transaction.addToHistory.of(false),
     })
 
     this.state = made.state
@@ -340,12 +361,11 @@ export class SharedDoc {
   edit(changes: readonly Replacement[] | ChangeSet, stepped?: Stepped): ChangeSet {
     const made = this.state.update({
       changes,
-      ...(stepped
-        ? {
-            annotations: [Transaction.userEvent.of(stepped.userEvent), isolateHistory.of('full')],
-            effects: (stepped.marks ?? []).map((mark) => marked.of(mark)),
-          }
-        : {}),
+      annotations: [
+        isolateHistory.of('full'),
+        ...(stepped ? [Transaction.userEvent.of(stepped.userEvent)] : []),
+      ],
+      effects: (stepped?.marks ?? []).map((mark) => marked.of(mark)),
     })
 
     this.state = made.state

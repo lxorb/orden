@@ -144,6 +144,11 @@ function runOf(state: EditorState, id: number): AiRun | null {
   return (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
 }
 
+function holderOf(view: AiView, note: SharedDoc | null, id: number): AiView | null {
+  if (runOf(view.state, id)) return view
+  return note?.holding((state) => runOf(state, id) !== null) ?? null
+}
+
 export function askAiFence(view: AiView, fence: AiFence): boolean {
   if (!runner || !view.state.field(asks, false) || view.state.readOnly) return false
 
@@ -153,23 +158,32 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
   const id = ++counter
   const controller = new AbortController()
   const ask = runner
+  const shows = documentOf(view)
   view.dispatch({ effects: openAsk.of({ id, from: fence.from, stop: () => controller.abort() }) })
+
+  const holding = (then: (holder: AiView) => void) => {
+    const holder = holderOf(view, shows, id)
+    if (holder) then(holder)
+    else controller.abort()
+  }
 
   void ask(
     {
       prompt,
       note: mentionsNote(prompt) ? view.state.doc.toString() : null,
-      shows: documentOf(view),
+      shows,
       place: view.state.facet(aiPlace),
-      started: (model) => beginAnswer(view, id, model),
-      wrote: (text) => writeAnswer(view, id, text),
+      started: (model) => holding((holder) => beginAnswer(holder, id, model)),
+      wrote: (text) => holding((holder) => writeAnswer(holder, id, text)),
     },
     controller.signal,
   )
     .catch(() => undefined)
     .finally(() => {
-      trimAnswer(view, id)
-      view.dispatch({ effects: closeAsk.of(id) })
+      const holder = holderOf(view, shows, id)
+      if (!holder) return
+      trimAnswer(holder, id)
+      holder.dispatch({ effects: closeAsk.of(id) })
     })
 
   return true

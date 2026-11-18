@@ -1,4 +1,5 @@
 import { door as fetched } from '@orden/markdown/door'
+import { stillOn } from './shared'
 
 type Commands = typeof import('./line-commands')
 
@@ -8,12 +9,15 @@ export const loadLineCommands: () => Promise<Commands> = fetched(() =>
   import('./line-commands').then((module) => (loaded = module)),
 )
 
-function door<Target>(
+function door<Target extends object>(
   pick: (commands: Commands) => (target: Target) => boolean,
 ): (target: Target) => boolean {
   return (target) => {
     if (loaded) return pick(loaded)(target)
-    void loadLineCommands().then((commands) => pick(commands)(target))
+    const still = stillOn(target)
+    void loadLineCommands().then((commands) => {
+      if (still()) pick(commands)(target)
+    })
 
     return true
   }
