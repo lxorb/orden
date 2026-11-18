@@ -7,7 +7,7 @@ use tauri::{
     AppHandle, LogicalPosition, LogicalSize, Manager as _, Webview, WebviewBuilder, WebviewUrl,
 };
 
-use crate::engine::devtools;
+use orden_web::engine::devtools;
 
 use super::library::Kept;
 use super::link::Store;

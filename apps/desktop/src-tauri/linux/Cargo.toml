@@ -222,6 +222,7 @@ orden-browsers = { path = "crates/browsers" }
 orden-crashes = { path = "crates/crashes" }
 orden-dictation = { path = "crates/dictation" }
 orden-explorer = { path = "crates/explorer" }
+orden-extensions = { path = "crates/extensions" }
 orden-import = { path = "crates/import" }
 orden-placement = { path = "crates/placement" }
 orden-pty = { path = "crates/pty" }

@@ -9,6 +9,8 @@ const AGAIN: std::time::Duration = std::time::Duration::from_secs(1);
 
 static EARLY: Mutex<Vec<Url>> = Mutex::new(Vec::new());
 
+static OPEN: OnceLock<fn(&AppHandle, Vec<String>)> = OnceLock::new();
+
 pub fn opened(url: Url) {
     let mut early = EARLY.lock().unwrap_or_else(PoisonError::into_inner);
     match APP.get() {
@@ -17,8 +19,9 @@ pub fn opened(url: Url) {
     }
 }
 
-pub fn start(app: &AppHandle) {
+pub fn start(app: &AppHandle, open: fn(&AppHandle, Vec<String>)) {
     let mut early = EARLY.lock().unwrap_or_else(PoisonError::into_inner);
+    let _ = OPEN.set(open);
     let _ = APP.set(app.clone());
     for url in early.drain(..) {
         handed(app.clone(), url);
@@ -44,7 +47,9 @@ fn handed(app: AppHandle, url: Url) {
                 "info",
                 "extensions: a tab one opened, as a tab of Orden's",
             );
-            crate::launch::hand_over(&app, crate::launch::Handed::Pages, vec![url.to_string()]);
+            if let Some(open) = OPEN.get() {
+                open(&app, vec![url.to_string()]);
+            }
         } else {
             orden_base::logs::say(
                 &app,

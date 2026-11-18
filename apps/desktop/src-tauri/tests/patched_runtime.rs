@@ -141,7 +141,7 @@ fn a_tab_chrome_s_own_ui_opens_is_handed_over_before_it_is_closed() {
     let runtime = read(&root().join("src/runtime.rs"));
     assert!(runtime.contains("pub fn on_unhosted_tab<F>(mut self, handler: F) -> Self"));
     let engine = read(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src/engine.rs"));
-    assert!(engine.contains(".on_unhosted_tab(crate::extensions::tabs::opened)"));
+    assert!(engine.contains(".on_unhosted_tab(orden_extensions::extensions::tabs::opened)"));
 }
 
 #[test]

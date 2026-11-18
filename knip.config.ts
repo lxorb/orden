@@ -35,7 +35,7 @@ export default {
     'apps/desktop/src-tauri/src/former.js',
     'apps/desktop/src-tauri/src/kept.js',
     'apps/desktop/src-tauri/src/agents/engines/snapshot.js',
-    'apps/desktop/src-tauri/src/extensions/firefox/*.js',
+    'apps/desktop/src-tauri/crates/extensions/src/extensions/firefox/*.js',
   ],
   workspaces: {
     '.': {

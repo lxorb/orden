@@ -208,6 +208,10 @@ pub fn extension_popup_place(app: AppHandle, rect: Rect) {
 }
 
 #[tauri::command]
+#[allow(
+    clippy::unused_async,
+    reason = "an async command runs off the main thread, where closing a page would wait on it"
+)]
 pub async fn extension_popup_close(app: AppHandle, label: Option<String>) {
     if label.is_none() {
         want(None);
@@ -323,7 +327,7 @@ fn laid_out(view: &Webview) -> Option<(f64, f64)> {
 }
 
 fn evaluated(view: &Webview) -> Option<String> {
-    let said = crate::engine::devtools::call(
+    let said = orden_web::engine::devtools::call(
         view,
         None,
         "Runtime.evaluate",

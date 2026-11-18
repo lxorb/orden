@@ -18,4 +18,4 @@ services/sync/src/sync-server-blog/src/math.ts
 
 apps/desktop/src-tauri/wix
 
-apps/desktop/src-tauri/src/extensions/firefox/browser-polyfill.js
+apps/desktop/src-tauri/crates/extensions/src/extensions/firefox/browser-polyfill.js
