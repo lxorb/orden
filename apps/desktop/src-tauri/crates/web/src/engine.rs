@@ -22,6 +22,10 @@ pub type Call =
 
 pub type Tell = fn(&Webview, Option<&str>, Vec<(&'static str, Value)>);
 
+pub type Zooms = Box<dyn Fn(crate::web_page::Step) + Send + Sync>;
+
+pub type Page = WebviewBuilder<orden_base::Engine>;
+
 pub struct Engine {
     pub page_id: fn(&PlatformWebview) -> Option<NativeWindow>,
     pub call: Call,
@@ -31,6 +35,7 @@ pub struct Engine {
     pub mute: fn(&Webview, bool) -> Result<(), String>,
     pub wear: fn(&PlatformWebview, crate::page_scheme::Scheme),
     pub served: fn(&PlatformWebview) -> Option<crate::web_certificate::Served>,
+    pub zooms: fn(Page, Zooms) -> Page,
 }
 
 static ENGINE: std::sync::OnceLock<Engine> = std::sync::OnceLock::new();
@@ -43,6 +48,13 @@ pub fn engine() -> Result<&'static Engine, String> {
     ENGINE
         .get()
         .ok_or_else(|| "the engine has not started".to_owned())
+}
+
+pub fn zooms(page: Page, zooms: Zooms) -> Page {
+    match engine() {
+        Ok(engine) => (engine.zooms)(page, zooms),
+        Err(_) => page,
+    }
 }
 
 pub mod devtools {

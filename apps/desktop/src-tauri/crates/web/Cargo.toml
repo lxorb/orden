@@ -30,5 +30,14 @@ raw-window-handle.workspace = true
 libc.workspace = true
 x11rb.workspace = true
 
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Threading",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
 [dev-dependencies]
 tempfile.workspace = true

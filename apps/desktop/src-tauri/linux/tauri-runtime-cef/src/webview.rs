@@ -410,6 +410,15 @@ pub enum ConsoleMessageLevel {
 /// Synchronous observer of renderer console output.
 pub type ConsoleMessageHandler = dyn Fn(ConsoleMessage) + Send + Sync + 'static;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ZoomCommand {
+  In,
+  Out,
+  Reset,
+}
+
+pub type ZoomCommandHandler = dyn Fn(ZoomCommand) + Send + Sync + 'static;
+
 /// Last look at a webview's [`cef::BrowserSettings`] before its browser is created.
 pub type BrowserSettingsCallback = dyn Fn(&mut cef::BrowserSettings) + Send + Sync + 'static;
 
@@ -787,6 +796,10 @@ impl<T: UserEvent> WinitCefApp<T> {
       console_message_handler: pending
         .runtime_specific_attributes
         .console_message_handler
+        .clone(),
+      zoom_command_handler: pending
+        .runtime_specific_attributes
+        .zoom_command_handler
         .clone(),
       permission_request_handler: pending.permission_request_handler.take().map(Arc::from),
       web_content_process_terminate_handler,
@@ -1516,6 +1529,7 @@ pub struct CefWebviewAttributes {
   /// Scoped to this webview's own native browser, so neither a CEF-owned popup's
   /// output nor that of a DevTools window opened on this webview is reported here.
   pub console_message_handler: Option<Arc<ConsoleMessageHandler>>,
+  pub zoom_command_handler: Option<Arc<ZoomCommandHandler>>,
   /// Families of Chrome commands this webview keeps rather than swallows.
   ///
   /// Empty by default, which blocks every group in [`ChromeCommandGroup`].
@@ -1540,6 +1554,7 @@ impl std::fmt::Debug for CefWebviewAttributes {
         "console_message_handler",
         &self.console_message_handler.is_some(),
       )
+      .field("zoom_command_handler", &self.zoom_command_handler.is_some())
       .field("allowed_chrome_commands", &self.allowed_chrome_commands)
       .field(
         "browser_settings_callback",

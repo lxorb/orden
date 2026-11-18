@@ -555,6 +555,12 @@ pub async fn web_open(
 
     let builder = reporting(builder, &app, &tab, private);
 
+    let stepping = (app.clone(), tab.clone());
+    let builder = crate::engine::zooms(
+        builder,
+        Box::new(move |step| crate::web_page::stepped(&stepping.0, &stepping.1, step)),
+    );
+
     let window = webview.window();
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
 

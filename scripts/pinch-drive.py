@@ -14,7 +14,7 @@ import threading
 import time
 from typing import Any
 from fresh_app import ended, fresh
-from native_app import App, config_of, endpoint, known
+from native_app import App, config_of, endpoint
 
 PAGE = b"""<!doctype html><meta name="viewport" content="width=device-width"><title>pinch</title>
 <body style="margin:0;font:16px sans-serif">
@@ -230,11 +230,7 @@ def main() -> int:
         print(f"after a pinch: {after}; zooms kept: {kept!r}", flush=True)
         magnified = after.get("scale", 1) > 1.05 or after.get("seen", 0) < before["seen"] * 0.95
         if not magnified:
-            said = f"a pinch did not magnify the page: {before} -> {after}"
-            if isinstance(engine, Windows):
-                known(2196, said)
-            else:
-                wrong.append(said)
+            wrong.append(f"a pinch did not magnify the page: {before} -> {after}")
         if abs(after.get("ratio", 0) - before["ratio"]) > 0.001:
             wrong.append(f"a pinch changed the page's zoom: {before['ratio']} -> {after.get('ratio')}")
         if kept not in (None, "{}"):
@@ -247,7 +243,7 @@ def main() -> int:
             zoomed = waited(lambda now: now["ratio"] > before["ratio"] * 1.05)
             print(f"after Ctrl and the wheel: {zoomed}", flush=True)
             if zoomed.get("ratio", 0) <= before["ratio"] * 1.05:
-                known(2196, f"Ctrl and the wheel no longer zoom the page: {zoomed}")
+                wrong.append(f"Ctrl and the wheel no longer zoom the page: {zoomed}")
     finally:
         ended(process)
         site.shutdown()

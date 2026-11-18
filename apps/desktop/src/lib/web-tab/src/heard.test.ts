@@ -94,6 +94,23 @@ test('a zoom made inside the page is the size the site is kept at', () => {
   expect(sites.zoomOf('example.com')).toBe(1.25)
 })
 
+test('a zoom the page asked for steps the tab a rung and keeps it for the site', async () => {
+  expect(readSaid({ tab: 'a', said: 'step', step: 'in' })).toEqual({
+    tab: 'a',
+    said: 'step',
+    step: 'in',
+  })
+  expect(readSaid({ tab: 'a', said: 'step', step: 'sideways' })).toBe(null)
+
+  const page = on('https://example.com/')
+  heard(page, { tab: 'a', said: 'step', step: 'in' })
+  await vi.waitFor(() => expect(page.zoom).toBe(1.1))
+  expect(sites.zoomOf('example.com')).toBe(1.1)
+
+  heard(page, { tab: 'a', said: 'step', step: 'out' })
+  await vi.waitFor(() => expect(page.zoom).toBe(1))
+})
+
 test('reads how a page arrived, and why it did not', () => {
   const arrived = { tab: 'a', said: 'arrived', url: 'https://a.example/' } as const
   const plain = { ...arrived, failure: null, bare: false, reason: null }
