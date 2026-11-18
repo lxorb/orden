@@ -476,17 +476,6 @@ describe('choosing a keyboard', () => {
     expect(shortcuts.overrides).toEqual({})
   })
 
-  test('turns modal editing on for Vim and off for the others', async () => {
-    const { shortcuts } = registry
-    const modes = await currentModes()
-
-    shortcuts.choose(keyboard('vim'))
-    expect(modes.vim).toBe(true)
-
-    shortcuts.choose(keyboard('obsidian'))
-    expect(modes.vim).toBe(false)
-  })
-
   test('can be turned on over another keyboard without replacing it', async () => {
     const { shortcuts } = registry
     const modes = await currentModes()
@@ -497,21 +486,29 @@ describe('choosing a keyboard', () => {
     expect(modes.vim).toBe(true)
     expect(shortcuts.preset).toBe('notion')
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    modes.setVimKeys(false)
   })
 
-  describe('and modal editing', () => {
-    test('stays off for every keyboard but Vim', async () => {
+  describe('and modal editing, which only the Vim keys switch holds', () => {
+    test('stays as it is when another keyboard is chosen or every key is put back', async () => {
       const { shortcuts } = registry
       const modes = await currentModes()
 
+      modes.setVimKeys(true)
       for (const id of ['default', 'notion', 'obsidian', 'vscode']) {
         shortcuts.choose(keyboard(id))
-        expect(modes.vim, id).toBe(false)
+        expect(modes.vim, id).toBe(true)
       }
+      shortcuts.resetAll()
+      expect(modes.vim).toBe(true)
+
+      modes.setVimKeys(false)
+      shortcuts.choose(keyboard('notion'))
+      expect(modes.vim).toBe(false)
     })
 
     test('stays off when a name written down before is read back', async () => {
-      for (const id of ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']) {
+      for (const id of ['default', 'notion', 'obsidian', 'vscode', 'custom']) {
         localStorage.clear()
         localStorage.setItem('orden:preset', id)
 
@@ -523,27 +520,11 @@ describe('choosing a keyboard', () => {
       }
     })
 
-    test('stays off when the account names a keyboard, Vim included', async () => {
-      for (const preset of ['notion', 'vim']) {
-        const fresh = await restarted()
-        const modes = await currentModes()
-
-        fresh.shortcuts.receive({ shortcuts: {}, preset })
-
-        expect(fresh.shortcuts.preset, preset).toBe(preset)
-        expect(modes.vim, preset).toBe(false)
-      }
-    })
-
-    test('goes off again when every key is put back', async () => {
-      const { shortcuts } = registry
-      const modes = await currentModes()
-
-      shortcuts.choose(keyboard('vim'))
-      expect(modes.vim).toBe(true)
-
-      shortcuts.resetAll()
-      expect(modes.vim).toBe(false)
+    test('reads the Vim keyboard of before as the default keys', async () => {
+      localStorage.clear()
+      localStorage.setItem('orden:preset', 'vim')
+      const fresh = await restarted()
+      expect(fresh.shortcuts.preset).toBe('default')
     })
 
     test('survives rebinding a key by hand, which makes the map custom', async () => {

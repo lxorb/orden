@@ -10,7 +10,6 @@ import {
   showCombination,
   viewport,
 } from '../../ui-kit/src/api'
-import { modes } from '../../modes/src/api'
 import { knownPreset, type PresetId, presetKeys } from './preset-ids'
 import type { Preset } from './presets'
 import {
@@ -103,11 +102,10 @@ class Shortcuts {
     return held === null || this.unkept ? this.overrides : usable(held)
   }
 
-  choose(preset: Pick<Preset, 'id' | 'keys' | 'mac' | 'vim'>) {
+  choose(preset: Pick<Preset, 'id' | 'keys' | 'mac'>) {
     this.preset = preset.id
     this.overrides = presetKeys(preset, this.platform)
     this.settle()
-    modes.setVimKeys(preset.vim)
   }
 
   keyFor(id: string): string | null {
@@ -221,7 +219,7 @@ class Shortcuts {
   }
 
   resetAll() {
-    this.choose({ id: 'default', keys: {}, vim: false })
+    this.choose({ id: 'default', keys: {} })
   }
 
   private settle() {
