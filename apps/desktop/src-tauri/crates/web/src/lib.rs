@@ -19,7 +19,6 @@ pub mod web_certificate;
 pub mod web_clear;
 pub mod web_cookies;
 pub mod web_cut;
-pub mod web_dialogs;
 pub mod web_find;
 pub mod web_follow;
 pub mod web_handed;

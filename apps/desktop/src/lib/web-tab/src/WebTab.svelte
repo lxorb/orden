@@ -53,8 +53,7 @@
   import { fading, opacityOf, underlaid } from './underlay'
   import { seek, shut, sought } from './seek'
   import { watchScale, watchShifts } from './shifts'
-  import { grants, siteOf } from './permissions.svelte'
-  import { dialogs } from './dialogs.svelte'
+  import { siteOf } from './permissions.svelte'
   import { asideFor, isMuted, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
@@ -62,8 +61,6 @@
   import { apartOf } from '@orden/scan/shortcut'
   import { clearingAsked } from './clearing-asked.svelte'
   import { passBubbles } from '../../pass-sync/src/api'
-  import WebAsk from './WebAsk.svelte'
-  import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
   import WebDownloads from './WebDownloads.svelte'
   import WebExtensionPopup from './WebExtensionPopup.svelte'
@@ -503,10 +500,6 @@
 
   const takeover = $derived(agentMarks.takeovers[tab.id] ?? null)
 
-  const asking = $derived(grants.asking.find((one) => one.tab === tab.id) ?? null)
-
-  const dialog = $derived(dialogs.open.find((one) => one.tab === tab.id) ?? null)
-
   $effect(() => {
     if (!page.find.open || page.loading) return
     untrack(() => seek(tab.id, page, page.find.query, 'fresh'))
@@ -707,13 +700,7 @@
       </div>
     {/if}
 
-    {#if dialog}
-      {#key dialog.id}
-        <WebDialog {dialog} icon={siteMark(page.icon, page.url)} />
-      {/key}
-    {:else if asking}
-      <WebAsk {asking} icon={siteMark(page.icon, page.url)} />
-    {:else if showingSite && page.url !== null}
+    {#if showingSite && page.url !== null}
       <WebSite
         url={page.url}
         {site}

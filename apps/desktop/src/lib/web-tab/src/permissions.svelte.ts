@@ -1,4 +1,4 @@
-import { invoke, isDesktop, withOrWithout, isRecord, Shared } from '../../platform/src/api'
+import { withOrWithout, isRecord, Shared } from '../../platform/src/api'
 import { originKey } from '@orden/scan/web-address'
 
 const STORAGE_KEY = 'orden:web-grants'
@@ -32,14 +32,6 @@ export function siteOf(url: string | null): string {
   return url === null ? '' : originKey(url)
 }
 
-export interface Asking {
-  id: number
-  tab: string
-  site: string
-  ask: Ask
-  privately: boolean
-}
-
 type Table = Record<string, Partial<Record<Ask, Answer>>>
 
 function readTable(read: unknown): Table {
@@ -58,24 +50,12 @@ function readTable(read: unknown): Table {
   return out
 }
 
-export function readAsked(value: unknown): Asking | null {
-  if (!isRecord(value)) return null
-
-  const { tab, id, origin, kind } = value
-  if (typeof tab !== 'string' || typeof id !== 'number') return null
-  if (typeof origin !== 'string' || typeof kind !== 'string' || !isAsk(kind)) return null
-
-  return { id, tab, site: originKey(origin) || origin, ask: kind, privately: false }
-}
-
 class Grants {
   private readonly kept = new Shared(STORAGE_KEY, readTable)
 
   private changed = $state(0)
 
   private privately = $state<Table>({})
-
-  asking = $state<Asking[]>([])
 
   constructor() {
     if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
@@ -127,48 +107,8 @@ class Grants {
     this.changed++
   }
 
-  heard(said: Asking) {
-    const already = this.said(said.site, said.ask, said.privately)
-    if (already !== null) {
-      void this.tell(said.id, already === 'allow')
-      return
-    }
-
-    this.asking = [...this.asking, said]
-  }
-
-  answer(said: Asking, allow: boolean) {
-    this.remember(said.site, said.ask, allow ? 'allow' : 'block', said.privately)
-
-    const same = this.asking.filter(
-      (one) => one.site === said.site && one.ask === said.ask && one.privately === said.privately,
-    )
-    this.asking = this.asking.filter((one) => !same.includes(one))
-    for (const one of same) void this.tell(one.id, allow)
-  }
-
-  dismiss(said: Asking) {
-    this.asking = this.asking.filter((one) => one.id !== said.id)
-    void this.tell(said.id, false)
-  }
-
-  dropped(tab: string, privateLeft = true) {
-    if (!privateLeft) this.privately = {}
-
-    const gone = this.asking.filter((one) => one.tab === tab)
-    if (!gone.length) return
-
-    this.asking = this.asking.filter((one) => one.tab !== tab)
-    for (const one of gone) void this.tell(one.id, false)
-  }
-
-  refused(id: number) {
-    void this.tell(id, false)
-  }
-
-  private async tell(id: number, allow: boolean): Promise<void> {
-    if (!isDesktop) return
-    await invoke('web_answer', { id, allow }).catch(() => undefined)
+  leftPrivate() {
+    this.privately = {}
   }
 
   forget(site: string, privately = false) {

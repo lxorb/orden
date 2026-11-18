@@ -92,16 +92,6 @@ pub fn web_find_stop(app: AppHandle, tab: String) -> Result<(), String> {
     }
 }
 
-pub fn listen(
-    _webview: &tauri::webview::PlatformWebview,
-    _app: AppHandle,
-    _tab: String,
-    _window: String,
-) {
-}
-
-pub fn forget(_tab: &str) {}
-
 #[cfg(test)]
 mod tests {
     use super::{looked, Found, Look};

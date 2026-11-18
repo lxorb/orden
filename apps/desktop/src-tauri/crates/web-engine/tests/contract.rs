@@ -8,7 +8,7 @@ use orden_contracts::{FailureKind, Outcome};
 use orden_web_engine::{
     allowed, app_host, becomes, debug_port, embed_allowed, frame_may_open, from_run, handed_out,
     internal, once_built, one_at_a_time, overlay_scrollbars, signs_in, switches, tab_may_open,
-    with_extensions, Asked, Becomes, Cookie, Download, Edge, Embed, EngineSettings, NativeWindow,
+    with_extensions, Becomes, Cookie, Download, Edge, Embed, EngineSettings, NativeWindow,
     NoExtensions, Outbox, Picture, Plain, Profiles, SandboxPolicy, Sending, StoreName, Url,
     WebEngine, WebPage, WindowSystem, APP_PROFILE, ENGINE_SWIPE, LONGEST_STORE_NAME,
     LOWEST_DEBUG_PORT, ROOT, STORE_PROFILE,
@@ -323,79 +323,28 @@ fn an_extension_s_own_pages_open_as_tabs_and_frames_take_what_a_page_embeds() {
 }
 
 #[test]
-fn a_new_window_becomes_a_tab_a_window_a_blocked_popup_or_nothing() {
+fn a_new_window_becomes_a_tab_a_window_or_nothing() {
     let url = |text: &str| Url::parse(text).expect(text);
     let site = url("https://example.com/page");
-    let asked = Asked::default();
     assert_eq!(
-        becomes(&site, asked, &NoExtensions),
+        becomes(&site, false, &NoExtensions),
         Becomes::Tab(site.to_string())
     );
+    assert_eq!(becomes(&site, true, &NoExtensions), Becomes::Window);
     assert_eq!(
-        becomes(
-            &site,
-            Asked {
-                sized: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
+        becomes(&url("https://accounts.example.com/x"), false, &NoExtensions),
         Becomes::Window
     );
     assert_eq!(
-        becomes(&url("https://accounts.example.com/x"), asked, &NoExtensions),
+        becomes(&url("about:blank"), false, &NoExtensions),
         Becomes::Window
-    );
-    assert_eq!(
-        becomes(&url("about:blank"), asked, &NoExtensions),
-        Becomes::Window
-    );
-    assert_eq!(
-        becomes(
-            &site,
-            Asked {
-                said: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
-        Becomes::Tab(site.to_string())
-    );
-    assert_eq!(
-        becomes(
-            &site,
-            Asked {
-                unasked: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
-        Becomes::Blocked(site.to_string())
     );
     let app = url("http://ipc.localhost/x");
-    assert_eq!(becomes(&app, asked, &NoExtensions), Becomes::Nothing);
-    assert_eq!(
-        becomes(
-            &app,
-            Asked {
-                unasked: true,
-                ..asked
-            },
-            &NoExtensions
-        ),
-        Becomes::Nothing
-    );
+    assert_eq!(becomes(&app, false, &NoExtensions), Becomes::Nothing);
     let known = |one: &Url| one.scheme() == "chrome-extension";
     let popup = url("chrome-extension://abc/popup.html");
     assert_eq!(
-        becomes(
-            &popup,
-            Asked {
-                sized: true,
-                ..asked
-            },
-            &known
-        ),
+        becomes(&popup, true, &known),
         Becomes::Tab(popup.to_string())
     );
 }

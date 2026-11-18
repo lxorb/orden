@@ -362,10 +362,6 @@ fn settle(app: &AppHandle, tab: &str) -> bool {
     true
 }
 
-pub fn listen(platform: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
-    progress::listen(platform, app, window);
-}
-
 #[tauri::command]
 pub fn web_downloads(app: AppHandle) -> Vec<Download> {
     held(&app)
@@ -403,7 +399,6 @@ mod progress {
     use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
 
     use serde_json::{json, Value};
-    use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Emitter as _, Manager as _, Webview};
 
     use super::{held, MOVED};
@@ -417,8 +412,6 @@ mod progress {
 
     static BEGUN: LazyLock<Mutex<Vec<Begun>>> = LazyLock::new(Mutex::default);
     static APP: OnceLock<AppHandle> = OnceLock::new();
-
-    pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _window: String) {}
 
     fn matched(begun: &mut [Begun], at: usize) -> Option<u64> {
         if let Some(id) = begun[at].id {

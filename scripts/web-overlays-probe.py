@@ -31,30 +31,6 @@ PAGES = {
 <title>A flat page</title>
 <body style="margin:0;background:#ff0080;height:100vh"></body>
 """,
-    "/asks": b"""<!doctype html>
-<title>A page that asks</title>
-<body style="margin:0;background:#0080ff;height:100vh">
-<script>
-  // The engine raises its own permission request for this, which is the whole point:
-  // nothing in the app asked for it and nothing in the app could have. Where you are
-  // rather than the camera, because a machine with no camera answers that one itself
-  // before there is anything to ask about.
-  //
-  // The page says in its own title what the engine told it, which is how the drive sees
-  // the far end of the answer: code 1 is PERMISSION_DENIED - the reader said no, or
-  // nobody ever answered - and anything else means the request was allowed and the
-  // machine simply has no location to give.
-  navigator.geolocation.getCurrentPosition(
-    function () {
-      document.title = 'allowed'
-    },
-    function (wrong) {
-      document.title = 'refused ' + wrong.code
-    },
-  )
-</script>
-</body>
-""",
 }
 
 def shoot(hwnd: int, name: str) -> pathlib.Path:
@@ -200,9 +176,6 @@ def main() -> int:
     (space / "A flat page.url").write_text(
         switch.shortcut(f"http://127.0.0.1:{port}/flat", "A flat page"), encoding="utf-8"
     )
-    (space / "A page that asks.url").write_text(
-        switch.shortcut(f"http://127.0.0.1:{port}/asks", "A page that asks"), encoding="utf-8"
-    )
 
     said: dict[str, object] = {}
     running = None
@@ -239,66 +212,6 @@ def main() -> int:
             )
             app.ask("window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
             time.sleep(0.8)
-
-        app.open("A page that asks.url")
-        asked = ""
-        until = time.perf_counter() + 30
-        while not asked and time.perf_counter() < until:
-            said_text = app.ask(
-                "JSON.stringify(document.querySelector('.ask[role=dialog]')?.textContent?.trim()"
-                " ?? '')"
-            )
-            asked = said_text if isinstance(said_text, str) else ""
-            if not asked:
-                time.sleep(1)
-
-        said["a site asks"] = asked
-        time.sleep(0.5)
-        shoot(hwnd, "a-site-asks")
-        if not asked:
-            print("FAIL: a site asked for where you are and no bubble went up")
-
-        said["the answers can be pressed"] = app.ask(
-            "JSON.stringify([...document.querySelectorAll('.ask .orden-button')].map((one) => {"
-            " const box = one.getBoundingClientRect();"
-            " const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);"
-            " return hit !== null && one.contains(hit) }))"
-        )
-        if said["the answers can be pressed"] != [True, True]:
-            print("FAIL: a pointer over the bubble's answers lands on something else")
-        app.ask("document.querySelectorAll('.ask .orden-button')[0].click()")
-
-        told = ""
-        until = time.perf_counter() + 20
-        while "refused" not in told and time.perf_counter() < until:
-            answer = app.ask(
-                "JSON.stringify(document.querySelector('.webbar input.address')?.value ?? '')"
-            )
-            told = answer if isinstance(answer, str) else ""
-            if "refused" not in told:
-                time.sleep(1)
-
-        said["the bubble is gone"] = app.ask(
-            "JSON.stringify(document.querySelector('.ask[role=dialog]') === null)"
-        )
-        said["what the engine told the page"] = told
-        said["what the site is allowed now"] = app.ask(
-            "JSON.stringify(JSON.parse(localStorage.getItem('orden:web-grants') ?? '{}'))"
-        )
-        shoot(hwnd, "a-site-answered")
-        if "refused 1" not in told:
-            print(f"FAIL: the page was told {told!r} rather than that it was refused")
-
-        app.ask(
-            "window.__TAURI_INTERNALS__.invoke('web_step', { tab: '"
-            + (switch.tab_of(app, "A page that asks") or "")
-            + "', step: 'reload' })"
-        )
-        time.sleep(6)
-        said["asked again"] = app.ask(
-            "JSON.stringify([document.querySelector('.ask[role=dialog]') === null,"
-            " document.querySelector('.webbar input.address')?.value ?? ''])"
-        )
     finally:
         if running is not None:
             running.terminate()

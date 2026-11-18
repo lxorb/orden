@@ -208,14 +208,12 @@ test('nothing is excused that is in the registry after all, or is no layer any m
 })
 
 const PLACED_INSIDE: Record<string, string> = {
-  'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebAsk.svelte .ask':
+  'lib/pass-ui/src/PassFill.svelte .fill': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebSite',
+  'lib/web-tab/src/WebSite.svelte .site':
     'under a web tab’s bar, inside the tab it is about, which it never leaves',
-  'lib/web-tab/src/WebDialog.svelte .dialog': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebAsk',
-  'lib/web-tab/src/WebSite.svelte .site': 'under a web tab’s bar: see WebAsk',
 }
 
 test('every bubble is placed in the window, where nothing that holds it can cut it', () => {

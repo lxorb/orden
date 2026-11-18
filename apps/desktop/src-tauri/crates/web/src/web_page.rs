@@ -58,14 +58,6 @@ pub fn web_unfill(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
-pub fn listen(
-    _webview: &tauri::webview::PlatformWebview,
-    _app: AppHandle,
-    _tab: String,
-    _window: String,
-) {
-}
-
 pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     (crate::engine::engine()?.mute)(view, muted)
 }
