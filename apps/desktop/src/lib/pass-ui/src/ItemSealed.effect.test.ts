@@ -1,8 +1,8 @@
 import { blank, newEnvelope } from '@orden/pass/envelope'
-import type { Content, Item, Vault } from '@orden/pass/types'
+import type { Content, Item } from '@orden/pass/types'
 import { flushSync } from 'svelte'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
-import { closed, showing, target } from '../test/drawn'
+import { closed, showing, target, vaultAs } from '../test/drawn'
 import { opened, pass } from '../test/opened'
 
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
@@ -11,23 +11,6 @@ const ItemView = (await import('./ItemView.svelte')).default
 
 const SECRET = 'wifi-pass-hidden-1'
 const TOTP = 'JBSWY3DPEHPK3PXP'
-
-function vaultHeldAs(id: string, role: Vault['role'], hide: boolean): Vault {
-  return {
-    v: 1,
-    id,
-    rev: 1,
-    role,
-    members: 2,
-    shared: true,
-    name: id,
-    description: '',
-    color: 'blue',
-    icon: 'home',
-    folders: [],
-    hidePasswordsFromViewers: hide,
-  }
-}
 
 function itemIn(vault: string, content: Content): Item {
   return { ...newEnvelope(content, 1), id: `${vault}-${content.kind}`, vault, rev: 1 }
@@ -47,8 +30,8 @@ beforeAll(async () => {
   await opened()
   pass.vaults = [
     ...pass.vaults,
-    vaultHeldAs('hidden', 'viewer', true),
-    vaultHeldAs('open', 'viewer', false),
+    { ...vaultAs('viewer', true), id: 'hidden' },
+    { ...vaultAs('viewer'), id: 'open' },
   ]
 })
 
