@@ -63,9 +63,9 @@ describe('a word dragged between words', () => {
     expect(moved('a **two** b\n', 'b', 'a **'.length)).toBe('a b **two**\n')
   })
 
-  test('takes no space in the middle of a word or between characters that take none', () => {
-    expect(copied('abcdef\n', 'x', 3)).toBe('abcxdef\n')
-    expect(copied('one, two\n', 'x', 3)).toBe('one x, two\n')
-    expect(copied('日本語\n', '字', 1)).toBe('日字本語\n')
-  })
+  test.each([
+    ['abcdef\n', 'abcxdef\n', 'x', 3],
+    ['one, two\n', 'one x, two\n', 'x', 3],
+    ['日本語\n', '日字本語\n', '字', 1],
+  ])('%j', (input, wanted, extra, last) => expect(copied(input, extra, last)).toEqual(wanted))
 })

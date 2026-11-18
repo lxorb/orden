@@ -41,16 +41,13 @@ const PROSE = 'one **two** three [four](five) `six`\n\nseven eight nine\n\n'
 const FILLER = 'prose with **emphasis** and a [link](x).\n\n'.repeat(200)
 
 describe('block decorations', () => {
-  test('records where the constructs that mind the caret are', () => {
-    expect(spans(`${PROSE}${TABLE}`)).toEqual([TABLE])
-    expect(spans('$$\nx = 1\n$$')).toEqual(['$$\nx = 1\n$$'])
-    expect(spans('```mermaid\ngraph TD\n```')).toEqual(['```mermaid\ngraph TD\n```'])
-    expect(spans('[toc]')).toEqual(['[toc]'])
-  })
-
-  test('prose is not a place the caret changes anything', () => {
-    expect(spans(PROSE)).toEqual([])
-  })
+  test.each([
+    [`${PROSE}${TABLE}`, [TABLE]],
+    ['$$\nx = 1\n$$', ['$$\nx = 1\n$$']],
+    ['```mermaid\ngraph TD\n```', ['```mermaid\ngraph TD\n```']],
+    ['[toc]', ['[toc]']],
+    [PROSE, []],
+  ])('%j', (input, wanted) => expect(spans(input)).toEqual(wanted))
 
   test('every fence is a place worth looking at again, whatever its language', () => {
     const fence = '```js\nlet x = 1\n```'
@@ -457,13 +454,10 @@ describe('a note cover', () => {
     return found
   }
 
-  test('is drawn for a note that names one', () => {
-    expect(covers(COVERED)).toBe(1)
-  })
-
-  test('is not drawn for a note that names none', () => {
-    expect(covers('---\ntitle: Wide\n---\n\n# Wide\n')).toBe(0)
-  })
+  test.each([
+    [COVERED, 1],
+    ['---\ntitle: Wide\n---\n\n# Wide\n', 0],
+  ])('%j', (input, wanted) => expect(covers(input)).toEqual(wanted))
 
   test('stays drawn while the caret is inside the front matter', () => {
     expect(covers(COVERED, COVERED.indexOf('cover:') + 3)).toBe(1)

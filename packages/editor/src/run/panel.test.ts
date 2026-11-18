@@ -317,15 +317,12 @@ describe('the panel state', () => {
 })
 
 describe('showing how long a run took', () => {
-  test('counts in milliseconds while that reads well', () => {
-    expect(formatElapsed(0)).toBe('0 ms')
-    expect(formatElapsed(47.6)).toBe('48 ms')
-    expect(formatElapsed(999)).toBe('999 ms')
-  })
-
-  test('switches to seconds, and drops the decimal once it is long', () => {
-    expect(formatElapsed(1000)).toBe('1.0 s')
-    expect(formatElapsed(1440)).toBe('1.4 s')
-    expect(formatElapsed(10_000)).toBe('10 s')
-  })
+  test.each([
+    [0, '0 ms'],
+    [47.6, '48 ms'],
+    [999, '999 ms'],
+    [1000, '1.0 s'],
+    [1440, '1.4 s'],
+    [10_000, '10 s'],
+  ])('%j', (input, wanted) => expect(formatElapsed(input)).toEqual(wanted))
 })

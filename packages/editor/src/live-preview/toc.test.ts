@@ -28,17 +28,14 @@ describe('reading the headings of a document', () => {
     expect(headings(state('##   Spaced   ##\n'))[0]?.text).toBe('Spaced')
   })
 
-  test('reads no heading from a line with = or - under it', () => {
-    expect(headings(state('Title\n=====\n\nSub\n---\n\nItem\n- one\n'))).toEqual([])
-  })
+  test.each([
+    [state('Title\n=====\n\nSub\n---\n\nItem\n- one\n'), []],
+    [state('just text\n'), []],
+  ])('%j', (input, wanted) => expect(headings(input)).toEqual(wanted))
 
   test('says where each one starts', () => {
     const doc = 'intro\n\n# One\n'
     expect(headings(state(doc))[0]?.from).toBe(doc.indexOf('# One'))
-  })
-
-  test('finds nothing in a document with no headings', () => {
-    expect(headings(state('just text\n'))).toEqual([])
   })
 })
 

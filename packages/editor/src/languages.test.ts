@@ -147,11 +147,11 @@ describe('the word a fence is opened with', () => {
     })
   }
 
-  test('the spelling is read whatever case it is written in', () => {
-    expect(languageFor('Python')).toBe('Python')
-    expect(languageFor('JSON')).toBe('JSON')
-    expect(languageFor('Dockerfile')).toBe('Dockerfile')
-  })
+  test.each([
+    ['Python', 'Python'],
+    ['JSON', 'JSON'],
+    ['Dockerfile', 'Dockerfile'],
+  ])('%j', (input, wanted) => expect(languageFor(input)).toEqual(wanted))
 
   test('a word nobody has a language for stays plain code', () => {
     expect(languageFor('notalanguage')).toBeNull()

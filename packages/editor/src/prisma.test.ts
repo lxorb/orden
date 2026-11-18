@@ -26,26 +26,20 @@ const typeOf = (schema: string, text: string) =>
   tokens(schema).find(([token]) => token === text)?.[1]
 
 describe('highlighting a prisma fence', () => {
-  test('marks the word that opens a block, and names what it opens', () => {
-    expect(typeOf('model User {', 'model')).toBe('definitionKeyword')
-    expect(typeOf('model User {', 'User')).toBe('typeName')
-    expect(typeOf('enum Role {', 'enum')).toBe('definitionKeyword')
-    expect(typeOf('datasource db {', 'datasource')).toBe('definitionKeyword')
-  })
-
-  test('a field is its name and then its type', () => {
-    expect(typeOf('  id Int', 'id')).toBe('propertyName')
-    expect(typeOf('  id Int', 'Int')).toBe('typeName')
-    expect(typeOf('  author User?', 'author')).toBe('propertyName')
-    expect(typeOf('  author User?', 'User')).toBe('typeName')
-    expect(typeOf('  posts Post[]', 'Post')).toBe('typeName')
-  })
-
-  test('marks the attributes', () => {
-    expect(typeOf('  id Int @id', '@id')).toBe('variableName.function')
-    expect(typeOf('  id Int @default(autoincrement())', '@default')).toBe('variableName.function')
-    expect(typeOf('  @@unique([a, b])', '@@unique')).toBe('variableName.function')
-  })
+  test.each([
+    ['model User {', 'definitionKeyword', 'model'],
+    ['model User {', 'typeName', 'User'],
+    ['enum Role {', 'definitionKeyword', 'enum'],
+    ['datasource db {', 'definitionKeyword', 'datasource'],
+    ['  id Int', 'propertyName', 'id'],
+    ['  id Int', 'typeName', 'Int'],
+    ['  author User?', 'propertyName', 'author'],
+    ['  author User?', 'typeName', 'User'],
+    ['  posts Post[]', 'typeName', 'Post'],
+    ['  id Int @id', 'variableName.function', '@id'],
+    ['  id Int @default(autoincrement())', 'variableName.function', '@default'],
+    ['  @@unique([a, b])', 'variableName.function', '@@unique'],
+  ])('%j', (input, wanted, extra) => expect(typeOf(input, extra)).toEqual(wanted))
 
   test('a setting is a name, an equals and a value', () => {
     const block = 'datasource db {\n  provider = "postgresql"\n  url = env("DB_URL")\n}'

@@ -382,10 +382,10 @@ describe('a document too long to parse', () => {
     return made.update({ effects: modeEffects(DEFAULTS) }).state
   }
 
-  test('is not parsed at all, and a short one still is', () => {
-    expect(parsedFully(opened(SHORT))).toBe(true)
-    expect(parsedFully(opened(LONG))).toBe(false)
-  })
+  test.each([
+    [opened(SHORT), true],
+    [opened(LONG), false],
+  ])('%j', (input, wanted) => expect(parsedFully(input)).toEqual(wanted))
 
   test('and is built that way rather than turned plain a transaction later', () => {
     const made = EditorState.create({ doc: LONG, extensions: modeExtensions(LONG.length) })

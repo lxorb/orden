@@ -23,26 +23,14 @@ describe('which nodes are headings', () => {
 })
 
 describe('the words a heading shows', () => {
-  test('without its hashes', () => {
-    expect(headingText('# Title')).toBe('Title')
-    expect(headingText('###### Deep')).toBe('Deep')
-  })
-
-  test('without the indent CommonMark allows in front of them', () => {
-    expect(headingText('   ## Title')).toBe('Title')
-  })
-
-  test('without the hashes some styles close one with', () => {
-    expect(headingText('## Title ##')).toBe('Title')
-    expect(headingText('## Title #')).toBe('Title')
-  })
-
-  test('keeping a hash that is one of the words', () => {
-    expect(headingText('# C# and F#')).toBe('C# and F#')
-  })
-
-  test('and nothing at all for a heading with no words', () => {
-    expect(headingText('#')).toBe('')
-    expect(headingText('## ##')).toBe('')
-  })
+  test.each([
+    ['# Title', 'Title'],
+    ['###### Deep', 'Deep'],
+    ['   ## Title', 'Title'],
+    ['## Title ##', 'Title'],
+    ['## Title #', 'Title'],
+    ['# C# and F#', 'C# and F#'],
+    ['#', ''],
+    ['## ##', ''],
+  ])('%j', (input, wanted) => expect(headingText(input)).toEqual(wanted))
 })

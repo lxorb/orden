@@ -39,14 +39,13 @@ function labels(found: CompletionResult | null): string[] {
 }
 
 describe('a hash in the middle of a line', () => {
-  test('offers every tag the space uses, most carried first', () => {
-    expect(labels(rowsAt('Filed under #'))).toEqual([
-      'work',
-      'work/ink',
-      'work/ink/canvas',
-      'reading',
-    ])
-  })
+  test.each([
+    [rowsAt('Filed under #'), ['work', 'work/ink', 'work/ink/canvas', 'reading']],
+    [rowsAt('#work/'), ['work/ink', 'work/ink/canvas']],
+    [rowsAt('#work/ink/'), ['work/ink/canvas']],
+    [rowsAt('#canvas'), ['work/ink/canvas']],
+    [rowsAt('(#read'), ['reading']],
+  ])('%j', (input, wanted) => expect(labels(input)).toEqual(wanted))
 
   test('says how many notes carry each one', () => {
     expect(rowsAt('Filed under #')?.options.map((one) => one.detail)).toEqual(['12', '7', '2', '4'])
@@ -56,19 +55,6 @@ describe('a hash in the middle of a line', () => {
     const found = rowsAt('Filed under #wo')
     expect(found?.from).toBe('Filed under #'.length)
     expect(labels(found)).toEqual(['work', 'work/ink', 'work/ink/canvas'])
-  })
-
-  test('narrows to the level under a slash, segment by segment', () => {
-    expect(labels(rowsAt('#work/'))).toEqual(['work/ink', 'work/ink/canvas'])
-    expect(labels(rowsAt('#work/ink/'))).toEqual(['work/ink/canvas'])
-  })
-
-  test('finds a nested one by its last segment alone', () => {
-    expect(labels(rowsAt('#canvas'))).toEqual(['work/ink/canvas'])
-  })
-
-  test('answers after an opening bracket as well, which is where a tag can sit', () => {
-    expect(labels(rowsAt('(#read'))).toEqual(['reading'])
   })
 
   test('is not a tag in the middle of a word', () => {
