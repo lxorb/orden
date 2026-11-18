@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { findLinks, type FoundLink } from '@orden/markdown/links'
-import { rewriteLinks } from './link-rewrite'
+import { retargetLinks, rewriteLinks } from './link-rewrite'
 
 const pointsAt = (wanted: string) => (link: FoundLink) =>
   link.target
@@ -156,6 +156,13 @@ describe('renaming a note to a name a wikilink cannot say', () => {
     )
     expect(rewriteLinks('![[Plan]]', 'Note.md', to, pointsAt('plan'))).toBe(
       '![C# basics](f/C%23%20basics.md)',
+    )
+  })
+
+  test('keeps the alias a link reached it by as the words it shows', () => {
+    const placed = { path: 'f/C# basics.md', reaches: () => false, shown: 'Shortcut' }
+    expect(retargetLinks('a [[Shortcut]] b', 'Note.md', () => placed)).toBe(
+      'a [Shortcut](f/C%23%20basics.md) b',
     )
   })
 
