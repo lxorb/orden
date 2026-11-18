@@ -52,6 +52,13 @@ export function attributeUrl(target: string): string {
   return encoded.replace(/&/g, '&amp;')
 }
 
+const NOT_IN_PATH = /[#?:]/g
+
+export function pathHref(path: string): string | null {
+  if (CODE_SCHEMES.has(schemeOf(path))) return null
+  return attributeUrl(path).replace(NOT_IN_PATH, (one) => `%${one.charCodeAt(0).toString(16)}`)
+}
+
 export function fragment(name: string): string {
   try {
     return encodeURIComponent(name)

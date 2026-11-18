@@ -1,5 +1,5 @@
 import type { MarkedExtension, Tokens } from 'marked'
-import { attributeUrl, escape, fragment, safeHref } from './html'
+import { attributeUrl, escape, fragment, pathHref, safeHref } from './html'
 import { DOCUMENT, iconMarkup, PLANE } from './icons'
 import {
   embedKind,
@@ -113,9 +113,10 @@ function anchor(link: Wikilink, resolve: LinkResolver | undefined, text: string)
   const target = resolved?.href ?? null
   const words = escape(resolved?.text ?? text)
 
-  if (target === null || !safeHref(target)) return words
+  const href = target === null ? null : pathHref(target)
+  if (href === null) return words
 
-  return `<a class="wikilink" href="${attributeUrl(target)}${anchored(link)}">${words}</a>`
+  return `<a class="wikilink" href="${href}${anchored(link)}">${words}</a>`
 }
 
 function anchored(link: Wikilink): string {
