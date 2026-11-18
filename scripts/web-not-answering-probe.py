@@ -6,7 +6,7 @@ or building a page used to be a call into that process the window's thread waite
 A browser busy with one heavy site - for seconds at a time, a chat app does it - took the
 whole app with it: measured 2026-10-04, a press on a web tab sat in `web_place` for as long
 as the browser was held, 47 to 89 seconds, with the window repainting and nothing else
-answering. See src-tauri/src/web_answers.rs.
+answering. See src-tauri/crates/web/src/web_answers.rs.
 
 This holds the probe's own web browser still from outside - every thread of it suspended,
 so it answers nothing at all - and asks the app for what a person does meanwhile: another

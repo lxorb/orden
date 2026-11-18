@@ -2,8 +2,6 @@
 mod agents;
 #[cfg(test)]
 mod calls;
-#[cfg(target_os = "linux")]
-mod chromium_pump;
 #[cfg(desktop)]
 mod downloads;
 #[cfg(desktop)]
@@ -12,8 +10,6 @@ mod engine;
 mod extensions;
 #[cfg(desktop)]
 mod handover;
-#[cfg(desktop)]
-mod host;
 #[cfg(desktop)]
 mod hotkeys;
 #[cfg(desktop)]
@@ -30,12 +26,6 @@ pub mod old_engine;
 pub mod old_home;
 #[cfg(desktop)]
 mod page_carry;
-#[cfg(desktop)]
-mod page_drag;
-#[cfg(desktop)]
-mod page_hide;
-#[cfg(desktop)]
-mod page_scale;
 #[cfg(desktop)]
 mod page_scheme;
 #[cfg(desktop)]
@@ -55,29 +45,17 @@ mod siri;
 mod spelling;
 mod uris;
 #[cfg(desktop)]
-mod web_answers;
-#[cfg(desktop)]
 mod web_certificate;
 #[cfg(desktop)]
 mod web_clear;
 #[cfg(desktop)]
 mod web_cookies;
 #[cfg(desktop)]
-mod web_cut;
-#[cfg(desktop)]
-mod web_dialogs;
-#[cfg(desktop)]
 mod web_find;
-#[cfg(desktop)]
-mod web_follow;
 #[cfg(desktop)]
 mod web_handed;
 #[cfg(desktop)]
-mod web_icons;
-#[cfg(desktop)]
 mod web_keys;
-#[cfg(desktop)]
-mod web_media;
 #[cfg(desktop)]
 mod web_opens;
 #[cfg(desktop)]
@@ -87,13 +65,7 @@ mod web_pass;
 #[cfg(desktop)]
 mod web_pause;
 #[cfg(desktop)]
-mod web_reload;
-#[cfg(desktop)]
 mod web_state;
-#[cfg(desktop)]
-mod web_steady;
-#[cfg(desktop)]
-mod web_stores;
 #[cfg(desktop)]
 mod web_swipe;
 #[cfg(desktop)]
@@ -277,9 +249,9 @@ macro_rules! desktop_commands {
             kept::kept_write,
             kept::kept_forget,
             orden_system::gpu::gpu_line,
-            page_scale::page_scale_seen,
-            page_scale::interface_zoom_chosen,
-            page_scale::interface_zoom_choose,
+            orden_web::page_scale::page_scale_seen,
+            orden_web::page_scale::interface_zoom_chosen,
+            orden_web::page_scale::interface_zoom_choose,
             page_scheme::page_scheme_seen,
             spelling::spell_languages,
             orden_system::fonts::font_families,
@@ -422,7 +394,7 @@ macro_rules! desktop_commands {
             web_tint::web_tint,
             web_clear::web_clear,
             web_tabs::web_answer,
-            web_dialogs::web_dialog_answer,
+            orden_web::web_dialogs::web_dialog_answer,
             orden_dictation::dictation::dictation_local,
             orden_dictation::dictation::dictation_local_fetch,
             orden_dictation::dictation::dictation_local_remove,
@@ -710,8 +682,8 @@ fn reminders_started(handle: &tauri::AppHandle) {
 #[cfg(desktop)]
 fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
-    chromium_pump::start(handle);
-    page_scale::start(handle);
+    orden_web::chromium_pump::start(handle);
+    orden_web::page_scale::start(handle);
     orden_documents::pdf::hand_engine(orden_documents::pdf::Engine {
         profile: engine::own_profile,
         call: engine::devtools::call,
@@ -728,6 +700,7 @@ fn first_of_all(handle: &tauri::AppHandle) {
         identifier: env!("ORDEN_IDENTIFIER"),
         version: env!("ORDEN_VERSION"),
     });
+    orden_web::host::hand_page_id(engine::page_id);
     orden_agents::hand(orden_agents::Host {
         answer: agents::answer,
         lent: orden_ai::ai_agent::lent,

@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom'
 import { expect, test } from 'vitest'
 
 const script = readFileSync(
-  join(import.meta.dirname, '../../../../src-tauri/src/web_media.js'),
+  join(import.meta.dirname, '../../../../src-tauri/crates/web/src/web_media.js'),
   'utf8',
 )
 

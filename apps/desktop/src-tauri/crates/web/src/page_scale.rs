@@ -17,12 +17,12 @@ fn zoom_is_off(ratio: f64, native: f64, zoom: f64) -> bool {
 pub const SCRIPT: &str = include_str!("page_scale.js");
 
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub(crate) fn scale_of_dpi(xft_dpi: i32) -> Option<f64> {
+pub fn scale_of_dpi(xft_dpi: i32) -> Option<f64> {
     (xft_dpi > 0).then(|| (f64::from(xft_dpi) / 1024.0 / 96.0).clamp(0.5, 4.0))
 }
 
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub(crate) fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
+pub fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
     let big = *data.first()? == b'B';
     let word = |at: usize| -> Option<u32> {
         let bytes: [u8; 4] = data.get(at..at + 4)?.try_into().ok()?;
@@ -285,7 +285,7 @@ mod tests {
 
     #[test]
     fn the_rungs_are_the_ones_settings_offers() {
-        let modes = include_str!("../../src/lib/modes/src/modes.svelte.ts");
+        let modes = include_str!("../../../../src/lib/modes/src/modes.svelte.ts");
         let listed = RUNGS.map(|one| one.to_string()).join(", ");
         assert!(
             modes.contains(&format!("INTERFACE_ZOOMS = [{listed}]")),

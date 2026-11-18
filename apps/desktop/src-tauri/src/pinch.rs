@@ -139,7 +139,7 @@ mod gestures {
     }
 
     pub fn web_page(platform: &tauri::webview::PlatformWebview, app: &AppHandle, label: &str) {
-        let Some(page) = crate::host::x11_page(platform) else {
+        let Some(page) = orden_web::host::x11_page(platform) else {
             return;
         };
         let Some(pinches) = pinches() else {

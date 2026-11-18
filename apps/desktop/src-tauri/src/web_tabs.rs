@@ -211,7 +211,7 @@ impl Trail {
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder
-        .on_window_event(crate::web_follow::heard)
+        .on_window_event(orden_web::web_follow::heard)
         .manage(WebTabs::default())
 }
 
@@ -440,7 +440,7 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
     let mut scripts = vec![
         crate::web_opens::script(),
         crate::web_swipe::script().to_string(),
-        crate::web_media::script().to_string(),
+        orden_web::web_media::script().to_string(),
     ];
 
     #[cfg(windows)]
@@ -470,9 +470,9 @@ fn page_built(
     let _doing = orden_crashes::stall::doing("web_open: building the page");
     let _ = (app, store);
 
-    let bounds = crate::web_follow::Bounds::from(pane);
-    let scale = crate::page_scale::of(window).unwrap_or(1.0);
-    let (left, top, width, height) = crate::web_follow::edges(bounds, scale);
+    let bounds = orden_web::web_follow::Bounds::from(pane);
+    let scale = orden_web::page_scale::of(window).unwrap_or(1.0);
+    let (left, top, width, height) = orden_web::web_follow::edges(bounds, scale);
     let view = crate::engine::add_child(
         window,
         builder,
@@ -482,11 +482,11 @@ fn page_built(
     .map_err(|error| format!("that page could not be opened: {error}"))?;
     crate::page_style::worn(&view);
     crate::page_scheme::wear(&view);
-    let zoom = crate::page_scale::web(1.0);
+    let zoom = orden_web::page_scale::web(1.0);
     if (zoom - 1.0).abs() > 0.01 {
         let _ = view.set_zoom(zoom);
     }
-    crate::web_follow::put(&view, bounds, scale)
+    orden_web::web_follow::put(&view, bounds, scale)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     Ok(())
 }
@@ -507,7 +507,7 @@ impl Profile {
         if self.private {
             return Ok((None, true));
         }
-        let store = crate::web_stores::named(self.store.as_deref())?.map(str::to_string);
+        let store = orden_web::web_stores::named(self.store.as_deref())?.map(str::to_string);
         Ok((store, false))
     }
 }
@@ -521,7 +521,7 @@ pub async fn web_open(
     pane: Pane,
     revived: Revived,
     profile: Profile,
-) -> Result<crate::web_cut::Layering, String> {
+) -> Result<orden_web::web_cut::Layering, String> {
     let address = address(&url)?;
     let (store, private) = profile.checked()?;
     let label = label_of(&tab);
@@ -529,7 +529,7 @@ pub async fn web_open(
 
     if app.get_webview(&label).is_some() {
         if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
-            return Ok(crate::web_cut::layering(&label));
+            return Ok(orden_web::web_cut::layering(&label));
         }
         return Err("that tab already has a page".into());
     }
@@ -597,7 +597,7 @@ pub async fn web_open(
 
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
-    Ok(crate::web_cut::layering(&label_of(&tab)))
+    Ok(orden_web::web_cut::layering(&label_of(&tab)))
 }
 
 fn windows_asked(
@@ -684,11 +684,11 @@ fn reporting(
             let holder = view.window().label().to_string();
             let asking = view.clone();
             std::thread::spawn(move || {
-                let declaring = crate::web_worlds::value(&asking, crate::web_icons::ASK)
+                let declaring = crate::web_worlds::value(&asking, orden_web::web_icons::ASK)
                     .and_then(|said| serde_json::from_value(said).ok())
                     .unwrap_or_default();
-                if let Some(icon) = crate::web_icons::best(&declaring) {
-                    crate::web_icons::said(&marked, &holder, &named, &icon);
+                if let Some(icon) = orden_web::web_icons::best(&declaring) {
+                    orden_web::web_icons::said(&marked, &holder, &named, &icon);
                 }
             });
         }
@@ -743,8 +743,13 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::downloads::listen(&platform, asking.clone(), window.clone());
-            crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
-            crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
+            orden_web::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
+            orden_web::web_dialogs::listen(
+                &platform,
+                asking.clone(),
+                named.clone(),
+                window.clone(),
+            );
             crate::pinch::web_page(&platform, &asking, &label);
             crate::web_pass::listen(&platform, asking.clone(), named.clone(), window.clone());
             ask::listen(&platform, asking, named, window);
@@ -833,7 +838,7 @@ fn say(
     let Ok(payload) = serde_json::to_value(payload) else {
         return;
     };
-    crate::web_steady::say(app, view.window().label(), MOVED, tab, loading, payload);
+    orden_web::web_steady::say(app, view.window().label(), MOVED, tab, loading, payload);
 }
 
 #[tauri::command]
@@ -846,54 +851,54 @@ pub fn web_place(
     tab: String,
     pane: Pane,
     visible: bool,
-    frame: Option<crate::web_follow::Frame>,
-    cut: Option<crate::web_cut::Cut>,
+    frame: Option<orden_web::web_follow::Frame>,
+    cut: Option<orden_web::web_cut::Cut>,
     corner: Option<f64>,
     opacity: Option<f64>,
-) -> Result<crate::web_cut::Layering, String> {
+) -> Result<orden_web::web_cut::Layering, String> {
     let view = found(&app, &tab)?;
 
     let answering = {
         let _doing = orden_crashes::stall::doing("web_place: asked");
-        crate::web_answers::answers(&view)
+        orden_web::web_answers::answers(&view)
     };
     if !answering {
-        crate::web_answers::said(&app);
+        orden_web::web_answers::said(&app);
         if visible {
-            return Err(crate::web_answers::NOT_ANSWERING.to_owned());
+            return Err(orden_web::web_answers::NOT_ANSWERING.to_owned());
         }
         let _doing = orden_crashes::stall::doing("web_place: put away");
-        crate::web_answers::put_away(&view);
-        return Ok(crate::web_cut::layering(view.label()));
+        orden_web::web_answers::put_away(&view);
+        return Ok(orden_web::web_cut::layering(view.label()));
     }
 
     let window = view.window();
-    let bounds = crate::web_follow::placed(
+    let bounds = orden_web::web_follow::placed(
         &window,
         view.label(),
-        crate::web_follow::Bounds::from(&pane),
+        orden_web::web_follow::Bounds::from(&pane),
         frame,
         visible,
     );
-    let scale = crate::page_scale::of(&window)
+    let scale = orden_web::page_scale::of(&window)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
-    let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
+    let (_, _, width, height) = orden_web::web_follow::edges(bounds, scale);
     if !visible {
         let _doing = orden_crashes::stall::doing("web_place: hidden");
-        crate::page_hide::out_of_sight(&view);
+        orden_web::page_hide::out_of_sight(&view);
         view.hide()
             .map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
     {
         let _doing = orden_crashes::stall::doing("web_place: bounds");
-        crate::web_follow::put(&view, bounds, scale)
+        orden_web::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
     let _ = opacity;
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: cut");
-        crate::web_cut::apply(
+        orden_web::web_cut::apply(
             &view,
             cut.clone(),
             width,
@@ -905,7 +910,7 @@ pub fn web_place(
 
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: shown");
-        crate::page_hide::no_ground(&view);
+        orden_web::page_hide::no_ground(&view);
         view.show()
             .map_err(|error| format!("that page could not be shown: {error}"))?;
     }
@@ -915,10 +920,10 @@ pub fn web_place(
         crate::keyboard::hold_for_layer(&app, window.label());
     }
     crate::keyboard::placed(&app, &view, visible && cut.is_none());
-    Ok(crate::web_cut::layering(view.label()))
+    Ok(orden_web::web_cut::layering(view.label()))
 }
 
-impl From<&Pane> for crate::web_follow::Bounds {
+impl From<&Pane> for orden_web::web_follow::Bounds {
     fn from(pane: &Pane) -> Self {
         Self {
             x: pane.x,
@@ -933,7 +938,7 @@ impl From<&Pane> for crate::web_follow::Bounds {
 pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), String> {
     let at = address(&url)?;
     let view = found(&app, &tab)?;
-    crate::web_dialogs::dismiss(&app, &tab);
+    orden_web::web_dialogs::dismiss(&app, &tab);
     view.navigate(at)
         .map_err(|error| format!("that address could not be opened: {error}"))
 }
@@ -948,14 +953,14 @@ pub fn web_step(
 ) -> Result<(), String> {
     let view = found(&app, &tab)?;
     if !matches!(step, Step::Stop) {
-        crate::web_dialogs::dismiss(&app, &tab);
+        orden_web::web_dialogs::dismiss(&app, &tab);
     }
     let steps = isize::try_from(by.unwrap_or(1).max(1)).unwrap_or(1);
 
     let by = match step {
         Step::Reload => return view.reload().map_err(|error| error.to_string()),
-        Step::Fresh => return crate::web_reload::fresh(&view),
-        Step::Stop => return crate::web_reload::stop(&view),
+        Step::Fresh => return orden_web::web_reload::fresh(&view),
+        Step::Stop => return orden_web::web_reload::stop(&view),
         Step::Back => -steps,
         Step::Forward => steps,
     };
@@ -1019,7 +1024,7 @@ pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), Str
 #[tauri::command]
 pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> {
     found(&app, &tab)?
-        .set_zoom(crate::page_scale::web(factor))
+        .set_zoom(orden_web::page_scale::web(factor))
         .map_err(|error| format!("that page could not be zoomed: {error}"))
 }
 
@@ -1093,18 +1098,18 @@ pub async fn web_close(
         let _doing = orden_crashes::stall::doing("web_close");
         if let Some(view) = closing.get_webview(&label) {
             crate::web_find::forget(&named);
-            crate::web_dialogs::forget(&named);
+            orden_web::web_dialogs::forget(&named);
             ask::forget(&named);
-            crate::web_steady::forget(&named);
+            orden_web::web_steady::forget(&named);
             crate::web_pass::forget(&named);
             crate::keyboard::closed(view.label());
-            crate::web_follow::unfollow(view.label());
-            crate::web_cut::uncut(view.label());
+            orden_web::web_follow::unfollow(view.label());
+            orden_web::web_cut::uncut(view.label());
             let_go(view.label());
-            if !crate::web_answers::answers(&view) {
-                crate::web_answers::said(&closing);
-                crate::web_answers::put_away(&view);
-                crate::web_answers::close_when_answering(&closing, view.label().to_owned());
+            if !orden_web::web_answers::answers(&view) {
+                orden_web::web_answers::said(&closing);
+                orden_web::web_answers::put_away(&view);
+                orden_web::web_answers::close_when_answering(&closing, view.label().to_owned());
             } else if crate::downloads::linger(&closing, &named) {
                 let _ = view.hide();
             } else {
@@ -1167,8 +1172,8 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         let_go(view.label());
         crate::keyboard::closed(view.label());
-        crate::web_follow::unfollow(view.label());
-        crate::web_cut::uncut(view.label());
+        orden_web::web_follow::unfollow(view.label());
+        orden_web::web_cut::uncut(view.label());
         let _ = view.close();
     }
 }
@@ -1618,7 +1623,7 @@ mod tests {
                 "{};\n{};\n{};\n{}{};\n",
                 crate::web_opens::script(),
                 crate::web_swipe::script(),
-                crate::web_media::script(),
+                orden_web::web_media::script(),
                 if cfg!(windows) {
                     format!("{};\n", super::bars())
                 } else {

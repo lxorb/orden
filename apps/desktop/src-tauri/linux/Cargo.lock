@@ -4203,6 +4203,7 @@ dependencies = [
  "orden-secrets",
  "orden-store",
  "orden-system",
+ "orden-web",
  "orden-web-engine",
  "percent-encoding",
  "png 0.18.1",
@@ -4570,6 +4571,20 @@ dependencies = [
  "windows-registry",
  "x11rb",
  "zbus 5.19.0",
+]
+
+[[package]]
+name = "orden-web"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "orden-base",
+ "orden-web-engine",
+ "raw-window-handle",
+ "serde",
+ "serde_json",
+ "tauri",
+ "x11rb",
 ]
 
 [[package]]

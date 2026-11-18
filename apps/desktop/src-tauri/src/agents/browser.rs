@@ -166,7 +166,7 @@ fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> 
     .and_then(|value| serde_json::from_value::<orden_agents::verbs::window::StoreSaid>(value).ok())
     .and_then(|said| said.store)
     .and_then(|store| {
-        crate::web_stores::named(Some(&store))
+        orden_web::web_stores::named(Some(&store))
             .ok()
             .flatten()
             .map(str::to_string)
