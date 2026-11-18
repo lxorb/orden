@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { Facts } from '../../ui-kit/src/api'
-  import type { Item, Login } from '@orden/pass/types'
-  import { atLeast } from '@orden/pass/types'
+  import { Facts, prompt } from '../../ui-kit/src/api'
+  import { atLeast, type Item, type Login } from '@orden/pass/types'
   import KeyRound from 'lucide/dist/esm/icons/key-round.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { localDate } from '../../platform/src/api'
-  import { prompt } from '../../ui-kit/src/api'
   import Glyph from './Glyph.svelte'
   import { pass } from '../../pass-sync/src/api'
 

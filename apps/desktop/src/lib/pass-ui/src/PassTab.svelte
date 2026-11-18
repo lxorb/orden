@@ -8,7 +8,7 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import type { Tab } from '../../documents/src/api'
   import AdoptSheet from './AdoptSheet.svelte'
-  import { asked } from '../../pass-sync/src/api'
+  import { asked, pass, PassUi, flagName } from '../../pass-sync/src/api'
   import ChangePassword from './ChangePassword.svelte'
   import Gate from './Gate.svelte'
   import Generator from './Generator.svelte'
@@ -27,10 +27,7 @@
   import RecoveryKit from './RecoveryKit.svelte'
   import Setup from './Setup.svelte'
   import ShareSheet from './ShareSheet.svelte'
-  import { pass } from '../../pass-sync/src/api'
-  import { PassUi } from '../../pass-sync/src/api'
   import VaultSheet from './VaultSheet.svelte'
-  import { flagName } from '../../pass-sync/src/api'
 
   const {
     tab,

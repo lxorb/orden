@@ -3,9 +3,7 @@
   import { guessSource, type Imported, SOURCES, type SourceId } from '@orden/pass/import/index'
   import { message } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import { importedFrom, isSealed } from '../../pass-sync/src/api'
-  import { kindsOf, markOf, stepsOf } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
+  import { importedFrom, isSealed, kindsOf, markOf, stepsOf, pass } from '../../pass-sync/src/api'
 
   let source = $state<SourceId>('proton')
   let asked = $state(false)

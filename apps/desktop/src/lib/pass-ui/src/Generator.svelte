@@ -1,8 +1,7 @@
 <script lang="ts">
   import { MEMORABLE_WORDS, RANDOM_LENGTH, SEPARATORS } from '@orden/pass/generate'
   import RefreshCw from 'lucide/dist/esm/icons/refresh-cw.mjs'
-  import { Select } from '../../ui-controls/src/api'
-  import { Sheet } from '../../ui-controls/src/api'
+  import { Select, Sheet } from '../../ui-controls/src/api'
   import { segmented } from '../../ui-kit/src/api'
   import { copyField } from '../../pass-sync/src/api'
   import { separatorLabel } from '../../pass-sync/src/api'

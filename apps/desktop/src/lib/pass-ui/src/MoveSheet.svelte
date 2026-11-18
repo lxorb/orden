@@ -3,8 +3,7 @@
   import FolderMark from 'lucide/dist/esm/icons/folder.mjs'
   import { Sheet } from '../../ui-controls/src/api'
   import Glyph from './Glyph.svelte'
-  import { pass } from '../../pass-sync/src/api'
-  import type { PassUi } from '../../pass-sync/src/api'
+  import { pass, type PassUi } from '../../pass-sync/src/api'
   import VaultMark from './VaultMark.svelte'
 
   const { ui }: { ui: PassUi } = $props()

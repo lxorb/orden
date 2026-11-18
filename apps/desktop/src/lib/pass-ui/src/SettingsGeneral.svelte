@@ -3,9 +3,7 @@
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { Select } from '../../ui-controls/src/api'
   import Glyph from './Glyph.svelte'
-  import { pauseWord } from '../../pass-sync/src/api'
-  import { type Paused, PAUSES } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
+  import { pauseWord, type Paused, PAUSES, pass } from '../../pass-sync/src/api'
   import SwitchRow from './SwitchRow.svelte'
 
   type Flag =

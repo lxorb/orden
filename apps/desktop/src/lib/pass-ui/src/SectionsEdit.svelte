@@ -3,8 +3,7 @@
   import { Cross } from '../../ui-kit/src/api'
   import AddField from './AddField.svelte'
   import FieldsEdit from './FieldsEdit.svelte'
-  import { newField } from '../../pass-sync/src/api'
-  import { newSection } from '../../pass-sync/src/api'
+  import { newField, newSection } from '../../pass-sync/src/api'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { sections = $bindable(), oninput }: { sections: Section[]; oninput: () => void } = $props()

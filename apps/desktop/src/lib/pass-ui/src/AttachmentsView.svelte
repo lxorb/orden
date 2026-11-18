@@ -1,15 +1,12 @@
 <script lang="ts">
-  import type { Item } from '@orden/pass/types'
-  import { atLeast } from '@orden/pass/types'
+  import { atLeast, type Item } from '@orden/pass/types'
   import Download from 'lucide/dist/esm/icons/download.mjs'
   import Paperclip from 'lucide/dist/esm/icons/paperclip.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
-  import { message } from '../../ui-kit/src/api'
-  import { prompt } from '../../ui-kit/src/api'
+  import { message, prompt } from '../../ui-kit/src/api'
   import { readableSize } from '../../accounts/src/api'
-  import { savedAttachment } from '../../pass-sync/src/api'
+  import { savedAttachment, pass } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
-  import { pass } from '../../pass-sync/src/api'
 
   const { item }: { item: Item } = $props()
 

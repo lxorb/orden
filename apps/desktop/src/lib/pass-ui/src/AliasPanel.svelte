@@ -1,10 +1,7 @@
 <script lang="ts">
-  import type { Alias, Item } from '@orden/pass/types'
-  import { atLeast } from '@orden/pass/types'
+  import { atLeast, type Alias, type Item } from '@orden/pass/types'
   import { message } from '../../ui-kit/src/api'
-  import { aliasStats, switchedAlias } from '../../pass-sync/src/api'
-  import type { AliasStats } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
+  import { aliasStats, switchedAlias, pass, type AliasStats } from '../../pass-sync/src/api'
   import SwitchRow from './SwitchRow.svelte'
 
   const { item, content }: { item: Item; content: Alias } = $props()

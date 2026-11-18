@@ -11,11 +11,9 @@
   import { Select } from '../../ui-controls/src/api'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
-  import { FIELD_ICONS } from '../../pass-sync/src/api'
-  import { securityLabel } from '../../pass-sync/src/api'
+  import { FIELD_ICONS, securityLabel, type PassUi } from '../../pass-sync/src/api'
   import PasswordField from './PasswordField.svelte'
   import SectionsEdit from './SectionsEdit.svelte'
-  import type { PassUi } from '../../pass-sync/src/api'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let {

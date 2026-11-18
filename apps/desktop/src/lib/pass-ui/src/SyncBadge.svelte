@@ -5,9 +5,7 @@
   import RefreshCw from 'lucide/dist/esm/icons/refresh-cw.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import Glyph from './Glyph.svelte'
-  import { pass } from '../../pass-sync/src/api'
-  import { passSync } from '../../pass-sync/src/api'
-  import { syncWord } from '../../pass-sync/src/api'
+  import { pass, passSync, syncWord } from '../../pass-sync/src/api'
 
   const { onadopt }: { onadopt: () => void } = $props()
 

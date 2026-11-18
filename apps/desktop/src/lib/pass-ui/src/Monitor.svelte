@@ -11,11 +11,8 @@
   import ShieldOff from 'lucide/dist/esm/icons/shield-off.mjs'
   import Smartphone from 'lucide/dist/esm/icons/smartphone.mjs'
   import { message } from '../../ui-kit/src/api'
-  import { fetcher } from '../../pass-sync/src/api'
-  import { flagName } from '../../pass-sync/src/api'
+  import { fetcher, flagName, pass, type PassUi } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
-  import { pass } from '../../pass-sync/src/api'
-  import type { PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
 
