@@ -90,6 +90,17 @@ function serving(themes: unknown[], css = sheet('#faf6ee')) {
   return asked
 }
 
+async function installedFrom(themes = [entry()], css?: string) {
+  serving(themes, css)
+  await store.load()
+  await store.install(themes[0] as never)
+}
+
+async function updated() {
+  serving([entry({ version: '2.0.0' })], sheet('#111111'))
+  await store.install(entry({ version: '2.0.0' }) as never)
+}
+
 beforeEach(() => {
   vi.unstubAllGlobals()
   stubs()
@@ -125,56 +136,36 @@ describe('what the grid shows', () => {
     }),
   ].map((one) => ({ ...one, variants: ['light' as const], palettes: { light: {}, dark: {} } }))
 
-  test('newest first, and ties by name so the order is the same everywhere', () => {
-    expect(arrange(catalogue, '', 'newest').map((one) => one.name)).toEqual([
-      'Amber',
-      'Mono',
-      'Zinc',
-    ])
-  })
+  const names = (query: string, order: 'newest' | 'name') =>
+    arrange(catalogue, query, order).map((one) => one.name)
 
-  test('by name is by name', () => {
-    expect(arrange(catalogue, '', 'name').map((one) => one.name)).toEqual(['Amber', 'Mono', 'Zinc'])
-  })
-
-  test('searches the name, the author, the tags and what it says', () => {
-    expect(arrange(catalogue, 'mono', 'name').map((one) => one.id)).toEqual(['c'])
-    expect(arrange(catalogue, 'Emil', 'name').map((one) => one.id)).toEqual(['c'])
-    expect(arrange(catalogue, 'warm', 'name').map((one) => one.id)).toEqual(['b'])
-    expect(arrange(catalogue, 'cream', 'name').map((one) => one.id)).toEqual(['b'])
-  })
-
-  test('the case of what was typed does not matter', () => {
-    expect(arrange(catalogue, 'ZINC', 'name').map((one) => one.id)).toEqual(['a'])
-  })
-
-  test('what was searched for is still sorted', () => {
-    const found = arrange(catalogue, 'Orden', 'newest')
-    expect(found.map((one) => one.name)).toEqual(['Amber', 'Zinc'])
-  })
-
-  test('nothing typed shows everything, and does not reorder the catalogue', () => {
-    expect(arrange(catalogue, '   ', 'newest')).toHaveLength(3)
-    expect(catalogue.map((one) => one.id)).toEqual(['a', 'b', 'c'])
-  })
-
-  test('nothing matching shows nothing', () => {
-    expect(arrange(catalogue, 'chartreuse', 'name')).toEqual([])
-  })
+  test.each([
+    ['', 'newest', ['Amber', 'Mono', 'Zinc']],
+    ['', 'name', ['Amber', 'Mono', 'Zinc']],
+    ['mono', 'name', ['Mono']],
+    ['Emil', 'name', ['Mono']],
+    ['warm', 'name', ['Amber']],
+    ['cream', 'name', ['Amber']],
+    ['ZINC', 'name', ['Zinc']],
+    ['Orden', 'newest', ['Amber', 'Zinc']],
+    ['   ', 'newest', ['Amber', 'Mono', 'Zinc']],
+    ['chartreuse', 'name', []],
+  ] as const)(
+    'searching %j by %s, the name, author, tags and text in any case, still sorted, ties by name',
+    (query, order, shown) => {
+      expect(names(query, order)).toEqual(shown)
+      expect(catalogue.map((one) => one.id)).toEqual(['a', 'b', 'c'])
+    },
+  )
 })
 
 describe('the catalogue', () => {
-  test('is read once and not again while it is fresh', async () => {
+  test('is read once and not again while it is fresh, unless asked for outright', async () => {
     const asked = serving([entry()])
     await store.load()
     await store.load()
     expect(asked).toEqual([expect.stringContaining('index.json')])
     expect(store.themes).toHaveLength(1)
-  })
-
-  test('is read again when it is asked for outright', async () => {
-    const asked = serving([entry()])
-    await store.load()
     await store.load(true)
     expect(asked).toHaveLength(2)
   })
@@ -229,59 +220,39 @@ describe('installing, updating and removing', () => {
   })
 
   test('a theme that brings an accent keeps it, and one that does not lets it go', async () => {
-    serving([entry()], `[data-theme='light'] { --bg: #fff; --accent: #a0522d; }`)
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom(undefined, `[data-theme='light'] { --bg: #fff; --accent: #a0522d; }`)
     expect(theme.accentIsTheme).toBe(true)
     await store.remove('warm-paper')
     expect(theme.accentIsTheme).toBe(false)
   })
 
   test('offers an update only when the catalogue is ahead', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom()
     expect(store.updatable(entry() as never)).toBe(false)
     expect(store.updatable(entry({ version: '1.0.1' }) as never)).toBe(true)
     expect(store.updatable(entry({ version: '0.9.0' }) as never)).toBe(false)
   })
 
-  test('an update replaces the file and the version with it', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
-    serving([entry({ version: '2.0.0' })], sheet('#111111'))
-    await store.install(entry({ version: '2.0.0' }) as never)
+  test('an update replaces the file and the version with it, keeping the app on it', async () => {
+    await installedFrom()
+    await updated()
     expect(folder.files.size).toBe(1)
     expect(folder.files.get('warm-paper')).toContain('--bg: #111111;')
     expect(store.updatable(entry({ version: '2.0.0' }) as never)).toBe(false)
+    expect(store.using('warm-paper')).toBe(true)
   })
 
   test('an update to a theme not in use leaves the app on the theme it was showing', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom()
     theme.select('default')
-    serving([entry({ version: '2.0.0' })], sheet('#111111'))
-    await store.install(entry({ version: '2.0.0' }) as never)
+    await updated()
     expect(folder.files.get('warm-paper')).toContain('--bg: #111111;')
     expect(theme.id).toBe('default')
     expect(store.using('warm-paper')).toBe(false)
   })
 
-  test('an update to the theme in use keeps the app on it', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
-    serving([entry({ version: '2.0.0' })], sheet('#111111'))
-    await store.install(entry({ version: '2.0.0' }) as never)
-    expect(store.using('warm-paper')).toBe(true)
-  })
-
   test('removing takes the file away and the app off it', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom()
     await store.remove('warm-paper')
     expect(folder.files.size).toBe(0)
     expect(store.installed('warm-paper')).toBe(false)
@@ -290,9 +261,7 @@ describe('installing, updating and removing', () => {
   })
 
   test('removing the theme in use tells the account, so the account does not bring it back', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom()
     const worn = theme.look()
     let told = 0
     const stop = theme.picked(() => told++)
@@ -305,9 +274,7 @@ describe('installing, updating and removing', () => {
   })
 
   test('what the theme asked for and did not get is kept to be said', async () => {
-    serving([entry()], `${sheet('#faf6ee')}\n.sidebar { display: none; }`)
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom(undefined, `${sheet('#faf6ee')}\n.sidebar { display: none; }`)
     expect(store.refused).toEqual({
       id: 'warm-paper',
       notes: ['.sidebar is not a selector a theme may set'],
@@ -316,9 +283,7 @@ describe('installing, updating and removing', () => {
   })
 
   test('a theme with nothing a theme may set is not installed', async () => {
-    serving([entry()], '.sidebar { display: none; }')
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom(undefined, '.sidebar { display: none; }')
     expect(folder.files.size).toBe(0)
     expect(store.error).toBe('that theme has nothing a theme may set')
   })
@@ -356,9 +321,7 @@ describe('keeping up with the catalogue', () => {
   })
 
   test('writes an installed theme again at the newer version, and paints it if worn', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom()
     serving([entry({ version: '1.1.0' })], PAIR)
     store.themes = []
     await store.keepUp()
@@ -368,9 +331,7 @@ describe('keeping up with the catalogue', () => {
   })
 
   test('leaves a theme at the catalogue version alone, and a hand-placed one too', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
+    await installedFrom()
     folder.files.set('night-owl', sheet('#001122'))
     const asked = serving([
       entry(),
@@ -402,34 +363,22 @@ describe('the light and dark switch', () => {
     expect(theme.current).toBe('light')
   })
 
-  test('is dead on a theme file that states one scheme, and switches nothing', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
+  test('is dead on a theme file that states one scheme, switching nothing, until it is removed', async () => {
+    await installedFrom()
     expect(theme.switchable).toBe(false)
     theme.toggle()
     expect(store.using('warm-paper')).toBe(true)
     expect(theme.current).toBe('light')
+    await store.remove('warm-paper')
+    expect(theme.switchable).toBe(true)
   })
 
   test('is live on a theme file that states both', async () => {
-    const pair = entry({ variants: ['light', 'dark'] })
-    serving([pair], PAIR)
-    await store.load()
-    await store.install(pair as never)
+    await installedFrom([entry({ variants: ['light', 'dark'] })], PAIR)
     expect(theme.switchable).toBe(true)
     const was = theme.current
     theme.toggle()
     expect(theme.current).not.toBe(was)
     expect(store.using('warm-paper')).toBe(true)
-  })
-
-  test('comes back when a theme with one scheme is removed', async () => {
-    serving([entry()])
-    await store.load()
-    await store.install(entry({}) as never)
-    expect(theme.switchable).toBe(false)
-    await store.remove('warm-paper')
-    expect(theme.switchable).toBe(true)
   })
 })
