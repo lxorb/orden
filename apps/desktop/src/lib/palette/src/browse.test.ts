@@ -26,12 +26,7 @@ describe('the palette with nothing typed', () => {
       'New note',
       'Send feedback',
     ])
-    expect(Object.fromEntries(heads)).toEqual({
-      1: 'This note',
-      3: 'View',
-      4: 'Create',
-      5: 'Help',
-    })
+    expect(Object.fromEntries(heads)).toEqual({ 1: 'This note', 3: 'View', 4: 'Create', 5: 'Help' })
   })
 
   test('leaves out a group none of whose rows is there', () => {

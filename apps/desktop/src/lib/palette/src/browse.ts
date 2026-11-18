@@ -8,18 +8,12 @@ const GROUPS: readonly { title: () => string; ids: readonly string[] }[] = [
     title: () => 'This note',
     ids: ['rename', 'move-note', 'share-note', 'copy-uri', 'history', 'print', 'reveal'],
   },
-  {
-    title: () => 'View',
-    ids: ['reading', 'read-only', 'source', 'focus', 'typewriter'],
-  },
+  { title: () => 'View', ids: ['reading', 'read-only', 'source', 'focus', 'typewriter'] },
   {
     title: () => 'Create',
     ids: ['new', 'new-canvas', 'new-pages', 'new-from-template', 'new-terminal'],
   },
-  {
-    title: () => 'Help',
-    ids: ['feedback'],
-  },
+  { title: () => 'Help', ids: ['feedback'] },
 ]
 
 export function browse(

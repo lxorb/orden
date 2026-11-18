@@ -42,9 +42,7 @@ import {
 import { providePort } from '@orden/contracts'
 
 if (!__EVEN_PLUGIN__) {
-  providePort('quit.ask', {
-    mayStop: async (why) => (await import('./quit-ports')).mayStop(why),
-  })
+  providePort('quit.ask', { mayStop: async (why) => (await import('./quit-ports')).mayStop(why) })
 }
 
 const DAY = 24 * 60 * 60 * 1000

@@ -7,10 +7,7 @@ import type { Compatible, Plan } from './catalog'
 export type Connecting =
   { state: 'in'; id: string } | { state: 'waiting'; id: string } | { state: 'failed'; said: string }
 
-const LOCAL: Partial<Record<Plan, LocalKind>> = {
-  claude: 'claude-code',
-  gemini: 'gemini-cli',
-}
+const LOCAL: Partial<Record<Plan, LocalKind>> = { claude: 'claude-code', gemini: 'gemini-cli' }
 
 const INSTALL: Record<LocalKind, string> = {
   'claude-code': 'https://code.claude.com/docs/en/setup',
