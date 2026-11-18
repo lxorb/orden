@@ -61,20 +61,8 @@ import { canPrint, printable } from '../../export-formats/src/api'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
 import { moveTargets } from '../../tree/src/api'
 import { closeAfterLabel } from '../../panes/src/api'
-import {
-  revealPanel,
-  stepRegionFocus,
-  toggleTabOverview,
-  workspace,
-  agentMarks,
-} from '../../workspace/src/api'
-import {
-  newSpace,
-  publishSpace,
-  shareSpace,
-  stepSpace,
-  toggleSpacePicker,
-} from '../../spaces/src/api'
+import { revealPanel, workspace, agentMarks } from '../../workspace/src/api'
+import { newSpace, publishSpace, shareSpace } from '../../spaces/src/api'
 import {
   canPublish,
   canShare,
@@ -87,10 +75,8 @@ import {
 import { archiveEntry } from '../../row-menu/src/api'
 import { updates, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
-import { shortcuts } from '../../shortcuts/src/api'
-import { toggleFill } from '../../tab-fill/src/api'
+import { runEntry, shortcuts } from '../../shortcuts/src/api'
 import {
-  closeWindow,
   internal,
   invoke,
   isDesktop,
@@ -107,13 +93,7 @@ import { askPlace } from '../../save-place/src/api'
 import { tabOps, tabToSpace } from '../../tab-strip/src/api'
 import { openRandomNote, randomChoices } from './random-note'
 import { showFeedback } from '../../surfaces/src/api'
-import {
-  commandRows,
-  commandRowsLoaded,
-  runCommand,
-  settingsWindow,
-  showQuickAdd,
-} from '@orden/contracts'
+import { commandRows, commandRowsLoaded, runCommand, settingsWindow } from '@orden/contracts'
 
 async function openCustomCss() {
   if (!isNative) return
@@ -134,6 +114,13 @@ export function paletteCommands(view?: EditorView): Command[] {
   folded.delete('page-setup')
   return appCommands(view).filter((one) => !folded.has(one.id))
 }
+
+const entry = (id: string, view?: EditorView) => () =>
+  void runEntry(id, {
+    view,
+    palette: () => undefined,
+    fullscreen: () => void fullscreen.toggle(workspace.panes),
+  })
 
 function importCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
@@ -198,7 +185,7 @@ function agentRows(): Command[] {
       label: 'Stop agents',
       hint: shortcuts.hint('agents.stop'),
       ownWindow: true,
-      run: () => void runCommand('agents.stop'),
+      run: entry('agents.stop'),
     },
   ]
 }
@@ -241,14 +228,14 @@ function tabCommands(): Command[] {
       label: 'Deselect tab',
       hint: shortcuts.hint('app.deselect-tab'),
       disabled: !tab,
-      run: () => workspace.deselect(),
+      run: entry('app.deselect-tab'),
     },
     {
       id: 'deselect-all',
       label: 'Deselect all tabs',
       hint: shortcuts.hint('app.deselect-all'),
       disabled: !workspace.tabs.some((one) => workspace.panes.at(one.paneId)),
-      run: () => workspace.deselectAll(),
+      run: entry('app.deselect-all'),
     },
     {
       id: 'duplicate-tab',
@@ -285,28 +272,28 @@ function paneCommands(): Command[] {
       label: 'Split right',
       hint: shortcuts.hint('pane.split-right'),
       disabled: !workspace.canSplit('row'),
-      run: () => workspace.split('row'),
+      run: entry('pane.split-right'),
     },
     {
       id: 'split-down',
       label: 'Split down',
       hint: shortcuts.hint('pane.split-down'),
       disabled: !workspace.canSplit('column'),
-      run: () => workspace.split('column'),
+      run: entry('pane.split-down'),
     },
     {
       id: 'move-tab-pane',
       label: 'Move to other pane',
       hint: shortcuts.hint('pane.move-tab'),
       disabled: !workspace.canMoveToOtherPane(workspace.activeTabId ?? ''),
-      run: () => void tabOps().then((ops) => ops.moveToOtherPane(workspace.activeTabId ?? '')),
+      run: entry('pane.move-tab'),
     },
     {
       id: 'focus-pane',
       label: 'Other pane',
       hint: shortcuts.hint('pane.focus-next'),
       disabled: workspace.panes.count < 2,
-      run: () => workspace.panes.focusNext(),
+      run: entry('pane.focus-next'),
     },
     {
       id: 'stack-tabs',
@@ -591,7 +578,6 @@ function spaceCommands(): Command[] {
           run: () => void workspace.showSpace(one.id),
         }))
       : []),
-    { id: 'new-space', label: 'New space', run: () => void newSpace() },
     ...(canShare(space)
       ? [{ id: 'share', label: 'Share this space', run: () => void shareSpace(space) }]
       : []),
@@ -660,7 +646,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'new',
       label: 'New note',
       hint: shortcuts.hint('app.new'),
-      run: () => workspace.openBlank(),
+      run: entry('app.new'),
     },
     ...(__EVEN_PLUGIN__
       ? []
@@ -669,7 +655,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'quick-add',
             label: 'Add task',
             hint: shortcuts.hint('app.quick-add'),
-            run: () => showQuickAdd(),
+            run: entry('app.quick-add'),
           },
         ]),
     ...commandRows('send', view),
@@ -799,7 +785,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'close',
       label: 'Close note',
       hint: shortcuts.hint('app.close'),
-      run: () => void workspace.closeActive(),
+      run: entry('app.close'),
     },
     ...archiveCommand(),
     ...protectCommands(),
@@ -809,21 +795,21 @@ export function appCommands(view?: EditorView): Command[] {
       label: 'Back',
       hint: shortcuts.hint('app.back'),
       disabled: !workspace.active?.canGoBack,
-      run: () => workspace.goBack(),
+      run: entry('app.back'),
     },
     {
       id: 'forward',
       label: 'Forward',
       hint: shortcuts.hint('app.forward'),
       disabled: !workspace.active?.canGoForward,
-      run: () => workspace.goForward(),
+      run: entry('app.forward'),
     },
     {
       id: 'reopen',
       label: 'Reopen closed tab',
       hint: shortcuts.hint('app.reopen'),
       disabled: !workspace.closed.any,
-      run: () => void workspace.reopenClosed(),
+      run: entry('app.reopen'),
     },
     { id: 'space', label: 'New space', run: () => void newSpace() },
     ...commandRows('web', view),
@@ -834,21 +820,21 @@ export function appCommands(view?: EditorView): Command[] {
       label: 'New window',
       hint: shortcuts.hint('app.new-window'),
       disabled: !isDesktop,
-      run: () => void invoke('new_window').catch(() => undefined),
+      run: entry('app.new-window'),
     },
     {
       id: 'close-window',
       label: 'Close window',
       hint: shortcuts.hint('app.close-window'),
       disabled: !isDesktop,
-      run: () => void closeWindow(),
+      run: entry('app.close-window'),
     },
     {
       id: 'new-private',
       label: 'New private tab',
       hint: shortcuts.hint('app.new-private'),
       disabled: !isDesktop || viewport.touch,
-      run: () => void runCommand('app.new-private'),
+      run: entry('app.new-private'),
     },
     {
       id: 'web-history',
@@ -873,7 +859,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'settings',
       label: 'Settings',
       hint: shortcuts.hint('app.settings'),
-      run: () => settingsWindow().show(),
+      run: entry('app.settings'),
     },
     {
       id: 'feedback',
@@ -884,8 +870,9 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'shortcuts',
       label: 'Shortcuts',
+      also: ['keyboard shortcuts', 'keys'],
       hint: shortcuts.hint('app.keys'),
-      run: () => settingsWindow().show('shortcuts'),
+      run: entry('app.keys'),
     },
     {
       id: 'history',
@@ -940,31 +927,31 @@ export function appCommands(view?: EditorView): Command[] {
       label: workspace.active?.reading ? 'Leave reading' : 'Reading',
       hint: shortcuts.hint('app.reading'),
       disabled: workspace.active?.kind !== 'note',
-      run: () => workspace.toggleReading(),
+      run: entry('app.reading'),
     },
     {
       id: 'read-only',
       label: modes.readOnly ? 'Leave read-only' : 'Read-only',
       hint: shortcuts.hint('app.read-only'),
-      run: () => modes.toggleReadOnly(view),
+      run: entry('app.read-only', view),
     },
     {
       id: 'source',
       label: modes.sourceIn(view) ? 'Leave source mode' : 'Source mode',
       hint: shortcuts.hint('app.source'),
-      run: () => modes.toggleSource(view),
+      run: entry('app.source', view),
     },
     {
       id: 'focus',
       label: modes.focus ? 'Leave focus mode' : 'Focus mode',
       hint: shortcuts.hint('app.focus'),
-      run: () => modes.toggleFocus(view),
+      run: entry('app.focus', view),
     },
     {
       id: 'typewriter',
       label: modes.typewriter ? 'Leave typewriter mode' : 'Typewriter mode',
       hint: shortcuts.hint('app.typewriter'),
-      run: () => modes.toggleTypewriter(view),
+      run: entry('app.typewriter', view),
     },
     ...(viewport.touch
       ? []
@@ -974,14 +961,14 @@ export function appCommands(view?: EditorView): Command[] {
             label: workspace.panes.fills === null ? 'Full window' : 'Leave full window',
             hint: shortcuts.hint('app.fill-tab'),
             disabled: workspace.panes.fills === null && !workspace.activeTabId,
-            run: () => void toggleFill(),
+            run: entry('app.fill-tab'),
           },
         ]),
     {
       id: 'fullscreen',
       label: fullscreen.on ? 'Leave fullscreen' : 'Fullscreen',
       hint: shortcuts.hint('app.fullscreen'),
-      run: () => void fullscreen.toggle(workspace.panes),
+      run: entry('app.fullscreen'),
     },
     ...(isDesktop
       ? [
@@ -1034,19 +1021,19 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'zoom-in',
       label: 'Zoom in',
       hint: shortcuts.hint('app.zoom-in'),
-      run: () => workspace.zoomPage('in') || modes.stepZoom(1),
+      run: entry('app.zoom-in'),
     },
     {
       id: 'zoom-out',
       label: 'Zoom out',
       hint: shortcuts.hint('app.zoom-out'),
-      run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
+      run: entry('app.zoom-out'),
     },
     {
       id: 'zoom-reset',
       label: 'Actual size',
       hint: shortcuts.hint('app.zoom-reset'),
-      run: () => workspace.zoomPage('reset') || modes.resetZoom(),
+      run: entry('app.zoom-reset'),
     },
 
     ...(isDesktop
@@ -1121,45 +1108,45 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'sidebar',
       label: workspace.panel ? 'Hide left sidebar' : 'Show left sidebar',
       hint: shortcuts.hint('app.sidebar'),
-      run: () => workspace.toggleSidebar(),
+      run: entry('app.sidebar'),
     },
     {
       id: 'files',
       label: 'Files',
       hint: shortcuts.hint('app.files'),
-      run: () => revealPanel('tree'),
+      run: entry('app.files'),
     },
     {
       id: 'reveal',
       label: 'Show in the file list',
       hint: shortcuts.hint('app.reveal'),
       disabled: !workspace.active?.path,
-      run: () => workspace.revealNote(),
+      run: entry('app.reveal'),
     },
     {
       id: 'fold-list',
       label: 'Collapse the file list',
       hint: shortcuts.hint('app.fold-list'),
       disabled: !workspace.unfolded,
-      run: () => workspace.foldList(),
+      run: entry('app.fold-list'),
     },
     {
       id: 'outline-panel',
       label: 'Outline',
       hint: shortcuts.hint('app.outline'),
-      run: () => revealPanel('outline'),
+      run: entry('app.outline'),
     },
     {
       id: 'search-space',
       label: 'Search this space',
       hint: shortcuts.hint('app.search'),
-      run: () => revealPanel('search'),
+      run: entry('app.search', view),
     },
     {
       id: 'links-panel',
       label: 'Links',
       hint: shortcuts.hint('app.links'),
-      run: () => revealPanel('links'),
+      run: entry('app.links'),
     },
     ...(viewport.touch
       ? []
@@ -1168,33 +1155,33 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'ask-panel',
             label: 'Ask',
             hint: shortcuts.hint('app.ask'),
-            run: () => revealPanel('ask'),
+            run: entry('app.ask'),
           },
         ]),
     {
       id: 'quick-question',
       label: 'Quick question',
       hint: shortcuts.hint('app.quick-question'),
-      run: () => void runCommand('app.quick-question'),
+      run: entry('app.quick-question'),
     },
     {
       id: 'reload-app',
       label: 'Reload Orden',
       hint: shortcuts.hint('app.reload'),
-      run: () => location.reload(),
+      run: entry('app.reload'),
     },
     {
       id: 'scratchpad',
       label: 'Scratchpad',
       hint: shortcuts.hint('app.scratchpad'),
-      run: () => void runCommand('app.scratchpad'),
+      run: entry('app.scratchpad'),
     },
     {
       id: 'right-sidebar',
       label: workspace.openOn('right') ? 'Hide right sidebar' : 'Show right sidebar',
       hint: shortcuts.hint('app.right-sidebar'),
       disabled: !workspace.right.length,
-      run: () => workspace.toggleSidebar('right'),
+      run: entry('app.right-sidebar'),
     },
     {
       id: 'hold-panel',
@@ -1207,7 +1194,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'graph',
       label: 'Graph',
       hint: shortcuts.hint('app.graph'),
-      run: () => workspace.openGraph(),
+      run: entry('app.graph'),
     },
     ...(__EVEN_PLUGIN__ || !passOn()
       ? []
@@ -1216,7 +1203,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'pass',
             label: 'Pass',
             hint: shortcuts.hint('app.pass'),
-            run: () => void runCommand('pass.open'),
+            run: entry('app.pass'),
           },
           {
             id: 'pass-lock',
@@ -1241,7 +1228,7 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'todos',
             label: 'Todos',
             hint: shortcuts.hint('app.tasks'),
-            run: () => void runCommand('views.todos'),
+            run: entry('app.tasks'),
           },
           ...(timeOn()
             ? [
@@ -1249,19 +1236,19 @@ export function appCommands(view?: EditorView): Command[] {
                   id: 'time-tab',
                   label: 'Open time tracker',
                   hint: shortcuts.hint('time.tab'),
-                  run: () => void runCommand('time.tab'),
+                  run: entry('time.tab'),
                 },
                 {
                   id: 'time-start',
                   label: 'Start timer',
                   hint: shortcuts.hint('time.start'),
-                  run: () => void runCommand('time.start'),
+                  run: entry('time.start'),
                 },
                 {
                   id: 'time-stop',
                   label: 'Stop timer',
                   hint: shortcuts.hint('time.stop'),
-                  run: () => void runCommand('time.stop'),
+                  run: entry('time.stop'),
                 },
               ]
             : []),
@@ -1270,45 +1257,39 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'region-next',
       label: 'Next section',
       hint: shortcuts.hint('app.region-next'),
-      run: () => void stepRegionFocus(1),
+      run: entry('app.region-next'),
     },
     {
       id: 'region-previous',
       label: 'Previous section',
       hint: shortcuts.hint('app.region-previous'),
-      run: () => void stepRegionFocus(-1),
+      run: entry('app.region-previous'),
     },
     {
       id: 'spaces',
       label: 'Spaces',
       hint: shortcuts.hint('space.switcher'),
-      run: toggleSpacePicker,
+      run: entry('space.switcher'),
     },
     {
       id: 'tab-overview',
       label: 'Tabs',
       hint: shortcuts.hint('app.tab-overview'),
-      run: toggleTabOverview,
+      run: entry('app.tab-overview'),
     },
     {
       id: 'space-next',
       label: 'Next space',
       hint: shortcuts.hint('space.next'),
       disabled: workspace.shownSpaces.length < 2,
-      run: () => stepSpace(1),
+      run: entry('space.next'),
     },
     {
       id: 'space-previous',
       label: 'Previous space',
       hint: shortcuts.hint('space.previous'),
       disabled: workspace.shownSpaces.length < 2,
-      run: () => stepSpace(-1),
-    },
-    {
-      id: 'keys',
-      label: 'Keyboard shortcuts',
-      hint: shortcuts.hint('app.keys'),
-      run: () => settingsWindow().show('shortcuts'),
+      run: entry('space.previous'),
     },
 
     ...composerCommands(view),

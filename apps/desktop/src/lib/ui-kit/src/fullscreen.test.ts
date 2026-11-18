@@ -280,7 +280,8 @@ describe('the shell', () => {
     expect(wayOut).toContain('onclick={() => void fullscreen.leave()}')
     expect(app).toContain("if (event.key === 'Escape' && fullscreen.on) {")
     expect(app).toContain('closeOnBack(fullscreen.on, () => void fullscreen.leave())')
-    expect(menu).toContain('run: () => void fullscreen.toggle(workspace.panes)')
+    expect(menu).toContain("run: entry('app.fullscreen')")
+    expect(menu).toContain('fullscreen: () => void fullscreen.toggle(workspace.panes)')
   })
 
   test('is not an overlay, because nothing is drawn over the document for it', () => {
