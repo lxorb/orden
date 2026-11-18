@@ -132,7 +132,7 @@ function placed(text: string, place: Place, doing: Doing): Replacement {
 
     case 'before':
     case 'after': {
-      const at = doing.kind === 'before' ? place.from : place.to
+      const at = doing.kind === 'before' ? place.from : (place.after ?? place.to)
       const edge = place.shape === 'edge'
       const atEnd = edge ? at === text.length : doing.kind === 'after'
       const apart = atEnd

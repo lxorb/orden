@@ -1,4 +1,4 @@
-import { blockAround, blockIdOf, itemHolding, ownLine, type Row, rowsOf } from './links'
+import { blockAround, blockIdOf, itemColumn, itemHolding, ownLine, type Row, rowsOf } from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)\r?$/u
 
@@ -138,7 +138,8 @@ export function namedBlock(
   const name = id()
   if (nameStandsApart(rows.slice(start, end + 1))) {
     const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
-    lines.splice(end + 1, 0, ending, `^${name}${ending}`, ...beneath)
+    const lead = (lines[start] ?? '').slice(0, itemColumn(lines, start))
+    lines.splice(end + 1, 0, ending, `${lead}^${name}${ending}`, ...beneath)
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`
   }

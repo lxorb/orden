@@ -653,7 +653,27 @@ function blockSection(source: string, wanted: string): Section | null {
   const block = lines.slice(start, end + 1)
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
-  return { from: start, to: end, text: block.join('\n').trimEnd() }
+  return { from: start, to: end, text: outOfItem(block, itemColumn(lines, start)) }
+}
+
+export function itemColumn(lines: readonly string[], at: number): number {
+  const indent = indentOf(lines[at] ?? '')
+  if (!indent) return 0
+  for (let above = at - 1; above >= 0; above--) {
+    const line = lines[above] ?? ''
+    if (!line.trim()) continue
+    const item = LIST_ITEM.exec(line)
+    if (item && (item[1]?.length ?? 0) < indent) return Math.min(indent, item[0].length)
+    if (indentOf(line) < indent) return 0
+  }
+  return 0
+}
+
+function outOfItem(block: readonly string[], column: number): string {
+  return block
+    .map((line) => line.slice(Math.min(column, indentOf(line))))
+    .join('\n')
+    .trimEnd()
 }
 
 export function blockSpanAt(source: string, at: number): { start: number; end: number } {
@@ -743,10 +763,7 @@ function blockAbove(source: string, lines: readonly string[], under: number): Se
   return {
     from: start,
     to: last,
-    text: lines
-      .slice(start, last + 1)
-      .join('\n')
-      .trimEnd(),
+    text: outOfItem(lines.slice(start, last + 1), itemColumn(lines, start)),
   }
 }
 

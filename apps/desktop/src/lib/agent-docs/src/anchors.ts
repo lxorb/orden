@@ -20,6 +20,7 @@ export interface Place {
   shape: Shape
   keep?: string
   indent?: string
+  after?: number
 }
 
 export function oneEnding(words: string): string {
@@ -277,8 +278,19 @@ export function taskWords(line: string): string | null {
 
 function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Place {
   const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
-  const found = [...lines(text)].filter((row) => !row.code && taskWords(row.text) === wanted)
+  const rows = [...lines(text)]
+  const found = rows.filter((row) => !row.code && taskWords(row.text) === wanted)
 
   const row = one(found, anchor, anchor.nth)
-  return { from: row.from, to: row.from + row.text.length, shape: 'line' }
+  const id = blockIdOf(row.text)
+  const indent = leadOf(row.text)
+  const end = rows[blockSpanAt(text, row.line).end] ?? row
+  return {
+    from: row.from,
+    to: row.from + row.text.length,
+    shape: 'item',
+    after: Math.max(row.from + row.text.length, end.from + end.text.length),
+    ...(id ? { keep: ` ^${id}` } : {}),
+    ...(indent ? { indent } : {}),
+  }
 }

@@ -71,9 +71,10 @@
     if (node.type !== 'file' || fileShown(node.file) !== 'words') return
 
     const wanted = node.file
+    const subpath = node.subpath
     links.locksSeen()
     let mine = true
-    void fileSource(wanted, canvasPath).then((text) => {
+    void fileSource(wanted, canvasPath, subpath).then((text) => {
       if (mine) source = text
     })
 
@@ -300,6 +301,10 @@
         {scale}
         {seen}
       />
+    {:else if shown === 'file'}
+      <div class="card link">
+        <span class="url">{node.file}</span>
+      </div>
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
       <div class="card page embed orden-rendered" use:embeds>{@html html}</div>
