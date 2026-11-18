@@ -26,9 +26,7 @@ async function namedElsewhere(path: string, own: string): Promise<boolean> {
   for (const tab of workspace.tabs) {
     if (tab.kind === 'web' && tab.path !== null) others.add(tab.path)
   }
-  for (const one of workspace.files) {
-    if (/\.url$/i.test(one.path)) others.add(one.path)
-  }
+  for (const one of workspace.files) if (/\.url$/i.test(one.path)) others.add(one.path)
   for (const other of others) {
     if (samePath(other, path)) continue
     if (readWebFile(other, await textOf(other))?.own === own) return true

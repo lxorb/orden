@@ -84,9 +84,7 @@ export async function convertWebsites(ws: Converts): Promise<number> {
 
   const notes = ws.notes.filter((one) => isMarkdownPath(one.name) && links.urlOf(one.path) !== null)
   let done = 0
-  for (const note of notes) {
-    if ((await asShortcut(ws, note.path)) !== null) done += 1
-  }
+  for (const note of notes) if ((await asShortcut(ws, note.path)) !== null) done += 1
 
   if (done) await ws.loadTree()
   return done

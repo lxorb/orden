@@ -38,6 +38,10 @@ const FILE =
   '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\n' +
   'Title=Svelte docs\r\nOrden-Added=2026-09-12T08:30:00.000Z\r\n'
 
+function kept(url: string, icon: string | null = null, text = FILE): void {
+  keepPage({ path: PATH, text: () => text, url, icon, wrote: () => undefined })
+}
+
 function said(): string {
   return written.at(-1)?.content ?? ''
 }
@@ -76,21 +80,9 @@ test('writes the page the reading got to, and keeps where the note points', asyn
 })
 
 test('a page that moves twice in a moment is one write', async () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/a',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/a')
   await vi.advanceTimersByTimeAsync(200)
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/b',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/b')
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(1)
@@ -98,21 +90,9 @@ test('a page that moves twice in a moment is one write', async () => {
 })
 
 test('a page that leaves and comes back in a moment leaves the file as it was', async () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/login?next=/docs',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/login?next=/docs')
   await vi.advanceTimersByTimeAsync(200)
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/docs',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs')
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)
@@ -124,13 +104,7 @@ test('the home already in the file is the home that stays', async () => {
     'Title=Svelte docs\r\nOrden-Added=2026-09-12T08:30:00.000Z\r\n' +
     'Orden-Home=https://svelte.dev/docs\r\n'
 
-  keepPage({
-    path: PATH,
-    text: () => moved,
-    url: 'https://svelte.dev/docs/two',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs/two', null, moved)
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(said()).toContain('URL=https://svelte.dev/docs/two')
@@ -138,39 +112,21 @@ test('the home already in the file is the home that stays', async () => {
 })
 
 test('a page that has not moved is not written', async () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/docs',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs')
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)
 })
 
 test('an address that is not the web is never written', async () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'file:///C:/notes',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('file:///C:/notes')
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)
 })
 
 test('tells the index what the file now says, so the row can wear the favicon', async () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/docs/svelte/runes',
-    icon: 'https://svelte.dev/favicon.png',
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs/svelte/runes', 'https://svelte.dev/favicon.png')
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(told).toHaveLength(1)
@@ -180,13 +136,7 @@ test('tells the index what the file now says, so the row can wear the favicon', 
 })
 
 test('says nothing to the index when there was nothing to write', async () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/docs',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs')
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)
@@ -214,36 +164,18 @@ test('a choice made while a write is waiting is in the file the write makes', as
 
 test('a mark already held as a picture is not written over on its own', async () => {
   const held = `${FILE}Orden-Icon=data:image/png;base64,AAAA\r\n`
-  keepPage({
-    path: PATH,
-    text: () => held,
-    url: 'https://svelte.dev/docs',
-    icon: 'data:image/png;base64,BBBB',
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs', 'data:image/png;base64,BBBB', held)
   await vi.advanceTimersByTimeAsync(2500)
   expect(written).toHaveLength(0)
 
-  keepPage({
-    path: PATH,
-    text: () => held,
-    url: 'https://svelte.dev/docs/svelte/runes',
-    icon: 'data:image/png;base64,BBBB',
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs/svelte/runes', 'data:image/png;base64,BBBB', held)
   await vi.advanceTimersByTimeAsync(2500)
   expect(said()).toContain('Orden-Icon=data:image/png;base64,BBBB')
 })
 
 test('a reading that never settles is written at the longest wait a note has', async () => {
   for (let step = 0; step < 12; step++) {
-    keepPage({
-      path: PATH,
-      text: () => FILE,
-      url: `https://svelte.dev/page-${step}`,
-      icon: null,
-      wrote: () => undefined,
-    })
+    kept(`https://svelte.dev/page-${step}`)
     await vi.advanceTimersByTimeAsync(SAVE_DELAY / 2)
   }
 
@@ -252,13 +184,7 @@ test('a reading that never settles is written at the longest wait a note has', a
 })
 
 test('the window going writes what is waiting, and waits for it', async () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/docs/kit',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs/kit')
   expect(written).toHaveLength(0)
 
   settleUp()
@@ -270,13 +196,7 @@ test('the window going writes what is waiting, and waits for it', async () => {
 })
 
 test('leaving the tab writes what is waiting for its note', () => {
-  keepPage({
-    path: PATH,
-    text: () => FILE,
-    url: 'https://svelte.dev/docs/cli',
-    icon: null,
-    wrote: () => undefined,
-  })
+  kept('https://svelte.dev/docs/cli')
   keepNow(PATH)
 
   expect(said()).toContain('URL=https://svelte.dev/docs/cli')
@@ -324,11 +244,11 @@ test('a .webloc is not written for a page that only said its mark', async () => 
 test('a note in a space shared to be read is never written, nor its copy changed', async () => {
   readOnly.add(PATH)
   let text = FILE
-  const kept = (url: string, icon: string | null) =>
+  const read = (url: string, icon: string | null) =>
     keepPage({ path: PATH, text: () => text, url, icon, wrote: (next) => (text = next) })
 
-  kept('https://svelte.dev/docs/kit', null)
-  kept('https://svelte.dev/docs/kit', 'https://svelte.dev/favicon.png')
+  read('https://svelte.dev/docs/kit', null)
+  read('https://svelte.dev/docs/kit', 'https://svelte.dev/favicon.png')
   await vi.advanceTimersByTimeAsync(SAVE_AT_MOST * 2)
   keepNow(PATH)
   settleUp()

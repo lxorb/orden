@@ -956,9 +956,7 @@ class Pages {
 
   keepOnly(ids: readonly string[]) {
     const kept = new Set(ids)
-    for (const tabId of [...this.held.keys()]) {
-      if (!kept.has(tabId)) this.forget(tabId)
-    }
+    for (const tabId of [...this.held.keys()]) if (!kept.has(tabId)) this.forget(tabId)
   }
 
   private readonly asked = new Map<string, string>()

@@ -83,12 +83,8 @@ export function write() {
   const adding = [...unwritten].filter(([id]) => wanted.has(id))
   unwritten.clear()
 
-  if (adding.length) {
-    put(index, [...sizes, ...adding.map(([id, one]) => [id, one.length] as const)])
-  }
-  for (const [id, picture] of adding) {
-    if (keep(MARK + id, picture)) sizes.set(id, picture.length)
-  }
+  if (adding.length) put(index, [...sizes, ...adding.map(([id, one]) => [id, one.length] as const)])
+  for (const [id, picture] of adding) if (keep(MARK + id, picture)) sizes.set(id, picture.length)
   for (const id of sizes.keys()) {
     if (wanted.has(id)) continue
     unkeep(MARK + id)
