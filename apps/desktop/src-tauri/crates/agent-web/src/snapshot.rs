@@ -741,82 +741,71 @@ mod tests {
         raw
     }
 
+    fn under(parent: &str, raw: Value) -> Value {
+        with(raw, "parentId", json!(parent))
+    }
+
+    fn alone(nodes: Vec<Value>) -> Vec<Part> {
+        vec![Part {
+            prefix: String::new(),
+            nodes,
+            owner: None,
+        }]
+    }
+
+    fn secrets(nodes: &[u64]) -> HashSet<(String, u64)> {
+        nodes.iter().map(|node| (String::new(), *node)).collect()
+    }
+
+    fn shown(parts: &[Part], secret: &HashSet<(String, u64)>, origin: &str) -> String {
+        let asked = Asked {
+            under: None,
+            most: MOST,
+            secret,
+            origin,
+        };
+        render(parts, &asked).text
+    }
+
     fn page() -> Vec<Value> {
         vec![
             node("1", "RootWebArea", "Shop", 1, &["2"]),
-            with(
+            under(
+                "1",
                 node("2", "generic", "", 2, &["3", "5", "7", "9", "11", "13"]),
-                "parentId",
-                json!("1"),
             ),
+            under("2", node("3", "heading", "Basket", 3, &["4"])),
+            under("3", node("4", "StaticText", "Basket", 4, &[])),
             with(
-                node("3", "heading", "Basket", 3, &["4"]),
-                "parentId",
-                json!("2"),
-            ),
-            with(
-                node("4", "StaticText", "Basket", 4, &[]),
-                "parentId",
-                json!("3"),
-            ),
-            with(
-                with(
-                    node("5", "textbox", "Card number", 5, &[]),
-                    "parentId",
-                    json!("2"),
-                ),
+                under("2", node("5", "textbox", "Card number", 5, &[])),
                 "value",
                 json!({ "type": "string", "value": "4242 4242" }),
             ),
             with(
-                with(
-                    node("7", "checkbox", "Keep me", 7, &[]),
-                    "parentId",
-                    json!("2"),
-                ),
+                under("2", node("7", "checkbox", "Keep me", 7, &[])),
                 "properties",
                 json!([{ "name": "checked", "value": { "type": "tristate", "value": "true" } }]),
             ),
             with(
-                with(
-                    node("9", "link", "Help", 9, &["10"]),
-                    "parentId",
-                    json!("2"),
-                ),
+                under("2", node("9", "link", "Help", 9, &["10"])),
                 "properties",
                 json!([{ "name": "url", "value": { "type": "string", "value": "https://shop.example/help" } }]),
             ),
+            under("9", node("10", "StaticText", "Help", 10, &[])),
             with(
-                node("10", "StaticText", "Help", 10, &[]),
-                "parentId",
-                json!("9"),
-            ),
-            with(
-                with(
-                    node("11", "textbox", "Password", 11, &[]),
-                    "parentId",
-                    json!("2"),
-                ),
+                under("2", node("11", "textbox", "Password", 11, &[])),
                 "value",
                 json!({ "type": "string", "value": "hunter2" }),
             ),
-            with(node("13", "Iframe", "", 13, &[]), "parentId", json!("2")),
+            under("2", node("13", "Iframe", "", 13, &[])),
         ]
     }
 
     fn frame() -> Vec<Value> {
         vec![
             node("1", "RootWebArea", "Pay", 1, &["2"]),
-            with(
-                node("2", "button", "Pay now", 20, &["3"]),
-                "parentId",
-                json!("1"),
-            ),
-            with(
-                node("3", "StaticText", "Pay now", 21, &[]),
-                "parentId",
-                json!("2"),
-            ),
+            under("1", node("2", "button", "Pay now", 20, &["3"])),
+            under("2", node("3", "StaticText", "Pay now", 21, &[])),
         ]
     }
 
@@ -836,7 +825,7 @@ mod tests {
     }
 
     fn written(parts: &[Part], under: Option<(&str, u64)>, most: usize) -> Written {
-        let secret: HashSet<(String, u64)> = [(String::new(), 11)].into_iter().collect();
+        let secret = secrets(&[11]);
         render(
             parts,
             &Asked {
@@ -900,11 +889,7 @@ mod tests {
     fn card_page() -> Vec<Value> {
         let field = |id: &str, name: &str, value: &str, backend: u64, children: &[&str]| {
             with(
-                with(
-                    node(id, "textbox", name, backend, children),
-                    "parentId",
-                    json!("1"),
-                ),
+                under("1", node(id, "textbox", name, backend, children)),
                 "value",
                 json!({ "type": "string", "value": value }),
             )
@@ -912,12 +897,8 @@ mod tests {
         vec![
             node("1", "RootWebArea", "Pay", 1, &["2", "5", "6", "8"]),
             field("2", "Card number", "4242 4242 4242 4242", 2, &["3"]),
-            with(node("3", "generic", "", 3, &["4"]), "parentId", json!("2")),
-            with(
-                node("4", "StaticText", "4242 4242 4242 4242", 4, &[]),
-                "parentId",
-                json!("3"),
-            ),
+            under("2", node("3", "generic", "", 3, &["4"])),
+            under("3", node("4", "StaticText", "4242 4242 4242 4242", 4, &[])),
             with(
                 node("5", "button", "Pay with 4242 4242 4242 4242", 5, &[]),
                 "name",
@@ -927,7 +908,8 @@ mod tests {
                 }),
             ),
             field("6", "PIN", "\u{2022}\u{2022}\u{2022}\u{2022}", 6, &["7"]),
-            with(
+            under(
+                "6",
                 node(
                     "7",
                     "StaticText",
@@ -935,8 +917,6 @@ mod tests {
                     7,
                     &[],
                 ),
-                "parentId",
-                json!("6"),
             ),
             field("8", "Empty code", "", 8, &[]),
         ]
@@ -944,24 +924,9 @@ mod tests {
 
     #[test]
     fn a_secret_field_says_only_that_it_is_filled() {
-        let parts = vec![Part {
-            prefix: String::new(),
-            nodes: card_page(),
-            owner: None,
-        }];
-        let secret: HashSet<(String, u64)> = [(String::new(), 2), (String::new(), 8)]
-            .into_iter()
-            .collect();
-        let text = render(
-            &parts,
-            &Asked {
-                under: None,
-                most: MOST,
-                secret: &secret,
-                origin: "https://shop.example",
-            },
-        )
-        .text;
+        let parts = alone(card_page());
+        let secret = secrets(&[2, 8]);
+        let text = shown(&parts, &secret, "https://shop.example");
         assert_eq!(
             text,
             [
@@ -1011,27 +976,14 @@ mod tests {
                 "sources": [{ "nativeSourceValue": { "relatedNodes": [{ "backendDOMNodeId": 2 }] } }],
             }),
         );
-        let parts = vec![Part {
-            prefix: String::new(),
-            nodes: vec![
-                node("1", "RootWebArea", "", 1, &["2", "4"]),
-                label,
-                held,
-                named,
-            ],
-            owner: None,
-        }];
-        let secret: HashSet<(String, u64)> = [(String::new(), 3)].into_iter().collect();
-        let text = render(
-            &parts,
-            &Asked {
-                under: None,
-                most: MOST,
-                secret: &secret,
-                origin: "https://a.example",
-            },
-        )
-        .text;
+        let parts = alone(vec![
+            node("1", "RootWebArea", "", 1, &["2", "4"]),
+            label,
+            held,
+            named,
+        ]);
+        let secret = secrets(&[3]);
+        let text = shown(&parts, &secret, "https://a.example");
         assert!(!text.contains("123456"), "{text}");
         assert!(text.contains("Code [hidden]"), "{text}");
     }
@@ -1052,32 +1004,17 @@ mod tests {
             "value",
             json!({ "type": "string", "value": "not" }),
         );
-        let parts = vec![Part {
-            prefix: String::new(),
-            nodes: vec![
-                node("1", "RootWebArea", "", 1, &["2", "3", "5", "6"]),
-                field,
-                warning,
-                words,
-                label,
-                holder,
-                held,
-            ],
-            owner: None,
-        }];
-        let secret: HashSet<(String, u64)> = [(String::new(), 2), (String::new(), 7)]
-            .into_iter()
-            .collect();
-        let text = render(
-            &parts,
-            &Asked {
-                under: None,
-                most: MOST,
-                secret: &secret,
-                origin: "https://a.example",
-            },
-        )
-        .text;
+        let parts = alone(vec![
+            node("1", "RootWebArea", "", 1, &["2", "3", "5", "6"]),
+            field,
+            warning,
+            words,
+            label,
+            holder,
+            held,
+        ]);
+        let secret = secrets(&[2, 7]);
+        let text = shown(&parts, &secret, "https://a.example");
         assert!(text.contains("Do not pay this invoice"), "{text}");
         assert!(text.contains("button \"report not\""), "{text}");
         assert!(text.contains("group \"PIN [hidden]\""), "{text}");
@@ -1116,29 +1053,12 @@ mod tests {
     fn recorded(page: &str) -> Vec<Part> {
         let all: Value =
             serde_json::from_str(include_str!("fixtures.json")).expect("recorded trees");
-        vec![Part {
-            prefix: String::new(),
-            nodes: all[page].as_array().expect("a page").clone(),
-            owner: None,
-        }]
+        alone(all[page].as_array().expect("a page").clone())
     }
 
     #[test]
     fn a_recorded_shop_reads_as_its_form() {
-        let secret: HashSet<(String, u64)> = [47, 50, 53]
-            .into_iter()
-            .map(|node| (String::new(), node))
-            .collect();
-        let text = render(
-            &recorded("/shop"),
-            &Asked {
-                under: None,
-                most: MOST,
-                secret: &secret,
-                origin: "about:blank",
-            },
-        )
-        .text;
+        let text = shown(&recorded("/shop"), &secrets(&[47, 50, 53]), "about:blank");
         assert_eq!(
             text,
             [
@@ -1171,17 +1091,8 @@ mod tests {
     #[test]
     fn a_recorded_sign_in_never_says_its_password() {
         let parts = recorded("/signin");
-        let secret: HashSet<(String, u64)> = HashSet::new();
-        let text = render(
-            &parts,
-            &Asked {
-                under: None,
-                most: MOST,
-                secret: &secret,
-                origin: "about:blank",
-            },
-        )
-        .text;
+        let secret = secrets(&[]);
+        let text = shown(&parts, &secret, "about:blank");
         assert!(
             text.contains("- textbox \"Password\" [filled] [ref=e137]"),
             "{text}"
@@ -1189,7 +1100,6 @@ mod tests {
         assert!(!text.contains("hunter2"), "{text}");
         assert!(!text.contains("[value="), "{text}");
         assert!(!text.contains('\u{2022}'), "{text}");
-        let secret = HashSet::new();
         let found = find(
             &parts,
             &secret,
