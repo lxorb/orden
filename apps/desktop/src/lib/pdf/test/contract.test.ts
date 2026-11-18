@@ -5,17 +5,16 @@ import {
   boxOf,
   citation,
   handed,
-  matrixOf,
   paperText,
   papers,
   PDF_TO_CSS,
   placesOnPaper,
   readPapers,
-  runsOfItems,
   sheetFor,
-  textOfRuns,
   toViewport,
 } from '../src/api'
+import { runsOfItems, textOfRuns } from '../src/find'
+import { matrixOf } from '../src/highlights'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')

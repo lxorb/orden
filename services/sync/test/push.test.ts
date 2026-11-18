@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { momentOf } from '@orden/markdown/task-reminders'
 import { base64url, fromBase64url } from '../src/sync-server/src/push/keys'
 import { MOST_TRIES, sendDue, TRY_AGAIN_AFTER } from '../src/sync-server/src/push/reminders'
 import { forgetAccess } from '../src/sync-server/src/push/fcm'
@@ -11,8 +10,7 @@ let token: string
 let space: string
 
 const ZONE = 'Europe/Zurich'
-const WALL = { date: '2099-01-05', time: '09:00' }
-const AT = momentOf(WALL, ZONE)
+const AT = Date.UTC(2099, 0, 5, 8)
 
 beforeEach(async () => {
   env = testEnv()
