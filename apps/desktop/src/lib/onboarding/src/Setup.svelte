@@ -174,6 +174,25 @@
     mask-image: linear-gradient(#000 calc(100% - 28px), transparent);
   }
 
+  .setup :global(.o-field) {
+    width: min(360px, 100%);
+    height: 50px;
+    border-radius: 12px;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    padding: 0 16px;
+    font: inherit;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  .setup :global(.o-error) {
+    margin: 0;
+    color: var(--danger);
+    font-size: 14px;
+    text-align: center;
+  }
+
   .setup :global(.o-end) {
     margin-inline-start: auto;
     min-width: 74px;

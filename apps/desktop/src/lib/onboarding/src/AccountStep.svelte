@@ -166,7 +166,7 @@
       <input
         bind:this={field}
         bind:value={account.email}
-        class="field"
+        class="o-field"
         type="email"
         autocomplete="email"
         placeholder="Email address"
@@ -176,7 +176,7 @@
     </form>
   {/if}
   {#if account.error && !signed}
-    <p class="error" role="alert">{account.error}</p>
+    <p class="o-error" role="alert">{account.error}</p>
   {/if}
 </Screen>
 
@@ -199,18 +199,6 @@
     align-items: center;
     gap: 14px;
     width: 100%;
-  }
-
-  .field {
-    width: min(360px, 100%);
-    height: 50px;
-    border-radius: 12px;
-    border: 1px solid var(--line-strong);
-    background: var(--card);
-    padding: 0 16px;
-    font: inherit;
-    font-size: 16px;
-    color: var(--text);
   }
 
   .muted {
@@ -265,13 +253,6 @@
     stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-
-  .error {
-    margin: 0;
-    color: var(--danger);
-    font-size: 14px;
-    text-align: center;
   }
 
   @media (max-width: 640px) {
