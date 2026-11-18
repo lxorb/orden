@@ -110,9 +110,7 @@ export function addy(key: string, fetcher: AliasFetcher): AliasClient {
     },
 
     async setEnabled(remoteId: string, on: boolean): Promise<boolean> {
-      if (on) {
-        return madeOf(await asked('/active-aliases', 'POST', { id: remoteId })).enabled
-      }
+      if (on) return madeOf(await asked('/active-aliases', 'POST', { id: remoteId })).enabled
       await asked(`/active-aliases/${encodeURIComponent(remoteId)}`, 'DELETE')
       return false
     },

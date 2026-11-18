@@ -407,9 +407,7 @@ async function itemRenewedLocally(
   const keyVersion = now.keyVersion
   const base = theirs ? { ...theirs.sent, rev: theirs.sent.rev + 1, keyVersion } : null
   if (base) await keepItemBase(rows, one.vault, one.id, base)
-  if (!one.pending && theirs && base) {
-    return { row: { ...one, ...base }, itemKey: theirs.itemKey }
-  }
+  if (!one.pending && theirs && base) return { row: { ...one, ...base }, itemKey: theirs.itemKey }
   const itemKey = theirs?.itemKey ?? newKey()
   try {
     const sealed = await renewedItem(one, from, now.key, keyVersion, itemKey)

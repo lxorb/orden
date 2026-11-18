@@ -90,9 +90,7 @@ function pickedContent(
   theirs: Content,
   mineWins: boolean,
 ): Picked<Content> {
-  if (mine.kind !== theirs.kind) {
-    return { value: mineWins ? mine : theirs, clashed: true }
-  }
+  if (mine.kind !== theirs.kind) return { value: mineWins ? mine : theirs, clashed: true }
   const was: Base = base?.kind === mine.kind ? base : UNKNOWN
   const one = pickedFields(was, mine as unknown as Fields, theirs as unknown as Fields, mineWins)
   return { value: one.value as unknown as Content, clashed: one.clashed }

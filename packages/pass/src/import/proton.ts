@@ -319,12 +319,8 @@ function parseProtonJson(text: string): Imported {
       const item = recordOf(rawItem)
       const { content, kind } = contentOf(item, stringOf(item.aliasEmail))
       const title = content.title
-      if (!isKnownKind(kind)) {
-        into.skip(`Kept as a note: Orden has no kind for "${kind}".`, title)
-      }
-      if (listOf(item.files).length > 0) {
-        into.skip('Its attachments were not imported.', title)
-      }
+      if (!isKnownKind(kind)) into.skip(`Kept as a note: Orden has no kind for "${kind}".`, title)
+      if (listOf(item.files).length > 0) into.skip('Its attachments were not imported.', title)
       into.add(
         itemOf(content, {
           created: dateOf(item.createTime),
