@@ -23,7 +23,26 @@ pub struct Cut {
     pub hollows: Vec<Hollow>,
 }
 
-pub type Piece = (i32, i32, i32, i32, i32);
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum Foot {
+    Even(f64),
+    Apart(f64, f64),
+}
+
+impl Foot {
+    #[must_use]
+    pub fn sides(self) -> (f64, f64) {
+        match self {
+            Self::Even(one) => (one, one),
+            Self::Apart(left, right) => (left, right),
+        }
+    }
+}
+
+pub type Piece = (i32, i32, i32, i32, i32, i32);
+
+pub type Row = (i32, i32, i32, i32);
 
 pub type Shape = Option<Vec<Piece>>;
 
@@ -33,16 +52,19 @@ fn pixels(length: f64, scale: f64) -> i32 {
 }
 
 #[must_use]
-pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64) -> Shape {
+pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) -> Shape {
     if cut.is_some_and(|one| one.all) {
         return Some(Vec::new());
     }
 
     let wide = i32::try_from(wide).unwrap_or(i32::MAX);
     let tall = i32::try_from(tall).unwrap_or(i32::MAX);
-    let round = pixels(corner.max(0.0) * 2.0, scale).clamp(0, wide.min(tall).max(0));
+    let round = |one: f64| pixels(one.max(0.0) * 2.0, scale).clamp(0, wide.min(tall).max(0));
+    let (left, right) = corner.sides();
+    let (left, right) = (round(left), round(right));
+    let whole = (0, 0, wide, tall, left, right);
     let Some(cut) = cut else {
-        return (round > 0).then(|| vec![(0, 0, wide, tall, round)]);
+        return (left > 0 || right > 0).then(|| vec![whole]);
     };
     let pieces: Vec<Piece> = cut
         .hollows
@@ -54,19 +76,69 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64
                 pixels(one.x + one.width, scale),
                 pixels(one.y + one.height, scale),
                 pixels(one.radius * 2.0, scale).max(0),
+                pixels(one.radius * 2.0, scale).max(0),
             )
         })
-        .filter(|&(left, top, right, bottom, _)| {
+        .filter(|&(left, top, right, bottom, _, _)| {
             left < right && top < bottom && left < wide && right > 0 && top < tall && bottom > 0
         })
         .collect();
 
-    if pieces.is_empty() && round == 0 {
+    if pieces.is_empty() && left == 0 && right == 0 {
         return None;
     }
-    let mut whole = vec![(0, 0, wide, tall, round)];
-    whole.extend(pieces);
-    Some(whole)
+    let mut all = vec![whole];
+    all.extend(pieces);
+    Some(all)
+}
+
+#[must_use]
+pub fn rectangles(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Row> {
+    let wide = right - left;
+    let tall = bottom - top;
+    if wide <= 0 || tall <= 0 {
+        return Vec::new();
+    }
+    let radius = (round / 2).clamp(0, wide.min(tall) / 2);
+    let mut all = vec![(left, top + radius, wide, tall - 2 * radius)];
+    for line in 0..radius {
+        let inset = inset(radius, line);
+        all.push((left + inset, top + line, wide - 2 * inset, 1));
+        all.push((left + inset, bottom - 1 - line, wide - 2 * inset, 1));
+    }
+    all
+}
+
+#[must_use]
+pub fn lower(left: i32, top: i32, right: i32, bottom: i32, foot: (i32, i32)) -> Vec<Row> {
+    let wide = right - left;
+    let tall = bottom - top;
+    if wide <= 0 || tall <= 0 {
+        return Vec::new();
+    }
+    let radius = |round: i32| (round / 2).clamp(0, wide.min(tall) / 2);
+    let (on_left, on_right) = (radius(foot.0), radius(foot.1));
+    let deep = on_left.max(on_right);
+    let mut all = vec![(left, top, wide, tall - deep)];
+    for line in 0..deep {
+        let side = |radius: i32| {
+            if line < radius {
+                inset(radius, line)
+            } else {
+                0
+            }
+        };
+        let (start, end) = (side(on_left), side(on_right));
+        all.push((left + start, bottom - 1 - line, wide - start - end, 1));
+    }
+    all
+}
+
+#[allow(clippy::cast_possible_truncation)]
+fn inset(radius: i32, line: i32) -> i32 {
+    let r = f64::from(radius);
+    let off = r - f64::from(line) - 0.5;
+    (r - (r * r - off * off).max(0.0).sqrt()).round() as i32
 }
 
 const CUTS: bool = cfg!(target_os = "linux");
@@ -91,17 +163,13 @@ pub fn layering(label: &str) -> Layering {
 
 static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
 
-type Given = HashMap<String, (Option<Cut>, f64, Shape)>;
+type Given = HashMap<String, (Option<Cut>, Foot, Shape)>;
 
 fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.held())
 }
 
-pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {
-    if !CUTS && !HOLLOWS {
-        engine::round(view, corner);
-        return;
-    }
+pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) {
     let shape = shape_of(cut.as_ref(), wide, tall, scale, corner);
     let label = view.label().to_string();
     let changed = given(|all| {
@@ -119,7 +187,10 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
         all.get(view.label())
             .map(|(cut, corner, _)| (cut.clone(), *corner))
     });
-    if let Some((cut, corner)) = kept.filter(|(cut, corner)| cut.is_some() || *corner > 0.0) {
+    if let Some((cut, corner)) = kept.filter(|(cut, corner)| {
+        let (left, right) = corner.sides();
+        cut.is_some() || left > 0.0 || right > 0.0
+    }) {
         apply(view, cut, wide, tall, scale, corner);
     }
 }
@@ -139,8 +210,6 @@ mod engine {
     use x11rb::rust_connection::RustConnection;
 
     use super::{Piece, Shape};
-
-    pub fn round(_view: &Webview, _corner: f64) {}
 
     static X: LazyLock<Option<RustConnection>> = LazyLock::new(|| {
         let (x, _) = x11rb::connect(None).ok()?;
@@ -169,9 +238,10 @@ mod engine {
             Some(pieces) => {
                 let (whole, hollows) = match pieces.split_first() {
                     None => (Vec::new(), &[][..]),
-                    Some((&(left, top, right, bottom, round), hollows)) => {
-                        (lower(left, top, right, bottom, round), hollows)
-                    }
+                    Some((&(left, top, right, bottom, on_left, on_right), hollows)) => (
+                        rows(super::lower(left, top, right, bottom, (on_left, on_right))),
+                        hollows,
+                    ),
                 };
                 x.shape_rectangles(
                     SO::SET,
@@ -185,8 +255,8 @@ mod engine {
                 .ok()?;
                 let cut: Vec<Rectangle> = hollows
                     .iter()
-                    .flat_map(|&(left, top, right, bottom, round)| {
-                        rectangles(left, top, right, bottom, round)
+                    .flat_map(|&(left, top, right, bottom, round, _)| {
+                        rows(super::rectangles(left, top, right, bottom, round))
                     })
                     .collect();
                 if !cut.is_empty() {
@@ -206,92 +276,19 @@ mod engine {
         x.flush().ok()
     }
 
-    pub fn rectangles(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Rectangle> {
-        let wide = right - left;
-        let tall = bottom - top;
-        if wide <= 0 || tall <= 0 {
-            return Vec::new();
-        }
-        let radius = (round / 2).clamp(0, wide.min(tall) / 2);
-        let rect = |x: i32, y: i32, width: i32, height: i32| Rectangle {
-            x: clamp16(x),
-            y: clamp16(y),
-            width: u16::try_from(width.max(0)).unwrap_or(u16::MAX),
-            height: u16::try_from(height.max(0)).unwrap_or(u16::MAX),
-        };
-        let mut all = vec![rect(left, top + radius, wide, tall - 2 * radius)];
-        for line in 0..radius {
-            let inset = inset(radius, line);
-            all.push(rect(left + inset, top + line, wide - 2 * inset, 1));
-            all.push(rect(left + inset, bottom - 1 - line, wide - 2 * inset, 1));
-        }
-        all
-    }
-
-    pub fn lower(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Rectangle> {
-        let rows = rectangles(left, top, right, bottom, round);
-        let Some(middle) = rows.first() else {
-            return rows;
-        };
-        let wide = right - left;
-        let radius = (round / 2).clamp(0, wide.min(bottom - top) / 2);
-        let mut all = vec![Rectangle {
-            y: clamp16(top),
-            height: u16::try_from((bottom - top - radius).max(0)).unwrap_or(u16::MAX),
-            ..*middle
-        }];
-        all.extend(rows.iter().skip(2).step_by(2).copied());
-        all
-    }
-
-    #[allow(clippy::cast_possible_truncation)]
-    fn inset(radius: i32, line: i32) -> i32 {
-        let r = f64::from(radius);
-        let off = r - f64::from(line) - 0.5;
-        (r - (r * r - off * off).max(0.0).sqrt()).round() as i32
+    fn rows(all: Vec<super::Row>) -> Vec<Rectangle> {
+        all.into_iter()
+            .map(|(x, y, width, height)| Rectangle {
+                x: clamp16(x),
+                y: clamp16(y),
+                width: u16::try_from(width.max(0)).unwrap_or(u16::MAX),
+                height: u16::try_from(height.max(0)).unwrap_or(u16::MAX),
+            })
+            .collect()
     }
 
     fn clamp16(value: i32) -> i16 {
         i16::try_from(value.clamp(i32::from(i16::MIN), i32::from(i16::MAX))).unwrap_or(0)
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::{lower, rectangles};
-
-        #[test]
-        fn a_page_is_rounded_at_the_bottom_alone() {
-            let page = lower(0, 0, 100, 50, 16);
-            assert_eq!(page.len(), 1 + 8);
-            assert_eq!(
-                (page[0].x, page[0].y, page[0].width, page[0].height),
-                (0, 0, 100, 42)
-            );
-            let rows = &page[1..];
-            assert!(rows.iter().all(|one| one.y >= 42 && one.width <= 100));
-            let last = rows.iter().find(|one| one.y == 49).expect("the bottom row");
-            assert!(last.width < 100 && last.x > 0);
-            assert_eq!(lower(0, 0, 100, 50, 0).len(), 1);
-        }
-
-        #[test]
-        fn corners_are_rows_as_wide_as_the_curve() {
-            let square = rectangles(10, 20, 110, 70, 0);
-            assert_eq!(square.len(), 1);
-            assert_eq!(
-                (square[0].x, square[0].y, square[0].width, square[0].height),
-                (10, 20, 100, 50)
-            );
-
-            let round = rectangles(0, 0, 100, 50, 16);
-            assert_eq!(round.len(), 1 + 2 * 8);
-            assert_eq!((round[0].y, round[0].height), (8, 34));
-            let first = round[1];
-            let last = round[2 * 7 + 1];
-            assert!(first.width < last.width, "{first:?} {last:?}");
-            assert!(round.iter().all(|one| one.width <= 100));
-            assert!(rectangles(0, 0, 0, 10, 4).is_empty());
-        }
     }
 }
 
@@ -301,11 +298,10 @@ mod engine {
     use windows::Win32::Foundation::{BOOL, HWND};
     use windows::Win32::Graphics::Gdi::{
         CombineRgn, CreateRectRgn, CreateRoundRectRgn, DeleteObject, SetWindowRgn, HRGN, RGN_DIFF,
+        RGN_OR,
     };
 
     use super::{Piece, Shape};
-
-    pub fn round(_view: &Webview, _corner: f64) {}
 
     pub fn shape(view: &Webview, shape: Shape) {
         let _ = view.with_webview(move |platform| {
@@ -324,15 +320,22 @@ mod engine {
     )]
     fn give(window: HWND, shape: Option<&[Piece]>) {
         unsafe {
-            let region = match shape {
-                None | Some([_]) => {
-                    SetWindowRgn(window, HRGN::default(), BOOL::from(true));
-                    return;
-                }
-                Some([]) => CreateRectRgn(0, 0, 0, 0),
-                Some([(left, top, right, bottom, _), hollows @ ..]) => {
-                    let whole = CreateRectRgn(*left, *top, *right, *bottom);
-                    for &(left, top, right, bottom, round) in hollows {
+            let Some(pieces) = shape else {
+                SetWindowRgn(window, HRGN::default(), BOOL::from(true));
+                return;
+            };
+            let region = match pieces.split_first() {
+                None => CreateRectRgn(0, 0, 0, 0),
+                Some((&(left, top, right, bottom, on_left, on_right), hollows)) => {
+                    let whole = CreateRectRgn(0, 0, 0, 0);
+                    for (x, y, width, height) in
+                        super::lower(left, top, right, bottom, (on_left, on_right))
+                    {
+                        let row = CreateRectRgn(x, y, x + width, y + height);
+                        CombineRgn(whole, whole, row, RGN_OR);
+                        let _ = DeleteObject(row);
+                    }
+                    for &(left, top, right, bottom, round, _) in hollows {
                         let hollow =
                             CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
                         CombineRgn(whole, whole, hollow, RGN_DIFF);
@@ -394,8 +397,6 @@ mod engine {
 
     static HELD: LazyLock<Mutex<HashMap<usize, Hollows>>> = LazyLock::new(Mutex::default);
 
-    pub fn round(_view: &Webview, _corner: f64) {}
-
     #[allow(unsafe_code)]
     pub fn shape(view: &Webview, shape: Shape) {
         let _ = view.with_webview(move |platform| {
@@ -413,41 +414,48 @@ mod engine {
 
     fn give(page: &NSView, shape: Option<&[Piece]>) {
         let key = std::ptr::from_ref(page).addr();
-        let hollows = match shape {
-            None | Some([_]) => None,
-            Some([]) => Some(vec![(page.bounds(), 0.0)]),
-            Some([(_, _, right, _, _), hollows @ ..]) => {
-                let bounds = page.bounds();
+        let bounds = page.bounds();
+        let (whole, hollows) = match shape {
+            None => (None, None),
+            Some([]) => (None, Some(vec![(bounds, 0.0)])),
+            Some([(left, top, right, bottom, on_left, on_right), hollows @ ..]) => {
                 let by = if *right > 0 {
                     bounds.size.width / f64::from(*right)
                 } else {
                     1.0
                 };
-                Some(
-                    hollows
-                        .iter()
-                        .map(|&(left, top, right, bottom, round)| {
-                            let at = |one: i32| f64::from(one) * by;
-                            let (width, height) = (at(right - left), at(bottom - top));
-                            let y = if page.isFlipped() {
-                                at(top)
-                            } else {
-                                bounds.size.height - at(bottom)
-                            };
-                            let corner = (at(round) / 2.0)
-                                .min(width / 2.0)
-                                .min(height / 2.0)
-                                .max(0.0);
-                            (
-                                NSRect::new(NSPoint::new(at(left), y), NSSize::new(width, height)),
-                                corner,
-                            )
-                        })
-                        .collect(),
-                )
+                let at = |one: i32| f64::from(one) * by;
+                let rect = |left: i32, top: i32, right: i32, bottom: i32| {
+                    let y = if page.isFlipped() {
+                        at(top)
+                    } else {
+                        bounds.size.height - at(bottom)
+                    };
+                    NSRect::new(
+                        NSPoint::new(at(left), y),
+                        NSSize::new(at(right - left), at(bottom - top)),
+                    )
+                };
+                let whole: Vec<NSRect> =
+                    super::lower(*left, *top, *right, *bottom, (*on_left, *on_right))
+                        .into_iter()
+                        .map(|(x, y, width, height)| rect(x, y, x + width, y + height))
+                        .collect();
+                let hollows: Hollows = hollows
+                    .iter()
+                    .map(|&(left, top, right, bottom, round, _)| {
+                        let one = rect(left, top, right, bottom);
+                        let corner = (at(round) / 2.0)
+                            .min(one.size.width / 2.0)
+                            .min(one.size.height / 2.0)
+                            .max(0.0);
+                        (one, corner)
+                    })
+                    .collect();
+                (Some(whole), (!hollows.is_empty()).then_some(hollows))
             }
         };
-        mask(page, hollows.as_deref());
+        mask(page, whole.as_deref(), hollows.as_deref());
         let mut all = HELD.held();
         match hollows {
             Some(hollows) => {
@@ -461,15 +469,15 @@ mod engine {
     }
 
     #[allow(unsafe_code)]
-    fn mask(page: &NSView, hollows: Option<&[(NSRect, f64)]>) {
+    fn mask(page: &NSView, whole: Option<&[NSRect]>, hollows: Option<&[(NSRect, f64)]>) {
         unsafe {
-            let Some(hollows) = hollows else {
+            if whole.is_none() && hollows.is_none() {
                 let layer: *mut AnyObject = msg_send![page, layer];
                 if let Some(layer) = layer.as_ref() {
                     let () = msg_send![layer, setMask: std::ptr::null::<AnyObject>()];
                 }
                 return;
-            };
+            }
             page.setWantsLayer(true);
             let layer: *mut AnyObject = msg_send![page, layer];
             let Some(layer) = layer.as_ref() else {
@@ -485,8 +493,10 @@ mod engine {
             let bounds: NSRect = msg_send![layer, bounds];
             let () = msg_send![cut, setFrame: bounds];
             let path = CGPathCreateMutable();
-            CGPathAddRect(path, std::ptr::null(), bounds);
-            for &(hollow, corner) in hollows {
+            for &row in whole.unwrap_or(std::slice::from_ref(&bounds)) {
+                CGPathAddRect(path, std::ptr::null(), row);
+            }
+            for &(hollow, corner) in hollows.unwrap_or_default() {
                 if corner > 0.0 {
                     CGPathAddRoundedRect(path, std::ptr::null(), hollow, corner, corner);
                 } else {
@@ -575,13 +585,11 @@ mod engine {
     use super::Shape;
 
     pub fn shape(_view: &Webview, _shape: Shape) {}
-
-    pub fn round(_view: &Webview, _corner: f64) {}
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{shape_of, Cut, Hollow};
+    use super::{lower, rectangles, shape_of, Cut, Foot, Hollow};
 
     fn cut(all: bool, hollows: &[(f64, f64, f64, f64, f64)]) -> Cut {
         let hollows = hollows
@@ -606,11 +614,11 @@ mod tests {
                 (800, 600),
                 1.5,
                 10.0,
-                Some(vec![(0, 0, 800, 600, 30)]),
+                Some(vec![(0, 0, 800, 600, 30, 30)]),
             ),
             (None, (800, 600), 1.5, 0.0, None),
             (None, (800, 600), 1.0, 0.0, None),
-            (None, (8, 600), 1.0, 10.0, Some(vec![(0, 0, 8, 600, 8)])),
+            (None, (8, 600), 1.0, 10.0, Some(vec![(0, 0, 8, 600, 8, 8)])),
             (Some(Cut::default()), (800, 600), 1.0, 0.0, None),
             (
                 Some(cut(true, &[])),
@@ -625,28 +633,28 @@ mod tests {
                 (800, 600),
                 1.0,
                 10.0,
-                Some(vec![(0, 0, 800, 600, 20), (10, 20, 210, 120, 0)]),
+                Some(vec![(0, 0, 800, 600, 20, 20), (10, 20, 210, 120, 0, 0)]),
             ),
             (
                 Some(cut(false, &[(10.0, 20.0, 200.0, 100.0, 8.0)])),
                 (1200, 900),
                 1.5,
                 0.0,
-                Some(vec![(0, 0, 1200, 900, 0), (15, 30, 315, 180, 24)]),
+                Some(vec![(0, 0, 1200, 900, 0, 0), (15, 30, 315, 180, 24, 24)]),
             ),
             (
                 Some(cut(false, &[(-40.0, -10.0, 100.0, 50.0, 0.0)])),
                 (800, 600),
                 1.0,
                 0.0,
-                Some(vec![(0, 0, 800, 600, 0), (-40, -10, 60, 40, 0)]),
+                Some(vec![(0, 0, 800, 600, 0, 0), (-40, -10, 60, 40, 0, 0)]),
             ),
             (
                 Some(cut(false, &[(-248.0, 85.0, 328.0, 240.0, 12.0)])),
                 (1000, 700),
                 1.0,
                 0.0,
-                Some(vec![(0, 0, 1000, 700, 0), (-248, 85, 80, 325, 24)]),
+                Some(vec![(0, 0, 1000, 700, 0, 0), (-248, 85, 80, 325, 24, 24)]),
             ),
             (
                 Some(cut(false, &[(900.0, 10.0, 100.0, 50.0, 0.0)])),
@@ -664,7 +672,7 @@ mod tests {
             ),
         ] {
             assert_eq!(
-                shape_of(over.as_ref(), width, height, scale, corner),
+                shape_of(over.as_ref(), width, height, scale, Foot::Even(corner)),
                 shape,
                 "{over:?}"
             );
@@ -682,5 +690,62 @@ mod tests {
             serde_json::json!(false)
         };
         assert_eq!(said, wanted);
+    }
+
+    #[test]
+    fn a_page_is_rounded_at_each_bottom_corner_its_card_rounds() {
+        assert_eq!(
+            shape_of(None, 800, 600, 1.0, Foot::Apart(10.0, 0.0)),
+            Some(vec![(0, 0, 800, 600, 20, 0)])
+        );
+        assert_eq!(
+            shape_of(None, 800, 600, 2.0, Foot::Apart(0.0, 10.0)),
+            Some(vec![(0, 0, 800, 600, 0, 40)])
+        );
+        assert_eq!(shape_of(None, 800, 600, 1.0, Foot::Apart(0.0, 0.0)), None);
+        let said: Foot = serde_json::from_str("[10, 0]").expect("two corners");
+        assert_eq!(said.sides(), (10.0, 0.0));
+        let said: Foot = serde_json::from_str("10").expect("one corner");
+        assert_eq!(said.sides(), (10.0, 10.0));
+    }
+
+    #[test]
+    fn a_page_is_rounded_at_the_bottom_alone() {
+        let page = lower(0, 0, 100, 50, (16, 16));
+        assert_eq!(page.len(), 1 + 8);
+        assert_eq!(page[0], (0, 0, 100, 42));
+        let rows = &page[1..];
+        assert!(rows.iter().all(|one| one.1 >= 42 && one.2 <= 100));
+        let last = rows.iter().find(|one| one.1 == 49).expect("the bottom row");
+        assert!(last.2 < 100 && last.0 > 0);
+        assert!(last.0 + last.2 < 100);
+        assert_eq!(lower(0, 0, 100, 50, (0, 0)).len(), 1);
+    }
+
+    #[test]
+    fn a_page_square_at_one_bottom_corner_runs_to_it() {
+        let page = lower(0, 0, 100, 50, (16, 0));
+        let last = page.iter().find(|one| one.1 == 49).expect("the bottom row");
+        assert!(last.0 > 0);
+        assert_eq!(last.0 + last.2, 100);
+        let page = lower(0, 0, 100, 50, (0, 16));
+        let last = page.iter().find(|one| one.1 == 49).expect("the bottom row");
+        assert_eq!(last.0, 0);
+        assert!(last.2 < 100);
+    }
+
+    #[test]
+    fn corners_are_rows_as_wide_as_the_curve() {
+        let square = rectangles(10, 20, 110, 70, 0);
+        assert_eq!(square, vec![(10, 20, 100, 50)]);
+
+        let round = rectangles(0, 0, 100, 50, 16);
+        assert_eq!(round.len(), 1 + 2 * 8);
+        assert_eq!((round[0].1, round[0].3), (8, 34));
+        let first = round[1];
+        let last = round[2 * 7 + 1];
+        assert!(first.2 < last.2, "{first:?} {last:?}");
+        assert!(round.iter().all(|one| one.2 <= 100));
+        assert!(rectangles(0, 0, 0, 10, 4).is_empty());
     }
 }

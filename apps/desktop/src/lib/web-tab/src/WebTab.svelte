@@ -221,7 +221,7 @@
       : settled(covered.cut, page.shot !== null, pages.cuts)
     last = at
     const visible = cut === null
-    const corner = page.filling ? 0 : cardCorner(hole)
+    const corner = page.filling ? ([0, 0] as const) : cardCorner(hole)
     underlaid(tab.id, under && page.live && seen ? { ...at, corner } : null)
     if (under && hole && fading(hole)) follow()
 

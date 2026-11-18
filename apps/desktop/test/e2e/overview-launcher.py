@@ -23,7 +23,7 @@ async () => {
 """
 
 LAUNCHERS = """() => [...document.querySelectorAll('[data-pane]')]
-  .filter((pane) => pane.querySelector(':scope > .here'))
+  .filter((pane) => pane.querySelector(':scope > .card > .here'))
   .map((pane) => Number(getComputedStyle(pane).opacity))"""
 
 def toggle(page: Page) -> None:

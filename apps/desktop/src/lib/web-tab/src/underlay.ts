@@ -1,8 +1,8 @@
 import { boxOf } from './covers'
-import type { Rect } from './pages.svelte'
+import type { Foot, Rect } from './pages.svelte'
 
 export interface Hollow extends Rect {
-  corner: number
+  corner: number | Foot
   cut?: boolean
 }
 
@@ -16,18 +16,20 @@ function n(value: number): string {
   return String(Math.round(value * 100) / 100)
 }
 
-export function rounded(box: Rect, round: number, bottomOnly: boolean): string {
-  const r = Math.max(0, Math.min(round, box.width / 2, box.height / 2))
+export function rounded(box: Rect, round: number | Foot, bottomOnly: boolean): string {
+  const fit = (one: number) => Math.max(0, Math.min(one, box.width / 2, box.height / 2))
+  const [bl, br] =
+    typeof round === 'number' ? [fit(round), fit(round)] : [fit(round[0]), fit(round[1])]
   const [l, t, rt, b] = [box.x, box.y, box.x + box.width, box.y + box.height]
-  const top = bottomOnly ? 0 : r
+  const top = bottomOnly ? 0 : bl
   return [
     `M${n(l + top)} ${n(t)}`,
     `H${n(rt - top)}`,
     top > 0 ? `A${n(top)} ${n(top)} 0 0 1 ${n(rt)} ${n(t + top)}` : '',
-    `V${n(b - r)}`,
-    r > 0 ? `A${n(r)} ${n(r)} 0 0 1 ${n(rt - r)} ${n(b)}` : '',
-    `H${n(l + r)}`,
-    r > 0 ? `A${n(r)} ${n(r)} 0 0 1 ${n(l)} ${n(b - r)}` : '',
+    `V${n(b - br)}`,
+    br > 0 ? `A${n(br)} ${n(br)} 0 0 1 ${n(rt - br)} ${n(b)}` : '',
+    `H${n(l + bl)}`,
+    bl > 0 ? `A${n(bl)} ${n(bl)} 0 0 1 ${n(l)} ${n(b - bl)}` : '',
     `V${n(t + top)}`,
     top > 0 ? `A${n(top)} ${n(top)} 0 0 1 ${n(l + top)} ${n(t)}` : '',
     'Z',

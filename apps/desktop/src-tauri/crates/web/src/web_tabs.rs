@@ -781,7 +781,7 @@ pub fn web_place(
     visible: bool,
     frame: Option<crate::web_follow::Frame>,
     cut: Option<crate::web_cut::Cut>,
-    corner: Option<f64>,
+    corner: Option<crate::web_cut::Foot>,
     opacity: Option<f64>,
 ) -> Result<crate::web_cut::Layering, String> {
     let view = found(&app, &tab)?;
@@ -832,7 +832,7 @@ pub fn web_place(
             width,
             height,
             scale,
-            corner.unwrap_or(0.0),
+            corner.unwrap_or(crate::web_cut::Foot::Even(0.0)),
         );
     }
 

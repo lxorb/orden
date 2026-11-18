@@ -32,6 +32,34 @@ user32 = under.user32
 WIDTH, HEIGHT = 1280, 800
 CORNER = 14
 
+TEAL = (0, 160, 160)
+APART = 12
+
+QUIET = (
+    "[data-panes] { background: #ff00ff !important }"
+    " footer[data-region='status'], .fab { visibility: hidden !important }"
+    " *, *::before, *::after { caret-color: transparent !important }"
+)
+
+CARDS = """
+const round = parseFloat(getComputedStyle(document.querySelector('main')).getPropertyValue('--card-radius')) || 0
+const all = [...document.querySelectorAll('[data-pane]')].filter((one) => one.getClientRects().length)
+const boxes = all.map((one) => one.getBoundingClientRect())
+return all.map((pane, at) => {
+  const id = pane.dataset.pane
+  const box = boxes[at]
+  const head = pane.querySelector(':scope > .head')
+  const strip = head ? head.querySelector('.tabs') : document.querySelector(`header [data-top-strip="${CSS.escape(id)}"] .tabs`)
+  const below = boxes.some((other, one) => one !== at && other.top >= box.bottom - 1 && other.left < box.right - 1 && other.right > box.left + 1)
+  return {
+    kind: orden.workspace.showing(id)?.kind ?? 'empty',
+    left: box.left, right: box.right, top: head ? head.getBoundingClientRect().bottom : box.top, bottom: box.bottom,
+    round, foot: !below, flush: !!strip && strip.classList.contains('flush') && !!strip.querySelector('.tab.first.active'),
+    leftmost: box.left < 1, rightmost: box.right > innerWidth - 1,
+  }
+})
+"""
+
 def page(wide: bool) -> bytes:
     size = "width:300vw;height:300vh" if wide else "width:10px;height:10px"
     return (
@@ -49,7 +77,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self) -> None:  # noqa: N802 - the standard library's name
-        body = page(self.path.startswith("/wide"))
+        body = (
+            b"<!doctype html><title>teal</title><body style='margin:0;height:100vh;background:#00a0a0'>"
+            if self.path.startswith("/teal")
+            else page(self.path.startswith("/wide"))
+        )
         self.send_response(200)
         self.send_header("content-type", "text/html; charset=utf-8")
         self.send_header("content-length", str(len(body)))
@@ -65,6 +97,56 @@ def corners(shot: Image.Image, hole: tuple[int, int, int, int]) -> list[Image.Im
 
 def apart(one: Image.Image, other: Image.Image) -> float:
     return max(ImageStat.Stat(ImageChops.difference(one, other)).mean)
+
+def off(one: tuple[int, ...], other: tuple[int, ...]) -> int:
+    return max(abs(a - b) for a, b in zip(one[:3], other[:3]))
+
+def rounded(app: Any, hwnd: int, label: str, out: pathlib.Path) -> list[str]:
+    wrong: list[str] = []
+    until = time.monotonic() + 30
+    while time.monotonic() < until:
+        shown = app.eval(
+            "return orden.pages.each().filter(([, one]) => one.live && one.sent && one.sent.visible).map(([, one]) => one.title)"
+        )
+        tabs = app.eval("return orden.workspace.panes.all.map((one) => orden.workspace.showing(one.id)?.kind).filter((one) => one === 'web').length")
+        if isinstance(shown, list) and shown.count("teal") >= (tabs if isinstance(tabs, int) else 1):
+            break
+        time.sleep(0.5)
+    time.sleep(3)
+    cards = app.eval(CARDS)
+    if not isinstance(cards, list):
+        return [f"[{label}] no panes measured: {cards}"]
+    scale = float(app.eval("return devicePixelRatio") or 1)
+    left0, top0, _, _ = under.client_box(hwnd)
+    shot = ImageGrab.grab().convert("RGB")
+    shot.save(out / f"{label.replace(' ', '-')}.png")
+    for card in cards:
+        reach = round((card["round"] + 4) * scale)
+        x0 = left0 + int(card["left"] * scale) + 1
+        y0 = top0 + int(card["top"] * scale) + 1
+        x1 = left0 + -int(-card["right"] * scale) - 2
+        y1 = top0 + -int(-card["bottom"] * scale) - 2
+        corners = {
+            "top left": ((x0, y0), (1, 1), not card["flush"] and not card["leftmost"]),
+            "top right": ((x1, y0), (-1, 1), not card["rightmost"]),
+            "bottom right": ((x1, y1), (-1, -1), not card["foot"] and not card["rightmost"]),
+            "bottom left": ((x0, y1), (1, -1), not card["foot"] and not card["leftmost"]),
+        }
+        for name, ((x, y), (dx, dy), round_) in corners.items():
+            at = shot.getpixel((x, y))
+            along = shot.getpixel((x + dx * reach, y))
+            down = shot.getpixel((x, y + dy * reach))
+            by = min(off(at, along), off(at, down))
+            where = f"[{label}] the {card['kind']} pane's {name} corner"
+            print(f"{where}: {at} beside {along} and {down}, {by} apart, wanted {'round' if round_ else 'square'}", flush=True)
+            shot.crop((x - 20, y - 20, x + 20, y + 20)).resize((160, 160), Image.NEAREST).save(
+                out / f"{label.replace(' ', '-')}-{card['kind']}-{name.replace(' ', '-')}-{int(card['left'])}-{int(card['top'])}.png"
+            )
+            if round_ and by <= APART:
+                wrong.append(f"{where} is square, where its card is rounded: {card}")
+            if not round_ and by > APART:
+                wrong.append(f"{where} is cut round, where its card meets the window: {card}")
+    return wrong
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -163,6 +245,32 @@ def main() -> int:
             print(f"{name}: the corners differ by {by:.1f} on average", flush=True)
             if by > 6:
                 wrong.append(f"the {name} corner of a page that runs wide is not drawn like a page that does not: {by:.1f}")
+
+        user32.SetWindowPos(hwnd, None, desk.left, desk.top, min(WIDTH, desk.right - desk.left), min(HEIGHT, desk.bottom - desk.top) - 80, 0x0004)
+        app.eval(f"const style = document.createElement('style'); style.textContent = {json.dumps(QUIET)}; document.head.append(style); return true")
+        app.eval(
+            "const [id] = orden.pages.each().find(([, one]) => one.live && one.sent && one.sent.visible) || [];"
+            f" if (id) orden.pages.go(id, {json.dumps(base + '/teal')}); return !!id"
+        )
+        wrong += rounded(app, hwnd, "one page", args.out)
+        app.eval("orden.workspace.split('column'); return true")
+        wrong += rounded(app, hwnd, "a page over a page", args.out)
+        app.eval(
+            "const ws = orden.workspace; ws.focusPane(ws.panes.all[0].id);"
+            " ws.openUnsaved('terminal', JSON.stringify({ shell: 'cmd', folder: ws.activeSpace ? ws.activeSpace.root : null, key: 'corner' }), 'Command Prompt');"
+            " return true"
+        )
+        wrong += rounded(app, hwnd, "a terminal over a page", args.out)
+        app.eval("const ws = orden.workspace; ws.focusPane(ws.panes.all[1].id); ws.split('row'); return true")
+        wrong += rounded(app, hwnd, "a terminal over two pages", args.out)
+        app.eval("orden.workspace.showRight('outline'); return true")
+        wrong += rounded(app, hwnd, "a terminal over two pages, the right side open", args.out)
+        app.eval(
+            "const ws = orden.workspace; const top = ws.panes.all[0].id;"
+            " const page = ws.tabs.find((one) => one.paneId === top && one.kind === 'web');"
+            " ws.focusPane(top); if (page) ws.activate(page.id); return !!page"
+        )
+        wrong += rounded(app, hwnd, "a page over two pages, the right side open", args.out)
     finally:
         ended(process, gentle=True)
         site.shutdown()
