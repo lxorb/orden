@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { busy } from './busy.svelte'
 
+function holding() {
+  let letGo!: () => void
+  const held = new Promise<void>((resolve) => (letGo = () => resolve()))
+  return { held, letGo }
+}
+
 afterEach(() => {
   busy.clear()
   vi.useRealTimers()
@@ -31,12 +37,7 @@ describe('the line across the top of the document', () => {
   })
 
   test('stays on until the last of them finishes', async () => {
-    let letGo: () => void = () => {
-      throw new Error('the held promise was never taken up')
-    }
-    const held = new Promise<void>((resolve) => {
-      letGo = resolve
-    })
+    const { held, letGo } = holding()
     const slow = busy.run('Exporting', () => held)
     await busy.run('Exporting', () => Promise.resolve())
     expect(busy.active).toBe(true)
@@ -47,11 +48,8 @@ describe('the line across the top of the document', () => {
 })
 
 describe('what the line says went wrong', () => {
-  test('is nothing, until something does', () => {
+  test('is nothing until something does, then the sentence it was given', () => {
     expect(busy.trouble).toBeNull()
-  })
-
-  test('is the sentence it was given', () => {
     busy.failed('That went to the print dialog')
     expect(busy.trouble).toBe('That went to the print dialog')
   })
@@ -92,12 +90,7 @@ describe('what the line says went wrong', () => {
 
 describe('work asked for again while it is still running', () => {
   test('runs once, and can be asked for again once it is done', async () => {
-    let letGo: () => void = () => {
-      throw new Error('the held promise was never taken up')
-    }
-    const held = new Promise<void>((resolve) => {
-      letGo = resolve
-    })
+    const { held, letGo } = holding()
     const work = vi.fn(() => held)
     busy.start('Printing', work, 'print')
     busy.start('Printing', work, 'print')
