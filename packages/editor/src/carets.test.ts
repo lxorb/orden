@@ -151,33 +151,24 @@ describe('the other people in a note', () => {
 })
 
 describe('the name on a caret', () => {
-  test('sits on top of the caret while nothing is written above it', () => {
-    expect(sideFor(true, false, false)).toBe('above')
-    expect(sideFor(true, false, true)).toBe('above')
-  })
+  test.each([
+    [true, 'above', false, false],
+    [true, 'above', false, true],
+    [true, 'below', true, false],
+    [false, 'below', false, false],
+    [false, 'below', true, true],
+    [true, 'above', true, true],
+  ])('%j', (input, wanted, extra, last) => expect(sideFor(input, extra, last)).toEqual(wanted))
 
-  test('goes under the caret when it would cover the words above', () => {
-    expect(sideFor(true, true, false)).toBe('below')
-  })
-
-  test('goes under the caret at the top of the note', () => {
-    expect(sideFor(false, false, false)).toBe('below')
-    expect(sideFor(false, true, true)).toBe('below')
-  })
-
-  test('stays on top when the lines above and below are both full', () => {
-    expect(sideFor(true, true, true)).toBe('above')
-  })
-
-  test('is written in whichever ink reads on the colour', () => {
-    expect(inkOn('#8aa0b8')).toBe('#0b0d10')
-    expect(inkOn('#e5b23c')).toBe('#0b0d10')
-    expect(inkOn('#5b6b7f')).toBe('#ffffff')
-    expect(inkOn('#c01c28')).toBe('#ffffff')
-    expect(inkOn('#5b4be0')).toBe('#ffffff')
-    expect(inkOn('#fff')).toBe('#0b0d10')
-    expect(inkOn('tomato')).toBe('var(--accent-ink)')
-  })
+  test.each([
+    ['#8aa0b8', '#0b0d10'],
+    ['#e5b23c', '#0b0d10'],
+    ['#5b6b7f', '#ffffff'],
+    ['#c01c28', '#ffffff'],
+    ['#5b4be0', '#ffffff'],
+    ['#fff', '#0b0d10'],
+    ['tomato', 'var(--accent-ink)'],
+  ])('%j', (input, wanted) => expect(inkOn(input)).toEqual(wanted))
 })
 
 describe('an agent in the note', () => {

@@ -12,28 +12,22 @@ import {
 const lines = (note: string) => note.split('\n')
 
 describe('the ai fence language', () => {
-  test('is read whatever case it was written in', () => {
-    expect(isAiLanguage('ai')).toBe(true)
-    expect(isAiLanguage('AI')).toBe(true)
-    expect(isAiLanguage(' ai ')).toBe(true)
-  })
-
-  test('is not another language that begins the same way', () => {
-    expect(isAiLanguage('aiml')).toBe(false)
-    expect(isAiLanguage('')).toBe(false)
-  })
+  test.each([
+    ['ai', true],
+    ['AI', true],
+    [' ai ', true],
+    ['aiml', false],
+    ['', false],
+  ])('%j', (input, wanted) => expect(isAiLanguage(input)).toEqual(wanted))
 })
 
 describe('a prompt asking for the note', () => {
-  test('is one that says @note', () => {
-    expect(mentionsNote('Summarise @note in three bullets')).toBe(true)
-    expect(mentionsNote('@NOTE please')).toBe(true)
-  })
-
-  test('is not one that only mentions a note', () => {
-    expect(mentionsNote('Write a note about herons')).toBe(false)
-    expect(mentionsNote('mail me at me@notebook.ch')).toBe(false)
-  })
+  test.each([
+    ['Summarise @note in three bullets', true],
+    ['@NOTE please', true],
+    ['Write a note about herons', false],
+    ['mail me at me@notebook.ch', false],
+  ])('%j', (input, wanted) => expect(mentionsNote(input)).toEqual(wanted))
 })
 
 describe('an answer as it goes into the file', () => {

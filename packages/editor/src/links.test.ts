@@ -2,11 +2,12 @@ import { describe, expect, test } from 'vitest'
 import { hrefOf } from './links'
 
 describe('what a link target is to a browser', () => {
-  test('web and mail addresses pass through', () => {
-    expect(hrefOf('https://x.dev/a?b=1')).toBe('https://x.dev/a?b=1')
-    expect(hrefOf('HTTP://X.DEV')).toBe('HTTP://X.DEV')
-    expect(hrefOf('mailto:a@b.dev')).toBe('mailto:a@b.dev')
-  })
+  test.each([
+    ['https://x.dev/a?b=1', 'https://x.dev/a?b=1'],
+    ['HTTP://X.DEV', 'HTTP://X.DEV'],
+    ['mailto:a@b.dev', 'mailto:a@b.dev'],
+    ['www.x.dev', 'https://www.x.dev'],
+  ])('%j', (input, wanted) => expect(hrefOf(input)).toEqual(wanted))
 
   test('a link written before the rename still passes through', () => {
     const link = 'nib://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
@@ -23,10 +24,6 @@ describe('what a link target is to a browser', () => {
   test("the welcome note's way to Settings > Import passes through, and no other pane", () => {
     expect(hrefOf('orden://settings/import')).toBe('orden://settings/import')
     expect(hrefOf('orden://settings/account')).toBeNull()
-  })
-
-  test('a www address is given its scheme', () => {
-    expect(hrefOf('www.x.dev')).toBe('https://www.x.dev')
   })
 
   test('paths and anchors belong to the note', () => {

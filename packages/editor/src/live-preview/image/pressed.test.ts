@@ -73,10 +73,10 @@ describe('deleting it', () => {
     return { ran, doc: current.doc.toString() }
   }
 
-  test('takes the picture out of the note and leaves the words around it', () => {
-    expect(run('a ![](cat.png) b')).toEqual({ ran: true, doc: 'a  b' })
-    expect(run('a ![[cat.png]] b')).toEqual({ ran: true, doc: 'a  b' })
-  })
+  test.each([
+    ['a ![](cat.png) b', { ran: true, doc: 'a  b' }],
+    ['a ![[cat.png]] b', { ran: true, doc: 'a  b' }],
+  ])('%j', (input, wanted) => expect(run(input)).toEqual(wanted))
 
   test('does nothing once the note has moved under it', () => {
     expect(run('a ![](cat.png) b', false, 'xyz')).toEqual({

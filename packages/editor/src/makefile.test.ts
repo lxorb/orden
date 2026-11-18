@@ -26,30 +26,21 @@ const typeOf = (makefile: string, text: string) =>
   tokens(makefile).find(([token]) => token === text)?.[1]
 
 describe('highlighting a makefile fence', () => {
-  test('names the targets', () => {
-    expect(typeOf('build: main.o', 'build')).toBe('labelName')
-    expect(typeOf('%.o: %.c', '%.o')).toBe('labelName')
-    expect(typeOf('.PHONY: build clean', '.PHONY')).toBe('labelName')
-  })
-
-  test('marks the variables, wherever they are being set', () => {
-    expect(typeOf('CC = gcc', 'CC')).toBe('propertyName')
-    expect(typeOf('CFLAGS += -Wall', 'CFLAGS')).toBe('propertyName')
-    expect(typeOf('SHELL := /bin/sh', 'SHELL')).toBe('propertyName')
-    expect(typeOf('CC = gcc', '=')).toBe('operator')
-  })
-
-  test('marks the variables being read, brackets and all', () => {
-    expect(typeOf('all: $(OBJECTS)', '$(OBJECTS)')).toBe('propertyName')
-    expect(typeOf('x := $(dir $(FILE))', '$(dir $(FILE))')).toBe('propertyName')
-    expect(typeOf('y := ${HOME}', '${HOME}')).toBe('propertyName')
-  })
-
-  test('marks the directives', () => {
-    expect(typeOf('ifeq ($(OS),Windows_NT)', 'ifeq')).toBe('keyword')
-    expect(typeOf('include config.mk', 'include')).toBe('keyword')
-    expect(typeOf('endif', 'endif')).toBe('keyword')
-  })
+  test.each([
+    ['build: main.o', 'labelName', 'build'],
+    ['%.o: %.c', 'labelName', '%.o'],
+    ['.PHONY: build clean', 'labelName', '.PHONY'],
+    ['CC = gcc', 'propertyName', 'CC'],
+    ['CFLAGS += -Wall', 'propertyName', 'CFLAGS'],
+    ['SHELL := /bin/sh', 'propertyName', 'SHELL'],
+    ['CC = gcc', 'operator', '='],
+    ['all: $(OBJECTS)', 'propertyName', '$(OBJECTS)'],
+    ['x := $(dir $(FILE))', 'propertyName', '$(dir $(FILE))'],
+    ['y := ${HOME}', 'propertyName', '${HOME}'],
+    ['ifeq ($(OS),Windows_NT)', 'keyword', 'ifeq'],
+    ['include config.mk', 'keyword', 'include'],
+    ['endif', 'keyword', 'endif'],
+  ])('%j', (input, wanted, extra) => expect(typeOf(input, extra)).toEqual(wanted))
 
   test('marks comments', () => {
     expect(tokens('# how to build')[0]?.[1]).toBe('comment')

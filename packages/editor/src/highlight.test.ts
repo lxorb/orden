@@ -27,34 +27,16 @@ function run(command: StateCommand, marked: string): string {
 }
 
 describe('highlighting the selection', () => {
-  test('writes the colour the way Obsidian writes it', () => {
-    expect(run(toggleHighlight(RED), 'be [careful] here')).toBe('be ==🔴 careful== here')
-  })
-
-  test('writes no colour at all for the plain one, which is what it always wrote', () => {
-    expect(run(toggleHighlight(PLAIN), 'be [careful] here')).toBe('be ==careful== here')
-  })
-
-  test('takes the highlight off when the same colour is asked for again', () => {
-    expect(run(toggleHighlight(RED), 'be ==🔴 [careful]== here')).toBe('be careful here')
-    expect(run(toggleHighlight(PLAIN), 'be ==[careful]== here')).toBe('be careful here')
-  })
-
-  test('changes the colour rather than nesting a second highlight inside one', () => {
-    expect(run(toggleHighlight(GREEN), 'be ==🔴 [careful]== here')).toBe('be ==🟢 careful== here')
-  })
-
-  test('takes the colour off a highlight asked for the plain one', () => {
-    expect(run(toggleHighlight(PLAIN), 'be ==🔴 [careful]== here')).toBe('be ==careful== here')
-  })
-
-  test('colours a highlight that had none', () => {
-    expect(run(toggleHighlight(RED), 'be ==[careful]== here')).toBe('be ==🔴 careful== here')
-  })
-
-  test('reads the marks whether they are inside the selection or outside it', () => {
-    expect(run(toggleHighlight(RED), 'be [==careful==] here')).toBe('be ==🔴 careful== here')
-  })
+  test.each([
+    [toggleHighlight(RED), 'be ==🔴 careful== here', 'be [careful] here'],
+    [toggleHighlight(PLAIN), 'be ==careful== here', 'be [careful] here'],
+    [toggleHighlight(RED), 'be careful here', 'be ==🔴 [careful]== here'],
+    [toggleHighlight(PLAIN), 'be careful here', 'be ==[careful]== here'],
+    [toggleHighlight(GREEN), 'be ==🟢 careful== here', 'be ==🔴 [careful]== here'],
+    [toggleHighlight(PLAIN), 'be ==careful== here', 'be ==🔴 [careful]== here'],
+    [toggleHighlight(RED), 'be ==🔴 careful== here', 'be ==[careful]== here'],
+    [toggleHighlight(RED), 'be ==🔴 careful== here', 'be [==careful==] here'],
+  ])('%j', (input, wanted, extra) => expect(run(input, extra)).toEqual(wanted))
 })
 
 describe('the colour that sticks', () => {

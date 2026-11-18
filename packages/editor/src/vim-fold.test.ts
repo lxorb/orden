@@ -172,10 +172,10 @@ describe('Tab, as normal mode reads it', () => {
   const idle = { prefixRepeat: [], operator: null, keyBuffer: [] }
   const normal = { insertMode: false, visualMode: false, inputState: idle }
 
-  test('is one fold alone and every heading with Shift', () => {
-    expect(normalTab(tab, normal)).toBe('one')
-    expect(normalTab({ ...tab, shiftKey: true }, normal)).toBe('all')
-  })
+  test.each([
+    [tab, 'one', normal],
+    [{ ...tab, shiftKey: true }, 'all', normal],
+  ])('%j', (input, wanted, extra) => expect(normalTab(input, extra)).toEqual(wanted))
 
   test('is nothing in insert or visual mode, mid-command, in a chord or with no Vim', () => {
     expect(normalTab(tab, { ...normal, insertMode: true })).toBeNull()

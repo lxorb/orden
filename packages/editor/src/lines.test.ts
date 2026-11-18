@@ -38,29 +38,21 @@ const note = (command: StateCommand, marked: string) => run(command, marked).not
 const META = '---\nicon: list-checks\n---\n'
 
 describe('sorting and reversing lines', () => {
-  test('sorts the selected lines and leaves them selected', () => {
-    expect(note(sortLines, '«pear\napple\nfig»')).toBe('«apple\nfig\npear»')
-  })
-
-  test('sorts the list the caret is in when nothing is selected', () => {
-    expect(note(sortLines, 'Shopping\n\n- pear|\n- apple\n- fig\n\nAfter')).toBe(
+  test.each([
+    [sortLines, '«apple\nfig\npear»', '«pear\napple\nfig»'],
+    [
+      sortLines,
       'Shopping\n\n«- apple\n- fig\n- pear»\n\nAfter',
-    )
-  })
-
-  test('reads past markers and boxes, case, and counts numbers as numbers', () => {
-    expect(note(sortLines, '«- [x] item 10\n- [ ] Item 2\n- item 1»')).toBe(
+      'Shopping\n\n- pear|\n- apple\n- fig\n\nAfter',
+    ],
+    [
+      sortLines,
       '«- item 1\n- [ ] Item 2\n- [x] item 10»',
-    )
-  })
-
-  test('leaves the line the selection ends in front of alone', () => {
-    expect(note(sortLines, '«b\na\n»c')).toBe('«a\nb»\nc')
-  })
-
-  test('reverses the lines', () => {
-    expect(note(reverseLines, '«one\ntwo\nthree»')).toBe('«three\ntwo\none»')
-  })
+      '«- [x] item 10\n- [ ] Item 2\n- item 1»',
+    ],
+    [sortLines, '«a\nb»\nc', '«b\na\n»c'],
+    [reverseLines, '«three\ntwo\none»', '«one\ntwo\nthree»'],
+  ])('%j', (input, wanted, extra) => expect(note(input, extra)).toEqual(wanted))
 
   test('gives way on a line with nothing to sort it against', () => {
     expect(run(sortLines, 'alone|').took).toBe(false)
@@ -72,23 +64,14 @@ describe('sorting and reversing lines', () => {
 })
 
 describe('joining lines', () => {
-  test('pulls the next line up with one space, the caret at the seam', () => {
-    expect(note(joinLines, 'one|\n   two')).toBe('one| two')
-  })
-
-  test('takes the list marker, box and quote marks off the line that comes up', () => {
-    expect(note(joinLines, '- one|\n- [ ] two')).toBe('- one| two')
-    expect(note(joinLines, '> one|\n> two')).toBe('> one| two')
-  })
-
-  test('joins every selected line onto the first', () => {
-    expect(note(joinLines, '«a\nb\nc»')).toBe('«a b c»')
-  })
-
-  test('adds no space onto an empty line or before one', () => {
-    expect(note(joinLines, 'one|\n\ntwo')).toBe('one|\ntwo')
-    expect(note(joinLines, '|\ntwo')).toBe('|two')
-  })
+  test.each([
+    [joinLines, 'one| two', 'one|\n   two'],
+    [joinLines, '- one| two', '- one|\n- [ ] two'],
+    [joinLines, '> one| two', '> one|\n> two'],
+    [joinLines, '«a b c»', '«a\nb\nc»'],
+    [joinLines, 'one|\ntwo', 'one|\n\ntwo'],
+    [joinLines, '|two', '|\ntwo'],
+  ])('%j', (input, wanted, extra) => expect(note(input, extra)).toEqual(wanted))
 
   test('gives way on the last line', () => {
     expect(run(joinLines, 'first\nlast|').took).toBe(false)

@@ -26,10 +26,10 @@ describe('what a card may actually have', () => {
     expect(framePermissions('payment')).toBe('')
   })
 
-  test('an empty sandbox is a sandbox, not a missing one', () => {
-    expect(frameSandbox(undefined)).toBe('')
-    expect(frameSandbox('nonsense')).toBe('')
-  })
+  test.each([
+    [undefined, ''],
+    ['nonsense', ''],
+  ])('%j', (input, wanted) => expect(frameSandbox(input)).toEqual(wanted))
 })
 
 describe('the referrer a frame sends', () => {
@@ -78,12 +78,12 @@ describe('the document a block of the note’s own HTML runs in', () => {
 describe('how tall an interactive block may say it is', () => {
   const said = (height: unknown) => frameHeight({ orden: 'orden-html-frame', height })
 
-  test('what it asked for, within reason', () => {
-    expect(said(320)).toBe(320)
-    expect(said(240.2)).toBe(241)
-    expect(said(0)).toBe(40)
-    expect(said(99999)).toBe(2400)
-  })
+  test.each([
+    [320, 320],
+    [240.2, 241],
+    [0, 40],
+    [99999, 2400],
+  ])('%j', (input, wanted) => expect(said(input)).toEqual(wanted))
 
   test('and nothing at all from a message that is not one of ours', () => {
     expect(frameHeight({ height: 300 })).toBe(null)

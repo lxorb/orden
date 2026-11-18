@@ -10,35 +10,36 @@ describe('formatting what the sandbox says', () => {
     expect(line('hi', 'there')).toBe('hi there')
   })
 
-  test('quotes a string that is a value rather than a message', () => {
-    expect(value('hi')).toBe("'hi'")
-  })
+  test.each([
+    ['hi', "'hi'"],
+    ["it's\nhere", "'it\\'s\\nhere'"],
+  ])('%s', (input, wanted) => expect(value(input)).toEqual(wanted))
 
-  test('escapes what would make a quoted string ambiguous', () => {
-    expect(value("it's\nhere")).toBe("'it\\'s\\nhere'")
-  })
-
-  test('names the values that have no text of their own', () => {
-    expect(line(undefined)).toBe('undefined')
-    expect(line(null)).toBe('null')
-    expect(line(true)).toBe('true')
-    expect(line(Number.NaN)).toBe('NaN')
-    expect(line(Infinity)).toBe('Infinity')
-    expect(line(-0)).toBe('-0')
-    expect(line(10n)).toBe('10n')
-    expect(line(Symbol('tag'))).toBe('Symbol(tag)')
-  })
-
-  test('describes objects and arrays by their contents', () => {
-    expect(line({ a: 1, b: 'x' })).toBe("{ a: 1, b: 'x' }")
-    expect(line([1, 'two', null])).toBe("[1, 'two', null]")
-    expect(line({})).toBe('{}')
-    expect(line([])).toBe('[]')
-  })
-
-  test('quotes a key that is not a plain name', () => {
-    expect(line({ 'two words': 1 })).toBe("{ 'two words': 1 }")
-  })
+  test.each([
+    [undefined, 'undefined'],
+    [null, 'null'],
+    [true, 'true'],
+    [Number.NaN, 'NaN'],
+    [Infinity, 'Infinity'],
+    [-0, '-0'],
+    [10n, '10n'],
+    [Symbol('tag'), 'Symbol(tag)'],
+    [{ a: 1, b: 'x' }, "{ a: 1, b: 'x' }"],
+    [[1, 'two', null], "[1, 'two', null]"],
+    [{}, '{}'],
+    [[], '[]'],
+    [{ 'two words': 1 }, "{ 'two words': 1 }"],
+    [new Map([['a', 1]]), "Map(1) { 'a' => 1 }"],
+    [new Set([1, 2]), 'Set(2) { 1, 2 }'],
+    [new Map(), 'Map(0) {}'],
+    [new TypeError('nope'), 'TypeError: nope'],
+    [new Error(''), 'Error'],
+    [new Date(0), '1970-01-01T00:00:00.000Z'],
+    [new Date(Number.NaN), 'Invalid Date'],
+    [/ab+c/gi, '/ab+c/gi'],
+    [{ a: { b: { c: { d: 1 } } } }, '{ a: { b: { c: [Object] } } }'],
+    [[[[[1]]]], '[[[[Array]]]]'],
+  ])('%s', (input, wanted) => expect(line(input)).toEqual(wanted))
 
   test('names the class an object came from', () => {
     class Point {
@@ -48,23 +49,6 @@ describe('formatting what the sandbox says', () => {
       ) {}
     }
     expect(line(new Point(1, 2))).toBe('Point { x: 1, y: 2 }')
-  })
-
-  test('says how many a map or a set holds', () => {
-    expect(line(new Map([['a', 1]]))).toBe("Map(1) { 'a' => 1 }")
-    expect(line(new Set([1, 2]))).toBe('Set(2) { 1, 2 }')
-    expect(line(new Map())).toBe('Map(0) {}')
-  })
-
-  test('reads an error as the sentence it is', () => {
-    expect(line(new TypeError('nope'))).toBe('TypeError: nope')
-    expect(line(new Error(''))).toBe('Error')
-  })
-
-  test('keeps dates and patterns in the form they are written in', () => {
-    expect(line(new Date(0))).toBe('1970-01-01T00:00:00.000Z')
-    expect(line(new Date(Number.NaN))).toBe('Invalid Date')
-    expect(line(/ab+c/gi)).toBe('/ab+c/gi')
   })
 
   test('names functions and classes without printing their bodies', () => {
@@ -89,11 +73,6 @@ describe('formatting what the sandbox says', () => {
   test('lets the same value appear twice side by side', () => {
     const shared = { a: 1 }
     expect(line({ one: shared, two: shared })).toBe('{ one: { a: 1 }, two: { a: 1 } }')
-  })
-
-  test('stops descending once nesting gets deep', () => {
-    expect(line({ a: { b: { c: { d: 1 } } } })).toBe('{ a: { b: { c: [Object] } } }')
-    expect(line([[[[1]]]])).toBe('[[[[Array]]]]')
   })
 
   test('counts the items it left out of a long array', () => {

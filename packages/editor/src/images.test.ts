@@ -165,19 +165,16 @@ describe('a picture whose name a link would read as something else', () => {
 describe('a picture beside words on the clipboard', () => {
   const STYLE = '<html><head><style>td{}</style></head><body><!--StartFragment-->'
 
-  test('Office writes its cells and words with a picture of them: the words win', () => {
-    expect(wordsBesidePicture(`${STYLE}<table><tr><td>Bob</td></tr></table>`, 'Bob')).toBe(true)
-    expect(wordsBesidePicture(`${STYLE}<p>word&nbsp;</p>`, 'word')).toBe(true)
-    expect(wordsBesidePicture('', 'Name\tAge\nBob\t3')).toBe(true)
-  })
-
-  test('a picture copied off a page or out of a viewer stays a picture', () => {
-    expect(wordsBesidePicture('', '')).toBe(false)
-    expect(wordsBesidePicture('<img src="https://x.co/a.png" alt="a">', '')).toBe(false)
-    expect(wordsBesidePicture('<img src="https://x.co/a.png" alt="a">', 'a')).toBe(false)
-    expect(wordsBesidePicture(`${STYLE}<p><img src="a.png"></p>`, 'a.png')).toBe(false)
-    expect(wordsBesidePicture('', 'photo.png')).toBe(false)
-  })
+  test.each([
+    [`${STYLE}<table><tr><td>Bob</td></tr></table>`, true, 'Bob'],
+    [`${STYLE}<p>word&nbsp;</p>`, true, 'word'],
+    ['', true, 'Name\tAge\nBob\t3'],
+    ['', false, ''],
+    ['<img src="https://x.co/a.png" alt="a">', false, ''],
+    ['<img src="https://x.co/a.png" alt="a">', false, 'a'],
+    [`${STYLE}<p><img src="a.png"></p>`, false, 'a.png'],
+    ['', false, 'photo.png'],
+  ])('%j', (input, wanted, extra) => expect(wordsBesidePicture(input, extra)).toEqual(wanted))
 })
 
 describe('a bracket in a picture attribute', () => {

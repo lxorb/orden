@@ -52,23 +52,13 @@ const MD = '![A cat](cat.png)'
 const TAG = '<img src="cat.png" alt="A cat" style="zoom:50%;" />'
 
 describe('parsing an img tag', () => {
-  test('reads the path, alt, title and zoom', () => {
-    expect(parseHtmlImage('<img src="a.png" alt="x" title="t" style="zoom: 60%" />')).toEqual({
-      src: 'a.png',
-      alt: 'x',
-      title: 't',
-      zoom: 60,
-    })
-  })
-
-  test('defaults to full size and an empty alt', () => {
-    expect(parseHtmlImage('<img src="a.png">')).toEqual({
-      src: 'a.png',
-      alt: '',
-      title: '',
-      zoom: 100,
-    })
-  })
+  test.each([
+    [
+      '<img src="a.png" alt="x" title="t" style="zoom: 60%" />',
+      { src: 'a.png', alt: 'x', title: 't', zoom: 60 },
+    ],
+    ['<img src="a.png">', { src: 'a.png', alt: '', title: '', zoom: 100 }],
+  ])('%j', (input, wanted) => expect(parseHtmlImage(input)).toEqual(wanted))
 
   test('keeps a width attribute as pixels', () => {
     expect(parseHtmlImage('<img src="a.png" width="320">')?.width).toBe(320)
@@ -96,61 +86,42 @@ describe('parsing an img tag', () => {
 })
 
 describe('writing an image back', () => {
-  test('is plain markdown at full size', () => {
-    expect(imageMarkup({ src: 'a.png', alt: 'x', title: '', zoom: 100 })).toBe('![x](a.png)')
-  })
-
-  test('keeps a title in the markdown form', () => {
-    expect(imageMarkup({ src: 'a.png', alt: 'x', title: 'Cat', zoom: 100 })).toBe(
-      '![x](a.png "Cat")',
-    )
-  })
-
-  test('is an img tag with a zoom the way Typora writes it', () => {
-    expect(imageMarkup({ src: 'a.png', alt: 'x', title: '', zoom: 50 })).toBe(
+  test.each([
+    [{ src: 'a.png', alt: 'x', title: '', zoom: 100 }, '![x](a.png)'],
+    [{ src: 'a.png', alt: 'x', title: 'Cat', zoom: 100 }, '![x](a.png "Cat")'],
+    [
+      { src: 'a.png', alt: 'x', title: '', zoom: 50 },
       '<img src="a.png" alt="x" style="zoom:50%;" />',
-    )
-  })
-
-  test('escapes quotes and ampersands in attributes', () => {
-    expect(imageMarkup({ src: 'a.png', alt: 'say "hi" & bye', title: '', zoom: 50 })).toBe(
+    ],
+    [
+      { src: 'a.png', alt: 'say "hi" & bye', title: '', zoom: 50 },
       '<img src="a.png" alt="say &quot;hi&quot; &amp; bye" style="zoom:50%;" />',
-    )
-  })
-
-  test('keeps a width attribute until a zoom replaces it', () => {
-    expect(imageMarkup({ src: 'a.png', alt: '', title: '', zoom: 100, width: 320 })).toBe(
+    ],
+    [
+      { src: 'a.png', alt: '', title: '', zoom: 100, width: 320 },
       '<img src="a.png" alt="" width="320" />',
-    )
-    expect(imageMarkup({ src: 'a.png', alt: '', title: '', zoom: 40, width: 320 })).toBe(
+    ],
+    [
+      { src: 'a.png', alt: '', title: '', zoom: 40, width: 320 },
       '<img src="a.png" alt="" style="zoom:40%;" />',
-    )
-  })
+    ],
+    [{ src: 'a picture.png', alt: 'x', title: '', zoom: 100 }, '![x](<a picture.png>)'],
+  ])('%j', (input, wanted) => expect(imageMarkup(input)).toEqual(wanted))
 
   test('round-trips through the parser', () => {
     const spec = { src: 'p/a b.png', alt: 'x "y"', title: 'T', zoom: 33 }
     expect(parseHtmlImage(imageMarkup(spec))).toEqual(spec)
   })
-
-  test('an address with a space is written between brackets', () => {
-    expect(imageMarkup({ src: 'a picture.png', alt: 'x', title: '', zoom: 100 })).toBe(
-      '![x](<a picture.png>)',
-    )
-    expect(imageMarkup({ src: 'a.png', alt: 'x', title: '', zoom: 100 })).toBe('![x](a.png)')
-  })
 })
 
 describe('resizing', () => {
-  test('snaps to the common fractions', () => {
-    expect(snapPercent(48)).toBe(50)
-    expect(snapPercent(52.4)).toBe(50)
-    expect(snapPercent(31)).toBe(33)
-    expect(snapPercent(98)).toBe(100)
-  })
-
-  test('rounds to whole percent away from a stop', () => {
-    expect(snapPercent(41.6)).toBe(42)
-  })
+  test.each([
+    [48, 50],
+    [52.4, 50],
+    [31, 33],
+    [98, 100],
+    [41.6, 42],
+  ])('%j', (input, wanted) => expect(snapPercent(input)).toEqual(wanted))
 
   test('can be asked not to snap', () => {
     expect(snapPercent(48, false)).toBe(48)
@@ -214,23 +185,16 @@ describe('what reveals the markup', () => {
   const from = 2
   const to = 2 + MD.length
 
-  test('a caret strictly inside', () => {
-    expect(imageRevealed(state(doc, { anchor: from + 3 }), from, to)).toBe(true)
-  })
-
-  test('not a caret touching either end', () => {
-    expect(imageRevealed(state(doc, { anchor: from }), from, to)).toBe(false)
-    expect(imageRevealed(state(doc, { anchor: to }), from, to)).toBe(false)
-  })
-
-  test('not a selection covering it exactly, or more than it', () => {
-    expect(imageRevealed(state(doc, { anchor: from, head: to }), from, to)).toBe(false)
-    expect(imageRevealed(state(doc, { anchor: 0, head: doc.length }), from, to)).toBe(false)
-  })
-
-  test('a selection with one end inside', () => {
-    expect(imageRevealed(state(doc, { anchor: 0, head: from + 4 }), from, to)).toBe(true)
-  })
+  test.each([
+    [state(doc, { anchor: from + 3 }), true, from, to],
+    [state(doc, { anchor: from }), false, from, to],
+    [state(doc, { anchor: to }), false, from, to],
+    [state(doc, { anchor: from, head: to }), false, from, to],
+    [state(doc, { anchor: 0, head: doc.length }), false, from, to],
+    [state(doc, { anchor: 0, head: from + 4 }), true, from, to],
+  ])('%j', (input, wanted, extra, last) =>
+    expect(imageRevealed(input, extra, last)).toEqual(wanted),
+  )
 })
 
 describe('the selected image', () => {
@@ -249,13 +213,10 @@ describe('keys beside an image', () => {
   const from = 2
   const to = 2 + MD.length
 
-  test('Backspace after a picture selects it instead of deleting into it', () => {
-    expect(run(selectImageBehind, state(doc, { anchor: to }))).toEqual({ anchor: from, head: to })
-  })
-
-  test('Delete before a picture selects it', () => {
-    expect(run(selectImageAhead, state(doc, { anchor: from }))).toEqual({ anchor: from, head: to })
-  })
+  test.each([
+    [selectImageBehind, { anchor: from, head: to }, state(doc, { anchor: to })],
+    [selectImageAhead, { anchor: from, head: to }, state(doc, { anchor: from })],
+  ])('%j', (input, wanted, extra) => expect(run(input, extra)).toEqual(wanted))
 
   test('both give way anywhere else', () => {
     expect(run(selectImageBehind, state(doc, { anchor: 1 }))).toBeNull()

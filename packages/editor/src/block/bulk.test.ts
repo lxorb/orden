@@ -93,10 +93,10 @@ describe('a line as the words in it', () => {
     expect(shaped('an item', 'numbered', 4)).toBe('4. an item')
   })
 
-  test('and a line with no words in it is left exactly as it was', () => {
-    expect(shaped('', 'bullet')).toBe('')
-    expect(shaped('   ', 'bullet')).toBe('   ')
-  })
+  test.each([
+    ['', '', 'bullet' as const],
+    ['   ', '   ', 'bullet' as const],
+  ])('%j', (input, wanted, extra) => expect(shaped(input, extra)).toEqual(wanted))
 })
 
 describe('turning several blocks into something else', () => {

@@ -2,6 +2,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import {
   EditorSelection,
   EditorState,
+  type Extension,
   type StateCommand,
   type Transaction,
 } from '@codemirror/state'
@@ -36,26 +37,21 @@ import { clearFormatting, marksAcross } from './marks'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
 
-function apply(
-  command: StateCommand,
-  doc: string,
-  from: number,
-  to = from,
-): { took: boolean; doc: string; selection: [number, number] } {
-  const state = parsed(
-    EditorState.create({
-      doc,
-      selection: EditorSelection.range(from, to),
-      extensions: [markdown({ base: markdownLanguage })],
-    }),
+const PLAIN = markdown({ base: markdownLanguage })
+const NOTE = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
+
+const stateOf = (doc: string, from: number, to = from, language: Extension = PLAIN) =>
+  parsed(
+    EditorState.create({ doc, selection: EditorSelection.range(from, to), extensions: [language] }),
   )
 
+function apply(command: StateCommand, doc: string, from: number, to = from, language = PLAIN) {
+  const state = stateOf(doc, from, to, language)
   let next = state
   const took = command({
     state,
     dispatch: (transaction: Transaction) => (next = transaction.state),
   })
-
   return {
     took,
     doc: next.doc.toString(),
@@ -63,761 +59,376 @@ function apply(
   }
 }
 
-function marks(marked: string): { doc: string; from: number; to: number } {
+function applyMarked(command: StateCommand, marked: string) {
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[[\]|]/g, '')
-
-  if (caret >= 0) return { doc, from: caret, to: caret }
-  return { doc, from: marked.indexOf('['), to: marked.indexOf(']') - 1 }
+  return caret >= 0
+    ? apply(command, doc, caret)
+    : apply(command, doc, marked.indexOf('['), marked.indexOf(']') - 1)
 }
 
-function run(command: StateCommand, marked: string): string {
-  const { doc, from, to } = marks(marked)
-  return apply(command, doc, from, to).doc
-}
+const run = (command: StateCommand, marked: string) => applyMarked(command, marked).doc
+const took = (command: StateCommand, marked: string) => applyMarked(command, marked).took
+const runSelection = (command: StateCommand, marked: string) =>
+  applyMarked(command, marked).selection
+const at = (command: StateCommand, doc: string, offset: number) => apply(command, doc, offset).doc
 
-function stateOf(doc: string, at: number): EditorState {
-  return parsed(
-    EditorState.create({
-      doc,
-      selection: EditorSelection.cursor(at),
-      extensions: [markdown({ base: markdownLanguage })],
-    }),
+const strong = toggleWrap('**')
+const italic = toggleWrap('*')
+const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n| 5 | 6 |'
+const SMALL = '| x |\n| - |\n| 1 |'
+const ONE_BY_ONE = '| Column 1 |\n| --- |\n|     |'
+const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'
+
+const runs = (command: StateCommand, rows: [string, string][]) =>
+  test.each(rows)('%j', (marked, wanted) => expect(run(command, marked)).toBe(wanted))
+const ats = (command: StateCommand, rows: [string, number, string][]) =>
+  test.each(rows)('%j at %i', (doc, offset, wanted) =>
+    expect(at(command, doc, offset)).toBe(wanted),
   )
-}
+const selects = (command: StateCommand, rows: [string, number[]][]) =>
+  test.each(rows)('%j', (marked, wanted) => expect(runSelection(command, marked)).toEqual(wanted))
 
-function at(command: StateCommand, doc: string, offset: number): string {
-  return apply(command, doc, offset).doc
-}
+runs(insertHorizontalRule, [
+  ['```\nco|de\nmore\n```\nb', '```\ncode\nmore\n```\n\n---\n\nb'],
+  ['> on|e\n> two\n\nb', '> one\n> two\n\n---\n\n\nb'],
+  ['[words]', 'words\n\n---\n'],
+  ['words|', 'words\n\n---\n'],
+  ['words\n|', 'words\n\n---\n'],
+  ['words\n\n|', 'words\n\n---\n'],
+  ['|', '---\n'],
+  ['a|b', 'a\n\n---\nb'],
+])
+runs(strong, [
+  ['a [word] b', 'a **word** b'],
+  ['a **[word]** b', 'a word b'],
+  ['a [**word**] b', 'a word b'],
+  ['a |b', 'a ****b'],
+  ['[word\n]', '**word**\n'],
+  ['a[ word ]b', 'a **word** b'],
+  ['[**word**\n]', 'word\n'],
+  ['a[ ]b', 'a** **b'],
+  ['***[word]***', '*word*'],
+  ['*[word]*', '***word***'],
+  ['[a ^abc123]', '**a** ^abc123'],
+])
+runs(toggleWrap('<u>', '</u>'), [['[x]', '<u>x</u>']])
+runs(setHeading(2), [
+  ['|Title', '## Title'],
+  ['## |Title', 'Title'],
+  ['### |Title', '## Title'],
+  ['[## One\nTwo]', '## One\n## Two'],
+  ['[## One\n## Two]', 'One\nTwo'],
+  ['- ite|m', '## item'],
+  ['1. ite|m', '## item'],
+])
+runs(setHeading(3), [['# |Title', '### Title']])
+runs(setHeading(0), [['### |Title', 'Title']])
+runs(setHeading(1), [['# |Title', 'Title']])
+runs(setHeading(6), [['###### |Title', 'Title']])
+runs(shiftHeading(1), [
+  ['## |Title', '### Title'],
+  ['###### |Title', '###### Title'],
+])
+runs(shiftHeading(-1), [
+  ['## |Title', '# Title'],
+  ['|Title', 'Title'],
+])
+runs(toggleQuote, [
+  ['|text', '> text'],
+  ['> |text', 'text'],
+])
+runs(toggleBulletList, [
+  ['|item', '- item'],
+  ['- |item', 'item'],
+  ['[1. one\n2. two]', '- one\n- two'],
+  ['[1. a\n   2. x]', '- a\n   - x'],
+])
+runs(toggleOrderedList, [
+  ['[one\ntwo\nthree]', '1. one\n2. two\n3. three'],
+  ['[- one\n- two]', '1. one\n2. two'],
+  ['[- a\n   - x\n   - y\n- b\nc]', '1. a\n   1. x\n   2. y\n2. b\n3. c'],
+  ['[1. a\n   1. x\n2. b]', 'a\n   x\nb'],
+])
+runs(insertCodeFence, [
+  ['|', '```\n\n```'],
+  ['text|', 'text\n```\n\n```'],
+  ['one |two\nthree', 'one \n```\n\n```\ntwo\nthree'],
+  ['|two', '```\n\n```\ntwo'],
+  ['- [item]\n- two', '- item\n```\n\n```\n- two'],
+  ['> [quoted]', '> quoted\n```\n\n```'],
+  ['# [Title]\nwords', '# Title\n```\n\n```\nwords'],
+  ['- it|em', '- item\n```\n\n```'],
+  ['[- one\n- two]', '```\n- one\n- two\n```'],
+  ['[one\ntwo]\nthree', '```\none\ntwo\n```\nthree'],
+  ['a [word] b', 'a \n```\nword\n```\n b'],
+  ['[one\n]two', '```\none\n```\ntwo'],
+  ['[```\nx\n```]', '````\n```\nx\n```\n````'],
+])
+runs(insertMathBlock, [
+  ['|', '$$\n\n$$'],
+  ['one |two', 'one \n$$\n\n$$\ntwo'],
+  ['1. it[em] b', '1. item b\n$$\n\n$$'],
+  ['[one\ntwo]\nthree', '$$\none\ntwo\n$$\nthree'],
+])
+runs(insertTable(1, 2), [['|', '| Column 1 | Column 2 |\n| --- | --- |\n|     |     |']])
+runs(insertTable(1, 1), [
+  ['one |two', `one \n\n${ONE_BY_ONE}\n\ntwo`],
+  ['he [llo] world', `he llo\n\n${ONE_BY_ONE}\n\n world`],
+  ['[words]\nnext', `words\n\n${ONE_BY_ONE}\n\nnext`],
+  ['above\n|', `above\n\n${ONE_BY_ONE}`],
+  ['[one\ntwo]\nthree', `one\ntwo\n\n${ONE_BY_ONE}\n\nthree`],
+  ['abc |def', `abc \n\n${ONE_BY_ONE}\n\ndef`],
+  ['[words]', `words\n\n${ONE_BY_ONE}`],
+  ['abc|\nnext', `abc\n\n${ONE_BY_ONE}\n\nnext`],
+  ['|\nnext', `${ONE_BY_ONE}\n\nnext`],
+])
+runs(insertCallout, [
+  ['- [item]', '- item\n> [!NOTE]\n> '],
+  ['[hello] world', '> [!NOTE]\n> hello\n\n world'],
+  ['one |two', 'one \n> [!NOTE]\n> \n\ntwo'],
+  ['[hello]\n\nnext', '> [!NOTE]\n> hello\n\nnext'],
+  ['[one\ntwo]\nthree', '> [!NOTE]\n> one\n> two\n\nthree'],
+  ['|', '> [!NOTE]\n> '],
+])
+runs(insertAiBlock, [['|', '```ai\n\n```\n']])
+runs(insertToc, [
+  ['one |two', 'one \n[toc]\ntwo'],
+  ['a [word] b', 'a word\n[toc]\n b'],
+  ['words\n|', 'words\n[toc]\n'],
+])
+runs(insertLink, [['[label]', '[label]()']])
+runs(clearFormatting, [
+  ['[**a** *b* ~~c~~ ==d== `e`]', 'a b c d e'],
+  ['**keep** [**drop**]', '**keep** drop'],
+  ['[see my_file_name.txt and __b__ _i_]', 'see my_file_name.txt and b i'],
+  ['[`**b**` **c**]', '**b** c'],
+])
+runs(closeFence, [
+  ['```|', '```\n\n```'],
+  ['```ts|', '```ts\n\n```'],
+  ['```|\nmore text', '```\n\n```\nmore text'],
+  ['~~~~|', '~~~~\n\n~~~~'],
+])
+runs(toggleTaskList, [
+  ['[one\ntwo]', '- [ ] one\n- [ ] two'],
+  ['  - |one', '  - [ ] one'],
+  ['1. |one', '- [ ] one'],
+  ['> |c', '> - [ ] c'],
+  ['> > - |c', '> > - [ ] c'],
+])
+runs(toggleTask, [
+  ['just words|', '- [ ] just words'],
+  ['  - a bullet|', '  - [ ] a bullet'],
+  ['1. a number|', '- [ ] a number'],
+  ['|', '- [ ] '],
+])
+runs(insertComment, [
+  ['a [word] b', 'a <!-- word --> b'],
+  ['a [<!-- word -->] b', 'a word b'],
+  ['a |b', 'a <!--  -->b'],
+])
+runs(insertFootnote, [['a claim|\n', 'a claim[^1]\n\n[^1]: ']])
+runs(italic, [
+  ['**[word]**', '***word***'],
+  ['[**word**]', '***word***'],
+  ['***[word]***', '**word**'],
+  ['[***word***]', '**word**'],
+  ['*[word]*', 'word'],
+])
+runs(marksAcross('**'), [
+  ['[one\ntwo\n\nthree]', '**one**\n**two**\n\n**three**'],
+  ['[- a\n- b]\n', '- **a**\n- **b**\n'],
+  ['[**a**\n\n**b**]', 'a\n\nb'],
+  ['x [a\n\nb] y', 'x **a**\n\n**b** y'],
+])
+ats(insertHorizontalRule, [[TABLE, TABLE.indexOf('2'), `${TABLE}\n\n---\n`]])
+ats(toggleTaskList, [['> - [ ] c', 8, '> c']])
+ats(toggleTask, [
+  ['- [ ] wash up', 10, '- [x] wash up'],
+  ['- [x] wash up', 10, '- [ ] wash up'],
+  ['- [🎉] wash up', 11, '- [ ] wash up'],
+])
+ats(tickTaskAtCaret, [
+  ['- [ ] wash up', 0, '- [x] wash up'],
+  ['- [x] wash up', 13, '- [ ] wash up'],
+  ['  - [ ] nested', 9, '  - [x] nested'],
+  ['- [ ] one\n- [ ] two', 12, '- [ ] one\n- [x] two'],
+])
+ats(insertFootnote, [
+  ['one[^1] two\n\n[^1]: first\n', 11, 'one[^1] two[^2]\n\n[^1]: first\n\n[^2]: '],
+  ['', 0, '[^1]\n\n[^1]: '],
+  ['a claim\n\n\n', 7, 'a claim[^1]\n\n[^1]: '],
+])
+ats(setCalloutSign('+'), [
+  [CALLOUT, 4, '> [!note]+ Mind the gap\n> and the step.\n'],
+  ['> [!note]- Mind the gap\n', 4, '> [!note]+ Mind the gap\n'],
+])
+ats(setCalloutSign('-'), [
+  [CALLOUT, 4, '> [!note]- Mind the gap\n> and the step.\n'],
+  [CALLOUT, CALLOUT.indexOf('step'), '> [!note]- Mind the gap\n> and the step.\n'],
+  ['> [!note]- Mind the gap\n', 4, '> [!note] Mind the gap\n'],
+  ['> [!tip]\n> Below it.\n', 4, '> [!tip]-\n> Below it.\n'],
+])
+ats(setHeading(2), [['- [ ] item', 8, '## item']])
+ats(indentItems, [
+  ['1. x\n2. y\n3. z', 6, '1. x\n   1. y\n3. z'],
+  ['10. x\n11. y', 7, '10. x\n    1. y'],
+  ['1. x\n- y', 6, '1. x\n   - y'],
+  ['- x\n- y', 5, '- x\n  - y'],
+  ['1. x\n   1. y\n2. z', 15, '1. x\n   1. y\n   2. z'],
+  ['> > - x\n> > - y', 13, '> > - x\n> >   - y'],
+  ['words', 1, '  words'],
+  ['```\n1. x\n2. y\n```', 11, '```\n1. x\n  2. y\n```'],
+  ['1. a\n2. b\n   - c', 6, '1. a\n   1. b\n      - c'],
+  ['- a\n- b\n  - c\n\n    more\n- d', 5, '- a\n  - b\n    - c\n\n      more\n- d'],
+  ['5. a', 1, '  5. a'],
+  ['> 1. a\n> 2. b', 10, '> 1. a\n>    1. b'],
+])
+ats(outdentItems, [
+  ['1. x\n   1. y', 8, '1. x\n2. y'],
+  ['- x\n    - y', 9, '- x\n- y'],
+  ['  words', 3, 'words'],
+  ['- a\n  - b\n    - c\n- d', 6, '- a\n- b\n  - c\n- d'],
+  ['> 1. a\n>    1. b', 14, '> 1. a\n> 2. b'],
+])
+ats(moveLineOver(1), [
+  [`a\n\n${SMALL}\n\nb`, 0, `${SMALL}\n\na\n\nb`],
+  [`a\n${SMALL}`, 0, `${SMALL}\n\na`],
+  ['a\nb', 0, 'b\na'],
+  [`a\nb\n\n${SMALL}`, 2, `a\n\n${SMALL}\n\nb`],
+])
+ats(moveLineOver(-1), [
+  [`b\n\n${SMALL}\n\na`, 23, `b\n\na\n\n${SMALL}`],
+  ['a\nb', 2, 'b\na'],
+  [`${SMALL}\n\na\nb`, SMALL.length + 2, `a\n\n${SMALL}\n\nb`],
+])
+selects(strong, [['[word\n]', [2, 6]]])
+selects(insertCodeFence, [
+  ['|', [3, 3]],
+  ['one |two', [8, 8]],
+  ['[one]', [3, 3]],
+])
+selects(insertCallout, [
+  ['one |two', [17, 17]],
+  ['|', [12, 12]],
+])
+selects(insertAiBlock, [['|', [6, 6]]])
+selects(insertMathBlock, [['[one]', [6, 6]]])
+selects(insertLink, [['x|', [4, 4]]])
+selects(selectWord, [
+  ['one tw|o three', [4, 7]],
+  ['one |- two', [4, 4]],
+])
+selects(closeFence, [['```|', [4, 4]]])
+selects(toggleTask, [['|', [6, 6]]])
+selects(insertComment, [['a |b', [7, 7]]])
+selects(insertFootnote, [['a claim|\n', [19, 19]]])
 
-function took(command: StateCommand, marked: string): boolean {
-  const { doc, from, to } = marks(marked)
-  return apply(command, doc, from, to).took
-}
+test.each<[string, StateCommand, string]>([
+  ['an already closed fence', closeFence, '```|\ncode\n```'],
+  ['a closing fence', closeFence, '```\ncode\n```|'],
+  ['away from the end of the line', closeFence, '``|`'],
+  ['an ordinary line', closeFence, 'just words|'],
+  ['a task in code', toggleTask, '```\n- [ ] still code|\n```'],
+  ['a line in code', toggleTask, '```py\nprint()|\n```'],
+  ['a heading', toggleTask, '# A heading|'],
+  ['a quote', toggleTask, '> quoted|'],
+  ['a box in code', tickTaskAtCaret, '```\n- [ ] still code|\n```'],
+  ['a sign outside a callout', setCalloutSign('-'), 'Plain |words.'],
+])('gives way on %s', (_what, command, marked) => {
+  expect(took(command, marked)).toBe(false)
+})
 
-function runSelection(command: StateCommand, marked: string): [number, number] {
-  const { doc, from, to } = marks(marked)
-  return apply(command, doc, from, to).selection
-}
-
-describe('a block that holds its lines', () => {
-  const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n| 5 | 6 |'
-
-  test('a block goes under a table, not under the row the caret is in', () => {
-    const said = apply(insertHorizontalRule, TABLE, TABLE.indexOf('2')).doc
-    expect(said).toBe(`${TABLE}\n\n---\n`)
+describe('over a range', () => {
+  test.each<[string, number, number, string, StateCommand]>([
+    [`words\n\n${TABLE}`, 0, 10, `words\n\n${TABLE}`, moveLineOver(1)],
+    [`words\n\n${TABLE}`, 0, 10, `words\n\n${TABLE}`, moveLineOver(-1)],
+    ['- a\n  - b\nc', 0, 11, '- a\n  - b\n- c', toggleBulletList],
+    ['- a\n  - [ ] b\n  - c', 0, 19, 'a\n  b\n  c', toggleBulletList],
+    ['a\nb\nc', 0, 4, '- a\n- b\nc', toggleBulletList],
+    ['a\nb\nc', 0, 2, '## a\nb\nc', setHeading(2)],
+    ['a\nb', 2, 2, 'a\n- b', toggleBulletList],
+    ['- [ ] task\n- [x] done', 0, 21, '1. [ ] task\n2. [x] done', toggleOrderedList],
+    ['| a | b |\n| --- | --- |', 2, 3, '| a | b |\n| --- | --- |', insertTable(1, 1)],
+    ['- [ ] one\n- [x] two', 0, 19, 'one\ntwo', toggleTaskList],
+    ['- [x] one\ntwo', 0, 13, '- [ ] one\n- [ ] two', toggleTaskList],
+    ['- [ ] one\n- [ ] two', 0, 19, '- [x] one\n- [x] two', toggleTask],
+    ['- [ ] one\ntwo', 0, 13, '- [x] one\n- [ ] two', toggleTask],
+    ['a claim here\n', 2, 7, 'a claim[^1] here\n\n[^1]: ', insertFootnote],
+    ['1. a\n2. b\n3. c', 6, 14, '1. a\n   1. b\n   2. c', indentItems],
+  ])('%j %i to %i', (doc, from, to, wanted, command) => {
+    expect(apply(command, doc, from, to).doc).toBe(wanted)
   })
 
-  test('and under a fence, whatever line of it the caret is on', () => {
-    expect(run(insertHorizontalRule, '```\nco|de\nmore\n```\nb')).toBe(
-      '```\ncode\nmore\n```\n\n---\n\nb',
+  test('a rule goes under maths', () => {
+    expect(apply(insertHorizontalRule, '$$\na\nb\n$$', 4, 4, NOTE).doc).toBe(
+      '$$\na\nb\n$$\n\n---\n',
     )
   })
 
-  test('and under maths', () => {
-    const state = parsed(
-      EditorState.create({
-        doc: '$$\na\nb\n$$',
-        selection: EditorSelection.cursor(4),
-        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
-      }),
-    )
-    let next = state
-    insertHorizontalRule({ state, dispatch: (one: Transaction) => (next = one.state) })
-    expect(next.doc.toString()).toBe('$$\na\nb\n$$\n\n---\n')
-  })
-
-  test('and under a quote, which a line of it does not end', () => {
-    expect(run(insertHorizontalRule, '> on|e\n> two\n\nb')).toBe('> one\n> two\n\n---\n\n\nb')
-  })
-
-  test('a line moved with part of a table selected goes nowhere', () => {
-    const doc = `words\n\n${TABLE}`
-    const to = doc.indexOf('| a') + 3
-    expect(apply(moveLineOver(1), doc, 0, to).doc).toBe(doc)
-    expect(apply(moveLineOver(-1), doc, 0, to).doc).toBe(doc)
-  })
-})
-
-describe('inline wrapping', () => {
-  const strong = toggleWrap('**')
-
-  test('wraps a selection', () => {
-    expect(run(strong, 'a [word] b')).toBe('a **word** b')
-  })
-
-  test('unwraps when the markers are outside the selection', () => {
-    expect(run(strong, 'a **[word]** b')).toBe('a word b')
-  })
-
-  test('unwraps when the markers are inside the selection', () => {
-    expect(run(strong, 'a [**word**] b')).toBe('a word b')
-  })
-
-  test('inserts empty markers at a caret', () => {
-    expect(run(strong, 'a |b')).toBe('a ****b')
-  })
-
-  test('handles asymmetric markers', () => {
-    expect(run(toggleWrap('<u>', '</u>'), '[x]')).toBe('<u>x</u>')
-  })
-
-  test('leaves the space and the line break at either edge outside the markers', () => {
-    expect(run(strong, '[word\n]')).toBe('**word**\n')
-    expect(run(strong, 'a[ word ]b')).toBe('a **word** b')
-  })
-
-  test('and takes the markers off again over the same selection', () => {
-    expect(run(strong, '[**word**\n]')).toBe('word\n')
-  })
-
-  test('and keeps what was selected selected, inside the markers', () => {
-    expect(runSelection(strong, '[word\n]')).toEqual([2, 6])
-  })
-
-  test('but a selection of nothing but space is wrapped as it is', () => {
-    expect(run(strong, 'a[ ]b')).toBe('a** **b')
-  })
-})
-
-describe('headings', () => {
-  test('applies a level', () => {
-    expect(run(setHeading(2), '|Title')).toBe('## Title')
-  })
-
-  test('replaces an existing level', () => {
-    expect(run(setHeading(3), '# |Title')).toBe('### Title')
-  })
-
-  test('level zero returns to a paragraph', () => {
-    expect(run(setHeading(0), '### |Title')).toBe('Title')
-  })
-
-  test('the level a line already is turns it back into a paragraph', () => {
-    expect(run(setHeading(2), '## |Title')).toBe('Title')
-    expect(run(setHeading(1), '# |Title')).toBe('Title')
-    expect(run(setHeading(6), '###### |Title')).toBe('Title')
-  })
-
-  test('while another level replaces it, as before', () => {
-    expect(run(setHeading(2), '### |Title')).toBe('## Title')
-  })
-
-  test('over several lines, all of them or none', () => {
-    expect(run(setHeading(2), '[## One\nTwo]')).toBe('## One\n## Two')
-    expect(run(setHeading(2), '[## One\n## Two]')).toBe('One\nTwo')
-  })
-
-  test('raises and lowers the level', () => {
-    expect(run(shiftHeading(1), '## |Title')).toBe('### Title')
-    expect(run(shiftHeading(-1), '## |Title')).toBe('# Title')
-  })
-
-  test('never goes past the ends of the scale', () => {
-    expect(run(shiftHeading(1), '###### |Title')).toBe('###### Title')
-    expect(run(shiftHeading(-1), '|Title')).toBe('Title')
-  })
-})
-
-describe('line prefixes', () => {
-  test('quotes and unquotes', () => {
-    expect(run(toggleQuote, '|text')).toBe('> text')
-    expect(run(toggleQuote, '> |text')).toBe('text')
-  })
-
-  test('toggles a bullet list', () => {
-    expect(run(toggleBulletList, '|item')).toBe('- item')
-    expect(run(toggleBulletList, '- |item')).toBe('item')
-  })
-
-  test('keeps a nested bullet nested when the list is made over it', () => {
-    const doc = '- a\n  - b\nc'
-    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n  - b\n- c')
-  })
-
-  test('takes off a nested bullet and a task box without the indent', () => {
-    const doc = '- a\n  - [ ] b\n  - c'
-    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n  b\n  c')
-  })
-
-  test('leaves the line a selection ends in front of', () => {
-    expect(apply(toggleBulletList, 'a\nb\nc', 0, 4).doc).toBe('- a\n- b\nc')
-    expect(apply(setHeading(2), 'a\nb\nc', 0, 2).doc).toBe('## a\nb\nc')
-    expect(apply(toggleBulletList, 'a\nb', 2).doc).toBe('a\n- b')
-  })
-
-  test('numbers an ordered list across lines', () => {
-    expect(run(toggleOrderedList, '[one\ntwo\nthree]')).toBe('1. one\n2. two\n3. three')
-  })
-
-  test('converts a bullet list to an ordered one', () => {
-    expect(run(toggleOrderedList, '[- one\n- two]')).toBe('1. one\n2. two')
-  })
-
-  test('keeps the checkboxes and the nesting of the list it numbers', () => {
-    const tasks = '- [ ] task\n- [x] done'
-    expect(apply(toggleOrderedList, tasks, 0, tasks.length).doc).toBe('1. [ ] task\n2. [x] done')
-    expect(run(toggleOrderedList, '[- a\n   - x\n   - y\n- b\nc]')).toBe(
-      '1. a\n   1. x\n   2. y\n2. b\n3. c',
-    )
-    expect(run(toggleOrderedList, '[1. a\n   1. x\n2. b]')).toBe('a\n   x\nb')
-  })
-
-  test('turns a numbered list into bullets instead of putting bullets before the numbers', () => {
-    expect(run(toggleBulletList, '[1. one\n2. two]')).toBe('- one\n- two')
-    expect(run(toggleBulletList, '[1. a\n   2. x]')).toBe('- a\n   - x')
-  })
-})
-
-describe('blocks', () => {
-  test('inserts a code fence with the caret inside', () => {
-    expect(run(insertCodeFence, '|')).toBe('```\n\n```')
-    expect(runSelection(insertCodeFence, '|')).toEqual([3, 3])
-  })
-
-  test('fences a selection of three hundred thousand lines, one fence longer than any inside', () => {
-    const lines = Array.from({ length: 300_000 }, (_, at) => (at === 7 ? '````' : 'x'))
-    const doc = lines.join('\n')
+  test('fences three hundred thousand lines, one fence longer than any inside', () => {
+    const doc = Array.from({ length: 300_000 }, (_, at) => (at === 7 ? '````' : 'x')).join('\n')
     const fenced = apply(insertCodeFence, doc, 0, doc.length).doc
     expect(fenced).toContain('`````\nx\nx')
     expect(fenced.trimEnd().endsWith('x\n`````')).toBe(true)
   })
 
-  test('inserts a math block', () => {
-    expect(run(insertMathBlock, '|')).toBe('$$\n\n$$')
+  test('a table row gives way to a task', () => {
+    const table = '| a | b |\n| - | - |\n| 1 | 2 |'
+    expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
   })
 
-  test('inserts a table with a header and divider', () => {
-    expect(run(insertTable(1, 2), '|')).toBe(
-      '| Column 1 | Column 2 |\n| --- | --- |\n|     |     |',
-    )
-  })
-
-  test('starts a block on its own line', () => {
-    expect(run(insertCodeFence, 'text|')).toBe('text\n```\n\n```')
-  })
-
-  test('ends a block on its own line where words follow', () => {
-    expect(run(insertCodeFence, 'one |two\nthree')).toBe('one \n```\n\n```\ntwo\nthree')
-    expect(run(insertMathBlock, 'one |two')).toBe('one \n$$\n\n$$\ntwo')
-    expect(run(insertTable(1, 1), 'one |two')).toBe('one \n\n| Column 1 |\n| --- |\n|     |\n\ntwo')
-    expect(run(insertCodeFence, '|two')).toBe('```\n\n```\ntwo')
-  })
-
-  test('sets a rule apart from the words above it', () => {
-    expect(run(insertHorizontalRule, '[words]')).toBe('words\n\n---\n')
-    expect(run(insertHorizontalRule, 'words|')).toBe('words\n\n---\n')
-    expect(run(insertHorizontalRule, 'words\n|')).toBe('words\n\n---\n')
-    expect(run(insertHorizontalRule, 'words\n\n|')).toBe('words\n\n---\n')
-    expect(run(insertHorizontalRule, '|')).toBe('---\n')
-  })
-
-  test('goes below a line of structure rather than splitting it', () => {
-    expect(run(insertCodeFence, '- [item]\n- two')).toBe('- item\n```\n\n```\n- two')
-    expect(run(insertCodeFence, '> [quoted]')).toBe('> quoted\n```\n\n```')
-    expect(run(insertCodeFence, '# [Title]\nwords')).toBe('# Title\n```\n\n```\nwords')
-    expect(run(insertMathBlock, '1. it[em] b')).toBe('1. item b\n$$\n\n$$')
-    expect(run(insertCodeFence, '- it|em')).toBe('- item\n```\n\n```')
-    expect(run(insertCallout, '- [item]')).toBe('- item\n> [!NOTE]\n> ')
-  })
-
-  test('still wraps such lines selected whole', () => {
-    expect(run(insertCodeFence, '[- one\n- two]')).toBe('```\n- one\n- two\n```')
-  })
-
-  test('closes a callout with a blank line where words follow', () => {
-    expect(run(insertCallout, '[hello] world')).toBe('> [!NOTE]\n> hello\n\n world')
-    expect(run(insertCallout, 'one |two')).toBe('one \n> [!NOTE]\n> \n\ntwo')
-    expect(run(insertCallout, '[hello]\n\nnext')).toBe('> [!NOTE]\n> hello\n\nnext')
-    expect(runSelection(insertCallout, 'one |two')).toEqual([17, 17])
-  })
-
-  test('sets a table apart from the words round it', () => {
-    expect(run(insertTable(1, 1), 'he [llo] world')).toBe(
-      'he llo\n\n| Column 1 |\n| --- |\n|     |\n\n world',
-    )
-    expect(run(insertTable(1, 1), '[words]\nnext')).toBe(
-      'words\n\n| Column 1 |\n| --- |\n|     |\n\nnext',
-    )
-    expect(run(insertTable(1, 1), 'above\n|')).toBe('above\n\n| Column 1 |\n| --- |\n|     |')
-  })
-
-  test('does not put a table inside a table', () => {
-    const inside = '| a | b |\n| --- | --- |'
-    expect(apply(insertTable(1, 1), inside, 2, 3).doc).toBe(inside)
-  })
-
-  test('puts the caret of an AI block on its empty line', () => {
-    expect(run(insertAiBlock, '|')).toBe('```ai\n\n```\n')
-    expect(runSelection(insertAiBlock, '|')).toEqual([6, 6])
-  })
-
-  test('adds no second line break to a block that ends in one', () => {
-    expect(run(insertToc, 'one |two')).toBe('one \n[toc]\ntwo')
-  })
-
-  test('keeps the caret inside the block', () => {
-    expect(runSelection(insertCodeFence, 'one |two')).toEqual([8, 8])
-  })
-
-  test('wraps the lines selected in a fence, a math block or a callout', () => {
-    expect(run(insertCodeFence, '[one\ntwo]\nthree')).toBe('```\none\ntwo\n```\nthree')
-    expect(run(insertMathBlock, '[one\ntwo]\nthree')).toBe('$$\none\ntwo\n$$\nthree')
-    expect(run(insertCallout, '[one\ntwo]\nthree')).toBe('> [!NOTE]\n> one\n> two\n\nthree')
-  })
-
-  test('wraps a word on its own lines, with what was round it on theirs', () => {
-    expect(run(insertCodeFence, 'a [word] b')).toBe('a \n```\nword\n```\n b')
-  })
-
-  test('leaves the line break that ends a selection of whole lines outside the block', () => {
-    expect(run(insertCodeFence, '[one\n]two')).toBe('```\none\n```\ntwo')
-  })
-
-  test('puts the caret where the language goes on a fence, and after the words otherwise', () => {
-    expect(runSelection(insertCodeFence, '[one]')).toEqual([3, 3])
-    expect(runSelection(insertMathBlock, '[one]')).toEqual([6, 6])
-  })
-
-  test('fences a selection that holds a fence with a longer one', () => {
-    expect(run(insertCodeFence, '[```\nx\n```]')).toBe('````\n```\nx\n```\n````')
-  })
-
-  test('keeps the words of a selection a block has no room for', () => {
-    expect(run(insertTable(1, 1), '[one\ntwo]\nthree')).toBe(
-      'one\ntwo\n\n| Column 1 |\n| --- |\n|     |\n\nthree',
-    )
-    expect(run(insertToc, 'a [word] b')).toBe('a word\n[toc]\n b')
-  })
-})
-
-describe('links', () => {
-  test('wraps the selection and parks the caret in the target', () => {
-    expect(run(insertLink, '[label]')).toBe('[label]()')
-  })
-
-  test('leaves the caret between the parentheses', () => {
-    const [from] = runSelection(insertLink, 'x|')
-    expect(from).toBe('x[]('.length)
-  })
-})
-
-describe('clear formatting', () => {
-  test('removes inline markers from the selection', () => {
-    expect(run(clearFormatting, '[**a** *b* ~~c~~ ==d== `e`]')).toBe('a b c d e')
-  })
-
-  test('leaves text outside the selection alone', () => {
-    expect(run(clearFormatting, '**keep** [**drop**]')).toBe('**keep** drop')
-  })
-
-  test('keeps the underscores inside a word', () => {
-    expect(run(clearFormatting, '[see my_file_name.txt and __b__ _i_]')).toBe(
-      'see my_file_name.txt and b i',
-    )
-  })
-})
-
-describe('select word', () => {
-  test('grows the selection to the word under the caret', () => {
-    expect(runSelection(selectWord, 'one tw|o three')).toEqual([4, 7])
-  })
-
-  test('collapses on punctuation', () => {
-    expect(runSelection(selectWord, 'one |- two')).toEqual([4, 4])
-  })
-})
-
-describe('pressing Enter after a code fence', () => {
-  function press(marked: string): { took: boolean; doc: string } {
-    const caret = marked.indexOf('|')
-    const doc = marked.replace(/\|/g, '')
-    const state = parsed(
-      EditorState.create({
-        doc,
-        selection: EditorSelection.cursor(caret),
-        extensions: [markdown({ base: markdownLanguage })],
-      }),
-    )
-
-    let next = state
-    const took = closeFence({
-      state,
-      dispatch: (transaction: Transaction) => (next = transaction.state),
-    })
-    return { took, doc: next.doc.toString() }
-  }
-
-  test('closes the fence and puts the caret inside it', () => {
-    expect(press('```|')).toEqual({ took: true, doc: '```\n\n```' })
-    expect(runSelection(closeFence, '```|')).toEqual([4, 4])
-  })
-
-  test('keeps the language', () => {
-    expect(press('```ts|').doc).toBe('```ts\n\n```')
-  })
-
-  test('keeps what follows outside the block', () => {
-    expect(press('```|\nmore text').doc).toBe('```\n\n```\nmore text')
-  })
-
-  test('closes tildes with tildes, and as many of them', () => {
-    expect(press('~~~~|').doc).toBe('~~~~\n\n~~~~')
-  })
-
-  test('leaves a fence that is already closed alone', () => {
-    expect(press('```|\ncode\n```').took).toBe(false)
-  })
-
-  test('leaves a closing fence alone', () => {
-    expect(press('```\ncode\n```|').took).toBe(false)
-  })
-
-  test('does nothing away from the end of the line', () => {
-    expect(press('``|`').took).toBe(false)
-  })
-
-  test('does nothing on an ordinary line', () => {
-    expect(press('just words|').took).toBe(false)
-  })
-})
-
-describe('a task list', () => {
-  test('makes plain lines into tasks', () => {
-    expect(run(toggleTaskList, '[one\ntwo]')).toBe('- [ ] one\n- [ ] two')
-  })
-
-  test('trades a bullet for a box and keeps the indentation', () => {
-    expect(run(toggleTaskList, '  - |one')).toBe('  - [ ] one')
-  })
-
-  test('trades a number for a box', () => {
-    expect(run(toggleTaskList, '1. |one')).toBe('- [ ] one')
-  })
-
-  test('takes the tasks off again when every line is one', () => {
-    const doc = '- [ ] one\n- [x] two'
-    expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('one\ntwo')
-  })
-
-  test('puts the box inside a quote, and takes it off again', () => {
-    expect(run(toggleTaskList, '> |c')).toBe('> - [ ] c')
-    expect(at(toggleTaskList, '> - [ ] c', 8)).toBe('> c')
-    expect(run(toggleTaskList, '> > - |c')).toBe('> > - [ ] c')
-  })
-
-  test('makes tasks of every line when only some of them are', () => {
-    const doc = '- [x] one\ntwo'
-    expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('- [ ] one\n- [ ] two')
-  })
-})
-
-describe('ticking the task under the caret', () => {
-  test('ticks an empty box', () => {
-    expect(apply(toggleTask, '- [ ] wash up', 10).doc).toBe('- [x] wash up')
-  })
-
-  test('clears a ticked one', () => {
-    expect(apply(toggleTask, '- [x] wash up', 10).doc).toBe('- [ ] wash up')
-  })
-
-  test('unticks a box holding an emoji whole', () => {
-    expect(apply(toggleTask, '- [🎉] wash up', 11).doc).toBe('- [ ] wash up')
-  })
-
-  test('ticks every task in the selection', () => {
-    const doc = '- [ ] one\n- [ ] two'
-    expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [x] two')
-  })
-
-  test('makes a task of words, a bullet, a number or an empty line', () => {
-    expect(run(toggleTask, 'just words|')).toBe('- [ ] just words')
-    expect(run(toggleTask, '  - a bullet|')).toBe('  - [ ] a bullet')
-    expect(run(toggleTask, '1. a number|')).toBe('- [ ] a number')
-    expect(run(toggleTask, '|')).toBe('- [ ] ')
-    expect(runSelection(toggleTask, '|')).toEqual([6, 6])
+  test('closing a fence says it took', () => {
+    expect(took(closeFence, '```|')).toBe(true)
   })
 
   test('ticks the task it has just made on the next press', () => {
     const first = apply(toggleTask, 'milk', 4)
-    expect(apply(toggleTask, first.doc, first.selection[0]).doc).toBe('- [x] milk')
+    expect(apply(toggleTask, first.doc, first.selection[0]!).doc).toBe('- [x] milk')
   })
 
-  test('makes tasks and ticks them line by line over a selection', () => {
-    const doc = '- [ ] one\ntwo'
-    expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [ ] two')
-  })
-
-  test('gives way in code, a heading, a quote and a table', () => {
-    expect(took(toggleTask, '```\n- [ ] still code|\n```')).toBe(false)
-    expect(took(toggleTask, '```py\nprint()|\n```')).toBe(false)
-    expect(took(toggleTask, '# A heading|')).toBe(false)
-    expect(took(toggleTask, '> quoted|')).toBe(false)
-    const table = '| a | b |\n| - | - |\n| 1 | 2 |'
-    expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
-  })
-})
-
-describe('ticking the task the caret is on, and nothing else', () => {
-  test('ticks an empty box and clears a ticked one, wherever on the line the caret is', () => {
-    expect(apply(tickTaskAtCaret, '- [ ] wash up', 0).doc).toBe('- [x] wash up')
-    expect(apply(tickTaskAtCaret, '- [x] wash up', 13).doc).toBe('- [ ] wash up')
-    expect(apply(tickTaskAtCaret, '  - [ ] nested', 9).doc).toBe('  - [x] nested')
-  })
-
-  test('only the line the caret is on', () => {
-    expect(apply(tickTaskAtCaret, '- [ ] one\n- [ ] two', 12).doc).toBe('- [ ] one\n- [x] two')
-  })
-
-  test('leaves a line that is not a task alone, and says so', () => {
+  test('the caret ticks no line that is not a task, and says so', () => {
     for (const doc of ['just words', '- a bullet', '1. a number', '']) {
-      const done = apply(tickTaskAtCaret, doc, doc.length)
-      expect(done.took, doc).toBe(false)
-      expect(done.doc).toBe(doc)
+      expect(apply(tickTaskAtCaret, doc, doc.length), doc).toMatchObject({ took: false, doc })
     }
+    expect(apply(tickTaskAtCaret, '- [ ] one\n- [ ] two', 0, 19).took).toBe(false)
   })
 
-  test('gives way in code, where a box is not a box', () => {
-    expect(took(tickTaskAtCaret, '```\n- [ ] still code|\n```')).toBe(false)
-  })
-
-  test('leaves a selection over more than one line alone', () => {
-    const doc = '- [ ] one\n- [ ] two'
-    expect(apply(tickTaskAtCaret, doc, 0, doc.length).took).toBe(false)
-  })
-})
-
-describe('the blocks a menu row inserts', () => {
-  test('a callout is the alert the renderer draws, ready to be written in', () => {
-    expect(run(insertCallout, '|')).toBe('> [!NOTE]\n> ')
-    expect(runSelection(insertCallout, '|')).toEqual([12, 12])
-  })
-
-  test('a table of contents is a line of its own', () => {
-    expect(run(insertToc, 'words\n|')).toBe('words\n[toc]\n')
-  })
-
-  test('a comment wraps what is selected, and unwraps it again', () => {
-    expect(run(insertComment, 'a [word] b')).toBe('a <!-- word --> b')
-    expect(run(insertComment, 'a [<!-- word -->] b')).toBe('a word b')
-  })
-
-  test('a comment with nothing selected leaves the caret inside it', () => {
-    expect(run(insertComment, 'a |b')).toBe('a <!--  -->b')
-    expect(runSelection(insertComment, 'a |b')).toEqual([7, 7])
-  })
-})
-
-describe('a footnote', () => {
-  test('marks the caret and puts its definition at the end of the note', () => {
-    expect(run(insertFootnote, 'a claim|\n')).toBe('a claim[^1]\n\n[^1]: ')
-  })
-
-  test('leaves the caret in the definition, ready to write it', () => {
-    expect(runSelection(insertFootnote, 'a claim|\n')).toEqual([19, 19])
-  })
-
-  test('takes the next number the note is not already using', () => {
-    expect(apply(insertFootnote, 'one[^1] two\n\n[^1]: first\n', 11).doc).toBe(
-      'one[^1] two[^2]\n\n[^1]: first\n\n[^2]: ',
-    )
-  })
-
-  test('in an empty note is a mark and the definition under it', () => {
-    expect(apply(insertFootnote, '', 0).doc).toBe('[^1]\n\n[^1]: ')
-  })
-
-  test('goes under the last of the words rather than under the blank lines', () => {
-    expect(apply(insertFootnote, 'a claim\n\n\n', 7).doc).toBe('a claim[^1]\n\n[^1]: ')
-  })
-
-  test('never replaces what is selected: a footnote is added to it', () => {
-    expect(apply(insertFootnote, 'a claim here\n', 2, 7).doc).toBe('a claim[^1] here\n\n[^1]: ')
-  })
-})
-
-describe('a callout is asked to fold', () => {
-  const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'
-
-  test('says nothing about folding until it is asked', () => {
-    expect(calloutSign(stateOf(CALLOUT, 4))).toBe('')
-    expect(run(insertCallout, '|')).toBe('> [!NOTE]\n> ')
-  })
-
-  test('and nothing at all where the caret is not in one', () => {
-    expect(calloutSign(stateOf('Plain words.\n', 3))).toBeNull()
-    expect(calloutSign(stateOf('> A plain quote\n', 5))).toBeNull()
-    expect(took(setCalloutSign('-'), 'Plain |words.')).toBe(false)
-  })
-
-  test('takes the sign after the brackets, where Obsidian writes it', () => {
-    expect(at(setCalloutSign('+'), CALLOUT, 4)).toBe('> [!note]+ Mind the gap\n> and the step.\n')
-    expect(at(setCalloutSign('-'), CALLOUT, 4)).toBe('> [!note]- Mind the gap\n> and the step.\n')
-  })
-
-  test('from a caret anywhere in the callout, not only on its first line', () => {
-    expect(at(setCalloutSign('-'), CALLOUT, CALLOUT.indexOf('step'))).toBe(
-      '> [!note]- Mind the gap\n> and the step.\n',
-    )
-  })
-
-  test('asked for the sign it already has, takes it off again', () => {
-    const folded = '> [!note]- Mind the gap\n'
-    expect(at(setCalloutSign('-'), folded, 4)).toBe('> [!note] Mind the gap\n')
-    expect(calloutSign(stateOf(folded, 4))).toBe('-')
-  })
-
-  test('and asked for the other one, trades it', () => {
-    expect(at(setCalloutSign('+'), '> [!note]- Mind the gap\n', 4)).toBe(
-      '> [!note]+ Mind the gap\n',
-    )
-    expect(calloutSign(stateOf('> [!note]+ Mind the gap\n', 4))).toBe('+')
-  })
-
-  test('leaves a callout with no title of its own a callout with no title', () => {
-    expect(at(setCalloutSign('-'), '> [!tip]\n> Below it.\n', 4)).toBe('> [!tip]-\n> Below it.\n')
-  })
-})
-
-describe('italic over a word that is bold', () => {
-  const italic = toggleWrap('*')
-  const bold = toggleWrap('**')
-
-  test('adds to the marks rather than taking a star of them', () => {
-    expect(run(italic, '**[word]**')).toBe('***word***')
-    expect(run(italic, '[**word**]')).toBe('***word***')
-  })
-
-  test('comes back off', () => {
-    expect(run(italic, '***[word]***')).toBe('**word**')
-    expect(run(italic, '[***word***]')).toBe('**word**')
-    expect(run(italic, '*[word]*')).toBe('word')
-    expect(run(bold, '***[word]***')).toBe('*word*')
-    expect(run(bold, '*[word]*')).toBe('***word***')
-  })
-})
-
-describe('marks across blocks', () => {
-  const bold = marksAcross('**')
-
-  test('go on each paragraph, since a run ends with its block', () => {
-    expect(run(bold, '[one\ntwo\n\nthree]')).toBe('**one**\n**two**\n\n**three**')
-  })
-
-  test('go inside each item', () => {
-    expect(run(bold, '[- a\n- b]\n')).toBe('- **a**\n- **b**\n')
-  })
-
-  test('come off again, and a selection starts where it starts', () => {
-    expect(run(bold, '[**a**\n\n**b**]')).toBe('a\n\nb')
-    expect(run(bold, 'x [a\n\nb] y')).toBe('x **a**\n\n**b** y')
-  })
-})
-
-describe('a heading over a list item', () => {
-  test('trades the marker rather than standing in front of it', () => {
-    expect(run(setHeading(2), '- ite|m')).toBe('## item')
-    expect(run(setHeading(2), '1. ite|m')).toBe('## item')
-    expect(at(setHeading(2), '- [ ] item', 8)).toBe('## item')
-  })
-})
-
-describe('clear formatting over code', () => {
-  test('leaves a fence as it is', () => {
-    const doc = '```\n**b** `c`\n```'
-    expect(apply(clearFormatting, `a **b**\n\n${doc}`, 0, doc.length + 9).doc).toBe(`a b\n\n${doc}`)
-  })
-
-  test("takes a code span's marks and none of what it holds", () => {
-    expect(run(clearFormatting, '[`**b**` **c**]')).toBe('**b** c')
-  })
-})
-
-describe('Tab on a list item', () => {
-  test('under a number goes as far as the words above it', () => {
-    expect(at(indentItems, '1. x\n2. y\n3. z', 6)).toBe('1. x\n   1. y\n3. z')
-    expect(at(indentItems, '10. x\n11. y', 7)).toBe('10. x\n    1. y')
-    expect(at(indentItems, '1. x\n- y', 6)).toBe('1. x\n   - y')
-  })
-
-  test('under a bullet is what it always was', () => {
-    expect(at(indentItems, '- x\n- y', 5)).toBe('- x\n  - y')
-  })
-
-  test('continues a list nested already', () => {
-    expect(at(indentItems, '1. x\n   1. y\n2. z', 15)).toBe('1. x\n   1. y\n   2. z')
-  })
-
-  test('back out goes where it came from, and counts on', () => {
-    expect(at(outdentItems, '1. x\n   1. y', 8)).toBe('1. x\n2. y')
-    expect(at(outdentItems, '- x\n    - y', 9)).toBe('- x\n- y')
-  })
-
-  test('inside quotes keeps the quotes, and a line quoted 28 deep costs no time', () => {
-    expect(at(indentItems, '> > - x\n> > - y', 13)).toBe('> > - x\n> >   - y')
+  test('a line quoted 28 deep costs no time', () => {
     const deep = `${'> '.repeat(28)}x`
     const started = Date.now()
     expect(at(indentItems, `${deep}\n${deep}`, deep.length + 3)).toBe(`${deep}\n  ${deep}`)
     expect(Date.now() - started).toBeLessThan(5000)
   })
 
-  test('leaves words and code to the plain indent', () => {
-    expect(at(indentItems, 'words', 1)).toBe('  words')
-    expect(at(outdentItems, '  words', 3)).toBe('words')
-    expect(at(indentItems, '```\n1. x\n2. y\n```', 11)).toBe('```\n1. x\n  2. y\n```')
+  test('a line moved past a table takes the caret with it', () => {
+    const moved = apply(moveLineOver(1), `ab\n\n${SMALL}`, 1)
+    expect(moved.selection).toEqual([SMALL.length + 3, SMALL.length + 3])
+  })
+
+  test('clear formatting leaves a fence as it is', () => {
+    const doc = '```\n**b** `c`\n```'
+    expect(apply(clearFormatting, `a **b**\n\n${doc}`, 0, doc.length + 9).doc).toBe(`a b\n\n${doc}`)
   })
 })
 
-describe('moving a line past a table', () => {
-  const TABLE = '| x |\n| - |\n| 1 |'
-
-  test('going down steps over it whole', () => {
-    expect(at(moveLineOver(1), `a\n\n${TABLE}\n\nb`, 0)).toBe(`${TABLE}\n\na\n\nb`)
-    expect(at(moveLineOver(1), `a\n${TABLE}`, 0)).toBe(`${TABLE}\n\na`)
+describe('a callout is asked to fold', () => {
+  test('says nothing about folding until it is asked', () => {
+    expect(calloutSign(stateOf(CALLOUT, 4))).toBe('')
+    expect(calloutSign(stateOf('> [!note]- Mind the gap\n', 4))).toBe('-')
+    expect(calloutSign(stateOf('> [!note]+ Mind the gap\n', 4))).toBe('+')
   })
 
-  test('going up steps over it whole', () => {
-    expect(at(moveLineOver(-1), `b\n\n${TABLE}\n\na`, 20 + 3)).toBe(`b\n\na\n\n${TABLE}`)
-  })
-
-  test('takes the caret with it', () => {
-    const moved = apply(moveLineOver(1), `ab\n\n${TABLE}`, 1)
-    expect(moved.selection).toEqual([TABLE.length + 3, TABLE.length + 3])
-  })
-
-  test('leaves any other line to the library', () => {
-    expect(at(moveLineOver(1), 'a\nb', 0)).toBe('b\na')
-    expect(at(moveLineOver(-1), 'a\nb', 2)).toBe('b\na')
-  })
-})
-
-describe('a block inserted in the middle of a line', () => {
-  test('a table keeps the words on either side and is a table', () => {
-    expect(run(insertTable(1, 1), 'abc |def')).toBe('abc \n\n| Column 1 |\n| --- |\n|     |\n\ndef')
-  })
-
-  test('keeps what was selected', () => {
-    expect(run(insertTable(1, 1), '[words]')).toBe('words\n\n| Column 1 |\n| --- |\n|     |')
-  })
-
-  test('a rule writes its own line break', () => {
-    expect(run(insertHorizontalRule, 'a|b')).toBe('a\n\n---\nb')
+  test('and nothing at all where the caret is not in one', () => {
+    expect(calloutSign(stateOf('Plain words.\n', 3))).toBeNull()
+    expect(calloutSign(stateOf('> A plain quote\n', 5))).toBeNull()
   })
 })
 
 describe('marks over a selection that holds what is not words', () => {
-  const across = (doc: string, mark = '**') => {
-    const state = parsed(
-      EditorState.create({
-        doc,
-        selection: EditorSelection.range(0, doc.length),
-        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
-      }),
-    )
-    let next = state
-    marksAcross(mark)({ state, dispatch: (one: Transaction) => (next = one.state) })
-    return next.doc.toString()
-  }
+  const across = (doc: string, mark = '**') =>
+    apply(marksAcross(mark), doc, 0, doc.length, NOTE).doc
 
   test.each([
     ['front matter', '---\ntitle: x\n---\n\npara', '---\ntitle: x\n---\n\n**para**'],
@@ -828,68 +439,16 @@ describe('marks over a selection that holds what is not words', () => {
     ['a link definition', 'a\n\n[x]: http://u\n\nb', '**a**\n\n[x]: http://u\n\n**b**'],
     ['a fence', 'a\n\n```\ncode\n```\n\nb', '**a**\n\n```\ncode\n```\n\n**b**'],
     ['a block name', 'a ^abc123\n\nb\n\n^own', '**a** ^abc123\n\n**b**\n\n^own'],
+    ['front matter alone', '---\ntitle: x\n---', '---\ntitle: x\n---'],
+    ['soft lines as one run', 'one\ntwo', '**one\ntwo**'],
+    ['soft lines as one run off', '**one\ntwo**', 'one\ntwo'],
   ])('leaves %s as it is', (_what, doc, wanted) => {
     expect(across(doc)).toBe(wanted)
-  })
-
-  test('front matter with nothing after it, and soft lines stay one run', () => {
-    expect(across('---\ntitle: x\n---')).toBe('---\ntitle: x\n---')
-    expect(across('one\ntwo')).toBe('**one\ntwo**')
-    expect(across('**one\ntwo**')).toBe('one\ntwo')
   })
 
   test('italic over bold paragraphs adds to them, and comes off', () => {
     expect(across('**a**\n\n**b**', '*')).toBe('***a***\n\n***b***')
     expect(across('***a***\n\n***b***', '*')).toBe('**a**\n\n**b**')
     expect(across('*a*\n\n*b*', '*')).toBe('a\n\nb')
-  })
-
-  test('toggling one line leaves its name out of the marks', () => {
-    expect(run(toggleWrap('**'), '[a ^abc123]')).toBe('**a** ^abc123')
-  })
-})
-
-describe('a table with something after it', () => {
-  test('keeps a blank line, or the next line is a row', () => {
-    expect(run(insertTable(1, 1), 'abc|\nnext')).toBe(
-      'abc\n\n| Column 1 |\n| --- |\n|     |\n\nnext',
-    )
-    expect(run(insertTable(1, 1), '|\nnext')).toBe('| Column 1 |\n| --- |\n|     |\n\nnext')
-    expect(run(insertTable(1, 1), 'above\n|')).toBe('above\n\n| Column 1 |\n| --- |\n|     |')
-  })
-})
-
-describe('Tab with what hangs under an item', () => {
-  test('children go with their parent', () => {
-    expect(at(indentItems, '1. a\n2. b\n   - c', 6)).toBe('1. a\n   1. b\n      - c')
-    expect(at(indentItems, '- a\n- b\n  - c\n\n    more\n- d', 5)).toBe(
-      '- a\n  - b\n    - c\n\n      more\n- d',
-    )
-    expect(at(outdentItems, '- a\n  - b\n    - c\n- d', 6)).toBe('- a\n- b\n  - c\n- d')
-  })
-
-  test('a selection counts on', () => {
-    expect(apply(indentItems, '1. a\n2. b\n3. c', 6, 14).doc).toBe('1. a\n   1. b\n   2. c')
-  })
-
-  test('a first item keeps its number', () => {
-    expect(at(indentItems, '5. a', 1)).toBe('  5. a')
-  })
-
-  test('in a quote stays in the quote', () => {
-    expect(at(indentItems, '> 1. a\n> 2. b', 10)).toBe('> 1. a\n>    1. b')
-    expect(at(outdentItems, '> 1. a\n>    1. b', 14)).toBe('> 1. a\n> 2. b')
-  })
-})
-
-describe('moving a line past a table, with a line beside it', () => {
-  const TABLE = '| x |\n| - |\n| 1 |'
-
-  test('going up, the line under it is not left to be a row', () => {
-    expect(at(moveLineOver(-1), `${TABLE}\n\na\nb`, TABLE.length + 2)).toBe(`a\n\n${TABLE}\n\nb`)
-  })
-
-  test('going down, the line over it is not left on its head', () => {
-    expect(at(moveLineOver(1), `a\nb\n\n${TABLE}`, 2)).toBe(`a\n\n${TABLE}\n\nb`)
   })
 })

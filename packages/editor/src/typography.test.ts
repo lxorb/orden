@@ -15,80 +15,50 @@ function type(line: string, character: string): string {
 }
 
 describe('quotes', () => {
-  test('opens at the start of a line', () => {
-    expect(type('', '"')).toBe('“')
-  })
-
-  test('opens after a space', () => {
-    expect(type('he said ', '"')).toBe('he said “')
-  })
-
-  test('closes after a word', () => {
-    expect(type('he said “hello', '"')).toBe('he said “hello”')
-  })
-
-  test('opens after a bracket', () => {
-    expect(type('(', '"')).toBe('(“')
-  })
-
-  test('handles single quotes the same way', () => {
-    expect(type('', "'")).toBe('‘')
-    expect(type('‘hello', "'")).toBe('‘hello’')
-  })
-
-  test('makes an apostrophe, not an opening quote', () => {
-    expect(type('don', "'")).toBe('don’')
-  })
+  test.each([
+    ['', '“', '"'],
+    ['he said ', 'he said “', '"'],
+    ['he said “hello', 'he said “hello”', '"'],
+    ['(', '(“', '"'],
+    ['', '‘', "'"],
+    ['‘hello', '‘hello’', "'"],
+    ['don', 'don’', "'"],
+  ])('%j', (input, wanted, extra) => expect(type(input, extra)).toEqual(wanted))
 })
 
 describe('dashes', () => {
-  test('two hyphens become an en dash', () => {
-    expect(type('a -', '-')).toBe('a –')
-  })
-
-  test('three become an em dash', () => {
-    expect(type('a –', '-')).toBe('a —')
-  })
-
-  test('a lone hyphen is left alone', () => {
-    expect(type('a', '-')).toBe('a-')
-  })
+  test.each([
+    ['a -', 'a –', '-'],
+    ['a –', 'a —', '-'],
+    ['a', 'a-', '-'],
+  ])('%j', (input, wanted, extra) => expect(type(input, extra)).toEqual(wanted))
 })
 
 describe('a line that is a break rather than a sentence', () => {
   const typed = (line: string) => line.split('').reduce((so, character) => type(so, character), '')
 
-  test('three hyphens on their own line stay a rule', () => {
-    expect(typed('---')).toBe('---')
-  })
+  test.each([
+    ['---', '---'],
+    ['----', '----'],
+    ['--------', '--------'],
+    ['  ---', '  ---'],
+    ['> ---', '> ---'],
+    ['>> ---', '>> ---'],
+    ['a -- b', 'a – b'],
+    ['a --- b', 'a — b'],
+    ['see -- here', 'see – here'],
+  ])('%j', (input, wanted) => expect(typed(input)).toEqual(wanted))
 
-  test('and so do the longer runs a rule may be written with', () => {
-    expect(typed('----')).toBe('----')
-    expect(typed('--------')).toBe('--------')
-  })
+  test.each([
+    ['-', '--', '-'],
+    ['--', '---', '-'],
+  ])('%j', (input, wanted, extra) => expect(type(input, extra)).toEqual(wanted))
 
-  test('the second hyphen is the one that had to be spared', () => {
-    expect(type('-', '-')).toBe('--')
-    expect(type('--', '-')).toBe('---')
-  })
-
-  test('indented up to three spaces, and inside a quotation', () => {
-    expect(typed('  ---')).toBe('  ---')
-    expect(typed('> ---')).toBe('> ---')
-    expect(typed('>> ---')).toBe('>> ---')
-  })
-
-  test('but dashes in prose still become dashes', () => {
-    expect(typed('a -- b')).toBe('a – b')
-    expect(typed('a --- b')).toBe('a — b')
-    expect(typed('see -- here')).toBe('see – here')
-  })
-
-  test('and a line with words on it is prose however it ends', () => {
-    expect(typingBreak('---')).toBe(true)
-    expect(typingBreak('a --')).toBe(false)
-    expect(typingBreak('    --')).toBe(false)
-  })
+  test.each([
+    ['---', true],
+    ['a --', false],
+    ['    --', false],
+  ])('%j', (input, wanted) => expect(typingBreak(input)).toEqual(wanted))
 
   test('a rule typed rather than commanded stays a rule', () => {
     const note = `# One
@@ -111,38 +81,26 @@ Body.
     expect(frontMatter(note)).toBe('title: Hi')
   })
 
-  test('a line of dashes or equals signs stays as it was typed', () => {
-    expect(typed('---')).toBe('---')
-    expect(typed('===')).toBe('===')
-  })
+  test.each([
+    ['---', '---'],
+    ['===', '==='],
+  ])('%j', (input, wanted) => expect(typed(input)).toEqual(wanted))
 })
 
 describe('ellipsis', () => {
-  test('three dots collapse', () => {
-    expect(type('wait..', '.')).toBe('wait…')
-  })
-
-  test('two dots do not', () => {
-    expect(type('wait.', '.')).toBe('wait..')
-  })
+  test.each([
+    ['wait..', 'wait…', '.'],
+    ['wait.', 'wait..', '.'],
+  ])('%j', (input, wanted, extra) => expect(type(input, extra)).toEqual(wanted))
 })
 
 describe('code spans', () => {
-  test('inside backticks nothing is substituted', () => {
-    expect(inCodeSpan('run `echo ', 10)).toBe(true)
-  })
-
-  test('after the closing backtick it resumes', () => {
-    expect(inCodeSpan('run `echo` ', 11)).toBe(false)
-  })
-
-  test('an indented code block is left alone', () => {
-    expect(inCodeSpan('    let x = "y"', 12)).toBe(true)
-  })
-
-  test('a fence is left alone', () => {
-    expect(inCodeSpan('```js', 5)).toBe(true)
-  })
+  test.each([
+    ['run `echo ', true, 10],
+    ['run `echo` ', false, 11],
+    ['    let x = "y"', true, 12],
+    ['```js', true, 5],
+  ])('%j', (input, wanted, extra) => expect(inCodeSpan(input, extra)).toEqual(wanted))
 })
 
 function at(marked: string): boolean {
@@ -158,42 +116,21 @@ function at(marked: string): boolean {
 }
 
 describe('what keeps its straight quotes', () => {
-  test('the body of a fenced block, which is not prose at all', () => {
-    expect(at('```js\nconst s = "a|\n```\n')).toBe(true)
-    expect(at('```\nwait..|\n```\n')).toBe(true)
-  })
-
-  test('an inline code span, and the fence lines themselves', () => {
-    expect(at('run `echo "a|` after\n')).toBe(true)
-    expect(at('```js|\n\n```\n')).toBe(true)
-  })
-
-  test('maths, where a quote is a prime', () => {
-    expect(at('the slope $f|$ of it\n')).toBe(true)
-    expect(at('$$\nf|\n$$\n')).toBe(true)
-  })
-
-  test('front matter, which is YAML', () => {
-    expect(at('---\ntitle: "a|\n---\n\nBody.\n')).toBe(true)
-  })
-
-  test("a link's address and its title", () => {
-    expect(at('see [it](https://x.dev/a|b "T")\n')).toBe(true)
-    expect(at('see [it](https://x.dev "a|")\n')).toBe(true)
-  })
-
-  test('an HTML tag, whose attributes are quoted straight', () => {
-    expect(at('text <span class="a| ">x</span>\n')).toBe(true)
-  })
-
-  test('but not the prose around any of them', () => {
-    expect(at('he said |\n')).toBe(false)
-    expect(at('run `echo` and| then\n')).toBe(false)
-    expect(at('```js\nlet x = 1\n```\n\nafter| it\n')).toBe(false)
-    expect(at('see [it](https://x.dev) and| more\n')).toBe(false)
-  })
-
-  test('and not a fence that nothing closes, which is a paragraph', () => {
-    expect(at('```js\nhe said| something\n')).toBe(false)
-  })
+  test.each([
+    ['```js\nconst s = "a|\n```\n', true],
+    ['```\nwait..|\n```\n', true],
+    ['run `echo "a|` after\n', true],
+    ['```js|\n\n```\n', true],
+    ['the slope $f|$ of it\n', true],
+    ['$$\nf|\n$$\n', true],
+    ['---\ntitle: "a|\n---\n\nBody.\n', true],
+    ['see [it](https://x.dev/a|b "T")\n', true],
+    ['see [it](https://x.dev "a|")\n', true],
+    ['text <span class="a| ">x</span>\n', true],
+    ['he said |\n', false],
+    ['run `echo` and| then\n', false],
+    ['```js\nlet x = 1\n```\n\nafter| it\n', false],
+    ['see [it](https://x.dev) and| more\n', false],
+    ['```js\nhe said| something\n', false],
+  ])('%j', (input, wanted) => expect(at(input)).toEqual(wanted))
 })

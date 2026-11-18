@@ -33,27 +33,18 @@ function click(doc: string, pos: number, parkedAt?: number): number {
 describe('inline code', () => {
   const doc = 'a `code` b'
 
-  test('a click at the right edge lands after the closing backtick', () => {
-    expect(click(doc, 7)).toBe(8)
-  })
+  test.each([
+    [doc, 8, 7],
+    [doc, 2, 3],
+    [doc, 5, 5],
+    [doc, 8, 8],
+    [doc, 2, 2],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 
-  test('a click at the left edge lands before the opening backtick', () => {
-    expect(click(doc, 3)).toBe(2)
-  })
-
-  test('a click inside the code stays where it was', () => {
-    expect(click(doc, 5)).toBe(5)
-  })
-
-  test('a click already outside stays put', () => {
-    expect(click(doc, 8)).toBe(8)
-    expect(click(doc, 2)).toBe(2)
-  })
-
-  test('visible marks are not stepped over', () => {
-    expect(click(doc, 7, 4)).toBe(7)
-    expect(click(doc, 3, 4)).toBe(3)
-  })
+  test.each([
+    [doc, 7, 7, 4],
+    [doc, 3, 3, 4],
+  ])('%j', (input, wanted, extra, last) => expect(click(input, extra, last)).toEqual(wanted))
 })
 
 describe('emphasis', () => {
@@ -63,11 +54,11 @@ describe('emphasis', () => {
     expect(click(doc, 2)).toBe(0)
   })
 
-  test('italic, strikethrough and highlight', () => {
-    expect(click('_i_ x', 2)).toBe(3)
-    expect(click('~~s~~ x', 3)).toBe(5)
-    expect(click('==h== x', 3)).toBe(5)
-  })
+  test.each([
+    ['_i_ x', 3, 2],
+    ['~~s~~ x', 5, 3],
+    ['==h== x', 5, 3],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 
   test('nested constructs snap all the way out', () => {
     const doc = '**bold `code`** x'
@@ -109,10 +100,10 @@ describe('constructs that are not applicable', () => {
     expect(click(doc, 8)).toBe(8)
   })
 
-  test('block marks follow the line, not the click', () => {
-    expect(click('# Title', 2)).toBe(2)
-    expect(click('> quoted', 2)).toBe(2)
-  })
+  test.each([
+    ['# Title', 2, 2],
+    ['> quoted', 2, 2],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
 
   test('marks that open a whole line are block marks too', () => {
     const front = '---\ntitle: Hi\n---\n\nbody'

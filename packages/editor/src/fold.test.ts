@@ -311,21 +311,21 @@ describe('a callout the note says is shut', () => {
     '',
   ].join('\n')
 
-  test('opens folded, with nothing written down anywhere', () => {
-    expect(foldLines(withFolds(state(SHUT, 0), []))).toEqual([[3, 5]])
-  })
+  test.each([
+    [withFolds(state(SHUT, 0), []), [[3, 5]]],
+    [
+      withFolds(state(SHUT, 0), [[1, 6]]),
+      [
+        [1, 6],
+        [3, 5],
+      ],
+    ],
+  ])('%j', (input, wanted) => expect(foldLines(input)).toEqual(wanted))
 
   test('a plus opens it, and so does no sign at all', () => {
     const open = SHUT.replace(']-', ']+')
     expect(foldLines(withFolds(state(open, 0), []))).toEqual([])
     expect(foldLines(withFolds(state(SHUT.replace(']-', ']'), 0), []))).toEqual([])
-  })
-
-  test('rides along with what was written down, in document order', () => {
-    expect(foldLines(withFolds(state(SHUT, 0), [[1, 6]]))).toEqual([
-      [1, 6],
-      [3, 5],
-    ])
   })
 
   test('never comes back over the caret', () => {
@@ -340,41 +340,17 @@ describe('a callout the note says is shut', () => {
 })
 
 describe('two sets of folds', () => {
-  test('are the same when they say the same thing', () => {
-    expect(
-      sameFolds(
-        [
-          [1, 4],
-          [6, 9],
-        ],
-        [
-          [1, 4],
-          [6, 9],
-        ],
-      ),
-    ).toBe(true)
-  })
-
-  test('nothing and an empty list say the same thing', () => {
-    expect(sameFolds(undefined, [])).toBe(true)
-  })
-
-  test('differ on a line, a count or an order', () => {
-    expect(sameFolds([[1, 4]], [[1, 5]])).toBe(false)
-    expect(sameFolds([[1, 4]], [])).toBe(false)
-    expect(
-      sameFolds(
-        [
-          [1, 4],
-          [6, 9],
-        ],
-        [
-          [6, 9],
-          [1, 4],
-        ],
-      ),
-    ).toBe(false)
-  })
+  const TWO: FoldLines[] = [
+    [1, 4],
+    [6, 9],
+  ]
+  test.each<[FoldLines[] | undefined, boolean, FoldLines[]]>([
+    [TWO, true, TWO.map(([head, last]) => [head, last] as const)],
+    [undefined, true, []],
+    [[[1, 4]], false, [[1, 5]]],
+    [[[1, 4]], false, []],
+    [TWO, false, [...TWO].reverse()],
+  ])('%j', (input, wanted, extra) => expect(sameFolds(input, extra)).toEqual(wanted))
 })
 
 describe('an indented block', () => {

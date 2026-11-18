@@ -78,8 +78,8 @@ describe('a line with something under it', () => {
     expect(names(text).filter((name) => name.includes('Heading'))).toEqual([])
   })
 
-  test('three dashes under words are a rule, and an equals sign is more of the words', () => {
-    expect(names('text\n---')).toEqual(['Document', 'Paragraph', 'HorizontalRule'])
-    expect(names('text\n===')).toEqual(['Document', 'Paragraph'])
-  })
+  test.each([
+    ['text\n---', ['Document', 'Paragraph', 'HorizontalRule']],
+    ['text\n===', ['Document', 'Paragraph']],
+  ])('%j', (input, wanted) => expect(names(input)).toEqual(wanted))
 })

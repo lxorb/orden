@@ -41,34 +41,22 @@ describe('the formula the caret is in', () => {
     expect(tex('costs $5 and $|6')).toBeNull()
   })
 
-  test('of two on a line, the one the caret is in', () => {
-    expect(tex('$x$ and $y|$')).toBe('y')
-    expect(tex('$x|$ and $y$')).toBe('x')
-  })
+  test.each([
+    ['$x$ and $y|$', 'y'],
+    ['$x|$ and $y$', 'x'],
+    ['$$E = m|c^2$$', 'E = mc^2'],
+    ['$$\na + |b', 'a + b'],
+    ['> [!note]\n> $$\n> a +| b\n> $$', 'a + b'],
+    ['> so $x^|2$', 'x^2'],
+    ['- item $\\alpha|$', '\\alpha'],
+    ['# Title $\\beta|$', '\\beta'],
+  ])('%j', (input, wanted) => expect(tex(input)).toEqual(wanted))
 
   test('a display block, on any of its lines', () => {
     const block = mathsAtCaret(at('above\n\n$$\n\\frac{1}{2}\n+ |x\n$$\n\nbelow'))
     expect(block).toMatchObject({ tex: '\\frac{1}{2}\n+ x', block: true })
     expect(tex('$$|\nx\n$$')).toBe('x')
     expect(tex('$$\nx\n$$|')).toBe('x')
-  })
-
-  test('a display block written on one line', () => {
-    expect(tex('$$E = m|c^2$$')).toBe('E = mc^2')
-  })
-
-  test('a display block still being written, with no closing $$ yet', () => {
-    expect(tex('$$\na + |b')).toBe('a + b')
-  })
-
-  test('in a quote or a callout, without the > of each line', () => {
-    expect(tex('> [!note]\n> $$\n> a +| b\n> $$')).toBe('a + b')
-    expect(tex('> so $x^|2$')).toBe('x^2')
-  })
-
-  test('in a list item and a heading', () => {
-    expect(tex('- item $\\alpha|$')).toBe('\\alpha')
-    expect(tex('# Title $\\beta|$')).toBe('\\beta')
   })
 
   test('a selection inside it counts, one reaching past it does not', () => {

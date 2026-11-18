@@ -170,10 +170,10 @@ describe('editing', () => {
 })
 
 describe('display width', () => {
-  test('counts CJK as two columns', () => {
-    expect(displayWidth('ab')).toBe(2)
-    expect(displayWidth('日本')).toBe(4)
-  })
+  test.each([
+    ['ab', 2],
+    ['日本', 4],
+  ])('%j', (input, wanted) => expect(displayWidth(input)).toEqual(wanted))
 
   test('aligns a CJK table', () => {
     const source = serializeTable(parseTable('| 名前 | x |\n| - | - |\n| ab | y |')!)
@@ -186,26 +186,13 @@ describe('sorting by a column', () => {
   const sorted = (source: string, column: number, order: 'up' | 'down' = 'up') =>
     sortRows(parseTable(source)!, column, order).rows.map((row) => row[column])
 
-  test('words, in the reader’s own alphabet', () => {
-    expect(sorted('| a |\n| - |\n| pear |\n| apple |\n| fig |', 0)).toEqual([
-      'apple',
-      'fig',
-      'pear',
-    ])
-  })
-
-  test('numbers as numbers, not as words', () => {
-    expect(sorted('| n |\n| - |\n| 9 |\n| 10 |\n| 100 |', 0)).toEqual(['9', '10', '100'])
-    expect(sorted('| n |\n| - |\n| -3 |\n| 2 |\n| 0.5 |', 0)).toEqual(['-3', '0.5', '2'])
-  })
-
-  test('a column of prices is a column of numbers', () => {
-    expect(sorted('| p |\n| - |\n| $1,200 |\n| $99 |\n| $300 |', 0)).toEqual([
-      '$99',
-      '$300',
-      '$1,200',
-    ])
-  })
+  test.each([
+    ['| a |\n| - |\n| pear |\n| apple |\n| fig |', ['apple', 'fig', 'pear'], 0],
+    ['| n |\n| - |\n| 9 |\n| 10 |\n| 100 |', ['9', '10', '100'], 0],
+    ['| n |\n| - |\n| -3 |\n| 2 |\n| 0.5 |', ['-3', '0.5', '2'], 0],
+    ['| p |\n| - |\n| $1,200 |\n| $99 |\n| $300 |', ['$99', '$300', '$1,200'], 0],
+    ['| d |\n| - |\n| 2025-10-01 |\n| 2025-09-08 |', ['2025-09-08', '2025-10-01'], 0],
+  ])('%j', (input, wanted, extra) => expect(sorted(input, extra)).toEqual(wanted))
 
   test('a name with a number in it is a name', () => {
     const source = '| r |\n| - |\n| Room 5 |\n| Hall 1 |\n| Attic 3 |\n| Basement |'
@@ -224,13 +211,6 @@ describe('sorting by a column', () => {
     ].map((order) => `| n |\n| - |\n${order.map((at) => `| ${cells[at]} |`).join('\n')}`)
 
     for (const source of orders) expect(sorted(source, 0)).toEqual(['999', '1,000', '5x'])
-  })
-
-  test('dates as dates', () => {
-    expect(sorted('| d |\n| - |\n| 2025-10-01 |\n| 2025-09-08 |', 0)).toEqual([
-      '2025-09-08',
-      '2025-10-01',
-    ])
   })
 
   test('the other way round when asked', () => {

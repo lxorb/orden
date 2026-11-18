@@ -15,81 +15,38 @@ function html(source: string): string {
 }
 
 describe('a table cell', () => {
-  test('renders bold, which is what a plain-text cell got wrong', () => {
-    expect(html('**Orden**')).toBe('<strong>Orden</strong>')
-  })
-
-  test('renders italic', () => {
-    expect(html('*maybe*')).toBe('<em>maybe</em>')
-  })
-
-  test('renders code without its backticks', () => {
-    expect(html('`pnpm dev`')).toBe('<code>pnpm dev</code>')
-  })
-
-  test('renders strikethrough', () => {
-    expect(html('~~gone~~')).toBe('<del>gone</del>')
-  })
-
-  test('keeps the text around a construct', () => {
-    expect(html('use **Orden** daily')).toBe('use <strong>Orden</strong> daily')
-  })
-
-  test('handles several in one cell', () => {
-    expect(html('**a** and *b*')).toBe('<strong>a</strong> and <em>b</em>')
-  })
-
-  test('nests them', () => {
-    expect(html('**bold *and* both**')).toBe('<strong>bold <em>and</em> both</strong>')
-  })
-
-  test('leaves ordinary text alone', () => {
-    expect(html('just words')).toBe('just words')
-  })
-
-  test('leaves an emoji alone', () => {
-    expect(html('✅')).toBe('✅')
-  })
-
-  test('is empty for an empty cell', () => {
-    expect(html('')).toBe('')
-  })
+  test.each([
+    ['**Orden**', '<strong>Orden</strong>'],
+    ['*maybe*', '<em>maybe</em>'],
+    ['`pnpm dev`', '<code>pnpm dev</code>'],
+    ['~~gone~~', '<del>gone</del>'],
+    ['use **Orden** daily', 'use <strong>Orden</strong> daily'],
+    ['**a** and *b*', '<strong>a</strong> and <em>b</em>'],
+    ['**bold *and* both**', '<strong>bold <em>and</em> both</strong>'],
+    ['just words', 'just words'],
+    ['✅', '✅'],
+    ['', ''],
+    ['a \\| b', 'a | b'],
+    ['`a \\| b`', '<code>a | b</code>'],
+    ['`x` and \\| and `y \\| z`', '<code>x</code> and | and <code>y | z</code>'],
+    ['`C:\\temp`', '<code>C:\\temp</code>'],
+  ])('%j', (input, wanted) => expect(html(input)).toEqual(wanted))
 
   test('keeps text that only looks like markup as text', () => {
     expect(parseInline('a < b & c')).toEqual([{ text: 'a < b & c' }])
   })
-
-  test('shows an escaped pipe as the pipe, which is how a cell has to spell one', () => {
-    expect(html('a \\| b')).toBe('a | b')
-  })
-
-  test('shows it inside code as well, where the grammar has no escapes', () => {
-    expect(html('`a \\| b`')).toBe('<code>a | b</code>')
-    expect(html('`x` and \\| and `y \\| z`')).toBe('<code>x</code> and | and <code>y | z</code>')
-  })
-
-  test('keeps a backslash that is not spelling a pipe', () => {
-    expect(html('`C:\\temp`')).toBe('<code>C:\\temp</code>')
-  })
 })
 
 describe('links in a cell', () => {
-  test('show their label and carry their address', () => {
-    expect(html('[Orden](https://orden.so)')).toBe('<a href="https://orden.so">Orden</a>')
-  })
-
-  test('refuse a scheme that could run something', () => {
-    expect(html('[tap](javascript:alert(1))')).toBe('<a>tap</a>')
-  })
+  test.each([
+    ['[Orden](https://orden.so)', '<a href="https://orden.so">Orden</a>'],
+    ['[tap](javascript:alert(1))', '<a>tap</a>'],
+  ])('%j', (input, wanted) => expect(html(input)).toEqual(wanted))
 })
 
 describe('a wikilink in a cell', () => {
-  test('draws its words and none of its brackets', () => {
-    expect(parseInline('[[Note]]')).toEqual([{ text: 'Note' }])
-    expect(parseInline('see [[Note\\|alias]] here')).toEqual([
-      { text: 'see ' },
-      { text: 'alias' },
-      { text: ' here' },
-    ])
-  })
+  test.each([
+    ['[[Note]]', [{ text: 'Note' }]],
+    ['see [[Note\\|alias]] here', [{ text: 'see ' }, { text: 'alias' }, { text: ' here' }]],
+  ])('%j', (input, wanted) => expect(parseInline(input)).toEqual(wanted))
 })
