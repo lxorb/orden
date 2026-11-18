@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const asked = vi.hoisted(() => ({ prompts: 0, stored: 0 }))
 
@@ -32,19 +33,6 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
   pdfjs: () => Promise.reject(new Error('no PDF here')),
 }))
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { run, place, putWords } = await import('./actions')
