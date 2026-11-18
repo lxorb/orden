@@ -8,7 +8,7 @@ import {
   type ServerFrame,
 } from '@orden/online/wire'
 import { account, ApiError, BASE } from '../../../accounts/src/api'
-import { toBase64, isDesktop, isNative } from '../../../platform/src/api'
+import { invoke, toBase64, isDesktop, isNative } from '../../../platform/src/api'
 import type { Said, Source } from '../source'
 import { viewport } from '../../../ui-kit/src/api'
 import { writeFile } from '../../../file-writes/src/api'
@@ -24,6 +24,7 @@ const LOOK_EVERY = 100
 const PASS_AT_MOST = 3_000
 const ASK_EVERY = 250
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
+const noteAt = (path: string) => invoke<string>('read_note', { path }).catch(() => null)
 
 async function termIdOf(path: string, until: number): Promise<string | null> {
   const { runner } = await import('../../../sync-client/src/api')
@@ -37,8 +38,7 @@ async function termIdOf(path: string, until: number): Promise<string | null> {
 
 async function sessionOf(id: string, path: string, until: number): Promise<string | null> {
   const { runner } = await import('../../../sync-client/src/api')
-  const { invoke } = await import('../../../platform/src/api')
-  const words = await invoke<string>('read_note', { path }).catch(() => null)
+  const words = await noteAt(path)
   for (;;) {
     try {
       const text = wordsFor(words, await termSession(id, namedSession(words)))
@@ -70,10 +70,9 @@ async function socketName(
 ): Promise<{ name: string } | { refused: string }> {
   const { sync } = await import('../../../sync-store/src/api')
   if (sync.version === 1) {
-    const { invoke } = await import('../../../platform/src/api')
     try {
       const name = await ownSession({
-        read: () => invoke<string>('read_note', { path }).catch(() => null),
+        read: () => noteAt(path),
         write: (text) => writeFile(path, text),
         make: () => termSession(null),
       })
@@ -265,7 +264,7 @@ export class OnlineSource implements Source {
     const second = Math.floor(now / 1000)
     if (second !== this.sent.second) this.sent = { second, count: 0 }
     if (this.sent.count >= FRAMES_A_SECOND) {
-      await new Promise((settle) => setTimeout(settle, (second + 1) * 1000 - now))
+      await pause((second + 1) * 1000 - now)
       this.sent = { second: second + 1, count: 0 }
     }
     this.sent.count += 1
@@ -313,8 +312,7 @@ export function onlineSource(
 export async function cacheKey(words: string, path: string | null): Promise<string> {
   let term = termOf(words)
   if (!term && path !== null) {
-    const { invoke } = await import('../../../platform/src/api')
-    const read = await invoke<string>('read_note', { path }).catch(() => null)
+    const read = await noteAt(path)
     term = read === null ? null : termOf(read)
   }
   return term ? `online-${term.session}` : ''

@@ -117,17 +117,11 @@ export function offersOf(value: unknown): Offers | null {
   if (!Array.isArray(value.types) || !Array.isArray(value.locations)) return null
   return {
     currency: value.currency,
-    locations: value.locations.flatMap((one: unknown) =>
-      isRecord(one) && isString(one.name)
-        ? [
-            {
-              name: one.name,
-              city: isString(one.city) ? one.city : cityOf(one.name),
-              country: isString(one.country) ? one.country : '',
-            },
-          ]
-        : [],
-    ),
+    locations: value.locations.flatMap((one: unknown) => {
+      if (!isRecord(one) || !isString(one.name)) return []
+      const city = isString(one.city) ? one.city : cityOf(one.name)
+      return [{ name: one.name, city, country: isString(one.country) ? one.country : '' }]
+    }),
     types: value.types.flatMap((one: unknown) => offerOf(one) ?? []),
   }
 }
@@ -178,14 +172,18 @@ export function onlineOf(value: unknown): Online | null {
   }
 }
 
+const saidBy = (error: unknown) =>
+  error instanceof ApiError && isRecord(error.body) && isString(error.body.error)
+    ? error.body.error
+    : ''
+
 const REFUSALS: readonly Refused[] = ['list', 'allowance', 'budget', 'off', 'flag', 'sessions']
 
 export function refusedOf(error: unknown): Refused {
   if (!(error instanceof ApiError)) return 'other'
   if (error.status === 401) return 'signed-out'
   if (error.status === 404) return 'off'
-  const said = isRecord(error.body) && isString(error.body.error) ? error.body.error : ''
-  return REFUSALS.find((one) => one === said) ?? 'other'
+  return REFUSALS.find((one) => one === saidBy(error)) ?? 'other'
 }
 
 function token(): string {
@@ -220,14 +218,10 @@ export async function offers(): Promise<Offers | null> {
 
 export type Refit = 'disk' | 'arch' | 'busy' | 'budget' | 'type' | 'other'
 
+const REFITS: readonly Refit[] = ['disk', 'arch', 'busy', 'budget', 'type']
+
 export function refitOf(error: unknown): Refit {
-  const said =
-    error instanceof ApiError && isRecord(error.body) && isString(error.body.error)
-      ? error.body.error
-      : ''
-  return (
-    (['disk', 'arch', 'busy', 'budget', 'type'] as const).find((one) => one === said) ?? 'other'
-  )
+  return REFITS.find((one) => one === saidBy(error)) ?? 'other'
 }
 
 export async function chooseType(type: string, location: string | null): Promise<void> {
@@ -279,10 +273,7 @@ function listedOf(value: unknown): Listed | null {
 
 export function listOf(value: unknown): Listed[] {
   if (!isRecord(value) || !Array.isArray(value.terms)) return []
-  return value.terms.flatMap((one) => {
-    const read = listedOf(one)
-    return read ? [read] : []
-  })
+  return value.terms.flatMap((one) => listedOf(one) ?? [])
 }
 
 export async function listed(): Promise<Listed[]> {

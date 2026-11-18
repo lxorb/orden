@@ -516,8 +516,7 @@ class Session {
   }
 
   private begin() {
-    if (this.online) void this.start()
-    else if (this.remote && !madeNow(this.spec().key) && !this.stillHeld) this.wait()
+    if (!this.online && this.remote && !madeNow(this.spec().key) && !this.stillHeld) this.wait()
     else void this.start()
   }
 
@@ -1297,29 +1296,16 @@ class Session {
   }
 
   private act(route: Exclude<Route, 'shell' | 'app' | 'paste' | 'ask'>) {
-    switch (route) {
-      case 'copy':
-        this.copyChosen()
-        return
-      case 'find':
-        this.finding = true
-        return
-      case 'select-all':
-        this.term.selectAll()
-        return
-      case 'clear':
-        this.term.clear()
-        return
-      case 'zoom-in':
-        shells.setSize(shells.size + 1)
-        return
-      case 'zoom-out':
-        shells.setSize(shells.size - 1)
-        return
-      case 'zoom-reset':
-        shells.setSize(SIZES.initial)
-        return
+    const acts: Record<typeof route, () => unknown> = {
+      copy: () => this.copyChosen(),
+      find: () => (this.finding = true),
+      'select-all': () => this.term.selectAll(),
+      clear: () => this.term.clear(),
+      'zoom-in': () => shells.setSize(shells.size + 1),
+      'zoom-out': () => shells.setSize(shells.size - 1),
+      'zoom-reset': () => shells.setSize(SIZES.initial),
     }
+    acts[route]()
   }
 
   private copyChosen() {
@@ -1517,10 +1503,7 @@ export function screenOf(tab: { readonly id: string }): { text: string; cols: nu
 
 export function sessionOf(tab: Tab): Session {
   let one = sessions.get(tab.id)
-  if (!one) {
-    one = new Session(tab)
-    sessions.set(tab.id, one)
-  }
+  if (!one) sessions.set(tab.id, (one = new Session(tab)))
   return one
 }
 

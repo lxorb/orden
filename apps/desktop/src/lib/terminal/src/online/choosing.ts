@@ -49,15 +49,8 @@ export function picksOf(
         : archNow && offer.arch !== archNow
           ? 'arch'
           : null
-    return [
-      {
-        offer,
-        monthly: price.monthly,
-        hourly: price.hourly,
-        blocked,
-        current: server?.type === offer.name,
-      },
-    ]
+    const { monthly, hourly } = price
+    return [{ offer, monthly, hourly, blocked, current: server?.type === offer.name }]
   })
   return picks.sort((one, other) =>
     sort === 'name'
@@ -76,11 +69,15 @@ export function money(amount: number, currency: string, hourly = false): string 
 
 const gb = (value: number) => `${localNumber(Math.round(value))} GB`
 
+const sizeOf = (one: Offer | ServerInfo) => [
+  `${localNumber(one.cores)} vCPU`,
+  `${gb(one.memoryGb)} RAM`,
+  `${gb(one.diskGb)} disk`,
+]
+
 export function factsOf(offer: Pick['offer']): string[] {
   return [
-    `${localNumber(offer.cores)} vCPU`,
-    `${gb(offer.memoryGb)} RAM`,
-    `${gb(offer.diskGb)} disk`,
+    ...sizeOf(offer),
     offer.cpu === 'dedicated' ? 'Dedicated' : 'Shared',
     offer.arch === 'arm' ? 'Arm' : 'x86',
   ]
@@ -92,9 +89,7 @@ export function summaryOf(server: ServerInfo): { about: string[]; cost: string[]
   const about = [
     server.type.toUpperCase(),
     ...(server.location ? [cityOf(server.location)] : []),
-    `${localNumber(server.cores)} vCPU`,
-    `${gb(server.memoryGb)} RAM`,
-    `${gb(server.diskGb)} disk`,
+    ...sizeOf(server),
   ]
   const cost =
     server.price !== null && server.currency
