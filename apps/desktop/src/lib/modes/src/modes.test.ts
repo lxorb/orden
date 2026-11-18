@@ -110,6 +110,17 @@ let modes: typeof import('./modes.svelte').modes
 
 await import('./modes.svelte')
 
+const answers = { ...api }
+
+function sending(): Held[] {
+  const sent: Held[] = []
+  api.saveSettings = async (_token, patch) => {
+    sent.push(patch)
+    return { settings: {} }
+  }
+  return sent
+}
+
 async function restarted() {
   vi.resetModules()
   const store = (await import('./modes.svelte')).modes
@@ -119,23 +130,33 @@ async function restarted() {
 
 beforeEach(async () => {
   localStorage.clear()
+  Object.assign(api, answers)
   told.calls = []
   told.views = []
   modes = await restarted()
 })
 
+test.each([
+  ['readOnly', false, () => modes.toggleReadOnly(), true],
+  ['punctuation', false, () => modes.togglePunctuation(), true],
+  ['ligatures', 'off', () => modes.setLigatures('code'), 'code'],
+  ['vim', false, () => modes.toggleVim(), true],
+  ['quietMarks', false, () => modes.toggleQuietMarks(), true],
+  ['silent', false, () => modes.toggleSilent(), true],
+  ['canvasTurns', true, () => modes.setCanvasTurns(false), false],
+  ['canvasTurnSnaps', true, () => modes.setCanvasTurnSnaps(false), false],
+  ['attachments', 'space', () => modes.setAttachments('named'), 'named'],
+] as const)(
+  '%s starts as %j and keeps a change across a restart',
+  async (key, start, change, to) => {
+    expect(modes[key]).toBe(start)
+    change()
+    expect(modes[key]).toBe(to)
+    expect((await restarted())[key]).toBe(to)
+  },
+)
+
 describe('read-only mode', () => {
-  test('starts off', () => {
-    expect(modes.readOnly).toBe(false)
-  })
-
-  test('is remembered across a restart', async () => {
-    modes.toggleReadOnly()
-    expect(modes.readOnly).toBe(true)
-
-    expect((await restarted()).readOnly).toBe(true)
-  })
-
   test('reaches the view it is toggled against', () => {
     modes.toggleReadOnly(surface())
     expect(told.calls).toContainEqual({ mode: 'read-only', on: true })
@@ -223,10 +244,6 @@ describe('the glasses settings', () => {
 })
 
 describe('smart punctuation', () => {
-  test('starts off', () => {
-    expect(modes.punctuation).toBe(false)
-  })
-
   test('stays off for a reader who never chose', async () => {
     localStorage.setItem('orden:modes', JSON.stringify({ focus: true }))
     expect((await restarted()).punctuation).toBe(false)
@@ -236,24 +253,9 @@ describe('smart punctuation', () => {
     localStorage.setItem('orden:modes', JSON.stringify({ punctuation: true }))
     expect((await restarted()).punctuation).toBe(true)
   })
-
-  test('is remembered across a restart', async () => {
-    modes.togglePunctuation()
-    expect(modes.punctuation).toBe(true)
-    expect((await restarted()).punctuation).toBe(true)
-  })
 })
 
 describe('the ligature scope', () => {
-  test('starts off', () => {
-    expect(modes.ligatures).toBe('off')
-  })
-
-  test('is remembered across a restart', async () => {
-    modes.setLigatures('code')
-    expect((await restarted()).ligatures).toBe('code')
-  })
-
   test('reads a switch written by an older build', async () => {
     localStorage.setItem('orden:modes', JSON.stringify({ ligatures: true }))
     expect((await restarted()).ligatures).toBe('all')
@@ -275,17 +277,6 @@ describe('the ligature scope', () => {
 })
 
 describe('modal editing', () => {
-  test('starts off', () => {
-    expect(modes.vim).toBe(false)
-  })
-
-  test('is remembered across a restart', async () => {
-    modes.toggleVim()
-    expect(modes.vim).toBe(true)
-
-    expect((await restarted()).vim).toBe(true)
-  })
-
   test('reaches every editor on the page, not only the one it was toggled at', () => {
     modes.apply(surface())
     told.calls = []
@@ -373,41 +364,13 @@ describe('modal editing', () => {
   })
 })
 
-describe('the formatting marks kept quiet', () => {
-  test('start shown, and are remembered across a restart', async () => {
-    expect(modes.quietMarks).toBe(false)
-    modes.toggleQuietMarks()
-    expect((await restarted()).quietMarks).toBe(true)
-  })
-})
-
-describe('Silent mode', () => {
-  test('starts off, so hints show, and is remembered across a restart', async () => {
-    expect(modes.silent).toBe(false)
-    modes.toggleSilent()
-    expect((await restarted()).silent).toBe(true)
-  })
-})
-
 describe('turning a canvas with two fingers (#351)', () => {
-  test('starts on, and is remembered off across a restart (#487)', async () => {
-    expect(modes.canvasTurns).toBe(true)
-    modes.setCanvasTurns(false)
-    expect((await restarted()).canvasTurns).toBe(false)
-  })
-
   test('takes no off from an older build, which wrote it down for everybody', async () => {
     localStorage.setItem('orden:modes', JSON.stringify({ canvasTurns: false, vim: true }))
     const back = await restarted()
     expect(back.canvasTurns).toBe(true)
     expect(back.vim).toBe(true)
     expect(localStorage.getItem('orden:modes')).not.toContain('"canvasTurns"')
-  })
-
-  test('snaps to its right angles unless that is turned off (#487)', async () => {
-    expect(modes.canvasTurnSnaps).toBe(true)
-    modes.setCanvasTurnSnaps(false)
-    expect((await restarted()).canvasTurnSnaps).toBe(false)
   })
 })
 
@@ -638,12 +601,7 @@ describe('taking over what the account holds', () => {
   }
 
   test('a change the account was not told of before a restart is sent first, not undone', async () => {
-    const sent: Held[] = []
-    const was = { settings: api.settings, saveSettings: api.saveSettings }
-    api.saveSettings = async (_token, patch) => {
-      sent.push(patch)
-      return { settings: {} }
-    }
+    const sent = sending()
     api.settings = async () => ({ settings: { silent: false } })
     modes.toggleSilent()
     expect(modes.silent).toBe(true)
@@ -652,13 +610,11 @@ describe('taking over what the account holds', () => {
     await modes.adopt('token')
 
     expect(sent).toEqual([expect.objectContaining({ silent: true })])
-    Object.assign(api, was)
   })
 
   test('keeps a change the account never heard across a restart, and sends it before reading', async () => {
     const sent: Held[] = []
     let server: Held = { ligatures: 'all' }
-    const was = { settings: api.settings, saveSettings: api.saveSettings }
     const accounts = await import('../../accounts/src/api')
     accounts.account.token = 'token'
     modes.setLigatures('code')
@@ -679,13 +635,11 @@ describe('taking over what the account holds', () => {
     sent.length = 0
     await (await restarted()).adopt('token')
     expect(sent).toEqual([])
-    Object.assign(api, was)
   })
 
   test('keeps what is owed to an account through a launch that does not know the account yet', async () => {
     const sent: Held[] = []
     let server: Held = { vim: false, ligatures: 'all' }
-    const was = { settings: api.settings, saveSettings: api.saveSettings }
     const signedIn = async (id: string | null) => {
       const { account } = await import('../../accounts/src/api')
       account.token = 'token'
@@ -717,12 +671,10 @@ describe('taking over what the account holds', () => {
     const { account } = await import('../../accounts/src/api')
     account.token = null
     account.user = null
-    Object.assign(api, was)
   })
 
   test('keeps a change made while signed out on this device, and takes the account’s at sign-in', async () => {
     const sent: Held[] = []
-    const was = { settings: api.settings, saveSettings: api.saveSettings }
     const { account } = await import('../../accounts/src/api')
     await account.restore()
     modes.setLigatures('code')
@@ -737,13 +689,11 @@ describe('taking over what the account holds', () => {
 
     expect(sent).toEqual([])
     expect(store.ligatures).toBe('all')
-    Object.assign(api, was)
   })
 
   test('lets go of a change the account turned down, and hears the account again', async () => {
     const { ApiError } = await import('../../accounts/src/client')
     let server: Held = { vim: false }
-    const was = { settings: api.settings, saveSettings: api.saveSettings }
     api.saveSettings = async (_token: string, patch: Held) => {
       if (patch.ligatures === 'code') throw new ApiError(400, 'refused')
       server = { ...server, ...patch }
@@ -761,7 +711,6 @@ describe('taking over what the account holds', () => {
     const store = await restarted()
     await store.adopt('token')
     expect(store.vim).toBe(true)
-    Object.assign(api, was)
   })
 
   test.each([
@@ -794,7 +743,6 @@ describe('taking over what the account holds', () => {
 
   test('deletes the OpenAI key the glasses kept on the account before they asked the default AI account', async () => {
     const removed: string[] = []
-    const was = api.settings
     api.settings = async () => ({ settings: {}, key: { set: true, tail: '4f2a' } })
     Object.assign(api, { removeAskKey: async (token: string) => void removed.push(token) })
     await modes.adopt('token')
@@ -803,7 +751,6 @@ describe('taking over what the account holds', () => {
     api.settings = async () => ({ settings: {}, key: { set: false, tail: '' } })
     await modes.adopt('token')
     expect(removed).toEqual(['token'])
-    api.settings = was
   })
 
   test('leaves alone a choice made while the answer was in the air', async () => {
@@ -823,38 +770,26 @@ describe('taking over what the account holds', () => {
   test('says nothing about modal editing unless the account does', async () => {
     for (const settings of [{}, { ligatures: 'all' }, { attachments: 'note' }] as Held[]) {
       const store = await restarted()
-      const { release, settingsCall } = heldAnswer(settings)
-      api.settings = settingsCall
-
-      const adopted = store.adopt('token')
-      release()
-      await adopted
+      api.settings = async () => ({ settings })
+      await store.adopt('token')
 
       expect(store.vim, JSON.stringify(settings)).toBe(false)
     }
   })
 
   test('leaves modal editing off for an account that wrote it down as off', async () => {
-    const { release, settingsCall } = heldAnswer({ vim: false })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
+    api.settings = async () => ({ settings: { vim: false } })
+    await modes.adopt('token')
 
     expect(modes.vim).toBe(false)
     expect(told.calls).not.toContainEqual({ mode: 'vim', on: true })
   })
 
   test('brings modal editing another machine turned on', async () => {
-    const { release, settingsCall } = heldAnswer({ vim: true })
-    api.settings = settingsCall
+    api.settings = async () => ({ settings: { vim: true } })
     modes.apply(surface())
     told.calls = []
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
+    await modes.adopt('token')
 
     expect(modes.vim).toBe(true)
     expect(told.calls).toContainEqual({ mode: 'vim', on: true })
@@ -874,21 +809,12 @@ describe('taking over what the account holds', () => {
   })
 
   test('carries up what was decided before the session came back', async () => {
-    const patches: Held[] = []
-    api.saveSettings = async (_token: string, patch: Held) => {
-      patches.push(patch)
-      return { settings: {} }
-    }
-    const { release, settingsCall } = heldAnswer({})
-    api.settings = settingsCall
-
+    const patches = sending()
+    api.settings = async () => ({ settings: {} })
     modes.sawGlasses()
     expect(modes.glassesSeen).toBe(true)
     expect(patches).toEqual([])
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
+    await modes.adopt('token')
 
     expect(patches).toEqual([{ glassesSeen: true }])
   })
@@ -911,11 +837,8 @@ describe('taking over what the account holds', () => {
       patches.push(patch)
       return { settings: {} }
     }
-    const { release, settingsCall } = heldAnswer({})
-    api.settings = settingsCall
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
+    api.settings = async () => ({ settings: {} })
+    await modes.adopt('token')
 
     expect(patches).toEqual([{ glassesSeen: true }, { glassesSeen: true }])
   })
@@ -961,18 +884,10 @@ describe('taking over what the account holds', () => {
   })
 
   test('takes it from the account, and then has nothing left to say', async () => {
-    const patches: Held[] = []
-    api.saveSettings = async (_token: string, patch: Held) => {
-      patches.push(patch)
-      return { settings: {} }
-    }
-    const { release, settingsCall } = heldAnswer({ glassesSeen: true })
-    api.settings = settingsCall
-
+    const patches = sending()
+    api.settings = async () => ({ settings: { glassesSeen: true } })
     expect(modes.glassesSeen).toBe(false)
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
+    await modes.adopt('token')
 
     expect(modes.glassesSeen).toBe(true)
     modes.sawGlasses()
@@ -1008,11 +923,7 @@ describe('taking over what the account holds', () => {
 
   describe('a phone or a tablet on the account', () => {
     async function adoptedOn(device: 'desktop' | 'phone', account: Held) {
-      const patches: Held[] = []
-      api.saveSettings = async (_token: string, patch: Held) => {
-        patches.push(patch)
-        return { settings: {} }
-      }
+      const patches = sending()
       api.settings = async () => ({ settings: account })
       const { viewport } = await import('../../ui-kit/src/viewport.svelte')
       viewport.device = device
@@ -1050,11 +961,7 @@ describe('taking over what the account holds', () => {
       await modes.adopt('token')
 
       modes.toggleSilent()
-      const patches: Held[] = []
-      api.saveSettings = async (_token: string, patch: Held) => {
-        patches.push(patch)
-        return { settings: {} }
-      }
+      const patches = sending()
       await modes.adopt('token')
       expect(patches).toEqual([{ silent: modes.silent }, { mobileSeen: true }])
     })
@@ -1062,15 +969,6 @@ describe('taking over what the account holds', () => {
 })
 
 describe('where a pasted picture goes', () => {
-  test("starts in the space's assets folder, which is where it always went", () => {
-    expect(modes.attachments).toBe('space')
-  })
-
-  test('is remembered across a restart', async () => {
-    modes.setAttachments('named')
-    expect((await restarted()).attachments).toBe('named')
-  })
-
   test('takes only one of the three names', async () => {
     modes.setAttachments('sideways')
     expect(modes.attachments).toBe('space')
