@@ -1,5 +1,4 @@
 const FORBIDDEN = /[\\/:*?"<>|]|\p{Cc}/gu
-
 export const withoutForbidden = (name: string): string => name.replace(FORBIDDEN, ' ')
 
 export function numbered(path: string, counter: number): string {
@@ -8,7 +7,6 @@ export function numbered(path: string, counter: number): string {
   const slash = path.lastIndexOf('/')
   const folder = path.slice(0, slash + 1)
   const file = path.slice(slash + 1)
-
   const dot = file.lastIndexOf('.')
   const stem = dot > 0 ? file.slice(0, dot) : file
   const extension = dot > 0 ? file.slice(dot) : ''
@@ -31,9 +29,7 @@ export const freeName = (name: string, taken: (candidate: string) => boolean): s
   taken(name) ? freeStem(name, taken) : name
 
 const COUNTED = /^(.*\S) ([1-9]\d{0,2})$/su
-
 const STACKED = /^(.*?\S)(?: 2){2,}$/su
-
 export const uncounted = (stem: string): string => COUNTED.exec(stem)?.[1] ?? stem
 
 function freeStem(stem: string, taken: (candidate: string) => boolean): string {

@@ -14,10 +14,8 @@ import {
 } from './canvas'
 
 export const GUTTER = 40
-
 export const GROWTH = 600
 const HEADROOM = 240
-
 export const pagesOf = (canvas: Canvas): PageNode[] => canvas.nodes.filter(isPage)
 
 export const pageCount = (canvas: Canvas): number =>
@@ -108,7 +106,6 @@ export function added(canvas: Canvas, after: string | null = null): { canvas: Ca
   const pages = pagesOf(canvas)
   const from = after === null ? pages[pages.length - 1] : pages.find((one) => one.id === after)
   const page = newPage(from?.paper ?? 'a4', from?.pattern ?? 'blank')
-
   const at = after === null ? -1 : canvas.nodes.findIndex((node) => node.id === after)
   const nodes = [...canvas.nodes]
   if (at < 0) nodes.push(page)

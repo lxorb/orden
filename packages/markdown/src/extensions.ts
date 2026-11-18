@@ -253,7 +253,6 @@ export const definitionLists: MarkedExtension = {
       ...definitionList,
       renderer(token: Tokens.Generic) {
         const items = token.items as { term: Tokens.Generic[]; details: Tokens.Generic[][] }[]
-
         const body = items
           .map((item) => {
             const term = `<dt>${this.parser.parseInline(item.term)}</dt>`
@@ -322,9 +321,7 @@ export function collectAbbreviations(source: string): Map<string, string> {
 }
 
 const FOOTNOTE_DEF = /\[\^[^\]\s]+\]:\s*\S/y
-
 const REF_STOPS = new WeakMap<Token[], number>()
-
 const A_REF_STOP = /[\]\s]/g
 
 function footnoteRefEnd(src: string, tokens: Token[]): number {

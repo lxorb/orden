@@ -293,7 +293,6 @@ function mergeList<T extends Thing>(
   const ourMove = (id: string) => timeIn(ourCanvas.moved ?? {}, id) ?? 0
   const theirMove = (id: string) => timeIn(theirCanvas.moved ?? {}, id) ?? 0
   const shared = (id: string) => mine.has(id) && yours.has(id) && ourMove(id) === theirMove(id)
-
   const ourList = [...mine.values()]
   const theirList = [...yours.values()]
   const anchors = settled(
@@ -409,9 +408,7 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     (edge) => cards.has(edge.fromNode) && cards.has(edge.toNode),
   )
   const ink = mergeList(ours.ink, theirs.ink, ours, theirs, gone)
-
   const held = new Set([...cards, ...edges.map((edge) => edge.id), ...ink.map((one) => one.id)])
-
   const at = noTimes()
   for (const id of new Set([...Object.keys(ours.at), ...Object.keys(theirs.at)])) {
     if (gone[id] !== undefined && !held.has(id)) continue

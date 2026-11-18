@@ -7,9 +7,7 @@ export const PAPERS = {
 export type Paper = keyof typeof PAPERS
 
 export const PAPER_NAMES = Object.keys(PAPERS) as Paper[]
-
 export const isPaper = (value: unknown): value is Paper => PAPER_NAMES.some((one) => one === value)
-
 const NEAR = 2
 
 export function paperSized(width: number, height: number): Paper {

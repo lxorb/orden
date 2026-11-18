@@ -45,29 +45,17 @@ export function patternJudge(longest = 2000, widest = 30) {
   }
 
   const NOTE = Math.log(Math.max(200000, longest))
-
   const LINE = Math.log(Math.max(2000, longest))
-
   const WORD = Math.log(Math.max(30, widest))
-
   const WORD_STARTS = Math.log(20)
-
   const TAKING_NOTE = Math.log(10)
-
   const MOST_COPIES = 10
-
   const MOST_BOUNDED = 300
-
   const MOST_STEPS = 20000
-
   const OPEN_END: Ahead = { rest: 0, heads: [], literal: 0, ended: true }
-
   const BACKWARDS: Ahead = { rest: 0, heads: [], literal: 0, ended: false }
-
   const REFUSED: Cost = { ...PLAIN, open: Number.POSITIVE_INFINITY }
-
   const ZERO: Cost = { ...PLAIN, literal: true, zero: true }
-
   const END: Cost = { ...ZERO, shape: { kind: 'end' } }
 
   function single(first: string | null = null, unit: string | null = null, lead = ''): Cost {
@@ -84,11 +72,8 @@ export function patternJudge(longest = 2000, widest = 30) {
   }
 
   const GROUP_OPENING = /^\?(?:[a-z-]*:|<[^=!>][^>]*>|=|!|<=|<!)/
-
   const COUNTED = /^\{(\d+)(,(\d*))?\}/
-
   const SYNTAX = /[\\^$.*+?()[\]{}|/]/g
-
   const SAMPLES = ' \t\n éßÄıſKσ中\u{1f600}'
 
   function sameLetter(one: string, other: string): boolean {
@@ -599,7 +584,6 @@ export function patternJudge(longest = 2000, widest = 30) {
   }
 
   const MOST_WAYS = 1e4
-
   const MOST_REACH = 22
 
   function startsOf(source: string, flags: string, lead: string, shape: Shape): number {

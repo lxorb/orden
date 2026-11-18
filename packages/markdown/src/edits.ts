@@ -13,7 +13,6 @@ export function oneEdit(held: string, mine: string): TextEdit | null {
   if (held === mine) return null
 
   const shortest = Math.min(held.length, mine.length)
-
   let front = 0
   while (front < shortest && held.charCodeAt(front) === mine.charCodeAt(front)) front++
   if (front > 0 && leadsPair(held, front - 1)) front--

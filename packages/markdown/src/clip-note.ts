@@ -9,7 +9,6 @@ export interface ClipOrigin {
 }
 
 const LONGEST_TITLE = 300
-
 export const UNTITLED = 'Untitled'
 
 export const clipTitle = (title: string): string =>

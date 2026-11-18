@@ -20,13 +20,10 @@ export const ICON_ATTRIBUTES: Readonly<Record<string, string>> = {
 }
 
 export const CHEVRON: IconParts = ChevronRight
-
 export const DOCUMENT: IconParts = FileText
 export const PLANE: IconParts = Shapes
-
 export const PLAY: IconParts = Play
 export const OPEN: IconParts = ExternalLink
-
 export const MARKS: Readonly<Record<'play' | 'open', IconParts>> = { play: PLAY, open: OPEN }
 
 const attributes = (written: Readonly<Record<string, string | number | undefined>>): string =>

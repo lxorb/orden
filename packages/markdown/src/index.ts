@@ -93,12 +93,9 @@ const plainText = (html: string): string =>
     .trim()
 
 const defaults = Renderer.prototype as Renderer
-
 const TOC_MARK = '<!--orden:toc-->'
-
 const TOC_AT = /\[toc\][ \t]*(?=\r?\n|$)/iy
 const TOC_NEEDLES = ['c]', 'C]']
-
 const TOC_OPEN = 3
 
 function tocLine(src: string, at: number): number | null {
@@ -143,13 +140,9 @@ function localLink(href: string): { target: string; fragment: string } | null {
 }
 
 const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
-
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
-
 const PUNCTUATION = /^[!-/:-@[-`{-~]$/
-
 const SCHEME = /^(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)/
-
 const MAIL_RUNS = new WeakMap<Token[], { from: number; to: number }>()
 
 const inMail = (code: number): boolean =>
@@ -248,7 +241,6 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
 
       link(token: Tokens.Link) {
         const body = this.parser.parseInline(token.tokens)
-
         const from = options.from
         const nested = from && options.resolveNoteFrom ? localLink(token.href) : null
         const there =
@@ -590,7 +582,6 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
 
   const skip = /<(code|pre|abbr|script|style)\b[\s\S]*?<\/\1>|<[^>]+>|&[#\w]+;/g
   const word = new RegExp(`(?<![\\p{L}\\p{N}_])(${pattern})(?![\\p{L}\\p{N}_])`, 'gu')
-
   let out = ''
   let last = 0
 

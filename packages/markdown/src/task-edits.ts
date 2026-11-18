@@ -187,7 +187,6 @@ export function writeTask(line: string, asked: TaskChange): TextEdit[] {
   const arriving: Arrival[] = []
   const taking: { from: number; to: number }[] = []
   const form = bracketStyle(parsed) ? 'bracket' : 'emoji'
-
   const status = nextStatus(fields, change)
   if (status !== null)
     edits.push({ from: parsed.box + 1, to: parsed.box + 1 + fields.status.length, insert: status })
@@ -383,7 +382,6 @@ const ordered = (edits: TextEdit[]): TextEdit[] =>
   edits.sort((a, b) => a.from - b.from || a.to - a.from - (b.to - b.from))
 
 const DATES = ['due', 'start', 'scheduled', 'deadline'] as const
-
 const takes = (value: string | null | undefined) => value === null || value === ''
 
 export function lastDateTaken(fields: TaskFields, change: TaskChange): boolean {

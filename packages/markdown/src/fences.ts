@@ -46,11 +46,8 @@ type Container = { quote: true } | { quote: false; width: number }
 type Leaf = null | 'paragraph' | 'indented' | { mark: string }
 
 const MARKER = /^([-*+]|(\d{1,9})[.)])( *)(.?)/
-
 const BREAK = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
-
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
-
 const NEST_DEEPEST = 100
 
 function expanded(line: string): string {

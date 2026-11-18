@@ -40,21 +40,10 @@ describe('a callout’s opening line', () => {
   })
 
   test('knows the thirteen types Obsidian has, and every alias of them', () => {
-    const types = [
-      'note',
-      'abstract',
-      'info',
-      'todo',
-      'tip',
-      'success',
-      'question',
-      'warning',
-      'failure',
-      'danger',
-      'bug',
-      'example',
-      'quote',
-    ]
+    const types =
+      'note abstract info todo tip success question warning failure danger bug example quote'.split(
+        ' ',
+      )
     for (const type of types) expect(calloutOf(`[!${type}]`)?.look, type).toBe(type)
 
     const aliases: Record<string, string> = {

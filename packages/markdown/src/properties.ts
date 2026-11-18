@@ -24,7 +24,6 @@ export interface Property {
 }
 
 const KEY = /^([^\s#-].*?)[ \t]*:(?=[ \t]|$)(.*)$/
-
 const NESTED = /^[ \t]+([^\s#-].*?)[ \t]*:(?=[ \t]|$)[ \t]*(.*)$/
 
 function keyed(pattern: RegExp, text: string): RegExpExecArray | null {
@@ -33,11 +32,8 @@ function keyed(pattern: RegExp, text: string): RegExpExecArray | null {
 }
 
 const YES_NO = /^(true|false)$/i
-
 const NUMBER = /^-?\d+(?:\.\d+)?$/
-
 const DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/
-
 const MOST_KEYS = 64
 
 function kindOf(value: string, quoted: boolean): PropertyKind {

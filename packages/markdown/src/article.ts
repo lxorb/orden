@@ -22,9 +22,7 @@ export interface Source extends Origin {
 }
 
 const LAZY = ['data-src', 'data-original', 'data-lazy-src', 'data-actualsrc']
-
 const isPlaceholder = (src: string): boolean => !src || src.startsWith('data:')
-
 const CANDIDATE = /[\s,]*([^\s,](?:\S*[^\s,])?)(?:\s+([^,]*))?/g
 
 export function widestOf(srcset: string): string | null {
@@ -173,7 +171,6 @@ function titleFromUrl(url: string): string {
 
 export function pageTitle(document: Document, url: string): string {
   const shared = document.querySelector('meta[property="og:title"]')?.getAttribute('content')
-
   const named = [shared ?? '', document.title].map((one) => one.trim()).find((one) => one !== '')
   return named ?? titleFromUrl(url)
 }

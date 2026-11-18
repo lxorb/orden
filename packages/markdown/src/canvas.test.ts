@@ -184,16 +184,9 @@ describe('writing a canvas', () => {
       edges: Record<string, unknown>[]
     }
 
-    expect(Object.keys(written.nodes[0] ?? {})).toEqual([
-      'id',
-      'type',
-      'x',
-      'y',
-      'width',
-      'height',
-      'color',
-      'text',
-    ])
+    expect(Object.keys(written.nodes[0] ?? {})).toEqual(
+      'id type x y width height color text'.split(' '),
+    )
     expect(Object.keys(written.edges[1] ?? {})).toEqual(['id', 'fromNode', 'toNode'])
   })
 

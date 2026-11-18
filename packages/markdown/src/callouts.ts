@@ -52,7 +52,6 @@ const ALIASES: ReadonlyMap<string, string> = new Map(
 )
 
 const SHOUTED = new Set(['tldr', 'faq'])
-
 const MARKER = /^([ \t]*\[!([^\]\n]+)\]([-+])?[ \t]*)([^\n]*)/
 
 export interface Callout {

@@ -1,7 +1,6 @@
 type Maths = 'inline' | 'display' | null
 
 const BLANK = /[ \t]/
-
 const LINE_LEAD = /^[ \t>]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+)*/
 
 export class TexDelimiters {

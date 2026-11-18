@@ -15,7 +15,6 @@ const fetchEmoji = door(async () => {
 })
 
 export const MOST_EMS = 100
-
 const listeners = new Set<() => void>()
 
 function landed() {
@@ -23,7 +22,6 @@ function landed() {
 }
 
 export const mathsEngine = (): Maths | null => maths
-
 export const emojiTable = (): Emoji | null => emoji
 
 export function useMaths(engine: Maths) {
@@ -37,13 +35,9 @@ export function useEmoji(table: Emoji) {
 }
 
 export const loadMaths = (): Promise<void> => (maths ? Promise.resolve() : fetchMaths())
-
 export const loadEmoji = (): Promise<void> => (emoji ? Promise.resolve() : fetchEmoji())
-
 const hasMaths = (source: string): boolean => source.includes('$')
-
 const SHORTCODE = /:[a-z0-9_+-]+:/i
-
 const hasEmoji = (source: string): boolean => source.includes(':') && SHORTCODE.test(source)
 
 export function loadFor(source: string): Promise<void> {

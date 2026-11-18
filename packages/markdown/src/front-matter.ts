@@ -27,11 +27,8 @@ interface KeyLine {
 }
 
 const KEY = /^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s#-].*?)[ \t]*:(?=\s|$)/
-
 const NAME = /^(?![\s#\-?:,[\]{}&*!|>'"%@`])(?!.*:(?:\s|$))(?!.*\s#)[^\p{Cc}\p{Zl}\p{Zp}]+(?<!\s)$/u
-
 export const isPropertyName = (name: string): boolean => NAME.test(name) && isKeyLine(`${name}: x`)
-
 const keyWritten = (key: string): string => (isKeyLine(`${key}: x`) ? key : JSON.stringify(key))
 
 export function frontMatterBlock(source: string): FrontMatterBlock | null {
@@ -89,7 +86,6 @@ export function frontMatterList(source: string, key: string): string[] {
   if (!line) return []
 
   const value = source.slice(line.value.from, line.value.to).trim()
-
   const closes = valueClosesAt(source, line.value.from, block.body.to)
   if (closes !== -1) {
     const joined = source
@@ -156,7 +152,6 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
     const stop = end === -1 || end > block.body.to ? block.body.to : end
     const text = source.slice(at, stop)
     const found = KEY.exec(text)
-
     const name = found?.[1] === undefined ? undefined : unquoted(found[1])
     if (found && name?.toLowerCase() === wanted) {
       const value = at + found[0].length

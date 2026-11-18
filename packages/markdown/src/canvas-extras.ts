@@ -1,32 +1,11 @@
-const NODE_FIELDS = new Set([
-  'id',
-  'type',
-  'x',
-  'y',
-  'width',
-  'height',
-  'color',
-  'text',
-  'file',
-  'subpath',
-  'url',
-  'label',
-  'background',
-  'backgroundStyle',
-])
-
-const EDGE_FIELDS = new Set([
-  'id',
-  'fromNode',
-  'fromSide',
-  'fromEnd',
-  'toNode',
-  'toSide',
-  'toEnd',
-  'color',
-  'label',
-])
-
+const NODE_FIELDS = new Set(
+  'id type x y width height color text file subpath url label background backgroundStyle'.split(
+    ' ',
+  ),
+)
+const EDGE_FIELDS = new Set(
+  'id fromNode fromSide fromEnd toNode toSide toEnd color label'.split(' '),
+)
 const TOP_FIELDS = new Set(['nodes', 'edges', 'orden', 'nib'])
 
 export function ownOf(file: Record<string, unknown>): Fields | undefined {
@@ -40,22 +19,9 @@ function keptOwn(file: Record<string, unknown>, own: Fields | null): void {
   else delete file.orden
 }
 
-const ORDEN_FIELDS = new Set([
-  'version',
-  'icon',
-  'iconColor',
-  'pages',
-  'ink',
-  'shapes',
-  'order',
-  'words',
-  'locked',
-  'at',
-  'gone',
-  'moved',
-  'outside',
-])
-
+const ORDEN_FIELDS = new Set(
+  'version icon iconColor pages ink shapes order words locked at gone moved outside'.split(' '),
+)
 const RECORD = 'outside'
 
 type Fields = Record<string, unknown>
