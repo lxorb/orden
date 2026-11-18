@@ -26,6 +26,47 @@ describe('reading a note for the index', () => {
     expect('bases' in scanNote('Plain.md', '# Plain\n')).toBe(false)
   })
 
+  test('counts definitions, pictures in a label and labels over two lines, and nothing in HTML or maths, as the Rust scan does', () => {
+    const links = scanNote(
+      'Note.md',
+      `Intro [one](One.md) and a picture link [![chart](chart.png)](Two.md).
+
+A label that [runs over
+a line](Three.md) ends here.
+
+[four]: Four.md "The fourth"
+[^note]: Not.md
+[web]: https://example.com
+
+<!-- [hidden](Hidden1.md) -->
+
+<pre>
+[hidden](Hidden2.md)
+</pre>
+
+$$
+[hidden](Hidden3.md)
+$$
+
+Inline $[hidden](Hidden4.md)$ maths and a comment <!-- [hidden](Hidden5.md) --> here, and [[Five]].
+
+Costs $5 and [six](Six.md) $10.
+`,
+    ).links
+
+    expect(links.map((one) => one.target)).toEqual([
+      'One.md',
+      'Two.md',
+      'chart.png',
+      'Three.md',
+      'Four.md',
+      'Five',
+      'Six.md',
+    ])
+    expect(links.find((one) => one.target === 'Three.md')?.line).toBe(2)
+    expect(links.find((one) => one.target === 'Four.md')?.alias).toBe('four')
+  })
+
   test('reads the other names the note gives itself, whichever way they are written', () => {
     const aliases = (body: string) => scanNote('Plan.md', body).aliases
 

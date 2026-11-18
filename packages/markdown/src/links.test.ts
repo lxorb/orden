@@ -718,10 +718,36 @@ describe('a markdown target the way a link names a file', () => {
       'a%20b.md',
       'a[b].md',
       'é ü.md',
+      're:view.md',
+      'a|b.md',
+      'tick`s.md',
+      'a\u00a0b.pdf',
+      'Shot 9.41\u202fAM.png',
+      'tab\there.pdf',
+      'a\\_b.pdf',
+      '<x>.pdf',
     ]) {
       expect(decodeTarget(encodeTarget(name))).toBe(name)
       expect(only(`[S](${encodeTarget(name)})`)).toEqual([name])
     }
+  })
+
+  test('and keeps letters outside ASCII as they are, writing out only what a link cannot hold', () => {
+    expect(encodeTarget('Café/Ünïcode 日本.md')).toBe('Café/Ünïcode%20日本.md')
+    expect(encodeTarget('re:view (1)#2?.md')).toBe('re%3Aview%20%281%29%232%3F.md')
+  })
+
+  test('a definition is a link, its target the part a rename rewrites', () => {
+    const text = 'See [the plan][p].\n\n[p]: <My Plan.md#Goals> "Plan"\n'
+    const [link] = findLinks(text)
+    expect(link).toMatchObject({
+      kind: 'markdown',
+      target: 'My Plan.md',
+      heading: 'Goals',
+      alias: 'p',
+    })
+    expect(text.slice(link?.targetFrom, link?.targetTo)).toBe('My Plan.md')
+    expect(text.slice(link?.from, link?.to)).toBe('[p]: <My Plan.md#Goals> "Plan"')
   })
 
   test('a rename finds the target as it is written, not as it is read', () => {
@@ -764,9 +790,10 @@ describe('parentheses and brackets in a markdown link', () => {
     expect(findLinks('[a[b](d.md)').map((link) => link.alias)).toEqual(['b'])
   })
 
-  test('an inner link is the link and the outer one is not', () => {
+  test('an inner link is the link and the outer one is not, but a picture in a label leaves the link a link', () => {
     expect(read('[a[b](c.md)d](e.md)').map(([target]) => target)).toEqual(['c.md'])
     expect(findLinks('[![i](p.png)](e.md)').map((link) => [link.target, link.embed])).toEqual([
+      ['e.md', false],
       ['p.png', true],
     ])
   })

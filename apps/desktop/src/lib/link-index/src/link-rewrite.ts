@@ -56,6 +56,7 @@ export function retargetLinks(
   }
 
   if (!edits.length) return null
+  edits.sort((one, other) => one.from - other.from)
   return applied(text, quotedInMatter(text, plainInMatter(text, edits)))
 }
 
