@@ -20,19 +20,13 @@ export function writtenBy(model: string): string {
   return `*Written by ${model}*`
 }
 
-function heading(language: string): string {
-  return language ? `Transcript (${language})` : 'Transcript'
-}
-
-function quoted(text: string): string {
-  return text
-    .split('\n')
-    .map((line) => (line ? `> ${line}` : '>'))
-    .join('\n')
-}
-
 export function transcriptCallout(text: string, language: string, model: string): string {
-  return [`> [!quote] ${heading(language)}`, `> ${writtenBy(model)}`, '>', quoted(text)].join('\n')
+  return [
+    `> [!quote] Transcript${language ? ` (${language})` : ''}`,
+    `> ${writtenBy(model)}`,
+    '>',
+    ...text.split('\n').map((line) => (line ? `> ${line}` : '>')),
+  ].join('\n')
 }
 
 export function clockOf(at: Date): string {

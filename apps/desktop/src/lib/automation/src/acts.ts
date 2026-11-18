@@ -79,18 +79,7 @@ export async function newNote(args: Said): Promise<unknown> {
     agentsMayAll(path, relative)
 
     const after = append ? joined(before, content) : prepended(before, content)
-    wroteTo(
-      relative,
-      await workspace.replaceInNotes([
-        {
-          path,
-          before,
-          after,
-          edits: [{ from: 0, to: before.length, insert: after }],
-          back: [{ from: 0, to: after.length, insert: before }],
-        },
-      ]),
-    )
+    wroteTo(relative, await workspace.replaceInNotes([whole(path, before, after)]))
 
     if (!silent) await workspace.open(path)
     return { path: relative, added: true }
@@ -127,6 +116,11 @@ export async function newNote(args: Said): Promise<unknown> {
 
 export function appendNote(args: Said): Promise<unknown> {
   return newNote({ ...args, append: true, prepend: false })
+}
+
+function whole(path: string, before: string, after: string) {
+  const edits = [{ from: 0, to: before.length, insert: after }]
+  return { path, before, after, edits, back: [{ from: 0, to: after.length, insert: before }] }
 }
 
 function wroteTo(relative: string, count: number) {
@@ -220,7 +214,6 @@ export async function writeFile(args: Said): Promise<unknown> {
   agentsMayAll(path, relative)
   const content = words(args, 'content')
   if (content === null) throw new Error('say the content')
-  agentsMayAll(path, relative)
 
   const before = await workspace.noteText(path)
   if (before === null)
@@ -228,18 +221,7 @@ export async function writeFile(args: Said): Promise<unknown> {
 
   wroteTo(
     relative,
-    await workspace.replaceInNotes(
-      [
-        {
-          path,
-          before,
-          after: content,
-          edits: [{ from: 0, to: before.length, insert: content }],
-          back: [{ from: 0, to: content.length, insert: before }],
-        },
-      ],
-      { anyFile: true },
-    ),
+    await workspace.replaceInNotes([whole(path, before, content)], { anyFile: true }),
   )
 
   return { path: relative, written: content.length }

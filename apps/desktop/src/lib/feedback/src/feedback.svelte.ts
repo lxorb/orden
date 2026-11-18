@@ -38,10 +38,10 @@ interface Past {
 
 const pastKey = () => `orden:feedback-sent:${account.user?.id ?? ''}`
 
-function pastOf(value: unknown): Past[] {
-  if (!Array.isArray(value)) return []
-  const listed: unknown[] = value
-  return listed.filter(
+function readPast(): Past[] {
+  const kept: unknown = stored(pastKey())
+  if (!Array.isArray(kept)) return []
+  return (kept as unknown[]).filter(
     (one): one is Past =>
       isRecord(one) &&
       typeof one.url === 'string' &&
@@ -49,8 +49,6 @@ function pastOf(value: unknown): Past[] {
       typeof one.at === 'number',
   )
 }
-
-const readPast = (): Past[] => pastOf(stored(pastKey()))
 
 interface Kept {
   ok?: unknown
