@@ -1,5 +1,6 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
+import { idle } from './settle'
 
 window.matchMedia = ((query: string) => ({
   matches: query.includes('reduce'),
@@ -458,7 +459,7 @@ test('a zoom only moves the camera: where the windows lie, and how big, is the s
     flushSync()
   }
   expect(document.querySelector<HTMLElement>('.world')?.style.transform).toMatch(/scale\(0\.[0-5]/)
-  await new Promise((go) => setTimeout(go, 400))
+  await idle(400)
   flushSync()
   expect(laidOut()).toEqual(before)
 })

@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { workspace } = await import('../../../workspace/src/api')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
@@ -37,8 +37,6 @@ async function typeAndUnlock(password: string) {
   field.dispatchEvent(new Event('input', { bubbles: true }))
   flushSync()
   target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
-  await new Promise((done) => setTimeout(done, 1500))
-  flushSync()
 }
 
 describe('the lock screen', () => {
@@ -50,13 +48,16 @@ describe('the lock screen', () => {
 
   test('stays shut for a wrong password, and says so', async () => {
     await typeAndUnlock('tulip')
+    await vi.waitFor(() => {
+      flushSync()
+      expect(target.querySelector('[role="alert"]')?.textContent).toContain('Wrong password')
+    })
     expect(lockedAt(NOTE)).toBe(true)
-    expect(target.querySelector('[role="alert"]')?.textContent).toContain('Wrong password')
   })
 
   test('opens for the password, and everything under the same lock with it', async () => {
     await typeAndUnlock('tulip ladder')
-    expect(lockedAt(NOTE)).toBe(false)
+    await vi.waitFor(() => expect(lockedAt(NOTE)).toBe(false))
     expect(lockedAt(`${ROOT}/Inside/Other.md`)).toBe(false)
   })
 })

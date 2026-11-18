@@ -1,5 +1,6 @@
-import { flushSync, mount, tick, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { settle } from '../../../../../test/effects/settle'
 
 const { workspace } = await import('../../../workspace/src/api')
 const { links } = await import('../../../link-index/src/api')
@@ -25,29 +26,21 @@ afterEach(() => {
   workspace.protection.set(ROOT, NOTE, null)
 })
 
-async function settled() {
-  for (let round = 0; round < 5; round++) {
-    await tick()
-    await Promise.resolve()
-  }
-  flushSync()
-}
-
 describe('a chat card for a protected note', () => {
   test('shows none of its words while the note is shut, and them once it opens and none when it shuts again', async () => {
     const target = document.createElement('div')
     document.body.append(target)
     const shown = mount(NoteCard, { target, props: { target: 'Diary', from: `${ROOT}/Chat.md` } })
-    await settled()
+    await settle()
     expect(target.textContent).toContain('Diary')
     expect(target.textContent).not.toContain('nobody')
 
     unlocks.unlock([LOCK])
-    await settled()
+    await settle()
     expect(target.textContent).toContain('what nobody may read')
 
     unlocks.close([LOCK])
-    await settled()
+    await settle()
     expect(target.textContent).not.toContain('nobody')
     void unmount(shown)
     target.remove()

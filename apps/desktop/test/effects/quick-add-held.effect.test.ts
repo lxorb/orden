@@ -1,5 +1,5 @@
-import { flushSync } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 let answer: string | null = null
 
@@ -25,29 +25,22 @@ afterEach(() => {
   quickAdd.anywhere = true
 })
 
-const settled = async () => {
-  for (let turn = 0; turn < 5; turn++) {
-    flushSync()
-    await Promise.resolve()
-  }
-}
-
 test('is what the crate holds, not what the switch asks for', async () => {
   quickAdd.anywhere = true
   answer = null
   stop = listen()
-  await settled()
+  await settle()
   expect(quickAdd.held).toBe(false)
 
   answer = 'Control+Alt+Space'
   quickAdd.anywhere = false
-  await settled()
+  await settle()
   quickAdd.anywhere = true
-  await settled()
+  await settle()
   expect(quickAdd.held).toBe(true)
 
   answer = null
   quickAdd.anywhere = false
-  await settled()
+  await settle()
   expect(quickAdd.held).toBe(false)
 })

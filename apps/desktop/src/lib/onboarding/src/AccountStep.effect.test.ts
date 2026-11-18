@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { elapse } from '../../../../test/effects/settle'
 
 const { account } = await import('../../accounts/src/api')
 const { setup } = await import('./setup-state.svelte')
@@ -63,11 +64,11 @@ describe('a code taken in', () => {
     const code = account.code.bind(account)
     try {
       entering(() => Promise.resolve(true))
-      await vi.advanceTimersByTimeAsync(0)
+      await elapse(0)
       const at = setup.step
       close?.()
       close = undefined
-      await vi.advanceTimersByTimeAsync(2000)
+      await elapse(2000)
       expect(setup.step).toBe(at)
     } finally {
       account.code = code

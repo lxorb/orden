@@ -1,5 +1,5 @@
-import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { elapse, settle } from './settle'
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
@@ -45,18 +45,13 @@ afterEach(() => {
   viewport.device = 'desktop'
 })
 
-async function settle() {
-  await vi.advanceTimersByTimeAsync(0)
-  flushSync()
-}
-
 test('waits the Tab preview delay before the first card, half a second, and is drawn', async () => {
   expect(previewDelay.ms).toBe(500)
   hovering.enter({ tab: alpha, box: BOX })
-  await vi.advanceTimersByTimeAsync(previewDelay.ms - 50)
+  await elapse(previewDelay.ms - 50)
   expect(shownFor()).toBeNull()
 
-  await vi.advanceTimersByTimeAsync(60)
+  await elapse(60)
   await settle()
   expect(shownFor()).toBe('Alpha')
   expect(document.querySelector('.card')?.textContent).toContain('Alpha')
@@ -67,16 +62,16 @@ test('waits as long as the setting says, two seconds at most', async () => {
   expect(previewDelay.ms).toBe(2000)
   previewDelay.set(1200)
   hovering.enter({ tab: alpha, box: BOX })
-  await vi.advanceTimersByTimeAsync(1150)
+  await elapse(1150)
   expect(shownFor()).toBeNull()
-  await vi.advanceTimersByTimeAsync(60)
+  await elapse(60)
   await settle()
   expect(shownFor()).toBe('Alpha')
 })
 
 test('moves to the tab beside at once, and goes once the pointer has left the strip', async () => {
   hovering.enter({ tab: alpha, box: BOX })
-  await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
+  await elapse(previewDelay.ms + 10)
   await settle()
 
   hovering.leave('a')
@@ -96,14 +91,14 @@ test('moves to the tab beside at once, and goes once the pointer has left the st
 
 test('goes on a press, and says nothing more about the tab pressed', async () => {
   hovering.enter({ tab: alpha, box: BOX })
-  await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
+  await elapse(previewDelay.ms + 10)
   await settle()
 
   window.dispatchEvent(new PointerEvent('pointerdown'))
   expect(shownFor()).toBeNull()
 
   hovering.enter({ tab: alpha, box: BOX })
-  await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
+  await elapse(previewDelay.ms + 10)
   await settle()
   expect(shownFor()).toBeNull()
 })
@@ -112,7 +107,7 @@ test('never comes over a menu', async () => {
   const close = overlays.show(() => undefined)
   try {
     hovering.enter({ tab: alpha, box: BOX })
-    await vi.advanceTimersByTimeAsync(previewDelay.ms + 10)
+    await elapse(previewDelay.ms + 10)
     await settle()
     expect(shownFor()).toBeNull()
   } finally {

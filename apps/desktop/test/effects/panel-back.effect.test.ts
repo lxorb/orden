@@ -5,12 +5,13 @@ import { viewport } from '../../src/lib/ui-kit/src/viewport.svelte'
 import { workspace } from '../../src/lib/workspace/src/api'
 import { panels } from '../../src/lib/session/src/api'
 import { computed, root, watch } from './runes.svelte'
+import { settle } from './settle'
 
 beforeEach(async () => {
   viewport.device = 'phone'
   workspace.panel = null
   workspace.right = []
-  for (let turn = 0; turn < 6; turn++) await new Promise((resolve) => setTimeout(resolve, 5))
+  await settle()
 })
 
 afterEach(() => {

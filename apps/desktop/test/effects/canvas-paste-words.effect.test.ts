@@ -4,6 +4,7 @@ import Canvas from '../../src/lib/canvas/src/Canvas.svelte'
 import { blankCanvas, readCanvas } from '@orden/markdown/canvas'
 import { tools } from '../../src/lib/canvas/src/tools.svelte'
 import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
+import { settle } from './settle'
 
 const stored = vi.hoisted(() => ({ pictures: 0 }))
 
@@ -65,8 +66,7 @@ function pasted(said: Record<string, string>, files: File[]) {
 }
 
 const settled = async () => {
-  for (let turn = 0; turn < 10; turn += 1) await Promise.resolve()
-  flushSync()
+  await settle()
   vi.advanceTimersByTime(2000)
 }
 

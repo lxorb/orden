@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { elapse } from './settle'
 
 const asked: string[] = []
 const busy = new Map<string, boolean>()
@@ -237,9 +238,9 @@ test('a short press of Cmd+Q says to hold it, and the words go again', async () 
   await holdToQuit()
   flushSync()
   expect(document.body.textContent).toContain('Hold ⌘Q to quit')
-  await vi.advanceTimersByTimeAsync(1_000)
+  await elapse(1_000)
   expect(holding.shown).toBe(true)
-  await vi.advanceTimersByTimeAsync(1_000)
+  await elapse(1_000)
   expect(holding.shown).toBe(false)
   vi.useRealTimers()
 })

@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest'
+import { elapse } from '../../test/effects/settle'
 
 function nothing(): undefined {
   return undefined
@@ -89,10 +90,10 @@ test("a note's card, opened by a long press on its link, stays once the finger l
     link.dispatchEvent(touch('pointerover'))
     link.dispatchEvent(touch('pointerdown'))
     link.dispatchEvent(touch('contextmenu'))
-    await vi.advanceTimersByTimeAsync(400)
+    await elapse(400)
     link.dispatchEvent(touch('pointerup'))
     link.dispatchEvent(touch('pointerout'))
-    await vi.advanceTimersByTimeAsync(1000)
+    await elapse(1000)
 
     expect(card.hidden).toBe(false)
     expect(card.textContent).toContain('Words of b.')

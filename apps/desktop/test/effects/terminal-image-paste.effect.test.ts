@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 const typed: string[] = []
 const carried: Record<string, unknown>[] = []
@@ -129,7 +130,7 @@ async function remote(): Promise<Opened> {
 async function drawn(session: Opened): Promise<Opened> {
   await session.attach(place, false)
   await vi.waitFor(() => expect(session.term.textarea).toBeDefined())
-  await new Promise((settle) => setTimeout(settle, 10))
+  await settle()
   return session
 }
 

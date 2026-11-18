@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { note } from './reading-find-redraw-world.svelte'
+import { settle } from './settle'
 
 vi.mock('../../src/lib/reading/src/drawn', () => ({ inlineFiles: () => () => undefined }))
 vi.mock('../../src/lib/reading/src/render', () => ({
@@ -48,8 +49,6 @@ Range.prototype.getBoundingClientRect = () => new DOMRect()
 
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
 
-const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
-
 let shown: ReturnType<typeof mount> | null = null
 
 afterEach(() => {
@@ -80,9 +79,10 @@ async function opened() {
   document.body.append(target)
   shown = mount(Reading, { target, props: { tab: tab as never, focused: true } })
   flushSync()
-  await wait(50)
-  flushSync()
-  expect(target.querySelector('article')?.textContent).toBe('alpha beta')
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('article')?.textContent).toBe('alpha beta')
+  })
   return target
 }
 
@@ -105,20 +105,20 @@ async function redrawn(target: HTMLElement, doc: string, shows = doc.replaceAll(
   note.doc = doc
   note.revision++
   flushSync()
-  await wait(400)
-  flushSync()
-  expect(target.querySelector('article')?.textContent).toBe(shows)
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('article')?.textContent).toBe(shows)
+  })
 }
 
 test('the tally counts the page that is showing after a redraw', async () => {
   const target = await opened()
   openBar(target)
   find(target, 'beta')
-  await wait(50)
-  expect(tally(target)).toBe('1 of 1')
+  await vi.waitFor(() => expect(tally(target)).toBe('1 of 1'))
 
   await redrawn(target, 'beta beta beta')
-  expect(tally(target)).toBe('1 of 3')
+  await vi.waitFor(() => expect(tally(target)).toBe('1 of 3'))
 
   find(target, 'bet')
   expect(tally(target)).toBe('1 of 3')
@@ -128,17 +128,17 @@ test('a bar opened again after a redraw it was open for searches the new page', 
   const target = await opened()
   openBar(target)
   find(target, 'beta')
-  await wait(50)
-  expect(tally(target)).toBe('1 of 1')
+  await vi.waitFor(() => expect(tally(target)).toBe('1 of 1'))
   await redrawn(target, 'beta\nbeta')
 
   target
     .querySelector('input')
     ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   flushSync()
-  await wait(50)
-  flushSync()
-  expect(target.querySelector('input')).toBeNull()
+  await vi.waitFor(() => {
+    flushSync()
+    expect(target.querySelector('input')).toBeNull()
+  })
 
   openBar(target)
   find(target, 'beta')
@@ -149,10 +149,10 @@ test('a base drawn after the page is not counted by the fence it replaced', asyn
   const target = await opened()
   openBar(target)
   find(target, 'beta')
-  await wait(50)
-  expect(tally(target)).toBe('1 of 1')
+  await vi.waitFor(() => expect(tally(target)).toBe('1 of 1'))
 
   await redrawn(target, 'beta\n<div data-base-code="beta">beta</div>', 'betaview')
+  await settle()
   expect(tally(target)).toBe('1 of 1')
 })
 

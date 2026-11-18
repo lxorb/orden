@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { idle } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 let stillHeld = false
@@ -237,7 +238,7 @@ test('a connection that keeps failing goes on trying, slower each time', async (
   await vi.waitFor(() => expect(spawns()).toHaveLength(2), { timeout: 3000 })
   vi.restoreAllMocks()
   said({ exit: 255 })
-  await new Promise((settle) => setTimeout(settle, 1500))
+  await idle(1500)
   expect(spawns()).toHaveLength(2)
   await vi.waitFor(() => expect(spawns()).toHaveLength(3), { timeout: 3000 })
 })
@@ -293,7 +294,7 @@ test('a tab another window took over only watches, until Take over gives it the 
   const bar = () => [...place.querySelectorAll<HTMLButtonElement>('.bar button')]
   expect(place.querySelector('.bar')?.textContent).toContain('Typing in another window')
   typing?.('ls\r')
-  await new Promise((settle) => setTimeout(settle, 50))
+  await idle(50)
   expect(calls('pty_write')).toHaveLength(0)
 
   bar()

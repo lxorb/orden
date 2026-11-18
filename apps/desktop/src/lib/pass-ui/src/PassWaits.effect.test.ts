@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { closed, draw, landed, target, until } from '../test/drawn'
 import { FAST, PASSWORD, pass } from '../test/opened'
 import type { Account } from '../../accounts/src/routes'
+import { idle } from '../../../../test/effects/settle'
 
 vi.mock('../../gates/src/api', async (original) => ({
   ...(await original<typeof import('../../gates/src/api')>()),
@@ -17,13 +18,6 @@ let setupSeen = 0
 const watcher = new MutationObserver(() => {
   if (target.textContent.includes('Set up Pass')) setupSeen++
 })
-
-async function settled(): Promise<void> {
-  for (let tries = 0; tries < 10; tries++) {
-    flushSync()
-    await new Promise((done) => setTimeout(done, 20))
-  }
-}
 
 function signedInAs(id: string): void {
   account.token = `token-${id}`
@@ -45,7 +39,7 @@ afterAll(() => {
 
 describe('Pass before the account has answered', () => {
   test('waits instead of offering setup while the account is unheard', async () => {
-    await settled()
+    await idle(200)
     expect(pass.state).toBe('loading')
     expect(target.querySelector('input[type=password]')).toBeNull()
     expect(setupSeen).toBe(0)
@@ -61,13 +55,13 @@ describe('Pass before the account has answered', () => {
     signedInAs('grace')
     await until(() => pass.state === 'loading', 'waiting for the other account')
     setupSeen = 0
-    await settled()
+    await idle(200)
     expect(setupSeen).toBe(0)
     const made = await newKeyring(PASSWORD, FAST)
     pass.tookKeyring({ keyring: made.keyring, rev: 1, pending: false })
     pass.accountHeard('grace')
     await until(() => pass.state === 'locked', 'the lock')
-    await settled()
+    await idle(200)
     expect(pass.state).toBe('locked')
     expect(setupSeen).toBe(0)
   })

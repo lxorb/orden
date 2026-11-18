@@ -1,9 +1,10 @@
-import { flushSync, mount, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { agentMarks } from '../../src/lib/workspace/src/api'
 import AgentSession from '../../src/lib/agents/src/ui/AgentSession.svelte'
 import { FakeCrate } from '../../src/lib/agents/src/ui/fake'
 import { ended, start, started } from '../../src/lib/agents/src/ui/index'
+import { settle } from './settle'
 
 Element.prototype.animate = () =>
   ({
@@ -22,16 +23,11 @@ Element.prototype.animate = () =>
 
 let fake: FakeCrate
 
-async function settled(): Promise<void> {
-  for (let turn = 0; turn < 5; turn++) await Promise.resolve()
-  flushSync()
-}
-
 beforeEach(async () => {
   fake = new FakeCrate()
   const hear = start(fake)
   fake.listen(hear)
-  await settled()
+  await settle()
 })
 
 afterEach(() => {
@@ -43,7 +39,7 @@ describe('the frame and the mark', () => {
   test('are worn by a reader tab while an agent acts in it, in the agent colour', async () => {
     fake.connect('claude', 'Claude Code')
     fake.act('claude', 't1', 'browser_click')
-    await settled()
+    await settle()
 
     const worn = agentMarks.on.t1
     expect(worn?.agent).toBe('claude')
@@ -55,10 +51,10 @@ describe('the frame and the mark', () => {
   test('stay on whatever the reader does in the tab: nothing hands it over', async () => {
     fake.connect('claude', 'Claude Code')
     fake.act('claude', 't1', 'browser_click')
-    await settled()
+    await settle()
 
     fake.act('claude', 't1', 'browser_type')
-    await settled()
+    await settle()
     expect(agentMarks.on.t1?.stopped).toBe(false)
     expect(fake.asked.some((one) => one.command === 'pause')).toBe(false)
   })
@@ -68,16 +64,16 @@ describe('the frame and the mark', () => {
     fake.connect('codex', 'Codex')
     fake.act('claude', 't1', 'browser_click')
     fake.act('codex', 't2', 'browser_type')
-    await settled()
+    await settle()
 
     agentMarks.act?.('t1', 'stop')
-    await settled()
+    await settle()
     expect(fake.asked.at(-1)).toEqual({ command: 'stop', args: ['claude'] })
     expect(agentMarks.on.t1?.stopped).toBe(true)
     expect(agentMarks.on.t2?.stopped).toBe(false)
 
     agentMarks.act?.('t1', 'resume')
-    await settled()
+    await settle()
     expect(fake.asked.at(-1)).toEqual({ command: 'resume', args: ['claude'] })
     expect(agentMarks.on.t1?.stopped).toBe(false)
   })
@@ -85,14 +81,14 @@ describe('the frame and the mark', () => {
   test('the stop mutes them all, and lifting it lets them act again', async () => {
     fake.connect('claude', 'Claude Code')
     fake.act('claude', 't1', 'browser_click')
-    await settled()
+    await settle()
 
     await started().stop()
-    await settled()
+    await settle()
     expect(agentMarks.on.t1?.stopped).toBe(true)
 
     agentMarks.act?.('t1', 'resume')
-    await settled()
+    await settle()
     expect(fake.asked.at(-1)).toEqual({ command: 'resume', args: [undefined] })
     expect(agentMarks.on.t1?.stopped).toBe(false)
   })
@@ -103,14 +99,14 @@ describe('the shell while an agent is connected', () => {
     expect(agentMarks.holding).toBe(false)
 
     fake.connect('claude', 'Claude Code')
-    await settled()
+    await settle()
 
     expect(fake.told?.key).toBe('Control+Alt+Shift+K')
     expect(fake.told?.words.stop).toBe('Stop agents')
     expect(agentMarks.holding).toBe(true)
 
     await agentMarks.hide?.()
-    await settled()
+    await settle()
     expect(fake.hidden).toBe(true)
   })
 })
@@ -135,7 +131,7 @@ describe("an agent's session", () => {
     const tab = fake.open('claude', 'https://shop.example/', 'Shop')
     fake.act('claude', tab.id, 'browser_click')
     const target = open()
-    await settled()
+    await settle()
 
     expect(target.querySelector('.name')?.textContent).toBe('Claude Code')
     expect([...target.querySelectorAll('.doing .fact')].map((one) => one.textContent)).toEqual([
@@ -153,7 +149,7 @@ describe("an agent's session", () => {
     fake.connect('claude', 'Claude Code')
     const asked = fake.ask('claude', 'paying', 'Place order on shop.example', 'shop.example', 't1')
     const target = open()
-    await settled()
+    await settle()
 
     expect(agentMarks.waiting).toBe(1)
     const question = target.querySelector('.question')
@@ -164,7 +160,7 @@ describe("an agent's session", () => {
     expect(answers).toEqual(['Don’t allow', 'Allow', 'Always on this site'])
 
     question?.querySelector<HTMLButtonElement>('.always')?.click()
-    await settled()
+    await settle()
 
     expect(fake.asked.find((one) => one.command === 'answer')).toEqual({
       command: 'answer',
@@ -179,15 +175,15 @@ describe("an agent's session", () => {
     fake.act('claude', 't1', 'browser_open', { url: 'https://shop.example/' })
     fake.act('claude', 't1', 'browser_click')
     const target = open()
-    await settled()
+    await settle()
     await started().readLog()
-    await settled()
+    await settle()
 
     const rows = [...target.querySelectorAll('.call .word')].map((one) => one.textContent)
     expect(rows).toEqual(['Pressing', 'Opening'])
 
     target.querySelector<HTMLButtonElement>('.head .orden-glyph')?.click()
-    await settled()
+    await settle()
     expect(fake.asked.at(-1)).toEqual({ command: 'stop', args: ['claude'] })
     expect(target.querySelector('.head .orden-glyph')?.getAttribute('aria-label')).toBe('Continue')
   })
@@ -200,9 +196,9 @@ describe('Full permissions', () => {
     const reading = workspace.activeTabId
     fake.connect('claude', 'Claude Code')
     const tab = fake.open('claude', 'https://shop.example/', 'Shop')
-    await settled()
+    await settle()
     fake.granted('claude', 'showing', 'Show Shop', tab.id)
-    await settled()
+    await settle()
 
     expect(agentMarks.waiting).toBe(0)
     await vi.waitFor(() =>
@@ -217,21 +213,21 @@ describe('Full permissions', () => {
 describe('questions outside the session', () => {
   test('a pairing is asked in a bubble of its own, and allowing it answers', async () => {
     const asked = fake.pair('Codex')
-    await settled()
+    await settle()
 
     const bubble = document.body.querySelector('.pairing')
     expect(bubble?.textContent).toContain('Codex wants to connect')
     expect(agentMarks.waiting).toBe(0)
 
     ;[...(bubble?.querySelectorAll('button') ?? [])].at(-1)?.click()
-    await settled()
+    await settle()
 
     expect(fake.asked.find((one) => one.command === 'answer')?.args).toEqual([
       asked.id,
       true,
       false,
     ])
-    await settled()
+    await settle()
     expect(document.body.querySelector('.pairing')).toBeNull()
   })
 
@@ -245,13 +241,13 @@ describe('questions outside the session', () => {
       'https://bank.example/',
       't1',
     )
-    await settled()
+    await settle()
 
     expect(agentMarks.takeovers.t1).toEqual({ id: asked.id, reason: 'Sign in to the bank' })
     expect(agentMarks.on.t1?.stopped).toBe(false)
 
     await started().answer(asked, true)
-    await settled()
+    await settle()
     expect(agentMarks.takeovers.t1).toBeUndefined()
     expect(agentMarks.on.t1?.stopped).toBe(false)
   })

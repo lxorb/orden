@@ -1,6 +1,7 @@
 import { providePort } from '@orden/contracts'
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { idle } from './settle'
 
 let config: unknown[] = []
 let kept: Record<string, unknown> = { own: [], about: {}, order: [], groups: [] }
@@ -243,7 +244,7 @@ test('a group of ten or more asks before it opens them all, and opens nothing on
   all()?.click()
   await vi.waitFor(() => expect(confirmed).toHaveLength(1))
   expect(confirmed[0]).toMatchObject({ title: 'Open all', detail: '10 tabs' })
-  await new Promise((settle) => setTimeout(settle, 20))
+  await idle(20)
   expect(workspace.tabs).toHaveLength(0)
 
   sure = true

@@ -119,6 +119,62 @@ const effectImports = rule(
   },
 )
 
+const SETTLING = new Set([
+  'tick',
+  'flushSync',
+  'Promise.resolve',
+  'vi.dynamicImportSettled',
+  'vi.advanceTimersByTimeAsync',
+])
+
+function settling(statement) {
+  if (statement.type === 'BlockStatement')
+    return statement.body.length > 0 && statement.body.every(settling)
+  if (statement.type !== 'ExpressionStatement') return false
+  const done =
+    statement.expression.type === 'AwaitExpression'
+      ? statement.expression.argument
+      : statement.expression
+  if (done.type === 'NewExpression')
+    return done.callee.type === 'Identifier' && done.callee.name === 'Promise'
+  return done.type === 'CallExpression' && SETTLING.has(calleeName(done.callee))
+}
+
+const timedWaits = rule(
+  'problem',
+  {
+    sleep:
+      'A test that sleeps a fixed time fails once the machine is slow: wait for the state with vi.waitFor, or use settle, elapse or idle from test/effects/settle.',
+    turns:
+      'A fixed count of turns does not wait for what is still loading: await settle() from test/effects/settle.',
+    advance:
+      'Moving the fake clock while imports are still loading skips what they schedule: use elapse from test/effects/settle.',
+  },
+  (context) => {
+    return {
+      "CallExpression[callee.name='setTimeout']"(node) {
+        const [done, delay] = node.arguments
+        let around = node.parent
+        while (around && !around.type.endsWith('FunctionExpression')) around = around.parent
+        const given = around?.params[0]
+        const promised =
+          around?.parent.type === 'NewExpression' && around.parent.callee.name === 'Promise'
+        if (!promised || done?.type !== 'Identifier' || done.name !== given?.name) return
+        if (delay && !(delay.type === 'Literal' && delay.value === 0))
+          context.report({ node, messageId: 'sleep' })
+      },
+      "CallExpression[callee.object.name='vi'][callee.property.name='advanceTimersByTimeAsync']"(
+        node,
+      ) {
+        context.report({ node, messageId: 'advance' })
+      },
+      ':matches(ForStatement, WhileStatement, DoWhileStatement)'(node) {
+        if (settling(node.body)) context.report({ node, messageId: 'turns' })
+      },
+    }
+  },
+)
+
 const MODULES = checkModules().modules.filter((one) => one.lang === 'ts')
 
 const MODULE_FILES = MODULES.map((one) => `${one.dir}/**/*.{ts,svelte}`)
@@ -448,10 +504,16 @@ export default tseslint.config(
           'pending-imports': pendingImports,
           'own-api': ownApi,
           'effect-imports': effectImports,
+          'timed-waits': timedWaits,
         },
       },
     },
     rules: { 'orden/no-comments': 'error', 'orden/effect-imports': 'error' },
+  },
+  {
+    files: ['**/*.effect.test.ts', 'apps/desktop/test/effects/**/*.ts'],
+    ignores: ['apps/desktop/test/effects/settle.ts'],
+    rules: { 'orden/timed-waits': 'error' },
   },
   {
     files: MODULE_FILES,

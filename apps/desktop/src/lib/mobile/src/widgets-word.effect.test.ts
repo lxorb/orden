@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte'
 import { expect, test, vi } from 'vitest'
+import { idle } from '../../../../test/effects/settle'
 
 const said = vi.hoisted(() => {
   let speak: (word: string) => void = () => undefined
@@ -39,7 +40,7 @@ const { watchWidgets } = await import('./widgets.svelte')
 test('rows handed over with no word are handed again once it is said', async () => {
   const stop = watchWidgets()
   flushSync()
-  await new Promise((done) => setTimeout(done, 20))
+  await idle(20)
   expect(pushed).toEqual([])
 
   said.word = 'word'

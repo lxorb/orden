@@ -25,10 +25,13 @@ function shownOn(tab: 'general' | 'export') {
 }
 
 async function until(ready: () => boolean): Promise<void> {
-  for (let tries = 0; tries < 100 && !ready(); tries++) {
-    await new Promise((done) => setTimeout(done, 20))
-    flushSync()
-  }
+  await vi.waitFor(
+    () => {
+      flushSync()
+      expect(ready()).toBe(true)
+    },
+    { timeout: 5000, interval: 20 },
+  )
 }
 
 describe('Pass settings', () => {

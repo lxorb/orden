@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { idle } from './settle'
 
 const typed: string[] = []
 
@@ -194,7 +195,7 @@ test('put away, the question gives the press to nobody', async () => {
   await vi.waitFor(() => expect(prompt.open).toBe(true))
 
   prompt.dismiss()
-  await new Promise((settle) => setTimeout(settle, 20))
+  await idle(20)
 
   expect(typed).toEqual([])
   expect(heard).toEqual([])

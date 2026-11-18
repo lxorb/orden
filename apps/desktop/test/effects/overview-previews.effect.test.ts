@@ -36,13 +36,6 @@ afterEach(() => {
   shown = undefined
 })
 
-async function until(done: () => boolean) {
-  for (let waited = 0; !done() && waited < 20_000; waited += 25) {
-    await new Promise((later) => setTimeout(later, 25))
-    flushSync()
-  }
-}
-
 test('every kind that is drawn from itself is drawn off the screen once, and kept as its window’s picture', async () => {
   const kinds = Object.entries(TAB_KINDS)
     .filter(([, traits]) => traits.preview === 'drawn')
@@ -63,7 +56,13 @@ test('every kind that is drawn from itself is drawn off the screen once, and kep
   document.body.append(target)
   shown = mount(Offstage, { target, props: { tabs, width: 800, height: 600 } })
   flushSync()
-  await until(() => tabs.every((tab) => faces.of(tab.id)?.html))
+  await vi.waitFor(
+    () => {
+      flushSync()
+      expect(tabs.every((tab) => faces.of(tab.id)?.html)).toBe(true)
+    },
+    { timeout: 20_000, interval: 25 },
+  )
   for (const tab of tabs) expect(faces.of(tab.id)?.html, tab.kind).toContain('drawn:')
   target.remove()
 })

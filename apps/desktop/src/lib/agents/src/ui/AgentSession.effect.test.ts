@@ -1,5 +1,6 @@
-import { flushSync, mount, tick, unmount } from 'svelte'
+import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
+import { elapse, settle } from '../../../../../test/effects/settle'
 
 const opened = vi.hoisted(() => ({ pages: [] as string[] }))
 
@@ -22,14 +23,6 @@ afterEach(() => {
   opened.pages = []
   document.body.innerHTML = ''
 })
-
-async function settle() {
-  for (let round = 0; round < 4; round += 1) {
-    await Promise.resolve()
-    await tick()
-  }
-  flushSync()
-}
 
 async function drawn(holding = true) {
   const fake = new FakeCrate()
@@ -145,7 +138,7 @@ test('an agent that never pauses still has its calls read in, about once a secon
     for (let at = 0; at < 12; at++) {
       fake.act('claude-code', tab.id, 'browser_click')
       flushSync()
-      await vi.advanceTimersByTimeAsync(400)
+      await elapse(400)
     }
     expect(reads() - before).toBeGreaterThanOrEqual(4)
     close()

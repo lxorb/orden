@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { Entry } from '../../src/lib/quick-add/src/entry'
+import { elapse, settle } from './settle'
 
 const invoked: string[] = []
 vi.mock('../../src/lib/platform/src/tauri', async (original) => ({
@@ -25,13 +26,6 @@ afterEach(() => {
   invoked.length = 0
 })
 
-const settled = async () => {
-  for (let turn = 0; turn < 5; turn++) {
-    flushSync()
-    await new Promise((resolve) => setTimeout(resolve, 0))
-  }
-}
-
 function fieldOf(): HTMLInputElement {
   const field = document.querySelector<HTMLInputElement>('input.field')
   if (!field) throw new Error('no field')
@@ -52,7 +46,7 @@ const enter = () =>
 async function typeAndAdd(words: string): Promise<HTMLInputElement> {
   const field = type(words)
   enter()
-  await settled()
+  await settle()
   return field
 }
 
@@ -103,9 +97,9 @@ describe('the field, while a task is on its way', () => {
     type('Call Ada')
     enter()
     enter()
-    await settled()
+    await settle()
     caller.letGo(true)
-    await settled()
+    await settle()
 
     expect(caller.handed).toHaveLength(1)
   })
@@ -120,10 +114,10 @@ describe('the field, while a task is on its way', () => {
 
     type('Call Ada')
     enter()
-    await settled()
+    await settle()
     type('Buy milk')
     caller.letGo(true)
-    await settled()
+    await settle()
 
     expect(fieldOf().value).toBe('Buy milk')
   })
@@ -142,10 +136,10 @@ describe('the global window', () => {
   test('stays, with the words, where the app put the task nowhere', async () => {
     const other = app(false)
     shown = mount(Window, { target: document.body })
-    await settled()
+    await settle()
 
     const field = await typeAndAdd('Call Ada')
-    await settled()
+    await settle()
     other.close()
 
     expect(invoked).not.toContain('quick_add_hide')
@@ -155,10 +149,10 @@ describe('the global window', () => {
   test('goes once the app has the task', async () => {
     const other = app(true)
     shown = mount(Window, { target: document.body })
-    await settled()
+    await settle()
 
     await typeAndAdd('Call Ada')
-    await settled()
+    await settle()
     other.close()
 
     expect(invoked).toContain('quick_add_hide')
@@ -171,7 +165,7 @@ describe('the global window', () => {
 
     type('Call Ada')
     enter()
-    await vi.advanceTimersByTimeAsync(60_000)
+    await elapse(60_000)
     flushSync()
 
     expect(invoked).not.toContain('quick_add_hide')
@@ -181,7 +175,7 @@ describe('the global window', () => {
     const app = new BroadcastChannel(CHANNEL)
     app.onmessage = (event: MessageEvent) => sent.push(event.data)
     enter()
-    await vi.advanceTimersByTimeAsync(100)
+    await elapse(100)
     app.close()
     expect(sent).toContainEqual(expect.objectContaining({ kind: 'task' }))
   })
@@ -212,7 +206,7 @@ describe('lines pasted as a task each', () => {
 
     paste('Milk\nCall Ada\nSketch the plan')
     document.querySelector<HTMLButtonElement>('.pasted .add')?.click()
-    await settled()
+    await settle()
 
     expect(handed.map((one) => one.text)).toEqual(['Milk', 'Call Ada', 'Sketch the plan'])
   })

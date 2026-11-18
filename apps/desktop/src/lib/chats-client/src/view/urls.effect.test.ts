@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { Who } from '@orden/chats'
 import type { Chats } from '../shapes'
 import { computed, root, watch } from '../../../../../test/effects/runes.svelte'
+import { elapse } from '../../../../../test/effects/settle'
 
 const { useStore } = await import('./source.svelte')
 const { fileUrl } = await import('./urls.svelte')
@@ -30,7 +31,7 @@ function row(chat: string, hash: string): { shown: () => string | null; close: (
   return { shown: () => shown, close }
 }
 
-const wait = (ms: number) => vi.advanceTimersByTimeAsync(ms).then(() => flushSync())
+const wait = (ms: number) => elapse(ms)
 
 beforeEach(() => {
   vi.useFakeTimers()
