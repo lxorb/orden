@@ -17,7 +17,7 @@ import {
   type VaultRow,
 } from '@orden/pass/wire'
 import type { PersonKey } from './people'
-import { PassApi, type Method, type PassCall } from './sync'
+import { errorOf, isFields, PassApi, saidOf, withFrom, type Method, type PassCall } from './sync'
 
 const PREFIX = '/v2/pass'
 
@@ -62,10 +62,6 @@ export interface Refusal {
 
 type Fields = Record<string, unknown>
 
-function isFields(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
 function fieldsOf(value: unknown): Fields {
   if (!isFields(value)) throw new Error('pass: unreadable answer')
   return value
@@ -85,12 +81,8 @@ function isState(value: unknown): value is MemberState {
 }
 
 export function refusalOf(error: unknown): Refusal | null {
-  if (!(error instanceof Error)) return null
-  const status = (error as { status?: unknown }).status
-  if (typeof status !== 'number') return null
-  const body = (error as { body?: unknown }).body ?? null
-  const said = isFields(body) && typeof body.error === 'string' ? body.error : ''
-  return { status, error: said, body }
+  const said = saidOf(error)
+  return said && { ...said, error: errorOf(said.body) }
 }
 
 const part = encodeURIComponent
@@ -189,8 +181,7 @@ export class ShareApi extends PassApi {
   }
 
   private async ask(path: string, method?: Method, body?: unknown): Promise<unknown> {
-    const from = method && method !== 'GET' ? this.sender() : null
-    const sent = from ? `${path}${path.includes('?') ? '&' : '?'}from=${part(from)}` : path
+    const sent = withFrom(path, method && method !== 'GET' ? this.sender() : null)
     return await this.reach(`${PREFIX}${sent}`, method, body)
   }
 }

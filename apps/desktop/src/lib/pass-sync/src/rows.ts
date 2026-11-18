@@ -155,16 +155,9 @@ export async function openAll(
       const box = held.vaults.get(row.vault)
       if (row.deleted || !box) return
       try {
-        const { envelope, itemKey } = await openItem(
-          box.key,
-          row.vault,
-          row.id,
-          row.key,
-          row.body,
-          row.keyVersion,
-        )
-        held.items.set(row.id, { key: itemKey, row })
-        items.push(itemOf(row, envelope))
+        const was = await openItem(box.key, row.vault, row.id, row.key, row.body, row.keyVersion)
+        held.items.set(row.id, { key: was.itemKey, row })
+        items.push(itemOf(row, was.envelope))
       } catch {
         log('warn', 'pass: an item on this device could not be opened')
       }
@@ -178,15 +171,8 @@ export async function openVersions(box: HeldVault, vault: string, id: string): P
   const opened = await Promise.all(
     rows.map(async (row) => {
       try {
-        const { envelope } = await openVersion(
-          box.key,
-          row.vault,
-          row.id,
-          row.rev,
-          row.key,
-          row.body,
-        )
-        return [itemOf(row, envelope)]
+        const was = await openVersion(box.key, row.vault, row.id, row.rev, row.key, row.body)
+        return [itemOf(row, was.envelope)]
       } catch {
         return []
       }
@@ -218,7 +204,7 @@ async function movedVersions(
   return moved.flat()
 }
 
-function heldVault(held: Held, id: string): HeldVault {
+export function heldVault(held: Held, id: string): HeldVault {
   const box = held.vaults.get(id)
   if (!box) throw new Error('pass: no such vault')
   return box

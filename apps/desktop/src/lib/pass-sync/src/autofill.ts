@@ -306,16 +306,14 @@ export class Autofill {
   }
 
   private async listen(): Promise<void> {
+    const on =
+      <T>(run: (said: T) => Promise<void>) =>
+      (said: T) =>
+        void (passOn() && run(said))
     await Promise.all([
-      onForms((said) => {
-        if (passOn()) void this.heardForms(said)
-      }),
-      onMark((said) => {
-        if (passOn()) void this.heardMark(said)
-      }),
-      onSubmitted((said) => {
-        if (passOn()) void this.heardSubmitted(said)
-      }),
+      onForms(on((said) => this.heardForms(said))),
+      onMark(on((said) => this.heardMark(said))),
+      onSubmitted(on((said) => this.heardSubmitted(said))),
     ])
   }
 
