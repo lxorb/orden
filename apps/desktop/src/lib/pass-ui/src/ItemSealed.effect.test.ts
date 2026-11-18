@@ -1,22 +1,16 @@
-import 'fake-indexeddb/auto'
 import { blank, newEnvelope } from '@orden/pass/envelope'
 import type { Content, Item, Vault } from '@orden/pass/types'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
-import '../test/no-device'
+import { closed, showing, target } from '../test/drawn'
+import { opened, pass } from '../test/opened'
 
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const { menu } = await import('../../ui-kit/src/api')
 const ItemView = (await import('./ItemView.svelte')).default
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
 
 const SECRET = 'wifi-pass-hidden-1'
 const TOTP = 'JBSWY3DPEHPK3PXP'
-
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 
 function vaultHeldAs(id: string, role: Vault['role'], hide: boolean): Vault {
   return {
@@ -39,12 +33,7 @@ function itemIn(vault: string, content: Content): Item {
   return { ...newEnvelope(content, 1), id: `${vault}-${content.kind}`, vault, rev: 1 }
 }
 
-function viewing(item: Item) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(ItemView, { target, props: { ui: new PassUi(null), item }, intro: false })
-  flushSync()
-}
+const viewing = (item: Item) => showing(ItemView, { ui: new PassUi(null), item })
 
 function menuLabels(): string[] {
   target.querySelector<HTMLButtonElement>('button[aria-label="More"]')?.click()
@@ -55,20 +44,13 @@ function menuLabels(): string[] {
 }
 
 beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup('correct horse battery staple')
+  await opened()
   pass.vaults = [
     ...pass.vaults,
     vaultHeldAs('hidden', 'viewer', true),
     vaultHeldAs('open', 'viewer', false),
   ]
 })
-
-function closed() {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
-}
 
 afterEach(closed)
 

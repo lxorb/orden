@@ -1,7 +1,7 @@
 import type { VaultMeta } from '@orden/pass/types'
 import type { Invite } from '@orden/pass/wire'
-import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { closed, draw, landed, target } from '../test/drawn'
 
 const fake = vi.hoisted(() => ({
   pass: {
@@ -44,9 +44,6 @@ const invite = (vault: string, more: Partial<Invite> = {}): Invite => ({
   ...more,
 })
 
-let target: HTMLElement
-let close: (() => void) | undefined
-
 beforeEach(() => {
   for (const one of [
     fake.pass.inviteMeta,
@@ -61,21 +58,14 @@ beforeEach(() => {
   )
   fake.pass.inviterCode.mockResolvedValue('1a2b 3c4d')
   fake.passSync.refresh.mockResolvedValue(undefined)
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
 })
 
-afterEach(() => {
-  close?.()
-  close = undefined
-  target.remove()
-})
+afterEach(closed)
 
 function shown(invites: Invite[]) {
   fake.passSync.invites = invites
-  const drawn = mount(InvitesList, { target, intro: false })
-  close = () => void unmount(drawn)
-  flushSync()
+  draw(InvitesList, {})
 }
 
 function row(vault: string): HTMLElement {

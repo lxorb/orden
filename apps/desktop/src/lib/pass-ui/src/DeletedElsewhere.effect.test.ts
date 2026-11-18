@@ -1,7 +1,7 @@
 import { blank, newEnvelope } from '@orden/pass/envelope'
 import type { Item } from '@orden/pass/types'
-import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { closed, draw, landed, target } from '../test/drawn'
 
 const fake = vi.hoisted(() => ({
   pass: { items: [], deletedElsewhere: vi.fn(), restoreDeleted: vi.fn() },
@@ -18,27 +18,17 @@ const GONE: Item = {
   rev: 3,
 }
 
-let target: HTMLElement
-let close: (() => void) | undefined
-
 beforeEach(() => {
   fake.pass.deletedElsewhere.mockReset().mockResolvedValue([GONE])
   fake.pass.restoreDeleted.mockReset().mockResolvedValue({ ...GONE, id: 'i2' })
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
 })
 
-afterEach(() => {
-  close?.()
-  close = undefined
-  target.remove()
-})
+afterEach(closed)
 
 describe('items deleted on another device', () => {
   test('are listed in the trash and restored as a copy', async () => {
-    const drawn = mount(DeletedElsewhere, { target, intro: false })
-    close = () => void unmount(drawn)
-    flushSync()
+    draw(DeletedElsewhere, {})
     await vi.waitFor(() => expect(target.querySelector('[data-gone="i1"]')).not.toBe(null))
     expect(target.textContent).toContain('Deleted on another device')
     const restore = [...target.querySelectorAll('button')].find(
@@ -51,9 +41,7 @@ describe('items deleted on another device', () => {
 
   test('show nothing when nothing was', async () => {
     fake.pass.deletedElsewhere.mockResolvedValue([])
-    const drawn = mount(DeletedElsewhere, { target, intro: false })
-    close = () => void unmount(drawn)
-    flushSync()
+    draw(DeletedElsewhere, {})
     await vi.waitFor(() => expect(fake.pass.deletedElsewhere).toHaveBeenCalled())
     expect(target.textContent.trim()).toBe('')
   })

@@ -1,8 +1,8 @@
-import 'fake-indexeddb/auto'
 import { newKeyring } from '@orden/pass/keys'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import '../test/no-device'
+import { closed, draw, landed, target } from '../test/drawn'
+import { FAST, PASSWORD, pass } from '../test/opened'
 import type { Account } from '../../accounts/src/routes'
 
 vi.mock('../../gates/src/api', async (original) => ({
@@ -11,13 +11,8 @@ vi.mock('../../gates/src/api', async (original) => ({
 }))
 
 const { account } = await import('../../accounts/src/account.svelte')
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const PassTab = (await import('./PassTab.svelte')).default
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 let setupSeen = 0
 const watcher = new MutationObserver(() => {
   if (target.textContent.includes('Set up Pass')) setupSeen++
@@ -46,18 +41,15 @@ function signedInAs(id: string): void {
 }
 
 beforeAll(() => {
-  target = document.createElement('div')
-  document.body.append(target)
+  landed()
   watcher.observe(target, { childList: true, subtree: true, characterData: true })
   signedInAs('ada')
-  shown = mount(PassTab, { target, props: { tab: null, focused: true }, intro: false })
-  flushSync()
+  draw(PassTab, { tab: null, focused: true })
 })
 
 afterAll(() => {
   watcher.disconnect()
-  if (shown) void unmount(shown)
-  target.remove()
+  closed()
 })
 
 describe('Pass before the account has answered', () => {
@@ -80,7 +72,7 @@ describe('Pass before the account has answered', () => {
     setupSeen = 0
     await settled()
     expect(setupSeen).toBe(0)
-    const made = await newKeyring('correct horse battery staple', FAST)
+    const made = await newKeyring(PASSWORD, FAST)
     pass.tookKeyring({ keyring: made.keyring, rev: 1, pending: false })
     pass.accountHeard('grace')
     await until(() => pass.state === 'locked', 'the lock')

@@ -1,42 +1,17 @@
-import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
-import '../test/no-device'
+import { closed, showing, target, typed } from '../test/drawn'
+import { opened, pass } from '../test/opened'
 
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ItemEdit = (await import('./ItemEdit.svelte')).default
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
+beforeAll(opened)
 
-beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup('correct horse battery staple')
-})
+afterEach(closed)
 
-afterEach(() => {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
-})
-
-function shownWith(ui: InstanceType<typeof PassUi>) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(ItemEdit, { target, props: { ui }, intro: false })
-  flushSync()
-}
-
-function typed(field: HTMLInputElement | null, text: string) {
-  if (!field) throw new Error('no field')
-  field.value = text
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  flushSync()
-}
+const shownWith = (ui: InstanceType<typeof PassUi>) => showing(ItemEdit, { ui })
 
 function saveButton(): HTMLButtonElement {
   const button = target.querySelector<HTMLButtonElement>('button[type="submit"]')
@@ -73,8 +48,7 @@ describe('editing an item', () => {
     expect(made?.content.kind === 'login' && made.content.password).toBe('hunter2-very-secret')
     expect(ui.view.item).toBe(made?.id)
 
-    if (shown) void unmount(shown)
-    target.remove()
+    closed()
     if (!made) throw new Error('not made')
     await ui.edit(made.id)
     shownWith(ui)
