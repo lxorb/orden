@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, joined, signIn, testEnv, type TestEnv } from './harness'
 
-type Field = 'archived' | 'excluded' | 'graph' | 'bookmarks' | 'arranged' | 'icons' | 'tints'
+type Field =
+  'archived' | 'excluded' | 'graph' | 'bookmarks' | 'arranged' | 'icons' | 'tints' | 'sort'
 
-function aSpace() {
+export function aSpace() {
   const at = {} as { env: TestEnv; token: string; space: string }
   beforeEach(async () => {
     at.env = testEnv()

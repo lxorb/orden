@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, mail, signIn, testEnv, type TestEnv } from './harness'
+import { call, joined, signIn, type TestEnv, testEnv } from './harness'
 
 const OWNER = 'owner@example.com'
 
@@ -49,13 +49,7 @@ async function guestOf(item: string): Promise<string> {
 
 async function editor(): Promise<string> {
   const token = await signIn(env, 'editor@example.com')
-  const sent = await mail(() =>
-    call(env, `/v1/spaces/${space}/share/invite`, {
-      token: owner,
-      body: { email: 'editor@example.com', role: 'write' },
-    }),
-  )
-  await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, { method: 'POST', token })
+  await joined(env, owner, space, 'editor@example.com', 'write', { as: token })
   return token
 }
 

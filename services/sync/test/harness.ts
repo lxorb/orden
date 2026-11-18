@@ -127,6 +127,7 @@ export interface Reply {
   excluded: string[]
   arranged: Record<string, string[]>
   archived: Record<string, number>
+  sort: string
   files: SpaceFileView[]
   missing: string[]
   deleted: string[]

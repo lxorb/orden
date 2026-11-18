@@ -1,7 +1,7 @@
 import { diagramKey } from '@orden/markdown/diagrams'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { createHash } from 'node:crypto'
-import { call, file, mail, signIn, testEnv, type TestEnv } from './harness'
+import { call, file, joined, signIn, type TestEnv, testEnv } from './harness'
 import { QUOTA } from '../src/sync-server/src/storage'
 
 let env: TestEnv
@@ -415,16 +415,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
 
     const picture = sized(2048)
     await upload(picture)
@@ -473,16 +464,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
 
     const picture = sized(2048)
     await upload(picture)
@@ -506,16 +488,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
 
     const picture = sized(2048)
     await upload(picture)
@@ -542,16 +515,7 @@ describe('giving an image back', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
     for (let at = 0; at < 260; at++) {
       env.db
         .prepare(
@@ -695,16 +659,7 @@ describe('a writer who deletes their account', () => {
         body: { name: 'Theirs' },
       })
     ).json.space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: owner,
-        body: { email: 'a@b.dev', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, owner, theirs, 'a@b.dev', 'write', { as: token })
     const lecture = (
       await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
         token: owner,

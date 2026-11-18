@@ -15,7 +15,7 @@ import {
 } from '../src/sync-server-engine/src/unused'
 import type { Note } from '../src/sync-server/src/types'
 import { sweepVersions } from '../src/sync-server/src/versions'
-import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
+import { call, joined, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { FakeSocket } from './room'
 import { framed, type Live, live } from './sync2'
 
@@ -1011,16 +1011,7 @@ describe('what a purge stops paying for', () => {
     const other = await signIn(env, 'other@example.com')
     const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Big' } })).json
       .space.id
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: 'owner@example.com', role: 'write' },
-      }),
-    )
-    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
-      method: 'POST',
-      token,
-    })
+    await joined(env, other, theirs, 'owner@example.com', 'write', { as: token })
     for (let at = 0; at < 260; at++) {
       env.db
         .prepare(
