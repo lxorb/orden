@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { code, walk } from './files'
 
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')
@@ -94,18 +95,6 @@ function readable(path: string, source: string): string[] {
   return [...scripts.flatMap(literals), markup]
 }
 
-function sources(dir: string, found: string[] = []): string[] {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) sources(path, found)
-    else if (/\.(svelte|ts)$/.test(entry.name) && !entry.name.endsWith('.test.ts')) {
-      found.push(path)
-    }
-  }
-
-  return found
-}
-
 function oldNames(text: string): number[] {
   return [...text.matchAll(OLD_NAME)]
     .filter((match) => !identifier(text, match.index, match[0].length))
@@ -129,7 +118,7 @@ describe('the name a reader sees', () => {
   test('is Orden in every string of the app', () => {
     const offenders: string[] = []
 
-    for (const path of sources(SOURCE)) {
+    for (const path of walk(SOURCE, code)) {
       const where = relative(SOURCE, path).replace(/\\/g, '/')
       const named = NAMED[where] ?? []
 

@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { code, walk } from './files'
 
 const HERE = fileURLToPath(new URL('.', import.meta.url))
 const TAURI = join(HERE, '..', 'src-tauri')
@@ -26,19 +27,7 @@ const granted = (plist: string) =>
 const mac = sentences(read(TAURI, 'Info.plist'))
 const phone = sentences(read(TAURI, 'Info.ios.plist'))
 
-function sources(dir: string, found: string[] = []): string[] {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) sources(path, found)
-    else if (/\.(ts|svelte)$/.test(entry.name) && !entry.name.endsWith('.test.ts')) {
-      found.push(path)
-    }
-  }
-
-  return found
-}
-
-const page = sources(SOURCE).map((path) => readFileSync(path, 'utf8'))
+const page = walk(SOURCE, code).map((path) => readFileSync(path, 'utf8'))
 const uses = (pattern: RegExp) => page.some((text) => pattern.test(text))
 
 describe('the words a Mac and an iPhone ask with', () => {

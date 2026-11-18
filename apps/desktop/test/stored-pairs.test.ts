@@ -1,8 +1,8 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 import { describe, expect, test } from 'vitest'
+import { code, walk } from './files'
 
 const SOURCE = fileURLToPath(new URL('../src', import.meta.url))
 
@@ -11,15 +11,6 @@ interface Use {
   way: Way
   side: 'write' | 'read'
   at: string
-}
-
-function files(dir: string, found: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) files(path, found)
-    else if (/\.(ts|svelte)$/.test(name) && !name.endsWith('.test.ts')) found.push(path)
-  }
-  return found
 }
 
 function scriptOf(path: string): string {
@@ -200,7 +191,7 @@ function audit(given: readonly { name: string; text: string }[]) {
 }
 
 const app = audit(
-  files(SOURCE).map((path) => ({ name: path.slice(SOURCE.length + 1), text: scriptOf(path) })),
+  walk(SOURCE, code).map((path) => ({ name: path.slice(SOURCE.length + 1), text: scriptOf(path) })),
 )
 
 describe('every key in storage', () => {

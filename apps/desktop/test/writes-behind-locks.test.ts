@@ -1,20 +1,13 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { code, walk } from './files'
 
 const SOURCE = fileURLToPath(new URL('../src/lib/', import.meta.url))
 
-function sources(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) return sources(path)
-    return /\.(ts|svelte)$/.test(name) && !name.endsWith('.test.ts') ? [path] : []
-  })
-}
-
 const using = (pattern: RegExp) =>
-  sources(SOURCE)
+  walk(SOURCE, code)
     .filter((path) => pattern.test(readFileSync(path, 'utf8')))
     .map((path) => relative(SOURCE, path).replace(/\\/g, '/'))
     .sort()

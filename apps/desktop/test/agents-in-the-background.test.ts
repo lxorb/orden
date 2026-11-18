@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 const KIT = /from '[./]*agent-verbs\/src\/api'/
@@ -34,17 +35,11 @@ const TAKES = [
   /\bopenChat\((?![^)]*activate: false)/,
 ]
 
-function filesIn(folder: string): string[] {
-  return readdirSync(folder).flatMap((name) => {
-    const path = join(folder, name)
-    if (statSync(path).isDirectory()) return name === 'node_modules' ? [] : filesIn(path)
-    return name.endsWith('.ts') && !name.endsWith('.test.ts') ? [path] : []
-  })
-}
-
 const named = (path: string) => relative(LIB, path).split(sep).join('/')
 
-const sources = filesIn(LIB).filter((path) => {
+const sources = walk(LIB, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts'), [
+  'node_modules',
+]).filter((path) => {
   const name = named(path)
   if (name in DOORS) return false
   return (

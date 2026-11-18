@@ -1,22 +1,13 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 
 const ENCODED =
   /\bbase64\s*[:,}]|toBase64\(|\[\.\.\.\s*(?:new Uint8Array|bytes\b)|Array\.from\(\s*(?:new Uint8Array|bytes\b)/
-
-function sources(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return one.name === 'web' ? [] : sources(path)
-    return /\.(ts|svelte)$/.test(one.name) && !/\.test\.ts$|\.fixture\.ts$/.test(one.name)
-      ? [path]
-      : []
-  })
-}
 
 function closing(text: string, from: number): number {
   let depth = 0
@@ -46,7 +37,11 @@ describe('bytes on their way to the crate', () => {
   })
 
   test('are never handed to a command as base64 or as an array of numbers', () => {
-    const found = sources(LIB).flatMap((path) =>
+    const found = walk(
+      LIB,
+      (path) => /\.(ts|svelte)$/.test(path) && !/\.test\.ts$|\.fixture\.ts$/.test(path),
+      ['web'],
+    ).flatMap((path) =>
       encodedArguments(readFileSync(path, 'utf8')).map((one) => `${relative(LIB, path)}: ${one}`),
     )
     expect(found).toEqual([])

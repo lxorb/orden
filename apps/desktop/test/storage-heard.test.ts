@@ -1,25 +1,13 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test, vi } from 'vitest'
+import { code, walk } from './files'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 
-function sources(): string[] {
-  const out: string[] = []
-  const walk = (dir: string) => {
-    for (const name of readdirSync(dir)) {
-      const path = join(dir, name)
-      if (statSync(path).isDirectory()) walk(path)
-      else if (/\.(svelte|ts)$/.test(name) && !name.endsWith('.test.ts')) out.push(path)
-    }
-  }
-  walk(SOURCE)
-  return out
-}
-
 test('a store hears another window write its key through heardElsewhere, not a listener of its own', () => {
-  const own = sources()
+  const own = walk(SOURCE, code)
     .map((path) => relative(SOURCE, path).replace(/\\/g, '/'))
     .filter((name) => name !== 'lib/platform/src/stored.ts')
     .filter((name) =>

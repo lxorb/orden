@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const APP = join(import.meta.dirname, '..')
 const ROOT = join(APP, '..', '..')
@@ -78,16 +79,6 @@ const PAGES = readdirSync(APP)
 
 const ENTRIES: [string, string[]][] = [...PAGES, ['site', [join(APP, 'src', 'site', 'site.ts')]]]
 
-function sourcesUnder(dir: string, found: string[] = []): string[] {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === 'dist') continue
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) sourcesUnder(path, found)
-    else if (/\.(?:ts|svelte)$/.test(entry.name)) found.push(path)
-  }
-  return found
-}
-
 describe('the ports an entry needs', () => {
   test('every page the app builds is read', () => {
     expect(PAGES.map(([page]) => page)).toEqual(
@@ -121,7 +112,9 @@ describe('the ports an entry needs', () => {
 
   test('every needPort names its port where it asks', () => {
     const vague = [join(APP, 'src'), join(ROOT, 'packages')]
-      .flatMap((dir) => sourcesUnder(dir))
+      .flatMap((dir) =>
+        walk(dir, (path) => /\.(?:ts|svelte)$/.test(path), ['node_modules', 'dist']),
+      )
       .filter((file) => /\bneedPort\(\s*[^'"\s]/.test(text(file)))
       .map((file) => relative(ROOT, file))
     expect(vague).toEqual([])

@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const HERE = fileURLToPath(new URL('.', import.meta.url))
 const ANDROID = join(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'src', 'main')
@@ -28,17 +29,7 @@ const commands =
   read(SOURCE, 'lib', 'dictation', 'src', 'recorder', 'commands.ts')
 const bridge = read(SOURCE, 'lib', 'platform', 'src', 'mobile-bridge.ts')
 
-function sources(dir: string, found: string[] = []): string[] {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) sources(path, found)
-    else if (/\.(ts|svelte)$/.test(entry.name)) found.push(path)
-  }
-
-  return found
-}
-
-const page = sources(SOURCE)
+const page = walk(SOURCE, (path) => /\.(ts|svelte)$/.test(path))
   .map((path) => readFileSync(path, 'utf8'))
   .join('\n')
 

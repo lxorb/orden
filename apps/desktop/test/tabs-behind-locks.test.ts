@@ -1,19 +1,12 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { svelte, walk } from './files'
 import { writeViewSpec } from '../src/lib/tab-kinds/src/api'
 import { noteBehind } from '../src/lib/protect/src/protection.svelte'
 
 const SOURCE = fileURLToPath(new URL('../src/lib/', import.meta.url))
-
-function views(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) return views(path)
-    return name.endsWith('.svelte') ? [path] : []
-  })
-}
 
 describe('a tab shown over a protected note', () => {
   test('is the note itself, never a task view', () => {
@@ -27,7 +20,7 @@ describe('a tab shown over a protected note', () => {
   })
 
   test('is locked by the note behind it, not by its own path alone', () => {
-    const bare = views(SOURCE)
+    const bare = walk(SOURCE, svelte)
       .filter((path) => /protection\.locked\(tab\??\.path\)/.test(readFileSync(path, 'utf8')))
       .map((path) => relative(SOURCE, path).replace(/\\/g, '/'))
     expect(bare).toEqual([])

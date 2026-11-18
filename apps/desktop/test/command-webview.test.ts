@@ -1,19 +1,14 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const CRATE = fileURLToPath(new URL('../src-tauri', import.meta.url))
 
-const SOURCES = ['src', 'crates'].map((dir) => join(CRATE, dir))
-
-function sources(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) return sources(path)
-    return name.endsWith('.rs') ? [path] : []
-  })
-}
+const RUST = ['src', 'crates'].flatMap((dir) =>
+  walk(join(CRATE, dir), (path) => path.endsWith('.rs')),
+)
 
 function commandSignatures(text: string): string[] {
   const out: string[] = []
@@ -27,7 +22,7 @@ function commandSignatures(text: string): string[] {
 
 describe('a command the window calls', () => {
   test('takes the webview that asked, never a WebviewWindow, which a window of several webviews is not', () => {
-    const offending = SOURCES.flatMap(sources).flatMap((path) =>
+    const offending = RUST.flatMap((path) =>
       commandSignatures(readFileSync(path, 'utf8'))
         .filter((signature) => /\bWebviewWindow\b/.test(signature))
         .map((signature) => `${relative(CRATE, path)}: ${signature.trim().split('\n')[0] ?? ''}`),
@@ -36,9 +31,7 @@ describe('a command the window calls', () => {
   })
 
   test('is found by the walk', () => {
-    const all = SOURCES.flatMap(sources).flatMap((path) =>
-      commandSignatures(readFileSync(path, 'utf8')),
-    )
+    const all = RUST.flatMap((path) => commandSignatures(readFileSync(path, 'utf8')))
     expect(all.some((one) => one.includes('fn owner_check'))).toBe(true)
   })
 })

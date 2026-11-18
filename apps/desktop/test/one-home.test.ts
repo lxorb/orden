@@ -1,17 +1,16 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const ROOT = join(import.meta.dirname, '..', '..', '..')
 
-function sources(folder: string): string[] {
-  return readdirSync(folder, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(folder, entry.name)
-    if (entry.isDirectory())
-      return ['node_modules', 'dist', 'test'].includes(entry.name) ? [] : sources(path)
-    return /\.(ts|svelte)$/.test(entry.name) && !entry.name.includes('.test.') ? [path] : []
-  })
-}
+const sources = (dir: string) =>
+  walk(dir, (path) => /\.(ts|svelte)$/.test(path) && !path.includes('.test.'), [
+    'node_modules',
+    'dist',
+    'test',
+  ])
 
 const APP = sources(join(ROOT, 'apps', 'desktop', 'src'))
 const EVERYWHERE = [
