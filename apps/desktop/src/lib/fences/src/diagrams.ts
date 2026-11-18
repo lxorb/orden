@@ -1,4 +1,4 @@
-import { sequenceToMermaid } from '@orden/editor'
+import { mermaidSvg, sequenceToMermaid } from '@orden/editor'
 import { flowSource, keepSafeLinks } from '@orden/editor/flow'
 import type { Scheme } from '../../theme/src/api'
 
@@ -37,19 +37,12 @@ export async function drawDiagram(
   return drawMermaid(language === 'sequence' ? sequenceToMermaid(code) : code, scheme, where)
 }
 
-async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor): Promise<string> {
-  const { default: mermaid } = await import('mermaid')
-
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: 'strict',
+function drawMermaid(code: string, scheme: Scheme, where: DiagramFor): Promise<string> {
+  return mermaidSvg(`orden-export-${sequence++}`, code, {
     theme: scheme === 'light' ? 'default' : 'dark',
     fontFamily: where === 'page' ? PAGE_FONT : FONT,
     ...(where === 'page' ? { htmlLabels: false } : {}),
   })
-
-  const { svg } = await mermaid.render(`orden-export-${sequence++}`, code)
-  return svg
 }
 
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {

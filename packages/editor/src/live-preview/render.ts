@@ -2,6 +2,7 @@ import { MOST_EMS } from '@orden/markdown/engines'
 import { chartFigure } from '@orden/markdown/chart'
 import { DIAGRAM_LANGUAGES } from '@orden/markdown/diagrams'
 import { loadMaths, mathsEngine } from '@orden/markdown/engines'
+import type { MermaidConfig } from 'mermaid'
 import type { BaseAsk, NoteIndex } from '../wikilink/notes'
 import { OrdenWidget } from './widget'
 import 'katex/dist/katex.min.css'
@@ -265,19 +266,24 @@ function themeColour(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
-async function drawMermaid(host: HTMLElement, code: string, shared = false) {
-  const { default: mermaid } = await import('mermaid')
+let drawing: Promise<unknown> = Promise.resolve()
 
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: 'strict',
+export function mermaidSvg(id: string, code: string, looks: MermaidConfig): Promise<string> {
+  const drawn = drawing.then(async () => {
+    const { default: mermaid } = await import('mermaid')
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', ...looks })
+    return (await mermaid.render(id, code)).svg
+  })
+  drawing = drawn.catch(() => undefined)
+  return drawn
+}
+
+async function drawMermaid(host: HTMLElement, code: string, shared = false) {
+  const id = `orden-diagram-${diagramSeq++}`
+  host.innerHTML = await mermaidSvg(id, code, {
     theme: document.documentElement.dataset.theme === 'light' ? 'default' : 'dark',
     fontFamily: themeColour('--font-ui'),
   })
-
-  const id = `orden-diagram-${diagramSeq++}`
-  const { svg } = await mermaid.render(id, code)
-  host.innerHTML = svg
   if (shared) shareStyle(host.querySelector('svg'), id)
 }
 
