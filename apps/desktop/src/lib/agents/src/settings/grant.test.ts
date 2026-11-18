@@ -154,7 +154,9 @@ describe('the rest of a grant', () => {
     expect(readGrant({ ...own(), limits: before })?.limits.memory).toBe(0)
     expect(readGrant(set)?.limits.memory).toBe(4096)
     const crate = readFileSync(
-      fileURLToPath(new URL('../../../../../src-tauri/src/agents/memory.rs', import.meta.url)),
+      fileURLToPath(
+        new URL('../../../../../src-tauri/crates/agent-web/src/memory.rs', import.meta.url),
+      ),
       'utf8',
     )
     expect(crate).not.toMatch(/const CEILING/)

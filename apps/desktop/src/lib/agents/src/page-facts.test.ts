@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
 const source = readFileSync(
-  join(import.meta.dirname, '../../../../src-tauri/src/agents/page.rs'),
+  join(import.meta.dirname, '../../../../src-tauri/crates/agent-web/src/page.rs'),
   'utf8',
 )
 

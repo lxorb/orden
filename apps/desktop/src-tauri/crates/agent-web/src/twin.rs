@@ -3,8 +3,8 @@ use std::sync::PoisonError;
 use serde_json::{json, Map, Value};
 use tauri::AppHandle;
 
-use super::cdp;
-use super::engines::View;
+use crate::cdp;
+use crate::engines::View;
 
 const KEPT: [&str; 11] = [
     "name",
@@ -21,10 +21,10 @@ const KEPT: [&str; 11] = [
 ];
 
 pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
-    let said = super::tabs::bare(app, reader).and_then(|(source, built)| {
+    let said = crate::tabs::bare(app, reader).and_then(|(source, built)| {
         let read = cdp::call(&source, "Network.getAllCookies", &json!({}));
         if built {
-            super::tabs::let_go_of_bare(app, &source);
+            crate::tabs::let_go_of_bare(app, &source);
         }
         read
     });

@@ -71,7 +71,7 @@ describe('the mirror of the crate agent verbs', () => {
       fileURLToPath(new URL('../../../../src-tauri/src/lib.rs', import.meta.url)),
       'utf8',
     )
-    const named = [...registered.matchAll(/agents::(?:[a-z]+::)?(agents_[a-z_]+),/g)].map(
+    const named = [...registered.matchAll(/agents?(?:_web)?::(?:[a-z]+::)?(agents_[a-z_]+),/g)].map(
       (one) => one[1],
     )
     expect(named).toEqual([...AGENT_COMMANDS])

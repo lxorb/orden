@@ -4,9 +4,9 @@ use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Emitter as _, Url};
 
-use super::cdp;
-use super::engines::{self, View};
-use super::quiet::{self, Owner};
+use crate::cdp;
+use crate::engines::{self, View};
+use crate::quiet::{self, Owner};
 use orden_agents::verbs::{AgentTab, Answer, Code, Event, Store, EVENT};
 
 pub const LABEL: &str = "agent-";
@@ -21,7 +21,7 @@ const ALL_TABS: usize = 8;
 
 const IDLE: Duration = Duration::from_secs(600);
 
-pub(super) const BUILDING: Duration = Duration::from_secs(20);
+pub const BUILDING: Duration = Duration::from_secs(20);
 
 #[derive(Clone, Debug)]
 pub struct Tab {
@@ -118,7 +118,7 @@ pub fn open(
     (most, ceiling): (usize, u32),
 ) -> Result<Tab, Answer> {
     let address = web_address(url)?;
-    if let Some(why) = super::memory::too_much(ceiling) {
+    if let Some(why) = crate::memory::too_much(ceiling) {
         return Err(Answer::error(Code::Limit, why));
     }
     make_room(app, agent, most, None);
@@ -152,7 +152,7 @@ pub fn page(app: &AppHandle, agent: &str, id: &str) -> Result<(Tab, View), Answe
         ));
     };
     touch(id);
-    if let Some(view) = super::engines::view(app, &tab.label()) {
+    if let Some(view) = crate::engines::view(app, &tab.label()) {
         return Ok((tab, view));
     }
     let address = web_address(&tab.url)?;
@@ -163,7 +163,7 @@ pub fn page(app: &AppHandle, agent: &str, id: &str) -> Result<(Tab, View), Answe
         one.parked = false;
         one.loading = true;
     });
-    super::engines::view(app, &tab.label())
+    crate::engines::view(app, &tab.label())
         .map(|view| (tab, view))
         .ok_or_else(|| Answer::error(Code::Failed, "the tab's page could not be built again"))
 }
@@ -178,7 +178,7 @@ pub fn set(id: &str, change: impl FnOnce(&mut Tab)) {
     }
 }
 
-pub(super) fn web_address(url: &str) -> Result<Url, Answer> {
+pub fn web_address(url: &str) -> Result<Url, Answer> {
     let address: Url = url.trim().parse().map_err(|error| {
         Answer::error(
             Code::BadArguments,
@@ -258,9 +258,9 @@ pub fn close_all(app: &AppHandle, agent: Option<&str>) {
 
 const ANCHOR: &str = "web-session";
 
-pub(super) fn bare(app: &AppHandle, store: Option<&str>) -> Result<(View, bool), String> {
+pub fn bare(app: &AppHandle, store: Option<&str>) -> Result<(View, bool), String> {
     if store.is_none() {
-        if let Some(anchor) = super::engines::view(app, ANCHOR) {
+        if let Some(anchor) = crate::engines::view(app, ANCHOR) {
             return Ok((anchor, false));
         }
     }
@@ -277,17 +277,17 @@ pub(super) fn bare(app: &AppHandle, store: Option<&str>) -> Result<(View, bool),
         size: (WIDTH, HEIGHT),
     };
     build_page(app, &tab, None)?;
-    super::engines::view(app, &tab.label())
+    crate::engines::view(app, &tab.label())
         .map(|view| (view, true))
         .ok_or_else(|| "the page was never built".into())
 }
 
-pub(super) fn let_go_of_bare(app: &AppHandle, view: &View) {
+pub fn let_go_of_bare(app: &AppHandle, view: &View) {
     let_go(app, &view.label());
 }
 
 fn let_go(app: &AppHandle, label: &str) {
-    if let Some(view) = super::engines::view(app, label) {
+    if let Some(view) = crate::engines::view(app, label) {
         view.close();
     }
     engines::forget(label);
@@ -319,13 +319,13 @@ pub fn said(app: &AppHandle, tab: &Tab) {
 }
 
 fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
-    let Some(reader) = super::engines::reader_of(tab.store_name.as_deref()) else {
+    let Some(reader) = crate::engines::reader_of(tab.store_name.as_deref()) else {
         return build_page(app, tab, address);
     };
     build_page(app, tab, None)?;
     let label = tab.label();
-    let twin = super::engines::view(app, &label).ok_or("the page was never built")?;
-    super::twin::carry(app, reader, &twin);
+    let twin = crate::engines::view(app, &label).ok_or("the page was never built")?;
+    crate::twin::carry(app, reader, &twin);
     if let Some(address) = address {
         cdp::call(
             &twin,
@@ -337,7 +337,7 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
 }
 
 fn build_page(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String> {
-    super::engines::cef::build(
+    (crate::engines::pages()?.build)(
         app,
         &Owner {
             agent: tab.agent.clone(),

@@ -7,7 +7,7 @@ use orden_agents::verbs::ReadAs;
 
 const PAINTED: [u8; 3] = [128, 128, 128];
 
-pub(super) fn png_size(base64: &str) -> Option<(u32, u32)> {
+pub fn png_size(base64: &str) -> Option<(u32, u32)> {
     let head = base64.get(..44)?;
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(head)
@@ -17,7 +17,7 @@ pub(super) fn png_size(base64: &str) -> Option<(u32, u32)> {
     Some((width, height))
 }
 
-pub(super) fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
+pub fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(png)
         .map_err(|why| why.to_string())?;
@@ -104,15 +104,11 @@ fn strip_tags(html: &str) -> String {
     kept.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-pub(super) const CARET_ALL: &str = "function () { if (this.select) { this.select() } else { const range = document.createRange(); range.selectNodeContents(this); const now = getSelection(); now.removeAllRanges(); now.addRange(range) } }";
+pub const CARET_ALL: &str = "function () { if (this.select) { this.select() } else { const range = document.createRange(); range.selectNodeContents(this); const now = getSelection(); now.removeAllRanges(); now.addRange(range) } }";
 
-pub(super) const CARET_END: &str = "function () { try { if (this.setSelectionRange) { const end = String(this.value || '').length; this.setSelectionRange(end, end) } } catch (_) {} }";
+pub const CARET_END: &str = "function () { try { if (this.setSelectionRange) { const end = String(this.value || '').length; this.setSelectionRange(end, end) } } catch (_) {} }";
 
-pub(super) fn words(
-    app: &tauri::AppHandle,
-    shape: ReadAs,
-    said: &Value,
-) -> (String, String, String) {
+pub fn words(app: &tauri::AppHandle, shape: ReadAs, said: &Value) -> (String, String, String) {
     let text_at = |key: &str| {
         said.get(key)
             .and_then(Value::as_str)

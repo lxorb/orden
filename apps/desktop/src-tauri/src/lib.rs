@@ -1,5 +1,3 @@
-#[cfg(desktop)]
-mod agents;
 #[cfg(test)]
 mod calls;
 #[cfg(desktop)]
@@ -141,14 +139,14 @@ macro_rules! desktop_commands {
             orden_agents::commands::agents_answer,
             orden_agents::commands::agents_ask,
             orden_agents::commands::agents_dialog_path,
-            agents::agents_state,
+            orden_agent_web::commands::agents_state,
             orden_agents::commands::agents_log,
             orden_agents::commands::agents_log_after,
             orden_agents::commands::agents_log_days,
             orden_agents::commands::agents_log_clear,
-            agents::agents_adopt,
-            agents::agents_peek,
-            agents::agents_capture,
+            orden_agent_web::commands::agents_adopt,
+            orden_agent_web::commands::agents_peek,
+            orden_agent_web::commands::agents_capture,
             orden_agents::shell::agents_shell,
             orden_agents::shell::agents_hold,
             quick_add::quick_add_key,
@@ -668,10 +666,15 @@ fn first_of_all(handle: &tauri::AppHandle) {
         wear: engine::scheme::wear,
         served: engine::certificate::served,
     });
+    orden_agent_web::engines::hand(orden_agent_web::engines::Pages {
+        page: engine::windowless::shared,
+        build: engine::windowless::build,
+        answer_dialog: engine::windowless::answer_dialog,
+    });
     orden_agents::hand(orden_agents::Host {
-        answer: agents::answer,
+        answer: orden_agent_web::answer,
         lent: orden_ai::ai_agent::lent,
-        close_tabs: |app| agents::tabs::close_all(app, None),
+        close_tabs: |app| orden_agent_web::tabs::close_all(app, None),
         page_up: launch::page_up,
         hold_stop: |app, key| hotkeys::hold(app, hotkeys::Which::StopAgents, key),
         quit: lifecycle::quit,
@@ -964,7 +967,7 @@ mod tests {
         "orden_placement::placement::read",
         "orden_extensions::extensions::webview2::reconcile",
         "orden_web::engine::web_store",
-        "crate::agents::quiet::destination",
+        "orden_agent_web::quiet::destination",
     ];
 
     const OPENS_ON_THE_WINDOW_S_THREAD: [&str; 2] = [

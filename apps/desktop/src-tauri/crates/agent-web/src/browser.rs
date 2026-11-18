@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use tauri::{AppHandle, Emitter as _};
 
-use super::engines::{self, Element, Engine, Page, ReaderStore, View};
-use super::tabs::{self, Tab};
+use crate::engines::{self, Element, Engine, Page, ReaderStore, View};
+use crate::tabs::{self, Tab};
 use orden_agents::approvals::{self, Asking};
 use orden_agents::files::hidden_within;
 use orden_agents::grants::{Grant, Scope, SiteRule, Spaces};
@@ -21,7 +21,7 @@ use orden_agents::Caller;
 const WAIT: Duration = Duration::from_secs(30);
 const LONGEST_WAIT: Duration = Duration::from_secs(120);
 
-pub(super) enum Place {
+pub enum Place {
     Own(Tab),
     Reader(String),
 }
@@ -53,7 +53,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
         Verb::Tabs(_) => tabs_of(app, caller),
         Verb::Open(open) => open_tab(app, caller, &open),
         Verb::Downloads(asked) => Answer::ok(DownloadList {
-            downloads: super::quiet::downloads_of(caller.id(), asked.tab.as_deref()),
+            downloads: crate::quiet::downloads_of(caller.id(), asked.tab.as_deref()),
         }),
         Verb::Close(on) => match tabs::find(caller.id(), &on.tab) {
             Some(_) => {
@@ -74,9 +74,9 @@ pub fn answer(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answe
 
 fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     let reader = match caller {
-        Caller::Reader => super::reader::every_tab(app),
+        Caller::Reader => crate::reader::every_tab(app),
         Caller::Agent(grant) if grant.holds(Scope::BrowserReader) => {
-            super::reader::tabs(app, &grant.spaces)
+            crate::reader::tabs(app, &grant.spaces)
         }
         Caller::Agent(_) => Vec::new(),
     };
@@ -192,14 +192,14 @@ fn place(app: &AppHandle, caller: &Caller, tab: &str) -> Result<(Place, View), A
         return Err(not_found());
     }
     if let Caller::Agent(grant) = caller {
-        if !super::reader::tabs(app, &grant.spaces)
+        if !crate::reader::tabs(app, &grant.spaces)
             .iter()
             .any(|one| one.id == tab)
         {
             return Err(not_found());
         }
     }
-    let Some(view) = super::reader::page(app, tab) else {
+    let Some(view) = crate::reader::page(app, tab) else {
         return Err(not_found());
     };
     Ok((Place::Reader(tab.to_string()), view))
@@ -263,7 +263,7 @@ fn page_on(
     }
 }
 
-pub(super) fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
+pub fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
     let held = tabs::held(tab).ok_or("there is no such agent tab")?;
     let view = engines::view(app, &held.label())
         .filter(|_| !held.parked)
@@ -304,7 +304,7 @@ fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer 
     )
 }
 
-pub(super) fn on_tab(
+pub fn on_tab(
     app: &AppHandle,
     caller: &Caller,
     tab: &str,
@@ -321,7 +321,7 @@ pub(super) fn on_tab(
         Ok(page) => page,
         Err(refused) => return refused,
     };
-    let held = super::quiet::dialog_of(&page.label);
+    let held = crate::quiet::dialog_of(&page.label);
     if held.is_some() && !lets_through {
         return Answer::error(
             Code::Failed,
@@ -332,7 +332,7 @@ pub(super) fn on_tab(
     let answered = act(&place, &page);
     answered.with_dialog(seen(
         page.limits.as_ref(),
-        super::quiet::dialog_of(&page.label),
+        crate::quiet::dialog_of(&page.label),
     ))
 }
 
@@ -675,10 +675,10 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         policy::site_allowed(grant, address.as_str(), place.store())
                             .map_err(|why| Answer::error(Code::SiteDenied, why))?;
                     }
-                    super::count_navigation(caller, page.since)?;
+                    crate::count_navigation(caller, page.since)?;
                     page.navigate(address.as_str())?;
                 } else if go.back || go.forward || go.reload {
-                    super::count_navigation(caller, page.since)?;
+                    crate::count_navigation(caller, page.since)?;
                     page.step(if go.back { -1 } else { i64::from(go.forward) })?;
                 } else {
                     return Err(Answer::error(
@@ -1087,7 +1087,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 from_page(Answer::ok(Evaluated { value }))
             }
             Verb::Dialog(answer) => {
-                let Some(held) = super::quiet::dialog_of(&page.label) else {
+                let Some(held) = crate::quiet::dialog_of(&page.label) else {
                     return Err(Answer::error(
                         Code::NoDialog,
                         "the page is holding no dialog",
@@ -1123,13 +1123,13 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         }
                     }
                 }
-                let said = super::quiet::Said {
+                let said = crate::quiet::Said {
                     accept: answer.accept,
                     text: answer.text,
                     username: answer.username,
                     password: answer.password,
                 };
-                super::quiet::answer_dialog(app, &page.label, said)
+                crate::quiet::answer_dialog(app, &page.label, said)
                     .map_err(|why| Answer::error(Code::Failed, why))?;
                 std::thread::sleep(Duration::from_millis(50));
                 page.settle(page.navigations());
@@ -1603,7 +1603,7 @@ mod tests {
             assert!(shown.message.is_empty(), "{url}");
             assert!(shown.default_text.is_none(), "{url}");
             assert!(
-                super::engines::from_allowed(Some(&limits), &[url.to_string()]).is_err(),
+                crate::engines::from_allowed(Some(&limits), &[url.to_string()]).is_err(),
                 "{url}"
             );
         }
@@ -1624,7 +1624,7 @@ mod tests {
             Some(allowed.clone())
         );
         assert!(
-            super::engines::from_allowed(Some(&limits), std::slice::from_ref(&allowed.url)).is_ok()
+            crate::engines::from_allowed(Some(&limits), std::slice::from_ref(&allowed.url)).is_ok()
         );
         let denied = dialog(DialogKind::Confirm, "https://bank.example/");
         assert_eq!(seen(None, Some(denied.clone())), Some(denied));

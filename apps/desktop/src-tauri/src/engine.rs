@@ -46,7 +46,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     if let Some(root) = cef_root() {
         if root
             .parent()
-            .is_some_and(crate::agents::engines::cef::windowless_wanted)
+            .is_some_and(crate::engine::windowless::windowless_wanted)
         {
             engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
         }
@@ -163,6 +163,7 @@ pub(crate) mod devtools;
 pub(crate) mod mute;
 pub(crate) mod renderer;
 pub(crate) mod scheme;
+pub(crate) mod windowless;
 
 #[cfg(test)]
 mod tests {
@@ -170,7 +171,7 @@ mod tests {
     #[test]
     fn a_new_window_is_handed_only_to_a_page_still_open() {
         let sources = [
-            "src/agents/quiet.rs",
+            "crates/agent-web/src/quiet.rs",
             "crates/web/src/web_tabs.rs",
             "crates/extensions/src/extensions/popup.rs",
         ];
