@@ -94,44 +94,38 @@ describe('what owns the gesture under the finger', () => {
 })
 
 describe('what a touch-action value says', () => {
-  test('none and pinch-zoom take every touch', () => {
-    expect(ownsEveryTouch('none')).toBe(true)
-    expect(ownsEveryTouch('pinch-zoom')).toBe(true)
-  })
-
-  test('anything that names a direction leaves the others alone', () => {
-    expect(ownsEveryTouch('auto')).toBe(false)
-    expect(ownsEveryTouch('manipulation')).toBe(false)
-    expect(ownsEveryTouch('pan-y pinch-zoom')).toBe(false)
-    expect(ownsEveryTouch('pan-x')).toBe(false)
+  test.each([
+    ['none', true],
+    ['pinch-zoom', true],
+    ['auto', false],
+    ['manipulation', false],
+    ['pan-y pinch-zoom', false],
+    ['pan-x', false],
+  ])('%s takes every touch: %s', (value, owns) => {
+    expect(ownsEveryTouch(value)).toBe(owns)
   })
 })
 
 describe('whose hand is on the screen', () => {
-  test('a finger drags the drawer', () => {
-    expect(isFinger('touch')).toBe(true)
-  })
-
-  test('a pen never does: it is drawing', () => {
-    expect(isFinger('pen')).toBe(false)
-  })
-
-  test('and a mouse is a finger as far as this is concerned', () => {
-    expect(isFinger('mouse')).toBe(true)
-    expect(isFinger('')).toBe(true)
+  test.each([
+    ['touch', true],
+    ['pen', false],
+    ['mouse', true],
+    ['', true],
+  ])('%s drags the drawer: %s', (kind, finger) => {
+    expect(isFinger(kind)).toBe(finger)
   })
 })
 
 describe('where a drag may start', () => {
-  test('on a tablet, within the edge strip and nowhere else', () => {
-    expect(opensDrawer(8, 32, false)).toBe(true)
-    expect(opensDrawer(32, 32, false)).toBe(true)
-    expect(opensDrawer(400, 32, false)).toBe(false)
-  })
-
-  test('on a phone, anywhere: the screen is the width of a thumb', () => {
-    expect(opensDrawer(400, 32, true)).toBe(true)
-    expect(opensDrawer(8, 32, true)).toBe(true)
+  test.each([
+    [8, false, true],
+    [32, false, true],
+    [400, false, false],
+    [400, true, true],
+    [8, true, true],
+  ])('at %i on a phone %s opens the drawer: %s', (x, phone, opens) => {
+    expect(opensDrawer(x, 32, phone)).toBe(opens)
   })
 })
 
@@ -148,49 +142,26 @@ describe('how far a touch is from a drawer’s own edge', () => {
 })
 
 describe('claiming a swipe', () => {
-  test('ignores a movement too small to mean anything', () => {
-    expect(claimsGesture(4, 1)).toBe(false)
-  })
-
-  test('ignores a scroll, however far it goes', () => {
-    expect(claimsGesture(6, 90)).toBe(false)
-  })
-
-  test('takes a clearly sideways drag', () => {
-    expect(claimsGesture(40, 8)).toBe(true)
-  })
-
-  test('takes one going the other way, which is how it closes', () => {
-    expect(claimsGesture(-40, 8)).toBe(true)
-  })
-
-  test('leaves a diagonal to the scroller', () => {
-    expect(claimsGesture(30, 40)).toBe(false)
+  test.each([
+    ['a movement too small to mean anything', 4, 1, false],
+    ['a scroll, however far it goes', 6, 90, false],
+    ['a clearly sideways drag', 40, 8, true],
+    ['one going the other way, which is how it closes', -40, 8, true],
+    ['a diagonal', 30, 40, false],
+  ])('%s: %s', (_name, x, y, claims) => {
+    expect(claimsGesture(x, y)).toBe(claims)
   })
 })
 
 describe('where the drawer lands when the finger lifts', () => {
-  test('opens once it is dragged past halfway', () => {
-    expect(settleOpen(WIDTH / 2 + 1, WIDTH, 0)).toBe(true)
-  })
-
-  test('falls back when it is not', () => {
-    expect(settleOpen(WIDTH / 2 - 1, WIDTH, 0)).toBe(false)
-  })
-
-  test('a flick opens it from barely anywhere', () => {
-    expect(settleOpen(30, WIDTH, 1.2)).toBe(true)
-  })
-
-  test('a flick back closes it from almost fully open', () => {
-    expect(settleOpen(WIDTH - 20, WIDTH, -1.2)).toBe(false)
-  })
-
-  test('a slow drag past halfway still opens, flick or no flick', () => {
-    expect(settleOpen(WIDTH - 10, WIDTH, -0.05)).toBe(true)
-  })
-
-  test('nothing dragged and nothing thrown stays shut', () => {
-    expect(settleOpen(0, WIDTH, 0)).toBe(false)
+  test.each([
+    ['dragged past halfway', WIDTH / 2 + 1, 0, true],
+    ['short of halfway', WIDTH / 2 - 1, 0, false],
+    ['a flick from barely anywhere', 30, 1.2, true],
+    ['a flick back from almost fully open', WIDTH - 20, -1.2, false],
+    ['a slow drag past halfway', WIDTH - 10, -0.05, true],
+    ['nothing dragged and nothing thrown', 0, 0, false],
+  ])('%s', (_name, at, speed, open) => {
+    expect(settleOpen(at, WIDTH, speed)).toBe(open)
   })
 })

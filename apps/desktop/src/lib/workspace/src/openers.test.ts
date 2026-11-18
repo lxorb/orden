@@ -16,31 +16,18 @@ function opener(
 }
 
 describe('what opens a path in the app', () => {
-  test('a PDF opens in the viewer', () => {
-    expect(opener('Papers/Kestrel.pdf')).toBe('pdf')
-  })
-
-  test('a shortcut opens in the browser', () => {
-    expect(opener('Links/Svelte docs.url')).toBe('web')
-  })
-
-  test('a page note opens on the handwriting surface', () => {
-    expect(opener('Sketches/Wind.pages')).toBe('pages')
-  })
-
-  test('a canvas opens on the plane', () => {
-    expect(opener('Boards/Plan.canvas')).toBe('canvas')
-  })
-
-  test('an online terminal opens as its terminal, not as the words that name it', () => {
-    expect(opener('Terms/Build.term')).toBe('term')
-    expect(opener('Terms/Build.TERM')).toBe('term')
-  })
-
-  test('and everything else opens as a note', () => {
-    expect(opener('Read me.md')).toBe('note')
-    expect(opener('notes/Kestrel.md')).toBe('note')
-    expect(opener('data/table.csv')).toBe('note')
+  test.each([
+    ['Papers/Kestrel.pdf', 'pdf'],
+    ['Links/Svelte docs.url', 'web'],
+    ['Sketches/Wind.pages', 'pages'],
+    ['Boards/Plan.canvas', 'canvas'],
+    ['Terms/Build.term', 'term'],
+    ['Terms/Build.TERM', 'term'],
+    ['Read me.md', 'note'],
+    ['notes/Kestrel.md', 'note'],
+    ['data/table.csv', 'note'],
+  ])('%s opens as %s', (path, kind) => {
+    expect(opener(path)).toBe(kind)
   })
 })
 
