@@ -5,13 +5,12 @@ import { spaceHolding } from './space-paths'
 
 const LIB = join(import.meta.dirname, '..', '..')
 
-function sources(folder: string): string[] {
-  return readdirSync(folder, { withFileTypes: true }).flatMap((entry) => {
+const sources = (folder: string): string[] =>
+  readdirSync(folder, { withFileTypes: true }).flatMap((entry) => {
     const path = join(folder, entry.name)
     if (entry.isDirectory()) return sources(path)
     return /\.(ts|svelte)$/.test(entry.name) && !entry.name.includes('.test.') ? [path] : []
   })
-}
 
 describe('the space that holds a path', () => {
   const spaces = [

@@ -170,9 +170,7 @@ const sessionWorld: SessionWorld = {
   },
   after(ms, run) {
     const timer = setTimeout(run, ms)
-    return () => {
-      clearTimeout(timer)
-    }
+    return () => clearTimeout(timer)
   },
   now: () => Date.now(),
 }
@@ -250,14 +248,11 @@ export class AppSession {
       for (const beside of numberedBeside(path)) {
         const there = await this.world.read(beside)
         if (this.over()) return
-        if ('text' in there && appFileOf(there.text)) {
+        const file = 'text' in there ? appFileOf(there.text) : null
+        if (file) {
           this.tab.path = beside
           this.world.moved?.(beside)
-          this.unread = null
-          this.file = appFileOf(there.text)
-          if (this.file) void this.nameHost(this.file.host)
-          await this.connect()
-          return
+          return this.arrive(file)
         }
       }
     }
@@ -273,10 +268,11 @@ export class AppSession {
       return
     }
     const file = appFileOf(read.text)
-    if (!file) {
-      this.damaged = true
-      return
-    }
+    if (file) await this.arrive(file)
+    else this.damaged = true
+  }
+
+  private async arrive(file: AppFile): Promise<void> {
     this.unread = null
     this.file = file
     void this.nameHost(file.host)
@@ -324,9 +320,7 @@ export class AppSession {
       if (!this.link) {
         this.link = this.world.link(
           id,
-          (heard) => {
-            this.heard(heard)
-          },
+          (heard) => this.heard(heard),
           this.view ?? { width: 1, height: 1, dpr: 1, hz: 60 },
         )
         this.link.open()
@@ -335,8 +329,7 @@ export class AppSession {
       return
     }
     this.closeLink()
-    if (look === 'unknown') this.blocked = 'unsynced'
-    else this.blocked = look
+    this.blocked = look === 'unknown' ? 'unsynced' : look
     if (look === 'unknown' || look === 'unreachable') this.later(turn, () => void this.lookIn(turn))
   }
 
@@ -362,16 +355,13 @@ export class AppSession {
   }
 
   retry(): void {
-    if (this.ended) return
+    if (this.ended || (!this.file && (!this.unread || !this.begun))) return
+    this.cancelLook?.()
+    this.cancelLook = null
     if (!this.file) {
-      if (!this.unread || !this.begun) return
-      this.cancelLook?.()
-      this.cancelLook = null
       void this.load()
       return
     }
-    this.cancelLook?.()
-    this.cancelLook = null
     this.tries = 0
     this.slow = false
     this.blocked = null
@@ -478,9 +468,7 @@ export class AppSession {
   }
 }
 
-function onOldSync(): boolean {
-  return !!account.user && account.user.syncVersion !== 2
-}
+const onOldSync = (): boolean => !!account.user && account.user.syncVersion !== 2
 
 export async function find(path: string, until: number): Promise<Found> {
   if (onOldSync()) {
@@ -499,9 +487,8 @@ export async function find(path: string, until: number): Promise<Found> {
 const sessions = new Map<string, AppSession>()
 let watching = false
 
-export function appSessionIfAny(tab: { readonly id: string }): AppSession | null {
-  return sessions.get(tab.id) ?? null
-}
+export const appSessionIfAny = (tab: { readonly id: string }): AppSession | null =>
+  sessions.get(tab.id) ?? null
 
 export function appSessionOf(tab: Tab): AppSession {
   if (!watching) {
@@ -519,10 +506,7 @@ export function appSessionOf(tab: Tab): AppSession {
       })
     })
   }
-  let session = sessions.get(tab.id)
-  if (!session) {
-    session = new AppSession(tab)
-    sessions.set(tab.id, session)
-  }
+  const session = sessions.get(tab.id) ?? new AppSession(tab)
+  sessions.set(tab.id, session)
   return session
 }

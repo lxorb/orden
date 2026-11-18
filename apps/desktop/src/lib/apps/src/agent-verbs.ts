@@ -126,17 +126,12 @@ function listed(tab: Tab, session: Session | null) {
   }
 }
 
-function named(tab: Tab): string {
-  return tab.path ? shownName(nameOf(tab.path)) : tab.id
-}
+const named = (tab: Tab): string => (tab.path ? shownName(nameOf(tab.path)) : tab.id)
 
-function siteOf(tab: Tab): string {
-  return `application:${tab.path ?? tab.id}`
-}
+const siteOf = (tab: Tab): string => `application:${tab.path ?? tab.id}`
 
-function word(op: 'start' | 'stop' | 'restart'): string {
-  return op === 'start' ? 'Start' : op === 'stop' ? 'Stop' : 'Restart'
-}
+const word = (op: 'start' | 'stop' | 'restart'): string =>
+  op === 'start' ? 'Start' : op === 'stop' ? 'Stop' : 'Restart'
 
 export function inputOf(said: unknown): InputEvent[] {
   if (!Array.isArray(said) || said.length === 0) {
@@ -209,28 +204,10 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
   }
 }
 
-const NAMED = [
-  'Enter',
-  'Backspace',
-  'Tab',
-  'Escape',
-  'Delete',
-  'Insert',
-  'Home',
-  'End',
-  'PageUp',
-  'PageDown',
-  'ArrowLeft',
-  'ArrowUp',
-  'ArrowRight',
-  'ArrowDown',
-  'CapsLock',
-  'NumLock',
-  'ScrollLock',
-  'Pause',
-  'PrintScreen',
-  'ContextMenu',
-]
+const NAMED = (
+  'Enter Backspace Tab Escape Delete Insert Home End PageUp PageDown ArrowLeft ArrowUp ' +
+  'ArrowRight ArrowDown CapsLock NumLock ScrollLock Pause PrintScreen ContextMenu'
+).split(' ')
 
 const ALIASES: Readonly<Record<string, string>> = {
   space: ' ',

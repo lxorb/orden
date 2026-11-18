@@ -3,13 +3,10 @@ import { decodeTarget } from '@orden/markdown/links'
 import { folderOf } from './space-paths'
 import { assetUrl, joinPath } from './tauri'
 
-export function isRemote(src: string): boolean {
-  return /^([a-z]+:)?\/\//i.test(src) || src.startsWith('data:')
-}
+export const isRemote = (src: string): boolean =>
+  /^([a-z]+:)?\/\//i.test(src) || src.startsWith('data:')
 
-function written(src: string): string {
-  return decodeTarget(src)
-}
+const written = (src: string): string => decodeTarget(src)
 
 function foldedPath(path: string): string {
   const separator = path.includes('\\') ? '\\' : '/'

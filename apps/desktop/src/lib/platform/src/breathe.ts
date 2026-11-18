@@ -9,13 +9,10 @@ export function breathe(): Promise<void> {
   return new Promise((go) => setTimeout(go, 0))
 }
 
-export function idle(): Promise<void> {
-  return new Promise((go) => {
+export const idle = (): Promise<void> =>
+  new Promise((go) => {
     if (typeof requestIdleCallback === 'function') requestIdleCallback(() => go())
     else setTimeout(go, 0)
   })
-}
 
-export function nextTask(): Promise<void> {
-  return new Promise((go) => setTimeout(go, 0))
-}
+export const nextTask = (): Promise<void> => new Promise((go) => setTimeout(go, 0))

@@ -3,9 +3,7 @@ const numbers = new Map<string, Intl.NumberFormat>()
 
 let read: { system: string; region: string } | null = null
 
-export function systemLocale(): string {
-  return new Intl.DateTimeFormat().resolvedOptions().locale
-}
+export const systemLocale = (): string => new Intl.DateTimeFormat().resolvedOptions().locale
 
 export function englishFor(system: string): string {
   let country: string | undefined

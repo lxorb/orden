@@ -4,13 +4,8 @@ import { openApplication } from './open'
 import { appSessionIfAny } from './session.svelte'
 
 export const applicationTabKind: TabKindParts = {
-  open: (path, how) => {
-    openApplication(path, how)
-    return Promise.resolve()
-  },
-  make: async () => {
-    await makeApplication()
-  },
+  open: (path, how) => Promise.resolve(void openApplication(path, how)),
+  make: () => makeApplication().then(() => undefined),
   hold: (id) => appSessionIfAny({ id })?.picture.hold() ?? null,
   facts: (id) => {
     const session = appSessionIfAny({ id })

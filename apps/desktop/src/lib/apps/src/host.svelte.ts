@@ -88,21 +88,13 @@ class Hosting {
     link: (heard: (what: RelayToHost | Opened) => void) => Speaking,
     private readonly cannot: NotStarted | null = null,
   ) {
-    this.state = cannot
-      ? { t: 'state', state: 'stopped', why: cannot }
-      : { t: 'state', state: 'stopped' }
-    this.link = link((what) => {
-      this.heard(what)
-    })
+    this.state = { t: 'state', state: 'stopped', ...(cannot ? { why: cannot } : {}) }
+    this.link = link((what) => this.heard(what))
   }
 
   open(): void {
     this.link.open()
-    void this.runner
-      .watch(this.key, (said) => {
-        this.said(said)
-      })
-      .catch(() => false)
+    void this.runner.watch(this.key, (said) => this.said(said)).catch(() => false)
   }
 
   private heard(what: RelayToHost | Opened): void {
@@ -156,9 +148,7 @@ class Hosting {
     }
     this.tell({ t: 'state', state: 'starting' })
     const why = await this.runner
-      .start(this.key, this.file, this.view, (said) => {
-        this.said(said)
-      })
+      .start(this.key, this.file, this.view, (said) => this.said(said))
       .catch((): NotStarted => 'failed')
     if (why !== null) this.tell({ t: 'state', state: 'stopped', why })
   }
@@ -284,12 +274,9 @@ export function applicationFiles(
   tree: { path: string; is_dir: boolean; children?: readonly unknown[] } | null,
 ): string[] {
   const found: string[] = []
-  const walk = (entry: { path: string; is_dir: boolean; children?: readonly unknown[] }) => {
-    if (!entry.is_dir) {
-      if (/\.application$/i.test(entry.path)) found.push(entry.path)
-      return
-    }
-    for (const child of entry.children ?? []) walk(child as typeof entry)
+  const walk = (entry: NonNullable<typeof tree>) => {
+    if (entry.is_dir) for (const child of entry.children ?? []) walk(child as typeof entry)
+    else if (/\.application$/i.test(entry.path)) found.push(entry.path)
   }
   if (tree) walk(tree)
   return found
@@ -335,15 +322,11 @@ async function appWorld(): Promise<{
       events.onmessage = said
       return native.invoke<boolean>('apps_watch', { key, events }).catch(() => false)
     },
-    async stop(key) {
-      await native.invoke('apps_stop', { key }).catch(() => undefined)
-    },
-    async signal(key, data) {
-      return native.invoke<string | null>('apps_signal', { key, data }).catch(() => null)
-    },
-    async view(key, view) {
-      await native.invoke('apps_view', { key, view }).catch(() => undefined)
-    },
+    stop: (key) => native.invoke<undefined>('apps_stop', { key }).catch(() => undefined),
+    signal: (key, data) =>
+      native.invoke<string | null>('apps_signal', { key, data }).catch(() => null),
+    view: (key, view) =>
+      native.invoke<undefined>('apps_view', { key, view }).catch(() => undefined),
   }
 
   void native

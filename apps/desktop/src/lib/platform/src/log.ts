@@ -6,18 +6,13 @@ const BEARER = /\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+/=-]{6,}/gi
 
 const KEYS = /\b(?:sk|pk|rk|ghp|gho|ghs|ghu|github_pat|xox[abpr]|AKIA|AIza)[-_A-Za-z0-9]{12,}/g
 
-export function tokensOut(text: string): string {
-  return text
-    .replace(BEARER, (_whole: string, kind: string) => `${kind} <token>`)
-    .replace(KEYS, '<token>')
-}
+export const tokensOut = (text: string): string =>
+  text.replace(BEARER, (_whole: string, kind: string) => `${kind} <token>`).replace(KEYS, '<token>')
 
 const KEPT = 200
 const recent: string[] = []
 
-export function recentLog(): readonly string[] {
-  return recent
-}
+export const recentLog = (): readonly string[] => recent
 
 export function log(level: Level, said: string) {
   const message = tokensOut(said)

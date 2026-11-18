@@ -16,13 +16,12 @@ export function serveAssets(): void {
 
 const BUILT = '/assets/'
 
-function codeLoaded(): string[] {
-  return performance
+const codeLoaded = (): string[] =>
+  performance
     .getEntriesByType('resource')
     .map((one) => new URL(one.name))
     .filter((url) => url.origin === location.origin && url.pathname.startsWith(BUILT))
     .map((url) => url.pathname)
-}
 
 function drawAgain(): void {
   const under = `[src^="${ASSET_ROUTE}"]`
