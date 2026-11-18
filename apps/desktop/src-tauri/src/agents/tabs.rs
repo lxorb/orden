@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter as _, Url};
 use super::cdp;
 use super::engines::{self, View};
 use super::quiet::{self, Owner};
-use super::verbs::{AgentTab, Answer, Code, Event, Store, EVENT};
+use orden_agents::verbs::{AgentTab, Answer, Code, Event, Store, EVENT};
 
 pub const LABEL: &str = "agent-";
 
@@ -95,10 +95,10 @@ pub fn find(agent: &str, id: &str) -> Option<Tab> {
 }
 
 pub fn may_open(owner: &Owner, url: &str) -> Result<(), String> {
-    if !super::policy::on_the_web(url) {
+    if !orden_agents::policy::on_the_web(url) {
         return Err("an agent's page stays on the web".to_string());
     }
-    super::policy::site_allowed_for(&owner.agent, url, store_of(&owner.tab))
+    orden_agents::policy::site_allowed_for(&owner.agent, url, store_of(&owner.tab))
 }
 
 fn store_of(id: &str) -> Store {
@@ -430,7 +430,7 @@ fn tick(app: &AppHandle) {
         close_all(app, Some(&agent));
     }
     engines::sleep_idle(app);
-    super::approvals::expire(app);
+    orden_agents::approvals::expire(app);
 }
 
 #[cfg(test)]

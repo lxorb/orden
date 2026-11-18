@@ -59,7 +59,7 @@ pub fn watch(app: &AppHandle) {
 
 #[cfg(desktop)]
 fn hand_over(app: &AppHandle, urls: Vec<String>) {
-    let waiting = app.state::<crate::endpoint::Waiting>();
+    let waiting = app.state::<orden_agents::endpoint::Waiting>();
     let windows: Vec<LinkWindow> = orden_base::labels::document_windows(app)
         .iter()
         .map(|one| LinkWindow {

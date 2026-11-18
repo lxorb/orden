@@ -47,7 +47,7 @@ function sources(folder: string, ending: RegExp): string[] {
 }
 
 const LIB = join(import.meta.dirname, '../..')
-const CRATE = join(LIB, '../../src-tauri/src')
+const TAURI = join(LIB, '../../src-tauri')
 const THE_ONE = /['"](?:\.\.?\/)+(?:files-out\/src\/api|reveal)['"]/
 
 describe('the words for showing a file where it sits', () => {
@@ -113,9 +113,10 @@ describe('showing a file where it sits', () => {
       .filter((path) => readFileSync(path, 'utf8').includes('revealItemInDir'))
       .map((path) => relative(LIB, path).replaceAll('\\', '/'))
     expect(own).toEqual(['files-out/src/reveal.ts'])
-    const crate = sources(CRATE, /\.rs$/)
+    const crate = ['src', 'crates']
+      .flatMap((under) => sources(join(TAURI, under), /\.rs$/))
       .filter((path) => readFileSync(path, 'utf8').includes('reveal_item_in_dir'))
-      .map((path) => relative(CRATE, path).replaceAll('\\', '/'))
-    expect(crate).toEqual(['agents/system.rs'])
+      .map((path) => relative(TAURI, path).replaceAll('\\', '/'))
+    expect(crate).toEqual(['crates/agents/src/system.rs'])
   })
 })

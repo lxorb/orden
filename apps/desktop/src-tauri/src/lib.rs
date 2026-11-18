@@ -11,8 +11,6 @@ mod chromium_pump;
 #[cfg(desktop)]
 mod downloads;
 #[cfg(desktop)]
-mod endpoint;
-#[cfg(desktop)]
 mod engine;
 #[cfg(desktop)]
 mod extensions;
@@ -210,33 +208,33 @@ macro_rules! commands {
 macro_rules! desktop_commands {
     () => {
         commands![
-            endpoint::automation_result,
-            endpoint::automation_listening,
-            endpoint::automation_claim,
-            agents::grants::agents_read,
-            agents::grants::agents_write,
-            agents::grants::agents_mint,
-            agents::agents_stop,
-            agents::agents_resume,
-            agents::agents_answer,
-            agents::agents_ask,
-            agents::agents_dialog_path,
+            orden_agents::endpoint::automation_result,
+            orden_agents::endpoint::automation_listening,
+            orden_agents::endpoint::automation_claim,
+            orden_agents::grants::agents_read,
+            orden_agents::grants::agents_write,
+            orden_agents::grants::agents_mint,
+            orden_agents::commands::agents_stop,
+            orden_agents::commands::agents_resume,
+            orden_agents::commands::agents_answer,
+            orden_agents::commands::agents_ask,
+            orden_agents::commands::agents_dialog_path,
             agents::agents_state,
-            agents::agents_log,
-            agents::agents_log_after,
-            agents::agents_log_days,
-            agents::agents_log_clear,
+            orden_agents::commands::agents_log,
+            orden_agents::commands::agents_log_after,
+            orden_agents::commands::agents_log_days,
+            orden_agents::commands::agents_log_clear,
             agents::agents_adopt,
             agents::agents_peek,
             agents::agents_capture,
-            agents::shell::agents_shell,
-            agents::shell::agents_hold,
+            orden_agents::shell::agents_shell,
+            orden_agents::shell::agents_hold,
             quick_add::quick_add_key,
             hotkeys::global_keys,
             hotkeys::global_keys_change,
             quick_add::quick_add_hide,
             quick_add::quick_add_tall,
-            agents::shell::tray_keep,
+            orden_agents::shell::tray_keep,
             orden_reminders::reminders::reminders_set,
             orden_reminders::reminders::reminders_taken,
             orden_reminders::reminders::reminders_quietly,
@@ -568,7 +566,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .manage(orden_notes::space_watch::Working::default());
 
     #[cfg(desktop)]
-    let builder = builder.manage(endpoint::Waiting::default());
+    let builder = builder.manage(orden_agents::endpoint::Waiting::default());
 
     #[cfg(desktop)]
     let builder = orden_placement::placement::managed(web_tabs::managed(builder));
@@ -654,7 +652,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
             orden_pty::terminal::page_started(webview);
             orden_explorer::explorer::watch::window_gone(webview.app_handle(), webview.label());
-            if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
+            if let Some(waiting) = webview.try_state::<orden_agents::endpoint::Waiting>() {
                 waiting.forget(webview.label());
             }
             ai_cli::page_started(webview.app_handle(), webview.label());
@@ -709,8 +707,8 @@ fn reminders_started(handle: &tauri::AppHandle) {
             #[cfg(target_os = "macos")]
             reopen: launch::reopen,
             quit_now: lifecycle::quit_now,
-            in_tray: agents::shell::in_tray,
-            notify: agents::shell::notify,
+            in_tray: orden_agents::shell::in_tray,
+            notify: orden_agents::shell::notify,
         },
     );
 }
@@ -732,6 +730,14 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
 fn first_of_all(handle: &tauri::AppHandle) {
     orden_crashes::crashes::start(handle);
     trace::mark("crash reports");
+    orden_agents::hand(orden_agents::Host {
+        answer: agents::answer,
+        lent: ai_agent::lent,
+        close_tabs: |app| agents::tabs::close_all(app, None),
+        page_up: launch::page_up,
+        hold_stop: |app, key| hotkeys::hold(app, hotkeys::Which::StopAgents, key),
+        quit: lifecycle::quit,
+    });
     orden_system::updates::hand_lifecycle(orden_system::updates::Lifecycle {
         quit: lifecycle::quit,
         before_installer: lifecycle::before_installer,
@@ -771,7 +777,7 @@ fn ready(
     trace::mark("deep links");
 
     #[cfg(desktop)]
-    endpoint::start(handle);
+    orden_agents::endpoint::start(handle);
     #[cfg(desktop)]
     trace::mark("automation endpoint");
 

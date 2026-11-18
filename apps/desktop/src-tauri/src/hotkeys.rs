@@ -180,7 +180,7 @@ pub fn pressed(app: &AppHandle, which: Which, token: Option<String>) {
     match which {
         Which::QuickAdd => crate::quick_add::bring_up(app, token),
         Which::StopAgents => {
-            crate::agents::stop::stop(app);
+            orden_agents::stop::stop(app);
         }
     }
 }

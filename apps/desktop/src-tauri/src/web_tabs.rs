@@ -360,7 +360,7 @@ pub enum Step {
     Stop,
 }
 
-pub(crate) use orden_web_engine::{allowed, app_host};
+pub(crate) use orden_web_engine::allowed;
 
 pub(crate) fn tab_may_open(url: &Url) -> bool {
     orden_web_engine::tab_may_open(url, &crate::extensions::ours)

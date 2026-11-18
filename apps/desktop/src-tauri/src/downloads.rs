@@ -179,34 +179,6 @@ fn same_path(one: &Path, other: &Path) -> bool {
         .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
 }
 
-pub(crate) fn plain_name(said: &str) -> String {
-    said.chars()
-        .filter(|one| !is_format(*one))
-        .map(|one| {
-            if one.is_control() || is_blank(one) {
-                ' '
-            } else {
-                one
-            }
-        })
-        .collect::<String>()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-pub(crate) fn spelled_out(said: &str) -> String {
-    let mut out = String::with_capacity(said.len());
-    for one in said.chars() {
-        if (one.is_control() && one != ' ') || is_format(one) {
-            out.extend(one.escape_unicode());
-        } else {
-            out.push(one);
-        }
-    }
-    out
-}
-
 pub(crate) fn clean_name(suggested: &OsStr) -> String {
     let replaced: String = suggested
         .to_string_lossy()
@@ -589,9 +561,8 @@ pub fn follow(view: &tauri::Webview, app: &AppHandle, window: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        clean_name, free_path, plain_name, spelled_out, split_extension, Downloads, State,
-    };
+    use super::{clean_name, free_path, split_extension, Downloads, State};
+    use orden_base::letters::{plain_name, spelled_out};
     use std::collections::HashSet;
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
