@@ -71,7 +71,7 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64
     Some(whole)
 }
 
-pub const CUTS: bool = cfg!(target_os = "linux");
+const CUTS: bool = cfg!(target_os = "linux");
 
 #[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
 #[serde(untagged)]

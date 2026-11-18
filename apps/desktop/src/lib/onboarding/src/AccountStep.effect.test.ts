@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { account } = await import('../../accounts/src/api')
 const { setup } = await import('./setup-state.svelte')
@@ -37,6 +37,55 @@ describe('the log in during setup', () => {
     expect(account.step).toBe('email')
     expect(target.querySelector('input[type="email"]')).not.toBeNull()
     expect(setup.step).toBe('account')
+  })
+})
+
+describe('a code taken in', () => {
+  function entering(answer: () => Promise<boolean>) {
+    setup.begin(false)
+    account.email = 'me@example.com'
+    account.step = 'code'
+    account.code = answer
+    const target = document.createElement('div')
+    document.body.append(target)
+    const made = mount(AccountStep, { target })
+    close = () => void unmount(made)
+    flushSync()
+    const first = target.querySelector<HTMLInputElement>('.digits input')!
+    first.value = '123456'
+    first.dispatchEvent(new Event('input', { bubbles: true }))
+    flushSync()
+    return target
+  }
+
+  test('moves setup on only while its step is still shown', async () => {
+    vi.useFakeTimers()
+    const code = account.code.bind(account)
+    try {
+      entering(() => Promise.resolve(true))
+      await vi.advanceTimersByTimeAsync(0)
+      const at = setup.step
+      close?.()
+      close = undefined
+      await vi.advanceTimersByTimeAsync(2000)
+      expect(setup.step).toBe(at)
+    } finally {
+      account.code = code
+      vi.useRealTimers()
+    }
+  })
+
+  test('that cannot be checked clears the boxes to type it again', async () => {
+    const code = account.code.bind(account)
+    try {
+      const target = entering(() => Promise.reject(new Error('offline')))
+      await vi.waitFor(() => {
+        flushSync()
+        expect(target.querySelector<HTMLInputElement>('.digits input')?.value).toBe('')
+      })
+    } finally {
+      account.code = code
+    }
   })
 })
 

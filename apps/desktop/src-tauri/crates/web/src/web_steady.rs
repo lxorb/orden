@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
-pub const STEADY: Duration = Duration::from_millis(100);
+const STEADY: Duration = Duration::from_millis(100);
 
 struct Kept<T> {
     last: Instant,

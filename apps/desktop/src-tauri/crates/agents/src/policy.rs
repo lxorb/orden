@@ -232,7 +232,7 @@ impl Facts {
         self.in_form && self.fields.iter().any(credential)
     }
 
-    pub fn card_form(&self) -> bool {
+    fn card_form(&self) -> bool {
         self.in_form && self.fields.iter().any(card_field)
     }
 
@@ -665,11 +665,11 @@ fn spaced(word: &str) -> bool {
     })
 }
 
-pub fn payment_host(host: &str) -> bool {
+fn payment_host(host: &str) -> bool {
     PAYMENT_HOSTS.iter().any(|one| covers(one, host))
 }
 
-pub fn social(host: &str) -> bool {
+fn social(host: &str) -> bool {
     SOCIAL.iter().any(|one| covers(one, host))
 }
 
@@ -1002,7 +1002,7 @@ const CARD: &[&str] = &[
     "nomor kartu",
 ];
 
-pub const PAYING: &[&str] = &[
+const PAYING: &[&str] = &[
     "pay", "pay now", "buy", "buy now", "place order", "place your order", "checkout",
     "check out", "confirm purchase", "complete purchase", "complete order", "submit order",
     "confirm order", "purchase", "order now",
@@ -1460,7 +1460,7 @@ const SIGNING_IN: &[&str] = &[
     "\u{767b}\u{9304}",
 ];
 
-pub const DELETING: &[&str] = &[
+const DELETING: &[&str] = &[
     "delete",
     "remove",
     "erase",

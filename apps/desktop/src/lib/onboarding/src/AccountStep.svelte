@@ -32,25 +32,35 @@
     setTimeout(() => boxes[0]?.focus(), 60)
   })
 
+  let moving: ReturnType<typeof setTimeout> | undefined
+  $effect(() => () => clearTimeout(moving))
+
+  function again() {
+    digits = blank()
+    submitted = ''
+    setTimeout(() => boxes[0]?.focus(), 0)
+  }
+
   $effect(() => {
     if (entered.length !== LENGTH || entered === submitted) return
     submitted = entered
-    void account.code(entered).then((accepted) => {
-      account.open = false
-      if (!accepted) {
-        digits = blank()
-        submitted = ''
-        setTimeout(() => boxes[0]?.focus(), 0)
-        return
-      }
-      signed = true
-      setup.signedIn = true
-      whenLoaded(
-        settling,
-        ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()),
-      )
-      setTimeout(() => setup.next('account'), 900)
-    })
+    void account
+      .code(entered)
+      .then((accepted) => {
+        account.open = false
+        if (!accepted) {
+          again()
+          return
+        }
+        signed = true
+        setup.signedIn = true
+        whenLoaded(
+          settling,
+          ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()),
+        )
+        moving = setTimeout(() => setup.next('account'), 900)
+      })
+      .catch(again)
   })
 
   function onDigit(index: number, event: Event) {
