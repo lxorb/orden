@@ -626,11 +626,7 @@ macro_rules! verbs {
             $( $(#[$doc])* $variant($args), )*
         }
 
-        #[allow(dead_code, reason = "the list the MCP server's schemas and the tests read")]
         pub const NAMES: &[&str] = &[$($name),*];
-
-        #[allow(dead_code, reason = "the list the MCP server's schemas and the tests read")]
-        pub const ANSWERS: &[(&str, &str)] = &[$(($name, stringify!($answer))),*];
 
         impl Verb {
             pub fn read(name: &str, args: Value) -> Option<Result<Self, String>> {
@@ -1250,7 +1246,6 @@ mod tests {
             assert!(seen.insert(*name), "{name} is in the table twice");
             assert!(Verb::read(name, json!({})).is_some(), "{name} is not read");
         }
-        assert_eq!(NAMES.len(), ANSWERS.len());
     }
 
     #[test]
