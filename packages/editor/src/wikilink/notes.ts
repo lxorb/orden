@@ -1,7 +1,4 @@
 import { type EditorState, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
-import type { TextEdit } from '@orden/markdown/edits'
-import type { TaskChange } from '@orden/markdown/task-edits'
-import type { TaskFields } from '@orden/markdown/task-line'
 import type { EditorView } from '@codemirror/view'
 import {
   foldName,
@@ -52,27 +49,7 @@ export interface NoteIndex {
   pressRow?: ((target: EventTarget | null) => boolean) | undefined
   render?: ((source: string, path: string | null) => Promise<string>) | undefined
   drawFile?: ((card: HTMLElement, file: FileDrawing) => () => void) | undefined
-  tasks?: TaskHelp | undefined
   mountBase?: ((host: HTMLElement, ask: BaseAsk) => () => void) | undefined
-}
-
-export interface DayTyped {
-  from: number
-  due: string
-  time?: string
-  label: string
-}
-
-export interface TaskHelp {
-  tick(note: string, line: number): Promise<readonly TextEdit[]>
-  pick(
-    field: string,
-    fields: TaskFields,
-    at: DOMRect,
-    due: 'start' | 'deadline',
-    change: (change: TaskChange) => void,
-  ): void
-  dayAtEnd(text: string): DayTyped | null
 }
 
 export type BaseAsk = { code: string } | { target: string; view: string | null }

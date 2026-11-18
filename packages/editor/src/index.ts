@@ -95,7 +95,7 @@ export { pasteHere, pastePlain } from './paste'
 export { editableCellAt, pasteIntoCell } from './table/view'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'
-export { DIAGRAM_LANGUAGES, diagramSvg, RENDERED_LANGUAGES } from './live-preview/render'
+export { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from './live-preview/render'
 export { blockAt, type BlockKind, type BlockShape, type BlockSpan } from './block'
 export { landed } from './landing'
 export { fenceLanguages } from './languages'
@@ -128,7 +128,6 @@ export {
   setNoteIndex,
   type SpaceBlock,
   type SpaceTag,
-  type TaskHelp,
 } from './wikilink/notes'
 export { trustedMarkupEffect } from './markup'
 export { keptCoverEffect } from './live-preview/kept-cover'
