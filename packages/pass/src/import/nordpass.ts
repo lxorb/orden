@@ -14,8 +14,7 @@ import {
   stringOf,
   unknownKind,
 } from './build'
-import type { CsvRecord } from './csv'
-import { csvRecords } from './csv'
+import { csvRecords, type CsvRecord } from './csv'
 import type { Imported } from './types'
 
 interface Extra {

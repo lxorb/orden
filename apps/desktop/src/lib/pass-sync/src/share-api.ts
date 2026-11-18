@@ -1,14 +1,5 @@
 import type { Role } from '@orden/pass/types'
 import { isSignPub } from '@orden/pass/shape'
-import type {
-  Accepted,
-  KeyProof,
-  LinkRow,
-  Member,
-  MemberState,
-  Pin,
-  VaultRow,
-} from '@orden/pass/wire'
 import {
   isCount,
   isSealed,
@@ -17,10 +8,16 @@ import {
   MEMBER_STATES,
   MOST_KEY_BYTES,
   vaultRowIn,
+  type Accepted,
+  type KeyProof,
+  type LinkRow,
+  type Member,
+  type MemberState,
+  type Pin,
+  type VaultRow,
 } from '@orden/pass/wire'
 import type { PersonKey } from './people'
-import type { Method, PassCall } from './sync'
-import { PassApi } from './sync'
+import { PassApi, type Method, type PassCall } from './sync'
 
 const PREFIX = '/v2/pass'
 

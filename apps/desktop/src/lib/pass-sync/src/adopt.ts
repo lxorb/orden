@@ -1,6 +1,5 @@
 import { newKey } from '@orden/pass/crypto'
-import type { Opened } from '@orden/pass/keys'
-import { sealItem } from '@orden/pass/keys'
+import { sealItem, type Opened } from '@orden/pass/keys'
 import type { Folder, Item, Vault, VaultMeta } from '@orden/pass/types'
 import type { Change, ItemRow, VaultRow } from './local'
 import { envelopeOf, newId, tombstoneOf } from './rows'

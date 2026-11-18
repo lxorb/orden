@@ -1,9 +1,7 @@
 import { code, totpIn } from '@orden/pass/totp'
 import type { Content } from '@orden/pass/types'
-import type { LinkOpened } from '@orden/pass/wire'
-import { isPassId, linkOpenedIn } from '@orden/pass/wire'
-import type { LinkField } from './link-fields'
-import { kindName, linkGroupsOf, websitesOf } from './link-fields'
+import { isPassId, linkOpenedIn, type LinkOpened } from '@orden/pass/wire'
+import { kindName, linkGroupsOf, websitesOf, type LinkField } from './link-fields'
 import { LINK_PATH, linkKeyIn, OPEN_PATH, openedLink } from './link-seal'
 
 export interface LinkWorld {

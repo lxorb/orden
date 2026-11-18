@@ -1,5 +1,4 @@
-import type { Opened } from '@orden/pass/keys'
-import { sealVault, wrapVaultKey } from '@orden/pass/keys'
+import { sealVault, wrapVaultKey, type Opened } from '@orden/pass/keys'
 import { acceptedOf, keyProofOf } from '@orden/pass/trust'
 import type { VaultMeta } from '@orden/pass/types'
 import type { VaultRow } from './local'

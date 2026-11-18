@@ -1,9 +1,7 @@
-import type { KdfParams } from '@orden/pass/crypto'
+import { kdfParamsIn, type KdfParams } from '@orden/pass/crypto'
 import { isRecord } from '../../platform/src/api'
-import { kdfParamsIn } from '@orden/pass/crypto'
 import type { DeviceSeal } from '@orden/pass/device'
-import type { Keyring } from '@orden/pass/keys'
-import { keyringIn } from '@orden/pass/keys'
+import { keyringIn, type Keyring } from '@orden/pass/keys'
 import type { Role } from '@orden/pass/types'
 import type { Accepted, Handover, KeyProof } from '@orden/pass/wire'
 

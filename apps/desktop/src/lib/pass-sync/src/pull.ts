@@ -15,10 +15,8 @@ import type {
 import type { Change, ItemRow, VaultRow, VersionRow } from './local'
 import { KEPT_AFTER_DELETE } from './local'
 import { rekeyed } from './rekey'
-import type { Held, HeldVault } from './rows'
-import { itemOf, vaultOf } from './rows'
-import type { Shown } from './shown'
-import { nothingShown, isShown } from './shown'
+import { itemOf, vaultOf, type Held, type HeldVault } from './rows'
+import { nothingShown, isShown, type Shown } from './shown'
 import type { SyncWorld } from './sync-world'
 import type { DeviceRows } from './synced'
 import {

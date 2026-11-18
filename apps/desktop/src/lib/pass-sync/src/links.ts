@@ -1,7 +1,6 @@
 import type { Item } from '@orden/pass/types'
 import type { LinkRow } from '@orden/pass/wire'
-import type { LinkOptions, MadeLink } from './link-make'
-import { madeLink } from './link-make'
+import { madeLink, type LinkOptions, type MadeLink } from './link-make'
 import { signedSharing } from './share-call'
 
 export type { LinkOptions, MadeLink } from './link-make'

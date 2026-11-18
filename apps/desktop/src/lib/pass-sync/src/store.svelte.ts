@@ -78,8 +78,7 @@ import {
 import type { LockWay, PassSettings } from './settings'
 import { keepSettings, readSettings, SETTINGS_KEY } from './settings'
 import type { InvitedRole, Sharing } from './share'
-import type { Person } from './people'
-import { codeOf, confirmedPerson } from './people'
+import { codeOf, confirmedPerson, type Person } from './people'
 import {
   acceptedInvite,
   confirmedMember,
@@ -94,11 +93,9 @@ import {
   trustBackfilled,
 } from './share'
 import type { Signed } from './share-call'
-import type { Shown } from './shown'
-import { shownAfter } from './shown'
+import { shownAfter, type Shown } from './shown'
 import { accountKeyringOf, keepAdopted } from './synced'
-import type { TrustProblem } from './trust-problem'
-import { trustWords } from './trust-problem'
+import { trustWords, type TrustProblem } from './trust-problem'
 import { madeVaultRow } from './vault-made'
 import { useNativeStretcher } from './stretcher'
 

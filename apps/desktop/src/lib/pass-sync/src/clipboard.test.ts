@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { Clipboard } from './clipboard'
-import { copySecret, isPassSecret } from './clipboard'
+import { copySecret, isPassSecret, type Clipboard } from './clipboard'
 
 function board(readable = true): Clipboard & { held: string; writes: string[] } {
   const one = {

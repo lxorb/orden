@@ -28,11 +28,9 @@ import type { ItemRow, VaultRow, VersionRow } from './local'
 import type { Person, PersonKey } from './people'
 import { isConfirmed, PersonChanged, personOf, seenPerson } from './people'
 import type { Held, HeldVault } from './rows'
-import type { Resealed, Rotation, ShareApi } from './share-api'
-import { refusalOf } from './share-api'
+import { refusalOf, type Resealed, type Rotation, type ShareApi } from './share-api'
 import { STALE } from './sync'
-import type { DeviceRows } from './synced'
-import { keepItemBase, keepVaultBase, vaultBaseOf } from './synced'
+import { keepItemBase, keepVaultBase, vaultBaseOf, type DeviceRows } from './synced'
 import { ownersOf } from './vault-trust'
 
 export interface Sharing {
