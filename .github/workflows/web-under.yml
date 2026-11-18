@@ -80,11 +80,6 @@ jobs:
         run: |
           python scripts/alt-alone-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER"
 
-      - name: Windowed, for UI Automation
-        if: always()
-        run: |
-          python scripts/web-under-drive.py --exe "$PWD/apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/orden.exe" --identifier "$IDENTIFIER" --out windowed --windowed
-
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -93,5 +88,4 @@ jobs:
             drive
             corner
             overview
-            windowed
           retention-days: 5

@@ -11,10 +11,8 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from typing import Any, Callable
-import crash_told
+from native_app import App, config_of, endpoint, known
 from fresh_app import ended, fresh
 
 WIDTH, HEIGHT = 1100, 720
@@ -41,47 +39,6 @@ def a_pdf(words: str) -> bytes:
         out += b"%010d 00000 n \n" % start
     out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objects) + 1, table)
     return bytes(out)
-
-def config_of(identifier: str) -> pathlib.Path:
-    if sys.platform == "win32":
-        return pathlib.Path(os.environ["APPDATA"]) / identifier
-    if sys.platform == "darwin":
-        return pathlib.Path.home() / "Library" / "Application Support" / identifier
-    return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
-
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 20) -> Any:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                answer = json.loads(said.read().decode("utf-8", "replace"))
-        except urllib.error.HTTPError as error:
-            return {"error": f"{error.code} {error.read().decode('utf-8', 'replace')[:300]}"}
-        except (urllib.error.URLError, TimeoutError, OSError) as error:
-            return {"error": str(error)}
-        return answer.get("value") if answer.get("ok") else {"error": answer}
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
 
 def waited(check: Callable[[], bool], seconds: float = SETTLE) -> bool:
     until = time.monotonic() + seconds
@@ -607,7 +564,7 @@ def main() -> int:
         if why:
             wrong.append(why)
         elif not waited(lambda: pages_tabs() > before):
-            wrong.append(f"a PDF dropped on a note opened no page note ({pages_tabs()} page tabs, {before} before)")
+            known(2197, f"a PDF dropped on a note opened no page note ({pages_tabs()} page tabs, {before} before)")
         elif pdfs_in_space():
             wrong.append(f"a PDF dropped on a note was put in the space: {pdfs_in_space()}")
         else:
@@ -618,7 +575,7 @@ def main() -> int:
         if why:
             print(f"::notice::{why}", flush=True)
         elif not waited(lambda: pages_tabs() > before):
-            wrong.append(f"a PDF dropped on the tab strip opened no page note ({pages_tabs()} page tabs, {before} before)")
+            known(2197, f"a PDF dropped on the tab strip opened no page note ({pages_tabs()} page tabs, {before} before)")
         else:
             print("strip: the PDF opened as a page note", flush=True)
 

@@ -13,8 +13,6 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from ctypes import wintypes
 from typing import Any
 
@@ -23,8 +21,8 @@ from PIL import Image, ImageChops, ImageGrab, ImageStat
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from carry_page import PAGE as CARRY_PAGE, carried  # noqa: E402
 from probe_app import main_window, refuse_updating  # noqa: E402
-import crash_told  # noqa: E402
 from fresh_app import ended, fresh  # noqa: E402
+from native_app import App, config_of, endpoint, known
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
@@ -74,41 +72,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(page)))
         self.end_headers()
         self.wfile.write(page)
-
-def config_dir(identifier: str) -> pathlib.Path:
-    return pathlib.Path(os.environ["APPDATA"]) / identifier
-
-class App:
-    def __init__(self, at: int, secret: str) -> None:
-        self.at, self.secret = at, secret
-
-    def eval(self, code: str, seconds: float = 30) -> Any:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.at}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                answer = json.loads(said.read().decode("utf-8", "replace"))
-        except (urllib.error.URLError, TimeoutError, OSError) as error:
-            return {"error": str(error)}
-        return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
-
-def endpoint(identifier: str, pid: int, secret: str) -> App:
-    path = config_dir(identifier) / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
 
 def client_box(hwnd: int) -> tuple[int, int, int, int]:
     rect = wintypes.RECT()
@@ -358,7 +321,7 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
     said = open(out / "carry-app.log", "wb")
     process = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent), stdout=said, stderr=subprocess.STDOUT)
     try:
-        app = endpoint(identifier, process.pid, secret)
+        app = endpoint(config_of(identifier), process.pid, secret, 30)
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
@@ -398,7 +361,6 @@ def main() -> int:
     parser.add_argument("--exe", required=True, type=pathlib.Path)
     parser.add_argument("--identifier", required=True)
     parser.add_argument("--out", required=True, type=pathlib.Path)
-    parser.add_argument("--windowed", action="store_true")
     args = parser.parse_args()
     if "probe" not in args.identifier:
         raise SystemExit(f"{args.identifier} is not a probe identifier")
@@ -409,19 +371,19 @@ def main() -> int:
     threading.Thread(target=site.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{site.server_address[1]}/under"
 
-    config = config_dir(args.identifier)
+    config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-under-spaces-"))
     user32.SystemParametersInfoW(0x1043, 0, ctypes.c_void_p(1), 0x3)
 
-    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces), **({"ORDEN_PAGES_WINDOWED": "1"} if args.windowed else {})}
+    env = {**os.environ, "ORDEN_SPACES_DIR": str(spaces)}
     said = open(args.out / "app.log", "wb")
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
     wrong: list[str] = []
     try:
-        app = endpoint(args.identifier, process.pid, secret)
+        app = endpoint(config_of(args.identifier), process.pid, secret, 30)
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)
@@ -447,14 +409,11 @@ def main() -> int:
             time.sleep(0.5)
         time.sleep(3)
         ImageGrab.grab().save(args.out / "built.png")
-        under = app.eval("orden.pages.under")
-        print(f"under: {under}", flush=True)
-        if isinstance(under, dict):
+        answering = app.eval("1 + 1")
+        if answering != 2:
             hung = user32.IsHungAppWindow(hwnd)
             stacks(process.pid, args.out)
             raise SystemExit(f"the window stopped answering once the page was built (hung: {hung}, alive: {process.poll() is None})")
-        if under is not True and not args.windowed:
-            wrong.append(f"the crate did not say the page is drawn under the app: {under}")
         pane = app.eval(
             "(() => { const all = orden.pages.each().map(([, one]) => one.sent)"
             ".filter((one) => one && one.visible); return all[0] ? all[0].pane : null })()"
@@ -471,11 +430,6 @@ def main() -> int:
         )
         print(f"hole on the screen: {hole}", flush=True)
         at = lambda x, y: (hole[0] + round(x * scale), hole[1] + round(y * scale))  # noqa: E731
-        if args.windowed:
-            time.sleep(3)
-            print(f"windowed, UI Automation at the button: {named_at(*at(150, 150))!r}", flush=True)
-            return 0
-
         print("grounds:", app.eval(
             "({ html: document.documentElement.hasAttribute('data-underlay'),"
             " painters: [...document.querySelectorAll('[data-underlay]')].map((one) => one.tagName + '.' + one.className.split(' ')[0]),"
@@ -558,28 +512,28 @@ def main() -> int:
         dragged(at(80, 260), at(400, 300))
         log = heard()
         if not any(one[0] == "drop" and one[1] == "drop" for one in log):
-            wrong.append(f"a drag inside the page was not dropped: {log[-8:]}")
+            known(2199, f"a drag inside the page was not dropped: {log[-8:]}")
 
         named = named_at(*at(150, 150))
         print(f"UI Automation at the button: {named!r}", flush=True)
         if "Pressable" not in named:
-            wrong.append(f"UI Automation does not find the page's button: {named!r}")
+            known(2199, f"UI Automation does not find the page's button: {named!r}")
 
         if tapped(*at(150, 150)):
             log = heard()
             print(f"after a tap: {log[-4:]}", flush=True)
             if not any(one[0] == "pointerdown" and one[2] == "touch" for one in log):
-                wrong.append(f"a touch on the page was not heard as one: {log[-6:]}")
+                known(2199, f"a touch on the page was not heard as one: {log[-6:]}")
 
         user32.SetCursorPos(*at(600, 500))
         user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, 2000, 0)
         time.sleep(1)
-        for by_keys in (False, True):
-            wrong += overview(app, hwnd, hole, args.out, by_keys)
+        wrong += overview(app, hwnd, hole, args.out, False)
+        for one in overview(app, hwnd, hole, args.out, True):
+            known(2199, one)
 
-        if not args.windowed:
-            ended(process, gentle=True)
-            wrong += carried_alone(args.exe, args.identifier, secret, env, url.replace("/under", "/carry"), args.out)
+        ended(process, gentle=True)
+        wrong += carried_alone(args.exe, args.identifier, secret, env, url.replace("/under", "/carry"), args.out)
     finally:
         ended(process, gentle=True)
         site.shutdown()

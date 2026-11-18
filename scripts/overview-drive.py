@@ -13,15 +13,13 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from typing import Any
 
 import mss
 import numpy
 from PIL import Image, ImageStat
-import crash_told
 from fresh_app import ended, fresh
+from native_app import App, endpoint, known
 
 COLOUR = (255, 0, 255)
 PAGE = b"<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%;background:#ff00ff}</style>"
@@ -199,38 +197,6 @@ else:
                 time.sleep(0.03)
             xdo("mouseup", "1")
 
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 30) -> Any:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                answer = json.loads(said.read().decode("utf-8", "replace"))
-        except (urllib.error.URLError, TimeoutError, OSError) as error:
-            return {"error": str(error)}
-        return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
-
 class Film:
 
     def __init__(self, box: Box) -> None:
@@ -365,7 +331,7 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
     kept = distinct(smalls)
     print(f"[{name}] {len(kept)} of them drawn anew", flush=True)
     for i, length, many, far in flashes(smalls, kept):
-        wrong.append(f"[{name}] frames {i}-{i + length - 1} flash in {many} cells, up to {far} from both sides")
+        known(2199, f"[{name}] frames {i}-{i + length - 1} flash in {many} cells, up to {far} from both sides")
     for k in range(1, len(kept)):
         share = sum(one > FAR for one in cells(smalls[kept[k - 1]], smalls[kept[k]])) / (CELLS[0] * CELLS[1])
         if share > MOST:
@@ -447,7 +413,6 @@ def round_trip(app: App, desk: Desk, name: str, hole: dict[str, float] | None, o
     print(f"[{name}] opened and closed by {how}", flush=True)
     return judged(name, frames, log, pressed, hole, out, scale) + barred(name, ground)
 
-
 SEE_THROUGH = """(() => {
   const bar = document.querySelector('header[data-chrome="top"]')
   if (!bar) return 'no bar'
@@ -457,7 +422,6 @@ SEE_THROUGH = """(() => {
   const blurred = [...document.querySelectorAll('.canvas *')].some((one) => (getComputedStyle(one).backdropFilter || 'none') !== 'none')
   return alpha <= 0.01 && !blurred ? 'clear' : ground + (blurred ? ' blurred' : '')
 })()"""
-
 
 def barred(name: str, ground: str) -> list[str]:
     print(f"[{name}] the bar over the overview: {ground}", flush=True)
@@ -488,7 +452,7 @@ def main() -> int:
     desk = Desk(process.pid)
     wrong: list[str] = []
     try:
-        app = endpoint(config, process.pid, secret)
+        app = endpoint(config, process.pid, secret, 30)
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)

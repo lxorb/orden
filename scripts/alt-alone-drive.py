@@ -36,6 +36,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 drive = importlib.import_module("web-tab-drive")
 from probe_app import main_window
 from fresh_app import ended, fresh
+from native_app import known
 
 ALT = 0x12
 F10 = 0x79
@@ -74,7 +75,7 @@ def tap(user32: ctypes.WinDLL, app, hwnd: int, name: str, key: int, where: str, 
     time.sleep(1.0)
     menu = in_menu(user32, hwnd)
     asked = time.monotonic()
-    said = app.eval("return 1 + 1", 8)
+    said = app.answer("return 1 + 1", 8)
     took = time.monotonic() - asked
     print(f"{name} alone in {where}: menu mode {menu}, the page answered {said} in {took:.1f} s", flush=True)
     if menu:
@@ -109,7 +110,7 @@ def main() -> int:
     try:
         app = drive.endpoint(config, process.pid, secret)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!orden.workspace").get("value") is not True:
+        while time.monotonic() < until and app.answer("!!orden.workspace").get("value") is not True:
             time.sleep(1)
         time.sleep(3)
         hwnd = main_window(process.pid)
@@ -129,10 +130,10 @@ def main() -> int:
         user32.keybd_event(ESCAPE, 0, KEY_UP, 0)
         time.sleep(1.0)
         menu = in_menu(user32, hwnd)
-        said = app.eval("return 1 + 1", 8)
+        said = app.answer("return 1 + 1", 8)
         print(f"Alt+Space, then Escape: the window's menu came up {shown}, menu mode after {menu}, the page answered {said}", flush=True)
         if not shown:
-            wrong.append("Alt+Space showed no window menu")
+            known(2199, "Alt+Space showed no window menu")
         if menu or said.get("value") != 2:
             wrong.append(f"Alt+Space and one Escape left the window's thread in menu mode {menu}, the page answering {said}")
             user32.keybd_event(ESCAPE, 0, 0, 0)

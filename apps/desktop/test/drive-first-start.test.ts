@@ -37,9 +37,9 @@ function answers(name: string, seen = new Set<string>()): boolean {
   seen.add(name)
   const text = script(name)
   if (/\bcrash_told\.told\(/.test(text)) return true
-  return [...text.matchAll(/import_module\("([\w-]+)"\)/g)].some((found) =>
-    answers(`${found[1] ?? ''}.py`, seen),
-  )
+  return [
+    ...text.matchAll(/import_module\("([\w-]+)"\)|^from ([\w]+) import [^\n]*\bendpoint\b/gm),
+  ].some((found) => answers(`${found[1] ?? found[2] ?? ''}.py`, seen))
 }
 
 describe('a drive CI runs on a fresh profile', () => {

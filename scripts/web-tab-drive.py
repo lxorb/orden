@@ -12,12 +12,10 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from typing import Any
 
-import crash_told
 from fresh_app import ended, fresh
+from native_app import App, config_of, endpoint
 
 PAGE = b"<!doctype html><title>a page</title><p>a page"
 STORM = (
@@ -39,13 +37,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-
-def config_of(identifier: str) -> pathlib.Path:
-    if sys.platform == "win32":
-        return pathlib.Path(os.environ["APPDATA"]) / identifier
-    if sys.platform == "darwin":
-        return pathlib.Path.home() / "Library" / "Application Support" / identifier
-    return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
 
 def window_answers(pid: int) -> str | None:
 
@@ -90,7 +81,7 @@ def watched(app: App, pid: int, count: int) -> list[str]:
     opened, live = time.monotonic(), False
     while time.monotonic() - opened < WATCHED:
         asked = time.monotonic()
-        said = app.eval(f"orden.pages.each().filter(([, page]) => page.live).length >= {count}")
+        said = app.answer(f"orden.pages.each().filter(([, page]) => page.live).length >= {count}")
         at = f"web tab {count}, {asked - opened:4.1f} s after it opened"
         if "error" in said:
             return [f"{at}: the endpoint did not answer: {said['error']}"]
@@ -100,39 +91,6 @@ def watched(app: App, pid: int, count: int) -> list[str]:
         time.sleep(0.5)
     print(f"web tab {count}: answered for {WATCHED:.0f} s, its page up: {live}", flush=True)
     return [] if live else [f"web tab {count}: its page never came up in {WATCHED:.0f} s"]
-
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 8) -> dict[str, Any]:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                return json.loads(said.read().decode("utf-8", "replace"))
-        except urllib.error.HTTPError as error:
-            return {"error": f"{error.code} {error.read().decode('utf-8', 'replace')[:200]}"}
-        except (urllib.error.URLError, TimeoutError, OSError) as error:
-            return {"error": str(error)}
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
 
 def stalls(identifier: str) -> list[str]:
 
@@ -167,12 +125,12 @@ def main() -> int:
     process = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
     wrong: list[str] = []
     try:
-        app = endpoint(config, process.pid, secret)
+        app = endpoint(config, process.pid, secret, 8)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!orden.workspace").get("value") is not True:
+        while time.monotonic() < until and app.answer("!!orden.workspace").get("value") is not True:
             time.sleep(1)
         time.sleep(2)
-        said = app.eval("orden.workspace.openBlank('One', '# One\\n\\nSome words.'); return true", 20)
+        said = app.answer("orden.workspace.openBlank('One', '# One\\n\\nSome words.'); return true", 20)
         if said.get("value") is not True:
             raise SystemExit(f"no note was opened: {said}")
         time.sleep(2)
@@ -182,7 +140,7 @@ def main() -> int:
         for count in range(1, TABS + 1):
             forward(process.pid)
             time.sleep(1)
-            said = app.eval(f"orden.workspace.openPage({json.dumps(f'{url}{count}')}); return true", 20)
+            said = app.answer(f"orden.workspace.openPage({json.dumps(f'{url}{count}')}); return true", 20)
             if said.get("value") is not True:
                 raise SystemExit(f"web tab {count} was not opened: {said}")
             wrong += watched(app, process.pid, count)
@@ -190,10 +148,10 @@ def main() -> int:
                 break
 
         if not wrong:
-            before = app.eval("return orden.workspace.tabs.length", 20).get("value")
-            app.eval(f"orden.workspace.openPage({json.dumps(f'{url}storm')}); return true", 20)
+            before = app.answer("return orden.workspace.tabs.length", 20).get("value")
+            app.answer(f"orden.workspace.openPage({json.dumps(f'{url}storm')}); return true", 20)
             time.sleep(8)
-            after = app.eval("return orden.workspace.tabs.length", 20).get("value")
+            after = app.answer("return orden.workspace.tabs.length", 20).get("value")
             if not isinstance(before, int) or after != before + 1:
                 wrong.append(f"400 window.open calls without a gesture: {before} tabs became {after}, not {before} + the storm's own")
             if why := window_answers(process.pid):

@@ -12,13 +12,11 @@ import subprocess
 import sys
 import tempfile
 import time
-import urllib.error
-import urllib.request
 from typing import Any
 
-import crash_told
 from fresh_app import ended, fresh
 from heavy_paper import BENCH_BODY, REFERENCE, heavy_paper
+from native_app import config_of, endpoint
 
 OPEN_LIMIT = 8000
 BLOCK_LIMIT = 500
@@ -120,56 +118,6 @@ const host = document.querySelector('.pages').getBoundingClientRect()
 return { x: box.x, y: box.y, width: box.width, height: box.height, hx: host.x, hy: host.y, hw: host.width, hh: host.height }
 """
 
-
-def config_of(identifier: str) -> pathlib.Path:
-    if sys.platform == "win32":
-        return pathlib.Path(os.environ["APPDATA"]) / identifier
-    if sys.platform == "darwin":
-        return pathlib.Path.home() / "Library" / "Application Support" / identifier
-    return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
-
-
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 60) -> Any:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                return json.loads(said.read().decode("utf-8", "replace")).get("value")
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as error:
-            return {"error": str(error)}
-
-    def until(self, code: str, seconds: float = 30) -> bool:
-        ends = time.monotonic() + seconds
-        while time.monotonic() < ends:
-            if self.eval(code) is True:
-                return True
-            time.sleep(0.1)
-        return False
-
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
-
-
 def page_session(identifier: str) -> Any:
     from devtools import Session, port, targets
 
@@ -186,7 +134,6 @@ def page_session(identifier: str) -> Any:
     there = sorted(str(one.relative_to(web.parent)) for one in web.parent.glob("*")) if web.parent.exists() else []
     print(f"no devtools port under {web}; beside it: {there[:20]}", flush=True)
     return None
-
 
 class Recording:
     def __init__(self, tools: Any) -> None:
@@ -218,7 +165,6 @@ class Recording:
                     one["acked"] = True
                     self.tools.call("Page.screencastFrameAck", {"sessionId": one["params"]["sessionId"]}, seconds=5)
 
-
 def black_frames(frames: list[bytes], sheet: dict, css_width: float) -> tuple[int, float, list[bytes]]:
     from PIL import Image
 
@@ -243,7 +189,6 @@ def black_frames(frames: list[bytes], sheet: dict, css_width: float) -> tuple[in
             if len(kept) < 3:
                 kept.append(png)
     return black, worst, kept
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -274,7 +219,7 @@ def main() -> int:
     unverified: list[str] = []
     tools = None
     try:
-        app = endpoint(config, process.pid, secret)
+        app = endpoint(config, process.pid, secret, 60)
         if not app.until("return !!orden.workspace && !!orden.workspace.activeSpace", 90):
             raise SystemExit("the app never had a space")
         time.sleep(2)
@@ -428,7 +373,6 @@ def main() -> int:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
 
-
 def heaviest(profile: dict, count: int = 12) -> list[str]:
     nodes = {node["id"]: node for node in profile.get("nodes", [])}
     self_time: dict[int, int] = {}
@@ -442,7 +386,6 @@ def heaviest(profile: dict, count: int = 12) -> list[str]:
         name = f"{frame.get('functionName') or '(anonymous)'} {pathlib.PurePosixPath(frame.get('url', '')).name}:{frame.get('lineNumber', 0)}"
         named[name] = named.get(name, 0) + hits * every
     return [f"{ms:.0f} ms {name}" for name, ms in sorted(named.items(), key=lambda one: -one[1])[:count]]
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
