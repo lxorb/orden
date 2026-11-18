@@ -13,7 +13,7 @@ vi.stubGlobal('localStorage', {
 const asked: string[] = []
 let reachable = false
 vi.stubGlobal('fetch', (url: string, init: RequestInit) => {
-  asked.push(`${init.method} ${url.slice(url.indexOf('/v1/'))} ${String(init.body)}`)
+  asked.push(`${init.method} ${url.slice(url.indexOf('/v1/'))} ${init.body as string}`)
   if (!reachable) return Promise.reject(new TypeError('Failed to fetch'))
   return Promise.resolve(new Response(JSON.stringify({ space: { id: 's1' } }), { status: 200 }))
 })
