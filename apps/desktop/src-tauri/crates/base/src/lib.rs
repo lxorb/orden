@@ -11,7 +11,11 @@ pub mod logs;
 pub mod paths;
 #[cfg(desktop)]
 pub mod printed;
+#[cfg(desktop)]
+pub mod program;
 pub mod sent;
+#[cfg(desktop)]
+pub mod stat;
 pub mod trace;
 #[cfg(desktop)]
 pub mod usage;

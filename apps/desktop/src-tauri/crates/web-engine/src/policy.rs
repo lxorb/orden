@@ -69,6 +69,11 @@ pub fn internal(url: &str) -> bool {
 }
 
 #[must_use]
+pub fn from_a_site(url: &Url) -> bool {
+    matches!(url.scheme(), "http" | "https") && url.host_str().is_some_and(|host| !host.is_empty())
+}
+
+#[must_use]
 pub fn blank(url: &Url) -> bool {
     url.scheme() == "about" && url.path() == "blank"
 }

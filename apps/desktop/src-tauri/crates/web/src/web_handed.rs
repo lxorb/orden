@@ -30,10 +30,7 @@ fn page(said: &str) -> Option<String> {
     }
 
     let url = Url::parse(said).ok()?;
-    let web = matches!(url.scheme(), "http" | "https")
-        && url.host_str().is_some_and(|host| !host.is_empty());
-
-    (web && crate::web_tabs::allowed(&url)).then(|| url.to_string())
+    (orden_web_engine::from_a_site(&url) && crate::web_tabs::allowed(&url)).then(|| url.to_string())
 }
 
 #[cfg(test)]

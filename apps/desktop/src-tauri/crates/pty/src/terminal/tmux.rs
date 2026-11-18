@@ -27,11 +27,7 @@ fn fits(name: &str) -> bool {
 }
 
 fn program() -> Option<PathBuf> {
-    let path = std::env::var_os("PATH").unwrap_or_default();
-    std::env::split_paths(&path)
-        .chain(["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"].map(PathBuf::from))
-        .map(|folder| folder.join("tmux"))
-        .find(|one| one.is_file())
+    orden_base::program::which("tmux")
 }
 
 pub fn parsed(listed: &str) -> Vec<Found> {

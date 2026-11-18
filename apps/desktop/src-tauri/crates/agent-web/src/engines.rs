@@ -254,7 +254,7 @@ pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<()
     };
     let placed = at
         .iter()
-        .any(|one| crate::cdp::on_the_web(&orden_agents::policy::made_by(one)));
+        .any(|one| orden_agents::policy::from_a_site(&orden_agents::policy::made_by(one)));
     if !placed && limits_sites(limits) {
         return Err("the engine did not say which site that came from".into());
     }

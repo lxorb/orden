@@ -25,7 +25,7 @@ use args::{Effort, Mode, Shape};
 use codex_app::Host;
 use gemini::Gemini;
 use home::Home;
-use orden_agents::program::Program;
+use orden_base::program::Program;
 use run::{Heard, Running, Said};
 use say::{Message, Say};
 use session::Claude;
@@ -1084,24 +1084,6 @@ exec node '{}' {name} \"$@\"
         assert!(ended.err.contains("asked with tools"));
     }
 
-    fn alive(pid: u32) -> bool {
-        #[cfg(windows)]
-        {
-            let listed = Command::new("tasklist")
-                .args(["/FI", &format!("PID eq {pid}"), "/NH"])
-                .output()
-                .expect("tasklist");
-            String::from_utf8_lossy(&listed.stdout).contains(&pid.to_string())
-        }
-        #[cfg(unix)]
-        {
-            Command::new("kill")
-                .args(["-0", &pid.to_string()])
-                .status()
-                .is_ok_and(|status| status.success())
-        }
-    }
-
     fn pids_in(file: &Path) -> Vec<u32> {
         let started = Instant::now();
         while started.elapsed() < Duration::from_secs(20) {
@@ -1122,7 +1104,7 @@ exec node '{}' {name} \"$@\"
     fn gone_soon(pid: u32) -> bool {
         let started = Instant::now();
         while started.elapsed() < Duration::from_secs(10) {
-            if !alive(pid) {
+            if !orden_base::stat::running(pid) {
                 return true;
             }
             std::thread::sleep(Duration::from_millis(50));
@@ -1149,7 +1131,7 @@ exec node '{}' {name} \"$@\"
         .expect("started");
 
         let family = pids_in(&pids);
-        assert!(family.iter().all(|&pid| alive(pid)));
+        assert!(family.iter().all(|&pid| orden_base::stat::running(pid)));
         running.stop();
 
         let ended = heard

@@ -73,16 +73,6 @@ pub fn rate_between(before: Option<&(Instant, Totals)>, now: Instant, totals: &T
     }
 }
 
-pub fn stat_of(text: &str) -> Option<(u32, u32, u64)> {
-    let rest = &text[text.rfind(')')? + 1..];
-    let fields: Vec<&str> = rest.split_whitespace().collect();
-    let parent = fields.get(1)?.parse().ok()?;
-    let group = fields.get(2)?.parse().ok()?;
-    let user: u64 = fields.get(11)?.parse().ok()?;
-    let system: u64 = fields.get(12)?.parse().ok()?;
-    Some((parent, group, user + system))
-}
-
 pub fn resident_of(text: &str) -> Option<u64> {
     let line = text.lines().find(|line| line.starts_with("VmRSS:"))?;
     let kilobytes: u64 = line.split_whitespace().nth(1)?.parse().ok()?;
@@ -124,11 +114,8 @@ pub fn totals(whose: Whose) -> Option<Totals> {
         let Some(pid) = entry.file_name().to_str().and_then(|one| one.parse().ok()) else {
             continue;
         };
-        let Ok(text) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else {
-            continue;
-        };
-        if let Some((parent, group, ticks)) = stat_of(&text) {
-            all.push((pid, parent, group, ticks));
+        if let Some(stat) = crate::stat::read(pid) {
+            all.push((pid, stat.parent, stat.group, stat.ticks));
         }
     }
     let chosen: Vec<u32> = match whose {
@@ -205,13 +192,6 @@ pub fn totals(_whose: Whose) -> Option<Totals> {
 mod tests {
     use super::*;
     use std::time::Duration;
-
-    #[test]
-    fn reads_a_process_past_a_name_with_spaces_and_parentheses() {
-        let text = "4242 (my (odd) prog) S 1 4242 4242 0 -1 4194560 100 0 0 0 250 50 0 0 20 0";
-        assert_eq!(stat_of(text), Some((1, 4242, 300)));
-        assert_eq!(stat_of("garbage"), None);
-    }
 
     #[test]
     fn reads_the_memory_resident_and_the_gpus_engines() {

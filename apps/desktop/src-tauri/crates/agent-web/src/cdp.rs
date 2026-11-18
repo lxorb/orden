@@ -323,7 +323,7 @@ impl Heard {
         let mut at = frame.to_string();
         for _ in 0..DEEPEST_FRAMES {
             let one = self.origins.get(&key(&at))?;
-            if on_the_web(&one.origin) {
+            if orden_agents::policy::from_a_site(&one.origin) {
                 return Some(one.origin.clone());
             }
             at = one.parent.clone()?;
@@ -703,11 +703,6 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
         "Input.dragIntercepted" => held.dragged = event.get("data").cloned(),
         _ => {}
     }
-}
-
-pub(crate) fn on_the_web(origin: &str) -> bool {
-    tauri::Url::parse(origin)
-        .is_ok_and(|url| matches!(url.scheme(), "http" | "https") && url.host().is_some())
 }
 
 fn placed(at: impl Iterator<Item = String>) -> Whence {

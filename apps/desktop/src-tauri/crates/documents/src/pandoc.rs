@@ -18,9 +18,6 @@ const CONVERTING: Duration = Duration::from_secs(10 * 60);
 
 const WRITE_FROM: &str = "markdown+tex_math_dollars+pipe_tables+task_lists+footnotes+strikeout";
 
-#[cfg(any(target_os = "macos", all(test, unix)))]
-mod finding;
-
 #[cfg_attr(not(windows), allow(unused_mut))]
 fn pandoc() -> Command {
     let mut command = Command::new(program());
@@ -29,46 +26,8 @@ fn pandoc() -> Command {
     command
 }
 
-#[cfg(not(target_os = "macos"))]
 fn program() -> PathBuf {
-    PathBuf::from("pandoc")
-}
-
-#[cfg(target_os = "macos")]
-fn program() -> PathBuf {
-    let home = std::env::var_os("HOME").map(PathBuf::from);
-    let folders = finding::folders(std::env::var_os("PATH").as_deref(), home.as_deref());
-
-    finding::first_in(&folders, runs)
-        .or_else(from_login_shell)
-        .unwrap_or_else(|| PathBuf::from("pandoc"))
-}
-
-#[cfg(any(target_os = "macos", all(test, unix)))]
-fn runs(program: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt as _;
-
-    fs::metadata(program)
-        .is_ok_and(|found| found.is_file() && found.permissions().mode() & 0o111 != 0)
-}
-
-#[cfg(target_os = "macos")]
-fn from_login_shell() -> Option<PathBuf> {
-    static ASKED: std::sync::OnceLock<Option<PathBuf>> = std::sync::OnceLock::new();
-    ASKED.get_or_init(ask_login_shell).clone()
-}
-
-#[cfg(target_os = "macos")]
-fn ask_login_shell() -> Option<PathBuf> {
-    let shell = std::env::var_os("SHELL").unwrap_or_else(|| "/bin/zsh".into());
-    in_login_shell(Command::new(shell), Duration::from_secs(3))
-}
-
-#[cfg(any(target_os = "macos", all(test, unix)))]
-fn in_login_shell(mut shell: Command, patience: Duration) -> Option<PathBuf> {
-    let said =
-        orden_base::printed::output(shell.args(["-ilc", "command -v pandoc"]), patience).ok()?;
-    finding::shell_answer(&String::from_utf8_lossy(&said.stdout)).filter(|program| runs(program))
+    orden_base::program::which("pandoc").unwrap_or_else(|| PathBuf::from("pandoc"))
 }
 
 #[tauri::command]
@@ -1344,84 +1303,5 @@ mod tests {
     #[test]
     fn survives_output_that_is_not_utf8() {
         assert_eq!(complaint(&[0xff, b'a'], "pandoc failed"), "\u{fffd}a");
-    }
-
-    #[cfg(unix)]
-    fn home_with_rc(rc: &str) -> tempfile::TempDir {
-        use std::os::unix::fs::PermissionsExt as _;
-
-        let home = tempfile::tempdir().expect("a folder");
-        let tools = home.path().join("tools").join("bin");
-        fs::create_dir_all(&tools).expect("a folder");
-        let program = tools.join("pandoc");
-        fs::write(&program, "#!/bin/sh\necho pandoc 3.1\n").expect("a program");
-        fs::set_permissions(&program, fs::Permissions::from_mode(0o755)).expect("runnable");
-        for name in [".zshrc", ".zprofile", ".zlogin", ".bash_profile", ".bashrc"] {
-            fs::write(home.path().join(name), rc).expect("an rc file");
-        }
-        home
-    }
-
-    #[cfg(unix)]
-    fn login_shells() -> Vec<&'static str> {
-        ["/bin/zsh", "/bin/bash"]
-            .into_iter()
-            .filter(|shell| Path::new(shell).exists())
-            .collect()
-    }
-
-    #[cfg(unix)]
-    fn asked(
-        shell: &str,
-        home: &Path,
-        patience: std::time::Duration,
-    ) -> Option<std::path::PathBuf> {
-        let mut command = std::process::Command::new(shell);
-        command
-            .env("HOME", home)
-            .env_remove("ZDOTDIR")
-            .env_remove("BASH_ENV");
-        super::in_login_shell(command, patience)
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn finds_pandoc_on_the_path_a_real_login_shell_sets_up() {
-        let home = home_with_rc(
-            "echo \"Welcome back, $USER\"\n\
-             echo '[oh-my-zsh] Would you like to update? [Y/n]' >&2\n\
-             export PATH=\"$HOME/tools/bin:$PATH\"\n\
-             alias ll='ls -l'\n",
-        );
-        let shells = login_shells();
-        assert!(!shells.is_empty(), "no login shell to ask");
-        for shell in shells {
-            let found = asked(shell, home.path(), std::time::Duration::from_secs(20));
-            assert_eq!(
-                found.map(|program| program.canonicalize().expect("a real path")),
-                Some(
-                    home.path()
-                        .join("tools/bin/pandoc")
-                        .canonicalize()
-                        .expect("a real path")
-                ),
-                "{shell} did not tell where pandoc is"
-            );
-        }
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn a_login_shell_whose_rc_hangs_is_given_up_on() {
-        let home = home_with_rc("export PATH=\"$HOME/tools/bin:$PATH\"\nsleep 30\n");
-        for shell in login_shells() {
-            let started = std::time::Instant::now();
-            let found = asked(shell, home.path(), std::time::Duration::from_secs(1));
-            assert_eq!(found, None, "{shell}");
-            assert!(
-                started.elapsed() < std::time::Duration::from_secs(5),
-                "{shell}"
-            );
-        }
     }
 }

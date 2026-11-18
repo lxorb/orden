@@ -388,16 +388,11 @@ fn ssh_program() -> Option<PathBuf> {
     if let Some(own) = std::env::var_os("ORDEN_SSH").filter(|one| !one.is_empty()) {
         return Some(PathBuf::from(own));
     }
-    let name = if cfg!(windows) { "ssh.exe" } else { "ssh" };
-    let system = std::env::var_os("SystemRoot")
+    std::env::var_os("SystemRoot")
         .filter(|_| cfg!(windows))
-        .map(|root| Path::new(&root).join(r"System32\OpenSSH\ssh.exe"));
-    let path = std::env::var_os("PATH").unwrap_or_default();
-    system
-        .into_iter()
-        .chain(std::env::split_paths(&path).map(|folder| folder.join(name)))
-        .chain((!cfg!(windows)).then(|| PathBuf::from("/usr/bin/ssh")))
-        .find(|one| one.is_file())
+        .map(|root| Path::new(&root).join(r"System32\OpenSSH\ssh.exe"))
+        .filter(|one| one.is_file())
+        .or_else(|| orden_base::program::which("ssh"))
 }
 
 fn sets_timeout(resolved: &str) -> bool {

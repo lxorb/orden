@@ -812,12 +812,13 @@ fn folder_key_as(naming: Naming, path: &str) -> String {
     } else {
         path.to_lowercase()
     };
-    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
-    for byte in spelled.bytes() {
-        hash ^= u64::from(byte);
-        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
-    }
-    format!("{hash:016x}")
+    format!("{:016x}", fnv1a(spelled.as_bytes()))
+}
+
+pub fn fnv1a(bytes: &[u8]) -> u64 {
+    bytes.iter().fold(0xcbf2_9ce4_8422_2325, |hash, byte| {
+        (hash ^ u64::from(*byte)).wrapping_mul(0x0000_0100_0000_01b3)
+    })
 }
 
 pub fn kept_folder(root: &Path, path: &str) -> PathBuf {
@@ -1145,7 +1146,7 @@ pub fn pipe_in(folder: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::{
-        a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
+        a_shareable_folder, at_most, copy_held, drop_held, files_in, fnv1a, folded, folder_key,
         folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
         is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
         judged_below, judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of,
@@ -2446,5 +2447,12 @@ mod tests {
             .recv_timeout(std::time::Duration::from_secs(10))
             .expect("opening a pipe never waits for a writer");
         assert_eq!(answer, (true, true, true));
+    }
+
+    #[test]
+    fn the_hash_is_fnv_1a_as_published() {
+        assert_eq!(fnv1a(b""), 0xcbf2_9ce4_8422_2325);
+        assert_eq!(fnv1a(b"a"), 0xaf63_dc4c_8601_ec8c);
+        assert_eq!(fnv1a(b"foobar"), 0x8594_4171_f739_67e8);
     }
 }

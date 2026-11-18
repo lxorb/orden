@@ -682,3 +682,18 @@ fn a_plain_window_system_leaves_moves_to_the_platform_and_refuses_nothing_else()
     system.hide(NativeWindow(1));
     assert_eq!(system.desktop_scale(), None);
 }
+
+#[test]
+fn a_site_s_address_is_http_or_https_with_a_host() {
+    let url = |text: &str| Url::parse(text).expect(text);
+    assert!(orden_web_engine::from_a_site(&url("https://example.com/")));
+    assert!(orden_web_engine::from_a_site(&url("http://[::1]:8/")));
+    for not in [
+        "file:///etc/passwd",
+        "about:blank",
+        "blob:https://a.example/x",
+        "data:,x",
+    ] {
+        assert!(!orden_web_engine::from_a_site(&url(not)), "{not}");
+    }
+}

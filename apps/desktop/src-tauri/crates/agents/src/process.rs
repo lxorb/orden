@@ -289,12 +289,16 @@ fn begin(app: &AppHandle, caller: &Caller, session: &str, asked: &Process, since
         return Answer::error(Code::BadArguments, "say which program");
     };
     let home = app.path().home_dir().ok();
-    let found = match located(program, home.as_deref(), &crate::program::search_path()) {
+    let found = match located(
+        program,
+        home.as_deref(),
+        &orden_base::program::search_path(),
+    ) {
         Ok(found) => found,
         Err(why) => return Answer::error(Code::BadArguments, why),
     };
     let cwd = match asked.cwd.as_deref() {
-        Some(cwd) => match absolute(cwd, home.as_deref())
+        Some(cwd) => match crate::files::under_home(cwd, home.as_deref())
             .and_then(|cwd| crate::working::on_disk(app, &cwd))
         {
             Ok(cwd) if cwd.is_dir() => cwd,
@@ -562,29 +566,9 @@ fn word(line: &mut String, said: &str) {
     }
 }
 
-fn absolute(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
-    let asked = asked.trim();
-    let rest = asked
-        .strip_prefix("~/")
-        .or_else(|| asked.strip_prefix("~\\"))
-        .or_else(|| (asked == "~").then_some(""));
-    let given = match rest {
-        Some(rest) => home
-            .ok_or_else(|| "this account has no home folder".to_owned())?
-            .join(rest),
-        None => PathBuf::from(asked),
-    };
-    if !given.is_absolute() {
-        return Err(format!(
-            "{asked} is not an absolute path: say where it is, or start it with ~/"
-        ));
-    }
-    Ok(orden_base::paths::folded(&given))
-}
-
 fn located(program: &str, home: Option<&Path>, path: &std::ffi::OsStr) -> Result<PathBuf, String> {
     if program.contains(['/', '\\']) || program.starts_with('~') {
-        let file = absolute(program, home)?;
+        let file = crate::files::under_home(program, home)?;
         return if file.is_file() {
             Ok(file)
         } else {
@@ -592,32 +576,12 @@ fn located(program: &str, home: Option<&Path>, path: &std::ffi::OsStr) -> Result
         };
     }
     let folders: Vec<PathBuf> = std::env::split_paths(path).collect();
-    crate::program::first_in(&folders, &names(program), runnable)
-        .ok_or_else(|| format!("there is no program called {program} on this computer's PATH"))
-}
-
-fn names(program: &str) -> Vec<String> {
-    let mut names = vec![program.to_owned()];
-    if cfg!(windows) && Path::new(program).extension().is_none() {
-        names = [".exe", ".cmd", ".bat", ".com"]
-            .iter()
-            .map(|ending| format!("{program}{ending}"))
-            .collect();
-    }
-    names
-}
-
-fn runnable(file: &Path) -> bool {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::metadata(file)
-            .is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0)
-    }
-    #[cfg(not(unix))]
-    {
-        file.is_file()
-    }
+    orden_base::program::first_in(
+        &folders,
+        &orden_base::program::endings(program),
+        orden_base::program::runnable,
+    )
+    .ok_or_else(|| format!("there is no program called {program} on this computer's PATH"))
 }
 
 fn spawned(
@@ -632,7 +596,7 @@ fn spawned(
     command
         .args(&asked.args)
         .current_dir(cwd)
-        .env("PATH", crate::program::search_path())
+        .env("PATH", orden_base::program::search_path())
         .envs(&asked.env)
         .stdin(if kept || asked.stdin.is_some() {
             Stdio::piped()
@@ -913,16 +877,19 @@ mod tests {
                 located(relative, Some(&home), std::ffi::OsStr::new("")).is_err(),
                 "{relative}"
             );
-            assert!(absolute(relative, Some(&home)).is_err(), "{relative}");
+            assert!(
+                crate::files::under_home(relative, Some(&home)).is_err(),
+                "{relative}"
+            );
         }
         assert_eq!(
-            absolute("~/a/../b", Some(&home)).expect("home"),
+            crate::files::under_home("~/a/../b", Some(&home)).expect("home"),
             orden_base::paths::folded(&home.join("b"))
         );
         assert!(located(
             "no-such-program-anywhere",
             Some(&home),
-            &crate::program::search_path()
+            &orden_base::program::search_path()
         )
         .is_err());
     }

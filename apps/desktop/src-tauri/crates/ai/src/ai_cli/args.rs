@@ -22,13 +22,13 @@ impl Tool {
         }
     }
 
-    pub fn find(self) -> Option<orden_agents::program::Program> {
+    pub fn find(self) -> Option<orden_base::program::Program> {
         let outright = match self {
             Self::ClaudeCode => "ORDEN_AI_CLAUDE_CODE",
             Self::Codex => "ORDEN_AI_CODEX",
             Self::Gemini => "ORDEN_AI_GEMINI",
         };
-        orden_agents::program::find(self.command(), outright)
+        orden_base::program::find(self.command(), outright)
     }
 }
 
