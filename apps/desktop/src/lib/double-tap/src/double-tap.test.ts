@@ -155,7 +155,7 @@ describe('the other modifiers', () => {
 describe('a web page', () => {
   test('waits as long for the second tap', () => {
     const script = readFileSync(
-      new URL('../../../../src-tauri/src/web_opens.rs', import.meta.url),
+      new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url),
       'utf8',
     )
     expect(script).toContain(`var within = ${WITHIN}`)

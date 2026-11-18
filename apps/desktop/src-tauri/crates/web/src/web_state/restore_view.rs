@@ -9,19 +9,19 @@ use tauri::{
 
 use super::PATIENCE;
 
-pub(crate) const PATH: &str = "/__orden_restore";
+pub const PATH: &str = "/__orden_restore";
 
 const VISIT: Duration = Duration::from_secs(15);
 
 static MADE: AtomicU64 = AtomicU64::new(0);
 
-pub(crate) struct Hidden {
+pub struct Hidden {
     view: Webview,
     loads: Receiver<String>,
 }
 
 impl Hidden {
-    pub(crate) async fn open(window: &Window, store: Option<&str>) -> Result<Self, String> {
+    pub async fn open(window: &Window, store: Option<&str>) -> Result<Self, String> {
         let app = window.app_handle().clone();
         let label = format!("web-state-{}", MADE.fetch_add(1, Ordering::Relaxed));
         let (loaded, loads) = channel(16);
@@ -65,11 +65,11 @@ impl Hidden {
         Ok(hidden)
     }
 
-    pub(crate) fn view(&self) -> &Webview {
+    pub fn view(&self) -> &Webview {
         &self.view
     }
 
-    pub(crate) async fn visit(&mut self, origin: &str) -> Result<(), String> {
+    pub async fn visit(&mut self, origin: &str) -> Result<(), String> {
         let address = format!("{origin}{PATH}");
         engine::show(&self.view, &address)?;
         loop {

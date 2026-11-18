@@ -132,12 +132,12 @@ pub async fn extension_popup_open(
     let builder = WebviewBuilder::new(label.clone(), WebviewUrl::External(blank()?))
         .focused(orden_placement::placement::away().is_none())
         .disable_drag_drop_handler()
-        .on_navigation(crate::web_tabs::tab_may_open);
-    let builder = crate::engine::web_store(builder, &app, store.as_deref())?;
+        .on_navigation(orden_web::web_tabs::tab_may_open);
+    let builder = orden_web::engine::web_store(builder, &app, store.as_deref())?;
     let measuring = app.clone();
     let builder = builder.on_page_load(move |view, payload| {
         if matches!(payload.event(), tauri::webview::PageLoadEvent::Finished)
-            && super::ours(payload.url())
+            && orden_web::extension_ids::ours(payload.url())
         {
             let (app, view) = (measuring.clone(), view.clone());
             std::thread::spawn(move || measure(&app, &view));
@@ -146,8 +146,8 @@ pub async fn extension_popup_open(
     let holder = webview.window().label().to_string();
     let (opening, asking, going) = (app.clone(), tab.clone(), label.clone());
     let builder = builder.on_new_window(move |url: Url, _| {
-        if crate::web_tabs::tab_may_open(&url) {
-            crate::web_tabs::open_as_tab(&opening, &holder, &asking, &url);
+        if orden_web::web_tabs::tab_may_open(&url) {
+            orden_web::web_tabs::open_as_tab(&opening, &holder, &asking, &url);
         }
         let (app, label) = (opening.clone(), going.clone());
         let _ = opening.run_on_main_thread(move || went(&app, &label));
@@ -164,7 +164,7 @@ pub async fn extension_popup_open(
             return;
         }
         closed(&building);
-        if let Some(page) = building.get_webview(&crate::web_tabs::label_of(&tab)) {
+        if let Some(page) = building.get_webview(&orden_web::web_tabs::label_of(&tab)) {
             if !orden_web::web_answers::answers(&page) {
                 orden_web::web_answers::said(&building);
                 let _ = sending.try_send(Err(orden_web::web_answers::NOT_ANSWERING.to_owned()));
@@ -173,7 +173,7 @@ pub async fn extension_popup_open(
         }
         let _ = &store;
         let scale = orden_web::page_scale::of(&window).unwrap_or(1.0);
-        let made = crate::engine::add_child(
+        let made = orden_web::engine::add_child(
             &window,
             builder,
             PhysicalPosition::new(rect.x * scale, rect.y * scale),
@@ -255,7 +255,7 @@ fn sent(app: &AppHandle, view: &Webview, address: &Url) {
         let _ = app;
         let (view, address) = (view.clone(), address.clone());
         std::thread::spawn(move || {
-            let _ = crate::web_worlds::sent(&view, &address, "");
+            let _ = orden_web::web_worlds::sent(&view, &address, "");
         });
     }
 }

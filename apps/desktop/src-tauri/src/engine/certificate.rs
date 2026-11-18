@@ -1,35 +1,16 @@
-use std::sync::mpsc::channel;
-use std::time::Duration;
-
 use cef::{
     ImplBinaryValue as _, ImplBrowser as _, ImplBrowserHost as _, ImplNavigationEntry as _,
     ImplSslstatus as _, ImplX509Certificate as _,
 };
-use tauri::Webview;
 
-use super::Served;
-
-const PATIENCE: Duration = Duration::from_secs(5);
+use orden_web::web_certificate::Served;
 
 const WRONG: u32 = 1 | 2 | 4 | 64 | 128 | 256 | 1024 | 2048 | 8192 | 16384 | 32768 | 1_048_576;
 
-pub async fn read(view: Webview, _address: &str) -> Option<Served> {
-    use tauri::Manager as _;
-
-    let (sending, said) = channel();
-    crate::web_tabs::on_the_page(view.app_handle(), view.label(), move |view| {
-        let _ = view.with_webview(move |platform| {
-            let read = platform
-                .downcast_ref::<tauri_runtime_cef::Webview>()
-                .and_then(|page| of(&page.browser()));
-            let _ = sending.send(read);
-        });
-    })
-    .ok()?;
-    tauri::async_runtime::spawn_blocking(move || said.recv_timeout(PATIENCE).ok().flatten())
-        .await
-        .ok()
-        .flatten()
+pub(crate) fn served(platform: &tauri::webview::PlatformWebview) -> Option<Served> {
+    platform
+        .downcast_ref::<tauri_runtime_cef::Webview>()
+        .and_then(|page| of(&page.browser()))
 }
 
 fn of(browser: &cef::Browser) -> Option<Served> {

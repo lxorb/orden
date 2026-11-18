@@ -3,7 +3,7 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
 const source = readFileSync(
-  new URL('../../../../src-tauri/src/web_opens.rs', import.meta.url),
+  new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url),
   'utf8',
 )
 const script = /pub const PAGE_SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''

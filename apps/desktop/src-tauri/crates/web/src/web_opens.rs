@@ -611,8 +611,8 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
     let Ok((url, name)) = serde_json::from_str::<(String, String)>(payload) else {
         return;
     };
-    if name == orden_web::web_media::UNPLAYABLE {
-        orden_web::web_media::heard(app, window, tab);
+    if name == crate::web_media::UNPLAYABLE {
+        crate::web_media::heard(app, window, tab);
         return;
     }
     if let Some(key) = sought(&name) {

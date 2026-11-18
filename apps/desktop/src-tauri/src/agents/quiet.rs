@@ -129,12 +129,12 @@ pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Opti
     let name = std::path::Path::new(suggested)
         .file_name()
         .map_or_else(|| std::ffi::OsString::from("download"), ToOwned::to_owned);
-    let folder = crate::downloads::folder(app)
+    let folder = orden_web::downloads::folder(app)
         .ok()?
         .join("Orden agents")
         .join(agent);
     orden_base::paths::made(&folder).ok()?;
-    let name = crate::downloads::clean_name(&name);
+    let name = orden_web::downloads::clean_name(&name);
     let taken: Vec<String> = DOWNLOADS
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
@@ -142,8 +142,9 @@ pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Opti
         .filter(|(_, one)| one.state == DownloadState::Going)
         .map(|(_, one)| one.path.clone())
         .collect();
-    Some(crate::downloads::free_path(&folder, &name, |path| {
-        crate::downloads::on_disk(path) || taken.iter().any(|one| std::path::Path::new(one) == path)
+    Some(orden_web::downloads::free_path(&folder, &name, |path| {
+        orden_web::downloads::on_disk(path)
+            || taken.iter().any(|one| std::path::Path::new(one) == path)
     }))
 }
 

@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-pub(crate) const WORLD: &str = "orden";
+pub const WORLD: &str = "orden";
 
 const MARK: &str = "void 0";
 

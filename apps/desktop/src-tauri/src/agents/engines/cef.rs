@@ -219,7 +219,7 @@ pub fn build(
                 .into(),
         );
     }
-    let profile = crate::engine::profile(app, store)?;
+    let profile = orden_web::engine::profile(app, store)?;
     let (built, waiting) = sync_channel(1);
     let page = Arc::new(Page {
         owner: owner.clone(),

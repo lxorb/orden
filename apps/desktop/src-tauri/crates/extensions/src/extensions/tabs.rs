@@ -27,7 +27,8 @@ pub fn start(app: &AppHandle) {
 
 fn handed(app: AppHandle, url: Url) {
     std::thread::spawn(move || {
-        let unknown = |url: &Url| url.scheme() == "chrome-extension" && !super::ours(url);
+        let unknown =
+            |url: &Url| url.scheme() == "chrome-extension" && !orden_web::extension_ids::ours(url);
         for _ in 0..LISTINGS {
             if !unknown(&url) {
                 break;
@@ -37,7 +38,7 @@ fn handed(app: AppHandle, url: Url) {
                 std::thread::sleep(AGAIN);
             }
         }
-        if crate::web_tabs::tab_may_open(&url) {
+        if orden_web::web_tabs::tab_may_open(&url) {
             orden_base::logs::say(
                 &app,
                 "info",

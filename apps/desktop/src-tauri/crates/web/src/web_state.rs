@@ -1,5 +1,5 @@
 mod cdp;
-pub(crate) mod cookies;
+pub mod cookies;
 mod isolated;
 mod merge;
 mod restore_view;
@@ -30,7 +30,7 @@ pub async fn web_merge(
     origins: Vec<String>,
 ) -> Result<merge::Merged, String> {
     ours(&webview)?;
-    let Some(from) = orden_web::web_stores::named(Some(&from))? else {
+    let Some(from) = crate::web_stores::named(Some(&from))? else {
         return Err("the shared store is merged into nothing".to_owned());
     };
     let origins: Vec<String> = origins
@@ -42,7 +42,7 @@ pub async fn web_merge(
         .map(|global| {
             let store = global
                 .parent()
-                .map(|config| config.join(orden_web::web_stores::STORES).join(from));
+                .map(|config| config.join(crate::web_stores::STORES).join(from));
             (
                 store.as_deref().and_then(merge::last_used),
                 merge::last_used(&global),
@@ -73,8 +73,8 @@ pub async fn web_copy(
 
 fn copy_stores<'a>(from: &'a str, into: &'a str) -> Result<(&'a str, &'a str), String> {
     let (Some(from), Some(into)) = (
-        orden_web::web_stores::named(Some(from))?,
-        orden_web::web_stores::named(Some(into))?,
+        crate::web_stores::named(Some(from))?,
+        crate::web_stores::named(Some(into))?,
     ) else {
         return Err("a copy is from one note's store into another's".to_owned());
     };

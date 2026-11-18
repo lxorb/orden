@@ -26,7 +26,8 @@ pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
     let Some(page) = control(app) else {
         return Vec::new();
     };
-    let Ok(profile) = crate::engine::root(app).map(|root| root.join("Default").join("Extensions"))
+    let Ok(profile) =
+        orden_web::engine::root(app).map(|root| root.join("Default").join("Extensions"))
     else {
         return Vec::new();
     };
@@ -159,10 +160,10 @@ fn hidden(app: &AppHandle, label: &str, address: &str) -> Option<Webview> {
     let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
         .focused(false)
         .disable_drag_drop_handler();
-    let builder = crate::engine::web_store(builder, app, None).ok()?;
+    let builder = orden_web::engine::web_store(builder, app, None).ok()?;
     let (made, waiting) = std::sync::mpsc::sync_channel(1);
     app.run_on_main_thread(move || {
-        let built = crate::engine::add_child(
+        let built = orden_web::engine::add_child(
             &window,
             builder,
             LogicalPosition::new(-10_000.0, -10_000.0),

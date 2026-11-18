@@ -30,8 +30,6 @@ const CHANGED: &str = "orden://extensions";
 
 static WRITING: Mutex<()> = Mutex::new(());
 
-static KNOWN: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
-
 static PROBLEMS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
 static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::default);
@@ -44,24 +42,6 @@ pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = orden_base::paths::config_dir(app)?.join("extensions");
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
     Ok(dir)
-}
-
-pub fn ours(url: &Url) -> bool {
-    url.scheme() == "chrome-extension"
-        && url.host_str().is_some_and(|id| {
-            KNOWN
-                .read()
-                .unwrap_or_else(PoisonError::into_inner)
-                .contains(id)
-        })
-}
-
-#[cfg(test)]
-pub fn known(id: &str) {
-    KNOWN
-        .write()
-        .unwrap_or_else(PoisonError::into_inner)
-        .insert(id.to_owned());
 }
 
 pub fn kept(app: &AppHandle) -> Vec<Kept> {
@@ -105,8 +85,7 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
         }
         list
     };
-    *KNOWN.write().unwrap_or_else(PoisonError::into_inner) =
-        list.iter().map(|(one, _)| one.id.clone()).collect();
+    orden_web::extension_ids::replace(list.iter().map(|(one, _)| one.id.clone()));
     list
 }
 

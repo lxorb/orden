@@ -2,7 +2,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { JSDOM } from 'jsdom'
 import { expect, test } from 'vitest'
-import script from '../../src-tauri/src/web_pass.js?raw'
+import script from '../../src-tauri/crates/web/src/web_pass.js?raw'
 
 const jsdomUtils = createRequire(join(process.cwd(), 'package.json'))(
   'jsdom/lib/generated/idl/utils.js',

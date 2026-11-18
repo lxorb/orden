@@ -1,12 +1,12 @@
+use std::sync::mpsc::channel;
+use std::time::Duration;
+
 use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tauri::AppHandle;
 
 mod separately;
 mod x509;
-
-#[path = "web_certificate/chromium.rs"]
-mod engine;
 
 #[derive(Serialize, Clone, Debug, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -36,8 +36,8 @@ pub struct Certificate {
 }
 
 pub struct Served {
-    secure: bool,
-    chain: Vec<Vec<u8>>,
+    pub secure: bool,
+    pub chain: Vec<Vec<u8>>,
 }
 
 #[tauri::command]
@@ -47,7 +47,7 @@ pub async fn web_certificate(
     address: String,
 ) -> Result<Option<Certificate>, String> {
     let view = crate::web_tabs::found(&app, &tab)?;
-    if let Some(served) = engine::read(view, &address).await {
+    if let Some(served) = read(view).await {
         if let Some(said) = Certificate::from_chain(served.secure, false, &served.chain) {
             return Ok(Some(said));
         }
@@ -60,6 +60,27 @@ pub async fn web_certificate(
     }
     let chain = separately::read(address).await;
     Ok(Certificate::from_chain(true, true, &chain))
+}
+
+const PATIENCE: Duration = Duration::from_secs(5);
+
+async fn read(view: tauri::Webview) -> Option<Served> {
+    use tauri::Manager as _;
+
+    let (sending, said) = channel();
+    crate::web_tabs::on_the_page(view.app_handle(), view.label(), move |view| {
+        let _ = view.with_webview(move |platform| {
+            let read = crate::engine::engine()
+                .ok()
+                .and_then(|engine| (engine.served)(&platform));
+            let _ = sending.send(read);
+        });
+    })
+    .ok()?;
+    tauri::async_runtime::spawn_blocking(move || said.recv_timeout(PATIENCE).ok().flatten())
+        .await
+        .ok()
+        .flatten()
 }
 
 impl Certificate {

@@ -44,7 +44,7 @@ fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
             continue;
         }
         let text = std::fs::read_to_string(&path).unwrap_or_default();
-        if name == "keyboard.rs" {
+        if name == "crates/web/src/keyboard.rs" {
             assert_eq!(
                 text.matches("orden_placement::placement::away().is_some()")
                     .count(),

@@ -5,7 +5,7 @@ use tauri::Webview;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct Cookie {
+pub struct Cookie {
     pub name: String,
     pub value: String,
     pub domain: String,
@@ -29,14 +29,14 @@ pub(crate) struct Cookie {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub(crate) enum SameSite {
+pub enum SameSite {
     Strict,
     Lax,
     None,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub(crate) enum Priority {
+pub enum Priority {
     Low,
     Medium,
     High,
@@ -44,33 +44,33 @@ pub(crate) enum Priority {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct Partition {
+pub struct Partition {
     pub top_level_site: String,
     #[serde(default)]
     pub cross_site_ancestor: bool,
 }
 
-pub(crate) const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
+pub const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
 
 fn until(cookie: &Cookie, now: f64) -> f64 {
     cookie.expires.unwrap_or(now + KEPT_FOR)
 }
 
-pub(crate) fn now() -> f64 {
+pub fn now() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0.0, |since| since.as_secs_f64())
 }
 
-pub(crate) async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
+pub async fn every(view: &Webview) -> Result<Vec<Cookie>, String> {
     engine::all(view).await
 }
 
-pub(crate) async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), String> {
+pub async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), String> {
     engine::set(view, cookies, now()).await
 }
 
-pub(crate) mod engine {
+pub mod engine {
     use serde_json::{json, Map, Value};
     use tauri::Webview;
 
@@ -92,7 +92,7 @@ pub(crate) mod engine {
             .map(|_| ())
     }
 
-    pub(crate) fn cookies_in(answered: &Value) -> Vec<Cookie> {
+    pub fn cookies_in(answered: &Value) -> Vec<Cookie> {
         answered["cookies"]
             .as_array()
             .map(|list| list.iter().filter_map(from_devtools).collect())
@@ -106,7 +106,7 @@ pub(crate) mod engine {
         })
     }
 
-    pub(crate) fn from_devtools(said: &Value) -> Option<Cookie> {
+    pub fn from_devtools(said: &Value) -> Option<Cookie> {
         let text = |key: &str| said[key].as_str().map(str::to_owned);
         let partition = match &said["partitionKey"] {
             Value::String(site) => Some(Partition {
@@ -153,7 +153,7 @@ pub(crate) mod engine {
         })
     }
 
-    pub(crate) fn to_devtools(cookie: &Cookie, now: f64) -> Value {
+    pub fn to_devtools(cookie: &Cookie, now: f64) -> Value {
         let mut out = Map::new();
         out.insert("name".into(), json!(cookie.name));
         out.insert("value".into(), json!(cookie.value));

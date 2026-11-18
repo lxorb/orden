@@ -34,15 +34,10 @@ pub fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<NativeWin
     (raw != 0).then_some(NativeWindow(raw))
 }
 
-static PAGE_ID: std::sync::OnceLock<fn(&tauri::webview::PlatformWebview) -> Option<NativeWindow>> =
-    std::sync::OnceLock::new();
-
-pub fn hand_page_id(page_id: fn(&tauri::webview::PlatformWebview) -> Option<NativeWindow>) {
-    let _ = PAGE_ID.set(page_id);
-}
-
 pub fn page_id(webview: &tauri::webview::PlatformWebview) -> Option<NativeWindow> {
-    PAGE_ID.get().and_then(|page_id| page_id(webview))
+    crate::engine::engine()
+        .ok()
+        .and_then(|engine| (engine.page_id)(webview))
 }
 
 pub fn x11_page(webview: &tauri::webview::PlatformWebview) -> Option<u32> {

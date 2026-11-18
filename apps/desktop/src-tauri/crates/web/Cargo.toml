@@ -11,12 +11,24 @@ workspace = true
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 orden-base = { path = "../base" }
+orden-crashes = { path = "../crashes" }
+orden-explorer = { path = "../explorer" }
+orden-placement = { path = "../placement" }
+orden-system = { path = "../system" }
 orden-web-engine = { path = "../web-engine" }
 tauri.workspace = true
+tauri-plugin-opener.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+base64.workspace = true
+sha2.workspace = true
+rustls.workspace = true
+tokio.workspace = true
 raw-window-handle.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc.workspace = true
 x11rb.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

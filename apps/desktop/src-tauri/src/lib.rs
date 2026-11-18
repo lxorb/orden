@@ -3,8 +3,6 @@ mod agents;
 #[cfg(test)]
 mod calls;
 #[cfg(desktop)]
-mod downloads;
-#[cfg(desktop)]
 mod engine;
 #[cfg(desktop)]
 mod extensions;
@@ -15,8 +13,6 @@ mod hotkeys;
 #[cfg(desktop)]
 mod kept;
 #[cfg(desktop)]
-mod keyboard;
-#[cfg(desktop)]
 mod launch;
 #[cfg(desktop)]
 mod lifecycle;
@@ -24,14 +20,6 @@ mod lifecycle;
 pub mod old_engine;
 #[cfg(desktop)]
 pub mod old_home;
-#[cfg(desktop)]
-mod page_carry;
-#[cfg(desktop)]
-mod page_scheme;
-#[cfg(desktop)]
-mod page_style;
-#[cfg(desktop)]
-mod pinch;
 #[cfg(desktop)]
 mod quick_add;
 #[cfg(test)]
@@ -44,36 +32,6 @@ mod siri;
 #[cfg(desktop)]
 mod spelling;
 mod uris;
-#[cfg(desktop)]
-mod web_certificate;
-#[cfg(desktop)]
-mod web_clear;
-#[cfg(desktop)]
-mod web_cookies;
-#[cfg(desktop)]
-mod web_find;
-#[cfg(desktop)]
-mod web_handed;
-#[cfg(desktop)]
-mod web_keys;
-#[cfg(desktop)]
-mod web_opens;
-#[cfg(desktop)]
-mod web_page;
-#[cfg(desktop)]
-mod web_pass;
-#[cfg(desktop)]
-mod web_pause;
-#[cfg(desktop)]
-mod web_state;
-#[cfg(desktop)]
-mod web_swipe;
-#[cfg(desktop)]
-mod web_tabs;
-#[cfg(desktop)]
-mod web_tint;
-#[cfg(desktop)]
-mod web_worlds;
 #[cfg(desktop)]
 mod window_drag;
 
@@ -252,7 +210,7 @@ macro_rules! desktop_commands {
             orden_web::page_scale::page_scale_seen,
             orden_web::page_scale::interface_zoom_chosen,
             orden_web::page_scale::interface_zoom_choose,
-            page_scheme::page_scheme_seen,
+            orden_web::page_scheme::page_scheme_seen,
             spelling::spell_languages,
             orden_system::fonts::font_families,
             window_drag::window_frame,
@@ -267,7 +225,7 @@ macro_rules! desktop_commands {
             orden_browsers::browser_data::read_browser_history,
             orden_browsers::browser_data::read_browser_icons,
             orden_browsers::safari::read_safari,
-            page_style::wear_page_styles,
+            orden_web::page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
             orden_documents::dropped_paths::dropped_paths,
@@ -352,7 +310,7 @@ macro_rules! desktop_commands {
             shortcuts::shortcuts_added,
             shortcuts::shortcuts_added_taken,
             shortcuts::shortcuts_left_inbox,
-            web_tabs::web_open,
+            orden_web::web_tabs::web_open,
             extensions::extensions_list,
             extensions::extensions_install,
             extensions::extensions_set,
@@ -363,37 +321,37 @@ macro_rules! desktop_commands {
             extensions::popup::extension_popup_open,
             extensions::popup::extension_popup_place,
             extensions::popup::extension_popup_close,
-            web_tabs::web_place,
-            keyboard::keyboard_watch,
-            keyboard::keyboard_pressed,
-            keyboard::keyboard_here,
-            keyboard::keyboard_went,
-            keyboard::keyboard_back,
-            web_keys::web_keys_take,
-            web_tabs::web_navigate,
-            web_tabs::web_step,
-            web_tabs::web_trail,
-            web_tabs::web_clip,
-            web_pass::web_pass_fill,
-            web_tabs::web_close,
-            web_tabs::web_look,
-            web_tabs::web_scroll,
-            web_tabs::web_zoom,
-            web_tabs::web_print,
-            web_tabs::web_devtools,
-            page_carry::page_carry,
-            page_carry::page_carry_end,
-            page_carry::page_carry_over,
-            web_certificate::web_certificate,
-            web_page::web_mute,
-            web_page::web_unfill,
-            web_pause::web_pause,
-            web_find::web_find,
-            web_find::web_find_stop,
-            web_tabs::web_shot,
-            web_tint::web_tint,
-            web_clear::web_clear,
-            web_tabs::web_answer,
+            orden_web::web_tabs::web_place,
+            orden_web::keyboard::keyboard_watch,
+            orden_web::keyboard::keyboard_pressed,
+            orden_web::keyboard::keyboard_here,
+            orden_web::keyboard::keyboard_went,
+            orden_web::keyboard::keyboard_back,
+            orden_web::web_keys::web_keys_take,
+            orden_web::web_tabs::web_navigate,
+            orden_web::web_tabs::web_step,
+            orden_web::web_tabs::web_trail,
+            orden_web::web_tabs::web_clip,
+            orden_web::web_pass::web_pass_fill,
+            orden_web::web_tabs::web_close,
+            orden_web::web_tabs::web_look,
+            orden_web::web_tabs::web_scroll,
+            orden_web::web_tabs::web_zoom,
+            orden_web::web_tabs::web_print,
+            orden_web::web_tabs::web_devtools,
+            orden_web::page_carry::page_carry,
+            orden_web::page_carry::page_carry_end,
+            orden_web::page_carry::page_carry_over,
+            orden_web::web_certificate::web_certificate,
+            orden_web::web_page::web_mute,
+            orden_web::web_page::web_unfill,
+            orden_web::web_pause::web_pause,
+            orden_web::web_find::web_find,
+            orden_web::web_find::web_find_stop,
+            orden_web::web_tabs::web_shot,
+            orden_web::web_tint::web_tint,
+            orden_web::web_clear::web_clear,
+            orden_web::web_tabs::web_answer,
             orden_web::web_dialogs::web_dialog_answer,
             orden_dictation::dictation::dictation_local,
             orden_dictation::dictation::dictation_local_fetch,
@@ -420,12 +378,12 @@ macro_rules! desktop_commands {
             orden_explorer::explorer::jobs::explorer_search,
             orden_explorer::explorer::watch::explorer_watch,
             orden_explorer::explorer::watch::explorer_unwatch,
-            downloads::web_downloads,
-            downloads::web_download_open,
-            downloads::web_download_saved,
-            downloads::web_download_cancel,
-            web_state::web_merge,
-            web_state::web_copy,
+            orden_web::downloads::web_downloads,
+            orden_web::downloads::web_download_open,
+            orden_web::downloads::web_download_saved,
+            orden_web::downloads::web_download_cancel,
+            orden_web::web_state::web_merge,
+            orden_web::web_state::web_copy,
             orden_system::presence::input_idle,
             orden_system::presence::device_name,
             orden_system::time_sense::time_sense,
@@ -535,7 +493,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.manage(orden_agents::endpoint::Waiting::default());
 
     #[cfg(desktop)]
-    let builder = orden_placement::placement::managed(web_tabs::managed(builder));
+    let builder = orden_placement::placement::managed(orden_web::web_tabs::managed(builder));
 
     #[cfg(desktop)]
     let builder = orden_pty::terminal::managed(builder);
@@ -600,7 +558,7 @@ fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
         use tauri::webview::WebContentProcessTerminationReason as Reason;
         if !matches!(ended.reason, Reason::Normal) {
             orden_crashes::crashes::page_ended(view.label());
-            web_page::ended(view);
+            orden_web::web_page::ended(view);
         }
     });
     builder
@@ -608,7 +566,7 @@ fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
 
 #[cfg(desktop)]
 fn first_window(handle: &tauri::AppHandle) {
-    pinch::first_window(handle);
+    orden_web::pinch::first_window(handle);
     orden_documents::dropped_paths::first_window(handle);
 }
 
@@ -657,8 +615,8 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
 
 #[cfg(desktop)]
 fn hearing(handle: &tauri::AppHandle) {
-    web_tabs::hearing(handle);
-    page_carry::forget_carried(handle);
+    orden_web::web_tabs::hearing(handle);
+    orden_web::page_carry::forget_carried(handle);
     #[cfg(windows)]
     orden_system::touchpad::start(handle);
     #[cfg(windows)]
@@ -700,7 +658,16 @@ fn first_of_all(handle: &tauri::AppHandle) {
         identifier: env!("ORDEN_IDENTIFIER"),
         version: env!("ORDEN_VERSION"),
     });
-    orden_web::host::hand_page_id(engine::page_id);
+    orden_web::engine::hand(orden_web::engine::Engine {
+        page_id: engine::page_id,
+        call: engine::devtools::call,
+        tell: engine::devtools::tell,
+        hear: |view, heard| engine::devtools::hear(view, heard),
+        let_go_of: engine::devtools::let_go_of,
+        mute: engine::mute::mute,
+        wear: engine::scheme::wear,
+        served: engine::certificate::served,
+    });
     orden_agents::hand(orden_agents::Host {
         answer: agents::answer,
         lent: orden_ai::ai_agent::lent,
@@ -822,7 +789,7 @@ fn ready(
     watched(handle);
     #[cfg(desktop)]
     if web_first {
-        web_tabs::warm(handle);
+        orden_web::web_tabs::warm(handle);
     }
     trace::write(handle);
 
@@ -996,13 +963,13 @@ mod tests {
         "orden_placement::placement::keep",
         "orden_placement::placement::read",
         "crate::extensions::webview2::reconcile",
-        "crate::engine::web_store",
+        "orden_web::engine::web_store",
         "crate::agents::quiet::destination",
     ];
 
     const OPENS_ON_THE_WINDOW_S_THREAD: [&str; 2] = [
         "orden_system::default_browser::platform::make_default::main#0",
-        "crate::downloads::saving::main#0",
+        "orden_web::downloads::saving::main#0",
     ];
 
     const BUILDS: [&str; 2] = ["WebviewWindowBuilder::new(", "WebviewBuilder::new("];

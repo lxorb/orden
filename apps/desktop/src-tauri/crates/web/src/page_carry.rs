@@ -11,24 +11,24 @@ const FOLDER: &str = "carried";
 const KEPT: Duration = Duration::from_secs(24 * 60 * 60);
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct Carried {
-    pub(crate) files: Vec<PathBuf>,
-    pub(crate) text: Option<String>,
-    pub(crate) addresses: Vec<String>,
+pub struct Carried {
+    pub files: Vec<PathBuf>,
+    pub text: Option<String>,
+    pub addresses: Vec<String>,
     folder: Option<PathBuf>,
     taken: bool,
 }
 
 static CARRYING: Mutex<Option<Carried>> = Mutex::new(None);
 
-pub(crate) fn carrying() -> Option<Carried> {
+pub fn carrying() -> Option<Carried> {
     CARRYING
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .clone()
 }
 
-pub(crate) fn taken() {
+pub fn taken() {
     if let Some(carried) = CARRYING
         .lock()
         .unwrap_or_else(PoisonError::into_inner)

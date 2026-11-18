@@ -179,7 +179,7 @@ fn same_path(one: &Path, other: &Path) -> bool {
         .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
 }
 
-pub(crate) fn clean_name(suggested: &OsStr) -> String {
+pub fn clean_name(suggested: &OsStr) -> String {
     let replaced: String = suggested
         .to_string_lossy()
         .chars()
@@ -259,11 +259,11 @@ fn split_extension(name: &str) -> (&str, &str) {
     (stem, ext)
 }
 
-pub(crate) fn on_disk(path: &Path) -> bool {
+pub fn on_disk(path: &Path) -> bool {
     std::fs::symlink_metadata(path).is_ok()
 }
 
-pub(crate) fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool) -> PathBuf {
+pub fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool) -> PathBuf {
     let first = folder.join(name);
     if !taken(&first) {
         return first;
@@ -276,7 +276,7 @@ pub(crate) fn free_path(folder: &Path, name: &str, taken: impl Fn(&Path) -> bool
         .unwrap_or(first)
 }
 
-pub(crate) fn folder(app: &AppHandle) -> Result<PathBuf, String> {
+pub fn folder(app: &AppHandle) -> Result<PathBuf, String> {
     if let Some(named) = orden_base::paths::folder_named(std::env::var_os(DOWNLOADS_DIR).as_deref())
     {
         return Ok(named);

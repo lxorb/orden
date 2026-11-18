@@ -105,7 +105,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             launch::hand_over(
                 app,
                 launch::Handed::Pages,
-                crate::web_handed::pages_among(&urls),
+                orden_web::web_handed::pages_among(&urls),
             );
             let app = app.clone();
             std::thread::spawn(move || {
@@ -155,9 +155,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => {
             if let Some(window) = app.get_window(&label) {
-                crate::keyboard::no_hidden_menu(&window);
+                orden_web::keyboard::no_hidden_menu(&window);
             }
-            crate::keyboard::window_came_back(app, &label);
+            orden_web::keyboard::window_came_back(app, &label);
         }
 
         RunEvent::WindowEvent {
@@ -339,7 +339,7 @@ pub fn quit_now(app: &AppHandle) {
             }
         };
 
-        crate::web_cookies::kept(&window, ask);
+        orden_web::web_cookies::kept(&window, ask);
     }
 }
 
