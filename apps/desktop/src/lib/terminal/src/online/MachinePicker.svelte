@@ -86,53 +86,25 @@
   }
 </script>
 
+{#snippet control(
+  label: string,
+  value: string,
+  options: { value: string; label: string }[],
+  onchange: (value: string) => void,
+  disabled = false,
+)}
+  <div class="control">
+    <span>{label}</span>
+    <Select {value} {options} {disabled} {label} {onchange} />
+  </div>
+{/snippet}
+
 <div class="picker">
   <div class="controls">
-    <div class="control">
-      <span>Location</span>
-      <Select
-        value={location ?? ''}
-        options={places}
-        disabled={made}
-        label="Location"
-        onchange={(value: string) => {
-          picked = value
-        }}
-      />
-    </div>
-    <div class="control">
-      <span>Sort by</span>
-      <Select
-        value={sort}
-        options={SORTS}
-        label="Sort by"
-        onchange={(value: string) => {
-          sort = value as Sort
-        }}
-      />
-    </div>
-    <div class="control">
-      <span>CPU</span>
-      <Select
-        value={kind}
-        options={KINDS}
-        label="CPU"
-        onchange={(value: string) => {
-          kind = value as Kind
-        }}
-      />
-    </div>
-    <div class="control">
-      <span>Architecture</span>
-      <Select
-        value={arch}
-        options={ARCHES}
-        label="Architecture"
-        onchange={(value: string) => {
-          arch = value as Arch
-        }}
-      />
-    </div>
+    {@render control('Location', location ?? '', places, (value) => (picked = value), made)}
+    {@render control('Sort by', sort, SORTS, (value) => (sort = value as Sort))}
+    {@render control('CPU', kind, KINDS, (value) => (kind = value as Kind))}
+    {@render control('Architecture', arch, ARCHES, (value) => (arch = value as Arch))}
   </div>
   {#if made}
     <p class="hint">A made machine keeps its location. A smaller disk cannot be chosen.</p>

@@ -50,27 +50,13 @@ export function terminalGround(theme: ITheme): string | null {
   return ground
 }
 
-const SIXTEEN = [
-  'black',
-  'red',
-  'green',
-  'yellow',
-  'blue',
-  'magenta',
-  'cyan',
-  'white',
-  'brightBlack',
-  'brightRed',
-  'brightGreen',
-  'brightYellow',
-  'brightBlue',
-  'brightMagenta',
-  'brightCyan',
-  'brightWhite',
-] as const
+const EIGHT = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'] as const
+type Bright = `bright${Capitalize<(typeof EIGHT)[number]>}`
+const brightOf = (name: string) => `bright${name[0]?.toUpperCase() ?? ''}${name.slice(1)}`
 
 const OWN = [
-  ...SIXTEEN,
+  ...EIGHT,
+  ...EIGHT.map((name) => brightOf(name) as Bright),
   'background',
   'foreground',
   'cursor',
@@ -126,7 +112,7 @@ export function terminalPalette(tokens: TerminalTokens): ITheme {
     for (let push = 0.6; ratio(bright, hue) < 1.15 && push > 0; push -= 0.15)
       bright = legible(mixed(hue, strong, push), ground, strong, HUE_FLOOR)
     out[name] = hexOf(hue)
-    out[`bright${name[0]?.toUpperCase() ?? ''}${name.slice(1)}`] = hexOf(bright)
+    out[brightOf(name)] = hexOf(bright)
   }
   out.black = hexOf(tokens.light ? ink : raised)
   out.brightBlack = hexOf(legible(muted, ground, ink, QUIET_FLOOR))

@@ -79,15 +79,12 @@
 
   const running = $derived((sessions.list ?? []).filter((one) => one.alive === true).length)
 
-  const stateWords = $derived(
-    state === 'awake'
-      ? 'Awake'
-      : state === 'starting'
-        ? 'Starting'
-        : state === 'stopping'
-          ? 'Stopping'
-          : 'Asleep',
-  )
+  const STATES: Record<string, string> = {
+    awake: 'Awake',
+    starting: 'Starting',
+    stopping: 'Stopping',
+  }
+  const stateWords = $derived(STATES[state ?? ''] ?? 'Asleep')
 
   const hours = (seconds: number) =>
     localNumber(Math.round(seconds / (seconds < 36_000 ? 360 : 3600)) / (seconds < 36_000 ? 10 : 1))
@@ -96,52 +93,31 @@
 
   const disk = $derived(known?.machine?.disk ?? null)
 
+  const meter = (label: string, share: number, words: string, near = false) => ({
+    label,
+    share,
+    near,
+    words,
+  })
+  const time = (used: number, limit: number) => `${hours(used)} / ${hours(limit)} h`
+  const room = (used: number, limit: number) => `${bytes(used)} / ${bytes(limit)}`
+
   const diskMeter = $derived(
-    disk
-      ? [
-          {
-            label: 'Disk',
-            share: diskShare(disk),
-            near: diskNear(disk),
-            words: `${bytes(disk.used)} / ${bytes(disk.total)}`,
-          },
-        ]
-      : [],
+    disk ? [meter('Disk', diskShare(disk), room(disk.used, disk.total), diskNear(disk))] : [],
   )
 
-  const meters = $derived(
-    server
-      ? diskMeter
-      : known && share
-        ? [
-            {
-              label: 'Hours',
-              share: share.awakeS,
-              near: machine.near,
-              words: `${hours(known.used.awakeS)} / ${hours(known.limit.awakeS)} h`,
-            },
-            {
-              label: 'CPU',
-              share: share.cpuS,
-              near: false,
-              words: `${hours(known.used.cpuS)} / ${hours(known.limit.cpuS)} h`,
-            },
-            {
-              label: 'Home',
-              share: share.homeBytes,
-              near: false,
-              words: `${bytes(known.used.homeBytes)} / ${bytes(known.limit.homeBytes)}`,
-            },
-            {
-              label: 'Web',
-              share: share.egressBytes,
-              near: false,
-              words: `${bytes(known.used.egressBytes)} / ${bytes(known.limit.egressBytes)}`,
-            },
-            ...diskMeter,
-          ]
-        : [],
-  )
+  const meters = $derived.by(() => {
+    if (server) return diskMeter
+    if (!known || !share) return []
+    const { used, limit } = known
+    return [
+      meter('Hours', share.awakeS, time(used.awakeS, limit.awakeS), machine.near),
+      meter('CPU', share.cpuS, time(used.cpuS, limit.cpuS)),
+      meter('Home', share.homeBytes, room(used.homeBytes, limit.homeBytes)),
+      meter('Web', share.egressBytes, room(used.egressBytes, limit.egressBytes)),
+      ...diskMeter,
+    ]
+  })
 
   const refusal = $derived(
     machine.known?.allowed === false
