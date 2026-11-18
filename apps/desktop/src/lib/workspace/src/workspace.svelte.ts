@@ -45,7 +45,8 @@ import {
   relativeTo,
   samePath,
   sameSpelling,
-  within, spaceHolding,
+  within,
+  spaceHolding,
   withinSpace,
   AGENTS_NAME,
   isAgentsName,
@@ -3949,12 +3950,6 @@ class Workspace {
     this.unfill()
     if (this.openOn(this.sideOf(next)) === next) return
 
-    this.sides = panels.showing(this.sides, next)
-  }
-
-  togglePanel(next: Panel) {
-    if (!this.offers(next)) return
-    if (this.unfill() && this.openOn(this.sideOf(next)) === next) return
     this.sides = panels.showing(this.sides, next)
   }
 

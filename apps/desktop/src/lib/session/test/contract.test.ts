@@ -1,18 +1,5 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import {
-  ClosedTabs,
-  type Draft,
-  loadSessionsLeft,
-  loadSlots,
-  loadUnwritten,
-  panels,
-  readDraft,
-  readSession,
-} from '../src/api'
-
-const SRC = join(import.meta.dirname, '../src')
+import { ClosedTabs, type Draft, panels, readDraft, readSession } from '../src/api'
 
 const draft = (path: string | null, dirty = false): Draft => ({
   kind: 'note',
@@ -22,32 +9,6 @@ const draft = (path: string | null, dirty = false): Draft => ({
   dirty,
   cursor: 0,
   scroll: 0,
-})
-
-describe('the module stands on its own', () => {
-  test('reaches no app module but the ones it declares', () => {
-    const reached = readdirSync(SRC)
-      .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
-      .flatMap((name) =>
-        [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
-          (found) => found[1],
-        ),
-      )
-    expect([...new Set(reached)].sort()).toEqual([
-      '../../collab/src/api',
-      '../../documents/src/api',
-      '../../file-ops/src/api',
-      '../../panes/src/api',
-      '../../platform/src/api',
-      '../../tab-kinds/src/api',
-    ])
-  })
-
-  test('keeps the window slot, what other windows left and unwritten words behind doors', async () => {
-    expect(typeof (await loadSlots()).takeSlot).toBe('function')
-    expect(typeof (await loadSessionsLeft()).takeSessionsLeft).toBe('function')
-    expect(typeof (await loadUnwritten()).cameBack).toBe('function')
-  })
 })
 
 describe('a session written down', () => {

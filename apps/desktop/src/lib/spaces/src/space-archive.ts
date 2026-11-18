@@ -6,7 +6,7 @@ const OWED_KEY = 'orden:archived-spaces-owed'
 
 let heard: readonly string[] | null = null
 
-export function canArchive(space: Space): boolean {
+function canArchive(space: Space): boolean {
   const shown = workspace.shownSpaces
   return shown.length > 1 && shown.some((one) => one.id === space.id)
 }

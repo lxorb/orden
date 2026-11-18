@@ -3,7 +3,6 @@ export type { Panel, PanelSide, PhoneTab, Sides } from './panels'
 export {
   arrangementIn,
   arrivingWith,
-  type ClosedTab,
   type Draft,
   frameDraft,
   frameOf,

@@ -65,8 +65,7 @@ class FileClipboard {
   }
 
   async paste(into: string) {
-    const inSpace = (one: string) =>
-      spaceHolding(workspace.spaces, one) !== null
+    const inSpace = (one: string) => spaceHolding(workspace.spaces, one) !== null
     const outside = this.paths.filter((one) => !inSpace(one))
     const explorer = portOf('explorer.carry')
     if (outside.length && explorer.ok) {

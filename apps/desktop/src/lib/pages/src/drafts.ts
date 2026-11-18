@@ -21,8 +21,7 @@ export interface Drafts {
   openUnsaved(kind: 'pages', text: string, name: string): Tab
 }
 
-const inSomeSpace = (ws: Drafts) => (path: string) =>
-  spaceHolding(ws.spaces, path) !== null
+const inSomeSpace = (ws: Drafts) => (path: string) => spaceHolding(ws.spaces, path) !== null
 
 const draftOf = (ws: Drafts, from: string) =>
   ws.tabs.find((tab) => {

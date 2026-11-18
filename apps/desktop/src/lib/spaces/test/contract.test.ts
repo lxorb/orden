@@ -1,34 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { providePort } from '@orden/contracts'
-import {
-  loadSpaceMenu,
-  loadSpacePicker,
-  publishSpace,
-  SpaceBadge,
-  soundMark,
-  spaceMenu,
-  spaceSound,
-  toggleSpacePicker,
-} from '../src/api'
+import { publishSpace, spaceMenu } from '../src/api'
 
 const SPACE = { id: 's', name: 'Notes', root: '/s' }
 
 describe('the spaces', () => {
-  test('draw their menu, their picker, their badge and their sound behind doors', () => {
-    for (const one of [
-      loadSpaceMenu,
-      loadSpacePicker,
-      soundMark,
-      spaceSound.ask,
-      toggleSpacePicker,
-    ]) {
-      expect(typeof one).toBe('function')
-    }
-    expect(typeof SpaceBadge).toBe('function')
-  })
-
-  test('offer a menu for a space', () => {
-    expect(spaceMenu(SPACE).length).toBeGreaterThan(0)
+  test('offer to rename and delete a space of one’s own', () => {
+    const labels = spaceMenu(SPACE).flatMap((one) => (one && 'label' in one ? [one.label] : []))
+    expect(labels).toContain('Rename')
+    expect(labels).toContain('Delete space')
+    expect(labels).not.toContain('Leave space')
   })
 
   test('publish a space through the publishing port, and do nothing without one', async () => {

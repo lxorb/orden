@@ -7,7 +7,8 @@ import {
   inTurn,
   insideSpace,
   pathKey,
-  within, spaceHolding,
+  within,
+  spaceHolding,
   invoke,
   joinPath,
 } from '../../platform/src/api'

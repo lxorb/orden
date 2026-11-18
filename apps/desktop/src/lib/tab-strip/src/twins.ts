@@ -11,12 +11,6 @@ export function twins(tabs: readonly Looked[]): Set<string> {
   )
 }
 
-export function initialOf(name: string): string {
-  const marks = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(name)]
-  const letter = marks.find((one) => /^[\p{L}\p{N}]/u.test(one.segment))
-  return (letter ?? marks[0])?.segment.toLocaleUpperCase() ?? ''
-}
-
 export function siteLook(address: string | null | undefined): string | null {
   if (!address) return null
   try {

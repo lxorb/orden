@@ -4,7 +4,6 @@ import { describe, expect, test, vi } from 'vitest'
 import {
   ARCHIVE_MARK,
   busy,
-  Cross,
   DIVIDER,
   initial,
   isSubmenu,
@@ -12,7 +11,6 @@ import {
   message,
   opensAt,
   parseCombination,
-  prompt,
   rank,
   readIcon,
   sameCombination,
@@ -41,12 +39,6 @@ describe('the module stands on its own', () => {
           .map((spec) => `${name}: ${spec}`)
       })
     expect(reaching).toEqual([])
-  })
-
-  test('the components and the prompt are there to call', () => {
-    expect(typeof Cross).toBe('function')
-    expect(typeof prompt.ask).toBe('function')
-    expect(typeof busy.run).toBe('function')
   })
 })
 

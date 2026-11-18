@@ -188,6 +188,83 @@ function standsAlone(module, test, problems, modules) {
   }
 }
 
+function sourcesOf(dir, found = []) {
+  if (!existsSync(dir)) return found
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (SKIPPED.has(entry.name)) continue
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) sourcesOf(path, found)
+    else if (/\.(?:ts|svelte)$/.test(entry.name) && !entry.name.includes('.test.')) found.push(path)
+  }
+  return found
+}
+
+const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
+
+function reachesOnlyApis(module, root, problems, modules) {
+  if (module.lang !== 'ts') return
+  const src = join(module.absolute, 'src')
+  for (const file of sourcesOf(src)) {
+    for (const specifier of importsOf(readFileSync(file, 'utf8'))) {
+      if (!specifier?.startsWith('.')) continue
+      const target = resolve(dirname(file), specifier.replace(/\?.*$/, ''))
+      if (target === module.absolute || target.startsWith(module.absolute + sep)) continue
+      const other = moduleOf(target, modules)
+      const api = other && join(other.absolute, other.api).replace(/\.ts$/, '')
+      if (api && target.replace(/\.ts$/, '') === api) {
+        if (!module.dependsOn.includes(other.name))
+          problems.push(
+            `${relative(root, file).split(sep).join('/')}: reaches '${other.name}', which ${module.file} does not declare`,
+          )
+        continue
+      }
+      const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one)) ?? target
+      if (module.pending.includes(relative(root, path).split(sep).join('/'))) continue
+      problems.push(
+        `${relative(root, file).split(sep).join('/')}: reaches '${specifier}', past a module api`,
+      )
+    }
+  }
+}
+
+const TYPES_ONLY = /(?:^|\n)\s*(?:import|export)\s+type\s[^;'"]*?from\s*['"][^'"]+['"]/g
+
+const LAZY = /import\(\s*['"](\.[^'"]+)['"]\s*\)/g
+
+function fileAt(target) {
+  return (
+    ENDINGS.map((one) => target + one).find((one) => existsSync(one) && !one.endsWith(sep)) ?? null
+  )
+}
+
+function doorsStayShut(module, root, problems) {
+  if (module.lang !== 'ts') return
+  const api = join(module.absolute, module.api)
+  if (!existsSync(api)) return
+  const text = readFileSync(api, 'utf8')
+  const doors = [...text.matchAll(LAZY)].map((one) => fileAt(resolve(dirname(api), one[1])))
+  if (!doors.length) return
+  const eager = new Set()
+  const queue = [api]
+  while (queue.length) {
+    const file = queue.shift()
+    if (eager.has(file)) continue
+    eager.add(file)
+    const source = readFileSync(file, 'utf8').replace(LAZY, '').replace(TYPES_ONLY, '')
+    for (const specifier of importsOf(source)) {
+      if (!specifier?.startsWith('.')) continue
+      const next = fileAt(resolve(dirname(file), specifier.replace(/\?.*$/, '')))
+      if (next && next.startsWith(module.absolute + sep)) queue.push(next)
+    }
+  }
+  for (const door of doors) {
+    if (door && eager.has(door))
+      problems.push(
+        `${module.dir}/${module.api}: opens ${relative(module.absolute, door).split(sep).join('/')} through a door, but loads it eagerly too`,
+      )
+  }
+}
+
 export function check(root = ROOT) {
   const modules = findModules(root)
   const problems = []
@@ -298,6 +375,8 @@ export function check(root = ROOT) {
       }
     }
     if (module.test) standsAlone(module, module.test, problems, [...byName.values()])
+    reachesOnlyApis(module, root, problems, [...byName.values()])
+    doorsStayShut(module, root, problems)
     for (const path of module.pending) {
       const inside = moduleOf(join(root, path), [...byName.values()])
       if (inside && inside !== module) {

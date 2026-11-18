@@ -5,13 +5,8 @@ import { busy, message } from '../../ui-kit/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
 import { changeOf } from '@orden/scan/search/replace'
 import { sayNotice } from '@orden/contracts'
-import { isMarkdownPath } from '../../platform/src/api'
 import { usage } from '../../accounts/src/api'
 import { workspace } from './workspace.svelte'
-
-export function canHaveCover(path: string | null | undefined): boolean {
-  return !!path && isMarkdownPath(path)
-}
 
 export async function setCover(path: string, src: string | null): Promise<void> {
   workspace.itemMeta.set(path, { [COVER_KEY]: src, [COVER_POSITION_KEY]: null })
