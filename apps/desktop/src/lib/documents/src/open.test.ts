@@ -5,6 +5,14 @@ const { OpenDocuments } = await import('./open')
 type Doc = import('./documents.svelte').NoteDoc
 type DocumentStart = import('./documents.svelte').DocumentStart
 
+const noteStart = (path: string | null, text = '', dirty = false): DocumentStart => ({
+  kind: 'note',
+  path,
+  name: path?.split('/').pop() ?? 'Untitled',
+  text,
+  dirty,
+})
+
 function open() {
   const tabs: (typeof Tab)['prototype'][] = []
   const made: string[] = []
@@ -122,13 +130,7 @@ describe('making a document', () => {
 
     release()
     const note = await documents.opening('/s/a.md', opener('/s/a.md'))
-    const again = documents.make({
-      kind: 'note',
-      path: '/s/a.md',
-      name: 'a.md',
-      text: '# and other words',
-      dirty: true,
-    })
+    const again = documents.make(noteStart('/s/a.md', '# and other words', true))
 
     expect(again).toBe(note)
     expect(made).toEqual(['/s/a.md'])
@@ -137,13 +139,7 @@ describe('making a document', () => {
   test('but a document with no file of its own is its own document', () => {
     const { documents, tabs, made } = open()
 
-    const start: DocumentStart = {
-      kind: 'note',
-      path: null,
-      name: 'Untitled',
-      text: '',
-      dirty: false,
-    }
+    const start = noteStart(null)
     const first = documents.make(start)
     tabs.push(new Tab(first, 'p1'))
     const second = documents.make(start)
@@ -158,18 +154,10 @@ describe('an arrangement being read', () => {
     const { documents, made } = open()
 
     await documents.arranging(async () => {
-      const first = documents.make({
-        kind: 'note',
-        path: '/s/a.md',
-        name: 'a.md',
-        text: '# a',
-        dirty: false,
-      })
+      const first = documents.make(noteStart('/s/a.md', '# a'))
 
       expect(documents.at('/s/a.md')).toBe(first)
-      expect(
-        documents.make({ kind: 'note', path: '/s/a.md', name: 'a.md', text: '', dirty: false }),
-      ).toBe(first)
+      expect(documents.make(noteStart('/s/a.md'))).toBe(first)
       await Promise.resolve()
     })
 
@@ -181,13 +169,7 @@ describe('an arrangement being read', () => {
     const { documents, made } = open()
 
     await documents.arranging(async () => {
-      const first = documents.make({
-        kind: 'note',
-        path: '/s/a.md',
-        name: 'a.md',
-        text: '# a',
-        dirty: false,
-      })
+      const first = documents.make(noteStart('/s/a.md', '# a'))
 
       await documents.arranging(() => Promise.resolve())
 
