@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 const SOURCE = readFileSync(join(import.meta.dirname, '../../../../../public/sw.js'), 'utf8')
-
 const ORIGIN = 'https://orden.test'
 
 type Kept = Map<string, Response>

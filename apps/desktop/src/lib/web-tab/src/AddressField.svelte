@@ -32,14 +32,12 @@
   import { onMount, untrack } from 'svelte'
   import { FileMark } from '../../marks/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { Suggest } from '../../matching/src/api'
+  import { Suggest, frecency, pieces } from '../../matching/src/api'
   import { links } from '../../link-index/src/api'
-  import { frecency, pieces } from '../../matching/src/api'
   import { dotCom, type HalfTyped } from '@orden/scan/typed'
-  import { shownAddress } from '@orden/scan/visits'
+  import { shownAddress, type Visit } from '@orden/scan/visits'
   import { visited } from './visited'
   import { leads, noteKey, webNotesFor, webNotesOf, type WebNote } from './web-notes'
-  import type { Visit } from '@orden/scan/visits'
 
   type Offer = { kind: 'page'; visit: Visit } | { kind: 'note'; note: WebNote }
 

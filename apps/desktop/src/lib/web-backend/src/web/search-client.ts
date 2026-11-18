@@ -4,7 +4,6 @@ import type { Warmth } from '@orden/scan/search/warmth'
 import type { Query } from '@orden/scan/search/query'
 
 const STALLED = 3000
-
 let worker: Worker | null = null
 
 interface Waiting {
@@ -16,17 +15,13 @@ interface Waiting {
 }
 
 const waiting = new Map<number, Waiting>()
-
 let asked = 0
 
 let told: ((warmth: Warmth) => void) | null = null
 
 let warmed: string | null = null
-
 let heard = 0
-
 let at: { id: number; relative: string } | null = null
-
 let watching: ReturnType<typeof setInterval> | null = null
 
 export function warmSpace(root: string, heard: (warmth: Warmth) => void): void {

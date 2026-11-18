@@ -880,9 +880,7 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     for (const name of odd) disk.files.set(`/spaces/Notes/${name}`, name)
     const { ws } = workspace('/spaces/Notes')
     expect(await convertSpace(ws, 's0')).toBe(true)
-    for (const name of odd) {
-      expect(await read(`/spaces/.orden/Notes/Notes/${name}`)).toBe(name)
-    }
+    for (const name of odd) expect(await read(`/spaces/.orden/Notes/Notes/${name}`)).toBe(name)
 
     disk.dirs.add('/spaces/Twice')
     disk.files.set('/spaces/Twice/plan.md', 'one')

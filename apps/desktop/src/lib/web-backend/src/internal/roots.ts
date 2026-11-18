@@ -8,7 +8,6 @@ export interface Mounted {
 }
 
 const mounted = new Map<string, Mounted>()
-
 const spelled = (path: string) => path.replace(/\\/g, '/').replace(/\/+$/, '')
 
 export function mountRoot(one: Mounted): () => void {
@@ -38,30 +37,11 @@ export function mounts(): Mounted[] {
   return [...mounted.values()]
 }
 
-const FILE_COMMANDS = new Set([
-  'read_note',
-  'write_note',
-  'write_bytes',
-  'delete_note',
-  'rename_note',
-  'copy_path',
-  'create_folder',
-  'delete_folder',
-  'remove_empty_folder',
-  'read_tree',
-  'path_exists',
-  'space_tags',
-  'scan_links',
-  'trash_item',
-  'trash_words',
-  'save_asset',
-  'read_highlights',
-  'write_highlights',
-  'read_asset',
-  'read_file',
-  'file_stamp',
-  'file_there',
-])
+const FILE_COMMANDS = new Set(
+  `read_note write_note write_bytes delete_note rename_note copy_path create_folder delete_folder
+  remove_empty_folder read_tree path_exists space_tags scan_links trash_item trash_words save_asset
+  read_highlights write_highlights read_asset read_file file_stamp file_there`.split(/\s+/),
+)
 
 const TRASH_COMMANDS = new Set([
   'list_trash',

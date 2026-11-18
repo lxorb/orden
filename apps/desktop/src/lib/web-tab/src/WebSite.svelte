@@ -1,17 +1,13 @@
 <script lang="ts">
   import Glyph from './Glyph.svelte'
-  import { Facts } from '../../ui-kit/src/api'
+  import { Facts, overlays } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
   import ChevronRight from 'lucide/dist/esm/icons/chevron-right.mjs'
-  import { localDate } from '../../platform/src/api'
+  import { localDate, invoke, dur, fly } from '../../platform/src/api'
   import { shownSite } from './idn'
-  import { invoke } from '../../platform/src/api'
-  import { dur, fly } from '../../platform/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import type { Ask } from './permissions.svelte'
-  import { ASKS, grants } from './permissions.svelte'
+  import { ASKS, grants, type Ask } from './permissions.svelte'
 
   const {
     url,
