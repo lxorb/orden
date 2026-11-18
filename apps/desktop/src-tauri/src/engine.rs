@@ -211,6 +211,33 @@ mod tests {
     }
 
     #[test]
+    fn every_profile_the_engine_opens_stays_open_for_the_app_s_life() {
+        let runtime =
+            crate::app_dir().join("linux/tauri-runtime-cef/src/cef_impl/request_context.rs");
+        let mut open = Vec::new();
+        let mut checked = 0;
+        for path in crate::sources()
+            .into_iter()
+            .map(|(_, path)| path)
+            .chain([runtime])
+        {
+            let text = std::fs::read_to_string(&path).unwrap_or_default();
+            let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+            let made = text.matches("= request_context_create_context(").count()
+                + text.matches("if request_context_create_context(").count();
+            checked += made;
+            if made > 0 && !text.contains("keep_open(") {
+                open.push(path.display().to_string());
+            }
+        }
+        assert!(checked >= 2, "no profile is opened where it was looked for");
+        assert!(
+            open.is_empty(),
+            "a profile that closes with its last page: {open:?}"
+        );
+    }
+
+    #[test]
     fn nothing_pumps_inside_with_webview() {
         let mut inside = Vec::new();
         for (_, path) in crate::sources() {

@@ -8,6 +8,7 @@
 #[cfg(target_os = "macos")]
 mod accessibility;
 mod cef_impl;
+pub use cef_impl::request_context::keep_open;
 mod devtools;
 mod dialog;
 /// The `Last Version` breadcrumb in the root cache path, and what a rollback to an older CEF

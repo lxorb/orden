@@ -247,6 +247,9 @@ wrap_request_context_handler! {
             let Some(page) = self.page.held().take() else {
                 return;
             };
+            if let Some(context) = request_context.as_deref() {
+                tauri_runtime_cef::keep_open(context);
+            }
             let mut client = Agent::new(Arc::clone(&page));
             let made = browser_host_create_browser_sync(
                 Some(&windowless()),

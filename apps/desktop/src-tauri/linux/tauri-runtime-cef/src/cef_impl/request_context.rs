@@ -366,6 +366,7 @@ pub(crate) fn request_context_from_webview_attributes<'a>(
       // underlying profile has finished initializing, which is exactly what this
       // continuation signals.
       if let Some(rc) = rc.as_ref() {
+        keep_open(rc);
         preferences::apply_app_webview_preferences(rc, &profile_preferences);
         preferences::apply_default_content_settings(rc, &content_settings);
         if let Some(proxy_url) = proxy_url.as_ref() {
@@ -396,6 +397,42 @@ pub(crate) fn request_context_from_webview_attributes<'a>(
   }
 
   request_context
+}
+
+static KEPT_OPEN: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+fn first_open(kept: &mut Vec<String>, cache_path: String) -> bool {
+  if cache_path.is_empty() || kept.contains(&cache_path) {
+    return false;
+  }
+  kept.push(cache_path);
+  true
+}
+
+pub fn keep_open(request_context: &RequestContext) {
+  let cache_path = CefString::from(&request_context.cache_path()).to_string();
+  let first = KEPT_OPEN
+    .lock()
+    .map(|mut kept| first_open(&mut kept, cache_path))
+    .unwrap_or(false);
+  if first {
+    std::mem::forget(request_context.clone());
+  }
+}
+
+#[cfg(test)]
+mod kept_open_tests {
+  use super::first_open;
+
+  #[test]
+  fn a_profile_is_kept_open_once_and_an_incognito_one_never() {
+    let mut kept = Vec::new();
+    assert!(first_open(&mut kept, "C:/chromium/store-a".into()));
+    assert!(!first_open(&mut kept, "C:/chromium/store-a".into()));
+    assert!(first_open(&mut kept, "C:/chromium/store-b".into()));
+    assert!(!first_open(&mut kept, String::new()));
+    assert_eq!(kept.len(), 2);
+  }
 }
 
 #[cfg(test)]

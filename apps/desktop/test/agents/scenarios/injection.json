@@ -1,5 +1,4 @@
 {
-  "known": "#2201: on Windows CEF the engine's own work sometimes stops partway through a run, and from then on no agent page is built",
   "proves": "every word a page hands the agent comes back marked as the page's, whichever vector carried the instruction, and which of five vectors reach the agent is reported",
   "steps": [
     {
