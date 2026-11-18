@@ -4195,6 +4195,7 @@ dependencies = [
  "orden-explorer",
  "orden-import",
  "orden-notes",
+ "orden-placement",
  "orden-pty",
  "orden-search",
  "orden-secrets",
@@ -4396,6 +4397,18 @@ dependencies = [
  "serde_json",
  "tauri",
  "tempfile",
+]
+
+[[package]]
+name = "orden-placement"
+version = "0.1.0"
+dependencies = [
+ "orden-base",
+ "orden-web-engine",
+ "serde",
+ "serde_json",
+ "tauri",
+ "windows 0.58.0",
 ]
 
 [[package]]

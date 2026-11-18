@@ -27,8 +27,6 @@ mod engine;
 #[cfg(desktop)]
 mod extensions;
 #[cfg(desktop)]
-mod foreground;
-#[cfg(desktop)]
 mod full_screen;
 #[cfg(desktop)]
 mod ground;
@@ -75,11 +73,11 @@ mod page_style;
 #[cfg(desktop)]
 mod pinch;
 #[cfg(desktop)]
-mod placement;
-#[cfg(desktop)]
 mod quick_add;
 #[cfg(desktop)]
 mod reminders;
+#[cfg(test)]
+mod scans;
 #[cfg(desktop)]
 mod shortcuts;
 #[cfg(desktop)]
@@ -89,8 +87,6 @@ mod siri;
 mod spelling;
 #[cfg(desktop)]
 mod system_update;
-#[cfg(desktop)]
-mod top_edge;
 #[cfg(desktop)]
 mod updates;
 mod uris;
@@ -363,8 +359,8 @@ macro_rules! desktop_commands {
             lifecycle::update_settled,
             document_window::show_document,
             menu_bar::hand_to_keyboard,
-            placement::take_keyboard,
-            placement::raise_window,
+            orden_placement::placement::take_keyboard,
+            orden_placement::placement::raise_window,
             orden_documents::pandoc::has_pandoc,
             orden_documents::pandoc::run_pandoc,
             orden_documents::pandoc::import_document,
@@ -556,9 +552,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     trace::begin();
 
     #[cfg(desktop)]
-    if foreground::hold() {
+    if orden_placement::foreground::hold() {
         eprintln!(
-            "orden: this probe started able to take the foreground; it is locked (see src-tauri/src/foreground.rs)"
+            "orden: this probe started able to take the foreground; it is locked (see src-tauri/crates/placement/src/foreground.rs)"
         );
     }
 
@@ -605,7 +601,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.manage(endpoint::Waiting::default());
 
     #[cfg(desktop)]
-    let builder = placement::managed(web_tabs::managed(builder));
+    let builder = orden_placement::placement::managed(web_tabs::managed(builder));
 
     #[cfg(desktop)]
     let builder = orden_pty::terminal::managed(builder);
@@ -813,19 +809,19 @@ fn ready(
 
     #[cfg(desktop)]
     if let Some(config) = ui {
-        let config = placement::restored(handle, config);
+        let config = orden_placement::placement::restored(handle, config);
         trace::mark("window placement");
         let building = engine::ui_window(app, &config)?;
         let see_through = ground::see_through(handle);
-        if let Some(at) = placement::away() {
-            let window = placement::built_away(building, at)?;
+        if let Some(at) = orden_placement::placement::away() {
+            let window = orden_placement::placement::built_away(building, at)?;
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
             orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
         } else if uris::launched_quietly(handle) {
             let window = building.visible(false).build()?;
-            top_edge::mind(&window.as_ref().window());
+            orden_placement::top_edge::mind(&window.as_ref().window());
             orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
         } else {
             let colour = ground::remembered(handle);
@@ -834,8 +830,8 @@ fn ready(
                 Some(colour) => building.background_color(colour),
                 None => building,
             };
-            let window = placement::settled(building.visible(at_once))?;
-            top_edge::mind(&window.as_ref().window());
+            let window = orden_placement::placement::settled(building.visible(at_once))?;
+            orden_placement::top_edge::mind(&window.as_ref().window());
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
@@ -844,7 +840,7 @@ fn ready(
                 #[cfg(target_os = "macos")]
                 orden_system::lights::hold(&window);
                 window.show()?;
-                placement::raised(&window.as_ref().window());
+                orden_placement::placement::raised(&window.as_ref().window());
             }
         }
         first_window(handle);
@@ -1036,8 +1032,8 @@ mod tests {
 
     const SMALL_ON_THE_WINDOW_S_THREAD: [&str; 6] = [
         "orden_crashes::crashes::exit::ended_well",
-        "crate::placement::keep",
-        "crate::placement::read",
+        "orden_placement::placement::keep",
+        "orden_placement::placement::read",
         "crate::extensions::webview2::reconcile",
         "crate::engine::web_store",
         "crate::agents::quiet::destination",

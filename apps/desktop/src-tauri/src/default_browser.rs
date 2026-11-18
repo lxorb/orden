@@ -49,7 +49,7 @@ pub fn keep_registered(app: &AppHandle) {
 fn ships(app: &AppHandle) -> bool {
     !cfg!(debug_assertions)
         && app.config().identifier == SHIPPED
-        && crate::placement::away().is_none()
+        && orden_placement::placement::away().is_none()
 }
 
 #[cfg_attr(

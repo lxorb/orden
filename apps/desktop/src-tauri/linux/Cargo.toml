@@ -217,6 +217,7 @@ orden-crashes = { path = "crates/crashes" }
 orden-dictation = { path = "crates/dictation" }
 orden-explorer = { path = "crates/explorer" }
 orden-import = { path = "crates/import" }
+orden-placement = { path = "crates/placement" }
 orden-pty = { path = "crates/pty" }
 orden-system = { path = "crates/system" }
 fontdb.workspace = true

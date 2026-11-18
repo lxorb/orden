@@ -45,7 +45,7 @@ fn offered(app: &AppHandle) -> bool {
     test_home().is_some()
         || (!cfg!(debug_assertions)
             && app.config().identifier == SHIPPED
-            && crate::placement::away().is_none()
+            && orden_placement::placement::away().is_none()
             && !crate::app_place::app_stuck())
 }
 

@@ -548,7 +548,7 @@ pub async fn web_open(
 
     let starting = (app.clone(), tab.clone());
     let builder = WebviewBuilder::new(label, WebviewUrl::External(built_on))
-        .focused(crate::placement::away().is_none())
+        .focused(orden_placement::placement::away().is_none())
         .on_navigation(move |to| {
             let going = tab_may_open(to);
             if going {

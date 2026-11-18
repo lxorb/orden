@@ -130,7 +130,7 @@ pub async fn extension_popup_open(
     let store = crate::web_stores::named(store.as_deref())?.map(str::to_owned);
 
     let builder = WebviewBuilder::new(label.clone(), WebviewUrl::External(blank()?))
-        .focused(crate::placement::away().is_none())
+        .focused(orden_placement::placement::away().is_none())
         .disable_drag_drop_handler()
         .on_navigation(crate::web_tabs::tab_may_open);
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?;

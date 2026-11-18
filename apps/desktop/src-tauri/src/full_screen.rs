@@ -37,7 +37,7 @@ pub fn window_is_fullscreen(window: tauri::Window) -> bool {
 }
 
 fn away() -> bool {
-    crate::placement::asked_away()
+    orden_placement::placement::asked_away()
 }
 
 #[cfg(test)]

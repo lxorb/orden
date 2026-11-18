@@ -123,7 +123,7 @@ pub fn closed(page: &str) {
 }
 
 pub fn window_came_back(app: &AppHandle, window: &str) {
-    if crate::placement::away().is_some() {
+    if orden_placement::placement::away().is_some() {
         return;
     }
     let home = homes(|all| all.home(window).map(str::to_string));
@@ -173,7 +173,7 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
         let page = crate::web_tabs::label_of(&tab);
         homes(|all| all.page_took(window.label(), &page));
     }
-    if crate::placement::away().is_some() || !native::in_front(&window) {
+    if orden_placement::placement::away().is_some() || !native::in_front(&window) {
         return false;
     }
     match homes(|all| all.back(window.label(), now())) {

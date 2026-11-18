@@ -207,7 +207,7 @@ fn save(app: &AppHandle, kept: &HashMap<String, Kept>) {
 }
 
 fn may_schedule() -> bool {
-    if crate::placement::away().is_some() {
+    if orden_placement::placement::away().is_some() {
         return std::env::var_os("ORDEN_PROBE_REMINDERS").is_some();
     }
     true
@@ -322,7 +322,7 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
     if act == Act::Open {
         if let Some(window) = crate::agents::shell::host(app) {
             let _ = window.show();
-            crate::placement::raised(&window);
+            orden_placement::placement::raised(&window);
         }
     }
     if let Some(window) = crate::agents::shell::host(app) {

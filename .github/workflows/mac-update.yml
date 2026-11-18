@@ -14,7 +14,7 @@ on:
       - apps/desktop/src-tauri/src/app_place.rs
       - scripts/mac-move-check.sh
       - scripts/mac-window-check.sh
-      - apps/desktop/src-tauri/src/placement.rs
+      - apps/desktop/src-tauri/crates/placement/**
 
 concurrency:
   group: mac-update-${{ github.ref }}

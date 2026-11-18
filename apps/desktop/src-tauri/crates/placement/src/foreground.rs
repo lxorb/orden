@@ -334,7 +334,7 @@ mod tests {
 
     #[test]
     fn the_app_holds_itself_back_before_it_makes_anything() {
-        let lib = include_str!("lib.rs");
+        let lib = include_str!("../../../src/lib.rs");
         let start = lib.find("pub fn run_on(").expect("run_on");
         let held = lib[start..]
             .find("foreground::hold()")

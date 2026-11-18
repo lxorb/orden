@@ -1,0 +1,6 @@
+{
+  "name": "placement",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base", "web-engine"]
+}
