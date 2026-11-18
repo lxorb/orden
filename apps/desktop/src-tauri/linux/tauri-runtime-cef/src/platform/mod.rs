@@ -19,6 +19,8 @@ pub mod linux;
 
 #[cfg(windows)]
 pub(crate) use windows::put_out_of_sight;
+#[cfg(windows)]
+pub(crate) use windows::key_pressed;
 
 #[cfg(target_os = "macos")]
 pub(crate) use macos::put_out_of_sight;
