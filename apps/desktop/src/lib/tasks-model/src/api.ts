@@ -1,6 +1,5 @@
 export {
   cleanLabel,
-  isDay,
   isPriority,
   LIMITS,
   PRIORITIES,
@@ -21,7 +20,6 @@ export {
   groupedByLabel,
   isSort,
   labelsOf,
-  nextOrder,
   placedBetween,
   shownTodos,
   type Sort,
@@ -32,4 +30,4 @@ export { isTodoSpace, todoSpaceOf, type TodoSpace } from './space'
 export { TodoStore, type StoreWorld, type Opening } from './store.svelte'
 export { MemoryTodoDisk, MemoryTodoServer, type TodoDisk, type TodoServer } from './records'
 export { startTodos, todos } from './start.svelte'
-export { addTask, listed, priorityOf, tickTask } from './actions'
+export { addEntry, addTask, listed, priorityOf, tickTask } from './actions'
