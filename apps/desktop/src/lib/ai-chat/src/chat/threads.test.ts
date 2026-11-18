@@ -196,6 +196,8 @@ describe('a thread kept', () => {
 })
 
 describe('a file read back', () => {
+  const kept = { id: 't', space: 's', provider: 'openai', model: 'gpt-5.5', turns: [] }
+
   test('that is not a thread is no thread', () => {
     expect(threadIn(null)).toBeNull()
     expect(threadIn({ id: 'x' })).toBeNull()
@@ -203,40 +205,19 @@ describe('a file read back', () => {
   })
 
   test('written in Ask, which Approve replaced, reads as Approve, and keeps its Always', () => {
-    const read = threadIn({
-      id: 't',
-      space: 's',
-      provider: 'openai',
-      model: 'gpt-5.5',
-      mode: 'ask',
-      always: ['edit_note', 3],
-      turns: [],
-    })
+    const read = threadIn({ ...kept, mode: 'ask', always: ['edit_note', 3] })
     expect(read).toMatchObject({ mode: 'approve', always: ['edit_note'] })
   })
 
   test('keeps the tools a task done with AI was not given, after a restart too', () => {
-    const read = threadIn({
-      id: 't',
-      space: 's',
-      provider: 'openai',
-      model: 'gpt-5.5',
-      mode: 'auto',
-      without: ['browser_open', 7, 'write_note'],
-      turns: [],
-    })
+    const read = threadIn({ ...kept, mode: 'auto', without: ['browser_open', 7, 'write_note'] })
     expect(read?.without).toEqual(['browser_open', 'write_note'])
-    expect(
-      threadIn({ id: 't', space: 's', provider: 'openai', model: 'm', turns: [] }),
-    ).not.toHaveProperty('without')
+    expect(threadIn(kept)).not.toHaveProperty('without')
   })
 
   test('keeps what it can read and leaves out what it cannot', () => {
     const read = threadIn({
-      id: 't',
-      space: 's',
-      provider: 'openai',
-      model: 'gpt-5.5',
+      ...kept,
       effort: 'ludicrous',
       mode: 'yolo',
       turns: [

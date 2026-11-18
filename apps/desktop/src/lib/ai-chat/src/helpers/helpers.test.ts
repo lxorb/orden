@@ -4,6 +4,8 @@ import type { Ended } from '../commands/types'
 import type { Provider } from '../../../ai-providers/src/providers'
 
 const { helpers, DEPTH, MINUTES, PER_ROOT } = await import('./helpers.svelte')
+const { newThread } = await import('../chat/threads')
+
 type Roads = Parameters<typeof helpers.start>[1]
 
 const model = (id: string): ModelInfo => ({
@@ -43,15 +45,8 @@ function roads() {
 }
 
 const parent = (id: string, provider = CLAUDE.id): Thread => ({
+  ...newThread('Notes', provider, 'opus', 'auto', 'full'),
   id,
-  space: 'Notes',
-  title: '',
-  provider,
-  model: 'opus',
-  effort: 'auto',
-  mode: 'full',
-  turns: [],
-  usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null },
   created: 0,
   updated: 0,
 })
