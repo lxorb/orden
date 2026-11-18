@@ -798,10 +798,10 @@ describe('what is picked, asked by id', () => {
 
 describe('leaving the card being written in', () => {
   test('asks it for its words first', async () => {
-    const { providePort } = await import('@orden/contracts')
+    const { holdEdits } = await import('@orden/contracts')
     const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a')] }))
     const handed: string[] = []
-    const release = providePort('edits.held', { flush: () => handed.push('handed') })
+    const release = holdEdits(() => handed.push('handed'))
     try {
       store.editing = 'a'
       expect(handed).toEqual([])
