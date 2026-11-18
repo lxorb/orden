@@ -121,30 +121,20 @@ pub fn best(declaring: &Declaring) -> Option<String> {
 mod tests {
     use super::{best, Declared, Declaring};
 
-    fn link(rel: &str, href: &str, sizes: &str, kind: &str) -> Declared {
-        Declared {
-            rel: rel.into(),
-            href: href.into(),
-            sizes: sizes.into(),
-            r#type: kind.into(),
-        }
-    }
-
-    fn on(links: Vec<Declared>) -> Option<String> {
+    fn on(links: &[(&str, &str, &str, &str)]) -> Option<String> {
+        let links = links
+            .iter()
+            .map(|&(rel, href, sizes, kind)| Declared {
+                rel: rel.into(),
+                href: href.into(),
+                sizes: sizes.into(),
+                r#type: kind.into(),
+            })
+            .collect();
         best(&Declaring {
             page: "https://a.example/deep/page?x=1".into(),
             links,
         })
-    }
-
-    #[test]
-    fn a_page_that_declares_nothing_wears_its_site_s_favicon_ico() {
-        assert_eq!(on(vec![]).as_deref(), Some("https://a.example/favicon.ico"));
-        let stylesheet = link("stylesheet", "https://a.example/s.css", "", "");
-        assert_eq!(
-            on(vec![stylesheet]).as_deref(),
-            Some("https://a.example/favicon.ico")
-        );
     }
 
     #[test]
@@ -157,83 +147,72 @@ mod tests {
     }
 
     #[test]
-    fn the_smallest_picture_that_fills_the_box_wins() {
-        let links = vec![
-            link("icon", "https://a.example/16.png", "16x16", ""),
-            link("icon", "https://a.example/192.png", "192x192", ""),
-            link("icon", "https://a.example/48.png", "48x48", ""),
-            link("icon", "https://a.example/32.png", "32x32", ""),
-        ];
-        assert_eq!(on(links).as_deref(), Some("https://a.example/32.png"));
-    }
-
-    #[test]
-    fn a_drawing_that_scales_beats_every_picture() {
-        let links = vec![
-            link("icon", "https://a.example/32.png", "32x32", ""),
-            link("icon", "https://a.example/mark.svg?v=2", "", ""),
-        ];
-        assert_eq!(on(links).as_deref(), Some("https://a.example/mark.svg?v=2"));
-
-        let typed = vec![
-            link("icon", "https://a.example/mark", "", "image/svg+xml"),
-            link("icon", "https://a.example/32.png", "32x32", ""),
-        ];
-        assert_eq!(on(typed).as_deref(), Some("https://a.example/mark"));
-    }
-
-    #[test]
-    fn an_unsized_icon_beats_one_too_small_for_the_box() {
-        let links = vec![
-            link("shortcut icon", "https://a.example/favicon.ico", "", ""),
-            link("icon", "https://a.example/16.png", "16x16", ""),
-        ];
-        assert_eq!(on(links).as_deref(), Some("https://a.example/favicon.ico"));
-    }
-
-    #[test]
-    fn of_two_as_good_the_one_declared_last_wins() {
-        let links = vec![
-            link("shortcut icon", "https://static.example/a.webp", "", ""),
-            link(
-                "apple-touch-icon",
-                "https://static.example/192.webp",
-                "192x192",
-                "",
-            ),
-            link("icon", "https://a.example/favicon/1x/", "", ""),
-        ];
-        assert_eq!(on(links).as_deref(), Some("https://a.example/favicon/1x/"));
-    }
-
-    #[test]
-    fn apple_s_picture_only_where_there_is_nothing_else() {
-        let only = vec![link(
+    fn the_best_picture_scales_or_fills_the_box_smallest_and_last_and_apple_s_only_alone() {
+        let ico = "https://a.example/favicon.ico";
+        let touch = (
             "apple-touch-icon",
             "https://a.example/touch.png",
             "180x180",
             "",
-        )];
-        assert_eq!(on(only).as_deref(), Some("https://a.example/touch.png"));
-
-        let both = vec![
-            link(
-                "apple-touch-icon",
-                "https://a.example/touch.png",
-                "180x180",
-                "",
+        );
+        for (links, wears) in [
+            (&[][..], ico),
+            (&[("stylesheet", "https://a.example/s.css", "", "")], ico),
+            (
+                &[
+                    ("icon", "https://a.example/16.png", "16x16", ""),
+                    ("icon", "https://a.example/192.png", "192x192", ""),
+                    ("icon", "https://a.example/48.png", "48x48", ""),
+                    ("icon", "https://a.example/32.png", "32x32", ""),
+                ],
+                "https://a.example/32.png",
             ),
-            link("icon", "https://a.example/16.png", "16x16", ""),
-        ];
-        assert_eq!(on(both).as_deref(), Some("https://a.example/16.png"));
-    }
-
-    #[test]
-    fn a_mark_written_into_the_page_counts_and_other_schemes_do_not() {
-        let inline = vec![link("icon", "data:image/png;base64,AAAA", "", "")];
-        assert_eq!(on(inline).as_deref(), Some("data:image/png;base64,AAAA"));
-
-        let local = vec![link("icon", "blob:https://a.example/1", "", "")];
-        assert_eq!(on(local).as_deref(), Some("https://a.example/favicon.ico"));
+            (
+                &[
+                    ("icon", "https://a.example/32.png", "32x32", ""),
+                    ("icon", "https://a.example/mark.svg?v=2", "", ""),
+                ],
+                "https://a.example/mark.svg?v=2",
+            ),
+            (
+                &[
+                    ("icon", "https://a.example/mark", "", "image/svg+xml"),
+                    ("icon", "https://a.example/32.png", "32x32", ""),
+                ],
+                "https://a.example/mark",
+            ),
+            (
+                &[
+                    ("shortcut icon", ico, "", ""),
+                    ("icon", "https://a.example/16.png", "16x16", ""),
+                ],
+                ico,
+            ),
+            (
+                &[
+                    ("shortcut icon", "https://static.example/a.webp", "", ""),
+                    (
+                        "apple-touch-icon",
+                        "https://static.example/192.webp",
+                        "192x192",
+                        "",
+                    ),
+                    ("icon", "https://a.example/favicon/1x/", "", ""),
+                ],
+                "https://a.example/favicon/1x/",
+            ),
+            (&[touch], "https://a.example/touch.png"),
+            (
+                &[touch, ("icon", "https://a.example/16.png", "16x16", "")],
+                "https://a.example/16.png",
+            ),
+            (
+                &[("icon", "data:image/png;base64,AAAA", "", "")],
+                "data:image/png;base64,AAAA",
+            ),
+            (&[("icon", "blob:https://a.example/1", "", "")], ico),
+        ] {
+            assert_eq!(on(links).as_deref(), Some(wears), "{links:?}");
+        }
     }
 }

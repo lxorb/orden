@@ -884,34 +884,22 @@ mod tests {
         let app = |name: &str, extra: &str| {
             format!("[Desktop Entry]\nType=Application\nName={name}\nExec={name} %f\n{extra}")
         };
-        write(
-            &system,
-            "gimp.desktop",
-            &app("gimp", "Icon=gimp\nName[de]=GIMP-Bildbearbeitung\n"),
-        );
-        write(&system, "kcalc.desktop", &app("kcalc", "OnlyShowIn=KDE;\n"));
-        write(
-            &system,
-            "gedit.desktop",
-            &app("gedit", "NotShowIn=KDE;GNOME;\n"),
-        );
-        write(
-            &system,
-            "files.desktop",
-            &app("files", "OnlyShowIn=X-Cinnamon;GNOME;\n"),
-        );
-        write(&system, "kde/okular.desktop", &app("okular", ""));
-        write(
-            &system,
-            "hidden.desktop",
-            &app("hidden", "NoDisplay=true\n"),
-        );
-        write(&system, "htop.desktop", &app("htop", "Terminal=true\n"));
-        write(
-            &system,
-            "gone.desktop",
-            &app("gone", "TryExec=/no/such/program\n"),
-        );
+        for (file, name, extra) in [
+            (
+                "gimp.desktop",
+                "gimp",
+                "Icon=gimp\nName[de]=GIMP-Bildbearbeitung\n",
+            ),
+            ("kcalc.desktop", "kcalc", "OnlyShowIn=KDE;\n"),
+            ("gedit.desktop", "gedit", "NotShowIn=KDE;GNOME;\n"),
+            ("files.desktop", "files", "OnlyShowIn=X-Cinnamon;GNOME;\n"),
+            ("kde/okular.desktop", "okular", ""),
+            ("hidden.desktop", "hidden", "NoDisplay=true\n"),
+            ("htop.desktop", "htop", "Terminal=true\n"),
+            ("gone.desktop", "gone", "TryExec=/no/such/program\n"),
+        ] {
+            write(&system, file, &app(name, extra));
+        }
         write(
             &system,
             "link.desktop",

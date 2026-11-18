@@ -622,29 +622,30 @@ mod tests {
     }
 
     #[test]
-    fn the_script_names_the_window_for_a_press_on_a_link() {
-        assert_eq!(
-            placed("orden-behind", true, NONE, false),
-            Some(Asked::Behind)
-        );
-        assert_eq!(
-            placed("orden-front", true, SHIFT, false),
-            Some(Asked::Front)
-        );
-    }
-
-    #[test]
-    fn the_press_s_own_keys_outrank_the_keyboard_s() {
-        assert_eq!(
-            placed("orden-behind", true, BOTH, false),
-            Some(Asked::Behind)
-        );
-        assert_eq!(
-            placed("orden-behind", true, SHIFT, true),
-            Some(Asked::Behind)
-        );
-        assert_eq!(placed("orden-front", true, NONE, false), Some(Asked::Front));
-        assert_eq!(placed("orden-front", true, CTRL, true), Some(Asked::Front));
+    fn a_window_is_placed_by_its_name_then_by_the_keys_of_a_press_and_the_page_s_menu() {
+        for (name, pressed, held, menu, asked) in [
+            ("orden-behind", true, NONE, false, Some(Asked::Behind)),
+            ("orden-front", true, SHIFT, false, Some(Asked::Front)),
+            ("orden-behind", true, BOTH, false, Some(Asked::Behind)),
+            ("orden-behind", true, SHIFT, true, Some(Asked::Behind)),
+            ("orden-front", true, NONE, false, Some(Asked::Front)),
+            ("orden-front", true, CTRL, true, Some(Asked::Front)),
+            ("", true, CTRL, false, Some(Asked::Behind)),
+            ("", true, BOTH, false, Some(Asked::Front)),
+            ("", true, SHIFT, false, Some(Asked::Front)),
+            ("", true, NONE, true, Some(Asked::Behind)),
+            ("", true, NONE, false, None),
+            ("_blank", true, NONE, false, None),
+            ("", false, CTRL, false, None),
+            ("", false, NONE, true, None),
+            ("orden-behind", false, NONE, false, Some(Asked::Behind)),
+        ] {
+            assert_eq!(
+                placed(name, pressed, held, menu),
+                asked,
+                "{name} {pressed} {menu}"
+            );
+        }
     }
 
     #[test]
@@ -663,47 +664,19 @@ mod tests {
     }
 
     #[test]
-    fn ctrl_leaves_the_tab_behind_and_shift_with_it_goes_there() {
-        assert_eq!(placed("", true, CTRL, false), Some(Asked::Behind));
-        assert_eq!(placed("", true, BOTH, false), Some(Asked::Front));
-    }
-
-    #[test]
-    fn shift_alone_goes_there_since_a_window_would_be_a_second_workspace() {
-        assert_eq!(placed("", true, SHIFT, false), Some(Asked::Front));
-    }
-
-    #[test]
-    fn the_pages_own_menu_leaves_the_tab_behind() {
-        assert_eq!(placed("", true, NONE, true), Some(Asked::Behind));
-    }
-
-    #[test]
-    fn a_plain_press_is_the_pages_own_request() {
-        assert_eq!(placed("", true, NONE, false), None);
-        assert_eq!(placed("_blank", true, NONE, false), None);
-    }
-
-    #[test]
-    fn keys_held_while_a_script_opens_a_window_are_not_about_it() {
-        assert_eq!(placed("", false, CTRL, false), None);
-        assert_eq!(placed("", false, NONE, true), None);
-        assert_eq!(
-            placed("orden-behind", false, NONE, false),
-            Some(Asked::Behind)
-        );
-    }
-
-    #[test]
     fn eight_names_ask_for_orden_s_answer_and_nothing_else_does() {
-        assert_eq!(sought("orden-find"), Some(Passed::Find));
-        assert_eq!(sought("orden-find-next"), Some(Passed::Next));
-        assert_eq!(sought("orden-find-previous"), Some(Passed::Previous));
-        assert_eq!(sought("orden-address"), Some(Passed::Address));
-        assert_eq!(sought("orden-twice-shift"), Some(Passed::ShiftTwice));
-        assert_eq!(sought("orden-twice-ctrl"), Some(Passed::CtrlTwice));
-        assert_eq!(sought("orden-twice-alt"), Some(Passed::AltTwice));
-        assert_eq!(sought("orden-install-extension"), Some(Passed::Install));
+        for (name, passed) in [
+            ("orden-find", Some(Passed::Find)),
+            ("orden-find-next", Some(Passed::Next)),
+            ("orden-find-previous", Some(Passed::Previous)),
+            ("orden-address", Some(Passed::Address)),
+            ("orden-twice-shift", Some(Passed::ShiftTwice)),
+            ("orden-twice-ctrl", Some(Passed::CtrlTwice)),
+            ("orden-twice-alt", Some(Passed::AltTwice)),
+            ("orden-install-extension", Some(Passed::Install)),
+        ] {
+            assert_eq!(sought(name), passed, "{name}");
+        }
         for name in [
             "",
             "_blank",
@@ -867,14 +840,18 @@ mod tests {
             })
             .expect("an ask")
         };
-        assert_eq!(said(Passed::Find)["key"], "find");
-        assert_eq!(said(Passed::Next)["key"], "next");
-        assert_eq!(said(Passed::Previous)["key"], "previous");
-        assert_eq!(said(Passed::Address)["key"], "address");
-        assert_eq!(said(Passed::ShiftTwice)["key"], "shift-shift");
-        assert_eq!(said(Passed::CtrlTwice)["key"], "ctrl-ctrl");
-        assert_eq!(said(Passed::AltTwice)["key"], "alt-alt");
-        assert_eq!(said(Passed::Install)["key"], "install");
+        for (passed, word) in [
+            (Passed::Find, "find"),
+            (Passed::Next, "next"),
+            (Passed::Previous, "previous"),
+            (Passed::Address, "address"),
+            (Passed::ShiftTwice, "shift-shift"),
+            (Passed::CtrlTwice, "ctrl-ctrl"),
+            (Passed::AltTwice, "alt-alt"),
+            (Passed::Install, "install"),
+        ] {
+            assert_eq!(said(passed)["key"], word);
+        }
         assert_eq!(said(Passed::Find)["tab"], "t1");
     }
 }
