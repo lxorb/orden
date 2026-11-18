@@ -20,7 +20,7 @@ use objc2_app_kit::{
   NSApplicationTerminateReply, NSEvent, NSRunningApplication,
 };
 use objc2_application_services::kProcessTransformToForegroundApplication;
-use objc2_foundation::{NSArray, NSObject, NSObjectProtocol, NSString, NSURL};
+use objc2_foundation::{NSArray, NSNumber, NSObject, NSObjectProtocol, NSString, NSURL};
 
 use super::utils;
 
@@ -29,6 +29,12 @@ pub(crate) struct CefWinitApplicationIvars {
   handling_send_event: Cell<Bool>,
   last_dock_show_ms: Cell<u64>,
   delegate: Cell<*const AppDelegate>,
+}
+
+const MANUAL_ACCESSIBILITY: &str = "AXManualAccessibility";
+
+fn turns_accessibility(attribute: &str) -> bool {
+  attribute == MANUAL_ACCESSIBILITY || attribute == "AXEnhancedUserInterface"
 }
 
 pub(crate) enum AppDelegateEvent {
@@ -144,8 +150,9 @@ define_class!(
       value: Option<&AnyObject>,
       attribute: Option<&NSString>,
     ) {
-      if let (Some(value), Some(attribute)) = (value, attribute) &&
-        attribute.to_string() == "AXEnhancedUserInterface"
+      let asked = attribute.map(|one| one.to_string());
+      if let (Some(value), Some(asked)) = (value, asked.as_deref()) &&
+        turns_accessibility(asked)
       {
         let int_value: std::ffi::c_int = unsafe { msg_send![value, intValue] };
         if let Some(delegate) = self.delegate() {
@@ -154,10 +161,33 @@ define_class!(
           });
         }
       }
+      if asked.as_deref() == Some(MANUAL_ACCESSIBILITY) {
+        return;
+      }
 
       let _: () = unsafe {
         msg_send![super(self), accessibilitySetValue: value, forAttribute: attribute]
       };
+    }
+
+    #[unsafe(method(accessibilityIsAttributeSettable:))]
+    unsafe fn accessibility_is_attribute_settable(&self, attribute: Option<&NSString>) -> Bool {
+      if attribute.is_some_and(|one| one.to_string() == MANUAL_ACCESSIBILITY) {
+        return Bool::YES;
+      }
+      unsafe { msg_send![super(self), accessibilityIsAttributeSettable: attribute] }
+    }
+
+    #[unsafe(method(accessibilityAttributeValue:))]
+    unsafe fn accessibility_attribute_value(
+      &self,
+      attribute: Option<&NSString>,
+    ) -> *mut AnyObject {
+      if attribute.is_some_and(|one| one.to_string() == MANUAL_ACCESSIBILITY) {
+        let on = NSNumber::new_bool(crate::accessibility::asked());
+        return Retained::autorelease_return(on).cast();
+      }
+      unsafe { msg_send![super(self), accessibilityAttributeValue: attribute] }
     }
   }
 
@@ -272,4 +302,16 @@ pub(crate) fn set_application_event_handler(
   app.ivars().delegate.set(&*delegate as *const AppDelegate);
   app.setDelegate(Some(ProtocolObject::from_ref(&*delegate)));
   delegate
+}
+
+#[cfg(test)]
+mod tests {
+  use super::{turns_accessibility, MANUAL_ACCESSIBILITY};
+
+  #[test]
+  fn an_assistive_app_turns_the_pages_accessibility_on_either_way() {
+    assert!(turns_accessibility(MANUAL_ACCESSIBILITY));
+    assert!(turns_accessibility("AXEnhancedUserInterface"));
+    assert!(!turns_accessibility("AXFocusedUIElement"));
+  }
 }

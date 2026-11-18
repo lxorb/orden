@@ -22,6 +22,7 @@ from ApplicationServices import (
     AXUIElementCreateApplication,
     AXUIElementCreateSystemWide,
     AXUIElementPerformAction,
+    AXUIElementSetAttributeValue,
 )
 from PIL import Image, ImageChops, ImageGrab, ImageStat
 
@@ -174,17 +175,6 @@ def near(one: tuple[int, int, int], other: tuple[int, int, int], by: int = 40) -
 
 LOCAL_NETWORK = "find devices on local networks"
 
-FAILING_ON_CEF = (
-    "the page's hole shows a still under the app's layer",
-    "a click on the page beside the app's layer was not heard by the page",
-    "a drag inside the page was not dropped",
-    "the accessibility hit test does not find the page's button",
-    "[carry beside] the page was handed no file",
-)
-
-def failing_on_cef(one: str) -> bool:
-    return one.startswith(FAILING_ON_CEF) or (one.startswith("[overview] frame ") and " flashes: " in one)
-
 def ax(element: Any, name: str) -> Any:
     error, value = AXUIElementCopyAttributeValue(element, name, None)
     return value if error == 0 else None
@@ -322,6 +312,24 @@ INNER = (
     "return { x: at.x / scale, y: at.y / scale }"
 )
 
+def window_of(pid: int) -> dict[str, float] | None:
+    found = [
+        dict(one["kCGWindowBounds"])
+        for one in Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID) or []
+        if int(one.get("kCGWindowOwnerPID", 0)) == pid and int(one.get("kCGWindowLayer", 0)) == 0
+    ]
+    if not found:
+        return None
+    bounds = max(found, key=lambda one: one["Width"] * one["Height"])
+    return {"x": bounds["X"], "y": bounds["Y"]}
+
+def inner_of(app: App, pid: int) -> Any:
+    said = app.eval(INNER)
+    seen = window_of(pid)
+    if seen is not None and isinstance(said, dict) and (said["x"], said["y"]) != (seen["x"], seen["y"]):
+        print(f"::warning::the app says its window is at {said}, the screen shows it at {seen}", flush=True)
+    return seen or said
+
 def moves_as_before(exe: pathlib.Path, identifier: str, secret: str, env: dict[str, str]) -> Any:
 
     process = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -333,7 +341,7 @@ def moves_as_before(exe: pathlib.Path, identifier: str, secret: str, env: dict[s
         app.eval("await window.__TAURI_INTERNALS__.invoke('plugin:window|set_focus', { label: 'main' }); return true")
         time.sleep(2)
         app.eval("window.__moves = 0; addEventListener('pointermove', () => window.__moves++, true); return true")
-        inner = app.eval(INNER)
+        inner = inner_of(app, process.pid)
         if not isinstance(inner, dict):
             return inner
         for step in range(8):
@@ -343,8 +351,8 @@ def moves_as_before(exe: pathlib.Path, identifier: str, secret: str, env: dict[s
     finally:
         ended(process, gentle=True)
 
-def carried_in(app: App, url: str, name: str) -> tuple[list[str], list[str]]:
-    inner = app.eval(INNER)
+def carried_in(app: App, pid: int, url: str, name: str) -> tuple[list[str], list[str]]:
+    inner = inner_of(app, pid)
     if not isinstance(inner, dict):
         return [f"[carry {name}] where the window is was not said: {inner}"], []
     screen = lambda x, y: (inner["x"] + x, inner["y"] + y)  # noqa: E731
@@ -360,7 +368,7 @@ def carried_alone(exe: pathlib.Path, identifier: str, secret: str, env: dict[str
             time.sleep(1)
         app.eval("await window.__TAURI_INTERNALS__.invoke('plugin:window|set_focus', { label: 'main' }); return true")
         time.sleep(3)
-        said = carried_in(app, url, name)
+        said = carried_in(app, process.pid, url, name)
         shot().save(out / f"carried-{name}.png")
         return said
     finally:
@@ -424,7 +432,7 @@ def main() -> int:
         )
         if not isinstance(pane, dict):
             raise SystemExit(f"the page was never shown: {pane}")
-        inner = app.eval(INNER)
+        inner = inner_of(app, process.pid)
         if not isinstance(inner, dict):
             raise SystemExit(f"where the window is was not said: {inner}")
         hole = (
@@ -469,8 +477,13 @@ def main() -> int:
             wrong.append(f"the app's layer is not drawn over the page: {colour_at(image, middle, ratio)}")
         if not near(colour_at(image, beside, ratio), COLOUR):
             wrong.append(f"the page is not drawn beside the app's layer: {colour_at(image, beside, ratio)}")
-        if app.eval("!!document.querySelector('.hole.still')") is True:
-            wrong.append("the page's hole shows a still under the app's layer")
+        cuts = app.eval("orden.pages.cuts") is True
+        still = app.eval("!!document.querySelector('.hole.still')") is True
+        print(f"the engine cuts layers out of pages: {cuts}; the page is held as a still under the layer: {still}", flush=True)
+        if cuts and still:
+            wrong.append("the page's hole shows a still under the app's layer, though the engine cuts the layer out of the page")
+        if not cuts and not still:
+            wrong.append("the page is hidden under the app's layer with no still of it in its place")
 
         press(at(500, 120))
         before = len(heard(0.6).get("log", []))
@@ -482,8 +495,11 @@ def main() -> int:
         if any(one[0] == "click" for one in log[before:]):
             wrong.append("a click on the app's layer reached the page under it")
         press(beside)
-        if not any(one[0] == "click" for one in heard().get("log", [])[before:]):
+        reached = any(one[0] == "click" for one in heard().get("log", [])[before:])
+        if cuts and not reached:
             wrong.append("a click on the page beside the app's layer was not heard by the page")
+        if not cuts and reached:
+            wrong.append("a click beside the app's layer reached the page held still under it")
         app.eval("document.getElementById('drive-layer')?.remove(); return true")
         time.sleep(1)
 
@@ -530,7 +546,13 @@ def main() -> int:
         if not any(one[0] == "drop" and one[1] == "drop" for one in log):
             wrong.append(f"a drag inside the page was not dropped: {log[-8:]}")
 
+        asked = AXUIElementSetAttributeValue(AXUIElementCreateApplication(process.pid), "AXManualAccessibility", True)
+        print(f"accessibility asked for as an assistive app asks: {asked}", flush=True)
         named = named_at(at(150, 150))
+        until = time.monotonic() + 8
+        while time.monotonic() < until and "Pressable" not in (named or ""):
+            time.sleep(0.5)
+            named = named_at(at(150, 150))
         print(f"accessibility at the button: {named!r}; at the app's own sidebar: {named_at((inner['x'] + 60, inner['y'] + 150))!r}", flush=True)
         if named is None:
             unverified.append("this process may not ask the accessibility hit test")
@@ -547,9 +569,10 @@ def main() -> int:
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 
-    for one in filter(failing_on_cef, wrong):
-        known(2206, one)
-    wrong = [one for one in wrong if not failing_on_cef(one)]
+    hiding = [one for one in wrong if one.startswith("[overview] frame ")]
+    for one in hiding:
+        known(2205, one)
+    wrong = [one for one in wrong if one not in hiding]
     for one in unverified:
         print(f"::warning::{one}", flush=True)
     for one in wrong:

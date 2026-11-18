@@ -695,6 +695,11 @@ impl<T: UserEvent> WinitCefApp<T> {
       appwindow.background_surface = None;
     }
 
+    #[cfg(target_os = "macos")]
+    if crate::accessibility::asked() {
+      child.host.set_accessibility_state(crate::accessibility::state(true));
+    }
+
     *live_browsers += 1;
     appwindow.children.push(child);
     layout_app_window(appwindow);

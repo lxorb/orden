@@ -5,6 +5,8 @@
 #![allow(clippy::arc_with_non_send_sync)]
 #![allow(clippy::too_many_arguments)]
 
+#[cfg(target_os = "macos")]
+mod accessibility;
 mod cef_impl;
 mod devtools;
 mod dialog;
