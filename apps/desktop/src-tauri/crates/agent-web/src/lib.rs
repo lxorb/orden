@@ -21,7 +21,7 @@ use tauri::AppHandle;
 
 use orden_agents::verbs::{self, Answer, ApprovalState, Code, Verb};
 use orden_agents::{
-    approvals, files, http, limits, logged, pair_client, process, said_waiting, shell, state, stop,
+    approvals, files, http, limits, logged, pair_client, process, said_waiting, shell, stop,
     system, Caller,
 };
 
@@ -47,7 +47,7 @@ pub fn answer(app: &AppHandle, caller: &Caller, session: &str, verb: Verb, args:
 fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {
     tabs::back(caller.id());
     match verb {
-        Verb::Status(_) => status(app, caller),
+        Verb::Status(_) => status(caller),
         Verb::ApprovalStatus(asked) => {
             let found = match caller {
                 Caller::Reader => approvals::any(&asked.id),
@@ -120,17 +120,14 @@ fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     }
 }
 
-fn status(app: &AppHandle, caller: &Caller) -> Answer {
+fn status(caller: &Caller) -> Answer {
     let Caller::Agent(grant) = caller else {
         return Answer::error(
             Code::BadArguments,
             "agent_status is an agent's question: the command line has no grant",
         );
     };
-    let grant = state(app)
-        .grants
-        .by_id(app, &grant.id)
-        .unwrap_or_else(|| grant.as_ref().clone());
+    let grant = grant.as_ref().clone();
     let tabs = tabs::of(&grant.id).iter().map(tabs::Tab::listed).collect();
     Answer::ok(verbs::Status {
         stopped: stop::stopped_for(&grant.id),
@@ -138,4 +135,30 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
         approvals: approvals::pending(Some(&grant.id)),
         grant,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use orden_agents::grants::{Grant, Mode, Scope};
+
+    fn told(grant: Grant) -> Value {
+        let Answer::Ok { result, .. } = status(&Caller::Agent(Box::new(grant))) else {
+            panic!("agent_status did not answer");
+        };
+        result["grant"].clone()
+    }
+
+    #[test]
+    fn an_agent_is_told_the_grant_it_acts_under_not_the_one_kept() {
+        let kept = Grant::third_party("told-codex".into(), "Codex");
+        let full = told(kept.clone().with_full_permissions());
+        assert_eq!(full["mode"], "autonomous");
+        let scopes = full["scopes"].as_array().map_or(0, Vec::len);
+        assert_eq!(scopes, Scope::ALL.len());
+
+        let mut asking = kept;
+        asking.mode = Mode::Confirm;
+        assert_eq!(told(asking)["mode"], "confirm");
+    }
 }

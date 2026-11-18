@@ -1,15 +1,12 @@
 import { type AgentAnswer, agentRefusal as refusal } from '@orden/contracts'
+import { fullPermissions } from '../../automation/src/api'
 import { invoke } from '../../platform/src/api'
 import type { Category } from '../../agent-protocol/src/api'
 import type { Call } from './call'
 import { Refused } from './problem'
 
-function fullPermissions(call: Call): boolean {
-  return call.caller.agent?.mode === 'autonomous'
-}
-
 export function readersOwn(call: Call, why: string): void {
-  if (!fullPermissions(call)) throw new Refused('by_hand', why)
+  if (!fullPermissions(call.caller.agent)) throw new Refused('by_hand', why)
 }
 
 function keyOf(call: Call): string {
@@ -36,7 +33,7 @@ export async function asked(
   quietly: Category = 'writing',
 ): Promise<AgentAnswer | null> {
   const agent = call.caller.agent
-  if (agent === null || fullPermissions(call)) return null
+  if (agent === null || fullPermissions(agent)) return null
 
   const about = category ?? (agent.mode === 'confirm' ? quietly : null)
   if (about === null) return null

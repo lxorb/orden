@@ -1,4 +1,4 @@
-import type { AgentAnswer } from '../../automation/src/api'
+import { type AgentAnswer, holds } from '../../automation/src/api'
 import { helperRun } from '../../ai-chat/src/api'
 import { type Mode, modeOfGrant } from '../../ai-providers/src/api'
 import type { AgentScope as Scope } from '@orden/contracts'
@@ -26,7 +26,7 @@ function reachesAsFar(call: Call): void {
 
   const whole =
     agent.spaces === 'all' &&
-    BUILT_IN.every((one) => agent.scopes.includes(one)) &&
+    BUILT_IN.every((one) => holds(call.caller, one)) &&
     Object.values(agent.sites).every((rule) => rule === 'allow')
   if (!whole) {
     throw new Refused(

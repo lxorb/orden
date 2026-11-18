@@ -58,6 +58,12 @@ describe('what a verb was told', () => {
     expect(() => needScope(call({}, agent(['notes.read'])), 'tree', 'moving')).toThrow(Refused)
     expect(() => needScope(call({}), 'tree', 'moving')).not.toThrow()
   })
+
+  test('an agent under Full permissions holds every scope, whatever its grant kept', () => {
+    const full = call({}, agent(['notes.read'], 'autonomous'))
+    expect(() => needScope(full, 'tree', 'moving')).not.toThrow()
+    expect(() => needScope(full, 'workspace.focus', 'a split')).not.toThrow()
+  })
 })
 
 describe('answers', () => {
