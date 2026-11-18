@@ -10,6 +10,7 @@ pub mod page;
 pub mod quiet;
 pub mod reader;
 pub mod scripts;
+pub mod snapshot;
 pub mod tabs;
 pub mod twin;
 
