@@ -46,6 +46,7 @@ const PLAN = '/space/Plan.md'
 
 async function moved(root = held.root) {
   moveOwnKeysSoon(root, workspace, held.signedIn)
+  await (await import('../../web-backend/src/api')).ownKeys()
   await new Promise((done) => setTimeout(done, 20))
 }
 
