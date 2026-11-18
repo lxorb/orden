@@ -1,8 +1,9 @@
 import type { Entry } from '@orden/contracts'
 import { type Base, readBase, writeBase } from '@orden/bases'
-import { folderNotePath } from '../../tree/src/api'
-import { folderOf, relativeTo } from '../../platform/src/api'
+import { links } from '../../link-index/src/api'
+import { relativeTo } from '../../platform/src/api'
 import { noteText, workspace, writeNoteText } from '../../workspace/src/api'
+import { drawnFences } from './drawn-fences'
 
 function movedId(id: string, from: string, to: string): string {
   if (id === from) return to
@@ -27,9 +28,9 @@ function movedOrder(base: Base, from: string, to: string): Base | null {
   return changed ? { ...base, views } : null
 }
 
-function basesIn(entry: Entry, found: string[] = []): string[] {
+function baseFiles(entry: Entry, found: string[] = []): string[] {
   for (const one of entry.children) {
-    if (one.is_dir) basesIn(one, found)
+    if (one.is_dir) baseFiles(one, found)
     else if (/\.base$/i.test(one.name)) found.push(one.path)
   }
   return found
@@ -39,35 +40,6 @@ function movedPath(path: string, from: string, to: string): string {
   if (path === from) return to
   return path.startsWith(`${from}/`) ? to + path.slice(from.length) : path
 }
-
-function foldersNotes(root: string, path: string): string[] {
-  const found: string[] = []
-  for (let dir = folderOf(path); dir.length > root.length; dir = folderOf(dir)) {
-    found.push(folderNotePath(dir), `${dir}.md`)
-  }
-  return found
-}
-
-function movedFoldersNotes(tree: Entry, from: string, to: string): string[] {
-  const moved = entryAt(tree, to) ?? entryAt(tree, from)
-  if (!moved?.is_dir) return [folderNotePath(to), `${to}.md`]
-  const found: string[] = []
-  const walk = (dir: Entry) => {
-    const now = movedPath(dir.path, from, to)
-    found.push(folderNotePath(now), `${now}.md`)
-    for (const one of dir.children) if (one.is_dir) walk(one)
-  }
-  walk(moved)
-  return found
-}
-
-function entryAt(entry: Entry, path: string): Entry | null {
-  if (entry.path === path) return entry
-  const next = entry.children.find((one) => path === one.path || path.startsWith(`${one.path}/`))
-  return next ? entryAt(next, path) : null
-}
-
-const FENCE = /^(```+|~~~+)base[^\n]*\n([\s\S]*?)^\1[^\S\n]*$/gm
 
 export function movedWords(text: string, fenced: boolean, was: string, now: string): string | null {
   const rewrite = (words: string): string | null => {
@@ -81,15 +53,14 @@ export function movedWords(text: string, fenced: boolean, was: string, now: stri
     return next ? writeBase(next, words) : null
   }
   if (!fenced) return rewrite(text)
-  let changed = false as boolean
-  const after = text.replace(FENCE, (whole, fence: string, body: string) => {
-    const next = rewrite(body)
-    if (next === null) return whole
-    changed = true
-    const head = whole.slice(0, whole.indexOf('\n') + 1)
-    return `${head}${next.endsWith('\n') ? next : `${next}\n`}${fence}`
-  })
-  return changed ? after : null
+  let after = text
+  for (const fence of drawnFences(text).reverse()) {
+    const next = fence.margin ? rewrite(fence.words) : null
+    if (next === null) continue
+    const body = next.endsWith('\n') ? next : `${next}\n`
+    after = after.slice(0, fence.from) + body + after.slice(fence.to)
+  }
+  return after === text ? null : after
 }
 
 export async function orderMoved(
@@ -101,12 +72,10 @@ export async function orderMoved(
   const was = relativeTo(root, from)
   const now = relativeTo(root, to)
   if (!was || !now || was === now) return
-  const files = basesIn(tree).map((path) => ({ path: movedPath(path, from, to), fenced: false }))
-  const own = [...movedFoldersNotes(tree, from, to), `${from}.md`]
-  const notes = [...new Set([...own, ...foldersNotes(root, to)])].map((path) => ({
-    path,
-    fenced: true,
-  }))
+  const files = baseFiles(tree).map((path) => ({ path: movedPath(path, from, to), fenced: false }))
+  const notes = links
+    .basesIn(root)
+    .map((path) => ({ path: movedPath(path, from, to), fenced: true }))
   for (const { path, fenced } of [...files, ...notes]) {
     const before = await noteText(workspace, path)
     if (!before?.includes(was)) continue

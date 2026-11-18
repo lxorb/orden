@@ -34,6 +34,7 @@ export interface ScannedNote {
   address: string | null
   cover: string | null
   bare: boolean
+  bases?: boolean
   front?: string | null
   tasks?: ScannedTask[]
   stamp?: Stamp | null
@@ -45,6 +46,8 @@ export interface SpaceLinks {
 }
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
+
+const BASE_FENCE = /^[ \t>]*(?:`{3,}|~{3,})[ \t]*base(?:\s|$)/m
 
 const CONTEXT = 200
 
@@ -64,6 +67,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     address: null,
     cover: frontMatterValue(content, COVER_KEY),
     bare: saysNothing(content, name),
+    ...(BASE_FENCE.test(content) ? { bases: true } : {}),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
       target: link.target,

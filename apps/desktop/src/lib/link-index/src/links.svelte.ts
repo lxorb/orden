@@ -580,6 +580,13 @@ class Links {
     return this.notes
   }
 
+  basesIn(root: string): string[] {
+    if (this.root === null || !samePath(this.root, root)) return []
+    return this.notes
+      .filter((note) => note.bases === true)
+      .map((note) => insideSpace(root, note.path))
+  }
+
   canvasRead(path: string, content: string) {
     const relative = this.relative(path)
     if (
