@@ -67,6 +67,12 @@ done
 if [ "$status" = 0 ]; then
   echo "the window mapped under X11:"
   xwininfo -root -tree 2>/dev/null | grep -iE 'orden|nib|read me' | head || true
+  if [ "${IDLE:-0}" = 1 ]; then
+    sleep 15
+    echo "on the first screen, before setup is finished:"
+    python3 "$here/idle-cpu.py" "$app" 20 | tee "$out/setup-idle.txt"
+    [ "${PIPESTATUS[0]}" = 0 ] || status=1
+  fi
   [ -n "${config:-}" ] && { python3 "$here/crash_told.py" "$config" || true; }
   sleep 10
   strangers=$(xwininfo -root -children 2>/dev/null | python3 -c '

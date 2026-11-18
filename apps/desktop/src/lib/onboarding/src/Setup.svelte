@@ -99,7 +99,7 @@
       radial-gradient(38% 42% at 82% 82%, var(--glow-b), transparent 70%),
       radial-gradient(30% 35% at 70% 20%, var(--glow-c), transparent 70%);
     filter: blur(10px);
-    animation: drift 22s ease-in-out infinite alternate;
+    animation: drift 8s var(--ease-out) both;
     transition: opacity 0.8s var(--ease-out);
   }
 

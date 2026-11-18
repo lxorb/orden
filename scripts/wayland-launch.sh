@@ -114,7 +114,15 @@ wait_for_views() {
 told() {
   [ "${CRASH_ASK:-0}" = 1 ] && return 0
   [ -f "$config/automation.json" ] || return 0
+  [ "${IDLE:-0}" = 1 ] && first_idle
   python3 "$here/crash_told.py" "$config" || true
+}
+
+first_idle() {
+  sleep 15
+  echo "on the first screen, before setup is finished:"
+  python3 "$here/idle-cpu.py" "$app_pid" 20 | tee "$out/setup-idle.txt"
+  [ "${PIPESTATUS[0]}" = 0 ] || status=1
 }
 
 site_pid=""
