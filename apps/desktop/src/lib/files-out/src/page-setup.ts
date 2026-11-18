@@ -1,3 +1,4 @@
+import { todayOf } from '@orden/bases'
 import type { PaperInches } from './frame'
 import { escapeAll } from '@orden/markdown/html'
 import { frontMatter, frontMatterValue } from '@orden/markdown'
@@ -115,13 +116,8 @@ const PAPER_INCHES: Record<Paper, [number, number]> = {
   Legal: [8.5, 14],
 }
 
-function localDay(at: Date): string {
-  const two = (value: number) => String(value).padStart(2, '0')
-  return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
-}
-
 export function runningDate(source: string, given?: string, now = new Date()): string {
-  return given ?? frontMatterValue(source, 'date') ?? localDay(now)
+  return given ?? frontMatterValue(source, 'date') ?? todayOf(now)
 }
 
 export function paperInches(setup: PageSetup): PaperInches {

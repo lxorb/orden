@@ -1,4 +1,4 @@
-import { keepJson, stored } from '../../platform/src/api'
+import { keepJson, stored, isRecord } from '../../platform/src/api'
 import { clampOpacity, type InkTool, isInkTool } from '@orden/markdown/canvas'
 import { INK_STYLES } from '../../plane/src/api'
 import { DEFAULT_INK } from '../../plane/src/api'
@@ -113,10 +113,6 @@ function blank(): Kept {
     box: false,
     partly: false,
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 function oneNib(held: unknown): Nib[] {

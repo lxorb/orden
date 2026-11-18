@@ -6,13 +6,13 @@
   import { workspace } from '../../../workspace/src/api'
   import type { Approval } from '../../../agent-protocol/src/api'
   import type { Activity } from './activity.svelte'
-  import { hostOf } from './session'
+  import { shownHost } from '@orden/scan/web-address'
 
   const { activity, approval }: { activity: Activity; approval: Approval } = $props()
 
   const chat = $derived(approval.site?.startsWith('chat:') === true)
 
-  const site = $derived(approval.site === undefined || chat ? null : hostOf(approval.site))
+  const site = $derived(approval.site === undefined || chat ? null : shownHost(approval.site))
 
   const icon = $derived.by(() => {
     const tab = approval.tab

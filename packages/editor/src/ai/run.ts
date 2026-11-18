@@ -8,6 +8,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { fenceCode, fenceLanguage } from '../fence'
+import { todayHere } from '../task-days'
 import { documentOf, type SharedDoc } from '../shared'
 import { enclosingNamed } from '../nodes'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
@@ -134,12 +135,6 @@ export function asksMoved(before: EditorState, after: EditorState): boolean {
 
 let counter = 0
 
-function today(): string {
-  const now = new Date()
-  const two = (value: number) => String(value).padStart(2, '0')
-  return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`
-}
-
 function runOf(state: EditorState, id: number): AiRun | null {
   return (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
 }
@@ -197,7 +192,7 @@ function beginAnswer(view: AiView, id: number, model: string) {
   const found = aiFenceAt(view.state, live.from)
   if (!found) return
 
-  const { head, tail } = answerParts(`answered by ${model}, ${today()}`)
+  const { head, tail } = answerParts(`answered by ${model}, ${todayHere()}`)
   const existing = answerSpan(view.state.doc.toString().split('\n'), found.closeLine)
   const span = existing ?? { from: found.to, to: found.to }
   const lead = existing ? '' : '\n\n'

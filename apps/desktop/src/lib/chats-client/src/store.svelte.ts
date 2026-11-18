@@ -45,6 +45,7 @@ import { chatName, findPointers, makePointer, type Place, readPointer } from './
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
 import { isRetiredChat } from '../../documents/src/api'
 import { type Host, View } from './view.svelte'
+import { dayOf } from './view/when'
 
 const RECEIPTS = 'orden:chat-receipts'
 
@@ -70,12 +71,6 @@ function remoteFor(id: string): Remote {
 
 function newId(): string {
   return ulid(Date.now(), Math.random)
-}
-
-function dayOf(at: number): string {
-  const date = new Date(at)
-  const pad = (one: number) => String(one).padStart(2, '0')
-  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 function startOf(day: string): number {

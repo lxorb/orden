@@ -1,10 +1,7 @@
+import { todayOf } from '@orden/bases'
 import { region, localDate } from '../../../platform/src/api'
 
-export function dayOf(at: number): string {
-  const date = new Date(at)
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
+export const dayOf = (at: number): string => todayOf(new Date(at))
 
 export function timeOf(at: number): string {
   return localDate(at, { hour: 'numeric', minute: '2-digit' })

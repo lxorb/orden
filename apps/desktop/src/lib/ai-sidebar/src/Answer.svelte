@@ -6,7 +6,7 @@
 
 <script lang="ts">
   import { mathsWaiting } from '../../chat-kit/src/api'
-  import { copyText } from '../../ui-controls/src/api'
+  import { copyText, SAID_FOR } from '../../ui-controls/src/api'
   import { drawInPieces } from './answer-pieces'
   import { patchHtml } from './patch-html'
 
@@ -30,7 +30,7 @@
     if (!button || code === undefined) return false
     void copyText(code)
     button.dataset.copied = ''
-    setTimeout(() => delete button.dataset.copied, 1600)
+    setTimeout(() => delete button.dataset.copied, SAID_FOR)
     return true
   }
 

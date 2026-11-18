@@ -5,7 +5,8 @@
   import { localDate } from '../../platform/src/api'
   import { tabAsk, type TabAsk } from '../../workspace/src/api'
   import { menu } from '../../ui-kit/src/api'
-  import { dayName, historyRows, hostOf, onScreen, type HistoryRow } from './history-list'
+  import { dayName, historyRows, onScreen, type HistoryRow } from './history-list'
+  import { shownHost } from '@orden/scan/web-address'
   import { siteMark } from './pages.svelte'
   import { visited } from './visited'
   import type { Visit } from '@orden/scan/visits'
@@ -68,7 +69,7 @@
   }
 
   function titleOf(visit: Visit): string {
-    return visit.title === '' ? hostOf(visit.url) : visit.title
+    return visit.title === '' ? shownHost(visit.url) : visit.title
   }
 
   function remove(visit: Visit) {
@@ -79,7 +80,7 @@
     event.preventDefault()
     menu.show(event, [
       { label: 'Open in new tab', run: () => onopen(visit.url, 'behind') },
-      { label: 'More from this site', run: () => (typed = hostOf(visit.url)) },
+      { label: 'More from this site', run: () => (typed = shownHost(visit.url)) },
       { label: 'Remove from history', run: () => remove(visit) },
     ])
   }
@@ -183,7 +184,7 @@
                   {#if mark}<img src={mark} alt="" draggable="false" />{/if}
                 </span>
                 <span class="orden-row-label" dir="auto">{titleOf(visit)}</span>
-                <span class="orden-row-meta host">{hostOf(visit.url)}</span>
+                <span class="orden-row-meta host">{shownHost(visit.url)}</span>
               </button>
               <button
                 class="orden-glyph gone"

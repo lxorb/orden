@@ -1,12 +1,12 @@
 <script lang="ts">
   import { recorder } from './recording.svelte'
-  import { spanOf } from './transcript'
+  import { elapsed } from '../../../platform/src/api'
 </script>
 
 {#if recorder.on || recorder.saving}
   <div class="orden-bar recording" class:saving={!recorder.on}>
     <span class="dot"></span>
-    <span class="clock">{spanOf(recorder.elapsed)}</span>
+    <span class="clock">{elapsed(recorder.elapsed)}</span>
     <button
       title="Stop recording"
       aria-label="Stop recording"

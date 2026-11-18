@@ -65,13 +65,13 @@ export function spaceOf(path: string): string {
 }
 
 export function safeName(input: string): string | null {
+  const ends = /^[.\s]+|[.\s]+$/g
   const cleaned = input
-    .split('')
-    .map((c) => (c < ' ' || `<>:"/\\|?*`.includes(c) ? ' ' : c))
-    .join('')
-
-  const collapsed = cleaned.split(/\s+/).filter(Boolean).join(' ')
-  const trimmed = collapsed.replace(/^[.\s]+|[.\s]+$/g, '')
-
-  return trimmed ? trimmed.slice(0, 64) : null
+    .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(' ')
+    .replace(ends, '')
+  const cut = Array.from(cleaned).slice(0, 64).join('').replace(ends, '')
+  return cut || null
 }

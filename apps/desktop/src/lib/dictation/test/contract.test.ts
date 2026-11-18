@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import * as api from '../src/api'
 import { promptOf } from '../src/heard'
 import { recordingName } from '../src/recorder/container'
-import { embedFor, recordingNoteName, spanOf } from '../src/recorder/transcript'
+import { embedFor, recordingNoteName } from '../src/recorder/transcript'
 import { RATE, wavOf } from '../src/recorder/wav'
 
 describe('the module stands on its own', () => {
@@ -28,12 +28,6 @@ describe('what a recording is called and how it is shown', () => {
     const at = new Date(2026, 8, 12, 14, 32)
     expect(recordingName(at, 'weba')).toBe('recording-2026-09-12-1432.weba')
     expect(recordingNoteName(at)).toBe('Recording 2026-09-12 1432')
-  })
-
-  test('a length reads as minutes and seconds, with hours only past the hour', () => {
-    expect(spanOf(65)).toBe('1:05')
-    expect(spanOf(3725)).toBe('1:02:05')
-    expect(spanOf(-3)).toBe('0:00')
   })
 
   test('the recording is embedded where it was made', () => {

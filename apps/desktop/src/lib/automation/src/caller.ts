@@ -4,6 +4,7 @@ import {
   agentRefusal,
   type AgentScope as Scope,
 } from '@orden/contracts'
+import { isRecord } from '../../platform/src/api'
 
 export type { AgentAnswer, Caller }
 
@@ -20,10 +21,6 @@ export function threadSpaceOf(caller: Caller): string | null {
 }
 
 export const READER: Caller = { agent: null }
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
 
 function texts(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []

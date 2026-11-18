@@ -1,3 +1,4 @@
+import { todayOf } from '@orden/bases'
 import { formatWikilink } from '@orden/markdown/links'
 
 export function embedFor(name: string): string {
@@ -34,22 +35,6 @@ export function transcriptCallout(text: string, language: string, model: string)
   return [`> [!quote] ${heading(language)}`, `> ${writtenBy(model)}`, '>', quoted(text)].join('\n')
 }
 
-export function spanOf(seconds: number): string {
-  const whole = Math.max(0, Math.round(seconds))
-  const minutes = Math.floor(whole / 60) % 60
-  const hours = Math.floor(whole / 3600)
-  const rest = String(whole % 60).padStart(2, '0')
-
-  if (!hours) return `${minutes}:${rest}`
-  return `${hours}:${String(minutes).padStart(2, '0')}:${rest}`
-}
-
-export function dayOf(at: Date): string {
-  const month = String(at.getMonth() + 1).padStart(2, '0')
-  const day = String(at.getDate()).padStart(2, '0')
-  return `${at.getFullYear()}-${month}-${day}`
-}
-
 export function clockOf(at: Date): string {
   const hour = String(at.getHours()).padStart(2, '0')
   const minute = String(at.getMinutes()).padStart(2, '0')
@@ -57,5 +42,5 @@ export function clockOf(at: Date): string {
 }
 
 export function recordingNoteName(at: Date): string {
-  return `Recording ${dayOf(at)} ${clockOf(at)}`
+  return `Recording ${todayOf(at)} ${clockOf(at)}`
 }

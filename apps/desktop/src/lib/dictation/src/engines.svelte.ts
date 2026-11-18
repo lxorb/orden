@@ -1,3 +1,4 @@
+import { shownHost } from '@orden/scan/web-address'
 import { account } from '../../accounts/src/api'
 import { transcriberNow } from '../../ai-providers/src/api'
 import type { Provider } from '../../ai-providers/src/api'
@@ -29,7 +30,7 @@ function read(): Engine | null {
 
 export function whereTo(provider: Provider): { local: boolean; host: string } {
   if (provider.kind !== 'compatible') return { local: false, host: 'OpenAI' }
-  const host = hostOf(provider.baseUrl ?? '')
+  const host = shownHost(provider.baseUrl ?? '')
   const local = /^(?:localhost|127\.0\.0\.1|\[::1\]|::1)$/i.test(host)
   return { local, host }
 }
@@ -38,14 +39,6 @@ export function deviceHears(): boolean {
   if (method('dictates')?.()) return true
   if (isNative && (platform() === 'windows' || platform() === 'linux')) return false
   return !!speechRecogniser()
-}
-
-function hostOf(address: string): string {
-  try {
-    return new URL(address).hostname
-  } catch {
-    return address
-  }
 }
 
 class Engines {

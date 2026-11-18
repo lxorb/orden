@@ -27,7 +27,7 @@ export const importingStore = () =>
     ? Promise.reject(new Error('no import in the Even Realities plugin'))
     : import('./importing.svelte')
 
-export const migratingStore = () =>
+const migratingStore = () =>
   __EVEN_PLUGIN__
     ? Promise.reject(new Error('no import in the Even Realities plugin'))
     : import('./migrating.svelte')

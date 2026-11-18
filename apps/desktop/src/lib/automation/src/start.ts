@@ -1,6 +1,6 @@
 import { portOf, startHearings } from '@orden/contracts'
 import { busy } from '../../ui-kit/src/api'
-import { log, invoke, isDesktop, isNative, openExternal } from '../../platform/src/api'
+import { log, invoke, isDesktop, isNative, openExternal, isRecord } from '../../platform/src/api'
 import { hearHere } from '../../windows/src/api'
 import { callerOf } from './caller'
 import { dueWithin } from './due'
@@ -86,10 +86,6 @@ async function answer(id: number, asked: Request) {
   } finally {
     due.end()
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function isText(value: unknown): value is string {

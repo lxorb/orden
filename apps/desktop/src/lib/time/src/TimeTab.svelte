@@ -1,11 +1,11 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import { localDate } from '../../platform/src/api'
+  import { localDate, midnightOf } from '../../platform/src/api'
   import { menu, segmented } from '../../ui-kit/src/api'
   import type { Tab } from '../../documents/src/api'
   import { counted, isOwn } from './counted'
   import DayLanes from './DayLanes.svelte'
-  import { counts, dayOf, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
+  import { counts, daysAfter, endOf, piecesIn, startOf, stepped } from './days'
   import Inside from './Inside.svelte'
   import { hoursShown, type Picked, unsaid } from './lanes'
   import { clock, length, nameOf, tintOf } from './look'
@@ -21,7 +21,7 @@
 
   const first = untrack(() => readSpec(tab.doc))
   let view = $state<View>(first.view)
-  let day = $state(dayOf(first.day ?? Date.now()))
+  let day = $state(midnightOf(first.day ?? Date.now()))
   let period = $state<'week' | 'month'>('week')
   let picked = $state<Picked | null>(null)
 
@@ -65,7 +65,7 @@
   const loose = $derived(view === 'day' ? unsaid(time.spans, minutes.list, ...range, now) : [])
   const current = $derived(
     view === 'day'
-      ? day === dayOf(now)
+      ? day === midnightOf(now)
       : startOf(view === 'week' ? 'week' : period, now) === range[0],
   )
 
@@ -146,7 +146,7 @@
           type="button"
           class="orden-chip"
           onclick={() => {
-            day = dayOf(Date.now())
+            day = midnightOf(Date.now())
             picked = null
           }}>Today</button
         >

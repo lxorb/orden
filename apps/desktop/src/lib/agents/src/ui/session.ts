@@ -1,3 +1,4 @@
+import { shownHost } from '@orden/scan/web-address'
 import { isRecord, localDate, nameOf } from '../../../platform/src/api'
 import { wordFor } from './words'
 
@@ -58,16 +59,8 @@ export function today(now = Date.now()): string {
 
 export function aboutOf(call: Call, titleOf: (tab: string) => string | null): string | null {
   if (call.path !== null) return nameOf(call.path).replace(/\.md$/i, '')
-  if (call.url !== null) return hostOf(call.url)
+  if (call.url !== null) return shownHost(call.url)
   return call.tab === null ? null : titleOf(call.tab)
-}
-
-export function hostOf(url: string): string {
-  try {
-    return new URL(url).host || url
-  } catch {
-    return url
-  }
 }
 
 export function sessionMarkdown(name: string, calls: readonly Call[]): string {
@@ -81,7 +74,7 @@ export function sessionMarkdown(name: string, calls: readonly Call[]): string {
       call.path !== null
         ? ` [[${call.path.replace(/\.md$/i, '')}]]`
         : call.url !== null
-          ? ` [${hostOf(call.url)}](${call.url})`
+          ? ` [${shownHost(call.url)}](${call.url})`
           : ''
     const mark = call.status === 'error' ? ' ✗' : call.status === 'needs_approval' ? ' ?' : ''
     return `- ${time} ${word}${link}${mark}`

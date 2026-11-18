@@ -71,8 +71,3 @@ export function seekAt(x: number, left: number, width: number): number {
   if (width <= 0) return 0
   return Math.min(1, Math.max(0, (x - left) / width))
 }
-
-export function clock(seconds: number): string {
-  const whole = Math.max(0, Math.round(seconds))
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
-}

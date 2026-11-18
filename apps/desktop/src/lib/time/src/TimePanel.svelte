@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { midnightOf } from '../../platform/src/api'
   import { Facts } from '../../ui-kit/src/api'
   import { counted, isOwn } from './counted'
-  import { dayOf, daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
+  import { daysAfter, MINUTE, near, piecesIn, totalsOf, wholeOf } from './days'
   import { hoursShown } from './lanes'
   import { length, tintOf } from './look'
   import { openTime } from './open'
@@ -13,7 +14,7 @@
 
   const ticker = ticking()
   const now = $derived(ticker.now)
-  const today = $derived(dayOf(now))
+  const today = $derived(midnightOf(now))
   const tomorrow = $derived(daysAfter(today, 1))
   const minutes = watchedMinutes(() => [today, tomorrow])
 

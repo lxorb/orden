@@ -1,3 +1,4 @@
+import { midnightOf } from '../../platform/src/api'
 import type { Span } from './records'
 
 export const HOUR = 3_600_000
@@ -19,20 +20,14 @@ export interface Total {
   ms: number
 }
 
-export function dayOf(at: number): number {
-  const date = new Date(at)
-  date.setHours(0, 0, 0, 0)
-  return date.getTime()
-}
-
 export function daysAfter(day: number, count: number): number {
   const date = new Date(day)
   date.setDate(date.getDate() + count)
-  return dayOf(date.getTime())
+  return midnightOf(date.getTime())
 }
 
 export function startOf(range: Range, at: number): number {
-  const date = new Date(dayOf(at))
+  const date = new Date(midnightOf(at))
   if (range === 'week') date.setDate(date.getDate() - ((date.getDay() + 6) % 7))
   if (range === 'month') date.setDate(1)
   return date.getTime()

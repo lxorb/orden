@@ -1,4 +1,4 @@
-import { isRecord } from './shape'
+import { isRecord } from '../../platform/src/api'
 
 export const BEAT = 'beat'
 export const BEAT_ANSWER = 'ok'

@@ -10,9 +10,7 @@ import {
   type ItemMeta,
 } from '@orden/sync-core'
 import type { MetaRow } from './store'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+import { isRecord } from '../../platform/src/api'
 
 export interface Flight {
   push: string

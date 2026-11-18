@@ -44,3 +44,18 @@ export function localNumber(value: number, options: Intl.NumberFormatOptions = {
   }
   return made.format(value)
 }
+
+export function midnightOf(at: number): number {
+  const date = new Date(at)
+  date.setHours(0, 0, 0, 0)
+  return date.getTime()
+}
+
+export function elapsed(seconds: number): string {
+  const whole = Math.max(0, Math.round(seconds))
+  const minutes = Math.floor(whole / 60) % 60
+  const hours = Math.floor(whole / 3600)
+  const rest = String(whole % 60).padStart(2, '0')
+  if (!hours) return `${minutes}:${rest}`
+  return `${hours}:${String(minutes).padStart(2, '0')}:${rest}`
+}

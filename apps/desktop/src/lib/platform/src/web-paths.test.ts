@@ -117,6 +117,14 @@ describe('making a name safe', () => {
     expect(safeName('x'.repeat(200))?.length).toBe(64)
   })
 
+  test('never cuts a character in half', () => {
+    expect(safeName(`${'x'.repeat(63)}😀😀`)).toBe(`${'x'.repeat(63)}😀`)
+  })
+
+  test('and drops control characters past the first few', () => {
+    expect(safeName('a\u007fb\u0085c')).toBe('a b c')
+  })
+
   test('keeps letters other languages use', () => {
     expect(safeName('Notizen über Bücher')).toBe('Notizen über Bücher')
   })

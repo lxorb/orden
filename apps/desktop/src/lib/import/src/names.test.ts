@@ -61,6 +61,10 @@ describe('a title as a file name', () => {
     expect(safeName('a'.repeat(300))).toHaveLength(96)
   })
 
+  test('and never cuts a character in half', () => {
+    expect(safeName(`${'a'.repeat(95)}😀😀`)).toBe(`${'a'.repeat(95)}😀`)
+  })
+
   test('a newline in a title is a space', () => {
     expect(safeName('One\nTwo')).toBe('One Two')
   })

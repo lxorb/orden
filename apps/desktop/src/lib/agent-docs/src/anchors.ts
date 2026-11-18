@@ -2,6 +2,7 @@ import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { blockIdOf, blockSpan, headingRows, lines, slugify } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
+import { isRecord } from '../../platform/src/api'
 
 export type Anchor =
   | { quote: string; prefix?: string; suffix?: string }
@@ -37,10 +38,6 @@ function described(anchor: Anchor): string {
 
 function clipped(words: string): string {
   return words.length > 60 ? `${words.slice(0, 57)}...` : words
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function optionalWords(value: unknown): string | undefined {

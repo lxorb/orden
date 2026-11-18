@@ -1,5 +1,6 @@
 import { type Anchor, oneEnding, type Place, readAnchor, resolve, type Selected } from './anchors'
 import { DocError } from './problem'
+import { isRecord } from '../../platform/src/api'
 
 export interface Replacement {
   from: number
@@ -19,10 +20,6 @@ export interface AgentEdit {
 }
 
 const MOST_EDITS = 500
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
 
 function doingOf(edit: Record<string, unknown>): Doing {
   const said: Doing[] = []

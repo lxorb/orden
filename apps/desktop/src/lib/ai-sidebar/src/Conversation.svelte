@@ -2,7 +2,7 @@
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import Thinking from './Thinking.svelte'
-  import { copyText } from '../../ui-controls/src/api'
+  import { Copied } from '../../ui-controls/src/api'
   import { dur, fade, fly } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'
   import { scrollbar } from '../../ui-kit/src/api'
@@ -67,14 +67,7 @@
       .map((one) => one.label.replace(/\.(?:md|markdown)$/i, ''))
   }
 
-  let copied = $state<string | null>(null)
-  let copying: ReturnType<typeof setTimeout> | undefined
-  async function copy(turn: string, text: string) {
-    await copyText(text)
-    copied = turn
-    clearTimeout(copying)
-    copying = setTimeout(() => (copied = null), 1600)
-  }
+  const copied = new Copied<string>()
 
   const follows = (..._values: unknown[]) => undefined
 
@@ -219,10 +212,10 @@
                   class="orden-glyph tool"
                   title="Copy"
                   aria-label="Copy"
-                  onclick={() => void copy(turn.id, words)}
+                  onclick={() => void copied.copy(words, turn.id)}
                 >
                   <svg viewBox="0 0 13 13">
-                    {#if copied === turn.id}
+                    {#if copied.what === turn.id}
                       <path d="M2.8 6.8l2.4 2.4 5-5.4" />
                     {:else}
                       <path

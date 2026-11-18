@@ -10,7 +10,8 @@
   import { asking } from './asking.svelte'
   import Question from './Question.svelte'
   import ReaderAsk from './ReaderAsk.svelte'
-  import { aboutOf, hostOf } from './session'
+  import { shownHost } from '@orden/scan/web-address'
+  import { aboutOf } from './session'
   import Spark from './Spark.svelte'
   import AgentWatch from './AgentWatch.svelte'
   import { started } from './live.svelte'
@@ -116,8 +117,8 @@
             data-agent-tab={tab.id}
             onclick={() => (watched = tab.id)}
           >
-            <span class="orden-row-label">{tab.title || hostOf(tab.url)}</span>
-            <span class="orden-row-meta">{hostOf(tab.url)}</span>
+            <span class="orden-row-label">{tab.title || shownHost(tab.url)}</span>
+            <span class="orden-row-meta">{shownHost(tab.url)}</span>
           </button>
         </li>
       {/each}

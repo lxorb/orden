@@ -8,6 +8,7 @@
     "platform",
     "ui-kit",
     "file-writes",
-    "web-backend"
+    "web-backend",
+    "bases"
   ]
 }
