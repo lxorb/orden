@@ -56,6 +56,11 @@ export class LiveView {
 
   private readonly stops: (() => void)[] = []
   private once = false
+  private loads = 0
+  private changes = 0
+  private saving = 0
+  private missed = false
+  private writing: Promise<void> = Promise.resolve()
   private readonly quiet = afterQuiet(() => (this.searched = this.typed.trim()), SEARCH_QUIET)
 
   fixed = $state(false)
@@ -124,8 +129,19 @@ export class LiveView {
   }
 
   async reload() {
+    const asked = ++this.loads
+    const changes = this.changes
     try {
       const loaded = await this.source.load()
+      if (asked !== this.loads) return
+      if (this.saving > 0) {
+        this.missed = true
+        return
+      }
+      if (changes !== this.changes) {
+        void this.reload()
+        return
+      }
       const base = guardedAt(loaded, this.source.path ?? null, this.source.stranger)
       if (!base) throw new Error('refused')
       this.fixed = this.source.fixed?.() ?? false
@@ -187,9 +203,22 @@ export class LiveView {
   }
 
   async change(next: Base, show?: number): Promise<void> {
+    this.changes++
+    this.saving++
     this.base = next
     if (show !== undefined) this.#at = show
     if (this.#at >= next.views.length) this.#at = Math.max(0, next.views.length - 1)
-    await this.source.save(next, { at: this.#at, typed: this.typed })
+    const shown = { at: this.#at, typed: this.typed }
+    const written = this.writing.then(() => this.source.save(next, shown))
+    this.writing = written.catch(() => undefined)
+    try {
+      await written
+    } finally {
+      this.saving--
+      if (this.saving === 0 && this.missed) {
+        this.missed = false
+        void this.reload()
+      }
+    }
   }
 }
