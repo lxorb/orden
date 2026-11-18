@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { links } from '../../../link-index/src/api'
 import type { Query } from '@orden/scan/search/query'
 import { protection } from '../../../protect/src/api'
@@ -86,14 +87,7 @@ export async function fromOthersIn(root: string): Promise<boolean> {
   return (await sharing()).reachedByOthersIn(root)
 }
 
-let fetched: Promise<typeof import('../../../sharing/src/api')> | null = null
-function sharing(): Promise<typeof import('../../../sharing/src/api')> {
-  fetched ??= import('../../../sharing/src/api').catch((error: unknown) => {
-    fetched = null
-    throw error
-  })
-  return fetched
-}
+const sharing = door(() => import('../../../sharing/src/api'))
 
 export async function wordsOf(note: NoteCommand | null | undefined): Promise<string> {
   if (!note?.body) return ''

@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { agentMarks } from './agent-marks.svelte'
 import { webPages } from '@orden/contracts'
 import { keepJson, stored } from '../../platform/src/api'
@@ -6,6 +7,8 @@ import { workspace } from './workspace.svelte'
 import { type HiddenTabs, isHiddenTabs, onLeaving } from './sets'
 
 const STORAGE_KEY = 'orden:hidden-tabs'
+
+const uiKit = door(() => import('../../ui-kit/src/api'))
 
 function read(): HiddenTabs {
   const kept = stored(STORAGE_KEY)
@@ -47,7 +50,7 @@ class Hidden {
   }
 
   private ask(): Promise<string | null> {
-    this.asking ??= import('../../ui-kit/src/api')
+    this.asking ??= uiKit()
       .then(({ prompt }) =>
         prompt.choose({
           title: 'Hidden tabs',

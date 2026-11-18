@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { message } from '../../ui-kit/src/api'
 import { afterQuiet, isDesktop, joinPath, samePath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
@@ -366,7 +367,14 @@ export function relistAll() {
   }
 }
 
-let hearing: Promise<void> | null = null
+const hearing = door(() =>
+  import('@tauri-apps/api/event').then(({ listen }) =>
+    listen<{ folders: string[] }>(CHANGED, (event) => {
+      for (const one of event.payload.folders) changed.add(one)
+      settle()
+    }),
+  ),
+)
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- held between two events, never drawn
 const changed = new Set<string>()
 let hearers: ((folders: readonly string[]) => void)[] = []
@@ -381,17 +389,7 @@ const settle = afterQuiet(() => {
 
 function hearChanges(): Promise<void> {
   if (!isDesktop) return Promise.resolve()
-  hearing ??= import('@tauri-apps/api/event')
-    .then(({ listen }) =>
-      listen<{ folders: string[] }>(CHANGED, (event) => {
-        for (const one of event.payload.folders) changed.add(one)
-        settle()
-      }),
-    )
-    .then(quiet, () => {
-      hearing = null
-    })
-  return hearing
+  return hearing().then(quiet, () => undefined)
 }
 
 export function watchHeard(folder: string, hear: (folders: readonly string[]) => void): () => void {

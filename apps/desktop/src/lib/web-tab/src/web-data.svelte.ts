@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 export const HISTORY = 'orden:web-visits'
 
 export function ownStore(own: string | null | undefined): string | null {
@@ -28,7 +29,7 @@ export async function copyingOut<T>(own: string, copy: () => Promise<T>): Promis
 }
 
 class WebData {
-  private merging: Promise<void> | null = null
+  private readonly merging = door(() => import('./merged').then((one) => one.mergeOld()))
 
   async store(own: string | null | undefined): Promise<string | null> {
     await this.merged()
@@ -40,8 +41,7 @@ class WebData {
   }
 
   merged(): Promise<void> {
-    this.merging ??= import('./merged').then((one) => one.mergeOld())
-    return this.merging
+    return this.merging()
   }
 }
 

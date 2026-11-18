@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { askSheet } from '@orden/contracts'
 import { documentOf, type EditorView, type SharedDoc, type Text } from '@orden/editor'
 import { views } from '../../panes/src/api'
@@ -30,8 +31,7 @@ function saidOf(turn: Turn): Said {
   return { role: 'model', text }
 }
 
-let store: Promise<Chat> | null = null
-const chatStore = () => (store ??= import('./store/chat.svelte').then((one) => one.chat))
+const chatStore = door<Chat>(() => import('./store/chat.svelte').then((one) => one.chat))
 
 class Quick {
   open = $state(false)
