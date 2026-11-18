@@ -78,11 +78,15 @@ describe('finding the answer a fence already has', () => {
     expect(answerSpan(lines(note), 2)).toBeNull()
   })
 
-  test('ends at the note where a stream was cut off before the closing mark', () => {
-    const note = `${fence}\n\n${ANSWER_OPEN}\n*said*\n\nHalf of it`
-    const span = answerSpan(lines(note), 2)
+  test("is nothing where the closing mark is gone, since what follows may be the writer's own", () => {
+    const note = `${fence}\n\n${ANSWER_OPEN}\n*said*\n\nHalf of it\n\nMy own notes.`
+    expect(answerSpan(lines(note), 2)).toBeNull()
+  })
 
-    expect(span?.to).toBe(note.length)
+  test('is nothing where the next closing mark belongs to a later answer', () => {
+    const later = answerText('said', 'Second.')
+    const note = `${fence}\n\n${ANSWER_OPEN}\n*said*\n\nFirst\n\nNotes.\n\n${fence}\n\n${later}`
+    expect(answerSpan(lines(note), 2)).toBeNull()
   })
 
   test('replacing it leaves the note with one answer', () => {

@@ -38,6 +38,7 @@ import {
   isMarkdownPath,
   nameOf,
   noteName,
+  pathKeyAs,
   relativePath,
   samePath,
   within,
@@ -170,6 +171,22 @@ interface FilesNamed {
 }
 
 const byFiles = new WeakMap<readonly string[], FilesNamed>()
+
+const byKey = new WeakMap<readonly string[], ReadonlyMap<string, readonly string[]>>()
+
+function filesByKey(files: readonly string[]): ReadonlyMap<string, readonly string[]> {
+  const known = byKey.get(files)
+  if (known) return known
+  const keyed = new Map<string, string[]>()
+  const add = (map: Map<string, string[]>, key: string, path: string) => {
+    const held = map.get(key)
+    if (held) held.push(path)
+    else map.set(key, [path])
+  }
+  for (const path of files) add(keyed, pathKeyAs(path, true), path)
+  byKey.set(files, keyed)
+  return keyed
+}
 
 function filesByName(files: readonly string[]): FilesNamed {
   const known = byFiles.get(files)
@@ -517,6 +534,7 @@ class Links {
   private changed() {
     this.read.clear()
     this.resolved.clear()
+    this.filesFound.clear()
     this.version++
   }
 
@@ -1694,10 +1712,20 @@ class Links {
     const at = root === null ? null : within(root, path)
     if (root === null || at === null) return false
     const files = other === null ? this.files : this.otherIndex(other, path).files
-    return files.some((one) => samePath(one, at))
+    return (filesByKey(files).get(pathKeyAs(at, true)) ?? []).some((one) => samePath(one, at))
   }
 
+  private filesFound = new Map<string, string | null>()
+
   fileFor(name: string, notePath: string | null, kind: LinkKind = 'wikilink'): string | null {
+    const key = `${String(this.version)}\n${this.root ?? ''}\n${notePath ?? ''}\n${kind}\n${name}`
+    if (this.filesFound.has(key)) return this.filesFound.get(key) ?? null
+    const found = this.fileFound(name, notePath, kind)
+    this.filesFound.set(key, found)
+    return found
+  }
+
+  private fileFound(name: string, notePath: string | null, kind: LinkKind): string | null {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null

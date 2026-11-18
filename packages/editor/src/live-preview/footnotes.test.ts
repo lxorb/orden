@@ -63,6 +63,13 @@ describe('a footnote', () => {
     expect(definitionOf(state, 'missing')).toBeNull()
   })
 
+  test('finds its definition whatever case the label is written in', () => {
+    const doc = 'See [^Note].\n\n[^note]: The words.\n'
+    const state = viewOf(doc).state
+    const definition = definitionOf(state, 'Note')
+    expect(definition && definitionWords(state, definition)).toBe('The words.')
+  })
+
   test('goes from the mark to the definition, and back to the mark it left', () => {
     const view = viewOf(NOTE)
     const second = footnoteAt(view.state, SECOND + 2)

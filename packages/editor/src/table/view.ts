@@ -1,5 +1,15 @@
-import { EditorSelection, type StateCommand } from '@codemirror/state'
+import {
+  type ChangeSet,
+  type ChangeSpec,
+  EditorSelection,
+  MapMode,
+  type Text,
+  type StateCommand,
+  type StateEffect,
+  Transaction,
+} from '@codemirror/state'
 import type { Command, EditorView } from '@codemirror/view'
+import { linkOpener, modifier } from '../links'
 import { redoEdit, undoEdit } from '../shared'
 import {
   attached,
@@ -15,12 +25,26 @@ import {
   caretAtEdge,
   caretOffset,
   caretRect,
+  offsetAtPoint,
   selectAtPoint,
   selectIn,
   selectionIn,
   textRows,
 } from './caret'
-import { type Align, type Order, type TableModel, serializeTable, setCell } from './model'
+import {
+  type Align,
+  columnWidth,
+  columnWidths,
+  displayWidth,
+  nameAfter,
+  type Order,
+  parseTable,
+  sameModel,
+  serializeRow,
+  serializeTable,
+  setCell,
+  type TableModel,
+} from './model'
 import {
   type CellAddress,
   type Side,
@@ -33,6 +57,9 @@ import {
   lineBeside,
   type TableSpan,
   tableAt,
+  changesDuring,
+  tableWrite,
+  writingTable,
 } from './navigation'
 import {
   alignedColumn,
@@ -46,6 +73,7 @@ import {
   removedRow,
   sortedColumn,
 } from './edits'
+import { sourceOffset } from './inline'
 import { inlineShortcut, runInCell } from './shortcuts'
 
 export interface TableSource {
@@ -58,7 +86,6 @@ export type Placement = 'start' | 'end' | 'all' | { x: number; edge: 'top' | 'bo
 
 export type Landing = 'start' | 'end' | { x: number }
 
-const IDLE_COMMIT = 700
 const WINDOWED = 150
 const AROUND = 40
 const STEP = 20
@@ -89,10 +116,15 @@ export class TableView {
   private readonly alignButtons: Record<'left' | 'center' | 'right', HTMLButtonElement>
   private model: TableModel
   private source: string
-  private from: number
+
   private pending: { at: CellAddress; value: string } | null = null
-  private idle: number | undefined
+  private start: number | null = null
+  private aligned: number[] | null = null
+  private expected: { source: string; model: TableModel; widths: number[] } | null = null
+
   private focusAfter: Focus | null = null
+  private composing = false
+
   private widths: (number | null)[]
   private barColumn = -1
   private barRow = -1
@@ -117,7 +149,7 @@ export class TableView {
   ) {
     this.model = model
     this.source = text.source
-    this.from = text.from
+    this.start = text.from
     this.widths = model.header.map(() => null)
     this.editable = !editor.state.readOnly
 
@@ -150,28 +182,132 @@ export class TableView {
     return tableAt(editor.state, editor.state.doc.lineAt(at).to)
   }
 
+  continues(text: TableSource): boolean {
+    return this.start === text.from
+  }
+
+  get tracked(): number | null {
+    return this.start
+  }
+
+  track(changes: ChangeSet, doc: Text) {
+    const { start } = this
+    if (start === null) return
+    const exact = changes.mapPos(start, 1, MapMode.TrackAfter)
+    if (exact !== null) {
+      this.start = exact
+      return
+    }
+
+    this.start = null
+    const header = headerOf(this.source)
+    changes.iterChanges((fromA, toA, fromB, toB) => {
+      if (start < fromA || start >= toA) return
+      const aimed = fromB + (start - fromA)
+      let nearest: number | null = null
+      for (let pos = fromB; pos < toB;) {
+        const line = doc.lineAt(pos)
+        if (line.to <= toB && headerOf(line.text) === header) {
+          if (nearest === null || Math.abs(line.from - aimed) < Math.abs(nearest - aimed)) {
+            nearest = line.from
+          }
+        }
+        pos = line.to + 1
+      }
+      this.start = nearest
+    })
+  }
+
+  sameTable(model: TableModel): boolean {
+    return this.model.header.every((text, column) => model.header[column] === text)
+  }
+
+  private placeOf(model: TableModel): CellAddress | null {
+    const { pending } = this
+    if (!pending) return null
+    const { row, column } = pending.at
+    const written = setCell(this.model, row, column, pending.value)
+    const mine = (row < 0 ? written.header : written.rows[row]) ?? []
+    const cell = mine[column]?.trim()
+    if (cell === undefined) return null
+    if (row < 0) return model.header[column] === cell ? pending.at : null
+
+    const whole = (cells: string[] | undefined) =>
+      cells?.length === mine.length &&
+      cells.every((text, at) => text === (at === column ? cell : mine[at]))
+    if (whole(model.rows[row])) return pending.at
+    const found = model.rows.flatMap((cells, at) => (whole(cells) ? [at] : []))
+    if (found.length === 1 && found[0] !== undefined) return { row: found[0], column }
+    if (found.length > 1) return null
+    return model.rows[row]?.[column] === cell ? pending.at : null
+  }
+
   adopt(text: TableSource, model: TableModel) {
-    const shown = serializeTable(model) === serializeTable(this.current())
+    const before = this.model
+    const place = this.placeOf(model)
+    const kept = place !== null
+    if (place && this.pending && !sameCell(place, this.pending.at)) {
+      const focused = this.focusedCell()
+      if (focused && !this.focusAfter) this.focusAfter = { at: place, offset: focused.offset }
+      this.pending = { at: place, value: this.pending.value }
+    }
+    const pending = kept ? this.pending : null
+    const incoming = pending
+      ? setCell(model, pending.at.row, pending.at.column, pending.value)
+      : model
+    const shown = sameModel(incoming, this.current())
+    const expected = this.expected?.source === text.source ? this.expected : null
+    this.aligned = expected ? expected.widths : null
     this.source = text.source
-    this.from = text.from
+    this.start = text.from
     this.model = model
+    if (!kept) this.clearPending()
 
     if (shown && this.editable === !this.editor.state.readOnly) {
       this.focusAfter = null
       return
     }
+    if (this.composing && !this.focusAfter && this.editable === !this.editor.state.readOnly) {
+      if (this.patch(before)) return
+    }
     this.editable = !this.editor.state.readOnly
-    this.clearPending()
     this.render()
   }
 
+  private patch(before: TableModel): boolean {
+    const { model } = this
+    const same =
+      before.header.length === model.header.length &&
+      before.rows.length === model.rows.length &&
+      before.align.every((align, column) => model.align[column] === align)
+    if (!same) return false
+
+    const focused = this.focusedCell()?.at
+    if (focused && textIn(model, focused) !== textIn(before, focused)) return false
+    if (focused && movedAway(before, model, focused.row)) return false
+    for (const cell of this.table.querySelectorAll<HTMLElement>('[data-row][data-column]')) {
+      const at = { row: Number(cell.dataset.row), column: Number(cell.dataset.column) }
+      if (sameCell(at, focused)) continue
+      const text = this.shownText(at, textIn(model, at))
+      if (cell.dataset.source === text) continue
+      cell.dataset.source = text
+      showRendered(cell)
+    }
+    return true
+  }
+
+  modelFor(source: string): TableModel | null {
+    return this.expected?.source === source ? this.expected.model : parseTable(source)
+  }
+
+  focusState(): { at: CellAddress; offset: number } | null {
+    return this.focusedCell()
+  }
+
   destroy() {
-    const left = this.pending ? serializeTable(this.current()) : null
-    const { editor, from, source } = this
     this.clearPending()
     this.dragging?.()
     this.unfollow()
-    if (left !== null && left !== source) queueMicrotask(() => keepEdit(editor, from, source, left))
   }
 
   flush() {
@@ -255,25 +391,91 @@ export class TableView {
       return
     }
 
-    window.clearTimeout(this.idle)
     this.focusAfter = focus ?? null
-
-    const text = serializeTable(next)
-    const { editor } = this
-    const span = this.span()
-    const current = span && editor.state.doc.sliceString(span.from, span.to) === this.source
-
-    if (text !== this.source && span && current)
-      editor.dispatch({ changes: { from: span.from, to: span.to, insert: text } })
-
+    const widths = columnWidths(next)
+    this.write(serializeTable(next, widths), 'input', next, widths)
     this.clearPending()
     this.focusAfter = null
   }
 
+  private write(text: string, userEvent: string, model: TableModel, widths: number[]): boolean {
+    const { editor } = this
+    const from = this.span()?.from ?? this.start
+    if (from === null) return false
+    if (text === this.source) {
+      this.aligned = widths
+      return false
+    }
+    if (editor.state.doc.sliceString(from, from + this.source.length) !== this.source) return false
+
+    this.keepCaretBeside(from, from + this.source.length)
+    this.expected = { source: text, model, widths }
+    try {
+      editor.dispatch({
+        changes: lineChanges(from, this.source, text),
+        userEvent,
+        annotations: tableWrite.of(true),
+      })
+    } finally {
+      this.expected = null
+    }
+    return true
+  }
+
+  private keepCaretBeside(from: number, to: number) {
+    const { state } = this.editor
+    const blank = (pos: number) => !state.doc.lineAt(pos).text.trim()
+    const beside = [to + 1, from - 1].find(
+      (pos) => pos >= 0 && pos <= state.doc.length && blank(pos),
+    )
+    if (beside === undefined) return
+    const { main } = state.selection
+    if (state.selection.ranges.length === 1 && main.empty && main.head === beside) return
+    this.editor.dispatch({
+      selection: { anchor: beside },
+      annotations: [tableWrite.of(true), Transaction.addToHistory.of(false)],
+    })
+  }
+
+  private typeIn(at: CellAddress) {
+    const next = this.current()
+    const widths = this.aligned
+    if (!widths) {
+      const fresh = columnWidths(next)
+      this.write(serializeTable(next, fresh), 'input.type', next, fresh)
+      return
+    }
+
+    const { row, column } = at
+    const before = (row < 0 ? this.model.header : this.model.rows[row])?.[column] ?? ''
+    const cells = (row < 0 ? next.header : next.rows[row]) ?? []
+    const now = cells[column] ?? ''
+    const width = widths[column] ?? 0
+    let wide = width
+    if (displayWidth(now) > width) wide = displayWidth(now)
+    else if (displayWidth(before) >= width) wide = columnWidth(next, column)
+
+    const sized = widths.slice()
+    sized[column] = wide
+    if (wide !== width) {
+      this.write(serializeTable(next, sized), 'input.type', next, sized)
+      return
+    }
+
+    const lines = this.source.split('\n')
+    lines[row < 0 ? 0 : row + 2] =
+      serializeRow(cells, sized) + (row < 0 ? '' : nameAfter(next, row))
+    this.write(lines.join('\n'), 'input.type', next, sized)
+  }
+
   private clearPending() {
-    window.clearTimeout(this.idle)
     this.pending = null
     if (active === this) active = null
+  }
+
+  private shownText(at: CellAddress, text: string): string {
+    const { pending } = this
+    return pending && sameCell(at, pending.at) ? pending.value : text
   }
 
   private render() {
@@ -289,7 +491,7 @@ export class TableView {
     if (this.fitted?.length !== model.header.length) this.fitted = null
     model.header.forEach((text, column) => {
       const at = { row: -1, column }
-      const th = this.cell(text, at, 'th', sameCell(at, focus?.at))
+      const th = this.cell(this.shownText(at, text), at, 'th', sameCell(at, focus?.at))
 
       const grip = element('span', 'orden-table-resize')
       grip.contentEditable = 'false'
@@ -367,7 +569,7 @@ export class TableView {
     tr.dataset.row = String(index)
     const cells = (this.model.rows[index] ?? []).map((text, column) => {
       const at = { row: index, column }
-      return this.cell(text, at, 'td', sameCell(at, editing))
+      return this.cell(this.shownText(at, text), at, 'td', sameCell(at, editing))
     })
     tr.append(...cells)
     this.drawn.set(index, tr)
@@ -514,6 +716,19 @@ export class TableView {
     return rows - 1
   }
 
+  private followedLink(event: MouseEvent): boolean {
+    const asked =
+      event.button === 1 || (event.button === 0 && (modifier(event) || this.editor.state.readOnly))
+    const target = event.target instanceof Element ? event.target.closest('a[href]') : null
+    const href = target?.getAttribute('href')
+    if (!asked || !href) return false
+
+    event.preventDefault()
+    event.stopPropagation()
+    this.editor.state.facet(linkOpener)(href, event)
+    return true
+  }
+
   private cell(text: string, at: CellAddress, tag: 'th' | 'td', editing: boolean) {
     const cell = element(tag)
     cell.contentEditable = this.editable ? 'true' : 'false'
@@ -528,20 +743,39 @@ export class TableView {
     const align = this.model.align[at.column]
     if (align) cell.style.textAlign = align
 
+    cell.addEventListener('auxclick', (event) => {
+      if (event.target instanceof Element && event.target.closest('a[href]')) event.preventDefault()
+    })
+    cell.addEventListener('click', (event) => {
+      if (event.target instanceof Element && event.target.closest('a[href]')) event.preventDefault()
+    })
+
     cell.addEventListener('mousedown', (event) => {
+      if (this.followedLink(event)) return
       if (this.editor.state.readOnly) return
       if (event.button !== 0 || document.activeElement === cell) return
+      const source = cell.dataset.source ?? ''
+      const shown = offsetAtPoint(cell, event.clientX, event.clientY)
+      const drawn = cell.textContent !== source
       event.preventDefault()
       cell.focus()
-      selectAtPoint(cell, event.clientX, event.clientY)
+      if (shown === null) selectAtPoint(cell, event.clientX, event.clientY)
+      else selectIn(cell, drawn ? sourceOffset(source, shown) : shown)
     })
 
     cell.addEventListener('focus', () => showSource(cell))
-    cell.addEventListener('blur', () => queueMicrotask(() => this.left(cell, at)))
+    cell.addEventListener('blur', () => {
+      this.composing = false
+      queueMicrotask(() => this.left(cell, at))
+    })
     cell.addEventListener('input', (event) => {
       if (!(event as InputEvent).isComposing) this.edited(cell, at)
     })
-    cell.addEventListener('compositionend', () => this.edited(cell, at))
+    cell.addEventListener('compositionstart', () => (this.composing = true))
+    cell.addEventListener('compositionend', () => {
+      this.composing = false
+      this.edited(cell, at)
+    })
     cell.addEventListener('keydown', (event) => this.keyInCell(event, cell, at))
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
@@ -554,6 +788,7 @@ export class TableView {
   }
 
   private edited(cell: HTMLElement, at: CellAddress) {
+    if (!attached(cell)) return
     if (this.editor.state.readOnly) {
       cell.blur()
       return
@@ -561,9 +796,7 @@ export class TableView {
 
     this.pending = { at, value: cell.textContent }
     holdsEdit(this)
-
-    window.clearTimeout(this.idle)
-    this.idle = window.setTimeout(() => this.flush(), IDLE_COMMIT)
+    this.typeIn(at)
   }
 
   private left(cell: HTMLElement, at: CellAddress) {
@@ -675,7 +908,13 @@ export class TableView {
     event.preventDefault()
     this.flush()
     this.focusAfter = { at, offset: caretOffset(cell) }
-    command(this.editor)
+    const scroll = this.editor.scrollSnapshot()
+    const made = changesDuring(this.editor, () => writingTable(() => command(this.editor)))
+    const kept = made.reduce<StateEffect<unknown> | undefined>(
+      (effect, changes) => effect?.map(changes),
+      scroll,
+    )
+    if (kept) this.editor.dispatch({ effects: kept, annotations: tableWrite.of(true) })
     this.focusAfter = null
   }
 
@@ -728,17 +967,23 @@ export class TableView {
   }
 
   private sortBy(column: number) {
-    const order = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
-    const edit = sortedColumn(this.current(), column, order, this.focusedCell() ?? undefined)
-    if (edit.next === this.current()) return
-
-    this.sortedAs = { column, order }
-    this.apply(edit)
+    const current = this.current()
+    const focus = this.focusedCell() ?? undefined
+    const asked = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
+    const other = asked === 'up' ? 'down' : 'up'
+    for (const order of [asked, other] as const) {
+      const edit = sortedColumn(current, column, order, focus)
+      if (edit.next === current) continue
+      this.sortedAs = { column, order }
+      this.apply(edit)
+      return
+    }
   }
 
   private moveColumnBy(column: number, step: number) {
-    const edit = movedColumn(this.current(), column, step, this.focusedCell() ?? undefined)
-    if (edit.next === this.current()) return
+    const current = this.current()
+    const edit = movedColumn(current, column, step, this.focusedCell() ?? undefined)
+    if (edit.next === current) return
 
     const [width] = this.widths.splice(column, 1)
     this.widths.splice(column + step, 0, width ?? null)
@@ -751,8 +996,9 @@ export class TableView {
   }
 
   private deleteColumn(column: number) {
-    const edit = removedColumn(this.current(), column, this.focusedCell() ?? undefined)
-    if (edit.next === this.current()) return
+    const current = this.current()
+    const edit = removedColumn(current, column, this.focusedCell() ?? undefined)
+    if (edit.next === current) return
 
     this.widths.splice(column, 1)
     this.apply(edit)
@@ -987,8 +1233,7 @@ export class TableView {
   }
 
   private textOf(at: CellAddress): string {
-    const { model } = this
-    return (at.row < 0 ? model.header[at.column] : model.rows[at.row]?.[at.column]) ?? ''
+    return textIn(this.model, at)
   }
 }
 
@@ -999,10 +1244,59 @@ function around(row: number, rows: number): { from: number; to: number } {
   }
 }
 
-function keepEdit(editor: EditorView, from: number, source: string, text: string) {
-  const { state } = editor
-  if (state.readOnly || state.doc.sliceString(from, from + source.length) !== source) return
-  editor.dispatch({ changes: { from, to: from + source.length, insert: text } })
+function headerOf(text: string): string {
+  const [first = ''] = text.split('\n', 1)
+  return first
+    .trim()
+    .replace(/^\||\|$/g, '')
+    .split('|')
+    .map((cell) => cell.trim())
+    .join('|')
+}
+
+function movedAway(before: TableModel, model: TableModel, row: number): boolean {
+  const was = before.rows[row]
+  const now = model.rows[row]
+  if (!was || !now || sameCells(was, now)) return false
+  return model.rows.some((cells, at) => at !== row && sameCells(cells, was))
+}
+
+function sameCells(one: readonly string[], other: readonly string[]): boolean {
+  return one.length === other.length && one.every((cell, at) => cell === other[at])
+}
+
+function textIn(model: TableModel, at: CellAddress): string {
+  return (at.row < 0 ? model.header[at.column] : model.rows[at.row]?.[at.column]) ?? ''
+}
+
+function lineChanges(from: number, before: string, after: string): ChangeSpec[] {
+  const old = before.split('\n')
+  const next = after.split('\n')
+  if (old.length !== next.length) return [{ from, to: from + before.length, insert: after }]
+
+  const changes: ChangeSpec[] = []
+  let at = from
+  old.forEach((line, index) => {
+    const made = next[index] ?? ''
+    if (line !== made) {
+      let head = 0
+      while (head < line.length && head < made.length && line[head] === made[head]) head++
+      let tail = 0
+      while (
+        tail < line.length - head &&
+        tail < made.length - head &&
+        line[line.length - 1 - tail] === made[made.length - 1 - tail]
+      )
+        tail++
+      changes.push({
+        from: at + head,
+        to: at + line.length - tail,
+        insert: made.slice(head, made.length - tail),
+      })
+    }
+    at += line.length + 1
+  })
+  return changes
 }
 
 const PASTE_TEXT = 'orden:paste-text'

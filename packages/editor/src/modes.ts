@@ -21,6 +21,7 @@ import { fenceLanguage } from './languages'
 import { livePreview } from './live-preview'
 import { noReveal, quietMarks } from './live-preview/reveal'
 import { numberEquations } from './live-preview/blocks'
+import { numberHeadings } from './headings'
 import { ordenMarkdownExtensions, NoSetextHeadings } from './markdown/extensions'
 import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
@@ -207,7 +208,7 @@ const ligaturesFor = once((scope: LigatureScope): Extension =>
 const punctuationFor = once((on: boolean): Extension => (on ? smartPunctuation() : []))
 
 const headingNumbersFor = once((on: boolean): Extension =>
-  on ? editorClass('orden-numbered') : [],
+  on ? [editorClass('orden-numbered'), numberHeadings.of(true)] : [],
 )
 
 const codeLineNumbersFor = once((on: boolean): Extension =>
@@ -230,6 +231,14 @@ export function firstStrong(text: string): Direction | null {
   return null
 }
 
+const UNSHOWN = [/^([ \t>]*(?:[-*+]|\d+[.)])[ \t]+)\[[ xX]\]/, /^([ \t>]*)\[![^\]]*\][+-]?/]
+
+const HIDDEN_WRITING = /\[\[[^\]|]*\||:[\w+-]+:|\]\([^)]*\)|<[^>]*>/g
+
+function shownText(text: string): string {
+  return UNSHOWN.reduce((line, mark) => line.replace(mark, '$1'), text).replace(HIDDEN_WRITING, ' ')
+}
+
 function keepsItsOwn(state: EditorState, pos: number): boolean {
   for (let node = syntaxTree(state).resolveInner(pos, 1); node.parent; node = node.parent)
     if (OWN_DIRECTION.has(node.name)) return true
@@ -248,7 +257,7 @@ function directions(view: EditorView, base: Direction): DecorationSet {
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to;) {
       const line = state.doc.lineAt(pos)
-      const said = firstStrong(line.text)
+      const said = firstStrong(shownText(line.text))
       if (said !== null && said !== base && !keepsItsOwn(state, line.from))
         marks.push(asWritten[said].range(line.from))
       if (line.to >= state.doc.length) break

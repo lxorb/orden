@@ -34,6 +34,30 @@ export async function prepareEmbeds(
   return (link) => bodies.get(link.target) ?? null
 }
 
+interface FenceOptions {
+  highlight?: boolean
+  query?: ((code: string, language: string) => Promise<string | null>) | undefined
+  base?: boolean
+}
+
+export async function prepareNote(
+  source: string,
+  scheme: Scheme,
+  read: ((target: string) => Promise<string | EmbeddedNote | null>) | undefined,
+  options: FenceOptions = {},
+): Promise<{ fence: Fence; embed?: (link: Wikilink) => string | EmbeddedNote | null }> {
+  const embedded: string[] = []
+  const embed = read
+    ? await prepareEmbeds(source, async (target) => {
+        const body = await read(target)
+        if (body !== null) embedded.push(typeof body === 'string' ? body : body.text)
+        return body
+      })
+    : undefined
+  const fence = await prepareFences([source, ...embedded].join('\n\n'), scheme, options)
+  return embed ? { fence, embed } : { fence }
+}
+
 export type Drawer = (code: string, language: string, scheme: Scheme) => Promise<string>
 
 const ANSWERED = new Set(['query', 'tasks'])
@@ -41,11 +65,7 @@ const ANSWERED = new Set(['query', 'tasks'])
 export async function prepareFences(
   source: string,
   scheme: Scheme,
-  options: {
-    highlight?: boolean
-    query?: ((code: string, language: string) => Promise<string | null>) | undefined
-    base?: boolean
-  } = {},
+  options: FenceOptions = {},
   draw: Drawer = drawDiagram,
 ): Promise<Fence> {
   const blocks = codeBlocks(source)

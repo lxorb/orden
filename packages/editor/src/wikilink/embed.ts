@@ -1,26 +1,58 @@
-import type { EditorState } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import type { SyntaxNode } from '@lezer/common'
+import type { EditorState, Line } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { DOCUMENT, PLANE } from '@orden/markdown/icons'
 import {
   embedKind,
   embedSize,
+  isTabFile,
   linkTarget,
   pageFragment,
   parseWikilink,
   sectionOf,
 } from '@orden/markdown/links'
 import { iconElement } from '../icon'
-import { imageResolver } from '../images'
+import { followAnchors } from '../links'
 import { pressedByKey } from '../press'
 import { openLightbox } from '../live-preview/image/lightbox'
 import { BaseWidget } from '../live-preview/render'
 import { OrdenWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
-import { type FileDrawing, jumpFor, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
+import {
+  type FileDrawing,
+  jumpFor,
+  type NoteIndex,
+  noteIndex,
+  noteOpener,
+  resolveFile,
+  resolveLink,
+} from './notes'
 
 const MOST_EMBEDDED = 40_000
 const EMBED_MAX = 512
+
+const OWN_BLOCK = /^(?:ATXHeading\d|FrontMatter|HorizontalRule|FencedCode|BlockMath)$/
+
+const OPENS_BELOW = /^(?:BulletList|OrderedList|Blockquote|Table|HTMLBlock)$/
+
+const LONE_EMBED = /^!\[\[[^[\]]+\]\]$/
+
+function standsApart(state: EditorState, line: Line, below: boolean): boolean {
+  const text = line.text.trim()
+  if (text === '' || LONE_EMBED.test(text)) return true
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolve(line.from, 1);
+    node;
+    node = node.parent
+  ) {
+    if (OWN_BLOCK.test(node.name) || (below && OPENS_BELOW.test(node.name))) {
+      return node.from <= line.from && node.to >= line.to
+    }
+  }
+  return false
+}
 
 export function embedOfBlock(state: EditorState, from: number, to: number): LinkSpan | null {
   if (to - from > EMBED_MAX || state.sliceDoc(from, from + 3) !== '![[') return null
@@ -32,13 +64,15 @@ export function embedOfBlock(state: EditorState, from: number, to: number): Link
   if (from !== line.from + (line.text.length - line.text.trimStart().length)) return null
   if (to !== line.from + line.text.trimEnd().length) return null
 
-  const above = line.number > 1 ? doc.line(line.number - 1).text : ''
-  const below = line.number < doc.lines ? doc.line(line.number + 1).text : ''
-  if (above.trim() !== '' || below.trim() !== '') return null
+  if (line.number > 1 && !standsApart(state, doc.line(line.number - 1), false)) return null
+  if (line.number < doc.lines && !standsApart(state, doc.line(line.number + 1), true)) return null
 
   if (!text.startsWith('![[') || !text.endsWith(']]')) return null
 
-  const link = parseWikilink(text.slice(3, -2), true)
+  const inner = text.slice(3, -2)
+  if (/[[\]]/.test(inner)) return null
+
+  const link = parseWikilink(inner, true)
   return link && { ...link, kind: 'wikilink', from, to }
 }
 
@@ -46,6 +80,7 @@ export class EmbedWidget extends OrdenWidget {
   constructor(
     private readonly link: LinkSpan,
     private readonly path: string | null,
+    private readonly index?: NoteIndex,
   ) {
     super()
   }
@@ -53,6 +88,7 @@ export class EmbedWidget extends OrdenWidget {
   override eq(other: EmbedWidget) {
     return (
       other.path === this.path &&
+      other.index === this.index &&
       other.link.target === this.link.target &&
       other.link.heading === this.link.heading &&
       other.link.block === this.link.block &&
@@ -66,6 +102,7 @@ export class EmbedWidget extends OrdenWidget {
 
     const body = document.createElement('div')
     body.className = 'orden-embed-body'
+    followAnchors(body, () => view)
     frame.append(body)
 
     const caption = document.createElement('button')
@@ -84,32 +121,55 @@ export class EmbedWidget extends OrdenWidget {
     pressedByKey(caption, () => open())
     frame.append(caption)
 
-    const missing = () => {
+    this.fill(view, frame, body, true)
+    return frame
+  }
+
+  override updateDOM(dom: HTMLElement, view: EditorView, previous: EmbedWidget) {
+    const same =
+      previous.path === this.path &&
+      previous.link.target === this.link.target &&
+      previous.link.heading === this.link.heading &&
+      previous.link.block === this.link.block &&
+      previous.link.alias === this.link.alias
+    const body = dom.querySelector<HTMLElement>('.orden-embed-body')
+    if (!same || !body) return false
+    this.fill(view, dom, body, false)
+    return true
+  }
+
+  private fill(view: EditorView, frame: HTMLElement, body: HTMLElement, first: boolean) {
+    const turn = (filling.get(frame) ?? 0) + 1
+    filling.set(frame, turn)
+    const current = () => body.isConnected && filling.get(frame) === turn
+    const shown = (html: string) => {
+      frame.classList.remove('orden-embed-loading', 'orden-embed-missing')
+      if (body.innerHTML !== html) body.innerHTML = html
+    }
+    const missing = (words = 'Note not found') => {
       frame.classList.remove('orden-embed-loading')
       frame.classList.add('orden-embed-missing')
-      body.textContent = 'Note not found'
+      body.textContent = words
     }
 
     if (this.path === null) {
       missing()
-      return frame
+      return
     }
 
-    if (view.state.facet(noteIndex).locked?.(this.path)) {
-      frame.classList.add('orden-embed-missing')
-      body.textContent = 'Protected'
-      return frame
+    const path = this.path
+    const index = view.state.facet(noteIndex)
+    if (index.locked?.(path)) {
+      missing('Protected')
+      return
     }
 
-    frame.classList.add('orden-embed-loading')
+    if (first) frame.classList.add('orden-embed-loading')
 
-    const showing = () => body.isConnected
-
-    void view.state
-      .facet(noteIndex)
-      .read(this.path)
+    void index
+      .read(path)
       .then(async (source) => {
-        if (!showing()) return
+        if (first ? !body.isConnected : !current()) return
 
         const section = source === null ? null : sectionOf(source, this.link)
         if (section === null) {
@@ -117,22 +177,28 @@ export class EmbedWidget extends OrdenWidget {
           return
         }
 
-        const html = await renderNote(section.slice(0, MOST_EMBEDDED), this.path, view.state)
-        if (!showing()) return
-
-        frame.classList.remove('orden-embed-loading')
-        body.innerHTML = html
+        const html = await renderNote(section.slice(0, MOST_EMBEDDED), path, view.state)
+        if (current()) shown(html)
       })
       .catch(() => {
-        if (showing()) missing()
+        if (current()) missing()
       })
-
-    return frame
   }
 
   override ignoreEvent() {
     return true
   }
+}
+
+const filling = new WeakMap<HTMLElement, number>()
+
+export function drawnAsLink(state: EditorState, link: LinkSpan): boolean {
+  const kind = embedKind(link.target)
+  if (kind === 'pdf' || kind === 'canvas' || kind === 'base') return false
+  if (isTabFile(link.target)) return true
+  if (!link.target) return false
+  const path = resolveLink(state.facet(noteIndex), link, link.kind)?.path ?? null
+  return path !== null && isTabFile(path)
 }
 
 export function embedWidget(
@@ -149,16 +215,23 @@ export function embedWidget(
     return new EmbedFileWidget(link, kind, resolveFile(index, link.target, link.kind))
 
   const path = link.target ? (resolveLink(index, link, link.kind)?.path ?? null) : index.path
-  return new EmbedWidget(link, path)
+  return new EmbedWidget(link, path, index)
 }
 
 export class EmbedImageWidget extends OrdenWidget {
-  constructor(private readonly link: LinkSpan) {
+  constructor(
+    private readonly link: LinkSpan,
+    private readonly address: string,
+  ) {
     super()
   }
 
   override eq(other: EmbedImageWidget) {
-    return other.link.target === this.link.target && other.link.alias === this.link.alias
+    return (
+      other.address === this.address &&
+      other.link.target === this.link.target &&
+      other.link.alias === this.link.alias
+    )
   }
 
   toDOM(view: EditorView) {
@@ -181,7 +254,7 @@ export class EmbedImageWidget extends OrdenWidget {
       openLightbox(view, picture.src, picture.alt)
     })
 
-    picture.src = view.state.facet(imageResolver)(this.link.target, true)
+    picture.src = this.address
     return picture
   }
 
@@ -194,6 +267,7 @@ export class EmbedMediaWidget extends OrdenWidget {
   constructor(
     private readonly link: LinkSpan,
     private readonly kind: 'audio' | 'video',
+    private readonly address: string,
   ) {
     super()
   }
@@ -201,12 +275,13 @@ export class EmbedMediaWidget extends OrdenWidget {
   override eq(other: EmbedMediaWidget) {
     return (
       other.kind === this.kind &&
+      other.address === this.address &&
       other.link.target === this.link.target &&
       other.link.alias === this.link.alias
     )
   }
 
-  toDOM(view: EditorView) {
+  toDOM() {
     const player = document.createElement(this.kind)
     player.className = `orden-embed-media orden-embed-${this.kind}`
     player.controls = true
@@ -222,7 +297,7 @@ export class EmbedMediaWidget extends OrdenWidget {
     }
 
     player.addEventListener('dragstart', (event) => event.preventDefault())
-    player.src = view.state.facet(imageResolver)(this.link.target, true)
+    player.src = this.address
 
     this.onDestroy(player, () => {
       player.pause()

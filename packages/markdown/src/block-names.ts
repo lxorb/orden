@@ -2,6 +2,7 @@ import {
   blockIdOf,
   heldBlocks,
   isHeading,
+  leadTo,
   nameIndent,
   itemLines,
   layoutOf,
@@ -85,7 +86,7 @@ export function namedBlock(
   const name = id()
   if (nameStandsApart(rows.slice(from, end + 1))) {
     const below = rows[end + 1]
-    const indent = nameIndent(rows, from)
+    const indent = leadTo(rows[from]?.text ?? '', nameIndent(rows, from).length)
     const joins = (below?.text.trim() ?? '') === '' || (indent !== '' && listed(below))
     lines.splice(end + 1, 0, ending, `${indent}^${name}${ending}`, ...(joins ? [] : [ending]))
   } else {

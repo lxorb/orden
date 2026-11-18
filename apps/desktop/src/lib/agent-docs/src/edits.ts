@@ -1,6 +1,6 @@
 import { type Anchor, oneEnding, type Place, readAnchor, resolve, type Selected } from './anchors'
-import { DocError } from './problem'
 import { isRecord } from '../../platform/src/api'
+import { DocError } from './problem'
 
 export interface Replacement {
   from: number
@@ -82,29 +82,64 @@ function apartFromAfter(words: string, gap: number, text: string, at: number): s
   return words + '\n'.repeat(Math.max(0, gap - have))
 }
 
-function gapOf(place: Place): number {
+const CHILD_ITEM = /^([ \t]+)(?:[-*+]|\d+[.)])[ \t]/
+
+function withKept(words: string, keep: string): string {
+  const trimmed = words.replace(/\n+$/, '')
+  if (keep.startsWith('\n')) return trimmed + keep
+  const lines = trimmed.split('\n')
+  const lead = /^[ \t]*/.exec(lines[0] ?? '')?.[0].length ?? 0
+  const child = lines.findIndex(
+    (line, at) => at > 0 && (CHILD_ITEM.exec(line)?.[1]?.length ?? 0) > lead,
+  )
+  if (child < 1) return trimmed + keep
+  return [
+    ...lines.slice(0, child - 1),
+    `${lines[child - 1] ?? ''}${keep}`,
+    ...lines.slice(child),
+  ].join('\n')
+}
+
+const ITEM_LINE = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]/
+
+function gapOf(place: Place, words: string): number {
   if (place.shape === 'words') return 0
+  if (place.shape === 'item') return words && !ITEM_LINE.test(words.replace(/^\n+/, '')) ? 2 : 1
   return place.shape === 'line' ? 1 : 2
 }
 
+function indented(words: string, indent: string | undefined): string {
+  if (!indent || words.replace(/^\n+/, '').startsWith(indent)) return words
+  return words
+    .split('\n')
+    .map((line) => (line.trim() ? indent + line : line))
+    .join('\n')
+}
+
 function placed(text: string, place: Place, doing: Doing): Replacement {
-  const gap = gapOf(place)
+  const asked = doing.kind === 'delete' ? '' : indented(doing.words, place.indent)
+  const gap = gapOf(place, asked)
 
   switch (doing.kind) {
     case 'replace': {
-      const keep = place.keep && !doing.words.includes(place.keep.trim()) ? place.keep : ''
-      const words = keep ? doing.words.replace(/\n+$/, '') + keep : doing.words
+      const keep = place.keep && !asked.includes(place.keep.trim()) ? place.keep : ''
+      const words = keep ? withKept(asked, keep) : asked
       return { from: place.from, to: place.to, insert: words }
     }
 
     case 'before':
     case 'after': {
-      const at = doing.kind === 'before' ? place.from : (place.under ?? place.to)
+      const at = doing.kind === 'before' ? place.from : (place.after ?? place.to)
       const edge = place.shape === 'edge'
       const atEnd = edge ? at === text.length : doing.kind === 'after'
-      const words = atEnd
-        ? apartFromBefore(doing.words, gap, text, at)
-        : apartFromAfter(doing.words, gap, text, at)
+      const apart = atEnd
+        ? apartFromBefore(asked, gap, text, at)
+        : apartFromAfter(asked, gap, text, at)
+      const words = edge
+        ? apart
+        : atEnd
+          ? apartFromAfter(apart, gap, text, at)
+          : apartFromBefore(apart, gap, text, at)
       const ending = at === text.length && text.endsWith('\n') && !words.endsWith('\n')
       return { from: at, to: at, insert: ending ? `${words}\n` : words }
     }
@@ -115,9 +150,8 @@ function placed(text: string, place: Place, doing: Doing): Replacement {
       }
       if (!gap) return { from: place.from, to: place.to, insert: '' }
 
-      const end = place.under ?? place.to
-      let to = end
-      while (to < text.length && text[to] === '\n' && to - end < gap) to++
+      let to = place.to
+      while (to < text.length && text[to] === '\n' && to - place.to < gap) to++
       let from = place.from
       if (to === text.length) {
         while (from > 0 && text[from - 1] === '\n') from--

@@ -9,7 +9,7 @@ import {
   parseWikilink,
   type Wikilink,
 } from '@orden/markdown/links'
-import { enclosingNamed } from '../nodes'
+import { enclosingNamed, linkAddress, linkBrackets } from '../nodes'
 
 export interface LinkSpan extends Wikilink {
   kind: LinkKind
@@ -27,7 +27,7 @@ export function wikilinkOfNode(state: EditorState, node: SyntaxNode): LinkSpan |
 }
 
 export function noteLinkOfNode(state: EditorState, node: SyntaxNode): LinkSpan | null {
-  const url = node.getChild('URL')
+  const url = linkAddress(node)
   if (!url) return null
 
   const written = state.doc.sliceString(url.from, url.to).replace(/^<|>$/g, '')
@@ -38,12 +38,8 @@ export function noteLinkOfNode(state: EditorState, node: SyntaxNode): LinkSpan |
   const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
   if (!target && !fragment) return null
 
-  const open = node.firstChild
-  const close = open?.nextSibling
-  const label =
-    open && close && open.name === 'LinkMark' && close.name === 'LinkMark'
-      ? state.doc.sliceString(open.to, close.from)
-      : ''
+  const brackets = linkBrackets(node)
+  const label = brackets ? state.doc.sliceString(brackets.open.to, brackets.close.from) : ''
 
   const block = fragment.startsWith('^') ? fragment.slice(1) : null
 

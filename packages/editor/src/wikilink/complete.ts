@@ -2,7 +2,17 @@ import type { Completion, CompletionContext, CompletionResult } from '@codemirro
 import { MapMode, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blocksOf, foldName, headingText, isHeading, type Row, rowsOf } from '@orden/markdown/links'
+import {
+  blocksOf,
+  commentedLines,
+  foldName,
+  headingText,
+  isHeading,
+  type Row,
+  rowsOf,
+} from '@orden/markdown/links'
+import { inCode } from '../code'
+import { bestShown } from './best-shown'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -45,8 +55,11 @@ const insert =
       ...(shown ? { shown } : {}),
     })
     const wiki = linked.startsWith('[[') && linked.endsWith(']]')
+    const bar = linked.lastIndexOf('|')
+    const inTable = wiki && bar !== -1 && kept.includes('\\|')
+    const written = inTable ? `${linked.slice(0, bar)}\\${linked.slice(bar)}` : linked
     const end = rest === null ? to : to + rest.length + 2
-    const text = !wiki && plainInMatter(view, start, end) ? JSON.stringify(linked) : linked
+    const text = !wiki && plainInMatter(view, start, end) ? JSON.stringify(linked) : written
 
     view.dispatch({
       changes: { from: start, to: end, insert: text },
@@ -72,18 +85,27 @@ function keptOf(rest: string, fragmentChosen: boolean): string {
     .map((mark) => rest.indexOf(mark))
     .filter((one) => one !== -1)
     .reduce((first, one) => Math.min(first, one), rest.length)
-  return rest.slice(at)
+  return rest.slice(rest[at] === '|' && rest[at - 1] === '\\' ? at - 1 : at)
 }
 
-function headingOf(kept: string): string | null {
+const ESCAPED_BAR = /\\(?=\|)/g
+
+function headingOf(written: string): string | null {
+  const kept = written.replace(ESCAPED_BAR, '')
   const bar = kept.indexOf('|')
   const heading = (bar === -1 ? kept : kept.slice(0, bar)).slice(1)
   return heading || null
 }
 
-function shownOf(kept: string): string | null {
+function shownOf(written: string): string | null {
+  const kept = written.replace(ESCAPED_BAR, '')
   const bar = kept.indexOf('|')
   return bar === -1 ? null : kept.slice(bar + 1) || null
+}
+
+export function offeredBlocks(source: string) {
+  const commented = commentedLines(source)
+  return blocksOf(source).filter((block) => block.text !== '' && !commented.has(block.line))
 }
 
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
@@ -134,16 +156,16 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
   return rows
 }
 
-function noteOptions(index: NoteIndex, typed: string): Completion[] {
+function noteOptions(index: NoteIndex, typed: string): { rows: Completion[]; all: boolean } {
   const needle = foldName(typed.trim())
   const rows: Completion[] = []
 
   for (const note of index.notes) {
     rows.push(...rowsFor(index, note, needle))
-    if (rows.length >= MOST_SHOWN) break
+    if (!needle && rows.length > MOST_SHOWN) break
   }
 
-  return rows.slice(0, MOST_SHOWN)
+  return bestShown(rows, needle, MOST_SHOWN)
 }
 
 const matches = (note: NoteRef, needle: string): boolean =>
@@ -175,9 +197,7 @@ async function blockOptions(
 
   const needle = foldName(typed.trim())
   const rows = rowsOf(source)
-
-  return blocksOf(source)
-    .filter((block) => block.text !== '')
+  return offeredBlocks(source)
     .filter((block) => !needle || foldName(block.text).includes(needle))
     .slice(0, MOST_SHOWN)
     .map((block) => ({
@@ -261,7 +281,7 @@ const name =
       .catch(() => undefined)
   }
 
-function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
+function spaceHeadings(index: NoteIndex, typed: string): { rows: Completion[]; all: boolean } {
   const needle = foldName(typed.trim())
   const rows: Completion[] = []
 
@@ -277,11 +297,11 @@ function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
         apply: insert({ ...about(index, note), fragment: heading }),
         type: 'keyword',
       })
-      if (rows.length >= MOST_SHOWN) return rows
+      if (!needle && rows.length > MOST_SHOWN) return bestShown(rows, needle, MOST_SHOWN)
     }
   }
 
-  return rows
+  return bestShown(rows, needle, MOST_SHOWN)
 }
 
 function namedBlocks(index: NoteIndex, needle: string): Completion[] {
@@ -300,7 +320,7 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
         type: 'property',
         boost: 1,
       })
-      if (rows.length >= MOST_SHOWN) return rows
+      if (!needle && rows.length > MOST_SHOWN) return rows
     }
   }
 
@@ -329,12 +349,16 @@ function foundBlock(index: NoteIndex, block: SpaceBlock, heading: string | null)
   }
 }
 
-async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[]> {
+async function spaceBlocks(
+  index: NoteIndex,
+  typed: string,
+): Promise<{ rows: Completion[]; all: boolean }> {
   const needle = foldName(typed.trim())
-  const rows = namedBlocks(index, needle)
+  const ids = bestShown(namedBlocks(index, needle), needle, MOST_SHOWN)
+  const rows = ids.rows
   const named = new Set(rows.map((row) => row.label))
 
-  if (!index.searchBlocks || needle.length < LEAST_SEARCHED) return rows
+  if (!index.searchBlocks || needle.length < LEAST_SEARCHED) return ids
 
   const found = await index.searchBlocks(needle, MOST_SHOWN).catch(() => [])
 
@@ -347,14 +371,14 @@ async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[
     if (rows.length >= MOST_SHOWN) break
   }
 
-  return rows
+  return { rows, all: false }
 }
 
 export function wikilinkCompletions(
   context: CompletionContext,
 ): CompletionResult | Promise<CompletionResult | null> | null {
   const typed = typing(context)
-  if (!typed) return null
+  if (!typed || inCode(context.state, typed.from)) return null
 
   const index = context.state.facet(noteIndex)
   const inner = typed.text.slice(2)
@@ -363,19 +387,24 @@ export function wikilinkCompletions(
   const across = typed.from + 2 + MARKER
 
   if (inner.startsWith('##')) {
-    const options = spaceHeadings(index, inner.slice(MARKER))
-    return options.length ? { from: across, options, validFor: /^[^[\]\n#|^]*$/ } : null
+    const { rows: options, all } = spaceHeadings(index, inner.slice(MARKER))
+    if (!options.length) return null
+    return { from: across, options, ...(all ? { validFor: /^[^[\]\n#|^]*$/ } : {}) }
   }
 
   if (inner.startsWith('^^')) {
-    return spaceBlocks(index, inner.slice(MARKER)).then((options) =>
-      options.length ? { from: across, options, validFor: /^[^[\]\n#|^]*$/ } : null,
+    return spaceBlocks(index, inner.slice(MARKER)).then(({ rows: options, all }) =>
+      options.length
+        ? { from: across, options, ...(all ? { validFor: /^[^[\]\n#|^]*$/ } : {}) }
+        : null,
     )
   }
 
   if (hash === -1) {
-    const options = noteOptions(index, inner)
-    return options.length ? { from: typed.from + 2, options, validFor: /^[^[\]\n#|]*$/ } : null
+    const { rows: options, all } = noteOptions(index, inner)
+    if (!options.length) return null
+    if (inner.includes('/')) return { from: typed.from + 2, options, filter: false }
+    return { from: typed.from + 2, options, ...(all ? { validFor: /^[^[\]\n#|]*$/ } : {}) }
   }
 
   const named = inner.slice(0, hash).trim()
@@ -399,6 +428,6 @@ export function wikilinkCompletions(
   }
 
   return blockOptions(index, target, note, after.slice(1)).then((options) =>
-    options.length ? { from, options, validFor: /^\^[^[\]\n|]*$/ } : null,
+    options.length ? { from: from + 1, options, validFor: /^[^[\]\n|^]*$/ } : null,
   )
 }

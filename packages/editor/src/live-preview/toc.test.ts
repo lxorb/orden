@@ -60,3 +60,18 @@ describe('a table of contents', () => {
     expect(new TocWidget(one).eq(new TocWidget(headings(state('# One\n'))))).toBe(false)
   })
 })
+
+describe('the words of a heading in the table of contents', () => {
+  test('leave out the quote marks of a callout the heading is in', () => {
+    const found = headings(state('[toc]\n\n> [!note]\n> ## Inside\n> body\n'))
+    expect(found.map((one) => one.text)).toEqual(['Inside'])
+  })
+
+  test('leave out the marker of a list item the heading is in', () => {
+    expect(headings(state('- # Item heading\n')).map((one) => one.text)).toEqual(['Item heading'])
+  })
+
+  test('leave out the hidden block name', () => {
+    expect(headings(state('# Plan ^plan\n')).map((one) => one.text)).toEqual(['Plan'])
+  })
+})

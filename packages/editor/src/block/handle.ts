@@ -14,7 +14,7 @@ import {
 } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { landing, moveBlock } from './move'
-import { blockAt, blocksIn, type BlockSpan, writtenLine } from './span'
+import { blockAt, blocksIn, type BlockSpan, withListIds, writtenLine } from './span'
 
 interface Carrying {
   span: BlockSpan
@@ -139,7 +139,8 @@ class BlockHandleWidget extends OrdenWidget {
       event.stopPropagation()
       if (event.button !== 0) return
 
-      const span = blockAt(view.state, view.posAtDOM(mark))
+      const found = blockAt(view.state, view.posAtDOM(mark))
+      const [span] = found ? withListIds(view.state, [found]) : []
       if (span) carry(view, mark, span, event)
     })
 
@@ -154,8 +155,19 @@ class BlockHandleWidget extends OrdenWidget {
 
 function carry(view: EditorView, mark: HTMLElement, span: BlockSpan, start: MouseEvent) {
   let dragging = false
+  const pressedOn = view.state.doc
+
+  const letGo = () => {
+    view.dom.ownerDocument.removeEventListener('mousemove', move)
+    view.dom.ownerDocument.removeEventListener('mouseup', up)
+    if (view.state.field(carrying, false)) view.dispatch({ effects: drop.of(null) })
+  }
 
   const move = (event: MouseEvent) => {
+    if (view.state.doc !== pressedOn) {
+      letGo()
+      return
+    }
     const travelled =
       Math.abs(event.clientY - start.clientY) + Math.abs(event.clientX - start.clientX)
     if (!dragging && travelled < A_DRAG) return
@@ -168,6 +180,10 @@ function carry(view: EditorView, mark: HTMLElement, span: BlockSpan, start: Mous
   }
 
   const up = (event: MouseEvent) => {
+    if (view.state.doc !== pressedOn) {
+      letGo()
+      return
+    }
     view.dom.ownerDocument.removeEventListener('mousemove', move)
     view.dom.ownerDocument.removeEventListener('mouseup', up)
 

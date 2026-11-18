@@ -3,7 +3,7 @@ import { blocksOf, lines } from '@orden/markdown/links'
 import { type Property, readProperties } from '@orden/markdown/properties'
 import { taskAt } from '@orden/markdown/tasks'
 import type { NoteDoc } from '../../documents/src/api'
-import { type Anchor, headingPath, headingsIn, taskWords } from './anchors'
+import { type Anchor, headingAnchor, headingsIn, taskWords } from './anchors'
 import { type Desk, type NoteAt, openNote, reachable, TYPING, wordsOf } from './desk'
 import { DocError } from './problem'
 import { revOf } from './rev'
@@ -93,25 +93,20 @@ function numbered<T>(rows: readonly T[], nameOf: (row: T) => string): (number | 
 
 function outlineOf(text: string): OutlineRow[] {
   const headings = headingsIn(text)
-  const paths = headings.map(headingPath)
-  const nth = numbered(paths, (path) => path)
 
-  return headings.map((heading, index) => {
-    const which = nth[index]
-    return {
-      anchor: { heading: paths[index] ?? heading.title, ...(which ? { nth: which } : {}) },
-      level: heading.level,
-      title: heading.title,
-      line: heading.line,
-    }
-  })
+  return headings.map((heading) => ({
+    anchor: headingAnchor(headings, heading),
+    level: heading.level,
+    title: heading.title,
+    line: heading.line,
+  }))
 }
 
 function tasksOf(text: string): TaskRow[] {
   const found: { words: string; done: boolean; line: number }[] = []
 
   for (const row of lines(text)) {
-    if (row.code || row.matter) continue
+    if (row.code) continue
     const words = taskWords(row.text)
     const task = taskAt(row.text)
     if (words !== null && task) found.push({ words, done: task.done, line: row.line })

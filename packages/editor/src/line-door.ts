@@ -1,4 +1,5 @@
 import { door as fetched } from '@orden/markdown/door'
+import type { HighlightColour } from '@orden/markdown/highlights'
 import { stillOn } from './shared'
 
 type Commands = typeof import('./line-commands')
@@ -50,4 +51,9 @@ const moveDown = door((commands) => commands.moveLineOver(1))
 const moveUp = door((commands) => commands.moveLineOver(-1))
 export const moveLineOver = (delta: -1 | 1) => writable(delta < 0 ? moveUp : moveDown)
 export const clearFormatting = door((commands) => commands.clearFormatting)
-export const marksAcross = (mark: string) => door((commands) => commands.marksAcross(mark))
+
+export const marksAcross = (mark: string, adding = false) =>
+  door((commands) => commands.marksAcross(mark, adding))
+
+export const highlightAcross = (colour: HighlightColour) =>
+  door((commands) => commands.highlightAcross(colour))

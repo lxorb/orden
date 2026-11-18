@@ -8,6 +8,26 @@ export interface Side {
   item: SyntaxNode | null
   indent: number
   moving: boolean
+  quote: string
+}
+
+const QUOTE = /^(?:[ \t]*>)*/
+
+const LEAD = /^(?:[ \t]*>)*[ \t]*/
+
+function quoteOf(text: string): string {
+  return QUOTE.exec(text)?.[0] ?? ''
+}
+
+export function leadOf(text: string): number {
+  return LEAD.exec(text)?.[0].length ?? 0
+}
+
+function sharedQuote(one: string, other: string): string {
+  let same = 0
+  while (same < one.length && same < other.length && one[same] === other[same]) same++
+  const kept = one.slice(0, same)
+  return kept.slice(0, kept.lastIndexOf('>') + 1)
 }
 
 export const indentOf = (text: string): number => text.length - text.trimStart().length
@@ -17,28 +37,32 @@ export const itemsAround = (state: EditorState, pos: number): SyntaxNode[] =>
 
 function itemStarting(state: EditorState, line: Line): SyntaxNode | null {
   let found: SyntaxNode | null = null
-  for (const node of enclosing(
-    syntaxTree(state).resolveInner(line.from + indentOf(line.text), 1),
-  )) {
+  for (const node of enclosing(syntaxTree(state).resolveInner(line.from + leadOf(line.text), 1))) {
     if (node.name === 'ListItem' && node.from >= line.from) found = node
   }
 
   return found
 }
 
-export const above = (state: EditorState, line: Line): Side => ({
-  items: itemsAround(state, line.to),
-  item: null,
-  indent: 0,
-  moving: false,
-})
+export function above(state: EditorState, line: Line): Side {
+  return {
+    items: itemsAround(state, line.to),
+    item: null,
+    indent: 0,
+    moving: false,
+    quote: quoteOf(line.text),
+  }
+}
 
-export const below = (state: EditorState, line: Line, indent = indentOf(line.text)): Side => ({
-  items: [],
-  item: itemStarting(state, line),
-  indent,
-  moving: false,
-})
+export function below(state: EditorState, line: Line, indent = indentOf(line.text)): Side {
+  return {
+    items: [],
+    item: itemStarting(state, line),
+    indent,
+    moving: false,
+    quote: quoteOf(line.text),
+  }
+}
 
 function markerOf(state: EditorState, item: SyntaxNode): { number: number | null; tail: string } {
   const mark = item.getChild('ListMark')
@@ -69,7 +93,9 @@ function loose(state: EditorState, list: SyntaxNode): boolean {
     .slice(1)
     .some((item) => {
       const line = doc.lineAt(item.from).number
-      return line > 1 && doc.line(line - 1).text.trim() === ''
+      if (line <= 1) return false
+      const text = doc.line(line - 1).text
+      return text.slice(quoteOf(text).length).trim() === ''
     })
 }
 
@@ -79,11 +105,26 @@ function listAt(state: EditorState, items: SyntaxNode[], indent: number): Syntax
   return item?.parent ?? null
 }
 
-const blank = (existing: string | null): string =>
-  existing !== null && existing.split('\n').length > 2 ? existing : '\n\n'
+function blank(existing: string | null, quote: string): string {
+  const between = existing?.split('\n').slice(1, -1) ?? []
+  const kept = between.length > 0 && between.every((line) => quoteOf(line).startsWith(quote))
+  return existing !== null && kept ? existing : `\n${quote}\n`
+}
 
-export function gap(state: EditorState, upper: Side, lower: Side, existing: string | null): string {
-  if (!joins(state, upper, lower)) return blank(existing)
+export function holderQuote(text: string, quoted: boolean): string {
+  const marks = quoteOf(text)
+  return quoted ? marks.slice(0, marks.slice(0, -1).lastIndexOf('>') + 1) : marks
+}
+
+export function gap(
+  state: EditorState,
+  upper: Side,
+  lower: Side,
+  existing: string | null,
+  holder: string,
+): string {
+  const quote = sharedQuote(sharedQuote(upper.quote, lower.quote), holder)
+  if (!joins(state, upper, lower)) return blank(existing, quote)
 
   const lists = [
     upper.moving ? null : listAt(state, upper.items, lower.indent),
@@ -91,5 +132,5 @@ export function gap(state: EditorState, upper: Side, lower: Side, existing: stri
   ].filter((list) => list !== null)
   const hosts = lists.length ? lists : [lower.item.parent].filter((list) => list !== null)
 
-  return hosts.some((list) => loose(state, list)) ? '\n\n' : '\n'
+  return hosts.some((list) => loose(state, list)) ? `\n${quote}\n` : '\n'
 }

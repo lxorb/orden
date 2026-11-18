@@ -94,12 +94,12 @@ export function viewHtml(
   for (const one of draws) {
     const key = `${scheme}\n${one.key}`
     drawingNow.add(key)
-    void drawDiagram(one.code, one.language, scheme)
+    void drawDiagram(one.code, one.language, scheme, 'document', false)
       .catch(() => '')
       .then((svg) => {
         drawn.set(one.key, svg)
         drawingNow.delete(key)
-        if (svg) bump()
+        bump()
       })
   }
 

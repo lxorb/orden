@@ -47,7 +47,8 @@ function typedCell(): EditorView {
 test('a table taken away with a cell mid-edit throws nothing and writes nothing', () => {
   const view = typedCell()
   const asked = vi.spyOn(view, 'posAtDOM')
-  view.dispatch({ changes: { from: TABLE.indexOf('|'), to: TABLE.indexOf('\n\nend'), insert: '' } })
+  const doc = view.state.doc.toString()
+  view.dispatch({ changes: { from: doc.indexOf('|'), to: doc.indexOf('\n\nend'), insert: '' } })
   expect(asked).not.toHaveBeenCalled()
   expect(errors).toEqual([])
   expect(view.state.doc.toString()).toBe('words\n\n\n\nend')
@@ -56,8 +57,9 @@ test('a table taken away with a cell mid-edit throws nothing and writes nothing'
 test('a table replaced by other words with a cell mid-edit keeps those words', () => {
   const view = typedCell()
   const asked = vi.spyOn(view, 'posAtDOM')
+  const doc = view.state.doc.toString()
   view.dispatch({
-    changes: { from: TABLE.indexOf('|'), to: TABLE.indexOf('\n\nend'), insert: 'prose' },
+    changes: { from: doc.indexOf('|'), to: doc.indexOf('\n\nend'), insert: 'prose' },
   })
   expect(asked).not.toHaveBeenCalled()
   expect(errors).toEqual([])

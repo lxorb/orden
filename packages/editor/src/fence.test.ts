@@ -6,6 +6,7 @@ import { describe, expect, test } from 'vitest'
 import { fenceCaption, fenceCode, fenceCodeAt, fenceLanguage } from './fence'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { parsed } from '../test/parsed'
+import { runnableFenceAt } from './run/door'
 
 function fence(doc: string): { state: EditorState; node: SyntaxNode } {
   const state = parsed(
@@ -71,5 +72,16 @@ describe('the code at a place in the document', () => {
     )
 
     expect(fenceCodeAt(typed, at)).toBe('let a = 7\nlet b = 2')
+  })
+})
+
+describe('the fence a bar button stands for', () => {
+  test('is found from the start of its first line, inside a list item or quote too', () => {
+    const top = 'intro\n\n```js\nconsole.log(1)\n```\n'
+    expect(runnableFenceAt(fence(top).state, top.indexOf('```'))?.code).toBe('console.log(1)')
+    const listed = '- item\n\n  ```js\n  x()\n  ```\n'
+    expect(fenceCodeAt(fence(listed).state, listed.indexOf('  ```'))).toContain('x()')
+    const quoted = '> ```js\n> console.log(1)\n> ```\n'
+    expect(fenceCodeAt(fence(quoted).state, 0)).toContain('console.log(1)')
   })
 })

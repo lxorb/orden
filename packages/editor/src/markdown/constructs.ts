@@ -1,9 +1,11 @@
 import type { Input } from '@lezer/common'
 import { tags } from '@lezer/highlight'
 import type { BlockContext, InlineContext, Line, MarkdownConfig } from '@lezer/markdown'
+import { stripLine } from '@orden/markdown/comments'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { parseWikilink, shownSpan } from '@orden/markdown/links'
 import { tagAt } from '@orden/markdown/tags'
+import { commentStateAt } from './comment-state'
 import { markTags } from './tags'
 import {
   BACKSLASH,
@@ -38,6 +40,35 @@ const PercentComment: MarkdownConfig = {
       },
     },
   ],
+  parseBlock: [
+    {
+      name: 'PercentCommentBlock',
+      before: 'HTMLBlock',
+      endLeaf: (cx: BlockContext, line: Line) => opensPercentBlock(cx, restOf(line)),
+      parse(cx: BlockContext, line: Line) {
+        if (!opensPercentBlock(cx, restOf(line))) return false
+
+        const from = cx.lineStart + line.pos
+        let to = cx.lineStart + line.text.length
+        while (cx.nextLine()) {
+          to = cx.lineStart + line.text.length
+          if (line.text.slice(line.pos).includes('%%')) {
+            cx.nextLine()
+            break
+          }
+        }
+
+        cx.addElement(cx.elt('CommentBlock', from, to))
+        return true
+      },
+    },
+  ],
+}
+
+function opensPercentBlock(cx: BlockContext, rest: string): boolean {
+  if (!rest.startsWith('%%') || stripLine(rest, null).inside !== '%%') return false
+  const { input } = cx as unknown as { input: Input }
+  return commentStateAt(input, cx.lineStart) === null
 }
 
 const HIGHLIGHT_DELIMITER = { resolve: 'Highlight', mark: 'HighlightMark' }
@@ -54,7 +85,11 @@ const Highlight: MarkdownConfig = {
       after: 'Emphasis',
       parse(cx, next, pos) {
         if (next !== EQUALS || cx.char(pos + 1) !== EQUALS) return -1
-        return cx.addDelimiter(HIGHLIGHT_DELIMITER, pos, pos + 2, true, true)
+        const before = cx.slice(pos - 1, pos)
+        const after = cx.slice(pos + 2, pos + 3)
+        const opens = /\S/u.test(after) && after !== '='
+        const closes = /\S/u.test(before) && before !== '='
+        return cx.addDelimiter(HIGHLIGHT_DELIMITER, pos, pos + 2, opens, closes)
       },
     },
   ],
@@ -243,6 +278,17 @@ const Footnote: MarkdownConfig = {
   ],
   parseInline: [
     {
+      name: 'FootnoteBang',
+      triggers: '!',
+      before: 'Image',
+      parse(cx, next, pos) {
+        if (next !== BANG || cx.char(pos + 1) !== BRACKET_OPEN || cx.char(pos + 2) !== CARET) {
+          return -1
+        }
+        return pos + 1
+      },
+    },
+    {
       name: 'FootnoteRef',
       triggers: '[',
       before: 'Link',
@@ -271,6 +317,9 @@ const Footnote: MarkdownConfig = {
     {
       name: 'FootnoteDef',
       before: 'LinkReference',
+      endLeaf(_cx: BlockContext, line: Line) {
+        return /^\[\^[^\]\s]+\]:/.test(line.text.slice(line.pos))
+      },
       parse(cx: BlockContext, line: Line) {
         const match = /^\[\^([^\]\s]+)\]:/.exec(line.text.slice(line.pos))
         if (!match) return false
@@ -283,6 +332,7 @@ const Footnote: MarkdownConfig = {
             cx.elt('FootnoteMark', from, from + 2),
             cx.elt('FootnoteLabel', from + 2, from + 2 + label.length),
             cx.elt('FootnoteMark', from + 2 + label.length, from + whole.length),
+            ...cx.parser.parseInline(line.text.slice(line.pos + whole.length), from + whole.length),
           ]),
         )
         cx.nextLine()
@@ -347,7 +397,10 @@ const DefinitionList: MarkdownConfig = {
         const to = cx.lineStart + line.text.length
 
         cx.addElement(
-          cx.elt('DefinitionDetail', from, to, [cx.elt('DefinitionMark', from, from + 1)]),
+          cx.elt('DefinitionDetail', from, to, [
+            cx.elt('DefinitionMark', from, from + 1),
+            ...cx.parser.parseInline(line.text.slice(line.pos + 1), from + 1),
+          ]),
         )
         cx.nextLine()
         return true

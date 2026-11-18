@@ -312,6 +312,66 @@ describe('the classes the stylesheet works from', () => {
   })
 })
 
+function numbersDrawn(state: EditorState, from = 0): string[] {
+  const out: string[] = []
+  const drawn = buildDecorations(state, [{ from, to: state.doc.length }]).decorations
+  drawn.between(from, state.doc.length, (at, _to, value) => {
+    const number = (value.spec.attributes as Record<string, string> | undefined)?.[
+      'data-heading-number'
+    ]
+    if (number) out.push(`${number} ${state.doc.lineAt(at).text}`)
+  })
+  return out
+}
+
+function numbered(doc: string): EditorView {
+  const { view } = surface(doc, 0)
+  setHeadingNumbers(view, true)
+  view.dispatch({})
+  return view
+}
+
+describe('numbered headings', () => {
+  test('a heading far down a long note shows its place in the whole note', () => {
+    const sections = Array.from(
+      { length: 300 },
+      (_, at) => `# Part ${at + 1}\n\nwords\n\n## Under ${at + 1}\n\nmore words`,
+    )
+    const view = numbered(sections.join('\n\n'))
+    const state = parsed(view.state)
+    const far = state.doc.toString().indexOf('# Part 300')
+
+    expect(numbersDrawn(state, far)).toEqual(['300 # Part 300', '300.1 ## Under 300'])
+  })
+
+  test('a deeper heading counts on from the one above it', () => {
+    const view = numbered('# A\n## B\n## C\n### D\n# E\n## F\n')
+
+    expect(numbersDrawn(parsed(view.state))).toEqual([
+      '1 # A',
+      '1.1 ## B',
+      '1.2 ## C',
+      '1.2.1 ### D',
+      '2 # E',
+      '2.1 ## F',
+    ])
+  })
+
+  test('a heading written inside a code fence is not counted', () => {
+    const view = numbered('# One\n\n```md\n# Not a heading\n```\n\n# Two\n')
+
+    expect(numbersDrawn(parsed(view.state))).toEqual(['1 # One', '2 # Two'])
+  })
+
+  test('turning them off takes the numbers away', () => {
+    const view = numbered('# One\n\n## Two\n')
+    expect(numbersDrawn(parsed(view.state))).toEqual(['1 # One', '1.1 ## Two'])
+
+    setHeadingNumbers(view, false)
+    expect(numbersDrawn(parsed(view.state))).toEqual([])
+  })
+})
+
 describe('applying every mode again', () => {
   function long(): string {
     const sections: string[] = []

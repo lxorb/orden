@@ -122,3 +122,17 @@ describe('aligning a column', () => {
     expect(alignedColumn(MODEL, 1, 'left', undefined).next.align[1]).toBe('left')
   })
 })
+
+describe('the caret after a move', () => {
+  test('goes with its own cell, when its column is the one moved past', () => {
+    expect(movedColumn(MODEL, 0, 1, at(0, 1)).focus).toEqual(at(0, 0))
+    expect(movedColumn(MODEL, 0, 1, at(0, 0)).focus).toEqual(at(0, 1))
+    expect(movedColumn(MODEL, 0, 1, at(0, 2)).focus).toEqual(at(0, 2))
+  })
+
+  test('and its row, when its row is the one moved past', () => {
+    expect(movedRow(MODEL, 0, 1, at(1, 0)).focus).toEqual(at(0, 0))
+    expect(movedRow(MODEL, 0, 1, at(0, 0)).focus).toEqual(at(1, 0))
+    expect(movedRow(MODEL, 0, 1, at(-1, 0)).focus).toEqual(at(-1, 0))
+  })
+})

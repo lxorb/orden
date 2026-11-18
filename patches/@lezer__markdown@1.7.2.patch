@@ -274,6 +274,15 @@ index e5725e7b76c21832da1a3d2ed188ae042c06224c..184b2850aefa0fa773280362b5f42035
          return content;
      }
      /**
+@@ -1869,7 +1939,7 @@ class FragmentCursor {
+     moveTo(pos, lineStart) {
+         while (this.fragment && this.fragment.to <= pos)
+             this.nextFragment();
+-        if (!this.fragment || this.fragment.from > (pos ? pos - 1 : 0))
++        if (!this.fragment || this.fragment.from > (pos ? pos - 1 : 0) || (!pos && this.fragment.openStart))
+             return false;
+         if (this.fragmentEnd < 0) {
+             let end = this.fragment.to;
 @@ -1883,7 +1953,9 @@ class FragmentCursor {
              c.firstChild();
          }

@@ -2,19 +2,23 @@ import { syntaxTree } from '@codemirror/language'
 import { ChangeSet, EditorSelection, EditorState, type Text } from '@codemirror/state'
 import type { SyntaxNode, Tree } from '@lezer/common'
 import { concealable } from './conceal'
+import { unlinked } from './definitions'
 import { revealed } from './reveal'
 
 const BLOCK_PARENTS = new Set(['FrontMatter', 'FootnoteDef', 'DefinitionDetail', 'AbbrevDef'])
 
-function inlineMark(node: SyntaxNode): boolean {
+function inlineMark(state: EditorState, node: SyntaxNode): boolean {
   const parent = node.parent?.name ?? ''
   if (BLOCK_PARENTS.has(parent)) return false
+  if (node.name === 'LinkMark' && node.parent && unlinked(state, node.parent)) return false
   if (concealable(node)) return true
+  if (node.name === 'WikilinkMark') return true
   return node.name === 'CodeMark' && parent === 'InlineCode'
 }
 
-const concealed = (state: EditorState, node: SyntaxNode): boolean =>
-  inlineMark(node) && !revealed(state, node)
+function concealed(state: EditorState, node: SyntaxNode): boolean {
+  return inlineMark(state, node) && !revealed(state, node)
+}
 
 const blank = (state: EditorState, from: number, to: number): boolean =>
   from >= to || /^\s*$/.test(state.doc.sliceString(from, to))

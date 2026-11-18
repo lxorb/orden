@@ -1,7 +1,7 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { blockDecorations } from './blocks'
+import { blockDecorations, buildBlockDecorations } from './blocks'
 import { keptCoverEffect, keptCoverExtension } from './kept-cover'
 import { ChartWidget, DiagramWidget, MathWidget } from './render'
 import { dragFreeze, setDragging } from './dragging'
@@ -47,6 +47,13 @@ describe('block decorations', () => {
     ['[toc]', ['[toc]']],
     [PROSE, []],
   ])('%j', (input, wanted) => expect(spans(input)).toEqual(wanted))
+
+  test('a toc with a line of words right under it is drawn, however long the words', () => {
+    for (const words of ['see below', 'The plan for this week']) {
+      const doc = `[toc]\n${words}\n\n# One\n\nx`
+      expect(drawn(state(doc, doc.length).field(blockDecorations), doc), words).toEqual(['[toc]'])
+    }
+  })
 
   test('every fence is a place worth looking at again, whatever its language', () => {
     const fence = '```js\nlet x = 1\n```'
@@ -109,7 +116,7 @@ describe('block decorations', () => {
   test('nor by the caret that arrives with a note being opened', () => {
     const opened = parsed(
       state('x\n').update({
-        changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
+        changes: { from: 0, to: 2, insert: `${TABLE}\n\ntail` },
         annotations: external.of(true),
       }).state,
     )
@@ -296,6 +303,29 @@ describe('prose typed away from every construct', () => {
     expect(found.is.decorations.size).toBe(1)
   })
 
+  test('words typed into a header that make the table whole draw it once the caret leaves', () => {
+    const doc = '| Name |\n| --- | --- |\n| Ann | 30 |\n\nend'
+    let at = doc.indexOf('\n')
+    let now = state(doc, at)
+    for (const key of ' Age') {
+      now = parsed(
+        now.update({
+          changes: { from: at, insert: key },
+          selection: EditorSelection.cursor(at + 1),
+          userEvent: 'input.type',
+        }).state,
+      )
+      at += 1
+    }
+    now = parsed(
+      now.update({ selection: EditorSelection.cursor(now.doc.length), userEvent: 'select' }).state,
+    )
+    const text = now.doc.toString()
+    const table = '| Name | Age\n| --- | --- |\n| Ann | 30 |'
+    expect(drawn({ decorations: buildBlockDecorations(now) }, text), 'reopened').toEqual([table])
+    expect(drawn(now.field(blockDecorations), text)).toEqual([table])
+  })
+
   test('a construct typed into is rebuilt, not shifted', () => {
     const at = doc.length - 2
     const { is } = afterTyping(doc, at, 'z')
@@ -352,6 +382,17 @@ describe('prose typed away from every construct', () => {
     const { was, is } = afterTyping(top, 0, '-')
     expect(was.decorations.size).toBe(0)
     expect(is.decorations.size).toBe(1)
+  })
+
+  test('a letter taken out of an HTML block opener draws the maths the block no longer holds', () => {
+    const opener = 'x\n\n<div\n$$\nx\n$$\n\nend\n'
+    const at = opener.indexOf('<div') + '<div'.length
+    const { was, is, state: after } = afterTyping(opener, at - 1, '', at)
+    const text = after.doc.toString()
+
+    expect(was.decorations.size).toBe(0)
+    expect(drawn(is, text)).toEqual(['$$\nx\n$$'])
+    expect(drawn(is, text)).toEqual(drawn({ decorations: buildBlockDecorations(after) }, text))
   })
 
   test('a toc completed by deleting the words after it is drawn', () => {
@@ -430,7 +471,7 @@ describe('a selection dragged over a rendered block', () => {
     const held = state('x\n', 0).update({ effects: setDragging.of(true) }).state
     const opened = parsed(
       held.update({
-        changes: { from: 0, to: 1, insert: `${TABLE}\n\ntail` },
+        changes: { from: 0, to: 2, insert: `${TABLE}\n\ntail` },
         annotations: external.of(true),
       }).state,
     )

@@ -20,6 +20,7 @@ export {
   imageMarkup,
   imageOfNode,
   parseHtmlImage,
+  retag,
   sourceCaret,
 } from './markup'
 export { resizeTo, snapPercent } from './size'

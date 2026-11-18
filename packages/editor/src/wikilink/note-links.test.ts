@@ -84,3 +84,18 @@ describe('noteLinks', () => {
     expect(noteLinks(notes, ['c.md'], shortest)).toBe('c.md')
   })
 })
+
+describe('noteLinks for a file whose name another file shares', () => {
+  const sharing: NoteIndex = {
+    ...index,
+    files: ['report.pdf', 'projects/report.pdf', 'cat.png', 'trips/cat.png'],
+  }
+
+  test('a file is linked by its path so the link finds it and not the other file', () => {
+    expect(noteLinks(sharing, ['projects/report.pdf'], wikilink)).toBe('[[projects/report.pdf]]')
+  })
+
+  test('a picture embeds itself by its path and not the other picture of that name', () => {
+    expect(noteLinks(sharing, ['trips/cat.png'], wikilink)).toBe('![[trips/cat.png]]')
+  })
+})

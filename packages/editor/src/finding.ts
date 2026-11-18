@@ -13,6 +13,7 @@ import {
   selectSelectionMatches as librarySelectMatches,
   setSearchQuery,
 } from '@codemirror/search'
+import { foldedRanges, unfoldEffect } from '@codemirror/language'
 import {
   type EditorState,
   type Extension,
@@ -270,14 +271,19 @@ export const searching = (): Extension => [
   highlightSelectionMatches(),
 ]
 
-export const queryFor = (spec: FindSpec): SearchQuery =>
-  new SearchQuery({
+function keptAsTyped(replacement: string): string {
+  return replacement.replace(/\\/g, '\\\\')
+}
+
+export function queryFor(spec: FindSpec): SearchQuery {
+  return new SearchQuery({
     search: spec.query,
-    replace: spec.replace,
+    replace: spec.regexp ? spec.replace : keptAsTyped(spec.replace),
     caseSensitive: spec.caseSensitive,
     regexp: spec.regexp,
     wholeWord: spec.wholeWord,
   })
+}
 
 const asking = new WeakMap<EditorView, number>()
 
@@ -300,11 +306,28 @@ export async function setQuery(view: EditorView, spec: FindSpec): Promise<void> 
 
 export const asked = (state: EditorState): boolean => getSearchQuery(state).valid
 
-export const next: Command = libraryNext
-export const previous: Command = libraryPrevious
-export const replaceOne: Command = libraryReplaceNext
+function unfolding<Target extends Parameters<StateCommand>[0]>(
+  command: (target: Target) => boolean,
+): (target: Target) => boolean {
+  return (target) => {
+    if (!command(target)) return false
+    const { state } = target
+    const shut: StateEffect<{ from: number; to: number }>[] = []
+    for (const range of state.selection.ranges) {
+      foldedRanges(state).between(range.from, range.to, (from, to) => {
+        if (from < range.to && to > range.from) shut.push(unfoldEffect.of({ from, to }))
+      })
+    }
+    if (shut.length) target.dispatch(state.update({ effects: shut }))
+    return true
+  }
+}
+
+export const next: Command = unfolding(libraryNext)
+export const previous: Command = unfolding(libraryPrevious)
+export const replaceOne: Command = unfolding(libraryReplaceNext)
 export const replaceEvery: Command = libraryReplaceAll
 export const gotoLine: Command = libraryGotoLine
-export const selectEvery: Command = librarySelectEvery
-export const selectNextOccurrence: StateCommand = librarySelectNext
-export const selectSelectionMatches: StateCommand = librarySelectMatches
+export const selectEvery: Command = unfolding(librarySelectEvery)
+export const selectNextOccurrence: StateCommand = unfolding(librarySelectNext)
+export const selectSelectionMatches: StateCommand = unfolding(librarySelectMatches)

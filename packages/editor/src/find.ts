@@ -29,6 +29,7 @@ export const NO_FIND: FindSpec = {
 export interface FindAsk {
   replace: boolean
   seed: string
+  pattern: string
 }
 
 const findAsked = StateEffect.define<FindAsk | null>()
@@ -41,11 +42,22 @@ export const findShown = StateField.define<boolean>({
   },
 })
 
-export function termAt(state: EditorState): string {
+const PATTERN_SYNTAX = /[\\^$.*+?()[\]{}|]/g
+
+function asTyped(selected: string): string {
+  return selected.replace(/\\/g, '\\\\').replace(/\n/g, '\\n')
+}
+
+function asPattern(selected: string): string {
+  return selected.replace(PATTERN_SYNTAX, '\\$&').replace(/\n/g, '\\n')
+}
+
+export function termAt(state: EditorState, regexp = false): string {
   const { from, to, empty } = state.selection.main
   if (empty || to > from + 100) return ''
 
-  return state.sliceDoc(from, to).trim().replace(/\n/g, '\\n')
+  const selected = state.sliceDoc(from, to).trim()
+  return regexp ? asPattern(selected) : asTyped(selected)
 }
 
 export const MOST_COUNTED = 300
@@ -106,7 +118,13 @@ const asks =
   (replace: boolean): Command =>
   (view) => {
     if (!loaded) void loadFind()
-    view.dispatch({ effects: findAsked.of({ replace, seed: termAt(view.state) }) })
+    view.dispatch({
+      effects: findAsked.of({
+        replace,
+        seed: termAt(view.state),
+        pattern: termAt(view.state, true),
+      }),
+    })
 
     return true
   }

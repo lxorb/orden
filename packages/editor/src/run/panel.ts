@@ -6,6 +6,7 @@ import {
   StateField,
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
+import { opensFence } from '../fence'
 import { pressedByKey } from '../press'
 import { OrdenWidget } from '../live-preview/widget'
 import type { RunLine } from './protocol'
@@ -35,7 +36,6 @@ export const openRun = StateEffect.define<{
 export const addRunLines = StateEffect.define<{ run: number; lines: readonly RunLine[] }>()
 export const closeRun = StateEffect.define<{ run: number; status: RunStatus; elapsed: number }>()
 export const dropRun = StateEffect.define<number>()
-const FENCE = /^[\s>]*(?:`{3,}|~{3,})/
 
 function mapPanels(panels: readonly RunPanel[], transaction: Transaction): RunPanel[] {
   const out: RunPanel[] = []
@@ -56,7 +56,7 @@ function mapPanels(panels: readonly RunPanel[], transaction: Transaction): RunPa
 
 function stillFenced(state: EditorState, panel: RunPanel): boolean {
   if (panel.from > state.doc.length) return false
-  return FENCE.test(state.doc.lineAt(panel.from).text)
+  return opensFence(state.doc.lineAt(panel.from).text)
 }
 
 function applyEffect(panels: readonly RunPanel[], effect: StateEffect<unknown>): RunPanel[] | null {

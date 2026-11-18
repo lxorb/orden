@@ -1,4 +1,10 @@
-import { EditorSelection, type StateCommand } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import {
+  type ChangeSpec,
+  EditorSelection,
+  type EditorState,
+  type StateCommand,
+} from '@codemirror/state'
 import {
   HIGHLIGHT_COLOURS,
   type HighlightColour,
@@ -6,6 +12,9 @@ import {
   readHighlight,
   writeHighlight,
 } from '@orden/markdown/highlights'
+import { inside, spansLines, splitPoints } from './commands'
+import { highlightAcross } from './line-door'
+import { enclosingNamed } from './nodes'
 
 const MARK = '=='
 
@@ -44,21 +53,83 @@ function highlighted(
   return null
 }
 
-export const toggleHighlight =
-  (colour: HighlightColour): StateCommand =>
-  ({ state, dispatch }) => {
+function runAt(
+  state: EditorState,
+  pos: number,
+): { from: number; to: number; inner: string } | null {
+  const run = enclosingNamed(syntaxTree(state).resolveInner(pos, 0), 'Highlight')
+  if (!run || pos < run.from + MARK.length || pos > run.to - MARK.length) return null
+  return {
+    from: run.from,
+    to: run.to,
+    inner: state.doc.sliceString(run.from + MARK.length, run.to - MARK.length),
+  }
+}
+
+function colourOf(inner: string): { colour: HighlightColour; from: number } {
+  const bare = HIGHLIGHT_COLOURS.find(
+    (colour) => colour.emoji !== null && inner.trimEnd() === colour.emoji,
+  )
+  return bare ? { colour: bare, from: inner.length } : readHighlight(inner)
+}
+
+function splitOut(
+  state: EditorState,
+  run: { from: number; to: number; inner: string },
+  from: number,
+  to: number,
+  colour: HighlightColour,
+) {
+  const { colour: had, from: at } = colourOf(run.inner)
+  const start = run.from + MARK.length + at
+  const end = run.to - MARK.length
+  if (from < start || to > end) return null
+
+  const opening = state.doc.sliceString(run.from, start)
+  const recolour = had.emoji === colour.emoji ? null : MARK + writeHighlight('', colour)
+  const changes: ChangeSpec[] = []
+
+  const { close, open } = splitPoints(state, run, { from: start, to: end }, { from, to })
+  changes.push(close === null ? { from: run.from, to: start } : { from: close, insert: MARK })
+  if (recolour) changes.push({ from, insert: recolour }, { from: to, insert: MARK })
+  changes.push(open === null ? { from: end, to: run.to } : { from: open, insert: opening })
+
+  const set = state.changes(changes)
+  return { changes: set, range: EditorSelection.range(set.mapPos(from, 1), set.mapPos(to, -1)) }
+}
+
+export function toggleHighlight(colour: HighlightColour): StateCommand {
+  return (target) => {
+    const { state, dispatch } = target
+    if (state.selection.ranges.some((range) => spansLines(state, range))) {
+      return highlightAcross(colour)(target)
+    }
+
     const update = state.changeByRange((range) => {
-      const { from, to } = range
-      const already = highlighted(state.doc, from, to)
+      const { from, to } = inside(state, range.from, range.to)
+      const typed = highlighted(state.doc, from, to)
+      const around = !typed && from === to ? runAt(state, from) : null
+      if (around && from === around.to - MARK.length) {
+        return { range: EditorSelection.cursor(around.to) }
+      }
+      const already = typed ?? around
+
+      const holding = !already && from < to ? runAt(state, from) : null
+      const split = holding && splitOut(state, holding, from, to, colour)
+      if (split) return split
 
       if (already) {
-        const { colour: had, from: at } = readHighlight(already.inner)
+        const { colour: had, from: at } = colourOf(already.inner)
         const words = already.inner.slice(at)
 
         if (had.emoji === colour.emoji) {
+          const start = already.from + MARK.length + at
           return {
             changes: { from: already.from, to: already.to, insert: words },
-            range: EditorSelection.range(already.from, already.from + words.length),
+            range:
+              from === to && from >= start
+                ? EditorSelection.cursor(already.from + from - start)
+                : EditorSelection.range(already.from, already.from + words.length),
           }
         }
 
@@ -69,22 +140,29 @@ export const toggleHighlight =
             to: already.to - MARK.length,
             insert: inner,
           },
-          range: EditorSelection.range(
-            already.from + MARK.length,
-            already.from + MARK.length + inner.length,
-          ),
+          range: words
+            ? EditorSelection.range(
+                already.from + MARK.length,
+                already.from + MARK.length + inner.length,
+              )
+            : EditorSelection.cursor(already.from + MARK.length + inner.length),
         }
       }
 
       const inner = writeHighlight(state.doc.sliceString(from, to), colour)
+      const end = from + MARK.length + inner.length
       return {
         changes: { from, to, insert: `${MARK}${inner}${MARK}` },
-        range: EditorSelection.range(from + MARK.length, from + MARK.length + inner.length),
+        range:
+          from === to
+            ? EditorSelection.cursor(end)
+            : EditorSelection.range(from + MARK.length, end),
       }
     })
 
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
+}
 
 export const highlightSelection: StateCommand = (target) => toggleHighlight(sticky)(target)

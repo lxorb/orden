@@ -1,13 +1,16 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState } from '@codemirror/state'
+import { codeFolding, foldEffect } from '@codemirror/language'
+import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations } from './blocks'
-import { edgeBeside } from './stepping'
+import { edgeBeside, stepDown } from './stepping'
 import { dragFreeze } from './dragging'
+import { noReveal } from './reveal'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-function state(doc: string, cursor = 0) {
+function state(doc: string, cursor = 0, readOnly = false) {
   return parsed(
     EditorState.create({
       doc,
@@ -15,14 +18,17 @@ function state(doc: string, cursor = 0) {
       extensions: [
         markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
         dragFreeze,
+        codeFolding(),
         blockDecorations,
+        noReveal.of(readOnly),
       ],
     }),
   )
 }
 
-const moved = (doc: string, to: number) =>
-  parsed(state(doc).update({ selection: EditorSelection.cursor(to) }).state)
+function moved(doc: string, to: number) {
+  return parsed(state(doc).update({ selection: EditorSelection.cursor(to) }).state)
+}
 
 const FORMULA = 'above\n\n$$\nE = mc^2\n$$\n\nbelow\n'
 const at = (doc: string, text: string) => doc.indexOf(text)
@@ -40,14 +46,77 @@ describe('a press onto a block that draws itself', () => {
     expect(edgeBeside(state(doc, blank), blank, false)).toBe(at(doc, '$$\n\nbelow') + 2)
   })
 
-  test.each([
-    [state(FORMULA, 0), null, 0, true],
-    [state(FORMULA, at(FORMULA, 'below')), null, at(FORMULA, 'below'), false],
-    [state('one\ntwo\nthree\n', 0), null, 0, true],
-    [state('one\ntwo\nthree\n', 5), null, 5, false],
-    [state(FORMULA, 0), null, 0, false],
-    [state(FORMULA, FORMULA.length), null, FORMULA.length, true],
-  ])('%j', (input, wanted, extra, last) => expect(edgeBeside(input, extra, last)).toBe(wanted))
+  test('one line at a time, so a line clear of the block is an ordinary press', () => {
+    const doc = FORMULA
+    expect(edgeBeside(state(doc, 0), 0, true)).toBe(null)
+    expect(edgeBeside(state(doc, at(doc, 'below')), at(doc, 'below'), false)).toBe(null)
+  })
+
+  test('never jumps over a block drawn under the caret of a note just opened for editing', () => {
+    const doc = FORMULA
+    const top = at(doc, '$$')
+    expect(edgeBeside(state(doc, top), top, true)).not.toBe(at(doc, '$$\n\nbelow') + 2)
+  })
+
+  test('opens that block on the press instead of pressing in place', () => {
+    const doc = FORMULA
+    const top = at(doc, '$$')
+    let now = state(doc, top)
+    const view = {
+      get state() {
+        return now
+      },
+      dispatch: (spec: TransactionSpec) => {
+        now = now.update(spec).state
+      },
+    } as unknown as EditorView
+    const drawn = () => now.field(blockDecorations).decorations.size
+
+    expect(drawn()).toBeGreaterThan(0)
+    expect(stepDown(view)).toBe(true)
+    expect(drawn()).toBe(0)
+    expect(edgeBeside(now, top, true)).toBeNull()
+  })
+
+  test('not into a block that sits in a folded section', () => {
+    const doc = 'intro\n\n## Data\n$$\nE = mc^2\n$$\n\nmore\n\n## Next\n\nend'
+    const heading = at(doc, '## Data') + '## Data'.length
+    const shut = parsed(
+      state(doc, heading).update({
+        effects: foldEffect.of({ from: heading, to: at(doc, '\n\n## Next') }),
+      }).state,
+    )
+    expect(edgeBeside(shut, heading, true)).toBeNull()
+  })
+
+  test('not while the caret can still go down a row of its own wrapped line', () => {
+    const doc = `${'word '.repeat(300)}\n$$\nE = mc^2\n$$\n\nbelow\n`
+    let now = state(doc, 0)
+    const view = {
+      get state() {
+        return now
+      },
+      dispatch: (spec: TransactionSpec) => {
+        now = now.update(spec).state
+      },
+      moveVertically: (range: { head: number }) => EditorSelection.cursor(range.head + 80),
+    } as unknown as EditorView
+
+    expect(stepDown(view)).toBe(false)
+    expect(now.selection.main.head).toBe(0)
+  })
+
+  test('nothing where the line it aims at is ordinary text', () => {
+    const doc = 'one\ntwo\nthree\n'
+    expect(edgeBeside(state(doc, 0), 0, true)).toBe(null)
+    expect(edgeBeside(state(doc, 5), 5, false)).toBe(null)
+  })
+
+  test('nothing off either end of the note', () => {
+    const doc = FORMULA
+    expect(edgeBeside(state(doc, 0), 0, false)).toBe(null)
+    expect(edgeBeside(state(doc, doc.length), doc.length, true)).toBe(null)
+  })
 
   test('nothing for the block the caret is already in, which is showing its source', () => {
     const doc = FORMULA
@@ -61,5 +130,51 @@ describe('a press onto a block that draws itself', () => {
   test('nothing for front matter, which is written out as it is and has nothing to open', () => {
     const blank = at(META, '\nwords')
     expect(edgeBeside(state(META, blank), blank, false)).toBe(null)
+  })
+})
+
+describe('a press across a block that never opens, as in read-only mode', () => {
+  const doc = 'above\n\n$$\nx\n$$\n\nbelow'
+  const top = at(doc, '$$')
+  const bottom = at(doc, '$$\n\nbelow') + 2
+
+  const pressed = (head: number, down: boolean) => edgeBeside(state(doc, head, true), head, down)
+
+  test('still stops at the top of it on the way down', () => {
+    expect(pressed(top - 1, true)).toBe(top)
+  })
+
+  test('crosses from its top to its bottom on the next press down', () => {
+    expect(pressed(top, true)).toBe(bottom)
+  })
+
+  test('then leaves it to the ordinary press below', () => {
+    expect(pressed(bottom, true)).toBe(null)
+  })
+
+  test('crosses from its bottom to its top on the next press up', () => {
+    expect(pressed(bottom + 1, false)).toBe(bottom)
+    expect(pressed(bottom, false)).toBe(top)
+  })
+
+  test('then leaves it to the ordinary press above', () => {
+    expect(pressed(top, false)).toBe(null)
+  })
+
+  test('walks the whole note without ever pressing in place', () => {
+    const stops = (start: number, down: boolean) => {
+      const seen = [start]
+      let head = start
+      for (let press = 0; press < 10; press++) {
+        const edge = pressed(head, down)
+        if (edge === null) break
+        expect(edge).not.toBe(head)
+        head = edge
+        seen.push(head)
+      }
+      return seen
+    }
+    expect(stops(top - 1, true)).toEqual([top - 1, top, bottom])
+    expect(stops(bottom + 1, false)).toEqual([bottom + 1, bottom, top])
   })
 })

@@ -459,6 +459,14 @@ mod tests {
     }
 
     #[test]
+    fn keeps_the_extension_of_a_name_it_shortens() {
+        let long = format!("{}.pdf", "Minutes of the meeting ".repeat(10));
+        let safe = safe_name(&long).unwrap_or_default();
+        assert!(safe.ends_with(".pdf"), "{safe}");
+        assert_eq!(safe.chars().count(), MAX_NAME);
+    }
+
+    #[test]
     fn caps_how_long_a_name_can_get() {
         let long = format!("{}.png", "x".repeat(400));
         assert_eq!(

@@ -1,9 +1,10 @@
-import { syntaxTree } from '@codemirror/language'
+import { foldedRanges, syntaxTree, unfoldEffect } from '@codemirror/language'
 import {
   EditorSelection,
   type EditorState,
   type Extension,
   RangeSetBuilder,
+  type StateEffect,
 } from '@codemirror/state'
 import {
   Decoration,
@@ -15,7 +16,9 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
+import { followAnchors } from '../links'
 import { noteIndex } from '../wikilink/notes'
+import { overlaps } from './reveal'
 import { renderNote } from '../wikilink/preview'
 
 export interface FootnotePart {
@@ -69,8 +72,16 @@ function footnoteParts(state: EditorState): FootnotePart[] {
   return parts
 }
 
-export const definitionOf = (state: EditorState, label: string): FootnotePart | null =>
-  footnoteParts(state).find((one) => one.kind === 'def' && one.label === label) ?? null
+function sameLabel(one: string, other: string): boolean {
+  const folded = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase()
+  return folded(one) === folded(other)
+}
+
+export function definitionOf(state: EditorState, label: string): FootnotePart | null {
+  return (
+    footnoteParts(state).find((one) => one.kind === 'def' && sameLabel(one.label, label)) ?? null
+  )
+}
 
 export const definitionWords = (state: EditorState, definition: FootnotePart): string =>
   state
@@ -89,11 +100,13 @@ function jumpTarget(view: EditorView, part: FootnotePart): number | null {
     return definition.labelTo + (/^\]:?[ \t]*/.exec(words)?.[0].length ?? 0)
   }
 
-  const marks = footnoteParts(state).filter((one) => one.kind === 'ref' && one.label === part.label)
+  const marks = footnoteParts(state).filter(
+    (one) => one.kind === 'ref' && sameLabel(one.label, part.label),
+  )
   if (!marks.length) return null
   const back = cameFrom.get(view)
   const mark =
-    back?.label === part.label
+    back && sameLabel(back.label, part.label)
       ? (marks.find((one) => one.from <= back.at && back.at <= one.to) ?? marks[0])
       : marks[0]
   return mark ? mark.to : null
@@ -104,17 +117,22 @@ export function followFootnote(view: EditorView, part: FootnotePart): boolean {
   if (to === null) return false
 
   if (part.kind === 'ref') cameFrom.set(view, { label: part.label, at: part.from })
+  const opened: StateEffect<unknown>[] = []
+  foldedRanges(view.state).between(to, to, (from, end) => {
+    if (from < to && end >= to) opened.push(unfoldEffect.of({ from, to: end }))
+  })
   view.dispatch({
     selection: EditorSelection.cursor(to),
-    effects: EditorView.scrollIntoView(to, { y: 'center' }),
+    effects: [...opened, EditorView.scrollIntoView(to, { y: 'center' })],
     userEvent: 'select.footnote',
   })
   view.focus()
   return true
 }
 
-const revealed = (state: EditorState, part: FootnotePart): boolean =>
-  state.selection.ranges.some((range) => range.from <= part.to && range.to >= part.from)
+function revealed(state: EditorState, part: FootnotePart): boolean {
+  return overlaps(state, part.from, part.to)
+}
 
 const numberMark = Decoration.mark({ class: 'orden-footnote-number' })
 
@@ -195,6 +213,7 @@ const footnotePreviews = hoverTooltip(
         const body = document.createElement('div')
         body.className = 'orden-note-preview-body orden-write'
         body.textContent = words
+        followAnchors(body, () => view, true)
         dom.append(body)
 
         void renderNote(words, view.state.facet(noteIndex).path, view.state)

@@ -1,5 +1,5 @@
 import { history } from '@codemirror/commands'
-import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown'
+import { deleteMarkupBackward } from '@codemirror/lang-markdown'
 import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { EditorState, type Extension, Prec, type Text, Transaction } from '@codemirror/state'
 import type { Cover } from '@orden/markdown/cover'
@@ -45,7 +45,7 @@ import {
 } from './wikilink/notes'
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
-import { closeFence, leaveQuote } from './commands'
+import { closeFence, continueInCode, continueLists, leaveQuote } from './commands'
 import { refuseControlCharacters } from './control'
 import { ordenBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
@@ -175,7 +175,8 @@ export function editorState(options: StateOptions): EditorState {
       Prec.high(
         keymap.of([
           { key: 'Enter', run: leaveQuote },
-          { key: 'Enter', run: insertNewlineContinueMarkupCommand({ nonTightLists: false }) },
+          { key: 'Enter', run: continueLists },
+          { key: 'Enter', run: continueInCode },
           { key: 'Backspace', run: deleteMarkupBackward },
         ]),
       ),
@@ -193,7 +194,13 @@ export function editorState(options: StateOptions): EditorState {
             .find((one) => one !== undefined)
           if (!update.docChanged) document?.selected(update.state.selection, userEvent)
           else if (document) {
-            document.local(update.changes, update.state.selection, update.view, userEvent)
+            document.local(
+              update.changes,
+              update.state.selection,
+              update.view,
+              userEvent,
+              update.startState.selection,
+            )
           } else onChange?.(update.state.doc)
         }
         if (

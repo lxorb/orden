@@ -212,3 +212,12 @@ describe('tidying a very long document', { timeout: 30_000 }, () => {
     expect(tidied.startsWith('---\ntitle: Long\n---')).toBe(true)
   })
 })
+
+describe('a block right under a table', () => {
+  test('stays the block it is, with a pipe in it or not', () => {
+    const table = '| a   | b   |\n| --- | --- |\n| 1   | 2   |'
+    expect(reformat(`${table}\n- item | x\n`)).toBe(`${table}\n- item | x\n`)
+    expect(reformat(`${table}\n# Total | 5\n`)).toBe(`${table}\n# Total | 5\n`)
+    expect(reformat(`${table}\n> q | r\n`)).toBe(`${table}\n> q | r\n`)
+  })
+})

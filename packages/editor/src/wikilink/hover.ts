@@ -7,8 +7,8 @@ import {
   type Tooltip,
   type TooltipView,
 } from '@codemirror/view'
-import { isTabFile, linkTarget, sectionOf } from '@orden/markdown/links'
-import { modifierHeld } from '../links'
+import { isTabFile, linkTarget, sectionLine, sectionOf } from '@orden/markdown/links'
+import { followAnchors, modifierHeld } from '../links'
 import { type LinkSpan, linkAt } from './at'
 import { noteIndex, resolveLink } from './notes'
 import { renderNote } from './preview'
@@ -24,12 +24,28 @@ export interface PreviewNote {
   readOnly: boolean
 }
 
+const CRLF = /\r?\n/g
+
 export const previewNoteOf = (
   state: EditorState,
   path: string,
   text: string,
   section: string,
-): PreviewNote => ({ path, text, at: anchorOf(text, section), readOnly: state.readOnly })
+  link: Pick<LinkSpan, 'heading' | 'block'> = { heading: null, block: null },
+): PreviewNote => ({
+  path,
+  text,
+  at: lineStart(text, sectionLine(text, link)) ?? anchorOf(text.replace(CRLF, '\n'), section),
+  readOnly: state.readOnly,
+})
+
+function lineStart(text: string, line: number | null): number | null {
+  if (line === null) return null
+  return text
+    .split(CRLF)
+    .slice(0, line)
+    .reduce((at, one) => at + one.length + 1, 0)
+}
 
 export type PreviewMount = (host: HTMLElement, note: PreviewNote) => (() => void) | null
 
@@ -81,6 +97,7 @@ const cardFor =
     const body = document.createElement('div')
     body.className = 'orden-note-preview-body orden-write'
     body.textContent = 'Loading…'
+    followAnchors(body, () => view, true)
     dom.append(body)
 
     let release: (() => void) | null = null
@@ -143,7 +160,7 @@ const cardFor =
           const host = document.createElement('div')
           release = view.state.facet(previewEditor)(
             host,
-            previewNoteOf(view.state, path, source, section),
+            previewNoteOf(view.state, path, source, section, link),
           )
 
           if (release) {
@@ -170,10 +187,33 @@ const cardFor =
     }
   }
 
+const NAMED_END = /[ \t]+\^[A-Za-z0-9-]+[ \t]*$/
+
+const bare = (line: string) => line.replace(NAMED_END, '').trim()
+
 function anchorOf(source: string, section: string): number {
   if (section === source) return 0
 
-  const first = section.split('\n')[0] ?? ''
-  const at = first ? source.indexOf(first) : -1
-  return at === -1 ? 0 : at
+  const wanted = section.split('\n').map(bare)
+  const lines = source.split('\n')
+  const starts: number[] = []
+  let offset = 0
+  for (const line of lines) {
+    starts.push(offset)
+    offset += line.length + 1
+  }
+
+  let best = -1
+  let most = 0
+  for (const [index, line] of lines.entries()) {
+    if (!wanted[0] || bare(line) !== wanted[0]) continue
+    let same = 1
+    while (same < wanted.length && bare(lines[index + same] ?? '') === wanted[same]) same++
+    if (same > most) {
+      most = same
+      best = index
+    }
+  }
+
+  return best === -1 ? 0 : (starts[best] ?? 0)
 }

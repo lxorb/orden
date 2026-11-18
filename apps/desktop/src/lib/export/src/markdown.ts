@@ -29,6 +29,8 @@ const DEFINITION = new RegExp(
   String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`,
 )
 
+const IMG_SOURCE = /<img\b[^>]*?\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)')/gi
+
 const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
 
 function asLink(link: FoundLink, target: string): string {
@@ -143,6 +145,17 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
       if (edit) edits.push(edit)
     }
 
+    for (const match of line.matchAll(IMG_SOURCE)) {
+      if (inCode(spans, at + match.index)) continue
+      const written = match[1] ?? match[2] ?? ''
+      const name = written.replaceAll('&quot;', '"').replaceAll('&amp;', '&')
+      const wanted = rename(name)
+      if (wanted === null || wanted === name) continue
+      const from = at + match.index + match[0].length - written.length - 1
+      const text = wanted.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+      edits.push({ from, to: from + written.length, text })
+    }
+
     const definition: RegExpExecArray | null = paragraph ? null : DEFINITION.exec(line)
     if (definition) {
       const from = at + (definition[1]?.length ?? 0)
@@ -155,6 +168,13 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
   }
 
   return edits
+}
+
+function mediaEmbed(link: FoundLink, target: string): string | null {
+  const kind = embedKind(link.target)
+  if (!link.embed || (kind !== 'image' && kind !== 'audio' && kind !== 'video')) return null
+  const words = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+  return `![${words}](${asSource(target, '')})`
 }
 
 function pictureEmbed(link: FoundLink, rename: (src: string) => string | null): string | null {
@@ -188,7 +208,11 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
       if (target === null && found.embed && embedKind(found.target) !== null) continue
       const within = found.target === '' && (found.heading !== null || found.block !== null)
       const written =
-        target !== null ? asLink(found, target) : within ? asLink(found, '') : shownText(found)
+        target !== null
+          ? ((options.picture ? null : mediaEmbed(found, target)) ?? asLink(found, target))
+          : within
+            ? asLink(found, '')
+            : shownText(found)
       const text = matter && found.from < matter.close ? inMatter(source, found, written) : written
       if (text !== null) edits.push({ from: found.from, to: found.to, text })
     }

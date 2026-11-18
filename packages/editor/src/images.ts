@@ -2,6 +2,7 @@ import { EditorSelection, type Extension, Facet, StateEffect, StateField } from 
 import { EditorView } from '@codemirror/view'
 import { embedKind, encodeTarget, formatWikilink } from '@orden/markdown/links'
 import { later } from './shared'
+import { fileLinkName, type NoteIndex, noteIndex, spacePathOf } from './wikilink/notes'
 
 export type ImageSink = (file: File) => Promise<string | null>
 
@@ -19,11 +20,11 @@ export const imageResolver = Facet.define<ImageResolver, ImageResolver>({
 const isImage = (file: File): boolean => file.type.startsWith('image/')
 const isKept = (file: File): boolean => isImage(file) || embedKind(file.name) !== null
 
-function markdownFor(file: File, path: string): string {
+function markdownFor(file: File, path: string, index: NoteIndex): string {
   if (isImage(file)) return `![](${encodeTarget(path)})`
 
-  const name = path.slice(path.lastIndexOf('/') + 1)
-  return formatWikilink({ target: name, heading: null, block: null, alias: null, embed: true })
+  const target = fileLinkName(index, spacePathOf(index, path))
+  return formatWikilink({ target, heading: null, block: null, alias: null, embed: true })
 }
 
 export function wordsBesidePicture(html: string, text: string): boolean {
@@ -38,43 +39,68 @@ export function wordsBesidePicture(html: string, text: string): boolean {
   return words.trim() !== ''
 }
 
-const dropAt = StateEffect.define<number | null>()
+interface Drop {
+  key: number
+  at: number
+}
 
-const dropPoint = StateField.define<number | null>({
-  create: () => null,
+const dropAt = StateEffect.define<Drop>()
+const dropDone = StateEffect.define<number>()
+
+const dropPoints = StateField.define<ReadonlyMap<number, number>>({
+  create: () => new Map(),
 
   update(value, transaction) {
-    for (const effect of transaction.effects) if (effect.is(dropAt)) return effect.value
-    if (value === null || !transaction.docChanged) return value
-    return transaction.changes.mapPos(value, 1)
+    let next = value
+    if (transaction.docChanged && value.size) {
+      next = new Map(
+        [...value].map(([key, at]) => [key, transaction.changes.mapPos(at, 1)] as const),
+      )
+    }
+    for (const effect of transaction.effects) {
+      if (effect.is(dropAt)) next = new Map(next).set(effect.value.key, effect.value.at)
+      else if (effect.is(dropDone) && next.has(effect.value)) {
+        const left = new Map(next)
+        left.delete(effect.value)
+        next = left
+      }
+    }
+    return next
   },
 })
 
+let drops = 0
+
 export async function receiveImages(
   view: EditorView,
-  files: File[],
+  files: readonly File[] | Promise<readonly File[]>,
   sink: ImageSink,
   at: number | null,
 ) {
-  const kept = files.filter(isKept)
-  if (!kept.length) return
+  if (!(files instanceof Promise) && !files.some(isKept)) return
 
   const land = later(view)
-  view.dispatch({ effects: dropAt.of(at) })
+  const key = ++drops
+  if (at !== null) view.dispatch({ effects: dropAt.of({ key, at }) })
+  const kept = (files instanceof Promise ? await files : files).filter(isKept)
 
   const written: string[] = []
   for (const file of kept) {
     const path = await sink(file)
-    if (path) written.push(markdownFor(file, path))
+    if (path) written.push(markdownFor(file, path, view.state.facet(noteIndex)))
   }
-  if (!written.length) return
+  if (!written.length) {
+    if (at !== null) view.dispatch({ effects: dropDone.of(key) })
+    return
+  }
 
   const markdown = written.join('\n')
   land((state) => {
     if (state.readOnly) return null
 
     const range = state.selection.main
-    const mapped = state === view.state ? (state.field(dropPoint, false) ?? null) : at
+    const point = at === null ? undefined : state.field(dropPoints, false)?.get(key)
+    const mapped = state === view.state ? (point ?? null) : at
     const from = mapped ?? range.from
     const to = mapped ?? range.to
 
@@ -83,7 +109,7 @@ export async function receiveImages(
       selection: EditorSelection.cursor(from + markdown.length),
       scrollIntoView: true,
       userEvent: 'input.paste',
-      effects: dropAt.of(null),
+      effects: dropDone.of(key),
     }
   })
 }
@@ -104,7 +130,7 @@ export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extensio
   }
 
   return [
-    dropPoint,
+    dropPoints,
     EditorView.domEventHandlers({
       paste(event, view) {
         if (view.state.readOnly) return false
@@ -136,10 +162,7 @@ export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extensio
           void receiveImages(view, files, sink, at)
           return true
         }
-        void reading.then((read) => {
-          const kept = read.filter(isKept)
-          if (kept.length && !view.state.readOnly) void receiveImages(view, kept, sink, at)
-        })
+        void receiveImages(view, reading, sink, at)
         return true
       },
 

@@ -3,7 +3,7 @@ import { loadFor } from '@orden/markdown/engines'
 import { numbered } from '@orden/markdown/paths'
 import type { FoundLink } from '@orden/markdown/links'
 import { buildBody, buildStyles, type HtmlOptions, renderNote } from './render'
-import { prepareEmbeds, prepareFences } from '../../fences/src/api'
+import { prepareNote } from '../../fences/src/api'
 import {
   pageSetupFor,
   paperInches,
@@ -63,9 +63,8 @@ const pageOf = async (note: Note, options: RunOptions, pictures?: readonly Pictu
   renderNote(note.source, note.name, options, pictures)
 
 async function partsOf(note: Note, options: RunOptions) {
-  const fence = await prepareFences(note.source, options.scheme ?? 'light')
-  const embed = options.readNote ? await prepareEmbeds(note.source, options.readNote) : undefined
-  const body = buildBody(note.source, { ...options, fence, ...(embed ? { embed } : {}) })
+  const prepared = await prepareNote(note.source, options.scheme ?? 'light', options.readNote)
+  const body = buildBody(note.source, { ...options, ...prepared })
 
   return { body, css: buildStyles(body, note.source, options) }
 }

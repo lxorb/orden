@@ -32,22 +32,30 @@ describe('finding tables', () => {
   const doc = `|above\n\n${TABLE}\n\nbelow`
   const span = { from: 7, to: 7 + TABLE.length }
 
-  test.each([
-    [state(doc), [span]],
-    [state(`above\n\n${TABLE.slice(0, 3)}|${TABLE.slice(3)}\n\nbelow`), []],
-  ])('%j', (input, wanted) => expect(renderedTables(input)).toEqual(wanted))
+  test('a table is rendered while the caret is elsewhere', () => {
+    expect(renderedTables(state(doc))).toEqual([span])
+  })
 
-  test.each([
-    [state(doc), span, 5, span.to + 2],
-    [state(doc), span, span.to + 2, 5],
-    [state(doc), span, span.to + 1, span.to],
-    [state(doc), span, span.from - 1, span.from],
-  ])('%j', (input, wanted, extra, last) => expect(tableCrossed(input, extra, last)).toEqual(wanted))
+  test('a table is not rendered while the caret is in its text', () => {
+    expect(
+      renderedTables(state(`above\n\n${TABLE.slice(0, 3)}|${TABLE.slice(3)}\n\nbelow`)),
+    ).toEqual([])
+  })
 
-  test.each([
-    [state(doc), 0, 5],
-    [state(doc), span.to + 1, span.to + 3],
-  ])('%j', (input, extra, last) => expect(tableCrossed(input, extra, last)).toBeNull())
+  test('a move that skips over the table crosses it', () => {
+    expect(tableCrossed(state(doc), 5, span.to + 2)).toEqual(span)
+    expect(tableCrossed(state(doc), span.to + 2, 5)).toEqual(span)
+  })
+
+  test('a move that stops at the edge of the table crosses it', () => {
+    expect(tableCrossed(state(doc), span.to + 1, span.to)).toEqual(span)
+    expect(tableCrossed(state(doc), span.from - 1, span.from)).toEqual(span)
+  })
+
+  test('a move beside the table does not', () => {
+    expect(tableCrossed(state(doc), 0, 5)).toBeNull()
+    expect(tableCrossed(state(doc), span.to + 1, span.to + 3)).toBeNull()
+  })
 
   test('a move inside a revealed table does not', () => {
     const revealed = state(`above\n\n${TABLE.slice(0, 3)}|${TABLE.slice(3)}\n\nbelow`)
@@ -61,58 +69,68 @@ describe('finding tables', () => {
 })
 
 describe('the line beside a table', () => {
-  test.each([
-    [
-      state(`|above\n\n${TABLE}\n\nbelow`),
-      { from: 6, to: 6, made: false, changes: [] },
-      { from: 7, to: 7 + TABLE.length },
-      'above' as const,
-    ],
-    [
-      state(`|above\n\n${TABLE}\n\nbelow`),
-      {
-        from: { from: 7, to: 7 + TABLE.length }.to + 1,
-        to: { from: 7, to: 7 + TABLE.length }.to + 1,
-        made: false,
-        changes: [],
-      },
-      { from: 7, to: 7 + TABLE.length },
-      'below' as const,
-    ],
-    [
-      state(`|above\n\n${TABLE}`),
-      {
-        from: { from: 7, to: 7 + TABLE.length }.to + 1,
-        to: { from: 7, to: 7 + TABLE.length }.to + 1,
-        made: true,
-        changes: { from: { from: 7, to: 7 + TABLE.length }.to, insert: '\n' },
-      },
-      { from: 7, to: 7 + TABLE.length },
-      'below' as const,
-    ],
-    [
-      state(`${TABLE}\n\nbelow|`),
-      { from: 0, to: 0, made: true, changes: { from: 0, insert: '\n' } },
-      { from: 0, to: TABLE.length },
-      'above' as const,
-    ],
-  ])('%j', (input, wanted, extra, last) => expect(lineBeside(input, extra, last)).toEqual(wanted))
+  test('is the line already there', () => {
+    const doc = `|above\n\n${TABLE}\n\nbelow`
+    const span = { from: 7, to: 7 + TABLE.length }
+    expect(lineBeside(state(doc), span, 'above')).toEqual({
+      from: 6,
+      to: 6,
+      made: false,
+      changes: [],
+    })
+    expect(lineBeside(state(doc), span, 'below')).toEqual({
+      from: span.to + 1,
+      to: span.to + 1,
+      made: false,
+      changes: [],
+    })
+  })
+
+  test('is made a blank line away when the table ends the document', () => {
+    const span = { from: 7, to: 7 + TABLE.length }
+    expect(lineBeside(state(`|above\n\n${TABLE}`), span, 'below')).toEqual({
+      from: span.to + 2,
+      to: span.to + 2,
+      made: true,
+      changes: { from: span.to, insert: '\n\n' },
+    })
+  })
+
+  test('made under a table that ends the document takes words that are no row of it', () => {
+    const before = state(`|above\n\n${TABLE}`)
+    const span = { from: 7, to: 7 + TABLE.length }
+    const line = lineBeside(before, span, 'below')
+    const opened = before.update({ changes: line.changes }).state
+    const after = parsed(opened.update({ changes: { from: line.from, insert: 'next' } }).state)
+
+    expect(tableAt(after, span.from + 1)).toEqual(span)
+  })
+
+  test('is made when the table starts the document', () => {
+    const span = { from: 0, to: TABLE.length }
+    expect(lineBeside(state(`${TABLE}\n\nbelow|`), span, 'above')).toEqual({
+      from: 0,
+      to: 0,
+      made: true,
+      changes: { from: 0, insert: '\n' },
+    })
+  })
 })
 
 describe('stepping between cells', () => {
   const model = parseTable(['| a | b |', '| - | - |', '| 1 | 2 |', '| 3 | 4 |'].join('\n'))!
 
-  test.each([
-    [model, { row: -1, column: 1 }, { row: -1, column: 0 }],
-    [model, { row: 0, column: 0 }, { row: -1, column: 1 }],
-    [model, 'below', { row: 1, column: 1 }],
-  ])('%j', (input, wanted, extra) => expect(cellAfter(input, extra)).toEqual(wanted))
+  test('forward runs along the row, then on to the next', () => {
+    expect(cellAfter(model, { row: -1, column: 0 })).toEqual({ row: -1, column: 1 })
+    expect(cellAfter(model, { row: -1, column: 1 })).toEqual({ row: 0, column: 0 })
+    expect(cellAfter(model, { row: 1, column: 1 })).toBe('below')
+  })
 
-  test.each([
-    [model, { row: 0, column: 0 }, { row: 0, column: 1 }],
-    [model, { row: -1, column: 1 }, { row: 0, column: 0 }],
-    [model, 'above', { row: -1, column: 0 }],
-  ])('%j', (input, wanted, extra) => expect(cellBefore(input, extra)).toEqual(wanted))
+  test('backward runs the same way in reverse', () => {
+    expect(cellBefore(model, { row: 0, column: 1 })).toEqual({ row: 0, column: 0 })
+    expect(cellBefore(model, { row: 0, column: 0 })).toEqual({ row: -1, column: 1 })
+    expect(cellBefore(model, { row: -1, column: 0 })).toBe('above')
+  })
 
   test('down and up keep the column', () => {
     expect(cellBelow(model, { row: -1, column: 1 })).toEqual({ row: 0, column: 1 })
@@ -121,11 +139,8 @@ describe('stepping between cells', () => {
     expect(cellAbove({ row: -1, column: 1 })).toBe('above')
   })
 
-  test.each([
-    [model, { row: 1, column: 1 }],
-    [
-      { ...model, rows: [] },
-      { row: -1, column: 1 },
-    ],
-  ])('%j', (input, wanted) => expect(lastCell(input)).toEqual(wanted))
+  test('the last cell of a table without rows is in the header', () => {
+    expect(lastCell(model)).toEqual({ row: 1, column: 1 })
+    expect(lastCell({ ...model, rows: [] })).toEqual({ row: -1, column: 1 })
+  })
 })

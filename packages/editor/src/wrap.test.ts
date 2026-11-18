@@ -104,6 +104,18 @@ describe('a mark typed over a selection', () => {
   })
 })
 
+describe('a mark typed over words that start or end with inline code', () => {
+  test('words ending in a code span are wrapped, not replaced by the mark', () => {
+    expect(typeOver('Then run `npm i` again', 'run `npm i`', '*')).toBe(
+      'Then *«run `npm i`»* again',
+    )
+  })
+
+  test('words starting with a code span are wrapped, not replaced by the mark', () => {
+    expect(typeOver('Then `npm i` runs', '`npm i` runs', '_')).toBe('Then _«`npm i` runs»_')
+  })
+})
+
 describe('in code a mark is a character', () => {
   test.each([
     ['run `one two` now', 'run `*| two` now', 'one', '*'],
