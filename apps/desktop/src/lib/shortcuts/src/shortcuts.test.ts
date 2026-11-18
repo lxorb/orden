@@ -793,6 +793,22 @@ describe('the keyboard', () => {
     expect(asked).toEqual(['commands'])
   })
 
+  test('leaves a key bound to what only the desktop app does to the browser', () => {
+    const { shortcuts } = registry
+    let prevented = false
+    const closeWindow = Object.assign(press('W', { ctrl: true, shift: true, code: 'KeyW' }), {
+      preventDefault: () => (prevented = true),
+    })
+
+    const ran = shortcuts.handle(closeWindow, {
+      palette: () => undefined,
+      fullscreen: () => undefined,
+    })
+
+    expect(ran).toBe(false)
+    expect(prevented).toBe(false)
+  })
+
   test('leaves a key nothing is bound to alone', () => {
     const { shortcuts } = registry
     shortcuts.set('app.palette.open', null)
