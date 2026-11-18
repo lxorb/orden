@@ -328,28 +328,6 @@ async function askWhichLayoutToDelete() {
   if (chosen) workspace.layouts.remove(chosen)
 }
 
-function foldingCommands(view?: EditorView): Command[] {
-  const fold = (id: string, label: string, command: StateCommand): Command => ({
-    id,
-    label,
-    hint: shortcuts.hint(id),
-    disabled: !view,
-    run: () => {
-      if (!view) return
-      command(view)
-      view.focus()
-    },
-  })
-
-  return [
-    fold('view.fold', 'Fold', toggleFold),
-    fold('view.fold-all', 'Fold everything', foldHeadings),
-    fold('view.fold-more', 'Fold more', foldMore),
-    fold('view.fold-less', 'Fold less', foldLess),
-    fold('view.unfold-all', 'Unfold everything', unfoldEverything),
-  ]
-}
-
 function lineCommands(view?: EditorView): Command[] {
   const row = (
     id: string,
@@ -369,6 +347,11 @@ function lineCommands(view?: EditorView): Command[] {
   })
 
   return [
+    row('view.fold', 'Fold', toggleFold, false),
+    row('view.fold-all', 'Fold everything', foldHeadings, false),
+    row('view.fold-more', 'Fold more', foldMore, false),
+    row('view.fold-less', 'Fold less', foldLess, false),
+    row('view.unfold-all', 'Unfold everything', unfoldEverything, false),
     row('edit.expand-selection', 'Expand the selection', expandSelection, false),
     row('edit.shrink-selection', 'Shrink the selection', shrinkSelection, false),
     row('edit.select-word', 'Select the word, then the next', selectWord, false),
@@ -602,7 +585,7 @@ export function appCommands(view?: EditorView): Command[] {
     ...(unsaved
       ? [{ id: 'save', label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(unsaved.id) }]
       : []),
-    keyed('new', 'New note', 'app.new'),
+    { id: 'new', label: 'New note', hint: shortcuts.hint('app.new'), run: entry('app.new') },
     ...(__EVEN_PLUGIN__ ? [] : [keyed('quick-add', 'Add task', 'app.quick-add')]),
     ...commandRows('send', view),
     {
@@ -778,7 +761,6 @@ export function appCommands(view?: EditorView): Command[] {
     },
 
     ...blockCommands(view),
-    ...foldingCommands(view),
     ...lineCommands(view),
     keyed('reading', workspace.active?.reading ? 'Leave reading' : 'Reading', 'app.reading', {
       disabled: workspace.active?.kind !== 'note',
@@ -930,7 +912,12 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !workspace.unfolded,
     }),
     keyed('outline-panel', 'Outline', 'app.outline'),
-    keyed('search-space', 'Search this space', 'app.search', {}, view),
+    {
+      id: 'search-space',
+      label: 'Search this space',
+      hint: shortcuts.hint('app.search'),
+      run: entry('app.search', view),
+    },
     keyed('links-panel', 'Links', 'app.links'),
     ...(viewport.touch ? [] : [keyed('ask-panel', 'Ask', 'app.ask')]),
     keyed('quick-question', 'Quick question', 'app.quick-question'),
@@ -961,7 +948,12 @@ export function appCommands(view?: EditorView): Command[] {
     ...(__EVEN_PLUGIN__
       ? []
       : [
-          keyed('todos', 'Todos', 'app.tasks'),
+          {
+            id: 'todos',
+            label: 'Todos',
+            hint: shortcuts.hint('app.tasks'),
+            run: entry('app.tasks'),
+          },
           ...(timeOn()
             ? [
                 keyed('time-tab', 'Open time tracker', 'time.tab'),

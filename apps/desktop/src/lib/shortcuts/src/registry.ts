@@ -469,7 +469,14 @@ const APP_ENTRIES: Shortcut[] = [
           null,
           () => void runCommand('app.handwriting'),
         ),
-        app('view', 'app.tasks', 'Todos', 'Mod-Shift-y', () => void runCommand('views.todos')),
+        {
+          id: 'app.tasks',
+          label: () => 'Todos',
+          category: 'view',
+          scope: 'app',
+          key: 'Mod-Shift-y',
+          run: () => void runCommand('views.todos'),
+        } satisfies Shortcut,
         app('view', 'app.chats', 'Chats', 'Mod-Shift-u', () => revealPanel('chats'), {
           shown: () => chatsOn(),
         }),
@@ -582,9 +589,15 @@ const APP_ENTRIES: Shortcut[] = [
     (context) => modes.toggleReadOnly(context.view),
     { mac: 'Mod-Ctrl-r' },
   ),
-  app('view', 'app.fullscreen', 'Fullscreen', 'F11', (context) => context.fullscreen(), {
+  {
+    id: 'app.fullscreen',
+    label: () => 'Fullscreen',
+    category: 'view',
+    scope: 'app',
+    key: 'F11',
     mac: 'Mod-Ctrl-f',
-  }),
+    run: (context) => context.fullscreen(),
+  },
   app(
     'view',
     'app.fill-tab',
