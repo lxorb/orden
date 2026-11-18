@@ -115,3 +115,31 @@ pub fn is_blank(one: char) -> bool {
         | '\u{FFA0}'
     )
 }
+
+pub fn plain_name(said: &str) -> String {
+    said.chars()
+        .filter(|one| !is_format(*one))
+        .map(|one| {
+            if one.is_control() || is_blank(one) {
+                ' '
+            } else {
+                one
+            }
+        })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+pub fn spelled_out(said: &str) -> String {
+    let mut out = String::with_capacity(said.len());
+    for one in said.chars() {
+        if (one.is_control() && one != ' ') || is_format(one) {
+            out.extend(one.escape_unicode());
+        } else {
+            out.push(one);
+        }
+    }
+    out
+}

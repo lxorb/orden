@@ -8,11 +8,11 @@ use std::time::Duration;
 use serde_json::{Map, Value};
 use tauri::{AppHandle, Manager as _, Webview};
 
-use super::grants::Grant;
-use super::keys::Key;
-use super::policy::Facts;
-use super::snapshot::{Part, Wanted};
-use super::verbs::{
+use orden_agents::grants::Grant;
+use orden_agents::keys::Key;
+use orden_agents::policy::Facts;
+use orden_agents::snapshot::{Part, Wanted};
+use orden_agents::verbs::{
     Answer, Code, ConsoleLines, Cookie, FieldValue, Match, Picture, ReadAs, Requests, Store, Until,
 };
 use orden_documents::pdf::PdfPage;
@@ -194,14 +194,15 @@ pub fn acts_in(limits: Option<&(Grant, Store)>, facts: &Facts) -> Result<(), Ans
         ));
     }
     match limits {
-        Some((grant, store)) => super::policy::frame_allowed(grant, &facts.at, *store)
+        Some((grant, store)) => orden_agents::policy::frame_allowed(grant, &facts.at, *store)
             .map_err(|why| Answer::error(Code::SiteDenied, why)),
         None => Ok(()),
     }
 }
 
 pub fn frame_readable(limits: Option<&(Grant, Store)>, at: &[String]) -> bool {
-    limits.is_none_or(|(grant, store)| super::policy::frame_allowed(grant, at, *store).is_ok())
+    limits
+        .is_none_or(|(grant, store)| orden_agents::policy::frame_allowed(grant, at, *store).is_ok())
 }
 
 pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<(), String> {
@@ -209,13 +210,13 @@ pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<()
         return Ok(());
     };
     let placed = at.iter().any(|one| {
-        tauri::Url::parse(&super::policy::made_by(one))
+        tauri::Url::parse(&orden_agents::policy::made_by(one))
             .is_ok_and(|url| matches!(url.scheme(), "http" | "https") && url.host().is_some())
     });
     if !placed && limits_sites(limits) {
         return Err("the engine did not say which site that came from".into());
     }
-    super::policy::frame_allowed(grant, at, *store)
+    orden_agents::policy::frame_allowed(grant, at, *store)
 }
 
 impl Page<'_> {
@@ -336,9 +337,9 @@ pub trait Engine {
 #[cfg(test)]
 mod tests {
     use super::{acts_in, frame_readable, from_allowed, reader_of, twin_of};
-    use crate::agents::grants::{Grant, SiteRule};
-    use crate::agents::policy::Facts;
-    use crate::agents::verbs::{Answer, Code, Store};
+    use orden_agents::grants::{Grant, SiteRule};
+    use orden_agents::policy::Facts;
+    use orden_agents::verbs::{Answer, Code, Store};
 
     fn denying() -> (Grant, Store) {
         let mut grant = Grant::own("a".into(), "A");

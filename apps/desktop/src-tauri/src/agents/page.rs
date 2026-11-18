@@ -7,12 +7,12 @@ use serde_json::{json, Value};
 
 use super::cdp::{self, Heard, Whence};
 use super::engines::{self, Engine, Gate, Page, Tree, SETTLED, UNREAD};
-use super::grants::Grant;
-use super::keys::{self, Key};
-use super::policy::{self, Facts, Field};
 use super::scripts::{self, paint_over, png_size, CARET_ALL, CARET_END};
-use super::snapshot::{self, Part};
-use super::verbs::{
+use orden_agents::grants::Grant;
+use orden_agents::keys::{self, Key};
+use orden_agents::policy::{self, Facts, Field};
+use orden_agents::snapshot::{self, Part};
+use orden_agents::verbs::{
     Answer, Code, ConsoleLine, ConsoleLines, Cookie, FieldValue, Match, Moment, Picture, ReadAs,
     Request, Requests, Store, Until,
 };
@@ -1279,7 +1279,7 @@ impl Page<'_> {
     }
 
     fn interrupted(&self) -> bool {
-        super::stop::cancelled(self.since) || super::quiet::dialog_of(&self.label).is_some()
+        orden_agents::stop::cancelled(self.since) || super::quiet::dialog_of(&self.label).is_some()
     }
 
     fn navigations(&self) -> u64 {
@@ -1780,7 +1780,7 @@ impl Page<'_> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
-            super::log::sensitive();
+            orden_agents::log::sensitive();
         }
         if facts.tag == "select" {
             return Err(Answer::error(
@@ -1885,7 +1885,7 @@ impl Page<'_> {
         let facts = self.facts(element)?;
         self.refuse_secret(&facts)?;
         if facts.sensitive() {
-            super::log::sensitive();
+            orden_agents::log::sensitive();
         }
         match value {
             FieldValue::Ticked(wanted) => {
@@ -2627,9 +2627,9 @@ impl Page<'_> {
     fn read(
         &self,
         app: &tauri::AppHandle,
-        shape: super::verbs::ReadAs,
+        shape: orden_agents::verbs::ReadAs,
     ) -> Result<(String, String, String), Answer> {
-        use super::verbs::ReadAs;
+        use orden_agents::verbs::ReadAs;
         let said = self.read_hiding(match shape {
             ReadAs::Text => text_hiding,
             ReadAs::Markdown => whole_hiding,
@@ -2732,7 +2732,7 @@ impl Page<'_> {
             if done {
                 return Ok(spent);
             }
-            if super::stop::cancelled(self.since) {
+            if orden_agents::stop::cancelled(self.since) {
                 return Err(Answer::error(Code::Stopped, "the reader pressed the stop"));
             }
             if super::quiet::dialog_of(&self.label).is_some() {
@@ -3656,7 +3656,7 @@ fn request_readable(limits: Option<&(Grant, Store)>, row: &Request, from: &Whenc
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::agents::grants::SiteRule;
+    use orden_agents::grants::SiteRule;
 
     fn denying() -> (Grant, Store) {
         let mut grant = Grant::own("a".into(), "A");

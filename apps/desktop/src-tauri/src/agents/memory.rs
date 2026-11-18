@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn no_ceiling_is_the_default_and_refuses_nothing() {
-        assert_eq!(crate::agents::grants::Limits::default().memory, 0);
+        assert_eq!(orden_agents::grants::Limits::default().memory, 0);
         assert!(too_much(0).is_none());
         assert!(past(u64::MAX, 0).is_none());
         assert!(past(64 * 1024 * MB, 0).is_none());

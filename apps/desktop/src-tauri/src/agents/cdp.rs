@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 
 use super::engines::View;
-use super::verbs::{ConsoleLine, Request};
+use orden_agents::verbs::{ConsoleLine, Request};
 
 pub const PATIENCE: Duration = Duration::from_secs(30);
 

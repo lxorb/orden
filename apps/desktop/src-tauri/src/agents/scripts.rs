@@ -3,7 +3,7 @@ use std::time::Duration;
 use base64::Engine as _;
 use serde_json::Value;
 
-use super::verbs::ReadAs;
+use orden_agents::verbs::ReadAs;
 
 const PAINTED: [u8; 3] = [128, 128, 128];
 
@@ -124,10 +124,10 @@ pub(super) fn words(
         return (url, title, text_at("text"));
     }
     let html = text_at("html");
-    let markdown = crate::endpoint::ask(
+    let markdown = orden_agents::endpoint::ask(
         app,
-        super::verbs::window::MARKDOWN,
-        serde_json::to_value(super::verbs::window::Convert {
+        orden_agents::verbs::window::MARKDOWN,
+        serde_json::to_value(orden_agents::verbs::window::Convert {
             html: html.clone(),
             url: url.clone(),
         })

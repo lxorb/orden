@@ -1,0 +1,45 @@
+[package]
+name = "orden-agents"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+orden-base = { path = "../base" }
+orden-crashes = { path = "../crashes" }
+orden-placement = { path = "../placement" }
+orden-web-engine = { path = "../web-engine" }
+tauri.workspace = true
+tauri-plugin-opener.workspace = true
+tauri-plugin-os.workspace = true
+tauri-plugin-notification.workspace = true
+png.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+getrandom.workspace = true
+sha2.workspace = true
+dirs.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+tauri = { workspace = true, features = ["tray-icon"] }
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_System_JobObjects",
+] }
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -72,7 +72,7 @@ describe('the Theme group in Appearance', () => {
     expect(existsSync(join(TAURI, 'browser_themes.rs'))).toBe(false)
     expect(places().filter((one) => one.label === 'Import')).toEqual([])
     const gone = /browser_themes|BrowserTheme|wearFirefoxTheme|userChrome|statictheme.*Theme/
-    for (const path of [...sources(LIB), ...sources(TAURI)]) {
+    for (const path of [...sources(LIB), ...sources(TAURI), ...sources(join(TAURI, '../crates'))]) {
       if (path === import.meta.filename) continue
       expect(readFileSync(path, 'utf8'), path).not.toMatch(gone)
     }

@@ -20,8 +20,8 @@ use tauri::AppHandle;
 use super::super::cdp;
 use super::super::quiet::{self, Owner, Said};
 use super::super::tabs;
-use super::super::verbs::{Dialog, DialogKind, Download, DownloadState};
 use super::View;
+use orden_agents::verbs::{Dialog, DialogKind, Download, DownloadState};
 
 const FRAME_RATE: i32 = 60;
 

@@ -3,19 +3,20 @@ use std::time::Duration;
 
 use tauri::{AppHandle, Emitter as _};
 
-use super::approvals::{self, Asking};
 use super::engines::{self, Element, Engine, Page, ReaderStore, View};
-use super::grants::{Grant, Scope, SiteRule, Spaces};
-use super::keys;
-use super::policy::{self, Act, Facts};
-use super::snapshot::{self, Asked, Wanted};
 use super::tabs::{self, Tab};
-use super::verbs::{
+use orden_agents::approvals::{self, Asking};
+use orden_agents::files::hidden_within;
+use orden_agents::grants::{Grant, Scope, SiteRule, Spaces};
+use orden_agents::keys;
+use orden_agents::policy::{self, Act, Facts};
+use orden_agents::snapshot::{self, Asked, Wanted};
+use orden_agents::verbs::{
     Acted, Answer, Category, Closed, Code, Dialog, DownloadList, Evaluated, Event, FieldValue,
     Found, Opened, PageText, Picture, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited,
     World, EVENT,
 };
-use super::Caller;
+use orden_agents::Caller;
 
 const WAIT: Duration = Duration::from_secs(30);
 const LONGEST_WAIT: Duration = Duration::from_secs(120);
@@ -83,7 +84,7 @@ fn tabs_of(app: &AppHandle, caller: &Caller) -> Answer {
     Answer::ok(TabList { reader, agent })
 }
 
-fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answer {
+fn open_tab(app: &AppHandle, caller: &Caller, open: &orden_agents::verbs::Open) -> Answer {
     if !caller.holds(Scope::Browser) {
         return Answer::error(
             Code::NotGranted,
@@ -151,18 +152,18 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
 }
 
 fn store_for(app: &AppHandle, space: Option<&str>, url: &str) -> Option<String> {
-    let asked = super::verbs::window::StoreAsk {
+    let asked = orden_agents::verbs::window::StoreAsk {
         space: space.map(str::to_string),
         url: url.to_string(),
     };
-    crate::endpoint::ask(
+    orden_agents::endpoint::ask(
         app,
-        super::verbs::window::STORE_FOR,
+        orden_agents::verbs::window::STORE_FOR,
         serde_json::to_value(asked).unwrap_or_default(),
         Duration::from_millis(800),
     )
     .ok()
-    .and_then(|value| serde_json::from_value::<super::verbs::window::StoreSaid>(value).ok())
+    .and_then(|value| serde_json::from_value::<orden_agents::verbs::window::StoreSaid>(value).ok())
     .and_then(|said| said.store)
     .and_then(|store| {
         crate::web_stores::named(Some(&store))
@@ -271,7 +272,7 @@ pub(super) fn peek(app: &AppHandle, tab: &str) -> Result<Picture, String> {
         &view,
         view.label(),
         true,
-        super::stop::generation(),
+        orden_agents::stop::generation(),
         None,
         true,
     );
@@ -643,7 +644,7 @@ fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) 
             tab: Some(own.id.clone()),
             key: key.to_string(),
         },
-        super::verbs::ApprovalAnswer::Allowed,
+        orden_agents::verbs::ApprovalAnswer::Allowed,
     );
 }
 
@@ -771,9 +772,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             }
             Verb::Click(click) => {
                 let button = match click.button {
-                    super::verbs::Button::Left => "left",
-                    super::verbs::Button::Right => "right",
-                    super::verbs::Button::Middle => "middle",
+                    orden_agents::verbs::Button::Left => "left",
+                    orden_agents::verbs::Button::Right => "right",
+                    orden_agents::verbs::Button::Middle => "middle",
                 };
                 let count = click.count.unwrap_or(1).clamp(1, 3);
                 let held = modifiers(&click.modifiers);
@@ -980,7 +981,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         files.iter().filter(|(_, inside)| !inside).collect();
                     if let Some(no) = outside
                         .iter()
-                        .find_map(|(path, _)| super::files::fenced_out(app, path))
+                        .find_map(|(path, _)| orden_agents::files::fenced_out(app, path))
                     {
                         return Err(no);
                     }
@@ -1177,7 +1178,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let asked = approvals::waiting_on(&grant.id, &own.id, Category::Showing);
                 if asked
                     .as_ref()
-                    .is_some_and(|one| one.answer == super::verbs::ApprovalAnswer::Allowed)
+                    .is_some_and(|one| one.answer == orden_agents::verbs::ApprovalAnswer::Allowed)
                 {
                     return Ok(acted(page));
                 }
@@ -1241,8 +1242,8 @@ fn press(page: &Page<'_>, place: &Place, key: &keys::Key) -> Result<(), Answer> 
     }
 }
 
-fn modifiers(held: &[super::verbs::Modifier]) -> u8 {
-    use super::verbs::Modifier;
+fn modifiers(held: &[orden_agents::verbs::Modifier]) -> u8 {
+    use orden_agents::verbs::Modifier;
     held.iter().fold(0, |bits, one| {
         bits | match one {
             Modifier::Alt => 1,
@@ -1294,9 +1295,9 @@ fn files_of(
             let logical = orden_base::paths::folded(&path);
             let twin = root
                 .as_deref()
-                .and_then(|root| super::working::kept_twin(root, &logical));
+                .and_then(|root| orden_agents::working::kept_twin(root, &logical));
             let path = match &twin {
-                Some(twin) => super::working::on_disk(app, twin)
+                Some(twin) => orden_agents::working::on_disk(app, twin)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?,
                 None => logical.clone(),
             };
@@ -1348,13 +1349,6 @@ fn kept_from_agents(app: &AppHandle, root: Option<&Path>, path: &Path) -> Result
     Ok(())
 }
 
-pub(super) fn hidden_within(root: &Path, path: &Path) -> bool {
-    path.strip_prefix(root).map_or(true, |rest| {
-        rest.components()
-            .any(|step| step.as_os_str().to_string_lossy().starts_with('.'))
-    })
-}
-
 fn plainly(path: &Path) -> String {
     let spelled = path.to_string_lossy();
     if let Some(share) = spelled.strip_prefix(r"\\?\UNC\") {
@@ -1364,12 +1358,12 @@ fn plainly(path: &Path) -> String {
 }
 
 fn may_hand(app: &AppHandle, path: &Path) -> bool {
-    let asked = super::verbs::window::HandAsk {
+    let asked = orden_agents::verbs::window::HandAsk {
         path: plainly(path),
     };
-    crate::endpoint::ask(
+    orden_agents::endpoint::ask(
         app,
-        super::verbs::window::MAY_HAND,
+        orden_agents::verbs::window::MAY_HAND,
         serde_json::to_value(asked).unwrap_or_default(),
         Duration::from_millis(800),
     )
@@ -1377,7 +1371,7 @@ fn may_hand(app: &AppHandle, path: &Path) -> bool {
 }
 
 fn handed_from_own(spaces: Option<&Path>, own: &[PathBuf], path: &Path) -> Result<(), Answer> {
-    super::files::behind_but_spaces(spaces, own, path).map_or(Ok(()), Err)
+    orden_agents::files::behind_but_spaces(spaces, own, path).map_or(Ok(()), Err)
 }
 
 fn beyond_the_grant(root: &Path, path: &Path, spaces: &Spaces) -> bool {
@@ -1428,8 +1422,8 @@ mod tests {
         assert!(handed(&report).is_ok());
         assert!(handed(&sneaking).is_err());
     }
-    use crate::agents::grants::{Every, SiteRule, Spaces};
-    use crate::agents::verbs::{Dialog, DialogKind, Modifier, Store};
+    use orden_agents::grants::{Every, SiteRule, Spaces};
+    use orden_agents::verbs::{Dialog, DialogKind, Modifier, Store};
     use std::path::Path;
 
     #[test]

@@ -1,101 +1,27 @@
-pub mod grants;
-pub mod verbs;
-
-mod approvals;
-mod capture;
-pub(crate) mod files;
-mod http;
-mod keys;
-mod limits;
-mod log;
-mod policy;
-mod process;
-mod snapshot;
-pub(crate) mod stop;
-mod system;
-
-pub mod engines;
-pub mod shell;
-
 mod browser;
+mod capture;
 pub(crate) mod cdp;
+pub mod engines;
 mod memory;
 mod page;
 mod quiet;
 mod reader;
 mod scripts;
-mod tabs;
+pub(crate) mod tabs;
 mod twin;
-pub(crate) mod working;
 
-use std::sync::OnceLock;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use serde::Serialize;
 use serde_json::Value;
 use tauri::AppHandle;
 
-use grants::{Grant, Grants, Scope};
-use verbs::{Answer, Approval, ApprovalAnswer, ApprovalState, Category, Code, Paired, Verb};
-
-#[derive(Default)]
-pub struct Agents {
-    pub grants: Grants,
-}
-
-pub(crate) static AGENTS: OnceLock<Agents> = OnceLock::new();
-
-pub fn state(_app: &AppHandle) -> &'static Agents {
-    AGENTS.get_or_init(Agents::default)
-}
-
-#[derive(Clone, Debug)]
-pub enum Caller {
-    Reader,
-    Agent(Box<Grant>),
-}
-
-impl Caller {
-    pub fn id(&self) -> &str {
-        match self {
-            Caller::Reader => "cli",
-            Caller::Agent(grant) => &grant.id,
-        }
-    }
-
-    pub fn holds(&self, scope: Scope) -> bool {
-        match self {
-            Caller::Reader => true,
-            Caller::Agent(grant) => grant.holds(scope),
-        }
-    }
-
-    pub fn told(&self) -> Option<Value> {
-        match self {
-            Caller::Reader => None,
-            Caller::Agent(grant) => serde_json::to_value(grant).ok(),
-        }
-    }
-
-    fn limits(&self) -> grants::Limits {
-        match self {
-            Caller::Reader => grants::Limits::default(),
-            Caller::Agent(grant) => grant.limits,
-        }
-    }
-}
-
-pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
-    if let Some(grant) = state(app).grants.by_token(app, token) {
-        return Some(Caller::Agent(Box::new(connected(grant))));
-    }
-    crate::ai_agent::lent(app, token).map(|grant| Caller::Agent(Box::new(grant)))
-}
-
-fn connected(mut grant: Grant) -> Grant {
-    grant.mode = grants::Mode::Autonomous;
-    grant
-}
+use orden_agents::grants::Grant;
+use orden_agents::verbs::{self, Answer, Approval, ApprovalState, Code, Verb};
+use orden_agents::{
+    approvals, files, http, limits, logged, pair_client, process, said_waiting, shell, state, stop,
+    system, Caller,
+};
 
 pub fn answer(app: &AppHandle, caller: &Caller, session: &str, verb: Verb, args: Value) -> Answer {
     shell::start(app);
@@ -114,58 +40,6 @@ pub fn answer(app: &AppHandle, caller: &Caller, session: &str, verb: Verb, args:
         started,
     );
     answered
-}
-
-pub fn session_of(asked: &Value) -> String {
-    asked
-        .get("session")
-        .and_then(Value::as_str)
-        .filter(|one| {
-            one.len() <= 64
-                && one
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
-        })
-        .unwrap_or_default()
-        .to_owned()
-}
-
-#[allow(
-    clippy::too_many_arguments,
-    reason = "a log line names the caller, its session, the call and its answer"
-)]
-pub fn logged(
-    app: &AppHandle,
-    caller: &Caller,
-    session: &str,
-    verb: &str,
-    tab: Option<&str>,
-    args: Value,
-    answered: &Answer,
-    started: Instant,
-) {
-    if let Caller::Agent(grant) = caller {
-        if verb != "agent_bye" {
-            shell::heard(app, &grant.id, session);
-        }
-    }
-    let code = match answered {
-        Answer::Error { code, .. } => serde_json::to_value(code).ok(),
-        _ => None,
-    };
-    log::write(
-        app,
-        log::Line {
-            at: orden_base::clock::now(),
-            agent: caller.id(),
-            verb,
-            tab,
-            args,
-            status: answered.status(),
-            code,
-            ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
-        },
-    );
 }
 
 fn run(app: &AppHandle, caller: &Caller, session: &str, verb: Verb) -> Answer {
@@ -244,19 +118,6 @@ fn count_navigation(caller: &Caller, since: u64) -> Result<(), Answer> {
     }
 }
 
-fn said_waiting(app: &AppHandle, caller: &Caller, session: &str, what: &str) {
-    logged(
-        app,
-        caller,
-        session,
-        "limit",
-        None,
-        serde_json::json!({ "waiting": what }),
-        &Answer::ok(verbs::Nothing {}),
-        Instant::now(),
-    );
-}
-
 fn status(app: &AppHandle, caller: &Caller) -> Answer {
     let Caller::Agent(grant) = caller else {
         return Answer::error(
@@ -275,204 +136,6 @@ fn status(app: &AppHandle, caller: &Caller) -> Answer {
         approvals: approvals::pending(Some(&grant.id)),
         grant,
     })
-}
-
-const LONGEST_PAIRING_WAIT: Duration = Duration::from_secs(300);
-
-fn pair_client(app: &AppHandle, caller: &Caller, pair: &verbs::Pair) -> Answer {
-    if !matches!(caller, Caller::Reader) {
-        return Answer::error(
-            Code::NotGranted,
-            "only a client holding the installation's secret pairs: an agent is paired already",
-        );
-    }
-    let client = crate::downloads::plain_name(&pair.client);
-    if client.is_empty() || client.chars().count() > 60 {
-        return Answer::error(Code::BadArguments, "a client's name is 1 to 60 characters");
-    }
-    let key = approvals::key("agent_pair", None, Some(&client));
-    let wait = Duration::from_millis(pair.wait_ms.unwrap_or(0)).min(LONGEST_PAIRING_WAIT);
-    let started = Instant::now();
-    loop {
-        if approvals::allowed(PAIRING, &key) {
-            return match state(app).grants.mint(app, &client, Grant::own) {
-                Ok((grant, token)) => Answer::ok(Paired {
-                    agent: grant.id,
-                    token,
-                }),
-                Err(why) => Answer::error(Code::Failed, why),
-            };
-        }
-        let asked = approvals::ask(
-            app,
-            approvals::Asking {
-                agent: PAIRING,
-                name: &client,
-                category: Category::Pairing,
-                summary: client.clone(),
-                site: None,
-                tab: None,
-                key: key.clone(),
-            },
-        );
-        if !matches!(asked, Answer::NeedsApproval { .. }) || started.elapsed() >= wait {
-            return asked;
-        }
-        std::thread::sleep(Duration::from_millis(200));
-    }
-}
-
-const PAIRING: &str = "";
-
-pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
-    let Caller::Agent(_) = caller else {
-        return Ok(());
-    };
-    if stop::stopped_for(caller.id()) {
-        return Err("the reader pressed the stop: nothing runs until they resume".into());
-    }
-    let Some((_, needs)) = verbs::window::AGENT_VERBS
-        .iter()
-        .find(|(name, _)| *name == verb)
-    else {
-        return Err(format!("{verb} is not a verb an agent may call"));
-    };
-    match needs {
-        Some(scope) if !caller.holds(*scope) => Err(format!(
-            "{verb} needs {}, which this agent was not granted",
-            serde_json::to_value(scope)
-                .ok()
-                .and_then(|one| one.as_str().map(str::to_string))
-                .unwrap_or_default()
-        )),
-        _ => Ok(()),
-    }
-}
-
-#[tauri::command]
-pub fn agents_stop(
-    webview: tauri::Webview,
-    app: AppHandle,
-    agent: Option<String>,
-) -> Result<bool, String> {
-    orden_base::labels::from_the_app(&webview)?;
-    Ok(match agent {
-        Some(agent) => {
-            stop::halt(&app, &agent);
-            false
-        }
-        None => stop::stop(&app),
-    })
-}
-
-#[tauri::command]
-pub fn agents_resume(
-    webview: tauri::Webview,
-    app: AppHandle,
-    agent: Option<String>,
-) -> Result<(), String> {
-    orden_base::labels::from_the_app(&webview)?;
-    stop::resume(&app, agent.as_deref());
-    Ok(())
-}
-
-#[tauri::command]
-pub async fn agents_dialog_path(
-    webview: tauri::Webview,
-    app: AppHandle,
-    agent: String,
-    path: String,
-    write: bool,
-) -> Answer {
-    orden_base::lane::off_the_runtime(move || -> Answer {
-        if let Err(why) = orden_base::labels::from_the_app(&webview) {
-            return Answer::error(Code::NotGranted, why);
-        }
-        let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
-            return Answer::error(Code::NotGranted, "there is no such agent");
-        };
-        let op = if write {
-            verbs::FilesOp::Write
-        } else {
-            verbs::FilesOp::Read
-        };
-        match files::reachable(&app, &Caller::Agent(Box::new(grant)), &path, op) {
-            Ok(path) => {
-                orden_base::paths::picked_for_an_agent(&app, &files::pick_reach(&app, &path));
-                Answer::ok(serde_json::json!({ "path": path.display().to_string() }))
-            }
-            Err(answer) => answer,
-        }
-    })
-    .await
-}
-
-#[tauri::command(async)]
-pub fn agents_answer(
-    webview: tauri::Webview,
-    app: AppHandle,
-    id: String,
-    allow: bool,
-    always: bool,
-) -> Result<Approval, String> {
-    orden_base::labels::from_the_app(&webview)?;
-    let approval = approvals::answer(&app, &id, allow)?;
-    if always && approval.answer == ApprovalAnswer::Allowed {
-        if let Some(site) = approval.site.clone() {
-            let category = approval.category;
-            let _ = state(&app).grants.change(&app, &approval.agent, |grant| {
-                let kept = grant.always.entry(site).or_default();
-                if !kept.contains(&category) {
-                    kept.push(category);
-                }
-            });
-        }
-    }
-    Ok(approval)
-}
-
-pub fn question_category(id: &str) -> Option<(verbs::Category, Option<String>)> {
-    approvals::any(id).map(|one| (one.category, one.site))
-}
-
-#[tauri::command(async)]
-pub fn agents_ask(
-    webview: tauri::Webview,
-    app: AppHandle,
-    agent: String,
-    category: Category,
-    summary: String,
-    key: String,
-    site: Option<String>,
-) -> Answer {
-    if let Err(why) = orden_base::labels::from_the_app(&webview) {
-        return Answer::error(Code::NotGranted, why);
-    }
-    if approvals::allowed(&agent, &key) {
-        return Answer::ok(verbs::Nothing {});
-    }
-    let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
-        return Answer::error(Code::NotGranted, "there is no such agent");
-    };
-    if !grant.asks(category)
-        || site
-            .as_deref()
-            .is_some_and(|site| grant.always(site, category))
-    {
-        return Answer::ok(verbs::Nothing {});
-    }
-    approvals::ask(
-        &app,
-        approvals::Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category,
-            summary,
-            site,
-            tab: None,
-            key,
-        },
-    )
 }
 
 #[tauri::command(async)]
@@ -506,43 +169,6 @@ pub struct Overview {
     pub stopped: bool,
     pub halted: Vec<String>,
     pub connected: Vec<String>,
-}
-
-#[tauri::command(async)]
-pub fn agents_log(
-    webview: tauri::Webview,
-    app: AppHandle,
-    day: String,
-) -> Result<Vec<Value>, String> {
-    orden_base::labels::from_the_app(&webview)?;
-    Ok(log::read_day(&app, &day))
-}
-
-#[tauri::command(async)]
-pub fn agents_log_after(
-    webview: tauri::Webview,
-    app: AppHandle,
-    day: String,
-    from: u64,
-) -> Result<log::After, String> {
-    orden_base::labels::from_the_app(&webview)?;
-    Ok(log::read_after(&app, &day, from))
-}
-
-#[tauri::command(async)]
-pub fn agents_log_days(webview: tauri::Webview, app: AppHandle) -> Result<Vec<String>, String> {
-    orden_base::labels::from_the_app(&webview)?;
-    Ok(log::days(&app))
-}
-
-#[tauri::command(async)]
-pub fn agents_log_clear(
-    webview: tauri::Webview,
-    app: AppHandle,
-    agent: Option<String>,
-) -> Result<(), String> {
-    orden_base::labels::from_the_app(&webview)?;
-    log::clear(&app, agent.as_deref())
 }
 
 #[tauri::command(async)]
@@ -599,72 +225,4 @@ pub async fn agents_capture(
         )
     })
     .await
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn an_agent_reaches_only_its_own_window_verbs() {
-        let mut grant = Grant::own("a".into(), "A");
-        grant.scopes.retain(|one| *one != Scope::NotesWrite);
-        let agent = Caller::Agent(Box::new(grant));
-
-        assert!(may_ask_the_window(&agent, "read_note").is_ok());
-        assert!(may_ask_the_window(&agent, "edit_note").is_err());
-        assert!(may_ask_the_window(&agent, "files.write").is_err());
-        assert!(may_ask_the_window(&agent, "eval").is_err());
-        assert!(may_ask_the_window(&agent, "list_spaces").is_ok());
-
-        assert!(may_ask_the_window(&Caller::Reader, "files.write").is_ok());
-    }
-
-    #[test]
-    fn a_client_connected_over_mcp_is_asked_nothing() {
-        let mut kept = Grant::third_party("codex".into(), "Codex");
-        kept.asks.insert(Category::Deleting, true);
-        kept.sites
-            .insert("bank.example".into(), grants::SiteRule::Deny);
-        kept.spaces = grants::Spaces::Named(vec!["Work".into()]);
-        let grant = connected(kept);
-
-        for category in [
-            Category::Paying,
-            Category::Sending,
-            Category::Publishing,
-            Category::Deleting,
-            Category::SigningIn,
-            Category::Settings,
-            Category::Terminal,
-            Category::Files,
-            Category::Writing,
-            Category::Showing,
-            Category::Takeover,
-        ] {
-            assert!(!grant.asks(category), "{category:?}");
-        }
-        assert!(grant.asks_nothing());
-        for scope in Scope::ALL {
-            assert!(grant.holds(scope), "{scope:?}");
-        }
-        let agent = Caller::Agent(Box::new(grant.clone()));
-        assert!(may_ask_the_window(&agent, "write_setting").is_ok());
-
-        assert!(
-            policy::site_allowed(&grant, "https://bank.example/", verbs::Store::Reader).is_err()
-        );
-        assert!(!grant.spaces.reach("Home"));
-    }
-
-    #[test]
-    fn the_command_line_is_filed_as_cli_with_every_scope() {
-        assert_eq!(Caller::Reader.id(), "cli");
-        assert!(Caller::Reader.holds(Scope::Terminal));
-        assert!(Caller::Reader.told().is_none());
-        let agent = Caller::Agent(Box::new(Grant::own("claude-code".into(), "Claude Code")));
-        assert_eq!(agent.id(), "claude-code");
-        assert!(!agent.holds(Scope::Settings));
-        assert_eq!(agent.told().expect("told")["id"], "claude-code");
-    }
 }

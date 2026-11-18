@@ -1,8 +1,8 @@
 use tauri::AppHandle;
 
-use super::grants::Scope;
-use super::verbs::{Answer, CaptureAs, Code};
-use super::Caller;
+use orden_agents::grants::Scope;
+use orden_agents::verbs::{Answer, CaptureAs, Code};
+use orden_agents::Caller;
 use orden_documents::pdf::PdfPage;
 
 const VERB: &str = "capture_to_note";
@@ -21,13 +21,14 @@ pub fn answer(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answ
 }
 
 fn may_capture(caller: &Caller, asked: &Asked) -> Result<(), Answer> {
-    if super::stop::stopped() {
+    if orden_agents::stop::stopped() {
         return Err(Answer::error(
             Code::Stopped,
             "the reader pressed the stop: nothing runs until they resume",
         ));
     }
-    super::may_ask_the_window(caller, VERB).map_err(|why| Answer::error(Code::NotGranted, why))?;
+    orden_agents::may_ask_the_window(caller, VERB)
+        .map_err(|why| Answer::error(Code::NotGranted, why))?;
     if !caller.holds(Scope::Browser) && !caller.holds(Scope::BrowserReader) {
         return Err(Answer::error(
             Code::NotGranted,
@@ -46,7 +47,7 @@ fn no_paper() -> Answer {
 
 fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
     use super::engines::{self, Engine};
-    use super::verbs::Captured;
+    use orden_agents::verbs::Captured;
 
     if engines::cannot(VERB).is_some() {
         return engines::refused(VERB);
@@ -58,7 +59,7 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
             "this agent was not granted tabs of its own",
         );
     }
-    let since = super::stop::generation();
+    let since = orden_agents::stop::generation();
     super::browser::on_tab(app, caller, tab, VERB, since, false, |_, page| {
         let url = Engine::url(page);
         let captured = match asked.shape {
@@ -102,7 +103,7 @@ fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::agents::grants::Grant;
+    use orden_agents::grants::Grant;
 
     fn asked(shape: CaptureAs) -> Asked {
         Asked {

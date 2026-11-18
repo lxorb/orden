@@ -33,7 +33,7 @@ import {
 
 function crate(name: string): string {
   return readFileSync(
-    fileURLToPath(new URL(`../../../../src-tauri/src/agents/${name}`, import.meta.url)),
+    fileURLToPath(new URL(`../../../../src-tauri/crates/agents/src/${name}`, import.meta.url)),
     'utf8',
   )
 }

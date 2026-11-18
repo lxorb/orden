@@ -70,7 +70,9 @@ describe('the defaults', () => {
 
   it('are the crate’s own, as grants.rs writes them', () => {
     const crate = readFileSync(
-      fileURLToPath(new URL('../../../../../src-tauri/src/agents/grants.rs', import.meta.url)),
+      fileURLToPath(
+        new URL('../../../../../src-tauri/crates/agents/src/grants.rs', import.meta.url),
+      ),
       'utf8',
     )
     expect(crate).toMatch(

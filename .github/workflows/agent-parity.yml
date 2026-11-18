@@ -6,6 +6,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - apps/desktop/src-tauri/src/agents/**
+      - apps/desktop/src-tauri/crates/agents/**
       - apps/desktop/src-tauri/Cargo.toml
       - scripts/agent-parity.py
       - .github/workflows/agent-parity.yml

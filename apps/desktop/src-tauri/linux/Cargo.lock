@@ -4185,6 +4185,7 @@ dependencies = [
  "objc2-core-video",
  "objc2-foundation",
  "objc2-screen-capture-kit",
+ "orden-agents",
  "orden-apps",
  "orden-base",
  "orden-browsers",
@@ -4236,6 +4237,30 @@ dependencies = [
  "windows 0.58.0",
  "x11rb",
  "zbus 5.19.0",
+]
+
+[[package]]
+name = "orden-agents"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "dirs 6.0.0",
+ "getrandom 0.3.4",
+ "libc",
+ "orden-base",
+ "orden-crashes",
+ "orden-placement",
+ "orden-web-engine",
+ "reqwest",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tauri",
+ "tauri-plugin-opener",
+ "tauri-plugin-os",
+ "tempfile",
+ "windows 0.58.0",
 ]
 
 [[package]]

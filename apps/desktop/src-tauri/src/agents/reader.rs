@@ -4,15 +4,15 @@ use serde_json::json;
 use tauri::{AppHandle, Manager as _};
 
 use super::engines::View;
-use super::grants::Spaces;
-use super::verbs::{window, ReaderTab};
+use orden_agents::grants::Spaces;
+use orden_agents::verbs::{window, ReaderTab};
 
 const ASKING: Duration = Duration::from_millis(800);
 
 const LENDING: Duration = Duration::from_secs(15);
 
 fn listed(app: &AppHandle) -> Option<Vec<ReaderTab>> {
-    crate::endpoint::ask(app, window::READER_TABS, json!({}), ASKING)
+    orden_agents::endpoint::ask(app, window::READER_TABS, json!({}), ASKING)
         .ok()
         .and_then(|value| serde_json::from_value(value).ok())
 }
@@ -58,7 +58,7 @@ pub fn page(app: &AppHandle, tab: &str) -> Option<View> {
     let lend = window::Lend {
         tab: tab.to_string(),
     };
-    let _ = crate::endpoint::ask(
+    let _ = orden_agents::endpoint::ask(
         app,
         window::LEND,
         serde_json::to_value(lend).unwrap_or_default(),

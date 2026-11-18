@@ -154,6 +154,7 @@ tauri-plugin-os = "=3.0.0-alpha.3"
 tauri-plugin-opener = "=3.0.0-alpha.3"
 tauri-plugin-deep-link = "=3.0.0-alpha.3"
 tauri-plugin-updater = "=3.0.0-alpha.3"
+tauri-plugin-notification = "=3.0.0-alpha.3"
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 notify = "8"
 file-id = "0.2"
@@ -213,6 +214,7 @@ getrandom.workspace = true
 percent-encoding.workspace = true
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
+orden-agents = { path = "crates/agents" }
 orden-apps = { path = "crates/apps" }
 orden-browsers = { path = "crates/browsers" }
 orden-crashes = { path = "crates/crashes" }
@@ -232,7 +234,6 @@ tempfile.workspace = true
 tauri-plugin-single-instance = { version = "=3.0.0-alpha.3", features = ["deep-link"] }
 tauri-plugin-updater.workspace = true
 tauri-plugin-global-shortcut = "=3.0.0-alpha.3"
-tauri-plugin-notification = "=3.0.0-alpha.3"
 sha2.workspace = true
 dirs.workspace = true
 reqwest.workspace = true

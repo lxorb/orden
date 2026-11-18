@@ -140,7 +140,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             orden_pty::terminal::end_all(app);
             orden_apps::apps_host::end_all(app);
             crate::ai_cli::end_all(app);
-            crate::agents::stop::quitting();
+            orden_agents::stop::quitting();
             orden_reminders::notices::clear_all(app);
         }
 
@@ -168,7 +168,8 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(pending) = app.try_state::<launch::Pending>() {
                 pending.forget(&label);
             }
-            app.state::<crate::endpoint::Waiting>().forget(&label);
+            app.state::<orden_agents::endpoint::Waiting>()
+                .forget(&label);
             app.state::<Installer>().gone(&label);
             orden_crashes::crashes::window_gone(&label);
             orden_pty::terminal::window_gone(
@@ -304,7 +305,7 @@ pub fn quit_show(webview: tauri::Webview) {
     }
     #[cfg(any(windows, target_os = "macos"))]
     if !window.is_visible().unwrap_or(true) {
-        crate::agents::shell::open(webview.app_handle());
+        orden_agents::shell::open(webview.app_handle());
         return;
     }
     orden_placement::placement::raised(&window);

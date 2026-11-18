@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use tauri::AppHandle;
 
 use super::cdp;
-use super::verbs::{Dialog, Download, DownloadState};
+use orden_agents::verbs::{Dialog, Download, DownloadState};
 
 pub(super) const DIALOG_PATIENCE: Duration = Duration::from_secs(30);
 
@@ -215,7 +215,7 @@ pub fn forget(app: &AppHandle, label: &str) {
 #[cfg(test)]
 mod tests {
     use super::{certificates, signing_in, Said, STUBS};
-    use crate::agents::verbs::{AnswerDialog, DialogKind};
+    use orden_agents::verbs::{AnswerDialog, DialogKind};
 
     #[test]
     fn a_certificate_is_the_one_named_or_the_first() {
