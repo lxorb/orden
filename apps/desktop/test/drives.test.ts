@@ -325,3 +325,23 @@ describe('the requests a drive holds or refuses', () => {
     expect(routed).toEqual([])
   })
 })
+
+describe('a panel the sidebar offers only to an account', () => {
+  const sidebar = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'sidebar', 'src', 'Sidebar.svelte')
+  const owed = [...sidebar.matchAll(/id !== '(\w+)' \|\| \(!!account\.accountToken\b/g)].map(
+    (found) => caught(found),
+  )
+
+  test('is read from the rule that offers it', () => {
+    expect(owed).toContain('chats')
+  })
+
+  test('is shown by a drive only once it has signed in', () => {
+    const unsigned = drives.filter((name) => {
+      const text = read(E2E, name)
+      const shown = owed.some((panel) => text.includes(`showPanel('${panel}')`))
+      return shown && !/\.sign_in\(|\bsigned_in\(/.test(text)
+    })
+    expect(unsigned).toEqual([])
+  })
+})

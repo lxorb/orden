@@ -49,6 +49,7 @@ def desktop(page: Page, scheme: str) -> None:
     DRIVE.open(page)
     page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
     page.evaluate(START)
+    DRIVE.sign_in(page)
     page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
     page.evaluate(OPEN, THESIS)
     if not wait_for(page, "document.querySelectorAll('.chat-tab .message').length > 4", "the chat's rows"):
