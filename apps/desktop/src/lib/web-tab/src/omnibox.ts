@@ -73,9 +73,7 @@ export function completion(list: readonly Visit[], typed: string, now: number): 
     })
   }
 
-  for (const site of sites.values()) {
-    if (!best || site.score > best.score) best = site
-  }
+  for (const site of sites.values()) if (!best || site.score > best.score) best = site
 
   return best ? { text: `${said}${best.form.slice(asked.length)}`, url: best.url } : null
 }

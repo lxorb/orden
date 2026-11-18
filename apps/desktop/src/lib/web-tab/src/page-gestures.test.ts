@@ -13,12 +13,14 @@ type Inside = Window &
     showOpenFilePicker: () => Promise<unknown>
   }
 
+function put(on: object, name: string, value: unknown) {
+  Object.defineProperty(on, name, { value, configurable: true, writable: true })
+}
+
 function page(ours = true, before?: (inside: Inside, reached: string[]) => void) {
   const dom = new JSDOM(
     '<input id="file" type="file"><input id="text"><label id="label" for="file">a file</label>',
-    {
-      runScripts: 'outside-only',
-    },
+    { runScripts: 'outside-only' },
   )
   const inside = dom.window as unknown as Inside
   const reached: string[] = []
@@ -30,69 +32,29 @@ function page(ours = true, before?: (inside: Inside, reached: string[]) => void)
       reached.push(name)
       return answer
     }
-  Object.defineProperty(inside.Element.prototype, 'requestFullscreen', {
-    value: reach('fullscreen', Promise.resolve()),
-    configurable: true,
-    writable: true,
-  })
+  put(inside.Element.prototype, 'requestFullscreen', reach('fullscreen', Promise.resolve()))
   const Clipboards = class {
     readonly made = 'clipboard'
   }
-  Object.defineProperty(inside, 'Clipboard', {
-    value: Clipboards,
-    configurable: true,
-    writable: true,
+  put(inside, 'Clipboard', Clipboards)
+  put(Clipboards.prototype, 'writeText', reach('writeText', Promise.resolve()))
+  put(inside.Document.prototype, 'execCommand', function (command: string) {
+    reached.push(`execCommand ${command}`)
+    return true
   })
-  Object.defineProperty(Clipboards.prototype, 'writeText', {
-    value: reach('writeText', Promise.resolve()),
-    configurable: true,
-    writable: true,
+  put(inside.HTMLElement.prototype, 'click', function (this: HTMLElement) {
+    reached.push(`click ${this.id}`)
   })
-  Object.defineProperty(inside.Document.prototype, 'execCommand', {
-    value(command: string) {
-      reached.push(`execCommand ${command}`)
-      return true
-    },
-    configurable: true,
-    writable: true,
-  })
-  Object.defineProperty(inside.HTMLElement.prototype, 'click', {
-    value(this: HTMLElement) {
-      reached.push(`click ${this.id}`)
-    },
-    configurable: true,
-    writable: true,
-  })
-  Object.defineProperty(inside.HTMLInputElement.prototype, 'showPicker', {
-    value: reach('showPicker'),
-    configurable: true,
-    writable: true,
-  })
-  Object.defineProperty(inside, 'showOpenFilePicker', {
-    value: reach('showOpenFilePicker', Promise.resolve([])),
-    configurable: true,
-    writable: true,
-  })
+  put(inside.HTMLInputElement.prototype, 'showPicker', reach('showPicker'))
+  put(inside, 'showOpenFilePicker', reach('showOpenFilePicker', Promise.resolve([])))
   const Payments = class {
     readonly made = 'payment'
   }
-  Object.defineProperty(inside, 'PaymentRequest', {
-    value: Payments,
-    configurable: true,
-    writable: true,
-  })
-  Object.defineProperty(Payments.prototype, 'show', {
-    value: reach('payment', Promise.resolve()),
-    configurable: true,
-    writable: true,
-  })
-  Object.defineProperty(inside, 'Notification', {
-    value: {
-      permission: 'default',
-      requestPermission: reach('notifications', Promise.resolve('granted')),
-    },
-    configurable: true,
-    writable: true,
+  put(inside, 'PaymentRequest', Payments)
+  put(Payments.prototype, 'show', reach('payment', Promise.resolve()))
+  put(inside, 'Notification', {
+    permission: 'default',
+    requestPermission: reach('notifications', Promise.resolve('granted')),
   })
   inside.open = reach('open', null) as typeof inside.open
 
@@ -266,16 +228,8 @@ function stubbedFrames(inside: Inside, reached: string[]) {
           reached.push(`frame ${name}`)
           return Promise.resolve()
         }
-      Object.defineProperty(child.Element.prototype, 'requestFullscreen', {
-        value: reach('fullscreen'),
-        configurable: true,
-        writable: true,
-      })
-      Object.defineProperty(child.Document.prototype, 'execCommand', {
-        value: reach('copy'),
-        configurable: true,
-        writable: true,
-      })
+      put(child.Element.prototype, 'requestFullscreen', reach('fullscreen'))
+      put(child.Document.prototype, 'execCommand', reach('copy'))
       child.open = reach('open') as unknown as typeof child.open
       return child
     },
