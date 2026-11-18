@@ -127,9 +127,13 @@
 
   const padHere = $derived(side === 'right' && !viewport.touch && !__EVEN_PLUGIN__)
 
-  const open = $derived(
-    side === 'right' ? workspace.rightShows !== null : workspace.openOn(side) !== null,
-  )
+  const offered = (id: Panel) =>
+    workspace.fills(id) &&
+    (id !== 'chats' || (!!account.accountToken && chatsOn())) &&
+    (id !== 'time' || timeOn()) &&
+    (id !== 'ask' || !__EVEN_PLUGIN__)
+
+  const open = $derived(padHere ? workspace.rightShows !== null : workspace.openOn(side) !== null)
 
   let lastShown: Panel = untrack(() => workspace.openOn(side)) ?? 'tree'
   const showing = $derived.by((): Panel | 'scratchpad' => {
@@ -138,13 +142,7 @@
     const chosen = open ?? (side === 'right' ? (workspace.nextRight ?? lastShown) : lastShown)
     if (open) lastShown = open
     const twin = !open && workspace.openOn(side === 'left' ? 'right' : 'left') === chosen
-    if (
-      !twin &&
-      workspace.fills(chosen) &&
-      (chosen !== 'time' || timeOn()) &&
-      (chosen !== 'chats' || chatsOn())
-    )
-      return chosen
+    if (!twin && offered(chosen)) return chosen
     return mine.find((one) => one.id !== 'scratchpad' && !(twin && one.id === chosen))?.id ?? chosen
   })
 
@@ -273,15 +271,7 @@
       ? [{ id: 'scratchpad', label: 'Scratchpad', path: SCRATCHPAD_MARK }]
       : []
     const panelsHere: { id: Panel | 'scratchpad'; label: string; path: string }[] = held.flatMap(
-      (id) =>
-        PANELS.filter(
-          (one) =>
-            one.id === id &&
-            workspace.fills(id) &&
-            (id !== 'chats' || (!!account.accountToken && chatsOn())) &&
-            (id !== 'time' || timeOn()) &&
-            (id !== 'ask' || !__EVEN_PLUGIN__),
-        ),
+      (id) => PANELS.filter((one) => one.id === id && offered(id)),
     )
     return [...panelsHere, ...pads]
   })
