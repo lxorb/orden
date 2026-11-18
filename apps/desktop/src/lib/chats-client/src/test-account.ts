@@ -13,6 +13,23 @@ import { keepsRow } from './fold'
 
 export const CHAT = `c_${'a'.repeat(32)}`
 
+export const messageOf = (seq: number, more: Partial<Message> = {}): Message => ({
+  id: `m${seq}`,
+  seq,
+  at: seq * 1000,
+  author: 'user:ana',
+  body: `words ${seq}`,
+  alsoToChat: false,
+  files: [],
+  mentions: [],
+  reactions: {},
+  pinned: false,
+  history: [],
+  deleted: false,
+  replies: 0,
+  ...more,
+})
+
 export const chatRow = (id: string, more: Partial<ChatRow> = {}): ChatRow => ({
   id,
   space: 'space',

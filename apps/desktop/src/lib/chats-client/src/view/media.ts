@@ -18,11 +18,7 @@ function isSound(file: FileRef): boolean {
   return file.type.startsWith('audio/')
 }
 
-export function sortFiles(files: readonly FileRef[]): {
-  seen: FileRef[]
-  heard: FileRef[]
-  other: FileRef[]
-} {
+export function sortFiles(files: readonly FileRef[]) {
   return {
     seen: files.filter((one) => isPicture(one) || isVideo(one)),
     heard: files.filter(isSound),
@@ -42,11 +38,7 @@ export function fitted(file: FileRef, column: number): { width: number; height: 
   return { width: Math.round(width * scale), height: Math.round(height * scale) }
 }
 
-export function gallery(files: readonly FileRef[]): {
-  across: number
-  shown: FileRef[]
-  more: number
-} {
+export function gallery(files: readonly FileRef[]) {
   const shown = files.slice(0, GALLERY_MOST)
   const across = shown.length === 2 || shown.length === 4 ? 2 : 3
   return { across, shown, more: files.length - shown.length }

@@ -2,6 +2,7 @@ import type { Message, Who } from '@orden/chats'
 import { describe, expect, it } from 'vitest'
 import type { Notice } from '../../notify/src/api'
 import { type Chosen, ChatNotices, lineOf, type NoticeWorld, type Told } from './notify'
+import { messageOf } from './test-account'
 
 const ME: Who = 'user:me'
 const LUCILE: Who = 'user:lucile'
@@ -9,24 +10,8 @@ const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
 const NOW = new Date(2026, 9, 6, 14, 0).getTime()
 
-function message(seq: number, change: Partial<Message> = {}): Message {
-  return {
-    id: `m${seq}`,
-    seq,
-    at: NOW,
-    author: LUCILE,
-    body: `message ${seq}`,
-    alsoToChat: false,
-    files: [],
-    mentions: [],
-    reactions: {},
-    pinned: false,
-    history: [],
-    deleted: false,
-    replies: 0,
-    ...change,
-  }
-}
+const message = (seq: number, change: Partial<Message> = {}) =>
+  messageOf(seq, { at: NOW, author: LUCILE, body: `message ${seq}`, ...change })
 
 function world(log: Message[], change: Partial<Told> = {}, chosen: Partial<Chosen> = {}) {
   const shown: Notice[] = []
