@@ -57,7 +57,12 @@ use linux::PlatformPump;
 #[cfg(target_os = "macos")]
 use macos::PlatformPump;
 #[cfg(windows)]
-use windows::PlatformPump;
+use windows::{PlatformPump, in_native_drag};
+
+#[cfg(not(windows))]
+fn in_native_drag() -> bool {
+  false
+}
 
 // Special timer delay placeholder value. Intentionally 32-bit for Windows and
 // OS X platform API compatibility.
@@ -78,6 +83,7 @@ impl CefExternalPump {
   pub(crate) fn new() -> Self {
     let state = Arc::new_cyclic(|weak| PumpState {
       is_active: AtomicBool::new(false),
+      is_nested: AtomicBool::new(false),
       reentrancy_detected: AtomicBool::new(false),
       platform: Mutex::new(PlatformPump::new(weak.clone())),
     });
@@ -100,6 +106,7 @@ impl CefExternalPump {
 /// Platform-independent pump state, shared with the [`PlatformPump`] backend.
 struct PumpState {
   is_active: AtomicBool,
+  is_nested: AtomicBool,
   reentrancy_detected: AtomicBool,
   platform: Mutex<PlatformPump>,
 }
@@ -177,6 +184,16 @@ impl PumpState {
 
   /// Mirrors cefclient's `PerformMessageLoopWork`.
   fn perform_message_loop_work(&self) -> bool {
+    if self.is_active.load(Ordering::SeqCst)
+      && !self.is_nested.load(Ordering::SeqCst)
+      && in_native_drag()
+    {
+      self.is_nested.store(true, Ordering::SeqCst);
+      cef::do_message_loop_work();
+      self.is_nested.store(false, Ordering::SeqCst);
+      return false;
+    }
+
     if self.is_active.load(Ordering::SeqCst) {
       // When CefDoMessageLoopWork() is called there may be various callbacks
       // (such as paint and IPC messages) that result in additional calls to this
