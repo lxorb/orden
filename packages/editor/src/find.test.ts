@@ -8,13 +8,12 @@ beforeAll(async () => {
   await loadFind()
 })
 
-function stateOf(doc: string, selection?: { anchor: number; head: number }): EditorState {
-  return EditorState.create({
+const stateOf = (doc: string, selection?: { anchor: number; head: number }): EditorState =>
+  EditorState.create({
     doc,
     ...(selection ? { selection: EditorSelection.single(selection.anchor, selection.head) } : {}),
     extensions: [findExtensions()],
   })
-}
 
 function looking(state: EditorState, spec: Partial<typeof NO_FIND> & { query: string }) {
   const { query, ...rest } = { ...NO_FIND, ...spec }

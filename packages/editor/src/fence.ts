@@ -9,20 +9,17 @@ function fenceInfo(state: EditorState, node: SyntaxNode): string {
   return info ? state.doc.sliceString(info.from, info.to).trim() : ''
 }
 
-export function fenceLanguage(state: EditorState, node: SyntaxNode): string {
-  return languageIn(fenceInfo(state, node))
-}
+export const fenceLanguage = (state: EditorState, node: SyntaxNode): string =>
+  languageIn(fenceInfo(state, node))
 
-export function fenceCaption(state: EditorState, node: SyntaxNode): string {
-  return captionIn(fenceInfo(state, node))
-}
+export const fenceCaption = (state: EditorState, node: SyntaxNode): string =>
+  captionIn(fenceInfo(state, node))
 
-export function fenceCode(state: EditorState, node: SyntaxNode): string {
-  return node
+export const fenceCode = (state: EditorState, node: SyntaxNode): string =>
+  node
     .getChildren('CodeText')
     .map((piece) => state.doc.sliceString(piece.from, piece.to))
     .join('')
-}
 
 export function fenceCodeAt(state: EditorState, pos: number): string {
   const node = enclosingNamed(syntaxTree(state).resolveInner(pos, 1), 'FencedCode')

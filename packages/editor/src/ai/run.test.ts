@@ -100,9 +100,8 @@ function held() {
 afterEach(() => setAiRunner(null))
 
 async function settled(view: Fake): Promise<void> {
-  for (let turn = 0; turn < 200 && view.asking; turn++) {
+  for (let turn = 0; turn < 200 && view.asking; turn++)
     await new Promise((resolve) => setTimeout(resolve, 5))
-  }
 }
 
 describe('finding the ai fence', () => {

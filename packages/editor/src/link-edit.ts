@@ -132,8 +132,9 @@ export function linkPartsAt(state: EditorState, pos: number): LinkParts | null {
   return node.name === 'Wikilink' ? wikilinkParts(state, node) : markdownParts(state, node)
 }
 
-export function editLink(pos: number): StateCommand {
-  return ({ state, dispatch }) => {
+export const editLink =
+  (pos: number): StateCommand =>
+  ({ state, dispatch }) => {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
     if (!parts) return false
 
@@ -160,10 +161,10 @@ export function editLink(pos: number): StateCommand {
     )
     return true
   }
-}
 
-export function removeLink(pos: number): StateCommand {
-  return ({ state, dispatch }) => {
+export const removeLink =
+  (pos: number): StateCommand =>
+  ({ state, dispatch }) => {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
     const words = parts?.words ?? null
     if (!parts || words === null) return false
@@ -176,4 +177,3 @@ export function removeLink(pos: number): StateCommand {
     )
     return true
   }
-}

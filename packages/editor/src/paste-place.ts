@@ -33,9 +33,8 @@ function intoEmptyItem(state: EditorState, range: SelectionRange, text: string):
   }
 }
 
-export function placed(state: EditorState, text: string): TransactionSpec {
-  return everywhere(state, (range) => placedAt(state, range, text))
-}
+export const placed = (state: EditorState, text: string): TransactionSpec =>
+  everywhere(state, (range) => placedAt(state, range, text))
 
 function placedAt(state: EditorState, range: SelectionRange, text: string): Landing {
   const special = intoEmptyItem(state, range, text)
@@ -80,6 +79,5 @@ function placedAt(state: EditorState, range: SelectionRange, text: string): Land
   }
 }
 
-export function plainly(state: EditorState, text: string): TransactionSpec {
-  return everywhere(state, (range) => intoEmptyItem(state, range, text) ?? plainAt(range, text))
-}
+export const plainly = (state: EditorState, text: string): TransactionSpec =>
+  everywhere(state, (range) => intoEmptyItem(state, range, text) ?? plainAt(range, text))

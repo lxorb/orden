@@ -2,9 +2,8 @@ import type { EditorState } from '@codemirror/state'
 import { type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { imageOfFrame, partsOf } from './widget'
 
-function isSelected(state: EditorState, from: number, to: number): boolean {
-  return state.selection.ranges.some((range) => range.from === from && range.to === to)
-}
+const isSelected = (state: EditorState, from: number, to: number): boolean =>
+  state.selection.ranges.some((range) => range.from === from && range.to === to)
 
 interface Mark {
   frame: HTMLElement

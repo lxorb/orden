@@ -183,9 +183,7 @@ const ONE_LINE = /^\$\$(?![\s$])[^\n]*?(?<![\s$])\$\$$/
 
 const restOf = (line: Line) => line.text.slice(line.pos).trimEnd()
 
-function opensBlockMath(rest: string): boolean {
-  return ONE_LINE.test(rest) || rest.trim() === '$$'
-}
+const opensBlockMath = (rest: string): boolean => ONE_LINE.test(rest) || rest.trim() === '$$'
 
 const CLOSES_MATH = /^\$\$(?:[ \t]+\^[A-Za-z0-9-]+)?\s*$/
 

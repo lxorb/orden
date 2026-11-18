@@ -1,8 +1,7 @@
 const AI_LANGUAGE = 'ai'
 
-export function isAiLanguage(language: string): boolean {
-  return language.trim().toLowerCase() === AI_LANGUAGE
-}
+export const isAiLanguage = (language: string): boolean =>
+  language.trim().toLowerCase() === AI_LANGUAGE
 
 export const ANSWER_OPEN = '<!--orden:ai-->'
 export const ANSWER_CLOSE = '<!--/orden:ai-->'
@@ -11,9 +10,7 @@ const CLOSES = new Set([ANSWER_CLOSE, '<!--/nib:ai-->'])
 
 const NOTE_MENTION = /@note\b/i
 
-export function mentionsNote(prompt: string): boolean {
-  return NOTE_MENTION.test(prompt)
-}
+export const mentionsNote = (prompt: string): boolean => NOTE_MENTION.test(prompt)
 
 export function answerSpan(
   lines: readonly string[],
@@ -40,9 +37,7 @@ function offsetOf(lines: readonly string[], line: number): number {
   return at
 }
 
-function attribution(label: string): string {
-  return `*${label}*`
-}
+const attribution = (label: string): string => `*${label}*`
 
 export function answerParts(label: string): { head: string; tail: string } {
   return { head: `${ANSWER_OPEN}\n${attribution(label)}\n\n`, tail: `\n${ANSWER_CLOSE}` }

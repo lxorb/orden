@@ -137,9 +137,8 @@ describe.each(Object.entries(parsers))('the %s parser', (_name, parser) => {
     const every = Object.create(parser) as Inside
     const all = inside.inlineParsers.filter((parse): parse is Inline => Boolean(parse))
     Object.defineProperty(every, 'inlineTable', { value: Array.from({ length: 129 }, () => all) })
-    for (const text of texts(600, 5)) {
+    for (const text of texts(600, 5))
       expect(shape(parser, text), JSON.stringify(text)).toBe(shape(every, text))
-    }
   })
 })
 

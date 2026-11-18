@@ -3,11 +3,8 @@ const SNAP_TOLERANCE = 3
 const MIN_WIDTH = 48
 
 export function snapPercent(percent: number, snap = true): number {
-  if (snap) {
-    for (const stop of SNAP_STOPS) {
-      if (Math.abs(percent - stop) <= SNAP_TOLERANCE) return stop
-    }
-  }
+  if (snap)
+    for (const stop of SNAP_STOPS) if (Math.abs(percent - stop) <= SNAP_TOLERANCE) return stop
   return Math.round(percent)
 }
 

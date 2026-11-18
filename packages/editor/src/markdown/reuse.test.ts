@@ -18,9 +18,8 @@ function shape(tree: Tree): string {
 
 function itemAt(tree: Tree, pos: number): Tree | null {
   const cursor = tree.cursor()
-  while (cursor.childAfter(pos)) {
+  while (cursor.childAfter(pos))
     if (cursor.name === 'ListItem' || cursor.name === 'Blockquote') return cursor.tree
-  }
   return null
 }
 

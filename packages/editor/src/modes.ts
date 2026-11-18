@@ -47,9 +47,7 @@ const headingNumbers = new Compartment()
 const codeLineNumbers = new Compartment()
 const direction = new Compartment()
 
-function editorClass(name: string): Extension {
-  return EditorView.editorAttributes.of({ class: name })
-}
+const editorClass = (name: string): Extension => EditorView.editorAttributes.of({ class: name })
 
 const markdownFor = once((strict: boolean): Extension =>
   markdown({
@@ -65,18 +63,14 @@ const PARSED_AT_MOST = 512 * 1024
 
 const NO_LANGUAGE: Extension = []
 
-export function tooLongToParse(length: number): boolean {
-  return length > PARSED_AT_MOST
-}
+export const tooLongToParse = (length: number): boolean => length > PARSED_AT_MOST
 
 const strictly = StateEffect.define<boolean>()
 
 const strictness = StateField.define<boolean>({
   create: () => false,
   update: (was, transaction) => {
-    for (const effect of transaction.effects) {
-      if (effect.is(strictly)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(strictly)) return effect.value
 
     return was
   },
@@ -100,9 +94,7 @@ const parseGuard = EditorState.transactionExtender.of((transaction) => {
 })
 
 function strictnessAfter(was: EditorState, effects: readonly StateEffect<unknown>[]): boolean {
-  for (const effect of effects) {
-    if (effect.is(strictly)) return effect.value
-  }
+  for (const effect of effects) if (effect.is(strictly)) return effect.value
 
   return was.field(strictness, false) ?? false
 }
@@ -118,9 +110,8 @@ const focusPlugin = ViewPlugin.fromClass(
     }
 
     update(update: ViewUpdate) {
-      if (update.docChanged || update.selectionSet || update.viewportChanged) {
+      if (update.docChanged || update.selectionSet || update.viewportChanged)
         this.decorations = this.build(update.view)
-      }
     }
 
     private build(view: EditorView): DecorationSet {
@@ -146,9 +137,8 @@ const focusPlugin = ViewPlugin.fromClass(
 
 function enclosingBlock(state: EditorView['state'], pos: number) {
   let block: SyntaxNode | null = null
-  for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1))) {
+  for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1)))
     if (node.name !== 'Document') block = node
-  }
 
   if (!block) {
     const line = state.doc.lineAt(pos)
@@ -171,39 +161,35 @@ const typewriterPlugin = EditorView.updateListener.of((update) => {
   view.scrollDOM.scrollTop += offset
 })
 
-export function modeExtensions(length = 0): Extension {
-  return [
-    language.of(tooLongToParse(length) ? NO_LANGUAGE : markdownFor(false)),
-    strictness,
-    seen,
-    parseGuard,
-    preview.of(previewFor(false)),
-    focus.of(focusFor(false)),
-    marks.of(quietMarks.of(false)),
-    typewriter.of(typewriterFor(false)),
-    punctuation.of(punctuationFor(false)),
-    equations.of(numberEquations.of(false)),
-    spelling.of(spellingFor(false)),
-    brackets.of(bracketsFor(true)),
-    glyphs.of(ligaturesFor('off')),
-    readOnly.of(readOnlyFor(false)),
-    headingNumbers.of(headingNumbersFor(false)),
-    codeLineNumbers.of(codeLineNumbersFor(false)),
-    direction.of(directionFor(false)),
-    vimExtensions(),
-  ]
-}
+export const modeExtensions = (length = 0): Extension => [
+  language.of(tooLongToParse(length) ? NO_LANGUAGE : markdownFor(false)),
+  strictness,
+  seen,
+  parseGuard,
+  preview.of(previewFor(false)),
+  focus.of(focusFor(false)),
+  marks.of(quietMarks.of(false)),
+  typewriter.of(typewriterFor(false)),
+  punctuation.of(punctuationFor(false)),
+  equations.of(numberEquations.of(false)),
+  spelling.of(spellingFor(false)),
+  brackets.of(bracketsFor(true)),
+  glyphs.of(ligaturesFor('off')),
+  readOnly.of(readOnlyFor(false)),
+  headingNumbers.of(headingNumbersFor(false)),
+  codeLineNumbers.of(codeLineNumbersFor(false)),
+  direction.of(directionFor(false)),
+  vimExtensions(),
+]
 
-function readOnlyExtensions(): Extension {
-  return [
-    EditorView.editable.of(false),
-    EditorState.readOnly.of(true),
-    noReveal.of(true),
-    EditorView.contentAttributes.of({ tabindex: '0' }),
-    EditorView.editorAttributes.of({ class: 'orden-read-only' }),
-    EditorState.changeFilter.of(isExternal),
-  ]
-}
+const readOnlyExtensions = (): Extension => [
+  EditorView.editable.of(false),
+  EditorState.readOnly.of(true),
+  noReveal.of(true),
+  EditorView.contentAttributes.of({ tabindex: '0' }),
+  EditorView.editorAttributes.of({ class: 'orden-read-only' }),
+  EditorState.changeFilter.of(isExternal),
+]
 
 const readOnlyFor = once((on: boolean): Extension => (on ? readOnlyExtensions() : []))
 
@@ -249,9 +235,8 @@ export function firstStrong(text: string): Direction | null {
 }
 
 function keepsItsOwn(state: EditorState, pos: number): boolean {
-  for (let node = syntaxTree(state).resolveInner(pos, 1); node.parent; node = node.parent) {
+  for (let node = syntaxTree(state).resolveInner(pos, 1); node.parent; node = node.parent)
     if (OWN_DIRECTION.has(node.name)) return true
-  }
   return false
 }
 
@@ -268,9 +253,8 @@ function directions(view: EditorView, base: Direction): DecorationSet {
     for (let pos = from; pos <= to;) {
       const line = state.doc.lineAt(pos)
       const said = firstStrong(line.text)
-      if (said !== null && said !== base && !keepsItsOwn(state, line.from)) {
+      if (said !== null && said !== base && !keepsItsOwn(state, line.from))
         marks.push(asWritten[said].range(line.from))
-      }
       if (line.to >= state.doc.length) break
       pos = line.to + 1
     }
@@ -377,9 +361,7 @@ export function setStrictMode(view: EditorView, on: boolean) {
   })
 }
 
-export function parsedFully(state: EditorState): boolean {
-  return state.facet(currentLanguage) !== null
-}
+export const parsedFully = (state: EditorState): boolean => state.facet(currentLanguage) !== null
 
 export function setEquationNumbers(view: EditorView, on: boolean) {
   view.dispatch({ effects: equations.reconfigure(numberEquations.of(on)) })

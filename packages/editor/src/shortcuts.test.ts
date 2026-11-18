@@ -8,13 +8,12 @@ import { imageBindings } from './live-preview/image'
 
 const ALL = [...ordenBindings, ...standardBindings, ...tableBindings, ...imageBindings]
 
-function keysIn(state: EditorState): string[] {
-  return state
+const keysIn = (state: EditorState): string[] =>
+  state
     .facet(keymap)
     .flat()
     .flatMap((binding) => [binding.key, binding.mac, binding.win, binding.linux])
     .filter((key): key is string => !!key)
-}
 
 describe('building the keymap', () => {
   test('uses the default where nothing was chosen', () => {
@@ -123,9 +122,8 @@ describe('a state built with them', () => {
     const counted = new Map<string, number>()
     for (const chord of keysIn(installed)) counted.set(chord, (counted.get(chord) ?? 0) + 1)
 
-    for (const chord of ['Mod-f', 'Mod-g', 'F3', 'Mod-Alt-g']) {
+    for (const chord of ['Mod-f', 'Mod-g', 'F3', 'Mod-Alt-g'])
       expect(counted.get(chord), chord).toBe(1)
-    }
 
     expect(counted.get('Mod-Shift-l')).toBeUndefined()
     expect(counted.get('Mod-d')).toBeUndefined()

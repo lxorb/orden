@@ -5,25 +5,19 @@ const setTrusted = StateEffect.define<boolean>()
 const trustedField = StateField.define<boolean>({
   create: () => false,
   update(value, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(setTrusted)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(setTrusted)) return effect.value
     return value
   },
 })
 
-export function trustsMarkup(state: EditorState): boolean {
-  return state.field(trustedField, false) ?? false
-}
+export const trustsMarkup = (state: EditorState): boolean =>
+  state.field(trustedField, false) ?? false
 
-export function trustedMarkup(trusted: boolean | undefined): Extension {
-  return trustedField.init(() => trusted ?? false)
-}
+export const trustedMarkup = (trusted: boolean | undefined): Extension =>
+  trustedField.init(() => trusted ?? false)
 
-export function trustedMarkupEffect(trusted: boolean): StateEffect<unknown> {
-  return setTrusted.of(trusted)
-}
+export const trustedMarkupEffect = (trusted: boolean): StateEffect<unknown> =>
+  setTrusted.of(trusted)
 
-export function trustChanged(before: EditorState, after: EditorState): boolean {
-  return before.field(trustedField, false) !== after.field(trustedField, false)
-}
+export const trustChanged = (before: EditorState, after: EditorState): boolean =>
+  before.field(trustedField, false) !== after.field(trustedField, false)

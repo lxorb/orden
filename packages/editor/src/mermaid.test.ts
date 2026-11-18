@@ -55,8 +55,7 @@ describe('highlighting a mermaid fence', () => {
   })
 
   test('always moves forward, whatever it is given', () => {
-    for (const line of ['', '~~~', '   ', '「」', '"unclosed', 'A-->']) {
+    for (const line of ['', '~~~', '   ', '「」', '"unclosed', 'A-->'])
       expect(() => tokens(line)).not.toThrow()
-    }
   })
 })

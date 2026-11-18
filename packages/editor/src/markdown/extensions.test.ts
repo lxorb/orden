@@ -8,14 +8,13 @@ import { growth, GROWS_AT_MOST } from '../../../../scripts/growth'
 import { ordenMarkdownExtensions } from './extensions'
 import { parsed } from '../../test/parsed'
 
-function stateFor(doc: string): EditorState {
-  return parsed(
+const stateFor = (doc: string): EditorState =>
+  parsed(
     EditorState.create({
       doc,
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-}
 
 function treeOf(state: EditorState): string {
   const doc = state.doc.toString()
@@ -32,28 +31,22 @@ function treeOf(state: EditorState): string {
   return out.join('\n')
 }
 
-function tree(doc: string): string {
-  return treeOf(stateFor(doc))
-}
+const tree = (doc: string): string => treeOf(stateFor(doc))
 
-function namesOf(state: EditorState): string[] {
-  return treeOf(state)
+const namesOf = (state: EditorState): string[] =>
+  treeOf(state)
     .split('\n')
     .map((line) => line.trim().split(' ')[0] ?? '')
-}
 
-function names(doc: string): string[] {
-  return namesOf(stateFor(doc))
-}
+const names = (doc: string): string[] => namesOf(stateFor(doc))
 
 describe('front matter being typed', () => {
   const language = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
   const top = (state: EditorState): string => {
     const out: string[] = []
     const tree = ensureSyntaxTree(state, state.doc.length, 5000) ?? syntaxTree(state)
-    for (let at = tree.topNode.firstChild; at; at = at.nextSibling) {
+    for (let at = tree.topNode.firstChild; at; at = at.nextSibling)
       out.push(`${at.name}@${at.from}-${at.to}`)
-    }
     return out.join(' ')
   }
   const fresh = (doc: string) => top(EditorState.create({ doc, extensions: [language] }))
@@ -482,9 +475,8 @@ describe('a long paragraph', () => {
       .language.parser
     const log = (lines: number) => {
       let doc = ''
-      for (let line = 0; line < lines; line++) {
+      for (let line = 0; line < lines; line++)
         doc += `2026-10-19 12:00:00 [INFO] request ${line} url=https://example.com/${line}\n`
-      }
       return doc
     }
     const found = { Link: 0, URL: 0 }
@@ -531,9 +523,8 @@ describe('a long paragraph', () => {
   test('a line of list or quote marks thousands deep parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
       ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}x\n`)
-    for (const unit of ['- ', '* ', '1. ', '> ', '> - ']) {
+    for (const unit of ['- ', '* ', '1. ', '> ', '> - '])
       expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
-    }
   }, 30_000)
 
   test('reads lists and quotes 100 deep, as the page is drawn', () => {
@@ -556,17 +547,15 @@ describe('a long paragraph', () => {
       .language.parser
     const parsed = (unit: string) => (length: number) =>
       parser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
-    for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a ']) {
+    for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a '])
       expect(growth(parsed(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
-    }
   }, 60_000)
 
   test('repeating what closes a link nothing opened parses in time that grows with its length', () => {
     const parsed = (unit: string) => (length: number) =>
       ordenMarkdownParser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
-    for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*']) {
+    for (const unit of [']*', '_]', '*]', ']$', '`]', 'a] ', '[a] ]*'])
       expect(growth(parsed(unit), 32_000), unit).toBeLessThan(GROWS_AT_MOST)
-    }
   }, 120_000)
 
   test('reads a link and emphasis that close as before', () => {

@@ -98,14 +98,13 @@ export function setAgentMarks(view: EditorView, agent: string, given: AgentMark[
     }))
     .filter((one) => one.to > one.from)
   const effects: StateEffect<unknown>[] = [setMarks.of({ agent, marks: held })]
-  if (view.state.field(marks, false) === undefined) {
+  if (view.state.field(marks, false) === undefined)
     effects.unshift(StateEffect.appendConfig.of([marks, look]))
-  }
   view.dispatch({ effects })
 }
 
-export function agentMarksIn(view: EditorView, agent?: string): AgentMark[] {
-  return (view.state.field(marks, false) ?? [])
+export const agentMarksIn = (view: EditorView, agent?: string): AgentMark[] =>
+  (view.state.field(marks, false) ?? [])
     .filter((one) => agent === undefined || one.agent === agent)
     .map((one) => ({
       agent: one.agent,
@@ -114,7 +113,6 @@ export function agentMarksIn(view: EditorView, agent?: string): AgentMark[] {
       message: one.message,
       severity: one.severity,
     }))
-}
 
 export function selectionsOf(
   view: EditorView,

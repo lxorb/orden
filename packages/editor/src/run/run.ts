@@ -27,9 +27,7 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
   const script = FRAME_SCRIPT
   if (!panels || script === null) return false
 
-  for (const panel of panels) {
-    if (panel.from === fence.from) teardown(panel.run)
-  }
+  for (const panel of panels) if (panel.from === fence.from) teardown(panel.run)
 
   const run = ++counter
   const startedAt = Date.now()
@@ -113,15 +111,12 @@ const runSandboxes = ViewPlugin.define((view) => ({
     if (!panels || panels === update.startState.field(runPanels, false)) return
 
     const shown = new Set(panels.map((panel) => panel.run))
-    for (const [run, sandbox] of [...live]) {
+    for (const [run, sandbox] of [...live])
       if (sandbox.view === view && !sandbox.finished && !shown.has(run)) teardown(run)
-    }
   },
 
   destroy() {
-    for (const [run, sandbox] of [...live]) {
-      if (sandbox.view === view) teardown(run)
-    }
+    for (const [run, sandbox] of [...live]) if (sandbox.view === view) teardown(run)
   },
 }))
 

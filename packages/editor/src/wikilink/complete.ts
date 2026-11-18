@@ -32,14 +32,12 @@ const MARKER = 2
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
-function typing(context: CompletionContext) {
-  return context.matchBefore(/\[\[[^[\]\n]*/)
-}
+const typing = (context: CompletionContext) => context.matchBefore(/\[\[[^[\]\n]*/)
 
 const REST_OF_LINK = /^([^[\]\n]*)\]\]/
 
-function insert(target: LinkWrite) {
-  return (view: EditorView, _completion: Completion, from: number, to: number) => {
+const insert =
+  (target: LinkWrite) => (view: EditorView, _completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
     const line = view.state.doc.lineAt(to)
     const rest = REST_OF_LINK.exec(view.state.doc.sliceString(to, line.to))?.[1] ?? null
@@ -61,7 +59,6 @@ function insert(target: LinkWrite) {
       userEvent: 'input.complete',
     })
   }
-}
 
 const OPENS_VALUE = /^[ \t]*(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)$/
 
@@ -124,9 +121,8 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
 
   for (const alias of note.aliases) {
     if (!alias.trim()) continue
-    if (archived ? foldName(alias) !== needle : needle && !foldName(alias).includes(needle)) {
+    if (archived ? foldName(alias) !== needle : needle && !foldName(alias).includes(needle))
       continue
-    }
 
     rows.push({
       label: alias,
@@ -155,13 +151,10 @@ function noteOptions(index: NoteIndex, typed: string): Completion[] {
   return rows.slice(0, MOST_SHOWN)
 }
 
-function matches(note: NoteRef, needle: string): boolean {
-  return (
-    foldName(note.name).includes(needle) ||
-    foldName(note.path).includes(needle) ||
-    note.aliases.some((alias) => foldName(alias).includes(needle))
-  )
-}
+const matches = (note: NoteRef, needle: string): boolean =>
+  foldName(note.name).includes(needle) ||
+  foldName(note.path).includes(needle) ||
+  note.aliases.some((alias) => foldName(alias).includes(needle))
 
 function headingOptions(target: LinkWrite, note: NoteRef, typed: string): Completion[] {
   const needle = foldName(typed.trim())
@@ -199,9 +192,8 @@ async function blockOptions(
     }))
 }
 
-function headingRow(row: Pick<Row, 'text' | 'code' | 'matter'> | undefined): string | null {
-  return row && !row.code && !row.matter && isHeading(row.text) ? headingText(row.text) : null
-}
+const headingRow = (row: Pick<Row, 'text' | 'code' | 'matter'> | undefined): string | null =>
+  row && !row.code && !row.matter && isHeading(row.text) ? headingText(row.text) : null
 
 function linked(
   path: string,
@@ -245,9 +237,8 @@ const heldTyped = StateField.define<readonly Held[]>({
 })
 
 function held(view: EditorView, from: number, to: number): object {
-  if (view.state.field(heldTyped, false) === undefined) {
+  if (view.state.field(heldTyped, false) === undefined)
     view.dispatch({ effects: StateEffect.appendConfig.of(heldTyped) })
-  }
   const key = {}
   view.dispatch({ effects: holdTyped.of({ key, from, to }) })
   return key
@@ -259,8 +250,9 @@ function released(view: EditorView, key: object): Held | null {
   return found
 }
 
-function name(path: string, line: number, target: LinkWrite) {
-  return (view: EditorView, completion: Completion, from: number, to: number) => {
+const name =
+  (path: string, line: number, target: LinkWrite) =>
+  (view: EditorView, completion: Completion, from: number, to: number) => {
     const start = opened(view, from)
     const typed = view.state.doc.sliceString(start, to)
     const key = held(view, start, to)
@@ -274,7 +266,6 @@ function name(path: string, line: number, target: LinkWrite) {
       })
       .catch(() => undefined)
   }
-}
 
 function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
   const needle = foldName(typed.trim())

@@ -24,15 +24,13 @@ interface Asked {
   searches: string[]
 }
 
-function note(path: string, headings: string[] = [], blocks: string[] = []): NoteRef {
-  return {
-    path,
-    name: (path.split('/').pop() ?? path).replace(/\.[^.]+$/, ''),
-    headings,
-    blocks,
-    aliases: [],
-  }
-}
+const note = (path: string, headings: string[] = [], blocks: string[] = []): NoteRef => ({
+  path,
+  name: (path.split('/').pop() ?? path).replace(/\.[^.]+$/, ''),
+  headings,
+  blocks,
+  aliases: [],
+})
 
 function space(
   notes: NoteRef[],
@@ -61,9 +59,8 @@ function space(
   return asked
 }
 
-function spelled(target: LinkWrite): string {
-  return `[${target.name}](${target.path ?? ''}|${target.from ?? ''}|${target.fragment ?? ''})`
-}
+const spelled = (target: LinkWrite): string =>
+  `[${target.name}](${target.path ?? ''}|${target.from ?? ''}|${target.fragment ?? ''})`
 
 function state(
   doc: string,
@@ -90,13 +87,11 @@ async function rowsFor(doc: string, asked: Asked): Promise<CompletionResult | nu
   return await wikilinkCompletions(new CompletionContext(built, doc.length, false))
 }
 
-function labels(found: CompletionResult | null): string[] {
-  return (found?.options ?? []).map((one) => one.label)
-}
+const labels = (found: CompletionResult | null): string[] =>
+  (found?.options ?? []).map((one) => one.label)
 
-function details(found: CompletionResult | null): (string | undefined)[] {
-  return (found?.options ?? []).map((one) => one.detail)
-}
+const details = (found: CompletionResult | null): (string | undefined)[] =>
+  (found?.options ?? []).map((one) => one.detail)
 
 async function picked(
   doc: string,

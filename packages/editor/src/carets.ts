@@ -594,14 +594,10 @@ const heldStyle = EditorView.baseTheme({
   '.cm-orden-held.is-below .cm-orden-held-name::before': { borderTop: '5px solid currentColor' },
 })
 
-export function remoteCarets(): Extension {
-  return [present, caretLayer, style, heldCarets()]
-}
+export const remoteCarets = (): Extension => [present, caretLayer, style, heldCarets()]
 
-export function peersOf(state: EditorState): readonly Peer[] {
-  return state.field(present, false)?.peers ?? []
-}
+export const peersOf = (state: EditorState): readonly Peer[] =>
+  state.field(present, false)?.peers ?? []
 
-export function agentsOf(state: EditorState): readonly Peer[] {
-  return state.field(present, false)?.agents ?? []
-}
+export const agentsOf = (state: EditorState): readonly Peer[] =>
+  state.field(present, false)?.agents ?? []

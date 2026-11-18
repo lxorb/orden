@@ -84,9 +84,8 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
     })
   }
   if (fields.assignee) out.push({ field: 'assignee', text: `+${fields.assignee}` })
-  if (fields.completed !== undefined) {
+  if (fields.completed !== undefined)
     out.push({ field: 'done', text: `done ${day(fields.completed)}` })
-  }
   return out
 }
 

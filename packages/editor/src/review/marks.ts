@@ -112,9 +112,8 @@ function asked(state: EditorState): Held {
 const field = StateField.define<Held>({
   create: asked,
   update(held, transaction) {
-    for (const effect of transaction.effects) {
+    for (const effect of transaction.effects)
       if (effect.is(setReviewMarks)) return drawn(transaction.state, effect.value)
-    }
     if (sharedOf(transaction.state) !== sharedOf(transaction.startState))
       return asked(transaction.state)
     if (!transaction.docChanged || !held.marks.length) return held
@@ -217,10 +216,7 @@ const style = EditorView.baseTheme({
 
 const extension: Extension = [field, offer, style]
 
-export function reviewMarks(): Extension {
-  return extension
-}
+export const reviewMarks = (): Extension => extension
 
-export function reviewMarksOf(state: EditorState): readonly ReviewMark[] {
-  return state.field(field, false)?.marks ?? []
-}
+export const reviewMarksOf = (state: EditorState): readonly ReviewMark[] =>
+  state.field(field, false)?.marks ?? []

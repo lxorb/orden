@@ -222,9 +222,8 @@ describe('what a fence is besides code', () => {
     expect(fenced('query')).toBe(block(''))
     expect(fenced('ai')).toBe(block(''))
 
-    for (const word of [...DIAGRAM_LANGUAGES, 'chart', 'js', 'javascript', 'mjs', 'cjs']) {
+    for (const word of [...DIAGRAM_LANGUAGES, 'chart', 'js', 'javascript', 'mjs', 'cjs'])
       expect(fenced(word), word).toBe(block(word))
-    }
   })
 })
 

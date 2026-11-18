@@ -37,9 +37,8 @@ function viewOf(doc: string, rtl = false): EditorView {
   return view
 }
 
-function directions(view: EditorView): (string | null)[] {
-  return [...view.contentDOM.querySelectorAll('.cm-line')].map((line) => line.getAttribute('dir'))
-}
+const directions = (view: EditorView): (string | null)[] =>
+  [...view.contentDOM.querySelectorAll('.cm-line')].map((line) => line.getAttribute('dir'))
 
 describe('the way a line reads', () => {
   test('is its first strong letter, past the marks Markdown writes', () => {

@@ -20,13 +20,12 @@ const NOTE = [
   '',
 ].join('\n')
 
-function language() {
-  return markdown({
+const language = () =>
+  markdown({
     base: markdownLanguage,
     extensions: ordenMarkdownExtensions,
     addKeymap: false,
   })
-}
 
 function classes(): Set<string> {
   const found = new Set<string>()
@@ -82,15 +81,12 @@ function typed(doc: string, at: number, text: string): string {
   } as unknown as EditorView
 
   const press = () => {
-    for (const handle of state.facet(EditorView.inputHandler)) {
+    for (const handle of state.facet(EditorView.inputHandler))
       if (handle(view, at, at, text, insert)) return true
-    }
     return false
   }
 
-  for (let asked = 0; asked < ASKED_AT_MOST; asked++) {
-    if (press()) break
-  }
+  for (let asked = 0; asked < ASKED_AT_MOST; asked++) if (press()) break
 
   return state.doc.toString()
 }

@@ -31,15 +31,13 @@ const FENCED = 'intro\n\n```js\nconsole.log(1)\n```\n\ntail\n'
 
 describe('which fences can be run', () => {
   test('accepts the spellings of JavaScript, whatever their case', () => {
-    for (const language of ['js', 'javascript', 'mjs', 'cjs', 'JS', ' JavaScript ']) {
+    for (const language of ['js', 'javascript', 'mjs', 'cjs', 'JS', ' JavaScript '])
       expect(isRunnableLanguage(language), language).toBe(true)
-    }
   })
 
   test('refuses everything that is not JavaScript', () => {
-    for (const language of ['', 'ts', 'typescript', 'jsx', 'node', 'python', 'mermaid', 'json']) {
+    for (const language of ['', 'ts', 'typescript', 'jsx', 'node', 'python', 'mermaid', 'json'])
       expect(isRunnableLanguage(language), language).toBe(false)
-    }
   })
 })
 

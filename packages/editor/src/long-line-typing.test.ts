@@ -19,9 +19,8 @@ const UNIT = 'a [b](c) '
 function viewOf(count: number): EditorView {
   const doc = UNIT.repeat(count)
   const hidden: Ranged<Decoration>[] = [Decoration.mark({ class: 'whole' }).range(0, doc.length)]
-  for (let at = 0; at < doc.length; at += UNIT.length) {
+  for (let at = 0; at < doc.length; at += UNIT.length)
     hidden.push(Decoration.replace({}).range(at + 5, at + 8))
-  }
   const view = new EditorView({
     state: EditorState.create({
       doc,
@@ -47,9 +46,8 @@ interface Tiled {
 function walksWhileTyping(view: EditorView): number {
   const line = view.contentDOM.querySelector<HTMLElement & Tiled>('.cm-line')
   let walking: Walking | null = line?.cmTile ?? null
-  while (walking && !Object.prototype.hasOwnProperty.call(walking, 'posBefore')) {
+  while (walking && !Object.prototype.hasOwnProperty.call(walking, 'posBefore'))
     walking = Object.getPrototypeOf(walking) as Walking | null
-  }
   if (!walking) throw new Error('no tile')
   const walker = document.createTreeWalker(view.contentDOM, NodeFilter.SHOW_TEXT)
   let last: Text | null = null

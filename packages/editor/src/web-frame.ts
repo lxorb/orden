@@ -33,16 +33,13 @@ export function framedPage(
   }
 }
 
-function allowed(written: string | undefined, list: ReadonlySet<string>, between: string): string {
-  return (written ?? '')
+const allowed = (written: string | undefined, list: ReadonlySet<string>, between: string): string =>
+  (written ?? '')
     .split(/[\s;]+/)
     .filter((one) => list.has(one))
     .join(between)
-}
 
-export function frameSandbox(written: string | undefined): string {
-  return allowed(written, SANDBOX, ' ')
-}
+export const frameSandbox = (written: string | undefined): string => allowed(written, SANDBOX, ' ')
 
 function known(frame: HTMLIFrameElement, sandbox: string): string {
   try {
@@ -55,9 +52,8 @@ function known(frame: HTMLIFrameElement, sandbox: string): string {
   }
 }
 
-export function framePermissions(written: string | undefined): string {
-  return allowed(written, ALLOW, '; ')
-}
+export const framePermissions = (written: string | undefined): string =>
+  allowed(written, ALLOW, '; ')
 
 function pageFrame(card: HTMLElement, title: string): HTMLIFrameElement | null {
   const source = framedPage(card.dataset.frame ?? '')
@@ -100,9 +96,7 @@ addEventListener('load',post)
 post()
 })()`
 
-export function literal(text: string): string {
-  return JSON.stringify(text).replace(/</g, '\\u003c')
-}
+export const literal = (text: string): string => JSON.stringify(text).replace(/</g, '\\u003c')
 
 export function frameDocument(parts: {
   head: string
@@ -155,9 +149,7 @@ const sizing = new Map<MessageEventSource, HTMLElement>()
 let listening = false
 
 function sized(event: MessageEvent) {
-  for (const [where, card] of sizing) {
-    if (!card.isConnected) sizing.delete(where)
-  }
+  for (const [where, card] of sizing) if (!card.isConnected) sizing.delete(where)
 
   const card = event.source === null ? undefined : sizing.get(event.source)
   if (card === undefined) return

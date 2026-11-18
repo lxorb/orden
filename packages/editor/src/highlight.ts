@@ -38,15 +38,15 @@ function highlighted(
 
   const text = doc.sliceString(from, to)
 
-  if (text.length >= MARK.length * 2 && text.startsWith(MARK) && text.endsWith(MARK)) {
+  if (text.length >= MARK.length * 2 && text.startsWith(MARK) && text.endsWith(MARK))
     return { from, to, inner: text.slice(MARK.length, text.length - MARK.length) }
-  }
 
   return null
 }
 
-export function toggleHighlight(colour: HighlightColour): StateCommand {
-  return ({ state, dispatch }) => {
+export const toggleHighlight =
+  (colour: HighlightColour): StateCommand =>
+  ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
       const { from, to } = range
       const already = highlighted(state.doc, from, to)
@@ -86,6 +86,5 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
-}
 
 export const highlightSelection: StateCommand = (target) => toggleHighlight(sticky)(target)

@@ -7,9 +7,12 @@ const LEFT = 60
 const RIGHT = 500
 const RADIUS = 6
 
-function rect(left: number, top: number, width: number, height = LINE): SelectionRect {
-  return { left, top, width, height }
-}
+const rect = (left: number, top: number, width: number, height = LINE): SelectionRect => ({
+  left,
+  top,
+  width,
+  height,
+})
 
 function overLines(from: number, to: number, lines = 3): SelectionRect[] {
   const middle = TOP + LINE

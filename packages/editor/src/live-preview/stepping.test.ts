@@ -21,9 +21,8 @@ function state(doc: string, cursor = 0) {
   )
 }
 
-function moved(doc: string, to: number) {
-  return parsed(state(doc).update({ selection: EditorSelection.cursor(to) }).state)
-}
+const moved = (doc: string, to: number) =>
+  parsed(state(doc).update({ selection: EditorSelection.cursor(to) }).state)
 
 const FORMULA = 'above\n\n$$\nE = mc^2\n$$\n\nbelow\n'
 const at = (doc: string, text: string) => doc.indexOf(text)

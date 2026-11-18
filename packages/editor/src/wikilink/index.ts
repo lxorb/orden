@@ -3,6 +3,4 @@ import { modifierWatch } from '../links'
 import { noteClicks } from './follow'
 import { notePreviews } from './hover'
 
-export function wikilinks(): Extension {
-  return [modifierWatch, noteClicks, notePreviews]
-}
+export const wikilinks = (): Extension => [modifierWatch, noteClicks, notePreviews]

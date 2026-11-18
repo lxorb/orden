@@ -12,18 +12,14 @@ const fetchRenderer = door(async () => {
   render = (await import('@orden/markdown')).renderMarkdown
 })
 
-export function readyToCopy(): Promise<void> {
-  return fetchRenderer()
-}
+export const readyToCopy = (): Promise<void> => fetchRenderer()
 
 function selected(state: EditorState): string {
   const { from, to } = state.selection.main
   return from === to ? state.doc.toString() : state.doc.sliceString(from, to)
 }
 
-export function ourOwn(html: string): boolean {
-  return html.includes(OURS)
-}
+export const ourOwn = (html: string): boolean => html.includes(OURS)
 
 export function copiedFlavours(
   state: EditorState,
@@ -60,17 +56,15 @@ function carry(event: ClipboardEvent, view: EditorView, cut: boolean): boolean {
   return true
 }
 
-export function richCopy(): Extension {
-  return [
-    EditorView.domEventHandlers({
-      copy: (event, view) => carry(event, view, false),
-      cut: (event, view) => carry(event, view, true),
-    }),
-    EditorView.updateListener.of((update) => {
-      if (!render && update.selectionSet && !update.state.selection.main.empty) void fetchRenderer()
-    }),
-  ]
-}
+export const richCopy = (): Extension => [
+  EditorView.domEventHandlers({
+    copy: (event, view) => carry(event, view, false),
+    cut: (event, view) => carry(event, view, true),
+  }),
+  EditorView.updateListener.of((update) => {
+    if (!render && update.selectionSet && !update.state.selection.main.empty) void fetchRenderer()
+  }),
+]
 
 export const copyMarkdown: Command = (view) => {
   navigator.clipboard.writeText(selected(view.state)).catch(() => undefined)

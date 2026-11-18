@@ -39,9 +39,8 @@ function type(
   } as unknown as EditorView
 
   const { from, to } = state.selection.main
-  for (const handler of state.facet(EditorView.inputHandler)) {
+  for (const handler of state.facet(EditorView.inputHandler))
     if (handler(view, from, to, character, () => state.update({}))) return state
-  }
 
   return state.update({
     changes: { from, to, insert: character },

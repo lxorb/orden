@@ -553,9 +553,8 @@ describe('where a link goes', () => {
 describe('the link under a position', () => {
   test('is found from inside it and from either edge', () => {
     const doc = 'see [[Plan#Today]] now'
-    for (const at of [4, 8, 18]) {
+    for (const at of [4, 8, 18])
       expect(linkAt(state(doc, 0), at)).toMatchObject({ target: 'Plan', heading: 'Today' })
-    }
   })
 
   test('is nothing where there is no link', () => {

@@ -17,17 +17,15 @@ function fenceEnd(line: Line): number {
 
 function closerEnd(line: Line, mark: number, length: number): number {
   let pos = line.pos
-  if (line.indent - line.baseIndent < 4) {
+  if (line.indent - line.baseIndent < 4)
     while (pos < line.text.length && line.text.charCodeAt(pos) === mark) pos++
-  }
   if (pos - line.pos < length) return -1
   if (line.skipSpace(pos) === line.text.length) return pos
   return fenceName(line.text.slice(line.pos)) === null ? -1 : line.text.trimEnd().length
 }
 
-function insideContainers(cx: BlockContext, line: Line): boolean {
-  return (line as Line & { depth: number }).depth >= cx.depth
-}
+const insideContainers = (cx: BlockContext, line: Line): boolean =>
+  (line as Line & { depth: number }).depth >= cx.depth
 
 interface LineReadingState {
   line: Line
@@ -58,9 +56,8 @@ function scanForCloser(cx: BlockContext, line: Line, mark: number, length: numbe
   const blocks = state.stack.map((block) => ({ ...block }))
 
   try {
-    while (cx.nextLine() && insideContainers(cx, line)) {
+    while (cx.nextLine() && insideContainers(cx, line))
       if (closerEnd(line, mark, length) >= 0) return true
-    }
     return false
   } finally {
     Object.assign(state, context)

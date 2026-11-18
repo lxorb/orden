@@ -16,9 +16,8 @@ const leaveNow = StateEffect.define()
 
 const leavesMidUpdate = ViewPlugin.define(() => ({
   update(update) {
-    if (!update.transactions.some((one) => one.effects.some((effect) => effect.is(leaveNow)))) {
+    if (!update.transactions.some((one) => one.effects.some((effect) => effect.is(leaveNow))))
       return
-    }
     const focused = document.activeElement
     if (focused instanceof HTMLElement) focused.blur()
   },

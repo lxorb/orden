@@ -8,18 +8,16 @@ import { imageExtension } from './image'
 import { runExtension } from '../run/door'
 import { dropSpacing, pointerSnap } from './snap'
 
-export function livePreview(): Extension {
-  return [
-    aiExtension,
-    dragFreeze,
-    footnoteReading,
-    pointerSnap,
-    dropSpacing,
-    livePreviewDecorations,
-    blockDecorations,
-    imageExtension,
-    runExtension(),
-  ]
-}
+export const livePreview = (): Extension => [
+  aiExtension,
+  dragFreeze,
+  footnoteReading,
+  pointerSnap,
+  dropSpacing,
+  livePreviewDecorations,
+  blockDecorations,
+  imageExtension,
+  runExtension(),
+]
 
 export { blockDecorations }

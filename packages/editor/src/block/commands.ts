@@ -235,13 +235,11 @@ function overBlocks(view: EditorView, pos: number, command: StateCommand): boole
   return ran
 }
 
-export function indentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, indentItems)
-}
+export const indentBlocks = (view: EditorView, pos: number): boolean =>
+  overBlocks(view, pos, indentItems)
 
-export function outdentBlocks(view: EditorView, pos: number): boolean {
-  return overBlocks(view, pos, outdentItems)
-}
+export const outdentBlocks = (view: EditorView, pos: number): boolean =>
+  overBlocks(view, pos, outdentItems)
 
 function nextWritten(state: EditorState, from: number, delta: -1 | 1): number | null {
   const doc = state.doc

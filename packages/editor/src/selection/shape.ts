@@ -52,13 +52,10 @@ export function selectionBlocks(rects: readonly SelectionRect[], radius: number)
   return blocks
 }
 
-function near(one: number, other: number): boolean {
-  return Math.abs(one - other) <= SAME
-}
+const near = (one: number, other: number): boolean => Math.abs(one - other) <= SAME
 
-function overlap(one: Run, other: Run): number {
-  return Math.min(one.right, other.right) - Math.max(one.left, other.left)
-}
+const overlap = (one: Run, other: Run): number =>
+  Math.min(one.right, other.right) - Math.max(one.left, other.left)
 
 function rows(rects: readonly SelectionRect[]): Row[] {
   const found: Row[] = []
@@ -128,17 +125,18 @@ function stacks(rows: readonly Row[]): Band[][] {
   return blocks
 }
 
-function bandOf(row: Row, run: Run): Band {
-  return { top: row.top, bottom: row.bottom, left: run.left, right: run.right }
-}
+const bandOf = (row: Row, run: Run): Band => ({
+  top: row.top,
+  bottom: row.bottom,
+  left: run.left,
+  right: run.right,
+})
 
-function snapped(band: Band, above: Band): Band {
-  return {
-    ...band,
-    left: near(band.left, above.left) ? above.left : band.left,
-    right: near(band.right, above.right) ? above.right : band.right,
-  }
-}
+const snapped = (band: Band, above: Band): Band => ({
+  ...band,
+  left: near(band.left, above.left) ? above.left : band.left,
+  right: near(band.right, above.right) ? above.right : band.right,
+})
 
 function boxOf(bands: readonly Band[]): Omit<SelectionBlock, 'path'> {
   const lefts = bands.map((band) => band.left)
@@ -231,10 +229,6 @@ function rounded(corners: readonly Point[], radius: number): string {
   return parts.join(' ')
 }
 
-function place(at: Point): string {
-  return `${round(at.x)} ${round(at.y)}`
-}
+const place = (at: Point): string => `${round(at.x)} ${round(at.y)}`
 
-function round(value: number): number {
-  return Math.round(value * 100) / 100
-}
+const round = (value: number): number => Math.round(value * 100) / 100

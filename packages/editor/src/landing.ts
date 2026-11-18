@@ -82,6 +82,4 @@ const forgetting = ViewPlugin.fromClass(
   },
 )
 
-export function landing(): Extension {
-  return [marked, forgetting]
-}
+export const landing = (): Extension => [marked, forgetting]

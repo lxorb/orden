@@ -293,9 +293,8 @@ export class TableView {
     const span = this.span()
     const current = span && editor.state.doc.sliceString(span.from, span.to) === this.source
 
-    if (text !== this.source && span && current) {
+    if (text !== this.source && span && current)
       editor.dispatch({ changes: { from: span.from, to: span.to, insert: text } })
-    }
 
     this.clearPending()
     this.focusAfter = null
@@ -577,9 +576,8 @@ export class TableView {
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
     cell.addEventListener(PASTE_TEXT, (event) => {
-      if (event instanceof CustomEvent && typeof event.detail === 'string') {
+      if (event instanceof CustomEvent && typeof event.detail === 'string')
         this.typeInCell(event.detail, cell, at)
-      }
     })
 
     return cell
@@ -955,9 +953,8 @@ export class TableView {
     bar.style.left = `${left}px`
 
     const align = this.model.align[column]
-    for (const [name, element] of Object.entries(this.alignButtons)) {
+    for (const [name, element] of Object.entries(this.alignButtons))
       element.classList.toggle('is-active', name === align)
-    }
   }
 
   private hideColumnBar() {

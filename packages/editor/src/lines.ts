@@ -56,8 +56,9 @@ function compare(one: string, other: string): number {
   return collator.compare(one.replace(LEAD, ''), other.replace(LEAD, ''))
 }
 
-function reordered(reorder: (lines: string[]) => string[]): StateCommand {
-  return ({ state, dispatch }) => {
+const reordered =
+  (reorder: (lines: string[]) => string[]): StateCommand =>
+  ({ state, dispatch }) => {
     const doc = state.doc
     const blocks = blocksOf(state, true).filter((lines) => lines.last > lines.first)
     if (!blocks.length) return false
@@ -83,7 +84,6 @@ function reordered(reorder: (lines: string[]) => string[]): StateCommand {
     )
     return true
   }
-}
 
 export const sortLines = reordered((lines) => [...lines].sort(compare))
 

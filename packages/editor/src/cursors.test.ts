@@ -9,11 +9,10 @@ beforeAll(async () => {
   await loadFind()
 })
 
-function ranged(doc: string, ...spans: [number, number][]): EditorState {
-  return editorState({ doc }).update({
+const ranged = (doc: string, ...spans: [number, number][]): EditorState =>
+  editorState({ doc }).update({
     selection: EditorSelection.create(spans.map(([from, to]) => EditorSelection.range(from, to))),
   }).state
-}
 
 function ran(command: StateCommand, from: EditorState): EditorState {
   let next = from
@@ -26,9 +25,8 @@ function ran(command: StateCommand, from: EditorState): EditorState {
   return next
 }
 
-function spans(one: EditorState): string[] {
-  return one.selection.ranges.map((range) => one.doc.sliceString(range.from, range.to))
-}
+const spans = (one: EditorState): string[] =>
+  one.selection.ranges.map((range) => one.doc.sliceString(range.from, range.to))
 
 describe('an editor that allows several cursors', () => {
   test('keeps every range it is given', () => {

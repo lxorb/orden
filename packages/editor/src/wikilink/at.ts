@@ -68,6 +68,5 @@ function linkToward(state: EditorState, pos: number, side: 1 | -1): LinkSpan | n
   return node.name === 'Wikilink' ? wikilinkOfNode(state, node) : noteLinkOfNode(state, node)
 }
 
-export function linkAt(state: EditorState, pos: number): LinkSpan | null {
-  return linkToward(state, pos, 1) ?? linkToward(state, pos, -1)
-}
+export const linkAt = (state: EditorState, pos: number): LinkSpan | null =>
+  linkToward(state, pos, 1) ?? linkToward(state, pos, -1)

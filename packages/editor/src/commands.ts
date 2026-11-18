@@ -22,9 +22,8 @@ export function toggleWrap(before: string, after = before): StateCommand {
 
   return (target) => {
     const { state, dispatch } = target
-    if (across && state.selection.ranges.some((range) => spansLines(state, range))) {
+    if (across && state.selection.ranges.some((range) => spansLines(state, range)))
       return across(target)
-    }
 
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
@@ -126,8 +125,9 @@ function headingOf(text: string): { level: number; length: number } {
   return { level: hashes.length, length: match[0].length }
 }
 
-export function setHeading(level: number): StateCommand {
-  return ({ state, dispatch }) => {
+export const setHeading =
+  (level: number): StateCommand =>
+  ({ state, dispatch }) => {
     const lines = selectedLines(state)
     const already = level > 0 && lines.every((line) => headingOf(line.text).level === level)
     const insert = level && !already ? `${'#'.repeat(level)} ` : ''
@@ -140,12 +140,12 @@ export function setHeading(level: number): StateCommand {
     dispatch(state.update({ changes, userEvent: 'input' }))
     return true
   }
-}
 
 const ITEM_MARKER = /^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/
 
-export function shiftHeading(delta: number): StateCommand {
-  return ({ state, dispatch }) => {
+export const shiftHeading =
+  (delta: number): StateCommand =>
+  ({ state, dispatch }) => {
     const changes: ChangeSpec[] = selectedLines(state).map((line) => {
       const existing = headingOf(line.text)
       const next = Math.min(6, Math.max(0, existing.level + delta))
@@ -160,10 +160,10 @@ export function shiftHeading(delta: number): StateCommand {
     dispatch(state.update({ changes, userEvent: 'input' }))
     return true
   }
-}
 
-function toggleLinePrefix(prefix: string, pattern: RegExp, replaces = pattern): StateCommand {
-  return ({ state, dispatch }) => {
+const toggleLinePrefix =
+  (prefix: string, pattern: RegExp, replaces = pattern): StateCommand =>
+  ({ state, dispatch }) => {
     const lines = selectedLines(state)
     const allPrefixed = lines.every((line) => pattern.test(line.text))
 
@@ -185,7 +185,6 @@ function toggleLinePrefix(prefix: string, pattern: RegExp, replaces = pattern): 
     dispatch(state.update({ changes, userEvent: 'input' }))
     return true
   }
-}
 
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 const INDENT = /^\s*/
@@ -206,9 +205,8 @@ export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
     const task = taskAt(line.text)
     const indent = task?.indent ?? (INDENT.exec(line.text)?.[0] ?? '').length
 
-    if (allTasks && task) {
+    if (allTasks && task)
       return { from: line.from + indent, to: line.from + task.marker, insert: '' }
-    }
 
     const marker = task ? task.marker : MARKER.exec(line.text)?.[0].length
     return {
@@ -235,9 +233,8 @@ const NO_TASK_HERE = new Set([
 
 function taskable(state: EditorState, line: Line): boolean {
   if (inCode(state, line.from)) return false
-  for (const node of enclosing(syntaxTree(state).resolveInner(line.from, 1))) {
+  for (const node of enclosing(syntaxTree(state).resolveInner(line.from, 1)))
     if (NO_TASK_HERE.has(node.name) || headingLevel(node.name) !== null) return false
-  }
   return true
 }
 
@@ -347,8 +344,9 @@ function roomBelow(state: EditorState, at: number, text: string, blank: boolean)
 
 const HOLDS_ITS_LINES: ReadonlySet<string> = new Set(['Table', 'FencedCode', 'BlockMath'])
 
-function insertBlock(build: () => Block, room: Room = {}): StateCommand {
-  return ({ state, dispatch }) => {
+const insertBlock =
+  (build: () => Block, room: Room = {}): StateCommand =>
+  ({ state, dispatch }) => {
     const range = state.selection.main
     const inTree = syntaxTree(state).resolveInner(range.to, -1)
     const holder = enclosingNamed(inTree, HOLDS_ITS_LINES)
@@ -376,7 +374,6 @@ function insertBlock(build: () => Block, room: Room = {}): StateCommand {
     )
     return true
   }
-}
 
 function fenceFor(words: string): string {
   const longest = words
@@ -451,9 +448,8 @@ export const closeFence: StateCommand = ({ state, dispatch }) => {
   }
   if (open) return false
 
-  for (let number = line.number + 1; number <= state.doc.lines; number++) {
+  for (let number = line.number + 1; number <= state.doc.lines; number++)
     if (closesFence(state.doc.line(number).text, fence.mark)) return false
-  }
 
   dispatch(
     state.update({
@@ -515,8 +511,9 @@ export function calloutSign(state: EditorState): '+' | '-' | '' | null {
   return found.callout.foldable ? (found.callout.folded ? '-' : '+') : ''
 }
 
-export function setCalloutSign(sign: '+' | '-'): StateCommand {
-  return ({ state, dispatch }) => {
+export const setCalloutSign =
+  (sign: '+' | '-'): StateCommand =>
+  ({ state, dispatch }) => {
     const found = calloutAt(state)
     if (!found) return false
 
@@ -531,7 +528,6 @@ export function setCalloutSign(sign: '+' | '-'): StateCommand {
     dispatch(state.update({ changes: { from, to: from + held, insert }, userEvent: 'input' }))
     return true
   }
-}
 
 export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
 
@@ -592,8 +588,9 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
   }
 }
 
-function wrapped(bang: '' | '!'): StateCommand {
-  return ({ state, dispatch }) => {
+const wrapped =
+  (bang: '' | '!'): StateCommand =>
+  ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
       const label = state.doc.sliceString(range.from, range.to)
       const insert = `${bang}[${label}]()`
@@ -606,7 +603,6 @@ function wrapped(bang: '' | '!'): StateCommand {
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
-}
 
 export const insertLink = wrapped('')
 export const insertImage = wrapped('!')

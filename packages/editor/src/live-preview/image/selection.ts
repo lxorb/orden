@@ -21,9 +21,7 @@ export function selectedImage(state: EditorState): ImageSpan | null {
   return image?.to === range.to ? image : null
 }
 
-export function selectionOver(image: ImageSpan) {
-  return EditorSelection.range(image.from, image.to)
-}
+export const selectionOver = (image: ImageSpan) => EditorSelection.range(image.from, image.to)
 
 export const selectImageBehind: StateCommand = ({ state, dispatch }) => {
   const range = state.selection.main
@@ -69,8 +67,9 @@ export const leaveSelectedImage: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-function stepOff(forward: boolean): Command {
-  return (view) => {
+const stepOff =
+  (forward: boolean): Command =>
+  (view) => {
     const image = selectedImage(view.state)
     if (!image) return false
 
@@ -85,7 +84,6 @@ function stepOff(forward: boolean): Command {
     })
     return true
   }
-}
 
 export const imageBindings: BindingSpec[] = [
   { id: 'image.select-behind', key: 'Backspace', run: selectImageBehind, contextual: true },

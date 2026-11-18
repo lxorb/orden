@@ -18,13 +18,13 @@ export type Side = 'above' | 'below'
 
 export type Step = CellAddress | Side
 
-function tableSpan(state: EditorState, from: number, to: number): TableSpan {
-  return { from: state.doc.lineAt(from).from, to: state.doc.lineAt(to).to }
-}
+const tableSpan = (state: EditorState, from: number, to: number): TableSpan => ({
+  from: state.doc.lineAt(from).from,
+  to: state.doc.lineAt(to).to,
+})
 
-export function standsAlone(state: EditorState, from: number): boolean {
-  return state.doc.lineAt(from).from === from
-}
+export const standsAlone = (state: EditorState, from: number): boolean =>
+  state.doc.lineAt(from).from === from
 
 export function renderedTables(state: EditorState): TableSpan[] {
   const spans: TableSpan[] = []
@@ -88,9 +88,10 @@ export function lineBeside(state: EditorState, span: TableSpan, side: Side): Lin
 
 export const firstCell: CellAddress = { row: -1, column: 0 }
 
-export function lastCell(model: TableModel): CellAddress {
-  return { row: model.rows.length - 1, column: model.header.length - 1 }
-}
+export const lastCell = (model: TableModel): CellAddress => ({
+  row: model.rows.length - 1,
+  column: model.header.length - 1,
+})
 
 export function cellAfter(model: TableModel, at: CellAddress): Step {
   if (at.column + 1 < model.header.length) return { row: at.row, column: at.column + 1 }
@@ -104,10 +105,8 @@ export function cellBefore(model: TableModel, at: CellAddress): Step {
   return 'above'
 }
 
-export function cellBelow(model: TableModel, at: CellAddress): CellAddress | 'below' {
-  return at.row + 1 < model.rows.length ? { row: at.row + 1, column: at.column } : 'below'
-}
+export const cellBelow = (model: TableModel, at: CellAddress): CellAddress | 'below' =>
+  at.row + 1 < model.rows.length ? { row: at.row + 1, column: at.column } : 'below'
 
-export function cellAbove(at: CellAddress): CellAddress | 'above' {
-  return at.row > -1 ? { row: at.row - 1, column: at.column } : 'above'
-}
+export const cellAbove = (at: CellAddress): CellAddress | 'above' =>
+  at.row > -1 ? { row: at.row - 1, column: at.column } : 'above'

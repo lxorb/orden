@@ -48,6 +48,4 @@ class ParseAhead {
 
 export const parseAhead = ViewPlugin.fromClass(ParseAhead)
 
-export function parsedOnScreen(view: EditorView): boolean {
-  return drawnThrough(view)
-}
+export const parsedOnScreen = (view: EditorView): boolean => drawnThrough(view)
