@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::fmt::Write as _;
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
@@ -35,7 +36,7 @@ static STARTED: Mutex<Vec<Arc<Started>>> = Mutex::new(Vec::new());
 static CLOSING: AtomicBool = AtomicBool::new(false);
 
 fn started() -> MutexGuard<'static, Vec<Arc<Started>>> {
-    STARTED.lock().unwrap_or_else(PoisonError::into_inner)
+    STARTED.held()
 }
 
 struct Started {
@@ -165,11 +166,11 @@ fn whole_to(bytes: &[u8], at: usize) -> usize {
 
 impl Started {
     fn said(&self) -> MutexGuard<'_, Said> {
-        self.said.lock().unwrap_or_else(PoisonError::into_inner)
+        self.said.held()
     }
 
     fn end(&self) {
-        let held = self.child.lock().unwrap_or_else(PoisonError::into_inner);
+        let held = self.child.held();
         if held.is_some() {
             self.killed.store(true, Ordering::SeqCst);
             self.family.end();
@@ -388,7 +389,7 @@ fn read(one: &Arc<Started>, asked: &Process, since: u64) -> Answer {
 }
 
 fn written(one: &Started, asked: &Process) -> Answer {
-    let mut input = one.input.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut input = one.input.held();
     let Some(feed) = input.as_ref() else {
         return Answer::error(Code::Failed, "its input is closed");
     };
@@ -638,7 +639,7 @@ fn spawned(
     };
     match (kept, input) {
         (true, input) => {
-            *one.input.lock().unwrap_or_else(PoisonError::into_inner) = input.map(Feed::new);
+            *one.input.held() = input.map(Feed::new);
         }
         (false, Some(mut pipe)) => {
             let words = asked.stdin.clone().unwrap_or_default();
@@ -689,7 +690,7 @@ fn listen(one: Arc<Started>, mut pipe: impl std::io::Read + Send + 'static, apar
 fn reap(one: &Started) {
     let code = loop {
         {
-            let mut held = one.child.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut held = one.child.held();
             let Some(child) = held.as_mut() else {
                 break None;
             };

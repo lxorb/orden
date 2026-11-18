@@ -1,7 +1,8 @@
+use orden_base::Held as _;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -35,7 +36,7 @@ struct Held {
 }
 
 fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
-    held.lock().unwrap_or_else(PoisonError::into_inner)
+    held.held()
 }
 
 pub struct Gemini {

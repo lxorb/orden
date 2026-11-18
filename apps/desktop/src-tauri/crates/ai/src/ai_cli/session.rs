@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::io;
 use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{mpsc, Arc, Mutex, MutexGuard, PoisonError};
+use std::sync::{mpsc, Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -19,7 +20,7 @@ enum Asked {
 type Waiting = Arc<Mutex<HashMap<String, Asked>>>;
 
 fn waiting(held: &Waiting) -> MutexGuard<'_, HashMap<String, Asked>> {
-    held.lock().unwrap_or_else(PoisonError::into_inner)
+    held.held()
 }
 
 pub struct Claude {
@@ -40,10 +41,7 @@ impl Claude {
         let answer_with = Arc::clone(&answering);
         let running = run::open(command, idle, move |heard| match heard {
             Heard::Line(line) => {
-                let writer = answer_with
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .clone();
+                let writer = answer_with.held().clone();
                 if let Some(message) = read(&line, &heard_by, writer.as_ref()) {
                     output(message);
                 }
@@ -57,7 +55,7 @@ impl Claude {
                 output(Message::End(ended));
             }
         })?;
-        *answering.lock().unwrap_or_else(PoisonError::into_inner) = Some(running.clone());
+        *answering.held() = Some(running.clone());
         Ok(Self {
             running,
             next: AtomicU64::new(1),

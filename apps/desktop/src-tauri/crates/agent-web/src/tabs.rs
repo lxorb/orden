@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Emitter as _, Url};
@@ -63,7 +64,7 @@ static NEXT: AtomicU64 = AtomicU64::new(1);
 static TICKING: std::sync::Once = std::sync::Once::new();
 
 fn tabs() -> std::sync::MutexGuard<'static, Vec<Tab>> {
-    TABS.lock().unwrap_or_else(PoisonError::into_inner)
+    TABS.held()
 }
 
 pub fn owner(label: &str) -> Option<Owner> {
@@ -295,15 +296,13 @@ fn let_go(app: &AppHandle, label: &str) {
 }
 
 pub fn bye(agent: &str) {
-    let mut gone = GONE.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut gone = GONE.held();
     gone.retain(|(one, _)| one != agent);
     gone.push((agent.to_string(), Instant::now()));
 }
 
 pub fn back(agent: &str) {
-    GONE.lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .retain(|(one, _)| one != agent);
+    GONE.held().retain(|(one, _)| one != agent);
 }
 
 pub fn said(app: &AppHandle, tab: &Tab) {
@@ -378,8 +377,7 @@ static SHOWN: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
 
 pub fn shown_as(id: &str) -> Option<String> {
     SHOWN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .iter()
         .find(|(agent_tab, _)| agent_tab == id)
         .map(|(_, reader)| reader.clone())
@@ -389,10 +387,7 @@ pub fn adopt(app: &AppHandle, id: &str, reader: &str) -> Result<(), String> {
     if held(id).is_none() {
         return Err("there is no such agent tab".into());
     }
-    SHOWN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .push((id.to_string(), reader.to_string()));
+    SHOWN.held().push((id.to_string(), reader.to_string()));
     close(app, id);
     Err("an agent's page on Orden's own Chromium has no window: the tab loads its address".into())
 }
@@ -417,7 +412,7 @@ fn tick(app: &AppHandle) {
         park(app, &id);
     }
     let gone: Vec<String> = {
-        let mut gone = GONE.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut gone = GONE.held();
         let due: Vec<String> = gone
             .iter()
             .filter(|(_, at)| at.elapsed() >= IDLE)

@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 
 use tauri::{AppHandle, Manager as _};
 use zbus::blocking::{Connection, MessageIterator};
@@ -359,15 +360,11 @@ fn first_entry(folders: &[PathBuf], exists: impl Fn(&std::path::Path) -> bool) -
 }
 
 fn set_session(session: Option<String>) {
-    *SESSION_NOW.lock().unwrap_or_else(PoisonError::into_inner) = session;
+    *SESSION_NOW.held() = session;
 }
 
 fn is_now(session: &str) -> bool {
-    SESSION_NOW
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_deref()
-        == Some(session)
+    SESSION_NOW.held().as_deref() == Some(session)
 }
 
 fn token() -> String {

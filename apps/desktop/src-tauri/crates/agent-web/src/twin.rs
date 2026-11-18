@@ -1,5 +1,4 @@
-use std::sync::PoisonError;
-
+use orden_base::Held as _;
 use serde_json::{json, Map, Value};
 use tauri::AppHandle;
 
@@ -36,13 +35,10 @@ pub fn carry(app: &AppHandle, reader: Option<&str>, twin: &View) {
         cdp::call(twin, "Network.setCookies", &json!({ "cookies": cookies })).map(|_| ())
     });
     if let Err(why) = written {
-        cdp::heard(&twin.label())
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .say(
-                "warning",
-                format!("Orden could not hand this page the reader's logins: {why}"),
-            );
+        cdp::heard(&twin.label()).held().say(
+            "warning",
+            format!("Orden could not hand this page the reader's logins: {why}"),
+        );
     }
 }
 

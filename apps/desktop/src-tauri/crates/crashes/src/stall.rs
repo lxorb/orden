@@ -1,7 +1,8 @@
+use orden_base::Held as _;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
@@ -384,9 +385,7 @@ pub fn watch_page(_app: &AppHandle, _webview: &tauri::Webview, _whose: &'static 
 static GONE: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
 
 pub fn page_gone(label: &str) -> bool {
-    GONE.lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .contains(label)
+    GONE.held().contains(label)
 }
 
 #[cfg(test)]

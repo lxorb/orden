@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::io::Write;
 use std::net::{Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::path::{Path, PathBuf};
@@ -75,9 +76,7 @@ struct Flow {
 
 impl Stream {
     fn lock(&self) -> MutexGuard<'_, Flow> {
-        self.flow
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.flow.held()
     }
 
     fn wait<'a>(&self, flow: MutexGuard<'a, Flow>) -> MutexGuard<'a, Flow> {

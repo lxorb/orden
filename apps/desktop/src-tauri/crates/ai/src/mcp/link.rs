@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
@@ -81,7 +82,7 @@ impl Link {
     }
 
     fn held(&self) -> MutexGuard<'_, Held> {
-        self.held.lock().unwrap_or_else(PoisonError::into_inner)
+        self.held.held()
     }
 
     fn seen_now(&self) -> Seen {

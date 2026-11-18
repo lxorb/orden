@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex, PoisonError, RwLock};
@@ -102,8 +103,7 @@ fn shown(kept: Kept, folder: &Path) -> Shown {
     let about = manifest::read(folder).unwrap_or_default();
     let picture = about.icon.as_deref().and_then(|icon| picture(folder, icon));
     let problem = PROBLEMS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .iter()
         .find(|(id, _)| *id == kept.id)
         .map(|(_, why)| why.clone());
@@ -252,7 +252,7 @@ fn listed_as(
     addon: Option<String>,
 ) -> Result<Shown, String> {
     let one = {
-        let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
+        let _writing = WRITING.held();
         let mut list = kept(app);
         let one = if let Some(there) = list.iter_mut().find(|one| one.id == id) {
             there.version.clone_from(&version);
@@ -301,7 +301,7 @@ pub async fn extensions_set(
             }
         }
         {
-            let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
+            let _writing = WRITING.held();
             let mut list = kept(&app);
             if !list.iter().any(|one| one.id == id) {
                 let (one, _) = listed(&app)
@@ -341,7 +341,7 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
             }
         }
         {
-            let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
+            let _writing = WRITING.held();
             let mut list = kept(&app);
             list.retain(|one| one.id != id);
             library::write(&root, &list)?;

@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -72,9 +73,7 @@ pub fn write(root: &Path, text: &str, over: &str) -> Result<String, String> {
     if !shape.is_object() {
         return Err("that is not the accounts".into());
     }
-    let _held = WRITING
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _held = WRITING.held();
     if stamp_of(read_text(root)?.as_deref()) != over {
         return Err("stale".into());
     }

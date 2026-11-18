@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
@@ -22,9 +23,7 @@ fn now() -> i64 {
 static GIVEN: Mutex<Option<HashSet<Ticket>>> = Mutex::new(None);
 
 fn given() -> MutexGuard<'static, Option<HashSet<Ticket>>> {
-    GIVEN
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    GIVEN.held()
 }
 
 fn hand_out(ticket: Ticket) -> Ticket {

@@ -1,7 +1,8 @@
+use orden_base::Held as _;
 use std::collections::{BTreeMap, VecDeque};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
@@ -124,7 +125,7 @@ pub fn facts() -> Option<&'static Facts> {
 }
 
 pub fn crumb(what: &str) {
-    let mut held = CRUMBS.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = CRUMBS.held();
     if held.len() >= MOST_CRUMBS {
         held.pop_front();
     }
@@ -135,12 +136,7 @@ pub fn crumb(what: &str) {
 }
 
 pub fn crumbs() -> Vec<Crumb> {
-    CRUMBS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .iter()
-        .cloned()
-        .collect()
+    CRUMBS.held().iter().cloned().collect()
 }
 
 pub fn crumbs_now() -> Option<std::sync::MutexGuard<'static, VecDeque<Crumb>>> {
@@ -148,17 +144,17 @@ pub fn crumbs_now() -> Option<std::sync::MutexGuard<'static, VecDeque<Crumb>>> {
 }
 
 pub fn shape(kinds: BTreeMap<String, u32>) {
-    *KINDS.lock().unwrap_or_else(PoisonError::into_inner) = kinds;
+    *KINDS.held() = kinds;
 }
 
 pub fn windows(count: usize) {
-    *WINDOWS.lock().unwrap_or_else(PoisonError::into_inner) = count;
+    *WINDOWS.held() = count;
 }
 
 fn open() -> Open {
     Open {
-        windows: *WINDOWS.lock().unwrap_or_else(PoisonError::into_inner),
-        kinds: KINDS.lock().unwrap_or_else(PoisonError::into_inner).clone(),
+        windows: *WINDOWS.held(),
+        kinds: KINDS.held().clone(),
     }
 }
 

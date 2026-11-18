@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
@@ -137,11 +138,7 @@ pub fn forget(label: &str) {
 }
 
 pub fn opened(label: &str, tab: &str) {
-    crate::cdp::heard(label)
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .opened
-        .push(tab.to_string());
+    crate::cdp::heard(label).held().opened.push(tab.to_string());
 }
 
 pub fn sleep_idle(app: &AppHandle) {

@@ -1,7 +1,8 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use tauri::{AppHandle, Manager};
@@ -22,18 +23,11 @@ pub struct Carried {
 static CARRYING: Mutex<Option<Carried>> = Mutex::new(None);
 
 pub fn carrying() -> Option<Carried> {
-    CARRYING
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .clone()
+    CARRYING.held().clone()
 }
 
 pub fn taken() {
-    if let Some(carried) = CARRYING
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_mut()
-    {
+    if let Some(carried) = CARRYING.held().as_mut() {
         carried.taken = true;
     }
 }
@@ -166,10 +160,7 @@ pub async fn page_carry(
         .collect();
     tauri::async_runtime::spawn_blocking(move || {
         let made = made_in(&root, &sources, addresses, SystemTime::now())?;
-        drop_untaken(std::mem::replace(
-            &mut *CARRYING.lock().unwrap_or_else(PoisonError::into_inner),
-            made,
-        ));
+        drop_untaken(std::mem::replace(&mut *CARRYING.held(), made));
         Ok(true)
     })
     .await
@@ -178,10 +169,7 @@ pub async fn page_carry(
 
 #[tauri::command]
 pub async fn page_carry_end() {
-    let carried = CARRYING
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .take();
+    let carried = CARRYING.held().take();
     orden_base::lane::off_the_runtime(move || {
         shown::forget();
         drop_untaken(carried);
@@ -190,7 +178,8 @@ pub async fn page_carry_end() {
 }
 
 mod shown {
-    use std::sync::{Mutex, PoisonError};
+    use orden_base::Held as _;
+    use std::sync::Mutex;
     use std::time::Duration;
 
     use serde_json::{json, Value};
@@ -202,7 +191,7 @@ mod shown {
     static OVER: Mutex<Option<String>> = Mutex::new(None);
 
     pub(super) fn forget() {
-        *OVER.lock().unwrap_or_else(PoisonError::into_inner) = None;
+        *OVER.held() = None;
     }
 
     pub(super) fn data_of(carried: &Carried) -> Value {
@@ -243,7 +232,7 @@ mod shown {
         x: f64,
         y: f64,
     ) -> Result<bool, String> {
-        let mut over = OVER.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut over = OVER.held();
         let steps = steps(over.as_deref(), tab, phase);
         *over = (phase == "over").then(|| tab.to_string());
         let data = data_of(carried);

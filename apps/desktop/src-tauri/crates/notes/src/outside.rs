@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use serde::Serialize;
 use std::fmt::Write as _;
 use std::fs;
@@ -48,9 +49,7 @@ pub fn outside_spaces() -> Option<String> {
 
 #[tauri::command(async)]
 pub fn take_in_outside(app: AppHandle) -> Result<Option<TakenIn>, String> {
-    let _one = TAKING
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _one = TAKING.held();
     let Some(folder) = outside_pending() else {
         return Ok(None);
     };
@@ -74,9 +73,7 @@ pub fn take_in_outside(app: AppHandle) -> Result<Option<TakenIn>, String> {
 
 #[tauri::command(async)]
 pub fn settle_outside(app: AppHandle) -> Result<(), String> {
-    let _one = TAKING
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _one = TAKING.held();
     let own = paths::spaces_dir(&app)?;
     let settings = config_dir(&app)?;
     write_atomically(

@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex, PoisonError};
+use std::sync::{LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 const STEADY: Duration = Duration::from_millis(100);
@@ -111,7 +112,7 @@ fn said_over(older: Said, newer: Said) -> Said {
 static TOLD: LazyLock<Mutex<Steady<Said>>> = LazyLock::new(Mutex::default);
 
 fn told<R>(look: impl FnOnce(&mut Steady<Said>) -> R) -> R {
-    look(&mut TOLD.lock().unwrap_or_else(PoisonError::into_inner))
+    look(&mut TOLD.held())
 }
 
 pub fn say(

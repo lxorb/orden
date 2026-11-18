@@ -1,4 +1,5 @@
-use std::sync::{Mutex, OnceLock, PoisonError};
+use orden_base::Held as _;
+use std::sync::{Mutex, OnceLock};
 
 use tauri::{AppHandle, Url};
 
@@ -12,7 +13,7 @@ static EARLY: Mutex<Vec<Url>> = Mutex::new(Vec::new());
 static OPEN: OnceLock<fn(&AppHandle, Vec<String>)> = OnceLock::new();
 
 pub fn opened(url: Url) {
-    let mut early = EARLY.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut early = EARLY.held();
     match APP.get() {
         Some(app) => handed(app.clone(), url),
         None => early.push(url),
@@ -20,7 +21,7 @@ pub fn opened(url: Url) {
 }
 
 pub fn start(app: &AppHandle, open: fn(&AppHandle, Vec<String>)) {
-    let mut early = EARLY.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut early = EARLY.held();
     let _ = OPEN.set(open);
     let _ = APP.set(app.clone());
     for url in early.drain(..) {

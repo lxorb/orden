@@ -7,11 +7,12 @@ mod run;
 mod say;
 mod session;
 
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -100,7 +101,7 @@ impl On {
 }
 
 fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
-    held.lock().unwrap_or_else(PoisonError::into_inner)
+    held.held()
 }
 
 impl Asks {
@@ -839,8 +840,13 @@ mod tests {
         assert!(asks.gone("orden-2", asks.load_of("orden-2")));
     }
 
-    fn node() -> bool {
-        Command::new("node").arg("--version").output().is_ok()
+    macro_rules! needs_node {
+        () => {
+            if Command::new("node").arg("--version").output().is_err() {
+                eprintln!("no node here; skipped");
+                return;
+            }
+        };
     }
 
     fn fake(tool: Tool, mode: &str, args: &[impl AsRef<std::ffi::OsStr>]) -> Command {
@@ -872,10 +878,7 @@ mod tests {
 
     #[test]
     fn a_second_account_signs_in_and_out_in_a_home_of_its_own() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         orden_store::ai_accounts::write(
             dir.path(),
@@ -942,10 +945,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn orden_connects_itself_to_an_agent_once_and_lets_go_only_of_its_own() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let home = dir.path().join("home");
         for one in [".claude", ".codex"] {
@@ -1046,10 +1046,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn claude_code_answers_line_by_line_with_the_question_on_stdin() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let args = args::ask(None, &full_caps()).expect("args");
         let (lines, ended) = heard_all(
             fake(Tool::ClaudeCode, "answer", &args),
@@ -1070,10 +1067,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_question_without_the_policy_flags_is_refused_by_the_stand_in() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let (_, ended) = heard_all(fake(Tool::ClaudeCode, "answer", &["-p"]), "hi", TELLING);
         assert_eq!(ended.code, Some(2));
         assert!(ended.err.contains("asked with tools"));
@@ -1109,10 +1103,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_stop_ends_the_program_and_everything_it_started() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let pids = dir.path().join("pids");
         let args = args::ask(None, &args::Caps::default()).expect("args");
@@ -1144,10 +1135,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_run_past_its_time_is_ended_with_its_family() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let pids = dir.path().join("pids");
         let args = args::ask(None, &args::Caps::default()).expect("args");
@@ -1164,10 +1152,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn the_status_question_is_answered_whole() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let claude = run_to_end(
             fake(Tool::ClaudeCode, "answer", args::status(Tool::ClaudeCode)),
             TELLING,
@@ -1255,10 +1240,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_claude_code_session_answers_turn_after_turn_and_is_told_what_to_use() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let shape = Shape {
             mode: Some(Mode::Plan),
@@ -1324,10 +1306,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_session_stopped_mid_turn_is_interrupted_and_keeps_its_words() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let (claude, heard) = claude_session("slow", Shape::default(), dir.path());
         claude.say(&turn("a long answer please")).expect("said");
@@ -1344,10 +1323,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_session_nobody_talks_to_is_ended_with_its_family() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let pids = dir.path().join("pids");
         let config = dir.path().join("orden-mcp.json");
@@ -1395,10 +1371,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn codex_threads_share_the_app_server_and_stream_their_turns() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("answer", true, dir.path());
         let (one, first) = route();
@@ -1487,10 +1460,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn codex_is_steered_and_stopped_mid_turn() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("slow", false, dir.path());
         let (output, heard) = route();
@@ -1516,10 +1486,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn codex_s_requests_for_approval_are_declined() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("approval", false, dir.path());
         let (output, heard) = route();
@@ -1534,10 +1501,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_thread_with_tools_on_a_host_with_no_token_is_refused_by_the_stand_in() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let host = codex_host("answer", false, dir.path());
         let (output, heard) = route();
@@ -1591,10 +1555,7 @@ exec node '{}' {name} \"$@\"
     #[cfg(windows)]
     #[test]
     fn every_argument_survives_an_npm_shim() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let shim = |name: &str, tool: &str| {
             let shim = dir.path().join(name);
@@ -1739,10 +1700,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_gemini_session_resumes_its_session_turn_by_turn_and_lends_orden() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let (gemini, heard) = gemini_session("answer", dir.path(), Some(Mode::Full));
         gemini.say(turn("what is a heron")).expect("said");
@@ -1788,10 +1746,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn a_gemini_turn_that_dies_unanswered_ends_the_session_with_its_words() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let (gemini, heard) = gemini_session("crash", dir.path(), None);
         gemini.say(turn("hello")).expect("said");
@@ -1809,10 +1764,7 @@ exec node '{}' {name} \"$@\"
 
     #[test]
     fn an_interrupted_gemini_turn_ends_stopped() {
-        if !node() {
-            eprintln!("no node here; skipped");
-            return;
-        }
+        needs_node!();
         let dir = tempfile::tempdir().expect("a folder");
         let pids = dir.path().join("pids");
         let (output, heard) = route();

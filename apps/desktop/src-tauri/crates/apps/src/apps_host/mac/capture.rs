@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
@@ -45,9 +46,7 @@ struct Frame {
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    mutex.held()
 }
 
 impl Frames {

@@ -5,8 +5,9 @@ mod toast;
 #[cfg(windows)]
 mod windows;
 
+use orden_base::Held as _;
 use std::collections::HashMap;
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter as _, Manager as _};
@@ -58,7 +59,7 @@ struct Answer {
 static WINDOWS: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
 
 fn in_windows<T>(alter: impl FnOnce(&mut HashMap<String, String>) -> T) -> T {
-    let mut held = WINDOWS.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = WINDOWS.held();
     alter(held.get_or_insert_with(HashMap::new))
 }
 

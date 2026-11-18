@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::sync::Mutex;
 
 use tauri::{Manager as _, Webview};
@@ -14,17 +15,12 @@ pub enum Scheme {
 static SAID: Mutex<Option<Scheme>> = Mutex::new(None);
 
 fn said() -> Option<Scheme> {
-    *SAID
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    *SAID.held()
 }
 
 #[tauri::command]
 pub fn page_scheme_seen(webview: Webview<orden_base::Engine>, scheme: Scheme) {
-    let before = SAID
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .replace(scheme);
+    let before = SAID.held().replace(scheme);
     if before == Some(scheme) {
         return;
     }

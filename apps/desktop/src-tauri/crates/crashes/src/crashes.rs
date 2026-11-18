@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use tauri::Manager as _;
@@ -105,7 +106,7 @@ pub fn crumb(command: &str) {
 
 pub fn tick(window_answers: bool) {
     renderer::look(window_answers);
-    let mut alive = ALIVE_AT.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut alive = ALIVE_AT.held();
     if alive.is_none_or(|at| at.elapsed() >= ALIVE_EVERY) {
         *alive = Some(Instant::now());
         drop(alive);
@@ -119,22 +120,14 @@ pub fn ended_well() {
 
 pub fn window_gone(label: &str) {
     renderer::gone(label);
-    if let Some(seen) = PAGES_SEEN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_mut()
-    {
+    if let Some(seen) = PAGES_SEEN.held().as_mut() {
         seen.remove(label);
     }
     report::windows(renderer_count());
 }
 
 fn renderer_count() -> usize {
-    PAGES_SEEN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_ref()
-        .map_or(0, HashSet::len)
+    PAGES_SEEN.held().as_ref().map_or(0, HashSet::len)
 }
 
 static PAGES_SEEN: Mutex<Option<HashSet<String>>> = Mutex::new(None);
@@ -180,7 +173,7 @@ pub fn page_ended(label: &str) {
 }
 
 fn claimed(id: &str) -> bool {
-    let mut held = CLAIMED.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = CLAIMED.held();
     let claims = held.get_or_insert_with(HashMap::new);
     claims.retain(|_, at| at.elapsed() < CLAIM);
     if claims.contains_key(id) {
@@ -191,11 +184,7 @@ fn claimed(id: &str) -> bool {
 }
 
 fn unclaimed(id: &str) {
-    if let Some(claims) = CLAIMED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_mut()
-    {
+    if let Some(claims) = CLAIMED.held().as_mut() {
         claims.remove(id);
     }
 }
@@ -225,7 +214,7 @@ pub fn crash_report_unsent(id: String) {
 }
 
 fn first_seen(message: &str) -> bool {
-    let mut held = JS_SEEN.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = JS_SEEN.held();
     let seen = held.get_or_insert_with(HashSet::new);
     if seen.len() >= MOST_JS {
         return false;
@@ -255,8 +244,7 @@ pub fn crash_report_js(message: String, stack: String) {
 pub fn crash_alive(webview: Webview, visible: bool) {
     let label = webview.label().to_owned();
     let fresh = PAGES_SEEN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .get_or_insert_with(HashSet::new)
         .insert(label.clone());
     if fresh {

@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::BTreeSet;
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use serde::Deserialize;
@@ -100,7 +101,7 @@ struct Lent {
 static LENT: Mutex<Vec<Lent>> = Mutex::new(Vec::new());
 
 fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
-    LENT.lock().unwrap_or_else(PoisonError::into_inner)
+    LENT.held()
 }
 
 pub fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {

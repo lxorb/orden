@@ -3,6 +3,7 @@ mod store;
 mod tables;
 mod wire;
 
+use orden_base::Held as _;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
@@ -42,9 +43,7 @@ impl Held {
 
 impl Stores {
     fn lock(&self) -> MutexGuard<'_, Option<Held>> {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.0.held()
     }
 }
 

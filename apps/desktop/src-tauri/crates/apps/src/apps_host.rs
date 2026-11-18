@@ -34,6 +34,7 @@ mod wm;
 use desk::{audio, capture, clipboard, input};
 #[cfg(target_os = "macos")]
 use mac::{audio, capture, clipboard, input};
+use orden_base::Held as _;
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -125,18 +126,12 @@ struct Running {
 
 impl Running {
     fn watched_by(&self, events: Channel<Said>) {
-        *self
-            .events
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events);
+        *self.events.held() = Some(events);
         self.tell(Said::RUNNING);
     }
 
     fn tell(&self, said: Said) {
-        let events = self
-            .events
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let events = self.events.held();
         if let Some(channel) = events.as_ref() {
             let _ = channel.send(said);
         }
@@ -156,10 +151,7 @@ struct Claim<'a> {
 
 impl Starting {
     fn claim(&self, key: &str) -> Claim<'_> {
-        let mut keys = self
-            .keys
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut keys = self.keys.held();
         while keys.contains(key) {
             keys = self
                 .done
@@ -176,11 +168,7 @@ impl Starting {
 
 impl Drop for Claim<'_> {
     fn drop(&mut self) {
-        self.starting
-            .keys
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .remove(&self.key);
+        self.starting.keys.held().remove(&self.key);
         self.starting.done.notify_all();
     }
 }
@@ -197,9 +185,7 @@ pub struct Hosted {
 
 impl Hosted {
     fn apps(&self) -> MutexGuard<'_, HashMap<String, Arc<Running>>> {
-        self.apps
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.apps.held()
     }
 
     fn kept(&self, key: &str, running: &Arc<Running>) -> bool {
@@ -219,9 +205,7 @@ impl Hosted {
 
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
     fn peers(&self) -> MutexGuard<'_, HashMap<String, stream::Peer>> {
-        self.peers
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.peers.held()
     }
 
     #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
@@ -409,11 +393,7 @@ fn run_on_its_display(
         let code = program.wait();
         let handed = began.elapsed() < HANDED_WITHIN && !desk.shown.load(Ordering::SeqCst);
         drop(program);
-        let desktop = running
-            .desktop
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .take();
+        let desktop = running.desktop.held().take();
         drop(desktop);
         let stopped = let_go(&app, &key, &running);
         let mut said = Said::ended(stopped, code);
@@ -482,17 +462,9 @@ fn run_on_its_display(
 
     std::thread::spawn(move || {
         let code = child.wait().ok().and_then(|status| status.code());
-        let placer = running
-            .placer
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .take();
+        let placer = running.placer.held().take();
         drop(placer);
-        let display = running
-            .display
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .take();
+        let display = running.display.held().take();
         drop(display);
         let stopped = let_go(&app, &key, &running);
         running.tell(Said::ended(stopped, code));
@@ -562,17 +534,9 @@ fn run_on_its_display(
 
     std::thread::spawn(move || {
         let status = child.wait().ok();
-        let display = running
-            .display
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .take();
+        let display = running.display.held().take();
         drop(display);
-        let sink = running
-            .sink
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .take();
+        let sink = running.sink.held().take();
         drop(sink);
         let stopped = let_go(&app, &key, &running);
         running.tell(Said::ended(stopped, status.and_then(|one| one.code())));
@@ -615,11 +579,7 @@ pub async fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
 pub async fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
         if let Some(running) = found(&webview, &key)? {
-            running
-                .screen
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .hz = view.hz;
+            running.screen.held().hz = view.hz;
             view_here(&running, view);
         }
         Ok(())
@@ -633,10 +593,7 @@ fn view_here(_running: &Running, _view: View) {}
 #[cfg(target_os = "windows")]
 fn view_here(running: &Running, view: View) {
     let (width, height) = desk_size(view);
-    let desktop = running
-        .desktop
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let desktop = running.desktop.held();
     if let Some(desktop) = desktop.as_ref() {
         desktop.fit(width, height);
     }
@@ -645,10 +602,7 @@ fn view_here(running: &Running, view: View) {
 #[cfg(target_os = "macos")]
 fn view_here(running: &Running, view: View) {
     let (width, height) = mac::display::screen(view.width, view.height, view.dpr);
-    let display = running
-        .display
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let display = running.display.held();
     if let Some(display) = display.as_ref() {
         display.fit(width, height, view.dpr);
     }
@@ -657,10 +611,7 @@ fn view_here(running: &Running, view: View) {
 #[cfg(target_os = "linux")]
 fn view_here(running: &Running, view: View) {
     let (width, height) = display::screen(view.width, view.height, view.dpr);
-    let display = running
-        .display
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let display = running.display.held();
     if let Some(display) = display.as_ref() {
         let _ = display.fit(width, height, view.dpr);
     }
@@ -736,16 +687,10 @@ fn signal_here(hosted: &Hosted, key: &str, data: &str) -> Option<String> {
 fn shared_of(running: &Running) -> (Option<Arc<clipboard::Clipboard>>, Option<String>) {
     let clipboard = running
         .display
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .held()
         .as_ref()
         .and_then(display::Display::clipboard);
-    let sound = running
-        .sink
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .as_ref()
-        .map(audio::Sink::monitor);
+    let sound = running.sink.held().as_ref().map(audio::Sink::monitor);
     (clipboard, sound)
 }
 
@@ -856,10 +801,7 @@ fn allowed_here(
 
     let key = allowed_key(path, args, cwd);
     {
-        let mut kept = hosted
-            .allowed
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut kept = hosted.allowed.held();
         let known = kept.get_or_insert_with(|| {
             allowed_file(app)
                 .and_then(|file| std::fs::read_to_string(file).ok())
@@ -889,10 +831,7 @@ fn allowed_here(
         return false;
     }
 
-    let mut kept = hosted
-        .allowed
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut kept = hosted.allowed.held();
     let known = kept.get_or_insert_with(HashSet::new);
     known.insert(key);
     if let Some(file) = allowed_file(app) {

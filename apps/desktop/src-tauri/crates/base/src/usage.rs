@@ -1,5 +1,6 @@
 #![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
+use crate::Held as _;
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -174,9 +175,7 @@ pub fn sample(key: &str, whose: Whose) -> Option<Usage> {
     static SAMPLES: std::sync::LazyLock<std::sync::Mutex<Sampler>> =
         std::sync::LazyLock::new(std::sync::Mutex::default);
     let totals = totals(whose)?;
-    let mut samples = SAMPLES
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut samples = SAMPLES.held();
     Some(samples.rate(key, Instant::now(), totals))
 }
 

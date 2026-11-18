@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::ffi::{c_int, c_void};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Mutex, Once, PoisonError};
+use std::sync::{Mutex, Once};
 use std::time::{Duration, Instant};
 
 use super::{Place, Raw, MOST_FRAMES, MOST_THREADS};
@@ -210,7 +211,7 @@ fn asking(
 #[allow(unsafe_code)]
 pub fn every_thread(within: Duration) -> Vec<Raw> {
     start();
-    let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
+    let _one_at_a_time = ASKING.held();
     let started = Instant::now();
     let pid = std::process::id();
     let me = unsafe { libc::gettid() };
@@ -262,7 +263,7 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
     }
 
     start();
-    let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
+    let _one_at_a_time = ASKING.held();
     let started = Instant::now();
     let me = unsafe { libc::pthread_self() };
     let task = unsafe { libc::mach_task_self() };
@@ -325,7 +326,7 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
 #[allow(unsafe_code)]
 fn one_thread(target: usize, within: Duration) -> Vec<usize> {
     start();
-    let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
+    let _one_at_a_time = ASKING.held();
     let mut silent = 0;
     asking(target, &mut silent, within, |signal| {
         i32::try_from(target)

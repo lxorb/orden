@@ -1,7 +1,8 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::io::Stdout;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, OnceLock, PoisonError, Weak};
+use std::sync::{Arc, Mutex, OnceLock, Weak};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -160,7 +161,7 @@ impl Session {
             return;
         }
         let Some(link) = self.link.get() else { return };
-        let mut listed = self.listed.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut listed = self.listed.held();
         let now = names(&link.seen(Duration::ZERO, false));
         if listed.as_ref().is_some_and(|before| *before != now) {
             *listed = Some(now);
@@ -175,7 +176,7 @@ impl Session {
     fn list(&self, id: &Value, params: &Value) -> Value {
         let link = self.link_for(params);
         link.seen(LIST_WAIT, true);
-        let mut listed = self.listed.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut listed = self.listed.held();
         let tools = shown(&link.seen(Duration::ZERO, false));
         *listed = Some(tools.iter().map(|tool| tool.name.clone()).collect());
         drop(listed);
@@ -240,7 +241,7 @@ struct Calls(Mutex<HashMap<String, bool>>);
 
 impl Calls {
     fn held(&self) -> std::sync::MutexGuard<'_, HashMap<String, bool>> {
-        self.0.lock().unwrap_or_else(PoisonError::into_inner)
+        self.0.held()
     }
 
     fn begin(&self, id: &str) -> Result<(), Refused> {

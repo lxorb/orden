@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Condvar, Mutex};
@@ -57,9 +58,7 @@ impl Capture {
 
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let (lock, came) = &*self.shot;
-        let held = lock
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let held = lock.held();
         let (held, _) = came
             .wait_timeout_while(held, FIRST_WITHIN, |shot| shot.is_none())
             .unwrap_or_else(std::sync::PoisonError::into_inner);
@@ -115,9 +114,7 @@ fn draw(
                 last.extend_from_slice(pixels);
                 last_size = size;
                 let (lock, came) = shot;
-                *lock
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(Shot {
+                *lock.held() = Some(Shot {
                     pixels: last.clone(),
                     size,
                 });

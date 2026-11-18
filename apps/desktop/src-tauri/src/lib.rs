@@ -1264,7 +1264,7 @@ mod tests {
             "fn asked() -> u8 {\n    *ASKED.lock().unwrap()\n}\n\n",
             "fn first() -> u8 {\n    *FIRST.lock().unwrap()\n}\n\n",
             "pub fn again() {\n    if let Some(seen) = Some(*ONE.lock().unwrap()) {\n        one();\n    }\n}\n\n",
-            "pub fn forth() {\n    let one = ONE.lock().unwrap();\n    *TWO.lock().unwrap() = *one;\n}\n\n",
+            "pub fn forth() {\n    let one = ONE.held();\n    *TWO.held() = *one;\n}\n\n",
             "pub fn back() {\n    let two = TWO.lock().unwrap();\n    one();\n    drop(two);\n}\n\n",
             "pub fn condition() {\n    if *ASKED.lock().unwrap() == 0 {\n        asked();\n    }\n}\n\n",
             "pub fn before() {\n    *holder(first()).lock().unwrap() = 1;\n}\n\n",
@@ -1309,7 +1309,7 @@ mod tests {
         let source = concat!(
             "static HELD: Mutex<u8> = Mutex::new(0);\n\n",
             "static FREE: Mutex<u8> = Mutex::new(0);\n\n",
-            "#[tauri::command(async)]\npub fn slow() {\n    let held = HELD.lock().unwrap();\n    fs::write(one, two);\n    drop(held);\n}\n\n",
+            "#[tauri::command(async)]\npub fn slow() {\n    let held = HELD.held();\n    fs::write(one, two);\n    drop(held);\n}\n\n",
             "#[tauri::command]\npub fn quick() -> u8 {\n    *HELD.lock().unwrap()\n}\n\n",
             "#[tauri::command(async)]\npub fn let_go() {\n    let held = FREE.lock().unwrap();\n    drop(held);\n    fs::write(one, two);\n}\n\n",
             "#[tauri::command]\npub fn free() -> u8 {\n    let read = *FREE.lock().unwrap();\n    read\n}\n\n",

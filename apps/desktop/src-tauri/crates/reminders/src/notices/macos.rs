@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
-use std::sync::{Mutex, Once, PoisonError};
+use std::sync::{Mutex, Once};
 
 use block2::RcBlock;
 use objc2::rc::Retained;
@@ -25,7 +26,7 @@ static ASKED: Once = Once::new();
 static SHOWING: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
 
 fn in_showing<T>(alter: impl FnOnce(&mut HashMap<String, String>) -> T) -> T {
-    let mut held = SHOWING.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = SHOWING.held();
     alter(held.get_or_insert_with(HashMap::new))
 }
 

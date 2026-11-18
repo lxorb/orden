@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -92,7 +93,7 @@ pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
     if id.len() != 32 || !id.bytes().all(|byte| (b'a'..=b'p').contains(&byte)) {
         return Err("that is not an extension".to_string());
     }
-    let _removing = REMOVING.lock().unwrap_or_else(PoisonError::into_inner);
+    let _removing = REMOVING.held();
     let page = control(app).ok_or("the engine's extensions could not be reached")?;
     let held = |expression: &str| asked(&page, &expression.replace("ID", &json!(id).to_string()));
     let was_on = held("chrome.management.get(ID).then((one) => one.enabled)")
@@ -138,7 +139,7 @@ pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
 }
 
 fn control(app: &AppHandle) -> Option<Webview> {
-    let _building = BUILDING.lock().unwrap_or_else(PoisonError::into_inner);
+    let _building = BUILDING.held();
     if let Some(page) = app.get_webview(CONTROL) {
         return Some(page);
     }

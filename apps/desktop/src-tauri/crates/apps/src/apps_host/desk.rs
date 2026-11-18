@@ -30,6 +30,7 @@ pub mod audio {
     }
 }
 
+use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -72,9 +73,7 @@ pub struct Desk {
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    mutex.held()
 }
 
 fn desks() -> MutexGuard<'static, HashMap<String, Arc<Desk>>> {

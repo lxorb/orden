@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use serde::Serialize;
 use std::cmp::Reverse;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
+use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::fuzzy::{without_words, Fuzzy, FuzzyHit};
@@ -109,7 +110,7 @@ fn cache() -> &'static Mutex<Warm> {
 }
 
 fn held() -> MutexGuard<'static, Warm> {
-    cache().lock().unwrap_or_else(PoisonError::into_inner)
+    cache().held()
 }
 
 fn body_of(path: &Path) -> Option<Arc<str>> {

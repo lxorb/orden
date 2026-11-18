@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use tauri::{AppHandle, Manager as _, Webview, WebviewUrl, WebviewWindowBuilder};
 
@@ -15,7 +16,7 @@ static HOST: Mutex<Option<String>> = Mutex::new(None);
 static ASKED_AT_LAUNCH: AtomicBool = AtomicBool::new(false);
 
 fn host() -> Option<String> {
-    HOST.lock().unwrap_or_else(PoisonError::into_inner).clone()
+    HOST.held().clone()
 }
 
 fn key_allowed(asked: Option<String>, probe: Option<String>, away: bool) -> Option<String> {
@@ -34,7 +35,7 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
     }
     let probe = std::env::var(PROBE_KEY).ok();
     let wanted = key_allowed(key, probe, orden_placement::placement::away().is_some());
-    *HOST.lock().unwrap_or_else(PoisonError::into_inner) = Some(webview.label().to_owned());
+    *HOST.held() = Some(webview.label().to_owned());
     let held = crate::hotkeys::hold(&app, crate::hotkeys::Which::QuickAdd, wanted);
     if ASKED_AT_LAUNCH.swap(false, Ordering::Relaxed) {
         let building = app.clone();

@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::VecDeque;
 use std::io::{self, Read, Write as _};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
@@ -133,9 +134,7 @@ struct Inner {
 
 impl Inner {
     fn lock(&self) -> MutexGuard<'_, Shared> {
-        self.shared
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.shared.held()
     }
 
     fn over(&self) -> bool {
@@ -143,10 +142,7 @@ impl Inner {
     }
 
     fn screen(&self) -> Screen {
-        self.screen
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone()
+        self.screen.held().clone()
     }
 
     fn end(&self) {
@@ -193,11 +189,7 @@ impl Peer {
             return Err(Cannot::Offer);
         }
 
-        let display = screen
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .display
-            .clone();
+        let display = screen.held().display.clone();
         let listening: Vec<UdpSocket> = sockets
             .iter()
             .filter_map(|socket| socket.try_clone().ok())
@@ -901,9 +893,7 @@ fn send_frames(
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    mutex.held()
 }
 
 fn write_channel(shared: &mut Shared, text: &str) {

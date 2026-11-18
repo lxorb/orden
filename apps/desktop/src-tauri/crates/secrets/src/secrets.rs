@@ -125,6 +125,7 @@ mod store {
 }
 
 mod file {
+    use orden_base::Held as _;
     use std::sync::Mutex;
 
     use tauri::{AppHandle, Manager as _};
@@ -140,16 +141,12 @@ mod file {
     }
 
     pub fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
-        let _held = HELD
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _held = HELD.held();
         Ok(super::read_file(&file(app)?)?.remove(account))
     }
 
     pub fn set(app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
-        let _held = HELD
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _held = HELD.held();
         let path = file(app)?;
         let mut kept = super::read_file(&path)?;
         kept.insert(account.to_owned(), secret.to_owned());
@@ -157,9 +154,7 @@ mod file {
     }
 
     pub fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
-        let _held = HELD
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _held = HELD.held();
         let path = file(app)?;
         let mut kept = super::read_file(&path)?;
         if kept.remove(account).is_some() {
@@ -170,9 +165,7 @@ mod file {
 
     #[cfg_attr(target_os = "macos", allow(dead_code))]
     pub fn holds_any(app: &AppHandle) -> bool {
-        let _held = HELD
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _held = HELD.held();
         file(app)
             .and_then(|path| super::read_file(&path))
             .is_ok_and(|kept| !kept.is_empty())

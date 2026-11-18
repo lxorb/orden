@@ -5,6 +5,7 @@ mod watching;
 
 pub use walk::says_gone;
 
+use orden_base::Held as _;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::ffi::OsStr;
@@ -24,9 +25,7 @@ pub struct Watching(Mutex<Option<Watch>>);
 
 impl Watching {
     fn lock(&self) -> MutexGuard<'_, Option<Watch>> {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.0.held()
     }
 }
 
@@ -35,9 +34,7 @@ pub struct Working(Mutex<HashMap<PathBuf, Watch>>);
 
 impl Working {
     fn lock(&self) -> MutexGuard<'_, HashMap<PathBuf, Watch>> {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.0.held()
     }
 }
 

@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::net::{TcpStream, ToSocketAddrs as _};
-use std::sync::{Arc, Mutex, PoisonError};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
@@ -36,7 +37,7 @@ fn chain_of(address: &tauri::Url) -> Option<Vec<Vec<u8>>> {
     socket.set_read_timeout(Some(PATIENCE)).ok()?;
     socket.set_write_timeout(Some(PATIENCE)).ok()?;
     while connection.is_handshaking() && connection.complete_io(&mut socket).is_ok() {}
-    let chain = std::mem::take(&mut *heard.chain.lock().unwrap_or_else(PoisonError::into_inner));
+    let chain = std::mem::take(&mut *heard.chain.held());
     Some(chain)
 }
 
@@ -58,7 +59,7 @@ impl ServerCertVerifier for Heard {
         _ocsp: &[u8],
         _now: UnixTime,
     ) -> Result<ServerCertVerified, rustls::Error> {
-        *self.chain.lock().unwrap_or_else(PoisonError::into_inner) = std::iter::once(end_entity)
+        *self.chain.held() = std::iter::once(end_entity)
             .chain(intermediates)
             .map(|one| one.as_ref().to_vec())
             .collect();

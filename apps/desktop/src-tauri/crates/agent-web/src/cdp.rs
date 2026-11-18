@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::mpsc::{sync_channel, Receiver, RecvTimeoutError};
-use std::sync::{Arc, Mutex, PoisonError};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
@@ -533,7 +534,7 @@ impl Heard {
 static HEARD: Mutex<Option<HashMap<String, Arc<Mutex<Heard>>>>> = Mutex::new(None);
 
 pub fn heard(label: &str) -> Arc<Mutex<Heard>> {
-    let mut all = HEARD.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut all = HEARD.held();
     Arc::clone(
         all.get_or_insert_with(HashMap::new)
             .entry(label.to_string())
@@ -542,7 +543,7 @@ pub fn heard(label: &str) -> Arc<Mutex<Heard>> {
 }
 
 pub fn forget(label: &str) {
-    let mut all = HEARD.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut all = HEARD.held();
     if let Some(all) = all.as_mut() {
         all.remove(label);
     }
@@ -550,8 +551,7 @@ pub fn forget(label: &str) {
 
 pub fn labels() -> Vec<String> {
     HEARD
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .as_ref()
         .map(|all| all.keys().cloned().collect())
         .unwrap_or_default()
@@ -583,15 +583,12 @@ const EVENTS: [&str; 20] = [
 pub fn follow_view(view: &View, label: &str) {
     {
         let page = heard(label);
-        if std::mem::replace(
-            &mut page.lock().unwrap_or_else(PoisonError::into_inner).followed,
-            true,
-        ) {
+        if std::mem::replace(&mut page.held().followed, true) {
             return;
         }
         let hearing = move |method: &str, session: Option<&str>, params: &Value| {
             if EVENTS.contains(&method) {
-                let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
+                let mut held = page.held();
                 heard_event(
                     &mut held,
                     method,
@@ -759,7 +756,7 @@ pub use crate::engines::cut;
 pub fn awake(view: &View, label: &str, own: bool) {
     let page = heard(label);
     let asleep = {
-        let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut held = page.held();
         held.used = Some(Instant::now());
         !std::mem::replace(&mut held.awake, true)
     };
@@ -777,12 +774,10 @@ pub fn awake(view: &View, label: &str, own: bool) {
     }
     if let Ok(tree) = call(view, "Page.getFrameTree", &json!({})) {
         if let Some(tree) = tree.get("frameTree") {
-            page.lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .frame_tree("", tree);
+            page.held().frame_tree("", tree);
         }
     }
-    let frames = page.lock().unwrap_or_else(PoisonError::into_inner).frames();
+    let frames = page.held().frames();
     for (_, frame) in frames {
         for method in ["Network.enable", "Page.enable"] {
             let _ = call_in(
@@ -801,9 +796,7 @@ pub fn awake(view: &View, label: &str, own: bool) {
             crate::page::FRAME_PATIENCE,
         ) {
             if let Some(tree) = tree.get("frameTree") {
-                page.lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .frame_tree(&frame.session, tree);
+                page.held().frame_tree(&frame.session, tree);
             }
         }
     }
@@ -818,10 +811,7 @@ const DEEPEST_FRAMES: usize = 32;
 pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(), String> {
     let page = heard(label);
     for _ in 0..DEEPEST_FRAMES {
-        let sessions = page
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .not_nested();
+        let sessions = page.held().not_nested();
         if sessions.is_empty() {
             return Ok(());
         }
@@ -833,7 +823,7 @@ pub fn follow_nested(view: &View, label: &str, patience: Duration) -> Result<(),
                 &auto_attach(),
                 patience,
             );
-            let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut held = page.held();
             match asked {
                 Ok(_) => {
                     held.nested.insert(session);
@@ -888,13 +878,7 @@ fn attach_existing(view: &View) {
 
 pub fn listen_to_console(view: &View, label: &str) {
     let page = heard(label);
-    let first = !std::mem::replace(
-        &mut page
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .console_on,
-        true,
-    );
+    let first = !std::mem::replace(&mut page.held().console_on, true);
     if first {
         let _ = call_in(
             view,
@@ -910,7 +894,7 @@ pub fn sleep_idle(app: &tauri::AppHandle) {
     for label in labels() {
         let page = heard(&label);
         let sleepy = {
-            let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut held = page.held();
             let idle = held.awake && held.used.is_none_or(|at| at.elapsed() >= AWAKE);
             if idle {
                 held.awake = false;

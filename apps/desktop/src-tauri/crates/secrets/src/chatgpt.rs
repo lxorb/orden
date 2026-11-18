@@ -1,5 +1,6 @@
 mod oauth;
 
+use orden_base::Held as _;
 use std::io::{BufRead as _, BufReader, Write as _};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
@@ -194,11 +195,7 @@ pub async fn chatgpt_sign_in(webview: Webview) -> Result<Account, String> {
     let state = app.state::<ChatGpt>();
 
     let stop = Arc::new(AtomicBool::new(false));
-    let earlier = state
-        .signing
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .replace(Arc::clone(&stop));
+    let earlier = state.signing.held().replace(Arc::clone(&stop));
     if let Some(earlier) = earlier {
         earlier.store(true, Ordering::SeqCst);
         tokio::time::sleep(Duration::from_millis(250)).await;
