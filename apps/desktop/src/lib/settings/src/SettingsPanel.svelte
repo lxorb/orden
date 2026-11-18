@@ -99,7 +99,7 @@
   const places = $derived.by((): Place[] => {
     const all: Place[] = [
       ...paneRows(),
-      ...SHORTCUTS.map((one): Place => ({
+      ...SHORTCUTS.filter(offeredHere).map((one): Place => ({
         section: 'shortcuts',
         label: one.label(),
         text: [shortcuts.hint(one.id) ?? '', 'Shortcuts'],
