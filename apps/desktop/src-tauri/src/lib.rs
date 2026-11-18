@@ -975,6 +975,31 @@ mod tests {
         own_on(calls::Target::WINDOWS)
     }
 
+    fn on_every_target(found: impl Fn(&calls::Crate) -> Vec<String>) -> Vec<String> {
+        TARGETS
+            .into_iter()
+            .flat_map(|target| {
+                found(&own_on(target))
+                    .into_iter()
+                    .map(move |one| format!("{target:?} {one}"))
+            })
+            .collect()
+    }
+
+    fn waiting_in(
+        own: &calls::Crate,
+        among: &[String],
+        (waits_on, stops): (&[&str], &[&str]),
+        allowed: &[&str],
+    ) -> Vec<String> {
+        let waits = own.waiting(waits_on, stops);
+        among
+            .iter()
+            .filter(|path| waits.contains(path) && !allowed.contains(&path.as_str()))
+            .map(|path| own.chain(path, waits_on, &waits).join(" -> "))
+            .collect()
+    }
+
     fn own_on(target: calls::Target) -> calls::Crate {
         let own = calls::read(&crate::app_dir().join("src").join("lib.rs"), target);
         assert!(
@@ -1050,27 +1075,15 @@ mod tests {
 
     #[test]
     fn nothing_a_command_runs_on_the_runtime_blocks_on_it() {
-        let mut late: Vec<String> = Vec::new();
-        for target in TARGETS {
-            let own = own_on(target);
+        let late = on_every_target(|own| {
+            let workers = own.workers();
             assert!(
-                own.workers().len() > 100,
+                workers.len() > 100,
                 "only {} commands on the runtime",
-                own.workers().len()
+                workers.len()
             );
-            let waits = own.waiting(&BLOCKS_THE_RUNTIME, &[]);
-            late.extend(
-                own.workers()
-                    .iter()
-                    .filter(|path| waits.contains(path))
-                    .map(|path| {
-                        format!(
-                            "{target:?} {}",
-                            own.chain(path, &BLOCKS_THE_RUNTIME, &waits).join(" -> ")
-                        )
-                    }),
-            );
-        }
+            waiting_in(own, workers, (&BLOCKS_THE_RUNTIME, &[]), &[])
+        });
         assert!(late.is_empty(), "blocks the runtime it runs on: {late:#?}");
     }
 
@@ -1123,55 +1136,26 @@ mod tests {
 
     #[test]
     fn no_command_on_the_runtime_waits_on_one_of_its_workers() {
-        let mut late: Vec<String> = Vec::new();
-        for target in TARGETS {
-            let own = own_on(target);
+        let late = on_every_target(|own| {
             for excepted in WAITS_IN_WHAT_IT_HANDS_ON {
                 assert!(
                     own.workers().iter().any(|one| one == excepted),
                     "{excepted} is no command on the runtime"
                 );
             }
-            let waits = own.waiting(&HOLDS_A_WORKER, &[]);
-            late.extend(
-                own.workers()
-                    .iter()
-                    .filter(|path| {
-                        waits.contains(path) && !WAITS_IN_WHAT_IT_HANDS_ON.contains(&path.as_str())
-                    })
-                    .map(|path| {
-                        format!(
-                            "{target:?} {}",
-                            own.chain(path, &HOLDS_A_WORKER, &waits).join(" -> ")
-                        )
-                    }),
-            );
-        }
+            let allowed = WAITS_IN_WHAT_IT_HANDS_ON;
+            waiting_in(own, own.workers(), (&HOLDS_A_WORKER, &[]), &allowed)
+        });
         assert!(late.is_empty(), "holds a worker of the runtime: {late:#?}");
     }
 
     #[test]
     fn nothing_the_window_s_thread_runs_waits() {
-        let mut late: Vec<String> = Vec::new();
-        for target in TARGETS {
-            let own = own_on(target);
+        let late = on_every_target(|own| {
             assert!(own.mains().len() > 5, "only {:?}", own.mains());
-            let waits = own.waiting(&WAITS, &SMALL_ON_THE_WINDOW_S_THREAD);
-            late.extend(
-                own.mains()
-                    .iter()
-                    .filter(|path| {
-                        waits.contains(path)
-                            && !OPENS_ON_THE_WINDOW_S_THREAD.contains(&path.as_str())
-                    })
-                    .map(|path| {
-                        format!(
-                            "{target:?} {}",
-                            own.chain(path, &WAITS, &waits).join(" -> ")
-                        )
-                    }),
-            );
-        }
+            let waits = (&WAITS[..], &SMALL_ON_THE_WINDOW_S_THREAD[..]);
+            waiting_in(own, own.mains(), waits, &OPENS_ON_THE_WINDOW_S_THREAD)
+        });
         assert!(late.is_empty(), "the window's thread waits in {late:#?}");
     }
 
@@ -1235,20 +1219,14 @@ mod tests {
 
     #[test]
     fn the_window_s_thread_takes_no_lock_held_while_asking_it() {
-        let mut late: Vec<String> = Vec::new();
-        for target in TARGETS {
-            let own = own_on(target);
+        let late = on_every_target(|own| {
             let asking = own.saying(asks_the_window_s_thread);
-            late.extend(
-                own.taking_held(
-                    asks_the_window_s_thread,
-                    &asking,
-                    &SMALL_ON_THE_WINDOW_S_THREAD,
-                )
-                .into_iter()
-                .map(|one| format!("{target:?} {one}")),
-            );
-        }
+            own.taking_held(
+                asks_the_window_s_thread,
+                &asking,
+                &SMALL_ON_THE_WINDOW_S_THREAD,
+            )
+        });
         assert!(
             late.is_empty(),
             "the window's thread could wait for itself in {late:#?}"
@@ -1288,15 +1266,7 @@ mod tests {
 
     #[test]
     fn no_lock_is_taken_again_or_in_the_other_order_under_another() {
-        let mut found: Vec<String> = Vec::new();
-        for target in TARGETS {
-            let own = own_on(target);
-            found.extend(
-                own.lock_orders(&[])
-                    .into_iter()
-                    .map(|one| format!("{target:?} {one}")),
-            );
-        }
+        let found = on_every_target(|own| own.lock_orders(&[]));
         assert!(
             found.is_empty(),
             "locks that wait on each other: {found:#?}"

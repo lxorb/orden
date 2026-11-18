@@ -877,6 +877,16 @@ struct Body<'a> {
     scope: Scope,
 }
 
+macro_rules! nested_items_stay_out {
+    ($a:lifetime) => {
+        fn visit_item_fn(&mut self, _: &$a syn::ItemFn) {}
+
+        fn visit_item_impl(&mut self, _: &$a syn::ItemImpl) {}
+
+        fn visit_item_mod(&mut self, _: &$a syn::ItemMod) {}
+    };
+}
+
 impl<'a> Visit<'a> for Body<'a> {
     fn visit_item_fn(&mut self, function: &'a syn::ItemFn) {
         if !tested(&function.attrs) {
@@ -2961,11 +2971,7 @@ impl<'a> Visit<'a> for Taking<'_> {
         syn::visit::visit_expr_call(self, call);
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 struct Temporaries<'o> {
@@ -3160,11 +3166,7 @@ impl<'a> Visit<'a> for Holding<'_> {
         syn::visit::visit_expr_call(self, call);
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 #[derive(Default)]
@@ -3219,11 +3221,7 @@ impl<'a> Visit<'a> for Mains {
         syn::visit::visit_expr_method_call(self, call);
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 #[derive(Clone)]
@@ -3514,11 +3512,7 @@ impl<'a> Visit<'a> for Bindings {
         }
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 #[derive(Default)]
@@ -3584,11 +3578,7 @@ impl<'a> Visit<'a> for Methods {
         }
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 enum Carried {
@@ -3706,11 +3696,7 @@ impl<'a> Visit<'a> for Slots {
         }
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 struct Passed {
@@ -3782,11 +3768,7 @@ impl<'a> Visit<'a> for Values {
         }
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 #[derive(Default)]
@@ -4020,11 +4002,7 @@ impl<'a> Visit<'a> for Drops {
         }
     }
 
-    fn visit_item_fn(&mut self, _: &'a syn::ItemFn) {}
-
-    fn visit_item_impl(&mut self, _: &'a syn::ItemImpl) {}
-
-    fn visit_item_mod(&mut self, _: &'a syn::ItemMod) {}
+    nested_items_stay_out!('a);
 }
 
 fn bounds_of(generics: &syn::Generics) -> Bounds {
