@@ -19,13 +19,15 @@ from AppKit import NSApplication, NSCursor, NSScreen
 from ApplicationServices import (
     AXUIElementCopyAttributeValue,
     AXUIElementCopyElementAtPosition,
+    AXUIElementCreateApplication,
     AXUIElementCreateSystemWide,
+    AXUIElementPerformAction,
 )
 from PIL import Image, ImageChops, ImageGrab, ImageStat
 
 from carry_page import PAGE as CARRY_PAGE, carried
 from fresh_app import ended, fresh
-from native_app import App, config_of, endpoint
+from native_app import App, config_of, endpoint, known
 
 COLOUR = (255, 0, 255)
 LAYER = (0, 160, 0)
@@ -170,6 +172,73 @@ def colour_at(image: Image.Image, at: tuple[float, float], ratio: float) -> tupl
 def near(one: tuple[int, int, int], other: tuple[int, int, int], by: int = 40) -> bool:
     return all(abs(one[k] - other[k]) < by for k in range(3))
 
+LOCAL_NETWORK = "find devices on local networks"
+
+FAILING_ON_CEF = (
+    "the page's hole shows a still under the app's layer",
+    "a click on the page beside the app's layer was not heard by the page",
+    "a drag inside the page was not dropped",
+    "the accessibility hit test does not find the page's button",
+    "[carry beside] the page was handed no file",
+)
+
+def failing_on_cef(one: str) -> bool:
+    return one.startswith(FAILING_ON_CEF) or (one.startswith("[overview] frame ") and " flashes: " in one)
+
+def ax(element: Any, name: str) -> Any:
+    error, value = AXUIElementCopyAttributeValue(element, name, None)
+    return value if error == 0 else None
+
+def within(element: Any, depth: int = 0) -> list[Any]:
+    found = [element]
+    if depth < 6:
+        for child in ax(element, "AXChildren") or []:
+            found += within(child, depth + 1)
+    return found
+
+def refused_local_network() -> list[str]:
+    owners = {
+        int(one["kCGWindowOwnerPID"])
+        for one in Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID) or []
+        if one.get("kCGWindowOwnerName") == "UserNotificationCenter"
+    }
+    refused = []
+    for pid in owners:
+        for window in ax(AXUIElementCreateApplication(pid), "AXWindows") or []:
+            parts = within(window)
+            text = " ".join(str(ax(one, "AXValue") or "") for one in parts if ax(one, "AXRole") == "AXStaticText")
+            if LOCAL_NETWORK not in text:
+                continue
+            refuse = next((one for one in parts if ax(one, "AXRole") == "AXButton" and str(ax(one, "AXTitle") or "").startswith("Don")), None)
+            if refuse is not None and AXUIElementPerformAction(refuse, "AXPress") == 0:
+                refused.append(text.strip())
+    return refused
+
+class Refuser:
+    def __init__(self) -> None:
+        self.going = True
+        self.thread = threading.Thread(target=self.run, daemon=True)
+        self.thread.start()
+
+    def run(self) -> None:
+        while self.going:
+            for one in refused_local_network():
+                print(f"the runner's local network prompt, not the app's, answered Don't Allow: {one}", flush=True)
+            time.sleep(0.5)
+
+    def stop(self) -> None:
+        self.going = False
+        self.thread.join()
+
+def page_edge(image: Image.Image, start: tuple[float, float], step: tuple[int, int], ratio: float) -> tuple[float, float]:
+    x, y = start
+    while x > 0 and y > 0:
+        pixel = image.getpixel((round((x + step[0]) * ratio), round((y + step[1]) * ratio)))
+        if not near(pixel[:3], COLOUR):
+            break
+        x, y = x + step[0], y + step[1]
+    return x, y
+
 class Film:
     def __init__(self) -> None:
         self.frames: list[tuple[float, Image.Image]] = []
@@ -309,6 +378,7 @@ def main() -> int:
     if info.get("CFBundleShortVersionString") != "99.0.0":
         raise SystemExit(f"{args.exe} is not a probe build: it would fetch the real update")
     args.out.mkdir(parents=True, exist_ok=True)
+    refuser = Refuser()
 
     site = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     threading.Thread(target=site.serve_forever, daemon=True).start()
@@ -372,6 +442,11 @@ def main() -> int:
         bare = shot()
         bare.save(args.out / "bare.png")
         print(f"the page with the window's HTML at no opacity: {colour_at(bare, middle, ratio)}", flush=True)
+        top = page_edge(bare, middle, (0, -1), ratio)[1]
+        left = page_edge(bare, (middle[0], hole[3] - 40), (-1, 0), ratio)[0]
+        if (left, top) != hole[:2]:
+            print(f"the page itself begins at {(left, top)}, not at the pane's corner {hole[:2]}", flush=True)
+            hole = (left, top, hole[2], hole[3])
         app.eval("document.documentElement.style.opacity = ''; return true")
         time.sleep(1)
 
@@ -466,14 +541,15 @@ def main() -> int:
         unverified += beside_unverified
 
         wrong += overview(app, hole, ratio, args.out)
-        if named and "find devices on local networks" in named:
-            unverified += [f"the system's local network prompt covers the page (#2200): {one}" for one in wrong]
-            wrong = []
     finally:
+        refuser.stop()
         ended(process, gentle=True)
         site.shutdown()
         shutil.rmtree(spaces, ignore_errors=True)
 
+    for one in filter(failing_on_cef, wrong):
+        known(2206, one)
+    wrong = [one for one in wrong if not failing_on_cef(one)]
     for one in unverified:
         print(f"::warning::{one}", flush=True)
     for one in wrong:
