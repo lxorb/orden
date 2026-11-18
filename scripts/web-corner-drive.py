@@ -26,7 +26,7 @@ under = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(under)
 from probe_app import main_window, refuse_updating  # noqa: E402
 from fresh_app import ended, fresh  # noqa: E402
-import crash_told  # noqa: E402
+from native_app import config_of, endpoint
 
 user32 = under.user32
 WIDTH, HEIGHT = 1280, 800
@@ -81,7 +81,7 @@ def main() -> int:
     threading.Thread(target=site.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{site.server_address[1]}"
 
-    config = under.config_dir(args.identifier)
+    config = config_of(args.identifier)
     fresh(config)
     secret = secrets.token_hex(32)
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
@@ -91,8 +91,7 @@ def main() -> int:
     process = subprocess.Popen([str(args.exe)], env=env, cwd=str(args.exe.parent), stdout=said, stderr=subprocess.STDOUT)
     wrong: list[str] = []
     try:
-        app = under.endpoint(args.identifier, process.pid, secret)
-        crash_told.told(app.at, secret)
+        app = endpoint(config, process.pid, secret, 30)
         until = time.monotonic() + 90
         while time.monotonic() < until and app.eval("!!orden.workspace") is not True:
             time.sleep(1)

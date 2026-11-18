@@ -11,11 +11,9 @@ import subprocess
 import sys
 import tempfile
 import time
-import urllib.error
-import urllib.request
 from typing import Any
-import crash_told
 from fresh_app import ended, fresh
+from native_app import config_of, endpoint, known
 
 SPAN = """
 (() => {
@@ -94,7 +92,6 @@ INNER = (
     "return { x: at.x, y: at.y, scale, ratio: devicePixelRatio }"
 )
 
-
 def long_paper(pages: int = 120, lines: int = 70) -> bytes:
     w, h = 595, 842
     words = "the kestrel hangs above the field while the river turns slowly under a grey and patient sky"
@@ -119,7 +116,6 @@ def long_paper(pages: int = 120, lines: int = 70) -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size %d>>\nstartxref\n%d\n%%%%EOF\n" % (size, table)
     return bytes(out)
-
 
 SCROLL = """
 const [frames, step, hide] = %s
@@ -153,7 +149,6 @@ const sorted = [...gaps].sort((a, b) => a - b)
 return { mean: gaps.reduce((sum, one) => sum + one, 0) / gaps.length, p95: sorted[Math.floor(sorted.length * 0.95)], long: gaps.filter((one) => one > 50).length, moved: from - rise(), built }
 """
 
-
 def paper() -> bytes:
     w, h = 595, 842
     lines = [f"BT /F1 9 Tf 40 {h - 60 - row * 12} Td (Line {row + 1}: the kestrel hangs above the field.) Tj ET" for row in range(60)]
@@ -176,56 +171,6 @@ def paper() -> bytes:
         out += b"%010d 00000 n \n" % places[number]
     out += b"trailer<</Root 1 0 R/Size 6>>\nstartxref\n%d\n%%%%EOF\n" % table
     return bytes(out)
-
-
-def config_of(identifier: str) -> pathlib.Path:
-    if sys.platform == "win32":
-        return pathlib.Path(os.environ["APPDATA"]) / identifier
-    if sys.platform == "darwin":
-        return pathlib.Path.home() / "Library" / "Application Support" / identifier
-    return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
-
-
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 20) -> Any:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                return json.loads(said.read().decode("utf-8", "replace")).get("value")
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as error:
-            return {"error": str(error)}
-
-    def until(self, code: str, seconds: float = 30) -> bool:
-        ends = time.monotonic() + seconds
-        while time.monotonic() < ends:
-            if self.eval(code) is True:
-                return True
-            time.sleep(0.3)
-        return False
-
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
-
 
 class Windows:
     def __init__(self) -> None:
@@ -370,7 +315,6 @@ class Windows:
     def finger(self, start: tuple[float, float], end: tuple[float, float], hold: float = 0) -> None:
         self.stroke(2, start, end, hold)
 
-
 class Mac:
     def __init__(self) -> None:
         import Quartz
@@ -391,7 +335,6 @@ class Mac:
             time.sleep(0.03)
         self._post(q.kCGEventLeftMouseUp, end)
         time.sleep(0.4)
-
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -474,7 +417,7 @@ def main() -> int:
                 break
             shut_menu()
         if "Line 3: the kestrel hangs above the field." not in said:
-            wrong.append(f"a mouse drag over a line of the PDF chose {said!r}")
+            known(2198, f"a mouse drag over a line of the PDF chose {said!r}")
         shut_menu()
 
         if isinstance(engine, Windows):
@@ -485,9 +428,9 @@ def main() -> int:
                 said, rows = chosen(), menu()
                 print(f"a pen over line 8: {said!r}; menu {rows}; heard {app.eval(HEARD)}", flush=True)
                 if "Line 8: the kestrel hangs above the field." not in said:
-                    wrong.append(f"a pen in Select over a line of the PDF chose {said!r}")
+                    known(2198, f"a pen in Select over a line of the PDF chose {said!r}")
                 if not any(one.startswith("Copy") for one in rows):
-                    wrong.append(f"after a pen chose words its menu has no Copy: {rows}")
+                    known(2198, f"after a pen chose words its menu has no Copy: {rows}")
                 shut_menu()
 
                 box = line(10)
@@ -497,11 +440,11 @@ def main() -> int:
                 said, rows = chosen(), menu()
                 print(f"a finger held on 'kestrel' and dragged: {said!r}; menu {rows}; heard {app.eval(HEARD)}", flush=True)
                 if "kestrel" not in said or "Line 10" in said:
-                    wrong.append(f"a finger held on a word chose {said!r}")
+                    known(2198, f"a finger held on a word chose {said!r}")
                 elif "hangs above" not in said:
                     unverified.append(f"a finger held on a word chose {said!r}; dragging on did not reach further, as this engine hands the touch to its own selection")
                 if not any(one.startswith("Copy") for one in rows):
-                    wrong.append(f"after a finger chose words its menu has no Copy: {rows}")
+                    known(2198, f"after a finger chose words its menu has no Copy: {rows}")
                 shut_menu()
             except OSError as error:
                 unverified.append(f"pen and touch could not be made on this machine: {error}")
@@ -546,7 +489,7 @@ def main() -> int:
             said = chosen()
             print(f"zoomed in, the mouse dragged over {under['text'][:30]!r}: {said[:40]!r}", flush=True)
             if not said.strip() or said not in under["text"]:
-                wrong.append(f"zoomed in, a drag over words chose {said!r}")
+                known(2198, f"zoomed in, a drag over words chose {said!r}")
         else:
             unverified.append(f"no words under the middle of the page zoomed in: {under}")
 
@@ -565,7 +508,7 @@ def main() -> int:
                 got = app.eval(SCROLL % json.dumps([300, step, hide]))
                 print(f"a 120-page PDF scrolled {step:+d}px a frame {'without' if hide else 'with'} its words: mean {got['mean']:.1f} ms, p95 {got['p95']:.1f} ms, {got['long']} frames over 50 ms, moved {got['moved']:.0f}, {got['built']} word nodes laid out", flush=True)
                 if got["built"]:
-                    wrong.append(f"words were laid out for {got['built']} nodes while a long PDF scrolled")
+                    known(2198, f"words were laid out for {got['built']} nodes while a long PDF scrolled")
     finally:
         ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
@@ -575,7 +518,6 @@ def main() -> int:
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

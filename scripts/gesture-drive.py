@@ -12,12 +12,10 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from typing import Any
 
-import crash_told
 from fresh_app import ended, fresh
+from native_app import App, config_of, endpoint
 
 PAGE = b"""<!doctype html><title>gestures</title>
 <body style="margin:0">
@@ -104,44 +102,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
 def heard(when: str) -> dict[str, list[str]]:
     with LOCK:
         return {what: list(answers) for what, answers in SAID.get(when, {}).items()}
-
-def config_of(identifier: str) -> pathlib.Path:
-    if sys.platform == "win32":
-        return pathlib.Path(os.environ["APPDATA"]) / identifier
-    if sys.platform == "darwin":
-        return pathlib.Path.home() / "Library" / "Application Support" / identifier
-    return pathlib.Path(os.environ.get("XDG_CONFIG_HOME") or pathlib.Path.home() / ".config") / identifier
-
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 20) -> Any:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                return json.loads(said.read().decode("utf-8", "replace")).get("value")
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError):
-            return None
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
 
 INNER = (
     "const i = window.__TAURI_INTERNALS__;"

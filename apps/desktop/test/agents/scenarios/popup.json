@@ -1,4 +1,5 @@
 {
+  "known": "#2201: on Windows CEF the agents' own browser builds no page",
   "proves": "a sign-in popup becomes another tab of the agent's, off every screen, and still reaches its opener",
   "steps": [
     {

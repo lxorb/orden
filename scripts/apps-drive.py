@@ -12,53 +12,12 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from typing import Any
-import crash_told
 from fresh_app import ended, fresh
+from native_app import App, endpoint
 
 TYPED = "typed from afar"
 KEY = "drive-1063"
-
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 30) -> dict[str, Any]:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                return json.loads(said.read().decode("utf-8", "replace"))
-        except urllib.error.HTTPError as error:
-            return {"error": f"{error.code} {error.read().decode('utf-8', 'replace')[:400]}"}
-        except (urllib.error.URLError, TimeoutError, OSError) as error:
-            return {"error": str(error)}
-
-    def value(self, code: str, seconds: float = 30) -> Any:
-        said = self.eval(code, seconds)
-        if "error" in said:
-            raise SystemExit(f"the window answered an error: {said['error']}\n{code}")
-        return said.get("value")
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    until = time.monotonic() + 120
-    while time.monotonic() < until:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
 
 INVOKE = "window.__TAURI_INTERNALS__.invoke"
 
@@ -123,6 +82,12 @@ await {INVOKE}('apps_stop', {{ key: '{KEY}' }});
 window.__drive?.pc.close();
 return true;
 """
+
+def value(app: App, code: str, seconds: float | None = None) -> Any:
+    said = app.answer(code, seconds)
+    if "error" in said:
+        raise SystemExit(f"the window answered an error: {said['error']}\n{code}")
+    return said.get("value")
 
 def text_on_desktop(name: str) -> str:
 
@@ -211,11 +176,11 @@ return true
 """
 
 def turned_on(app: App) -> None:
-    app.value(TURN_ON)
+    value(app, TURN_ON)
     ready = "!window.__unturned && !!orden.workspace && JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]').includes('experimental-apps')"
     until = time.monotonic() + 90
     while time.monotonic() < until:
-        if app.eval(ready).get("value") is True:
+        if app.answer(ready).get("value") is True:
             return
         time.sleep(1)
     raise SystemExit("the app did not come back with applications turned on")
@@ -223,11 +188,11 @@ def turned_on(app: App) -> None:
 def tabs(app: App, notepad: str) -> list[str]:
     wrong: list[str] = []
     until = time.monotonic() + 60
-    while time.monotonic() < until and app.eval("!!orden.workspace.spaces").get("value") is not True:
+    while time.monotonic() < until and app.answer("!!orden.workspace.spaces").get("value") is not True:
         time.sleep(1)
     for name, text in FILES.items():
         written = text.replace("HOST", "device-desktop").replace("ID", notepad.replace("\\", "\\\\"))
-        opened = app.value(TAB.replace("NAME", json.dumps(name)).replace("TEXT", json.dumps(written)), 60)
+        opened = value(app, TAB.replace("NAME", json.dumps(name)).replace("TEXT", json.dumps(written)), 60)
         said = str((opened or {}).get("said", ""))
         print(f"{name}.application: {said!r}", flush=True)
         if said == "no tab" or "damaged" in said or "could not be read" in said:
@@ -236,7 +201,7 @@ def tabs(app: App, notepad: str) -> list[str]:
 
 def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
     wrong: list[str] = []
-    listed = app.value(LISTED, 120)
+    listed = value(app, LISTED, 120)
     names = [name for _, name in listed["list"]]
     print(f"{listed['count']} applications, {listed['icons']} with icons: {names}", flush=True)
     if listed["count"] == 0:
@@ -254,19 +219,19 @@ def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
     wrong.extend(tabs(app, notepad[0]))
 
     before = notepads_here()
-    app.value(START.replace("ID", json.dumps(notepad[0])), 60)
+    value(app, START.replace("ID", json.dumps(notepad[0])), 60)
     time.sleep(3)
     if notepads_here() > before:
         wrong.append("Notepad opened on the runner's own desktop")
 
-    offered = app.value(OFFER, 60)
+    offered = value(app, OFFER, 60)
     print(f"the host answered: {offered}", flush=True)
     if not isinstance(offered, dict) or "cannot" in offered:
         return [*wrong, f"the host gave no picture: {offered}"]
     looked: dict[str, Any] = {}
     until = time.monotonic() + 60
     while time.monotonic() < until:
-        looked = app.value(LOOK)
+        looked = value(app, LOOK)
         if looked.get("decoded", 0) >= 3 and looked.get("channel") == "open":
             break
         time.sleep(1)
@@ -280,7 +245,7 @@ def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
         {"t": "button", "button": 0, "down": False},
         {"t": "text", "text": TYPED},
     ]
-    app.value(SEND.replace("EVENTS", json.dumps(events)))
+    value(app, SEND.replace("EVENTS", json.dumps(events)))
     desktop = f"orden-app-{pid}-0"
     typed = ""
     until = time.monotonic() + 20
@@ -289,16 +254,16 @@ def drive(app: App, pid: int, shot: pathlib.Path | None) -> list[str]:
         typed = text_on_desktop(desktop)
     if TYPED not in typed:
         wrong.append(f"the text did not reach Notepad; its desktop reads: {typed[:300]!r}")
-    later = app.value(LOOK)
+    later = value(app, LOOK)
     if later.get("decoded", 0) <= looked.get("decoded", 0):
         wrong.append("no new frame came after typing")
 
     if shot:
-        picture = app.value(SHOT)
+        picture = value(app, SHOT)
         if isinstance(picture, str) and picture.startswith("data:image/png;base64,"):
             shot.write_bytes(base64.b64decode(picture.split(",", 1)[1]))
             print(f"the picture is in {shot}", flush=True)
-    app.value(STOP)
+    value(app, STOP)
     return wrong
 
 def main() -> int:
@@ -320,9 +285,9 @@ def main() -> int:
     process = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
     wrong: list[str] = []
     try:
-        app = endpoint(config, process.pid, secret)
+        app = endpoint(config, process.pid, secret, 30)
         until = time.monotonic() + 90
-        while time.monotonic() < until and app.eval("!!orden.workspace").get("value") is not True:
+        while time.monotonic() < until and app.answer("!!orden.workspace").get("value") is not True:
             time.sleep(1)
         wrong = drive(app, process.pid, args.shot)
     finally:

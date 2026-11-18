@@ -12,18 +12,15 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.error
-import urllib.request
 from typing import Any
-import crash_told
 from fresh_app import ended, fresh
+from native_app import config_of, endpoint
 
 SPACE = "Protect probe"
 NOTE = "Diary.md"
 PASSWORD = "tulip ladder"
 WORDS = "the secret words"
 PAGE = b"<!doctype html><title>a page</title><p>a page beside the note"
-
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *_: Any) -> None:
@@ -35,57 +32,6 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("content-length", str(len(PAGE)))
         self.end_headers()
         self.wfile.write(PAGE)
-
-
-class App:
-    def __init__(self, port: int, secret: str) -> None:
-        self.port, self.secret = port, secret
-
-    def eval(self, code: str, seconds: float = 60) -> Any:
-        body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []}).encode()
-        asked = urllib.request.Request(
-            f"http://127.0.0.1:{self.port}/",
-            data=body,
-            headers={"authorization": f"Bearer {self.secret}", "content-type": "application/json"},
-        )
-        try:
-            with urllib.request.urlopen(asked, timeout=seconds) as said:
-                answer = json.loads(said.read().decode("utf-8", "replace"))
-        except urllib.error.HTTPError as error:
-            return {"error": f"{error}: {error.read().decode('utf-8', 'replace')}"}
-        except (urllib.error.URLError, TimeoutError, OSError) as error:
-            return {"error": str(error)}
-        return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
-
-    def until(self, code: str, seconds: float = 30) -> Any:
-        last: Any = None
-        stop = time.monotonic() + seconds
-        while time.monotonic() < stop:
-            last = self.eval(code)
-            if last not in (None, False) and not (isinstance(last, dict) and "error" in last):
-                return last
-            time.sleep(0.25)
-        return last
-
-
-def config_of(identifier: str) -> pathlib.Path:
-    return pathlib.Path(os.environ["APPDATA"]) / identifier
-
-
-def endpoint(config: pathlib.Path, pid: int, secret: str) -> App:
-    path = config / "automation.json"
-    stop = time.monotonic() + 120
-    while time.monotonic() < stop:
-        try:
-            said = json.loads(path.read_text(encoding="utf-8-sig"))
-            if said.get("port") and int(said.get("pid") or 0) == pid:
-                crash_told.told(int(said["port"]), secret)
-                return App(int(said["port"]), secret)
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.25)
-    raise SystemExit(f"the app never wrote {path}")
-
 
 FIND = """
 (async () => {
@@ -164,7 +110,6 @@ SUBMIT = """
 
 TROUBLE = "(() => document.querySelector('.track.failed .said')?.textContent ?? '')()"
 
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--exe", required=True, type=pathlib.Path)
@@ -208,7 +153,7 @@ def main() -> int:
         return said
 
     try:
-        app = endpoint(config, process.pid, secret)
+        app = endpoint(config, process.pid, secret, 60)
         app.until("!!orden.workspace", 90)
         app.eval(
             "localStorage.setItem('orden:hidden-kinds', JSON.stringify(['shown-protection']));"
@@ -290,7 +235,6 @@ def main() -> int:
     (args.out / "wrong.json").write_text(json.dumps(wrong, indent=1), encoding="utf-8")
     print(f"{len(wrong)} wrong", flush=True)
     return 1 if wrong else 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
