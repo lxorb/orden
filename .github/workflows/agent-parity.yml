@@ -59,6 +59,7 @@ jobs:
             Linux)
               bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} --no-bundle \
                 --ignore-version-mismatches --config "$config"
+              bash scripts/cef-beside.sh apps/desktop/src-tauri/target/${{ matrix.target }}/release
               echo "EXE=$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden" >>"$GITHUB_ENV"
               ;;
             macOS)

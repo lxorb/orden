@@ -33,7 +33,7 @@ jobs:
         run: |
           source scripts/edge-profile.sh
           config='{"identifier":"'"$IDENTIFIER"'","version":"99.0.0","bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
-          pnpm --filter @orden/desktop exec tauri build --target aarch64-apple-darwin --bundles app --config "$config"
+          bash scripts/linux-cef.sh tauri build --target aarch64-apple-darwin --bundles app --ignore-version-mismatches --config "$config"
           app=$(ls -d apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app | head -1)
           echo "EXE=$PWD/$app/Contents/MacOS/$(ls "$app/Contents/MacOS" | head -1)" >>"$GITHUB_ENV"
 
