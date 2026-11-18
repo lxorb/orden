@@ -162,21 +162,13 @@ mod tests {
     }
 
     #[test]
-    fn a_read_that_asked_for_more_is_the_whole_answer() {
+    fn a_read_or_a_window_is_heard_as_it_is_and_another_tool_is_not_the_connectors() {
         let asked = json!({ "path": "plan.md", "include": ["outline"] });
         assert_eq!(text("read_note", &asked, &json!({ "text": "x" })), None);
-    }
-
-    #[test]
-    fn a_window_that_says_the_text_itself_is_heard_as_it_is() {
         assert_eq!(
             text("list_spaces", &json!({}), &json!("Work\nHome")).as_deref(),
             Some("Work\nHome")
         );
-    }
-
-    #[test]
-    fn any_other_tool_is_not_the_connectors() {
         assert_eq!(text("edit_note", &json!({}), &json!({})), None);
     }
 }

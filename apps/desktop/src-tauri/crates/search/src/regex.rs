@@ -2139,28 +2139,16 @@ mod tests {
     }
 
     #[test]
-    fn literal_text_matches_where_it_stands() {
+    fn literal_text_matches_from_where_the_search_starts_leftmost_first() {
         assert_eq!(spans("foo", "a foo b", 0), Some((2, 5)));
         assert_eq!(first("foo", "nothing here"), None);
         assert_eq!(spans("", "abc", 0), Some((0, 0)));
-    }
-
-    #[test]
-    fn the_search_starts_where_it_is_asked_to() {
         assert_eq!(spans("a", "banana", 0), Some((1, 2)));
         assert_eq!(spans("a", "banana", 2), Some((3, 4)));
         assert_eq!(spans("a", "banana", 5), Some((5, 6)));
         assert_eq!(spans("a", "banana", 6), None);
         assert_eq!(spans("a", "banana", 99), None);
-    }
-
-    #[test]
-    fn the_leftmost_start_wins_over_the_longest_match() {
         assert_eq!(first("a+", "b aa aaa").as_deref(), Some("aa"));
-    }
-
-    #[test]
-    fn a_dot_takes_anything_but_a_newline() {
         assert_eq!(first("a.c", "abc").as_deref(), Some("abc"));
         assert_eq!(first("a.c", "a\nc"), None);
         assert_eq!(first(".", "\n"), None);
@@ -2184,11 +2172,30 @@ mod tests {
     }
 
     #[test]
-    fn a_class_holds_the_characters_it_lists() {
+    fn a_class_holds_its_characters_ranges_and_escapes_the_way_the_browser_does() {
         assert_eq!(first("[abc]+", "xxcab!").as_deref(), Some("cab"));
         assert_eq!(first("[^abc]+", "abxy").as_deref(), Some("xy"));
         assert_eq!(first("[.*]+", "a.*b").as_deref(), Some(".*"));
         assert_eq!(first("[abc]", "xyz"), None);
+        assert_eq!(first("[a-f0-9]+", "zz3fq").as_deref(), Some("3f"));
+        assert_eq!(first("[a-c]+", "xbcax").as_deref(), Some("bca"));
+        assert_eq!(first("[^a-y]", "abz").as_deref(), Some("z"));
+        assert_eq!(first("[]]", "a]b").as_deref(), Some("]"));
+        assert_eq!(first("[^]]+", "]ab]").as_deref(), Some("ab"));
+        assert_eq!(first("[a-]+", "-a-").as_deref(), Some("-a-"));
+        assert_eq!(first(r"[\d\-_]+", "x-4_y").as_deref(), Some("-4_"));
+        assert_eq!(first(r"[\w-]+", "! a-b").as_deref(), Some("a-b"));
+        assert_eq!(first(r"[a-\d]+", "qb-5").as_deref(), Some("-5"));
+        assert_eq!(first(r"[\n\t]+", "a\n\tb").as_deref(), Some("\n\t"));
+        assert_eq!(first(r"[\]]", "a]").as_deref(), Some("]"));
+        assert_eq!(first(r"[\\]", r"a\b").as_deref(), Some(r"\"));
+        assert_eq!(first(r"[^\d]+", "12ab").as_deref(), Some("ab"));
+        assert_eq!(first(r"\d+", "ab 42 cd").as_deref(), Some("42"));
+        assert_eq!(first(r"\D+", "42ab").as_deref(), Some("ab"));
+        assert_eq!(first(r"\w+", " a_1!").as_deref(), Some("a_1"));
+        assert_eq!(first(r"\W+", "ab!? cd").as_deref(), Some("!? "));
+        assert_eq!(first(r"\s+", "a \t b").as_deref(), Some(" \t "));
+        assert_eq!(first(r"\S+", "  ab ").as_deref(), Some("ab"));
     }
 
     #[test]
@@ -2200,41 +2207,6 @@ mod tests {
         assert!(!spaces.contains(&'a'));
         assert!(spaces.iter().all(|&one| Kind::Space.holds(one)));
         assert_eq!(Kind::Digit.members().len(), 10);
-    }
-
-    #[test]
-    fn a_class_range_runs_from_one_character_to_another() {
-        assert_eq!(first("[a-f0-9]+", "zz3fq").as_deref(), Some("3f"));
-        assert_eq!(first("[a-c]+", "xbcax").as_deref(), Some("bca"));
-        assert_eq!(first("[^a-y]", "abz").as_deref(), Some("z"));
-    }
-
-    #[test]
-    fn a_class_reads_its_brackets_and_dashes_the_way_the_browser_does() {
-        assert_eq!(first("[]]", "a]b").as_deref(), Some("]"));
-        assert_eq!(first("[^]]+", "]ab]").as_deref(), Some("ab"));
-        assert_eq!(first("[a-]+", "-a-").as_deref(), Some("-a-"));
-        assert_eq!(first(r"[\d\-_]+", "x-4_y").as_deref(), Some("-4_"));
-        assert_eq!(first(r"[\w-]+", "! a-b").as_deref(), Some("a-b"));
-        assert_eq!(first(r"[a-\d]+", "qb-5").as_deref(), Some("-5"));
-    }
-
-    #[test]
-    fn a_class_takes_escapes_inside_it() {
-        assert_eq!(first(r"[\n\t]+", "a\n\tb").as_deref(), Some("\n\t"));
-        assert_eq!(first(r"[\]]", "a]").as_deref(), Some("]"));
-        assert_eq!(first(r"[\\]", r"a\b").as_deref(), Some(r"\"));
-        assert_eq!(first(r"[^\d]+", "12ab").as_deref(), Some("ab"));
-    }
-
-    #[test]
-    fn the_class_escapes_stand_for_their_sets() {
-        assert_eq!(first(r"\d+", "ab 42 cd").as_deref(), Some("42"));
-        assert_eq!(first(r"\D+", "42ab").as_deref(), Some("ab"));
-        assert_eq!(first(r"\w+", " a_1!").as_deref(), Some("a_1"));
-        assert_eq!(first(r"\W+", "ab!? cd").as_deref(), Some("!? "));
-        assert_eq!(first(r"\s+", "a \t b").as_deref(), Some(" \t "));
-        assert_eq!(first(r"\S+", "  ab ").as_deref(), Some("ab"));
     }
 
     #[test]
@@ -2286,16 +2258,8 @@ mod tests {
         );
         assert_eq!(caught("((a)b)", "ab"), Some(words(&["ab", "a"])));
         assert_eq!(caught("abc", "abc"), Some(words(&[])));
-    }
-
-    #[test]
-    fn a_non_capturing_group_catches_nothing() {
         assert_eq!(caught("(a)(?:b)(c)", "abc"), Some(words(&["a", "c"])));
         assert_eq!(first("(?:ab)+", "ababx").as_deref(), Some("abab"));
-    }
-
-    #[test]
-    fn a_group_that_took_part_in_no_match_is_an_empty_string() {
         assert_eq!(caught("(x)|(a)", "a"), Some(words(&["", "a"])));
         assert_eq!(caught(r"(\d+)?-(\w+)", "-ab"), Some(words(&["", "ab"])));
     }
@@ -2311,7 +2275,7 @@ mod tests {
     }
 
     #[test]
-    fn the_greedy_quantifiers_take_as_much_as_they_can() {
+    fn the_quantifiers_take_as_much_or_as_little_as_they_may() {
         assert_eq!(first("a*", "aaa").as_deref(), Some("aaa"));
         assert_eq!(first("a*", "b").as_deref(), Some(""));
         assert_eq!(first("a+", "aaa").as_deref(), Some("aaa"));
@@ -2319,10 +2283,6 @@ mod tests {
         assert_eq!(first("ba?", "b").as_deref(), Some("b"));
         assert_eq!(first("ba?", "ba").as_deref(), Some("ba"));
         assert_eq!(first("<.*>", "<a><b>").as_deref(), Some("<a><b>"));
-    }
-
-    #[test]
-    fn the_counted_quantifiers_count() {
         assert_eq!(first("a{2}", "aaa").as_deref(), Some("aa"));
         assert_eq!(first("a{2}", "a"), None);
         assert_eq!(first("a{2,}", "aaaa").as_deref(), Some("aaaa"));
@@ -2330,40 +2290,28 @@ mod tests {
         assert_eq!(first("a{0}b", "b").as_deref(), Some("b"));
         assert_eq!(first("a{0,}", "aa").as_deref(), Some("aa"));
         assert_eq!(first("(?:ab){2}", "ababab").as_deref(), Some("abab"));
-    }
-
-    #[test]
-    fn the_lazy_quantifiers_take_as_little_as_they_can() {
         assert_eq!(first("a.*?b", "axbxb").as_deref(), Some("axb"));
         assert_eq!(first("<.*?>", "<a><b>").as_deref(), Some("<a>"));
         assert_eq!(first("a+?", "aaa").as_deref(), Some("a"));
         assert_eq!(first("a??b", "ab").as_deref(), Some("ab"));
         assert_eq!(first("a{2,3}?", "aaaa").as_deref(), Some("aa"));
         assert_eq!(first("a{2,}?b", "aaab").as_deref(), Some("aaab"));
-    }
-
-    #[test]
-    fn a_quantifier_gives_back_what_the_rest_of_the_pattern_needs() {
         assert_eq!(caught("(a+)(a)", "aaa"), Some(words(&["aa", "a"])));
         assert_eq!(first(r"\d+3", "12345").as_deref(), Some("123"));
     }
 
     #[test]
-    fn a_repetition_of_something_empty_stops_instead_of_going_round() {
+    fn a_repetition_of_nothing_stops_and_forgets_the_round_before() {
         assert_eq!(spans("(a*)*", "b", 0), Some((0, 0)));
         assert_eq!(spans("(?:){3,}", "a", 0), Some((0, 0)));
         assert_eq!(first("(a?)*b", "aab").as_deref(), Some("aab"));
-    }
-
-    #[test]
-    fn a_round_that_matched_nothing_leaves_the_group_as_the_round_before_had_it() {
         assert_eq!(caught("(a*)*b", "aaab"), Some(words(&["aaa"])));
-    }
-
-    #[test]
-    fn a_repetition_forgets_what_the_round_before_it_caught() {
         assert_eq!(caught("(?:(a)|b)+", "ab"), Some(words(&[""])));
         assert_eq!(caught("((a)|b){2}", "ab"), Some(words(&["b", ""])));
+        assert_eq!(spans("(?:^|\\w{2})?a", "aaa", 0), Some((0, 3)));
+        assert_eq!(caught("(^|a)?(a+)", "aaa"), Some(words(&["a", "aa"])));
+        assert_eq!(caught("(a?){1,2}", "a"), Some(words(&["a"])));
+        assert_eq!(caught("([ab]??){1,2}", "ab"), Some(words(&["a"])));
     }
 
     #[test]
@@ -2376,6 +2324,12 @@ mod tests {
         assert_eq!(folding("[^a]", "A"), None);
         assert_eq!(folding(r"\w+", "AbC").as_deref(), Some("AbC"));
         assert_eq!(folding("straße", "STRAßE").as_deref(), Some("STRAßE"));
+        assert_eq!(starts("beta", true), Some(vec!['B', 'b']));
+        assert_eq!(
+            starts("[a-c]", true),
+            Some(vec!['A', 'B', 'C', 'a', 'b', 'c'])
+        );
+        assert_eq!(starts(r"\w", true).map(|set| set.len()), Some(63));
     }
 
     #[test]
@@ -2567,14 +2521,6 @@ mod tests {
                 }
             }
         }
-    }
-
-    #[test]
-    fn a_counted_round_past_the_least_that_takes_nothing_does_not_count() {
-        assert_eq!(spans("(?:^|\\w{2})?a", "aaa", 0), Some((0, 3)));
-        assert_eq!(caught("(^|a)?(a+)", "aaa"), Some(words(&["a", "aa"])));
-        assert_eq!(caught("(a?){1,2}", "a"), Some(words(&["a"])));
-        assert_eq!(caught("([ab]??){1,2}", "ab"), Some(words(&["a"])));
     }
 
     #[test]
@@ -2816,16 +2762,6 @@ mod tests {
         assert_eq!(starts(r"\w", false).map(|set| set.len()), Some(63));
         assert_eq!(starts(r"\s", false).map(|set| set.len()), Some(25));
         assert_eq!(starts("ötest", false), Some(vec!['ö']));
-    }
-
-    #[test]
-    fn folding_puts_both_cases_in_the_set() {
-        assert_eq!(starts("beta", true), Some(vec!['B', 'b']));
-        assert_eq!(
-            starts("[a-c]", true),
-            Some(vec!['A', 'B', 'C', 'a', 'b', 'c'])
-        );
-        assert_eq!(starts(r"\w", true).map(|set| set.len()), Some(63));
     }
 
     #[test]

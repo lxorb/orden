@@ -65,22 +65,14 @@ mod tests {
     use std::path::Path;
 
     #[test]
-    fn the_sidecar_of_a_pdf_is_named_after_it() {
+    fn only_a_pdf_has_a_sidecar_named_after_it() {
         assert_eq!(
             sidecar_of(Path::new("Notes/paper.pdf")),
             Ok(Path::new("Notes/paper.pdf.highlights.json").to_path_buf())
         );
-    }
-
-    #[test]
-    fn nothing_that_is_not_a_pdf_has_one() {
         assert!(sidecar_of(Path::new("Notes/Idea.md")).is_err());
         assert!(sidecar_of(Path::new("Notes/shot.png")).is_err());
         assert!(sidecar_of(Path::new("Notes/paper.pdf.highlights.json")).is_err());
-    }
-
-    #[test]
-    fn a_pdf_nobody_has_marked_reads_as_nothing() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = sidecar_of(&dir.path().join("paper.pdf")).expect("a sidecar path");
 

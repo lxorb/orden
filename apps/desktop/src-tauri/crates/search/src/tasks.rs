@@ -86,30 +86,19 @@ mod tests {
         assert!(!task.done);
         assert_eq!(task.marker, 6);
         assert_eq!(words("- [ ] buy milk"), Some("buy milk"));
-    }
-
-    #[test]
-    fn a_box_holding_anything_but_a_space_is_done() {
         for line in ["- [x] a", "- [X] a", "- [-] a", "- [/] a"] {
             assert!(task_at(line).expect(line).done, "{line}");
         }
         assert!(!task_at("- [ ] a").expect("a task").done);
-    }
-
-    #[test]
-    fn every_marker_a_list_is_written_with() {
         for line in ["- [ ] a", "* [ ] a", "+ [ ] a", "1. [ ] a", "2) [ ] a"] {
             assert!(task_at(line).is_some(), "{line}");
         }
-    }
-
-    #[test]
-    fn indentation_is_kept_however_deep() {
         let task = task_at("    - [x] nested").expect("a task");
 
         assert_eq!(task.indent, 4);
         assert_eq!(task.marker, 10);
         assert_eq!(words("    - [x] nested"), Some("nested"));
+        assert_eq!(words("- [ ]"), Some(""));
     }
 
     #[test]
@@ -123,11 +112,6 @@ mod tests {
             assert_eq!(task_at(line).expect(line).mark, mark, "{line}");
         }
         assert_eq!(task_at("\t- [x] a").expect("a task").indent, 1);
-    }
-
-    #[test]
-    fn a_box_with_nothing_written_in_it_yet_is_a_task() {
-        assert_eq!(words("- [ ]"), Some(""));
     }
 
     #[test]

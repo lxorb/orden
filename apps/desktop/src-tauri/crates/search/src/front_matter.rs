@@ -739,6 +739,14 @@ mod tests {
 
         assert_eq!(&note[found.from..found.close], "icon: rocket\n");
         assert_eq!(&note[found.end..], "\n\n# Plan\n");
+        let found = block("---\n---\n").expect("a block");
+
+        assert_eq!(found.from, found.close);
+        assert_eq!(found.end, 7);
+        assert!(block("# Plan\n\nwords").is_none());
+        assert!(block("").is_none());
+        assert!(block("---").is_none());
+        assert!(block("---\nicon: rocket\n\n# Plan").is_none());
     }
 
     #[test]
@@ -751,22 +759,6 @@ mod tests {
         for (note, expected) in table {
             assert_eq!(block(&note).is_some(), expected, "{note:?}");
         }
-    }
-
-    #[test]
-    fn a_block_with_nothing_in_it_is_still_a_block() {
-        let found = block("---\n---\n").expect("a block");
-
-        assert_eq!(found.from, found.close);
-        assert_eq!(found.end, 7);
-    }
-
-    #[test]
-    fn a_note_that_opens_with_anything_else_has_no_block() {
-        assert!(block("# Plan\n\nwords").is_none());
-        assert!(block("").is_none());
-        assert!(block("---").is_none());
-        assert!(block("---\nicon: rocket\n\n# Plan").is_none());
     }
 
     #[test]
@@ -805,10 +797,6 @@ mod tests {
             Some("file-text")
         );
         assert_eq!(icon("---\nICON: rocket\n---\n").as_deref(), Some("rocket"));
-    }
-
-    #[test]
-    fn takes_the_quotes_off_a_value() {
         assert_eq!(
             icon("---\nicon: \"rocket\"\n---\n").as_deref(),
             Some("rocket")
@@ -817,29 +805,13 @@ mod tests {
             icon("---\nicon: 'rocket'\n---\n").as_deref(),
             Some("rocket")
         );
-    }
-
-    #[test]
-    fn reads_an_emoji_as_what_it_says() {
         assert_eq!(icon("---\nicon: 🚀\n---\n").as_deref(), Some("🚀"));
-    }
-
-    #[test]
-    fn reads_nothing_where_there_is_nothing_to_read() {
         assert_eq!(icon("# Plan\n\nwords"), None);
         assert_eq!(icon("---\ntitle: Plan\n---\n"), None);
         assert_eq!(icon("---\nicon:\n---\n"), None);
         assert_eq!(icon("---\nicon: rocket\n\n# Plan"), None);
         assert_eq!(icon("---\ntitle: Plan\n---\n\nicon: rocket\n"), None);
-    }
-
-    #[test]
-    fn a_key_indented_under_another_is_not_the_notes_own() {
         assert_eq!(icon("---\nexport:\n  icon: rocket\n---\n"), None);
-    }
-
-    #[test]
-    fn reads_a_note_written_with_carriage_returns() {
         assert_eq!(
             icon("---\r\nicon: rocket\r\n---\r\n").as_deref(),
             Some("rocket")
@@ -847,7 +819,7 @@ mod tests {
     }
 
     #[test]
-    fn reads_a_list_written_across_lines() {
+    fn reads_a_list_however_it_is_written() {
         assert_eq!(
             aliases("---\naliases: [\n  One, # first\n  # a note\n  \"Two\",\n]\nz: 1\n---\n"),
             vec!["One", "Two"]
@@ -857,18 +829,10 @@ mod tests {
             vec!["One"]
         );
         assert_eq!(aliases("---\naliases: [One\nz: 1\n---\n"), vec!["[One"]);
-    }
-
-    #[test]
-    fn reads_a_list_written_on_the_key_s_own_line() {
         assert_eq!(
             aliases("---\naliases: [One, Two]\n---\n"),
             vec!["One".to_string(), "Two".to_string()]
         );
-    }
-
-    #[test]
-    fn reads_a_list_written_under_the_key() {
         assert_eq!(
             aliases("---\naliases:\n  - One\n  - Two\n---\n"),
             vec!["One".to_string(), "Two".to_string()]
@@ -877,15 +841,7 @@ mod tests {
             aliases("---\naliases:\n- One\n---\n"),
             vec!["One".to_string()]
         );
-    }
-
-    #[test]
-    fn reads_a_single_value_as_a_list_of_one() {
         assert_eq!(aliases("---\naliases: One\n---\n"), vec!["One".to_string()]);
-    }
-
-    #[test]
-    fn takes_the_quotes_off_every_item() {
         assert_eq!(
             aliases("---\naliases: [\"One\", 'Two']\n---\n"),
             vec!["One".to_string(), "Two".to_string()]
@@ -894,23 +850,16 @@ mod tests {
             aliases("---\naliases:\n  - \"One two\"\n---\n"),
             vec!["One two".to_string()]
         );
-    }
-
-    #[test]
-    fn stops_at_the_next_key_of_the_notes_own() {
         assert_eq!(
             aliases("---\naliases:\n  - One\ntitle: Not an alias\n---\n"),
             vec!["One".to_string()]
         );
-    }
-
-    #[test]
-    fn reads_nothing_where_there_is_no_list() {
         assert!(aliases("Words.\n").is_empty());
         assert!(aliases("---\ntitle: A note\n---\n").is_empty());
         assert!(aliases("---\naliases:\n---\n").is_empty());
         assert!(aliases("---\naliases: []\n---\n").is_empty());
         assert!(aliases("---\nexport:\n  aliases: [One]\n---\n").is_empty());
+        assert_eq!(aliases("---\naliases:\n  -\n  - Foo\n---\n"), vec!["Foo"]);
     }
 
     #[test]
@@ -947,37 +896,20 @@ mod tests {
     }
 
     #[test]
-    fn a_key_in_quotes_is_the_key_it_spells() {
+    fn a_key_is_spelled_as_written_up_to_its_colon_and_comment() {
         assert_eq!(aliases("---\n\"aliases\": [A]\n---\n"), vec!["A"]);
         assert_eq!(
             icon("---\n'icon': rocket\n---\n").as_deref(),
             Some("rocket")
         );
-    }
-
-    #[test]
-    fn a_comment_after_a_value_is_not_part_of_it() {
         assert_eq!(
             icon("---\nicon: rocket # was star\n---\n").as_deref(),
             Some("rocket")
         );
         assert_eq!(icon("---\nicon: 'a # b'\n---\n").as_deref(), Some("a # b"));
-    }
-
-    #[test]
-    fn a_colon_with_no_space_after_it_makes_no_key() {
         assert_eq!(icon("---\nicon:rocket\n---\n"), None);
         assert_eq!(icon("---\nicon:\n---\n"), None);
-    }
-
-    #[test]
-    fn of_two_keys_that_differ_in_case_the_one_asked_for_wins() {
         assert_eq!(aliases("---\nAliases: [X]\naliases: [Y]\n---\n"), vec!["Y"]);
         assert_eq!(aliases("---\nAliases: [X]\n---\n"), vec!["X"]);
-    }
-
-    #[test]
-    fn an_empty_dash_is_passed_over_and_the_list_goes_on() {
-        assert_eq!(aliases("---\naliases:\n  -\n  - Foo\n---\n"), vec!["Foo"]);
     }
 }

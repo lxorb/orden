@@ -589,34 +589,18 @@ mod tests {
     }
 
     #[test]
-    fn matches_its_letters_in_order_wherever_they_sit() {
+    fn a_term_matches_its_letters_in_order_or_with_a_typo() {
         assert!(score("rdm", "read me").is_some());
         assert!(score("read", "read me").is_some());
         assert!(score("mdr", "read me").is_none());
         assert!(score("zq", "read me").is_none());
-    }
-
-    #[test]
-    fn matches_a_typo_which_is_the_point() {
         assert!(score("meting", "Meeting notes").is_some());
         assert!(score("recieve", "i before e receipt").is_none());
         assert!(score("recept", "i before e receipt").is_some());
-    }
-
-    #[test]
-    fn folds_case_both_ways() {
         assert_eq!(score("RDM", "read me"), score("rdm", "read me"));
         assert!(score("rdm", "READ ME").is_some());
-    }
-
-    #[test]
-    fn marks_the_letters_it_found_and_nothing_else() {
         assert_eq!(marked("rdm", "read me"), "rdm");
         assert_eq!(marked("read", "read me"), "read");
-    }
-
-    #[test]
-    fn is_nothing_at_all_for_an_empty_term() {
         assert!(fit("", "read me").is_none());
     }
 
@@ -633,14 +617,12 @@ mod tests {
     }
 
     #[test]
-    fn a_word_start_over_the_middle_of_a_word() {
+    fn a_word_start_beats_the_middle_and_the_whole_word_beats_initials() {
         assert!(score("me", "me first") > score("me", "somewhere"));
         assert!(score("rdm", "read me") > score("rdm", "a random thing"));
-    }
-
-    #[test]
-    fn a_capital_after_a_small_letter_as_a_word_start_too() {
         assert!(score("rm", "readMe") > score("rm", "rummage"));
+        assert!(score("meeting", "Meeting notes") > score("mn", "Meeting notes"));
+        assert_eq!(marked("plan", "paper: the plan"), "plan");
     }
 
     #[test]
@@ -654,22 +636,16 @@ mod tests {
     }
 
     #[test]
-    fn the_whole_word_over_the_initials_of_it() {
-        assert!(score("meeting", "Meeting notes") > score("mn", "Meeting notes"));
-    }
-
-    #[test]
-    fn and_picks_the_best_place_the_term_fits_not_the_first() {
-        assert_eq!(marked("plan", "paper: the plan"), "plan");
-    }
-
-    #[test]
     fn bare_words_are_relaxed_folded() {
         assert_eq!(
             terms(&all(&[text("meting"), text("notes")])),
             ["meting", "notes"]
         );
         assert_eq!(terms(&text("MeTing")), ["meting"]);
+        assert!(terms(&all(&[])).is_empty());
+        assert!(terms(&path("Work")).is_empty());
+        let left = without_words(&query(&all(&[text("meting"), text("notes")])));
+        assert_eq!(left, Query::All { of: Vec::new() });
     }
 
     #[test]
@@ -699,18 +675,6 @@ mod tests {
     }
 
     #[test]
-    fn and_not_an_empty_field() {
-        assert!(terms(&all(&[])).is_empty());
-        assert!(terms(&path("Work")).is_empty());
-    }
-
-    #[test]
-    fn a_note_answers_nothing_exactly_when_the_query_was_only_words() {
-        let left = without_words(&query(&all(&[text("meting"), text("notes")])));
-        assert_eq!(left, Query::All { of: Vec::new() });
-    }
-
-    #[test]
     fn a_note_still_answers_the_operators_when_there_were_any() {
         let left = without_words(&query(&all(&[text("meting"), path("Work")])));
         assert_eq!(
@@ -725,32 +689,16 @@ mod tests {
     }
 
     #[test]
-    fn a_note_offers_its_best_line_and_says_what_matched() {
+    fn a_note_offers_one_best_line_that_holds_every_term() {
         let found = best(&all(&[text("quater"), text("plan")]), NOTE).expect("a hit");
         assert_eq!(found.text, "## The quarter plan");
         assert_eq!(found.line, 4);
         assert!(!found.ranges.is_empty());
-    }
-
-    #[test]
-    fn one_row_and_no_more_because_a_guess_is_worth_one() {
         let found = best(&text("bta"), NOTE).expect("a hit");
         assert!(found.score() > 0);
-    }
-
-    #[test]
-    fn a_note_needs_every_term_on_one_line() {
         assert!(best(&all(&[text("alpha"), text("plan")]), NOTE).is_none());
         assert!(best(&all(&[text("alpha"), text("monday")]), NOTE).is_some());
-    }
-
-    #[test]
-    fn a_note_answers_nothing_when_a_letter_is_missing_from_it() {
         assert!(best(&text("zzz"), NOTE).is_none());
-    }
-
-    #[test]
-    fn and_nothing_at_all_when_the_query_is_not_one_to_relax() {
         assert!(best(&text("quarter plan"), NOTE).is_none());
     }
 
