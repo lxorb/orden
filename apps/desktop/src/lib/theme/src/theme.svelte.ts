@@ -286,17 +286,7 @@ class Themes {
   }
 
   private storedDrawers(): ChosenSettings {
-    const drawers: ChosenSettings = Object.fromEntries(
-      Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
-        owner,
-        recordOf(values, isValue),
-      ]),
-    )
-    const accent = storedText(ACCENT_KEY)
-    if (accent !== null && drawers[SHARED]?.accent === undefined) {
-      drawers[SHARED] = { ...drawers[SHARED], accent }
-    }
-    return drawers
+    return this.withOldAccent(storedSettings())
   }
 
   private unkept = false
@@ -398,16 +388,9 @@ class Themes {
   }
 
   private offerTheContrastTheme() {
-    if (storedText(OFFERED_KEY)) return
-
-    if (!window.matchMedia(MORE).matches) return
-
-    if (this.chose()) {
-      keep(OFFERED_KEY, 'yes')
-      return
-    }
-
+    if (storedText(OFFERED_KEY) || !window.matchMedia(MORE).matches) return
     keep(OFFERED_KEY, 'yes')
+    if (this.chose()) return
     this.offerContrast = true
     this.wearId(CONTRAST_THEME)
   }
@@ -462,19 +445,7 @@ class Themes {
     const css = await invoke<string>('read_custom_css')
       .then(carriedCss)
       .catch(() => '')
-    let style = document.getElementById(CUSTOM_ID)
-
-    if (!css.trim()) {
-      style?.remove()
-      return
-    }
-
-    if (!style) {
-      style = document.createElement('style')
-      style.id = CUSTOM_ID
-      document.head.append(style)
-    }
-    style.textContent = everySurface(css)
+    styleTag(CUSTOM_ID, css.trim() && everySurface(css))
   }
 
   select(id: string) {
@@ -634,21 +605,22 @@ class Themes {
         return
       }
     }
+    this.keepValue(drawer, id, value)
+    this.tellPicked()
+  }
+
+  private keepValue(drawer: string, id: string, value: ThemeValue) {
     const held = this.writtenDrawers
     this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
     this.unkept = !keepJson(SETTINGS_KEY, this.chosen)
-    this.tellPicked()
   }
 
   set(id: string, value: ThemeValue) {
     const setting = this.settings.find((one) => one.id === id)
     if (!setting) return
 
-    const drawer = this.drawerOf(setting)
-    const held = this.writtenDrawers
-    this.chosen = { ...held, [drawer]: { ...held[drawer], [id]: value } }
-    this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
-    this.unkept = !keepJson(SETTINGS_KEY, this.chosen)
+    this.keepValue(this.drawerOf(setting), id, value)
+    this.trying = without(this.trying, id)
     if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()
@@ -710,16 +682,10 @@ class Themes {
     this.early = null
 
     if (theme.css !== undefined) this.wear(theme.css, kept)
-    else if (theme.load) {
-      if (early !== undefined) this.wear(early, false)
-      void this.fetched(theme)
-        .then(carriedCss)
-        .then((css) => this.wear(applying === this.applied ? css : null, kept))
-        .catch(() => this.wear(applying === this.applied ? '' : null, kept))
-    } else if (!theme.path) this.wear('', kept)
+    else if (!theme.load && !theme.path) this.wear('', kept)
     else {
       if (early !== undefined) this.wear(early, false)
-      void invoke<string>('read_theme', { path: theme.path })
+      void (theme.load ? this.fetched(theme) : invoke<string>('read_theme', { path: theme.path }))
         .then(carriedCss)
         .then((css) => this.wear(applying === this.applied ? css : null, kept))
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
@@ -835,23 +801,23 @@ class Themes {
       })
   }
 
-  private inject(css: string | null) {
-    if (css === null) return
-
-    let style = document.getElementById(STYLE_ID)
-
-    if (!css) {
-      style?.remove()
-      return
-    }
-
-    if (!style) {
-      style = document.createElement('style')
-      style.id = STYLE_ID
-      document.head.insertBefore(style, document.getElementById(CUSTOM_ID))
-    }
-    style.textContent = everySurface(chosenFirst(css))
+  private inject(css: string) {
+    styleTag(STYLE_ID, css && everySurface(chosenFirst(css)), document.getElementById(CUSTOM_ID))
   }
+}
+
+function styleTag(id: string, css: string, before: Element | null = null) {
+  let style = document.getElementById(id)
+  if (!css) {
+    style?.remove()
+    return
+  }
+  if (!style) {
+    style = document.createElement('style')
+    style.id = id
+    document.head.insertBefore(style, before)
+  }
+  style.textContent = css
 }
 
 export const theme = new Themes()
