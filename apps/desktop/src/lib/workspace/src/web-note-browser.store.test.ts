@@ -10,10 +10,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: false,
   isNative: false,
-  openExternal: (url: string) => {
-    handed.push(url)
-    return Promise.resolve()
-  },
+  openExternal: async (url: string) => void handed.push(url),
   invoke: (command: string, args?: Record<string, unknown>) =>
     Promise.resolve(
       command === 'read_note' && args?.path === SITE

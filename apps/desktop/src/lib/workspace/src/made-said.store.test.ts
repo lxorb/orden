@@ -39,10 +39,7 @@ beforeEach(async () => {
   wrote.length = 0
   stop = hearWrites({
     there: (path) => onDisk(path),
-    made: (path) => {
-      made.push(path)
-      return Promise.resolve()
-    },
+    made: async (path) => void made.push(path),
     wrote: (path, content) => void wrote.push(`${path}: ${content}`),
   })
 })

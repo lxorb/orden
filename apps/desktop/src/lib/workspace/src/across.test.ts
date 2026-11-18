@@ -974,9 +974,8 @@ describe('a space made in another window', () => {
         tell: () => Promise.resolve(),
         follow: () => undefined,
         loadTree: () => Promise.resolve(),
-        loadSpaces: () => {
+        loadSpaces: async () => {
           lists += 1
-          return Promise.resolve()
         },
       } as never,
       windows as never,

@@ -13,9 +13,8 @@ const homes = vi.hoisted(() => ({
 }))
 const relaunched = vi.hoisted(() => ({ count: 0 }))
 vi.mock('@tauri-apps/plugin-process', () => ({
-  relaunch: () => {
+  relaunch: async () => {
     relaunched.count++
-    return Promise.resolve()
   },
 }))
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({

@@ -78,14 +78,9 @@ function store(spaces: Space[]) {
     panel: null,
     notes: [],
     tabs: [],
-    fileMoved: (from: string, to: string, kind: string) => {
-      told.push(`moved ${kind} ${from} -> ${to}`)
-      return Promise.resolve()
-    },
-    fileGone: (path: string, kind: string) => {
-      told.push(`gone ${kind} ${path}`)
-      return Promise.resolve()
-    },
+    fileMoved: async (from: string, to: string, kind: string) =>
+      void told.push(`moved ${kind} ${from} -> ${to}`),
+    fileGone: async (path: string, kind: string) => void told.push(`gone ${kind} ${path}`),
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     close: (id: string) => void told.push(`closed ${id}`),
     clearSelection: () => undefined,

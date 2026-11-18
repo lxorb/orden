@@ -61,20 +61,16 @@ function space(notes: Record<string, string>, openAt?: string) {
     undone: new FileActions(),
     flush: () => undefined,
     documentAt: (path: string) => (tab?.path === path ? { text: tab.doc } : null),
-    fileGone: (path: string, _kind: string, back?: string) => {
+    fileGone: async (path: string, _kind: string, back?: string) => {
       told.push(`gone ${path}`)
       if (back) buried.push(back)
-      return Promise.resolve()
     },
     reload: (path: string) => void told.push(`reloaded ${path}`),
     retarget: (from: string, to: string) => {
       told.push(`retargeted ${from} -> ${to}`)
       return Promise.resolve(1)
     },
-    open: (path: string) => {
-      told.push(`opened ${path}`)
-      return Promise.resolve()
-    },
+    open: async (path: string) => void told.push(`opened ${path}`),
     freeNameOnDisk: (dir: string, wanted: string) =>
       Promise.resolve(freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`))),
     loadTree: () => Promise.resolve(),
