@@ -24,9 +24,7 @@ export const programJudge = () => (__EVEN_PLUGIN__ ? refused() : import('./agent
 
 export const sessions = () => (__EVEN_PLUGIN__ ? refused() : import('./sessions.svelte'))
 
-export const onlineCalls = () => (__EVEN_PLUGIN__ ? refused() : import('./online/calls'))
-
-export const onlineMachine = () => (__EVEN_PLUGIN__ ? refused() : import('./online/machine.svelte'))
+const onlineMachine = () => (__EVEN_PLUGIN__ ? refused() : import('./online/machine.svelte'))
 
 export const remoteHosts = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/hosts.svelte'))
 
