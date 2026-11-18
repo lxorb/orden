@@ -48,7 +48,7 @@ export function internalRows(
     return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
   }
 
-  const wordRows = async (wanted: (path: string) => boolean = () => true) => {
+  const wordRows = async (wanted: (path: string) => boolean) => {
     const out: FileRow[] = []
     for (const { path, entry } of await listing()) {
       if (!wanted(path)) continue
@@ -57,16 +57,6 @@ export function internalRows(
         const row = await fileRow(path, entry)
         if (row) out.push(row)
       }
-    }
-    return out
-  }
-
-  const assetRows = async () => {
-    const out: AssetRow[] = []
-    for (const { path, entry } of await listing()) {
-      if (!entry.key || words(path)) continue
-      const row = await asset(path, entry)
-      if (row) out.push(row)
     }
     return out
   }
@@ -106,13 +96,12 @@ export function internalRows(
       const entry = await folder.at(inSpace(path))
       return entry ? fileRow(normalise(path), entry) : undefined
     },
-    all: () => wordRows(),
     paths: async () =>
       (await listing())
         .filter(({ path, entry }) => !entry.key || words(path))
         .map(({ path }) => path),
     each: async (visit) => {
-      for (const row of await wordRows()) visit(row)
+      for (const row of await wordRows(() => true)) visit(row)
     },
     between: (from, to) => wordRows((path) => path >= from && path <= to),
     put: (row) => write(row.path, row.content),
@@ -137,7 +126,6 @@ export function internalRows(
       const entry = await folder.at(inSpace(path))
       return entry ? asset(normalise(path), entry) : undefined
     },
-    all: assetRows,
     paths: async () =>
       (await listing())
         .filter(({ path, entry }) => entry.key && !words(path))

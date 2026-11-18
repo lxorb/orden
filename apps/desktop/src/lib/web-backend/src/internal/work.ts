@@ -322,8 +322,7 @@ export class Mirror {
       }
       for (const rel of [one.path, ...(one.kind === 'renamed' ? [one.from] : [])]) {
         if (!carried(rel)) continue
-        touched.add(rel)
-        for (const seen of Object.keys(this.seen)) if (seen.startsWith(`${rel}/`)) touched.add(seen)
+        this.touch(touched, rel)
         if (one.dir) {
           for (const { path } of await this.folder.list()) {
             if (path.startsWith(`${rel}/`)) touched.add(path)
@@ -332,6 +331,11 @@ export class Mirror {
       }
     }
     if (touched.size) await this.settle(touched)
+  }
+
+  private touch(touched: Set<string>, rel: string) {
+    touched.add(rel)
+    for (const seen of Object.keys(this.seen)) if (seen.startsWith(`${rel}/`)) touched.add(seen)
   }
 
   private async renamedInStore(from: string, to: string, dir: boolean): Promise<boolean> {
@@ -369,8 +373,7 @@ export class Mirror {
         if (from && carried(from)) touched.add(from)
       }
       if (!carried(rel)) continue
-      touched.add(rel)
-      for (const seen of Object.keys(this.seen)) if (seen.startsWith(`${rel}/`)) touched.add(seen)
+      this.touch(touched, rel)
     }
     if (touched.size) await this.settle(touched)
   }
@@ -387,16 +390,14 @@ export class Mirror {
   }
 }
 
-function nameOf(folder: string): string {
-  return spelled(folder).split('/').pop() ?? ''
-}
-
 export function workFolderOf(folder: string): string {
   const cut = folder.replace(/[\\/]+$/, '')
   const at = Math.max(cut.lastIndexOf('/'), cut.lastIndexOf('\\'))
   const home = at < 0 ? '' : cut.slice(0, at)
-  return joinPath(home ? joinPath(home, WORK) : WORK, nameOf(cut))
+  return joinPath(home ? joinPath(home, WORK) : WORK, spelled(cut).split('/').pop() ?? '')
 }
+
+const taken = (path: string) => crate<boolean>('path_taken', { path }).catch(() => false)
 
 function crateDisk(folder: string): WorkDisk {
   const root = workFolderOf(folder)
@@ -420,9 +421,7 @@ function crateDisk(folder: string): WorkDisk {
       return stamp(rel)
     },
     stamp,
-    isDir: async (rel) =>
-      !(await stamp(rel)) &&
-      (await crate<boolean>('path_taken', { path: at(rel) }).catch(() => false)),
+    isDir: async (rel) => !(await stamp(rel)) && (await taken(at(rel))),
     mkdir: (rel) => crate('create_folder', { path: at(rel) }),
     remove: (rel, dir) =>
       crate<undefined>(dir ? 'remove_empty_folder' : 'delete_note', { path: at(rel) }).catch(
@@ -518,15 +517,10 @@ export async function workingFolder(path: string): Promise<string | null> {
   return workingPath(entry && !entry.key ? path : (found?.mount.root ?? path))
 }
 
-async function kept(mount: Mounted): Promise<void> {
-  const root = workFolderOf(mount.folder.name)
-  if (await crate<boolean>('path_taken', { path: root }).catch(() => false)) keep(mount)
-}
-
 export async function keepWorking(root?: string): Promise<void> {
   const found = root === undefined ? null : mountOf(root)
   for (const mount of found ? [found.mount] : root === undefined ? mounts() : []) {
-    await kept(mount)
+    if (await taken(workFolderOf(mount.folder.name))) keep(mount)
   }
 }
 
@@ -544,7 +538,7 @@ export async function letGoWorking(folder: string, then?: 'gone') {
 
 export async function movedWorking(from: string, to: string, root: string) {
   const was = workFolderOf(from)
-  if (!(await crate<boolean>('path_taken', { path: was }).catch(() => false))) return
+  if (!(await taken(was))) return
   await crate('rename_note', { from: was, to: workFolderOf(to) }).catch(() => undefined)
   await keepWorking(root)
 }

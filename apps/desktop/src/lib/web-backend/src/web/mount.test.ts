@@ -23,7 +23,6 @@ function kept(): Kept {
   const rows: Rows = {
     files: {
       get: (path) => Promise.resolve(held.get(path)),
-      all: () => Promise.resolve(sorted(held)),
       paths: () => Promise.resolve([...held.keys()].sort()),
       each: (visit) => {
         for (const row of sorted(held)) visit(row)
@@ -45,7 +44,6 @@ function kept(): Kept {
     },
     assets: {
       get: (path) => Promise.resolve(pictures.get(path)),
-      all: () => Promise.resolve(sorted(pictures)),
       paths: () => Promise.resolve([...pictures.keys()].sort()),
       put: (row) => Promise.resolve(void pictures.set(row.path, row)),
       remove: (path) => Promise.resolve(void pictures.delete(path)),
