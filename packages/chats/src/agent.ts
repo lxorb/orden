@@ -9,9 +9,7 @@ export function untrusted(source: string, words: string): string {
 const PROMPT_TAGS = /^\s*[/\u2215\u2044]?\s*(attached|summary|reader-context)/
 const EVERY_TAG = /^\s*[/\u2215\u2044]?\s*(untrusted|attached|summary|reader-context)/
 
-export function defused(words: string): string {
-  return inert(words, PROMPT_TAGS)
-}
+export const defused = (words: string): string => inert(words, PROMPT_TAGS)
 
 const HIDDEN = /^[\p{Cf}\u034F\uFE00-\uFE0F\u{E0100}-\u{E01EF}]$/u
 
@@ -61,14 +59,13 @@ function seenAfter(words: string, from: number): string {
   return Array.from(out.normalize('NFKC').toLowerCase(), (one) => LATIN[one] ?? one).join('')
 }
 
-function inert(words: string, tags: RegExp): string {
-  return words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) =>
+const inert = (words: string, tags: RegExp): string =>
+  words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) =>
     tags.test(seenAfter(words, at + 1)) ? '&lt;' : one,
   )
-}
 
-function attribute(source: string): string {
-  return Array.from(source)
+const attribute = (source: string): string =>
+  Array.from(source)
     .slice(0, 300)
     .map((one) => {
       if (one === '&') return '&amp;'
@@ -78,13 +75,10 @@ function attribute(source: string): string {
       return /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one) ? ' ' : one
     })
     .join('')
-}
 
 export const oneLine = (text: string): string => text.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]+/gu, ' ')
 
-export function momentOf(at: number): string {
-  return `${new Date(at).toISOString().slice(0, 16)}Z`
-}
+export const momentOf = (at: number): string => `${new Date(at).toISOString().slice(0, 16)}Z`
 
 export interface Reading {
   me: Who | null

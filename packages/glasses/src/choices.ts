@@ -26,6 +26,5 @@ export const COMPACTIONS: readonly Compaction[] = ['none', 'collapse', 'aggressi
 
 export const DEFAULT_COMPACTION: Compaction = 'collapse'
 
-export function isCompaction(value: unknown): value is Compaction {
-  return typeof value === 'string' && (COMPACTIONS as readonly string[]).includes(value)
-}
+export const isCompaction = (value: unknown): value is Compaction =>
+  typeof value === 'string' && (COMPACTIONS as readonly string[]).includes(value)

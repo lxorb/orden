@@ -131,9 +131,7 @@ function refuse(message: string): BasesError {
   return new BasesError(message)
 }
 
-function tooLong(): BasesError {
-  return refuse('This takes too long to answer')
-}
+const tooLong = (): BasesError => refuse('This takes too long to answer')
 
 export function refusing<T>(run: () => T): { value: T; partial: boolean } {
   const before = refused
@@ -174,6 +172,4 @@ export function spend(steps: number): void {
   if (evaluatingMs >= MOST_EVALUATING_MS) throw tooLong()
 }
 
-export function stepsOfText(length: number): number {
-  return length / 16
-}
+export const stepsOfText = (length: number): number => length / 16

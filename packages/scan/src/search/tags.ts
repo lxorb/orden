@@ -32,17 +32,14 @@ export function tagUses(body: string): TagUse[] {
   return out
 }
 
-export function tagsIn(body: string): string[] {
-  return tagUses(body).map((use) => `#${use.tag}`)
-}
+export const tagsIn = (body: string): string[] => tagUses(body).map((use) => `#${use.tag}`)
 
-export function tagPath(tag: string): string {
-  return tag
+export const tagPath = (tag: string): string =>
+  tag
     .toLowerCase()
     .split('/')
     .filter((segment) => segment !== '')
     .join('/')
-}
 
 export function tagUnder(tag: string, wanted: string): boolean {
   const path = tagPath(tag)
@@ -195,12 +192,11 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
   return at
 }
 
-function blankedComments(text: string): string {
-  return text.replace(
+const blankedComments = (text: string): string =>
+  text.replace(
     /(^|\s)(#\s.*)$/gm,
     (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`,
   )
-}
 
 function readValues(from: number, text: string, out: TagUse[]) {
   for (const found of text.matchAll(VALUE)) {

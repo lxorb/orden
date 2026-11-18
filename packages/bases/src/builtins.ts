@@ -18,9 +18,8 @@ const BY_DEADLINE =
 
 export const WHEN = `if(!task.deadline, null, ${BY_DEADLINE})`
 
-export function isWhen(property: string | undefined): boolean {
-  return property === 'formula.when' || property === 'formula.ordenWhen'
-}
+export const isWhen = (property: string | undefined): boolean =>
+  property === 'formula.when' || property === 'formula.ordenWhen'
 
 export const WHEN_GROUPS = ['overdue', 'today', 'tomorrow', 'later']
 

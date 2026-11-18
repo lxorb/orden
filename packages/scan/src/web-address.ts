@@ -65,13 +65,9 @@ function origin(url: string, read: (host: string) => string): string {
   return parsed.protocol === 'http:' ? `http://${host}` : host
 }
 
-export function plainOrigin(url: string): string {
-  return origin(url, readable)
-}
+export const plainOrigin = (url: string): string => origin(url, readable)
 
-export function originKey(url: string): string {
-  return origin(url, (host) => host)
-}
+export const originKey = (url: string): string => origin(url, (host) => host)
 
 export function favicon(address: string): string | null {
   try {

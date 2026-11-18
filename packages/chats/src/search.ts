@@ -63,17 +63,14 @@ export function parseSearch(query: string, today: string): SearchQuery {
   return out
 }
 
-export function hasModifiers(query: SearchQuery): boolean {
-  return (
-    query.from.length > 0 ||
-    query.in.length > 0 ||
-    query.has.length > 0 ||
-    query.isReply ||
-    query.mentions.length > 0 ||
-    query.since !== undefined ||
-    query.until !== undefined
-  )
-}
+export const hasModifiers = (query: SearchQuery): boolean =>
+  query.from.length > 0 ||
+  query.in.length > 0 ||
+  query.has.length > 0 ||
+  query.isReply ||
+  query.mentions.length > 0 ||
+  query.since !== undefined ||
+  query.until !== undefined
 
 function word(out: SearchQuery, token: string, today: string) {
   if (!/[\p{L}\p{N}]/u.test(token)) return
@@ -194,9 +191,8 @@ function plusDays(day: string, days: number): string {
   return dayText(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate())
 }
 
-function dayText(year: number, month: number, day: number): string {
-  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
+const dayText = (year: number, month: number, day: number): string =>
+  `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
 const LINK = /\bhttps?:\/\/\S/i
 
@@ -263,6 +259,4 @@ export function matches(query: SearchQuery, hit: Hit): boolean {
   return query.until === undefined || day < query.until
 }
 
-function folded(text: string): string {
-  return text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
-}
+const folded = (text: string): string => text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()

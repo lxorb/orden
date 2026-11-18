@@ -17,15 +17,13 @@ export function civil(iso: string): Civil | null {
   return parts
 }
 
-export function daysInMonth(year: number, month: number): number {
-  return new Date(Date.UTC(year, month, 0)).getUTCDate()
-}
+export const daysInMonth = (year: number, month: number): number =>
+  new Date(Date.UTC(year, month, 0)).getUTCDate()
 
 const pad = (value: number, width = 2) => String(value).padStart(width, '0')
 
-export function isoOf(year: number, month: number, day: number): string {
-  return `${pad(year, 4)}-${pad(month)}-${pad(day)}`
-}
+export const isoOf = (year: number, month: number, day: number): string =>
+  `${pad(year, 4)}-${pad(month)}-${pad(day)}`
 
 export function dayNumber(iso: string): number {
   const known = dayNumbers.get(iso)
@@ -45,9 +43,7 @@ export function fromDayNumber(days: number): string {
   return isoOf(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate())
 }
 
-export function addDays(iso: string, days: number): string {
-  return fromDayNumber(dayNumber(iso) + days)
-}
+export const addDays = (iso: string, days: number): string => fromDayNumber(dayNumber(iso) + days)
 
 export function addMonths(iso: string, months: number): string {
   const parts = civil(iso)
@@ -58,9 +54,7 @@ export function addMonths(iso: string, months: number): string {
   return isoOf(year, month, Math.min(parts.day, daysInMonth(year, month)))
 }
 
-export function weekday(iso: string): number {
-  return (((dayNumber(iso) + 4) % 7) + 7) % 7
-}
+export const weekday = (iso: string): number => (((dayNumber(iso) + 4) % 7) + 7) % 7
 
 export function wallMs(value: DateValue): number {
   const day = dayNumber(value.iso) * DAY
@@ -75,9 +69,8 @@ export function msOf(value: DateValue, zone?: string): number {
   return offset === null ? wall : wallOf(wall - offset * 60_000, zone)
 }
 
-export function onClock(value: DateValue, zone?: string): DateValue {
-  return value.zone && value.time ? dateAt(msOf(value, zone)) : value
-}
+export const onClock = (value: DateValue, zone?: string): DateValue =>
+  value.zone && value.time ? dateAt(msOf(value, zone)) : value
 
 export function rewritten(was: DateValue, edited: DateValue, zone?: string): DateValue {
   const offset = was.zone && was.time ? offsetMinutes(was.zone) : null
@@ -190,13 +183,9 @@ const MONTHS = [
 ]
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-export function monthName(month: number): string {
-  return MONTHS[month - 1] ?? ''
-}
+export const monthName = (month: number): string => MONTHS[month - 1] ?? ''
 
-export function weekdayName(day: number): string {
-  return WEEKDAYS[day] ?? ''
-}
+export const weekdayName = (day: number): string => WEEKDAYS[day] ?? ''
 
 function ordinal(value: number): string {
   const tens = value % 100
@@ -324,6 +313,5 @@ export function relative(ms: number, now: number): string {
   return ms <= now ? `${words} ago` : `in ${words}`
 }
 
-export function todayOf(now: Date = new Date()): string {
-  return isoOf(now.getFullYear(), now.getMonth() + 1, now.getDate())
-}
+export const todayOf = (now: Date = new Date()): string =>
+  isoOf(now.getFullYear(), now.getMonth() + 1, now.getDate())

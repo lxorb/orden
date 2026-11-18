@@ -43,9 +43,8 @@ export interface TaskOut {
   parent?: number
 }
 
-export function atOf(row: Pick<Row, 'path' | 'anchor'>): string {
-  return `${row.path}#${row.anchor?.line ?? 0}:${row.anchor?.hash ?? ''}`
-}
+export const atOf = (row: Pick<Row, 'path' | 'anchor'>): string =>
+  `${row.path}#${row.anchor?.line ?? 0}:${row.anchor?.hash ?? ''}`
 
 export function readAt(at: unknown): { path: string; line: number; hash: string } {
   const found = typeof at === 'string' ? /^(.+)#(\d+):([0-9a-z]+)$/.exec(at.trim()) : null
@@ -195,19 +194,17 @@ export function taskChange(args: Args): TaskChange {
   return change
 }
 
-function bare(text: string): TaskFields {
-  return {
-    text,
-    status: ' ',
-    done: false,
-    cancelled: false,
-    remind: [],
-    priority: NO_PRIORITY,
-    tags: [],
-    dependsOn: [],
-    fields: {},
-  }
-}
+const bare = (text: string): TaskFields => ({
+  text,
+  status: ' ',
+  done: false,
+  cancelled: false,
+  remind: [],
+  priority: NO_PRIORITY,
+  tags: [],
+  dependsOn: [],
+  fields: {},
+})
 
 export type ReadWords = (text: string) => Read
 

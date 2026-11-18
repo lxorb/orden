@@ -61,6 +61,9 @@ export function taskRow(
   }
 }
 
-export function contextAt(extra: Partial<Context> = {}): Context {
-  return { today: '2026-10-04', now: '2026-10-04T10:00:00', me: 'Emil', ...extra }
-}
+export const contextAt = (extra: Partial<Context> = {}): Context => ({
+  today: '2026-10-04',
+  now: '2026-10-04T10:00:00',
+  me: 'Emil',
+  ...extra,
+})

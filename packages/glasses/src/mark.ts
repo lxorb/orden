@@ -87,9 +87,7 @@ export interface Work {
   searched: number
 }
 
-function nothing(): Work {
-  return { blocks: 0, lines: 0, folded: 0, searched: 0 }
-}
+const nothing = (): Work => ({ blocks: 0, lines: 0, folded: 0, searched: 0 })
 
 const work = nothing()
 
@@ -168,17 +166,14 @@ class Lines {
   }
 }
 
-function textOf(token: Token): string {
-  return 'text' in token && typeof token.text === 'string' ? token.text : ''
-}
+const textOf = (token: Token): string =>
+  'text' in token && typeof token.text === 'string' ? token.text : ''
 
-function rawOf(token: Token): string {
-  return 'raw' in token && typeof token.raw === 'string' ? token.raw : ''
-}
+const rawOf = (token: Token): string =>
+  'raw' in token && typeof token.raw === 'string' ? token.raw : ''
 
-function childrenOf(token: Token): Token[] {
-  return 'tokens' in token && Array.isArray(token.tokens) ? token.tokens : []
-}
+const childrenOf = (token: Token): Token[] =>
+  'tokens' in token && Array.isArray(token.tokens) ? token.tokens : []
 
 const HTML_TAG = /<[^>]*>/g
 
@@ -660,9 +655,7 @@ function list(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   })
 }
 
-function isLeading(token: Token): boolean {
-  return token.type === 'text' || token.type === 'paragraph'
-}
+const isLeading = (token: Token): boolean => token.type === 'text' || token.type === 'paragraph'
 
 function table(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const one = token as Tokens.Table

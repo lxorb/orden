@@ -45,19 +45,16 @@ function firstAdded(one: Shortcut, other: Shortcut): Date {
   )
 }
 
-function sameShortcut(one: Shortcut | null, other: Shortcut): boolean {
-  return (
-    one !== null &&
-    one.url === other.url &&
-    one.title === other.title &&
-    one.added === other.added &&
-    (one.home ?? null) === (other.home ?? null) &&
-    one.icon === other.icon &&
-    one.own === other.own &&
-    one.chosen === other.chosen &&
-    one.chosenColour === other.chosenColour
-  )
-}
+const sameShortcut = (one: Shortcut | null, other: Shortcut): boolean =>
+  one !== null &&
+  one.url === other.url &&
+  one.title === other.title &&
+  one.added === other.added &&
+  (one.home ?? null) === (other.home ?? null) &&
+  one.icon === other.icon &&
+  one.own === other.own &&
+  one.chosen === other.chosen &&
+  one.chosenColour === other.chosenColour
 
 export function sameSite(one: string | null | undefined, other: string | null | undefined) {
   const host = hostIn(one)

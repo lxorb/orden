@@ -3,16 +3,14 @@ import { type NoteRead, rowsOf } from '@orden/bases/rows'
 import { scanRows, type Stamp } from '@orden/bases/scan'
 import { type ScannedNote, scanNote } from './scan-note'
 
-export function readOf(note: ScannedNote): NoteRead {
-  return {
-    path: note.path,
-    front: note.front ?? null,
-    tasks: note.tasks ?? [],
-    stamp: note.stamp ?? null,
-    tags: note.tags,
-    links: note.links,
-  }
-}
+export const readOf = (note: ScannedNote): NoteRead => ({
+  path: note.path,
+  front: note.front ?? null,
+  tasks: note.tasks ?? [],
+  stamp: note.stamp ?? null,
+  tags: note.tags,
+  links: note.links,
+})
 
 export interface NoteHeld {
   stamp?: Stamp

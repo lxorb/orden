@@ -36,9 +36,8 @@ function stringValue(written: string): Value {
   return text
 }
 
-function readValue(text: string, quoted: boolean | undefined): Value {
-  return quoted ? stringValue(text) : scalarValue(text)
-}
+const readValue = (text: string, quoted: boolean | undefined): Value =>
+  quoted ? stringValue(text) : scalarValue(text)
 
 function propertyValue(property: Property): Value {
   const quoted = property.quotedItems ?? []

@@ -2,9 +2,7 @@ export type Unit = 'line' | 'block' | 'section' | 'task' | 'task-todo' | 'task-d
 
 const LINE_KINDS: readonly Unit[] = ['task', 'task-todo', 'task-done']
 
-export function aKindOfLine(unit: Unit): boolean {
-  return LINE_KINDS.includes(unit)
-}
+export const aKindOfLine = (unit: Unit): boolean => LINE_KINDS.includes(unit)
 
 type Compare = 'has' | 'is' | 'null' | 'lt' | 'lte' | 'gt' | 'gte' | 'range'
 
@@ -23,9 +21,7 @@ export type Query =
 
 const NOTHING: Query = { kind: 'all', of: [] }
 
-export function isEmpty(query: Query): boolean {
-  return query.kind === 'all' && query.of.length === 0
-}
+export const isEmpty = (query: Query): boolean => query.kind === 'all' && query.of.length === 0
 
 const VALUED = ['path', 'file', 'tag', 'content'] as const
 
@@ -348,6 +344,4 @@ function join(kind: 'all' | 'any', parts: Query[]): Query {
   return { kind, of: parts }
 }
 
-export function parseQuery(source: string): Query {
-  return new Parser(source).parse()
-}
+export const parseQuery = (source: string): Query => new Parser(source).parse()

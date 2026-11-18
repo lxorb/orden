@@ -21,13 +21,9 @@ const OWN = /\.(md|markdown|mdown|mkd)$/i
 
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i
 
-function comparable(path: string): string {
-  return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
-}
+const comparable = (path: string): string => foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 
-function lastOf(folded: string): string {
-  return folded.slice(folded.lastIndexOf('/') + 1)
-}
+const lastOf = (folded: string): string => folded.slice(folded.lastIndexOf('/') + 1)
 
 function folderOf(path: string): string {
   const at = path.lastIndexOf('/')

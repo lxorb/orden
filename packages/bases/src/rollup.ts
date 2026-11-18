@@ -21,9 +21,8 @@ export interface RollupSpec {
 
 const NAME = /^[A-Za-z_][\w]*$/
 
-function member(object: string, key: string): string {
-  return NAME.test(key) ? `${object}.${key}` : `${object}[${JSON.stringify(key)}]`
-}
+const member = (object: string, key: string): string =>
+  NAME.test(key) ? `${object}.${key}` : `${object}[${JSON.stringify(key)}]`
 
 function columnOf(column: string): string {
   if (column.startsWith('formula.')) return member('formula', column.slice(8))

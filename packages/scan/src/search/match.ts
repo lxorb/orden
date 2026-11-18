@@ -43,13 +43,9 @@ export interface Hit {
 
 const LINE = 200
 
-export function shownLine(raw: string): string {
-  return Array.from(raw.trim()).slice(0, LINE).join('')
-}
+export const shownLine = (raw: string): string => Array.from(raw.trim()).slice(0, LINE).join('')
 
-export function shownWhole(text: string): boolean {
-  return Array.from(text).length < LINE
-}
+export const shownWhole = (text: string): boolean => Array.from(text).length < LINE
 
 const HEADING = /^ {0,3}#{1,6}(\s|$)/
 
@@ -60,9 +56,7 @@ export interface Work {
   characters: number
 }
 
-function nothing(): Work {
-  return { notes: 0, regions: 0, needles: 0, characters: 0 }
-}
+const nothing = (): Work => ({ notes: 0, regions: 0, needles: 0, characters: 0 })
 
 const work = nothing()
 
@@ -152,9 +146,8 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   return out
 }
 
-function keysIn(body: string): Set<string> {
-  return new Set(frontMatterKeys(body).map((key) => key.toLowerCase()))
-}
+const keysIn = (body: string): Set<string> =>
+  new Set(frontMatterKeys(body).map((key) => key.toLowerCase()))
 
 interface Facts {
   note: SearchNote
@@ -168,17 +161,14 @@ interface Facts {
   places: Map<string, number[]>
 }
 
-function foldedOf(facts: Facts): string {
-  return (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
-}
+const foldedOf = (facts: Facts): string =>
+  (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
 
-function startsOf(facts: Facts): readonly number[] {
-  return (facts.starts ??= facts.note.starts?.() ?? lineStarts(facts.note.body))
-}
+const startsOf = (facts: Facts): readonly number[] =>
+  (facts.starts ??= facts.note.starts?.() ?? lineStarts(facts.note.body))
 
-function tagsOf(facts: Facts): string[] {
-  return (facts.tags ??= tagsIn(facts.note.body).map((tag) => tagPath(tag.slice(1))))
-}
+const tagsOf = (facts: Facts): string[] =>
+  (facts.tags ??= tagsIn(facts.note.body).map((tag) => tagPath(tag.slice(1))))
 
 function propertyOf(facts: Facts, name: string): string[] | undefined {
   if (!(facts.keys ??= keysIn(facts.note.body)).has(name)) return undefined
@@ -192,17 +182,12 @@ function propertyOf(facts: Facts, name: string): string[] | undefined {
   return values
 }
 
-function wordsIn(body: string): number {
-  return frontMatterBlock(body)?.to ?? 0
-}
+const wordsIn = (body: string): number => frontMatterBlock(body)?.to ?? 0
 
-function wordsFrom(facts: Facts): number {
-  return (facts.words ??= wordsIn(facts.note.body))
-}
+const wordsFrom = (facts: Facts): number => (facts.words ??= wordsIn(facts.note.body))
 
-function unitsOf(facts: Facts, unit: Unit): Range[] {
-  return (facts.units[unit] ??= unitsIn(facts.note.body, startsOf(facts), unit))
-}
+const unitsOf = (facts: Facts, unit: Unit): Range[] =>
+  (facts.units[unit] ??= unitsIn(facts.note.body, startsOf(facts), unit))
 
 const A_NUMBER = /^-?\d+(?:\.\d+)?$/
 const A_DATE =
@@ -242,9 +227,7 @@ function alike(value: string, asked: string): boolean {
 
 const NULLS = new Set(['', '~', 'null', 'Null', 'NULL'])
 
-function heldValue(value: string): boolean {
-  return !NULLS.has(value.trim())
-}
+const heldValue = (value: string): boolean => !NULLS.has(value.trim())
 
 function heldAgainst(value: string, query: Extract<Query, { kind: 'property' }>): boolean {
   const asked = query.value
@@ -279,9 +262,8 @@ function pastFrontMatter(body: string, starts: readonly number[]): number {
   return past === -1 ? starts.length : past
 }
 
-function contains(hay: string, needle: string, folded: boolean): boolean {
-  return folded ? hay.toLowerCase().includes(needle.toLowerCase()) : hay.includes(needle)
-}
+const contains = (hay: string, needle: string, folded: boolean): boolean =>
+  folded ? hay.toLowerCase().includes(needle.toLowerCase()) : hay.includes(needle)
 
 function placesIn(facts: Facts, hay: string, needle: string, folded: boolean): number[] {
   const key = `${folded ? 'i' : ' '}${needle}`
@@ -570,9 +552,7 @@ interface Stretch extends Range {
 
 const LONG_LINE = 2000
 
-function bucket(length: number): number {
-  return length > 0 ? Math.ceil(Math.log2(length)) : 0
-}
+const bucket = (length: number): number => (length > 0 ? Math.ceil(Math.log2(length)) : 0)
 
 function stretches(text: string): Stretch[] {
   const out: Stretch[] = []

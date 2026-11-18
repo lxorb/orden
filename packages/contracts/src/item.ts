@@ -13,9 +13,8 @@ export const ENTRY_KINDS: readonly EntryKind[] = [
   'folder',
 ]
 
-export function isEntryKind(value: unknown): value is EntryKind {
-  return typeof value === 'string' && (ENTRY_KINDS as readonly string[]).includes(value)
-}
+export const isEntryKind = (value: unknown): value is EntryKind =>
+  typeof value === 'string' && (ENTRY_KINDS as readonly string[]).includes(value)
 
 export type ItemMeta = Readonly<Record<string, string>>
 

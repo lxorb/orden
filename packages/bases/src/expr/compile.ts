@@ -96,13 +96,12 @@ function compileMember(node: Extract<Node, { type: 'member' }>, facts: Facts): F
   return (scope) => member(object(scope), name, scope)
 }
 
-function thunks(args: readonly Fn[], scope: Scope): Arg[] {
-  return args.map(
+const thunks = (args: readonly Fn[], scope: Scope): Arg[] =>
+  args.map(
     (arg): Arg =>
       (locals) =>
         locals ? arg({ ...scope, locals: { ...scope.locals, ...locals } }) : arg(scope),
   )
-}
 
 const NODES_A_STEP = 32
 

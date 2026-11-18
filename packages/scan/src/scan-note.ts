@@ -102,9 +102,9 @@ export function scanShortcut(path: string, content: string): ScannedNote {
   }
 }
 
-function noteTags(content: string): string[] {
-  return [...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase()))]
-}
+const noteTags = (content: string): string[] => [
+  ...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase())),
+]
 
 function contextAt(text: string, at: number): string {
   const from = text.lastIndexOf('\n', at) + 1
@@ -117,12 +117,11 @@ function contextAt(text: string, at: number): string {
 
 const BARE_HEADING = /^ {0,3}#{1,6}[ \t](.*)$/
 
-function loose(words: string): string {
-  return words
+const loose = (words: string): string =>
+  words
     .replace(/[<>:"/\\|?* -]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[.\s]+|[.\s]+$/g, '')
-}
 
 export function saysNothing(content: string, name: string): boolean {
   const lines = stripFrontMatter(content)

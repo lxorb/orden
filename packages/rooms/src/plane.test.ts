@@ -79,12 +79,18 @@ function both(one: Device, other: Device) {
   Y.applyUpdate(one.doc, second, 'room')
 }
 
-function card(id: string, x = 0, y = 0, text = id): CanvasNode {
-  return { id, type: 'text', x, y, width: 250, height: 60, text }
-}
+const card = (id: string, x = 0, y = 0, text = id): CanvasNode => ({
+  id,
+  type: 'text',
+  x,
+  y,
+  width: 250,
+  height: 60,
+  text,
+})
 
-function points(count: number): InkPoint[] {
-  return Array.from({ length: count }, (_, at) => ({
+const points = (count: number): InkPoint[] =>
+  Array.from({ length: count }, (_, at) => ({
     x: at * 3,
     y: Math.round(Math.sin(at / 5) * 40),
     pressure: 0.5,
@@ -92,19 +98,18 @@ function points(count: number): InkPoint[] {
     tiltY: 0,
     t: at * 8,
   }))
-}
 
-function stroke(id: string, count = 4, colour = '1'): InkStroke {
-  return { id, tool: 'pen', color: colour, size: 6, points: points(count) }
-}
+const stroke = (id: string, count = 4, colour = '1'): InkStroke => ({
+  id,
+  tool: 'pen',
+  color: colour,
+  size: 6,
+  points: points(count),
+})
 
-function withNodes(canvas: Canvas, nodes: CanvasNode[]): Canvas {
-  return { ...canvas, nodes }
-}
+const withNodes = (canvas: Canvas, nodes: CanvasNode[]): Canvas => ({ ...canvas, nodes })
 
-function withInk(canvas: Canvas, ink: InkStroke[]): Canvas {
-  return { ...canvas, ink }
-}
+const withInk = (canvas: Canvas, ink: InkStroke[]): Canvas => ({ ...canvas, ink })
 
 describe('a canvas as a room holds it', () => {
   test('a room nobody has joined is empty, and a seeded one is not', () => {

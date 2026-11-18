@@ -51,9 +51,8 @@ export type GivenRole = 'write' | 'read'
 
 export const SPACE_ROLES: readonly SpaceRole[] = ['owner', 'write', 'read']
 
-export function isSpaceRole(value: unknown): value is SpaceRole {
-  return typeof value === 'string' && (SPACE_ROLES as readonly string[]).includes(value)
-}
+export const isSpaceRole = (value: unknown): value is SpaceRole =>
+  typeof value === 'string' && (SPACE_ROLES as readonly string[]).includes(value)
 
 export interface Member {
   readonly id?: UserId | null

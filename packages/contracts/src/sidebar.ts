@@ -39,6 +39,4 @@ export function registerSidebarPart(part: SidebarPart): () => void {
   }
 }
 
-export function sidebarPart(id: SidebarPartId): SidebarPart | null {
-  return parts.get(id) ?? null
-}
+export const sidebarPart = (id: SidebarPartId): SidebarPart | null => parts.get(id) ?? null

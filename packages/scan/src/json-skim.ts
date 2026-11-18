@@ -14,9 +14,8 @@ const CLOSE_BRACE = 0x7d
 const OPEN_BRACKET = 0x5b
 const CLOSE_BRACKET = 0x5d
 
-function isSpace(code: number): boolean {
-  return code === 0x20 || code === 0x0a || code === 0x0d || code === 0x09
-}
+const isSpace = (code: number): boolean =>
+  code === 0x20 || code === 0x0a || code === 0x0d || code === 0x09
 
 function skipSpace(text: string, at: number, end: number): number {
   let one = at

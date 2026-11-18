@@ -15,11 +15,8 @@ function working(activity: Activity): boolean {
   return activity.output > 0 || activity.cpu > BUSY_CPU || netPerMinute > BUSY_NET_PER_MINUTE
 }
 
-function spent(used: Allowance, limit: Allowance): boolean {
-  return (
-    used.awakeS >= limit.awakeS || used.cpuS >= limit.cpuS || used.egressBytes >= limit.egressBytes
-  )
-}
+const spent = (used: Allowance, limit: Allowance): boolean =>
+  used.awakeS >= limit.awakeS || used.cpuS >= limit.cpuS || used.egressBytes >= limit.egressBytes
 
 export function awake(
   now: number,

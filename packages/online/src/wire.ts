@@ -38,13 +38,10 @@ export const MOST_IMAGE = 16 * 1024 * 1024
 
 export const IMAGE_PART = (MOST_INPUT / 4) * 3
 
-export function isImageId(value: unknown): value is string {
-  return typeof value === 'string' && /^[a-z0-9]{16,64}$/.test(value)
-}
+export const isImageId = (value: unknown): value is string =>
+  typeof value === 'string' && /^[a-z0-9]{16,64}$/.test(value)
 
-export function socketPath(term: string): string {
-  return `/v2/online/${encodeURIComponent(term)}/socket`
-}
+export const socketPath = (term: string): string => `/v2/online/${encodeURIComponent(term)}/socket`
 
 export type Refusal =
   'gone' | 'role' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'rate' | 'large'
@@ -130,9 +127,7 @@ export type Note = 'restore' | 'disk'
 
 const NOTES: readonly Note[] = ['restore', 'disk']
 
-export function text(value: ClientFrame | ServerFrame): string {
-  return JSON.stringify(value)
-}
+export const text = (value: ClientFrame | ServerFrame): string => JSON.stringify(value)
 
 export function outFrame(seq: number, data: Uint8Array): Uint8Array {
   const out = new Uint8Array(8 + data.length)
@@ -202,9 +197,7 @@ export const QUIET_FOR = 20_000
 
 export const SILENT_FOR = 40_000
 
-export function linkFrame(value: MachineFrame | OrdendFrame): Uint8Array {
-  return frame(value)
-}
+export const linkFrame = (value: MachineFrame | OrdendFrame): Uint8Array => frame(value)
 
 const LONGEST_ID = 200
 const LONGEST_TITLE = 1024
@@ -212,58 +205,41 @@ const MOST_SCREEN = 32 * 1024 * 1024
 
 type Fields = Record<string, unknown>
 
-function isRecord(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Fields =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-function isId(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID
-}
+const isId = (value: unknown): value is string =>
+  typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID
 
-function isCount(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-}
+const isCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
-function isCells(value: unknown): value is number {
-  return isCount(value) && value >= 1 && value <= MOST_CELLS
-}
+const isCells = (value: unknown): value is number =>
+  isCount(value) && value >= 1 && value <= MOST_CELLS
 
-function isTime(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
-}
+const isTime = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value)
 
-function isShort(value: unknown): value is string | null {
-  return value === null || (typeof value === 'string' && value.length <= LONGEST_TITLE)
-}
+const isShort = (value: unknown): value is string | null =>
+  value === null || (typeof value === 'string' && value.length <= LONGEST_TITLE)
 
-function isCode(value: unknown): value is number | null {
-  return value === null || (typeof value === 'number' && Number.isSafeInteger(value))
-}
+const isCode = (value: unknown): value is number | null =>
+  value === null || (typeof value === 'number' && Number.isSafeInteger(value))
 
-function isScreen(value: unknown): value is string {
-  return typeof value === 'string' && value.length <= MOST_SCREEN
-}
+const isScreen = (value: unknown): value is string =>
+  typeof value === 'string' && value.length <= MOST_SCREEN
 
-function isStatus(value: unknown): value is number {
-  return isCount(value) && value <= 999
-}
+const isStatus = (value: unknown): value is number => isCount(value) && value <= 999
 
-function isPathOrNone(value: unknown): value is string | null {
-  return (
-    value === null ||
-    (typeof value === 'string' && value.startsWith('/') && value.length <= LONGEST_TITLE)
-  )
-}
+const isPathOrNone = (value: unknown): value is string | null =>
+  value === null ||
+  (typeof value === 'string' && value.startsWith('/') && value.length <= LONGEST_TITLE)
 
-function isPart(value: unknown): value is string {
-  return (
-    typeof value === 'string' && value.length <= MOST_INPUT && /^[A-Za-z0-9+/]*={0,2}$/.test(value)
-  )
-}
+const isPart = (value: unknown): value is string =>
+  typeof value === 'string' && value.length <= MOST_INPUT && /^[A-Za-z0-9+/]*={0,2}$/.test(value)
 
-function oneOf<T>(list: readonly T[], value: unknown): value is T {
-  return list.some((one) => one === value)
-}
+const oneOf = <T>(list: readonly T[], value: unknown): value is T =>
+  list.some((one) => one === value)
 
 function parsed(raw: string): unknown {
   try {

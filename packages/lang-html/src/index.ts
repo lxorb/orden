@@ -81,6 +81,4 @@ const closeTags: Extension = EditorView.inputHandler.of((view, from, to, text, i
   closers.some((close) => close(view, from, to, text, insert)),
 )
 
-export function htmlCompletionSource(_context: CompletionContext): CompletionResult | null {
-  return null
-}
+export const htmlCompletionSource = (_context: CompletionContext): CompletionResult | null => null

@@ -92,9 +92,7 @@ export function viewOf(base: Base, view: string | number | undefined): View | un
   return base.views.find((one) => one.name === view) ?? base.views[0]
 }
 
-export function groupName(key: Value): string {
-  return key === null ? '' : text(key)
-}
+export const groupName = (key: Value): string => (key === null ? '' : text(key))
 
 function spacedPath(space: string, path: string): string {
   return `${space}//${path}`
@@ -369,13 +367,11 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   return { view, answer }
 }
 
-export function rowId(row: Row): string {
-  return row.anchor ? `${row.path}#${row.anchor.line}` : row.path
-}
+export const rowId = (row: Row): string =>
+  row.anchor ? `${row.path}#${row.anchor.line}` : row.path
 
-export function orderId(row: Row): string {
-  return row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path
-}
+export const orderId = (row: Row): string =>
+  row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path
 
 const compiledViews = new WeakMap<Base, Map<string | number, CompiledView>>()
 

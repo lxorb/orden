@@ -80,9 +80,7 @@ export function needPort<Name extends PortName>(name: Name): PortMap[Name] {
   return found.value
 }
 
-export function portProvided(name: PortName): boolean {
-  return provided.has(name)
-}
+export const portProvided = (name: PortName): boolean => provided.has(name)
 
 export function whenPortProvided<Name extends PortName>(
   name: Name,
@@ -117,36 +115,28 @@ export function mayStop(why: StopReason): Promise<boolean> {
   return port ? port.mayStop(why) : Promise.resolve(true)
 }
 
-export function syncStore(): SyncStorePort | null {
-  return (provided.get('sync.store') as SyncStorePort | undefined) ?? null
-}
+export const syncStore = (): SyncStorePort | null =>
+  (provided.get('sync.store') as SyncStorePort | undefined) ?? null
 
-export function searching(): SearchPort | null {
-  return (provided.get('search') as SearchPort | undefined) ?? null
-}
+export const searching = (): SearchPort | null =>
+  (provided.get('search') as SearchPort | undefined) ?? null
 
-export function webPages(): WebPagesPort {
-  return (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
-}
+export const webPages = (): WebPagesPort =>
+  (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
 
-export function workspaceNotes(): WorkspaceNotesPort {
-  return (provided.get('workspace.notes') as WorkspaceNotesPort | undefined) ?? NO_WORKSPACE_NOTES
-}
+export const workspaceNotes = (): WorkspaceNotesPort =>
+  (provided.get('workspace.notes') as WorkspaceNotesPort | undefined) ?? NO_WORKSPACE_NOTES
 
-export function workspaceView(): WorkspaceViewPort {
-  return (provided.get('workspace.view') as WorkspaceViewPort | undefined) ?? NO_WORKSPACE_VIEW
-}
+export const workspaceView = (): WorkspaceViewPort =>
+  (provided.get('workspace.view') as WorkspaceViewPort | undefined) ?? NO_WORKSPACE_VIEW
 
-export function settingsWindow(): SettingsWindowPort {
-  return (
-    (provided.get('settings.window') as SettingsWindowPort | undefined) ?? {
-      open: false,
-      at: null,
-      historyOpen: false,
-      show: () => undefined,
-    }
-  )
-}
+export const settingsWindow = (): SettingsWindowPort =>
+  (provided.get('settings.window') as SettingsWindowPort | undefined) ?? {
+    open: false,
+    at: null,
+    historyOpen: false,
+    show: () => undefined,
+  }
 
 export function askSheet(id: SheetId): Promise<void> {
   const port = provided.get('shell.sheets') as SheetsPort | undefined
@@ -161,6 +151,5 @@ export function sayNotice(words: string): void {
   ;(provided.get('shell.notice') as NoticePort | undefined)?.say(words)
 }
 
-export function focusEditorRegion(): boolean {
-  return (provided.get('shell.focus') as ShellFocusPort | undefined)?.editor() ?? false
-}
+export const focusEditorRegion = (): boolean =>
+  (provided.get('shell.focus') as ShellFocusPort | undefined)?.editor() ?? false

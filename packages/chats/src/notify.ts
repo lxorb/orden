@@ -55,13 +55,11 @@ export const DESKTOP_ACTIVE_WITHIN = 2 * 60 * 1000
 
 const DAY_MINUTES = 24 * 60
 
-export function levelOf(notify: Notify | null, members: number): Notify {
-  return notify ?? (members > MENTIONS_ONLY_PAST ? 'mentions' : 'all')
-}
+export const levelOf = (notify: Notify | null, members: number): Notify =>
+  notify ?? (members > MENTIONS_ONLY_PAST ? 'mentions' : 'all')
 
-export function isMuted(mutedUntil: number | null, now: number): boolean {
-  return mutedUntil !== null && mutedUntil > now
-}
+export const isMuted = (mutedUntil: number | null, now: number): boolean =>
+  mutedUntil !== null && mutedUntil > now
 
 const WORDY = '[\\p{L}\\p{N}_]'
 
@@ -116,19 +114,15 @@ export function decide(asked: Asked): Ping {
   return inHours(hush.hours, moment) ? 'show' : 'hours'
 }
 
-export function owesPush(ping: Ping, desktopActive: boolean): boolean {
-  return ping === 'show' && !desktopActive
-}
+export const owesPush = (ping: Ping, desktopActive: boolean): boolean =>
+  ping === 'show' && !desktopActive
 
-export function isKeywords(value: unknown): value is string[] {
-  return (
-    Array.isArray(value) &&
-    value.length <= MOST_KEYWORDS &&
-    value.every(
-      (one) => typeof one === 'string' && one.trim().length > 0 && one.length <= LONGEST_KEYWORD,
-    )
+export const isKeywords = (value: unknown): value is string[] =>
+  Array.isArray(value) &&
+  value.length <= MOST_KEYWORDS &&
+  value.every(
+    (one) => typeof one === 'string' && one.trim().length > 0 && one.length <= LONGEST_KEYWORD,
   )
-}
 
 export function isHours(value: unknown): value is Hours {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false

@@ -39,13 +39,9 @@ export function enginesFor(language: string): readonly Engine[] {
 
 const ALL: readonly Engine[] = [...EVERYWHERE, ...Object.values(REGIONAL).flat()]
 
-export function engineById(id: string): Engine | null {
-  return ALL.find((one) => one.id === id) ?? null
-}
+export const engineById = (id: string): Engine | null => ALL.find((one) => one.id === id) ?? null
 
-export function engineHome(search: string): string {
-  return rootOf(search) ?? rootOf(SEARCH) ?? SEARCH
-}
+export const engineHome = (search: string): string => rootOf(search) ?? rootOf(SEARCH) ?? SEARCH
 
 function rootOf(search: string): string | null {
   let parsed: URL

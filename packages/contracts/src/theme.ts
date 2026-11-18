@@ -81,10 +81,7 @@ export interface ThemePorts {
 
 export const SCHEMES: readonly Scheme[] = ['dark', 'light']
 
-export function isScheme(value: unknown): value is Scheme {
-  return value === 'dark' || value === 'light'
-}
+export const isScheme = (value: unknown): value is Scheme => value === 'dark' || value === 'light'
 
-export function isSchemeChoice(value: unknown): value is SchemeChoice {
-  return value === 'system' || isScheme(value)
-}
+export const isSchemeChoice = (value: unknown): value is SchemeChoice =>
+  value === 'system' || isScheme(value)

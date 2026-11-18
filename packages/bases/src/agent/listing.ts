@@ -7,27 +7,25 @@ import { AgentError, type TaskOut, taskOut } from './tasks'
 
 export const VIEWS = ['todos', 'inbox', 'today', 'upcoming', 'logbook'] as const
 
-function everything(filters?: Filter): Base {
-  return {
-    formulas: {},
-    properties: {},
-    summaries: {},
-    views: [
-      {
-        type: 'list',
-        name: '',
-        ...(filters === undefined ? {} : { filters }),
-        order: [],
-        sort: [{ property: 'task.date', direction: 'ASC' }],
-        summaries: {},
-        orden: { rows: 'tasks', kept: {} },
-        options: {},
-      },
-    ],
-    orden: { properties: {}, kept: {} },
-    kept: {},
-  }
-}
+const everything = (filters?: Filter): Base => ({
+  formulas: {},
+  properties: {},
+  summaries: {},
+  views: [
+    {
+      type: 'list',
+      name: '',
+      ...(filters === undefined ? {} : { filters }),
+      order: [],
+      sort: [{ property: 'task.date', direction: 'ASC' }],
+      summaries: {},
+      orden: { rows: 'tasks', kept: {} },
+      options: {},
+    },
+  ],
+  orden: { properties: {}, kept: {} },
+  kept: {},
+})
 
 function narrowed(base: Base, filter: Filter): Base {
   const [view, ...rest] = base.views

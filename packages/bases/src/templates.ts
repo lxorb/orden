@@ -28,8 +28,8 @@ function shifted(today: string, by: string | undefined): string {
 
 const PLACEHOLDER = /\{\{\s*(title|date|time)\s*([+-]\d+[dwMy])?\s*(?::([^}]*))?\}\}/g
 
-export function fillTemplate(text: string, filling: Filling): string {
-  return text.replace(
+export const fillTemplate = (text: string, filling: Filling): string =>
+  text.replace(
     PLACEHOLDER,
     (_written, name: string, by: string | undefined, format: string | undefined) => {
       if (name === 'title') return filling.title
@@ -39,7 +39,6 @@ export function fillTemplate(text: string, filling: Filling): string {
       return name === 'time' ? filling.time : iso
     },
   )
-}
 
 const TEMPLATE_KEYS = ['repeat', 'made', 'folder'] as const
 

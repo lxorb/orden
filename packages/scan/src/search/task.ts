@@ -16,6 +16,5 @@ export function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[]
   }
 }
 
-export function taskWordsOf(hit: Hit): string | null {
-  return shownWhole(hit.text) ? (readTask(hit.text)?.text ?? null) : null
-}
+export const taskWordsOf = (hit: Hit): string | null =>
+  shownWhole(hit.text) ? (readTask(hit.text)?.text ?? null) : null

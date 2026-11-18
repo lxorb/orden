@@ -7,24 +7,22 @@ const ME: Who = 'user:me'
 const LUCILE: Who = 'user:lucile'
 const AT = Date.UTC(2026, 9, 7, 14, 40)
 
-function message(fields: Partial<Message>): Message {
-  return {
-    id: '01K6Z8Q3V8A0000000000000AB',
-    seq: 1,
-    at: AT,
-    author: LUCILE,
-    body: 'Reading it tonight',
-    alsoToChat: false,
-    files: [],
-    mentions: [],
-    reactions: {},
-    pinned: false,
-    history: [],
-    deleted: false,
-    replies: 0,
-    ...fields,
-  }
-}
+const message = (fields: Partial<Message>): Message => ({
+  id: '01K6Z8Q3V8A0000000000000AB',
+  seq: 1,
+  at: AT,
+  author: LUCILE,
+  body: 'Reading it tonight',
+  alsoToChat: false,
+  files: [],
+  mentions: [],
+  reactions: {},
+  pinned: false,
+  history: [],
+  deleted: false,
+  replies: 0,
+  ...fields,
+})
 
 const reading = {
   me: ME,

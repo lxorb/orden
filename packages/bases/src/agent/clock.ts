@@ -1,7 +1,7 @@
 import type { Context } from '../types'
 
-function partsOf(now: Date, zone?: string): Record<string, string> {
-  return Object.fromEntries(
+const partsOf = (now: Date, zone?: string): Record<string, string> =>
+  Object.fromEntries(
     new Intl.DateTimeFormat('en-CA', {
       ...(zone ? { timeZone: zone } : {}),
       year: 'numeric',
@@ -15,7 +15,6 @@ function partsOf(now: Date, zone?: string): Record<string, string> {
       .formatToParts(now)
       .map((part) => [part.type, part.value]),
   )
-}
 
 export function clockOf(now: Date, zone?: string): Pick<Context, 'today' | 'now' | 'zone'> {
   const parts = partsOf(now, zone)

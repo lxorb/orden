@@ -9,9 +9,8 @@ export interface OccurrenceOptions {
   created?: boolean
 }
 
-function referenceOf(task: TaskFields): string | undefined {
-  return task.due ?? task.scheduled ?? task.start ?? task.deadline
-}
+const referenceOf = (task: TaskFields): string | undefined =>
+  task.due ?? task.scheduled ?? task.start ?? task.deadline
 
 const later = (a: string, b: string) => (a > b ? a : b)
 
@@ -199,8 +198,7 @@ export function skip(line: string, today: string, options: OccurrenceOptions = {
   return next ? writeTask(line, changeBetween(task, { ...next, status: task.status })) : []
 }
 
-export function finish(line: string): TextEdit[] {
-  return writeTask(line, { done: true, recurrence: null })
-}
+export const finish = (line: string): TextEdit[] =>
+  writeTask(line, { done: true, recurrence: null })
 
 export { todayOf }
