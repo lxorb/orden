@@ -118,5 +118,4 @@ def drive(browser: Browser) -> None:
     check(page, "left", "y")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a press beside the pens' panels closes them, and a stroke beside the bar is drawn"))
+raise SystemExit(DRIVE.run(drive, "a press beside the pens' panels closes them, and a stroke beside the bar is drawn"))

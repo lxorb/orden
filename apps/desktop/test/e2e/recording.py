@@ -532,5 +532,4 @@ def main() -> int:
 
     return DRIVE.verdict("a recording, a transcript and an old meeting note, on a pointer and a finger")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

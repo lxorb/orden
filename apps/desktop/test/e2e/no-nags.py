@@ -125,5 +125,4 @@ def drive(browser: Browser) -> None:
     settled_with_nothing_left(browser, "desktop")
     settled_with_nothing_left(browser, "phone")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a first launch, signed out, asks nobody to sign in"))
+raise SystemExit(DRIVE.run(drive, "a first launch, signed out, asks nobody to sign in"))

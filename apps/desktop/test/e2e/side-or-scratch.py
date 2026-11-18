@@ -161,5 +161,4 @@ def drive(browser: Browser) -> None:
     desktop(browser)
     phone(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the right side and the scratchpad take turns"))
+raise SystemExit(DRIVE.run(drive, "the right side and the scratchpad take turns"))

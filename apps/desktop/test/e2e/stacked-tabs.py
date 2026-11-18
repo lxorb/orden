@@ -212,5 +212,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "a pane lays its notes out as columns when it is asked to")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

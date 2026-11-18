@@ -455,5 +455,4 @@ def main() -> int:
     print("\nboth browsers wrote in one note and neither lost a word", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

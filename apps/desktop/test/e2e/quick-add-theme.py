@@ -74,5 +74,4 @@ def drive(browser: Browser) -> None:
     shot(quick, "04-classic-system-orange")
     shot(app, "05-the-app")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "quick add wears the theme, scheme and accent the app wears"))
+raise SystemExit(DRIVE.run(drive, "quick add wears the theme, scheme and accent the app wears"))

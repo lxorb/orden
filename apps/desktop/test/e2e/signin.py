@@ -349,5 +349,4 @@ def main() -> int:
     print("\nsigning in said so, counted, lifted on its own, and never trapped anybody", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

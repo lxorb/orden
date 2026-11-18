@@ -88,5 +88,4 @@ def main() -> int:
     say(f"shots in {OUT}")
     return 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

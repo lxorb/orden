@@ -149,5 +149,4 @@ def main() -> int:
 
     return DRIVE.verdict("every cell of the picker in One colour drawn in one colour, inside its box")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

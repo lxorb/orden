@@ -50,5 +50,4 @@ def drive(browser: Browser) -> None:
     page.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the Links panel's rows stay in place"))
+raise SystemExit(DRIVE.run(drive, "the Links panel's rows stay in place"))

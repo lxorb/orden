@@ -69,5 +69,4 @@ def drive(browser: Browser) -> None:
         toggling(page, scheme)
         page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Shift twice opens the palette and puts it away"))
+raise SystemExit(DRIVE.run(drive, "Shift twice opens the palette and puts it away"))

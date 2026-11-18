@@ -99,5 +99,4 @@ def drive(browser: Browser) -> None:
     page.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a quick question's answer is followed only while the reader is at its end"))
+raise SystemExit(DRIVE.run(drive, "a quick question's answer is followed only while the reader is at its end"))

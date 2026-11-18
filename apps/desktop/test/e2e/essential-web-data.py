@@ -195,5 +195,4 @@ def drive(_browser: object) -> None:
     if last != "cookie:who=apart":
         wrong(f"taken out of the Essentials, the tab saw {last}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a web note keeps its own web data in the Essentials", browser=False))
+raise SystemExit(DRIVE.run(drive, "a web note keeps its own web data in the Essentials", browser=False))

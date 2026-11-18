@@ -268,5 +268,4 @@ def drive(browser: Browser) -> None:
     say("--- asked ---")
     asked(page)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the scratchpad keeps, finds and moves; the quick question answers in place"))
+raise SystemExit(DRIVE.run(drive, "the scratchpad keeps, finds and moves; the quick question answers in place"))

@@ -736,5 +736,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "every gap the audit found is closed in the built app")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

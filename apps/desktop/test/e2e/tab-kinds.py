@@ -110,5 +110,4 @@ def drive(browser: Browser) -> None:
     drive_on(browser, "desktop", False)
     drive_on(browser, "phone", True)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a kind switched off is offered nowhere, and back on, it is again"))
+raise SystemExit(DRIVE.run(drive, "a kind switched off is offered nowhere, and back on, it is again"))

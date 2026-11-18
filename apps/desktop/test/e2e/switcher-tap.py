@@ -110,5 +110,4 @@ def drive(browser: Browser) -> None:
     )
     check(browser, "desktop", False, viewport={"width": 1280, "height": 820})
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the switcher's button opens and closes it, by finger and by mouse"))
+raise SystemExit(DRIVE.run(drive, "the switcher's button opens and closes it, by finger and by mouse"))

@@ -149,5 +149,4 @@ def drive(browser: Browser) -> None:
     shot(page, "web-moved")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "notes ask before moving to another space, web tabs do not"))
+raise SystemExit(DRIVE.run(drive, "notes ask before moving to another space, web tabs do not"))

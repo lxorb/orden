@@ -75,5 +75,4 @@ def drive(browser: Browser) -> None:
     if not kept:
         wrong("the words B had unwritten went with the note")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

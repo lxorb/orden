@@ -79,5 +79,4 @@ def drive(browser: Browser) -> None:
     if child not in page.evaluate(ROWS):
         wrong(f"a second click on {parent} hid its subnotes")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

@@ -105,5 +105,4 @@ def drive(browser: Browser) -> None:
     same_build(browser)
     newer_build(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a lost chunk comes back, by Reload or by itself"))
+raise SystemExit(DRIVE.run(drive, "a lost chunk comes back, by Reload or by itself"))

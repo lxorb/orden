@@ -229,5 +229,4 @@ def drive(browser: Browser) -> None:
     if space != ids["bee"] or not back or not back["here"]:
         wrong(f"a tab closed in Bee did not come back in Bee: {back} in {space}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

@@ -183,5 +183,4 @@ def main() -> int:
         drive(browser, worker, token, ids)
     return DRIVE.verdict("a move to another space moves, on the disk, the account and every device")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

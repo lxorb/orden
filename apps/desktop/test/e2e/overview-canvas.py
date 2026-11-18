@@ -281,5 +281,4 @@ def drive(browser: Browser) -> None:
             wrong(f"[carry] windows of two spaces lie on each other once let go: {crossed}")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the overview's canvas: riding tabs, a quiet bar, zoom, tidy, choosing, carrying"))
+raise SystemExit(DRIVE.run(drive, "the overview's canvas: riding tabs, a quiet bar, zoom, tidy, choosing, carrying"))

@@ -39,5 +39,4 @@ def drive(browser: Browser) -> None:
     if undone != {"undone": 1} or "strikes" not in words:
         wrong(f"the edit stayed: {undone}, {words!r}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

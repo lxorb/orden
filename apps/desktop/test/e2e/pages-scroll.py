@@ -163,5 +163,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a long PDF in a page note scrolls as smoothly with its words as without them"))
+raise SystemExit(DRIVE.run(drive, "a long PDF in a page note scrolls as smoothly with its words as without them"))

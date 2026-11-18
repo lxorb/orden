@@ -209,5 +209,4 @@ def look(browser: Browser, tag: str) -> None:
 def drive(browser: Browser) -> None:
     look(browser, "light")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every bubble is drawn whole, under what it is about"))
+raise SystemExit(DRIVE.run(drive, "every bubble is drawn whole, under what it is about"))

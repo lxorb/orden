@@ -253,5 +253,4 @@ def main() -> int:
         page.context.close()
     return DRIVE.verdict("all good")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

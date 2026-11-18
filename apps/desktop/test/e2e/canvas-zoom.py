@@ -181,5 +181,4 @@ def drive_both(browser: Browser) -> None:
     drive(browser)
     drive_far(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive_both, "the plane goes back to 100% from the bar, and a pen is as wide as it shows zoomed in and out"))
+raise SystemExit(DRIVE.run(drive_both, "the plane goes back to 100% from the bar, and a pen is as wide as it shows zoomed in and out"))

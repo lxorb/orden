@@ -441,5 +441,4 @@ def drive(browser: Browser) -> None:
     for kind, width, height, scheme in LOOKS:
         look(browser, kind, width, height, scheme)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Settings > Online terminal is laid out in every look"))
+raise SystemExit(DRIVE.run(drive, "Settings > Online terminal is laid out in every look"))

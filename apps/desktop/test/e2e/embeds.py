@@ -277,5 +277,4 @@ def main() -> int:
 
     return DRIVE.verdict("media plays, files are cards, a chart draws, and nothing loads unasked")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

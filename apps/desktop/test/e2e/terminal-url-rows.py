@@ -145,5 +145,4 @@ def drive(browser: Browser) -> None:
     page.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a terminal address over three rows is one whole link"))
+raise SystemExit(DRIVE.run(drive, "a terminal address over three rows is one whole link"))

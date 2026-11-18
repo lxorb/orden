@@ -82,5 +82,4 @@ def main() -> int:
         look(browser)
     return DRIVE.verdict("a label in Latin stands on its own face's line")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

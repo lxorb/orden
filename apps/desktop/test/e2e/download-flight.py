@@ -118,5 +118,4 @@ def main() -> int:
 
     return DRIVE.verdict("a download flies to where downloads are, and is said")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

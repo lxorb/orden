@@ -65,5 +65,4 @@ def drive(browser: Browser) -> None:
         page.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a terminal another window types in shows Take over"))
+raise SystemExit(DRIVE.run(drive, "a terminal another window types in shows Take over"))

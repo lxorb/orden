@@ -447,5 +447,4 @@ def main() -> int:
 
     return DRIVE.verdict("the note behind a link reads exactly as the note does")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

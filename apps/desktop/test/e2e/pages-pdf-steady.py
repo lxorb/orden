@@ -265,5 +265,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a page note with a heavy PDF opens, edits and zooms without holding the app or showing black"))
+raise SystemExit(DRIVE.run(drive, "a page note with a heavy PDF opens, edits and zooms without holding the app or showing black"))

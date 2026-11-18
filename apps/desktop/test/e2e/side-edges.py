@@ -145,5 +145,4 @@ def drive(browser: Any) -> None:
         wrong(f"a touch screen's bar lost its file list button: {toggles(phone)}")
     shot(phone, "08-touch")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

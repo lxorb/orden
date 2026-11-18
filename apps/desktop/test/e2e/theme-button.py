@@ -111,5 +111,4 @@ def drive(browser: Browser) -> None:
     page.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Themes in the account menu opens a picker that tries a theme see-through and keeps it"))
+raise SystemExit(DRIVE.run(drive, "Themes in the account menu opens a picker that tries a theme see-through and keeps it"))

@@ -126,5 +126,4 @@ def drive(browser: Browser) -> None:
     checked(page, "a word note, the right side open", "bar")
     context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the note's corners stay inside its pane"))
+raise SystemExit(DRIVE.run(drive, "the note's corners stay inside its pane"))

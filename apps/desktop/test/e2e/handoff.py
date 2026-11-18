@@ -194,6 +194,5 @@ def drive(browser: Browser) -> None:
     nothing(browser)
     elsewhere(browser)
 
-if __name__ == "__main__":
-    built()
-    raise SystemExit(DRIVE.run(drive, passed="the notes come over, and only to the new address"))
+built()
+raise SystemExit(DRIVE.run(drive, passed="the notes come over, and only to the new address"))

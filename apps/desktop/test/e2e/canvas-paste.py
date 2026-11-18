@@ -135,5 +135,4 @@ def main() -> int:
         drive(browser, token)
     return DRIVE.verdict("a picture pasted onto a canvas is the picture, signed in and not")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -218,10 +218,9 @@ def drive(browser: Browser) -> None:
     overlapping(browser)
     cornered(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(
-        DRIVE.run(
-            drive,
-            "the overview's windows never lie on each other or show nothing, one see-through bar, further out, corners that turn",
-        )
+raise SystemExit(
+    DRIVE.run(
+        drive,
+        "the overview's windows never lie on each other or show nothing, one see-through bar, further out, corners that turn",
     )
+)

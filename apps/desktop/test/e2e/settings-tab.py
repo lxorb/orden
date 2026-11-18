@@ -128,5 +128,4 @@ def drive(browser: Browser) -> None:
     phone(browser)
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Settings opens as one tab, by every way in, on a desktop and a phone"))
+raise SystemExit(DRIVE.run(drive, "Settings opens as one tab, by every way in, on a desktop and a phone"))

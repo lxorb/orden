@@ -337,5 +337,4 @@ def main() -> int:
     print("\nPASSED: a space rename leaves the note writing in both directions")
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

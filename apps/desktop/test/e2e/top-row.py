@@ -127,5 +127,4 @@ def drive(browser: Any) -> None:
     page.set_viewport_size({"width": 900, "height": 600})
     check(page, "07-narrow")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

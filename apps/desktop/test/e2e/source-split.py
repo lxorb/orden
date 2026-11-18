@@ -100,5 +100,4 @@ def drive(browser: Browser) -> None:
     shot(page, "04-new-tab")
     context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "each pane keeps its own source mode"))
+raise SystemExit(DRIVE.run(drive, "each pane keeps its own source mode"))

@@ -415,5 +415,4 @@ def main() -> int:
     return DRIVE.verdict("Orden Pass on its own name, light and dark, a rounded tab icon: signed in, set up, a login made, locked and opened, the corner without a theme switch and with the face or its initial, a phone, a slow vault never offers setup")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

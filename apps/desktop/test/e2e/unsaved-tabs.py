@@ -219,5 +219,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("a tab with no file waits for a place, and a web note is open once")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

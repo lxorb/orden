@@ -96,5 +96,4 @@ def main() -> int:
 
     return DRIVE.verdict("the tree was shot light and dark")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

@@ -154,5 +154,4 @@ def drive(browser: Browser) -> None:
     shot(page, "canvas")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a right click's menu stays, and a held one chooses the row it is let go of on"))
+raise SystemExit(DRIVE.run(drive, "a right click's menu stays, and a held one chooses the row it is let go of on"))

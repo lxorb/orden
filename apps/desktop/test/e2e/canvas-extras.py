@@ -110,5 +110,4 @@ def drive(browser: Browser) -> None:
     DRIVE.shot(page, "01-a-card-down")
     page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "an Obsidian canvas edited here keeps what this app does not read"))
+raise SystemExit(DRIVE.run(drive, "an Obsidian canvas edited here keeps what this app does not read"))

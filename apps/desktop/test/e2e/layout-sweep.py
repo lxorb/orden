@@ -757,5 +757,4 @@ def main() -> int:
     say(f"swept in {time.monotonic() - started:.0f}s")
     return DRIVE.verdict()
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

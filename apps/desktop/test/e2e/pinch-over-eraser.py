@@ -146,5 +146,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "two fingers over the eraser zoom and leave the ink, one finger rubs out"))
+raise SystemExit(DRIVE.run(drive, "two fingers over the eraser zoom and leave the ink, one finger rubs out"))

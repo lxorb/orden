@@ -234,5 +234,4 @@ def main() -> int:
 
     return DRIVE.verdict("the question comes up over the held note and says nothing it need not")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

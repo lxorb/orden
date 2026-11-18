@@ -80,5 +80,4 @@ def main() -> int:
     print(f"{same} identical, {differ} differ, {missing} in one run only, of {len(names)}")
     return 1 if differ or missing else 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

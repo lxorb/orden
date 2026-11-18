@@ -326,5 +326,4 @@ def main() -> int:
 
     return DRIVE.verdict("code that never ends never takes the app with it")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

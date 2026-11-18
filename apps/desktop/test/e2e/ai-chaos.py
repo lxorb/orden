@@ -144,5 +144,4 @@ def drive(browser: Browser) -> None:
     page.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the AI panel through three chats answering at once, switched, archived, deleted and stopped"))
+raise SystemExit(DRIVE.run(drive, "the AI panel through three chats answering at once, switched, archived, deleted and stopped"))

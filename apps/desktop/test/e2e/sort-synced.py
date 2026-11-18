@@ -83,5 +83,4 @@ def main() -> int:
         drive(browser, worker, token, space)
     return DRIVE.verdict("a space's order is the space's on every device")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

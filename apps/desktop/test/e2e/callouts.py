@@ -329,5 +329,4 @@ def main() -> int:
 
     return DRIVE.verdict("every kind of callout is drawn, named and coloured")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

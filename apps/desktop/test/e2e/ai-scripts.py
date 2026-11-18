@@ -111,5 +111,4 @@ def drive(browser: Browser) -> None:
         page.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "an answer's subscripts and superscripts are drawn, whichever way they are written"))
+raise SystemExit(DRIVE.run(drive, "an answer's subscripts and superscripts are drawn, whichever way they are written"))

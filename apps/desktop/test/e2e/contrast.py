@@ -308,5 +308,4 @@ def main() -> int:
 
     return DRIVE.verdict("contrast is a theme, and it measures up on both of its sides")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

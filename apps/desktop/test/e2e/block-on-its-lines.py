@@ -88,5 +88,4 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Control+z")
     DRIVE.wait_for(page, f"() => window.orden.state.doc.toString() === {WORDS!r}", "the words as they were")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

@@ -115,5 +115,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("the AI panel's chats are one list, and the open one stays as the space changes")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

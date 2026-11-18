@@ -144,5 +144,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("Settings has an ask bar whose agent finds settings and changes one only once confirmed")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

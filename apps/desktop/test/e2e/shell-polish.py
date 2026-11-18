@@ -836,5 +836,4 @@ def main() -> int:
 
     return DRIVE.verdict("the bar is one row and every mark is centred")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

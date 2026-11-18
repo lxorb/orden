@@ -482,5 +482,4 @@ def main() -> int:
 
     return DRIVE.verdict("a picture pasted, named, imported and dropped draws everywhere")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

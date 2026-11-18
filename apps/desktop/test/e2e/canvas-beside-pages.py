@@ -57,5 +57,4 @@ def drive(browser: Any) -> None:
         wrong("the page note took up a tool it has not got")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

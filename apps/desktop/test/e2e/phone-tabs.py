@@ -172,7 +172,6 @@ def drive(browser: Browser) -> None:
     phone(browser, True)
 
 
-if __name__ == "__main__":
-    raise SystemExit(
-        DRIVE.run(drive, "a phone gets around by a tab bar, and a note pushed over it comes back by a back button")
-    )
+raise SystemExit(
+    DRIVE.run(drive, "a phone gets around by a tab bar, and a note pushed over it comes back by a back button")
+)

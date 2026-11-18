@@ -110,5 +110,4 @@ def main() -> int:
 
     return DRIVE.verdict("a layer over the Settings tab is the first to close, and the tab stays")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

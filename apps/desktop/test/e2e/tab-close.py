@@ -131,5 +131,4 @@ def drive(browser: Browser) -> None:
             closing(page, scheme, icons)
             page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a closed tab shrinks out of the way, and the rest hold still"))
+raise SystemExit(DRIVE.run(drive, "a closed tab shrinks out of the way, and the rest hold still"))

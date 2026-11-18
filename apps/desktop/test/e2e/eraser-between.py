@@ -128,5 +128,4 @@ def drive(browser: Browser) -> None:
     whole_stroke(page, "createCanvas")
     whole_stroke(page, "createPages")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

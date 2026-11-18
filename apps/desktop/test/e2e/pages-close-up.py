@@ -106,5 +106,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a page note zoomed in on a dense screen is drawn sharp where it is seen"))
+raise SystemExit(DRIVE.run(drive, "a page note zoomed in on a dense screen is drawn sharp where it is seen"))

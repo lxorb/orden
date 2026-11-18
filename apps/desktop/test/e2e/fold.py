@@ -494,5 +494,4 @@ def main() -> int:
 
     return DRIVE.verdict("a note folds, stays folded, and comes back folded")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

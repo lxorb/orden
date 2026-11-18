@@ -353,5 +353,4 @@ def main() -> int:
 
     return DRIVE.verdict("the right side opens where it should; Ask cites and opens")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

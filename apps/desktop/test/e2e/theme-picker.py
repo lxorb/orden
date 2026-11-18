@@ -238,5 +238,4 @@ def main() -> int:
     say("every promise kept")
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

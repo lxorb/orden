@@ -751,5 +751,4 @@ def main() -> int:
 
     return DRIVE.verdict("every surface answers a keyboard, and axe finds nothing serious")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

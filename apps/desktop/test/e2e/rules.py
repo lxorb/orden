@@ -132,5 +132,4 @@ def main() -> int:
 
     return DRIVE.verdict("the rule is a hairline and nothing else, and it can be typed")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

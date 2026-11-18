@@ -321,5 +321,4 @@ def main() -> int:
         " file's own mark in the strip as in the list, down to the chip a tab behind is drawn as"
     )
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

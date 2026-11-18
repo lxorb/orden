@@ -52,5 +52,4 @@ def main() -> int:
     return DRIVE.verdict("the app is in English, left to right, whatever the system speaks")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

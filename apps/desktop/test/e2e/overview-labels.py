@@ -107,5 +107,4 @@ def drive(browser: Browser) -> None:
     look(page, "05-dark")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the overview's window captions stay readable zoomed out"))
+raise SystemExit(DRIVE.run(drive, "the overview's window captions stay readable zoomed out"))

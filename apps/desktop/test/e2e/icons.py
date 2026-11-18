@@ -333,5 +333,4 @@ def main() -> int:
         "icons on a note, a canvas and a folder, the picker over every set, its cells' marks, and an emoji's outline"
     )
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

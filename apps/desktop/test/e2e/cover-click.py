@@ -214,5 +214,4 @@ def drive(browser: Browser) -> None:
     say(f"the band, narrow: {band(page)} pixels")
     click_round(page, "09-narrow", near)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every click in a note with a cover lands in the word clicked"))
+raise SystemExit(DRIVE.run(drive, "every click in a note with a cover lands in the word clicked"))

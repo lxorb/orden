@@ -503,5 +503,4 @@ def main() -> int:
 
     return DRIVE.verdict("a chat made, written in, reacted to, edited and deleted live between three browsers")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

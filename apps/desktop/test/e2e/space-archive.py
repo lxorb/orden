@@ -134,5 +134,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "a whole space is put away out of every list, and comes back")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

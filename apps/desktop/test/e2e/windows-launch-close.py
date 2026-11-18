@@ -117,5 +117,4 @@ def drive(browser: Browser) -> None:
     kept_through(page, "list up", True, total)
     kept_through(page, "set building", True, total)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

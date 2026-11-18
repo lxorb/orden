@@ -365,5 +365,4 @@ def report(label: str) -> None:
     for name, one_run in runs.items():
         print(name, json.dumps(one_run["phone"]["tokens"]))
 
-if __name__ == "__main__":
-    sys.exit(run(sys.argv[1] if len(sys.argv) > 1 else "before"))
+sys.exit(run(sys.argv[1] if len(sys.argv) > 1 else "before"))

@@ -168,5 +168,4 @@ def main() -> int:
 
     return DRIVE.verdict()
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

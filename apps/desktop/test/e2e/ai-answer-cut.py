@@ -144,5 +144,4 @@ def drive(browser: Browser) -> None:
     send(page, "go on")
     panel_says(page, "a long one", "Going on.")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

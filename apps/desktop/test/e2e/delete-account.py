@@ -122,5 +122,4 @@ def drive(browser: Browser) -> None:
             "/v1/second/confirm", token, {"holding": begun["holding"], "code": phone.code()}
         )
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "an account with a second factor deletes itself"))
+raise SystemExit(DRIVE.run(drive, "an account with a second factor deletes itself"))

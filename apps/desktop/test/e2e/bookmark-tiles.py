@@ -326,5 +326,4 @@ def main() -> int:
 
     return DRIVE.verdict("bookmarks are tiles, the open one lifted, and they move by hand")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

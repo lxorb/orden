@@ -127,5 +127,4 @@ def drive(browser: Browser) -> None:
         wrong("[home] the sidebar is not back where it was")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the overview happens in the window, nothing seen twice"))
+raise SystemExit(DRIVE.run(drive, "the overview happens in the window, nothing seen twice"))

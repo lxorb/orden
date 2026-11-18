@@ -64,5 +64,4 @@ def drive(browser):
     if got["up"] != 1.1:
         wrong(f"text size by key: {got['up']}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))
