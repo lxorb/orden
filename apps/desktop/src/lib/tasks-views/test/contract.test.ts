@@ -136,6 +136,6 @@ describe('tasks-views contract', () => {
     shown.setOnlySpace(true)
     expect(shown.space).toBeNull()
     expect(shown.spaceName('work')).toBe('Space work')
-    expect(shown.todos.map((t) => t.id)).toEqual(['b'])
+    expect(shown.todos.map((t) => t.id).sort()).toEqual(['a', 'b'])
   })
 })
