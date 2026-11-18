@@ -133,7 +133,6 @@ const KNOWN: Record<string, Check> = {
   keepVersions: oneOf('keepVersions', KEEP_DAYS),
   conflicts: wordOf('conflicts', CONFLICT_RULES),
   remindBefore: oneOf('remindBefore', REMIND_BEFORE),
-  undatedInToday: switched('undatedInToday'),
   canvasTurns: switched('canvasTurns'),
   canvasTurnSnaps: switched('canvasTurnSnaps'),
   highlightTone: (value) =>
@@ -159,7 +158,7 @@ const KNOWN: Record<string, Check> = {
   look: lookWrong,
 }
 
-const RETIRED: ReadonlySet<string> = new Set(['spellWords', 'pull'])
+const RETIRED: ReadonlySet<string> = new Set(['spellWords', 'pull', 'undatedInToday'])
 
 const MOST_SHORTCUTS = 200
 const LONGEST_ID = 64

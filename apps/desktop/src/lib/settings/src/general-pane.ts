@@ -307,19 +307,7 @@ export function generalPane(): Pane {
       },
       {
         title: 'Add task',
-        fields: [
-          ...settingFieldsIn('general', 'Add task'),
-          {
-            kind: 'switch',
-            key: 'general.undatedInToday',
-            label: 'Show tasks without a start date in Today',
-            hint: 'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
-            words: ['tasks', 'today', 'start date', 'undated', 'no date', 'todoist'],
-            initial: DEFAULTS.undatedInToday,
-            get: () => modes.undatedInToday,
-            set: (on) => modes.setUndatedInToday(on),
-          },
-        ],
+        fields: [...settingFieldsIn('general', 'Add task')],
       },
       ...(__EVEN_PLUGIN__
         ? []
