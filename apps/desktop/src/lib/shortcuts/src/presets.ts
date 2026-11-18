@@ -6,7 +6,6 @@ export interface Preset {
   label: () => string
   keys: KeyOverrides
   mac?: KeyOverrides
-  vim: boolean
 }
 
 const OBSIDIAN: KeyOverrides = {
@@ -82,11 +81,10 @@ const VSCODE: KeyOverrides = {
 }
 
 export const PRESETS: Preset[] = [
-  { id: 'default', label: () => 'Default', keys: {}, vim: false },
-  { id: 'notion', label: () => 'Notion', keys: NOTION, mac: NOTION_MAC, vim: false },
-  { id: 'obsidian', label: () => 'Obsidian', keys: OBSIDIAN, vim: false },
-  { id: 'vscode', label: () => 'VS Code', keys: VSCODE, vim: false },
-  { id: 'vim', label: () => 'Vim', keys: {}, vim: true },
+  { id: 'default', label: () => 'Default', keys: {} },
+  { id: 'notion', label: () => 'Notion', keys: NOTION, mac: NOTION_MAC },
+  { id: 'obsidian', label: () => 'Obsidian', keys: OBSIDIAN },
+  { id: 'vscode', label: () => 'VS Code', keys: VSCODE },
 ]
 
 export const presetById = (id: string): Preset | undefined => PRESETS.find((one) => one.id === id)
