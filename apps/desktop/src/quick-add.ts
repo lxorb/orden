@@ -1,6 +1,7 @@
 import './lib/backend-ports'
 import './lib/platform/src/api'
-import './lib/sync-ports'
+import './lib/sync-base-ports'
+import './lib/no-workspace-ports'
 import './lib/theme-ports'
 import '@orden/themes'
 import { mount } from 'svelte'

@@ -487,3 +487,12 @@ describe('the quick add window', () => {
     }
   })
 })
+
+describe('the windows that start sync without the workspace', () => {
+  test.each(['quick-add.ts', 'pass-web.ts'])('%s loads no workspace at startup', (entry) => {
+    const reached = eagerGraph(join(import.meta.dirname, '../src', entry)).files.map((one) =>
+      one.replace(/\\/g, '/'),
+    )
+    expect(reached.filter((one) => one.includes('/lib/workspace/'))).toEqual([])
+  })
+})
