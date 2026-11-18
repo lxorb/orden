@@ -1,7 +1,6 @@
 export {
   type Entry,
   type Heading,
-  type Naming,
   type NewKind,
   type NoteDoc,
   paletteWords,
@@ -10,7 +9,6 @@ export {
   type TabKind,
   tabOverview,
   toggleTabOverview,
-  type TreeOptions,
   workspace,
 } from './workspace.svelte'
 export { agentMarks, type TabAct, type Worn } from './agent-marks.svelte'
@@ -80,16 +78,7 @@ export const blankTabs = () => import('./blank-tabs.svelte')
 
 export const outsideHearing = () => import('./outside.svelte')
 
-export {
-  besideAt,
-  howFor,
-  type LinkAsk,
-  linkAsk,
-  middleOpens,
-  type Press,
-  type TabAsk,
-  tabAsk,
-} from './new-tab'
+export { howFor, linkAsk, middleOpens, type Press, type TabAsk, tabAsk } from './new-tab'
 
 export { carvable, mergeable } from './composing'
 
