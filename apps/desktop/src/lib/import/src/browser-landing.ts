@@ -1,7 +1,7 @@
 import type { BrowserId } from '@orden/contracts'
 import type { Space } from '../../workspace/src/api'
 import { arcSidebar } from './arc'
-import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
+import { bringHistory, droppedLine, takeEngine, withMarks } from './browser-extras'
 import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'
 import { chromiumSidebar } from './chromium'
 import { firefoxSidebar } from './firefox'
@@ -85,7 +85,7 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
   const engine = profile.files.includes(SEARCH)
     ? mozillaEngine(mozJson(await browserFile(profile, SEARCH)))
     : null
-  return { sidebar: firefoxSidebar(session, bookmarks, name, folderWords()), engine, lost: [] }
+  return { sidebar: firefoxSidebar(session, bookmarks, name), engine, lost: [] }
 }
 
 const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
@@ -120,7 +120,7 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
         ]
       : []
   return {
-    sidebar: chromiumSidebar(session, bookmarks, name, folderWords(), account),
+    sidebar: chromiumSidebar(session, bookmarks, name, account),
     engine: await preferencesEngine(profile),
     lost,
   }
@@ -181,7 +181,6 @@ async function readSafari(name: string): Promise<Read | null> {
         session: files.session ?? null,
       },
       name,
-      folderWords(),
     ),
     engine: safariEngine(files.engine),
     lost: [],

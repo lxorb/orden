@@ -3,22 +3,8 @@ import { fromBase64 } from '../../platform/src/bytes'
 import { readShortcut } from '@orden/scan/shortcut'
 import { chromiumSidebar } from './chromium'
 import { BOOKMARKS, SESSION } from './chromium.fixture'
-import type { FolderWords } from './sidebar-made'
 import { sidebarImport } from './sidebar-plan'
 import { readSnss } from './snss'
-
-const WORDS: FolderWords = {
-  bookmarks: 'Bookmarks',
-  savedGroups: 'Saved groups',
-  group: 'Tab group',
-  toolbar: 'Bookmarks toolbar',
-  bar: 'Bookmarks bar',
-  menu: 'Bookmarks menu',
-  other: 'Other bookmarks',
-  mobile: 'Mobile bookmarks',
-  favorites: 'Favorites',
-  readingList: 'Reading List',
-}
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')
 
@@ -32,7 +18,7 @@ function space(
   bookmarks: unknown = BOOKMARKS,
   tabs: ReturnType<typeof session> | null = session(),
 ) {
-  const sidebar = chromiumSidebar(tabs, bookmarks, 'Chrome', WORDS)
+  const sidebar = chromiumSidebar(tabs, bookmarks, 'Chrome')
   return sidebarImport(sidebar, NOW, 'none').spaces[0]
 }
 
@@ -84,7 +70,7 @@ describe("Chrome's tabs and bookmarks as Orden's", () => {
         synced: { children: [{ type: 'url', url: 'https://phone.example.com/', name: 'Phone' }] },
       },
     }
-    const sidebar = chromiumSidebar(null, BOOKMARKS, 'Chrome', WORDS, account)
+    const sidebar = chromiumSidebar(null, BOOKMARKS, 'Chrome', account)
     const chrome = sidebarImport(sidebar, NOW, 'none').spaces[0]
     expect(chrome?.order.Bookmarks).toEqual([
       'Bookmarks bar',

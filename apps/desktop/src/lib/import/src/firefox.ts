@@ -1,16 +1,7 @@
 import type { Sidebar } from './sidebar'
-import {
-  type FolderWords,
-  isObject,
-  list,
-  Made,
-  type Said,
-  siteMark,
-  type Step,
-  text,
-} from './sidebar-made'
+import { WORDS, isObject, list, Made, type Said, siteMark, type Step, text } from './sidebar-made'
 
-const ROOTS: [string, keyof FolderWords][] = [
+const ROOTS: [string, keyof typeof WORDS][] = [
   ['toolbar_____', 'toolbar'],
   ['menu________', 'menu'],
   ['unfiled_____', 'other'],
@@ -18,30 +9,25 @@ const ROOTS: [string, keyof FolderWords][] = [
 ]
 const TAGS = 'tags________'
 
-export function firefoxSidebar(
-  session: unknown,
-  bookmarks: unknown,
-  name: string,
-  words: FolderWords,
-): Sidebar {
+export function firefoxSidebar(session: unknown, bookmarks: unknown, name: string): Sidebar {
   const made = new Made()
   if (isObject(session)) {
-    const open = readWindows(session, made, words)
-    readSaved(list(session.savedGroups), open, made, words)
+    const open = readWindows(session, made)
+    readSaved(list(session.savedGroups), open, made)
   }
-  if (isObject(bookmarks)) readBookmarks(bookmarks, made, words)
+  if (isObject(bookmarks)) readBookmarks(bookmarks, made)
 
   return made.sidebar(name)
 }
 
-function readWindows(session: Said, made: Made, words: FolderWords): Set<string> {
+function readWindows(session: Said, made: Made): Set<string> {
   const open = new Set<string>()
   const windows = list(session.windows).filter((one) => !one.isPrivate && !one.isPopup)
   for (const window of windows) {
     const groups = new Map(
       list(window.groups).flatMap((group) => {
         const id = text(group.id)
-        return id ? [[id, text(group.name) ?? words.group] as const] : []
+        return id ? [[id, text(group.name) ?? WORDS.group] as const] : []
       }),
     )
     for (const id of groups.keys()) open.add(id)
@@ -66,12 +52,12 @@ function readWindows(session: Said, made: Made, words: FolderWords): Set<string>
   return open
 }
 
-function readSaved(saved: Said[], open: Set<string>, made: Made, words: FolderWords) {
+function readSaved(saved: Said[], open: Set<string>, made: Made) {
   for (const group of saved) {
     const id = text(group.id)
     if (!id || open.has(id)) continue
-    made.folder('saved', words.savedGroups, null)
-    made.folder(`saved:${id}`, text(group.name) ?? words.group, 'saved')
+    made.folder('saved', WORDS.savedGroups, null)
+    made.folder(`saved:${id}`, text(group.name) ?? WORDS.group, 'saved')
 
     for (const one of list(group.tabs)) {
       const tab = isObject(one.state) ? one.state : one
@@ -116,25 +102,20 @@ function rootOf(node: Said): string | null {
 
 export type Spacing = (guid: string | null, around: string) => string
 
-export function readBookmarks(
-  root: Said,
-  made: Made,
-  words: FolderWords,
-  spacing: Spacing = (_, around) => around,
-) {
+export function readBookmarks(root: Said, made: Made, spacing: Spacing = (_, around) => around) {
   const roots = list(root.children).filter((one) => rootOf(one) !== TAGS)
   const known = ROOTS.flatMap(([guid, word]) => {
     const found = roots.find((one) => rootOf(one) === guid)
-    return found ? [{ node: found, name: words[word] }] : []
+    return found ? [{ node: found, name: WORDS[word] }] : []
   })
   const others = roots
     .filter((one) => !ROOTS.some(([guid]) => guid === rootOf(one)))
-    .map((node) => ({ node, name: text(node.title) ?? words.other }))
+    .map((node) => ({ node, name: text(node.title) ?? WORDS.other }))
 
-  const top: Step = { key: 'bookmarks', name: words.bookmarks }
+  const top: Step = { key: 'bookmarks', name: WORDS.bookmarks }
   for (const { node, name } of [...known, ...others]) {
     const steps = [top, { key: `bookmark:${rootOf(node) ?? name}`, name }]
-    walk(node, steps, made, words, spacing, spacing(text(node.guid), made.space), 0)
+    walk(node, steps, made, spacing, spacing(text(node.guid), made.space), 0)
   }
 }
 
@@ -144,7 +125,6 @@ function walk(
   folder: Said,
   steps: readonly Step[],
   made: Made,
-  words: FolderWords,
   spacing: Spacing,
   space: string,
   depth: number,
@@ -168,8 +148,8 @@ function walk(
       })
     } else if (kind === FOLDER) {
       const key = `bookmark:${text(node.guid) ?? `${steps.at(-1)?.key ?? ''}/${String(at)}`}`
-      const inner = [...steps, { key, name: text(node.title) ?? words.other }]
-      walk(node, inner, made, words, spacing, here, depth + 1)
+      const inner = [...steps, { key, name: text(node.title) ?? WORDS.other }]
+      walk(node, inner, made, spacing, here, depth + 1)
     }
   })
 }

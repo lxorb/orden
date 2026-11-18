@@ -1,11 +1,11 @@
 import type { Space } from '../../workspace/src/api'
-import { bringHistory, droppedLine, folderWords, takeEngine, withMarks } from './browser-extras'
+import { bringHistory, droppedLine, takeEngine, withMarks } from './browser-extras'
 import { landSpaces } from './sidebar-landing'
 import { zenSession, type ZenProfile } from './zen-profiles'
 import { zenImport } from './zen-plan'
 
 export async function landZen(profile: ZenProfile): Promise<Space> {
-  const read = await zenSession(profile, folderWords())
+  const read = await zenSession(profile)
   const sidebar = await withMarks(read.sidebar, 'zen', profile.path)
   const { spaces, lost } = zenImport(sidebar, new Date())
   const engine = await takeEngine(read.engine, 'Zen')

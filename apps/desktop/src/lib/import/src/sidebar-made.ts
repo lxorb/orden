@@ -1,17 +1,17 @@
 import { isWebAddress } from '@orden/scan/web-address'
 import type { Sidebar, SidebarFolder, SidebarTab } from './sidebar'
 
-export interface FolderWords {
-  bookmarks: string
-  savedGroups: string
-  group: string
-  toolbar: string
-  bar: string
-  menu: string
-  other: string
-  mobile: string
-  favorites: string
-  readingList: string
+export const WORDS = {
+  bookmarks: 'Bookmarks',
+  savedGroups: 'Saved groups',
+  group: 'Tab group',
+  toolbar: 'Bookmarks toolbar',
+  bar: 'Bookmarks bar',
+  menu: 'Bookmarks menu',
+  other: 'Other bookmarks',
+  mobile: 'Mobile bookmarks',
+  favorites: 'Favorites',
+  readingList: 'Reading List',
 }
 
 export type Said = Record<string, unknown>

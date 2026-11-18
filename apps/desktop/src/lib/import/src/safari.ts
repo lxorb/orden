@@ -1,5 +1,5 @@
 import type { Sidebar } from './sidebar'
-import { type FolderWords, isObject, list, Made, type Said, text } from './sidebar-made'
+import { WORDS, isObject, list, Made, type Said, text } from './sidebar-made'
 
 export interface SafariFiles {
   bookmarks: unknown
@@ -16,11 +16,11 @@ const READING_LIST = 'com.apple.ReadingList'
 const FOLDER = 1
 const TAB = 0
 
-export function safariSidebar(files: SafariFiles, name: string, words: FolderWords): Sidebar {
+export function safariSidebar(files: SafariFiles, name: string): Sidebar {
   const made = new Made()
-  if (Array.isArray(files.tabs)) readTabs(files.tabs.filter(isObject), made, words)
+  if (Array.isArray(files.tabs)) readTabs(files.tabs.filter(isObject), made)
   else if (isObject(files.session)) readSession(files.session, made)
-  if (isObject(files.bookmarks)) readBookmarks(files.bookmarks, made, words)
+  if (isObject(files.bookmarks)) readBookmarks(files.bookmarks, made)
   return made.sidebar(name)
 }
 
@@ -45,7 +45,7 @@ function rowOf(said: Said): Row | null {
 
 const DEEPEST = 16
 
-function readTabs(said: Said[], made: Made, words: FolderWords) {
+function readTabs(said: Said[], made: Made) {
   const rows = said.map(rowOf).filter((one): one is Row => one !== null)
   const ids = new Set(rows.map((one) => one.id))
   const inside = new Map<number | null, Row[]>()
@@ -69,7 +69,7 @@ function readTabs(said: Said[], made: Made, words: FolderWords) {
       const tabs = tabsIn(folder)
       if (tabs.length && folder.title !== LOCAL) {
         const id = `group:${String(folder.id)}`
-        made.folder(id, folder.title || words.group, null)
+        made.folder(id, folder.title || WORDS.group, null)
         for (const tab of tabs) page(made, tab, { folder: id })
       } else {
         for (const tab of tabs) page(made, tab, {})
@@ -113,26 +113,26 @@ function readSession(session: Said, made: Made) {
   }
 }
 
-function readBookmarks(root: Said, made: Made, words: FolderWords) {
+function readBookmarks(root: Said, made: Made) {
   const lists = list(root.Children).filter((one) => one.WebBookmarkType === 'WebBookmarkTypeList')
   const named = (title: string | null) =>
-    title === BAR ? words.favorites : title === MENU ? words.menu : (title ?? words.other)
+    title === BAR ? WORDS.favorites : title === MENU ? WORDS.menu : (title ?? WORDS.other)
 
   for (const one of lists.filter((each) => text(each.Title) !== READING_LIST)) {
-    made.folder('bookmarks', words.bookmarks, null)
+    made.folder('bookmarks', WORDS.bookmarks, null)
     const id = `bookmark:${text(one.WebBookmarkUUID) ?? named(text(one.Title))}`
     made.folder(id, named(text(one.Title)), 'bookmarks')
-    walk(one, id, made, words, 0)
+    walk(one, id, made, 0)
   }
 
   const reading = lists.find((each) => text(each.Title) === READING_LIST)
   if (reading) {
-    made.folder('reading', words.readingList, null)
-    walk(reading, 'reading', made, words, 0)
+    made.folder('reading', WORDS.readingList, null)
+    walk(reading, 'reading', made, 0)
   }
 }
 
-function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: number) {
+function walk(folder: Said, id: string, made: Made, depth: number) {
   if (depth > DEEPEST) return
   list(folder.Children).forEach((node, at) => {
     if (node.WebBookmarkType === 'WebBookmarkTypeLeaf') {
@@ -150,8 +150,8 @@ function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: n
       })
     } else if (node.WebBookmarkType === 'WebBookmarkTypeList') {
       const inner = `bookmark:${text(node.WebBookmarkUUID) ?? `${id}/${String(at)}`}`
-      made.folder(inner, text(node.Title) ?? words.other, id)
-      walk(node, inner, made, words, depth + 1)
+      made.folder(inner, text(node.Title) ?? WORDS.other, id)
+      walk(node, inner, made, depth + 1)
     }
   })
 }

@@ -1,28 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import { readShortcut } from '@orden/scan/shortcut'
 import { firefoxSidebar } from './firefox'
-import type { FolderWords } from './sidebar-made'
 import { BOOKMARKS, page, SESSION } from './firefox.fixture'
 import { sidebarImport } from './sidebar-plan'
-
-const WORDS: FolderWords = {
-  bookmarks: 'Bookmarks',
-  savedGroups: 'Saved groups',
-  group: 'Tab group',
-  toolbar: 'Bookmarks toolbar',
-  bar: 'Bookmarks bar',
-  menu: 'Bookmarks menu',
-  other: 'Other bookmarks',
-  mobile: 'Mobile bookmarks',
-  favorites: 'Favorites',
-  readingList: 'Reading List',
-}
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')
 const CONTAINERS = 'Containers stay in Firefox'
 
 const planned = (session: unknown = SESSION, bookmarks: unknown = BOOKMARKS) =>
-  sidebarImport(firefoxSidebar(session, bookmarks, 'Firefox', WORDS), NOW, CONTAINERS)
+  sidebarImport(firefoxSidebar(session, bookmarks, 'Firefox'), NOW, CONTAINERS)
 
 describe("Firefox's tabs and bookmarks as Orden's", () => {
   test('is one space, named as asked', () => {
@@ -155,8 +141,8 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
   })
 
   test('counts the pages it left behind for not being on the web', () => {
-    expect(firefoxSidebar(SESSION, BOOKMARKS, 'Firefox', WORDS).dropped).toBe(2)
-    expect(firefoxSidebar(null, null, 'Firefox', WORDS).dropped).toBe(0)
+    expect(firefoxSidebar(SESSION, BOOKMARKS, 'Firefox').dropped).toBe(2)
+    expect(firefoxSidebar(null, null, 'Firefox').dropped).toBe(0)
   })
 
   test('says containers stay where a tab was in one', () => {

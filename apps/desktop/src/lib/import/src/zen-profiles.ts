@@ -1,7 +1,6 @@
 import { fromBase64, invoke, isDesktop } from '../../platform/src/api'
 import { unmozLz4 } from './mozlz4'
 import { type BrowserEngine, mozillaEngine } from './search-engines'
-import type { FolderWords } from './sidebar-made'
 import { readZenSession, withBookmarks, type ZenPlaces, type ZenSession } from './zen'
 
 export interface ZenProfile {
@@ -26,7 +25,7 @@ export interface ZenRead {
 
 const SEARCH = 'search.json.mozlz4'
 
-export async function zenSession(profile: ZenProfile, words: FolderWords): Promise<ZenRead> {
+export async function zenSession(profile: ZenProfile): Promise<ZenRead> {
   const places = profile.files.includes('places.sqlite') ? await placesOf(profile) : null
   for (const file of profile.files.filter((one) => one.includes('session'))) {
     const session = await fileOf(profile, file)
@@ -36,7 +35,7 @@ export async function zenSession(profile: ZenProfile, words: FolderWords): Promi
       const engine = profile.files.includes(SEARCH)
         ? mozillaEngine(await fileOf(profile, SEARCH).catch(() => null))
         : null
-      return { sidebar: withBookmarks(session, places, words), engine }
+      return { sidebar: withBookmarks(session, places), engine }
     }
   }
 

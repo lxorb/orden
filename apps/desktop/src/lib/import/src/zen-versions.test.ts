@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import { readShortcut } from '@orden/scan/shortcut'
-import type { FolderWords } from './sidebar-made'
 import { readZenSession, withBookmarks, type ZenPlaces } from './zen'
 import { zenImport } from './zen-plan'
 import { ZEN_1_17, ZEN_1_17_PLACES, ZEN_1_24, ZEN_TWILIGHT } from './zen-versions.fixture'
@@ -75,19 +74,6 @@ describe('a Zen up to 1.17', () => {
   })
 })
 
-const WORDS: FolderWords = {
-  bookmarks: 'Bookmarks',
-  savedGroups: 'Saved groups',
-  group: 'Tab group',
-  toolbar: 'Bookmarks toolbar',
-  bar: 'Bookmarks bar',
-  menu: 'Bookmarks menu',
-  other: 'Other bookmarks',
-  mobile: 'Mobile bookmarks',
-  favorites: 'Favorites',
-  readingList: 'Reading List',
-}
-
 const PLACES: ZenPlaces = {
   spaces: [],
   pins: [],
@@ -121,7 +107,7 @@ describe("Zen's bookmarks", () => {
   test('come in the first space, and a folder Zen shows only in a space in that one', () => {
     const session = readZenSession(ZEN_1_24)
     if (!session) throw new Error('no sidebar read')
-    const marked = withBookmarks(session, PLACES, WORDS)
+    const marked = withBookmarks(session, PLACES)
     const [home, work] = zenImport(marked, NOW).spaces
 
     expect(home?.order['']?.at(-1)).toBe('Bookmarks')
@@ -134,6 +120,6 @@ describe("Zen's bookmarks", () => {
   test('are nothing where Places could not be read', () => {
     const session = readZenSession(ZEN_1_24)
     if (!session) throw new Error('no sidebar read')
-    expect(withBookmarks(session, null, WORDS)).toBe(session)
+    expect(withBookmarks(session, null)).toBe(session)
   })
 })
