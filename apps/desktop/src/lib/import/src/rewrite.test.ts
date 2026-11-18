@@ -13,8 +13,17 @@ test('a wikilink to a name holding a dollar sign keeps the name it was written w
   expect(out).toBe('See [[/Inbox/Projects/$$ Plan]] and [[/Inbox/Projects/A$&B]].')
 })
 
-test('a path written into a link keeps every blank encoded, so the link still reads as one', () => {
-  for (const name of ['a\u00a0b.pdf', 'Shot 9.41\u202fAM.png', 'tab\there.pdf', 'a b.pdf']) {
+test('a path written into a link reads back as the same path, blanks and marks and all', () => {
+  for (const name of [
+    'a\u00a0b.pdf',
+    'Shot 9.41\u202fAM.png',
+    'tab\there.pdf',
+    'a b.pdf',
+    'a\\_b.pdf',
+    'what?.pdf',
+    '<x>.pdf',
+    '50%.pdf',
+  ]) {
     const text = `[p](${encodeTarget(name)})`
     expect(
       findLinks(text).map((link) => link.target),

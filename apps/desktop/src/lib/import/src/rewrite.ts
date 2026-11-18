@@ -712,6 +712,9 @@ function decoded(target: string): string {
 export function encodeTarget(path: string): string {
   return path
     .replace(/%/g, '%25')
+    .replace(/\\/g, '%5C')
+    .replace(/</g, '%3C')
+    .replace(/>/g, '%3E')
     .replace(/#/g, '%23')
     .replace(/ /g, '%20')
     .replace(/\(/g, '%28')
