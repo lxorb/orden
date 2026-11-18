@@ -54,21 +54,18 @@ describe('the pointer at the edge', () => {
     expect(peek.out).toBe(true)
   })
 
-  test('nor with a button held: a selection, a row or a tab being carried', () => {
-    at(0, 1)
-    vi.advanceTimersByTime(GRACE * 2)
-    expect(peek.out).toBe(false)
-  })
-
-  test('nor with a finger, whose drawer has an edge of its own', () => {
-    at(0, 0, 'touch')
-    vi.advanceTimersByTime(GRACE * 2)
-    expect(peek.out).toBe(false)
-  })
-
-  test('nor where it may not: open already, a drawer, full screen, a menu up', () => {
-    room.allowed = false
-    at(0)
+  test.each([
+    ['with a button held: a selection, a row or a tab being carried', () => at(0, 1)],
+    ['with a finger, whose drawer has an edge of its own', () => at(0, 0, 'touch')],
+    [
+      'where it may not: open already, a drawer, full screen, a menu up',
+      () => {
+        room.allowed = false
+        at(0)
+      },
+    ],
+  ])('nor %s', (_, reach) => {
+    reach()
     vi.advanceTimersByTime(GRACE * 2)
     expect(peek.out).toBe(false)
   })
@@ -119,13 +116,11 @@ describe('the list out over the note', () => {
     expect(peek.out).toBe(false)
   })
 
-  test('goes when the pointer leaves the window', () => {
+  test('goes when the pointer leaves the window, and at once when put away', () => {
     peek.away()
     vi.advanceTimersByTime(GRACE)
     expect(peek.out).toBe(false)
-  })
-
-  test('goes at once when put away', () => {
+    at(0)
     peek.hide()
     expect(peek.out).toBe(false)
   })
