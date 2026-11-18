@@ -806,6 +806,7 @@ mod tests {
     use super::run::{run_to_end, start, Ended, Heard};
     use super::say::GoalSay;
     use super::*;
+    use serde_json::json;
     use std::sync::mpsc::{self, Receiver};
     use std::time::Instant;
 
@@ -953,79 +954,59 @@ exec node '{}' {name} \"$@\"
                 std::fs::read_to_string(&kept)
                     .ok()
                     .and_then(|text| serde_json::from_str(&text).ok())
-                    .unwrap_or_else(|| serde_json::json!({}))
+                    .unwrap_or_else(|| json!({}))
             };
-            let ours = || serde_json::json!([orden.to_string_lossy(), "mcp"]);
-            let elsewhere = || serde_json::json!(["C:/elsewhere/orden.exe", "mcp"]);
+            let ours = || json!([orden.to_string_lossy(), "mcp"]);
+            let elsewhere = || json!(["C:/elsewhere/orden.exe", "mcp"]);
             let start = |with: Value| std::fs::write(&kept, with.to_string()).expect("kept");
+            let on = || enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
+            let off = || enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
+            let carry = || enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
+            let holds = |want: Value| assert_eq!(servers(), want, "{tool:?}");
 
             std::fs::remove_file(&kept).ok();
-            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
-            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(
-                servers(),
-                serde_json::json!({ "orden": ours() }),
-                "{tool:?}"
-            );
-            enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(servers(), serde_json::json!({}), "{tool:?}");
+            on();
+            on();
+            holds(json!({ "orden": ours() }));
+            off();
+            holds(json!({}));
 
-            let theirs = serde_json::json!({ "orden": elsewhere() });
+            let theirs = json!({ "orden": elsewhere() });
             start(theirs.clone());
-            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
-            enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(servers(), theirs, "{tool:?}");
+            on();
+            off();
+            holds(theirs);
 
             for enrolling in [true, false] {
-                start(serde_json::json!({ "nib": ours() }));
+                start(json!({ "nib": ours() }));
                 for _ in 0..2 {
                     if enrolling {
-                        enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
+                        on();
                     } else {
-                        enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
+                        carry();
                     }
                 }
-                assert_eq!(
-                    servers(),
-                    serde_json::json!({ "orden": ours() }),
-                    "{tool:?}"
-                );
+                holds(json!({ "orden": ours() }));
             }
 
-            start(serde_json::json!({ "nib": ours(), "orden": ours() }));
-            enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(
-                servers(),
-                serde_json::json!({ "orden": ours() }),
-                "{tool:?}"
-            );
+            start(json!({ "nib": ours(), "orden": ours() }));
+            carry();
+            holds(json!({ "orden": ours() }));
 
-            start(serde_json::json!({ "nib": elsewhere() }));
-            enroll::carry_over(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(
-                servers(),
-                serde_json::json!({ "nib": elsewhere() }),
-                "{tool:?}"
-            );
-            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(
-                servers(),
-                serde_json::json!({ "nib": elsewhere(), "orden": ours() }),
-                "{tool:?}"
-            );
+            start(json!({ "nib": elsewhere() }));
+            carry();
+            holds(json!({ "nib": elsewhere() }));
+            on();
+            holds(json!({ "nib": elsewhere(), "orden": ours() }));
 
-            let kept_both = serde_json::json!({ "nib": ours(), "orden": elsewhere() });
+            let kept_both = json!({ "nib": ours(), "orden": elsewhere() });
             start(kept_both.clone());
-            enroll::enroll(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(servers(), kept_both, "{tool:?}");
+            on();
+            holds(kept_both);
 
-            start(serde_json::json!({ "nib": ours(), "orden": elsewhere() }));
-            enroll::unenroll(&program, tool, dir.path(), &orden, Some(&home));
-            assert_eq!(
-                servers(),
-                serde_json::json!({ "orden": elsewhere() }),
-                "{tool:?}"
-            );
+            start(json!({ "nib": ours(), "orden": elsewhere() }));
+            off();
+            holds(json!({ "orden": elsewhere() }));
             std::fs::remove_file(&kept).ok();
         }
     }
