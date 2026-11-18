@@ -44,15 +44,14 @@ function described(path: string, name: string): Entry {
   }
 }
 
-function below(root: string, folder: string, query: string): Found[] {
-  return readdirSync(folder).flatMap((name) => {
+const below = (root: string, folder: string, query: string): Found[] =>
+  readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
     const here = name.toLowerCase().includes(query)
       ? [{ ...described(path, name), within: folder }]
       : []
     return statSync(path).isDirectory() ? [...here, ...below(root, path, query)] : here
   })
-}
 
 vi.mock('./commands', async (original) => ({
   ...(await original<typeof import('./commands')>()),
@@ -154,23 +153,22 @@ afterEach(() => {
   explorerPrefs.sortTurned(false)
 })
 
-function place(one: HTMLElement): [number, number] {
-  return [parseFloat(one.style.top) || 0, parseFloat(one.style.insetInlineStart) || 0]
-}
+const place = (one: HTMLElement): [number, number] => [
+  parseFloat(one.style.top) || 0,
+  parseFloat(one.style.insetInlineStart) || 0,
+]
 
-function shown(): string[] {
-  return [...target.querySelectorAll<HTMLElement>('.entry')]
+const shown = (): string[] =>
+  [...target.querySelectorAll<HTMLElement>('.entry')]
     .sort((one, other) => {
       const [top, start] = place(one)
       const [otherTop, otherStart] = place(other)
       return top - otherTop || start - otherStart
     })
     .map((one) => one.querySelector('.orden-row-label')?.textContent ?? '')
-}
 
-function heads(): string[] {
-  return [...target.querySelectorAll('.head .column')].map((one) => one.textContent.trim())
-}
+const heads = (): string[] =>
+  [...target.querySelectorAll('.head .column')].map((one) => one.textContent.trim())
 
 function header(at: string) {
   target.querySelector<HTMLElement>(`.head .column.${at}`)?.click()

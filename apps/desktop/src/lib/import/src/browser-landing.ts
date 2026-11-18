@@ -91,9 +91,8 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
 
 const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
 
-function isSession(file: string): boolean {
-  return file.startsWith('Sessions') || file === 'Current Session' || file === 'Last Session'
-}
+const isSession = (file: string): boolean =>
+  file.startsWith('Sessions') || file === 'Current Session' || file === 'Last Session'
 
 async function readChromium(profile: BrowserProfile, name: string): Promise<Read | null> {
   let session: SnssSession | null = null

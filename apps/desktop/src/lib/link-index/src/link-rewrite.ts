@@ -21,14 +21,12 @@ export interface Move {
   to: string
 }
 
-export function rewriteLinks(
+export const rewriteLinks = (
   text: string,
   source: string,
   move: Move,
   points: (link: FoundLink) => boolean,
-): string | null {
-  return retargetLinks(text, source, (link) => (points(link) ? move.to : null))
-}
+): string | null => retargetLinks(text, source, (link) => (points(link) ? move.to : null))
 
 export function retargetLinks(
   text: string,
@@ -272,9 +270,8 @@ function keptPieces(text: string, scalar: Scalar, edits: readonly Edit[]): strin
   return pieces
 }
 
-function interleaved(pieces: readonly string[], edits: readonly Edit[]): string {
-  return pieces.map((piece, index) => piece + (edits[index]?.insert ?? '')).join('')
-}
+const interleaved = (pieces: readonly string[], edits: readonly Edit[]): string =>
+  pieces.map((piece, index) => piece + (edits[index]?.insert ?? '')).join('')
 
 function asMarkdown(link: FoundLink, source: string, placed: string | Placed): string {
   const path = typeof placed === 'string' ? placed : placed.path

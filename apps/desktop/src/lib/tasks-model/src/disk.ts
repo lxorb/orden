@@ -8,20 +8,18 @@ const CURSOR = 'cursor'
 const nameFor = (owner: string | null): string =>
   owner === null ? 'orden-todos' : `orden-todos:${owner}`
 
-function settled<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
+const settled = <T>(request: IDBRequest<T>): Promise<T> =>
+  new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the todo store refused'))
   })
-}
 
-function finished(tx: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
+const finished = (tx: IDBTransaction): Promise<void> =>
+  new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error ?? new Error('the todo store did not write'))
     tx.onabort = () => reject(tx.error ?? new Error('the todo store did not write'))
   })
-}
 
 const keptOf = (value: unknown): Kept | null => {
   if (typeof value !== 'object' || value === null) return null

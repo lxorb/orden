@@ -289,9 +289,7 @@ const VOID = /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track
 
 const CHECKED = /checked\s*=\s*["']?true/i
 
-function box(checked: boolean): string {
-  return `<input type="checkbox"${checked ? ' checked' : ''}>`
-}
+const box = (checked: boolean): string => `<input type="checkbox"${checked ? ' checked' : ''}>`
 
 function withoutEvernote(
   enml: string,

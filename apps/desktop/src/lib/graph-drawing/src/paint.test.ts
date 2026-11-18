@@ -149,9 +149,8 @@ function painted(
 const all = (lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] =>
   painted(lines, ratio, over).strokes
 
-function drawn(lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] {
-  return all(lines, ratio, over).filter((one) => one.colour === EDGE)
-}
+const drawn = (lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] =>
+  all(lines, ratio, over).filter((one) => one.colour === EDGE)
 
 describe('how wide a link is drawn', () => {
   test('is one of the screen’s pixels at the middle step, whatever the ratio', () => {

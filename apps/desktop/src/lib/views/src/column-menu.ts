@@ -125,19 +125,17 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
   ]
 }
 
-export function grouped(
+export const grouped = (
   event: MouseEvent | undefined,
   label: string,
   more: () => Promise<MenuEntry[]>,
-): MenuEntry {
-  return {
-    label,
-    more,
-    run: () => {
-      if (event) void more().then((rows) => menu.show(event, rows, { title: label }))
-    },
-  }
-}
+): MenuEntry => ({
+  label,
+  more,
+  run: () => {
+    if (event) void more().then((rows) => menu.show(event, rows, { title: label }))
+  },
+})
 
 export function columnMenu(
   kit: Kit,

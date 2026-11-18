@@ -13,9 +13,7 @@ function session(): ZenSession {
   return read
 }
 
-function spaces() {
-  return zenImport(session(), NOW).spaces
-}
+const spaces = () => zenImport(session(), NOW).spaces
 
 describe("Zen's spaces as Orden's", () => {
   test('is a space for every Zen space, named, dressed and in order', () => {

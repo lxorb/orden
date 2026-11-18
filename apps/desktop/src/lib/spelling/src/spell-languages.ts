@@ -67,9 +67,8 @@ export function toggled(chosen: readonly string[], id: string, on: boolean): str
   return DICTIONARIES.map((one) => one.id).filter((one) => next.includes(one))
 }
 
-export function machineLanguages(): readonly string[] {
-  return typeof navigator === 'undefined' ? [] : navigator.languages
-}
+export const machineLanguages = (): readonly string[] =>
+  typeof navigator === 'undefined' ? [] : navigator.languages
 
 export function tellEngine(languages: readonly string[]): void {
   if (!choosable) return

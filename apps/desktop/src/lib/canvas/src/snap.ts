@@ -22,13 +22,9 @@ interface Span {
   size: number
 }
 
-function acrossOf(box: Box): Span {
-  return { from: box.x, size: box.width }
-}
+const acrossOf = (box: Box): Span => ({ from: box.x, size: box.width })
 
-function downOf(box: Box): Span {
-  return { from: box.y, size: box.height }
-}
+const downOf = (box: Box): Span => ({ from: box.y, size: box.height })
 
 function stops(span: Span): [number, number, number] {
   return [span.from, span.from + span.size / 2, span.from + span.size]

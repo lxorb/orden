@@ -8,9 +8,7 @@ import { fromAppJson, leftInVault, obsidianCarries } from './obsidian'
 import { detect, readAs } from './read'
 import { insideFolder, sourceOf, sourcesFrom, type Source } from './sources'
 
-function file(path: string, body = 'x'): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body = 'x'): Source => sourceOf(path, new TextEncoder().encode(body))
 
 async function noteFrom(path: string, ...files: Source[]): Promise<string> {
   const plan = await readAs('obsidian', [file('.obsidian/app.json', '{}'), ...files])

@@ -81,9 +81,8 @@ const CACHED = 24
 
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
-export function readsWords(path: string): boolean {
-  return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
-}
+export const readsWords = (path: string): boolean =>
+  isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
 
 function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
@@ -219,15 +218,13 @@ function fileNamed(
   return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
 }
 
-function refOf(note: ScannedNote): NoteRef {
-  return {
-    path: note.path,
-    name: note.name,
-    headings: note.headings,
-    blocks: note.blocks,
-    aliases: note.aliases,
-  }
-}
+const refOf = (note: ScannedNote): NoteRef => ({
+  path: note.path,
+  name: note.name,
+  headings: note.headings,
+  blocks: note.blocks,
+  aliases: note.aliases,
+})
 
 class Links {
   private notes = $state.raw<ScannedNote[]>([])
@@ -1745,9 +1742,7 @@ function heldAs(path: string): 'note' | 'plane' | 'web' | 'elsewhere' | 'file' {
 
 const LINKED_TEXT = /!?\[\[[^\]\n]*\]\]|!?\[[^\]\n]*\]\([^)\n]*\)/g
 
-function prose(line: string): string {
-  return withoutCode(line).replace(LINKED_TEXT, ' ')
-}
+const prose = (line: string): string => withoutCode(line).replace(LINKED_TEXT, ' ')
 
 function standsAlone(line: string, name: string): boolean {
   const word = /[\p{L}\p{N}]/u

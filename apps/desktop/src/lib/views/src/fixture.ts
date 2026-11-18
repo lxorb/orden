@@ -27,20 +27,18 @@ function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {
   }
 }
 
-export function noteRow(
+export const noteRow = (
   path: string,
   note: string | Record<string, Value> = {},
   file: Partial<FileInfo> = {},
   space = 'Notes',
-): Row {
-  return {
-    kind: 'note',
-    space,
-    path,
-    file: fileAt(path, file),
-    note: typeof note === 'string' ? noteValues(note) : note,
-  }
-}
+): Row => ({
+  kind: 'note',
+  space,
+  path,
+  file: fileAt(path, file),
+  note: typeof note === 'string' ? noteValues(note) : note,
+})
 
 export function taskRow(
   path: string,

@@ -195,9 +195,8 @@
     }
   }
 
-  function shown(hit: Hit, task: { text: string; ranges: Range[] } | null) {
-    return task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
-  }
+  const shown = (hit: Hit, task: { text: string; ranges: Range[] } | null) =>
+    task ? pieces(task.text, task.ranges) : pieces(hit.text, hit.ranges)
 
   async function ticked(event: Event, hit: Hit) {
     event.preventDefault()

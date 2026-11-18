@@ -31,13 +31,17 @@ export function pickedAt(from: Picked, names: readonly string[], name: string, h
   }
 }
 
-export function pickedOnly(names: readonly string[]): Picked {
-  return { names: new Set(names), cursor: names.at(-1) ?? null, anchor: names[0] ?? null }
-}
+export const pickedOnly = (names: readonly string[]): Picked => ({
+  names: new Set(names),
+  cursor: names.at(-1) ?? null,
+  anchor: names[0] ?? null,
+})
 
-export function pickedAll(from: Picked, names: readonly string[]): Picked {
-  return { names: new Set(names), cursor: from.cursor ?? names[0] ?? null, anchor: from.anchor }
-}
+export const pickedAll = (from: Picked, names: readonly string[]): Picked => ({
+  names: new Set(names),
+  cursor: from.cursor ?? names[0] ?? null,
+  anchor: from.anchor,
+})
 
 export function stillThere(from: Picked, names: readonly string[]): Picked {
   const here = new Set(names)

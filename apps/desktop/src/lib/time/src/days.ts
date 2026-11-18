@@ -138,9 +138,7 @@ export function totalsOf(pieces: readonly Piece[]): Total[] {
     .sort((one, other) => other.ms - one.ms)
 }
 
-export function wholeOf(pieces: readonly Piece[]): number {
-  return covered(pieces)
-}
+export const wholeOf = (pieces: readonly Piece[]): number => covered(pieces)
 
 export function lasting(ms: number): string {
   const minutes = Math.floor(Math.max(0, ms) / MINUTE)

@@ -6,9 +6,8 @@ export interface Heading {
   line: number
 }
 
-export function scanHeadings(text: string): Heading[] {
-  return headingRows(text).map(({ level, text: words, line }) => ({ level, text: words, line }))
-}
+export const scanHeadings = (text: string): Heading[] =>
+  headingRows(text).map(({ level, text: words, line }) => ({ level, text: words, line }))
 
 export function lineOf(text: string, at: number): number {
   let line = 0

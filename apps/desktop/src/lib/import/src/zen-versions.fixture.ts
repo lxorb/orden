@@ -133,36 +133,34 @@ export const ZEN_TWILIGHT = {
   })),
 }
 
-function oldTab(
+const oldTab = (
   pin: string | null,
   url: string,
   title: string,
   said: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return {
-    entries: [{ url, title, cacheKey: 0, ID: 12, docIdentifier: 14 }],
-    lastAccessed: 1793911475933,
-    pinned: pin !== null,
-    hidden: false,
-    zenWorkspace: null,
-    zenPinnedId: pin,
-    zenEssential: null,
-    zenDefaultUserContextId: null,
-    zenPinnedEntry: null,
-    zenPinnedIcon: null,
-    zenIsEmpty: false,
-    zenHasStaticLabel: false,
-    zenGlanceId: null,
-    zenIsGlance: false,
-    searchMode: null,
-    userContextId: 0,
-    attributes: {},
-    index: 1,
-    requestedIndex: 0,
-    image: 'data:,',
-    ...said,
-  }
-}
+): Record<string, unknown> => ({
+  entries: [{ url, title, cacheKey: 0, ID: 12, docIdentifier: 14 }],
+  lastAccessed: 1793911475933,
+  pinned: pin !== null,
+  hidden: false,
+  zenWorkspace: null,
+  zenPinnedId: pin,
+  zenEssential: null,
+  zenDefaultUserContextId: null,
+  zenPinnedEntry: null,
+  zenPinnedIcon: null,
+  zenIsEmpty: false,
+  zenHasStaticLabel: false,
+  zenGlanceId: null,
+  zenIsGlance: false,
+  searchMode: null,
+  userContextId: 0,
+  attributes: {},
+  index: 1,
+  requestedIndex: 0,
+  image: 'data:,',
+  ...said,
+})
 
 const OLD_HOME = '{d88f2556-133e-46ba-ac88-679b67e17db0}'
 const OLD_WORK = '{82cd46dd-7275-4832-8a1c-a0f01c885cc7}'
@@ -216,7 +214,7 @@ export const ZEN_1_17 = {
   savedGroups: [],
 }
 
-function pin(
+const pin = (
   id: number,
   uuid: string,
   title: string,
@@ -224,26 +222,24 @@ function pin(
   workspace: string | null,
   position: number,
   said: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return {
-    id,
-    uuid,
-    title,
-    url,
-    container_id: null,
-    workspace_uuid: workspace,
-    position,
-    is_essential: 0,
-    is_group: 0,
-    created_at: 1793911477427,
-    updated_at: 1793911477427,
-    edited_title: 0,
-    is_folder_collapsed: 0,
-    folder_icon: null,
-    folder_parent_uuid: null,
-    ...said,
-  }
-}
+): Record<string, unknown> => ({
+  id,
+  uuid,
+  title,
+  url,
+  container_id: null,
+  workspace_uuid: workspace,
+  position,
+  is_essential: 0,
+  is_group: 0,
+  created_at: 1793911477427,
+  updated_at: 1793911477427,
+  edited_title: 0,
+  is_folder_collapsed: 0,
+  folder_icon: null,
+  folder_parent_uuid: null,
+  ...said,
+})
 
 export const ZEN_1_17_PLACES = {
   bookmarks: null,

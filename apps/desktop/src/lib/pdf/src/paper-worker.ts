@@ -10,9 +10,7 @@ streamsIterate()
 
 const drawing = { filtered: false }
 
-function filtersUsed(): boolean {
-  return drawing.filtered
-}
+const filtersUsed = (): boolean => drawing.filtered
 
 class NoFilters {
   addFilter(maps: unknown) {

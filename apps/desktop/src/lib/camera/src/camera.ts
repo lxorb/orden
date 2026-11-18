@@ -5,9 +5,7 @@ export interface Camera {
   turn?: number
 }
 
-export function turnOf(camera: Camera): number {
-  return camera.turn ?? 0
-}
+export const turnOf = (camera: Camera): number => camera.turn ?? 0
 
 export function settledTurn(turn: number): number {
   let angle = turn % (2 * Math.PI)
@@ -30,9 +28,8 @@ export const PAPER_CLOSEST = 32
 
 export const SMALLEST_DOT = 1.1
 
-export function clampScale(scale: number, closest = CLOSEST): number {
-  return Math.min(closest, Math.max(FURTHEST, scale))
-}
+export const clampScale = (scale: number, closest = CLOSEST): number =>
+  Math.min(closest, Math.max(FURTHEST, scale))
 
 export const NOTCH = 1.2
 
@@ -72,9 +69,7 @@ interface Gesture extends UIEvent {
 
 let gesturing = false
 
-export function pinching(): boolean {
-  return gesturing
-}
+export const pinching = (): boolean => gesturing
 
 export function heldGestures(
   element: HTMLElement,

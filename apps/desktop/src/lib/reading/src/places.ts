@@ -29,6 +29,4 @@ export function positionOf(section: Section, offsets: readonly number[], end: nu
   return Math.round(from + Math.min(1, Math.max(0, fraction)) * Math.max(0, next - from))
 }
 
-export function headingOffsets(text: string): number[] {
-  return headingRows(text).map((one) => one.from)
-}
+export const headingOffsets = (text: string): number[] => headingRows(text).map((one) => one.from)

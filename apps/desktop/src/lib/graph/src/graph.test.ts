@@ -23,12 +23,11 @@ const space = (notes: Record<string, string>) => graphOf(scan(notes))
 
 const named = (graph: NoteGraph) => graph.nodes.map((node) => node.name)
 
-function joins(graph: NoteGraph): string[] {
-  return graph.edges
+const joins = (graph: NoteGraph): string[] =>
+  graph.edges
     .map((edge) => [graph.nodes[edge.a]?.name ?? '', graph.nodes[edge.b]?.name ?? ''].sort())
     .map((pair) => pair.join(' - '))
     .sort()
-}
 
 describe('the space as a graph', () => {
   test('a node per note, whether anything links to it or not', () => {

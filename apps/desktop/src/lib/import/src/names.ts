@@ -95,9 +95,7 @@ export function titleFrom(text: string): string | null {
   return null
 }
 
-export function nameKey(path: string): string {
-  return path.normalize('NFC').toLowerCase()
-}
+export const nameKey = (path: string): string => path.normalize('NFC').toLowerCase()
 
 export class Names {
   private readonly taken = new Set<string>()

@@ -16,17 +16,13 @@ export interface FolderWords {
 
 export type Said = Record<string, unknown>
 
-export function isObject(value: unknown): value is Said {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+export const isObject = (value: unknown): value is Said =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-export function list(value: unknown): Said[] {
-  return Array.isArray(value) ? value.filter(isObject) : []
-}
+export const list = (value: unknown): Said[] => (Array.isArray(value) ? value.filter(isObject) : [])
 
-export function text(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null
-}
+export const text = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() ? value.trim() : null
 
 export function siteMark(value: unknown): string | null {
   const said = text(value)

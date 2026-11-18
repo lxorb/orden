@@ -1,17 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { cursorFor, type Look, nibCursor, rubCursor } from './cursor'
 
-function look(over: Partial<Look> = {}): Look {
-  return {
-    tool: 'select',
-    busy: false,
-    holding: false,
-    over: null,
-    nib: { size: 3, colour: '#112233' },
-    rub: { size: 10, whole: false },
-    ...over,
-  }
-}
+const look = (over: Partial<Look> = {}): Look => ({
+  tool: 'select',
+  busy: false,
+  holding: false,
+  over: null,
+  nib: { size: 3, colour: '#112233' },
+  rub: { size: 10, whole: false },
+  ...over,
+})
 
 describe('what the pointer says', () => {
   test('is the arrow over the plane with the arrow in hand', () => {

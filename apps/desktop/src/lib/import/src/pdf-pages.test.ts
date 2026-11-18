@@ -11,9 +11,7 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
       : Promise.reject(new Error('not a PDF')),
 }))
 
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 
 describe('papers', () => {
   test('each becomes its page note, byte for byte', async () => {

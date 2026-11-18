@@ -45,9 +45,7 @@ export async function asOneUndo(steps: readonly (() => Promise<unknown>)[]): Pro
   for (; made > 1; made--) if (!(await gatherLast(workspace.undone))) return
 }
 
-export function writeRow(row: Row, change: RowChange): Promise<boolean> {
-  return rows.write(row, change)
-}
+export const writeRow = (row: Row, change: RowChange): Promise<boolean> => rows.write(row, change)
 
 export async function writeEach(
   pairs: readonly { row: Row; change: RowChange }[],
@@ -79,9 +77,7 @@ export async function writeEach(
   return true
 }
 
-export function dropRow(row: Row, drop: Drop): Promise<boolean> {
-  return writeRow(row, drop.change)
-}
+export const dropRow = (row: Row, drop: Drop): Promise<boolean> => writeRow(row, drop.change)
 
 export async function pressRow(row: Row, change: RowChange): Promise<boolean> {
   const path = pathOf(row)
@@ -107,13 +103,9 @@ async function rewriteTask(
   return replaced([changeOf(path, before, [edit])], said)
 }
 
-export function deleteTask(row: Row): Promise<boolean> {
-  return rewriteTask(row, withoutTask, 'deleted')
-}
+export const deleteTask = (row: Row): Promise<boolean> => rewriteTask(row, withoutTask, 'deleted')
 
-export function duplicateTask(row: Row): Promise<boolean> {
-  return rewriteTask(row, duplicatedTask)
-}
+export const duplicateTask = (row: Row): Promise<boolean> => rewriteTask(row, duplicatedTask)
 
 export async function linkToTask(row: Row): Promise<string | null> {
   const note = row.path.replace(/\.md$/i, '')

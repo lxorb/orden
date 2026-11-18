@@ -88,13 +88,14 @@ Markdown
 Last words.
 `
 
-function be16Bytes(value: number): number[] {
-  return [(value >>> 8) & 0xff, value & 0xff]
-}
+const be16Bytes = (value: number): number[] => [(value >>> 8) & 0xff, value & 0xff]
 
-function be32Bytes(value: number): number[] {
-  return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff]
-}
+const be32Bytes = (value: number): number[] => [
+  (value >>> 24) & 0xff,
+  (value >>> 16) & 0xff,
+  (value >>> 8) & 0xff,
+  value & 0xff,
+]
 
 function crc32(bytes: readonly number[]): number {
   let crc = 0xffffffff
@@ -226,17 +227,19 @@ function words(rtf: string): string {
   return out
 }
 
-function count(rtf: string, pattern: RegExp): number {
-  return [...rtf.matchAll(pattern)].length
-}
+const count = (rtf: string, pattern: RegExp): number => [...rtf.matchAll(pattern)].length
 
-function run(on: string, text: string, off: string): string {
-  return `{${on} ${text}${off}}`
-}
+const run = (on: string, text: string, off: string): string => `{${on} ${text}${off}}`
 
-function made(blocks: Doc['blocks'], notes: Doc['notes'] = []): Doc {
-  return { title: 'Made', named: true, author: null, lang: 'en', date: null, blocks, notes }
-}
+const made = (blocks: Doc['blocks'], notes: Doc['notes'] = []): Doc => ({
+  title: 'Made',
+  named: true,
+  author: null,
+  lang: 'en',
+  date: null,
+  blocks,
+  notes,
+})
 
 const PICTURES = [
   picture('assets/pic.png', 'image/png', png(24, 24)),

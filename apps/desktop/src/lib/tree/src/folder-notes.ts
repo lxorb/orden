@@ -11,17 +11,12 @@ import { entryAt } from './tree-edits'
 
 const INDEX = /^_?index$/i
 
-export function folderFor(note: string): string {
-  return withoutExtension(note)
-}
+export const folderFor = (note: string): string => withoutExtension(note)
 
-export function folderNotePath(folder: string): string {
-  return joinPath(folder, `${nameOf(folder)}.md`)
-}
+export const folderNotePath = (folder: string): string => joinPath(folder, `${nameOf(folder)}.md`)
 
-export function isFolderNote(note: string): boolean {
-  return isMarkdownPath(note) && nameOf(folderOf(note)) === nameOf(withoutExtension(note))
-}
+export const isFolderNote = (note: string): boolean =>
+  isMarkdownPath(note) && nameOf(folderOf(note)) === nameOf(withoutExtension(note))
 
 export function folderNote(entry: Entry): Entry | null {
   if (!entry.is_dir) return null
@@ -73,11 +68,10 @@ export function renameSteps(note: string, typed: string): { path: string; name: 
   ]
 }
 
-export function linkedFiles(tree: Entry | null, root: string, rows: readonly string[]): string[] {
-  return rows.flatMap((row) => {
+export const linkedFiles = (tree: Entry | null, root: string, rows: readonly string[]): string[] =>
+  rows.flatMap((row) => {
     const entry = entryAt(tree, row)
     const file = entry?.is_dir ? (folderNote(entry)?.path ?? folderNotePath(row)) : row
     const inside = withinSpace(root, file)
     return inside === null ? [] : [inside]
   })
-}

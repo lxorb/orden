@@ -31,12 +31,11 @@ const FORMS: { pattern: RegExp; make: (found: RegExpExecArray) => Piece }[] = [
   },
 ]
 
-export function pieces(words: string): Piece[] {
-  return heldPieces(heldEscapes(words)).map((one) => {
+export const pieces = (words: string): Piece[] =>
+  heldPieces(heldEscapes(words)).map((one) => {
     const text = released(one.text, one.code === true)
     return one.link === undefined ? { ...one, text } : { ...one, text, link: released(one.link) }
   })
-}
 
 function heldPieces(words: string): Piece[] {
   const out: Piece[] = []
@@ -60,8 +59,7 @@ function heldPieces(words: string): Piece[] {
   return out
 }
 
-export function plain(words: string): string {
-  return pieces(words)
+export const plain = (words: string): string =>
+  pieces(words)
     .map((one) => one.text)
     .join('')
-}

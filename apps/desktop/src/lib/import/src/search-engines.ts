@@ -35,9 +35,7 @@ export function chromiumEngine(said: unknown): BrowserEngine | null {
   return chosen(text(data.short_name), url)
 }
 
-export function safariEngine(name: unknown): BrowserEngine | null {
-  return chosen(text(name), null)
-}
+export const safariEngine = (name: unknown): BrowserEngine | null => chosen(text(name), null)
 
 function chosen(name: string | null, template: string | null): BrowserEngine | null {
   const search = template?.replaceAll('{searchTerms}', WORDS) ?? null

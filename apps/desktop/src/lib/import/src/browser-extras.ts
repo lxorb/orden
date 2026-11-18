@@ -60,17 +60,15 @@ export function droppedLine(sidebar: Sidebar): string[] {
   ]
 }
 
-export function folderWords(): FolderWords {
-  return {
-    bookmarks: 'Bookmarks',
-    savedGroups: 'Saved groups',
-    group: 'Tab group',
-    toolbar: 'Bookmarks toolbar',
-    bar: 'Bookmarks bar',
-    menu: 'Bookmarks menu',
-    other: 'Other bookmarks',
-    mobile: 'Mobile bookmarks',
-    favorites: 'Favorites',
-    readingList: 'Reading List',
-  }
-}
+export const folderWords = (): FolderWords => ({
+  bookmarks: 'Bookmarks',
+  savedGroups: 'Saved groups',
+  group: 'Tab group',
+  toolbar: 'Bookmarks toolbar',
+  bar: 'Bookmarks bar',
+  menu: 'Bookmarks menu',
+  other: 'Other bookmarks',
+  mobile: 'Mobile bookmarks',
+  favorites: 'Favorites',
+  readingList: 'Reading List',
+})

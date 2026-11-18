@@ -3,9 +3,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { bearTags, bearWords, readBear } from './bear'
 import { sourceOf, type Source } from './sources'
 
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 
 describe("Bear's closed tags", () => {
   test('become tags Orden can hold', () => {

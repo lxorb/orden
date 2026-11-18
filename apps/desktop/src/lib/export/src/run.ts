@@ -59,9 +59,8 @@ function labelFor(id: Exportable): string {
   return variant ? variant.label : id
 }
 
-async function pageOf(note: Note, options: RunOptions, pictures?: readonly Picture[]) {
-  return renderNote(note.source, note.name, options, pictures)
-}
+const pageOf = async (note: Note, options: RunOptions, pictures?: readonly Picture[]) =>
+  renderNote(note.source, note.name, options, pictures)
 
 async function partsOf(note: Note, options: RunOptions) {
   const fence = await prepareFences(note.source, options.scheme ?? 'light')
@@ -71,9 +70,8 @@ async function partsOf(note: Note, options: RunOptions) {
   return { body, css: buildStyles(body, note.source, options) }
 }
 
-function picturesOf(sources: readonly string[], options: RunOptions) {
-  return readPictures(sources, options.resolveImage ?? ((src) => src))
-}
+const picturesOf = (sources: readonly string[], options: RunOptions) =>
+  readPictures(sources, options.resolveImage ?? ((src) => src))
 
 function paperFor(note: Note, options: RunOptions, title: string): PaperTwips {
   const setup = pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP)

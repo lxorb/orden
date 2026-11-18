@@ -61,11 +61,10 @@ function keptOf(value: unknown): Kept | null {
   return kept
 }
 
-function lastOf(value: unknown): Last | null {
-  return isRecord(value) && typeof value.owner === 'string' && typeof value.text === 'string'
+const lastOf = (value: unknown): Last | null =>
+  isRecord(value) && typeof value.owner === 'string' && typeof value.text === 'string'
     ? { owner: value.owner, text: value.text }
     : null
-}
 
 function folded(words: Y.Text, to: string): boolean {
   const from = words.toJSON()

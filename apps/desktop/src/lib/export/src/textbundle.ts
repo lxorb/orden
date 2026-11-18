@@ -7,8 +7,8 @@ const ASSETS = 'assets'
 
 const TYPE = 'net.daringfireball.markdown'
 
-function info(): string {
-  return `${JSON.stringify(
+const info = (): string =>
+  `${JSON.stringify(
     {
       version: 2,
       type: TYPE,
@@ -18,7 +18,6 @@ function info(): string {
     null,
     2,
   )}\n`
-}
 
 export interface BundleOptions {
   link?: (link: FoundLink) => string | null

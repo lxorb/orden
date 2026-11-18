@@ -92,9 +92,7 @@ export function insideFolder(path: string): boolean {
   return !path.split(/[\\/]/).includes('..')
 }
 
-async function taken(path: string): Promise<boolean> {
-  return invoke<boolean>('path_taken', { path })
-}
+const taken = async (path: string): Promise<boolean> => invoke<boolean>('path_taken', { path })
 
 async function freeBeside(folder: string, path: string, claimed: Set<string>): Promise<string> {
   for (let counter = 1; ; counter += 1) {

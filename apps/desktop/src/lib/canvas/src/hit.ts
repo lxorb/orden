@@ -21,9 +21,8 @@ export const PORT = 9
 
 const ROOM = 3
 
-export function roomFor(box: Box, scale: number, size: number): boolean {
-  return Math.min(box.width, box.height) * scale >= ROOM * size
-}
+export const roomFor = (box: Box, scale: number, size: number): boolean =>
+  Math.min(box.width, box.height) * scale >= ROOM * size
 
 export interface Where {
   canvas: Canvas
@@ -40,9 +39,7 @@ export function hitAt(where: Where, point: Point): Hit {
   const slack = (where.coarse ? FORGIVING : 0) * unit
 
   const handle = handleAt(where, point, slack)
-  if (handle) {
-    return where.lassoed ? { ...NOTHING, ink: handle } : { ...NOTHING, handle }
-  }
+  if (handle) return where.lassoed ? { ...NOTHING, ink: handle } : { ...NOTHING, handle }
 
   if (where.lassoed && where.box && turnAt(where.box, point, HANDLE * 2.4 * unit + slack)) {
     return { ...NOTHING, ink: 'turn' }

@@ -12,11 +12,10 @@ export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
   3: 'High',
 }
 
-export function priorityTone(priority: number): string | undefined {
-  return (
-    { 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' } as Record<number, string>
+export const priorityTone = (priority: number): string | undefined =>
+  (
+    ({ 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' }) as Record<number, string>
   )[priority]
-}
 
 export interface Subtask {
   readonly id: string
@@ -75,9 +74,8 @@ function cutToBytes(text: string, most: number): string {
   return wholeSlice(text, low)
 }
 
-export function fittedDescription(text: string): string {
-  return cutToBytes(wholeSlice(text, LIMITS.description), DESCRIPTION_BYTES)
-}
+export const fittedDescription = (text: string): string =>
+  cutToBytes(wholeSlice(text, LIMITS.description), DESCRIPTION_BYTES)
 
 export function titledOf(text: string): { title: string; description?: string } {
   if (text.length <= LIMITS.title) return { title: text }

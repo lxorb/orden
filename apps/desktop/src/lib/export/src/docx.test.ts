@@ -43,8 +43,8 @@ function png(width: number, height: number): Uint8Array {
   ])
 }
 
-function jpeg(width: number, height: number): Uint8Array {
-  return new Uint8Array([
+const jpeg = (width: number, height: number): Uint8Array =>
+  new Uint8Array([
     0xff,
     0xd8,
     0xff,
@@ -69,7 +69,6 @@ function jpeg(width: number, height: number): Uint8Array {
     0xff,
     0xd9,
   ])
-}
 
 const LOCAL = png(24, 16)
 const REMOTE = jpeg(1200, 600)

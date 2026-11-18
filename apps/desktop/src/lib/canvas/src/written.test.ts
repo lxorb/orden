@@ -1,11 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import { changesBetween, type Replacement, written } from './written'
 
-function applied(text: string, changes: readonly Replacement[]): string {
-  return [...changes]
+const applied = (text: string, changes: readonly Replacement[]): string =>
+  [...changes]
     .sort((one, other) => other.from - one.from)
     .reduce((out, one) => out.slice(0, one.from) + one.insert + out.slice(one.to), text)
-}
 
 const text = (runs: readonly (readonly string[])[]) => written(runs).text
 

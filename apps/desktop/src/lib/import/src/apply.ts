@@ -68,9 +68,9 @@ export async function applyImport(
   return { paths, stepped }
 }
 
-async function asPages(path: string): Promise<string[]> {
-  return [(await workspace.pageNoteForPdf(path)) ?? path]
-}
+const asPages = async (path: string): Promise<string[]> => [
+  (await workspace.pageNoteForPdf(path)) ?? path,
+]
 
 async function landed(paths: string[], wrote: Record<string, string>) {
   workspace.undone.record({ kind: 'import', paths, wrote })

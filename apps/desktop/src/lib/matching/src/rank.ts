@@ -84,9 +84,7 @@ function quality(words: readonly string[], reading: string, slips: boolean): num
   return best > 0 ? score / best : 0
 }
 
-function usePoints(use: number): number {
-  return Math.min(MOST_USE, 12 * Math.log2(1 + use))
-}
+const usePoints = (use: number): number => Math.min(MOST_USE, 12 * Math.log2(1 + use))
 
 function scored<T>(
   { words, typed, short }: Typed,

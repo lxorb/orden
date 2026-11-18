@@ -125,9 +125,7 @@ function isRange(value: string): boolean {
   )
 }
 
-function two(value: number): string {
-  return String(value).padStart(2, '0')
-}
+const two = (value: number): string => String(value).padStart(2, '0')
 
 export function pagesIn(value: string): string[] | null {
   const names: string[] = []

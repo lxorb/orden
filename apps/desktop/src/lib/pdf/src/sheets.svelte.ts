@@ -20,9 +20,7 @@ export function sheetArrived(path: string): void {
   if (path.endsWith(SIDECAR)) marksWritten(path.slice(0, -SIDECAR.length))
 }
 
-export function marksFromOutside(path: string): number {
-  return written.get(pathKey(path)) ?? 0
-}
+export const marksFromOutside = (path: string): number => written.get(pathKey(path)) ?? 0
 
 windows.hear(SAID, ({ path }) => {
   if (typeof path === 'string') heard(path)

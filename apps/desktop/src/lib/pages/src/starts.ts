@@ -1,3 +1,2 @@
-export function pans(tool: string, onPage: boolean, writable: boolean): boolean {
-  return tool === 'hand' || !onPage || !writable
-}
+export const pans = (tool: string, onPage: boolean, writable: boolean): boolean =>
+  tool === 'hand' || !onPage || !writable

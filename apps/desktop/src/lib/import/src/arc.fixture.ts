@@ -1,27 +1,25 @@
 const FAVORITES = 'C-TOP-DEFAULT'
 const OTHER_FAVORITES = 'C-TOP-P1'
 
-function item(
+const item = (
   id: string,
   parentID: string,
   data: Record<string, unknown>,
   said: Record<string, unknown> = {},
-) {
-  return {
-    id,
-    parentID,
-    childrenIds: [],
-    title: null,
-    data,
-    createdAt: 751_234_567.1,
-    isUnread: false,
-    originatingDevice: 'D1',
-    ...said,
-  }
-}
+) => ({
+  id,
+  parentID,
+  childrenIds: [],
+  title: null,
+  data,
+  createdAt: 751_234_567.1,
+  isUnread: false,
+  originatingDevice: 'D1',
+  ...said,
+})
 
-function tab(id: string, parentID: string, url: string, title: string) {
-  return item(id, parentID, {
+const tab = (id: string, parentID: string, url: string, title: string) =>
+  item(id, parentID, {
     tab: {
       savedURL: url,
       savedTitle: title,
@@ -29,11 +27,9 @@ function tab(id: string, parentID: string, url: string, title: string) {
       timeLastActiveAt: 751_234_999.5,
     },
   })
-}
 
-function container(id: string, kind: Record<string, unknown>, children: string[]) {
-  return item(id, '', { itemContainer: { containerType: kind } }, { childrenIds: children })
-}
+const container = (id: string, kind: Record<string, unknown>, children: string[]) =>
+  item(id, '', { itemContainer: { containerType: kind } }, { childrenIds: children })
 
 const items = [
   container(FAVORITES, { topApps: { _0: { default: true } } }, ['F-MAIL', 'F-CAL']),

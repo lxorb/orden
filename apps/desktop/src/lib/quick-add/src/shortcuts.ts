@@ -126,15 +126,14 @@ async function exclusive<T>(run: () => Promise<T>): Promise<T> {
   return locks.request(TAKING, run) as Promise<T>
 }
 
-export function takeAdded(add: Add = addedHere): Promise<number> {
-  return exclusive(async () => {
+export const takeAdded = (add: Add = addedHere): Promise<number> =>
+  exclusive(async () => {
     const behind = await leftBehind(add).catch((error: unknown) => {
       log('warn', `shortcuts: the old inbox was not read: ${String(error)}`)
       return 0
     })
     return behind + (await waiting(add))
   })
-}
 
 export async function hearShortcuts(): Promise<void> {
   await takeAdded()

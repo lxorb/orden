@@ -343,9 +343,7 @@
     return kept ? was : null
   })
 
-  function hitId(hit: PaperHit): string {
-    return `paper:${hit.paper}:${hit.at}`
-  }
+  const hitId = (hit: PaperHit): string => `paper:${hit.paper}:${hit.at}`
 
   function around(hit: PaperHit): Found {
     const text = texts[hit.paper - 1] ?? ''
@@ -504,9 +502,8 @@
 
   $effect(() => holdFreeScroll())
 
-  function kindOf(event: PointerEvent) {
-    return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
-  }
+  const kindOf = (event: PointerEvent) =>
+    penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
 
   const stylus = new Stylus({
     agent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
@@ -585,17 +582,14 @@
     }
   }
 
-  function inside(
+  const inside = (
     point: Point,
     box: { x: number; y: number; width: number; height: number },
-  ): boolean {
-    return (
-      point.x >= box.x &&
-      point.x <= box.x + box.width &&
-      point.y >= box.y &&
-      point.y <= box.y + box.height
-    )
-  }
+  ): boolean =>
+    point.x >= box.x &&
+    point.x <= box.x + box.width &&
+    point.y >= box.y &&
+    point.y <= box.y + box.height
 
   let doubting: { id: number; timer: number; event: PointerEvent } | null = null
 
@@ -796,9 +790,7 @@
     run.colour(store, colour ?? DEFAULT_INK)
   }
 
-  function inkPicked(): boolean {
-    return writable && canvas.ink.some((one) => store.pickedSet.has(one.id))
-  }
+  const inkPicked = (): boolean => writable && canvas.ink.some((one) => store.pickedSet.has(one.id))
 
   function duplicatePicked() {
     if (writable) run.duplicate(store)
@@ -818,12 +810,10 @@
     await runRow(id)
   }
 
-  function command(id: string, label: string): MenuEntry {
-    return {
-      label,
-      run: () => void runCommandRow(id),
-    }
-  }
+  const command = (id: string, label: string): MenuEntry => ({
+    label,
+    run: () => void runCommandRow(id),
+  })
 
   function pagesMenu(point: Point): MenuEntry[] {
     const page = pageAt(pages, point)
@@ -1174,9 +1164,8 @@
     return new MouseEvent('contextmenu', { clientX: box?.left ?? 0, clientY: box?.bottom ?? 0 })
   }
 
-  function sameView(one: Camera, other: Camera): boolean {
-    return one.x === other.x && one.y === other.y && one.scale === other.scale
-  }
+  const sameView = (one: Camera, other: Camera): boolean =>
+    one.x === other.x && one.y === other.y && one.scale === other.scale
 
   function dropTouch() {
     const one = gesture
@@ -1303,14 +1292,11 @@
     else fall()
   }
 
-  function typing(target: EventTarget | null): boolean {
-    return (
-      target instanceof HTMLElement &&
-      (target.isContentEditable ||
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement)
-    )
-  }
+  const typing = (target: EventTarget | null): boolean =>
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement)
 
   function onkeydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (store.editing !== null || typing(event.target)) return
@@ -1399,14 +1385,11 @@
     if (layer?.textContent.trim()) selection?.selectAllChildren(layer)
   }
 
-  function onWords(event: MouseEvent): boolean {
-    return (
-      tools.which === 'select' &&
-      event.target instanceof Element &&
-      event.target.closest('.words') !== null &&
-      !(caught && inside(planeAt(event), caught))
-    )
-  }
+  const onWords = (event: MouseEvent): boolean =>
+    tools.which === 'select' &&
+    event.target instanceof Element &&
+    event.target.closest('.words') !== null &&
+    !(caught && inside(planeAt(event), caught))
 
   function ondblclick(event: MouseEvent) {
     if (onWords(event)) return

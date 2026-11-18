@@ -86,17 +86,15 @@
     window.addEventListener('pointercancel', done)
   }
 
-  function toggle(on: boolean, run: () => void) {
-    return {
-      onclick: run,
-      onkeydown: (event: KeyboardEvent) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return
-        event.preventDefault()
-        run()
-      },
-      'aria-checked': on,
-    }
-  }
+  const toggle = (on: boolean, run: () => void) => ({
+    onclick: run,
+    onkeydown: (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      run()
+    },
+    'aria-checked': on,
+  })
 </script>
 
 {#snippet setting(label: string, on: boolean, run: () => void)}

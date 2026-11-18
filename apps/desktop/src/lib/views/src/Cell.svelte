@@ -107,9 +107,8 @@
 
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
 
-  function shownMember(item: ListItem): Value {
-    return item !== null && typeof item === 'object' ? item.asWritten : item
-  }
+  const shownMember = (item: ListItem): Value =>
+    item !== null && typeof item === 'object' ? item.asWritten : item
 
   function fromWords(words: string | null): Value | null {
     if (words === null || words === '') return null

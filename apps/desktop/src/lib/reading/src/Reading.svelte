@@ -65,12 +65,11 @@
 
   const reach = $derived(reachKey(tab.doc, tab.path, links))
 
-  function note() {
-    return untrack(() => {
+  const note = () =>
+    untrack(() => {
       tab.note.flush()
       return { text: tab.doc, path: tab.path }
     })
-  }
 
   async function draw() {
     const mine = ++latest
@@ -342,9 +341,7 @@
   const offsetOf = (line: number) =>
     tab.doc.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)
 
-  function written(target: string): string {
-    return decodeTarget(target)
-  }
+  const written = (target: string): string => decodeTarget(target)
 
   function jump(fragment: string) {
     const page = surface

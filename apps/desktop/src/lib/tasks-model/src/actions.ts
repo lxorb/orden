@@ -19,16 +19,14 @@ export function priorityOf(quick: QuickPriority | undefined): Priority {
   return 0
 }
 
-function taskOut(todo: Todo): TaskOut {
-  return {
-    at: todo.id,
-    space: todo.space ?? '',
-    text: todo.title,
-    ...(todo.done ? { status: 'x' } : {}),
-    ...(todo.deadline === null ? {} : { due: todo.deadline }),
-    ...(todo.priority === 0 ? {} : { priority: 4 - todo.priority }),
-  }
-}
+const taskOut = (todo: Todo): TaskOut => ({
+  at: todo.id,
+  space: todo.space ?? '',
+  text: todo.title,
+  ...(todo.done ? { status: 'x' } : {}),
+  ...(todo.deadline === null ? {} : { due: todo.deadline }),
+  ...(todo.priority === 0 ? {} : { priority: 4 - todo.priority }),
+})
 
 export async function addTask(
   text: string,

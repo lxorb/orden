@@ -14,9 +14,7 @@ export function atVaultTop(sources: readonly Source[]): Source[] {
     .find(Boolean)
   if (!wrapper) return [...sources]
   const beside = (path: string) => !path.startsWith(wrapper) && !isJunk(path) && !leftInVault(path)
-  if (sources.some((one) => beside(one.path))) {
-    return [...sources]
-  }
+  if (sources.some((one) => beside(one.path))) return [...sources]
 
   return sources.map((one) =>
     one.path.startsWith(wrapper) ? { ...one, path: one.path.slice(wrapper.length) } : one,

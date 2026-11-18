@@ -28,9 +28,7 @@ function folder(path: string, ...children: Entry[]): Entry {
   return { name, path, is_dir: true, modified: 0, created: 0, children }
 }
 
-function note(path: string): Entry {
-  return { ...folder(path), is_dir: false }
-}
+const note = (path: string): Entry => ({ ...folder(path), is_dir: false })
 
 const BASE = `views:
   - type: kanban

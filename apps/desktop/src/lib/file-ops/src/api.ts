@@ -63,8 +63,9 @@ export interface KeptByPath {
   forget?(root: string, back?: string): unknown
 }
 
-export function keeping(store: KeptByPath): Follower {
-  return (op): unknown => {
+export const keeping =
+  (store: KeptByPath): Follower =>
+  (op): unknown => {
     if (op.op === 'removed') {
       if (op.kind === 'space') return store.forget?.(op.path, op.back)
       return store.gone?.(op.path, op.root, op.back)
@@ -76,7 +77,6 @@ export function keeping(store: KeptByPath): Follower {
     }
     return undefined
   }
-}
 
 export function keepingShared(store: KeptByPath): Follower {
   const kept = keeping(store)

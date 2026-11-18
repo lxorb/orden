@@ -25,21 +25,19 @@ export function pointer(
   }
 }
 
-function noteFrom(target: string, from: EmbeddedNote): string | null {
-  return from.path === undefined
+const noteFrom = (target: string, from: EmbeddedNote): string | null =>
+  from.path === undefined
     ? null
     : links.targetOf(from.path, { kind: 'markdown', target: decodeTarget(target) })
-}
 
-export function withPictures(
+export const withPictures = (
   html: string,
   note: Note,
   drawn: ReadonlySet<string> = new Set(),
-): string {
-  return mapSources(html, (src) =>
+): string =>
+  mapSources(html, (src) =>
     drawn.has(src) ? null : escapeAll(notePicture(attributeText(src), note.path, note.text)),
   )
-}
 
 const MEASURE = 'orden:reading'
 

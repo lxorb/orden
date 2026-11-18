@@ -134,16 +134,13 @@ export function sheetDrawn(
   }
 }
 
-export function sameSheet(one: SheetDrawn, other: SheetDrawn): boolean {
-  return (
-    one.x === other.x &&
-    one.y === other.y &&
-    one.width === other.width &&
-    one.height === other.height &&
-    one.file === other.file &&
-    one.page === other.page &&
-    one.palette === other.palette &&
-    one.ink.length === other.ink.length &&
-    one.ink.every((stroke, at) => stroke === other.ink[at])
-  )
-}
+export const sameSheet = (one: SheetDrawn, other: SheetDrawn): boolean =>
+  one.x === other.x &&
+  one.y === other.y &&
+  one.width === other.width &&
+  one.height === other.height &&
+  one.file === other.file &&
+  one.page === other.page &&
+  one.palette === other.palette &&
+  one.ink.length === other.ink.length &&
+  one.ink.every((stroke, at) => stroke === other.ink[at])

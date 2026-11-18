@@ -3,12 +3,11 @@ import { liftedFrom, nodesIn, renamedTo, type TagNode, tagTree } from './tag-tre
 
 const tag = (one: string, notes = 1) => ({ tag: one, notes })
 
-function drawn(nodes: readonly TagNode[], depth = 0): string[] {
-  return nodes.flatMap((node) => [
+const drawn = (nodes: readonly TagNode[], depth = 0): string[] =>
+  nodes.flatMap((node) => [
     `${'  '.repeat(depth)}${node.path} ${node.notes}`,
     ...drawn(node.children, depth + 1),
   ])
-}
 
 describe('building the tree', () => {
   test('makes a node of every segment', () => {

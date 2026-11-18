@@ -7,9 +7,7 @@ import { detect } from './read'
 import { sourceOf, type Source } from './sources'
 import { readTomboy, tomboyMarkdown } from './tomboy'
 
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 
 function noteAt(plan: ImportPlan, path: string): string {
   const found = plan.files.find((one) => one.path === path)

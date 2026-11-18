@@ -9,9 +9,7 @@ import {
 
 const PINNED = 'orden:explorer-pinned'
 
-function read(): string[] {
-  return stringList(stored(PINNED)) ?? []
-}
+const read = (): string[] => stringList(stored(PINNED)) ?? []
 
 class Pins {
   list = $state<string[]>(read())

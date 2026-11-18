@@ -30,16 +30,13 @@ const NOTHING: Worn = {
   bare: false,
 }
 
-function wears(path: string): boolean {
-  return (
-    isMarkdownPath(path) ||
-    isCanvasTarget(path) ||
-    isPagesTarget(path) ||
-    isWebTarget(path) ||
-    isChatTarget(path) ||
-    isTermTarget(path)
-  )
-}
+const wears = (path: string): boolean =>
+  isMarkdownPath(path) ||
+  isCanvasTarget(path) ||
+  isPagesTarget(path) ||
+  isWebTarget(path) ||
+  isChatTarget(path) ||
+  isTermTarget(path)
 
 async function wornBy(path: string, content: string): Promise<Worn> {
   if (isWebTarget(path)) {

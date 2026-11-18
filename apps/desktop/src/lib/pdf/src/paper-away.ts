@@ -59,9 +59,7 @@ function opened(): Worker | null {
   return worker
 }
 
-export function drawsAway(): boolean {
-  return opened() !== null
-}
+export const drawsAway = (): boolean => opened() !== null
 
 export function openAway(bytes: Uint8Array): number | null {
   const away = opened()

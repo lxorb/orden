@@ -38,16 +38,15 @@ const view = {
   onfind: () => undefined,
 }
 
-function press(key: string, shiftKey = false): KeyboardEvent {
-  return {
+const press = (key: string, shiftKey = false): KeyboardEvent =>
+  ({
     key,
     code: key,
     shiftKey,
     ctrlKey: false,
     metaKey: false,
     altKey: false,
-  } as KeyboardEvent
-}
+  }) as KeyboardEvent
 
 describe('a nudge', () => {
   test('is a pixel with a bare arrow', () => {

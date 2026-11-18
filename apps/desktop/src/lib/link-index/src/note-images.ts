@@ -56,20 +56,20 @@ function heldAlready(src: string): string | null {
 
 const ABSOLUTE = /^(?:[a-z]:[\\/]|[\\/])/i
 
-export function picturesOf(
-  notePath: string | null,
-  source: string,
-  finish: (path: string) => string,
-  every = false,
-): PictureResolver {
-  return (src, wikilink, from) => {
+export const picturesOf =
+  (
+    notePath: string | null,
+    source: string,
+    finish: (path: string) => string,
+    every = false,
+  ): PictureResolver =>
+  (src, wikilink, from) => {
     if (!every && !wikilink && from?.path === undefined) return null
     const found = from?.path
       ? picturePath(src, from.path, from.text, wikilink)
       : picturePath(src, notePath, source, wikilink)
     return found === null ? null : finish(found)
   }
-}
 
 function besideNote(notePath: string, path: string): string | null {
   const folder = folderOf(notePath).replace(/\\/g, '/')
@@ -78,12 +78,12 @@ function besideNote(notePath: string, path: string): string | null {
   return relativePath(folder, there)
 }
 
-export function pictureBeside(notePath: string | null): (path: string) => string {
-  return (path) => {
+export const pictureBeside =
+  (notePath: string | null): ((path: string) => string) =>
+  (path) => {
     const beside = notePath === null ? null : besideNote(notePath, path)
     return beside === null ? path : encodeTarget(beside)
   }
-}
 
 function pictureWritten(link: FoundLink, to: string): string {
   if (link.kind !== 'wikilink') return to

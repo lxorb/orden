@@ -63,13 +63,11 @@ export async function noteHolding(
   return text !== null && besideIts(text, note, pdf, how.root) ? note : null
 }
 
-export async function asItself(pdf: string, sizes: Sizes): Promise<string> {
-  return writeCanvas(pagesFromPdf(nameOf(pdf), await sized(pdf, sizes)))
-}
+export const asItself = async (pdf: string, sizes: Sizes): Promise<string> =>
+  writeCanvas(pagesFromPdf(nameOf(pdf), await sized(pdf, sizes)))
 
-export async function asDraft(pdf: string, sizes: Sizes): Promise<string> {
-  return writeCanvas(pagesFromPdf(pdf, await sized(pdf, sizes)))
-}
+export const asDraft = async (pdf: string, sizes: Sizes): Promise<string> =>
+  writeCanvas(pagesFromPdf(pdf, await sized(pdf, sizes)))
 
 export function paperOutside(text: string, inSpace: (path: string) => boolean): string | null {
   let pages

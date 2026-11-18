@@ -7,10 +7,8 @@ export function approach(from: number, to: number, dt: number, tau: number): num
 
 const ARRIVED = 0.5
 
-export function arrived(
+export const arrived = (
   from: { x: number; y: number },
   to: { x: number; y: number },
   unit = 1,
-): boolean {
-  return Math.hypot(to.x - from.x, to.y - from.y) <= ARRIVED * unit
-}
+): boolean => Math.hypot(to.x - from.x, to.y - from.y) <= ARRIVED * unit

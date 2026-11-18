@@ -64,8 +64,8 @@ export function withBookmarks(
   }
 }
 
-function inOrder(spaces: Said[]): Said[] {
-  return spaces
+const inOrder = (spaces: Said[]): Said[] =>
+  spaces
     .map((one, at) => ({ one, at, position: Number(one.position) }))
     .sort(
       (a, b) =>
@@ -73,7 +73,6 @@ function inOrder(spaces: Said[]): Said[] {
           (Number.isFinite(b.position) ? b.position : b.at) || a.at - b.at,
     )
     .map(({ one }) => one)
-}
 
 function fromWindows(windows: Said[]): Said | null {
   const normal = windows.filter((one) => !one.isPrivate && !one.isPopup && !one.isTaskbarTab)
@@ -87,16 +86,14 @@ function fromWindows(windows: Said[]): Said | null {
   }
 }
 
-function spaceRow(row: Said): Said {
-  return {
-    uuid: row.uuid,
-    name: row.name,
-    icon: row.icon,
-    position: row.position,
-    containerTabId: row.container_id,
-    theme: { gradientColors: parsed(row.theme_colors) },
-  }
-}
+const spaceRow = (row: Said): Said => ({
+  uuid: row.uuid,
+  name: row.name,
+  icon: row.icon,
+  position: row.position,
+  containerTabId: row.container_id,
+  theme: { gradientColors: parsed(row.theme_colors) },
+})
 
 function parsed(value: unknown): unknown {
   if (typeof value !== 'string') return value
@@ -146,13 +143,9 @@ function folderOf(one: Said): SidebarFolder | null {
   }
 }
 
-function flag(value: unknown): boolean {
-  return value === true || value === 'true' || value === 1
-}
+const flag = (value: unknown): boolean => value === true || value === 'true' || value === 1
 
-function idOf(one: Said): string | null {
-  return text(one.zenSyncId) ?? text(one.zenPinnedId)
-}
+const idOf = (one: Said): string | null => text(one.zenSyncId) ?? text(one.zenPinnedId)
 
 function tabsOf(tabs: Said[]): SidebarTab[] {
   const kept = new Map<string, SidebarTab | null>()

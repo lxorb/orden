@@ -61,13 +61,9 @@ function areaOf(): Box {
   return panes ?? { x: 0, y: 0, width: innerWidth, height: innerHeight }
 }
 
-function pagesInWindow(): boolean {
-  return document.querySelector('.webbar') !== null
-}
+const pagesInWindow = (): boolean => document.querySelector('.webbar') !== null
 
-function engineCuts(): boolean {
-  return pagesInWindow() && webPages().cuts
-}
+const engineCuts = (): boolean => pagesInWindow() && webPages().cuts
 
 function pageOf(tab: string, cuts: boolean): Point | null {
   const glyph = [...document.querySelectorAll<HTMLElement>(GLYPHS)].find(
@@ -157,11 +153,10 @@ function listen() {
   window.addEventListener('resize', stopFlights, { passive: true })
 }
 
-function settled(): Promise<void> {
-  return new Promise((done) => {
+const settled = (): Promise<void> =>
+  new Promise((done) => {
     requestAnimationFrame(() => requestAnimationFrame(() => done()))
   })
-}
 
 export async function started(
   name: string,

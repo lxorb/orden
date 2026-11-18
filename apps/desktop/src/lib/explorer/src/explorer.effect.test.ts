@@ -119,9 +119,8 @@ async function explorer() {
   return { tab, view: viewOf(tab) }
 }
 
-function rows(): string[] {
-  return [...target.querySelectorAll('.entry .orden-row-label')].map((one) => one.textContent)
-}
+const rows = (): string[] =>
+  [...target.querySelectorAll('.entry .orden-row-label')].map((one) => one.textContent)
 
 function press(key: string, more: KeyboardEventInit = {}) {
   const focused = document.activeElement

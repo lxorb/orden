@@ -174,9 +174,8 @@ interface Item {
   text: string
 }
 
-function taskLine(item: Item): string {
-  return `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
-}
+const taskLine = (item: Item): string =>
+  `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
 
 function linksOf(said: unknown, text: string): string[] {
   if (!Array.isArray(said)) return []
@@ -231,9 +230,8 @@ function filePaths(said: unknown): string[] {
   return paths
 }
 
-function asNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
+const asNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
 
 function beside(
   files: ReadonlyMap<string, Source>,

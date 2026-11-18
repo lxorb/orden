@@ -29,12 +29,11 @@ const sizes = [
   { key: 'g', w: 600, h: 600 },
 ].map(({ key, w, h }) => ({ key, outline: shapeOf({ x: 0, y: 0, w, h }) }))
 
-function placedOf(out: Record<string, Shift>): Outline[] {
-  return sizes.map(({ key, outline }) => {
+const placedOf = (out: Record<string, Shift>): Outline[] =>
+  sizes.map(({ key, outline }) => {
     const shift = out[key] ?? { x: 0, y: 0 }
     return moved(outline, shift.x, shift.y)
   })
-}
 
 test('the first goes on the middle, and no outline comes nearer another than the gap', () => {
   const out = packed(sizes, GAP)

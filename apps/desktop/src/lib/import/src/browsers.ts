@@ -61,15 +61,14 @@ export async function foundBrowsers(): Promise<FoundBrowser[]> {
   }
 }
 
-export async function browserFile(
+export const browserFile = async (
   profile: BrowserProfile,
   file: string,
-): Promise<Uint8Array | null> {
-  return invoke<string>('read_browser_file', {
+): Promise<Uint8Array | null> =>
+  invoke<string>('read_browser_file', {
     browser: profile.browser,
     profile: profile.path,
     file,
   })
     .then(fromBase64)
     .catch(() => null)
-}

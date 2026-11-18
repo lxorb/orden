@@ -9,6 +9,5 @@ export async function queryRowsHtml(
   return loaded.queryRowsHtml(code, nothing, root)
 }
 
-export function pressQueryRow(target: EventTarget | null): boolean {
-  return loaded?.pressRow(target) ?? false
-}
+export const pressQueryRow = (target: EventTarget | null): boolean =>
+  loaded?.pressRow(target) ?? false

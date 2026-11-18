@@ -21,17 +21,14 @@ function under(folder: string, path: string): boolean {
   return other === one || other.startsWith(`${one}/`)
 }
 
-export function movesInto(paths: readonly string[], folder: string): boolean {
-  return paths.some((path) => folderOf(path) !== folder && !under(path, folder))
-}
+export const movesInto = (paths: readonly string[], folder: string): boolean =>
+  paths.some((path) => folderOf(path) !== folder && !under(path, folder))
 
-export function copiesInto(paths: readonly string[], folder: string): boolean {
-  return paths.some((path) => !under(path, folder))
-}
+export const copiesInto = (paths: readonly string[], folder: string): boolean =>
+  paths.some((path) => !under(path, folder))
 
-export function landsIn(paths: readonly string[], folder: string, how: 'move' | 'copy'): boolean {
-  return how === 'copy' ? copiesInto(paths, folder) : movesInto(paths, folder)
-}
+export const landsIn = (paths: readonly string[], folder: string, how: 'move' | 'copy'): boolean =>
+  how === 'copy' ? copiesInto(paths, folder) : movesInto(paths, folder)
 
 interface Place {
   path: string

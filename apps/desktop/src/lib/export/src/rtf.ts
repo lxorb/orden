@@ -132,9 +132,7 @@ function hyperlink(href: string, words: string): string {
   return `{\\field{\\*\\fldinst{HYPERLINK "${address}"}}{\\fldrslt{\\cf${LINK}\\ul ${words}}}}`
 }
 
-function bolded(spans: readonly Span[]): Span[] {
-  return spans.map((span) => ({ ...span, bold: true }))
-}
+const bolded = (spans: readonly Span[]): Span[] => spans.map((span) => ({ ...span, bold: true }))
 
 interface Sheet {
   doc: Doc
@@ -192,9 +190,8 @@ function pngSize(bytes: Uint8Array): Size | null {
 
 const BARE = new Set([0x01, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9])
 
-function isFrame(marker: number): boolean {
-  return marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc
-}
+const isFrame = (marker: number): boolean =>
+  marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc
 
 function jpegSize(bytes: Uint8Array): Size | null {
   if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return null
@@ -277,9 +274,8 @@ function runOf(span: Span, sheet: Sheet): string {
   return span.href === undefined ? words : hyperlink(span.href, words)
 }
 
-function runs(spans: readonly Span[], sheet: Sheet): string {
-  return spans.map((span) => runOf(span, sheet)).join('')
-}
+const runs = (spans: readonly Span[], sheet: Sheet): string =>
+  spans.map((span) => runOf(span, sheet)).join('')
 
 interface Frame {
   indent: number
@@ -294,9 +290,8 @@ function opened(frame: Frame, props: string, lead = ''): string {
   return `\\pard\\plain${frame.border}${lead}${indent}${props} `
 }
 
-function paragraph(spans: readonly Span[], sheet: Sheet, frame: Frame, props = BODY): string {
-  return `${opened(frame, props)}${runs(spans, sheet)}\\par\n`
-}
+const paragraph = (spans: readonly Span[], sheet: Sheet, frame: Frame, props = BODY): string =>
+  `${opened(frame, props)}${runs(spans, sheet)}\\par\n`
 
 const HEADINGS = [
   { size: 36, before: 360, after: 160 },
@@ -354,9 +349,7 @@ const ALIGNS: Record<'left' | 'center' | 'right', string> = {
   right: '\\qr',
 }
 
-function alignWord(align: Align | undefined): string {
-  return align == null ? '\\ql' : ALIGNS[align]
-}
+const alignWord = (align: Align | undefined): string => (align == null ? '\\ql' : ALIGNS[align])
 
 function tableRtf(block: Extract<Block, { kind: 'table' }>, sheet: Sheet, frame: Frame): string {
   const rows = block.head.length ? [block.head, ...block.rows] : block.rows

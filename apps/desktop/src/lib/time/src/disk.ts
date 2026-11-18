@@ -21,20 +21,18 @@ const MINUTES = 'minutes'
 const nameFor = (owner: string | null): string =>
   owner === null ? 'orden-time' : `orden-time:${owner}`
 
-function settled<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
+const settled = <T>(request: IDBRequest<T>): Promise<T> =>
+  new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('the time store refused'))
   })
-}
 
-function finished(tx: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
+const finished = (tx: IDBTransaction): Promise<void> =>
+  new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error ?? new Error('the time store did not write'))
     tx.onabort = () => reject(tx.error ?? new Error('the time store did not write'))
   })
-}
 
 const rowOf = (value: unknown): Row | null => {
   if (typeof value !== 'object' || value === null) return null

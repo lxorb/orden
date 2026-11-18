@@ -569,9 +569,7 @@
         : pullSnap.guides,
   )
 
-  function modulo(value: number, by: number): number {
-    return by > 0 ? ((value % by) + by) % by : 0
-  }
+  const modulo = (value: number, by: number): number => (by > 0 ? ((value % by) + by) % by : 0)
 
   const follows = (_value: unknown) => undefined
 
@@ -716,8 +714,8 @@
     return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) }
   }
 
-  function hitFor(point: Point, coarse: boolean): Hit {
-    return hitAt(
+  const hitFor = (point: Point, coarse: boolean): Hit =>
+    hitAt(
       {
         canvas: shown,
         picked: store.picked,
@@ -729,7 +727,6 @@
       },
       point,
     )
-  }
 
   function sampleOf(event: PointerEvent, began: number): InkPoint {
     const point = planeAt(event)
@@ -776,9 +773,7 @@
   let gestures = 0
   let cloning: string | null = null
 
-  function putting() {
-    return { colour: tools.colour, path: tab.path }
-  }
+  const putting = () => ({ colour: tools.colour, path: tab.path })
 
   function send(input: Input) {
     const preview = shown
@@ -917,9 +912,8 @@
     predicted = []
   }
 
-  function kindOf(event: PointerEvent) {
-    return penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
-  }
+  const kindOf = (event: PointerEvent) =>
+    penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
 
   const contacts = new Contacts()
 

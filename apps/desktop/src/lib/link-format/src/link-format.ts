@@ -5,9 +5,8 @@ export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
 
 export const LINK_FORMATS: readonly LinkFormat[] = ['wikilink', 'shortest', 'relative', 'absolute']
 
-export function isLinkFormat(value: unknown): value is LinkFormat {
-  return typeof value === 'string' && (LINK_FORMATS as readonly string[]).includes(value)
-}
+export const isLinkFormat = (value: unknown): value is LinkFormat =>
+  typeof value === 'string' && (LINK_FORMATS as readonly string[]).includes(value)
 
 let writing: LinkFormat = 'wikilink'
 
@@ -15,9 +14,7 @@ export function setLinkWriting(format: LinkFormat) {
   writing = format
 }
 
-export function linkWriting(): LinkFormat {
-  return writing
-}
+export const linkWriting = (): LinkFormat => writing
 
 export interface LinkTarget {
   name: string
@@ -66,15 +63,12 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
   return target.from ? relativePath(folderOf(target.from), path) : path
 }
 
-function bareFragment(fragment: string): string {
-  return fragment.startsWith('^') ? fragment.slice(1) : fragment
-}
+const bareFragment = (fragment: string): string =>
+  fragment.startsWith('^') ? fragment.slice(1) : fragment
 
 const EXTENSION = /\.[^./]+$/
 
-function withExtension(name: string): string {
-  return EXTENSION.test(name) ? name : `${name}.md`
-}
+const withExtension = (name: string): string => (EXTENSION.test(name) ? name : `${name}.md`)
 
 function markdownFragment(fragment: string): string {
   if (fragment.startsWith('^') || /^page=\d+$/i.test(fragment)) return fragment

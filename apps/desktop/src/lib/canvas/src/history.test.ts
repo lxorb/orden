@@ -2,15 +2,13 @@ import { describe, expect, test } from 'vitest'
 import type { Canvas } from '@orden/markdown/canvas'
 import { CanvasHistory, KEPT } from './history'
 
-function step(id: string): Canvas {
-  return {
-    nodes: [{ id, type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
-    edges: [],
-    ink: [],
-    at: {},
-    gone: {},
-  }
-}
+const step = (id: string): Canvas => ({
+  nodes: [{ id, type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
+  edges: [],
+  ink: [],
+  at: {},
+  gone: {},
+})
 
 const at = (canvas: Canvas | null) => canvas?.nodes[0]?.id
 

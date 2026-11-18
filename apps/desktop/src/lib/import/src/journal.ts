@@ -173,9 +173,7 @@ function named(attribute: string, wanted: string): boolean {
   return attribute.split(/\s+/).includes(wanted)
 }
 
-function isSpan(span: Span | null): span is Span {
-  return !!span
-}
+const isSpan = (span: Span | null): span is Span => !!span
 
 function words(inner: string): string {
   return unescapeXml(inner.replace(/<[^>]*>/g, ' '))

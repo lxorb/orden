@@ -12,13 +12,11 @@ const DEEPEST = 3
 
 const MOST_BYTES = 512 * 1024 * 1024
 
-export function sourceOf(path: string, bytes: Uint8Array): Source {
-  return {
-    path: tidyPath(path),
-    text: () => Promise.resolve(decoded(bytes)),
-    bytes: () => Promise.resolve(bytes),
-  }
-}
+export const sourceOf = (path: string, bytes: Uint8Array): Source => ({
+  path: tidyPath(path),
+  text: () => Promise.resolve(decoded(bytes)),
+  bytes: () => Promise.resolve(bytes),
+})
 
 export function pickedFolder(picked: readonly PickedFile[]): string | null {
   let folder: string | null = null
@@ -169,6 +167,4 @@ export function decoded(bytes: Uint8Array): string {
   }
 }
 
-export function tooMuch(bytes: number): boolean {
-  return bytes > MOST_BYTES
-}
+export const tooMuch = (bytes: number): boolean => bytes > MOST_BYTES

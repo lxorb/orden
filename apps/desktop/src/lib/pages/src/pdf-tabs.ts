@@ -17,30 +17,23 @@ export const draftPdf: typeof import('./drafts').draftPdf = async (ws, from) =>
 export const keepPaper: typeof import('./drafts').keepPaper = async (ws, note, path) =>
   (await drafts()).keepPaper(ws, note, path)
 
-export function heldBy(path: string, root: string | null): Promise<string | null> {
-  return noteHolding(path, {
+export const heldBy = (path: string, root: string | null): Promise<string | null> =>
+  noteHolding(path, {
     root,
     exists: onDisk,
     read: (one) => invoke<string>('read_note', { path: one }).catch(() => null),
   })
-}
 
-export function asItself(path: string): Promise<string> {
-  return itself(path, pageSizes)
-}
+export const asItself = (path: string): Promise<string> => itself(path, pageSizes)
 
-export function asPageNote(
+export const asPageNote = (
   path: string,
   root: string | null,
   move: (from: string, to: string) => Promise<void>,
-): Promise<string> {
-  return pageNote(path, turningIn(root, move))
-}
+): Promise<string> => pageNote(path, turningIn(root, move))
 
-export function adoptBeside(
+export const adoptBeside = (
   path: string,
   root: string | null,
   move: (from: string, to: string) => Promise<void>,
-): Promise<boolean> {
-  return adopt(path, turningIn(root, move))
-}
+): Promise<boolean> => adopt(path, turningIn(root, move))

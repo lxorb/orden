@@ -8,9 +8,7 @@ import { elsewhere, links } from '../../link-index/src/api'
 import { folderOf, isMarkdownPath, samePath, withinSpace } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 
-function mapKey(path: string): string {
-  return isFolderNote(path) ? folderOf(path) : path
-}
+const mapKey = (path: string): string => (isFolderNote(path) ? folderOf(path) : path)
 
 function awayIn(path: string): string | null {
   let home: string | null = null
@@ -46,9 +44,8 @@ export function holdsPaper(path: string): boolean {
   return elsewhere.of(path)?.paper === true
 }
 
-function saysNothing(path: string): boolean {
-  return awayIn(path) === null ? links.saysNothing(path) : elsewhere.of(path)?.bare === true
-}
+const saysNothing = (path: string): boolean =>
+  awayIn(path) === null ? links.saysNothing(path) : elsewhere.of(path)?.bare === true
 
 function isEmpty(mark: FileMark, path: string): boolean {
   if (mark === 'note') return saysNothing(path)
@@ -83,13 +80,11 @@ export function sourceMark(
   return { mark, icon: null }
 }
 
-export function siteMark(
+export const siteMark = (
   live: string | null | undefined,
   url: string | null | undefined,
   written?: string | null,
-): string | null {
-  return live ?? webPages().faviconOf(url) ?? written ?? null
-}
+): string | null => live ?? webPages().faviconOf(url) ?? written ?? null
 
 export function faviconFor(path: string | undefined, url?: string | null): string | null {
   if (path === undefined) return siteMark(null, url)
@@ -97,17 +92,14 @@ export function faviconFor(path: string | undefined, url?: string | null): strin
   return siteMark(liveMarkOf(path), url ?? addressOf(path), writtenMarkOf(path))
 }
 
-export function wearsChosen(path: string | null | undefined): boolean {
-  return !!path && readIcon(chosenIcon(path)) !== null
-}
+export const wearsChosen = (path: string | null | undefined): boolean =>
+  !!path && readIcon(chosenIcon(path)) !== null
 
-export function addressOf(path: string): string | null {
-  return awayIn(path) === null ? links.shortcutOf(path) : (elsewhere.of(path)?.address ?? null)
-}
+export const addressOf = (path: string): string | null =>
+  awayIn(path) === null ? links.shortcutOf(path) : (elsewhere.of(path)?.address ?? null)
 
-function writtenMarkOf(path: string): string | null {
-  return awayIn(path) === null ? links.faviconOf(path) : (elsewhere.of(path)?.favicon ?? null)
-}
+const writtenMarkOf = (path: string): string | null =>
+  awayIn(path) === null ? links.faviconOf(path) : (elsewhere.of(path)?.favicon ?? null)
 
 function liveMarkOf(path: string): string | null {
   for (const tab of workspace.tabs) {

@@ -20,9 +20,7 @@ const OFFERS: Record<ExportKind, readonly ExportId[]> = {
   none: [],
 }
 
-export function offeredBy(kind: ExportKind): readonly ExportId[] {
-  return OFFERS[kind]
-}
+export const offeredBy = (kind: ExportKind): readonly ExportId[] => OFFERS[kind]
 
 export const EXPORT_KEYS: readonly ExportId[] = [
   ...FORMATS,
@@ -39,9 +37,8 @@ export function exportKindOf(open: Open | null): ExportKind {
   return open.exports === 'file' && open.path === null ? 'none' : open.exports
 }
 
-export function isNoteFormat(id: ExportId): id is Exportable {
-  return EXPORT_FORMATS.some((one) => one.id === id) || EXPORT_VARIANTS.some((one) => one.id === id)
-}
+export const isNoteFormat = (id: ExportId): id is Exportable =>
+  EXPORT_FORMATS.some((one) => one.id === id) || EXPORT_VARIANTS.some((one) => one.id === id)
 
 export function labelOf(id: ExportId): string {
   const extra = EXPORT_EXTRAS.find((one) => one.id === id)
@@ -57,6 +54,5 @@ const PRINTABLE: ReadonlySet<string> = new Set(
   __EVEN_PLUGIN__ ? ['note'] : ['note', 'canvas', 'pages'],
 )
 
-export function printable(kind: string | undefined): boolean {
-  return kind !== undefined && PRINTABLE.has(kind)
-}
+export const printable = (kind: string | undefined): boolean =>
+  kind !== undefined && PRINTABLE.has(kind)

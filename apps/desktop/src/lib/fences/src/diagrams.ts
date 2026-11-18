@@ -37,13 +37,12 @@ export async function drawDiagram(
   return drawMermaid(language === 'sequence' ? sequenceToMermaid(code) : code, scheme, where)
 }
 
-function drawMermaid(code: string, scheme: Scheme, where: DiagramFor): Promise<string> {
-  return mermaidSvg(`orden-export-${sequence++}`, code, {
+const drawMermaid = (code: string, scheme: Scheme, where: DiagramFor): Promise<string> =>
+  mermaidSvg(`orden-export-${sequence++}`, code, {
     theme: scheme === 'light' ? 'default' : 'dark',
     fontFamily: where === 'page' ? PAGE_FONT : FONT,
     ...(where === 'page' ? { htmlLabels: false } : {}),
   })
-}
 
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {
   const flowchart = (await import('flowchart.js')).default

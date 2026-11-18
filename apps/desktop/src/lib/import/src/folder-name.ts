@@ -59,6 +59,4 @@ function stemOf(picked: PickedFile): string {
   return picked.name.replace(/\.[^.]+$/, '')
 }
 
-export function onMac(): boolean {
-  return isDesktop && platform() === 'macos'
-}
+export const onMac = (): boolean => isDesktop && platform() === 'macos'

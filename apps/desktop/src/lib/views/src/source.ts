@@ -21,12 +21,10 @@ async function fileText(path: string): Promise<string> {
   return text
 }
 
-function watchFile(path: string) {
-  return (changed: () => void) =>
-    links.hearSaves((saved) => {
-      if (samePath(saved, path)) changed()
-    })
-}
+const watchFile = (path: string) => (changed: () => void) =>
+  links.hearSaves((saved) => {
+    if (samePath(saved, path)) changed()
+  })
 
 export function fileSource(path: string, view?: string, self?: () => Row | undefined): Source {
   let before = ''

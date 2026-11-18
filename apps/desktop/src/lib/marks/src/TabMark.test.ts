@@ -27,9 +27,8 @@ const TabMark = (await import('./TabMark.svelte')).default
 
 iconLibrary.set = await loadIcons()
 
-function strokes(icon: readonly (readonly [string, Record<string, unknown>])[]): string[] {
-  return icon.flatMap(([, attrs]) => (typeof attrs.d === 'string' ? [attrs.d] : []))
-}
+const strokes = (icon: readonly (readonly [string, Record<string, unknown>])[]): string[] =>
+  icon.flatMap(([, attrs]) => (typeof attrs.d === 'string' ? [attrs.d] : []))
 
 const rocket = strokes(iconLibrary.shape('rocket') ?? [])
 
@@ -42,9 +41,7 @@ function tabFor(kind: TabKind, path: string | null, text = ''): InstanceType<typ
   return new Tab(doc, 'pane')
 }
 
-function drawn(tab: InstanceType<typeof Tab>): string {
-  return render(TabMark, { props: { tab } }).body
-}
+const drawn = (tab: InstanceType<typeof Tab>): string => render(TabMark, { props: { tab } }).body
 
 const SITE = 'https://svelte.dev/docs'
 const FAVICON = 'https://svelte.dev/favicon.png'

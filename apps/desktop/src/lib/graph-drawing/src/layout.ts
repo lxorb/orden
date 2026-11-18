@@ -456,6 +456,5 @@ export class Layout {
   }
 }
 
-function quadrant(px: number, py: number, midX: number, midY: number): number {
-  return (px >= midX ? 1 : 0) + (py >= midY ? 2 : 0)
-}
+const quadrant = (px: number, py: number, midX: number, midY: number): number =>
+  (px >= midX ? 1 : 0) + (py >= midY ? 2 : 0)

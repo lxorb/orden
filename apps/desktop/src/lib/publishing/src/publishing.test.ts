@@ -110,8 +110,8 @@ import { canPublish } from '../../sharing/src/sharing.svelte'
 import { theme } from '../../theme/src/theme.svelte'
 import type { RemoteSpace } from '../../accounts/src/routes'
 
-function remote(id: string, role: 'owner' | 'write' | 'read', blog = {}): RemoteSpace {
-  return {
+const remote = (id: string, role: 'owner' | 'write' | 'read', blog = {}): RemoteSpace =>
+  ({
     id,
     name: id,
     role,
@@ -124,8 +124,7 @@ function remote(id: string, role: 'owner' | 'write' | 'read', blog = {}): Remote
       dns: [],
       ...blog,
     },
-  } as unknown as RemoteSpace
-}
+  }) as unknown as RemoteSpace
 
 const local = (name: string) => ({ id: name, name, root: name })
 

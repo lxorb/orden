@@ -32,9 +32,7 @@
 
   const root = $derived(workspace.activeSpace?.root ?? null)
 
-  function noteOf(row: Row): string | null {
-    return 'to' in row ? row.to : row.path
-  }
+  const noteOf = (row: Row): string | null => ('to' in row ? row.to : row.path)
 
   function placeOf(row: Row) {
     const note = noteOf(row)

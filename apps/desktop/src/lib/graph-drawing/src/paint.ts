@@ -2,9 +2,7 @@ import { type Camera, SMALLEST_DOT } from '../../camera/src/api'
 import type { NoteGraph } from '../../graph/src/api'
 import { shownName } from '@orden/markdown/note-name'
 
-export function radiusOf(degree: number): number {
-  return 3 + Math.min(7, Math.sqrt(degree))
-}
+export const radiusOf = (degree: number): number => 3 + Math.min(7, Math.sqrt(degree))
 
 const DIMMED = 0.16
 

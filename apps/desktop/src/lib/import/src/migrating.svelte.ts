@@ -208,8 +208,6 @@ export async function arrive(space: Space, open = true) {
   if (!viewport.drawer) workspace.showPanel('tree')
 }
 
-function firstNote(): string | null {
-  return (workspace.notes[0] ?? workspace.files[0])?.path ?? null
-}
+const firstNote = (): string | null => (workspace.notes[0] ?? workspace.files[0])?.path ?? null
 
 export const migrating = new Migrating()

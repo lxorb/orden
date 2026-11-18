@@ -14,9 +14,11 @@ function picked(path: string, bytes: Uint8Array): PickedFile {
   }
 }
 
-function loose(name: string, bytes: Uint8Array): PickedFile {
-  return { name, webkitRelativePath: '', arrayBuffer: async () => bytes.slice().buffer }
-}
+const loose = (name: string, bytes: Uint8Array): PickedFile => ({
+  name,
+  webkitRelativePath: '',
+  arrayBuffer: async () => bytes.slice().buffer,
+})
 
 async function zipped(entries: Record<string, string | Uint8Array>): Promise<Uint8Array> {
   const zip = new JSZip()

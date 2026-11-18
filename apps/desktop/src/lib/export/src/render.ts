@@ -46,21 +46,19 @@ export interface HtmlOptions {
   escapeHtml?: boolean
 }
 
-function declarations(tokens: Record<string, string>): string {
-  return Object.entries(tokens)
+const declarations = (tokens: Record<string, string>): string =>
+  Object.entries(tokens)
     .map(([token, value]) => `${token}: ${value};`)
     .join(' ')
-}
 
-function accentCss(accent: string, scheme: Scheme): string {
-  return [
+const accentCss = (accent: string, scheme: Scheme): string =>
+  [
     `:root { ${declarations(accentTokens(accent, scheme))} }`,
     `@media print { :root { ${declarations(accentTokens(accent, 'light'))} } }`,
   ].join('\n')
-}
 
-export function buildBody(source: string, options: HtmlOptions = {}): string {
-  return renderMarkdown(source, {
+export const buildBody = (source: string, options: HtmlOptions = {}): string =>
+  renderMarkdown(source, {
     footnotes: true,
     toc: true,
     cover: true,
@@ -69,7 +67,6 @@ export function buildBody(source: string, options: HtmlOptions = {}): string {
     ...(options.pictures ? { resolvePicture: options.pictures } : {}),
     ...(options.escapeHtml ? { escapeHtml: true } : {}),
   })
-}
 
 export function buildStyles(body: string, source: string, options: HtmlOptions = {}): string {
   const palette =

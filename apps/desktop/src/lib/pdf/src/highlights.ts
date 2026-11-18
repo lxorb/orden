@@ -25,17 +25,12 @@ export interface Sheet {
   held?: Held
 }
 
-export function emptySheet(): Sheet {
-  return { version: VERSION, highlights: [] }
-}
+export const emptySheet = (): Sheet => ({ version: VERSION, highlights: [] })
 
-export function leftAlone(held: Held): Sheet {
-  return { version: VERSION, highlights: [], held }
-}
+export const leftAlone = (held: Held): Sheet => ({ version: VERSION, highlights: [], held })
 
-export function frozen(sheet: Sheet): Held | null {
-  return sheet.held ?? (sheet.version > VERSION ? 'newer' : null)
-}
+export const frozen = (sheet: Sheet): Held | null =>
+  sheet.held ?? (sheet.version > VERSION ? 'newer' : null)
 
 function readQuad(value: unknown): Quad | null {
   if (!Array.isArray(value) || value.length !== 8) return null
@@ -90,12 +85,11 @@ export function readSheet(text: string): Sheet {
   }
 }
 
-function sorted(highlights: readonly Highlight[]): Highlight[] {
-  return [...highlights].sort(
+const sorted = (highlights: readonly Highlight[]): Highlight[] =>
+  [...highlights].sort(
     (one, other) =>
       one.page - other.page || one.created - other.created || (one.id < other.id ? -1 : 1),
   )
-}
 
 export function writeSheet(sheet: Sheet): string {
   if (!sheet.highlights.length) return ''
@@ -114,16 +108,14 @@ export type Point = (x: number, y: number) => readonly [number, number]
 
 export type Transform = readonly [number, number, number, number, number, number]
 
-export function matrixOf(values: readonly number[]): Transform {
-  return [
-    values[0] ?? 1,
-    values[1] ?? 0,
-    values[2] ?? 0,
-    values[3] ?? 1,
-    values[4] ?? 0,
-    values[5] ?? 0,
-  ]
-}
+export const matrixOf = (values: readonly number[]): Transform => [
+  values[0] ?? 1,
+  values[1] ?? 0,
+  values[2] ?? 0,
+  values[3] ?? 1,
+  values[4] ?? 0,
+  values[5] ?? 0,
+]
 
 export function toViewport(matrix: Transform): Point {
   const [a, b, c, d, e, f] = matrix

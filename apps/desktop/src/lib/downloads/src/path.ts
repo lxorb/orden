@@ -43,27 +43,23 @@ export function startOf(asked: {
   return middleOf(asked.area)
 }
 
-export function landing(glyphs: readonly Glyph[], tab: string | null): Glyph | null {
-  return (
-    (tab === null ? undefined : glyphs.find((one) => one.tab === tab)) ??
-    glyphs.find((one) => one.focused) ??
-    glyphs[0] ??
-    null
-  )
-}
+export const landing = (glyphs: readonly Glyph[], tab: string | null): Glyph | null =>
+  (tab === null ? undefined : glyphs.find((one) => one.tab === tab)) ??
+  glyphs.find((one) => one.focused) ??
+  glyphs[0] ??
+  null
 
-export function cornerOf(window: { width: number; height: number }): Point {
-  return { x: window.width - CORNER, y: CORNER }
-}
+export const cornerOf = (window: { width: number; height: number }): Point => ({
+  x: window.width - CORNER,
+  y: CORNER,
+})
 
 export function flightMs(from: Point, to: Point): number {
   const far = Math.hypot(to.x - from.x, to.y - from.y)
   return Math.round(400 + 200 * Math.min(1, far / 1200))
 }
 
-function eased(at: number): number {
-  return at * at * (3 - 2 * at)
-}
+const eased = (at: number): number => at * at * (3 - 2 * at)
 
 export function arcOf(from: Point, to: Point, steps = 16): Point[] {
   const far = Math.hypot(to.x - from.x, to.y - from.y)

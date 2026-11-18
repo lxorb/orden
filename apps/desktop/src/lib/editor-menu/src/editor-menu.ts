@@ -85,9 +85,8 @@ function blockName(kind: BlockKind): string {
   }
 }
 
-export function blockLinkName(path: string | null | undefined): string | null {
-  return path && isMarkdownPath(path) ? noteName(path) : null
-}
+export const blockLinkName = (path: string | null | undefined): string | null =>
+  path && isMarkdownPath(path) ? noteName(path) : null
 
 function blockEntries(
   view: EditorView | undefined,
@@ -232,9 +231,8 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
   ]
 }
 
-function rowsFor(place: CommandPlace, on: object | undefined): MenuEntry[] {
-  return commandRows(place, on).map(({ label, run }) => ({ label, run }))
-}
+const rowsFor = (place: CommandPlace, on: object | undefined): MenuEntry[] =>
+  commandRows(place, on).map(({ label, run }) => ({ label, run }))
 
 function pasteInto(view: EditorView, cell: HTMLElement | null): void {
   if (!cell) {
@@ -388,20 +386,18 @@ function linkEntries(
   ]
 }
 
-function noteEntries(jump: NoteJump, from: string | null, state: EditorState): MenuEntry[] {
-  return [
-    { label: 'Open in new tab', run: () => void workspace.followLink(jump, 'behind', from) },
-    ...(viewport.touch
-      ? []
-      : [
-          {
-            label: 'Open to the side',
-            run: () => void workspace.followLink(jump, 'aside', from),
-          },
-        ]),
-    { label: 'Copy link', run: () => void copyText(linkOf(jump, state)) },
-  ]
-}
+const noteEntries = (jump: NoteJump, from: string | null, state: EditorState): MenuEntry[] => [
+  { label: 'Open in new tab', run: () => void workspace.followLink(jump, 'behind', from) },
+  ...(viewport.touch
+    ? []
+    : [
+        {
+          label: 'Open to the side',
+          run: () => void workspace.followLink(jump, 'aside', from),
+        },
+      ]),
+  { label: 'Copy link', run: () => void copyText(linkOf(jump, state)) },
+]
 
 function linkOf(jump: NoteJump, state: EditorState): string {
   const fragment =
