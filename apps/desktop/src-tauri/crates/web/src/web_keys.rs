@@ -21,7 +21,7 @@ pub struct Pressed {
 
 impl Pressed {
     #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
-    pub fn keeps_page(&self) -> bool {
+    fn keeps_page(&self) -> bool {
         self.code == "F11"
     }
 
@@ -168,7 +168,7 @@ fn named(vk: u32, shift: bool) -> Option<(&'static str, &'static str)> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Chord {
+struct Chord {
     vk: u32,
     held: Held,
 }
@@ -302,7 +302,7 @@ fn tells_alt(_app: &tauri::AppHandle) -> bool {
 }
 
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
+fn reloading(vk: u32, held: Held) -> Option<Pressed> {
     if held.alt {
         return None;
     }
@@ -322,7 +322,7 @@ pub fn reloading(vk: u32, held: Held) -> Option<Pressed> {
 }
 
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
-pub fn vk_of(keyval: u32) -> Option<u32> {
+fn vk_of(keyval: u32) -> Option<u32> {
     match keyval {
         0x61..=0x7A => Some(keyval - 0x20),
         0x41..=0x5A | 0x30..=0x39 => Some(keyval),

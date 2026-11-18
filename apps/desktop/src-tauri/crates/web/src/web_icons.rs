@@ -16,7 +16,7 @@ pub fn said(app: &AppHandle, window: &str, tab: &str, icon: &str) {
 }
 
 #[derive(Debug, Default, Deserialize)]
-pub struct Declared {
+struct Declared {
     #[serde(default)]
     rel: String,
     #[serde(default)]

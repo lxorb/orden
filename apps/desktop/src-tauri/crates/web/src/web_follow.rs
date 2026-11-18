@@ -93,7 +93,7 @@ fn following<T>(look: impl FnOnce(&mut HashMap<String, (String, Followed)>) -> T
 }
 
 #[must_use]
-pub fn extent(width: u32, height: u32, scale: f64) -> Option<Extent> {
+fn extent(width: u32, height: u32, scale: f64) -> Option<Extent> {
     if width == 0 || height == 0 || scale <= 0.0 {
         return None;
     }
@@ -155,7 +155,7 @@ pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<(
 }
 
 #[must_use]
-pub fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
+fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
     Rect {
         position: PhysicalPosition::new(left, top).into(),
         size: PhysicalSize::new(width, height).into(),

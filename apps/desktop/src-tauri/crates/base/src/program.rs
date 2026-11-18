@@ -133,7 +133,7 @@ fn login_path() -> Option<&'static OsStr> {
 const MARK: &str = "__orden_path__=";
 
 #[cfg(any(unix, test))]
-pub fn marked_path(printed: &str) -> Option<&str> {
+fn marked_path(printed: &str) -> Option<&str> {
     printed
         .lines()
         .rev()

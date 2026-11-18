@@ -207,7 +207,7 @@ fn ranges(body: &str, at: &[usize]) -> Vec<Span> {
     reason = "the twin of the app's fuzzyTerms, which is what sends the terms over; the tests hold the two to the same table"
 )]
 #[must_use]
-pub fn fuzzy_terms(query: &Query) -> Vec<String> {
+fn fuzzy_terms(query: &Query) -> Vec<String> {
     let mut out = Vec::new();
     if gather(query, &mut out) {
         out

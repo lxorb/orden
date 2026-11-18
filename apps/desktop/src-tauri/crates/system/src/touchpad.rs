@@ -7,7 +7,7 @@ const FINGERS: &str = "orden://touchpad";
 const PAN: &str = "orden://touchpad-pan";
 
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
-pub struct Fingers {
+struct Fingers {
     fingers: u32,
 }
 
@@ -94,7 +94,7 @@ pub fn touchpad_pan(on: bool) {
 }
 
 #[must_use]
-pub fn per_unit(logical: (i32, i32), physical: (i32, i32)) -> f64 {
+fn per_unit(logical: (i32, i32), physical: (i32, i32)) -> f64 {
     let wide = f64::from(logical.1) - f64::from(logical.0);
     let real = f64::from(physical.1) - f64::from(physical.0);
     if wide > 0.0 && real > 0.0 {
