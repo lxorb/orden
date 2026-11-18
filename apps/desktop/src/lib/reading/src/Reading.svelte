@@ -6,6 +6,7 @@
   import { modes } from '../../modes/src/api'
   import { placesIn, type Words } from '@orden/scan/search/find'
   import { inlineFiles } from './drawn'
+  import { reachKey } from './reach'
   import { paint, rangeOf, wordsOf } from './find'
   import { headingOffsets, positionOf, type Section, sectionAt } from './places'
   import { readingHtml, tagAnchor, unreadableHtml } from './render'
@@ -62,7 +63,7 @@
     }
   }
 
-  const asks = $derived(tab.doc.includes('```query') || tab.doc.includes('```tasks'))
+  const reach = $derived(reachKey(tab.doc, tab.path, links))
 
   function note() {
     return untrack(() => {
@@ -116,7 +117,7 @@
       tab.note.revision,
       theme.current,
       trustsHtmlIn(tab.note),
-      asks ? links.version : 0,
+      reach,
       links.locksSeen(),
       modes.hardBreaks,
     ]
