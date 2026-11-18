@@ -70,9 +70,7 @@ export function registerTabKind(kind: TabKind, load: () => Promise<TabKindParts>
   }
 }
 
-export function tabKindParts(kind: TabKind): TabKindParts {
-  return loaded.get(kind) ?? NO_TAB_KIND
-}
+export const tabKindParts = (kind: TabKind): TabKindParts => loaded.get(kind) ?? NO_TAB_KIND
 
 export async function tabKindLoaded(kind: TabKind): Promise<TabKindParts> {
   const load = loads.get(kind)

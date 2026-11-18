@@ -41,17 +41,14 @@ export interface Scope {
   formula: (name: string, row: Row) => Val
 }
 
-export function isDate(value: Val): value is DateValue {
-  return isRecordLike(value) && value.kind === 'date' && typeof value.iso === 'string'
-}
+export const isDate = (value: Val): value is DateValue =>
+  isRecordLike(value) && value.kind === 'date' && typeof value.iso === 'string'
 
-export function isDuration(value: Val): value is DurationValue {
-  return isRecordLike(value) && value.kind === 'duration' && typeof value.ms === 'number'
-}
+export const isDuration = (value: Val): value is DurationValue =>
+  isRecordLike(value) && value.kind === 'duration' && typeof value.ms === 'number'
 
-export function isLink(value: Val): value is LinkValue {
-  return isRecordLike(value) && value.kind === 'link' && typeof value.target === 'string'
-}
+export const isLink = (value: Val): value is LinkValue =>
+  isRecordLike(value) && value.kind === 'link' && typeof value.target === 'string'
 
 function isRecordLike(value: Val): value is ValueRecord {
   if (value === null || typeof value !== 'object') return false
@@ -59,9 +56,8 @@ function isRecordLike(value: Val): value is ValueRecord {
   return prototype === Object.prototype || prototype === null
 }
 
-export function isObject(value: Val): value is ValueRecord {
-  return isRecordLike(value) && !isDate(value) && !isDuration(value) && !isLink(value)
-}
+export const isObject = (value: Val): value is ValueRecord =>
+  isRecordLike(value) && !isDate(value) && !isDuration(value) && !isLink(value)
 
 export function fileOf(value: Val, scope: Scope): Row | null {
   if (value instanceof FileRef || value instanceof ThisRef) return value.row
@@ -77,22 +73,19 @@ export function fileOf(value: Val, scope: Scope): Row | null {
   return null
 }
 
-function reachedFrom(target: string, from: Row, context: Context): string | null {
-  return context.resolve?.(target, from) ?? null
-}
+const reachedFrom = (target: string, from: Row, context: Context): string | null =>
+  context.resolve?.(target, from) ?? null
 
-function linkPath(link: LinkValue, from: Row, context: Context): string | null {
-  return link.exact ? link.target : reachedFrom(link.target, from, context)
-}
+const linkPath = (link: LinkValue, from: Row, context: Context): string | null =>
+  link.exact ? link.target : reachedFrom(link.target, from, context)
 
-export function plainTarget(target: string): string {
-  return target
+export const plainTarget = (target: string): string =>
+  target
     .replace(/^!?\[\[|\]\]$/g, '')
     .replace(/[|#].*$/, '')
     .replace(/\.md$/i, '')
     .trim()
     .toLowerCase()
-}
 
 export function pointsAt(
   target: string,
@@ -117,9 +110,8 @@ export function truthy(value: Val): boolean {
   return true
 }
 
-function pathOf(value: Val): string | null {
-  return value instanceof FileRef || value instanceof ThisRef ? value.row.path : null
-}
+const pathOf = (value: Val): string | null =>
+  value instanceof FileRef || value instanceof ThisRef ? value.row.path : null
 
 export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (a === b) return true
@@ -455,6 +447,5 @@ export function settled(value: Val): Value {
   return value
 }
 
-export function fieldOf(object: ValueRecord | RenderedValue, name: string): Val {
-  return Object.hasOwn(object, name) ? ((object as ValueRecord)[name] ?? null) : null
-}
+export const fieldOf = (object: ValueRecord | RenderedValue, name: string): Val =>
+  Object.hasOwn(object, name) ? ((object as ValueRecord)[name] ?? null) : null

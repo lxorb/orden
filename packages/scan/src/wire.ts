@@ -44,33 +44,25 @@ export interface SearchAnswer {
   after: string | null
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-function isText(value: unknown): value is string {
-  return typeof value === 'string' && value.length <= LONGEST
-}
+const isText = (value: unknown): value is string =>
+  typeof value === 'string' && value.length <= LONGEST
 
-function isId(value: unknown): value is string {
-  return isText(value) && value.length > 0
-}
+const isId = (value: unknown): value is string => isText(value) && value.length > 0
 
-function isCount(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-}
+const isCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
-function isTextOrNull(value: unknown): value is string | null {
-  return value === null || typeof value === 'string'
-}
+const isTextOrNull = (value: unknown): value is string | null =>
+  value === null || typeof value === 'string'
 
-function isTexts(value: unknown, most = Infinity): value is string[] {
-  return Array.isArray(value) && value.length <= most && value.every(isText)
-}
+const isTexts = (value: unknown, most = Infinity): value is string[] =>
+  Array.isArray(value) && value.length <= most && value.every(isText)
 
-function isIds(value: unknown, most: number): value is string[] {
-  return Array.isArray(value) && value.length <= most && value.every(isId)
-}
+const isIds = (value: unknown, most: number): value is string[] =>
+  Array.isArray(value) && value.length <= most && value.every(isId)
 
 const UNITS: readonly Unit[] = ['line', 'block', 'section', 'task', 'task-todo', 'task-done']
 const COMPARES = ['has', 'is', 'null', 'lt', 'lte', 'gt', 'gte', 'range']
@@ -163,41 +155,33 @@ export function searchRequestOf(value: unknown): SearchRequest | null {
 
 const LINK_KINDS: readonly LinkKind[] = ['wikilink', 'markdown']
 
-function isLink(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    LINK_KINDS.some((one) => one === value.kind) &&
-    typeof value.target === 'string' &&
-    isTextOrNull(value.heading) &&
-    isTextOrNull(value.block) &&
-    isTextOrNull(value.alias) &&
-    typeof value.embed === 'boolean' &&
-    isCount(value.line) &&
-    typeof value.text === 'string'
-  )
-}
+const isLink = (value: unknown): boolean =>
+  isRecord(value) &&
+  LINK_KINDS.some((one) => one === value.kind) &&
+  typeof value.target === 'string' &&
+  isTextOrNull(value.heading) &&
+  isTextOrNull(value.block) &&
+  isTextOrNull(value.alias) &&
+  typeof value.embed === 'boolean' &&
+  isCount(value.line) &&
+  typeof value.text === 'string'
 
-function isTask(value: unknown): value is ScannedTask {
-  return (
-    isRecord(value) &&
-    isCount(value.line) &&
-    isCount(value.indent) &&
-    typeof value.mark === 'string' &&
-    typeof value.text === 'string' &&
-    Array.isArray(value.section) &&
-    value.section.every((one) => typeof one === 'string') &&
-    (value.description === undefined || typeof value.description === 'string') &&
-    (value.comments === undefined || isCount(value.comments))
-  )
-}
+const isTask = (value: unknown): value is ScannedTask =>
+  isRecord(value) &&
+  isCount(value.line) &&
+  isCount(value.indent) &&
+  typeof value.mark === 'string' &&
+  typeof value.text === 'string' &&
+  Array.isArray(value.section) &&
+  value.section.every((one) => typeof one === 'string') &&
+  (value.description === undefined || typeof value.description === 'string') &&
+  (value.comments === undefined || isCount(value.comments))
 
-function isStamp(value: unknown): value is Stamp {
-  return isRecord(value) && isCount(value.size) && isCount(value.mtime) && isCount(value.ctime)
-}
+const isStamp = (value: unknown): value is Stamp =>
+  isRecord(value) && isCount(value.size) && isCount(value.mtime) && isCount(value.ctime)
 
-function strings(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((one) => typeof one === 'string')
-}
+const strings = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((one) => typeof one === 'string')
 
 export function indexedOf(value: unknown): IndexedNote | null {
   if (!isRecord(value)) return null
@@ -243,30 +227,23 @@ export function indexAnswerOf(value: unknown): IndexItem[] | null {
   })
 }
 
-function isRanges(value: unknown): value is Range[] {
-  return (
-    Array.isArray(value) &&
-    value.every((one) => isRecord(one) && isCount(one.from) && isCount(one.to))
-  )
-}
+const isRanges = (value: unknown): value is Range[] =>
+  Array.isArray(value) &&
+  value.every((one) => isRecord(one) && isCount(one.from) && isCount(one.to))
 
-function isHit(value: unknown): value is FoundHit {
-  return (
-    isRecord(value) &&
-    isId(value.id) &&
-    typeof value.path === 'string' &&
-    typeof value.name === 'string' &&
-    isCount(value.line) &&
-    typeof value.text === 'string' &&
-    isRanges(value.ranges) &&
-    (value.bare === undefined || value.bare === true) &&
-    (value.score === undefined || typeof value.score === 'number')
-  )
-}
+const isHit = (value: unknown): value is FoundHit =>
+  isRecord(value) &&
+  isId(value.id) &&
+  typeof value.path === 'string' &&
+  typeof value.name === 'string' &&
+  isCount(value.line) &&
+  typeof value.text === 'string' &&
+  isRanges(value.ranges) &&
+  (value.bare === undefined || value.bare === true) &&
+  (value.score === undefined || typeof value.score === 'number')
 
-function isLoose(value: unknown): value is FoundLoose {
-  return isRecord(value) && typeof value.score === 'number' && isHit(value)
-}
+const isLoose = (value: unknown): value is FoundLoose =>
+  isRecord(value) && typeof value.score === 'number' && isHit(value)
 
 export function searchAnswerOf(value: unknown): SearchAnswer | null {
   if (!isRecord(value) || !(value.after === null || isText(value.after))) return null

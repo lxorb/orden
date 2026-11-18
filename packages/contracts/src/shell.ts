@@ -59,9 +59,8 @@ export const TAB_KINDS = [
 
 export type TabKind = (typeof TAB_KINDS)[number]
 
-export function isTabKind(value: unknown): value is TabKind {
-  return typeof value === 'string' && (TAB_KINDS as readonly string[]).includes(value)
-}
+export const isTabKind = (value: unknown): value is TabKind =>
+  typeof value === 'string' && (TAB_KINDS as readonly string[]).includes(value)
 
 export interface CommandExtension {
   readonly id: string

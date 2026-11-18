@@ -84,9 +84,7 @@ const EVENTS: Event[] = [
   },
 ]
 
-function wired(value: unknown): unknown {
-  return JSON.parse(JSON.stringify(value))
-}
+const wired = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
 
 describe('events', () => {
   it.each(EVENTS.map((event) => [event.kind, event] as const))(

@@ -40,27 +40,24 @@ export function planeMarks(content: string): PlaneMarks {
   }
 }
 
-export function scanCanvas(path: string, content: string): ScannedNote {
-  return markedPlane(path, planeMarks(content))
-}
+export const scanCanvas = (path: string, content: string): ScannedNote =>
+  markedPlane(path, planeMarks(content))
 
-export function markedPlane(path: string, marks: PlaneMarks): ScannedNote {
-  return {
-    path,
-    name: path.split('/').pop() ?? path,
-    headings: [],
-    blocks: [],
-    tags: [],
-    icon: marks.icon,
-    iconColor: marks.iconColor,
-    aliases: [],
-    url: null,
-    favicon: null,
-    address: null,
-    cover: null,
-    bare: false,
-    links: marks.links.map((link) =>
-      link.target.startsWith('/') ? link : { ...link, target: `/${link.target}` },
-    ),
-  }
-}
+export const markedPlane = (path: string, marks: PlaneMarks): ScannedNote => ({
+  path,
+  name: path.split('/').pop() ?? path,
+  headings: [],
+  blocks: [],
+  tags: [],
+  icon: marks.icon,
+  iconColor: marks.iconColor,
+  aliases: [],
+  url: null,
+  favicon: null,
+  address: null,
+  cover: null,
+  bare: false,
+  links: marks.links.map((link) =>
+    link.target.startsWith('/') ? link : { ...link, target: `/${link.target}` },
+  ),
+})

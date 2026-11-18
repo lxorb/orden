@@ -18,13 +18,10 @@ export function ulid(now: number, random: () => number): string {
   return time + noise
 }
 
-function digit(value: number): string {
-  return ALPHABET.charAt(Math.min(31, Math.max(0, value)))
-}
+const digit = (value: number): string => ALPHABET.charAt(Math.min(31, Math.max(0, value)))
 
-export function isUlid(value: unknown): value is string {
-  return typeof value === 'string' && ULID.test(value)
-}
+export const isUlid = (value: unknown): value is string =>
+  typeof value === 'string' && ULID.test(value)
 
 export function ulidTime(id: string): number | null {
   if (!isUlid(id)) return null

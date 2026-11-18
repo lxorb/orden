@@ -33,15 +33,13 @@ export interface ChatState {
   readonly metaSeqs: Record<keyof Meta, number>
 }
 
-export function chatState(): ChatState {
-  return {
-    messages: new Map(),
-    meta: { topic: '', posting: 'writers', slowmode: 0 },
-    seq: 0,
-    marks: new Map(),
-    metaSeqs: { topic: 0, posting: 0, slowmode: 0 },
-  }
-}
+export const chatState = (): ChatState => ({
+  messages: new Map(),
+  meta: { topic: '', posting: 'writers', slowmode: 0 },
+  seq: 0,
+  marks: new Map(),
+  metaSeqs: { topic: 0, posting: 0, slowmode: 0 },
+})
 
 export function apply(state: ChatState, event: Logged): Message[] {
   state.seq = Math.max(state.seq, event.seq)
@@ -119,9 +117,8 @@ function metaSet<K extends keyof Meta>(
   state.meta[key] = value
 }
 
-function newer(register: Register<unknown> | undefined, seq: number): boolean {
-  return register === undefined || register.seq < seq
-}
+const newer = (register: Register<unknown> | undefined, seq: number): boolean =>
+  register === undefined || register.seq < seq
 
 function marksOf(state: ChatState, id: string): Marks {
   let marks = state.marks.get(id)
@@ -190,11 +187,10 @@ function built(state: ChatState, id: string): Message | null {
   return message
 }
 
-function wordings(post: LoggedPost, marks: Marks): Version[] {
-  return [...marks.edits.values()]
+const wordings = (post: LoggedPost, marks: Marks): Version[] =>
+  [...marks.edits.values()]
     .filter((edit) => edit.author === post.author && edit.seq > post.seq)
     .sort((a, b) => a.seq - b.seq)
-}
 
 function filesOf(versions: readonly Version[], post: LoggedPost): FileRef[] {
   let files = post.files ?? []

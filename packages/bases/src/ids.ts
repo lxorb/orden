@@ -1,8 +1,7 @@
 import type { Row, Value } from './types'
 
-export function idText(prefix: string, number: number): string {
-  return prefix ? `${prefix}-${number}` : String(number)
-}
+export const idText = (prefix: string, number: number): string =>
+  prefix ? `${prefix}-${number}` : String(number)
 
 export function idNumber(value: Value | undefined, prefix: string): number | null {
   if (typeof value === 'number') return !prefix && Number.isInteger(value) ? value : null

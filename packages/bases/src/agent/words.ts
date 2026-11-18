@@ -21,8 +21,9 @@ const MARKED = [
 
 const SPOKEN = ['en', 'de']
 
-export function quickWords(langs: readonly string[], now: Date): ReadWords {
-  return (said) => {
+export const quickWords =
+  (langs: readonly string[], now: Date): ReadWords =>
+  (said) => {
     const written = readTask(`- [ ] ${said}`)
     const words = written?.text ?? said.trim()
     const quick = parseQuickAdd(words, [...langs, ...SPOKEN], now)
@@ -40,4 +41,3 @@ export function quickWords(langs: readonly string[], now: Date): ReadWords {
     }
     return { fields }
   }
-}

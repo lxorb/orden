@@ -30,19 +30,16 @@ const note = (over: Partial<SearchNote> = {}): SearchNote => ({
   ...over,
 })
 
-function answers(source: string, over: Partial<SearchNote> = {}): boolean {
-  return new Matcher(parseQuery(source)).spans(note(over)) !== null
-}
+const answers = (source: string, over: Partial<SearchNote> = {}): boolean =>
+  new Matcher(parseQuery(source)).spans(note(over)) !== null
 
-function lines(source: string, over: Partial<SearchNote> = {}): string[] {
-  return new Matcher(parseQuery(source)).hits(note(over), 50).map((hit) => hit.text)
-}
+const lines = (source: string, over: Partial<SearchNote> = {}): string[] =>
+  new Matcher(parseQuery(source)).hits(note(over), 50).map((hit) => hit.text)
 
-function marked(source: string, over: Partial<SearchNote> = {}): string[] {
-  return new Matcher(parseQuery(source))
+const marked = (source: string, over: Partial<SearchNote> = {}): string[] =>
+  new Matcher(parseQuery(source))
     .hits(note(over), 50)
     .flatMap((hit) => hit.ranges.map((range) => hit.text.slice(range.from, range.to)))
-}
 
 describe('a note whose lines end in CRLF', () => {
   test('still has the block list its front matter holds', () => {

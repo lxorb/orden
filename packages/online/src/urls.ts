@@ -23,9 +23,7 @@ export function loopbackOrigin(url: unknown): string | null {
   return LOOPBACK_HOSTS.has(one.hostname.toLowerCase()) ? one.origin : null
 }
 
-export function isLoopbackUrl(url: unknown): url is string {
-  return loopbackOrigin(url) !== null
-}
+export const isLoopbackUrl = (url: unknown): url is string => loopbackOrigin(url) !== null
 
 export function callbacksIn(url: string): string[] {
   const one = parsed(url)
@@ -43,6 +41,4 @@ export function isCallbackOf(opened: string, landed: string): boolean {
   return origin !== null && callbacksIn(opened).includes(origin)
 }
 
-export function hostOf(url: string): string {
-  return parsed(url)?.host ?? url
-}
+export const hostOf = (url: string): string => parsed(url)?.host ?? url

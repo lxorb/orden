@@ -31,9 +31,7 @@ import type {
   Wording,
 } from './types'
 
-export function socketPath(chat: string): string {
-  return `/v2/chats/${encodeURIComponent(chat)}/socket`
-}
+export const socketPath = (chat: string): string => `/v2/chats/${encodeURIComponent(chat)}/socket`
 
 export type Refusal = 'role' | 'gone' | 'posting' | 'slow' | 'rate' | 'large' | 'invalid'
 
@@ -63,9 +61,7 @@ export type ServerFrame =
   | { t: 'here'; who: Who[] }
   | { t: 'profile'; who: Who }
 
-export function text(frame: ClientFrame | ServerFrame | ChatPoke): string {
-  return JSON.stringify(frame)
-}
+export const text = (frame: ClientFrame | ServerFrame | ChatPoke): string => JSON.stringify(frame)
 
 export interface ChatPoke {
   t: 'chat'
@@ -145,53 +141,38 @@ const MOST_HISTORY = 100
 
 type Fields = Record<string, unknown>
 
-function isRecord(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Fields =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-function isId(value: unknown): value is string {
-  return typeof value === 'string' && ID.test(value)
-}
+const isId = (value: unknown): value is string => typeof value === 'string' && ID.test(value)
 
-export function isWho(value: unknown): value is Who {
-  return typeof value === 'string' && WHO.test(value)
-}
+export const isWho = (value: unknown): value is Who => typeof value === 'string' && WHO.test(value)
 
-function isMention(value: unknown): value is Mention {
-  return value === 'here' || value === 'everyone' || isWho(value)
-}
+const isMention = (value: unknown): value is Mention =>
+  value === 'here' || value === 'everyone' || isWho(value)
 
-function isHash(value: unknown): value is string {
-  return typeof value === 'string' && HASH.test(value)
-}
+const isHash = (value: unknown): value is string => typeof value === 'string' && HASH.test(value)
 
-function isCount(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-}
+const isCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
-function isTime(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
-}
+const isTime = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0
 
-function isText(value: unknown, most: number): value is string {
-  return typeof value === 'string' && value.length <= most
-}
+const isText = (value: unknown, most: number): value is string =>
+  typeof value === 'string' && value.length <= most
 
-function isLine(value: unknown, most: number): value is string {
-  return isText(value, most) && value.trim().length > 0
-}
+const isLine = (value: unknown, most: number): value is string =>
+  isText(value, most) && value.trim().length > 0
 
-function isEmoji(value: unknown): value is string {
-  return isLine(value, LONGEST_EMOJI) && !/\s/.test(value)
-}
+const isEmoji = (value: unknown): value is string =>
+  isLine(value, LONGEST_EMOJI) && !/\s/.test(value)
 
-function isUrl(value: unknown): value is string {
-  return isText(value, LONGEST_URL) && /^https?:\/\/\S+$/i.test(value)
-}
+const isUrl = (value: unknown): value is string =>
+  isText(value, LONGEST_URL) && /^https?:\/\/\S+$/i.test(value)
 
-function oneOf<T>(list: readonly T[], value: unknown): value is T {
-  return list.some((one) => one === value)
-}
+const oneOf = <T>(list: readonly T[], value: unknown): value is T =>
+  list.some((one) => one === value)
 
 function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | null): T[] | null {
   if (!Array.isArray(value) || value.length > most) return null
@@ -204,25 +185,17 @@ function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | nu
   return out
 }
 
-function optional<T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined {
-  return value === undefined ? undefined : check(value)
-}
+const optional = <T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined =>
+  value === undefined ? undefined : check(value)
 
-function idOf(value: unknown): string | null {
-  return isId(value) ? value : null
-}
+const idOf = (value: unknown): string | null => (isId(value) ? value : null)
 
-function whoOf(value: unknown): Who | null {
-  return isWho(value) ? value : null
-}
+const whoOf = (value: unknown): Who | null => (isWho(value) ? value : null)
 
-function mentionOf(value: unknown): Mention | null {
-  return isMention(value) ? value : null
-}
+const mentionOf = (value: unknown): Mention | null => (isMention(value) ? value : null)
 
-function answerOf(value: unknown): number | null {
-  return isCount(value) && value < MOST_ANSWERS ? value : null
-}
+const answerOf = (value: unknown): number | null =>
+  isCount(value) && value < MOST_ANSWERS ? value : null
 
 function parsed(raw: string): unknown {
   try {
@@ -394,11 +367,10 @@ export function loggedOf(value: unknown): Logged | null {
   return logged
 }
 
-function wordingOf(value: unknown): Wording | null {
-  return isRecord(value) && isText(value.body, MOST_BODY) && isTime(value.at)
+const wordingOf = (value: unknown): Wording | null =>
+  isRecord(value) && isText(value.body, MOST_BODY) && isTime(value.at)
     ? { body: value.body, at: value.at }
     : null
-}
 
 function votesOf(value: unknown): Record<Who, number[]> | null {
   if (!isRecord(value)) return null
@@ -596,9 +568,8 @@ export function chatListOf(value: unknown): ChatList | null {
   return { chats }
 }
 
-export function newChatOf(value: unknown): NewChat | null {
-  return isRecord(value) && isLine(value.space, LONGEST_DEVICE) ? { space: value.space } : null
-}
+export const newChatOf = (value: unknown): NewChat | null =>
+  isRecord(value) && isLine(value.space, LONGEST_DEVICE) ? { space: value.space } : null
 
 export function eventsPageOf(value: unknown): EventsPage | null {
   if (!isRecord(value) || typeof value.more !== 'boolean') return null

@@ -26,11 +26,8 @@ const isEmptyValue = (value: Val) =>
 const numbers = (values: readonly Val[]) =>
   values.filter((one): one is number => typeof one === 'number')
 
-function dates(values: readonly Val[]): DateValue[] {
-  return values
-    .map((one) => (typeof one === 'number' ? null : asDate(one)))
-    .filter((one) => one !== null)
-}
+const dates = (values: readonly Val[]): DateValue[] =>
+  values.map((one) => (typeof one === 'number' ? null : asDate(one))).filter((one) => one !== null)
 
 const least = (values: readonly number[]) =>
   values.reduce((low, one) => Math.min(low, one), Infinity)

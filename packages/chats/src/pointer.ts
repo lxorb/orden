@@ -4,13 +4,11 @@ export const CHAT_EXTENSION = '.chat'
 
 const CHAT_ID = /^c_[0-9a-f]{32}$/
 
-export function isChatId(value: unknown): value is string {
-  return typeof value === 'string' && CHAT_ID.test(value)
-}
+export const isChatId = (value: unknown): value is string =>
+  typeof value === 'string' && CHAT_ID.test(value)
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 export function chatOf(text: string): Pointer | null {
   let value: unknown
@@ -28,11 +26,8 @@ export function chatOf(text: string): Pointer | null {
 
 const MOST_WORN = 100
 
-function worn(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' && value.length <= MOST_WORN
-    ? value
-    : null
-}
+const worn = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() !== '' && value.length <= MOST_WORN ? value : null
 
 export function withIcon(pointer: Pointer, icon: string | null, iconColor: string | null): Pointer {
   const bare: Pointer = { v: pointer.v, chat: pointer.chat }

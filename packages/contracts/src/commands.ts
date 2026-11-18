@@ -11,13 +11,11 @@ function held(key: string, load: () => Promise<Runs>): () => void {
   }
 }
 
-export function registerCommands(space: `${string}.`, load: () => Promise<Runs>): () => void {
-  return held(space, load)
-}
+export const registerCommands = (space: `${string}.`, load: () => Promise<Runs>): (() => void) =>
+  held(space, load)
 
-export function registerCommand(id: string, load: () => Promise<() => void>): () => void {
-  return held(id, async () => ({ [id]: await load() }))
-}
+export const registerCommand = (id: string, load: () => Promise<() => void>): (() => void) =>
+  held(id, async () => ({ [id]: await load() }))
 
 export async function runCommand(id: string): Promise<boolean> {
   const load = loads.get(id) ?? loads.get(id.slice(0, id.indexOf('.') + 1))
@@ -56,9 +54,8 @@ export function registerCommandRows(
   }
 }
 
-export function commandRows(place: CommandPlace, view?: object): readonly CommandExtension[] {
-  return rowsLoaded.get(place)?.(view) ?? []
-}
+export const commandRows = (place: CommandPlace, view?: object): readonly CommandExtension[] =>
+  rowsLoaded.get(place)?.(view) ?? []
 
 export async function commandRowsLoaded(): Promise<void> {
   await Promise.all(

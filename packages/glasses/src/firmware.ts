@@ -1,23 +1,18 @@
 import { getAdvW, getTextWidth } from '@evenrealities/pretext'
 import { which as emojiNamed } from 'node-emoji'
 
-export function draws(code: number): boolean {
-  return getAdvW(code) !== 0
-}
+export const draws = (code: number): boolean => getAdvW(code) !== 0
 
-function formatting(code: number): boolean {
-  return (
-    code === 0x00ad ||
-    code === 0x061c ||
-    (code >= 0x200b && code <= 0x200f) ||
-    (code >= 0x202a && code <= 0x202e) ||
-    (code >= 0x2060 && code <= 0x2064) ||
-    (code >= 0x206a && code <= 0x206f) ||
-    code === 0xfeff ||
-    (code >= 0xfe00 && code <= 0xfe0f) ||
-    (code >= 0xe0100 && code <= 0xe01ef)
-  )
-}
+const formatting = (code: number): boolean =>
+  code === 0x00ad ||
+  code === 0x061c ||
+  (code >= 0x200b && code <= 0x200f) ||
+  (code >= 0x202a && code <= 0x202e) ||
+  (code >= 0x2060 && code <= 0x2064) ||
+  (code >= 0x206a && code <= 0x206f) ||
+  code === 0xfeff ||
+  (code >= 0xfe00 && code <= 0xfe0f) ||
+  (code >= 0xe0100 && code <= 0xe01ef)
 
 const INSTEAD: Readonly<Record<string, string>> = {
   '`': '‘',
@@ -138,9 +133,7 @@ export interface Work {
   cached: number
 }
 
-function nothing(): Work {
-  return { folded: 0, instead: 0, measured: 0, broken: 0, cached: 0 }
-}
+const nothing = (): Work => ({ folded: 0, instead: 0, measured: 0, broken: 0, cached: 0 })
 
 const work = nothing()
 
@@ -210,9 +203,7 @@ export function fold(text: string): string {
   return out
 }
 
-export function width(text: string): number {
-  return measure(fold(text))
-}
+export const width = (text: string): number => measure(fold(text))
 
 const CJK = /[ᄀ-ᇿ⺀-〿぀-ヿ㄰-㆏㐀-䶿一-鿿ꀀ-꓏가-힯豈-﫿︰-﹏＀-ﾟ]/
 
@@ -315,9 +306,8 @@ export function wrap(text: string, inner: number, hang = ''): readonly string[] 
   return rows
 }
 
-export function rows(text: string, inner: number, hang = ''): number {
-  return wrap(text, inner, hang).length
-}
+export const rows = (text: string, inner: number, hang = ''): number =>
+  wrap(text, inner, hang).length
 
 export function fit(text: string, most: number): string {
   const whole = fold(text)

@@ -129,6 +129,8 @@ export function placeIn(note: string, lines: readonly string[], heading?: string
   }
 }
 
-export function placedEdit(placed: Placed): TextEdit {
-  return { from: placed.at, to: placed.at, insert: placed.insert }
-}
+export const placedEdit = (placed: Placed): TextEdit => ({
+  from: placed.at,
+  to: placed.at,
+  insert: placed.insert,
+})

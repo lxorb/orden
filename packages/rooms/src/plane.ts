@@ -27,17 +27,15 @@ const Z = 'z'
 const MOVED = 'moved'
 const ADDED: readonly string[] = [KIND, AT, Z, MOVED]
 
-export function planeOf(doc: Y.Doc): Y.Map<Y.Map<unknown>> {
-  return doc.getMap(PLANE)
-}
+export const planeOf = (doc: Y.Doc): Y.Map<Y.Map<unknown>> => doc.getMap(PLANE)
 
-export function buriedOf(doc: Y.Doc): Y.Map<number> {
-  return doc.getMap(BURIED)
-}
+export const buriedOf = (doc: Y.Doc): Y.Map<number> => doc.getMap(BURIED)
 
-export function rootsOf(doc: Y.Doc): Y.Map<unknown>[] {
-  return [doc.getMap(PLANE), doc.getMap(BURIED), doc.getMap(EXTRAS)]
-}
+export const rootsOf = (doc: Y.Doc): Y.Map<unknown>[] => [
+  doc.getMap(PLANE),
+  doc.getMap(BURIED),
+  doc.getMap(EXTRAS),
+]
 
 function putExtras(doc: Y.Doc, canvas: Canvas) {
   const held = doc.getMap<string>(EXTRAS)
@@ -53,13 +51,9 @@ export function seedExtras(doc: Y.Doc, canvas: Canvas) {
   if (holdsExtras(canvas.extras)) putExtras(doc, canvas)
 }
 
-function isInk(thing: Thing): thing is InkStroke {
-  return 'points' in thing
-}
+const isInk = (thing: Thing): thing is InkStroke => 'points' in thing
 
-function isEdge(thing: Thing): thing is CanvasEdge {
-  return 'fromNode' in thing
-}
+const isEdge = (thing: Thing): thing is CanvasEdge => 'fromNode' in thing
 
 function kindOf(thing: Thing): ThingKind {
   if (isInk(thing)) return 'ink'
@@ -112,9 +106,8 @@ function put(plane: Y.Map<Y.Map<unknown>>, thing: Thing, at: number, z?: number)
 
 const WORDS = 'text'
 
-function shared(key: string, value: unknown): unknown {
-  return key === WORDS && typeof value === 'string' ? new Y.Text(value) : value
-}
+const shared = (key: string, value: unknown): unknown =>
+  key === WORDS && typeof value === 'string' ? new Y.Text(value) : value
 
 function rewrite(text: Y.Text, wanted: string) {
   const change = fold(text.toJSON(), wanted)
@@ -503,6 +496,5 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
   }
 }
 
-export function planeIsEmpty(doc: Y.Doc): boolean {
-  return planeOf(doc).size === 0 && buriedOf(doc).size === 0
-}
+export const planeIsEmpty = (doc: Y.Doc): boolean =>
+  planeOf(doc).size === 0 && buriedOf(doc).size === 0

@@ -167,6 +167,4 @@ export function drawsScript(code: string | undefined): boolean {
   return SCRIPTS.find((one) => one.code === code)?.draws ?? true
 }
 
-export function scriptsNotDrawn(): readonly Script[] {
-  return SCRIPTS.filter((one) => !one.draws)
-}
+export const scriptsNotDrawn = (): readonly Script[] => SCRIPTS.filter((one) => !one.draws)

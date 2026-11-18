@@ -29,9 +29,8 @@ const stringsOf = (value: unknown): Record<string, string> =>
     ? Object.fromEntries(Object.entries(value).map(([key, one]) => [key, scalar(one)]))
     : {}
 
-function rest(value: Plain, known: readonly string[]): Plain {
-  return Object.fromEntries(Object.entries(value).filter(([key]) => !known.includes(key)))
-}
+const rest = (value: Plain, known: readonly string[]): Plain =>
+  Object.fromEntries(Object.entries(value).filter(([key]) => !known.includes(key)))
 
 function readSort(raw: unknown): Sort | null {
   if (typeof raw === 'string') return { property: raw, direction: 'ASC' }
@@ -220,8 +219,8 @@ export function readBase(yaml: string): Base {
   return base
 }
 
-function present(entries: [string, unknown][]): Plain {
-  return Object.fromEntries(
+const present = (entries: [string, unknown][]): Plain =>
+  Object.fromEntries(
     entries.filter(([, value]) => {
       if (value === undefined) return false
       if (isPlain(value)) return Object.keys(value).length > 0
@@ -229,12 +228,11 @@ function present(entries: [string, unknown][]): Plain {
       return true
     }),
   )
-}
 
 const sortPlain = (sort: Sort): Plain => ({ property: sort.property, direction: sort.direction })
 
-function ordenViewPlain(orden: OrdenView): Plain {
-  return present([
+const ordenViewPlain = (orden: OrdenView): Plain =>
+  present([
     ['rows', orden.rows],
     ['subGroupBy', orden.subGroupBy && sortPlain(orden.subGroupBy)],
     ['order', orden.order],
@@ -256,10 +254,9 @@ function ordenViewPlain(orden: OrdenView): Plain {
     ['colourColumns', orden.colourColumns],
     ...Object.entries(orden.kept),
   ])
-}
 
-function viewPlain(view: View): Plain {
-  return present([
+const viewPlain = (view: View): Plain =>
+  present([
     ['type', view.type],
     ['name', view.name],
     ['filters', view.filters ?? view.options.filters],
@@ -271,14 +268,12 @@ function viewPlain(view: View): Plain {
     ...Object.entries(rest(view.options, ['filters', 'limit'])),
     ['orden', ordenViewPlain(view.orden)],
   ])
-}
 
-function optionPlain({ kept, ...option }: SelectOption): Plain {
-  return present([...Object.entries(option), ...Object.entries(kept ?? {})])
-}
+const optionPlain = ({ kept, ...option }: SelectOption): Plain =>
+  present([...Object.entries(option), ...Object.entries(kept ?? {})])
 
-function ordenBasePlain(orden: OrdenBase): Plain {
-  return present([
+const ordenBasePlain = (orden: OrdenBase): Plain =>
+  present([
     ['template', orden.template],
     [
       'id',
@@ -305,10 +300,9 @@ function ordenBasePlain(orden: OrdenBase): Plain {
     ['locked', orden.locked],
     ...Object.entries(orden.kept),
   ])
-}
 
-function basePlain(base: Base): Plain {
-  return present([
+const basePlain = (base: Base): Plain =>
+  present([
     ['filters', base.filters ?? base.kept.filters],
     ['formulas', base.formulas],
     [
@@ -325,11 +319,8 @@ function basePlain(base: Base): Plain {
     ...Object.entries(rest(base.kept, ['filters'])),
     ['orden', ordenBasePlain(base.orden)],
   ])
-}
 
-function keyText(key: unknown): string {
-  return isScalar(key) ? String(key.value) : String(key)
-}
+const keyText = (key: unknown): string => (isScalar(key) ? String(key.value) : String(key))
 
 function renamed(node: YAMLMap, value: Plain): void {
   if (!('orden' in value) || 'nib' in value) return

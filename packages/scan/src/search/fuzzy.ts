@@ -54,9 +54,7 @@ export interface Work {
   characters: number
 }
 
-function nothing(): Work {
-  return { notes: 0, lines: 0, terms: 0, characters: 0 }
-}
+const nothing = (): Work => ({ notes: 0, lines: 0, terms: 0, characters: 0 })
 
 const work = nothing()
 
@@ -66,9 +64,8 @@ export function workDone(): Work {
   return done
 }
 
-function isLower(letter: string): boolean {
-  return letter !== '' && letter === letter.toLowerCase() && letter !== letter.toUpperCase()
-}
+const isLower = (letter: string): boolean =>
+  letter !== '' && letter === letter.toLowerCase() && letter !== letter.toUpperCase()
 
 function opens(body: string, at: number): boolean {
   if (at === 0) return true
@@ -192,9 +189,7 @@ export function fit(term: string, line: string): { score: number; ranges: Range[
   return found ? { score: found.score, ranges: ranges(text, kept) } : null
 }
 
-function lettersOf(term: string): string[] {
-  return Array.from(fold(term))
-}
+const lettersOf = (term: string): string[] => Array.from(fold(term))
 
 function ranges(text: string, at: readonly number[]): Range[] {
   const out: Range[] = []

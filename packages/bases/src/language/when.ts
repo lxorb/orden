@@ -7,12 +7,10 @@ export interface Clock {
   minutes: number
 }
 
-export function clockOf(now: Date): Clock {
-  return {
-    today: todayOf(now),
-    minutes: now.getHours() * 60 + now.getMinutes(),
-  }
-}
+export const clockOf = (now: Date): Clock => ({
+  today: todayOf(now),
+  minutes: now.getHours() * 60 + now.getMinutes(),
+})
 
 export interface When {
   end: number
