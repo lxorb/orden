@@ -1,4 +1,11 @@
-import { isNumber, isRecord, isString, keepJson, stored } from '../../platform/src/api'
+import {
+  heardElsewhere,
+  isNumber,
+  isRecord,
+  isString,
+  keepJson,
+  stored,
+} from '../../platform/src/api'
 
 const KEY = 'orden:ai-moves'
 
@@ -55,13 +62,10 @@ function told(moves: readonly Move[]): void {
   for (const listener of heard) listener(moves)
 }
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (event) => {
-    if (event.key !== KEY && event.key !== null) return
-    readAgain()
-    told(movesAfter(known))
-  })
-}
+heardElsewhere([KEY], () => {
+  readAgain()
+  told(movesAfter(known))
+})
 
 function saidAgain(move: Move): boolean {
   return kept().some((one) => one.from === move.from && one.to === move.to && one.who === move.who)

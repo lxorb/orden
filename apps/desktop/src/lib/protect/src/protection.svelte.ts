@@ -11,6 +11,7 @@ import {
   forget,
   isRecord,
   keep,
+  heardElsewhere,
   keepJson,
   stored,
   storedText,
@@ -168,9 +169,7 @@ export class Protection {
   private heard = JSON.stringify(this.spaces)
 
   constructor() {
-    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
-    window.addEventListener('storage', (event) => {
-      const key = event.key
+    heardElsewhere([STORAGE_KEY, PASSWORD_KEY, OWNER_KEY], (key) => {
       if (key === STORAGE_KEY || key === null) this.reread()
       if (key === PASSWORD_KEY || key === null) this.hashed = hashedOf(stored(PASSWORD_KEY))
       if (key === OWNER_KEY || key === null) this.owner = storedText(OWNER_KEY)

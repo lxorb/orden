@@ -74,11 +74,18 @@ export class Shared<T> {
   }
 }
 
-export function heardElsewhere(keys: readonly string[], heard: () => void): void {
-  if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
-  window.addEventListener('storage', (event) => {
-    if (event.key !== null && keys.includes(event.key)) heard()
-  })
+export function heardElsewhere(
+  keys: readonly string[],
+  heard: (key: string | null) => void,
+): () => void {
+  if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') {
+    return () => undefined
+  }
+  const hear = (event: StorageEvent) => {
+    if (event.key === null || keys.includes(event.key)) heard(event.key)
+  }
+  window.addEventListener('storage', hear)
+  return () => window.removeEventListener('storage', hear)
 }
 
 export function forget(key: string): void {

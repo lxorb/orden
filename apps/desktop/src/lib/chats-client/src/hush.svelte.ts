@@ -1,6 +1,6 @@
 import { type Hours, isHours, isKeywords, MUTED_FOR_GOOD } from '@orden/chats/notify'
 import { account, api, type AccountSettings, stands } from '../../accounts/src/api'
-import { isBoolean, isRecord, keepJson, stored } from '../../platform/src/api'
+import { heardElsewhere, isBoolean, isRecord, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden.chat-hush'
 
@@ -89,11 +89,7 @@ class Hush {
 
 export const hush = /* @__PURE__ */ new Hush()
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === KEY) hush.heard()
-  })
-}
+heardElsewhere([KEY], () => hush.heard())
 
 export function dndUntil(): number | null {
   const status = account.user?.status

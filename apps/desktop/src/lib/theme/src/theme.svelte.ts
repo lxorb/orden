@@ -22,6 +22,7 @@ import {
   keep,
   keepJson,
   recordOf,
+  heardElsewhere,
   stored,
   storedText,
   invoke,
@@ -251,16 +252,16 @@ class Themes {
   private hearOthers() {
     if (this.heardOn === window) return
     this.heardOn = window
-    window.addEventListener('storage', (event) => {
-      if (event.key === STORAGE_KEY || event.key === SCHEME_KEY) this.heardChoice()
-      else if (event.key === SETTINGS_KEY) {
+    heardElsewhere([STORAGE_KEY, SCHEME_KEY, SETTINGS_KEY, ACCENT_KEY], (key) => {
+      if (key === STORAGE_KEY || key === SCHEME_KEY) this.heardChoice()
+      else if (key === SETTINGS_KEY) {
         const ended = this.id === this.keptId && this.trying.accent === this.kept.accent
         if (ended) this.trying = without(this.trying, 'accent')
         this.unkept = false
         this.chosen = this.storedDrawers()
         this.paintSettings()
         this.apply()
-      } else if (event.key === null || event.key === ACCENT_KEY) this.chosenElsewhere()
+      } else this.chosenElsewhere()
     })
   }
 

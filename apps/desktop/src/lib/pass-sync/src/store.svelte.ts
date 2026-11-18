@@ -35,6 +35,7 @@ import { forgetKey, keysAreGuarded, readSecret, writeSecret } from '../../ai-pro
 import { message } from '../../ui-kit/src/api'
 import { deviceCan, deviceSays } from '../../protect/src/api'
 import { passOn } from '../../gates/src/api'
+import { heardElsewhere } from '../../platform/src/api'
 import { adoptedChange } from './adopt'
 import type { AliasAccount } from './alias-account'
 import type { Picked } from './attachments'
@@ -1049,8 +1050,4 @@ export const pass = new PassStore()
 
 useNativeStretcher()
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === SETTINGS_KEY) pass.heardSettings()
-  })
-}
+heardElsewhere([SETTINGS_KEY], () => pass.heardSettings())
