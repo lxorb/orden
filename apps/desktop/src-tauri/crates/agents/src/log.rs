@@ -92,22 +92,18 @@ pub struct After {
 }
 
 pub fn read_after(app: &AppHandle, day: &str, from: u64) -> After {
-    day_path(app, day).map_or_else(
-        || After {
-            lines: Vec::new(),
-            to: 0,
-            fresh: true,
-        },
-        |path| after_in(&path, from),
-    )
+    day_path(app, day).map_or_else(|| nothing(0, true), |path| after_in(&path, from))
 }
 
-fn after_in(path: &Path, from: u64) -> After {
-    let nothing = |to, fresh| After {
+fn nothing(to: u64, fresh: bool) -> After {
+    After {
         lines: Vec::new(),
         to,
         fresh,
-    };
+    }
+}
+
+fn after_in(path: &Path, from: u64) -> After {
     let Ok(mut file) = fs::File::open(path) else {
         return nothing(0, true);
     };

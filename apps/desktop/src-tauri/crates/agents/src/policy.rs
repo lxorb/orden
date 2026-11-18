@@ -1042,6 +1042,14 @@ mod tests {
         }
     }
 
+    fn called(said: &str) -> Field {
+        Field {
+            kind: "text".into(),
+            said: said.into(),
+            ..Field::default()
+        }
+    }
+
     fn in_dialog(name: &str, dialog: &str) -> Facts {
         Facts {
             dialog: dialog.into(),
@@ -1345,8 +1353,7 @@ mod tests {
     fn what_is_no_code_and_no_payment_card_stays_readable() {
         let called = |said: &str, kind: &str| Field {
             kind: kind.into(),
-            said: said.into(),
-            ..Field::default()
+            ..called(said)
         };
         for said in [
             "One-time donation",
@@ -1385,22 +1392,12 @@ mod tests {
             "Two-step code",
             "Security key",
         ] {
-            let field = Field {
-                kind: "text".into(),
-                said: said.into(),
-                ..Field::default()
-            };
-            assert!(secret(&field), "{said}");
+            assert!(secret(&called(said)), "{said}");
         }
     }
 
     #[test]
     fn a_code_under_a_name_with_marks_or_as_a_whole_label_is_secret() {
-        let called = |said: &str| Field {
-            kind: "text".into(),
-            said: said.into(),
-            ..Field::default()
-        };
         for said in [
             "SMS-Code",
             "Best\u{e4}tigungs-Code",
@@ -1425,11 +1422,6 @@ mod tests {
 
     #[test]
     fn a_code_a_pin_and_a_card_are_secret_by_what_they_are_called() {
-        let called = |said: &str| Field {
-            kind: "text".into(),
-            said: said.into(),
-            ..Field::default()
-        };
         for said in [
             "otp 6-digit code",
             "verification_code Verification code",
