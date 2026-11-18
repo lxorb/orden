@@ -1,20 +1,13 @@
 import { describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 import { asDrafts, takeSessionsLeft } from './sessions-left'
 import type { Draft } from './session'
 import { LEAVING_GRACE } from './slot'
 
-function memoryStorage(entries: Record<string, string> = {}): Storage {
-  const store = new Map(Object.entries(entries))
-  return {
-    get length() {
-      return store.size
-    },
-    key: (at) => [...store.keys()][at] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
+function stored(entries: Record<string, string>): Storage {
+  const storage = memoryStorage()
+  for (const [key, value] of Object.entries(entries)) storage.setItem(key, value)
+  return storage
 }
 
 const locks = {
@@ -23,49 +16,70 @@ const locks = {
 } as unknown as LockManager
 
 const tab = (fields: object) => ({ name: 'n.md', doc: '', dirty: false, ...fields })
-const session = (tabs: object[]) =>
+const frame = (tabs: object[], active = 0, recent?: number[]) => ({
+  kind: 'pane',
+  pane: { id: 'q', linked: false, active, ...(recent ? { recent } : {}), tabs },
+})
+const laid = (shown: object) => ({ panel: null, focused: 'q', frame: shown })
+const whole = (fields: object) =>
   JSON.stringify({
     spaces: [],
     activeSpace: null,
     panel: null,
     positions: {},
     closed: [],
-    layout: {
-      panel: null,
-      focused: 'p',
-      frame: { kind: 'pane', pane: { id: 'p', linked: false, active: 0, tabs } },
-    },
+    layout: laid(frame([])),
+    ...fields,
   })
+const session = (tabs: object[], active?: number, recent?: number[]) =>
+  whole({ layout: laid(frame(tabs, active, recent)) })
+
+async function leave(key: string, value: string, mine: number, reloads = 1) {
+  const storage = stored({ [key]: value })
+  const calls: Draft[][] = []
+  for (let reload = 0; reload < reloads; reload += 1) {
+    await takeSessionsLeft(
+      mine,
+      (drafts) => {
+        calls.push(drafts)
+        return Promise.resolve()
+      },
+      storage,
+      locks,
+    )
+  }
+  const left = storage.getItem(key)
+  return { calls, taken: calls.flat().map((one) => one.doc), left, kept: left ?? '' }
+}
+
+interface Left {
+  tabs: { path: string }[]
+  active: number
+  recent: number[]
+}
+const paneLeft = (kept: string) =>
+  (JSON.parse(kept) as { layout: { frame: { pane: Left } } }).layout.frame.pane
 
 const draftWords = 'DRAFT WORDS'
+const unsaved = tab({ path: null, doc: draftWords })
 
 describe('what a window that went left', () => {
   test('moves: a reload taking it again finds nothing, and the first entry keeps its tabs', async () => {
-    const storage = memoryStorage({
-      'orden:workspace': session([
-        tab({ path: '/s/a.md', name: 'a.md' }),
-        tab({ path: null, doc: draftWords }),
-      ]),
-    })
-    const taken: Draft[][] = []
-    const take = (drafts: Draft[]) => {
-      taken.push(drafts)
-      return Promise.resolve()
-    }
-    for (let reload = 0; reload < 3; reload += 1) {
-      await takeSessionsLeft(1, take, storage, locks)
-    }
+    const { calls, taken, kept } = await leave(
+      'orden:workspace',
+      session([tab({ path: '/s/a.md', name: 'a.md' }), unsaved]),
+      1,
+      3,
+    )
 
-    expect(taken).toHaveLength(1)
-    expect(taken[0]?.map((one) => one.doc)).toEqual([draftWords])
-    expect(storage.getItem('orden:workspace')).toContain('/s/a.md')
-    expect(storage.getItem('orden:workspace')).not.toContain(draftWords)
+    expect(calls).toHaveLength(1)
+    expect(taken).toEqual([draftWords])
+    expect(kept).toContain('/s/a.md')
+    expect(kept).not.toContain(draftWords)
   })
 
   test('stays where it is if it could not be taken', async () => {
-    const storage = memoryStorage({
-      'orden:workspace:2': session([tab({ path: null, doc: draftWords })]),
-    })
+    const storage = stored({ 'orden:workspace:2': session([unsaved]) })
     const take = vi.fn(() => Promise.reject(new Error('no')))
     await takeSessionsLeft(0, take, storage, locks).catch(() => undefined)
 
@@ -74,8 +88,8 @@ describe('what a window that went left', () => {
 
   test('a session left this moment may be a reload coming back: it is left for its grace', async () => {
     const now = 1_000_000
-    const storage = memoryStorage({
-      'orden:workspace:1': session([tab({ path: null, doc: draftWords })]),
+    const storage = stored({
+      'orden:workspace:1': session([unsaved]),
       'orden:window-left:1': String(now - 100),
     })
     const take = vi.fn(() => Promise.resolve())
@@ -91,71 +105,30 @@ describe('what a window that went left', () => {
 })
 
 describe('wherever the session held them', () => {
-  const frame = (tabs: object[], active = 0, recent?: number[]) => ({
-    kind: 'pane',
-    pane: { id: 'q', linked: false, active, ...(recent ? { recent } : {}), tabs },
-  })
-  const whole = (fields: object) =>
-    JSON.stringify({
-      spaces: [],
-      activeSpace: null,
-      panel: null,
-      positions: {},
-      closed: [],
-      layout: { panel: null, focused: 'p', frame: frame([]) },
-      ...fields,
-    })
-  const taking = () => {
-    const taken: Draft[] = []
-    return {
-      taken,
-      take: (drafts: Draft[]) => {
-        taken.push(...drafts)
-        return Promise.resolve()
-      },
-    }
-  }
-  const aside = (tabs: object[], active = 0, recent?: number[]) => ({
+  const aside = (tabs: object[]) => ({
     on: 's1',
-    aside: {
-      s2: {
-        layout: { panel: null, focused: 'q', frame: frame(tabs, active, recent) },
-        right: null,
-      },
-    },
+    aside: { s2: { layout: { panel: null, focused: 'q', frame: frame(tabs) }, right: null } },
   })
 
   test('in a set out of sight, of a slot past the first', async () => {
-    const storage = memoryStorage({
-      'orden:workspace:1': whole({
-        sets: aside([
-          tab({ path: null, doc: draftWords, space: 's2' }),
-          tab({ path: '/s/a.md', doc: 'typed', dirty: true }),
-          tab({ path: '/s/b.md' }),
-        ]),
-      }),
-    })
-    const { taken, take } = taking()
-    await takeSessionsLeft(0, take, storage, locks)
+    const sets = aside([
+      tab({ path: null, doc: draftWords, space: 's2' }),
+      tab({ path: '/s/a.md', doc: 'typed', dirty: true }),
+      tab({ path: '/s/b.md' }),
+    ])
+    const { taken, left } = await leave('orden:workspace:1', whole({ sets }), 0)
 
-    expect(taken.map((one) => one.doc)).toEqual([draftWords, 'typed'])
-    expect(storage.getItem('orden:workspace:1')).toBeNull()
+    expect(taken).toEqual([draftWords, 'typed'])
+    expect(left).toBeNull()
   })
 
   test('in a set out of sight, of the first slot: they move, and the rest stays', async () => {
-    const storage = memoryStorage({
-      'orden:workspace': whole({
-        sets: aside([tab({ path: null, doc: draftWords }), tab({ path: '/s/b.md' })]),
-      }),
-    })
-    const { taken, take } = taking()
-    for (let reload = 0; reload < 2; reload += 1) {
-      await takeSessionsLeft(1, take, storage, locks)
-    }
+    const sets = aside([unsaved, tab({ path: '/s/b.md' })])
+    const { taken, kept } = await leave('orden:workspace', whole({ sets }), 1, 2)
 
-    expect(taken.map((one) => one.doc)).toEqual([draftWords])
-    expect(storage.getItem('orden:workspace')).not.toContain(draftWords)
-    expect(storage.getItem('orden:workspace')).toContain('/s/b.md')
+    expect(taken).toEqual([draftWords])
+    expect(kept).not.toContain(draftWords)
+    expect(kept).toContain('/s/b.md')
   })
 
   test('in a split, on both sides of it', async () => {
@@ -169,73 +142,46 @@ describe('wherever the session held them', () => {
         frame([tab({ path: null, doc: 'RIGHT' })]),
       ],
     }
-    const storage = memoryStorage({
-      'orden:workspace': whole({ layout: { panel: null, focused: 'q', frame: split } }),
-    })
-    const { taken, take } = taking()
-    await takeSessionsLeft(1, take, storage, locks)
+    const { taken, kept } = await leave('orden:workspace', whole({ layout: laid(split) }), 1)
 
-    expect(taken.map((one) => one.doc)).toEqual(['LEFT', 'RIGHT'])
-    expect(storage.getItem('orden:workspace')).not.toContain('LEFT')
-    expect(storage.getItem('orden:workspace')).not.toContain('RIGHT')
+    expect(taken).toEqual(['LEFT', 'RIGHT'])
+    expect(kept).not.toMatch(/LEFT|RIGHT/)
   })
 
   test('in a strip of an older build', async () => {
-    const raw = JSON.parse(whole({ tabs: [tab({ path: null, doc: draftWords })] })) as {
-      layout?: unknown
-    }
+    const raw = JSON.parse(whole({ tabs: [unsaved] })) as { layout?: unknown }
     delete raw.layout
-    const storage = memoryStorage({ 'orden:workspace:3': JSON.stringify(raw) })
-    const { taken, take } = taking()
-    await takeSessionsLeft(0, take, storage, locks)
-    expect(taken.map((one) => one.doc)).toEqual([draftWords])
+    expect((await leave('orden:workspace:3', JSON.stringify(raw), 0)).taken).toEqual([draftWords])
+  })
+
+  const closed = (fields: object, more = {}) => ({
+    draft: tab(fields),
+    paneId: 'p',
+    at: 0,
+    ...more,
   })
 
   test('on the closed stack, where no Recently deleted has them', async () => {
-    const storage = memoryStorage({
-      'orden:workspace:1': whole({
-        closed: [
-          { draft: tab({ path: null, doc: 'CLOSED, IN NO TRASH' }), paneId: 'p', at: 0 },
-          { draft: tab({ path: null, doc: 'IN THE TRASH' }), paneId: 'p', at: 0, trashed: 't1' },
-          { draft: tab({ path: '/s/a.md', doc: 'owed', dirty: true }), paneId: 'p', at: 0 },
-          { draft: tab({ path: '/s/b.md' }), paneId: 'p', at: 0 },
-        ],
-      }),
-    })
-    const { taken, take } = taking()
-    await takeSessionsLeft(0, take, storage, locks)
-    expect(taken.map((one) => one.doc)).toEqual(['CLOSED, IN NO TRASH', 'owed'])
+    const stack = [
+      closed({ path: null, doc: 'CLOSED, IN NO TRASH' }),
+      closed({ path: null, doc: 'IN THE TRASH' }, { trashed: 't1' }),
+      closed({ path: '/s/a.md', doc: 'owed', dirty: true }),
+      closed({ path: '/s/b.md' }),
+    ]
+    const { taken } = await leave('orden:workspace:1', whole({ closed: stack }), 0)
+    expect(taken).toEqual(['CLOSED, IN NO TRASH', 'owed'])
   })
 
   test('off the first slot, the closed stack keeps what it can still bring back', async () => {
-    const storage = memoryStorage({
-      'orden:workspace': whole({
-        closed: [
-          { draft: tab({ path: null, doc: 'CLOSED, IN NO TRASH' }), paneId: 'p', at: 0 },
-          { draft: tab({ path: '/s/b.md' }), paneId: 'p', at: 0 },
-        ],
-      }),
-    })
-    const { take } = taking()
-    await takeSessionsLeft(1, take, storage, locks)
-    const left = storage.getItem('orden:workspace') ?? ''
-    expect(left).not.toContain('CLOSED, IN NO TRASH')
-    expect(left).toContain('/s/b.md')
+    const stack = [closed({ path: null, doc: 'CLOSED, IN NO TRASH' }), closed({ path: '/s/b.md' })]
+    const { kept } = await leave('orden:workspace', whole({ closed: stack }), 1)
+    expect(kept).not.toContain('CLOSED, IN NO TRASH')
+    expect(kept).toContain('/s/b.md')
   })
 
   test('a tab that holds no words of a file is not words: a terminal stays behind', async () => {
-    const storage = memoryStorage({
-      'orden:workspace:1': whole({
-        layout: {
-          panel: null,
-          focused: 'q',
-          frame: frame([tab({ kind: 'terminal', path: null, doc: '{"shell":"bash"}' })]),
-        },
-      }),
-    })
-    const { taken, take } = taking()
-    await takeSessionsLeft(0, take, storage, locks)
-    expect(taken).toEqual([])
+    const terminal = tab({ kind: 'terminal', path: null, doc: '{"shell":"bash"}' })
+    expect((await leave('orden:workspace:1', session([terminal]), 0)).taken).toEqual([])
   })
 
   test('a strip that loses tabs keeps which one was in front, and the order of use', async () => {
@@ -246,17 +192,9 @@ describe('wherever the session held them', () => {
       tab({ path: '/s/b.md' }),
       tab({ path: '/s/c.md' }),
     ]
-    const storage = memoryStorage({
-      'orden:workspace': whole({
-        layout: { panel: null, focused: 'q', frame: frame(tabs, 3, [3, 0, 4, 2, 1]) },
-      }),
-    })
-    const { take } = taking()
-    await takeSessionsLeft(1, take, storage, locks)
-    const left = JSON.parse(storage.getItem('orden:workspace') ?? '{}') as {
-      layout: { frame: { pane: { tabs: { path: string }[]; active: number; recent: number[] } } }
-    }
-    const { pane } = left.layout.frame
+    const pane = paneLeft(
+      (await leave('orden:workspace', session(tabs, 3, [3, 0, 4, 2, 1]), 1)).kept,
+    )
     expect(pane.tabs.map((one) => one.path)).toEqual(['/s/a.md', '/s/b.md', '/s/c.md'])
     expect(pane.tabs[pane.active]?.path).toBe('/s/b.md')
     expect(pane.recent.map((at) => pane.tabs[at]?.path)).toEqual(['/s/b.md', '/s/c.md', '/s/a.md'])
@@ -268,89 +206,59 @@ describe('wherever the session held them', () => {
       tab({ path: null, doc: 'WORDS' }),
       tab({ path: '/s/b.md' }),
     ]
-    const storage = memoryStorage({
-      'orden:workspace': whole({
-        layout: { panel: null, focused: 'q', frame: frame(tabs, 1) },
-      }),
-    })
-    const { take } = taking()
-    await takeSessionsLeft(1, take, storage, locks)
-    const left = JSON.parse(storage.getItem('orden:workspace') ?? '{}') as {
-      layout: { frame: { pane: { tabs: { path: string }[]; active: number } } }
-    }
-    const { pane } = left.layout.frame
+    const pane = paneLeft((await leave('orden:workspace', session(tabs, 1), 1)).kept)
     expect(pane.tabs[pane.active]?.path).toBe('/s/b.md')
   })
 })
 
 describe('words on a file that went on without them', () => {
-  const note = (fields: object) => tab(fields) as unknown as Draft
+  const note = (fields: object) =>
+    ({ ...tab({ path: '/s/a.md', doc: 'unwritten', dirty: true }), ...fields }) as unknown as Draft
+  const drafted = (notes: Draft[], says: string | null, spaceOf?: () => string) =>
+    asDrafts(notes, () => Promise.resolve(says), spaceOf)
 
   test('stay, as a draft of their own, where the file says something else', async () => {
-    const out = await asDrafts(
-      [note({ path: '/s/a.md', doc: 'unwritten', dirty: true, share: 'k' })],
-      () => Promise.resolve('what the file says'),
-    )
+    const out = await drafted([note({ share: 'k' })], 'what the file says')
     expect(out).toHaveLength(1)
     expect(out[0]).toMatchObject({ path: null, doc: 'unwritten', dirty: true })
     expect(out[0]).not.toHaveProperty('share')
   })
 
   test('stay where the file has gone', async () => {
-    const out = await asDrafts([note({ path: '/s/a.md', doc: 'unwritten', dirty: true })], () =>
-      Promise.resolve(null),
-    )
-    expect(out[0]).toMatchObject({ path: null, doc: 'unwritten' })
+    expect((await drafted([note({})], null))[0]).toMatchObject({ path: null, doc: 'unwritten' })
   })
 
-  test('are not kept twice where the file says them', async () => {
-    const out = await asDrafts([note({ path: '/s/a.md', doc: 'same', dirty: true })], () =>
-      Promise.resolve('same'),
-    )
-    expect(out).toEqual([])
+  test.each([
+    ['the file says them', { doc: 'same' }, 'same'],
+    ['the file says them in CRLF', { doc: 'a\nb\n' }, 'a\r\nb\r\n'],
+    [
+      'the file has gone on with them in it',
+      { kind: 'note', doc: 'base\nmine\n', base: 'base\n' },
+      'base\nmine\nand a newer line\n',
+    ],
+  ])('are not kept where %s', async (_, fields, says) => {
+    expect(await drafted([note(fields)], says)).toEqual([])
   })
 
   test('come once, for a note open in two panes', async () => {
-    const out = await asDrafts(
+    const out = await drafted(
       [
-        note({ path: '/s/a.md', doc: 'unwritten', dirty: true, share: 'k' }),
-        note({ path: '/s/a.md', doc: 'unwritten', dirty: true, share: 'k' }),
-        note({ path: '/s/b.md', doc: 'other', dirty: true, share: 'j' }),
+        note({ share: 'k' }),
+        note({ share: 'k' }),
+        note({ path: '/s/b.md', doc: 'other', share: 'j' }),
       ],
-      () => Promise.resolve('what the file says'),
+      'what the file says',
     )
     expect(out.map((one) => one.doc)).toEqual(['unwritten', 'other'])
   })
 
-  test('are the file words of a CRLF file, line endings aside', async () => {
-    const out = await asDrafts([note({ path: '/s/a.md', doc: 'a\nb\n', dirty: true })], () =>
-      Promise.resolve('a\r\nb\r\n'),
-    )
-    expect(out).toEqual([])
-  })
-
   test('belong to the space that holds their file', async () => {
-    const out = await asDrafts(
-      [note({ path: '/s/a.md', doc: 'unwritten', dirty: true })],
-      () => Promise.resolve('what the file says'),
-      () => 'space-1',
-    )
+    const out = await drafted([note({})], 'what the file says', () => 'space-1')
     expect(out[0]).toMatchObject({ path: null, space: 'space-1' })
   })
 
-  test('do not come where the file has gone on with them in it', async () => {
-    const out = await asDrafts(
-      [note({ kind: 'note', path: '/s/a.md', doc: 'base\nmine\n', base: 'base\n', dirty: true })],
-      () => Promise.resolve('base\nmine\nand a newer line\n'),
-    )
-    expect(out).toEqual([])
-  })
-
   test('forget the version they were typed on', async () => {
-    const out = await asDrafts(
-      [note({ path: '/s/a.md', doc: 'mine', base: 'old', dirty: true })],
-      () => Promise.resolve('other'),
-    )
+    const out = await drafted([note({ doc: 'mine', base: 'old' })], 'other')
     expect(out[0]).not.toHaveProperty('base')
   })
 })
@@ -366,77 +274,41 @@ describe('one document in two places of a left session', () => {
     share: 'k1',
     base: 'base\n',
   }
+  const kept = async (...docs: string[]) =>
+    (
+      await asDrafts(
+        docs.map((doc) => ({ ...held, doc })),
+        () => Promise.resolve('base\n'),
+      )
+    ).map((one) => one.doc)
 
   test('the newer words are the ones kept, whichever is found first', async () => {
-    const older = { ...held, doc: 'base\nolder\n' }
-    const newer = { ...held, doc: 'base\nolder\nnewer\n' }
-    const says = () => Promise.resolve('base\n')
-    for (const found of [
-      [older, newer],
-      [newer, older],
-    ]) {
-      expect((await asDrafts(found, says)).map((one) => one.doc)).toEqual(['base\nolder\nnewer\n'])
-    }
+    const older = 'base\nolder\n'
+    const newer = 'base\nolder\nnewer\n'
+    expect(await kept(older, newer)).toEqual([newer])
+    expect(await kept(newer, older)).toEqual([newer])
   })
 
   test('words that went two ways are both kept', async () => {
-    const one = { ...held, doc: 'base\none way\n' }
-    const other = { ...held, doc: 'base\nanother\n' }
-    const out = await asDrafts([one, other], () => Promise.resolve('base\n'))
-    expect(out.map((draft) => draft.doc)).toEqual(['base\none way\n', 'base\nanother\n'])
+    expect(await kept('base\none way\n', 'base\nanother\n')).toEqual([
+      'base\none way\n',
+      'base\nanother\n',
+    ])
   })
 
   test('two panes on one note are one set of words', async () => {
-    const pane = { ...held, doc: 'base\nwords\n' }
-    const out = await asDrafts([pane, { ...pane }], () => Promise.resolve('base\n'))
-    expect(out).toHaveLength(1)
+    expect(await kept('base\nwords\n', 'base\nwords\n')).toHaveLength(1)
   })
-})
 
-describe('two different drafts of one document', () => {
-  const held = {
-    kind: 'note' as const,
-    path: '/spaces/One/a.md',
-    name: 'a.md',
-    dirty: true,
-    cursor: 0,
-    scroll: 0,
-    share: 'k1',
-    base: 'base\n',
-  }
-  const says = () => Promise.resolve('base\n')
-
-  test('each saying the other, one of them stays', async () => {
-    const out = await asDrafts(
-      [
-        { ...held, doc: 'base\nfoo ' },
-        { ...held, doc: 'base\n foo' },
-      ],
-      says,
-    )
-    expect(out).toHaveLength(1)
+  test('two drafts each saying the other: one of them stays', async () => {
+    expect(await kept('base\nfoo ', 'base\n foo')).toHaveLength(1)
   })
 
   test('however many there are of them', async () => {
-    const out = await asDrafts(
-      [
-        { ...held, doc: 'base\nfoo  ' },
-        { ...held, doc: 'base\n foo ' },
-        { ...held, doc: 'base\n  foo' },
-      ],
-      says,
-    )
-    expect(out.length).toBeGreaterThan(0)
+    expect((await kept('base\nfoo  ', 'base\n foo ', 'base\n  foo')).length).toBeGreaterThan(0)
   })
 
   test('the one holding the other is kept, even where the other came later', async () => {
-    const out = await asDrafts(
-      [
-        { ...held, doc: 'base\nkeep this\n' },
-        { ...held, doc: 'base\nkeep\n' },
-      ],
-      says,
-    )
-    expect(out.map((one) => one.doc)).toEqual(['base\nkeep this\n'])
+    expect(await kept('base\nkeep this\n', 'base\nkeep\n')).toEqual(['base\nkeep this\n'])
   })
 })
