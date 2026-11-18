@@ -116,6 +116,27 @@ for _stream in (sys.stdout, sys.stderr):
     with contextlib.suppress(AttributeError, ValueError):
         _stream.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
 
+class Lost:
+    def __init__(self, page: Any, pieces: Sequence[str]) -> None:
+        self.context = page.context
+        self.pieces = list(pieces)
+        self.asked = 0
+        for piece in self.pieces:
+            self.context.route(piece, self.refuse)
+
+    def refuse(self, route: Any) -> None:
+        self.asked += 1
+        route.abort("connectionreset")
+
+    def found(self) -> None:
+        for piece in self.pieces:
+            self.context.unroute(piece, self.refuse)
+
+
+def lose(page: Any, *pieces: str) -> Lost:
+    return Lost(page, pieces)
+
+
 def answering(browser: Any) -> Any:
     made_context = browser.new_context
     made_page = browser.new_page

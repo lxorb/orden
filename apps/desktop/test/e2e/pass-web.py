@@ -347,11 +347,10 @@ def came_back(page: Page) -> None:
 
 
 def offered_a_reload(page: Page) -> None:
-    piece = "**/assets/FeedbackSheet-*.js"
-    page.route(piece, lambda route: route.abort())
+    lost = harness.lose(page, "**/assets/FeedbackSheet-*.js")
     page.locator(f"{CORNER} button[aria-label='Send feedback']").click()
     wait_for(page, "document.querySelector('.reload[role=alert] button')", "the offer to reload after a piece of the page failed to load")
-    page.unroute(piece)
+    lost.found()
     shot(page, "05-reload-offered")
     say("a piece of the page that failed to load offers a reload")
 

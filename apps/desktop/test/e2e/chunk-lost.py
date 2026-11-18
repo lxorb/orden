@@ -5,14 +5,14 @@ from typing import Any
 
 from playwright.sync_api import Browser, Page, Route
 
-from harness import Drive
+from harness import Drive, lose
 
 NEEDS = ("chromium",)
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-PALETTE = re.compile(r"/assets/Palette-[^/]+\.js$")
+PALETTE = "**/assets/Palette-*.js"
 
 ENTRY = re.compile(r'(<script type="module"[^>]*src="[^"]+\.js)"')
 
@@ -22,19 +22,6 @@ MARK = "() => { window.__beforeReload = true }"
 SAME_PAGE = "() => window.__beforeReload === true"
 
 RELOADED = "() => document.querySelector('script[type=module][src]')?.getAttribute('src').includes('deploy=2')"
-
-def lose_the_palette(page: Page) -> dict[str, int]:
-    asked = {"palette": 0, "deployed": 0}
-
-    def refuse(route: Route) -> None:
-        if asked["deployed"]:
-            route.continue_()
-            return
-        asked["palette"] += 1
-        route.abort("connectionreset")
-
-    page.route(PALETTE, refuse)
-    return asked
 
 def press_for_palette(page: Page) -> bool:
     page.mouse.click(600, 400)
@@ -50,14 +37,16 @@ def press_for_palette(page: Page) -> bool:
 def same_build(browser: Browser) -> None:
     say("--- the same build: the network lost the piece ---")
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
-    asked = lose_the_palette(page)
+    asked = lose(page, PALETTE)
     DRIVE.open(page)
     page.evaluate(MARK)
 
     offered = "() => !!document.querySelector('.notices .reload button')"
     if not DRIVE.waited(page, offered, "Reload on offer"):
         return
-    say(f"    the palette's chunk was asked for {asked['palette']} time(s) and refused")
+    say(f"    the palette's chunk was asked for {asked.asked} time(s) and refused")
+    if not asked.asked:
+        wrong("the palette's chunk was never asked for, so nothing was lost")
     shot(page, "same-build-offered")
 
     if press_for_palette(page):
@@ -67,7 +56,7 @@ def same_build(browser: Browser) -> None:
     if not page.evaluate(SAME_PAGE):
         wrong("the page reloaded by itself under the same build")
 
-    page.unroute(PALETTE)
+    asked.found()
     with page.expect_navigation():
         page.click(".notices .reload button")
     DRIVE.ready(page)
@@ -80,7 +69,7 @@ def same_build(browser: Browser) -> None:
 def newer_build(browser: Browser) -> None:
     say("--- a newer build: the site moved on under the tab ---")
     page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
-    asked = lose_the_palette(page)
+    asked = lose(page, PALETTE)
     served = {"root": 0}
 
     def deployed(route: Route) -> None:
@@ -88,15 +77,13 @@ def newer_build(browser: Browser) -> None:
         response = route.fetch()
         body = response.text()
         if served["root"] > 1:
-            asked["deployed"] = 1
             body = ENTRY.sub(r'\1?deploy=2"', body, count=1)
         route.fulfill(response=response, body=body)
 
-    page.route(re.compile(r"^[^?#]+://[^/]+/(\?.*)?$"), deployed)
+    page.context.route(re.compile(r"^[^?#]+://[^/]+/(\?.*)?$"), deployed)
     DRIVE.open(page)
-    say(f"    the palette's chunk was asked for {asked['palette']} time(s) and refused")
-
-    page.unroute(PALETTE)
+    say(f"    the palette's chunk was asked for {asked.asked} time(s) and refused")
+    asked.found()
     if not DRIVE.waited(page, RELOADED, "the page to reload by itself", patience=30):
         shot(page, "newer-build-stuck")
         return
