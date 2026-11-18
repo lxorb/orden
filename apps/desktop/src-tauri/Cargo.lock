@@ -3719,7 +3719,6 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 name = "orden"
 version = "0.16.0"
 dependencies = [
- "base64 0.22.1",
  "block2",
  "dirs",
  "dispatch2",
@@ -3743,6 +3742,7 @@ dependencies = [
  "orden-apps",
  "orden-base",
  "orden-browsers",
+ "orden-carry",
  "orden-crashes",
  "orden-dictation",
  "orden-documents",
@@ -3760,14 +3760,12 @@ dependencies = [
  "orden-web",
  "orden-web-engine",
  "percent-encoding",
- "plist",
  "png 0.18.1",
  "proc-macro2",
  "quote",
  "raw-window-handle",
  "reqwest",
  "ring",
- "rusqlite",
  "rustls",
  "security-framework 3.7.0",
  "serde",
@@ -3816,7 +3814,6 @@ name = "orden-agents"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
- "dirs",
  "getrandom 0.3.4",
  "libc",
  "orden-base",
@@ -3890,6 +3887,7 @@ dependencies = [
 name = "orden-base"
 version = "0.1.0"
 dependencies = [
+ "dirs",
  "libc",
  "percent-encoding",
  "serde",
@@ -3906,6 +3904,22 @@ dependencies = [
  "base64 0.22.1",
  "dirs",
  "orden-base",
+ "plist",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tempfile",
+]
+
+[[package]]
+name = "orden-carry"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "dirs",
+ "orden-base",
+ "orden-web-engine",
  "plist",
  "rusqlite",
  "serde",

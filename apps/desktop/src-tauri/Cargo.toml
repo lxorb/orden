@@ -217,9 +217,7 @@ tauri-plugin-os.workspace = true
 tauri-plugin-deep-link.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-base64.workspace = true
 flate2.workspace = true
-rusqlite.workspace = true
 getrandom.workspace = true
 percent-encoding.workspace = true
 
@@ -232,6 +230,7 @@ orden-agents = { path = "crates/agents" }
 orden-ai = { path = "crates/ai" }
 orden-apps = { path = "crates/apps" }
 orden-browsers = { path = "crates/browsers" }
+orden-carry = { path = "crates/carry" }
 orden-crashes = { path = "crates/crashes" }
 orden-dictation = { path = "crates/dictation" }
 orden-explorer = { path = "crates/explorer" }
@@ -244,7 +243,6 @@ orden-system = { path = "crates/system" }
 orden-web = { path = "crates/web" }
 fontdb.workspace = true
 png.workspace = true
-plist.workspace = true
 tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-dialog.workspace = true
 tauri-plugin-process = "2"

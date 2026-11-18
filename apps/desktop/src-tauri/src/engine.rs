@@ -99,12 +99,12 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<orden_base::Engine>>(
     let building = {
         let _ = OWN_PROFILE.set(orden_web::engine::app_profile(manager.app_handle())?);
         orden_web::page_scale::read_chosen(manager.app_handle());
-        crate::kept::read_kept(manager.app_handle());
+        orden_carry::kept::read_kept(manager.app_handle());
         own_window(building)
     };
     Ok(building
-        .initialization_script(crate::old_home::script())
-        .initialization_script(crate::old_engine::script()))
+        .initialization_script(orden_carry::old_home::script())
+        .initialization_script(orden_carry::old_engine::script()))
 }
 
 pub(crate) fn own_window<M: tauri::Manager<orden_base::Engine>>(
@@ -113,7 +113,7 @@ pub(crate) fn own_window<M: tauri::Manager<orden_base::Engine>>(
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
-        .initialization_script(crate::kept::kept_script())
+        .initialization_script(orden_carry::kept::kept_script())
         .initialization_script(crate::window_drag::SCRIPT)
         .initialization_script(orden_web::page_drag::SCRIPT)
         .initialization_script(orden_system::gpu::SCRIPT)

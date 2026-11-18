@@ -452,7 +452,11 @@ mod tests {
     fn fixture() -> PathBuf {
         let dir =
             scratch(&format!("webkit-{:?}", std::thread::current().id()).replace(['(', ')'], ""));
-        super::copied(&crate::app_dir().join("tests/old-engine/webkit"), &dir).unwrap();
+        super::copied(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/old-engine/webkit"),
+            &dir,
+        )
+        .unwrap();
         dir
     }
 

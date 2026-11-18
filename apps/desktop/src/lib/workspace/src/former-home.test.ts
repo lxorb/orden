@@ -49,7 +49,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 const { finishFormerHome, formerSaid, HOME_CARRIED } = await import('./former-home')
 
 const SCRIPT = readFileSync(
-  join(import.meta.dirname, '../../../../src-tauri/src/former.js'),
+  join(import.meta.dirname, '../../../../src-tauri/crates/carry/src/former.js'),
   'utf8',
 )
 
