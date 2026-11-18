@@ -3,24 +3,11 @@ import { blank } from '@orden/pass/envelope'
 import type { Item, Passkey } from '@orden/pass/types'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import '../test/no-device'
 
 const fake = vi.hoisted(() => ({
   confirm: vi.fn(),
   delivered: [] as { name: string; extension: string; bytes: Uint8Array }[],
-}))
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
 }))
 
 vi.mock('../../ui-kit/src/prompt.svelte', () => ({

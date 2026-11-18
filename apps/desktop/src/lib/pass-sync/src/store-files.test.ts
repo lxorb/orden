@@ -3,26 +3,13 @@ import { blank } from '@orden/pass/envelope'
 import { FILE_PART } from '@orden/pass/files'
 import type { Alias } from '@orden/pass/types'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import '../test/no-device'
 import { NotHere } from './attachments'
 import { deviceRows } from './device-rows'
 import type { FileApi } from './file-api'
 import { waitingFiles } from './file-queue'
 import { forgetLocal, readFileParts, readMeta } from './local'
 import { configurePass, PassStore } from './store.svelte'
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
-}))
 
 const FAST = { m: 64, t: 1, p: 1 }
 configurePass({ kdf: FAST, pinKdf: FAST })

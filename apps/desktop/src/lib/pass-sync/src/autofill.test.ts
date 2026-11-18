@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
 import type { Card, Content, Identity, Login, Website } from '@orden/pass/types'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import '../test/no-device'
 import type {
   FieldRole,
   FillTarget,
@@ -48,20 +49,6 @@ vi.mock('./channel', () => ({
     heard.filled.push({ target, values, submit })
     return Promise.resolve(heard.fills)
   },
-}))
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => false,
-  readSecret: () => Promise.resolve(null),
-  writeSecret: () => Promise.resolve(),
-  forgetKey: () => Promise.resolve(),
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(false),
-  deviceSays: () => Promise.resolve(false),
-  deviceName: () => 'Touch ID',
 }))
 
 const { forgetLocal } = await import('./local')
