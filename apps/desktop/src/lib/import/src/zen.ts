@@ -1,6 +1,6 @@
 import { readBookmarks } from './firefox'
 import type { Sidebar, SidebarFolder, SidebarSpace, SidebarTab } from './sidebar'
-import { type FolderWords, isObject, list, Made, type Said, siteMark, text } from './sidebar-made'
+import { isObject, list, Made, type Said, siteMark, text } from './sidebar-made'
 
 export type ZenSession = Sidebar
 
@@ -34,11 +34,7 @@ export function readZenSession(said: unknown, places: ZenPlaces | null = null): 
   return pinnedIn(spaces, folders, tabs, list(places.pins))
 }
 
-export function withBookmarks(
-  sidebar: ZenSession,
-  places: ZenPlaces | null,
-  words: FolderWords,
-): ZenSession {
+export function withBookmarks(sidebar: ZenSession, places: ZenPlaces | null): ZenSession {
   const [first] = sidebar.spaces
   if (!first || !places || !isObject(places.bookmarks)) return sidebar
 
@@ -53,7 +49,7 @@ export function withBookmarks(
   }
 
   const made = new Made(first.id)
-  readBookmarks(places.bookmarks, made, words, (guid, around) =>
+  readBookmarks(places.bookmarks, made, (guid, around) =>
     guid === null ? around : (shown.get(guid) ?? around),
   )
   return {

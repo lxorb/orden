@@ -2,30 +2,12 @@ import { describe, expect, test } from 'vitest'
 import { readShortcut } from '@orden/scan/shortcut'
 import { safariSidebar } from './safari'
 import { BOOKMARKS, SESSION, TABS } from './safari.fixture'
-import type { FolderWords } from './sidebar-made'
 import { sidebarImport } from './sidebar-plan'
-
-const WORDS: FolderWords = {
-  bookmarks: 'Bookmarks',
-  savedGroups: 'Saved groups',
-  group: 'Tab group',
-  toolbar: 'Bookmarks toolbar',
-  bar: 'Bookmarks bar',
-  menu: 'Bookmarks menu',
-  other: 'Other bookmarks',
-  mobile: 'Mobile bookmarks',
-  favorites: 'Favorites',
-  readingList: 'Reading List',
-}
 
 const NOW = new Date('2026-10-18T08:00:00.000Z')
 
 function space(files: Partial<{ bookmarks: unknown; tabs: unknown; session: unknown }>) {
-  const sidebar = safariSidebar(
-    { bookmarks: null, tabs: null, session: null, ...files },
-    'Safari',
-    WORDS,
-  )
+  const sidebar = safariSidebar({ bookmarks: null, tabs: null, session: null, ...files }, 'Safari')
   return { sidebar, space: sidebarImport(sidebar, NOW, null).spaces[0] }
 }
 
