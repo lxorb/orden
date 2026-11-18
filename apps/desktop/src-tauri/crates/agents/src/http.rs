@@ -601,19 +601,14 @@ mod tests {
                 })
             )
         };
+        let goes = |grant: &Grant, said: &str| decided(grant, &url(said), false) == Ok(Reach::Go);
         assert!(refused(&own, "https://login.BANK.example./x"));
-        assert_eq!(
-            decided(&own, &url("https://docs.example/"), false),
-            Ok(Reach::Go)
-        );
+        assert!(goes(&own, "https://docs.example/"));
 
         let mut full = own.clone();
         full.mode = Mode::Autonomous;
         assert!(refused(&full, "https://bank.example/"));
-        assert_eq!(
-            decided(&full, &url("https://docs.example/"), false),
-            Ok(Reach::Go)
-        );
+        assert!(goes(&full, "https://docs.example/"));
 
         let mut confirm = Grant::third_party("http-third".into(), "B");
         confirm.sites.insert("bank.example".into(), SiteRule::Deny);
@@ -633,22 +628,13 @@ mod tests {
         always
             .always
             .insert("http:docs.example".into(), vec![Category::Writing]);
-        assert_eq!(
-            decided(&always, &url("https://docs.example/"), false),
-            Ok(Reach::Go)
-        );
+        assert!(goes(&always, "https://docs.example/"));
         let mut allowed = confirm.clone();
         allowed.sites.insert("docs.example".into(), SiteRule::Allow);
-        assert_eq!(
-            decided(&allowed, &url("https://docs.example/"), false),
-            Ok(Reach::Go)
-        );
+        assert!(goes(&allowed, "https://docs.example/"));
         let mut quiet = confirm;
         quiet.asks.insert(Category::Writing, false);
-        assert_eq!(
-            decided(&quiet, &url("https://docs.example/"), false),
-            Ok(Reach::Go)
-        );
+        assert!(goes(&quiet, "https://docs.example/"));
     }
 
     #[test]
