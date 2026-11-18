@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { Message, Notify } from '@orden/chats'
-  import { may } from '@orden/chats'
+  import { may, type Message, type Notify } from '@orden/chats'
   import { LONGEST_TOPIC } from '@orden/chats/limits'
   import { localNumber } from '../../../platform/src/api'
   import { Avatar } from '../../../accounts-ui/src/api'
@@ -259,7 +258,8 @@
   }
 
   @media (hover: hover) {
-    .people:hover {
+    .people:hover,
+    .pin:hover {
       background: var(--surface-hover);
     }
   }
@@ -301,12 +301,6 @@
     font: inherit;
     font-size: var(--text-sm);
     text-align: start;
-  }
-
-  @media (hover: hover) {
-    .pin:hover {
-      background: var(--surface-hover);
-    }
   }
 
   .pin span {

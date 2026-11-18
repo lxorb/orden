@@ -1,10 +1,9 @@
 <script lang="ts">
   import type { FileRef } from '@orden/chats'
   import { cubicOut } from 'svelte/easing'
-  import { closeOnBack } from '../../../ui-kit/src/api'
   import { downloadStarted } from '../../../downloads/src/api'
   import { fade, LAYER, scale } from '../../../platform/src/api'
-  import { overlays } from '../../../ui-kit/src/api'
+  import { closeOnBack, overlays } from '../../../ui-kit/src/api'
   import { Glyph } from '../../../chat-kit/src/api'
   import { isVideo } from './media'
   import { fileUrl } from './urls.svelte'

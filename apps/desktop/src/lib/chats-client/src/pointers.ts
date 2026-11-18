@@ -16,12 +16,8 @@ export function chatName(path: string): string {
   return name.toLowerCase().endsWith(CHAT_EXTENSION) ? name.slice(0, -CHAT_EXTENSION.length) : name
 }
 
-function spaceOf(folder: string) {
-  return spaceHolding(workspace.spaces, folder)
-}
-
 export async function makePointer(folder: string, name: string): Promise<Place | null> {
-  const space = spaceOf(folder)
+  const space = spaceHolding(workspace.spaces, folder)
   const remote = space ? sync.remoteIdFor(space.root) : null
   if (!space || !remote) return null
   const pointer = await makeChat(remote)

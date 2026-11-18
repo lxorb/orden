@@ -51,7 +51,7 @@ interface Held {
   typing: { who: Who; parent?: string }[]
 }
 
-function seeded(seed: number): () => number {
+export function randomFrom(seed: number): () => number {
   let state = seed >>> 0
   return () => {
     state = (state * 1664525 + 1013904223) >>> 0
@@ -84,12 +84,12 @@ export class FixtureChats implements Chats {
 
   constructor(me: Who, options: { seed?: number; now?: () => number } = {}) {
     this.me = me
-    this.random = seeded(options.seed ?? 7)
+    this.random = randomFrom(options.seed ?? 7)
     this.now = options.now ?? (() => Date.now())
   }
 
   add(name: string, members: ChatMember[], more: Partial<ChatEntry> = {}): string {
-    const id = `c_${Array.from({ length: 32 }, () => Math.floor(this.random() * 16).toString(16)).join('')}`
+    const id = `c_${hexOf(this.random, 32)}`
     const entry: ChatEntry = {
       id,
       space: 's_team',
@@ -306,6 +306,10 @@ export class FixtureChats implements Chats {
     return post.message
   }
 
+  readonly retry = () => Promise.resolve()
+  readonly linking = () => Promise.resolve<Hit[]>([])
+  readonly preview = () => Promise.resolve<Preview | null>(null)
+
   scheduled(chat: string): Promise<Scheduled[]> {
     return Promise.resolve([...this.must(chat).scheduled])
   }
@@ -350,10 +354,6 @@ export class FixtureChats implements Chats {
     return last.body
   }
 
-  retry(): Promise<void> {
-    return Promise.resolve()
-  }
-
   discard(chat: string, message: string): Promise<void> {
     const held = this.must(chat)
     held.pending = held.pending.filter((one) => one.id !== message)
@@ -392,10 +392,6 @@ export class FixtureChats implements Chats {
       }
     }
     return Promise.resolve(hits.sort((a, b) => b.message.at - a.message.at))
-  }
-
-  linking(): Promise<Hit[]> {
-    return Promise.resolve([])
   }
 
   draft(chat: string): string {
@@ -468,19 +464,13 @@ export class FixtureChats implements Chats {
   }
 
   upload(bytes: Uint8Array): Promise<string | null> {
-    const hash = Array.from({ length: 64 }, () => Math.floor(this.random() * 16).toString(16)).join(
-      '',
-    )
+    const hash = hexOf(this.random, 64)
     this.files.set(hash, URL.createObjectURL(new Blob([bytes.slice()])))
     return Promise.resolve(hash)
   }
 
   fileUrl(_chat: string, hash: string): Promise<string | null> {
     return Promise.resolve(this.files.get(hash) ?? pictureOf(hash))
-  }
-
-  preview(): Promise<Preview | null> {
-    return Promise.resolve(null)
   }
 
   make(folder: string, name: string): Promise<string | null> {
@@ -588,8 +578,7 @@ class FixtureView implements ChatView {
   refresh(): void {
     const held = this.store.must(this.chat)
     const all = held.ordered
-    const from = this.indexOf(this.low)
-    const to = this.high === Infinity ? all.length : this.indexOf(this.high + 1)
+    const { from, to } = this.shownSpan()
     this.messages = all.slice(from, to).map(shown)
     this.atStart = from === 0
     this.atEnd = to >= all.length
@@ -608,20 +597,22 @@ class FixtureView implements ChatView {
     return () => this.listeners.delete(listener)
   }
 
-  older(): Promise<void> {
-    const from = this.indexOf(this.low)
+  private shownSpan(): { from: number; to: number } {
     const to =
       this.high === Infinity ? this.store.ordered(this.chat).length : this.indexOf(this.high + 1)
+    return { from: this.indexOf(this.low), to }
+  }
+
+  older(): Promise<void> {
+    const { from, to } = this.shownSpan()
     const next = Math.max(0, from - PAGE)
     this.window(next, Math.min(to, next + MOST_HELD))
     return Promise.resolve()
   }
 
   newer(): Promise<void> {
-    const all = this.store.ordered(this.chat)
-    const from = this.indexOf(this.low)
-    const to = this.high === Infinity ? all.length : this.indexOf(this.high + 1)
-    const next = Math.min(all.length, to + PAGE)
+    const { from, to } = this.shownSpan()
+    const next = Math.min(this.store.ordered(this.chat).length, to + PAGE)
     this.window(Math.max(from, next - MOST_HELD), next)
     return Promise.resolve()
   }
@@ -718,7 +709,9 @@ function pictureOf(hash: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
+const hexOf = (random: () => number, length: number) =>
+  Array.from({ length }, () => Math.floor(random() * 16).toString(16)).join('')
+
 export function fixtureFile(random: () => number, more: Omit<FileRef, 'hash'>): FileRef {
-  const hash = Array.from({ length: 64 }, () => Math.floor(random() * 16).toString(16)).join('')
-  return { hash, ...more }
+  return { hash: hexOf(random, 64), ...more }
 }

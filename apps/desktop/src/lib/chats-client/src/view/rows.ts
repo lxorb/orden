@@ -4,14 +4,7 @@ import { GROUP_WITHIN } from '@orden/chats/limits'
 export type Item<M extends Message = Message> =
   | { kind: 'day'; key: string; day: string; at: number }
   | { kind: 'new'; key: 'new' }
-  | {
-      kind: 'message'
-      key: string
-      message: M
-      head: boolean
-      pending: boolean
-      seen: Who[]
-    }
+  | { kind: 'message'; key: string; message: M; head: boolean; pending: boolean; seen: Who[] }
 
 export interface Rowing<M extends Message = Message> {
   messages: readonly M[]
