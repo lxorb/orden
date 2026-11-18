@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CARD_BRANDS, type Card, type CardBrand } from '@orden/pass/types'
+  import { CARD_BRANDS, type Card } from '@orden/pass/types'
   import { Select } from '../../ui-controls/src/api'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
@@ -22,10 +22,6 @@
     content.expiry = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits
     oninput()
   }
-
-  function brandIn(value: string): CardBrand {
-    return CARD_BRANDS.find((brand) => brand === value) ?? 'other'
-  }
 </script>
 
 <EditCard>
@@ -45,7 +41,7 @@
       value={content.brand}
       options={brands}
       onchange={(value: string) => {
-        content.brand = brandIn(value)
+        content.brand = CARD_BRANDS.find((brand) => brand === value) ?? 'other'
         oninput()
       }}
     />

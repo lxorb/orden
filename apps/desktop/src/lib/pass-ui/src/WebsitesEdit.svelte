@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MATCH_RULES, type MatchRule, type Website } from '@orden/pass/types'
+  import { MATCH_RULES, type Website } from '@orden/pass/types'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import { Cross } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
@@ -20,10 +20,6 @@
   function remove(at: number) {
     websites = websites.filter((_, index) => index !== at)
     oninput()
-  }
-
-  function ruleOf(value: string): MatchRule {
-    return MATCH_RULES.find((rule) => rule === value) ?? 'domain'
   }
 </script>
 
@@ -50,7 +46,7 @@
             options={rules}
             label="Fill on"
             onchange={(value: string) => {
-              website.match = ruleOf(value)
+              website.match = MATCH_RULES.find((rule) => rule === value) ?? 'domain'
               oninput()
             }}
           />

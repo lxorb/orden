@@ -140,6 +140,16 @@
   }
 </script>
 
+{#snippet act(label: string, run: () => void, danger = false)}
+  <button
+    class="orden-button is-quiet"
+    class:danger
+    type="button"
+    disabled={!picked?.length}
+    onclick={run}>{label}</button
+  >
+{/snippet}
+
 <section class="list" aria-label={title}>
   <header class="head">
     {#if heading !== null || stepped}
@@ -181,31 +191,11 @@
     <div class="bar picking" role="toolbar" aria-label="Selected items">
       <span class="count">{picked.length === 1 ? '1 selected' : `${picked.length} selected`}</span>
       {#if trash}
-        <button
-          class="orden-button is-quiet"
-          type="button"
-          disabled={!picked.length}
-          onclick={() => void unpick(pass.restore(picked))}>Restore</button
-        >
-        <button
-          class="orden-button is-quiet danger"
-          type="button"
-          disabled={!picked.length}
-          onclick={() => void removePicked(picked)}>Delete</button
-        >
+        {@render act('Restore', () => void unpick(pass.restore(picked)))}
+        {@render act('Delete', () => void removePicked(picked), true)}
       {:else}
-        <button
-          class="orden-button is-quiet"
-          type="button"
-          disabled={!picked.length}
-          onclick={() => (ui.sheet = { kind: 'move', ids: picked })}>Move</button
-        >
-        <button
-          class="orden-button is-quiet danger"
-          type="button"
-          disabled={!picked.length}
-          onclick={() => void unpick(pass.trash(picked))}>Trash</button
-        >
+        {@render act('Move', () => (ui.sheet = { kind: 'move', ids: picked }))}
+        {@render act('Trash', () => void unpick(pass.trash(picked)), true)}
       {/if}
       <button class="orden-button is-quiet is-soft" type="button" onclick={() => (ui.picked = null)}
         >Done</button

@@ -74,19 +74,19 @@
 {:else}
   <section class="links" aria-label="Secure links" data-scrolls>
     <header class="head">
-      <h2 class="title">Secure links</h2>
+      <h2 class="pass-title">Secure links</h2>
       <button class="orden-chip" type="button" disabled={busy || expired === 0} onclick={sweep}
         >Remove all expired links</button
       >
     </header>
-    <p class="quiet">
+    <p class="pass-quiet">
       A link’s key is never kept, so a link cannot be copied again. Make a new one instead.
     </p>
-    {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+    {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
     {#if rows === null}
-      <p class="quiet">Reading…</p>
+      <p class="pass-quiet">Reading…</p>
     {:else}
-      <div class="card" role="list">
+      <div class="pass-card" role="list">
         {#each rows as link (link.id)}
           {@const item = itemOf(link)}
           {@const over = isExpired(link, now)}
@@ -133,19 +133,6 @@
     gap: var(--space-3);
   }
 
-  .title {
-    margin: 0;
-    font-size: var(--text-head);
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
-  }
-
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
   .row {
     gap: var(--space-3);
     padding: var(--space-2) var(--space-3);
@@ -179,18 +166,6 @@
 
   .is-over .name {
     color: var(--muted);
-  }
-
-  .quiet {
-    margin: 0;
-    color: var(--muted);
-    font-size: var(--text-sm);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 
   @media (max-width: 520px) {

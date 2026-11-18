@@ -132,11 +132,7 @@
     {#key ui.editing.id ?? 'new'}
       <ItemEdit {ui} />
     {/key}
-  {:else if item && page === 'items'}
-    {#key item.id}
-      <ItemView {ui} {item} stepped={columns < 3} />
-    {/key}
-  {:else if item && flagged}
+  {:else if item && (page === 'items' || flagged)}
     {#key item.id}
       <ItemView {ui} {item} stepped={columns < 3} />
     {/key}
@@ -322,5 +318,42 @@
   .wide-body {
     flex: 1;
     min-height: 0;
+  }
+
+  :global(.pass-card),
+  :global(.pass-stack) {
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  :global(.pass-stack) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.pass-wrong) {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--danger);
+  }
+
+  :global(.pass-quiet) {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-sm);
+  }
+
+  :global(.pass-buttons) {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  :global(.pass-title) {
+    margin: 0;
+    font-size: var(--text-head);
+    font-weight: var(--weight-strong);
+    color: var(--text-strong);
   }
 </style>

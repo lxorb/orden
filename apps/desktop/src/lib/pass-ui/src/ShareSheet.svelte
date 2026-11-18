@@ -412,8 +412,6 @@
   }
 
   .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
     overflow: hidden;
   }
 
@@ -484,11 +482,6 @@
 
   .empty {
     padding: var(--space-2) var(--space-3);
-  }
-
-  .wrong {
-    margin: 0;
-    color: var(--danger);
   }
 
   .buttons {

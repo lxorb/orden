@@ -20,15 +20,7 @@
 </script>
 
 {#if print}
-  <section class="card">
+  <section class="pass-card">
     <FieldRow label="Fingerprint" value={print} mono />
   </section>
 {/if}
-
-<style>
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-</style>

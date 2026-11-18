@@ -60,13 +60,13 @@
     bind:value={again}
   />
   {#if short}
-    <p class="wrong" role="alert">At least {LEAST} characters</p>
+    <p class="pass-wrong" role="alert">At least {LEAST} characters</p>
   {:else if differ}
-    <p class="wrong" role="alert">The two passwords differ</p>
+    <p class="pass-wrong" role="alert">The two passwords differ</p>
   {:else if wrong}
-    <p class="wrong" role="alert">Wrong password</p>
+    <p class="pass-wrong" role="alert">Wrong password</p>
   {/if}
-  <div class="buttons">
+  <div class="pass-buttons">
     {#if oncancel}
       <button class="orden-button is-quiet" type="button" onclick={oncancel}>Cancel</button>
     {/if}
@@ -81,17 +81,5 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
-  }
-
-  .buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-2);
   }
 </style>

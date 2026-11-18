@@ -41,7 +41,7 @@
       </button>
     </div>
     {#if section.fields.length}
-      <div class="card">
+      <div class="pass-stack">
         <FieldsEdit bind:fields={section.fields} {oninput} />
       </div>
     {/if}
@@ -91,15 +91,7 @@
     color: var(--text-strong);
   }
 
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > :global(* + *) {
+  .pass-stack > :global(* + *) {
     border-top: 1px solid var(--line);
   }
 

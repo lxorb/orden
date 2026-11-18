@@ -110,7 +110,7 @@
       <span class="orden-row-label">Choose an icon</span>
     </button>
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
-    <div class="buttons">
+    <div class="pass-buttons">
       <button class="orden-button is-quiet" type="button" onclick={close}>Cancel</button>
       <button class="orden-button" type="submit" disabled={!name.trim() || busy}>
         {editing ? 'Save' : 'Create vault'}
@@ -163,18 +163,6 @@
   }
 
   .chooser {
-    gap: var(--space-2);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
-  }
-
-  .buttons {
-    display: flex;
-    justify-content: flex-end;
     gap: var(--space-2);
   }
 </style>

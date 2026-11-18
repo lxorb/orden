@@ -5,20 +5,12 @@
 </script>
 
 {#if title}<h3 class="orden-section">{title}</h3>{/if}
-<div class="card">
+<div class="pass-stack">
   {@render children()}
 </div>
 
 <style>
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > :global(* + *) {
+  .pass-stack > :global(* + *) {
     border-top: 1px solid var(--line);
   }
 

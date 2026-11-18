@@ -72,7 +72,7 @@
   ondrop={dropped}
 >
   {#if shown.length || adding.length}
-    <div class="card">
+    <div class="pass-stack">
       {#each shown as file (file.id)}
         <div class="line">
           <Glyph icon={Paperclip} />
@@ -121,7 +121,7 @@
   >
     <Glyph icon={Paperclip} />Attach file
   </button>
-  {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+  {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 </section>
 
 <style>
@@ -135,14 +135,6 @@
   .files.over {
     outline: 2px dashed var(--accent);
     outline-offset: 2px;
-  }
-
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
   }
 
   .line {
@@ -180,11 +172,5 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>

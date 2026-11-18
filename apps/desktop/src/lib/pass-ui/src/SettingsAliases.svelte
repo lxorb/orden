@@ -161,7 +161,7 @@
   </p>
 {/if}
 {#if said}<p class="line" role="status">{said}</p>{/if}
-{#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+{#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 
 <style>
   .card {
@@ -202,11 +202,5 @@
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>
