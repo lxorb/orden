@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Emitter as _};
 
+use crate::grants::Grant;
 use crate::verbs::{Answer, Approval, ApprovalAnswer, Category, Event, EVENT};
 use orden_base::letters::spelled_out;
 
@@ -77,6 +78,24 @@ pub struct Asking<'a> {
     pub site: Option<String>,
     pub tab: Option<String>,
     pub key: String,
+}
+
+impl<'a> Asking<'a> {
+    pub fn of(grant: &'a Grant, category: Category, summary: String, key: String) -> Self {
+        Asking {
+            agent: &grant.id,
+            name: &grant.name,
+            category,
+            summary,
+            site: None,
+            tab: None,
+            key,
+        }
+    }
+}
+
+pub fn unless_allowed(app: &AppHandle, asking: Asking<'_>) -> Option<Answer> {
+    (!allowed(asking.agent, &asking.key)).then(|| ask(app, asking))
 }
 
 pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> Approval {

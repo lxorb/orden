@@ -456,21 +456,10 @@ fn question(
             .unwrap_or_default(),
         ),
     );
-    if approvals::allowed(&grant.id, &key) {
-        return None;
-    }
-    Some(approvals::ask(
+    approvals::unless_allowed(
         app,
-        Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category,
-            summary: summary(program, asked),
-            site: None,
-            tab: None,
-            key,
-        },
-    ))
+        Asking::of(grant, category, summary(program, asked), key),
+    )
 }
 
 fn runs_in_reach(app: &AppHandle, grant: &Grant, cwd: &Path) -> bool {

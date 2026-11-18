@@ -583,6 +583,10 @@ impl Page<'_> {
         .map_err(|why| stale(&why))
     }
 
+    fn asked_in(&self, session: Option<&str>, method: &str, params: &Value) -> Option<Value> {
+        cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
+    }
+
     pub(crate) fn url(&self) -> String {
         self.view.url()
     }
@@ -839,20 +843,26 @@ impl Page<'_> {
     }
 
     fn link_listens(&self, element: &Element) -> bool {
-        let control = self.object(element).ok().and_then(|object| {
-            let found = self
-                .call_on(
-                    element,
-                    "Runtime.callFunctionOn",
-                    &json!({ "objectId": object, "functionDeclaration": PRESSED.as_str() }),
-                )
-                .ok()?;
-            found
-                .pointer("/result/objectId")?
-                .as_str()
-                .map(str::to_string)
-        });
-        control.is_some_and(|object| self.hears(element, &object))
+        self.control_of(element)
+            .is_some_and(|object| self.hears(element, &object))
+    }
+
+    fn control_of(&self, element: &Element) -> Option<String> {
+        self.through(element, &self.object(element).ok()?, &PRESSED)
+    }
+
+    fn through(&self, element: &Element, object: &str, function: &str) -> Option<String> {
+        let found = self
+            .call_on(
+                element,
+                "Runtime.callFunctionOn",
+                &json!({ "objectId": object, "functionDeclaration": function }),
+            )
+            .ok()?;
+        found
+            .pointer("/result/objectId")?
+            .as_str()
+            .map(str::to_string)
     }
 
     fn hears(&self, element: &Element, object: &str) -> bool {
@@ -900,14 +910,7 @@ impl Page<'_> {
             if self.hears(element, &object) {
                 return Some(object);
             }
-            let round = self
-                .call_on(
-                    element,
-                    "Runtime.callFunctionOn",
-                    &json!({ "objectId": object, "functionDeclaration": ROUND_IT.as_str() }),
-                )
-                .ok()?;
-            object = round.pointer("/result/objectId")?.as_str()?.to_string();
+            object = self.through(element, &object, &ROUND_IT)?;
         }
         None
     }
@@ -929,15 +932,7 @@ impl Page<'_> {
     }
 
     fn engine_name(&self, element: &Element) -> Option<String> {
-        let object = self.object(element).ok()?;
-        let control = self
-            .call_on(
-                element,
-                "Runtime.callFunctionOn",
-                &json!({ "objectId": object, "functionDeclaration": PRESSED.as_str() }),
-            )
-            .ok()?;
-        let control = control.pointer("/result/objectId")?.as_str()?;
+        let control = self.control_of(element)?;
         let tree = self
             .call_on(
                 element,
@@ -956,9 +951,7 @@ impl Page<'_> {
 
     fn closed_fields(&self, element: &Element) -> Option<Vec<Field>> {
         let session = element.session.as_deref();
-        let call = |method: &str, params: &Value| {
-            cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
-        };
+        let call = |method: &str, params: &Value| self.asked_in(session, method, params);
         let object = self.object(element).ok()?;
         let scope = call(
             "Runtime.callFunctionOn",
@@ -1289,12 +1282,7 @@ impl Page<'_> {
         let Ok(metrics) = self.call("Page.getLayoutMetrics", &json!({})) else {
             return (0.0, 0.0);
         };
-        let get = |path: &str| {
-            metrics
-                .pointer(path)
-                .and_then(Value::as_f64)
-                .unwrap_or_default()
-        };
+        let get = |path: &str| number(&metrics, path);
         (
             get("/cssLayoutViewport/pageX"),
             get("/cssLayoutViewport/pageY"),
@@ -1314,9 +1302,7 @@ impl Page<'_> {
     }
 
     fn originating(&self, session: Option<&str>, backend: u64) -> u64 {
-        let call = |method: &str, params: &Value| {
-            cdp::call_in(self.view, session, method, params, cdp::PATIENCE).ok()
-        };
+        let call = |method: &str, params: &Value| self.asked_in(session, method, params);
         let hangs =
             call("DOM.describeNode", &json!({ "backendNodeId": backend })).is_some_and(|said| {
                 said.pointer("/node/pseudoType").is_some()
@@ -1377,11 +1363,9 @@ impl Page<'_> {
             backend: 0,
         };
         let (x, y) = self.frame_map(&inner).ok()?.to_frame((x, y))?;
-        let call = |method: &str, params: &Value| {
-            cdp::call_in(self.view, Some(&session), method, params, cdp::PATIENCE).ok()
-        };
+        let call = |method: &str, params: &Value| self.asked_in(Some(&session), method, params);
         let metrics = call("Page.getLayoutMetrics", &json!({}))?;
-        let scrolled = |path: &str| metrics.pointer(path).and_then(Value::as_f64).unwrap_or(0.0);
+        let scrolled = |path: &str| number(&metrics, path);
         let hit = call(
             "DOM.getNodeForLocation",
             &json!({
@@ -1429,7 +1413,7 @@ impl Page<'_> {
             "Runtime.evaluate",
             &json!({ "expression": "[innerWidth, innerHeight]", "returnByValue": true, "contextId": self.world_of_frame(session, frame)? }),
         )?;
-        let size = |at: &str| said.pointer(at).and_then(Value::as_f64).unwrap_or(0.0);
+        let size = |at: &str| number(&said, at);
         let (width, height) = (size("/result/value/0"), size("/result/value/1"));
         let map = FrameMap::of(&quad, width, height).ok_or_else(|| {
             Answer::error(
@@ -1646,9 +1630,7 @@ impl Page<'_> {
     fn pointer_over(&self, element: &Element) -> Option<Element> {
         let (session, frame) = (element.session.as_deref()?, element.frame.as_deref()?);
         let world = self.world_of_frame(Some(session), frame).ok()?;
-        let call = |method: &str, params: &Value| {
-            cdp::call_in(self.view, Some(session), method, params, cdp::PATIENCE).ok()
-        };
+        let call = |method: &str, params: &Value| self.asked_in(Some(session), method, params);
         let said = call(
             "Runtime.evaluate",
             &json!({
@@ -2029,12 +2011,7 @@ impl Page<'_> {
 
     fn viewport(&self) -> Result<(f64, f64, f64, f64), Answer> {
         let metrics = self.call("Page.getLayoutMetrics", &json!({}))?;
-        let get = |path: &str| {
-            metrics
-                .pointer(path)
-                .and_then(Value::as_f64)
-                .unwrap_or_default()
-        };
+        let get = |path: &str| number(&metrics, path);
         Ok((
             get("/cssVisualViewport/clientWidth"),
             get("/cssVisualViewport/clientHeight"),
@@ -2251,12 +2228,7 @@ impl Page<'_> {
             true,
             &mut same,
         );
-        let mut places = HashMap::new();
-        frame_places(
-            tree.get("frameTree").unwrap_or(&Value::Null),
-            &[],
-            &mut places,
-        );
+        let places = places_in(&tree);
         for frame in same.into_iter().filter(|one| !away_ids.contains(one)) {
             if !places.get(&frame).is_none_or(|at| self.may_read_frame(at)) {
                 continue;
@@ -2329,13 +2301,7 @@ impl Page<'_> {
         self.nested_followed()?;
         let mut frames: Vec<(String, Vec<String>)> = Vec::new();
         if let Ok(tree) = self.call("Page.getFrameTree", &json!({})) {
-            let mut places = HashMap::new();
-            frame_places(
-                tree.get("frameTree").unwrap_or(&Value::Null),
-                &[],
-                &mut places,
-            );
-            frames.extend(places);
+            frames.extend(places_in(&tree));
         }
         let away = self.heard().held().frames();
         for (_, frame) in away {
@@ -3088,6 +3054,16 @@ fn cookie_fits(domain: &str, host: &str) -> bool {
         && (domain == site || domain.ends_with(&format!(".{site}")))
 }
 
+fn places_in(tree: &Value) -> HashMap<String, Vec<String>> {
+    let mut places = HashMap::new();
+    frame_places(
+        tree.get("frameTree").unwrap_or(&Value::Null),
+        &[],
+        &mut places,
+    );
+    places
+}
+
 fn frame_places(tree: &Value, around: &[String], out: &mut HashMap<String, Vec<String>>) {
     let mut at = Vec::with_capacity(around.len() + 1);
     if let Some(url) = tree.pointer("/frame/url").and_then(Value::as_str) {
@@ -3293,6 +3269,13 @@ fn pressable(quad: &[f64]) -> Vec<(f64, f64)> {
             )
         }))
         .collect()
+}
+
+fn number(value: &Value, path: &str) -> f64 {
+    value
+        .pointer(path)
+        .and_then(Value::as_f64)
+        .unwrap_or_default()
 }
 
 fn area(at: &[f64]) -> f64 {
@@ -3888,8 +3871,7 @@ mod tests {
                 { "frame": { "id": "blank", "url": "about:blank" } },
             ] },
         ] });
-        let mut places = HashMap::new();
-        frame_places(&tree, &[], &mut places);
+        let places = places_in(&json!({ "frameTree": tree }));
         assert_eq!(
             places["blank"],
             [
