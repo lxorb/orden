@@ -321,7 +321,7 @@ enum Reach {
 }
 
 fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), Answer> {
-    if !web(url) {
+    if !orden_web_engine::from_a_site(url) {
         return Err(Answer::error(
             Code::BadArguments,
             format!("{url} is not an http or https address"),
@@ -374,10 +374,6 @@ fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
         return Ok(Reach::Go);
     }
     Ok(Reach::Ask { site, always })
-}
-
-fn web(url: &Url) -> bool {
-    orden_web_engine::from_a_site(url)
 }
 
 fn reached(agent: &str, site: &str) -> bool {
@@ -515,7 +511,10 @@ mod tests {
     #[test]
     fn only_http_and_https_are_sent() {
         for allowed in ["http://a.example/", "https://a.example:8443/x?y"] {
-            assert!(web(&Url::parse(allowed).expect("an address")), "{allowed}");
+            assert!(
+                orden_web_engine::from_a_site(&Url::parse(allowed).expect("an address")),
+                "{allowed}"
+            );
         }
         for refused in [
             "file:///etc/passwd",
@@ -525,7 +524,10 @@ mod tests {
             "javascript:alert(1)",
             "ws://a.example/",
         ] {
-            assert!(!web(&Url::parse(refused).expect("an address")), "{refused}");
+            assert!(
+                !orden_web_engine::from_a_site(&Url::parse(refused).expect("an address")),
+                "{refused}"
+            );
         }
     }
 

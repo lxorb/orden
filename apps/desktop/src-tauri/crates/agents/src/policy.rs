@@ -36,30 +36,16 @@ pub fn on_the_web(url: &str) -> bool {
     }
 }
 
-const SHARED_HOSTS: &[&str] = &[
-    "github.io",
-    "gitlab.io",
-    "pages.dev",
-    "workers.dev",
-    "vercel.app",
-    "netlify.app",
-    "web.app",
-    "firebaseapp.com",
-    "herokuapp.com",
-    "onrender.com",
-    "fly.dev",
-    "azurewebsites.net",
-    "cloudfront.net",
-    "s3.amazonaws.com",
-    "blogspot.com",
-    "wordpress.com",
-    "notion.site",
-    "glitch.me",
-    "surge.sh",
-    "ngrok.io",
-    "ngrok.app",
-    "ngrok-free.app",
-    "repl.co",
+const SHARED_HOSTS: &str = concat!(
+    "github.io|gitlab.io|pages.dev|workers.dev|vercel.app|netlify.app|web.app|firebaseapp.com",
+    "|herokuapp.com|onrender.com|fly.dev|azurewebsites.net|cloudfront.net|s3.amazonaws.com",
+    "|blogspot.com|wordpress.com|notion.site|glitch.me|surge.sh|ngrok.io|ngrok.app",
+    "|ngrok-free.app|repl.co",
+);
+
+const SECOND_LEVEL: [&str; 15] = [
+    "co", "com", "org", "net", "ac", "gov", "edu", "or", "ne", "go", "gob", "nic", "mil", "ltd",
+    "plc",
 ];
 
 pub fn site_of(host: &str) -> String {
@@ -69,34 +55,13 @@ pub fn site_of(host: &str) -> String {
     }
     let labels: Vec<&str> = host.split('.').collect();
     if let Some(shared) = SHARED_HOSTS
-        .iter()
+        .split('|')
         .find(|one| host.ends_with(&format!(".{one}")))
     {
         return labels[labels.len() - shared.split('.').count() - 1..].join(".");
     }
     let keep = match labels.as_slice() {
-        [.., second, top]
-            if top.len() == 2
-                && matches!(
-                    *second,
-                    "co" | "com"
-                        | "org"
-                        | "net"
-                        | "ac"
-                        | "gov"
-                        | "edu"
-                        | "or"
-                        | "ne"
-                        | "go"
-                        | "gob"
-                        | "nic"
-                        | "mil"
-                        | "ltd"
-                        | "plc"
-                ) =>
-        {
-            3
-        }
+        [.., second, top] if top.len() == 2 && SECOND_LEVEL.contains(second) => 3,
         _ => 2,
     };
     labels[labels.len().saturating_sub(keep)..].join(".")
@@ -140,14 +105,17 @@ pub fn site_allowed(grant: &Grant, url: &str, store: Store) -> Result<(), String
     if !on_the_web(url) {
         return Err(format!("an agent stays on the web, and {url} is not on it"));
     }
-    let Some(host) = host_of(&made_by(url)) else {
-        return Ok(());
-    };
-    match rule_for(grant, &host) {
-        Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(&host))),
+    host_of(&made_by(url)).map_or(Ok(()), |host| {
+        allowed_on(grant, &host, store, ": open it with store \"agent\"")
+    })
+}
+
+fn allowed_on(grant: &Grant, host: &str, store: Store, hint: &str) -> Result<(), String> {
+    match rule_for(grant, host) {
+        Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(host))),
         Some(SiteRule::AgentStore) if store != Store::Agent => Err(format!(
-            "{} is only for this agent's own store: open it with store \"agent\"",
-            site_of(&host)
+            "{} is only for this agent's own store{hint}",
+            site_of(host)
         )),
         _ => Ok(()),
     }
@@ -163,14 +131,7 @@ pub fn frame_allowed(grant: &Grant, at: &[String], store: Store) -> Result<(), S
     }) else {
         return Ok(());
     };
-    match rule_for(grant, &host) {
-        Some(SiteRule::Deny) => Err(format!("{} is denied to this agent", site_of(&host))),
-        Some(SiteRule::AgentStore) if store != Store::Agent => Err(format!(
-            "{} is only for this agent's own store",
-            site_of(&host)
-        )),
-        _ => Ok(()),
-    }
+    allowed_on(grant, &host, store, "")
 }
 
 pub fn site_allowed_for(agent: &str, url: &str, store: Store) -> Result<(), String> {
@@ -220,6 +181,12 @@ pub struct Field {
     pub mentions: bool,
 }
 
+impl Field {
+    fn completes(&self, wanted: impl Fn(&str) -> bool) -> bool {
+        self.autocomplete.split_whitespace().any(wanted)
+    }
+}
+
 impl Facts {
     pub fn password(&self) -> bool {
         self.kind == "password" || credential(&self.field)
@@ -259,7 +226,7 @@ impl Facts {
 }
 
 fn card_field(field: &Field) -> bool {
-    if field.autocomplete.split_whitespace().any(|one| {
+    if field.completes(|one| {
         matches!(
             one,
             "cc-number" | "cc-csc" | "cc-exp" | "cc-exp-month" | "cc-exp-year"
@@ -268,7 +235,7 @@ fn card_field(field: &Field) -> bool {
         return true;
     }
     let said = seen(&field.said).to_lowercase();
-    CARD.iter().any(|one| said.contains(&seen(one)))
+    CARD.split('|').any(|one| said.contains(&seen(one)))
         || (says(&plain_said(&seen(&field.said)), CARD_WORDS) && !says(&said, NO_PAYMENT_CARD))
 }
 
@@ -286,11 +253,7 @@ fn plain_said(said: &str) -> String {
 }
 
 fn one_time(field: &Field) -> bool {
-    if field
-        .autocomplete
-        .split_whitespace()
-        .any(|one| one == "postal-code")
-    {
+    if field.completes(|one| one == "postal-code") {
         return false;
     }
     let said = plain_said(&seen(&field.said));
@@ -311,31 +274,17 @@ fn one_time(field: &Field) -> bool {
             })
 }
 
-const NOT_A_PIN: &[&str] = &[
-    "pin to",
-    "pin notes",
-    "pin note",
-    "pin this",
-    "pin it",
-    "pin on",
-    "pin board",
-];
+const NOT_A_PIN: &str = "pin to|pin notes|pin note|pin this|pin it|pin on|pin board";
 
 fn credential(field: &Field) -> bool {
     field.kind == "password"
         || field.masked
-        || field
-            .autocomplete
-            .split_whitespace()
-            .any(|one| matches!(one, "current-password" | "new-password"))
+        || field.completes(|one| matches!(one, "current-password" | "new-password"))
 }
 
 pub fn secret(field: &Field) -> bool {
     credential(field)
-        || field
-            .autocomplete
-            .split_whitespace()
-            .any(|one| one.starts_with("cc-") || one == "one-time-code")
+        || field.completes(|one| one.starts_with("cc-") || one == "one-time-code")
         || card_field(field)
         || one_time(field)
 }
@@ -346,10 +295,7 @@ fn body(field: &Field) -> bool {
 
 fn addressed(field: &Field) -> bool {
     matches!(field.kind.as_str(), "email" | "tel")
-        || field
-            .autocomplete
-            .split_whitespace()
-            .any(|one| one == "email" || one == "tel" || one.starts_with("tel-"))
+        || field.completes(|one| one == "email" || one == "tel" || one.starts_with("tel-"))
         || alone(&field.label, ADDRESSED_ALONE)
         || says(&field.said, RECIPIENTS)
         || (body(field) && field.mentions)
@@ -420,7 +366,7 @@ pub fn signs_in(facts: &Facts, act: Act) -> bool {
     }
 }
 
-fn alone(name: &str, words: &[&str]) -> bool {
+fn alone(name: &str, words: &str) -> bool {
     let name = seen(name)
         .split_whitespace()
         .collect::<Vec<_>>()
@@ -428,7 +374,7 @@ fn alone(name: &str, words: &[&str]) -> bool {
         .trim_end_matches([':', '\u{ff1a}'])
         .trim()
         .to_lowercase();
-    !name.is_empty() && words.iter().any(|word| seen(word) == name)
+    !name.is_empty() && words.split('|').any(|word| seen(word) == name)
 }
 
 pub struct Question {
@@ -631,9 +577,9 @@ fn short(name: &str) -> String {
     }
 }
 
-pub fn says(name: &str, words: &[&str]) -> bool {
+pub fn says(name: &str, words: &str) -> bool {
     let name = seen(name).to_lowercase();
-    words.iter().any(|word| {
+    words.split('|').any(|word| {
         let word = seen(word);
         let word = word.as_str();
         if !spaced(word) {
@@ -663,157 +609,45 @@ fn spaced(word: &str) -> bool {
 }
 
 fn payment_host(host: &str) -> bool {
-    PAYMENT_HOSTS.iter().any(|one| covers(one, host))
+    PAYMENT_HOSTS.split('|').any(|one| covers(one, host))
 }
 
 fn social(host: &str) -> bool {
-    SOCIAL.iter().any(|one| covers(one, host))
+    SOCIAL.split('|').any(|one| covers(one, host))
 }
 
-const ONE_TIME: &[&str] = &[
-    "otp",
-    "otpcode",
-    "totp",
-    "one time code",
-    "one time password",
-    "one time passcode",
-    "one time pin",
-    "onetime code",
-    "onetime password",
-    "onetimecode",
-    "onetimepassword",
-    "verification code",
-    "verificationcode",
-    "verify code",
-    "digit code",
-    "digit 1",
-    "digit 2",
-    "digit 3",
-    "digit 4",
-    "digit 5",
-    "digit 6",
-    "2fa",
-    "two factor",
-    "mfa",
-    "authenticator code",
-    "auth code",
-    "authentication code",
-    "sms code",
-    "login code",
-    "sign in code",
-    "recovery code",
-    "backup code",
-    "enter code",
-    "your code",
-    "einmal code",
-    "two step code",
-    "security key",
-    "code we sent",
-    "code you received",
-    "pincode",
-    "pin code",
-    "pin number",
-    "passcode",
-    "best\u{e4}tigungs code",
-    "best\u{e4}tigungscode",
-    "einmalcode",
-    "einmalpasswort",
-    "sicherheitscode",
-    "zugangscode",
-    "anmeldecode",
-    "authentifizierungscode",
-    "geheimzahl",
-    "code de v\u{e9}rification",
-    "c\u{f3}digo de verificaci\u{f3}n",
-    "codice di verifica",
-];
+const ONE_TIME: &str = concat!(
+    "otp|otpcode|totp|one time code|one time password|one time passcode|one time pin",
+    "|onetime code|onetime password|onetimecode|onetimepassword|verification code",
+    "|verificationcode|verify code|digit code|digit 1|digit 2|digit 3|digit 4|digit 5|digit 6",
+    "|2fa|two factor|mfa|authenticator code|auth code|authentication code|sms code|login code",
+    "|sign in code|recovery code|backup code|enter code|your code|einmal code|two step code",
+    "|security key|code we sent|code you received|pincode|pin code|pin number|passcode",
+    "|best\u{e4}tigungs code|best\u{e4}tigungscode|einmalcode|einmalpasswort|sicherheitscode",
+    "|zugangscode|anmeldecode|authentifizierungscode|geheimzahl|code de v\u{e9}rification",
+    "|c\u{f3}digo de verificaci\u{f3}n|codice di verifica",
+);
 
-const ONE_TIME_ALONE: &[&str] = &["code", "otp", "pin", "one time", "authenticator"];
+const ONE_TIME_ALONE: &str = "code|otp|pin|one time|authenticator";
 
-const CARD_WORDS: &[&str] = &[
-    "card no",
-    "cardno",
-    "card num",
-    "credit card",
-    "mm/yy",
-    "mm / yy",
-    "mm/jj",
-    "mm/aa",
-];
+const CARD_WORDS: &str = "card no|cardno|card num|credit card|mm/yy|mm / yy|mm/jj|mm/aa";
 
-const NO_PAYMENT_CARD: &[&str] = &[
-    "library",
-    "loyalty",
-    "member",
-    "membership",
-    "student",
-    "health",
-    "insurance",
-    "id card",
-    "gift",
-];
+const NO_PAYMENT_CARD: &str =
+    "library|loyalty|member|membership|student|health|insurance|id card|gift";
 
-const DISMISSING: &[&str] = &[
-    "cancel",
-    "close",
-    "close dialog",
-    "close modal",
-    "close window",
-    "close popup",
-    "dismiss",
-    "no",
-    "stay",
-    "stay here",
-    "continue shopping",
-    "not now",
-    "back",
-    "go back",
-    "never mind",
-    "got it",
-    "accept cookies",
-    "accept all cookies",
-    "allow cookies",
-    "allow all cookies",
-    "reject",
-    "reject all",
-    "decline",
-    "learn more",
-    "more info",
-    "details",
-    "next page",
-    "previous page",
-    "skip",
-    "later",
-    "maybe later",
-    "x",
-    "\u{d7}",
-    "\u{2715}",
-    "abbrechen",
-    "schlie\u{df}en",
-    "nein",
-    "zur\u{fc}ck",
-    "sp\u{e4}ter",
-    "verstanden",
-    "alle cookies akzeptieren",
-    "annuler",
-    "fermer",
-    "non",
-    "cancelar",
-    "cerrar",
-    "annulla",
-    "chiudi",
-    "annuleren",
-    "sluiten",
-    "fechar",
-    "\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}",
-    "\u{9589}\u{3058}\u{308b}",
-    "\u{53d6}\u{6d88}",
-    "\u{5173}\u{95ed}",
-    "\u{43e}\u{442}\u{43c}\u{435}\u{43d}\u{430}",
-    "\u{437}\u{430}\u{43a}\u{440}\u{44b}\u{442}\u{44c}",
-];
+const DISMISSING: &str = concat!(
+    "cancel|close|close dialog|close modal|close window|close popup|dismiss|no|stay|stay here",
+    "|continue shopping|not now|back|go back|never mind|got it|accept cookies",
+    "|accept all cookies|allow cookies|allow all cookies|reject|reject all|decline|learn more",
+    "|more info|details|next page|previous page|skip|later|maybe later|x|\u{d7}|\u{2715}",
+    "|abbrechen|schlie\u{df}en|nein|zur\u{fc}ck|sp\u{e4}ter|verstanden",
+    "|alle cookies akzeptieren|annuler|fermer|non|cancelar|cerrar|annulla|chiudi|annuleren",
+    "|sluiten|fechar|\u{30ad}\u{30e3}\u{30f3}\u{30bb}\u{30eb}|\u{9589}\u{3058}\u{308b}",
+    "|\u{53d6}\u{6d88}|\u{5173}\u{95ed}|\u{43e}\u{442}\u{43c}\u{435}\u{43d}\u{430}",
+    "|\u{437}\u{430}\u{43a}\u{440}\u{44b}\u{442}\u{44c}",
+);
 
-const KEEPING: &[&str] = &["keep", "behalten", "garder"];
+const KEEPING: &str = "keep|behalten|garder";
 
 fn dismisses(name: &str) -> bool {
     let name = &seen(name);
@@ -833,80 +667,30 @@ fn dismisses(name: &str) -> bool {
         && !talks_of(rest, DELETING, DIALOG_DELETING)
 }
 
-const DIALOG_DELETING: &[&str] = &[
-    "deletion",
-    "terminated",
-    "terminates",
-    "terminating",
-    "wipes",
-    "wiped",
-    "wiping",
-    "destroyed",
-    "destroys",
-    "destroying",
-    "discard",
-    "discards",
-    "discarded",
-    "discarding",
-    "eliminada",
-    "eliminados",
-    "eliminadas",
-    "borrada",
-    "supprim\u{e9}s",
-    "supprim\u{e9}es",
-    "deleted",
-    "deletes",
-    "deleting",
-    "removed",
-    "removes",
-    "removing",
-    "erased",
-    "erases",
-    "erasing",
-    "gel\u{f6}scht",
-    "entfernt",
-    "supprim\u{e9}",
-    "supprim\u{e9}e",
-    "eliminado",
-    "borrado",
-    "eliminato",
-    "cancellato",
-    "rimosso",
-];
-const DIALOG_PAYING: &[&str] = &[
-    "debited",
-    "debits",
-    "charged",
-    "charge",
-    "billed",
-    "paid",
-    "paying",
-    "payment",
-    "purchased",
-    "bezahlt",
-    "zahlung",
-];
+const DIALOG_DELETING: &str = concat!(
+    "deletion|terminated|terminates|terminating|wipes|wiped|wiping|destroyed|destroys",
+    "|destroying|discard|discards|discarded|discarding|eliminada|eliminados|eliminadas",
+    "|borrada|supprim\u{e9}s|supprim\u{e9}es|deleted|deletes|deleting|removed|removes",
+    "|removing|erased|erases|erasing|gel\u{f6}scht|entfernt|supprim\u{e9}|supprim\u{e9}e",
+    "|eliminado|borrado|eliminato|cancellato|rimosso",
+);
+const DIALOG_PAYING: &str =
+    "debited|debits|charged|charge|billed|paid|paying|payment|purchased|bezahlt|zahlung";
 
-const IN_ANOTHER_SENSE: &[&str] = &[
-    "free of charge",
-    "no charge",
-    "without charge",
-    "in charge",
-    "pay attention",
-];
+const IN_ANOTHER_SENSE: &str = "free of charge|no charge|without charge|in charge|pay attention";
 
 const ONLY_AS_A_NAME: &[&str] = &["saya"];
 
-fn talks_of(said: &str, words: &[&str], inflected: &[&str]) -> bool {
+fn talks_of(said: &str, words: &str, inflected: &str) -> bool {
     let mut said = seen(said).to_lowercase();
-    for phrase in IN_ANOTHER_SENSE {
+    for phrase in IN_ANOTHER_SENSE.split('|') {
         said = said.replace(phrase, " ");
     }
     words
-        .iter()
-        .chain(inflected)
+        .split('|')
+        .chain(inflected.split('|'))
         .filter(|word| !ONLY_AS_A_NAME.contains(word))
-        .any(|word| says(&said, &[word]))
+        .any(|word| says(&said, word))
 }
 
 fn stops(dialog: &str) -> impl Iterator<Item = usize> + '_ {
@@ -918,7 +702,7 @@ fn stops(dialog: &str) -> impl Iterator<Item = usize> + '_ {
     })
 }
 
-fn mention<'d>(dialog: &'d str, words: &[&str], inflected: &[&str]) -> Option<&'d str> {
+fn mention<'d>(dialog: &'d str, words: &str, inflected: &str) -> Option<&'d str> {
     if !talks_of(dialog, words, inflected) {
         return None;
     }
@@ -933,9 +717,9 @@ fn mention<'d>(dialog: &'d str, words: &[&str], inflected: &[&str]) -> Option<&'
     Some(dialog[start..].trim())
 }
 
-fn starts_with_any(line: &str, words: &[&str]) -> bool {
+fn starts_with_any(line: &str, words: &str) -> bool {
     let line = seen(line).trim().to_lowercase();
-    words.iter().any(|word| {
+    words.split('|').any(|word| {
         line.strip_prefix(seen(word).as_str())
             .is_some_and(|rest| !rest.chars().next().is_some_and(char::is_alphanumeric))
     })
@@ -946,697 +730,299 @@ pub fn leads(line: &str) -> bool {
         && (starts_with_any(line, PAYING) || starts_with_any(line, DELETING))
 }
 
-const CARD: &[&str] = &[
-    "cardnumber",
-    "card-number",
-    "card_number",
-    "card number",
-    "ccnum",
-    "cc-num",
-    "cc_num",
-    "creditcard",
-    "credit-card",
-    "credit card",
-    "cvc",
-    "cvv",
-    "csc",
-    "securitycode",
-    "security code",
-    "security-code",
-    "card verification",
-    "expiry",
-    "expiration",
-    "exp-date",
-    "exp_date",
-    "expdate",
-    "valid thru",
-    "kartennummer",
-    "kreditkarte",
-    "pr\u{fc}fnummer",
-    "ablaufdatum",
-    "g\u{fc}ltig bis",
-    "num\u{e9}ro de carte",
-    "cryptogramme",
-    "date d'expiration",
-    "n\u{fa}mero de tarjeta",
-    "fecha de caducidad",
-    "c\u{f3}digo de seguridad",
-    "numero della carta",
-    "codice di sicurezza",
-    "n\u{fa}mero do cart\u{e3}o",
-    "c\u{f3}digo de seguran\u{e7}a",
-    "numer karty",
-    "\u{43d}\u{43e}\u{43c}\u{435}\u{440} \u{43a}\u{430}\u{440}\u{442}\u{44b}",
-    "\u{43d}\u{43e}\u{43c}\u{435}\u{440} \u{43a}\u{430}\u{440}\u{442}\u{43a}\u{438}",
-    "\u{30ab}\u{30fc}\u{30c9}\u{756a}\u{53f7}",
-    "\u{30bb}\u{30ad}\u{30e5}\u{30ea}\u{30c6}\u{30a3}\u{30b3}\u{30fc}\u{30c9}",
-    "\u{5361}\u{53f7}",
-    "\u{5361}\u{865f}",
-    "\u{5b89}\u{5168}\u{7801}",
-    "\u{ce74}\u{b4dc} \u{bc88}\u{d638}",
-    "kart numaras\u{131}",
-    "s\u{1ed1} th\u{1ebb}",
-    "nomor kartu",
-];
+const CARD: &str = concat!(
+    "cardnumber|card-number|card_number|card number|ccnum|cc-num|cc_num|creditcard",
+    "|credit-card|credit card|cvc|cvv|csc|securitycode|security code|security-code",
+    "|card verification|expiry|expiration|exp-date|exp_date|expdate|valid thru|kartennummer",
+    "|kreditkarte|pr\u{fc}fnummer|ablaufdatum|g\u{fc}ltig bis|num\u{e9}ro de carte",
+    "|cryptogramme|date d'expiration|n\u{fa}mero de tarjeta|fecha de caducidad",
+    "|c\u{f3}digo de seguridad|numero della carta|codice di sicurezza",
+    "|n\u{fa}mero do cart\u{e3}o|c\u{f3}digo de seguran\u{e7}a|numer karty",
+    "|\u{43d}\u{43e}\u{43c}\u{435}\u{440} \u{43a}\u{430}\u{440}\u{442}\u{44b}",
+    "|\u{43d}\u{43e}\u{43c}\u{435}\u{440} \u{43a}\u{430}\u{440}\u{442}\u{43a}\u{438}",
+    "|\u{30ab}\u{30fc}\u{30c9}\u{756a}\u{53f7}",
+    "|\u{30bb}\u{30ad}\u{30e5}\u{30ea}\u{30c6}\u{30a3}\u{30b3}\u{30fc}\u{30c9}",
+    "|\u{5361}\u{53f7}|\u{5361}\u{865f}|\u{5b89}\u{5168}\u{7801}",
+    "|\u{ce74}\u{b4dc} \u{bc88}\u{d638}|kart numaras\u{131}|s\u{1ed1} th\u{1ebb}|nomor kartu",
+);
 
-const PAYING: &[&str] = &[
-    "pay", "pay now", "buy", "buy now", "place order", "place your order", "checkout",
-    "check out", "confirm purchase", "complete purchase", "complete order", "submit order",
-    "confirm order", "purchase", "order now",
-    "bezahlen", "jetzt bezahlen", "kaufen", "jetzt kaufen", "zahlungspflichtig bestellen",
-    "kostenpflichtig bestellen", "bestellung abschlie\u{df}en", "kauf abschlie\u{df}en",
-    "zur kasse", "zahle", "chaufe",
-    "payer", "acheter", "commander", "passer la commande", "valider la commande",
-    "confirmer l'achat", "finaliser la commande", "paiement",
-    "pagar", "comprar", "realizar pedido", "finalizar compra", "confirmar compra",
-    "tramitar pedido", "hacer pedido",
-    "paga", "acquista", "compra", "effettua ordine", "conferma ordine",
-    "procedi all'acquisto", "concludi ordine",
-    "fazer pedido", "finalizar pedido", "encomendar",
-    "zap\u{142}a\u{107}", "kup", "kup teraz", "zamawiam", "zam\u{f3}w",
-    "z\u{142}\u{f3}\u{17c} zam\u{f3}wienie", "kupuj\u{119} i p\u{142}ac\u{119}",
-    "\u{43e}\u{43f}\u{43b}\u{430}\u{442}\u{438}\u{442}\u{44c}", "\u{43a}\u{443}\u{43f}\u{438}\u{442}\u{44c}",
-    "\u{43e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{44c} \u{437}\u{430}\u{43a}\u{430}\u{437}",
-    "\u{437}\u{430}\u{43a}\u{430}\u{437}\u{430}\u{442}\u{44c}",
-    "\u{43e}\u{43f}\u{43b}\u{430}\u{442}\u{438}\u{442}\u{438}", "\u{43a}\u{443}\u{43f}\u{438}\u{442}\u{438}",
-    "\u{43e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{438} \u{437}\u{430}\u{43c}\u{43e}\u{432}\u{43b}\u{435}\u{43d}\u{43d}\u{44f}",
-    "\u{437}\u{430}\u{43c}\u{43e}\u{432}\u{438}\u{442}\u{438}",
-    "\u{f6}de", "\u{f6}deme yap", "sat\u{131}n al", "sipari\u{15f}i tamamla", "sipari\u{15f} ver",
-    "bayar", "beli", "beli sekarang", "buat pesanan", "tuku", "magbayad", "bumili", "bilhin",
-    "mag-order",
-    "lipa", "nunua", "agiza", "biya", "saya", "\u{12ed}\u{12ad}\u{1348}\u{1209}", "\u{130d}\u{12db}",
-    "\u{627}\u{62f}\u{641}\u{639}", "\u{62f}\u{641}\u{639}", "\u{634}\u{631}\u{627}\u{621}",
-    "\u{627}\u{634}\u{62a}\u{631}", "\u{625}\u{62a}\u{645}\u{627}\u{645} \u{627}\u{644}\u{637}\u{644}\u{628}",
-    "\u{62a}\u{623}\u{643}\u{64a}\u{62f} \u{627}\u{644}\u{637}\u{644}\u{628}",
-    "\u{67e}\u{631}\u{62f}\u{627}\u{62e}\u{62a}", "\u{62e}\u{631}\u{6cc}\u{62f}",
-    "\u{62b}\u{628}\u{62a} \u{633}\u{641}\u{627}\u{631}\u{634}", "\u{62a}\u{627}\u{62f}\u{6cc}\u{647}",
-    "\u{627}\u{62f}\u{627}\u{626}\u{6cc}\u{6af}\u{6cc}", "\u{62e}\u{631}\u{6cc}\u{62f}\u{6cc}\u{6ba}",
-    "\u{92d}\u{941}\u{917}\u{924}\u{93e}\u{928}", "\u{916}\u{930}\u{940}\u{926}\u{947}\u{902}",
-    "\u{911}\u{930}\u{94d}\u{921}\u{930} \u{915}\u{930}\u{947}\u{902}", "\u{916}\u{930}\u{947}\u{926}\u{940}",
-    "\u{9aa}\u{9c7}\u{9ae}\u{9c7}\u{9a8}\u{9cd}\u{99f}", "\u{995}\u{9bf}\u{9a8}\u{9c1}\u{9a8}",
-    "\u{a9a}\u{ac1}\u{a95}\u{ab5}\u{aa3}\u{ac0}", "\u{a96}\u{ab0}\u{ac0}\u{aa6}\u{acb}",
-    "\u{a2d}\u{a41}\u{a17}\u{a24}\u{a3e}\u{a28}", "\u{a16}\u{a30}\u{a40}\u{a26}\u{a4b}",
-    "\u{b9a}\u{bc6}\u{bb2}\u{bc1}\u{ba4}\u{bcd}\u{ba4}\u{bc1}", "\u{bb5}\u{bbe}\u{b99}\u{bcd}\u{b95}\u{bc1}",
-    "\u{c1a}\u{c46}\u{c32}\u{c4d}\u{c32}\u{c3f}\u{c02}\u{c1a}", "\u{c15}\u{c4a}\u{c28}\u{c41}\u{c17}\u{c4b}\u{c32}\u{c41}",
-    "\u{caa}\u{cbe}\u{cb5}\u{ca4}\u{cbf}\u{cb8}\u{cbf}", "\u{c96}\u{cb0}\u{cc0}\u{ca6}\u{cbf}\u{cb8}\u{cbf}",
-    "\u{d2a}\u{d23}\u{d2e}\u{d1f}\u{d2f}\u{d4d}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}", "\u{d35}\u{d3e}\u{d19}\u{d4d}\u{d19}\u{d41}\u{d15}",
-    "\u{e0a}\u{e33}\u{e23}\u{e30}\u{e40}\u{e07}\u{e34}\u{e19}", "\u{e2a}\u{e31}\u{e48}\u{e07}\u{e0b}\u{e37}\u{e49}\u{e2d}",
-    "\u{1004}\u{103d}\u{1031}\u{1015}\u{1031}\u{1038}\u{1001}\u{103b}\u{1031}", "\u{101d}\u{101a}\u{103a}",
-    "thanh to\u{e1}n", "mua ngay", "\u{111}\u{1eb7}t h\u{e0}ng", "\u{111}\u{1eb7}t mua",
-    "\u{652f}\u{6255}", "\u{8cfc}\u{5165}", "\u{6ce8}\u{6587}\u{3059}\u{308b}", "\u{6ce8}\u{6587}\u{3092}\u{78ba}\u{5b9a}",
-    "\u{30ec}\u{30b8}\u{306b}\u{9032}\u{3080}", "\u{acb0}\u{c81c}", "\u{ad6c}\u{b9e4}", "\u{c8fc}\u{bb38}\u{d558}\u{ae30}",
-    "\u{652f}\u{4ed8}", "\u{4ed8}\u{6b3e}", "\u{8d2d}\u{4e70}", "\u{63d0}\u{4ea4}\u{8ba2}\u{5355}", "\u{7ed3}\u{7b97}",
-    "\u{4e0b}\u{5355}", "\u{8cfc}\u{8cb7}", "\u{63d0}\u{4ea4}\u{8a02}\u{55ae}", "\u{7d50}\u{5e33}", "\u{4e0b}\u{55ae}",
-    "\u{4fbe}\u{9322}", "\u{843d}\u{55ae}",
-];
+const PAYING: &str = concat!(
+    "pay|pay now|buy|buy now|place order|place your order|checkout|check out|confirm purchase",
+    "|complete purchase|complete order|submit order|confirm order|purchase|order now|bezahlen",
+    "|jetzt bezahlen|kaufen|jetzt kaufen|zahlungspflichtig bestellen",
+    "|kostenpflichtig bestellen|bestellung abschlie\u{df}en|kauf abschlie\u{df}en|zur kasse",
+    "|zahle|chaufe|payer|acheter|commander|passer la commande|valider la commande",
+    "|confirmer l'achat|finaliser la commande|paiement|pagar|comprar|realizar pedido",
+    "|finalizar compra|confirmar compra|tramitar pedido|hacer pedido|paga|acquista|compra",
+    "|effettua ordine|conferma ordine|procedi all'acquisto|concludi ordine|fazer pedido",
+    "|finalizar pedido|encomendar|zap\u{142}a\u{107}|kup|kup teraz|zamawiam|zam\u{f3}w",
+    "|z\u{142}\u{f3}\u{17c} zam\u{f3}wienie|kupuj\u{119} i p\u{142}ac\u{119}",
+    "|\u{43e}\u{43f}\u{43b}\u{430}\u{442}\u{438}\u{442}\u{44c}",
+    "|\u{43a}\u{443}\u{43f}\u{438}\u{442}\u{44c}",
+    "|\u{43e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{44c} \u{437}\u{430}\u{43a}\u{430}\u{437}",
+    "|\u{437}\u{430}\u{43a}\u{430}\u{437}\u{430}\u{442}\u{44c}",
+    "|\u{43e}\u{43f}\u{43b}\u{430}\u{442}\u{438}\u{442}\u{438}",
+    "|\u{43a}\u{443}\u{43f}\u{438}\u{442}\u{438}",
+    "|\u{43e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{438} \u{437}\u{430}\u{43c}\u{43e}\u{432}\u{43b}\u{435}\u{43d}\u{43d}\u{44f}",
+    "|\u{437}\u{430}\u{43c}\u{43e}\u{432}\u{438}\u{442}\u{438}|\u{f6}de|\u{f6}deme yap",
+    "|sat\u{131}n al|sipari\u{15f}i tamamla|sipari\u{15f} ver|bayar|beli|beli sekarang",
+    "|buat pesanan|tuku|magbayad|bumili|bilhin|mag-order|lipa|nunua|agiza|biya|saya",
+    "|\u{12ed}\u{12ad}\u{1348}\u{1209}|\u{130d}\u{12db}|\u{627}\u{62f}\u{641}\u{639}",
+    "|\u{62f}\u{641}\u{639}|\u{634}\u{631}\u{627}\u{621}|\u{627}\u{634}\u{62a}\u{631}",
+    "|\u{625}\u{62a}\u{645}\u{627}\u{645} \u{627}\u{644}\u{637}\u{644}\u{628}",
+    "|\u{62a}\u{623}\u{643}\u{64a}\u{62f} \u{627}\u{644}\u{637}\u{644}\u{628}",
+    "|\u{67e}\u{631}\u{62f}\u{627}\u{62e}\u{62a}|\u{62e}\u{631}\u{6cc}\u{62f}",
+    "|\u{62b}\u{628}\u{62a} \u{633}\u{641}\u{627}\u{631}\u{634}",
+    "|\u{62a}\u{627}\u{62f}\u{6cc}\u{647}|\u{627}\u{62f}\u{627}\u{626}\u{6cc}\u{6af}\u{6cc}",
+    "|\u{62e}\u{631}\u{6cc}\u{62f}\u{6cc}\u{6ba}|\u{92d}\u{941}\u{917}\u{924}\u{93e}\u{928}",
+    "|\u{916}\u{930}\u{940}\u{926}\u{947}\u{902}",
+    "|\u{911}\u{930}\u{94d}\u{921}\u{930} \u{915}\u{930}\u{947}\u{902}",
+    "|\u{916}\u{930}\u{947}\u{926}\u{940}|\u{9aa}\u{9c7}\u{9ae}\u{9c7}\u{9a8}\u{9cd}\u{99f}",
+    "|\u{995}\u{9bf}\u{9a8}\u{9c1}\u{9a8}|\u{a9a}\u{ac1}\u{a95}\u{ab5}\u{aa3}\u{ac0}",
+    "|\u{a96}\u{ab0}\u{ac0}\u{aa6}\u{acb}|\u{a2d}\u{a41}\u{a17}\u{a24}\u{a3e}\u{a28}",
+    "|\u{a16}\u{a30}\u{a40}\u{a26}\u{a4b}",
+    "|\u{b9a}\u{bc6}\u{bb2}\u{bc1}\u{ba4}\u{bcd}\u{ba4}\u{bc1}",
+    "|\u{bb5}\u{bbe}\u{b99}\u{bcd}\u{b95}\u{bc1}",
+    "|\u{c1a}\u{c46}\u{c32}\u{c4d}\u{c32}\u{c3f}\u{c02}\u{c1a}",
+    "|\u{c15}\u{c4a}\u{c28}\u{c41}\u{c17}\u{c4b}\u{c32}\u{c41}",
+    "|\u{caa}\u{cbe}\u{cb5}\u{ca4}\u{cbf}\u{cb8}\u{cbf}",
+    "|\u{c96}\u{cb0}\u{cc0}\u{ca6}\u{cbf}\u{cb8}\u{cbf}",
+    "|\u{d2a}\u{d23}\u{d2e}\u{d1f}\u{d2f}\u{d4d}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
+    "|\u{d35}\u{d3e}\u{d19}\u{d4d}\u{d19}\u{d41}\u{d15}",
+    "|\u{e0a}\u{e33}\u{e23}\u{e30}\u{e40}\u{e07}\u{e34}\u{e19}",
+    "|\u{e2a}\u{e31}\u{e48}\u{e07}\u{e0b}\u{e37}\u{e49}\u{e2d}",
+    "|\u{1004}\u{103d}\u{1031}\u{1015}\u{1031}\u{1038}\u{1001}\u{103b}\u{1031}",
+    "|\u{101d}\u{101a}\u{103a}|thanh to\u{e1}n|mua ngay|\u{111}\u{1eb7}t h\u{e0}ng",
+    "|\u{111}\u{1eb7}t mua|\u{652f}\u{6255}|\u{8cfc}\u{5165}|\u{6ce8}\u{6587}\u{3059}\u{308b}",
+    "|\u{6ce8}\u{6587}\u{3092}\u{78ba}\u{5b9a}|\u{30ec}\u{30b8}\u{306b}\u{9032}\u{3080}",
+    "|\u{acb0}\u{c81c}|\u{ad6c}\u{b9e4}|\u{c8fc}\u{bb38}\u{d558}\u{ae30}|\u{652f}\u{4ed8}",
+    "|\u{4ed8}\u{6b3e}|\u{8d2d}\u{4e70}|\u{63d0}\u{4ea4}\u{8ba2}\u{5355}|\u{7ed3}\u{7b97}",
+    "|\u{4e0b}\u{5355}|\u{8cfc}\u{8cb7}|\u{63d0}\u{4ea4}\u{8a02}\u{55ae}|\u{7d50}\u{5e33}",
+    "|\u{4e0b}\u{55ae}|\u{4fbe}\u{9322}|\u{843d}\u{55ae}",
+);
 
-const SENDING: &[&str] = &[
-    "send",
-    "post",
-    "reply",
-    "publish",
-    "comment",
-    "tweet",
-    "retweet",
-    "repost",
-    "reply all",
-    "senden",
-    "absenden",
-    "abschicken",
-    "schicken",
-    "posten",
-    "ver\u{f6}ffentlichen",
-    "antworten",
-    "kommentieren",
-    "s\u{e4}nde",
-    "schicke",
-    "ver\u{f6}ffentliche",
-    "antworte",
-    "kommentiere",
-    "envoyer",
-    "publier",
-    "r\u{e9}pondre",
-    "poster",
-    "commenter",
-    "enviar",
-    "publicar",
-    "responder",
-    "comentar",
-    "invia",
-    "inviare",
-    "pubblica",
-    "rispondi",
-    "commenta",
-    "wy\u{15b}lij",
-    "prze\u{15b}lij",
-    "opublikuj",
-    "publikuj",
-    "odpowiedz",
-    "skomentuj",
-    "\u{43e}\u{442}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{44c}",
-    "\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{438}\u{43a}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
-    "\u{43e}\u{442}\u{432}\u{435}\u{442}\u{438}\u{442}\u{44c}",
-    "\u{43f}\u{440}\u{43e}\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{438}\u{440}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
-    "\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{438}\u{440}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
-    "\u{43d}\u{430}\u{434}\u{456}\u{441}\u{43b}\u{430}\u{442}\u{438}",
-    "\u{432}\u{456}\u{434}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{438}",
-    "\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{456}\u{43a}\u{443}\u{432}\u{430}\u{442}\u{438}",
-    "\u{432}\u{456}\u{434}\u{43f}\u{43e}\u{432}\u{456}\u{441}\u{442}\u{438}",
-    "\u{43a}\u{43e}\u{43c}\u{435}\u{43d}\u{442}\u{443}\u{432}\u{430}\u{442}\u{438}",
-    "g\u{f6}nder",
-    "yay\u{131}nla",
-    "yay\u{131}mla",
-    "yan\u{131}tla",
-    "yorum yap",
-    "kirim",
-    "hantar",
-    "terbitkan",
-    "siarkan",
-    "balas",
-    "komentari",
-    "komen",
-    "terbitake",
-    "bales",
-    "wangsuli",
-    "ipadala",
-    "ilathala",
-    "sumagot",
-    "tumugon",
-    "i-post",
-    "magkomento",
-    "tuma",
-    "chapisha",
-    "jibu",
-    "aika",
-    "wallafa",
-    "amsa",
-    "\u{120b}\u{12ad}",
-    "\u{12ed}\u{120b}\u{12a9}",
-    "\u{12a0}\u{1233}\u{1275}\u{121d}",
-    "\u{625}\u{631}\u{633}\u{627}\u{644}",
-    "\u{623}\u{631}\u{633}\u{644}",
-    "\u{646}\u{634}\u{631}",
-    "\u{627}\u{646}\u{634}\u{631}",
-    "\u{631}\u{62f}",
-    "\u{627}\u{631}\u{633}\u{627}\u{644}",
-    "\u{628}\u{641}\u{631}\u{633}\u{62a}",
-    "\u{627}\u{646}\u{62a}\u{634}\u{627}\u{631}",
-    "\u{67e}\u{627}\u{633}\u{62e}",
-    "\u{644}\u{6d0}\u{696}\u{644}",
-    "\u{62e}\u{67e}\u{631}\u{648}\u{644}",
-    "\u{681}\u{648}\u{627}\u{628}",
-    "\u{628}\u{6be}\u{6cc}\u{62c}\u{6cc}\u{6ba}",
-    "\u{645}\u{646}\u{62a}\u{634}\u{631} \u{6a9}\u{646}",
-    "\u{634}\u{627}\u{626}\u{639} \u{6a9}\u{631}\u{6cc}\u{6ba}",
-    "\u{62c}\u{648}\u{627}\u{628} \u{62f}\u{6cc}\u{6ba}",
-    "\u{92d}\u{947}\u{91c}\u{947}\u{902}",
-    "\u{92d}\u{947}\u{91c}\u{94b}",
-    "\u{92a}\u{94d}\u{930}\u{915}\u{93e}\u{936}\u{93f}\u{924}",
-    "\u{91c}\u{935}\u{93e}\u{92c} \u{926}\u{947}\u{902}",
-    "\u{91f}\u{93f}\u{92a}\u{94d}\u{92a}\u{923}\u{940} \u{915}\u{930}\u{947}\u{902}",
-    "\u{92a}\u{93e}\u{920}\u{935}\u{93e}",
-    "\u{909}\u{924}\u{94d}\u{924}\u{930} \u{926}\u{94d}\u{92f}\u{93e}",
-    "\u{9aa}\u{9be}\u{9a0}\u{9be}\u{9a8}",
-    "\u{9aa}\u{9cd}\u{9b0}\u{995}\u{9be}\u{9b6} \u{995}\u{9b0}\u{9c1}\u{9a8}",
-    "\u{989}\u{9a4}\u{9cd}\u{9a4}\u{9b0} \u{9a6}\u{9bf}\u{9a8}",
-    "\u{aae}\u{acb}\u{a95}\u{ab2}\u{acb}",
-    "\u{aaa}\u{acd}\u{ab0}\u{a95}\u{abe}\u{ab6}\u{abf}\u{aa4} \u{a95}\u{ab0}\u{acb}",
-    "\u{a9c}\u{ab5}\u{abe}\u{aac} \u{a86}\u{aaa}\u{acb}",
-    "\u{a2d}\u{a47}\u{a1c}\u{a4b}",
-    "\u{a1b}\u{a3e}\u{a2a}\u{a4b}",
-    "\u{a1c}\u{a35}\u{a3e}\u{a2c} \u{a26}\u{a3f}\u{a13}",
-    "\u{b85}\u{ba9}\u{bc1}\u{baa}\u{bcd}\u{baa}\u{bc1}",
-    "\u{bb5}\u{bc6}\u{bb3}\u{bbf}\u{baf}\u{bbf}\u{b9f}\u{bc1}",
-    "\u{baa}\u{ba4}\u{bbf}\u{bb2}\u{bb3}\u{bbf}",
-    "\u{c2a}\u{c02}\u{c2a}\u{c41}",
-    "\u{c2a}\u{c02}\u{c2a}\u{c02}\u{c21}\u{c3f}",
-    "\u{c2a}\u{c4d}\u{c30}\u{c1a}\u{c41}\u{c30}\u{c3f}\u{c02}\u{c1a}\u{c41}",
-    "\u{c2a}\u{c4d}\u{c30}\u{c24}\u{c4d}\u{c2f}\u{c41}\u{c24}\u{c4d}\u{c24}\u{c30}\u{c02}",
-    "\u{c95}\u{cb3}\u{cc1}\u{cb9}\u{cbf}\u{cb8}\u{cbf}",
-    "\u{caa}\u{ccd}\u{cb0}\u{c95}\u{c9f}\u{cbf}\u{cb8}\u{cbf}",
-    "\u{c89}\u{ca4}\u{ccd}\u{ca4}\u{cb0}\u{cbf}\u{cb8}\u{cbf}",
-    "\u{d05}\u{d2f}\u{d2f}\u{d4d}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
-    "\u{d2a}\u{d4d}\u{d30}\u{d38}\u{d3f}\u{d26}\u{d4d}\u{d27}\u{d40}\u{d15}\u{d30}\u{d3f}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
-    "\u{d2e}\u{d31}\u{d41}\u{d2a}\u{d1f}\u{d3f}",
-    "\u{e2a}\u{e48}\u{e07}\u{e02}\u{e49}\u{e2d}\u{e04}\u{e27}\u{e32}\u{e21}",
-    "\u{e42}\u{e1e}\u{e2a}\u{e15}\u{e4c}",
-    "\u{e40}\u{e1c}\u{e22}\u{e41}\u{e1e}\u{e23}\u{e48}",
-    "\u{e15}\u{e2d}\u{e1a}\u{e01}\u{e25}\u{e31}\u{e1a}",
-    "\u{1015}\u{102d}\u{102f}\u{1037}\u{101b}\u{1014}\u{103a}",
-    "\u{1011}\u{102f}\u{1010}\u{103a}\u{1015}\u{103c}\u{1014}\u{103a}",
-    "\u{1015}\u{103c}\u{1014}\u{103a}\u{1005}\u{102c}",
-    "g\u{1eed}i",
-    "xu\u{1ea5}t b\u{1ea3}n",
-    "tr\u{1ea3} l\u{1edd}i",
-    "b\u{ec}nh lu\u{1ead}n",
-    "\u{9001}\u{4fe1}",
-    "\u{6295}\u{7a3f}",
-    "\u{8fd4}\u{4fe1}",
-    "\u{516c}\u{958b}\u{3059}\u{308b}",
-    "\u{bcf4}\u{b0b4}\u{ae30}",
-    "\u{c804}\u{c1a1}",
-    "\u{ac8c}\u{c2dc}\u{d558}\u{ae30}",
-    "\u{b2f5}\u{c7a5}",
-    "\u{b313}\u{ae00} \u{b2ec}\u{ae30}",
-    "\u{53d1}\u{9001}",
-    "\u{53d1}\u{5e03}",
-    "\u{53d1}\u{8868}",
-    "\u{56de}\u{590d}",
-    "\u{767c}\u{9001}",
-    "\u{50b3}\u{9001}",
-    "\u{767c}\u{4f48}",
-    "\u{767c}\u{5e03}",
-    "\u{767c}\u{8868}",
-    "\u{56de}\u{8986}",
-    "\u{9001}\u{51fa}",
-];
+const SENDING: &str = concat!(
+    "send|post|reply|publish|comment|tweet|retweet|repost|reply all|senden|absenden",
+    "|abschicken|schicken|posten|ver\u{f6}ffentlichen|antworten|kommentieren|s\u{e4}nde",
+    "|schicke|ver\u{f6}ffentliche|antworte|kommentiere|envoyer|publier|r\u{e9}pondre|poster",
+    "|commenter|enviar|publicar|responder|comentar|invia|inviare|pubblica|rispondi|commenta",
+    "|wy\u{15b}lij|prze\u{15b}lij|opublikuj|publikuj|odpowiedz|skomentuj",
+    "|\u{43e}\u{442}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{44c}",
+    "|\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{438}\u{43a}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
+    "|\u{43e}\u{442}\u{432}\u{435}\u{442}\u{438}\u{442}\u{44c}",
+    "|\u{43f}\u{440}\u{43e}\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{438}\u{440}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
+    "|\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{438}\u{440}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
+    "|\u{43d}\u{430}\u{434}\u{456}\u{441}\u{43b}\u{430}\u{442}\u{438}",
+    "|\u{432}\u{456}\u{434}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{438}",
+    "|\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{456}\u{43a}\u{443}\u{432}\u{430}\u{442}\u{438}",
+    "|\u{432}\u{456}\u{434}\u{43f}\u{43e}\u{432}\u{456}\u{441}\u{442}\u{438}",
+    "|\u{43a}\u{43e}\u{43c}\u{435}\u{43d}\u{442}\u{443}\u{432}\u{430}\u{442}\u{438}",
+    "|g\u{f6}nder|yay\u{131}nla|yay\u{131}mla|yan\u{131}tla|yorum yap|kirim|hantar|terbitkan",
+    "|siarkan|balas|komentari|komen|terbitake|bales|wangsuli|ipadala|ilathala|sumagot|tumugon",
+    "|i-post|magkomento|tuma|chapisha|jibu|aika|wallafa|amsa|\u{120b}\u{12ad}",
+    "|\u{12ed}\u{120b}\u{12a9}|\u{12a0}\u{1233}\u{1275}\u{121d}",
+    "|\u{625}\u{631}\u{633}\u{627}\u{644}|\u{623}\u{631}\u{633}\u{644}|\u{646}\u{634}\u{631}",
+    "|\u{627}\u{646}\u{634}\u{631}|\u{631}\u{62f}|\u{627}\u{631}\u{633}\u{627}\u{644}",
+    "|\u{628}\u{641}\u{631}\u{633}\u{62a}|\u{627}\u{646}\u{62a}\u{634}\u{627}\u{631}",
+    "|\u{67e}\u{627}\u{633}\u{62e}|\u{644}\u{6d0}\u{696}\u{644}",
+    "|\u{62e}\u{67e}\u{631}\u{648}\u{644}|\u{681}\u{648}\u{627}\u{628}",
+    "|\u{628}\u{6be}\u{6cc}\u{62c}\u{6cc}\u{6ba}",
+    "|\u{645}\u{646}\u{62a}\u{634}\u{631} \u{6a9}\u{646}",
+    "|\u{634}\u{627}\u{626}\u{639} \u{6a9}\u{631}\u{6cc}\u{6ba}",
+    "|\u{62c}\u{648}\u{627}\u{628} \u{62f}\u{6cc}\u{6ba}|\u{92d}\u{947}\u{91c}\u{947}\u{902}",
+    "|\u{92d}\u{947}\u{91c}\u{94b}|\u{92a}\u{94d}\u{930}\u{915}\u{93e}\u{936}\u{93f}\u{924}",
+    "|\u{91c}\u{935}\u{93e}\u{92c} \u{926}\u{947}\u{902}",
+    "|\u{91f}\u{93f}\u{92a}\u{94d}\u{92a}\u{923}\u{940} \u{915}\u{930}\u{947}\u{902}",
+    "|\u{92a}\u{93e}\u{920}\u{935}\u{93e}",
+    "|\u{909}\u{924}\u{94d}\u{924}\u{930} \u{926}\u{94d}\u{92f}\u{93e}",
+    "|\u{9aa}\u{9be}\u{9a0}\u{9be}\u{9a8}",
+    "|\u{9aa}\u{9cd}\u{9b0}\u{995}\u{9be}\u{9b6} \u{995}\u{9b0}\u{9c1}\u{9a8}",
+    "|\u{989}\u{9a4}\u{9cd}\u{9a4}\u{9b0} \u{9a6}\u{9bf}\u{9a8}",
+    "|\u{aae}\u{acb}\u{a95}\u{ab2}\u{acb}",
+    "|\u{aaa}\u{acd}\u{ab0}\u{a95}\u{abe}\u{ab6}\u{abf}\u{aa4} \u{a95}\u{ab0}\u{acb}",
+    "|\u{a9c}\u{ab5}\u{abe}\u{aac} \u{a86}\u{aaa}\u{acb}|\u{a2d}\u{a47}\u{a1c}\u{a4b}",
+    "|\u{a1b}\u{a3e}\u{a2a}\u{a4b}|\u{a1c}\u{a35}\u{a3e}\u{a2c} \u{a26}\u{a3f}\u{a13}",
+    "|\u{b85}\u{ba9}\u{bc1}\u{baa}\u{bcd}\u{baa}\u{bc1}",
+    "|\u{bb5}\u{bc6}\u{bb3}\u{bbf}\u{baf}\u{bbf}\u{b9f}\u{bc1}",
+    "|\u{baa}\u{ba4}\u{bbf}\u{bb2}\u{bb3}\u{bbf}|\u{c2a}\u{c02}\u{c2a}\u{c41}",
+    "|\u{c2a}\u{c02}\u{c2a}\u{c02}\u{c21}\u{c3f}",
+    "|\u{c2a}\u{c4d}\u{c30}\u{c1a}\u{c41}\u{c30}\u{c3f}\u{c02}\u{c1a}\u{c41}",
+    "|\u{c2a}\u{c4d}\u{c30}\u{c24}\u{c4d}\u{c2f}\u{c41}\u{c24}\u{c4d}\u{c24}\u{c30}\u{c02}",
+    "|\u{c95}\u{cb3}\u{cc1}\u{cb9}\u{cbf}\u{cb8}\u{cbf}",
+    "|\u{caa}\u{ccd}\u{cb0}\u{c95}\u{c9f}\u{cbf}\u{cb8}\u{cbf}",
+    "|\u{c89}\u{ca4}\u{ccd}\u{ca4}\u{cb0}\u{cbf}\u{cb8}\u{cbf}",
+    "|\u{d05}\u{d2f}\u{d2f}\u{d4d}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
+    "|\u{d2a}\u{d4d}\u{d30}\u{d38}\u{d3f}\u{d26}\u{d4d}\u{d27}\u{d40}\u{d15}\u{d30}\u{d3f}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
+    "|\u{d2e}\u{d31}\u{d41}\u{d2a}\u{d1f}\u{d3f}",
+    "|\u{e2a}\u{e48}\u{e07}\u{e02}\u{e49}\u{e2d}\u{e04}\u{e27}\u{e32}\u{e21}",
+    "|\u{e42}\u{e1e}\u{e2a}\u{e15}\u{e4c}|\u{e40}\u{e1c}\u{e22}\u{e41}\u{e1e}\u{e23}\u{e48}",
+    "|\u{e15}\u{e2d}\u{e1a}\u{e01}\u{e25}\u{e31}\u{e1a}",
+    "|\u{1015}\u{102d}\u{102f}\u{1037}\u{101b}\u{1014}\u{103a}",
+    "|\u{1011}\u{102f}\u{1010}\u{103a}\u{1015}\u{103c}\u{1014}\u{103a}",
+    "|\u{1015}\u{103c}\u{1014}\u{103a}\u{1005}\u{102c}|g\u{1eed}i|xu\u{1ea5}t b\u{1ea3}n",
+    "|tr\u{1ea3} l\u{1edd}i|b\u{ec}nh lu\u{1ead}n|\u{9001}\u{4fe1}|\u{6295}\u{7a3f}",
+    "|\u{8fd4}\u{4fe1}|\u{516c}\u{958b}\u{3059}\u{308b}|\u{bcf4}\u{b0b4}\u{ae30}",
+    "|\u{c804}\u{c1a1}|\u{ac8c}\u{c2dc}\u{d558}\u{ae30}|\u{b2f5}\u{c7a5}",
+    "|\u{b313}\u{ae00} \u{b2ec}\u{ae30}|\u{53d1}\u{9001}|\u{53d1}\u{5e03}|\u{53d1}\u{8868}",
+    "|\u{56de}\u{590d}|\u{767c}\u{9001}|\u{50b3}\u{9001}|\u{767c}\u{4f48}|\u{767c}\u{5e03}",
+    "|\u{767c}\u{8868}|\u{56de}\u{8986}|\u{9001}\u{51fa}",
+);
 
-const SENDING_ALONE: &[&str] = &[
-    "\u{e2a}\u{e48}\u{e07}",
-    "\u{111}\u{103}ng",
-    "\u{1015}\u{102d}\u{102f}\u{1037}",
-    "\u{ac8c}\u{c2dc}",
-    "\u{516c}\u{958b}",
-    "\u{9001}\u{308b}",
-];
+const SENDING_ALONE: &str = concat!(
+    "\u{e2a}\u{e48}\u{e07}|\u{111}\u{103}ng|\u{1015}\u{102d}\u{102f}\u{1037}|\u{ac8c}\u{c2dc}",
+    "|\u{516c}\u{958b}|\u{9001}\u{308b}",
+);
 
-const NOT_SENDING: &[&str] = &["post code", "post office"];
+const NOT_SENDING: &str = "post code|post office";
 
-const SUBMITTING: &[&str] = &[
-    "submit",
-    "soumettre",
-    "submeter",
-    "einreichen",
-    "\u{fc}bermitteln",
-    "\u{63d0}\u{4ea4}",
-    "\u{63d0}\u{51fa}",
-    "\u{c81c}\u{cd9c}",
-];
+const SUBMITTING: &str = concat!(
+    "submit|soumettre|submeter|einreichen|\u{fc}bermitteln|\u{63d0}\u{4ea4}|\u{63d0}\u{51fa}",
+    "|\u{c81c}\u{cd9c}",
+);
 
-const RECIPIENTS: &[&str] = &[
-    "recipient",
-    "recipients",
-    "empf\u{e4}nger",
-    "destinataire",
-    "destinataires",
-    "destinatario",
-    "destinatarios",
-    "destinatari",
-    "destinat\u{e1}rio",
-    "destinat\u{e1}rios",
-    "odbiorca",
-    "odbiorcy",
-    "\u{43f}\u{43e}\u{43b}\u{443}\u{447}\u{430}\u{442}\u{435}\u{43b}\u{44c}",
-    "\u{43f}\u{43e}\u{43b}\u{443}\u{447}\u{430}\u{442}\u{435}\u{43b}\u{438}",
-    "\u{430}\u{434}\u{440}\u{435}\u{441}\u{430}\u{442}",
-    "\u{43e}\u{434}\u{435}\u{440}\u{436}\u{443}\u{432}\u{430}\u{447}",
-    "\u{43e}\u{442}\u{440}\u{438}\u{43c}\u{443}\u{432}\u{430}\u{447}",
-    "al\u{131}c\u{131}",
-    "al\u{131}c\u{131}lar",
-    "penerima",
-    "tatanggap",
-    "mpokeaji",
-    "\u{1270}\u{1240}\u{1263}\u{12ed}",
-    "\u{627}\u{644}\u{645}\u{633}\u{62a}\u{644}\u{645}",
-    "\u{627}\u{644}\u{645}\u{633}\u{62a}\u{644}\u{645}\u{64a}\u{646}",
-    "\u{6af}\u{6cc}\u{631}\u{646}\u{62f}\u{647}",
-    "\u{648}\u{635}\u{648}\u{644} \u{6a9}\u{646}\u{646}\u{62f}\u{6c1}",
-    "\u{92a}\u{94d}\u{930}\u{93e}\u{92a}\u{94d}\u{924}\u{915}\u{930}\u{94d}\u{924}\u{93e}",
-    "\u{9aa}\u{9cd}\u{9b0}\u{9be}\u{9aa}\u{995}",
-    "\u{aaa}\u{acd}\u{ab0}\u{abe}\u{aaa}\u{acd}\u{aa4}\u{a95}\u{ab0}\u{acd}\u{aa4}\u{abe}",
-    "\u{a2a}\u{a4d}\u{a30}\u{a3e}\u{a2a}\u{a24}\u{a15}\u{a30}\u{a24}\u{a3e}",
-    "\u{baa}\u{bc6}\u{bb1}\u{bc1}\u{ba8}\u{bb0}\u{bcd}",
-    "\u{c17}\u{c4d}\u{c30}\u{c39}\u{c40}\u{c24}",
-    "\u{cb8}\u{ccd}\u{cb5}\u{cc0}\u{c95}\u{cb0}\u{cbf}\u{cb8}\u{cc1}\u{cb5}\u{cb5}\u{cb0}\u{cc1}",
-    "\u{d38}\u{d4d}\u{d35}\u{d40}\u{d15}\u{d7c}\u{d24}\u{d4d}\u{d24}\u{d3e}\u{d35}\u{d4d}",
-    "\u{e1c}\u{e39}\u{e49}\u{e23}\u{e31}\u{e1a}",
-    "\u{101c}\u{1000}\u{103a}\u{1001}\u{1036}\u{101e}\u{1030}",
-    "ng\u{1b0}\u{1edd}i nh\u{1ead}n",
-    "\u{5b9b}\u{5148}",
-    "\u{bc1b}\u{b294} \u{c0ac}\u{b78c}",
-    "\u{c218}\u{c2e0}\u{c790}",
-    "\u{6536}\u{4ef6}\u{4eba}",
-    "\u{6536}\u{4ef6}\u{8005}",
-];
+const RECIPIENTS: &str = concat!(
+    "recipient|recipients|empf\u{e4}nger|destinataire|destinataires|destinatario",
+    "|destinatarios|destinatari|destinat\u{e1}rio|destinat\u{e1}rios|odbiorca|odbiorcy",
+    "|\u{43f}\u{43e}\u{43b}\u{443}\u{447}\u{430}\u{442}\u{435}\u{43b}\u{44c}",
+    "|\u{43f}\u{43e}\u{43b}\u{443}\u{447}\u{430}\u{442}\u{435}\u{43b}\u{438}",
+    "|\u{430}\u{434}\u{440}\u{435}\u{441}\u{430}\u{442}",
+    "|\u{43e}\u{434}\u{435}\u{440}\u{436}\u{443}\u{432}\u{430}\u{447}",
+    "|\u{43e}\u{442}\u{440}\u{438}\u{43c}\u{443}\u{432}\u{430}\u{447}|al\u{131}c\u{131}",
+    "|al\u{131}c\u{131}lar|penerima|tatanggap|mpokeaji|\u{1270}\u{1240}\u{1263}\u{12ed}",
+    "|\u{627}\u{644}\u{645}\u{633}\u{62a}\u{644}\u{645}",
+    "|\u{627}\u{644}\u{645}\u{633}\u{62a}\u{644}\u{645}\u{64a}\u{646}",
+    "|\u{6af}\u{6cc}\u{631}\u{646}\u{62f}\u{647}",
+    "|\u{648}\u{635}\u{648}\u{644} \u{6a9}\u{646}\u{646}\u{62f}\u{6c1}",
+    "|\u{92a}\u{94d}\u{930}\u{93e}\u{92a}\u{94d}\u{924}\u{915}\u{930}\u{94d}\u{924}\u{93e}",
+    "|\u{9aa}\u{9cd}\u{9b0}\u{9be}\u{9aa}\u{995}",
+    "|\u{aaa}\u{acd}\u{ab0}\u{abe}\u{aaa}\u{acd}\u{aa4}\u{a95}\u{ab0}\u{acd}\u{aa4}\u{abe}",
+    "|\u{a2a}\u{a4d}\u{a30}\u{a3e}\u{a2a}\u{a24}\u{a15}\u{a30}\u{a24}\u{a3e}",
+    "|\u{baa}\u{bc6}\u{bb1}\u{bc1}\u{ba8}\u{bb0}\u{bcd}",
+    "|\u{c17}\u{c4d}\u{c30}\u{c39}\u{c40}\u{c24}",
+    "|\u{cb8}\u{ccd}\u{cb5}\u{cc0}\u{c95}\u{cb0}\u{cbf}\u{cb8}\u{cc1}\u{cb5}\u{cb5}\u{cb0}\u{cc1}",
+    "|\u{d38}\u{d4d}\u{d35}\u{d40}\u{d15}\u{d7c}\u{d24}\u{d4d}\u{d24}\u{d3e}\u{d35}\u{d4d}",
+    "|\u{e1c}\u{e39}\u{e49}\u{e23}\u{e31}\u{e1a}",
+    "|\u{101c}\u{1000}\u{103a}\u{1001}\u{1036}\u{101e}\u{1030}|ng\u{1b0}\u{1edd}i nh\u{1ead}n",
+    "|\u{5b9b}\u{5148}|\u{bc1b}\u{b294} \u{c0ac}\u{b78c}|\u{c218}\u{c2e0}\u{c790}",
+    "|\u{6536}\u{4ef6}\u{4eba}|\u{6536}\u{4ef6}\u{8005}",
+);
 
-const ADDRESSED_ALONE: &[&str] = &[
-    "to",
-    "cc",
-    "bcc",
-    "send to",
-    "an",
-    "\u{e0}",
-    "a",
-    "para",
-    "do",
-    "\u{43a}\u{43e}\u{43c}\u{443}",
-    "kime",
-    "kepada",
-    "kwa",
-    "\u{625}\u{644}\u{649}",
-    "\u{628}\u{647}",
-    "\u{62a}\u{647}",
-    "\u{915}\u{94b}",
-    "\u{92a}\u{94d}\u{930}\u{924}\u{93f}",
-    "\u{9aa}\u{9cd}\u{9b0}\u{9a4}\u{9bf}",
-    "\u{e16}\u{e36}\u{e07}",
-    "\u{111}\u{1ebf}n",
-];
+const ADDRESSED_ALONE: &str = concat!(
+    "to|cc|bcc|send to|an|\u{e0}|a|para|do|\u{43a}\u{43e}\u{43c}\u{443}|kime|kepada|kwa",
+    "|\u{625}\u{644}\u{649}|\u{628}\u{647}|\u{62a}\u{647}|\u{915}\u{94b}",
+    "|\u{92a}\u{94d}\u{930}\u{924}\u{93f}|\u{9aa}\u{9cd}\u{9b0}\u{9a4}\u{9bf}",
+    "|\u{e16}\u{e36}\u{e07}|\u{111}\u{1ebf}n",
+);
 
-const MESSAGES: &[&str] = &[
-    "message",
-    "reply",
-    "comment",
-    "chat",
-    "nachricht",
-    "antwort",
-    "kommentar",
-    "r\u{e9}ponse",
-    "commentaire",
-    "mensaje",
-    "respuesta",
-    "comentario",
-    "messaggio",
-    "risposta",
-    "commento",
-    "mensagem",
-    "resposta",
-    "coment\u{e1}rio",
-    "wiadomo\u{15b}\u{107}",
-    "odpowied\u{17a}",
-    "komentarz",
-    "\u{441}\u{43e}\u{43e}\u{431}\u{449}\u{435}\u{43d}\u{438}\u{435}",
-    "\u{43e}\u{442}\u{432}\u{435}\u{442}",
-    "\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{430}\u{440}\u{438}\u{439}",
-    "\u{43f}\u{43e}\u{432}\u{456}\u{434}\u{43e}\u{43c}\u{43b}\u{435}\u{43d}\u{43d}\u{44f}",
-    "\u{432}\u{456}\u{434}\u{43f}\u{43e}\u{432}\u{456}\u{434}\u{44c}",
-    "\u{43a}\u{43e}\u{43c}\u{435}\u{43d}\u{442}\u{430}\u{440}",
-    "mesaj",
-    "yan\u{131}t",
-    "yorum",
-    "pesan",
-    "balasan",
-    "komentar",
-    "mesej",
-    "komen",
-    "pesen",
-    "mensahe",
-    "sagot",
-    "komento",
-    "ujumbe",
-    "jibu",
-    "maoni",
-    "sa\u{199}o",
-    "amsa",
-    "sharhi",
-    "\u{1218}\u{120d}\u{12a5}\u{12ad}\u{1275}",
-    "\u{12a0}\u{1235}\u{1270}\u{12eb}\u{12e8}\u{1275}",
-    "\u{631}\u{633}\u{627}\u{644}\u{629}",
-    "\u{627}\u{644}\u{631}\u{633}\u{627}\u{644}\u{629}",
-    "\u{631}\u{62f}",
-    "\u{62a}\u{639}\u{644}\u{64a}\u{642}",
-    "\u{67e}\u{6cc}\u{627}\u{645}",
-    "\u{67e}\u{627}\u{633}\u{62e}",
-    "\u{646}\u{638}\u{631}",
-    "\u{67e}\u{6cc}\u{63a}\u{627}\u{645}",
-    "\u{681}\u{648}\u{627}\u{628}",
-    "\u{62c}\u{648}\u{627}\u{628}",
-    "\u{62a}\u{628}\u{635}\u{631}\u{6c1}",
-    "\u{938}\u{902}\u{926}\u{947}\u{936}",
-    "\u{91c}\u{935}\u{93e}\u{92c}",
-    "\u{91f}\u{93f}\u{92a}\u{94d}\u{92a}\u{923}\u{940}",
-    "\u{9ac}\u{9be}\u{9b0}\u{9cd}\u{9a4}\u{9be}",
-    "\u{9ae}\u{9a8}\u{9cd}\u{9a4}\u{9ac}\u{9cd}\u{9af}",
-    "\u{989}\u{9a4}\u{9cd}\u{9a4}\u{9b0}",
-    "\u{ab8}\u{a82}\u{aa6}\u{ac7}\u{ab6}",
-    "\u{a9f}\u{abf}\u{aaa}\u{acd}\u{aaa}\u{aa3}\u{ac0}",
-    "\u{a38}\u{a41}\u{a28}\u{a47}\u{a39}\u{a3e}",
-    "\u{a1f}\u{a3f}\u{a71}\u{a2a}\u{a23}\u{a40}",
-    "\u{b9a}\u{bc6}\u{baf}\u{bcd}\u{ba4}\u{bbf}",
-    "\u{b95}\u{bb0}\u{bc1}\u{ba4}\u{bcd}\u{ba4}\u{bc1}",
-    "\u{c38}\u{c02}\u{c26}\u{c47}\u{c36}\u{c02}",
-    "\u{c35}\u{c4d}\u{c2f}\u{c3e}\u{c16}\u{c4d}\u{c2f}",
-    "\u{cb8}\u{c82}\u{ca6}\u{cc7}\u{cb6}",
-    "\u{c95}\u{cbe}\u{cae}\u{cc6}\u{c82}\u{c9f}\u{ccd}",
-    "\u{d38}\u{d28}\u{d4d}\u{d26}\u{d47}\u{d36}\u{d02}",
-    "\u{d15}\u{d2e}\u{d28}\u{d4d}\u{d31}\u{d4d}",
-    "\u{e02}\u{e49}\u{e2d}\u{e04}\u{e27}\u{e32}\u{e21}",
-    "\u{e04}\u{e27}\u{e32}\u{e21}\u{e04}\u{e34}\u{e14}\u{e40}\u{e2b}\u{e47}\u{e19}",
-    "\u{e15}\u{e2d}\u{e1a}\u{e01}\u{e25}\u{e31}\u{e1a}",
-    "\u{1019}\u{1000}\u{103a}\u{1006}\u{1031}\u{1037}\u{1001}\u{103b}\u{103a}",
-    "\u{1019}\u{103e}\u{1010}\u{103a}\u{1001}\u{103b}\u{1000}\u{103a}",
-    "tin nh\u{1eaf}n",
-    "tr\u{1ea3} l\u{1edd}i",
-    "b\u{ec}nh lu\u{1ead}n",
-    "\u{30e1}\u{30c3}\u{30bb}\u{30fc}\u{30b8}",
-    "\u{8fd4}\u{4fe1}",
-    "\u{30b3}\u{30e1}\u{30f3}\u{30c8}",
-    "\u{ba54}\u{c2dc}\u{c9c0}",
-    "\u{b2f5}\u{c7a5}",
-    "\u{b313}\u{ae00}",
-    "\u{6d88}\u{606f}",
-    "\u{4fe1}\u{606f}",
-    "\u{56de}\u{590d}",
-    "\u{8bc4}\u{8bba}",
-    "\u{8a0a}\u{606f}",
-    "\u{56de}\u{8986}",
-    "\u{7559}\u{8a00}",
-    "\u{8a55}\u{8ad6}",
-];
+const MESSAGES: &str = concat!(
+    "message|reply|comment|chat|nachricht|antwort|kommentar|r\u{e9}ponse|commentaire|mensaje",
+    "|respuesta|comentario|messaggio|risposta|commento|mensagem|resposta|coment\u{e1}rio",
+    "|wiadomo\u{15b}\u{107}|odpowied\u{17a}|komentarz",
+    "|\u{441}\u{43e}\u{43e}\u{431}\u{449}\u{435}\u{43d}\u{438}\u{435}",
+    "|\u{43e}\u{442}\u{432}\u{435}\u{442}",
+    "|\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{430}\u{440}\u{438}\u{439}",
+    "|\u{43f}\u{43e}\u{432}\u{456}\u{434}\u{43e}\u{43c}\u{43b}\u{435}\u{43d}\u{43d}\u{44f}",
+    "|\u{432}\u{456}\u{434}\u{43f}\u{43e}\u{432}\u{456}\u{434}\u{44c}",
+    "|\u{43a}\u{43e}\u{43c}\u{435}\u{43d}\u{442}\u{430}\u{440}|mesaj|yan\u{131}t|yorum|pesan",
+    "|balasan|komentar|mesej|komen|pesen|mensahe|sagot|komento|ujumbe|jibu|maoni|sa\u{199}o",
+    "|amsa|sharhi|\u{1218}\u{120d}\u{12a5}\u{12ad}\u{1275}",
+    "|\u{12a0}\u{1235}\u{1270}\u{12eb}\u{12e8}\u{1275}|\u{631}\u{633}\u{627}\u{644}\u{629}",
+    "|\u{627}\u{644}\u{631}\u{633}\u{627}\u{644}\u{629}|\u{631}\u{62f}",
+    "|\u{62a}\u{639}\u{644}\u{64a}\u{642}|\u{67e}\u{6cc}\u{627}\u{645}",
+    "|\u{67e}\u{627}\u{633}\u{62e}|\u{646}\u{638}\u{631}|\u{67e}\u{6cc}\u{63a}\u{627}\u{645}",
+    "|\u{681}\u{648}\u{627}\u{628}|\u{62c}\u{648}\u{627}\u{628}",
+    "|\u{62a}\u{628}\u{635}\u{631}\u{6c1}|\u{938}\u{902}\u{926}\u{947}\u{936}",
+    "|\u{91c}\u{935}\u{93e}\u{92c}|\u{91f}\u{93f}\u{92a}\u{94d}\u{92a}\u{923}\u{940}",
+    "|\u{9ac}\u{9be}\u{9b0}\u{9cd}\u{9a4}\u{9be}",
+    "|\u{9ae}\u{9a8}\u{9cd}\u{9a4}\u{9ac}\u{9cd}\u{9af}|\u{989}\u{9a4}\u{9cd}\u{9a4}\u{9b0}",
+    "|\u{ab8}\u{a82}\u{aa6}\u{ac7}\u{ab6}|\u{a9f}\u{abf}\u{aaa}\u{acd}\u{aaa}\u{aa3}\u{ac0}",
+    "|\u{a38}\u{a41}\u{a28}\u{a47}\u{a39}\u{a3e}|\u{a1f}\u{a3f}\u{a71}\u{a2a}\u{a23}\u{a40}",
+    "|\u{b9a}\u{bc6}\u{baf}\u{bcd}\u{ba4}\u{bbf}",
+    "|\u{b95}\u{bb0}\u{bc1}\u{ba4}\u{bcd}\u{ba4}\u{bc1}",
+    "|\u{c38}\u{c02}\u{c26}\u{c47}\u{c36}\u{c02}",
+    "|\u{c35}\u{c4d}\u{c2f}\u{c3e}\u{c16}\u{c4d}\u{c2f}|\u{cb8}\u{c82}\u{ca6}\u{cc7}\u{cb6}",
+    "|\u{c95}\u{cbe}\u{cae}\u{cc6}\u{c82}\u{c9f}\u{ccd}",
+    "|\u{d38}\u{d28}\u{d4d}\u{d26}\u{d47}\u{d36}\u{d02}",
+    "|\u{d15}\u{d2e}\u{d28}\u{d4d}\u{d31}\u{d4d}",
+    "|\u{e02}\u{e49}\u{e2d}\u{e04}\u{e27}\u{e32}\u{e21}",
+    "|\u{e04}\u{e27}\u{e32}\u{e21}\u{e04}\u{e34}\u{e14}\u{e40}\u{e2b}\u{e47}\u{e19}",
+    "|\u{e15}\u{e2d}\u{e1a}\u{e01}\u{e25}\u{e31}\u{e1a}",
+    "|\u{1019}\u{1000}\u{103a}\u{1006}\u{1031}\u{1037}\u{1001}\u{103b}\u{103a}",
+    "|\u{1019}\u{103e}\u{1010}\u{103a}\u{1001}\u{103b}\u{1000}\u{103a}|tin nh\u{1eaf}n",
+    "|tr\u{1ea3} l\u{1edd}i|b\u{ec}nh lu\u{1ead}n|\u{30e1}\u{30c3}\u{30bb}\u{30fc}\u{30b8}",
+    "|\u{8fd4}\u{4fe1}|\u{30b3}\u{30e1}\u{30f3}\u{30c8}|\u{ba54}\u{c2dc}\u{c9c0}",
+    "|\u{b2f5}\u{c7a5}|\u{b313}\u{ae00}|\u{6d88}\u{606f}|\u{4fe1}\u{606f}|\u{56de}\u{590d}",
+    "|\u{8bc4}\u{8bba}|\u{8a0a}\u{606f}|\u{56de}\u{8986}|\u{7559}\u{8a00}|\u{8a55}\u{8ad6}",
+);
 
-const SIGNING_IN: &[&str] = &[
-    "sign in",
-    "log in",
-    "login",
-    "log on",
-    "anmelden",
-    "einloggen",
-    "aamelde",
-    "iilogge",
-    "se connecter",
-    "connexion",
-    "iniciar sesi\u{f3}n",
-    "iniciar sess\u{e3}o",
-    "acceder",
-    "entrar",
-    "accedi",
-    "zaloguj",
-    "\u{432}\u{43e}\u{439}\u{442}\u{438}",
-    "\u{443}\u{432}\u{456}\u{439}\u{442}\u{438}",
-    "oturum a\u{e7}",
-    "giri\u{15f} yap",
-    "masuk",
-    "mlebu",
-    "mag-sign in",
-    "mag-log in",
-    "ingia",
-    "shiga",
-    "\u{130d}\u{1263}",
-    "\u{62a}\u{633}\u{62c}\u{64a}\u{644} \u{627}\u{644}\u{62f}\u{62e}\u{648}\u{644}",
-    "\u{648}\u{631}\u{648}\u{62f}",
-    "\u{646}\u{646}\u{648}\u{62a}\u{644}",
-    "\u{633}\u{627}\u{626}\u{646} \u{627}\u{646}",
-    "\u{644}\u{627}\u{6af} \u{627}\u{646}",
-    "\u{938}\u{93e}\u{907}\u{928} \u{907}\u{928}",
-    "\u{932}\u{949}\u{917} \u{907}\u{928}",
-    "\u{9b8}\u{9be}\u{987}\u{9a8} \u{987}\u{9a8}",
-    "\u{ab8}\u{abe}\u{a87}\u{aa8} \u{a87}\u{aa8}",
-    "\u{a38}\u{a3e}\u{a08}\u{a28} \u{a07}\u{a28}",
-    "\u{b89}\u{bb3}\u{bcd}\u{ba8}\u{bc1}\u{bb4}\u{bc8}",
-    "\u{c38}\u{c48}\u{c28}\u{c4d} \u{c07}\u{c28}\u{c4d}",
-    "\u{cb8}\u{cc8}\u{ca8}\u{ccd} \u{c87}\u{ca8}\u{ccd}",
-    "\u{d38}\u{d48}\u{d7b} \u{d07}\u{d7b}",
-    "\u{e40}\u{e02}\u{e49}\u{e32}\u{e2a}\u{e39}\u{e48}\u{e23}\u{e30}\u{e1a}\u{e1a}",
-    "\u{1021}\u{1000}\u{1031}\u{102c}\u{1004}\u{1037}\u{103a}\u{101d}\u{1004}\u{103a}",
-    "\u{111}\u{103}ng nh\u{1ead}p",
-    "\u{30b5}\u{30a4}\u{30f3}\u{30a4}\u{30f3}",
-    "\u{30ed}\u{30b0}\u{30a4}\u{30f3}",
-    "\u{b85c}\u{adf8}\u{c778}",
-    "\u{767b}\u{5f55}",
-    "\u{767b}\u{5165}",
-    "\u{767b}\u{9304}",
-];
+const SIGNING_IN: &str = concat!(
+    "sign in|log in|login|log on|anmelden|einloggen|aamelde|iilogge|se connecter|connexion",
+    "|iniciar sesi\u{f3}n|iniciar sess\u{e3}o|acceder|entrar|accedi|zaloguj",
+    "|\u{432}\u{43e}\u{439}\u{442}\u{438}|\u{443}\u{432}\u{456}\u{439}\u{442}\u{438}",
+    "|oturum a\u{e7}|giri\u{15f} yap|masuk|mlebu|mag-sign in|mag-log in|ingia|shiga",
+    "|\u{130d}\u{1263}",
+    "|\u{62a}\u{633}\u{62c}\u{64a}\u{644} \u{627}\u{644}\u{62f}\u{62e}\u{648}\u{644}",
+    "|\u{648}\u{631}\u{648}\u{62f}|\u{646}\u{646}\u{648}\u{62a}\u{644}",
+    "|\u{633}\u{627}\u{626}\u{646} \u{627}\u{646}|\u{644}\u{627}\u{6af} \u{627}\u{646}",
+    "|\u{938}\u{93e}\u{907}\u{928} \u{907}\u{928}|\u{932}\u{949}\u{917} \u{907}\u{928}",
+    "|\u{9b8}\u{9be}\u{987}\u{9a8} \u{987}\u{9a8}|\u{ab8}\u{abe}\u{a87}\u{aa8} \u{a87}\u{aa8}",
+    "|\u{a38}\u{a3e}\u{a08}\u{a28} \u{a07}\u{a28}",
+    "|\u{b89}\u{bb3}\u{bcd}\u{ba8}\u{bc1}\u{bb4}\u{bc8}",
+    "|\u{c38}\u{c48}\u{c28}\u{c4d} \u{c07}\u{c28}\u{c4d}",
+    "|\u{cb8}\u{cc8}\u{ca8}\u{ccd} \u{c87}\u{ca8}\u{ccd}|\u{d38}\u{d48}\u{d7b} \u{d07}\u{d7b}",
+    "|\u{e40}\u{e02}\u{e49}\u{e32}\u{e2a}\u{e39}\u{e48}\u{e23}\u{e30}\u{e1a}\u{e1a}",
+    "|\u{1021}\u{1000}\u{1031}\u{102c}\u{1004}\u{1037}\u{103a}\u{101d}\u{1004}\u{103a}",
+    "|\u{111}\u{103}ng nh\u{1ead}p|\u{30b5}\u{30a4}\u{30f3}\u{30a4}\u{30f3}",
+    "|\u{30ed}\u{30b0}\u{30a4}\u{30f3}|\u{b85c}\u{adf8}\u{c778}|\u{767b}\u{5f55}",
+    "|\u{767b}\u{5165}|\u{767b}\u{9304}",
+);
 
-const DELETING: &[&str] = &[
-    "delete",
-    "remove",
-    "erase",
-    "delete forever",
-    "delete permanently",
-    "l\u{f6}schen",
-    "entfernen",
-    "endg\u{fc}ltig l\u{f6}schen",
-    "l\u{f6}sche",
-    "entferne",
-    "supprimer",
-    "effacer",
-    "eliminar",
-    "borrar",
-    "suprimir",
-    "quitar",
-    "elimina",
-    "cancella",
-    "rimuovi",
-    "excluir",
-    "apagar",
-    "remover",
-    "usu\u{144}",
-    "skasuj",
-    "wyma\u{17c}",
-    "\u{443}\u{434}\u{430}\u{43b}\u{438}\u{442}\u{44c}",
-    "\u{441}\u{442}\u{435}\u{440}\u{435}\u{442}\u{44c}",
-    "\u{432}\u{438}\u{434}\u{430}\u{43b}\u{438}\u{442}\u{438}",
-    "\u{441}\u{442}\u{435}\u{440}\u{442}\u{438}",
-    "sil",
-    "kald\u{131}r",
-    "hapus",
-    "padam",
-    "buang",
-    "busak",
-    "tanggalin",
-    "burahin",
-    "futa",
-    "ondoa",
-    "goge",
-    "cire",
-    "\u{1230}\u{122d}\u{12dd}",
-    "\u{62d}\u{630}\u{641}",
-    "\u{627}\u{62d}\u{630}\u{641}",
-    "\u{625}\u{632}\u{627}\u{644}\u{629}",
-    "\u{645}\u{633}\u{62d}",
-    "\u{67e}\u{627}\u{6a9} \u{6a9}\u{631}\u{62f}\u{646}",
-    "\u{6c1}\u{679}\u{627}\u{626}\u{6cc}\u{6ba}",
-    "\u{939}\u{91f}\u{93e}\u{90f}\u{902}",
-    "\u{92e}\u{93f}\u{91f}\u{93e}\u{90f}\u{902}",
-    "\u{939}\u{91f}\u{935}\u{93e}",
-    "\u{9ae}\u{9c1}\u{99b}\u{9c1}\u{9a8}",
-    "\u{a95}\u{abe}\u{aa2}\u{ac0} \u{aa8}\u{abe}\u{a96}\u{acb}",
-    "\u{a2e}\u{a3f}\u{a1f}\u{a3e}\u{a13}",
-    "\u{ba8}\u{bc0}\u{b95}\u{bcd}\u{b95}\u{bc1}",
-    "\u{c24}\u{c4a}\u{c32}\u{c17}\u{c3f}\u{c02}\u{c1a}\u{c41}",
-    "\u{c85}\u{cb3}\u{cbf}\u{cb8}\u{cbf}",
-    "\u{d07}\u{d32}\u{d4d}\u{d32}\u{d3e}\u{d24}\u{d3e}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
-    "\u{e25}\u{e1a}",
-    "\u{1016}\u{103b}\u{1000}\u{103a}",
-    "x\u{f3}a",
-    "x\u{f2}a",
-    "g\u{1ee1} b\u{1ecf}",
-    "\u{524a}\u{9664}",
-    "\u{6d88}\u{53bb}",
-    "\u{c0ad}\u{c81c}",
-    "\u{c81c}\u{ac70}",
-    "\u{5220}\u{9664}",
-    "\u{79fb}\u{9664}",
-    "\u{6e05}\u{9664}",
-    "\u{522a}\u{9664}",
-];
+const DELETING: &str = concat!(
+    "delete|remove|erase|delete forever|delete permanently|l\u{f6}schen|entfernen",
+    "|endg\u{fc}ltig l\u{f6}schen|l\u{f6}sche|entferne|supprimer|effacer|eliminar|borrar",
+    "|suprimir|quitar|elimina|cancella|rimuovi|excluir|apagar|remover|usu\u{144}|skasuj",
+    "|wyma\u{17c}|\u{443}\u{434}\u{430}\u{43b}\u{438}\u{442}\u{44c}",
+    "|\u{441}\u{442}\u{435}\u{440}\u{435}\u{442}\u{44c}",
+    "|\u{432}\u{438}\u{434}\u{430}\u{43b}\u{438}\u{442}\u{438}",
+    "|\u{441}\u{442}\u{435}\u{440}\u{442}\u{438}|sil|kald\u{131}r|hapus|padam|buang|busak",
+    "|tanggalin|burahin|futa|ondoa|goge|cire|\u{1230}\u{122d}\u{12dd}|\u{62d}\u{630}\u{641}",
+    "|\u{627}\u{62d}\u{630}\u{641}|\u{625}\u{632}\u{627}\u{644}\u{629}|\u{645}\u{633}\u{62d}",
+    "|\u{67e}\u{627}\u{6a9} \u{6a9}\u{631}\u{62f}\u{646}",
+    "|\u{6c1}\u{679}\u{627}\u{626}\u{6cc}\u{6ba}|\u{939}\u{91f}\u{93e}\u{90f}\u{902}",
+    "|\u{92e}\u{93f}\u{91f}\u{93e}\u{90f}\u{902}|\u{939}\u{91f}\u{935}\u{93e}",
+    "|\u{9ae}\u{9c1}\u{99b}\u{9c1}\u{9a8}",
+    "|\u{a95}\u{abe}\u{aa2}\u{ac0} \u{aa8}\u{abe}\u{a96}\u{acb}",
+    "|\u{a2e}\u{a3f}\u{a1f}\u{a3e}\u{a13}|\u{ba8}\u{bc0}\u{b95}\u{bcd}\u{b95}\u{bc1}",
+    "|\u{c24}\u{c4a}\u{c32}\u{c17}\u{c3f}\u{c02}\u{c1a}\u{c41}",
+    "|\u{c85}\u{cb3}\u{cbf}\u{cb8}\u{cbf}",
+    "|\u{d07}\u{d32}\u{d4d}\u{d32}\u{d3e}\u{d24}\u{d3e}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
+    "|\u{e25}\u{e1a}|\u{1016}\u{103b}\u{1000}\u{103a}|x\u{f3}a|x\u{f2}a|g\u{1ee1} b\u{1ecf}",
+    "|\u{524a}\u{9664}|\u{6d88}\u{53bb}|\u{c0ad}\u{c81c}|\u{c81c}\u{ac70}|\u{5220}\u{9664}",
+    "|\u{79fb}\u{9664}|\u{6e05}\u{9664}|\u{522a}\u{9664}",
+);
 
-const PAYMENT_HOSTS: &[&str] = &[
-    "stripe.com",
-    "stripe.network",
-    "paypal.com",
-    "paypalobjects.com",
-    "braintreegateway.com",
-    "braintree-api.com",
-    "adyen.com",
-    "adyenpayments.com",
-    "checkout.com",
-    "klarna.com",
-    "klarnaservices.com",
-    "afterpay.com",
-    "affirm.com",
-    "squareup.com",
-    "pay.google.com",
-    "payments.google.com",
-    "applepay.cdn-apple.com",
-    "pay.amazon.com",
-    "payments.amazon.com",
-    "worldpay.com",
-    "authorize.net",
-    "2checkout.com",
-    "mollie.com",
-    "razorpay.com",
-    "paddle.com",
-    "paystack.co",
-    "flutterwave.com",
-    "payu.com",
-    "mercadopago.com",
-    "alipay.com",
-    "twint.ch",
-    "sofort.com",
-    "trustly.com",
-    "shop.app",
-    "pay.shopify.com",
-    "recurly.com",
-    "chargebee.com",
-    "gocardless.com",
-    "sezzle.com",
-    "zip.co",
-    "bitpay.com",
-    "commerce.coinbase.com",
-    "datatrans.com",
-    "saferpay.com",
-    "payrexx.com",
-    "wallee.com",
-];
+const PAYMENT_HOSTS: &str = concat!(
+    "stripe.com|stripe.network|paypal.com|paypalobjects.com|braintreegateway.com",
+    "|braintree-api.com|adyen.com|adyenpayments.com|checkout.com|klarna.com",
+    "|klarnaservices.com|afterpay.com|affirm.com|squareup.com|pay.google.com",
+    "|payments.google.com|applepay.cdn-apple.com|pay.amazon.com|payments.amazon.com",
+    "|worldpay.com|authorize.net|2checkout.com|mollie.com|razorpay.com|paddle.com|paystack.co",
+    "|flutterwave.com|payu.com|mercadopago.com|alipay.com|twint.ch|sofort.com|trustly.com",
+    "|shop.app|pay.shopify.com|recurly.com|chargebee.com|gocardless.com|sezzle.com|zip.co",
+    "|bitpay.com|commerce.coinbase.com|datatrans.com|saferpay.com|payrexx.com|wallee.com",
+);
 
-const SOCIAL: &[&str] = &[
-    "mail.google.com",
-    "gmail.com",
-    "outlook.com",
-    "outlook.live.com",
-    "outlook.office.com",
-    "outlook.office365.com",
-    "mail.yahoo.com",
-    "proton.me",
-    "protonmail.com",
-    "icloud.com",
-    "fastmail.com",
-    "gmx.net",
-    "gmx.de",
-    "gmx.ch",
-    "web.de",
-    "mail.ru",
-    "mail.yandex.ru",
-    "tutanota.com",
-    "tuta.com",
-    "zoho.com",
-    "x.com",
-    "twitter.com",
-    "facebook.com",
-    "messenger.com",
-    "instagram.com",
-    "threads.net",
-    "linkedin.com",
-    "reddit.com",
-    "bsky.app",
-    "mastodon.social",
-    "tiktok.com",
-    "youtube.com",
-    "discord.com",
-    "slack.com",
-    "teams.microsoft.com",
-    "teams.live.com",
-    "whatsapp.com",
-    "telegram.org",
-    "signal.org",
-    "github.com",
-    "gitlab.com",
-    "medium.com",
-    "substack.com",
-    "tumblr.com",
-    "pinterest.com",
-    "quora.com",
-    "stackoverflow.com",
-    "stackexchange.com",
-    "news.ycombinator.com",
-    "weibo.com",
-    "vk.com",
-    "line.me",
-    "wechat.com",
-    "snapchat.com",
-    "chat.google.com",
-];
+const SOCIAL: &str = concat!(
+    "mail.google.com|gmail.com|outlook.com|outlook.live.com|outlook.office.com",
+    "|outlook.office365.com|mail.yahoo.com|proton.me|protonmail.com|icloud.com|fastmail.com",
+    "|gmx.net|gmx.de|gmx.ch|web.de|mail.ru|mail.yandex.ru|tutanota.com|tuta.com|zoho.com",
+    "|x.com|twitter.com|facebook.com|messenger.com|instagram.com|threads.net|linkedin.com",
+    "|reddit.com|bsky.app|mastodon.social|tiktok.com|youtube.com|discord.com|slack.com",
+    "|teams.microsoft.com|teams.live.com|whatsapp.com|telegram.org|signal.org|github.com",
+    "|gitlab.com|medium.com|substack.com|tumblr.com|pinterest.com|quora.com|stackoverflow.com",
+    "|stackexchange.com|news.ycombinator.com|weibo.com|vk.com|line.me|wechat.com|snapchat.com",
+    "|chat.google.com",
+);
 
 #[cfg(test)]
 mod tests {

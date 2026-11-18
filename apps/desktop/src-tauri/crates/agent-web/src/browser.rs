@@ -645,10 +645,6 @@ fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) 
     );
 }
 
-fn element(page: &Page<'_>, reference: &str) -> Result<Element, Answer> {
-    page.element(reference)
-}
-
 #[allow(clippy::too_many_lines)]
 fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: Verb) -> Answer {
     let tab = place.id().to_string();
@@ -774,7 +770,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let held = modifiers(&click.modifiers);
                 match (&click.element, click.x, click.y) {
                     (Some(reference), None, None) => {
-                        let target = element(page, reference)?;
+                        let target = page.element(reference)?;
                         let key = approvals::key("browser_click", Some(&tab), Some(reference));
                         let press = OnePress {
                             times: count,
@@ -805,7 +801,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Type(typing) => {
-                let target = element(page, &typing.element)?;
+                let target = page.element(&typing.element)?;
                 let mut facts = page.facts(&target)?;
                 let key = approvals::key("browser_type", Some(&tab), Some(&typing.element));
                 judged(app, caller, page, place, &facts, Act::Write, &key)?;
@@ -858,7 +854,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let target = scroll
                     .element
                     .as_deref()
-                    .map(|one| element(page, one))
+                    .map(|one| page.element(one))
                     .transpose()?;
                 if let Some(target) = &target {
                     page.may_act_in(&page.facts(target)?)?;
@@ -867,7 +863,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Select(select) => {
-                let target = element(page, &select.element)?;
+                let target = page.element(&select.element)?;
                 let facts = page.facts(&target)?;
                 let key = approvals::key("browser_select", Some(&tab), Some(&select.element));
                 judged(app, caller, page, place, &facts, Act::Write, &key)?;
@@ -877,7 +873,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::FillForm(form) => {
                 let mut targets = Vec::with_capacity(form.fields.len());
                 for field in &form.fields {
-                    let target = element(page, &field.element)?;
+                    let target = page.element(&field.element)?;
                     let facts = page.facts(&target)?;
                     page.may_act_in(&facts)?;
                     targets.push((target, facts));
@@ -918,13 +914,13 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Hover(hover) => {
-                let target = element(page, &hover.element)?;
+                let target = page.element(&hover.element)?;
                 page.may_act_in(&page.facts(&page.at_first_point(&target)?)?)?;
                 page.hover(&target)?;
                 acted(page)
             }
             Verb::Drag(drag) => {
-                let (from, to) = (element(page, &drag.from)?, element(page, &drag.to)?);
+                let (from, to) = (page.element(&drag.from)?, page.element(&drag.to)?);
                 let (picked, dropped) = (page.at_first_point(&from)?, page.at_first_point(&to)?);
                 let (mut from_facts, to_facts) = (
                     page.facts_of_press(&picked)?,
@@ -965,7 +961,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 acted(page)
             }
             Verb::Upload(upload) => {
-                let target = element(page, &upload.element)?;
+                let target = page.element(&upload.element)?;
                 let files = files_of(app, caller, &upload.files)?;
                 for (_, inside) in &files {
                     handing_granted(caller, *inside)?;
@@ -1043,7 +1039,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 let target = shot
                     .element
                     .as_deref()
-                    .map(|one| element(page, one))
+                    .map(|one| page.element(one))
                     .transpose()?;
                 let picture = page.screenshot(target.as_ref(), shot.full_page, shot.scale)?;
                 from_page(Answer::ok(picture))

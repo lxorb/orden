@@ -291,7 +291,7 @@ fn let_go(app: &AppHandle, label: &str) {
     if let Some(view) = crate::engines::view(app, label) {
         view.close();
     }
-    engines::forget(label);
+    crate::cdp::forget(label);
     quiet::forget(app, label);
 }
 
@@ -424,7 +424,7 @@ fn tick(app: &AppHandle) {
     for agent in gone {
         close_all(app, Some(&agent));
     }
-    engines::sleep_idle(app);
+    crate::cdp::sleep_idle(app);
     orden_agents::approvals::expire(app);
 }
 
