@@ -179,16 +179,9 @@ export class TestDevice {
       for (const row of this.rows.itemRows.values()) {
         const box = held.vaults.get(row.vault)
         if (row.deleted || !box) continue
-        const { envelope, itemKey } = await openItem(
-          box.key,
-          row.vault,
-          row.id,
-          row.key,
-          row.body,
-          row.keyVersion,
-        )
-        held.items.set(row.id, { key: itemKey, row })
-        items.push(itemOf(row, envelope))
+        const was = await openItem(box.key, row.vault, row.id, row.key, row.body, row.keyVersion)
+        held.items.set(row.id, { key: was.itemKey, row })
+        items.push(itemOf(row, was.envelope))
       }
       this.held = held
       this.vaults = vaults
@@ -226,12 +219,8 @@ export class TestDevice {
   }
 
   async move(id: string, vault: string): Promise<void> {
-    const held = this.mustHold()
-    const one = held.items.get(id)
-    if (!one) throw new Error('no such item')
     const item = this.item(id)
-    await this.rows.write({ items: [tombstoneOf(one.row, Date.now())], dropVersions: [one.row] })
-    held.items.delete(id)
+    await this.remove(id)
     await this.put(vault, id, envelopeOf(item), null)
   }
 
@@ -276,25 +265,18 @@ export class TestDevice {
       pending: true,
       deleted: false,
     }
-    const versions: VersionRow[] =
-      was && before
-        ? [
-            {
-              vault,
-              id,
-              rev: before.row.rev,
-              at: before.row.at,
-              ...(await sealVersion(
-                box.key,
-                vault,
-                id,
-                before.row.rev,
-                envelopeOf(was),
-                before.key,
-              )),
-            },
-          ]
-        : []
+    const versions: VersionRow[] = []
+    if (was && before) {
+      const kept = await sealVersion(
+        box.key,
+        vault,
+        id,
+        before.row.rev,
+        envelopeOf(was),
+        before.key,
+      )
+      versions.push({ vault, id, rev: before.row.rev, at: before.row.at, ...kept })
+    }
     await this.rows.write({ items: [row], versions })
     held.items.set(id, { key: sealed.itemKey, row })
     const item = itemOf(row, envelope)

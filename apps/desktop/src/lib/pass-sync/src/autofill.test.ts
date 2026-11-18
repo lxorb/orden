@@ -12,6 +12,7 @@ import type {
   PassMark,
   PassSubmitted,
 } from './channel'
+import type { Pause, Paused } from './settings'
 
 const heard = vi.hoisted(() => ({
   forms: null as ((said: unknown) => void) | null,
@@ -56,6 +57,7 @@ const { configurePass, PassStore } = await import('./store.svelte')
 const { Autofill } = await import('./autofill')
 const { passBubbles } = await import('./fill-bubbles.svelte')
 const { FLOW_WINDOW } = await import('./sign-in-flow')
+const { PAUSES } = await import('./settings')
 const { EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
 
 configurePass({ kdf: { m: 64, t: 1, p: 1 }, pinKdf: { m: 64, t: 1, p: 1 } })
@@ -64,6 +66,7 @@ const TAB = 'tab-1'
 const BANK = 'https://bank.com'
 const SEED = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'
 const TOTP = `otpauth://totp/Bank:alice?secret=${SEED}&digits=8`
+const SIGN_IN: FieldRole[] = ['username', 'password']
 
 type Store = InstanceType<typeof PassStore>
 
@@ -100,6 +103,15 @@ function forms(frame: PassFrame, kind: FormKind, roles: FieldRole[], form = '1')
   return { ...frame, forms: [formOf(form, kind, roles)] }
 }
 
+function loginPage(url = `${BANK}/login`): PassForms {
+  return forms(frameAt(url), 'login', SIGN_IN)
+}
+
+function pausedAt(pause: Pause): void {
+  const paused = Object.fromEntries(PAUSES.map((one) => [one, one === pause])) as Paused
+  store.setSetting('paused', { 'bank.com': paused })
+}
+
 function site(url: string, match: Website['match'] = 'domain'): Website {
   return { url, match }
 }
@@ -118,7 +130,7 @@ async function said(event: 'forms' | 'mark' | 'submitted', what: unknown): Promi
   const then = heard[event]
   if (!then) throw new Error(`nobody hears ${event}`)
   then(what)
-  await new Promise((done) => setTimeout(done, 20))
+  await pause(20)
 }
 
 async function marked(frame: PassFrame, kind: FormKind, roles: FieldRole[]): Promise<void> {
@@ -147,6 +159,15 @@ async function settled(count: number) {
   await vi.waitFor(() => expect(heard.filled).toHaveLength(count))
 }
 
+function pause(ms = 50): Promise<void> {
+  return new Promise((done) => setTimeout(done, ms))
+}
+
+async function unsent(after = 50): Promise<void> {
+  await pause(after)
+  expect(heard.filled).toHaveLength(0)
+}
+
 beforeEach(async () => {
   await forgetLocal()
   heard.filled = []
@@ -168,10 +189,7 @@ describe('where Pass fills', () => {
   test('a page that is not https, nor on this machine, is offered nothing', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await marked(frameAt('http://bank.com/login', { secure: false }), 'login', [
-      'username',
-      'password',
-    ])
+    await marked(frameAt('http://bank.com/login', { secure: false }), 'login', SIGN_IN)
     expect(shown()).toBeNull()
     await marked(frameAt('http://bank.com/login', { secure: true }), 'login', ['password'])
     expect(shown()).toBeNull()
@@ -180,10 +198,11 @@ describe('where Pass fills', () => {
   test("a frame whose address is not on the engine's origin is dropped", async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await marked(frameAt('https://bank.com/login', { origin: 'https://evil.com' }), 'login', [
-      'username',
-      'password',
-    ])
+    await marked(
+      frameAt('https://bank.com/login', { origin: 'https://evil.com' }),
+      'login',
+      SIGN_IN,
+    )
     expect(shown()).toBeNull()
     expect(heard.filled).toHaveLength(0)
   })
@@ -192,13 +211,13 @@ describe('where Pass fills', () => {
     await kept(login({ title: 'Site wide', username: 'alice', password: 'pw' }))
     made()
     const inner = frameAt('https://accounts.bank.com/frame', { frame: 'inner', top: false })
-    await marked(inner, 'login', ['username', 'password'])
+    await marked(inner, 'login', SIGN_IN)
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.logins).toEqual([])
     const named = await kept(
       login({ title: 'Named', websites: [site('https://accounts.bank.com', 'host')] }),
     )
-    await marked(inner, 'login', ['username', 'password'])
+    await marked(inner, 'login', SIGN_IN)
     const again = shown()
     expect(again?.kind === 'choose' && again.logins.map((one) => one.id)).toEqual([named.id])
   })
@@ -206,10 +225,11 @@ describe('where Pass fills', () => {
   test('a frame of another site entirely is offered no login', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await marked(frameAt('https://evil.com/frame', { frame: 'inner', top: false }), 'login', [
-      'username',
-      'password',
-    ])
+    await marked(
+      frameAt('https://evil.com/frame', { frame: 'inner', top: false }),
+      'login',
+      SIGN_IN,
+    )
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.logins).toEqual([])
   })
@@ -220,7 +240,7 @@ describe('the mark', () => {
     const item = await kept(login({ username: 'alice', password: 'pw' }))
     const autofill = made()
     const frame = frameAt('https://bank.com/login')
-    await marked(frame, 'login', ['username', 'password'])
+    await marked(frame, 'login', SIGN_IN)
     const bubble = shown()
     expect(bubble?.kind).toBe('choose')
     expect(bubble?.kind === 'choose' && bubble.logins).toEqual([
@@ -281,24 +301,18 @@ describe('the mark', () => {
     }
     const item = await kept(card)
     const autofill = made()
-    await marked(frameAt('https://shop.com/pay'), 'card', [
+    const roles: FieldRole[] = [
       'cc-name',
       'cc-number',
       'cc-exp',
       'cc-exp-month',
       'cc-exp-year',
       'cc-csc',
-    ])
+    ]
+    await marked(frameAt('https://shop.com/pay'), 'card', roles)
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.cards.map((one) => one.id)).toEqual([item.id])
-    expect(bubble?.kind === 'choose' && bubble.fields).toEqual([
-      'cc-name',
-      'cc-number',
-      'cc-exp',
-      'cc-exp-month',
-      'cc-exp-year',
-      'cc-csc',
-    ])
+    expect(bubble?.kind === 'choose' && bubble.fields).toEqual(roles)
     await autofill.choose(TAB, item.id)
     expect(heard.filled[0]?.values).toEqual({
       e10: 'Alice Doe',
@@ -360,7 +374,7 @@ describe('the mark', () => {
     const item = await kept(login({ username: 'alice', password: 'pw' }))
     const autofill = made()
     const frame = frameAt('https://bank.com/login')
-    const form = formOf('1', 'login', ['username', 'password'])
+    const form = formOf('1', 'login', SIGN_IN)
     const hidden = {
       ...form,
       fields: form.fields.map((one, at) => ({ ...one, visible: at === 1 })),
@@ -377,7 +391,7 @@ describe('the mark', () => {
     store.lock()
     made()
     const frame = frameAt('https://bank.com/login')
-    await marked(frame, 'login', ['username', 'password'])
+    await marked(frame, 'login', SIGN_IN)
     expect(shown()).toEqual({ kind: 'unlock', tab: TAB })
     await said('submitted', submitted(frame, { username: 'bob', password: 'new' }))
     expect(shown()).toEqual({ kind: 'unlock', tab: TAB })
@@ -386,18 +400,9 @@ describe('the mark', () => {
 
   test('a site with autofill turned off is offered nothing', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
-    store.setSetting('paused', {
-      'bank.com': {
-        autofill: true,
-        totp: false,
-        suggest: false,
-        save: false,
-        passkeys: false,
-        autoLogin: false,
-      },
-    })
+    pausedAt('autofill')
     made()
-    await marked(frameAt('https://bank.com/login'), 'login', ['username', 'password'])
+    await marked(frameAt('https://bank.com/login'), 'login', SIGN_IN)
     expect(shown()).toBeNull()
   })
 })
@@ -513,7 +518,7 @@ describe('signing in by itself', () => {
   test('a sign-in page with one login is filled and sent', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
+    await said('forms', loginPage())
     await settled(1)
     expect(heard.filled[0]).toMatchObject({ values: { e10: 'alice', e11: 'pw' }, submit: true })
   })
@@ -521,7 +526,7 @@ describe('signing in by itself', () => {
   test('the bubble says who is signing in, before the step is taken', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made(80)
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
+    await said('forms', loginPage())
     expect(shown()).toEqual({ kind: 'signing', tab: TAB, name: 'alice' })
     expect(heard.filled).toHaveLength(0)
     await settled(1)
@@ -553,12 +558,12 @@ describe('signing in by itself', () => {
   test('the same page again, as after a wrong password, is not sent twice', async () => {
     await kept(login({ username: 'alice', password: 'wrong' }))
     made()
-    const page = forms(frameAt(`${BANK}/login`), 'login', ['username', 'password'])
+    const page = loginPage()
     await said('forms', page)
     await settled(1)
-    await said('forms', forms(frameAt(`${BANK}/login?error=1`), 'login', ['username', 'password']))
+    await said('forms', forms(frameAt(`${BANK}/login?error=1`), 'login', SIGN_IN))
     await said('forms', page)
-    await new Promise((done) => setTimeout(done, 50))
+    await pause()
     expect(heard.filled).toHaveLength(1)
     expect(shown()).toBeNull()
   })
@@ -567,9 +572,8 @@ describe('signing in by itself', () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     await kept(login({ username: 'bob', password: 'pw2' }))
     made()
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
-    await new Promise((done) => setTimeout(done, 50))
-    expect(heard.filled).toHaveLength(0)
+    await said('forms', loginPage())
+    await unsent()
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.logins).toHaveLength(2)
   })
@@ -577,12 +581,8 @@ describe('signing in by itself', () => {
   test('a login for the whole site only offers itself on a subdomain, never sends', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await said(
-      'forms',
-      forms(frameAt('https://accounts.bank.com/login'), 'login', ['username', 'password']),
-    )
-    await new Promise((done) => setTimeout(done, 50))
-    expect(heard.filled).toHaveLength(0)
+    await said('forms', loginPage('https://accounts.bank.com/login'))
+    await unsent()
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.logins).toHaveLength(1)
   })
@@ -592,16 +592,13 @@ describe('signing in by itself', () => {
       login({ username: 'alice', password: 'pw', websites: [site('https://accounts.bank.com')] }),
     )
     made()
-    await said(
-      'forms',
-      forms(frameAt('https://accounts.bank.com/login'), 'login', ['username', 'password']),
-    )
+    await said('forms', loginPage('https://accounts.bank.com/login'))
     await settled(1)
   })
 
   test('no matching login does nothing', async () => {
     made()
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
+    await said('forms', loginPage())
     expect(shown()).toBeNull()
     expect(heard.filled).toHaveLength(0)
   })
@@ -611,12 +608,10 @@ describe('signing in by itself', () => {
     const autofill = made(60)
     await said('forms', forms(frameAt(`${BANK}/a`), 'username', ['username']))
     autofill.dismiss(TAB)
-    await new Promise((done) => setTimeout(done, 120))
-    expect(heard.filled).toHaveLength(0)
+    await unsent(120)
     expect(shown()).toBeNull()
     await said('forms', forms(frameAt(`${BANK}/b`), 'password', ['password']))
-    await new Promise((done) => setTimeout(done, 120))
-    expect(heard.filled).toHaveLength(0)
+    await unsent(120)
   })
 
   test('a step later than two minutes into the sign-in is not taken', async () => {
@@ -626,7 +621,7 @@ describe('signing in by itself', () => {
     await settled(1)
     clock += FLOW_WINDOW + 1000
     await said('forms', forms(frameAt(`${BANK}/b`), 'password', ['password']))
-    await new Promise((done) => setTimeout(done, 50))
+    await pause()
     expect(heard.filled).toHaveLength(1)
   })
 
@@ -634,44 +629,31 @@ describe('signing in by itself', () => {
     await kept(login({ username: 'alice', password: 'pw', totp: TOTP }))
     made()
     await said('forms', forms(frameAt(`${BANK}/2fa`), 'totp', ['totp']))
-    await new Promise((done) => setTimeout(done, 50))
-    expect(heard.filled).toHaveLength(0)
+    await unsent()
   })
 
   test('a site left out of signing in by itself is not signed in', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
-    store.setSetting('paused', {
-      'bank.com': {
-        autofill: false,
-        totp: false,
-        suggest: false,
-        save: false,
-        passkeys: false,
-        autoLogin: true,
-      },
-    })
+    pausedAt('autoLogin')
     made()
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
-    await new Promise((done) => setTimeout(done, 50))
-    expect(heard.filled).toHaveLength(0)
+    await said('forms', loginPage())
+    await unsent()
   })
 
   test('with signing in by itself off, nothing is sent', async () => {
     store.setSetting('autoLogin', false)
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
-    await new Promise((done) => setTimeout(done, 50))
-    expect(heard.filled).toHaveLength(0)
+    await said('forms', loginPage())
+    await unsent()
   })
 
   test('with Pass locked nothing is sent', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     store.lock()
     made()
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
-    await new Promise((done) => setTimeout(done, 50))
-    expect(heard.filled).toHaveLength(0)
+    await said('forms', loginPage())
+    await unsent()
     expect(shown()).toBeNull()
   })
 
@@ -680,10 +662,9 @@ describe('signing in by itself', () => {
     made()
     await said(
       'forms',
-      forms(frameAt('http://bank.com/login', { secure: false }), 'login', ['username', 'password']),
+      forms(frameAt('http://bank.com/login', { secure: false }), 'login', SIGN_IN),
     )
-    await new Promise((done) => setTimeout(done, 50))
-    expect(heard.filled).toHaveLength(0)
+    await unsent()
   })
 })
 
@@ -696,9 +677,9 @@ describe('with the password manager turned off in Settings', () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
     hiddenKinds.hidden = []
-    await marked(frameAt(`${BANK}/login`), 'login', ['username', 'password'])
+    await marked(frameAt(`${BANK}/login`), 'login', SIGN_IN)
     await said('submitted', submitted(frameAt(`${BANK}/login`), { username: 'bob', password: 'x' }))
-    await new Promise((done) => setTimeout(done, 50))
+    await pause()
     expect(shown()).toBeNull()
     expect(heard.filled).toHaveLength(0)
   })
@@ -706,11 +687,11 @@ describe('with the password manager turned off in Settings', () => {
   test('a sign-in already under way when it is turned off is not taken', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     const autofill = made(80)
-    await said('forms', forms(frameAt(`${BANK}/login`), 'login', ['username', 'password']))
+    await said('forms', loginPage())
     expect(shown()?.kind).toBe('signing')
     hiddenKinds.hidden = []
     autofill.quiet()
-    await new Promise((done) => setTimeout(done, 150))
+    await pause(150)
     expect(shown()).toBeNull()
     expect(heard.filled).toHaveLength(0)
   })
@@ -723,7 +704,7 @@ describe('with the password manager turned off in Settings', () => {
     hiddenKinds.hidden = [EXPERIMENTAL_WORD, PASS_WORD]
     expect(await store.unlock({ password: 'correct horse battery staple' })).toBe(true)
     store.setSetting('autoLogin', false)
-    await marked(frameAt(`${BANK}/login`), 'login', ['username', 'password'])
+    await marked(frameAt(`${BANK}/login`), 'login', SIGN_IN)
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.logins.map((one) => one.id)).toEqual([item.id])
     await autofill.choose(TAB, item.id)

@@ -2,33 +2,13 @@ import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
 import { newKeyring } from '@orden/pass/keys'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
+import '../test/fake-device'
 import { deviceRows } from './device-rows'
 import { forgetLocal, readItems, readKeyring } from './local'
 import { nothingShown } from './shown'
 import { configurePass, PassStore } from './store.svelte'
 import { accountKeyringOf, cursorOf, keepAccountKeyring, keepCursor } from './synced'
-
-const fake = vi.hoisted(() => ({ secrets: new Map<string, string>() }))
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => true,
-  readSecret: (id: string) => Promise.resolve(fake.secrets.get(id) ?? null),
-  writeSecret: (id: string, secret: string) => {
-    fake.secrets.set(id, secret)
-    return Promise.resolve()
-  },
-  forgetKey: (id: string) => {
-    fake.secrets.delete(id)
-    return Promise.resolve()
-  },
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(true),
-  deviceSays: () => Promise.resolve(true),
-  deviceName: () => 'Touch ID',
-}))
 
 const FAST = { m: 64, t: 1, p: 1 }
 const MINE = 'the password on this device'
@@ -45,13 +25,7 @@ async function opened(): Promise<PassStore> {
 
 beforeEach(async () => {
   await forgetLocal()
-  fake.secrets.clear()
-  const kept = new Map<string, string>()
-  vi.stubGlobal('localStorage', {
-    getItem: (key: string) => kept.get(key) ?? null,
-    setItem: (key: string, value: string) => kept.set(key, value),
-    removeItem: (key: string) => kept.delete(key),
-  })
+  vi.stubGlobal('localStorage', memoryStorage())
 })
 
 describe('the store under sync', () => {

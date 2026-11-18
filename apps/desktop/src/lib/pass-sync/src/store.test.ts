@@ -4,39 +4,10 @@ import { openExport } from '@orden/pass/export'
 import { parseOrden } from '@orden/pass/import/orden'
 import type { Login, Website } from '@orden/pass/types'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
+import { fake } from '../test/fake-device'
 import { forgetLocal } from './local'
 import { configurePass, PassStore } from './store.svelte'
-
-const fake = vi.hoisted(() => ({
-  secrets: new Map<string, string>(),
-  guarded: true,
-  can: true,
-  yes: true,
-  asked: [] as string[],
-}))
-
-vi.mock('../../ai-providers/src/api', async (original) => ({
-  ...(await original<typeof import('../../ai-providers/src/api')>()),
-  keysAreGuarded: () => fake.guarded,
-  readSecret: (id: string) => Promise.resolve(fake.secrets.get(id) ?? null),
-  writeSecret: (id: string, secret: string) => {
-    fake.secrets.set(id, secret)
-    return Promise.resolve()
-  },
-  forgetKey: (id: string) => {
-    fake.secrets.delete(id)
-    return Promise.resolve()
-  },
-}))
-
-vi.mock('../../protect/src/device', () => ({
-  deviceCan: () => Promise.resolve(fake.can),
-  deviceSays: (reason: string) => {
-    fake.asked.push(reason)
-    return Promise.resolve(fake.yes)
-  },
-  deviceName: () => 'Touch ID',
-}))
 
 const FAST = { m: 64, t: 1, p: 1 }
 const PASSWORD = 'correct horse battery staple'
@@ -98,17 +69,7 @@ async function everythingKept(): Promise<string> {
 
 beforeEach(async () => {
   await forgetLocal()
-  fake.secrets.clear()
-  fake.guarded = true
-  fake.can = true
-  fake.yes = true
-  fake.asked = []
-  const kept = new Map<string, string>()
-  vi.stubGlobal('localStorage', {
-    getItem: (key: string) => kept.get(key) ?? null,
-    setItem: (key: string, value: string) => kept.set(key, value),
-    removeItem: (key: string) => kept.delete(key),
-  })
+  vi.stubGlobal('localStorage', memoryStorage())
 })
 
 describe('setting up and unlocking', () => {
