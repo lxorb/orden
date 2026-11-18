@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -10,8 +8,6 @@ say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 EDGE = """
 () => {
   const ws = window.ordenApp.workspace
-  // The card's own element, docked in the right side on a desktop and the one note on a
-  // phone: the side showing it, and it drawn.
   const card = document.querySelector('[data-scratchpad-card]')
   return {
     side: ws.openOn('right'),

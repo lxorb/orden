@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -45,7 +43,6 @@ async () => {
 CANVAS = """
 async () => {
   const ws = window.ordenApp.workspace
-  // Made and opened in front, the way the New canvas row makes one.
   await ws.createCanvas(ws.activeSpace.root, 'Launch')
   return ws.active.path
 }
@@ -62,7 +59,6 @@ HOLD = """
     ],
     edges: [{ id: 'e', fromNode: 'a', toNode: 'b' }],
   })
-  // Marked by the words that differ, the way `excerpt` in @orden/sync-core marks them.
   const marked = (text, words) => ({
     text,
     marks: words.map((word) => [text.indexOf(word), text.indexOf(word) + word.length]),

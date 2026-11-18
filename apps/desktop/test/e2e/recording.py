@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import math
 import struct
@@ -73,9 +71,6 @@ PLAYERS = """
       tag: player.tagName.toLowerCase(),
       src: new URL(player.src, location.href).pathname,
       ready: player.readyState,
-      // A file `MediaRecorder` wrote carries no duration in its header - it was a live
-      // stream when it was written - so a browser answers `Infinity` for it until it has
-      // read the whole thing. That is a decoded file, not a broken one.
       duration: player.duration,
       wide: Math.round(player.getBoundingClientRect().width),
     })
@@ -188,9 +183,6 @@ PRESS_ROW = """
   )
   if (!found) return rows.map((one) => one.textContent.trim())
 
-  // A command that cannot run wears `.dim` and does nothing when pressed, so saying
-  // which of the two happened is the difference between a broken drive and a row that
-  // is honestly not available.
   const off = found.classList.contains('dim')
   found.click()
   return off ? 'greyed out' : 'pressed'
@@ -491,9 +483,6 @@ def phone(browser: Browser) -> None:
       const seen = box?.getBoundingClientRect()
       return {
         display: shown?.display ?? 'none',
-        // How far the bottom edge of the pill is from the bottom of the screen,
-        // which is what says whether it is clear of the gesture bar or sitting on
-        // it, and how tall it is under a thumb.
         above: Math.round(window.innerHeight - (seen?.bottom ?? 0)),
         tall: Math.round(seen?.height ?? 0),
         width: Math.round(seen?.width ?? 0),

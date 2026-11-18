@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 import time
 
@@ -80,9 +78,6 @@ PASTE = """
   const data = new DataTransfer()
   data.setData('text/plain', text)
   const event = new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true })
-  // The editor the selection was made in, not the first one in the page: a tab keeps
-  // its editor while another is in front, so the first `.cm-content` can be a note
-  // nobody is looking at.
   window.orden.contentDOM.dispatchEvent(event)
 }
 """

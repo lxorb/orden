@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Browser, Page
@@ -65,11 +63,8 @@ async () => {
   )
   await ws.noteFrom('# Chapter one\\n\\nreading\\n', at('Reading'))
 
-  // Named outright: with a name in hand the file is written at once, rather than a
-  // row waiting to be typed into. See `createCanvas`.
   await ws.createCanvas(root, 'Roadmap.canvas')
 
-  // A folder is not a file, so its icon comes out of the space's own map.
   ws.setFolderIcon(at('Reading'), 'flat-color-icons:folder')
 
   ws.toggleFolder(at('Reading'))

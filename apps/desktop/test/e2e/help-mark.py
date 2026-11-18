@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import Browser, Page
 
 from harness import Drive
@@ -25,7 +23,6 @@ MEASURE = """
     const svg = mark.querySelector('svg')
     const drawn = svg?.getBoundingClientRect()
     if (!drawn || !drawn.width) continue
-    // The words the mark follows: the last text with letters in it before the mark.
     const walker = document.createTreeWalker(mark.parentElement, NodeFilter.SHOW_TEXT)
     let words = null
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -42,20 +39,14 @@ MEASURE = """
     const style = getComputedStyle(words.parentElement)
     canvas.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
     const x = canvas.measureText('x')
-    // The text's box is its font's ascent and descent; the baseline is the ascent down.
     const baseline = last.top + x.fontBoundingBoxAscent
     const middle = baseline - x.actualBoundingBoxAscent / 2
     const centre = drawn.top + drawn.height / 2
-    // The words on the glyph's line, wherever bidi put them: the gap is to the end of
-    // that line in the label's direction, not to the last letter in memory.
     range.selectNodeContents(words)
     const line = [...range.getClientRects()].filter((one) => one.width && centre > one.top && centre < one.bottom)
     const gap = !line.length ? NaN : drawn.left - Math.max(...line.map((one) => one.right))
-    // Inside the box the words are in, which keeps the end of the line for the glyph.
     const box = mark.parentElement.getBoundingClientRect()
     const outside = drawn.right - box.right
-    // Glued to the last word: a word joiner straight after it, and not even a space
-    // between, which would widen the gap. Svelte's anchors are comments, and no text.
     let before = mark.previousSibling
     while (before?.nodeType === Node.COMMENT_NODE) before = before.previousSibling
     const glued = mark.firstChild?.nodeType === Node.TEXT_NODE && mark.firstChild.textContent === '\\u2060'
@@ -96,7 +87,6 @@ def styled(page: Page, size: int | None, face: str | None) -> None:
             style.id = 'help-mark-look'
             document.head.append(style)
           }
-          // Every row, and whatever else holds a mark: a caption, a link.
           style.textContent = '.orden-setting, .orden-setting *, :has(> .orden-mark), :has(> .orden-mark) * {' +
             (size ? `font-size: ${size}px !important;` : '') +
             (face ? `font-family: '${face}' !important;` : '') + '}'

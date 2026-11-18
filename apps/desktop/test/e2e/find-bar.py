@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 import time
 
@@ -47,8 +45,6 @@ SEED = """
 async (text) => {
   const ws = window.ordenApp.workspace
   const path = await ws.noteFrom(text, ws.activeSpace.root)
-  // Activated, not merely opened - and see `SHOWING`, which is what makes it stay
-  // activated through the sitting being read back.
   await ws.openEntry(path, { activate: true })
   if (ws.panel) ws.showPanel(null)
   return path

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Browser, Page
@@ -22,7 +20,6 @@ async () => {
   const ws = window.ordenApp.workspace
   const root = ws.activeSpace.root
   if (ws.panel !== 'tree') ws.showPanel('tree')
-  // As an agent or a sync writes them: past the app's own naming.
   const { writeFile } = await window.ordenApp.tasks()
   await ws.noteFrom('# Plain\\n', root)
   await ws.noteFrom('# Kept\\n', root + '/Folder')

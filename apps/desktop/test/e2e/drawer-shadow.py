@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from harness import Drive
 from shell import PHONE_AGENT, SEED
 

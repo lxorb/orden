@@ -1,6 +1,4 @@
 
-from __future__ import annotations
-
 from playwright.sync_api import Browser
 
 from harness import Drive

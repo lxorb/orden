@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from settling import HIDE_CARET, steady

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import time
 
@@ -78,9 +76,6 @@ BLOCKS = """
   const fenceStyle = said(fence)
   const calloutStyle = said(callout)
 
-  // A word in the code that the highlighter gave a colour of its own. Found by
-  // colour rather than by class, because which class a token wears is the
-  // highlighter's business and changes with the theme.
   const ink = said(root).color
   const token = [...root.querySelectorAll('.orden-code span')].find(
     (one) => one.textContent.trim() && getComputedStyle(one).color !== ink,
@@ -104,9 +99,6 @@ BLOCKS = """
     maths: !!root.querySelector('.katex'),
     tasks: root.querySelectorAll('.orden-checkbox, input[type=checkbox]').length,
     ticked: root.querySelectorAll('.orden-task-done').length,
-    // The first picture that names a file. A surface draws more than one `img` -
-    // a widget puts an empty one up while it works out where the file is - so the
-    // first element is not the answer; the first address is.
     picture:
       [...root.querySelectorAll('img')].map((one) => one.getAttribute('src')).find(Boolean) ??
       null,
@@ -126,13 +118,8 @@ INSIDE = """
   const box = card.getBoundingClientRect()
 
   return {
-    // The scope: the body is a writing surface, like every other place a note is
-    // read or written in this app - by the class, since the id is the pane's.
     scope: body.classList.contains('orden-write') && body.id !== 'write' ? 'write' : body.id,
     words: (inner ?? body).textContent.slice(0, 40),
-    // The lines inside the card's own box, which is what a reader sees of it. The
-    // card holds the whole note - what is typed in it goes back to the file - so
-    // where it is scrolled to is what says which part of the note the link named.
     showing: [...body.querySelectorAll('.cm-line')]
       .filter((one) => {
         const line = one.getBoundingClientRect()
@@ -143,7 +130,6 @@ INSIDE = """
       .join(' ')
       .slice(0, 160),
     name: card.querySelector('.orden-note-preview-name')?.textContent ?? null,
-    // The card is the note, so there is an editor in it and it can be typed in.
     written: body.dataset.written ?? 'no',
     editor: !!inner,
     editable: inner?.getAttribute('contenteditable') ?? null,

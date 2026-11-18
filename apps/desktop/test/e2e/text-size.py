@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import harness
 from harness import Drive
 
@@ -33,8 +31,6 @@ SIZE = """
     zoom: getComputedStyle(root).getPropertyValue('--zoom').trim(),
     kept: window.ordenApp.modes.zoom,
     badge: badge ? badge.textContent.trim() : null,
-    // What the app must never be doing: the page's own scale, which a webview
-    // zoom would move.
     scale: Math.round(window.devicePixelRatio * 100) / 100,
   }
 }

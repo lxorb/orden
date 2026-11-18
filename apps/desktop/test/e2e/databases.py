@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Page

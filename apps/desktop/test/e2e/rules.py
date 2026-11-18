@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 
 from playwright.sync_api import Browser, Page

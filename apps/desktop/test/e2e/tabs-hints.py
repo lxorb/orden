@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import functools
 import http.server
 import os
@@ -36,8 +34,6 @@ async (names) => {
     await ws.open(path)
     ws.keep(ws.activeTabId)
   }
-  // Whatever the launch opened on its own - the welcome note - goes, so the strip is
-  // these four.
   for (const one of ws.tabs.filter((tab) => !names.includes(tab.shown))) ws.close(one.id)
   ws.activate(ws.tabs.find((one) => one.shown === names[0]).id)
   if (!ws.panel) ws.showPanel('tree')

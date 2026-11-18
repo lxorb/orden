@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 from playwright.sync_api import Browser, Page
@@ -41,7 +39,6 @@ ROWS = """
     note: row?.querySelector('.orden-row-meta')?.textContent ?? null,
     twist: !!line.querySelector('.twist'),
     open: line.querySelector('.twist')?.getAttribute('aria-expanded') ?? null,
-    // Where the name starts, which is what the eye reads the nesting off.
     left: Math.round(
       row?.querySelector('.orden-row-label')?.getBoundingClientRect().left ?? 0,
     ),

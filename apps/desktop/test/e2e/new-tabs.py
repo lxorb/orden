@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 from harness import Drive
@@ -97,11 +95,6 @@ HERE = """
       if (!at || at === document.body) return null
       return at.querySelector('.orden-row-label')?.textContent.trim() ?? at.tagName.toLowerCase()
     })(),
-    // Each mark's artwork in its own 24 unit grid: where it starts down the box and
-    // how much of it it fills. Read off the drawing with `getBBox` rather than off
-    // the screen, so it is the ink and not the stroke around it. This is twice the
-    // size a row draws a mark at, which is where a mark that fills less of its grid
-    // than the rest stops being invisible; see file-mark.ts.
     marks: buttons.map((one) => {
       const svg = one.querySelector('.mark svg')
       if (!svg) return null
