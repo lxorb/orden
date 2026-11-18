@@ -1,7 +1,7 @@
 import { newKeyring } from '@orden/pass/keys'
 import { flushSync } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { closed, draw, landed, target } from '../test/drawn'
+import { closed, draw, landed, target, until } from '../test/drawn'
 import { FAST, PASSWORD, pass } from '../test/opened'
 import type { Account } from '../../accounts/src/routes'
 
@@ -23,15 +23,6 @@ async function settled(): Promise<void> {
     flushSync()
     await new Promise((done) => setTimeout(done, 20))
   }
-}
-
-async function until(ready: () => boolean, what: string): Promise<void> {
-  for (let tries = 0; tries < 200; tries++) {
-    flushSync()
-    if (ready()) return
-    await new Promise((done) => setTimeout(done, 20))
-  }
-  throw new Error(`never: ${what}`)
 }
 
 function signedInAs(id: string): void {

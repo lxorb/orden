@@ -56,3 +56,12 @@ export function vaultAs(role: Role, hidePasswordsFromViewers = false): Vault {
     shared: true,
   }
 }
+
+export async function until(ready: () => boolean, what: string): Promise<void> {
+  for (let tries = 0; tries < 200; tries++) {
+    flushSync()
+    if (ready()) return
+    await new Promise((done) => setTimeout(done, 20))
+  }
+  throw new Error(`never: ${what}`)
+}
