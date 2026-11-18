@@ -1165,9 +1165,7 @@ class Session {
 
     const folder = await source.where()
     const spec = this.spec()
-    if (folder && folder !== spec.folder) {
-      this.respec({ ...spec, folder })
-    }
+    if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
   }
 
   private reported(code: 7 | 9, data: string): boolean {
