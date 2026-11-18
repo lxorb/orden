@@ -6,10 +6,7 @@ vi.mock('../../accounts/src/account.svelte', async () => ({
   account: (await import('../../accounts/test/fakes')).accountDouble(),
 }))
 
-const server = vi.hoisted(() => ({
-  held: null as Promise<void> | null,
-  invites: [] as unknown[],
-}))
+const server = vi.hoisted(() => ({ held: null as Promise<void> | null, invites: [] as unknown[] }))
 
 vi.mock('../../accounts/src/client', () => ({ BASE: '', request: () => Promise.resolve({}) }))
 vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
