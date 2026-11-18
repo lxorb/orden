@@ -27,9 +27,7 @@ function shortName(step: string): boolean {
   return base !== undefined && base.length <= 8
 }
 
-export function namesByShortName(path: string): boolean {
-  return path.split(/[\\/]/).some(shortName)
-}
+export const namesByShortName = (path: string): boolean => path.split(/[\\/]/).some(shortName)
 
 function onWindows(): boolean {
   const os = (globalThis as { window?: { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } } })

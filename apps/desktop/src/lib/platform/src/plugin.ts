@@ -4,6 +4,4 @@ export function markPlugin(): void {
   plugin = true
 }
 
-export function isPlugin(): boolean {
-  return plugin
-}
+export const isPlugin = (): boolean => plugin

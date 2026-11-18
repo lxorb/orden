@@ -155,9 +155,7 @@ export function joinPath(dir: string, relative: string): string {
 
 const OPENABLE = /^(?:https?|mailto|tel):/i
 
-export function isOpenable(url: string): boolean {
-  return url.startsWith('//') || OPENABLE.test(url)
-}
+export const isOpenable = (url: string): boolean => url.startsWith('//') || OPENABLE.test(url)
 
 export async function openExternal(url: string): Promise<void> {
   if (!isOpenable(url)) return

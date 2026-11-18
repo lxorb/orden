@@ -3,9 +3,8 @@ import { mimeOfPath, UNKNOWN_TYPE } from './mime'
 
 export const ASSET_ROUTE = '/asset/'
 
-export function assetType(path: string, stored?: string): string {
-  return mimeOfPath(path) ?? stored ?? UNKNOWN_TYPE
-}
+export const assetType = (path: string, stored?: string): string =>
+  mimeOfPath(path) ?? stored ?? UNKNOWN_TYPE
 
 export function assetRoute(path: string): string {
   const inside = normalise(path).slice(1)

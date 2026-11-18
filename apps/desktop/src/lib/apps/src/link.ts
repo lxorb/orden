@@ -37,9 +37,7 @@ export class AppLink extends Channel<RelayToViewer, ViewerFrame> {
 
   resize(view: View): void {
     const was = this.view
-    if (was.width === view.width && was.height === view.height && was.dpr === view.dpr) {
-      if (was.hz === view.hz) return
-    }
+    if ((['width', 'height', 'dpr', 'hz'] as const).every((one) => was[one] === view[one])) return
     this.view = view
     this.say({ t: 'view', view })
   }

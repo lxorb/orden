@@ -4,15 +4,12 @@ const POLL_HIDDEN_MAX = 600_000
 
 export const NUDGE_DELAY = 2_000
 
-export function nudgeDelay(left: number): number {
-  return Math.min(NUDGE_DELAY, Math.max(0, left))
-}
+export const nudgeDelay = (left: number): number => Math.min(NUDGE_DELAY, Math.max(0, left))
 
 export const RECONCILE_INTERVAL = 300_000
 
-export function pollDelay(quiet: number, hidden: boolean): number {
-  return Math.min(POLL_BUSY * 2 ** quiet, hidden ? POLL_HIDDEN_MAX : POLL_IDLE_MAX)
-}
+export const pollDelay = (quiet: number, hidden: boolean): number =>
+  Math.min(POLL_BUSY * 2 ** quiet, hidden ? POLL_HIDDEN_MAX : POLL_IDLE_MAX)
 
 const ROOM_FIRST = 400
 const ROOM_MAX = 20_000
@@ -37,9 +34,8 @@ export const SAVE_DELAY = 400
 
 export const SAVE_AT_MOST = 2000
 
-export function saveRetryDelay(tries: number): number {
-  return Math.min(2_000 * 2 ** Math.max(0, tries - 1), 60_000)
-}
+export const saveRetryDelay = (tries: number): number =>
+  Math.min(2_000 * 2 ** Math.max(0, tries - 1), 60_000)
 
 export const BEAT_EVERY = 10_000
 
@@ -49,6 +45,5 @@ export const INPUT_EVERY = 30_000
 
 export const PRESENCE_EVERY = 60_000
 
-export function passing(status: number): boolean {
-  return status === 408 || status === 429 || status >= 500
-}
+export const passing = (status: number): boolean =>
+  status === 408 || status === 429 || status >= 500

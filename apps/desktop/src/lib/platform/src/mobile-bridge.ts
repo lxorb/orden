@@ -28,9 +28,7 @@ export function method<K extends keyof OrdenSystem>(name: K): OrdenSystem[K] | u
   return typeof held === 'function' ? (held.bind(found) as OrdenSystem[K]) : undefined
 }
 
-export function onTheActivity(): boolean {
-  return !!method('insets')
-}
+export const onTheActivity = (): boolean => !!method('insets')
 
 let word: Promise<string> | undefined
 
@@ -70,9 +68,7 @@ export function frameWord(): Promise<string> {
   return asking
 }
 
-export function wordSaid(): Promise<string> {
-  return spoken
-}
+export const wordSaid = (): Promise<string> => spoken
 
 export class NoWord extends Error {
   override readonly name = 'NoWord'

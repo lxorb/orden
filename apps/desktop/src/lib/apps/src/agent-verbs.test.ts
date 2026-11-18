@@ -83,8 +83,8 @@ function session(change: Partial<FakeSession> = {}): FakeSession & {
   return made
 }
 
-function call(args: Record<string, unknown>, mode = 'unsupervised') {
-  return applicationTabs({
+const call = (args: Record<string, unknown>, mode = 'unsupervised') =>
+  applicationTabs({
     verb: 'application_tabs',
     args,
     caller: callerOf({
@@ -95,7 +95,6 @@ function call(args: Record<string, unknown>, mode = 'unsupervised') {
       mode,
     }),
   }).catch((error: unknown) => error)
-}
 
 beforeEach(() => {
   sessions.clear()

@@ -1,11 +1,27 @@
-export function waited(ms = 0): Promise<void> {
-  return new Promise((go) => setTimeout(go, ms))
-}
+export const waited = (ms = 0): Promise<void> => new Promise((go) => setTimeout(go, ms))
 
 export interface Later {
   (): void
   cancel(): void
   flush(): void
+}
+
+function later(
+  ask: (fire: () => void) => void,
+  stop: () => void,
+  waiting: () => boolean,
+  run: () => void,
+): Later {
+  const fire = () => {
+    stop()
+    run()
+  }
+  return Object.assign(() => ask(fire), {
+    cancel: stop,
+    flush: () => {
+      if (waiting()) fire()
+    },
+  })
 }
 
 export function afterQuiet(
@@ -15,76 +31,35 @@ export function afterQuiet(
 ): Later {
   let timer: ReturnType<typeof setTimeout> | undefined
   let since: number | undefined
-
-  const waiting = () => {
-    timer = undefined
-    since = undefined
-    run()
+  const stop = () => {
+    clearTimeout(timer)
+    timer = since = undefined
   }
-
-  const later = () => {
+  const ask = (fire: () => void) => {
     clearTimeout(timer)
     const now = Date.now()
     since ??= now
-
     const wait = typeof ms === 'number' ? ms : ms()
-    timer = setTimeout(waiting, Math.max(0, Math.min(wait, since + atMost - now)))
+    timer = setTimeout(fire, Math.max(0, Math.min(wait, since + atMost - now)))
   }
-
-  later.cancel = () => {
-    clearTimeout(timer)
-    timer = undefined
-    since = undefined
-  }
-
-  later.flush = () => {
-    if (timer === undefined) return
-
-    clearTimeout(timer)
-    timer = undefined
-    since = undefined
-    run()
-  }
-
-  return later
+  return later(ask, stop, () => timer !== undefined, run)
 }
 
 export function onceAFrame(run: () => void): Later {
   let frame: number | undefined
-
-  const arrive = () => {
-    frame = undefined
-    run()
-  }
-
-  const ask = (): number =>
-    typeof requestAnimationFrame === 'function'
-      ? requestAnimationFrame(arrive)
-      : (setTimeout(arrive, 0) as unknown as number)
-
-  const drop = (held: number) => {
-    if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(held)
-    else clearTimeout(held as unknown as ReturnType<typeof setTimeout>)
-  }
-
-  const soon = () => {
-    frame ??= ask()
-  }
-
-  soon.cancel = () => {
-    if (frame !== undefined) drop(frame)
-    frame = undefined
-  }
-
-  soon.flush = () => {
+  const stop = () => {
     if (frame === undefined) return
-
-    drop(frame)
+    if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame)
+    else clearTimeout(frame as unknown as ReturnType<typeof setTimeout>)
     frame = undefined
-    run()
   }
-
-  return soon
+  const ask = (fire: () => void) => {
+    frame ??=
+      typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame(fire)
+        : (setTimeout(fire, 0) as unknown as number)
+  }
+  return later(ask, stop, () => frame !== undefined, run)
 }
 
 export const ANSWERS_WITHIN = 120_000

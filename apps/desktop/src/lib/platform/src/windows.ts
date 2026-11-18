@@ -124,6 +124,5 @@ export const windows = /* @__PURE__ */ new Windows(() =>
 
 const FILE_TURN_AT_MOST = 3_000
 
-export function oneWriteAt<T>(path: string, run: () => Promise<T>): Promise<T> {
-  return inTurn(() => `orden:file:${pathKey(path)}`, run, FILE_TURN_AT_MOST)
-}
+export const oneWriteAt = <T>(path: string, run: () => Promise<T>): Promise<T> =>
+  inTurn(() => `orden:file:${pathKey(path)}`, run, FILE_TURN_AT_MOST)
