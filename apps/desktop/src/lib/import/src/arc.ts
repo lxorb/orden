@@ -64,9 +64,8 @@ function listOf(value: unknown, wanted: (marker: unknown) => boolean): string | 
   return null
 }
 
-function isKey(marker: unknown, key: string): boolean {
-  return marker === key || (isObject(marker) && key in marker)
-}
+const isKey = (marker: unknown, key: string): boolean =>
+  marker === key || (isObject(marker) && key in marker)
 
 function profileIs(profile: unknown, folder: string): boolean {
   if (!isObject(profile)) return folder === 'Default'

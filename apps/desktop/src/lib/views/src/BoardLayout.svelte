@@ -268,11 +268,10 @@
     )
   }
 
-  function sumsOf(group: Group): string[] {
-    return Object.keys(view?.summaries ?? {})
+  const sumsOf = (group: Group): string[] =>
+    Object.keys(view?.summaries ?? {})
       .map((one) => valueText(group.summaries[one] ?? null, live.today))
       .filter(Boolean)
-  }
 
   let pickedFrom: { column: string; lane: string | null } | null = null
 
@@ -494,9 +493,8 @@
     return null
   })
 
-  function isFocus(column: string, lane: string | null, row: Row): boolean {
-    return rover?.column === column && rover.lane === lane && rover.card === cardKey(row)
-  }
+  const isFocus = (column: string, lane: string | null, row: Row): boolean =>
+    rover?.column === column && rover.lane === lane && rover.card === cardKey(row)
 
   async function focusAt(column: number, lane: number, index: number) {
     const group = shownGroups[column]

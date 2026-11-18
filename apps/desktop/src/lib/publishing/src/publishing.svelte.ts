@@ -71,13 +71,11 @@ function holdsPassword(blog: Blog | undefined): boolean {
   return !!site?.password
 }
 
-function copyRules(rules: SiteSettings['rules'] | undefined): SiteSettings['rules'] {
-  return {
-    include: [...(rules?.include ?? [])],
-    exclude: [...(rules?.exclude ?? [])],
-    otherwise: rules?.otherwise ?? 'all',
-  }
-}
+const copyRules = (rules: SiteSettings['rules'] | undefined): SiteSettings['rules'] => ({
+  include: [...(rules?.include ?? [])],
+  exclude: [...(rules?.exclude ?? [])],
+  otherwise: rules?.otherwise ?? 'all',
+})
 
 const same = (one: unknown, other: unknown) => JSON.stringify(one) === JSON.stringify(other)
 

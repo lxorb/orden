@@ -123,9 +123,8 @@
     return wide[Math.floor(wide.length / 2)] ?? screenRoom.w * WIDEST
   }
 
-  function wholeOf(cells: readonly Cell[]): Box {
-    return around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
-  }
+  const wholeOf = (cells: readonly Cell[]): Box =>
+    around(cells.flatMap(({ key }) => outlineAt(key) ?? []).map(boundsOf)) ?? room
 
   const CELLS_APART = 4
 
@@ -138,9 +137,8 @@
     return wide * SPACE_NAMES_MOST
   }
 
-  function outlineFor(key: string, boxes: readonly Box[]): Outline | null {
-    return outlineOf(boxes.map(captioned), NAME_ROOM, nameWide(key))
-  }
+  const outlineFor = (key: string, boxes: readonly Box[]): Outline | null =>
+    outlineOf(boxes.map(captioned), NAME_ROOM, nameWide(key))
 
   function outlineAt(key: string): Outline | null {
     const inside = resting.filter((slot) => cellOf.get(slot.id) === key && !heldIds.has(slot.id))
@@ -163,9 +161,7 @@
     return { x: place.x + (place.w - w) / 2, y: place.y + (place.h - h) / 2, w, h }
   }
 
-  function placeOf(key: string): Box {
-    return key === spaceKey ? room : (places.at(key) ?? room)
-  }
+  const placeOf = (key: string): Box => (key === spaceKey ? room : (places.at(key) ?? room))
 
   function packedPlaces(keys: readonly string[], taken: readonly Outline[], middle: Point) {
     const cells = keys.flatMap((key) => {
@@ -390,9 +386,7 @@
 
   let aside = $state<Record<string, Point>>({})
 
-  function offsetOf(key: string): Point | null {
-    return aside[key] ?? null
-  }
+  const offsetOf = (key: string): Point | null => aside[key] ?? null
 
   function pushAside() {
     const whole = held?.whole
@@ -455,9 +449,7 @@
     return { w: slot.w * 3, h: slot.h * 3 }
   }
 
-  function captioned(box: Box): Box {
-    return { ...box, h: box.h + CAPTION_ROOM }
-  }
+  const captioned = (box: Box): Box => ({ ...box, h: box.h + CAPTION_ROOM })
 
   const CAPTION_NEAR = 60
 
@@ -844,11 +836,8 @@
 
   let corner = 0
 
-  function cardCorner(): number {
-    return (
-      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-radius')) || 0
-    )
-  }
+  const cardCorner = (): number =>
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-radius')) || 0
 
   function cornersOf(node: HTMLElement): Corners {
     const style = getComputedStyle(node)

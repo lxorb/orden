@@ -13,9 +13,15 @@ import {
 const AREA = { x: 0, y: 40, width: 1000, height: 600 }
 const BUTTON = { x: 100, y: 100, width: 20, height: 20 }
 
-function asked(change: Partial<Parameters<typeof startOf>[0]> = {}) {
-  return { element: null, page: null, press: null, pressed: null, now: 1000, area: AREA, ...change }
-}
+const asked = (change: Partial<Parameters<typeof startOf>[0]> = {}) => ({
+  element: null,
+  page: null,
+  press: null,
+  pressed: null,
+  now: 1000,
+  area: AREA,
+  ...change,
+})
 
 describe('where a flight starts', () => {
   test('at the control it was asked for by', () => {

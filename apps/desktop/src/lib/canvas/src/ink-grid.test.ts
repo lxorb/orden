@@ -4,38 +4,30 @@ import type { Box } from '../../plane/src/api'
 import { strokeBox } from '../../plane/src/api'
 import { InkGrid } from './ink-grid'
 
-function stroke(id: string, x: number, y: number, wide = 20, tall = 8, size = 3): InkStroke {
-  return {
-    id,
-    tool: 'pen',
-    color: 'ink',
-    size,
-    points: [
-      { x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
-      { x: x + wide, y: y + tall, pressure: 0.5, tiltX: 0, tiltY: 0, t: 10 },
-    ],
-  }
-}
+const stroke = (id: string, x: number, y: number, wide = 20, tall = 8, size = 3): InkStroke => ({
+  id,
+  tool: 'pen',
+  color: 'ink',
+  size,
+  points: [
+    { x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
+    { x: x + wide, y: y + tall, pressure: 0.5, tiltX: 0, tiltY: 0, t: 10 },
+  ],
+})
 
-function meets(one: Box, other: Box): boolean {
-  return (
-    one.x < other.x + other.width &&
-    other.x < one.x + one.width &&
-    one.y < other.y + other.height &&
-    other.y < one.y + one.height
-  )
-}
+const meets = (one: Box, other: Box): boolean =>
+  one.x < other.x + other.width &&
+  other.x < one.x + one.width &&
+  one.y < other.y + other.height &&
+  other.y < one.y + one.height
 
-function walked(strokes: readonly InkStroke[], box: Box): string[] {
-  return strokes
+const walked = (strokes: readonly InkStroke[], box: Box): string[] =>
+  strokes
     .filter((one) => meets(strokeBox(one), box))
     .map((one) => one.id)
     .sort()
-}
 
-function ids(strokes: readonly InkStroke[]): string[] {
-  return strokes.map((one) => one.id).sort()
-}
+const ids = (strokes: readonly InkStroke[]): string[] => strokes.map((one) => one.id).sort()
 
 function numbers(seed: number) {
   let state = seed

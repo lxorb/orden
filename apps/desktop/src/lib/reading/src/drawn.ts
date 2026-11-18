@@ -70,9 +70,7 @@ function askedBy(card: HTMLElement, root: string): Drawn | null {
   return { kind, path, root, page: Number.isInteger(page) && page >= 1 ? page : null }
 }
 
-function written(target: string): string {
-  return decodeTarget(target)
-}
+const written = (target: string): string => decodeTarget(target)
 
 async function fill(card: HTMLElement, file: Drawn, showing: () => boolean): Promise<void> {
   const width = Math.round(card.clientWidth) || FALLBACK_WIDTH

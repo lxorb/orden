@@ -5,9 +5,8 @@ const INSET = 5
 const GROUND = '#17161c'
 const INK = '#f4f3f8'
 
-function opens(svg: string, attribute: string): string | null {
-  return new RegExp(`\\b${attribute}="([^"]*)"`).exec(svg)?.[1] ?? null
-}
+const opens = (svg: string, attribute: string): string | null =>
+  new RegExp(`\\b${attribute}="([^"]*)"`).exec(svg)?.[1] ?? null
 
 export function siteIcon(mark: Element | null): string | null {
   if (!mark) return null

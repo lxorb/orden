@@ -14,9 +14,11 @@ function file(path: string): Entry {
   }
 }
 
-function folder(path: string, children: Entry[] = []): Entry {
-  return { ...file(path), is_dir: true, children }
-}
+const folder = (path: string, children: Entry[] = []): Entry => ({
+  ...file(path),
+  is_dir: true,
+  children,
+})
 
 function root(): Entry {
   return folder('/N', [
@@ -26,9 +28,8 @@ function root(): Entry {
   ])
 }
 
-function shape(entry: Entry): string[] {
-  return entry.children.flatMap((child) => [child.path, ...shape(child)])
-}
+const shape = (entry: Entry): string[] =>
+  entry.children.flatMap((child) => [child.path, ...shape(child)])
 
 describe('the rows a space has archived, left out of the list', () => {
   test('go at any depth, and a folder takes everything under it', () => {

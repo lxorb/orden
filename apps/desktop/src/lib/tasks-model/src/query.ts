@@ -39,15 +39,14 @@ const hasLabel = (todo: Todo, label: string | null): boolean =>
 const stillShown = (todo: Todo, today: string): boolean =>
   !todo.done || (todo.doneAt !== null && dayOf(todo.doneAt) === today)
 
-export function shownTodos(todos: readonly Todo[], filter: Filter): Todo[] {
-  return todos.filter(
+export const shownTodos = (todos: readonly Todo[], filter: Filter): Todo[] =>
+  todos.filter(
     (todo) =>
       inSpace(todo, filter) &&
       stillShown(todo, filter.today) &&
       started(todo, filter.today) &&
       hasLabel(todo, filter.label),
   )
-}
 
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })
 

@@ -18,22 +18,17 @@ function inFolder(tree: Entry, path: string, change: (children: Entry[]) => Entr
   }
 }
 
-export function withEntry(tree: Entry, entry: Entry): Entry {
-  return inFolder(tree, folderOf(entry.path), (children) => [
+export const withEntry = (tree: Entry, entry: Entry): Entry =>
+  inFolder(tree, folderOf(entry.path), (children) => [
     ...children.filter((child) => child.path !== entry.path),
     entry,
   ])
-}
 
-export function withoutEntry(tree: Entry, path: string): Entry {
-  return inFolder(tree, folderOf(path), (children) =>
-    children.filter((child) => child.path !== path),
-  )
-}
+export const withoutEntry = (tree: Entry, path: string): Entry =>
+  inFolder(tree, folderOf(path), (children) => children.filter((child) => child.path !== path))
 
-export function entryAt(tree: Entry | null, path: string): Entry | null {
-  return spelledAs(tree, path) ?? (tree ? spelledOtherwise(tree, path) : null)
-}
+export const entryAt = (tree: Entry | null, path: string): Entry | null =>
+  spelledAs(tree, path) ?? (tree ? spelledOtherwise(tree, path) : null)
 
 function spelledAs(tree: Entry | null, path: string): Entry | null {
   if (!tree) return null
@@ -90,16 +85,14 @@ function withFolders(tree: Entry, path: string): Entry {
   return withEntry(withFolders(tree, folderOf(path)), blank(path, true))
 }
 
-function blank(path: string, isFolder: boolean): Entry {
-  return {
-    name: nameOf(path),
-    path,
-    is_dir: isFolder,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
+const blank = (path: string, isFolder: boolean): Entry => ({
+  name: nameOf(path),
+  path,
+  is_dir: isFolder,
+  modified: 0,
+  created: 0,
+  children: [],
+})
 
 export function withMove(tree: Entry, from: string, to: string): Entry {
   const entry = entryAt(tree, from)

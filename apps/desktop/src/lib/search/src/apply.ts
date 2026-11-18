@@ -68,13 +68,10 @@ function phrased(query: Query): Query {
   return { ...query, of: out }
 }
 
-function followsAs(next: Query | undefined, words: Words): next is Words {
-  return (next?.kind === 'text' || next?.kind === 'content') && next.fold === words.fold
-}
+const followsAs = (next: Query | undefined, words: Words): next is Words =>
+  (next?.kind === 'text' || next?.kind === 'content') && next.fold === words.fold
 
-function oneLine(unit: Unit): boolean {
-  return unit === 'line' || aKindOfLine(unit)
-}
+const oneLine = (unit: Unit): boolean => unit === 'line' || aKindOfLine(unit)
 
 export async function changesFor(
   query: Query,

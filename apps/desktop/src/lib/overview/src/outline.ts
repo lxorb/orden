@@ -32,9 +32,8 @@ export function outlineOf(boxes: readonly Box[], above = 0, wide = 0): Outline |
   return joined(bubble, boxOutline(name))
 }
 
-export function moved(o: Outline, x: number, y: number): Outline {
-  return Float64Array.from(o, (one, i) => one + x * (COS[i] ?? 0) + y * (SIN[i] ?? 0))
-}
+export const moved = (o: Outline, x: number, y: number): Outline =>
+  Float64Array.from(o, (one, i) => one + x * (COS[i] ?? 0) + y * (SIN[i] ?? 0))
 
 export function gapOf(a: Outline, b: Outline): number {
   let widest = Number.NEGATIVE_INFINITY

@@ -34,16 +34,15 @@ function transfer() {
   } as unknown as DataTransfer
 }
 
-function dragEvent(dataTransfer: DataTransfer, keys: Partial<DragEvent> = {}) {
-  return {
+const dragEvent = (dataTransfer: DataTransfer, keys: Partial<DragEvent> = {}) =>
+  ({
     dataTransfer,
     ctrlKey: false,
     altKey: false,
     shiftKey: false,
     preventDefault: vi.fn(),
     ...keys,
-  } as unknown as DragEvent
-}
+  }) as unknown as DragEvent
 
 describe("a file explorer's drag", () => {
   test('carries its paths, and a file list drag too where all of them are in a space', () => {

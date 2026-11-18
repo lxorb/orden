@@ -3,9 +3,7 @@ export function marked(name: string, value: string): HTMLElement | null {
   return document.querySelector<HTMLElement>(`[data-${name}="${quoted}"]`)
 }
 
-function paneBody(paneId: string): HTMLElement | null {
-  return marked('pane', paneId)
-}
+const paneBody = (paneId: string): HTMLElement | null => marked('pane', paneId)
 
 export function shownBox(paneId: string): DOMRect | null {
   const pane = paneBody(paneId)

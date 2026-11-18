@@ -10,14 +10,11 @@ const STATES: DomainStatus['state'][] = [
   'unconfigured',
 ]
 
-export function isDomainStatus(value: unknown): value is DomainStatus {
-  return (
-    isRecord(value) &&
-    STATES.some((one) => one === value.state) &&
-    Array.isArray(value.dns) &&
-    (value.detail === null || isString(value.detail))
-  )
-}
+export const isDomainStatus = (value: unknown): value is DomainStatus =>
+  isRecord(value) &&
+  STATES.some((one) => one === value.state) &&
+  Array.isArray(value.dns) &&
+  (value.detail === null || isString(value.detail))
 
 export interface Notice {
   tone: 'muted' | 'ok' | 'bad'
@@ -50,6 +47,5 @@ export function domainNotice(status: DomainStatus): Notice | null {
   }
 }
 
-export function keepAsking(status: DomainStatus | null): boolean {
-  return status?.state === 'pending' || status?.state === 'error'
-}
+export const keepAsking = (status: DomainStatus | null): boolean =>
+  status?.state === 'pending' || status?.state === 'error'

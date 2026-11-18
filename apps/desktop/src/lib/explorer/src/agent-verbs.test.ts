@@ -111,13 +111,12 @@ vi.mock('../../sharing/src/api', () => ({
 
 const { explorerTabs, namesAt } = await import('./agent-verbs')
 
-function call(args: Record<string, unknown>, mode = 'confirm') {
-  return explorerTabs({
+const call = (args: Record<string, unknown>, mode = 'confirm') =>
+  explorerTabs({
     verb: 'explorer_tabs',
     args,
     caller: callerOf({ id: 'claude', name: 'Claude', scopes: ['files'], mode }),
   }).catch((error: unknown) => error)
-}
 
 beforeEach(() => {
   view = fakeView()

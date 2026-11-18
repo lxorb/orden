@@ -68,9 +68,8 @@ function quotedValue(value: string): string {
   return `'${value.replace(/'/g, "''")}'`
 }
 
-function asSource(path: string, written: string): string {
-  return written.startsWith('<') || path.includes(' ') || !balanced(path) ? `<${path}>` : path
-}
+const asSource = (path: string, written: string): string =>
+  written.startsWith('<') || path.includes(' ') || !balanced(path) ? `<${path}>` : path
 
 function balanced(path: string): boolean {
   let open = 0

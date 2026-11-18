@@ -91,9 +91,9 @@ export function distinctKeys(): (row: Row, group: string) => string {
   }
 }
 
-export function everyRow(groups: readonly Group[]): Row[] {
-  return [...new Set(groups.flatMap((group) => group.rows))]
-}
+export const everyRow = (groups: readonly Group[]): Row[] => [
+  ...new Set(groups.flatMap((group) => group.rows)),
+]
 
 export function listItems(groups: readonly Group[], options: ListOptions): Item[] {
   const out: Item[] = []
@@ -152,9 +152,8 @@ export function withEveryDay(groups: readonly Group[], from: string, through: st
   return out
 }
 
-export function withinDays(groups: readonly Group[], from: string, through: string): Group[] {
-  return groups.filter((group) => {
+export const withinDays = (groups: readonly Group[], from: string, through: string): Group[] =>
+  groups.filter((group) => {
     const day = dayIn(group.key)
     return day === null || (day >= from && day <= through)
   })
-}

@@ -2,9 +2,8 @@ import { todayOf } from '@orden/bases'
 
 const two = (value: number) => String(value).padStart(2, '0')
 
-function nowOf(at: Date): string {
-  return `${todayOf(at)}T${two(at.getHours())}:${two(at.getMinutes())}:${two(at.getSeconds())}`
-}
+const nowOf = (at: Date): string =>
+  `${todayOf(at)}T${two(at.getHours())}:${two(at.getMinutes())}:${two(at.getSeconds())}`
 
 export const todayHere = (): string => todayOf()
 

@@ -35,9 +35,8 @@ function frontValue(value: Value): unknown {
   return typeof display === 'string' && display ? `[[${target}|${display}]]` : `[[${target}]]`
 }
 
-export function askedProperties(asked: Record<string, Value> = {}): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(asked).map(([name, value]) => [name, frontValue(value)]))
-}
+export const askedProperties = (asked: Record<string, Value> = {}): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(asked).map(([name, value]) => [name, frontValue(value)]))
 
 export function groupProperties(group?: { property: string; key: Value }): Record<string, unknown> {
   if (!group || !isNoteProperty(group.property)) return {}

@@ -7,13 +7,11 @@ import { type Host, type RowsChange, RowsStore } from './store'
 const WORK = '/spaces/Work'
 const HOME = '/spaces/Home'
 
-function scanned(path: string, content: string): ScannedNote {
-  return {
-    ...scanNote(path, content),
-    ...scanRows(content),
-    stamp: { size: content.length, mtime: 1, ctime: 1 },
-  }
-}
+const scanned = (path: string, content: string): ScannedNote => ({
+  ...scanNote(path, content),
+  ...scanRows(content),
+  stamp: { size: content.length, mtime: 1, ctime: 1 },
+})
 
 interface Rig {
   store: RowsStore

@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  DICTIONARIES,
-  dictionaryFor,
-  inForce,
-  inForceNow,
-  toggled,
-} from './spell-languages'
+import { DICTIONARIES, dictionaryFor, inForce, inForceNow, toggled } from './spell-languages'
 
 describe('the dictionary a language reads in', () => {
   test('is its own where Chromium has one', () => {

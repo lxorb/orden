@@ -58,9 +58,7 @@ const PAGE_TOP: IconNode = [
   ['path', { d: 'M14 2v5a1 1 0 0 0 1 1h5' }],
 ]
 
-function typeMark(letters: IconNode): IconNode {
-  return [...PAGE_TOP, ...letters]
-}
+const typeMark = (letters: IconNode): IconNode => [...PAGE_TOP, ...letters]
 
 const Pdf: IconNode = typeMark([
   ['path', { d: 'M3 21v-7h2a2 2 0 0 1 0 4H3' }],
@@ -104,9 +102,8 @@ export const MARKS: Record<FileMark, IconNode> = {
   settings: Cog,
 }
 
-export function faceOf(mark: FileMark, chosen: boolean): 'mark' | 'letter' {
-  return mark === 'note' && !chosen ? 'letter' : 'mark'
-}
+export const faceOf = (mark: FileMark, chosen: boolean): 'mark' | 'letter' =>
+  mark === 'note' && !chosen ? 'letter' : 'mark'
 
 const GRAPHEMES = new Intl.Segmenter()
 

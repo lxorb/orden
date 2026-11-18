@@ -174,16 +174,13 @@ function menuRows(): MenuItem[] {
   return submenu.rows.filter((row): row is MenuItem => row !== null && !isSubmenu(row))
 }
 
-function menuLabels(): string[] {
-  return menuRows().map((row) => row.label)
-}
+const menuLabels = (): string[] => menuRows().map((row) => row.label)
 
-function offeredIds(): string[] {
-  return exportCommands()
+const offeredIds = (): string[] =>
+  exportCommands()
     .map((command) => command.id)
     .filter((id) => id.startsWith('export-'))
     .map((id) => id.slice('export-'.length))
-}
 
 async function only(open: () => Promise<void> | void) {
   for (const tab of [...workspace.tabs]) workspace.close(tab.id)

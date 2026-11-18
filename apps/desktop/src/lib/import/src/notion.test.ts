@@ -10,13 +10,9 @@ const SUB = 'aaaabbbbccccddddeeeeffff00001111'
 const TASKS = '99998888777766665555444433332222'
 const ROW = '11112222333344445555666677778888'
 
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 
-function pathsOf(plan: ImportPlan): string[] {
-  return plan.files.map((one) => one.path)
-}
+const pathsOf = (plan: ImportPlan): string[] => plan.files.map((one) => one.path)
 
 function noteAt(plan: ImportPlan, path: string): string {
   const found = plan.files.find((one) => one.path === path)

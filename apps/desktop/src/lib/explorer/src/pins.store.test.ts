@@ -51,9 +51,7 @@ function pinned(...paths: string[]) {
   for (const one of paths) places.pin(one)
 }
 
-function kept(): unknown {
-  return JSON.parse(localStorage.getItem('orden:explorer-pinned') ?? 'null')
-}
+const kept = (): unknown => JSON.parse(localStorage.getItem('orden:explorer-pinned') ?? 'null')
 
 describe('a pinned folder follows a rename or move made in Orden', () => {
   beforeEach(async () => {

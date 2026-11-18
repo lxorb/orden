@@ -13,9 +13,7 @@ const CSV = [
   'Ubik,Reading,224,March 4 2026,',
 ].join('\n')
 
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 
 function noteAt(plan: ImportPlan, path: string): string {
   const found = plan.files.find((one) => one.path === path)

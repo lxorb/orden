@@ -26,9 +26,7 @@ const EXTENSIONS = new Map<string, string>(
   [...EXPORT_FORMATS, ...EXPORT_VARIANTS].map((entry) => [entry.id, entry.extension]),
 )
 
-export function extensionFor(id: Exportable): string {
-  return EXTENSIONS.get(id) ?? 'bin'
-}
+export const extensionFor = (id: Exportable): string => EXTENSIONS.get(id) ?? 'bin'
 
 export const TEXTPACK = 'textpack'
 

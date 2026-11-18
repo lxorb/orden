@@ -22,9 +22,8 @@ const WORDS: FolderWords = {
 const NOW = new Date('2026-10-18T08:00:00.000Z')
 const CONTAINERS = 'Containers stay in Firefox'
 
-function planned(session: unknown = SESSION, bookmarks: unknown = BOOKMARKS) {
-  return sidebarImport(firefoxSidebar(session, bookmarks, 'Firefox', WORDS), NOW, CONTAINERS)
-}
+const planned = (session: unknown = SESSION, bookmarks: unknown = BOOKMARKS) =>
+  sidebarImport(firefoxSidebar(session, bookmarks, 'Firefox', WORDS), NOW, CONTAINERS)
 
 describe("Firefox's tabs and bookmarks as Orden's", () => {
   test('is one space, named as asked', () => {

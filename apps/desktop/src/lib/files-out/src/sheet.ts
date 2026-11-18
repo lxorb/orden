@@ -118,12 +118,11 @@ export function pageWith(html: string, pictures: readonly Placed[]): Blob {
   return new Blob(placed(html, wanted), { type: 'text/html' })
 }
 
-function swapped(html: string, links: ReadonlyMap<string, string>): string {
-  return html.replace(PLACED, (whole: string, before: string, src: string, after: string) => {
+const swapped = (html: string, links: ReadonlyMap<string, string>): string =>
+  html.replace(PLACED, (whole: string, before: string, src: string, after: string) => {
     const link = links.get(src)
     return link === undefined ? whole : `${before}${link}${after}`
   })
-}
 
 async function pictureOf(path: string, mime: string): Promise<Blob | null> {
   if (isNative) {

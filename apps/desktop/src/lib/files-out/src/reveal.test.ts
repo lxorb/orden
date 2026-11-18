@@ -38,13 +38,12 @@ beforeEach(() => {
   state.shows = true
 })
 
-function sources(folder: string, ending: RegExp): string[] {
-  return readdirSync(folder).flatMap((name) => {
+const sources = (folder: string, ending: RegExp): string[] =>
+  readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
     if (statSync(path).isDirectory()) return sources(path, ending)
     return ending.test(name) && !name.includes('.test.') ? [path] : []
   })
-}
 
 const LIB = join(import.meta.dirname, '../..')
 const TAURI = join(LIB, '../../src-tauri')

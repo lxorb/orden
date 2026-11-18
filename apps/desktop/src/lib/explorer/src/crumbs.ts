@@ -38,9 +38,7 @@ function topName(top: string): string {
   return top === '/' ? '/' : top.replace(/\\$/, '')
 }
 
-export function folderName(folder: string): string {
-  return crumbsOf(folder).at(-1)?.name ?? folder
-}
+export const folderName = (folder: string): string => crumbsOf(folder).at(-1)?.name ?? folder
 
 export function parentOf(folder: string): string | null {
   const crumbs = crumbsOf(folder)

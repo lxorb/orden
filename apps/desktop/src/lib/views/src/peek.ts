@@ -103,6 +103,5 @@ function key(event: KeyboardEvent) {
   if (held.back?.isConnected) held.back.focus()
 }
 
-function writable(target: HTMLElement): boolean {
-  return target.isContentEditable || target.closest('input, textarea, select') !== null
-}
+const writable = (target: HTMLElement): boolean =>
+  target.isContentEditable || target.closest('input, textarea, select') !== null

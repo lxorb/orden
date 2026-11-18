@@ -5,13 +5,10 @@ import { BY_ID } from '../../shortcuts/src/registry'
 
 const TOOLS: ToolMark[] = [...ABOUT, ...RUBBING, ...PLACING]
 
-function drawable(icon: unknown): boolean {
-  return (
-    Array.isArray(icon) &&
-    icon.length > 0 &&
-    icon.every((one) => Array.isArray(one) && typeof one[0] === 'string' && one.length >= 2)
-  )
-}
+const drawable = (icon: unknown): boolean =>
+  Array.isArray(icon) &&
+  icon.length > 0 &&
+  icon.every((one) => Array.isArray(one) && typeof one[0] === 'string' && one.length >= 2)
 
 describe('what the bar is drawn from', () => {
   test('every tool on it has an icon that can be drawn', () => {

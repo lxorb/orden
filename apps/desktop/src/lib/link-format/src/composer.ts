@@ -16,13 +16,10 @@ const SEAM = '\n\n---\n\n'
 
 const LISTED = new Set(['aliases', 'alias', 'tags', 'tag', 'cssclasses'])
 
-function edited(text: string, edit: { from: number; to: number; insert: string } | null): string {
-  return edit ? text.slice(0, edit.from) + edit.insert + text.slice(edit.to) : text
-}
+const edited = (text: string, edit: { from: number; to: number; insert: string } | null): string =>
+  edit ? text.slice(0, edit.from) + edit.insert + text.slice(edit.to) : text
 
-function lineEnded(text: string): string {
-  return text.endsWith('\n') ? text : `${text}\n`
-}
+const lineEnded = (text: string): string => (text.endsWith('\n') ? text : `${text}\n`)
 
 function withMatterOf(into: string, from: string): string {
   const block = frontMatterBlock(from)
@@ -57,24 +54,21 @@ export function merged(into: string, from: string): string {
   return `${head}${SEAM}${tail}\n`
 }
 
-export function linkTo(
+export const linkTo = (
   name: string,
   shown?: string | null,
   about: Omit<LinkTarget, 'name' | 'shown'> = {},
   format: LinkFormat = linkWriting(),
-): string {
-  return formatLink({ ...about, name, ...(shown ? { shown } : {}) }, format)
-}
+): string => formatLink({ ...about, name, ...(shown ? { shown } : {}) }, format)
 
-export function pickedLink(target: LinkWrite): string {
-  return linkTo(target.name, target.shown ?? null, {
+export const pickedLink = (target: LinkWrite): string =>
+  linkTo(target.name, target.shown ?? null, {
     markdown: target.markdown ?? null,
     path: target.path ?? null,
     from: target.from ?? null,
     fragment: target.fragment ?? null,
     file: target.file ?? null,
   })
-}
 
 export interface Split {
   kept: string
@@ -116,9 +110,8 @@ export function extracted(
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
-function noteNamed(name: string): string {
-  return isTabFile(name) || MARKDOWN.test(name) ? `${name}.md` : name
-}
+const noteNamed = (name: string): string =>
+  isTabFile(name) || MARKDOWN.test(name) ? `${name}.md` : name
 
 const SENTENCE_END = /[.!?。！？]+$/u
 
@@ -128,6 +121,5 @@ function oneLine(text: string): string {
   return words.length > 0 && words.length <= 60 ? words : ''
 }
 
-function lineStart(text: string, at: number): number {
-  return text.lastIndexOf('\n', Math.max(0, at - 1)) + 1
-}
+const lineStart = (text: string, at: number): number =>
+  text.lastIndexOf('\n', Math.max(0, at - 1)) + 1

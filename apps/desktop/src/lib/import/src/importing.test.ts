@@ -3,13 +3,11 @@ import { describe, expect, test } from 'vitest'
 
 import { folderNameFor } from './folder-name'
 
-function picked(name: string, inside = ''): PickedFile {
-  return {
-    name,
-    webkitRelativePath: inside,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-  }
-}
+const picked = (name: string, inside = ''): PickedFile => ({
+  name,
+  webkitRelativePath: inside,
+  arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+})
 
 describe('the folder an import makes for itself', () => {
   test('is named after the file that was picked', () => {

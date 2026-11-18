@@ -94,8 +94,8 @@ async function measuredHeight(html: string, width: number): Promise<number> {
   }
 }
 
-function loadedPicture(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+const loadedPicture = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
     const picture = new Image()
     picture.addEventListener('load', () => {
       resolve(picture)
@@ -105,7 +105,6 @@ function loadedPicture(url: string): Promise<HTMLImageElement> {
     })
     picture.src = url
   })
-}
 
 interface Paper {
   width: number

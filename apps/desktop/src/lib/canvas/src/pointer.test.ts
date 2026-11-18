@@ -17,42 +17,38 @@ import { RUB, STROKE_RUB } from './pens.svelte'
 
 const HERE = { x: 0, y: 0 }
 
-function context(over: Partial<Context> = {}): Context {
-  return {
-    tool: 'select',
-    picked: [],
-    editing: null,
-    scale: 1,
-    inkBox: null,
-    pen: { tool: 'pen', size: 3, color: '#000', opacity: 1 },
-    eraser: { whole: false, size: RUB, stroke: STROKE_RUB },
-    lassoBox: false,
-    aspect: false,
-    straighten: true,
-    penSeen: false,
-    fingerDraws: false,
-    ...over,
-  }
-}
+const context = (over: Partial<Context> = {}): Context => ({
+  tool: 'select',
+  picked: [],
+  editing: null,
+  scale: 1,
+  inkBox: null,
+  pen: { tool: 'pen', size: 3, color: '#000', opacity: 1 },
+  eraser: { whole: false, size: RUB, stroke: STROKE_RUB },
+  lassoBox: false,
+  aspect: false,
+  straighten: true,
+  penSeen: false,
+  fingerDraws: false,
+  ...over,
+})
 
-function down(over: Partial<Down> = {}): Down {
-  return {
-    kind: 'down',
-    id: 1,
-    pointer: 'mouse',
-    at: HERE,
-    screen: HERE,
-    time: 0,
-    button: 0,
-    shift: false,
-    adds: false,
-    alt: false,
-    eraser: false,
-    sample: { x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
-    hit: NOTHING,
-    ...over,
-  }
-}
+const down = (over: Partial<Down> = {}): Down => ({
+  kind: 'down',
+  id: 1,
+  pointer: 'mouse',
+  at: HERE,
+  screen: HERE,
+  time: 0,
+  button: 0,
+  shift: false,
+  adds: false,
+  alt: false,
+  eraser: false,
+  sample: { x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 },
+  hit: NOTHING,
+  ...over,
+})
 
 type Over<Kind> = Partial<Extract<Input, { kind: Kind }>>
 
@@ -75,9 +71,7 @@ const up = (at: typeof HERE, over: Over<'up'> = {}): Input => ({
   ...over,
 })
 
-function hit(over: Partial<Hit>): Hit {
-  return { ...NOTHING, ...over }
-}
+const hit = (over: Partial<Hit>): Hit => ({ ...NOTHING, ...over })
 
 function play(inputs: Input[], where: Context, from: Machine = start()) {
   let machine = from

@@ -15,17 +15,15 @@ import {
   writeSheet,
 } from './highlights'
 
-function mark(over: Partial<Highlight> = {}): Highlight {
-  return {
-    id: 'abc123',
-    page: 3,
-    text: 'the selected words',
-    quads: [[100, 712, 200, 712, 200, 700, 100, 700]],
-    colour: 0,
-    created: 1_700_000_000_000,
-    ...over,
-  }
-}
+const mark = (over: Partial<Highlight> = {}): Highlight => ({
+  id: 'abc123',
+  page: 3,
+  text: 'the selected words',
+  quads: [[100, 712, 200, 712, 200, 700, 100, 700]],
+  colour: 0,
+  created: 1_700_000_000_000,
+  ...over,
+})
 
 describe('the sidecar', () => {
   test('is named after the PDF, under the name the Rust side writes', () => {

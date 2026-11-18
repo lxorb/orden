@@ -133,9 +133,8 @@ function spotOf(text: string, link: FoundLink): Spot {
     : { labelFrom, labelTo: Math.max(inline, labelFrom), defined: false }
 }
 
-function linksWritten(text: string, write: Write): string {
-  return written(text, findLinks(text, true), 0, text.length, write)
-}
+const linksWritten = (text: string, write: Write): string =>
+  written(text, findLinks(text, true), 0, text.length, write)
 
 function written(
   text: string,
@@ -379,9 +378,7 @@ function captured(
   )
 }
 
-function namesNote(path: string): boolean {
-  return isMarkdownPath(path) || isWebTarget(path)
-}
+const namesNote = (path: string): boolean => isMarkdownPath(path) || isWebTarget(path)
 
 function nearest(
   said: string,
@@ -526,9 +523,8 @@ function propertiesTo(text: string): number {
   return lines.slice(0, propertiesEnd(lines)).join('\n').length
 }
 
-function inCode(ranges: readonly [number, number][], offset: number): boolean {
-  return ranges.some(([from, to]) => offset >= from && offset < to)
-}
+const inCode = (ranges: readonly [number, number][], offset: number): boolean =>
+  ranges.some(([from, to]) => offset >= from && offset < to)
 
 function splitTarget(inside: string): { target: string; title: string } {
   const said = inside.trim()

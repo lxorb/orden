@@ -70,13 +70,12 @@ export function basesAre(paths: readonly string[]) {
 
 const running = (): boolean => held.size > 0
 
-function heldIn(space: string, led = false): HeldBase[] {
-  return [...held.entries()].flatMap(([path, one]) => {
+const heldIn = (space: string, led = false): HeldBase[] =>
+  [...held.entries()].flatMap(([path, one]) => {
     if ((led && !leading.has(path)) || protection.locked(path)) return []
     const base = one.space === space ? guardedAt(one.base, path) : null
     return base ? [{ ...one, base }] : []
   })
-}
 const ours = new Set<string>()
 const waiting = new Map<
   string,
@@ -124,9 +123,8 @@ export async function readHeld(path: string): Promise<void> {
   forget(path)
 }
 
-function rowsOf(space: string, path: string): readonly Row[] {
-  return rows.of(space).filter((row) => row.path === path)
-}
+const rowsOf = (space: string, path: string): readonly Row[] =>
+  rows.of(space).filter((row) => row.path === path)
 
 function numbering(path: string) {
   const space = spaceHolding(workspace.spaces, path)
@@ -243,9 +241,8 @@ const MAKING = 'orden:repeat-templates'
 
 const MAKING_PATIENCE = 60_000
 
-export function repeatTemplates(): Promise<void> {
-  return inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
-}
+export const repeatTemplates = (): Promise<void> =>
+  inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
 
 async function makeRepeats() {
   const space = workspace.activeSpace

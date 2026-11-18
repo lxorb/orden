@@ -23,9 +23,10 @@
 
   const NONE = ''
 
-  function direction(sort: Sort): Sort {
-    return { ...sort, direction: sort.direction === 'ASC' ? 'DESC' : 'ASC' }
-  }
+  const direction = (sort: Sort): Sort => ({
+    ...sort,
+    direction: sort.direction === 'ASC' ? 'DESC' : 'ASC',
+  })
 </script>
 
 {#snippet arrow(sort: Sort, flip: () => void)}

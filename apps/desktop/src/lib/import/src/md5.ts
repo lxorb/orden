@@ -9,9 +9,7 @@ const SINES = Uint32Array.from({ length: 64 }, (_one, step) =>
   Math.floor(Math.abs(Math.sin(step + 1)) * 2 ** 32),
 )
 
-function rotated(value: number, by: number): number {
-  return ((value << by) | (value >>> (32 - by))) >>> 0
-}
+const rotated = (value: number, by: number): number => ((value << by) | (value >>> (32 - by))) >>> 0
 
 export function md5(bytes: Uint8Array): string {
   const padded = withPadding(bytes)

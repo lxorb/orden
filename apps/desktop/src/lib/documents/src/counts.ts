@@ -5,11 +5,8 @@ export interface Counts {
   minutes: number
 }
 
-function isSpace(code: number): boolean {
-  return (
-    code === 32 || (code >= 9 && code <= 13) || code === 160 || code === 0x3000 || code === 0x200b
-  )
-}
+const isSpace = (code: number): boolean =>
+  code === 32 || (code >= 9 && code <= 13) || code === 160 || code === 0x3000 || code === 0x200b
 
 export function countText(text: string): Counts {
   let words = 0

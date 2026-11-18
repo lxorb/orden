@@ -25,9 +25,7 @@ function textOf(spans: readonly Span[]): string {
 
 const GRAPHEMES = new Intl.Segmenter()
 
-function shownWidth(text: string): number {
-  return [...GRAPHEMES.segment(text)].length
-}
+const shownWidth = (text: string): number => [...GRAPHEMES.segment(text)].length
 
 function widths(rows: readonly string[][]): number[] {
   const out: number[] = []
@@ -135,9 +133,8 @@ function pushAll(out: string[], lines: readonly string[]) {
   for (const line of lines) out.push(line)
 }
 
-function wrapped(text: string, indent: string): string[] {
-  return text.split('\n').map((line) => `${indent}${line}`.trimEnd())
-}
+const wrapped = (text: string, indent: string): string[] =>
+  text.split('\n').map((line) => `${indent}${line}`.trimEnd())
 
 export function toPlainText(doc: Doc): string {
   const lines: string[] = []

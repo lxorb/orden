@@ -4,9 +4,7 @@ import type { Nib } from './pens.svelte'
 
 const SAMPLES = 44
 
-function pressureAt(share: number): number {
-  return 0.3 + 0.7 * Math.sin(Math.PI * share) ** 0.7
-}
+const pressureAt = (share: number): number => 0.3 + 0.7 * Math.sin(Math.PI * share) ** 0.7
 
 export function sampleStroke(nib: Nib, width: number, height: number): InkStroke {
   const room = Math.max(nib.size * 0.9, 3) + 2
@@ -41,6 +39,5 @@ export function sampleStroke(nib: Nib, width: number, height: number): InkStroke
   }
 }
 
-export function samplePath(nib: Nib, width: number, height: number): string {
-  return inkPath(outlineOf(sampleStroke(nib, width, height)))
-}
+export const samplePath = (nib: Nib, width: number, height: number): string =>
+  inkPath(outlineOf(sampleStroke(nib, width, height)))

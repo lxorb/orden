@@ -65,31 +65,29 @@ function current(): import('../../../../test/disk').Disk {
 const changes = () =>
   current().sent.filter((one) => /^(write_note|rename_note|delete_note|trash_item) /.test(one))
 
-function sitting() {
-  return {
-    frame: {
-      kind: 'pane' as const,
-      pane: {
-        id: 'p1',
-        active: 0,
-        linked: false,
-        tabs: [
-          {
-            kind: 'pdf' as const,
-            path: PAPER,
-            name: 'paper.pdf',
-            doc: '',
-            dirty: false,
-            cursor: 0,
-            scroll: 0,
-          },
-        ],
-      },
+const sitting = () => ({
+  frame: {
+    kind: 'pane' as const,
+    pane: {
+      id: 'p1',
+      active: 0,
+      linked: false,
+      tabs: [
+        {
+          kind: 'pdf' as const,
+          path: PAPER,
+          name: 'paper.pdf',
+          doc: '',
+          dirty: false,
+          cursor: 0,
+          scroll: 0,
+        },
+      ],
     },
-    focused: 'p1',
-    panel: null,
-  }
-}
+  },
+  focused: 'p1',
+  panel: null,
+})
 
 beforeEach(async () => {
   current().reset()

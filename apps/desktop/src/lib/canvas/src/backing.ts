@@ -26,9 +26,7 @@ export function inkMode({ agent, reported }: InkBacking): InkMode {
   return 'latency'
 }
 
-export function wantedInkMode(): InkMode {
-  return inkMode({ agent: AGENT, reported: null })
-}
+export const wantedInkMode = (): InkMode => inkMode({ agent: AGENT, reported: null })
 
 const announced = new Set<string>()
 

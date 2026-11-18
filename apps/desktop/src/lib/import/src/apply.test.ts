@@ -92,17 +92,11 @@ beforeEach(() => {
   described.length = 0
 })
 
-function planOf(files: Planned[]): ImportPlan {
-  return { format: 'markdown', files, lost: [] }
-}
+const planOf = (files: Planned[]): ImportPlan => ({ format: 'markdown', files, lost: [] })
 
-function note(path: string, text: string): Planned {
-  return { kind: 'note', path, text }
-}
+const note = (path: string, text: string): Planned => ({ kind: 'note', path, text })
 
-function file(path: string): Planned {
-  return { kind: 'file', path, bytes: Uint8Array.from([1]) }
-}
+const file = (path: string): Planned => ({ kind: 'file', path, bytes: Uint8Array.from([1]) })
 
 function textAt(files: readonly Planned[], path: string): string {
   const found = files.find((one) => one.path === path)

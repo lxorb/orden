@@ -108,14 +108,13 @@ Element.prototype.animate = () =>
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
 
-function remote(): RemoteSpace {
-  return {
+const remote = (): RemoteSpace =>
+  ({
     id: 'space-1',
     name: 'Notes',
     role: 'owner',
     blog: { enabled: false, subdomain: null, domain: null, title: null, note: null, dns: [] },
-  } as unknown as RemoteSpace
-}
+  }) as unknown as RemoteSpace
 
 function open() {
   world.mirrors = { Notes: 'space-1' }

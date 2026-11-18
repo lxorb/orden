@@ -6,9 +6,8 @@ import { nameOf, isRecord, keepJson, stored } from '../../platform/src/api'
 export const SCRATCHPAD = 'Scratchpad.md'
 export const WIDTH = 320
 
-export function isScratchpad(path: string | null | undefined): boolean {
-  return !!path && nameOf(path) === SCRATCHPAD && workspace.outside(path)
-}
+export const isScratchpad = (path: string | null | undefined): boolean =>
+  !!path && nameOf(path) === SCRATCHPAD && workspace.outside(path)
 
 export function padTab(): { id: string } | null {
   return workspace.tabs.find((one) => isScratchpad(one.path)) ?? null

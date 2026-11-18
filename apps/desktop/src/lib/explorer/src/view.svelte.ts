@@ -336,13 +336,9 @@ function why(error: unknown, folder: string): string {
 
 const MOST_REST = 2000
 
-function rest(ms: number): Promise<void> {
-  return new Promise((done) => setTimeout(done, ms))
-}
+const rest = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms))
 
-function fresh(folder: string): Spec {
-  return { folder, back: [], ahead: [] }
-}
+const fresh = (folder: string): Spec => ({ folder, back: [], ahead: [] })
 
 const views = new WeakMap<Tab, ExplorerView>()
 

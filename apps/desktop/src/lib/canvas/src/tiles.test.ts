@@ -247,22 +247,20 @@ function plane(count: number, across = 100, spacing = 120): InkStroke[] {
   return strokes
 }
 
-function drawn(id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'): InkStroke {
-  return {
-    id,
-    tool,
-    color: 'ink',
-    size: 3,
-    points: [0, 1, 2, 3].map((step) => ({
-      x: x + step * 10,
-      y,
-      pressure: 0.5,
-      tiltX: 0,
-      tiltY: 0,
-      t: step * 10,
-    })),
-  }
-}
+const drawn = (id: string, x: number, y: number, tool: InkStroke['tool'] = 'pen'): InkStroke => ({
+  id,
+  tool,
+  color: 'ink',
+  size: 3,
+  points: [0, 1, 2, 3].map((step) => ({
+    x: x + step * 10,
+    y,
+    pressure: 0.5,
+    tiltX: 0,
+    tiltY: 0,
+    t: step * 10,
+  })),
+})
 
 const view = (x: number, y: number, scale = 1) => ({
   camera: { x, y, scale },

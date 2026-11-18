@@ -20,9 +20,8 @@ export interface Bar {
   ownDates?: boolean
 }
 
-function shiftIn(value: Value, day: string | null): number {
-  return isDateValue(value) && day !== null ? dayNumber(value.iso) - dayNumber(day) : 0
-}
+const shiftIn = (value: Value, day: string | null): number =>
+  isDateValue(value) && day !== null ? dayNumber(value.iso) - dayNumber(day) : 0
 
 function timeIn(value: Value): string {
   if (typeof value === 'string') return value.slice(10)

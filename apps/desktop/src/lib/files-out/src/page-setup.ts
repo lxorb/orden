@@ -16,9 +16,7 @@ interface Length {
 
 const DEFAULT_MARGIN: Length = { amount: '20', unit: 'mm' }
 
-function isUnit(value: string): value is Unit {
-  return UNITS.some((unit) => unit === value)
-}
+const isUnit = (value: string): value is Unit => UNITS.some((unit) => unit === value)
 
 function parseLength(value: string): Length | null {
   const [, amount, unit] = LENGTH.exec(value.trim()) ?? []
@@ -116,9 +114,8 @@ const PAPER_INCHES: Record<Paper, [number, number]> = {
   Legal: [8.5, 14],
 }
 
-export function runningDate(source: string, given?: string, now = new Date()): string {
-  return given ?? frontMatterValue(source, 'date') ?? todayOf(now)
-}
+export const runningDate = (source: string, given?: string, now = new Date()): string =>
+  given ?? frontMatterValue(source, 'date') ?? todayOf(now)
 
 export function paperInches(setup: PageSetup): PaperInches {
   const [width, height] = PAPER_INCHES[setup.paper]

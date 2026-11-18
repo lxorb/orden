@@ -25,9 +25,7 @@ export function ordenOpens(path: string): boolean {
   return mark !== 'file' && mark !== 'picture'
 }
 
-export function inASpace(path: string): boolean {
-  return spaceHolding(workspace.spaces, path) !== null
-}
+export const inASpace = (path: string): boolean => spaceHolding(workspace.spaces, path) !== null
 
 export async function openFile(path: string) {
   if (ordenOpens(path)) await workspace.openEntry(path)

@@ -91,29 +91,25 @@ export function spanOf(id: string, value: Record<string, unknown>): Span | null 
   }
 }
 
-export function activityValue(activity: Activity): Record<string, unknown> {
-  return {
-    name: activityName(activity.name),
-    tint: activity.tint,
-    parent: activity.parent,
-    archived: activity.archived,
-    order: activity.order,
-  }
-}
+export const activityValue = (activity: Activity): Record<string, unknown> => ({
+  name: activityName(activity.name),
+  tint: activity.tint,
+  parent: activity.parent,
+  archived: activity.archived,
+  order: activity.order,
+})
 
-export function spanValue(span: Span): Record<string, unknown> {
-  return {
-    start: span.start,
-    end: span.end,
-    activity: span.activity,
-    tags: span.tags,
-    note: span.note.slice(0, LONGEST_NOTE),
-    source: span.source,
-    place: span.place,
-    label: span.label,
-    device: span.device,
-  }
-}
+export const spanValue = (span: Span): Record<string, unknown> => ({
+  start: span.start,
+  end: span.end,
+  activity: span.activity,
+  tags: span.tags,
+  note: span.note.slice(0, LONGEST_NOTE),
+  source: span.source,
+  place: span.place,
+  label: span.label,
+  device: span.device,
+})
 
 export interface Rule {
   id: string
@@ -132,9 +128,11 @@ export function ruleOf(id: string, value: Record<string, unknown>): Rule | null 
   return { id, activity, lane, place }
 }
 
-export function ruleValue(rule: Rule): Record<string, unknown> {
-  return { activity: rule.activity, lane: rule.lane, place: rule.place }
-}
+export const ruleValue = (rule: Rule): Record<string, unknown> => ({
+  activity: rule.activity,
+  lane: rule.lane,
+  place: rule.place,
+})
 
 export function recordingOf(value: Record<string, unknown> | null | undefined): boolean {
   if (!value) return true
@@ -160,6 +158,8 @@ export function goalOf(id: string, value: Record<string, unknown>): Goal | null 
   return { id, activity, per, ms: value.ms }
 }
 
-export function goalValue(goal: Goal): Record<string, unknown> {
-  return { activity: goal.activity, per: goal.per, ms: goal.ms }
-}
+export const goalValue = (goal: Goal): Record<string, unknown> => ({
+  activity: goal.activity,
+  per: goal.per,
+  ms: goal.ms,
+})

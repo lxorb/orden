@@ -232,12 +232,10 @@
     ]
   }
 
-  function csvRows(): MenuEntry[] {
-    return [
-      { label: 'Copy as CSV', run: () => void copyCsv(live) },
-      { label: 'Save as CSV', run: () => void saveCsv(live, named) },
-    ]
-  }
+  const csvRows = (): MenuEntry[] => [
+    { label: 'Copy as CSV', run: () => void copyCsv(live) },
+    { label: 'Save as CSV', run: () => void saveCsv(live, named) },
+  ]
 
   function nameMenu(event: MouseEvent) {
     if (!base) return

@@ -42,13 +42,12 @@ export function warmPdf(): void {
     .catch(() => undefined)
 }
 
-export function loading(library: Library, data: Uint8Array) {
-  return library.getDocument({
+export const loading = (library: Library, data: Uint8Array) =>
+  library.getDocument({
     data,
     isImageDecoderSupported: decodesImages(),
     worker: workerOf(library),
   })
-}
 
 export interface OpenPdf {
   doc: PDFDocumentProxy
@@ -96,9 +95,8 @@ export async function openDocument(path: string): Promise<OpenPdf> {
   return await opening(library, data)
 }
 
-export async function openBytes(data: Uint8Array): Promise<OpenPdf> {
-  return await opening(await pdfjs(), data)
-}
+export const openBytes = async (data: Uint8Array): Promise<OpenPdf> =>
+  await opening(await pdfjs(), data)
 
 async function opening(library: Library, data: Uint8Array): Promise<OpenPdf> {
   const hash = await sha256(data)

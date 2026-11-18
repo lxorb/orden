@@ -5,9 +5,7 @@ import { planFor, type AppleNotes } from './apple'
 import { detect, readAs } from './read'
 import { sourceOf, type Source } from './sources'
 
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 
 function read(): AppleNotes {
   return {

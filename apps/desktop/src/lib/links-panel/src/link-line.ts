@@ -26,11 +26,10 @@ export function linkPieces(line: string): LinePiece[] {
   return pieces
 }
 
-export function shownLine(line: string): string {
-  return linkPieces(line)
+export const shownLine = (line: string): string =>
+  linkPieces(line)
     .map((one) => one.text)
     .join('')
-}
 
 function plain(text: string, into: LinePiece[]) {
   let at = 0

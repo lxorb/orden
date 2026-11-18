@@ -21,9 +21,15 @@ type CanvasNode = import('@orden/markdown/canvas').CanvasNode
 type Shared = import('@orden/markdown/plane').SharedPlane
 type Pushed = import('@orden/markdown/plane').Pushed
 
-function card(id: string, x = 0): CanvasNode {
-  return { id, type: 'text', x, y: 0, width: 250, height: 60, text: id }
-}
+const card = (id: string, x = 0): CanvasNode => ({
+  id,
+  type: 'text',
+  x,
+  y: 0,
+  width: 250,
+  height: 60,
+  text: id,
+})
 
 function opened(text = blankCanvas()) {
   const note = new NoteDoc(
@@ -384,9 +390,7 @@ describe('a plane that is in a room', () => {
   })
 })
 
-function blank(): Canvas {
-  return { nodes: [], edges: [], ink: [], at: {}, gone: {} }
-}
+const blank = (): Canvas => ({ nodes: [], edges: [], ink: [], at: {}, gone: {} })
 
 describe('a plane written after it opens', () => {
   function drawnPlane(count: number): string {

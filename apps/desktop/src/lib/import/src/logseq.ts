@@ -475,15 +475,14 @@ function blocksOf(lines: readonly string[]): string[] {
   return out
 }
 
-function logseqLine(line: string, graph: Graph, count: () => void): string {
-  return logseqText(
+const logseqLine = (line: string, graph: Graph, count: () => void): string =>
+  logseqText(
     line.replace(MARKER, (_whole, indent: string, word: string) =>
       word === 'DONE' ? `${indent}- [x] ` : `${indent}- [ ] `,
     ),
     graph,
     count,
   )
-}
 
 function logseqText(text: string, graph: Graph, count: () => void): string {
   const block = (whole: string, id: string, as: (said: string) => string = (said) => said) => {

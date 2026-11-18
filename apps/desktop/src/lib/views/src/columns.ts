@@ -38,9 +38,8 @@ export type Editor =
   | 'button'
   | 'none'
 
-export function bare(property: string): string {
-  return property.startsWith('note.') ? property.slice(5) : property
-}
+export const bare = (property: string): string =>
+  property.startsWith('note.') ? property.slice(5) : property
 
 export function isNoteProperty(property: string): boolean {
   return !/^(file|formula|task|this)\./.test(property)
@@ -82,17 +81,14 @@ export function columnsOf(base: Base, at: number, rows: readonly Row[]): string[
   return defaultColumns(view?.orden.rows ?? 'notes', rows)
 }
 
-export function displayName(base: Base, property: string): string | undefined {
-  return (base.properties[property] ?? base.properties[bare(property)])?.displayName
-}
+export const displayName = (base: Base, property: string): string | undefined =>
+  (base.properties[property] ?? base.properties[bare(property)])?.displayName
 
-export function optionsOf(base: Base, property: string): string[] {
-  return base.orden.properties[bare(property)]?.options?.map((one) => one.value) ?? []
-}
+export const optionsOf = (base: Base, property: string): string[] =>
+  base.orden.properties[bare(property)]?.options?.map((one) => one.value) ?? []
 
-export function toneOf(base: Base, property: string, value: string): string | undefined {
-  return base.orden.properties[bare(property)]?.options?.find((one) => one.value === value)?.tone
-}
+export const toneOf = (base: Base, property: string, value: string): string | undefined =>
+  base.orden.properties[bare(property)]?.options?.find((one) => one.value === value)?.tone
 
 function noteKind(key: string, rows: readonly Row[]): Editor {
   for (const row of rows) {
@@ -178,9 +174,8 @@ export function holdsOf(base: Base, rows: readonly Row[]): HoldsOf {
   }
 }
 
-export function holdsLists(property: string, rows: readonly Row[]): boolean {
-  return noteKind(bare(property), rows) === 'list'
-}
+export const holdsLists = (property: string, rows: readonly Row[]): boolean =>
+  noteKind(bare(property), rows) === 'list'
 
 const readsAsNumber = (words: string) => words !== '' && String(Number(words)) === words
 
@@ -192,21 +187,24 @@ function holdsNumbers(base: Base, property: string, value: Value, rows: readonly
   return options.length > 0 && options.every(readsAsNumber)
 }
 
-export function optionWritten(
+export const optionWritten = (
   base: Base,
   property: string,
   value: Value,
   rows: readonly Row[],
   words: string,
-): Value {
-  return readsAsNumber(words) && holdsNumbers(base, property, value, rows) ? Number(words) : words
-}
+): Value =>
+  readsAsNumber(words) && holdsNumbers(base, property, value, rows) ? Number(words) : words
 
-export function keyWritten(base: Base, property: string, key: Value, rows: readonly Row[]): Value {
-  return typeof key === 'string' && isNoteProperty(property)
+export const keyWritten = (
+  base: Base,
+  property: string,
+  key: Value,
+  rows: readonly Row[],
+): Value =>
+  typeof key === 'string' && isNoteProperty(property)
     ? optionWritten(base, property, null, rows, key)
     : key
-}
 
 export function editorOf(base: Base, property: string, rows: readonly Row[]): Editor {
   if (property.startsWith('task.')) return TASK_EDITORS[property.slice(5)] ?? 'none'

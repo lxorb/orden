@@ -34,9 +34,7 @@
 
   const follows = (_value: unknown) => undefined
 
-  function inked(colour: string): string {
-    return palette[colour] ?? colour
-  }
+  const inked = (colour: string): string => palette[colour] ?? colour
 
   const CATCHING_UP = 70
 

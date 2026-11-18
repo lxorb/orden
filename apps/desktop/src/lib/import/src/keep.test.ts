@@ -7,9 +7,7 @@ import { readKeep } from './keep'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
 
-function file(path: string, body: string): Source {
-  return sourceOf(path, new TextEncoder().encode(body))
-}
+const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 
 function noteAt(plan: ImportPlan, path: string): string {
   const found = plan.files.find((one) => one.path === path)
@@ -17,9 +15,7 @@ function noteAt(plan: ImportPlan, path: string): string {
   return found.text
 }
 
-function keepNote(note: Record<string, unknown>): string {
-  return JSON.stringify(note)
-}
+const keepNote = (note: Record<string, unknown>): string => JSON.stringify(note)
 
 describe('a Google Keep export', () => {
   test('becomes a note with its labels as tags and its dates', async () => {

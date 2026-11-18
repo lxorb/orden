@@ -118,9 +118,8 @@ vi.mock('./carry-over', async () => {
 const { importAsSpace, arrive } = await import('./migrating.svelte')
 const { busy } = await import('../../ui-kit/src/api')
 
-function file(path: string, body: string | Uint8Array = 'x'): Source {
-  return sourceOf(path, typeof body === 'string' ? new TextEncoder().encode(body) : body)
-}
+const file = (path: string, body: string | Uint8Array = 'x'): Source =>
+  sourceOf(path, typeof body === 'string' ? new TextEncoder().encode(body) : body)
 
 beforeEach(() => {
   wrote.clear()

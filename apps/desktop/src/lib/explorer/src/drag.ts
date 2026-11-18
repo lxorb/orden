@@ -33,9 +33,8 @@ export function endDrag() {
   carriedNothing()
 }
 
-function takes(transfer: DataTransfer | null): boolean {
-  return isExplorerDrag(transfer) || isTreeDrag(transfer) || isFileDrop(transfer)
-}
+const takes = (transfer: DataTransfer | null): boolean =>
+  isExplorerDrag(transfer) || isTreeDrag(transfer) || isFileDrop(transfer)
 
 export function dropHow(event: DragEvent): 'copy' | 'move' {
   const copying = platform() === 'macos' ? event.altKey : event.ctrlKey

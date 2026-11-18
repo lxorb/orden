@@ -193,9 +193,8 @@ function itemText(words: string, indent: string): string {
     .join('\n')
 }
 
-function asWritten(name: string, shown: string | null = null, embed = false): string {
-  return `${embed ? '!' : ''}[[${name}${shown === null ? '' : `|${shown}`}]]`
-}
+const asWritten = (name: string, shown: string | null = null, embed = false): string =>
+  `${embed ? '!' : ''}[[${name}${shown === null ? '' : `|${shown}`}]]`
 
 export function roamText(
   said: string,
@@ -293,6 +292,5 @@ export function dayName(title: string): string | null {
   return dayOf(`${found[3]}-${String(month).padStart(2, '0')}-${(found[2] ?? '').padStart(2, '0')}`)
 }
 
-function asNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
+const asNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null

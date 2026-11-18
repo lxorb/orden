@@ -35,8 +35,8 @@ function look(): void {
   if (due.length) keepJson(TOLD, [...told].slice(-KEPT))
 }
 
-export function remind(): Promise<void> {
-  return inTurn(
+export const remind = (): Promise<void> =>
+  inTurn(
     () => TOLD,
     () => {
       look()
@@ -44,6 +44,5 @@ export function remind(): Promise<void> {
     },
     MINUTE,
   )
-}
 
 setInterval(() => void remind(), MINUTE)

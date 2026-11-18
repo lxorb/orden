@@ -12,9 +12,7 @@ export const opening = { source: false }
 
 export type { TabKind }
 
-export function holdsWords(kind: TabKind): boolean {
-  return TAB_KINDS[kind].words
-}
+export const holdsWords = (kind: TabKind): boolean => TAB_KINDS[kind].words
 
 export function unixLines(text: string): string {
   return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text

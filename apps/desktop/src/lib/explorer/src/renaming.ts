@@ -69,12 +69,11 @@ export function swapping(
   return pairs.some(({ to }, at) => (leaving.get(key(to)) ?? []).some((there) => there !== at))
 }
 
-export function crossing(moving: readonly { from: string; name: string }[]): boolean {
-  return swapping(
+export const crossing = (moving: readonly { from: string; name: string }[]): boolean =>
+  swapping(
     moving.map(({ from, name }) => ({
       from: `${folderOf(from)}\0${nameOf(from)}`,
       to: `${folderOf(from)}\0${name}`,
     })),
     (one) => one.toLowerCase(),
   )
-}

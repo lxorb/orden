@@ -29,9 +29,7 @@ export function mimeOf(src: string, fallback = 'image/png'): string {
   return found?.startsWith('image/') ? found : fallback
 }
 
-export function suffixFor(mime: string): string {
-  return SUFFIXES[mime] ?? 'png'
-}
+export const suffixFor = (mime: string): string => SUFFIXES[mime] ?? 'png'
 
 const MEDIA_TYPE = /^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*\/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*$/
 
@@ -102,13 +100,11 @@ export async function readPictures(
     })
 }
 
-export function inlinePictures(html: string, pictures: readonly Picture[]): string {
-  return swapSources(
+export const inlinePictures = (html: string, pictures: readonly Picture[]): string =>
+  swapSources(
     html,
     new Map(pictures.map((one) => [one.src, `data:${one.mime};base64,${toBase64(one.bytes)}`])),
   )
-}
 
-export function sourcesIn(html: string): string[] {
-  return sourcesOf(html, (src) => !src.startsWith('data:'))
-}
+export const sourcesIn = (html: string): string[] =>
+  sourcesOf(html, (src) => !src.startsWith('data:'))

@@ -130,9 +130,7 @@ interface Reader {
   at: number
 }
 
-function peek(reader: Reader, ahead = 0): string | undefined {
-  return reader.tokens[reader.at + ahead]
-}
+const peek = (reader: Reader, ahead = 0): string | undefined => reader.tokens[reader.at + ahead]
 
 function tokensOf(tex: string): string[] {
   return (tex.match(TOKEN) ?? []).filter((token) => !/^\s+$/.test(token))

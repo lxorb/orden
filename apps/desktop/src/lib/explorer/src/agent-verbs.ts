@@ -246,17 +246,15 @@ function explorerTab(call: Call): Tab {
   return tab
 }
 
-function listed(tab: Tab, view: View) {
-  return {
-    tab: tab.id,
-    folder: view.listing?.path ?? view.folder,
-    picked: view.chosen,
-    view: view.search ? 'search' : 'folder',
-  }
-}
+const listed = (tab: Tab, view: View) => ({
+  tab: tab.id,
+  folder: view.listing?.path ?? view.folder,
+  picked: view.chosen,
+  view: view.search ? 'search' : 'folder',
+})
 
-function shown(tab: Tab, view: View): AgentAnswer {
-  return done(
+const shown = (tab: Tab, view: View): AgentAnswer =>
+  done(
     {
       ...listed(tab, view),
       entries: view.rows.slice(0, 500).map((one) => ({
@@ -269,7 +267,6 @@ function shown(tab: Tab, view: View): AgentAnswer {
     },
     `the names of files in ${view.listing?.path ?? 'a folder'}`,
   )
-}
 
 export const explorerVerbs = verbsOf({
   explorer_tabs: gatedBy(() => explorerOn(), 'the file explorer is', explorerTabs),

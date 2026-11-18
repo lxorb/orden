@@ -15,13 +15,20 @@ import {
   sharedWords,
 } from './shared'
 
-function item(one: Partial<SharedItem>): SharedItem {
-  return { name: '', mime: '', size: 0, text: null, ...one }
-}
+const item = (one: Partial<SharedItem>): SharedItem => ({
+  name: '',
+  mime: '',
+  size: 0,
+  text: null,
+  ...one,
+})
 
-function arrived(one: Partial<Arrived>): Arrived {
-  return { action: 'android.intent.action.SEND', subject: '', items: [], ...one }
-}
+const arrived = (one: Partial<Arrived>): Arrived => ({
+  action: 'android.intent.action.SEND',
+  subject: '',
+  items: [],
+  ...one,
+})
 
 const bytes = (text: string) => new TextEncoder().encode(text)
 

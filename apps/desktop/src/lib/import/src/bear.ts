@@ -72,9 +72,7 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
   return plan
 }
 
-export function bearTags(text: string): string {
-  return convertTags(text).text
-}
+export const bearTags = (text: string): string => convertTags(text).text
 
 const UNDERLINE = /(?<![~\\\w/])~([^~\s\\](?:[^~\n]*[^~\s\\])?)~(?![~\w/])/g
 
@@ -225,16 +223,13 @@ function infoOf(infos: ReadonlyMap<string, Info>, path: string): Info | undefine
   return bundle === undefined ? undefined : infos.get(bundle)
 }
 
-function record(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
+const record = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null
-}
 
 function text(value: unknown): string | null {
   return typeof value === 'string' && value ? value : null
 }
 
-function flag(value: unknown): boolean {
-  return value === 1 || value === true || value === '1'
-}
+const flag = (value: unknown): boolean => value === 1 || value === true || value === '1'

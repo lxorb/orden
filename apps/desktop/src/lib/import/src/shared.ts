@@ -69,26 +69,24 @@ export function isNote(item: SharedItem): boolean {
   return item.mime.includes('markdown') || NOTES.test(item.name)
 }
 
-export function sharedWords(arrived: Arrived): string {
-  return arrived.items
+export const sharedWords = (arrived: Arrived): string =>
+  arrived.items
     .map((one) => one.text)
     .filter((one): one is string => one !== null)
     .join('\n\n')
     .trim()
-}
 
 function saysMarkdown(item: SharedItem): boolean {
   return item.mime.includes('markdown') || /\.(md|markdown|mdown|mkd)$/i.test(item.name)
 }
 
-export function sharedMarkdown(arrived: Arrived): string {
-  return arrived.items
+export const sharedMarkdown = (arrived: Arrived): string =>
+  arrived.items
     .flatMap((one) =>
       one.text === null ? [] : [saysMarkdown(one) ? one.text : plainWords(one.text)],
     )
     .join('\n\n')
     .trim()
-}
 
 export function sharedTitle(arrived: Arrived): string {
   const subject = arrived.subject.trim()

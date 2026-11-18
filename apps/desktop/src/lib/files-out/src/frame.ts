@@ -7,9 +7,7 @@ export interface PaperInches {
   landscape: boolean
 }
 
-export function printsInFrame(): boolean {
-  return !(isDesktop && platform() === 'macos')
-}
+export const printsInFrame = (): boolean => !(isDesktop && platform() === 'macos')
 
 export function printInFrame(html: string | Blob, page?: PaperInches): Promise<void> {
   if (!printsInFrame()) {

@@ -13,9 +13,8 @@ interface Caretful {
   caretRangeFromPoint?: (x: number, y: number) => Range | null
 }
 
-function wordsText(node: Node | null | undefined): node is Text {
-  return node?.nodeType === 3 && !!node.parentElement?.closest('.words.live')
-}
+const wordsText = (node: Node | null | undefined): node is Text =>
+  node?.nodeType === 3 && !!node.parentElement?.closest('.words.live')
 
 export function caretAt(doc: Document, x: number, y: number): Caret | null {
   const asked: Caretful = doc

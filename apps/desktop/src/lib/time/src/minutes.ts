@@ -30,19 +30,17 @@ const minuteOf = (at: number): number => Math.floor(at / 60_000) * 60_000
 const share = (value: number | null): number | null =>
   value === null || !Number.isFinite(value) ? null : Math.min(1, Math.max(0, value))
 
-function fresh(sample: Sample): Minute {
-  return {
-    at: minuteOf(sample.at),
-    active: 0,
-    samples: 0,
-    cpu: null,
-    memory: null,
-    battery: null,
-    charging: null,
-    lid: null,
-    locked: null,
-  }
-}
+const fresh = (sample: Sample): Minute => ({
+  at: minuteOf(sample.at),
+  active: 0,
+  samples: 0,
+  cpu: null,
+  memory: null,
+  battery: null,
+  charging: null,
+  lid: null,
+  locked: null,
+})
 
 function folded(minute: Minute, sample: Sample): Minute {
   const busy = sample.idleMs !== null && sample.idleMs < SAMPLE_EVERY && sample.locked !== true

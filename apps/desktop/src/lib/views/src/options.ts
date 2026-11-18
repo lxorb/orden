@@ -33,13 +33,11 @@ export function valuesOf(rows: readonly Row[], property: string, most = 50): str
 
 const TONES = ['1', '2', '3', '4', '5', '6']
 
-export function optionsFor(values: readonly string[]): SelectOption[] {
-  return values.map((value, at) => ({ value, tone: TONES[at % TONES.length] ?? '1' }))
-}
+export const optionsFor = (values: readonly string[]): SelectOption[] =>
+  values.map((value, at) => ({ value, tone: TONES[at % TONES.length] ?? '1' }))
 
-export function optionsAt(base: Base, property: string): SelectOption[] {
-  return base.orden.properties[bare(property)]?.options ?? []
-}
+export const optionsAt = (base: Base, property: string): SelectOption[] =>
+  base.orden.properties[bare(property)]?.options ?? []
 
 export function renamedIn(row: Row, property: string, from: string, to: string): RowChange | null {
   const key = bare(property)

@@ -101,9 +101,8 @@ export function drawScale(width: number, height: number, density: number): numbe
   )
 }
 
-export function densityFor(onScreen: number): number {
-  return DENSITIES.find((one) => onScreen <= one) ?? SHARP
-}
+export const densityFor = (onScreen: number): number =>
+  DENSITIES.find((one) => onScreen <= one) ?? SHARP
 
 export function paperOf(
   at: PaperAt,
@@ -159,9 +158,7 @@ function letGo(job: Job) {
   job.settle(null)
 }
 
-function keyOfJob(job: Job): string {
-  return `${String(job.number)}@${String(job.density)}`
-}
+const keyOfJob = (job: Job): string => `${String(job.number)}@${String(job.density)}`
 
 function next(): Job | undefined {
   const at = queue.findIndex((job) => !job.aside)
@@ -202,9 +199,8 @@ export async function outlineOf(at: PaperAt): Promise<PdfHeading[]> {
   return opened ? await readOutline(opened.doc) : []
 }
 
-export async function paperPathOf(at: PaperAt): Promise<string | null> {
-  return (await heldOf(at)?.place) ?? null
-}
+export const paperPathOf = async (at: PaperAt): Promise<string | null> =>
+  (await heldOf(at)?.place) ?? null
 
 export interface PaperView {
   transform: Transform

@@ -144,9 +144,8 @@ function layIn(frame: Frame, room: Box, panes: Panes, widest: number): Laid {
   return { slots, seams }
 }
 
-export function lay(frame: Frame, room: Box, panes: Panes): Laid {
-  return layIn(frame, room, panes, room.w * WIDEST)
-}
+export const lay = (frame: Frame, room: Box, panes: Panes): Laid =>
+  layIn(frame, room, panes, room.w * WIDEST)
 
 export function seamsAmong(frame: Frame, slots: readonly Slot[]): Seam[] {
   if (frame.kind === 'pane') return []

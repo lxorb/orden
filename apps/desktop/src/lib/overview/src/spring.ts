@@ -18,9 +18,7 @@ export interface Spring {
   rest: number
 }
 
-export function spring(at: number, rest = PIXELS): Spring {
-  return { at, speed: 0, to: at, rest }
-}
+export const spring = (at: number, rest = PIXELS): Spring => ({ at, speed: 0, to: at, rest })
 
 export function step(one: Spring, seconds: number, feel: Feel = FLIGHT): void {
   const stiffness = (2 * Math.PI) / feel.response
@@ -38,9 +36,8 @@ export function step(one: Spring, seconds: number, feel: Feel = FLIGHT): void {
   if (resting(one)) land(one)
 }
 
-export function resting(one: Spring): boolean {
-  return Math.abs(one.at - one.to) < one.rest && Math.abs(one.speed) < one.rest * 10
-}
+export const resting = (one: Spring): boolean =>
+  Math.abs(one.at - one.to) < one.rest && Math.abs(one.speed) < one.rest * 10
 
 export function land(one: Spring): void {
   one.at = one.to

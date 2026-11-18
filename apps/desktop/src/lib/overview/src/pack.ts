@@ -11,9 +11,7 @@ export interface Shift {
   y: number
 }
 
-export function meets(a: Outline, b: Outline, gap: number): boolean {
-  return gapOf(a, b) < gap - 0.01
-}
+export const meets = (a: Outline, b: Outline, gap: number): boolean => gapOf(a, b) < gap - 0.01
 
 const AROUND = 2
 

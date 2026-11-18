@@ -9,9 +9,7 @@ const WAYS: Record<string, Way> = {
   ArrowDown: 'down',
 }
 
-export function wayOf(key: string): Way | null {
-  return WAYS[key] ?? null
-}
+export const wayOf = (key: string): Way | null => WAYS[key] ?? null
 
 const middle = (box: Box) => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 })
 

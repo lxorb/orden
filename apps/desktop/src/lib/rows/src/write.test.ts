@@ -41,13 +41,12 @@ type HoldsNotes = import('../../workspace/src/note-text').HoldsNotes
 
 const PATH = '/space/Plan.md'
 
-function rowsFor(text: string): Row[] {
-  return rowsOf('Space', {
+const rowsFor = (text: string): Row[] =>
+  rowsOf('Space', {
     ...scanNote('Plan.md', text),
     ...scanRows(text),
     stamp: null,
   })
-}
 
 const noteRow = (text: string) => {
   const [found] = rowsFor(text)

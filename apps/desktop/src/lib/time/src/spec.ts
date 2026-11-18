@@ -23,6 +23,4 @@ export function readSpec(text: string): Spec {
   }
 }
 
-export function writeSpec(spec: Spec): string {
-  return JSON.stringify(spec)
-}
+export const writeSpec = (spec: Spec): string => JSON.stringify(spec)

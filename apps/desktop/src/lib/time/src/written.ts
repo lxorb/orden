@@ -39,9 +39,8 @@ export interface TimeRecord {
   value: Record<string, unknown>
 }
 
-export function jsonOf(records: readonly TimeRecord[]): string {
-  return `${JSON.stringify({ format: TIME_FORMAT, version: 1, records }, null, 2)}\n`
-}
+export const jsonOf = (records: readonly TimeRecord[]): string =>
+  `${JSON.stringify({ format: TIME_FORMAT, version: 1, records }, null, 2)}\n`
 
 export function recordsIn(text: string): TimeRecord[] | null {
   let parsed: unknown

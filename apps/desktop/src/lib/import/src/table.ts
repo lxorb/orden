@@ -129,9 +129,8 @@ export function rowNote(
   return { name, text: noteText(null, [titleHeading(name), ...words].join('\n\n'), meta) }
 }
 
-function titleOf(columns: readonly string[]): string {
-  return columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
-}
+const titleOf = (columns: readonly string[]): string =>
+  columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
 
 function renamed(title: string, name: string): boolean {
   return title.replace(/\s+/g, ' ') !== name

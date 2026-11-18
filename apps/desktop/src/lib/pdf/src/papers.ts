@@ -40,9 +40,8 @@ export interface Walked {
 }
 let listings = 0
 
-function listedAt(root: string, path: string): number | undefined {
-  return listing?.root === root ? listing.modified.get(path) : undefined
-}
+const listedAt = (root: string, path: string): number | undefined =>
+  listing?.root === root ? listing.modified.get(path) : undefined
 
 function orphaned(root: string, path: string): boolean {
   const holder = holderOf(path)
@@ -210,17 +209,13 @@ export function paperGone(path: string): void {
   told()
 }
 
-function withPaper(path: string): string[] {
-  return isPagesTarget(path) ? [path, paperOf(path)] : [path]
-}
+const withPaper = (path: string): string[] => (isPagesTarget(path) ? [path, paperOf(path)] : [path])
 
 function under(path: string, at: string): boolean {
   return path === at || path.startsWith(`${at}/`)
 }
 
-function heldUnder(at: string): string[] {
-  return [...held.keys()].filter((path) => under(path, at))
-}
+const heldUnder = (at: string): string[] => [...held.keys()].filter((path) => under(path, at))
 
 async function forgetStored(at: string): Promise<void> {
   for (const file of await paperFiles()) {
@@ -277,9 +272,11 @@ function told(): void {
   hearing?.(papersHeld())
 }
 
-export function papersHeld(): PapersHeld {
-  return { papers: papersRead(), characters: characters(), cap: IN_MEMORY }
-}
+export const papersHeld = (): PapersHeld => ({
+  papers: papersRead(),
+  characters: characters(),
+  cap: IN_MEMORY,
+})
 
 export function papersRead(): number {
   let read = 0
