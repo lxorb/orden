@@ -177,7 +177,7 @@ class Search {
   }
 
   private async run() {
-    const round = this.round
+    const round = ++this.round
     const root = workspace.activeSpace?.root
 
     if (!root) {
@@ -185,6 +185,7 @@ class Search {
       return
     }
 
+    this.running = true
     this.empty()
     this.skipped.clear()
 
@@ -228,7 +229,6 @@ class Search {
 
     await workspace.replaceInNotes(changes)
 
-    this.round++
     await this.run()
   }
 }
