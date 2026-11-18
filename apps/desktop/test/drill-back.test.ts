@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { svelte, walk } from './files'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+import { SOURCE, svelte, walk } from './files'
 
 describe('a page opened inside another with a Back of its own', () => {
   test("is closed by a phone's Back too", () => {

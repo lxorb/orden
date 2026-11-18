@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
-import { svelte, walk } from './files'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+import { SOURCE, svelte, walk } from './files'
 
 function pictures(text: string): string[] {
   return [...text.matchAll(/<img\b[\s\S]*?\/>/g)].map((one) => one[0])

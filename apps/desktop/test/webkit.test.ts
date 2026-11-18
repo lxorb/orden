@@ -1,11 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
-import { walk } from './files'
-
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+import { ROOT, walk } from './files'
 
 const SOURCES = [
   'apps/desktop/src',

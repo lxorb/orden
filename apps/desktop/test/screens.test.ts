@@ -2,9 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { svelte, walk } from './files'
+import { SOURCE, svelte, walk } from './files'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
 const uncommented = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '')

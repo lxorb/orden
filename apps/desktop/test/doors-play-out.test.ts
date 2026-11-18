@@ -1,10 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { svelte, walk } from './files'
+import { SOURCE, svelte, walk } from './files'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const LIB = join(SOURCE, 'lib')
 
 function markup(text: string): string {

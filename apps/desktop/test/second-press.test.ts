@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { code, walk } from './files'
-
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
+import { code, SOURCE, walk } from './files'
 
 const NOT_LAYERS: Record<string, string> = {
   'lib/ui-controls/src/spent-click.ts': 'spends the click a catch took the press of',

@@ -3,8 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
+import { SOURCE } from './files'
 
-const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const THEMES = fileURLToPath(new URL('../../../packages/themes/src/', import.meta.url))
 
 function componentFiles(dir: string): string[] {

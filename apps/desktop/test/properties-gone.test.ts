@@ -1,10 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { walk } from './files'
+import { ROOT, walk } from './files'
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const APP = join(ROOT, 'apps/desktop/src')
 const EDITOR = join(ROOT, 'packages/editor/src')
 const THEMES = join(ROOT, 'packages/themes/src')
