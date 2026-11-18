@@ -71,15 +71,22 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64
 
 const CUTS: bool = cfg!(target_os = "linux");
 
+const HOLLOWS: bool = cfg!(windows);
+
 #[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum Layering {
     Cuts(bool),
+    Hollows(&'static str),
 }
 
 pub fn layering(label: &str) -> Layering {
     let _ = label;
-    Layering::Cuts(CUTS)
+    if HOLLOWS {
+        Layering::Hollows("hollows")
+    } else {
+        Layering::Cuts(CUTS)
+    }
 }
 
 static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
@@ -91,7 +98,7 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
 }
 
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {
-    if !CUTS {
+    if !CUTS && !HOLLOWS {
         engine::round(view, corner);
         return;
     }
@@ -288,7 +295,60 @@ mod engine {
     }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(windows)]
+mod engine {
+    use tauri::Webview;
+    use windows::Win32::Foundation::{BOOL, HWND};
+    use windows::Win32::Graphics::Gdi::{
+        CombineRgn, CreateRectRgn, CreateRoundRectRgn, DeleteObject, SetWindowRgn, HRGN, RGN_DIFF,
+    };
+
+    use super::{Piece, Shape};
+
+    pub fn round(_view: &Webview, _corner: f64) {}
+
+    pub fn shape(view: &Webview, shape: Shape) {
+        let _ = view.with_webview(move |platform| {
+            let Some(page) =
+                crate::host::page_id(&platform).and_then(|one| isize::try_from(one.0).ok())
+            else {
+                return;
+            };
+            give(HWND(page as _), shape.as_deref());
+        });
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "the page's window is given its region through GDI"
+    )]
+    fn give(window: HWND, shape: Option<&[Piece]>) {
+        unsafe {
+            let region = match shape {
+                None | Some([_]) => {
+                    SetWindowRgn(window, HRGN::default(), BOOL::from(true));
+                    return;
+                }
+                Some([]) => CreateRectRgn(0, 0, 0, 0),
+                Some([(left, top, right, bottom, _), hollows @ ..]) => {
+                    let whole = CreateRectRgn(*left, *top, *right, *bottom);
+                    for &(left, top, right, bottom, round) in hollows {
+                        let hollow =
+                            CreateRoundRectRgn(left, top, right + 1, bottom + 1, round, round);
+                        CombineRgn(whole, whole, hollow, RGN_DIFF);
+                        let _ = DeleteObject(hollow);
+                    }
+                    whole
+                }
+            };
+            if SetWindowRgn(window, region, BOOL::from(true)) == 0 {
+                let _ = DeleteObject(region);
+            }
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "linux", windows)))]
 mod engine {
     use tauri::Webview;
 
@@ -389,5 +449,18 @@ mod tests {
                 "{over:?}"
             );
         }
+    }
+
+    #[test]
+    fn each_system_says_how_a_page_meets_what_lies_over_it() {
+        let said = serde_json::to_value(super::layering("page")).expect("said");
+        let wanted = if cfg!(target_os = "linux") {
+            serde_json::json!(true)
+        } else if cfg!(windows) {
+            serde_json::json!("hollows")
+        } else {
+            serde_json::json!(false)
+        };
+        assert_eq!(said, wanted);
     }
 }

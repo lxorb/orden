@@ -25,8 +25,8 @@ const heldLooks: (() => void)[] = []
 let refusing = false
 let photographing: Promise<void> | null = null
 let photo: string | null = null
-let cuts: boolean | 'under' = false
-const cutsOf = new Map<string, boolean | 'under'>()
+let cuts: boolean | 'under' | 'hollows' = false
+const cutsOf = new Map<string, boolean | 'under' | 'hollows'>()
 
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
@@ -291,6 +291,50 @@ describe('a page asked for while something is over the pane', () => {
 
     expect(commands()).not.toContain('web_open')
     expect(last('web_place')).toMatchObject({ tab: 'a', visible: true })
+  })
+})
+
+describe('a page whose engine cuts only what floats over it', () => {
+  const over = {
+    cut: { all: false, hollows: [{ x: 500, y: 520, width: 280, height: 60, radius: 8 }] },
+    frame: null,
+  }
+
+  test('stays shown round a layer over part of it', async () => {
+    cuts = 'hollows'
+    await built()
+    await settle()
+    calls.length = 0
+
+    await pages.show('a', SITE, PANE, false, over)
+    await settle()
+
+    expect(pages.cuts).toBe(true)
+    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true, cut: over.cut })
+    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
+      false,
+    )
+  })
+
+  test('arrives under such a layer cut round it', async () => {
+    cuts = 'hollows'
+    await built('a', SITE, PANE, false, over)
+    await vi.waitFor(() => expect(last('web_place')).toMatchObject({ visible: true }))
+
+    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, cut: over.cut })
+  })
+
+  test('steps behind its picture under a scrim', async () => {
+    cuts = 'hollows'
+    await built()
+    await settle()
+    calls.length = 0
+
+    await pages.show('a', SITE, PANE, false, { cut: { all: true, hollows: [] }, frame: null })
+    await settle()
+
+    expect(last('web_place')).toMatchObject({ tab: 'a', visible: false, cut: null })
+    expect(commands()).toContain('web_shot')
   })
 })
 

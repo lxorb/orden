@@ -452,6 +452,7 @@ def main() -> int:
                 return {"v": None, "y": None, "log": []}
 
         heard = lambda: told()["log"]  # noqa: E731
+        live = lambda: app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is True  # noqa: E731
 
         shot = ImageGrab.grab()
         shot.save(args.out / "page.png")
@@ -472,7 +473,32 @@ def main() -> int:
             wrong.append(f"the app's layer is not drawn over the page: {colour_at(shot, *middle)}")
         if not near(colour_at(shot, *beside), COLOUR):
             wrong.append(f"the page is not drawn beside the app's layer: {colour_at(shot, *beside)}")
+        if not live():
+            wrong.append("the page steps behind its picture for a layer over part of it")
         app.eval("document.getElementById('drive-layer')?.remove(); return true")
+        time.sleep(1)
+
+        low = pane["height"] - 90
+        app.eval(
+            "const row = document.createElement('div'); row.dataset.notices = ''; row.id = 'drive-notices';"
+            f"Object.assign(row.style, {{ position: 'fixed', left: '{pane['x'] + pane['width'] - 420}px',"
+            f" top: '{pane['y'] + low}px', width: '400px', height: '70px', zIndex: 9999 }});"
+            "const card = document.createElement('div');"
+            "Object.assign(card.style, { width: '400px', height: '70px', background: 'rgb(0,160,0)', borderRadius: '8px' });"
+            "row.append(card); document.body.append(row); return true"
+        )
+        time.sleep(1.5)
+        shot = ImageGrab.grab()
+        shot.save(args.out / "notice.png")
+        card = at(pane["width"] - 220, low + 35)
+        for name, x, y in (("beside", 200, low + 35), ("below", 200, pane["height"] - 10)):
+            if not near(colour_at(shot, *at(x, y)), COLOUR):
+                wrong.append(f"the page is not drawn {name} the notice: {colour_at(shot, *at(x, y))}")
+        if not near(colour_at(shot, *card), LAYER):
+            wrong.append(f"the notice is not drawn over the page: {colour_at(shot, *card)}")
+        if not live():
+            wrong.append("the page steps behind its picture for a notice over part of it")
+        app.eval("document.getElementById('drive-notices')?.remove(); return true")
         time.sleep(1)
 
         user32.SetCursorPos(*at(200, 60))

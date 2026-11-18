@@ -83,14 +83,17 @@ interface Placement {
   corner?: number | undefined
 }
 
-export type Layering = 'under' | 'cut' | 'hide'
+export type Layering = 'under' | 'cut' | 'hollows' | 'hide'
 
 let layering = $state<Layering>('hide')
 
 function heard(page: Page, said: unknown): void {
-  layering = said === 'under' ? 'under' : said === true ? 'cut' : 'hide'
+  layering = said === 'under' || said === 'hollows' ? said : said === true ? 'cut' : 'hide'
   page.layering = layering
 }
+
+const cutsOut = (layering: Layering, cut: Cut | null): boolean =>
+  cut !== null && (layering === 'cut' || (layering === 'hollows' && !cut.all))
 
 interface Looked {
   url: string
@@ -412,7 +415,7 @@ class Pages {
     try {
       const store = page.inPrivate ? null : await (await stores()).store(forOwn)
       const pass = (await import('../../gates/src/api')).passOn()
-      const said = await invoke<boolean | 'under' | undefined>('web_open', {
+      const said = await invoke<boolean | 'under' | 'hollows' | undefined>('web_open', {
         tab: tabId,
         url: page.url,
         pane,
@@ -478,7 +481,7 @@ class Pages {
         tabId,
         wanted.pane,
         false,
-        page.layering === 'under' || (page.layering === 'cut' && wanted.over.cut !== null),
+        page.layering === 'under' || cutsOut(page.layering, wanted.over.cut),
         wanted.over,
       )
     else this.hide(tabId, wanted.pane)
@@ -516,7 +519,7 @@ class Pages {
       return
     }
 
-    if (covering && page.layering === 'cut' && page.live && over.cut) {
+    if (covering && page.live && cutsOut(page.layering, over.cut)) {
       await this.cover(tabId, page, pane, over)
       return
     }
@@ -554,7 +557,7 @@ class Pages {
     if (__EVEN_PLUGIN__) return
     page.sent = one
     try {
-      const said = await invoke<boolean | 'under' | undefined>('web_place', {
+      const said = await invoke<boolean | 'under' | 'hollows' | undefined>('web_place', {
         tab: tabId,
         pane: one.pane,
         visible: one.visible,
