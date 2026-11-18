@@ -11,7 +11,6 @@ export function registerHearing(load: () => Promise<Hearing>): () => void {
 }
 
 export async function startHearings(): Promise<(() => void)[]> {
-  const stops: (() => void)[] = []
-  for (const load of [...loads]) stops.push(await (await load())())
-  return stops
+  const started = await Promise.allSettled([...loads].map(async (load) => (await load())()))
+  return started.flatMap((one) => (one.status === 'fulfilled' ? [one.value] : []))
 }
