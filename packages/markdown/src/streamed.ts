@@ -11,7 +11,6 @@ export class TexDelimiters {
   #maths: Maths = null
   #fresh = true
   #words = false
-  #wordsBefore = true
   #last = '\n'
   #breakNext = false
 
@@ -55,11 +54,10 @@ export class TexDelimiters {
       if (one === '\n') {
         write('\n')
         at++
-        if (!this.#words && !this.#wordsBefore) {
+        if (!this.#words) {
           this.#code = 0
           if (this.#maths === 'inline') this.#maths = null
         }
-        this.#wordsBefore = this.#words
         this.#words = false
         this.#fresh = true
         continue
@@ -117,6 +115,7 @@ export class TexDelimiters {
       }
 
       if (this.#code > 0) {
+        if (!BLANK.test(one)) this.#words = true
         write(one)
         at++
         continue
