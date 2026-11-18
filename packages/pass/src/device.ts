@@ -1,6 +1,5 @@
 import { base64, joined, randomBytes, unbase64 } from './bytes'
-import type { KdfParams } from './crypto'
-import { open, PIN_KDF, seal, stretch, subkey, WrongSecret } from './crypto'
+import { open, PIN_KDF, seal, stretch, subkey, WrongSecret, type KdfParams } from './crypto'
 
 export interface DeviceSeal {
   way: 'device' | 'pin'

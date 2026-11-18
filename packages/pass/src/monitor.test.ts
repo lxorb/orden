@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { blank, newEnvelope } from './envelope'
-import { fieldOf, loginOf, noteOf } from './import/build'
-import type { LoginParts } from './import/build'
+import { fieldOf, loginOf, noteOf, type LoginParts } from './import/build'
 import { FLAGS, activeLogins, flagsOf, isLoginItem, report, watchedLogins } from './monitor'
 import { strengthOf } from './strength'
 import { TWO_FACTOR_SITES, offersTwoFactor } from './two-factor'

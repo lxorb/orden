@@ -13,8 +13,7 @@ import {
   pick,
   textOf,
 } from './build'
-import type { CsvRecord } from './csv'
-import { csvHeader, csvRecords } from './csv'
+import { csvHeader, csvRecords, type CsvRecord } from './csv'
 import type { Imported } from './types'
 
 type Kind = 'credentials' | 'securenotes' | 'payments' | 'ids' | 'personalInfo'

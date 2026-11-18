@@ -1,6 +1,5 @@
 import { prompt } from '../../ui-kit/src/api'
-import { shortcuts } from '../../shortcuts/src/api'
-import { BY_ID } from '../../shortcuts/src/api'
+import { shortcuts, BY_ID } from '../../shortcuts/src/api'
 import { shells, type Way } from './shells.svelte'
 
 export function bothName(command: string): string {

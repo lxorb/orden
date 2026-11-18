@@ -1,8 +1,7 @@
 import type { Field } from '../types'
 import { Collector, ImportError, dateOf, fieldOf, itemOf, loginOf, noteOf } from './build'
 import type { Imported } from './types'
-import type { XmlElement } from './xml'
-import { childOf, childrenOf, parseXml, textAt } from './xml'
+import { childOf, childrenOf, parseXml, textAt, type XmlElement } from './xml'
 
 const STANDARD = new Set(['Title', 'UserName', 'Password', 'URL', 'Notes'])
 const TOTP_KEYS = new Set(['otp', 'totp', 'totp seed', 'timeotp-secret-base32'])

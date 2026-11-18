@@ -1,11 +1,8 @@
 import { openFile, partsOf, sealFile } from '@orden/pass/files'
 import type { Attachment, Item } from '@orden/pass/types'
-import type { FileApi } from './file-api'
-import { fileApi } from './file-api'
-import type { QueueRows } from './file-queue'
-import { droppedWaiting, queuedRemoval, queuedUpload } from './file-queue'
-import type { FilePartRow } from './local'
-import { dropFileParts, readFileParts, writeFileParts } from './local'
+import { fileApi, type FileApi } from './file-api'
+import { droppedWaiting, queuedRemoval, queuedUpload, type QueueRows } from './file-queue'
+import { dropFileParts, readFileParts, writeFileParts, type FilePartRow } from './local'
 import { newId } from './rows'
 
 export interface Picked {

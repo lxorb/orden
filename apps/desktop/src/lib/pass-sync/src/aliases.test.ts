@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { AliasFetcher } from './aliases'
-import { aliasClient, AliasRefused } from './aliases'
+import { aliasClient, AliasRefused, type AliasFetcher } from './aliases'
 
 interface Asked {
   method: string

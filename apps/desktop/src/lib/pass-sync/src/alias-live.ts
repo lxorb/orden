@@ -1,6 +1,5 @@
 import type { Alias } from '@orden/pass/types'
-import type { AliasStats } from './aliases'
-import { aliasClient } from './aliases'
+import { aliasClient, type AliasStats } from './aliases'
 import { pass } from './store.svelte'
 
 async function clientFor(content: Alias) {

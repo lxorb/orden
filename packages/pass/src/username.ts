@@ -1,5 +1,4 @@
-import type { Random, WordsRule } from './generate'
-import { chosenWords, joinedWords, secureRandom } from './generate'
+import { chosenWords, joinedWords, secureRandom, type Random, type WordsRule } from './generate'
 
 export interface UsernameRule extends WordsRule {
   leet: boolean

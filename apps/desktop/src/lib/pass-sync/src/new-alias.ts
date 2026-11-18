@@ -2,8 +2,7 @@ import { siteOf } from '@orden/pass/urls'
 import type { Alias, Item } from '@orden/pass/types'
 import type { AliasAccount } from './alias-account'
 import { aliasContentOf, defaultAsk } from './alias-make'
-import type { AliasAsk, AliasOptions } from './aliases'
-import { aliasClient } from './aliases'
+import { aliasClient, type AliasAsk, type AliasOptions } from './aliases'
 import { pass } from './store.svelte'
 
 function titleFor(hostname: string | undefined, address: string): string {

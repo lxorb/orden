@@ -1,5 +1,4 @@
-import type { Vault } from '@orden/pass/types'
-import { atLeast } from '@orden/pass/types'
+import { atLeast, type Vault } from '@orden/pass/types'
 
 type Held = Pick<Vault, 'role' | 'hidePasswordsFromViewers'>
 
