@@ -1642,6 +1642,7 @@ const SOCIAL: &[&str] = &[
 mod tests {
     use super::*;
     use crate::grants::Grant;
+    use crate::verbs::Category::{Deleting, Paying, Sending, SigningIn, Unread, Writing};
 
     fn grant() -> Grant {
         Grant::own("a".into(), "A")
@@ -1655,6 +1656,13 @@ mod tests {
         }
     }
 
+    fn in_dialog(name: &str, dialog: &str) -> Facts {
+        Facts {
+            dialog: dialog.into(),
+            ..press(name)
+        }
+    }
+
     fn category(facts: &Facts, url: &str) -> Option<Category> {
         judge(&grant(), facts, Act::Press, url, &[]).map(|question| question.category)
     }
@@ -1662,75 +1670,35 @@ mod tests {
     #[test]
     fn a_dialog_that_talks_of_paying_or_deleting_asks_of_all_but_its_way_out() {
         let url = "https://app.example/";
-        let in_dialog = |name: &str, dialog: &str| Facts {
-            dialog: dialog.into(),
-            ..press(name)
-        };
         for (name, dialog, asked) in [
-            (
-                "Confirm",
-                "You are about to delete your account.",
-                Category::Deleting,
-            ),
-            (
-                "Confirm",
-                "Warning. Delete your account.",
-                Category::Deleting,
-            ),
-            (
-                "Yes",
-                "Confirmation Delete your account.",
-                Category::Deleting,
-            ),
-            ("OK", "Please confirm: delete account", Category::Deleting),
-            ("OK", "Your account will be terminated.", Category::Deleting),
-            ("Continue", "This wipes your phone.", Category::Deleting),
-            ("OK", "All your data is destroyed.", Category::Deleting),
-            ("Yes", "Discard this draft?", Category::Deleting),
-            (
-                "Agree",
-                "We start the deletion of your data.",
-                Category::Deleting,
-            ),
-            ("Confirm", "20 EUR is debited today.", Category::Paying),
-            (
-                "OK",
-                "Are you sure? All your files get deleted.",
-                Category::Deleting,
-            ),
+            ("Confirm", "You are about to delete your account.", Deleting),
+            ("Confirm", "Warning. Delete your account.", Deleting),
+            ("Yes", "Confirmation Delete your account.", Deleting),
+            ("OK", "Please confirm: delete account", Deleting),
+            ("OK", "Your account will be terminated.", Deleting),
+            ("Continue", "This wipes your phone.", Deleting),
+            ("OK", "All your data is destroyed.", Deleting),
+            ("Yes", "Discard this draft?", Deleting),
+            ("Agree", "We start the deletion of your data.", Deleting),
+            ("Confirm", "20 EUR is debited today.", Paying),
+            ("OK", "Are you sure? All your files get deleted.", Deleting),
             (
                 "Confirm",
                 "Order summary. Total 99 EUR. Pay with Visa ending 4242.",
-                Category::Paying,
+                Paying,
             ),
             (
                 "OK",
                 "Your card is charged 99 EUR. Purchase details below.",
-                Category::Paying,
+                Paying,
             ),
-            (
-                "Continue \u{2192}",
-                "Delete your account?",
-                Category::Deleting,
-            ),
-            (
-                "Confirm and close",
-                "Delete your account?",
-                Category::Deleting,
-            ),
-            ("Keep going", "Delete your account?", Category::Deleting),
-            ("Close account", "Delete your account?", Category::Deleting),
-            (
-                "Yes, no going back",
-                "Delete your account?",
-                Category::Deleting,
-            ),
-            (
-                "Done",
-                "You can remove your data at any time.",
-                Category::Deleting,
-            ),
-            ("", "Remove item from cart?", Category::Deleting),
+            ("Continue \u{2192}", "Delete your account?", Deleting),
+            ("Confirm and close", "Delete your account?", Deleting),
+            ("Keep going", "Delete your account?", Deleting),
+            ("Close account", "Delete your account?", Deleting),
+            ("Yes, no going back", "Delete your account?", Deleting),
+            ("Done", "You can remove your data at any time.", Deleting),
+            ("", "Remove item from cart?", Deleting),
         ] {
             assert_eq!(
                 category(&in_dialog(name, dialog), url),
@@ -1760,10 +1728,6 @@ mod tests {
     #[test]
     fn the_way_out_of_a_dialog_and_what_reads_as_paying_by_mistake() {
         let url = "https://app.example/";
-        let in_dialog = |name: &str, dialog: &str| Facts {
-            dialog: dialog.into(),
-            ..press(name)
-        };
         for (name, dialog) in [
             (
                 "Accept all cookies",
@@ -1801,81 +1765,49 @@ mod tests {
     #[test]
     fn only_what_is_plainly_the_way_out_goes_free() {
         let url = "https://app.example/";
-        let in_dialog = |name: &str, dialog: &str| Facts {
-            dialog: dialog.into(),
-            ..press(name)
-        };
         for (name, dialog, asked) in [
-            (
-                "Accept",
-                "Accept a charge of 99 EUR to your card?",
-                Category::Paying,
-            ),
-            (
-                "Keep",
-                "Keep your plan and be billed 99 EUR?",
-                Category::Paying,
-            ),
-            (
-                "Accept",
-                "Delete transfer request from Bob",
-                Category::Deleting,
-            ),
-            ("Accept all", "Delete your account?", Category::Deleting),
-            ("OK", "Delete your account?", Category::Deleting),
-            ("No, thanks and charge me", "Pay 99 EUR?", Category::Paying),
-            (
-                "OK",
-                "Delete your account? We use cookies.",
-                Category::Deleting,
-            ),
-            (
-                "OK",
-                "Your card is charged 99 EUR. We use cookies.",
-                Category::Paying,
-            ),
+            ("Accept", "Accept a charge of 99 EUR to your card?", Paying),
+            ("Keep", "Keep your plan and be billed 99 EUR?", Paying),
+            ("Accept", "Delete transfer request from Bob", Deleting),
+            ("Accept all", "Delete your account?", Deleting),
+            ("OK", "Delete your account?", Deleting),
+            ("No, thanks and charge me", "Pay 99 EUR?", Paying),
+            ("OK", "Delete your account? We use cookies.", Deleting),
+            ("OK", "Your card is charged 99 EUR. We use cookies.", Paying),
             (
                 "Continue",
                 "Free of charge for a month, then you are charged 9 EUR.",
-                Category::Paying,
+                Paying,
             ),
-            (
-                "Continue",
-                "This upgrade is 20 EUR. Pay now?",
-                Category::Paying,
-            ),
+            ("Continue", "This upgrade is 20 EUR. Pay now?", Paying),
             (
                 "OK",
                 "We use cookies. You can delete them in your browser.",
-                Category::Deleting,
+                Deleting,
             ),
-            ("OK", "Consent to payment of 99 EUR.", Category::Paying),
+            ("OK", "Consent to payment of 99 EUR.", Paying),
             (
                 "Agree",
                 "By clicking Agree you consent to be charged 99 EUR every month.",
-                Category::Paying,
+                Paying,
             ),
             (
                 "Allow",
                 "Payment consent. Allow shop.example to take 500 EUR from your account.",
-                Category::Paying,
+                Paying,
             ),
             (
                 "OK",
                 "We use cookies. Your account will be deleted permanently.",
-                Category::Deleting,
+                Deleting,
             ),
             (
                 "Accept all",
                 "We use cookies. You can delete them in your browser.",
-                Category::Deleting,
+                Deleting,
             ),
-            (
-                "Next",
-                "Your card will be charged 99 EUR.",
-                Category::Paying,
-            ),
-            ("Next", "Your account will be deleted.", Category::Deleting),
+            ("Next", "Your card will be charged 99 EUR.", Paying),
+            ("Next", "Your account will be deleted.", Deleting),
         ] {
             assert_eq!(
                 category(&in_dialog(name, dialog), url),
@@ -1905,16 +1837,11 @@ mod tests {
             field(true, "", "Delete your account?"),
             field(false, "", "Delete your account?"),
         ] {
-            assert_eq!(
-                enter(&facts),
-                Some(Category::Deleting),
-                "{}",
-                facts.default_button
-            );
+            assert_eq!(enter(&facts), Some(Deleting), "{}", facts.default_button);
         }
         assert_eq!(
             enter(&field(true, "Next", "Your account will be deleted.")),
-            Some(Category::Deleting)
+            Some(Deleting)
         );
         assert_eq!(enter(&field(true, "Cancel", "Delete your account?")), None);
         assert_eq!(enter(&field(true, "", "Change your name?")), None);
@@ -1970,9 +1897,9 @@ mod tests {
             ..press("OK")
         };
         for (dialog, asked) in [
-            ("Tu cuenta sera eliminada", Category::Deleting),
-            ("Paying 20 EUR", Category::Paying),
-            ("Purchased", Category::Paying),
+            ("Tu cuenta sera eliminada", Deleting),
+            ("Paying 20 EUR", Paying),
+            ("Purchased", Paying),
         ] {
             assert_eq!(category(&in_dialog(dialog), url), Some(asked), "{dialog}");
         }
@@ -2025,10 +1952,7 @@ mod tests {
             opaque: true,
             ..Facts::default()
         };
-        assert_eq!(
-            category(&unread, "https://app.example/"),
-            Some(Category::Unread)
-        );
+        assert_eq!(category(&unread, "https://app.example/"), Some(Unread));
     }
 
     #[test]
@@ -2216,26 +2140,26 @@ mod tests {
     #[test]
     fn presses_are_recognised_in_every_language() {
         let cases: &[(&str, &str, Option<Category>)] = &[
-            ("Place order", "https://shop.example/", Some(Category::Paying)),
-            ("Pay \u{20ac}12.50", "https://shop.example/", Some(Category::Paying)),
-            ("Jetzt kaufen", "https://shop.example/", Some(Category::Paying)),
-            ("Zahlungspflichtig bestellen", "https://shop.example/", Some(Category::Paying)),
-            ("Passer la commande", "https://shop.example/", Some(Category::Paying)),
-            ("Finalizar compra", "https://shop.example/", Some(Category::Paying)),
-            ("\u{6ce8}\u{6587}\u{3092}\u{78ba}\u{5b9a}\u{3059}\u{308b}", "https://shop.example/", Some(Category::Paying)),
-            ("\u{7acb}\u{5373}\u{8d2d}\u{4e70}", "https://shop.example/", Some(Category::Paying)),
-            ("\u{acb0}\u{c81c}\u{d558}\u{ae30}", "https://shop.example/", Some(Category::Paying)),
-            ("\u{41e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{44c} \u{437}\u{430}\u{43a}\u{430}\u{437}", "https://shop.example/", Some(Category::Paying)),
-            ("Send", "https://mail.google.com/mail/u/0/", Some(Category::Sending)),
-            ("Senden", "https://outlook.office.com/mail/", Some(Category::Sending)),
-            ("Publier", "https://www.linkedin.com/feed/", Some(Category::Sending)),
-            ("\u{53d1}\u{9001}", "https://weibo.com/", Some(Category::Sending)),
+            ("Place order", "https://shop.example/", Some(Paying)),
+            ("Pay \u{20ac}12.50", "https://shop.example/", Some(Paying)),
+            ("Jetzt kaufen", "https://shop.example/", Some(Paying)),
+            ("Zahlungspflichtig bestellen", "https://shop.example/", Some(Paying)),
+            ("Passer la commande", "https://shop.example/", Some(Paying)),
+            ("Finalizar compra", "https://shop.example/", Some(Paying)),
+            ("\u{6ce8}\u{6587}\u{3092}\u{78ba}\u{5b9a}\u{3059}\u{308b}", "https://shop.example/", Some(Paying)),
+            ("\u{7acb}\u{5373}\u{8d2d}\u{4e70}", "https://shop.example/", Some(Paying)),
+            ("\u{acb0}\u{c81c}\u{d558}\u{ae30}", "https://shop.example/", Some(Paying)),
+            ("\u{41e}\u{444}\u{43e}\u{440}\u{43c}\u{438}\u{442}\u{44c} \u{437}\u{430}\u{43a}\u{430}\u{437}", "https://shop.example/", Some(Paying)),
+            ("Send", "https://mail.google.com/mail/u/0/", Some(Sending)),
+            ("Senden", "https://outlook.office.com/mail/", Some(Sending)),
+            ("Publier", "https://www.linkedin.com/feed/", Some(Sending)),
+            ("\u{53d1}\u{9001}", "https://weibo.com/", Some(Sending)),
             ("Send", "https://shop.example/contact", None),
-            ("Delete", "https://drive.example/", Some(Category::Deleting)),
-            ("Endg\u{fc}ltig l\u{f6}schen", "https://drive.example/", Some(Category::Deleting)),
-            ("Supprimer le fichier", "https://drive.example/", Some(Category::Deleting)),
-            ("\u{524a}\u{9664}", "https://drive.example/", Some(Category::Deleting)),
-            ("Sil", "https://drive.example/", Some(Category::Deleting)),
+            ("Delete", "https://drive.example/", Some(Deleting)),
+            ("Endg\u{fc}ltig l\u{f6}schen", "https://drive.example/", Some(Deleting)),
+            ("Supprimer le fichier", "https://drive.example/", Some(Deleting)),
+            ("\u{524a}\u{9664}", "https://drive.example/", Some(Deleting)),
+            ("Sil", "https://drive.example/", Some(Deleting)),
             ("Silver plan", "https://drive.example/", None),
             ("Payment history", "https://shop.example/", None),
             ("Search", "https://shop.example/", None),
@@ -2257,20 +2181,14 @@ mod tests {
             said: String::new(),
             ..Field::default()
         }];
-        assert_eq!(
-            category(&facts, "https://shop.example/"),
-            Some(Category::Paying)
-        );
+        assert_eq!(category(&facts, "https://shop.example/"), Some(Paying));
         facts.fields = vec![Field {
             kind: "text".into(),
             autocomplete: String::new(),
             said: "Kartennummer".into(),
             ..Field::default()
         }];
-        assert_eq!(
-            category(&facts, "https://shop.example/"),
-            Some(Category::Paying)
-        );
+        assert_eq!(category(&facts, "https://shop.example/"), Some(Paying));
     }
 
     #[test]
@@ -2285,7 +2203,7 @@ mod tests {
             "https://shop.example/",
             &hosts,
         );
-        assert_eq!(asked.map(|one| one.category), Some(Category::Paying));
+        assert_eq!(asked.map(|one| one.category), Some(Paying));
         facts.submit = false;
         assert!(judge(
             &grant(),
@@ -2356,7 +2274,7 @@ mod tests {
     }
 
     fn sent(facts: &Facts, act: Act, url: &str) -> bool {
-        asked(facts, act, url).is_some_and(|(category, _)| category == Category::Sending)
+        asked(facts, act, url).is_some_and(|(category, _)| category == Sending)
     }
 
     #[test]
@@ -2364,7 +2282,7 @@ mod tests {
         let send = submitting("Send", compose());
         assert_eq!(
             asked(&send, Act::Press, "http://127.0.0.1:23960/mail"),
-            Some((Category::Sending, "Send on 127.0.0.1".to_string()))
+            Some((Sending, "Send on 127.0.0.1".to_string()))
         );
         let webmail = on_the_page(
             "Send",
@@ -2403,7 +2321,7 @@ mod tests {
                 Act::Press,
                 "https://forum.example/"
             ),
-            Some((Category::Sending, "Send on forum.example".to_string()))
+            Some((Sending, "Send on forum.example".to_string()))
         );
         let support = vec![
             field("email", "Email"),
@@ -2626,7 +2544,7 @@ mod tests {
     #[test]
     fn a_category_turned_off_or_always_allowed_does_not_ask() {
         let mut grant = grant();
-        grant.asks.insert(Category::Deleting, false);
+        grant.asks.insert(Deleting, false);
         assert!(judge(
             &grant,
             &press("Delete"),
@@ -2635,9 +2553,7 @@ mod tests {
             &[]
         )
         .is_none());
-        grant
-            .always
-            .insert("shop.example".into(), vec![Category::Paying]);
+        grant.always.insert("shop.example".into(), vec![Paying]);
         assert!(judge(
             &grant,
             &press("Buy now"),
@@ -2673,14 +2589,14 @@ mod tests {
 
         let mut asked = grant();
         let question = judge(&asked, &log_in, Act::Press, url, &[]);
-        assert_eq!(question.map(|one| one.category), Some(Category::SigningIn));
-        asked.asks.insert(Category::SigningIn, false);
+        assert_eq!(question.map(|one| one.category), Some(SigningIn));
+        asked.asks.insert(SigningIn, false);
         assert!(judge(&asked, &log_in, Act::Press, url, &[]).is_none());
 
         let mut approve = grant();
         approve.mode = Mode::Confirm;
         let question = judge(&approve, &typed, Act::Write, url, &[]);
-        assert_eq!(question.map(|one| one.category), Some(Category::SigningIn));
+        assert_eq!(question.map(|one| one.category), Some(SigningIn));
     }
 
     #[test]
@@ -2698,14 +2614,14 @@ mod tests {
         for asking in [&approve, &unsupervised] {
             for kind in [DialogKind::SignIn, DialogKind::Certificate] {
                 let question = answering(asking, kind, true, url, "").expect("asked");
-                assert_eq!(question.category, Category::SigningIn);
+                assert_eq!(question.category, SigningIn);
                 assert_eq!(question.summary, "Sign in on intranet.example");
                 assert!(answering(asking, kind, false, url, "").is_none());
             }
         }
 
         let mut off = grant();
-        off.asks.insert(Category::SigningIn, false);
+        off.asks.insert(SigningIn, false);
         assert!(answering(&off, DialogKind::SignIn, true, url, "").is_none());
 
         for kind in [DialogKind::Alert, DialogKind::Confirm, DialogKind::Prompt] {
@@ -2728,7 +2644,7 @@ mod tests {
             "Pay 500 EUR now?",
         )
         .expect("asked");
-        assert_eq!(question.category, Category::Paying);
+        assert_eq!(question.category, Paying);
         assert_eq!(
             question.summary,
             "The page says \u{201c}Pay 500 EUR now?\u{201d} on shop.example"
@@ -2742,7 +2658,7 @@ mod tests {
             "Delete this repository?",
         )
         .expect("asked");
-        assert_eq!(question.category, Category::Deleting);
+        assert_eq!(question.category, Deleting);
 
         assert!(answering(&unsupervised, DialogKind::Confirm, false, url, "Pay now?").is_none());
         assert!(answering(&unsupervised, DialogKind::Alert, true, url, "Pay now?").is_none());
@@ -2755,23 +2671,20 @@ mod tests {
     fn hidden_or_look_alike_letters_never_hide_a_dangerous_word() {
         let url = "https://shop.example/";
         let disguised = [
-            ("Del\u{200b}ete", Category::Deleting),
-            ("Del\u{200d}ete account", Category::Deleting),
-            ("D\u{ad}elete", Category::Deleting),
-            ("\u{202e}Delete\u{202c}", Category::Deleting),
-            ("De\u{2060}lete", Category::Deleting),
-            ("Delet\u{435}", Category::Deleting),
-            (
-                "\u{ff24}\u{ff45}\u{ff4c}\u{ff45}\u{ff54}\u{ff45}",
-                Category::Deleting,
-            ),
+            ("Del\u{200b}ete", Deleting),
+            ("Del\u{200d}ete account", Deleting),
+            ("D\u{ad}elete", Deleting),
+            ("\u{202e}Delete\u{202c}", Deleting),
+            ("De\u{2060}lete", Deleting),
+            ("Delet\u{435}", Deleting),
+            ("\u{ff24}\u{ff45}\u{ff4c}\u{ff45}\u{ff54}\u{ff45}", Deleting),
             (
                 "\u{1d403}\u{1d41e}\u{1d425}\u{1d41e}\u{1d42d}\u{1d41e}",
-                Category::Deleting,
+                Deleting,
             ),
-            ("\u{420}\u{430}\u{443}", Category::Paying),
-            ("P\u{feff}ay now", Category::Paying),
-            ("Buy\u{fe0f} now", Category::Paying),
+            ("\u{420}\u{430}\u{443}", Paying),
+            ("P\u{feff}ay now", Paying),
+            ("Buy\u{fe0f} now", Paying),
         ];
         for (name, wanted) in disguised {
             assert_eq!(category(&press(name), url), Some(wanted), "{name:?}");
@@ -2784,7 +2697,7 @@ mod tests {
             "Del\u{200b}ete this repository?",
         )
         .expect("asked");
-        assert_eq!(question.category, Category::Deleting);
+        assert_eq!(question.category, Deleting);
         assert!(leads("Del\u{200b}ete all"));
 
         let dialog = "This will delete your account.";
@@ -2797,10 +2710,7 @@ mod tests {
             None
         );
         assert_eq!(category(&out("C\u{200b}ancel"), url), None);
-        assert_eq!(
-            category(&out("D\u{200b}elete"), url),
-            Some(Category::Deleting)
-        );
+        assert_eq!(category(&out("D\u{200b}elete"), url), Some(Deleting));
     }
 
     #[test]
@@ -2809,10 +2719,7 @@ mod tests {
         let mut link = press("How to delete your account");
         link.link = true;
         assert_eq!(category(&link, url), None);
-        assert_eq!(
-            category(&press("Delete account"), url),
-            Some(Category::Deleting)
-        );
+        assert_eq!(category(&press("Delete account"), url), Some(Deleting));
     }
 
     #[test]
@@ -2842,7 +2749,7 @@ mod tests {
         let mut big = press("Go");
         big.cut = true;
         big.submit = true;
-        assert_eq!(category(&big, url), Some(Category::Unread));
+        assert_eq!(category(&big, url), Some(Unread));
         big.submit = false;
         assert_eq!(category(&big, url), None);
     }
@@ -2901,7 +2808,7 @@ mod tests {
             "https://a.example/",
             &[],
         );
-        assert_eq!(asked.map(|one| one.category), Some(Category::Writing));
+        assert_eq!(asked.map(|one| one.category), Some(Writing));
         let typed = judge(
             &grant,
             &Facts::default(),
@@ -2909,7 +2816,7 @@ mod tests {
             "https://a.example/",
             &[],
         );
-        assert_eq!(typed.map(|one| one.category), Some(Category::Writing));
+        assert_eq!(typed.map(|one| one.category), Some(Writing));
     }
 
     #[test]
@@ -3062,14 +2969,10 @@ mod tests {
     fn a_key_on_a_button_is_a_press_of_it() {
         let grant = grant();
         for key in ["Space", "Enter", "Shift+Enter", "Control+Enter"] {
-            assert_eq!(
-                keyed(&grant, press("Pay now"), key),
-                Some(Category::Paying),
-                "{key}"
-            );
+            assert_eq!(keyed(&grant, press("Pay now"), key), Some(Paying), "{key}");
             assert_eq!(
                 keyed(&grant, press("Delete account"), key),
-                Some(Category::Deleting),
+                Some(Deleting),
                 "{key}"
             );
         }
@@ -3077,11 +2980,8 @@ mod tests {
             fields: vec![field("textarea", "Type a message"), field("email", "To")],
             ..press("Send")
         };
-        assert_eq!(
-            keyed(&grant, send.clone(), "Space"),
-            Some(Category::Sending)
-        );
-        assert_eq!(keyed(&grant, send, "Enter"), Some(Category::Sending));
+        assert_eq!(keyed(&grant, send.clone(), "Space"), Some(Sending));
+        assert_eq!(keyed(&grant, send, "Enter"), Some(Sending));
         assert_eq!(keyed(&grant, press("Pay now"), "Tab"), None);
         assert_eq!(keyed(&grant, press("Open menu"), "Space"), None);
     }
@@ -3095,8 +2995,8 @@ mod tests {
             ..press("Log in")
         };
         let grant = grant();
-        assert_eq!(keyed(&grant, log_in(), "Space"), Some(Category::SigningIn));
-        assert_eq!(keyed(&grant, log_in(), "Enter"), Some(Category::SigningIn));
+        assert_eq!(keyed(&grant, log_in(), "Space"), Some(SigningIn));
+        assert_eq!(keyed(&grant, log_in(), "Enter"), Some(SigningIn));
         let mut full = grant.clone();
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, log_in(), "Space"), None);
@@ -3116,22 +3016,16 @@ mod tests {
         };
         assert_eq!(
             keyed(&grant, field_of("Delete account"), "Enter"),
-            Some(Category::Deleting)
+            Some(Deleting)
         );
-        assert_eq!(
-            keyed(&grant, field_of("Pay now"), "Enter"),
-            Some(Category::Paying)
-        );
+        assert_eq!(keyed(&grant, field_of("Pay now"), "Enter"), Some(Paying));
         assert_eq!(keyed(&grant, field_of("Search"), "Enter"), None);
         let submitted = Facts {
             submit: true,
             ..field_of("Delete account")
         };
         let question = judge(&grant, &submitted, Act::Enter, "https://shop.example/", &[]);
-        assert_eq!(
-            question.as_ref().map(|one| one.category),
-            Some(Category::Deleting)
-        );
+        assert_eq!(question.as_ref().map(|one| one.category), Some(Deleting));
         assert_eq!(
             question.map(|one| one.summary).as_deref(),
             Some("Delete account on shop.example")
@@ -3142,7 +3036,7 @@ mod tests {
             field: field("checkbox", "Sure"),
             ..field_of("Delete account")
         };
-        assert_eq!(keyed(&grant, tick, "Enter"), Some(Category::Deleting));
+        assert_eq!(keyed(&grant, tick, "Enter"), Some(Deleting));
         let boxed = Facts {
             tag: "textarea".into(),
             kind: String::new(),
@@ -3169,8 +3063,8 @@ mod tests {
             opaque: true,
             ..Facts::default()
         };
-        assert_eq!(keyed(&grant, host(), "Space"), Some(Category::Unread));
-        assert_eq!(keyed(&grant, host(), "Enter"), Some(Category::Unread));
+        assert_eq!(keyed(&grant, host(), "Space"), Some(Unread));
+        assert_eq!(keyed(&grant, host(), "Enter"), Some(Unread));
         let mut full = grant.clone();
         full.mode = Mode::Autonomous;
         assert_eq!(keyed(&full, host(), "Space"), None);
@@ -3215,10 +3109,7 @@ mod tests {
             fields: vec![field("password", "Password")],
             ..Facts::default()
         };
-        assert_eq!(
-            keyed(&grant, tick.clone(), "Enter"),
-            Some(Category::SigningIn)
-        );
+        assert_eq!(keyed(&grant, tick.clone(), "Enter"), Some(SigningIn));
         assert_eq!(keyed(&grant, tick, "Space"), None);
     }
 

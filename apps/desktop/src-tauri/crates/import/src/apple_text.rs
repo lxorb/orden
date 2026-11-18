@@ -47,20 +47,7 @@ struct Run {
 
 impl Default for Run {
     fn default() -> Self {
-        Self {
-            length: 0,
-            style: PLAIN,
-            indent: 0,
-            done: None,
-            quote: false,
-            weight: 0,
-            underlined: false,
-            struck: 0,
-            baseline: 0,
-            emphasis: 0,
-            link: None,
-            attachment: None,
-        }
+        DEFAULT
     }
 }
 

@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 publish = false
+build = "../base/build.rs"
 
 [lints]
 workspace = true
