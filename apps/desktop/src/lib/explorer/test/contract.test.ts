@@ -34,15 +34,13 @@ describe('a folder', () => {
   })
 })
 
-describe('the way back and forward', () => {
-  test('is kept in the tab and survives being written and read again', () => {
-    const start = { folder: '/a', back: [], ahead: [] }
-    const there = wentTo(wentTo(start, '/b'), '/c')
-    const back = steppedBack(there)
-    expect(back).toEqual({ folder: '/b', back: ['/a'], ahead: ['/c'] })
-    expect(back && steppedForward(back)).toEqual(there)
-    expect(readSpec(writeSpec(there))).toEqual(there)
-    expect(readSpec('not json')).toBeNull()
-    expect(steppedBack(start)).toBeNull()
-  })
+test('the way back and forward is kept in the tab and survives being written and read again', () => {
+  const start = { folder: '/a', back: [], ahead: [] }
+  const there = wentTo(wentTo(start, '/b'), '/c')
+  const back = steppedBack(there)
+  expect(back).toEqual({ folder: '/b', back: ['/a'], ahead: ['/c'] })
+  expect(back && steppedForward(back)).toEqual(there)
+  expect(readSpec(writeSpec(there))).toEqual(there)
+  expect(readSpec('not json')).toBeNull()
+  expect(steppedBack(start)).toBeNull()
 })

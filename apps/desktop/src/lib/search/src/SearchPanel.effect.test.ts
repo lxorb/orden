@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import type { Hit } from '@orden/scan/search/match'
 import { taskHash } from '@orden/bases'
 
@@ -35,29 +35,25 @@ function panel(): HTMLElement {
   return into
 }
 
-describe('a paper found on more than one page', () => {
-  test('shows a row for each page', () => {
-    const into = panel()
-    search.found = [page(1), page(2)]
-    flushSync()
+test('a paper found on more than one page shows a row for each page', () => {
+  const into = panel()
+  search.found = [page(1), page(2)]
+  flushSync()
 
-    const rows = [...into.querySelectorAll('.orden-row-meta')].map((row) => row.textContent)
-    expect(rows).toEqual(['Page 1', 'Page 2'])
-  })
+  const rows = [...into.querySelectorAll('.orden-row-meta')].map((row) => row.textContent)
+  expect(rows).toEqual(['Page 1', 'Page 2'])
 })
 
-describe('ticking a task in the results', () => {
-  test('names the task it showed, so a note edited since ticks that task or none', async () => {
-    const ticks = vi.spyOn(workspace, 'toggleTaskAt').mockResolvedValue(false)
-    const into = panel()
-    search.found = [
-      { path: '/space/List.md', name: 'List.md', line: 3, text: '- [ ] buy milk', ranges: [] },
-    ]
-    flushSync()
+test('ticking a task in the results names the task it showed, so a note edited since ticks that task or none', async () => {
+  const ticks = vi.spyOn(workspace, 'toggleTaskAt').mockResolvedValue(false)
+  const into = panel()
+  search.found = [
+    { path: '/space/List.md', name: 'List.md', line: 3, text: '- [ ] buy milk', ranges: [] },
+  ]
+  flushSync()
 
-    into.querySelector<HTMLInputElement>('input.orden-checkbox')?.click()
-    await vi.waitFor(() => expect(ticks).toHaveBeenCalled())
+  into.querySelector<HTMLInputElement>('input.orden-checkbox')?.click()
+  await vi.waitFor(() => expect(ticks).toHaveBeenCalled())
 
-    expect(ticks).toHaveBeenCalledWith('/space/List.md', 3, taskHash('buy milk'))
-  })
+  expect(ticks).toHaveBeenCalledWith('/space/List.md', 3, taskHash('buy milk'))
 })

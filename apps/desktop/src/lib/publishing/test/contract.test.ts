@@ -1,12 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import { loadPublishSheet, publish } from '../src/api'
 
-describe('the module stands on its own', () => {
-  test('the api loads with the sheet closed and nothing ready to publish', () => {
-    expect(publish.open).toBe(false)
-    expect(publish.ready).toBe(false)
-    expect(typeof loadPublishSheet).toBe('function')
-  })
+test('the module stands on its own the api loads with the sheet closed and nothing ready to publish', () => {
+  expect(publish.open).toBe(false)
+  expect(publish.ready).toBe(false)
+  expect(typeof loadPublishSheet).toBe('function')
 })
 
 describe('the form', () => {

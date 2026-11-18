@@ -394,12 +394,10 @@ describe('preparing the notes a document embeds', () => {
   })
 })
 
-describe('naming the document', () => {
-  test('prefers the front matter, then the first heading, then the file', () => {
-    expect(titleOf('---\ntitle: Meta\n---\n# Head', 'file.md')).toBe('Meta')
-    expect(titleOf('# Head\n', 'file.md')).toBe('Head')
-    expect(titleOf('text', 'file.md')).toBe('file')
-  })
+test('naming the document prefers the front matter, then the first heading, then the file', () => {
+  expect(titleOf('---\ntitle: Meta\n---\n# Head', 'file.md')).toBe('Meta')
+  expect(titleOf('# Head\n', 'file.md')).toBe('Head')
+  expect(titleOf('text', 'file.md')).toBe('file')
 })
 
 describe('pandoc formats', () => {

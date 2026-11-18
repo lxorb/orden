@@ -60,16 +60,14 @@ describe('the writers', () => {
   })
 })
 
-describe('showing a file where it sits', () => {
-  test('names Finder on a Mac unless the explorer port offers to show it', () => {
-    expect(showLabel('macos')).toBe('Show in Finder')
-    const stop = providePort('explorer.show', {
-      offered: () => true,
-      show: () => Promise.resolve(true),
-    })
-    expect(showLabel('macos')).toBe('Show in folder')
-    expect(showLabel('linux')).toBe('Show in folder')
-    stop()
-    expect(showLabel('macos')).toBe('Show in Finder')
+test('showing a file where it sits names Finder on a Mac unless the explorer port offers to show it', () => {
+  expect(showLabel('macos')).toBe('Show in Finder')
+  const stop = providePort('explorer.show', {
+    offered: () => true,
+    show: () => Promise.resolve(true),
   })
+  expect(showLabel('macos')).toBe('Show in folder')
+  expect(showLabel('linux')).toBe('Show in folder')
+  stop()
+  expect(showLabel('macos')).toBe('Show in Finder')
 })

@@ -1,5 +1,5 @@
 import { readBase } from '@orden/bases'
-import { describe, expect, test } from 'vitest'
+import { expect, test } from 'vitest'
 import { renamedGroup } from './edit'
 
 const base = readBase(`filters: 'note.priority == "Low" || note.status == "Low"'
@@ -19,17 +19,15 @@ views:
         - 'note["status"] != "Low"'
 `)
 
-describe('an option renamed in the filters', () => {
-  test('only comparisons of the renamed property change, not another with the same words', () => {
-    const renamed = renamedGroup(base, 'note.status', 'Low', 'Backlog')
-    expect(renamed.filters).toBe('note.priority == "Low" || note.status == "Backlog"')
-    expect(renamed.views[0]?.filters).toBe('status != "Backlog" && priority == "Low"')
-    expect(renamed.views[1]?.filters).toEqual({
-      and: [
-        '"Backlog" == status',
-        'status.contains("Backlog") && tags.contains("Low")',
-        'note["status"] != "Backlog"',
-      ],
-    })
+test('an option renamed in the filters only comparisons of the renamed property change, not another with the same words', () => {
+  const renamed = renamedGroup(base, 'note.status', 'Low', 'Backlog')
+  expect(renamed.filters).toBe('note.priority == "Low" || note.status == "Backlog"')
+  expect(renamed.views[0]?.filters).toBe('status != "Backlog" && priority == "Low"')
+  expect(renamed.views[1]?.filters).toEqual({
+    and: [
+      '"Backlog" == status',
+      'status.contains("Backlog") && tags.contains("Low")',
+      'note["status"] != "Backlog"',
+    ],
   })
 })

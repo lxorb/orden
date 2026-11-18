@@ -159,25 +159,23 @@ describe('a document read by pandoc while a space shared to be read is open', ()
   })
 })
 
-describe('an import with no folder of its own', () => {
-  test('lands where it was sent, not in a folder called Untitled', async () => {
-    for (const [under, folder] of [
-      ['', ''],
-      ['Plans', ''],
-      ['Plans', 'Notion'],
-    ]) {
-      importing.plan = { format: 'todoist', files: [], lost: [] }
-      importing.stage = 'ready'
-      importing.root = MINE.root
-      importing.under = under ?? ''
-      importing.folder = folder ?? ''
-      await importing.run()
-    }
+test('an import with no folder of its own lands where it was sent, not in a folder called Untitled', async () => {
+  for (const [under, folder] of [
+    ['', ''],
+    ['Plans', ''],
+    ['Plans', 'Notion'],
+  ]) {
+    importing.plan = { format: 'todoist', files: [], lost: [] }
+    importing.stage = 'ready'
+    importing.root = MINE.root
+    importing.under = under ?? ''
+    importing.folder = folder ?? ''
+    await importing.run()
+  }
 
-    expect(landedIn).toEqual([
-      { root: MINE.root, folder: '' },
-      { root: MINE.root, folder: 'Plans' },
-      { root: MINE.root, folder: 'Plans/Notion' },
-    ])
-  })
+  expect(landedIn).toEqual([
+    { root: MINE.root, folder: '' },
+    { root: MINE.root, folder: 'Plans' },
+    { root: MINE.root, folder: 'Plans/Notion' },
+  ])
 })

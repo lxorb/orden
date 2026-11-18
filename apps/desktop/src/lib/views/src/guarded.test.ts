@@ -61,18 +61,16 @@ describe('a base with a pattern that could freeze the app', () => {
   })
 })
 
-describe('a fence in a file somebody shared on its own', () => {
-  test('is refused for a pattern that could freeze the app', async () => {
-    const live = new LiveView({
-      scope: null,
-      path: null,
-      stranger: true,
-      load: () => Promise.resolve(risky),
-      save: () => Promise.resolve(),
-    })
-    await live.reload()
-    expect(live.failed).toBe(true)
+test('a fence in a file somebody shared on its own is refused for a pattern that could freeze the app', async () => {
+  const live = new LiveView({
+    scope: null,
+    path: null,
+    stranger: true,
+    load: () => Promise.resolve(risky),
+    save: () => Promise.resolve(),
   })
+  await live.reload()
+  expect(live.failed).toBe(true)
 })
 
 describe('a base read from a file by anything that answers it', () => {

@@ -17,11 +17,9 @@ const { placesFor } = await import('../src/places')
 
 type Entry = NonNullable<Parameters<typeof placesFor>[0]>
 
-describe('saving the tab in front', () => {
-  test('writes what is open when no tab waits for a place', () => {
-    saveFront()
-    expect(wrote.times).toBe(1)
-  })
+test('saving the tab in front writes what is open when no tab waits for a place', () => {
+  saveFront()
+  expect(wrote.times).toBe(1)
 })
 
 describe('where Save offers to put a tab', () => {

@@ -14,11 +14,9 @@ function sources(folder: string): string[] {
   })
 }
 
-describe('the module stands on its own', () => {
-  test('no file under src waits on a door, so the site script bundles it as one IIFE', () => {
-    const doors = sources(SRC).filter((file) => /\bimport\(/.test(readFileSync(file, 'utf8')))
-    expect(doors.map((file) => relative(SRC, file))).toEqual([])
-  })
+test('the module stands on its own no file under src waits on a door, so the site script bundles it as one IIFE', () => {
+  const doors = sources(SRC).filter((file) => /\bimport\(/.test(readFileSync(file, 'utf8')))
+  expect(doors.map((file) => relative(SRC, file))).toEqual([])
 })
 
 type Graph = ConstructorParameters<typeof Layout>[0]

@@ -65,15 +65,13 @@ describe('a name that is already taken', () => {
   })
 })
 
-describe('claiming a name', () => {
-  test('tells the set about the name it gave out', () => {
-    const taken = new Set<string>()
+test('claiming a name tells the set about the name it gave out', () => {
+  const taken = new Set<string>()
 
-    expect(claimName('pic.png', taken)).toBe('pic.png')
-    expect(claimName('pic.png', taken)).toBe('pic 2.png')
-    expect(claimName('pic.png', taken)).toBe('pic 3.png')
-    expect([...taken].sort()).toEqual(['pic 2.png', 'pic 3.png', 'pic.png'])
-  })
+  expect(claimName('pic.png', taken)).toBe('pic.png')
+  expect(claimName('pic.png', taken)).toBe('pic 2.png')
+  expect(claimName('pic.png', taken)).toBe('pic 3.png')
+  expect([...taken].sort()).toEqual(['pic 2.png', 'pic 3.png', 'pic.png'])
 })
 
 describe('the export list', () => {

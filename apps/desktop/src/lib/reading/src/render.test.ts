@@ -226,19 +226,15 @@ describe('the HTML in a note', () => {
   })
 })
 
-describe('a note the renderer cannot read', () => {
-  test('is shown as the words it is, escaped, rather than a blank page', () => {
-    const html = unreadableHtml('> [!note] <b>x</b> & y\n')
+test('a note the renderer cannot read is shown as the words it is, escaped, rather than a blank page', () => {
+  const html = unreadableHtml('> [!note] <b>x</b> & y\n')
 
-    expect(html).toBe('<pre class="unreadable">&gt; [!note] &lt;b&gt;x&lt;/b&gt; &amp; y\n</pre>')
-  })
+  expect(html).toBe('<pre class="unreadable">&gt; [!note] &lt;b&gt;x&lt;/b&gt; &amp; y\n</pre>')
 })
 
-describe('a picture the first pass found', () => {
-  test('is drawn once, not looked up again', async () => {
-    const html = await readingHtml(note('![[x.png]]\n'), 'light', true)
+test('a picture the first pass found is drawn once, not looked up again', async () => {
+  const html = await readingHtml(note('![[x.png]]\n'), 'light', true)
 
-    expect(html).toContain('src="/asset/space/att/x.png"')
-    expect(html).not.toContain('asset:///asset')
-  })
+  expect(html).toContain('src="/asset/space/att/x.png"')
+  expect(html).not.toContain('asset:///asset')
 })

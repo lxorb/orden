@@ -122,20 +122,18 @@ describe('rewriting a markdown link', () => {
   })
 })
 
-describe('code the page draws is never rewritten', () => {
-  test('a fence in a callout, indented code, and code in a list item', () => {
-    for (const note of [
-      '> [!example] Linking\n> ```md\n> See [[Plan]] for more.\n> ```\n',
-      'Write it like this:\n\n    [[Plan]]\n',
-      '- step\n\n      [[Plan]]\n',
-      '- step\n  ```\n  [[Plan]]\n  ```\n',
-    ]) {
-      expect(rewriteLinks(note, 'Note.md', move, pointsAt('Plan')), note).toBeNull()
-    }
-    expect(rewriteLinks('> See [[Plan]]\n', 'Note.md', move, pointsAt('Plan'))).toBe(
-      '> See [[Roadmap]]\n',
-    )
-  })
+test('code the page draws is never rewritten a fence in a callout, indented code, and code in a list item', () => {
+  for (const note of [
+    '> [!example] Linking\n> ```md\n> See [[Plan]] for more.\n> ```\n',
+    'Write it like this:\n\n    [[Plan]]\n',
+    '- step\n\n      [[Plan]]\n',
+    '- step\n  ```\n  [[Plan]]\n  ```\n',
+  ]) {
+    expect(rewriteLinks(note, 'Note.md', move, pointsAt('Plan')), note).toBeNull()
+  }
+  expect(rewriteLinks('> See [[Plan]]\n', 'Note.md', move, pointsAt('Plan'))).toBe(
+    '> See [[Roadmap]]\n',
+  )
 })
 
 describe('renaming a note to a name a wikilink cannot say', () => {

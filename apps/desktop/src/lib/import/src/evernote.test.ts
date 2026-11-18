@@ -404,23 +404,21 @@ describe('the markup of an Evernote note', () => {
   })
 })
 
-describe('an Evernote checkbox', () => {
-  test('reads none of its words as a field of the task', async () => {
-    const list = `  <note>
-    <title>Chores</title>
-    <content><![CDATA[<en-note><div><en-todo/>task 📅 2026-11-01 ⏫ 🔁 every week #tag</div></en-note>]]></content>
-  </note>`
+test('an Evernote checkbox reads none of its words as a field of the task', async () => {
+  const list = `  <note>
+  <title>Chores</title>
+  <content><![CDATA[<en-note><div><en-todo/>task 📅 2026-11-01 ⏫ 🔁 every week #tag</div></en-note>]]></content>
+</note>`
 
-    const line = noteAt(await readEvernote([file('A.enex', enex(list))]), 'Chores.md')
-      .split('\n')
-      .find((one) => one.startsWith('- [ ]'))
-    const task = readTask(line ?? '')
+  const line = noteAt(await readEvernote([file('A.enex', enex(list))]), 'Chores.md')
+    .split('\n')
+    .find((one) => one.startsWith('- [ ]'))
+  const task = readTask(line ?? '')
 
-    expect(task).toMatchObject({ tags: [] })
-    expect(task?.due).toBeUndefined()
-    expect(task?.recurrence).toBeUndefined()
-    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
-  })
+  expect(task).toMatchObject({ tags: [] })
+  expect(task?.due).toBeUndefined()
+  expect(task?.recurrence).toBeUndefined()
+  expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
 })
 
 describe('an Evernote note written in the evening, west of Greenwich', () => {

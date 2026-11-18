@@ -853,22 +853,20 @@ describe('a vault landed in a folder named like one of its own folders', () => {
   })
 })
 
-describe('an import into a space that is not the one open', () => {
-  test('has a link by name reach the note it came with, not that space’s namesake', async () => {
-    listed.set('/Other', ['Ideas.md', 'cover.png'])
-    await applyImport(
-      planOf([
-        note('Ideas.md', '# mine'),
-        file('cover.png'),
-        note('Daily/Day.md', 'See [[Ideas]] and ![[cover.png]].'),
-      ]),
-      { root: '/Other', folder: 'Vault' },
-    )
+test('an import into a space that is not the one open has a link by name reach the note it came with, not that space’s namesake', async () => {
+  listed.set('/Other', ['Ideas.md', 'cover.png'])
+  await applyImport(
+    planOf([
+      note('Ideas.md', '# mine'),
+      file('cover.png'),
+      note('Daily/Day.md', 'See [[Ideas]] and ![[cover.png]].'),
+    ]),
+    { root: '/Other', folder: 'Vault' },
+  )
 
-    expect(said.get('/Other/Vault/Daily/Day.md')).toBe(
-      'See [[Vault/Ideas|Ideas]] and ![[Vault/cover.png]].',
-    )
-  })
+  expect(said.get('/Other/Vault/Daily/Day.md')).toBe(
+    'See [[Vault/Ideas|Ideas]] and ![[Vault/cover.png]].',
+  )
 })
 
 describe('an import into a space that already holds an earlier copy', () => {
@@ -1018,36 +1016,32 @@ describe('a path no space would take', () => {
   })
 })
 
-describe('an import that fails partway', () => {
-  test('is still one thing to undo for what it wrote', async () => {
-    refusing = '/Space/C.md'
+test('an import that fails partway is still one thing to undo for what it wrote', async () => {
+  refusing = '/Space/C.md'
 
-    await expect(
-      applyImport(planOf([note('A.md', 'a'), note('B.md', 'b'), note('C.md', 'c')]), {
-        root: '/Space',
-        folder: '',
-      }),
-    ).rejects.toThrow('the disk is full')
+  await expect(
+    applyImport(planOf([note('A.md', 'a'), note('B.md', 'b'), note('C.md', 'c')]), {
+      root: '/Space',
+      folder: '',
+    }),
+  ).rejects.toThrow('the disk is full')
 
-    expect(recorded).toEqual([
-      {
-        kind: 'import',
-        paths: ['/Space/A.md', '/Space/B.md'],
-        wrote: { '/Space/A.md': await sha256('a'), '/Space/B.md': await sha256('b') },
-      },
-    ])
-  })
+  expect(recorded).toEqual([
+    {
+      kind: 'import',
+      paths: ['/Space/A.md', '/Space/B.md'],
+      wrote: { '/Space/A.md': await sha256('a'), '/Space/B.md': await sha256('b') },
+    },
+  ])
 })
 
-describe('a space shared to be read', () => {
-  test('is refused before a single file is written', async () => {
-    readOnly.add('/Theirs')
-    const plan = planOf([note('Plan.md', '# Plan'), file('assets/x.png')])
+test('a space shared to be read is refused before a single file is written', async () => {
+  readOnly.add('/Theirs')
+  const plan = planOf([note('Plan.md', '# Plan'), file('assets/x.png')])
 
-    await expect(applyImport(plan, { root: '/Theirs', folder: 'In' })).rejects.toThrow(
-      /could not be written/,
-    )
-    expect(wrote).toEqual([])
-    expect(recorded).toEqual([])
-  })
+  await expect(applyImport(plan, { root: '/Theirs', folder: 'In' })).rejects.toThrow(
+    /could not be written/,
+  )
+  expect(wrote).toEqual([])
+  expect(recorded).toEqual([])
 })

@@ -14,13 +14,11 @@ function sources(folder: string): string[] {
   })
 }
 
-describe('the module stands on its own', () => {
-  test('imports nothing at all, so the published site script carries it without a barrel', () => {
-    const imports = sources(SRC).flatMap((file) => [
-      ...readFileSync(file, 'utf8').matchAll(/^import .* from '([^']+)'/gm),
-    ])
-    expect(imports.map((found) => found[1])).toEqual([])
-  })
+test('the module stands on its own imports nothing at all, so the published site script carries it without a barrel', () => {
+  const imports = sources(SRC).flatMap((file) => [
+    ...readFileSync(file, 'utf8').matchAll(/^import .* from '([^']+)'/gm),
+  ])
+  expect(imports.map((found) => found[1])).toEqual([])
 })
 
 describe('a camera', () => {

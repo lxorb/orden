@@ -41,35 +41,33 @@ describe('a view’s tasks assigned to me (#1254)', () => {
   })
 })
 
-describe('the notes that link to a note', () => {
-  test('are gathered in time that grows with the notes, however many link to one', () => {
-    const index = noteRowsOf('Mine', 'Index.md', '# Index\n')
-    const days = new Map<number, ReturnType<typeof noteRowsOf>>()
-    const daily = (count: number) => {
-      const known = days.get(count)
-      if (known) return known
-      const made = [
-        ...index,
-        ...Array.from({ length: count }, (_, at) =>
-          noteRowsOf('Mine', `Day ${at}.md`, 'See [[Index]]\n'),
-        ).flat(),
-      ]
-      days.set(count, made)
-      return made
-    }
-    const target = index.find((one) => one.kind === 'note')
-    if (!target) throw new Error('no note row')
-    const linking = linearly(
-      (count) =>
-        contextFor({
-          rows: daily(count),
-          today: '2026-11-06',
-          now: '2026-11-06T10:00',
-        }).backlinks?.(target),
-      16_000,
-    )
-    expect(linking).toHaveLength(16_000)
-  })
+test('the notes that link to a note are gathered in time that grows with the notes, however many link to one', () => {
+  const index = noteRowsOf('Mine', 'Index.md', '# Index\n')
+  const days = new Map<number, ReturnType<typeof noteRowsOf>>()
+  const daily = (count: number) => {
+    const known = days.get(count)
+    if (known) return known
+    const made = [
+      ...index,
+      ...Array.from({ length: count }, (_, at) =>
+        noteRowsOf('Mine', `Day ${at}.md`, 'See [[Index]]\n'),
+      ).flat(),
+    ]
+    days.set(count, made)
+    return made
+  }
+  const target = index.find((one) => one.kind === 'note')
+  if (!target) throw new Error('no note row')
+  const linking = linearly(
+    (count) =>
+      contextFor({
+        rows: daily(count),
+        today: '2026-11-06',
+        now: '2026-11-06T10:00',
+      }).backlinks?.(target),
+    16_000,
+  )
+  expect(linking).toHaveLength(16_000)
 })
 
 describe('a link in a base', () => {

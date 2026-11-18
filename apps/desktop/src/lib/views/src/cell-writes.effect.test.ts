@@ -154,17 +154,15 @@ describe('a task cell, when edited', () => {
   })
 })
 
-describe('a checkbox cell on a note without the key', () => {
-  test('shows a box unticked that writes the key when ticked', () => {
-    const { target, writes } = shown(rowOf('b.md', 'words\n'), 'note.done', 'checkbox', {
-      editing: false,
-    })
-    const box = target.querySelector<HTMLInputElement>('input[type="checkbox"]')
-    expect(box?.checked).toBe(false)
-    box?.click()
-    flushSync()
-    expect(writes).toEqual([{ note: { done: true } }])
+test('a checkbox cell on a note without the key shows a box unticked that writes the key when ticked', () => {
+  const { target, writes } = shown(rowOf('b.md', 'words\n'), 'note.done', 'checkbox', {
+    editing: false,
   })
+  const box = target.querySelector<HTMLInputElement>('input[type="checkbox"]')
+  expect(box?.checked).toBe(false)
+  box?.click()
+  flushSync()
+  expect(writes).toEqual([{ note: { done: true } }])
 })
 
 describe('a number cell, when edited', () => {

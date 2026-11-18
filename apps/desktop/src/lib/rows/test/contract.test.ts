@@ -6,13 +6,11 @@ import { noteRowsOf } from '../src/store'
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
 
-describe('the module stands on its own', () => {
-  test('names the rows store, what a row is read from and how one is written', () => {
-    const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
-    for (const name of ['rows', 'noteRowsOf', 'changed', 'RowChange']) {
-      expect(api).toMatch(new RegExp(`\\b${name}\\b`))
-    }
-  })
+test('the module stands on its own names the rows store, what a row is read from and how one is written', () => {
+  const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
+  for (const name of ['rows', 'noteRowsOf', 'changed', 'RowChange']) {
+    expect(api).toMatch(new RegExp(`\\b${name}\\b`))
+  }
 })
 
 describe('the rows of a note', () => {

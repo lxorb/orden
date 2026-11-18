@@ -7,13 +7,11 @@ import { RightPan } from '../src/right-pan'
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
 
-describe('the module stands on its own', () => {
-  test('opens the canvas itself only through its door', () => {
-    const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
-    const loaded = [...api.matchAll(/from '([^']+)'/g)].map((one) => one[1])
-    expect(loaded).not.toContain('./Canvas.svelte')
-    expect(api).toMatch(/export const loadCanvas = \(\) =>[^;]*import\('\.\/Canvas\.svelte'\)/)
-  })
+test('the module stands on its own opens the canvas itself only through its door', () => {
+  const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
+  const loaded = [...api.matchAll(/from '([^']+)'/g)].map((one) => one[1])
+  expect(loaded).not.toContain('./Canvas.svelte')
+  expect(api).toMatch(/export const loadCanvas = \(\) =>[^;]*import\('\.\/Canvas\.svelte'\)/)
 })
 
 const plane = {

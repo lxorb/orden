@@ -129,13 +129,11 @@ describe('a CSV as one note per row', () => {
   })
 })
 
-describe('a file with no rows in it', () => {
-  test('says so rather than making an empty note', async () => {
-    const plan = await readTable([file('Empty.csv', '')])
+test('a file with no rows in it says so rather than making an empty note', async () => {
+  const plan = await readTable([file('Empty.csv', '')])
 
-    expect(plan.files).toHaveLength(0)
-    expect(plan.lost).toHaveLength(1)
-  })
+  expect(plan.files).toHaveLength(0)
+  expect(plan.lost).toHaveLength(1)
 })
 
 describe('what a spreadsheet holds that a database does not', () => {

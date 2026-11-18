@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import type { FuzzyHit } from '@orden/scan/search/fuzzy'
 import type { Hit } from '@orden/scan/search/match'
 
@@ -53,15 +53,13 @@ vi.mock('../../away/src/api', () => ({
 await import('../../workspace/src/api')
 const { searchSpace } = await import('./space')
 
-describe('a search in a browser that keeps some notes away', () => {
-  test('shows the best guesses of all the notes together, no more of them than of its own', async () => {
-    const hits: string[] = []
-    const loose: string[] = []
-    await searchSpace('/space', { kind: 'term', text: 'tulip' } as never, ['tulip'], 3, (found) => {
-      hits.push(...found.hits.map((one) => one.path))
-      loose.push(...found.loose.map((one) => one.path))
-    })
-    expect(hits).toEqual(['/space/Here.md'])
-    expect(loose).toEqual(['/space/away1.md', '/space/away3.md', '/space/a.md'])
+test('a search in a browser that keeps some notes away shows the best guesses of all the notes together, no more of them than of its own', async () => {
+  const hits: string[] = []
+  const loose: string[] = []
+  await searchSpace('/space', { kind: 'term', text: 'tulip' } as never, ['tulip'], 3, (found) => {
+    hits.push(...found.hits.map((one) => one.path))
+    loose.push(...found.loose.map((one) => one.path))
   })
+  expect(hits).toEqual(['/space/Here.md'])
+  expect(loose).toEqual(['/space/away1.md', '/space/away3.md', '/space/a.md'])
 })

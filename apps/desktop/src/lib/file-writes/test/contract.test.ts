@@ -24,15 +24,13 @@ vi.mock('../../documents/src/api', () => ({
 
 const { hearWrites, writeFile, writeIfAbsent } = await import('../src/api')
 
-describe('the module stands on its own', () => {
-  test('reads the index, the documents and the platform through their apis only', () => {
-    const text = readFileSync(join(import.meta.dirname, '../src/api.ts'), 'utf8')
-    expect([...text.matchAll(/from '([^']*)'/g)].map((found) => found[1]).sort()).toEqual([
-      '../../documents/src/api',
-      '../../link-index/src/api',
-      '../../platform/src/api',
-    ])
-  })
+test('the module stands on its own reads the index, the documents and the platform through their apis only', () => {
+  const text = readFileSync(join(import.meta.dirname, '../src/api.ts'), 'utf8')
+  expect([...text.matchAll(/from '([^']*)'/g)].map((found) => found[1]).sort()).toEqual([
+    '../../documents/src/api',
+    '../../link-index/src/api',
+    '../../platform/src/api',
+  ])
 })
 
 describe('writing a file', () => {

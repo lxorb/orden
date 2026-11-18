@@ -24,21 +24,19 @@ const reachedApis = () =>
     ].map((found) => found[1]),
   )
 
-describe('the module stands on its own', () => {
-  test('reads the workspace, the search, the reading view, the bases and the canvas through no file of theirs', () => {
-    expect([...new Set(reachedApis())].sort()).toEqual([
-      'graph',
-      'launch',
-      'link-format',
-      'platform',
-      'sharing',
-      'ui-kit',
-    ])
-    const text = sources(SRC)
-      .map((file) => readFileSync(file, 'utf8'))
-      .join('\n')
-    expect(text).not.toMatch(/(?:from |import\()'[^']*workspace/)
-  })
+test('the module stands on its own reads the workspace, the search, the reading view, the bases and the canvas through no file of theirs', () => {
+  expect([...new Set(reachedApis())].sort()).toEqual([
+    'graph',
+    'launch',
+    'link-format',
+    'platform',
+    'sharing',
+    'ui-kit',
+  ])
+  const text = sources(SRC)
+    .map((file) => readFileSync(file, 'utf8'))
+    .join('\n')
+  expect(text).not.toMatch(/(?:from |import\()'[^']*workspace/)
 })
 
 describe('the link index', () => {

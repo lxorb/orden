@@ -142,23 +142,19 @@ describe('the three slots', () => {
   })
 })
 
-describe('the lasso and what it catches', () => {
-  test('is a loop until somebody asks for a box', () => {
-    expect(pens.box).toBe(false)
+test('the lasso and what it catches is a loop until somebody asks for a box', () => {
+  expect(pens.box).toBe(false)
 
-    pens.catching({ box: true, partly: true })
-    expect(pens.box).toBe(true)
-    expect(pens.partly).toBe(true)
-  })
+  pens.catching({ box: true, partly: true })
+  expect(pens.box).toBe(true)
+  expect(pens.partly).toBe(true)
 })
 
-describe('straightening', () => {
-  test('is on to begin with and can be turned off', () => {
-    expect(pens.straighten).toBe(true)
+test('straightening is on to begin with and can be turned off', () => {
+  expect(pens.straighten).toBe(true)
 
-    pens.straightening(false)
-    expect(pens.straighten).toBe(false)
-  })
+  pens.straightening(false)
+  expect(pens.straighten).toBe(false)
 })
 
 describe('the eraser', () => {
@@ -176,14 +172,12 @@ describe('the eraser', () => {
   })
 })
 
-describe('where the bar sits', () => {
-  test('moves to an edge and folds away', () => {
-    pens.dockTo('top')
-    pens.fold(true)
+test('where the bar sits moves to an edge and folds away', () => {
+  pens.dockTo('top')
+  pens.fold(true)
 
-    expect(pens.dock).toBe('top')
-    expect(pens.shut).toBe(true)
-  })
+  expect(pens.dock).toBe('top')
+  expect(pens.shut).toBe(true)
 })
 
 describe('what the store holds', () => {
