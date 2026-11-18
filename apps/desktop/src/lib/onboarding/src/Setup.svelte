@@ -174,6 +174,37 @@
     mask-image: linear-gradient(#000 calc(100% - 28px), transparent);
   }
 
+  .setup :global(.o-end) {
+    margin-inline-start: auto;
+    min-width: 74px;
+    min-height: 30px;
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .setup :global(.o-done) {
+    margin-inline-start: auto;
+    min-width: 30px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    color: var(--success);
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .setup :global(.o-done svg) {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .setup :global(.o-list) {
     width: 100%;
     border-radius: 14px;

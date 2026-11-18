@@ -46,10 +46,10 @@
           </span>
           <span class="text">{issue.text}</span>
           {#if sent[issue.id] === 'sent'}
-            <span class="done" role="status">Report received</span>
+            <span class="o-done" role="status">Report received</span>
           {:else}
             <button
-              class="orden-chip end"
+              class="orden-chip o-end"
               type="button"
               disabled={sent[issue.id] === 'sending'}
               aria-busy={sent[issue.id] === 'sending'}
@@ -120,26 +120,5 @@
   .text {
     min-width: 0;
     flex: 1;
-  }
-
-  .end {
-    margin-inline-start: auto;
-    min-width: 74px;
-    min-height: 30px;
-    display: inline-grid;
-    place-items: center;
-  }
-
-  .done {
-    margin-inline-start: auto;
-    min-width: 30px;
-    height: 30px;
-    display: inline-grid;
-    place-items: center;
-    flex: none;
-    color: var(--success);
-    font-size: 13.5px;
-    font-weight: 600;
-    white-space: nowrap;
   }
 </style>
