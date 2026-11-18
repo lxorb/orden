@@ -1,13 +1,19 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
 
+pub mod appearance;
 pub mod bundle_name;
+pub mod default_browser;
+pub mod document_window;
 pub mod fonts;
 #[cfg(target_os = "linux")]
 pub mod front_x;
+pub mod full_screen;
 pub mod gpu;
+pub mod ground;
 #[cfg(target_os = "macos")]
 pub mod lights;
 pub mod link_preview;
+pub mod menu_bar;
 pub mod package_manager;
 #[cfg(target_os = "linux")]
 pub mod packagekit;

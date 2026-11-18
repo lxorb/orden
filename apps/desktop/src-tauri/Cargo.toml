@@ -145,6 +145,8 @@ flate2 = { version = "1", default-features = false, features = ["rust_backend"] 
 rusqlite = { version = "0.32", features = ["bundled"] }
 tauri-plugin-os = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-deep-link = "2"
+window-vibrancy = "0.6"
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
 notify = "8"
@@ -208,7 +210,7 @@ orden-web-engine = { path = "crates/web-engine" }
 tauri = { version = "2", features = ["protocol-asset", "unstable"] }
 tauri-plugin-opener.workspace = true
 tauri-plugin-os.workspace = true
-tauri-plugin-deep-link = "2"
+tauri-plugin-deep-link.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 base64.workspace = true
@@ -238,7 +240,6 @@ tauri-plugin-updater = "2"
 tauri-plugin-global-shortcut = "~2.3"
 tauri-plugin-notification = "~2.4"
 sha2.workspace = true
-window-vibrancy = "0.6"
 dirs.workspace = true
 reqwest.workspace = true
 rustls.workspace = true
@@ -289,7 +290,6 @@ str0m.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 file-id.workspace = true
-windows-registry.workspace = true
 windows = { workspace = true, features = [
   "Wdk_System_Threading",
   "Win32_UI_Shell",

@@ -2,5 +2,5 @@
   "name": "system",
   "layer": "native",
   "lang": "rust",
-  "dependsOn": ["base"]
+  "dependsOn": ["base", "placement"]
 }

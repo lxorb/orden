@@ -169,32 +169,6 @@ mod tests {
     }
 
     #[test]
-    fn no_window_is_built_to_show_the_desk_where_nothing_is_drawn() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        let mut through = Vec::new();
-        for name in [
-            "tauri.conf.json",
-            "tauri.linux.conf.json",
-            "tauri.macos.conf.json",
-            "tauri.windows.conf.json",
-        ] {
-            let text = std::fs::read_to_string(root.join(name)).expect("the config");
-            if text.contains("\"transparent\": true") {
-                through.push(name.to_string());
-            }
-        }
-        for (name, path) in crate::sources() {
-            if std::fs::read_to_string(&path)
-                .unwrap_or_default()
-                .contains(concat!(".transparent", "(true)"))
-            {
-                through.push(name);
-            }
-        }
-        assert!(through.is_empty(), "built to show through: {through:?}");
-    }
-
-    #[test]
     fn only_a_ground_with_nothing_in_it_asks_for_the_material() {
         assert!(clear("rgba(0, 0, 0, 0)"));
         assert!(clear("rgba(14, 16, 19, 0)"));

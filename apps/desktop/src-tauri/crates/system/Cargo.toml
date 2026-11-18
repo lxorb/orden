@@ -11,6 +11,8 @@ workspace = true
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 orden-base = { path = "../base" }
+orden-placement = { path = "../placement" }
+tauri-plugin-opener.workspace = true
 tauri.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -24,6 +26,7 @@ tokio.workspace = true
 libc.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
+tauri-plugin-deep-link.workspace = true
 zbus.workspace = true
 x11rb.workspace = true
 
@@ -33,7 +36,11 @@ block2.workspace = true
 objc2-foundation.workspace = true
 objc2-app-kit.workspace = true
 
+[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
+window-vibrancy.workspace = true
+
 [target.'cfg(target_os = "windows")'.dependencies]
+windows-registry.workspace = true
 windows = { workspace = true, features = [
   "Win32_Devices_HumanInterfaceDevice",
   "Win32_Foundation",
