@@ -1,4 +1,5 @@
 import type { Preview } from '@orden/chats'
+import { unbase64 } from '@orden/pass/bytes'
 import { isRecord, isString, invoke, isDesktop } from '../../platform/src/api'
 
 const WIDEST = 480
@@ -21,11 +22,12 @@ async function smaller(bytes: Uint8Array, type: string): Promise<Uint8Array> {
   }
 }
 
-function bytesOf(base64: string): Uint8Array {
-  const raw = atob(base64)
-  const out = new Uint8Array(raw.length)
-  for (let at = 0; at < raw.length; at++) out[at] = raw.charCodeAt(at)
-  return out
+function bytesOf(base64: string): Uint8Array | null {
+  try {
+    return unbase64(base64)
+  } catch {
+    return null
+  }
 }
 
 export async function previewOf(
@@ -39,8 +41,9 @@ export async function previewOf(
   const preview: Preview = { url: page.url, title: page.title }
   if (isString(page.site) && page.site) preview.site = page.site
   if (isString(page.text) && page.text) preview.text = page.text
-  if (isString(page.picture) && isString(page.pictureType)) {
-    const picture = await smaller(bytesOf(page.picture), page.pictureType)
+  const bytes = isString(page.picture) ? bytesOf(page.picture) : null
+  if (bytes && isString(page.pictureType)) {
+    const picture = await smaller(bytes, page.pictureType)
     const hash = await upload(picture)
     if (hash) preview.picture = hash
   }
