@@ -9,11 +9,23 @@ from linux_app import run
 DESK, OUT, APP = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
 NAME = Path(sys.argv[0]).stem.removesuffix("-drive")
 POINTER = OUT / "pointer.fifo"
+DID = OUT / "pointer.log"
 failures = []
 
+def done():
+    try:
+        return DID.read_text().count("\ndid ")
+    except OSError:
+        return 0
+
 def tell(line):
+    before = done()
     with open(POINTER, "w") as pointer:
         pointer.write(line + "\n")
+    for _ in range(50):
+        if done() > before:
+            return
+        time.sleep(0.05)
 
 def xdo(*words):
     return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout

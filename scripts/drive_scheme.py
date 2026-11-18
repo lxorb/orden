@@ -18,6 +18,10 @@ def mode(scheme):
     return f"{PICKER} .modes button[aria-label='{NAMES[scheme]}']"
 
 
+def kept(scheme):
+    return f"{SCHEME} === {json.dumps(scheme)} && !!document.querySelector({json.dumps(mode(scheme) + '[aria-pressed=true]')})"
+
+
 def themes_row(run):
     at = run(
         "[...document.querySelectorAll(%s)].find((one) => one.textContent.trim() === 'Themes')?.dataset.at ?? null"
@@ -60,7 +64,7 @@ def switch(run, box, press, want, seconds=4):
         run(CLOSE)
         return f"the picker offers no {NAMES[want]}"
     press(choice)
-    switched = waited(run, f"{SCHEME} === {json.dumps(want)}", seconds)
+    switched = waited(run, kept(want), seconds)
     run(CLOSE)
     if not waited(run, GONE, seconds):
         return "Escape left the picker open"
@@ -81,7 +85,7 @@ def clicked(run, want, seconds=4):
     )
     if said != "pressed":
         return said
-    switched = waited(run, f"{SCHEME} === {json.dumps(want)}", seconds)
+    switched = waited(run, kept(want), seconds)
     run(CLOSE)
     if not waited(run, GONE, seconds):
         return "Escape left the picker open"

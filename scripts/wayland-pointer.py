@@ -165,3 +165,7 @@ while True:
                 chord(words[1:-1], int(words[-1]))
             elif words[0] == "quit":
                 sys.exit(0)
+            synced = next(ids)
+            send(1, 0, struct.pack("<I", synced))
+            until(synced, registry)
+            print(f"did {words[0]}", flush=True)
