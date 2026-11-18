@@ -15,6 +15,8 @@ on:
       - apps/desktop/src/lib/ui-kit/src/outside-drops.ts
       - scripts/web-tab-drive.py
       - scripts/gesture-drive.py
+      - scripts/edge-drive.py
+      - scripts/native_app.py
       - scripts/outside-drop-drive.py
       - scripts/pinch-drive.py
       - .github/workflows/web-tab.yml
@@ -116,6 +118,20 @@ jobs:
               python3 -m venv "$RUNNER_TEMP/gestures"
               "$RUNNER_TEMP/gestures/bin/pip" install --quiet pyobjc-framework-Quartz
               "$RUNNER_TEMP/gestures/bin/python" "${drive[@]}"
+              ;;
+          esac
+
+      - name: The window's edges answer the pointer over a page
+        if: ${{ !cancelled() && env.EXE != '' && runner.os != 'Linux' }}
+        timeout-minutes: 15
+        run: |
+          drive=(scripts/edge-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Windows) python "${drive[@]}" ;;
+            *)
+              python3 -m venv "$RUNNER_TEMP/edges"
+              "$RUNNER_TEMP/edges/bin/pip" install --quiet pyobjc-framework-Quartz
+              "$RUNNER_TEMP/edges/bin/python" "${drive[@]}"
               ;;
           esac
 

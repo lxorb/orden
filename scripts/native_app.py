@@ -66,5 +66,30 @@ def endpoint(config: pathlib.Path, pid: int, secret: str, patience: float = 20, 
         time.sleep(0.25)
     raise SystemExit(f"the app never wrote {path}")
 
+INNER = (
+    "const i = window.__TAURI_INTERNALS__;"
+    "const at = await i.invoke('plugin:window|inner_position', { label: 'main' });"
+    "const scale = await i.invoke('plugin:window|scale_factor', { label: 'main' });"
+    "return { x: at.x, y: at.y, scale, ratio: devicePixelRatio }"
+)
+
+def forward(app: App, pid: int) -> None:
+    app.eval("await window.__TAURI_INTERNALS__.invoke('plugin:window|set_focus', { label: 'main' }); return true")
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    from probe_app import main_window
+
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    hwnd = main_window(pid)
+    theirs = user32.GetWindowThreadProcessId(user32.GetForegroundWindow(), None)
+    ours = ctypes.windll.kernel32.GetCurrentThreadId()
+    user32.AttachThreadInput(ours, theirs, True)
+    user32.ShowWindow(hwnd, 9)
+    user32.SetForegroundWindow(hwnd)
+    user32.BringWindowToTop(hwnd)
+    user32.AttachThreadInput(ours, theirs, False)
+
 def known(issue: int, what: str) -> None:
     print(f"::warning::known (#{issue}): {what}", flush=True)
