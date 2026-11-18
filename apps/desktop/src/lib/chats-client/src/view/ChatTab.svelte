@@ -30,6 +30,7 @@
   import { store } from './source.svelte'
   import Timeline from './Timeline.svelte'
   import Tip from './Tip.svelte'
+  import { boxOf } from './tips.svelte'
 
   const { tab }: { tab: Tab } = $props()
 
@@ -113,11 +114,6 @@
   )
 
   onDestroy(() => page?.close())
-
-  function boxOf(element: Element): Box {
-    const box = element.getBoundingClientRect()
-    return { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
-  }
 
   function reactPicker(message: Message, from: HTMLElement) {
     picking = { at: boxOf(from), pick: (emoji) => page?.react(message, emoji) }
