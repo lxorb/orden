@@ -37,9 +37,7 @@ describe('a folder outside, taken in', () => {
       moved: [{ from: '/Vault/Work', to: '/Spaces/Work 2' }],
       left: [],
     }
-
     expect(await takeIn()).toBe(true)
-
     const session = JSON.parse(localStorage.getItem('orden:workspace') ?? '{}') as {
       spaces: { id: string; root: string }[]
       tabs: { path: string }[]
@@ -71,10 +69,8 @@ describe('a folder outside, taken in', () => {
       moved: [{ from: '/Vault/Work', to: '/Spaces/Work 2' }],
       left: ['Home'],
     }
-
     expect(await takeIn()).toBe(true)
     expect(await takeIn()).toBe(false)
-
     expect(asked.map((one) => one.command)).not.toContain('settle_outside')
     expect(rootsMoved()).toEqual([{ from: '/Vault/Work', to: '/Spaces/Work 2' }])
     expect(JSON.parse(localStorage.getItem(OUTSIDE) ?? 'null')).toEqual({

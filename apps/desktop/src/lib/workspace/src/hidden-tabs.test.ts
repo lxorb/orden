@@ -60,7 +60,6 @@ describe('until somebody has answered', () => {
   test('the first switch away from a running page asks, and Pause pauses it', async () => {
     answers.push('pause')
     await hiddenTabs.left([webTab('a')])
-
     expect(asked.count).toBe(1)
     expect(hiddenTabs.choice).toBe('pause')
     expect(await paused()).toEqual([['a', true]])
@@ -72,7 +71,6 @@ describe('until somebody has answered', () => {
     await hiddenTabs.left([webTab('a')])
     expect(hiddenTabs.choice).toBe('ask')
     expect(await paused()).toEqual([])
-
     answers.push(null)
     await hiddenTabs.left([webTab('a')])
     expect(asked.count).toBe(2)
@@ -82,7 +80,6 @@ describe('until somebody has answered', () => {
     answers.push('run')
     await hiddenTabs.left([webTab('a')])
     await hiddenTabs.left([webTab('b')])
-
     expect(asked.count).toBe(1)
     expect(hiddenTabs.choice).toBe('run')
     expect(await paused()).toEqual([])
@@ -100,7 +97,6 @@ describe('pausing', () => {
     await hiddenTabs.left([webTab('a'), webTab('b')])
     await sending()
     sent.length = 0
-
     hiddenTabs.came([webTab('a'), webTab('c')])
     expect(await paused()).toEqual([['a', false]])
   })
@@ -117,7 +113,6 @@ describe('pausing', () => {
     await hiddenTabs.left([webTab('a')])
     await sending()
     sent.length = 0
-
     hiddenTabs.set('run')
     expect(await paused()).toEqual([['a', false]])
   })

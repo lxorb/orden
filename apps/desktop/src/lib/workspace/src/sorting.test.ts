@@ -51,7 +51,6 @@ describe('the order a space is read in', () => {
     expect(sorting.of(ROOT)).toBe('modified-desc')
     expect(sorting.of('/other')).toBe('name')
     expect(JSON.parse(store.getItem(STORAGE_KEY) ?? '{}')[ROOT].mode).toBe('modified-desc')
-
     store.setItem('orden:list-order', JSON.stringify({ [ROOT]: 'created-asc' }))
     expect(made().of(ROOT)).toBe('modified-desc')
   })
@@ -68,7 +67,6 @@ describe('the order a space is read in', () => {
     const sorting = made()
     sorting.adopt(ROOT, 'manual', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
-
     sorting.adopt(ROOT, 'created-desc', 'account')
     expect(sorting.of(ROOT)).toBe('created-desc')
     expect(sent).toEqual([])
@@ -112,7 +110,6 @@ describe('an account whose listing says nothing of the order', () => {
     expect(sorting.of(ROOT)).toBe('manual')
     await new Promise((settled) => setTimeout(settled, 50))
     expect(sent).toEqual([])
-
     sorting.adopt(ROOT, 'name', 'account')
     expect(sorting.of(ROOT)).toBe('manual')
     await vi.waitFor(() => expect(sent).toEqual([{ root: ROOT, sort: 'manual' }]))

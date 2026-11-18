@@ -176,7 +176,6 @@ describe('one note in two windows', () => {
     a.type(inA, 'FROM-A ')
     await a.save(inA)
     await wires.deliver()
-
     expect(disk.get(PATH)).toBe(`${BASE}FROM-A `)
     expect(inB.latest).toBe(`${BASE}FROM-A `)
     expect(inB.dirty).toBe(false)
@@ -193,7 +192,6 @@ describe('one note in two windows', () => {
     b.type(inB, 'MORE ')
     await a.save(inA)
     await wires.deliver()
-
     expect(inB.latest).toBe(`${BASE}FROM-A MORE `)
     expect(inB.onDisk).toBe(`${BASE}FROM-A `)
   })
@@ -206,11 +204,9 @@ describe('one note in two windows', () => {
     a.type(inA, 'FROM-A ')
     await a.save(inA)
     await wires.deliver()
-
     const b = aWindow(wires.end(), disk)
     const inB = b.open(BASE)
     await b.across.heardSoFar()
-
     expect(inB.latest).toBe(`${BASE}FROM-A `)
     expect(inB.dirty).toBe(false)
     expect(b.owed).toEqual([])
@@ -224,11 +220,9 @@ describe('one note in two windows', () => {
     await a.save(inA)
     b.type(inB, 'FROM-B ')
     await b.save(inB)
-
     expect(disk.get(PATH)).toContain('FROM-A')
     expect(disk.get(PATH)).toContain('FROM-B')
     expect(inB.latest).toBe(disk.get(PATH))
-
     await wires.deliver()
     expect(inA.latest).toBe(disk.get(PATH))
     expect(inB.latest).toBe(disk.get(PATH))
@@ -243,7 +237,6 @@ describe('one note in two windows', () => {
     a.type(inA, 'FROM-A ')
     await a.save(inA)
     await wires.deliver()
-
     expect(inB.latest).toBe(`TOP ${BASE}FROM-A `)
     expect(inB.dirty).toBe(true)
     expect(b.owed).toEqual([inB])
@@ -263,7 +256,6 @@ describe('one note in two windows', () => {
     const saving = b.save(inB)
     inB.live.edit([{ from: 0, to: 0, insert: 'KEY ' }])
     await saving
-
     expect(disk.get(PATH)).toContain('FROM-A')
     expect(inB.latest).toContain('KEY')
     expect(inB.latest).toContain('FROM-A')
@@ -283,7 +275,6 @@ describe('one note in two windows', () => {
       if (inB.dirty) await b.save(inB)
       await wires.deliver()
     }
-
     expect(disk.get(PATH)).toContain('AAA')
     expect(disk.get(PATH)).toContain('BBB')
     expect(inA.latest).toBe(disk.get(PATH))
@@ -300,7 +291,6 @@ describe('one note in two windows', () => {
       op: { op: 'removed', path: PATH, kind: 'file', root: '/Notes' } satisfies FileOp,
     })
     await wires.deliver()
-
     expect(b.heard.at(-1)).toMatchObject({ op: 'removed', heard: true })
     expect(inB.path).toBeNull()
     expect(inB.latest).toContain('AFTER-DELETE')
@@ -313,7 +303,6 @@ describe('one note in two windows', () => {
     const inB = b.open(BASE)
     b.type(inB, 'typed')
     disk.delete(PATH)
-
     expect(await b.save(inB)).toBeNull()
     expect(disk.has(PATH)).toBe(false)
     expect(inB.path).toBeNull()
@@ -338,7 +327,6 @@ describe('one note in two windows', () => {
     await a.save(inA)
     inB.replace('{"nodes":[2]}')
     await b.save(inB)
-
     expect(disk.get(PATH)).toBe('{"nodes":[2]}')
     expect(b.versions).toEqual(['{"nodes":[1]}'])
     await wires.deliver()
@@ -362,11 +350,9 @@ describe('a whole file written by the app in this window', () => {
     const disk = new Map([[PATH, BASE]])
     const one = aWindow(channel().end(), disk)
     const note = one.open(BASE)
-
     disk.set(PATH, `${BASE}- [ ] added by the app\n`)
     one.across.wroteHere(PATH)
     await one.across.heardSoFar()
-
     expect(note.latest).toBe(`${BASE}- [ ] added by the app\n`)
     expect(note.dirty).toBe(false)
   })
@@ -376,11 +362,9 @@ describe('a whole file written by the app in this window', () => {
     const one = aWindow(channel().end(), disk)
     const note = one.open(BASE)
     one.type(note, 'typed ')
-
     disk.set(PATH, `top\n${BASE}`)
     one.across.wroteHere(PATH)
     await one.across.heardSoFar()
-
     expect(note.latest).toBe(`top\n${BASE}typed `)
     expect(note.dirty).toBe(true)
     await one.save(note)
@@ -391,11 +375,9 @@ describe('a whole file written by the app in this window', () => {
     const disk = new Map([[PATH, BASE]])
     const one = aWindow(channel().end(), disk)
     const note = one.open(BASE)
-
     disk.set('/Notes/Other.md', 'other')
     one.across.wroteHere('/Notes/Other.md')
     await one.across.heardSoFar()
-
     expect(note.latest).toBe(BASE)
   })
 })
@@ -412,7 +394,6 @@ describe('whatever order the news arrives in', () => {
     b.type(inB, 'BEE ')
     await b.save(inB)
     await wires.deliver()
-
     for (const token of ['ONE ', 'TWO ', 'BEE ']) {
       expect(count(disk.get(PATH) ?? '', token)).toBe(1)
       expect(count(inA.latest, token)).toBe(1)
@@ -496,7 +477,6 @@ describe('around one write', () => {
       if (inA.dirty) await a.save(inA)
       await wires.deliver()
     }
-
     expect(disk.get(PATH)).toContain('FROM-A')
     expect(disk.get(PATH)).toContain('FROM-B')
     expect(inA.latest).toBe(disk.get(PATH))
@@ -508,7 +488,6 @@ describe('around one write', () => {
     const inB = b.open(BASE)
     b.type(inB, 'typed')
     b.failRead(true)
-
     await expect(b.save(inB)).rejects.toMatchObject({ name: 'WillNotRead' })
     expect(disk.get(PATH)).toBe(BASE)
     expect(count(inB.latest, 'base line')).toBe(1)
@@ -524,7 +503,6 @@ describe('around one write', () => {
     disk.delete(PATH)
     disk.set('/Notes/Moved.md', BASE)
     b.renamedSoon(inB, '/Notes/Moved.md')
-
     expect(await b.save(inB)).toBeNull()
     expect(inB.path).toBe('/Notes/Moved.md')
     expect(b.owed).toEqual([inB])
@@ -558,15 +536,12 @@ describe('a file with CRLF endings', () => {
     expect(doc.latest).toBe(LF)
     expect(doc.text).toBe(LF)
     expect(doc.onDisk).toBe(LF)
-
     doc.replace('a\r\nb\rc\n', false)
     expect(doc.latest).toBe('a\nb\nc\n')
     expect(doc.onDisk).toBe('a\nb\nc\n')
-
     doc.adopt({ path: '/Notes/Other.md', name: 'Other.md', text: 'x\r\ny\r\n' })
     expect(doc.latest).toBe('x\ny\n')
     expect(doc.onDisk).toBe('x\ny\n')
-
     doc.replace('p\r\nq', true)
     doc.flush()
     expect(doc.text).toBe('p\nq')
@@ -590,16 +565,13 @@ describe('a file with CRLF endings', () => {
     b.type(inB, 'FROM-B ')
     await savingLikeTheCrate(b, disk)(inB)
     await wires.deliver()
-
     expect(inA.latest).toBe(`${LF}FROM-B `)
     expect(inA.dirty).toBe(false)
-
     inA.live.edit([{ from: 0, to: 0, insert: 'FROM-A ' }])
     expect(inA.dirty).toBe(true)
     expect(a.edited).toEqual([inA])
     await savingLikeTheCrate(a, disk)(inA)
     await wires.deliver()
-
     const words = `FROM-A ${LF}FROM-B `
     expect(inA.latest).toBe(words)
     expect(inB.latest).toBe(words)
@@ -617,7 +589,6 @@ describe('a file with CRLF endings', () => {
     expect(inA.latest).toContain('AAA')
     expect(inA.latest).toContain('BBB')
     expect(inA.latest).not.toContain('\r')
-
     await savingLikeTheCrate(a, disk)(inA)
     await wires.deliver()
     expect(disk.get(PATH)).toContain('AAA')
@@ -772,7 +743,6 @@ describe('a merge that throws does not stop the saving', () => {
     await b.save(inB)
     await wires.deliver()
     restore()
-
     expect(inA.latest).toBe(`${BASE}FROM-B `)
     expect(inA.dirty).toBe(false)
     inA.live.edit([{ from: 0, to: 0, insert: 'typed' }])
@@ -789,7 +759,6 @@ describe('a merge that throws does not stop the saving', () => {
     await b.save(inB)
     await wires.deliver()
     restore()
-
     expect(inA.latest).toBe(`TOP ${BASE}FROM-B `)
     expect(inA.dirty).toBe(true)
     expect(a.owed).toContain(inA)
@@ -807,7 +776,6 @@ describe('a merge that throws does not stop the saving', () => {
     const restore = refusing(inA)
     expect(await a.save(inA)).toBeTruthy()
     restore()
-
     expect(disk.get(PATH)).toBe(`TOP ${BASE}FROM-B `)
     expect(inA.dirty).toBe(false)
   })
@@ -839,13 +807,11 @@ describe('a merge that throws does not stop the saving', () => {
     const replacing = vi.spyOn(inA.live, 'replace').mockImplementation(() => {
       throw new RangeError('no')
     })
-
     await expect(a.save(inA)).rejects.toThrow()
     await wires.deliver()
     expect(a.owed).toContain(inA)
     expect(inA.dirty).toBe(true)
     expect(inA.latest).toContain('TOP')
-
     restore()
     replacing.mockRestore()
     expect(await a.save(inA)).toBeTruthy()
@@ -875,13 +841,11 @@ describe('while an input method is composing', () => {
     b.type(inB, 'TWO ')
     await b.save(inB)
     await wires.deliver()
-
     view.composing = false
     inA.live.settle()
     await wires.deliver()
     await a.save(inA)
     await wires.deliver()
-
     for (const token of ['ONE ', 'TWO ']) {
       expect(count(disk.get(PATH) ?? '', token)).toBe(1)
       expect(count(inA.latest, token)).toBe(1)
@@ -935,11 +899,9 @@ describe('a share gone offline', () => {
     a.type(inA, 'WORDS ')
     disk.delete(PATH)
     a.outOfReach(true)
-
     await expect(a.save(inA)).rejects.toThrow()
     expect(inA.path).toBe(PATH)
     expect(inA.dirty).toBe(true)
-
     a.outOfReach(false)
     disk.set(PATH, BASE)
     expect(await a.save(inA)).toBeTruthy()

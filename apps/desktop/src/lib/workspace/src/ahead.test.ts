@@ -37,13 +37,10 @@ describe('what was read ahead', () => {
   test('goes to the question it answers, once', async () => {
     arrived(READ)
     const ahead = await fresh()
-
     expect(await ahead.spacesAhead()).toEqual(READ.spaces)
     expect(await ahead.spacesAhead()).toBeNull()
-
     expect(await ahead.treeAhead(ROOT, { showHidden: false })).toEqual(TREE)
     expect(await ahead.treeAhead(ROOT, { showHidden: false })).toBeNull()
-
     expect(await ahead.noteAheadPeek(`${ROOT}\\Plan.md`)).toBe('# Plan')
     expect(await ahead.noteAhead(`${ROOT}\\Plan.md`)).toBe('# Plan')
     expect(await ahead.noteAhead(`${ROOT}\\Plan.md`)).toBeNull()
@@ -52,7 +49,6 @@ describe('what was read ahead', () => {
   test('and to no other: another space, other options, another note', async () => {
     arrived(READ)
     const ahead = await fresh()
-
     expect(await ahead.treeAhead('C:\\Orden\\Home', { showHidden: false })).toBeNull()
     expect(await ahead.treeAhead(ROOT, { showHidden: true })).toBeNull()
     expect(await ahead.noteAhead(`${ROOT}\\Other.md`)).toBeNull()
@@ -62,7 +58,6 @@ describe('what was read ahead', () => {
   test('is let go of once the launch is past its reads', async () => {
     arrived(READ)
     const ahead = await fresh()
-
     ahead.forgetAhead()
     await Promise.resolve()
     await Promise.resolve()
@@ -74,7 +69,6 @@ describe('what was read ahead', () => {
     vi.stubGlobal('window', {})
     const none = await fresh()
     expect(await none.spacesAhead()).toBeNull()
-
     arrived({ something: 'else' })
     const odd = await fresh()
     expect(await odd.treeAhead(ROOT, { showHidden: false })).toBeNull()
@@ -91,11 +85,9 @@ describe('what the next launch asks for first', () => {
       notes: [`${ROOT}\\Plan.md`],
       web: false,
     }
-
     ahead.plan(plan)
     ahead.plan({ ...plan, notes: [...plan.notes] })
     ahead.plan({ ...plan, root: 'C:\\Orden\\Home' })
-
     expect(sent).toEqual([
       ['remember_launch', { plan }],
       ['remember_launch', { plan: { ...plan, root: 'C:\\Orden\\Home' } }],

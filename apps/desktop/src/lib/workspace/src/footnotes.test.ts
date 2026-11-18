@@ -4,7 +4,6 @@ import { scanFootnotes } from './footnotes'
 describe('the footnotes of a note', () => {
   test('what each one says, and the line its mark is on', () => {
     const note = ['A claim[^1] and another[^2].', '', '[^1]: first', '[^2]: second'].join('\n')
-
     expect(scanFootnotes(note)).toEqual([
       { id: '1', text: 'first', line: 0, defined: 2, used: true },
       { id: '2', text: 'second', line: 0, defined: 3, used: true },
@@ -38,7 +37,6 @@ describe('the footnotes of a note', () => {
   test('the line is the first mark, however many there are', () => {
     const note = ['one[^1]', 'two', 'three[^1]', '', '[^1]: said once'].join('\n')
     const found = scanFootnotes(note)
-
     expect(found).toHaveLength(1)
     expect(found[0]?.line).toBe(0)
   })
@@ -69,21 +67,18 @@ describe('where the definition is', () => {
   test('is the line the definition is written on', () => {
     const note = 'Words[^1] and more.\n\nMore words.\n\n[^1]: what it says\n'
     const [found] = scanFootnotes(note)
-
     expect(found?.line).toBe(0)
     expect(found?.defined).toBe(4)
   })
 
   test('is nothing at all for a mark nothing defines', () => {
     const [found] = scanFootnotes('Words[^1] and no definition.\n')
-
     expect(found?.line).toBe(0)
     expect(found?.defined).toBeNull()
   })
 
   test('is the same line as the mark for one nothing points at', () => {
     const [found] = scanFootnotes('Words.\n\n[^lonely]: said and never pointed at\n')
-
     expect(found?.used).toBe(false)
     expect(found?.line).toBe(2)
     expect(found?.defined).toBe(2)

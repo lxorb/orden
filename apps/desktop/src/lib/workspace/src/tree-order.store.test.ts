@@ -43,11 +43,9 @@ describe('a tree that comes back after the space changed', () => {
     held.slow = one!.root
     const late = workspace.loadTree()
     await vi.waitFor(() => expect(held.slow).toBe(null))
-
     workspace.activeSpaceId = two!.id
     await workspace.loadTree()
     expect(workspace.tree?.path).toBe(two!.root)
-
     held.release()
     await late
     expect(workspace.tree?.path).toBe(two!.root)

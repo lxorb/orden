@@ -67,24 +67,20 @@ describe('a switch between two spaces with tabs of their own', () => {
   test('leaves the left side shut where it was shut in the other space', async () => {
     const workspace = await window()
     await bothOpen(workspace)
-
     workspace.panel = 'tree'
     await workspace.selectSpace('food')
     workspace.panel = null
     await workspace.selectSpace('work')
-
     expect(workspace.panel).toBeNull()
   })
 
   test('leaves the left side on the panel chosen in the other space', async () => {
     const workspace = await window()
     await bothOpen(workspace)
-
     await workspace.selectSpace('food')
     workspace.panel = 'search'
     await workspace.selectSpace('work')
     expect(workspace.panel).toBe('search')
-
     workspace.panel = 'tree'
     await workspace.selectSpace('food')
     expect(workspace.panel).toBe('tree')
@@ -93,15 +89,12 @@ describe('a switch between two spaces with tabs of their own', () => {
   test('leaves the right side open on its panel, and shut where it was shut', async () => {
     const workspace = await window()
     await bothOpen(workspace)
-
     workspace.rightPanel = 'links'
     await workspace.selectSpace('food')
     expect(workspace.rightPanel).toBe('links')
-
     workspace.rightPanel = null
     await workspace.selectSpace('work')
     expect(workspace.rightPanel).toBeNull()
-
     workspace.rightPanel = 'outline'
     await workspace.selectSpace('food')
     expect(workspace.rightPanel).toBe('outline')
@@ -111,11 +104,9 @@ describe('a switch between two spaces with tabs of their own', () => {
     const workspace = await window()
     await fetched()
     await workspace.open(`${WORK.root}/Plan.md`)
-
     workspace.panel = 'tree'
     workspace.rightPanel = 'links'
     await workspace.selectSpace('food')
-
     expect(sides(workspace)).toEqual(['tree', 'links'])
   })
 
@@ -127,9 +118,7 @@ describe('a switch between two spaces with tabs of their own', () => {
     const sets = await fetched()
     const web = workspace.tabs.find((one) => one.kind === 'web')!
     await sets.adopt([web], 'food')
-
     await workspace.selectSpace('food')
-
     expect(sides(workspace)).toEqual([null, null])
   })
 })
@@ -137,9 +126,7 @@ describe('a switch between two spaces with tabs of their own', () => {
 describe('the switcher', () => {
   test('opens no shut side, with no tabs open', async () => {
     const workspace = await window()
-
     await workspace.showSpace('food')
-
     expect(workspace.activeSpaceId).toBe('food')
     expect(sides(workspace)).toEqual([null, null])
   })
@@ -147,10 +134,8 @@ describe('the switcher', () => {
   test('opens no shut side, with tabs of their own in both spaces', async () => {
     const workspace = await window()
     await bothOpen(workspace)
-
     await workspace.showSpace('food')
     await workspace.showSpace('work')
-
     expect(workspace.activeSpaceId).toBe('work')
     expect(sides(workspace)).toEqual([null, null])
   })
@@ -160,9 +145,7 @@ describe('the switcher', () => {
     await bothOpen(workspace)
     workspace.panel = 'search'
     workspace.rightPanel = 'outline'
-
     await workspace.showSpace('food')
-
     expect(sides(workspace)).toEqual(['search', 'outline'])
   })
 })
@@ -183,11 +166,9 @@ describe('a session with a side for every space, as older builds wrote it', () =
 
   test('comes back with the sides the window had on screen, in every space', async () => {
     const written = await older()
-
     const after = await window(written)
     await (await fetched()).wake()
     await after.selectSpace('food')
-
     expect(after.tabs.map((one) => one.path)).toContain(`${FOOD.root}/Food.md`)
     expect(sides(after)).toEqual([null, null])
   })
@@ -197,10 +178,8 @@ describe('a session with a side for every space, as older builds wrote it', () =
     await bothOpen(workspace)
     workspace.panel = 'search'
     workspace.rightPanel = 'links'
-
     const written = workspace.setsWritten() as
       { aside: Record<string, { layout: { panel: unknown }; right: unknown }> } | undefined
-
     expect(written?.aside.food?.layout.panel).toBe('search')
     expect(written?.aside.food?.right).toBe('links')
   })

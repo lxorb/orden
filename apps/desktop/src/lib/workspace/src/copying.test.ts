@@ -96,7 +96,6 @@ describe('a copied folder note', () => {
     disk.set('/s/Trip/Trip.md', '# Trip\n')
     const ws = rig([entry('/s/Trip', [entry('/s/Trip/Trip.md')])])
     await copyRows(ws as never, [{ from: '/s/Trip', into: '/s' }])
-
     expect(reads).toEqual([])
     expect(told).toEqual([
       'copy /s/Trip -> /s/Trip copy',
@@ -112,7 +111,6 @@ describe('a copied note in a base that numbers its rows', () => {
     disk.set('/s/Bugs/A.md', '---\nid: BUG-2\nstatus: Doing\n---\nText\n')
     const ws = rig([entry('/s/Bugs/A.md')])
     await copyRows(ws as never, [{ from: '/s/Bugs/A.md', into: '/s/Bugs/2025' }])
-
     expect(told).toEqual([
       'copy /s/Bugs/A.md -> /s/Bugs/2025/A.md',
       'write /s/Bugs/2025/A.md',
@@ -133,7 +131,6 @@ describe('a copied note in a base that numbers its rows', () => {
       ]),
     ])
     await copyRows(ws as never, [{ from: '/s/Bugs/Sprint', into: '/s/Bugs/2025' }])
-
     expect(disk.get('/s/Bugs/2025/Sprint/X.md')).not.toContain('BUG')
     expect(disk.get('/s/Bugs/2025/Sprint/Deep/Y.md')).not.toContain('BUG')
     expect(told.at(-1)).toBe('came /s/Bugs/2025/Sprint')
@@ -147,7 +144,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     meta.set('/s/Groceries.md', { 'todo-list': 'yes', icon: 'cart', 'done-on': 'abc:20261101' })
     const ws = rig([entry('/s/Groceries.md')])
     await copyRows(ws as never, [{ from: '/s/Groceries.md', into: '/s/Old' }])
-
     expect(meta.of('/s/Old/Groceries.md')).toEqual({
       'todo-list': 'yes',
       icon: 'cart',
@@ -169,7 +165,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     meta.set('/s/Trip/Packing.md', { 'todo-list': 'yes' })
     const ws = rig([entry('/s/Trip', [entry('/s/Trip/Trip.md'), entry('/s/Trip/Packing.md')])])
     await copyRows(ws as never, [{ from: '/s/Trip', into: '/s' }])
-
     expect(meta.of('/s/Trip copy')).toEqual({ icon: 'plane' })
     expect(meta.of('/s/Trip copy/Trip copy.md')).toEqual({ cover: 'sea' })
     expect(meta.of('/s/Trip copy/Trip.md')).toBeNull()
@@ -183,7 +178,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     meta.set('/s/Plan.md', { 'todo-list': 'yes' })
     const ws = rig([entry('/s/Plan.md')])
     await copyRows(ws as never, [{ from: '/s/Plan.md', into: '/t' }])
-
     expect(meta.of('/t/Plan.md', '/t')).toEqual({ 'todo-list': 'yes' })
   })
 
@@ -201,7 +195,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
       } as never,
       [{ from: '/s/Diary.md', into: '/t' }],
     )
-
     expect(protection.covering('/t/Diary.md')).toEqual([
       { root: '/t', key: 'Diary.md', way: 'password' },
     ])
@@ -214,7 +207,6 @@ describe('a copy keeps what Orden keeps about the item', () => {
     const protection = new Protection()
     protection.set('/s', '/s/Trip/Trip.md', 'password')
     await copyRows({ ...ws, protection } as never, [{ from: '/s/Trip', into: '/s' }])
-
     expect(protection.locked('/s/Trip copy/Trip copy.md')).toBe(true)
     expect(protection.agentsMay('/s/Trip copy/Trip copy.md')).toBe(false)
   })
@@ -226,7 +218,6 @@ describe('a copy that fails', () => {
     disk.set('/s/Locked.md', '# Locked\n')
     const ws = rig([entry('/s/Locked.md')])
     const made = await copyRows(ws as never, [{ from: '/s/Locked.md', into: '/s/Box' }])
-
     expect(made).toEqual([])
     expect([...ws.shown]).toEqual([])
   })

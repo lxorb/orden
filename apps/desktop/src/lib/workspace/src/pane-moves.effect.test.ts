@@ -117,7 +117,6 @@ describe('the pointer over another pane', () => {
     search.focus()
     over(tab('b'))
     expect(document.activeElement).toBe(search)
-
     state.focused = 'a'
     document.documentElement.setAttribute('data-keyboard-in-page', '')
     expect(keyboardStays('a')).toBe(true)

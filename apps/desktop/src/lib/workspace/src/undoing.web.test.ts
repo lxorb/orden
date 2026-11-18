@@ -28,9 +28,7 @@ beforeEach(() => files.clear())
 describe('a delete undone in the browser after a note took its name', () => {
   test('puts the old note back beside the new one, which keeps its words', async () => {
     files.set('/s/Plan.md', '# Plan\nwritten today\n')
-
     const at = await putBack({ kind: 'delete', path: '/s/Plan.md', content: '# Plan\nold\n' })
-
     expect(at).toBe('/s/Plan 2.md')
     expect(files.get('/s/Plan.md')).toBe('# Plan\nwritten today\n')
     expect(files.get('/s/Plan 2.md')).toBe('# Plan\nold\n')

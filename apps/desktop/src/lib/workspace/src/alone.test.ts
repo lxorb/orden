@@ -56,21 +56,18 @@ describe('a guest a link gave one file to', () => {
   test('has the window to itself while the file is in front', () => {
     world.guest = guest
     world.active = sharedCanvas
-
     expect(alone.on).toBe(true)
     expect(alone.pane).toBe('pane-1')
   })
 
   test('and while the link to it is still being walked through', () => {
     world.invitation = { note: 'board.canvas' }
-
     expect(alone.on).toBe(true)
   })
 
   test('gets the app back in front of anything that is not that file', () => {
     world.guest = guest
     world.active = { note: {} }
-
     expect(alone.on).toBe(false)
     expect(alone.pane).toBeNull()
   })
@@ -81,7 +78,6 @@ describe('everybody else keeps the app round the file', () => {
     world.user = { id: 'u1' }
     world.active = sharedCanvas
     world.invitation = { note: 'board.canvas' }
-
     expect(alone.on).toBe(false)
   })
 
@@ -89,13 +85,11 @@ describe('everybody else keeps the app round the file', () => {
     world.guest = guest
     world.spaces = [{ id: 'space-1' }]
     world.active = sharedCanvas
-
     expect(alone.on).toBe(false)
   })
 
   test('a link to a space, on its way', () => {
     world.invitation = { note: null }
-
     expect(alone.on).toBe(false)
   })
 })

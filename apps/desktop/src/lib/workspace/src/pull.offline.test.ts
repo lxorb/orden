@@ -20,7 +20,6 @@ test('a pull whose reload could not even be fetched, offline, says so and can be
   await expect(pull.press()).resolves.toBeUndefined()
   expect(pull.refreshing).toBe(false)
   expect(pull.failed).toBe(true)
-
   await expect(pull.press()).resolves.toBeUndefined()
   expect(pull.refreshing).toBe(false)
 })

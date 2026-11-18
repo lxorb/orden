@@ -109,7 +109,6 @@ beforeEach(() => {
 describe('a replacement across the space', () => {
   test('keeps what was there, writes what is, and says so once', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'before' })
-
     await replaceInNotes(ws, [
       {
         path: `${SPACE}/a.md`,
@@ -119,7 +118,6 @@ describe('a replacement across the space', () => {
         back: [{ from: 0, to: 5, insert: 'before' }],
       },
     ])
-
     expect(sent).toEqual([
       { command: 'read_note', path: `${SPACE}/a.md`, content: '' },
       { command: 'snapshot_note', path: `${SPACE}/a.md`, content: 'before' },
@@ -143,7 +141,6 @@ describe('a replacement across the space', () => {
 
   test('hands an open note the words that changed rather than the whole note', async () => {
     const { ws, edits } = space({ [`${SPACE}/a.md`]: 'before' }, `${SPACE}/a.md`)
-
     await replaceInNotes(ws, [
       {
         path: `${SPACE}/a.md`,
@@ -153,13 +150,11 @@ describe('a replacement across the space', () => {
         back: [{ from: 0, to: 5, insert: 'before' }],
       },
     ])
-
     expect(edits).toEqual(['after'])
   })
 
   test('and however many notes it touched, it is one thing to undo', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'x', [`${SPACE}/b.md`]: 'x' })
-
     await replaceInNotes(
       ws,
       ['a', 'b'].map((name) => ({
@@ -170,7 +165,6 @@ describe('a replacement across the space', () => {
         back: [{ from: 0, to: 1, insert: 'x' }],
       })),
     )
-
     expect(ws.undone.stack).toHaveLength(1)
   })
 
@@ -184,11 +178,9 @@ describe('a replacement across the space', () => {
       edits: [{ from: 31, to: 35, insert: 'moon' }],
       back: [{ from: 31, to: 35, insert: 'star' }],
     }
-
     await replaceInNotes(ws, [change])
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
     expect(ws.undone.stack).toEqual([])
-
     await replaceInNotes(ws, [change], { anyFile: true })
     expect(sent.filter((one) => one.command === 'write_note')).toHaveLength(1)
   })
@@ -196,7 +188,6 @@ describe('a replacement across the space', () => {
   test('and nothing at all where there is nothing to change', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'x' })
     await replaceInNotes(ws, [])
-
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
   })
@@ -214,7 +205,6 @@ describe('a space shared to be read', () => {
   test('takes no replacement, and none is counted as done', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'before' })
     readOnly.add(SPACE)
-
     expect(await replaceInNotes(ws, [change(`${SPACE}/a.md`)])).toBe(0)
     expect(sent).toEqual([])
     expect(disk.get(`${SPACE}/a.md`)).toBe('before')
@@ -225,7 +215,6 @@ describe('a space shared to be read', () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'before', '/theirs/b.md': 'before' })
     disk.set('/theirs/b.md', 'before')
     readOnly.add('/theirs')
-
     expect(await replaceInNotes(ws, [change('/theirs/b.md'), change(`${SPACE}/a.md`)])).toBe(1)
     expect(disk.get(`${SPACE}/a.md`)).toBe('after')
     expect(disk.get('/theirs/b.md')).toBe('before')
@@ -274,7 +263,6 @@ describe('a space shared to be read', () => {
       void toggleTaskAt(ws, path, 0, taskHash('Alpha'))
       await vi.advanceTimersByTimeAsync(1000)
       holding = null
-
       let done = false
       const next = toggleTaskAt(ws, path, 1, taskHash('Bravo')).then((one) => ((done = true), one))
       await vi.advanceTimersByTimeAsync(1000)
@@ -291,7 +279,6 @@ describe('a space shared to be read', () => {
   test('ticks no task', async () => {
     const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] wash up\n' })
     readOnly.add(SPACE)
-
     expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 0)).toBe(false)
     expect(disk.get(`${SPACE}/todo.md`)).toBe('- [ ] wash up\n')
     expect(sent.filter((one) => one.command !== 'read_note')).toEqual([])
@@ -300,7 +287,6 @@ describe('a space shared to be read', () => {
   test('renames no tag, and counts no note as renamed', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'Plan #work\n' })
     readOnly.add(SPACE)
-
     expect(await retagNotes(ws, 'work', 'job')).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #work\n')
   })
@@ -308,7 +294,6 @@ describe('a space shared to be read', () => {
   test('nor is a note written from a hover card', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'before' })
     readOnly.add(SPACE)
-
     await writeNoteText(ws, `${SPACE}/a.md`, 'before', 'after')
     expect(disk.get(`${SPACE}/a.md`)).toBe('before')
   })
@@ -318,7 +303,6 @@ describe("a note's words as they stand", () => {
   test('are what is on screen when it is open, unwritten and all', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'on disk' }, `${SPACE}/a.md`)
     disk.set(`${SPACE}/a.md`, 'on disk')
-
     expect(await noteText(ws, `${SPACE}/a.md`)).toBe('on disk')
     expect(ws.flushed).toBe(1)
     expect(sent).toEqual([])
@@ -349,14 +333,12 @@ describe('a task ticked from a row', () => {
 
   test('reads the line again rather than trusting the row', async () => {
     const { ws } = space({ [NOTE]: '# to do\n\n- [ ] wash up\n- [x] done\n' })
-
     expect(await toggleTaskAt(ws, NOTE, 2)).toBe(true)
     expect(disk.get(NOTE)).toBe('# to do\n\n- [x] wash up\n- [x] done\n')
   })
 
   test('and a recurring one comes back above, in the same write', async () => {
     const { ws } = space({ [NOTE]: '- [ ] gym 🔁 every week 📅 2026-10-05\n' })
-
     expect(await toggleTaskAt(ws, NOTE, 0)).toBe(true)
     expect(disk.get(NOTE)).toBe(
       '- [ ] gym 🔁 every week 📅 2026-10-12\n- [x] gym 🔁 every week 📅 2026-10-05\n',
@@ -365,14 +347,12 @@ describe('a task ticked from a row', () => {
 
   test('and clears one that is ticked', async () => {
     const { ws } = space({ [NOTE]: '- [x] done\n' })
-
     expect(await toggleTaskAt(ws, NOTE, 0)).toBe(true)
     expect(disk.get(NOTE)).toBe('- [ ] done\n')
   })
 
   test('and says no where the line the row named holds no box now', async () => {
     const { ws } = space({ [NOTE]: '# to do\n\njust words\n' })
-
     expect(await toggleTaskAt(ws, NOTE, 2)).toBe(false)
     expect(sent.every((one) => one.command === 'read_note')).toBe(true)
   })
@@ -390,13 +370,10 @@ describe('a tag renamed everywhere', () => {
       [`${SPACE}/b.md`]: 'Nothing tagged\n',
       [`${SPACE}/c.md`]: 'Also #work/q3\n',
     })
-
     for (const name of ['2024', 'a.b', 'a,b', 'a!'])
       expect(await retagNotes(ws, 'work', name)).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #work\n')
-
     expect(await retagNotes(ws, 'work', 'job')).toBe(2)
-
     expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #job\n')
     expect(disk.get(`${SPACE}/b.md`)).toBe('Nothing tagged\n')
     expect(disk.get(`${SPACE}/c.md`)).toBe('Also #job/q3\n')
@@ -411,7 +388,6 @@ describe('a tag renamed everywhere', () => {
   test('reads an open note as it stands on screen, not as it was saved', async () => {
     const { ws, edits } = space({ [`${SPACE}/a.md`]: 'Typed #work\n' }, `${SPACE}/a.md`)
     disk.set(`${SPACE}/a.md`, 'Saved\n')
-
     expect(await retagNotes(ws, 'work', null)).toBe(1)
     expect(edits).toEqual(['Typed\n'])
   })
@@ -421,7 +397,6 @@ describe("the space's tags", () => {
   test('come off the index', async () => {
     const { ws } = space({})
     await loadTags(ws)
-
     expect(ws.tags).toEqual([{ path: 'work', count: 2 }])
   })
 })
@@ -429,9 +404,7 @@ describe("the space's tags", () => {
 describe('a note written from a hover card', () => {
   test('goes in as the one span it changed by, not as the note again', async () => {
     const { ws, edits } = space({ [`${SPACE}/a.md`]: 'the plan for monday' }, `${SPACE}/a.md`)
-
     await writeNoteText(ws, `${SPACE}/a.md`, 'the plan for monday', 'the plan for tuesday')
-
     expect(sent).toEqual([
       { command: 'snapshot_note', path: `${SPACE}/a.md`, content: 'the plan for monday' },
       { command: 'write_note', path: `${SPACE}/a.md`, content: 'the plan for tuesday' },
@@ -454,9 +427,7 @@ describe('a note written from a hover card', () => {
 
   test('and is one thing to undo, which puts the words back', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'one\ntwo\n' })
-
     await writeNoteText(ws, `${SPACE}/a.md`, 'one\ntwo\n', 'one\ntwo\nthree\n')
-
     const undo = ws.undone.stack[0]
     expect(undo?.kind).toBe('replace')
     expect(told).toEqual([`saved ${SPACE}/a.md`, 'nudged'])
@@ -464,9 +435,7 @@ describe('a note written from a hover card', () => {
 
   test('writes nothing at all where nothing was typed', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'unchanged' })
-
     await writeNoteText(ws, `${SPACE}/a.md`, 'unchanged', 'unchanged')
-
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
   })
@@ -519,13 +488,11 @@ describe('a replacement while the reader types', () => {
     const { ws, note, type, live } = typedIn(NOTE, 'the plan for monday')
     const before = await noteText(ws, NOTE)
     if (before === null) throw new Error('the note is open')
-
     const release = hold('snapshot_note')
     const writing = writeNoteText(ws, NOTE, before, 'the plan for tuesday')
     type(0, 'Re: ')
     release()
     await writing
-
     expect(live()).toBe('Re: the plan for tuesday')
     note.flush()
     expect(note.text).toBe('Re: the plan for tuesday')
@@ -536,10 +503,8 @@ describe('a replacement while the reader types', () => {
     const { ws, note, type, live } = typedIn(NOTE, 'the plan for monday')
     const before = await noteText(ws, NOTE)
     if (before === null) throw new Error('the note is open')
-
     type(0, 'Re: ')
     await writeNoteText(ws, NOTE, before, 'the plan for tuesday')
-
     expect(live()).toBe('Re: the plan for tuesday')
     note.flush()
     expect(note.text).toBe('Re: the plan for tuesday')
@@ -564,14 +529,12 @@ describe('a replacement while the reader types', () => {
     disk.set(`${SPACE}/other.md`, 'also #work')
     const notes = ws as unknown as { notes: { path: string }[] }
     notes.notes = [{ path: `${SPACE}/other.md` }, { path: NOTE }]
-
     const release = hold('snapshot_note')
     const renaming = retagNotes(ws, 'work', 'job')
     await new Promise((resolve) => setTimeout(resolve, 0))
     type(6, 'now ')
     release()
     await renaming
-
     expect(disk.get(`${SPACE}/other.md`)).toBe('also #job')
     expect(live()).toBe('- [ ] now call #job')
   })
@@ -585,7 +548,6 @@ describe('an open file with Windows line endings', () => {
 
   test('takes an edit where it was worked out, on the disk and in the editor', async () => {
     const { ws, note, live } = typedIn(URL_FILE, SHORTCUT)
-
     await replaceInNotes(
       ws,
       [
@@ -601,11 +563,9 @@ describe('an open file with Windows line endings', () => {
       ],
       { anyFile: true },
     )
-
     expect(disk.get(URL_FILE)).toBe(CHOSEN)
     expect(live()).toBe(CHOSEN.replace(/\r\n/g, '\n'))
     expect(note.text).toBe(CHOSEN.replace(/\r\n/g, '\n'))
-
     await undoLastFileAction(ws as unknown as PutsBack)
     expect(disk.get(URL_FILE)).toBe(SHORTCUT)
     expect(live()).toBe(SHORTCUT.replace(/\r\n/g, '\n'))
@@ -628,9 +588,7 @@ describe('a replacement taken back while the reader types', () => {
     const { ws, note, type, live } = typedIn(NOTE, 'the plan for monday')
     await writeNoteText(ws, NOTE, 'the plan for monday', 'the plan for tuesday')
     type(0, 'Re: ')
-
     await undoLastFileAction(ws as unknown as PutsBack)
-
     expect(live()).toBe('Re: the plan for monday')
     note.flush()
     expect(note.text).toBe('Re: the plan for monday')
@@ -641,9 +599,7 @@ describe('a replacement taken back while the reader types', () => {
     const { ws } = space({ [NOTE]: 'the plan for monday' })
     await writeNoteText(ws, NOTE, 'the plan for monday', 'the plan for tuesday')
     disk.set(NOTE, 'Re: the plan for tuesday')
-
     await undoLastFileAction(ws as unknown as PutsBack)
-
     expect(disk.get(NOTE)).toBe('Re: the plan for monday')
   })
 })
@@ -661,9 +617,7 @@ describe('a closed note written to after the change was worked out', () => {
   test('keeps what was written meanwhile, and the change goes on around it', async () => {
     const { ws } = space({ [NOTE]: change.before })
     disk.set(NOTE, 'Re: the plan #two words#')
-
     await replaceInNotes(ws, [change])
-
     expect(disk.get(NOTE)).toBe('Re: the plan #two-words')
     expect(sent).toContainEqual({
       command: 'snapshot_note',
@@ -675,9 +629,7 @@ describe('a closed note written to after the change was worked out', () => {
   test('and leaves the note alone where what was written overlaps the change', async () => {
     const { ws } = space({ [NOTE]: change.before })
     disk.set(NOTE, 'the plan #two words and more#')
-
     await replaceInNotes(ws, [change])
-
     expect(disk.get(NOTE)).toBe('the plan #two words and more#')
     expect(sent.some((one) => one.command === 'write_note')).toBe(false)
     expect(ws.undone.stack).toEqual([])
@@ -694,17 +646,14 @@ describe('a closed note written to after the change was worked out', () => {
 
     test('takes them for the same words, and puts them back', async () => {
       const { ws } = space({ [NOTE]: 'one\r\nthe plan #two words#\r\nthree\r\n' })
-
       expect(await replaceInNotes(ws, [lf])).toBe(1)
       expect(disk.get(NOTE)).toBe('one\r\nthe plan #two-words\r\nthree\r\n')
-
       await undoLastFileAction(ws as unknown as PutsBack)
       expect(disk.get(NOTE)).toBe('one\r\nthe plan #two words#\r\nthree\r\n')
     })
 
     test('carries the change past what was written meanwhile', async () => {
       const { ws } = space({ [NOTE]: 'Re: one\r\nthe plan #two words#\r\nthree\r\n' })
-
       expect(await replaceInNotes(ws, [lf])).toBe(1)
       expect(disk.get(NOTE)).toBe('Re: one\r\nthe plan #two-words\r\nthree\r\n')
     })
@@ -718,7 +667,6 @@ describe('a closed note written to after the change was worked out', () => {
         edits: [{ from: 4, to: 4, insert: 'new\nmore\n' }],
         back: [{ from: 4, to: 13, insert: '' }],
       }
-
       expect(await replaceInNotes(ws, [adding])).toBe(1)
       expect(disk.get(NOTE)).toBe('one\r\nnew\r\nmore\r\ntwo\r\n')
     })
@@ -733,10 +681,8 @@ describe('a closed note written to after the change was worked out', () => {
         edits: [{ from: 17, to: 28, insert: '#two-words' }],
         back: [{ from: 17, to: 27, insert: '#two words#' }],
       }
-
       expect(await replaceInNotes(ws, [change])).toBe(1)
       expect(disk.get(NOTE)).toBe('# T\none\r\nthe plan #two-words\r\nthree\n')
-
       disk.set(NOTE, '# Title\none\r\nthe plan #two-words\r\nthree\n')
       await undoLastFileAction(ws as unknown as PutsBack)
       expect(disk.get(NOTE)).toBe('# Title\none\r\nthe plan #two words#\r\nthree\n')
@@ -744,10 +690,8 @@ describe('a closed note written to after the change was worked out', () => {
 
     test('writes a mixed file the disk then rewrites, as a save would', async () => {
       const { ws } = space({ [NOTE]: 'one\r\nthe plan #two words#\nthree\r\n' })
-
       expect(await replaceInNotes(ws, [lf])).toBe(1)
       expect(disk.get(NOTE)).toBe('one\r\nthe plan #two-words\nthree\r\n')
-
       disk.set(NOTE, 'Re: one\r\nthe plan #two-words\r\nthree\r\n')
       await undoLastFileAction(ws as unknown as PutsBack)
       expect(disk.get(NOTE)).toBe('Re: one\r\nthe plan #two words#\r\nthree\r\n')
@@ -757,9 +701,7 @@ describe('a closed note written to after the change was worked out', () => {
   test('and writes nothing at all for a note that has gone', async () => {
     const { ws } = space({ [NOTE]: change.before })
     disk.delete(NOTE)
-
     await replaceInNotes(ws, [change])
-
     expect(disk.has(NOTE)).toBe(false)
   })
 })
@@ -809,7 +751,6 @@ describe('with another window here', () => {
       },
     }
     meetAcross(across as never)
-
     await replaceInNotes(ws, [
       {
         path: '/space/a.md',
@@ -819,7 +760,6 @@ describe('with another window here', () => {
         back: [{ from: 0, to: 3, insert: 'one' }],
       },
     ])
-
     expect(seen).toEqual([{ base: 'one\ntwo\n', words: 'ONE\ntwo\n', dirty: true }])
     expect(disk.get('/space/a.md')).toBe('ONE\ntwo\n')
     expect(note.dirty).toBe(false)
@@ -935,7 +875,6 @@ describe('a protected note while it is shut', () => {
 
   test('takes no replacement, while the open notes beside it take theirs', async () => {
     const { ws } = space({ [SHUT]: 'before', [OPEN]: 'before' })
-
     expect(await replaceInNotes(ws, [change(SHUT), change(OPEN)])).toBe(1)
     expect(disk.get(SHUT)).toBe('before')
     expect(disk.get(OPEN)).toBe('after')
@@ -944,7 +883,6 @@ describe('a protected note while it is shut', () => {
 
   test('keeps its tags when a tag is renamed or removed everywhere', async () => {
     const { ws } = space({ [SHUT]: 'Dear #work\n', [OPEN]: 'Plan #work\n' })
-
     expect(await retagNotes(ws, 'work', 'job')).toBe(1)
     expect(disk.get(SHUT)).toBe('Dear #work\n')
     expect(await retagNotes(ws, 'job', null)).toBe(1)
@@ -954,7 +892,6 @@ describe('a protected note while it is shut', () => {
 
   test('nor is it written from a hover card, nor a task in it ticked', async () => {
     const { ws } = space({ [SHUT]: '- [ ] wash up\n' })
-
     await writeNoteText(ws, SHUT, '- [ ] wash up\n', '- [ ] dry up\n')
     expect(await toggleTaskAt(ws, SHUT, 0)).toBe(false)
     expect(disk.get(SHUT)).toBe('- [ ] wash up\n')
@@ -963,14 +900,12 @@ describe('a protected note while it is shut', () => {
   test('is written again once it is unlocked', async () => {
     const { ws } = space({ [SHUT]: 'before' })
     unlocks.unlock(protection.covering(SHUT))
-
     expect(await replaceInNotes(ws, [change(SHUT)])).toBe(1)
     expect(disk.get(SHUT)).toBe('after')
   })
 
   test('is still written by a change that says it goes through locks', async () => {
     const { ws } = space({ [SHUT]: 'before' })
-
     expect(await replaceInNotes(ws, [change(SHUT)], { throughLocks: true })).toBe(1)
     expect(disk.get(SHUT)).toBe('after')
   })
