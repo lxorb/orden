@@ -129,16 +129,8 @@ pub fn view(app: &AppHandle, label: &str) -> Option<View> {
     app.get_webview(label).map(View::Webview)
 }
 
-pub fn forget(label: &str) {
-    crate::cdp::forget(label);
-}
-
 pub fn opened(label: &str, tab: &str) {
     crate::cdp::heard(label).held().opened.push(tab.to_string());
-}
-
-pub fn sleep_idle(app: &AppHandle) {
-    crate::cdp::sleep_idle(app);
 }
 
 pub const NAME: &str = "Chromium";

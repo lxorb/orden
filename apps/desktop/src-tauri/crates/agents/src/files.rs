@@ -29,14 +29,14 @@ pub fn answer(app: &AppHandle, caller: &Caller, asked: &Files) -> Answer {
             "files outside the spaces need the files scope, which the reader grants in Settings > Agents",
         );
     }
-    let path = match resolved(app, &asked.path) {
+    let path = match absolute(app, &asked.path) {
         Ok(path) => path,
         Err(why) => return Answer::error(Code::BadArguments, why),
     };
     let to = match asked
         .to
         .as_deref()
-        .map(|one| resolved(app, one))
+        .map(|one| absolute(app, one))
         .transpose()
     {
         Ok(to) => to,
@@ -96,7 +96,7 @@ pub fn reachable(
             "saving to a file needs the files scope, which the reader grants in Settings > Agents",
         ));
     }
-    let path = resolved(app, asked).map_err(|why| Answer::error(Code::BadArguments, why))?;
+    let path = absolute(app, asked).map_err(|why| Answer::error(Code::BadArguments, why))?;
     if let Caller::Agent(grant) = caller {
         if let Some(refused) = refused(&fences(app), op, &path, None) {
             return Err(refused);
@@ -127,10 +127,6 @@ fn reach_of(fenced: &[PathBuf], path: &Path) -> PathBuf {
         }
         _ => path.to_path_buf(),
     }
-}
-
-pub fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
-    resolved(app, asked)
 }
 
 pub fn fenced_out(app: &AppHandle, path: &Path) -> Option<Answer> {
@@ -190,7 +186,7 @@ fn changes(op: FilesOp) -> bool {
     )
 }
 
-fn resolved(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
+pub fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
     under_home(asked, app.path().home_dir().ok().as_deref())
 }
 
