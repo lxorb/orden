@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
-import { agentDocs, DocError, inTurn, plan, readEdits, revOf, touchedBy } from '../src/api'
+import { DocError, inTurn, plan, readEdits, revOf, touchedBy } from '../src/api'
 
 const followed = vi.hoisted(() => [] as unknown[])
 vi.mock('../../workspace/src/api', () => ({
@@ -45,7 +45,9 @@ describe('the module stands on its own', () => {
   })
 
   test('the note docs open through a door', () => {
-    expect(typeof agentDocs).toBe('function')
+    const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
+    expect(api).toMatch(/import\('\.\/index'\)/)
+    expect(api).not.toMatch(/from '\.\/index'/)
   })
 
   test('the api loads without the note docs, which follow file moves only once opened', () => {
