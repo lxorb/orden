@@ -33,17 +33,9 @@ import type {
 
 export const socketPath = (chat: string): string => `/v2/chats/${encodeURIComponent(chat)}/socket`
 
-export type Refusal = 'role' | 'gone' | 'posting' | 'slow' | 'rate' | 'large' | 'invalid'
+export const REFUSALS = ['role', 'gone', 'posting', 'slow', 'rate', 'large', 'invalid'] as const
 
-export const REFUSALS: readonly Refusal[] = [
-  'role',
-  'gone',
-  'posting',
-  'slow',
-  'rate',
-  'large',
-  'invalid',
-]
+export type Refusal = (typeof REFUSALS)[number]
 
 export type ClientFrame =
   | { t: 'hello'; since?: number }
@@ -188,6 +180,16 @@ function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | nu
 const optional = <T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined =>
   value === undefined ? undefined : check(value)
 
+function filled<T extends object>(
+  base: T,
+  extra: { [K in keyof T]?: T[K] | null | undefined },
+): T | null {
+  const given = Object.entries(extra)
+  if (given.some(([, one]) => one === null)) return null
+  for (const [key, one] of given) if (one !== undefined) Object.assign(base, { [key]: one })
+  return base
+}
+
 const idOf = (value: unknown): string | null => (isId(value) ? value : null)
 
 const whoOf = (value: unknown): Who | null => (isWho(value) ? value : null)
@@ -210,40 +212,32 @@ export function fileRefOf(value: unknown): FileRef | null {
   const { hash, name, size, type } = value
   if (!isHash(hash) || !isLine(name, LONGEST_NAME) || !isLine(type, LONGEST_NAME)) return null
   if (!isCount(size) || size > MOST_FILE_BYTES) return null
-  const file: FileRef = { hash, name, size, type }
-
   const side = (one: unknown) => (isCount(one) && one > 0 && one <= MOST_PIXELS ? one : null)
-  const width = optional(value.width, side)
-  const height = optional(value.height, side)
-  const preview = optional(value.preview, (one) => (isHash(one) ? one : null))
-  const seconds = optional(value.seconds, (one) =>
-    isTime(one) && one <= MOST_SECONDS ? one : null,
+  return filled<FileRef>(
+    { hash, name, size, type },
+    {
+      width: optional(value.width, side),
+      height: optional(value.height, side),
+      preview: optional(value.preview, (one) => (isHash(one) ? one : null)),
+      seconds: optional(value.seconds, (one) => (isTime(one) && one <= MOST_SECONDS ? one : null)),
+      wave: optional(value.wave, (one) => {
+        const bars = listOf(one, WAVE_BARS, (bar) => (isCount(bar) && bar <= 255 ? bar : null))
+        return bars?.length === WAVE_BARS ? bars : null
+      }),
+    },
   )
-  const wave = optional(value.wave, (one) => {
-    const bars = listOf(one, WAVE_BARS, (bar) => (isCount(bar) && bar <= 255 ? bar : null))
-    return bars?.length === WAVE_BARS ? bars : null
-  })
-  if (width === null || height === null || preview === null || seconds === null || wave === null)
-    return null
-  if (width !== undefined) file.width = width
-  if (height !== undefined) file.height = height
-  if (preview !== undefined) file.preview = preview
-  if (seconds !== undefined) file.seconds = seconds
-  if (wave !== undefined) file.wave = wave
-  return file
 }
 
 function previewOf(value: unknown): Preview | null {
   if (!isRecord(value) || !isUrl(value.url) || !isLine(value.title, LONGEST_TITLE)) return null
-  const preview: Preview = { url: value.url, title: value.title }
-  const site = optional(value.site, (one) => (isLine(one, LONGEST_SITE) ? one : null))
-  const words = optional(value.text, (one) => (isText(one, LONGEST_TEXT) ? one : null))
-  const picture = optional(value.picture, (one) => (isHash(one) ? one : null))
-  if (site === null || words === null || picture === null) return null
-  if (site !== undefined) preview.site = site
-  if (words !== undefined) preview.text = words
-  if (picture !== undefined) preview.picture = picture
-  return preview
+  return filled<Preview>(
+    { url: value.url, title: value.title },
+    {
+      site: optional(value.site, (one) => (isLine(one, LONGEST_SITE) ? one : null)),
+      text: optional(value.text, (one) => (isText(one, LONGEST_TEXT) ? one : null)),
+      picture: optional(value.picture, (one) => (isHash(one) ? one : null)),
+    },
+  )
 }
 
 function pollOf(value: unknown): Poll | null {
@@ -253,11 +247,10 @@ function pollOf(value: unknown): Poll | null {
     isLine(one, LONGEST_ANSWER) ? one : null,
   )
   if (!answers || answers.length < FEWEST_ANSWERS) return null
-  const poll: Poll = { question: value.question, answers, several: value.several }
-  const ends = optional(value.ends, (one) => (isTime(one) ? one : null))
-  if (ends === null) return null
-  if (ends !== undefined) poll.ends = ends
-  return poll
+  return filled<Poll>(
+    { question: value.question, answers, several: value.several },
+    { ends: optional(value.ends, (one) => (isTime(one) ? one : null)) },
+  )
 }
 
 function viaOf(value: unknown): { agent: string } | null {
@@ -268,8 +261,6 @@ function viaOf(value: unknown): { agent: string } | null {
 function postOf(value: Fields): Post | null {
   const { id, message, body } = value
   if (!isId(id) || !isId(message) || !isText(body, MOST_BODY)) return null
-  const post: Post = { kind: 'post', id, message, body }
-
   const parent = optional(value.parent, idOf)
   const quote = optional(value.quote, idOf)
   const files = optional(value.files, (one) => listOf(one, MOST_FILES, fileRefOf))
@@ -278,20 +269,21 @@ function postOf(value: Fields): Post | null {
   const via = optional(value.via, viaOf)
   const also = optional(value.alsoToChat, (one) => (typeof one === 'boolean' ? one : null))
   const mentions = optional(value.mentions, (one) => listOf(one, MOST_MEMBERS + 2, mentionOf))
-  if (parent === null || quote === null || files === null || poll === null) return null
-  if (preview === null || via === null || also === null || mentions === null) return null
-
   if (!body.trim() && !files?.length && !poll) return null
   if (also !== undefined && parent === undefined) return null
-  if (parent !== undefined) post.parent = parent
-  if (quote !== undefined) post.quote = quote
-  if (files !== undefined) post.files = files
-  if (poll) post.poll = poll
-  if (preview) post.preview = preview
-  if (via) post.via = via
-  if (also !== undefined) post.alsoToChat = also
-  if (mentions) post.mentions = [...new Set(mentions)]
-  return post
+  return filled<Post>(
+    { kind: 'post', id, message, body },
+    {
+      parent,
+      quote,
+      files,
+      poll,
+      preview,
+      via,
+      alsoToChat: also,
+      mentions: mentions && [...new Set(mentions)],
+    },
+  )
 }
 
 function metaKeysOf(value: Fields): Partial<Meta> | null {
@@ -302,12 +294,7 @@ function metaKeysOf(value: Fields): Partial<Meta> | null {
   const slowmode = optional(value.slowmode, (one) =>
     isCount(one) && one <= MOST_SLOWMODE ? one : null,
   )
-  if (topic === null || posting === null || slowmode === null) return null
-  const meta: Partial<Meta> = {}
-  if (topic !== undefined) meta.topic = topic
-  if (posting !== undefined) meta.posting = posting
-  if (slowmode !== undefined) meta.slowmode = slowmode
-  return meta
+  return filled<Partial<Meta>>({}, { topic, posting, slowmode })
 }
 
 export function eventOf(value: unknown): Event | null {
@@ -331,10 +318,10 @@ export function eventOf(value: unknown): Event | null {
     case 'edit': {
       if (!isText(value.body, MOST_BODY)) return null
       const files = optional(value.files, (one) => listOf(one, MOST_FILES, fileRefOf))
-      if (files === null) return null
-      return files === undefined
-        ? { kind: 'edit', id, target, body: value.body }
-        : { kind: 'edit', id, target, body: value.body, files }
+      return filled<Extract<Event, { kind: 'edit' }>>(
+        { kind: 'edit', id, target, body: value.body },
+        { files },
+      )
     }
     case 'delete':
       return { kind: 'delete', id, target }
@@ -361,10 +348,7 @@ export function loggedOf(value: unknown): Logged | null {
   if (madeAt !== undefined && !isTime(madeAt)) return null
   const event = eventOf(value)
   if (!event) return null
-  const logged: Logged = { ...event, seq, at, author }
-  if (device !== undefined) logged.device = device
-  if (madeAt !== undefined) logged.madeAt = madeAt
-  return logged
+  return filled<Logged>({ ...event, seq, at, author }, { device, madeAt })
 }
 
 const wordingOf = (value: unknown): Wording | null =>
@@ -439,15 +423,7 @@ export function messageOf(value: unknown): Message | null {
     const votes = isRecord(one) ? votesOf(one.votes) : null
     return asked && votes && { ...asked, votes }
   })
-  if ([parent, quote, preview, via, editedAt, lastReplyAt, poll].includes(null)) return null
-  if (parent) message.parent = parent
-  if (quote) message.quote = quote
-  if (preview) message.preview = preview
-  if (via) message.via = via
-  if (editedAt !== undefined && editedAt !== null) message.editedAt = editedAt
-  if (lastReplyAt !== undefined && lastReplyAt !== null) message.lastReplyAt = lastReplyAt
-  if (poll) message.poll = poll
-  return message
+  return filled(message, { parent, quote, preview, via, editedAt, lastReplyAt, poll })
 }
 
 function metaOf(value: unknown): Meta | null {
