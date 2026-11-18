@@ -1,26 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { describe, expect, test } from 'vitest'
+import { spaceField } from './space-field'
+import { call, signIn } from './harness'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
-
-function put(sort: unknown) {
-  return call(env, `/v1/spaces/${space}/sort`, { method: 'PUT', token, body: { sort } })
-}
-
-async function listed() {
-  const { json } = await call(env, '/v1/spaces', { token })
-  return json.spaces.find((one: { id: string }) => one.id === space)?.sort
-}
+const { at, put, listed } = spaceField('sort')
 
 describe('the order a space is read in', () => {
   test('is by name until somebody chooses', async () => {
@@ -39,7 +21,7 @@ describe('the order a space is read in', () => {
   test('back by name is nothing written, as it was', async () => {
     await put('manual')
     await put('name')
-    const raw = env.db.prepare('select sort from spaces where id = ?').get(space) as {
+    const raw = at.env.db.prepare('select sort from spaces where id = ?').get(at.space) as {
       sort: string
     }
     expect(raw.sort).toBe('')
@@ -54,13 +36,13 @@ describe('the order a space is read in', () => {
   })
 
   test('reads a word it has never heard of as by name', async () => {
-    env.db.prepare('update spaces set sort = ? where id = ?').run('by-colour', space)
+    at.env.db.prepare('update spaces set sort = ? where id = ?').run('by-colour', at.space)
     expect(await listed()).toBe('name')
   })
 
   test('is written only by somebody who may write in the space', async () => {
-    const other = await signIn(env, 'c@d.dev')
-    const answer = await call(env, `/v1/spaces/${space}/sort`, {
+    const other = await signIn(at.env, 'c@d.dev')
+    const answer = await call(at.env, `/v1/spaces/${at.space}/sort`, {
       method: 'PUT',
       token: other,
       body: { sort: 'manual' },
