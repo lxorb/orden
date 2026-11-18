@@ -5,10 +5,8 @@ const { workspace } = await import('../../workspace/src/api')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { unlocks } = await import('../../protect/src/unlocked.svelte')
 const WindowFace = (await import('./WindowFace.svelte')).default
-
 const ROOT = '/space'
 const PATH = `${ROOT}/Diary.md`
-
 let target: HTMLElement | undefined
 let shown: ReturnType<typeof mount> | undefined
 

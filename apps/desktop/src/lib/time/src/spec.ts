@@ -1,7 +1,6 @@
 import { isRecord } from '../../platform/src/api'
 
 export type View = 'day' | 'week' | 'reports'
-
 const VIEWS: readonly View[] = ['day', 'week', 'reports']
 
 export interface Spec {

@@ -6,7 +6,6 @@ import type { Picture } from './pictures'
 import { toRtf } from './rtf'
 
 const PAPER = paperTwips(DEFAULT_PAGE_SETUP, 'Corpus', '2026-09-14')
-
 const NOTE = `---
 title: Corpus
 author: Ada Lovelace
@@ -228,7 +227,6 @@ function words(rtf: string): string {
 }
 
 const count = (rtf: string, pattern: RegExp): number => [...rtf.matchAll(pattern)].length
-
 const run = (on: string, text: string, off: string): string => `{${on} ${text}${off}}`
 
 const made = (blocks: Doc['blocks'], notes: Doc['notes'] = []): Doc => ({

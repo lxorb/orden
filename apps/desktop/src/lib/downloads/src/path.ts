@@ -17,7 +17,6 @@ export interface Glyph {
 }
 
 export const PRESS_LASTS = 60_000
-
 const CORNER = 32
 
 export function middleOf(box: Box): Point {

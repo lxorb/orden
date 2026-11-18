@@ -116,13 +116,9 @@ const SPACERS: Record<string, string> = {
 }
 
 const ALIGNMENT = new Set(['\\\\', '&'])
-
 const DELIMITERS: Record<string, string> = { '(': ')', '[': ']', '\\{': '\\}' }
-
 const SCRIPTS = new Set(['^', '_'])
-
 const TOKEN = /\\[a-zA-Z]+|\\[\s\S]|\s+|[\s\S]/g
-
 const PLAIN = /^[\p{L}\p{N}+\-=<>/|.,;:!?'*]$/u
 
 interface Reader {

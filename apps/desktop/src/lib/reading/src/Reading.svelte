@@ -28,16 +28,13 @@
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
   const REDRAW = 200
-
   let scroller = $state<HTMLDivElement>()
   let root = $state<HTMLDivElement>()
   let surface = $state<HTMLElement>()
   let html = $state('')
-
   let latest = 0
   let redraw: ReturnType<typeof setTimeout> | undefined
   let drawn = false
-
   let undrawn: (() => void) | undefined
 
   function basesIn(page: HTMLElement, from: string | null): () => void {
@@ -380,13 +377,10 @@
   }
 
   const painter = {}
-
   let finding = $state(false)
   let query = $state('')
   let current = $state(0)
-
   let words: Words | null = null
-
   let drawnPage = $state(0)
 
   function changed() {

@@ -2,7 +2,6 @@ import { readBase } from '@orden/bases'
 import { renderMarkdown } from '@orden/markdown'
 import { scanNote } from '@orden/scan/note'
 import { describe, expect, test } from 'vitest'
-
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
 import { readTable, rowNote, tableOf } from './table'

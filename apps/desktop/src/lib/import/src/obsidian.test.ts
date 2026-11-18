@@ -1,7 +1,6 @@
 import type { PickedFile } from '@orden/contracts'
 import JSZip from 'jszip'
 import { describe, expect, test, vi } from 'vitest'
-
 import { setLinkWriting } from '../../link-format/src/api'
 import { carriedBy, NOTION } from './carry'
 import { fromAppJson, leftInVault, obsidianCarries } from './obsidian'

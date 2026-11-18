@@ -1,13 +1,9 @@
 import type { Box } from './layout'
 
 export const N = 120
-
 export const PAD = 16
-
 export const CLEAR = 12
-
 const RATE = 13
-
 const BREATH = 0.8
 const BREATH_RATE = 0.22
 const WAVE = 0.6
@@ -18,9 +14,7 @@ const WAVES: readonly { lobes: number; rate: number; phase: number }[] = [
 ]
 
 const SEAM = 4
-
 const STEP = 8
-
 const TAU = 2 * Math.PI
 export const COS = Float64Array.from({ length: N }, (_, i) => Math.cos((i / N) * TAU))
 export const SIN = Float64Array.from({ length: N }, (_, i) => Math.sin((i / N) * TAU))

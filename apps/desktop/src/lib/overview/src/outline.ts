@@ -2,7 +2,6 @@ import { COS, N, restingOf, SIN } from './bubble'
 import type { Box } from './layout'
 
 export type Outline = Float64Array
-
 const at = (o: Outline, i: number) => o[((i % N) + N) % N] ?? 0
 
 export function boxOutline(box: Box): Outline {

@@ -74,11 +74,8 @@ export interface Outgoing extends Reference {
 }
 
 const MOST_MENTIONS = 200
-
 const NOTHING: ReadonlySet<string> = new Set()
-
 const CACHED = 24
-
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
 export const readsWords = (path: string): boolean =>
@@ -1741,7 +1738,6 @@ function heldAs(path: string): 'note' | 'plane' | 'web' | 'elsewhere' | 'file' {
 }
 
 const LINKED_TEXT = /!?\[\[[^\]\n]*\]\]|!?\[[^\]\n]*\]\([^)\n]*\)/g
-
 const prose = (line: string): string => withoutCode(line).replace(LINKED_TEXT, ' ')
 
 function standsAlone(line: string, name: string): boolean {
@@ -1759,5 +1755,4 @@ function standsAlone(line: string, name: string): boolean {
 }
 
 export const links = new Links()
-
 export const spaceLinks = (): Links => new Links()

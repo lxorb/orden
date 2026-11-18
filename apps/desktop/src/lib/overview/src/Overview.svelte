@@ -67,13 +67,10 @@
 
   let shown = $state(false)
   let out = $state(false)
-
   let width = $state(window.innerWidth)
   let height = $state(window.innerHeight)
-
   const MARGIN = 56
   const ROW = 60
-
   let barBottom = $state(0)
 
   function barOf(): number {
@@ -82,7 +79,6 @@
   }
 
   const roomTop = $derived((barBottom > 0 ? barBottom : ROW) + MARGIN / 2)
-
   let panes = $state<Record<string, { w: number; h: number }>>({})
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
   const panesAsWindows = new Map<
@@ -92,7 +88,6 @@
   let asPanes = $state<Record<string, true>>({})
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
   let ridersDrawn = $state<Record<string, HTMLElement>>({})
-
   const frame = $derived(workspace.panes.frame)
   const screenRoom = $derived<Box>({
     x: MARGIN,
@@ -385,7 +380,6 @@
   })
 
   let aside = $state<Record<string, Point>>({})
-
   const offsetOf = (key: string): Point | null => aside[key] ?? null
 
   function pushAside() {
@@ -450,7 +444,6 @@
   }
 
   const captioned = (box: Box): Box => ({ ...box, h: box.h + CAPTION_ROOM })
-
   const CAPTION_NEAR = 60
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -538,10 +531,8 @@
   }
 
   let at = $state<string | null>(null)
-
   let frameAsked = 0
   let last = 0
-
   const READY = 250
   const LONGEST_FRAME = 1 / 30
   let unready = 0
@@ -626,7 +617,6 @@
   let top = $state<HTMLElement>()
   let under = $state<HTMLElement>()
   let bar: HTMLElement | null = null
-
   let opens: HTMLElement[] = []
   let slides: HTMLElement[] = []
 
@@ -653,7 +643,6 @@
 
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once a frame, never rendered
   const homes = new Map<string, Pose>()
-
   const NEAR = 14
 
   function fromHome(id: string): number | null {
@@ -1376,7 +1365,6 @@
   }
 
   const spaces = $derived(workspace.shownSpaces)
-
   let zoomGoal: { zoom: number; at: Point; ease: number } | null = null
   let zoomFrame = 0
   let zoomLast = 0

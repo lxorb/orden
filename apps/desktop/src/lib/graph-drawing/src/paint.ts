@@ -3,16 +3,11 @@ import type { NoteGraph } from '../../graph/src/api'
 import { shownName } from '@orden/markdown/note-name'
 
 export const radiusOf = (degree: number): number => 3 + Math.min(7, Math.sqrt(degree))
-
 const DIMMED = 0.16
-
 const SQUARE = 0.88
-
 const LABELS_FROM = 0.55
 const LABELS_FULL = 0.85
-
 const MOST_LABELS = 400
-
 const LABEL_SIZE = 11
 
 const LINES: readonly { wide: number; brush: readonly (readonly [number, number])[] }[] = [
@@ -29,11 +24,8 @@ const LINES: readonly { wide: number; brush: readonly (readonly [number, number]
 ]
 
 const LIT_LINES: readonly number[] = [1.2, 2, 4]
-
 const HAIRLINE = 1
-
 const RING_PIXELS = 2
-
 const ARROWS_FROM = 0.4
 const HEAD_LONG = 7
 const HEAD_WIDE = 3

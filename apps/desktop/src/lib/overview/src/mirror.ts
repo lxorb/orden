@@ -115,7 +115,6 @@ export function snapshotFrom(
 }
 
 const SCROLLED = 'data-overview-scrolled'
-
 const PICTURE = 512
 
 function pictureOf(canvas: HTMLCanvasElement): string {

@@ -1,6 +1,5 @@
 import { foldName } from '@orden/markdown/links'
 import { asWords } from '@orden/markdown/words'
-
 import { dayOf, noteText, type Meta } from './meta'
 import { Names, pageLink, safeName } from './names'
 import type { ImportPlan, Planned } from './plan'
@@ -27,11 +26,8 @@ const MONTHS = [
 ]
 
 const EMBED = String.raw`\{\{\s*(?:\[\[)?embed(?:-path)?(?:\]\])?\s*:\s*`
-
 const BLOCK_EMBED = new RegExp(`${EMBED}\\(\\(([^()\\s]+)\\)\\)\\s*\\}\\}`, 'g')
-
 const ALONE = new RegExp(`^\\s*${BLOCK_EMBED.source}\\s*$`)
-
 const PAGE_EMBED = new RegExp(`${EMBED}\\[\\[([^\\]\\n]+)\\]\\]\\s*\\}\\}`, 'g')
 
 interface RoamBlock {

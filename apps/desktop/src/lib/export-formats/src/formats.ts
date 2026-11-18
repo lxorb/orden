@@ -19,7 +19,6 @@ export const EXPORT_VARIANTS = [
 ] as const
 
 type ExportVariant = (typeof EXPORT_VARIANTS)[number]['id']
-
 export type Exportable = ExportFormat | ExportVariant
 
 const EXTENSIONS = new Map<string, string>(
@@ -27,7 +26,6 @@ const EXTENSIONS = new Map<string, string>(
 )
 
 export const extensionFor = (id: Exportable): string => EXTENSIONS.get(id) ?? 'bin'
-
 export const TEXTPACK = 'textpack'
 
 export const PANDOC_FORMATS = [

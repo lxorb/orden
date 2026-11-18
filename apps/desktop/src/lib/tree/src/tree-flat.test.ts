@@ -24,7 +24,6 @@ const WORK = folder('/s/Work', [
 ])
 const PROJECTS = folder('/s/Projects', [file('/s/Projects/one.md')])
 const READ_ME = file('/s/Read me.md')
-
 const SPACE = folder('/s', [WORK, PROJECTS, READ_ME])
 
 const open = (...paths: string[]) => {

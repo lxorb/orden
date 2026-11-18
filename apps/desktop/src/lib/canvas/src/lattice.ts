@@ -1,13 +1,9 @@
 import { GRID } from '../../plane/src/api'
 
 const THINS_AT = 12
-
 const FILLS_AT = 15
-
 const MOST = 32
-
 const FAINTEST = 0.004
-
 export const latticeEvery = (level: number): number => GRID * 2 ** level
 
 export function latticeLevel(scale: number, held = 0): number {

@@ -1,6 +1,5 @@
 import type { PickedFile } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-
 import { folderNameFor } from './folder-name'
 
 const picked = (name: string, inside = ''): PickedFile => ({

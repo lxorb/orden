@@ -12,7 +12,6 @@ export interface Database {
 }
 
 const NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/
-
 const CHECKBOX = /^(yes|no)$/i
 
 const NOTION_DATE =
@@ -36,7 +35,6 @@ const MONTHS = [
 ]
 
 const PAGE = / \(((?:[^()\s]|\([^()\s]*\))+\.md)\)(?:, |$)/g
-
 const LABEL = /^[^.!?\n]{1,40}$/
 
 export function databaseOf(text: string): Database {

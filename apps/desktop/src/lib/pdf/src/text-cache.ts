@@ -1,9 +1,7 @@
 import { isNumber, isRecord, isString, invoke } from '../../platform/src/api'
 
 const A_PAPER = 2_000_000
-
 const ALL_PAPERS = 16_000_000
-
 let aPaper = A_PAPER
 let allPapers = ALL_PAPERS
 

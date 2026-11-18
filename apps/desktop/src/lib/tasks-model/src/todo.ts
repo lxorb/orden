@@ -2,7 +2,6 @@ import { err, failure, ok, type Result } from '@orden/contracts'
 import { inboxChangeOf, inboxStamp, type InboxFields, type InboxValue } from '@orden/sync-core'
 
 export const PRIORITIES = [0, 1, 2, 3] as const
-
 export type Priority = (typeof PRIORITIES)[number]
 
 export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
@@ -50,11 +49,8 @@ export const LIMITS = {
 } as const
 
 export const KIND = 'todo'
-
 const DESCRIPTION_BYTES = 12_000
-
 const encoder = new TextEncoder()
-
 const bytesOf = (text: string): number => encoder.encode(JSON.stringify(text)).length
 
 function wholeSlice(text: string, end: number): string {
@@ -155,7 +151,6 @@ export function fieldsOf(patch: TodoPatch): InboxFields {
 }
 
 const refused = (message: string) => err(failure('tasks-model', 'invalid', message))
-
 type Mutable<T> = { -readonly [K in keyof T]: T[K] }
 
 export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {

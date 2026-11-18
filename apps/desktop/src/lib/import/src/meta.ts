@@ -53,7 +53,6 @@ export function noteText(title: string | null, body: string, meta: Meta = {}, ow
 }
 
 const KEY_LINE = /^[^\s#-].*?[ \t]*:(?:\s|$)/
-
 const BLOCK_LINE = new RegExp(`${KEY_LINE.source}|^(?:[ \\t]|-(?:\\s|$)|#)`)
 
 function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {

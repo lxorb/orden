@@ -41,7 +41,6 @@ export function keptOver(was: Kept | undefined, item: Kept): Kept {
 }
 
 const MOST_PAGES = 50
-
 const STAMP_TIME = 9
 
 function justAfter(stamp: string | undefined): number {

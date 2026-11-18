@@ -84,7 +84,6 @@
   const phone = $derived(viewport.device === 'phone')
   const options = $derived(base && property ? optionsAt(base, property) : [])
   const lists = $derived(property?.startsWith('note.') ? holdsLists(live.rows, property) : false)
-
   let pending = $state<Pending[]>([])
   let shuffled = $state<{ column: string; order: string[] } | null>(null)
 
@@ -110,7 +109,6 @@
   )
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
   const names = $derived(shownGroups.map((group) => groupName(group.key)))
-
   let seen: Answer | null = null
   $effect(() => {
     const answer = live.answer
@@ -431,7 +429,6 @@
   }
 
   const titleOf = (row: Row) => row.file.basename
-
   let said = $state('')
   function announce(words: string) {
     said = words

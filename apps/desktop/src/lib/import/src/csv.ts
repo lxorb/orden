@@ -1,7 +1,5 @@
 const MAYBE = [',', ';', '\t'] as const
-
 const SEP = /^"?sep=(.)"?[^\S\r\n]*(\r\n|\r|\n|$)/i
-
 export const readCsv = (text: string): string[][] => parsed(text).rows
 
 function parsed(text: string): { rows: string[][]; delimiter: string } {

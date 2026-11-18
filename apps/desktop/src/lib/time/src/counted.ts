@@ -9,7 +9,6 @@ export interface Place {
 }
 
 export const isOwn = (span: Span): boolean => span.source === 'manual' || span.source === 'timer'
-
 const ruleKey = (lane: string, place: string) => `${lane}\u0000${place}`
 
 export function counted(spans: readonly Span[], rules: readonly Rule[]): Span[] {

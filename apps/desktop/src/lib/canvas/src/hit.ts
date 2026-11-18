@@ -18,7 +18,6 @@ import { FORGIVING, type Hit, NOTHING } from './pointer'
 
 export const HANDLE = 9
 export const PORT = 9
-
 const ROOM = 3
 
 export const roomFor = (box: Box, scale: number, size: number): boolean =>

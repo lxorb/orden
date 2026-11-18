@@ -24,11 +24,8 @@ import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '.
 import { carried, type Moving, moving } from '../../file-ops/src/api'
 
 export const STORAGE_KEY = 'orden:arranged'
-
 export const MOST_ARRANGED = 200
-
 export const MOST_NAMES = 500
-
 const LONGEST_NAME = 255
 
 function isName(value: unknown): value is string {
@@ -417,7 +414,6 @@ const withList = (
 ): Record<string, string[]> => (names.length ? { ...held, [folder]: names } : without(held, folder))
 
 export const SORT_KEY = 'orden:sorting'
-
 const BEFORE = 'orden:list-order'
 
 interface Sorted extends Folded {

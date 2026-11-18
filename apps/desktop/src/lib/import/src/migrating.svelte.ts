@@ -209,5 +209,4 @@ export async function arrive(space: Space, open = true) {
 }
 
 const firstNote = (): string | null => (workspace.notes[0] ?? workspace.files[0])?.path ?? null
-
 export const migrating = new Migrating()

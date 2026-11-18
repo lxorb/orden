@@ -18,7 +18,6 @@ const FILES: Record<string, string> = {
 }
 
 const KEPT: Record<string, Record<string, string>> = {}
-
 const PAPERS = new Set(['/Home/Lecture.pages.pdf'])
 const asked: string[] = []
 

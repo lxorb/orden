@@ -24,7 +24,6 @@
   } = $props()
 
   const uid = $props.id()
-
   const offered = $derived(choices?.filter((one) => !property.items.includes(one)) ?? [])
 
   function commitOnEnter(event: KeyboardEvent) {

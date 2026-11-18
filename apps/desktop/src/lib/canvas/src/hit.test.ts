@@ -15,7 +15,6 @@ const card = (id: string, x: number, y: number): CanvasNode => ({
 
 const NODES = [card('a', 0, 0), card('b', 600, 400)]
 const EDGE: CanvasEdge = { id: 'e', fromNode: 'a', toNode: 'b' }
-
 const CANVAS: Canvas = { nodes: NODES, edges: [EDGE], ink: [], at: {}, gone: {} }
 
 const where = (over: Partial<Where> = {}): Where => ({

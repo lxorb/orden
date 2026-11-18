@@ -19,7 +19,6 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const ROOT = '/space'
-
 let arranged: Arranged
 
 beforeEach(() => {

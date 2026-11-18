@@ -30,7 +30,6 @@ export function mimeOf(src: string, fallback = 'image/png'): string {
 }
 
 export const suffixFor = (mime: string): string => SUFFIXES[mime] ?? 'png'
-
 const MEDIA_TYPE = /^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*\/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]*$/
 
 function declaredMime(value: string | null | undefined): string | null {

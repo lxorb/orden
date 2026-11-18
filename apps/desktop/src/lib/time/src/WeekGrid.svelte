@@ -21,7 +21,6 @@
   } = $props()
 
   const PER_HOUR = 44
-
   const days = $derived(Array.from({ length: 7 }, (_, index) => daysAfter(from, index)))
   const bounds = $derived.by((): [number, number] => {
     const times = [

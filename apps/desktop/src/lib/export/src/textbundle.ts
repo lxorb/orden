@@ -4,7 +4,6 @@ import { toMarkdown } from './markdown'
 import { type FoundLink } from '@orden/markdown/links'
 
 const ASSETS = 'assets'
-
 const TYPE = 'net.daringfireball.markdown'
 
 const info = (): string =>

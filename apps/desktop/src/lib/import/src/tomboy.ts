@@ -1,6 +1,5 @@
 import { plainWords } from '@orden/markdown/escapes'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
-
 import { dayOf, noteText, type Meta } from './meta'
 import { nameKey, Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
@@ -8,7 +7,6 @@ import type { Source } from './sources'
 import { closingOf, element, tagsIn, textOf, textsOf, unescapeXml } from './xml'
 
 const NOTEBOOK = /^system:notebook:(.*)$/i
-
 const SYSTEM = /^system:/i
 
 const AROUND: Record<string, string> = {

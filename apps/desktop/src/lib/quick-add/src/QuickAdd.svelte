@@ -77,9 +77,7 @@
   let words = $state<HTMLTextAreaElement>()
   let asking = $state<{ rows: MenuEntry[]; at: DOMRect } | null>(null)
   let pasted = $state<string[] | null>(null)
-
   let seen = untrack(() => prefill.text ?? '')
-
   const today = $derived(todayOf())
   const read = $derived(
     smart
@@ -163,7 +161,6 @@
   let caret = $state(-1)
   let dismissed = $state(-1)
   let active = $state(0)
-
   const token = $derived(smart && caret >= 0 ? tokenAt(text, caret) : null)
   const offered = $derived.by((): string[] => {
     if (!token || token.from === dismissed) return []

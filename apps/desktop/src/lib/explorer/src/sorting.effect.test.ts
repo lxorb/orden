@@ -14,7 +14,6 @@ import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vite
 import type { Entry, Found, Listing } from './commands'
 
 type Heard = (event: { payload: unknown }) => void
-
 const ears = vi.hoisted(() => ({ heard: new Map<string, Heard>() }))
 
 vi.mock('../../platform/src/tauri', async (original) => ({
@@ -191,7 +190,6 @@ const FOLDERS_BY_MODIFIED = ['Folder 10', 'folder 9']
 const BY_KIND = ['File 2.md', 'Ärger.pdf', 'photo.PNG', 'file 10.txt', '日記.txt']
 const BY_KIND_DOWN = ['file 10.txt', '日記.txt', 'photo.PNG', 'Ärger.pdf', 'File 2.md']
 const BY_CREATED = ['file 10.txt', 'File 2.md', 'photo.PNG', 'Ärger.pdf', '日記.txt']
-
 const back = (names: string[]) => [...names].reverse()
 
 describe('sorting a real folder in the file explorer', () => {

@@ -31,13 +31,9 @@
   const LABEL = 11
   const TARGET = 16
   const ARROW = 'M 11 0 L -6.6 -7.7 L -3.3 0 L -6.6 7.7 Z'
-
   const follows = (_value: unknown) => undefined
-
   const inked = (colour: string): string => palette[colour] ?? colour
-
   const CATCHING_UP = 70
-
   let eased = $state.raw<Record<number, { x: number; y: number }>>({})
   let frame = 0
   let last = 0

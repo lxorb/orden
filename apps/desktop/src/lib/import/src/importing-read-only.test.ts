@@ -47,7 +47,6 @@ vi.mock('../../workspace/src/api', () => ({
 }))
 
 const failed = vi.hoisted((): string[] => [])
-
 const offered: string[] = []
 vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
@@ -70,7 +69,6 @@ vi.mock('./document', () => ({
 }))
 
 const storedFor = vi.hoisted((): string[] => [])
-
 const landedIn = vi.hoisted((): { root: string; folder: string }[] => [])
 vi.mock('./apply', () => ({
   applyImport: (_: unknown, target: { root: string; folder: string }) => {

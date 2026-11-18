@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { chromiumEngine, mozillaEngine, safariEngine } from './search-engines'
 
 const ZEN = {

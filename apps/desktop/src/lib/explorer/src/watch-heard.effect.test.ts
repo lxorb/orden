@@ -61,7 +61,6 @@ const ExplorerColumn = (await import('./ExplorerColumn.svelte')).default
 const { viewOf } = await import('./view.svelte')
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
 let close: (() => void) | undefined
 
 afterEach(() => {

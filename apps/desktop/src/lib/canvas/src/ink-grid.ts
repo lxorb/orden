@@ -3,7 +3,6 @@ import type { Box } from '../../plane/src/api'
 import { strokeBox } from '../../plane/src/api'
 
 const CELL = 256
-
 const SPAN = 2 ** 21
 const HALF = 2 ** 20
 
@@ -12,7 +11,6 @@ function cellOf(value: number): number {
 }
 
 const keyOf = (across: number, down: number): number => (across + HALF) * SPAN + (down + HALF)
-
 const MOST_CELLS = 1024
 
 const cellsUnder = (box: Box): number =>

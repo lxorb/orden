@@ -9,7 +9,6 @@ export interface Source {
 }
 
 const DEEPEST = 3
-
 const MOST_BYTES = 512 * 1024 * 1024
 
 export const sourceOf = (path: string, bytes: Uint8Array): Source => ({

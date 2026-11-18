@@ -4,11 +4,8 @@ export interface Feel {
 }
 
 export const FLIGHT: Feel = { response: 0.38, damping: 0.86 }
-
 const LONGEST = 1 / 240
-
 export const PIXELS = 0.5
-
 export const SHARE = 0.004
 
 export interface Spring {

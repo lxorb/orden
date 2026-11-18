@@ -3,7 +3,6 @@ import { pathKey, windows } from '../../platform/src/api'
 import { SIDECAR } from './highlights'
 
 const SAID = 'marks-written'
-
 const written = new SvelteMap<string, number>()
 
 function heard(path: string): void {

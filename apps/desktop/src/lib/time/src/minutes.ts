@@ -1,5 +1,4 @@
 export const SAMPLE_EVERY = 5000
-
 export const KEEP_MINUTES = 90 * 24 * 60 * 60_000
 
 export interface Sample {

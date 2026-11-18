@@ -9,7 +9,6 @@ Object.assign(globalThis, { pdfjsWorker: engine })
 streamsIterate()
 
 const drawing = { filtered: false }
-
 const filtersUsed = (): boolean => drawing.filtered
 
 class NoFilters {
@@ -57,11 +56,8 @@ const owner = {
 }
 
 const docs = new Map<number, { task: PDFDocumentLoadingTask; doc: Promise<PDFDocumentProxy> }>()
-
 const running = new Map<number, RenderTask>()
-
 const dropped = new Set<number>()
-
 let line: Promise<unknown> = Promise.resolve()
 
 function open(doc: number, bytes: ArrayBuffer) {

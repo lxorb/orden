@@ -15,16 +15,11 @@ interface Paper {
 }
 
 const held = new Map<string, Paper>()
-
 const IN_MEMORY = 4_000_000
-
 const SETTLE = 1500
-
 const WINDOW = 180
 const BEFORE = 60
-
 const writing = afterQuiet(() => void writePapers(), SETTLE)
-
 let hydrated: { root: string; at: number; done: Promise<void> } | null = null
 
 let listing: {
@@ -55,7 +50,6 @@ function orphaned(root: string, path: string): boolean {
 }
 
 const letGone = new Set<string>()
-
 let walking = 0
 
 function letGo(path: string): void {
@@ -259,7 +253,6 @@ async function moveStored(from: string, to: string, moved: ReadonlySet<string>):
 }
 
 let hearing: ((held: PapersHeld) => void) | null = null
-
 let toldOnce = false
 
 export function hearPapers(hear: (held: PapersHeld) => void): void {

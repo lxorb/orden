@@ -28,14 +28,11 @@
   } = $props()
 
   const SNAP = 5 * MINUTE
-
   const nowShown = $derived(from <= now && now < to)
-
   const whole = $derived(to - from)
   const at = (moment: number) => `${((moment - from) / whole) * 100}%`
   const wide = (ms: number) => `${Math.max(0.2, (ms / whole) * 100)}%`
   const pixels = (ms: number) => (ms / whole) * width
-
   const said = $derived(stacked(piecesIn(own, from, to, now, isOwn)))
   const lanes = $derived(
     (
@@ -75,7 +72,6 @@
   const cpu = $derived(line((one) => one.cpu))
   const memory = $derived(line((one) => one.memory))
   const battery = $derived(line((one) => one.battery))
-
   let track = $state<HTMLElement>()
   let pressed: { x: number; at: number; span: string | null } | null = null
   let dragging = $state(false)

@@ -19,11 +19,8 @@ import type { Hand, PlaneSurface, Reachable, SharedPlane } from '@orden/markdown
 import type { NoteDoc, Tab } from '../../documents/src/api'
 
 const PADDING = 48
-
 const WRITE_DELAY = 1_200
-
 const PRINTED_AT_ONCE = 10_000
-
 const FEW_PICKED = 16
 
 export class CanvasStore implements PlaneSurface {
@@ -476,7 +473,6 @@ export class CanvasStore implements PlaneSurface {
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; see above
 const drawn = new Set<WeakRef<CanvasStore>>()
-
 const LEFT = new WeakMap<Tab, { note: NoteDoc; revision: number; history: CanvasHistory }>()
 
 function flushCanvases(): void {

@@ -8,7 +8,6 @@ export const EXPORT_EXTRAS = [
 ] as const
 
 export type ExportId = Exportable | (typeof EXPORT_EXTRAS)[number]['id']
-
 const FORMATS = EXPORT_FORMATS.map((format) => format.id)
 const VARIANTS = EXPORT_VARIANTS.map((variant) => variant.id)
 

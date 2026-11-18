@@ -28,13 +28,9 @@ import { KEEP_MINUTES, type Minute } from './minutes'
 import type { TimeRecord } from './written'
 
 const CURSOR = 'cursor'
-
 const SEND_AFTER = 1500
-
 const TRACKING = 'tracking'
-
 const REMINDERS = 'reminders'
-
 const KINDS = ['activity', 'span', 'rule', 'goal', 'pref']
 
 export interface Opening {

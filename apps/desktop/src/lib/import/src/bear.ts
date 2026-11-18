@@ -8,7 +8,6 @@ import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 
 const ARCHIVE = 'Archive'
-
 const BUNDLE = /^(.*?\.textbundle)(?:\/|$)/i
 
 interface Info {
@@ -73,15 +72,10 @@ export async function readBear(sources: readonly Source[]): Promise<ImportPlan> 
 }
 
 export const bearTags = (text: string): string => convertTags(text).text
-
 const UNDERLINE = /(?<![~\\\w/])~([^~\s\\](?:[^~\n]*[^~\s\\])?)~(?![~\w/])/g
-
 const COLONS = /(?<![\w:])::([^\s:](?:[^:\n]*[^\s:])?)::(?![\w:])/g
-
 const NOTE_LINK = /\]\((bear:\/\/x-callback-url\/open-note\?[^)\s]*)\)/g
-
 const WIKILINK = /(?<!\\)(!?)\[\[([^\]\n|#]+)((?:\|[^\]\n]*)?)\]\]/g
-
 const UNLINKABLE_NAME = /(?<!\\)!?\[\[([^\]\n|]*[#^[][^\]\n|]*)((?:\|[^\]\n]*)?)\]\]/g
 
 export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): string {

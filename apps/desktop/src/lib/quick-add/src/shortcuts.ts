@@ -12,11 +12,8 @@ import { invoke as crate } from '../../crate/src/api'
 import { hearHere } from '../../windows/src/api'
 
 const TAKING = 'orden:shortcuts-added'
-
 const ADDED = 'orden://shortcuts-added'
-
 export const TAKEN = '.shortcuts'
-
 const OPEN_TASK = /^\s*[-*+]\s+\[ \]\s+(.+?)\s*$/
 
 interface Added {

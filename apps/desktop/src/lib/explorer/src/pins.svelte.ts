@@ -8,7 +8,6 @@ import {
 } from '../../platform/src/api'
 
 const PINNED = 'orden:explorer-pinned'
-
 const read = (): string[] => stringList(stored(PINNED)) ?? []
 
 class Pins {

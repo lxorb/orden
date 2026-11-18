@@ -22,9 +22,7 @@ export interface AwaySaid {
 }
 
 export const HERE = 'here'
-
 type Drawn = ImageBitmap | null | typeof HERE
-
 let worker: Worker | null = null
 let broken = false
 let asked = 0

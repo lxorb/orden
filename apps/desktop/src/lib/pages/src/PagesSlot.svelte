@@ -14,10 +14,8 @@
   } = $props()
 
   const BAND = 88
-
   const part = $derived(reach > 0 ? Math.min(1, rise / reach) : 0)
   const ready = $derived(rise >= reach && reach > 0)
-
   const words = $derived(ready ? 'Release to add a page' : 'Pull to add a page')
 </script>
 

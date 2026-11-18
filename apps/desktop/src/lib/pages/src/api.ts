@@ -4,7 +4,6 @@ import { pages } from './showing.svelte'
 export { pages }
 
 export const loadPages = () => import('./Pages.svelte')
-
 export const loadNavigator = () => import('./PagesNavigator.svelte')
 
 export const pagesOut = () =>

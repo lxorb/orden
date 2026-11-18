@@ -1,7 +1,6 @@
 import type { Todo } from './todo'
 
 export const SORTS = ['deadline', 'priority', 'manual'] as const
-
 export type Sort = (typeof SORTS)[number]
 
 export const isSort = (value: unknown): value is Sort =>
@@ -70,9 +69,7 @@ const deadlineOrder = (a: Todo, b: Todo): number => {
 }
 
 const priorityOrder = (a: Todo, b: Todo): number => b.priority - a.priority
-
 const manualOrder = (a: Todo, b: Todo): number => a.order - b.order || a.created - b.created
-
 const doneLast = (a: Todo, b: Todo): number => Number(a.done) - Number(b.done)
 
 export function sortedTodos(todos: readonly Todo[], sort: Sort): Todo[] {

@@ -1,9 +1,7 @@
 import { foldName } from '@orden/markdown/links'
-
 import { encodeTarget } from '@orden/markdown/links'
 import { codeAndWords } from '@orden/markdown/tags'
 import { folderOf, relativePath } from '../../platform/src/api'
-
 import { folderPlan, isHidden, isJunk } from './folder'
 import { dayOf, type Meta } from './meta'
 import { Names, pageLink, safeName } from './names'
@@ -11,34 +9,22 @@ import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 
 const APP = /^logseq\//i
-
 const PROPERTY = /^\s*(?:-\s+)?([A-Za-z][\w -]{0,39}):: *(.*?)\r?$/
 
 const MARKER =
   /^(\s*)-\s+(TODO|DOING|NOW|LATER|DONE|WAIT|WAITING|IN-PROGRESS|STARTED|CANCELED|CANCELLED)\s+/
 
 const REFERENCE = /\(\(([0-9a-f-]{36})\)\)/gi
-
 const LABELLED_REFERENCE = /\[([^\]\n]+)\]\(\(\(([0-9a-f-]{36})\)\)\)/gi
-
 const BLOCK_EMBED = /\{\{embed\s+\(\(([0-9a-f-]{36})\)\)\s*\}\}/gi
-
 const PAGE_EMBED = /\{\{embed\s+\[\[([^\]\n]+)\]\]\s*\}\}/gi
-
 const LABELLED_PAGE = /\[([^\]\n]+)\]\(\[\[([^\]\n]+)\]\]\)/g
-
 const PAGE = /\[\[([^\][\n]+)\]\]/g
-
 const HIGHLIGHT = /\^\^([^^\n]+)\^\^/g
-
 const PICTURE_SIZE = /(!\[[^\]\n]*\]\([^)\n]*\))\{:[^}\n]*\}/g
-
 const BLOCK_ID = /^\s*(?:-\s+)?id:: *([0-9a-f-]{36})\s*$/i
-
 const COLLAPSED = /^\s*collapsed:: *(?:true|false)\s*$/i
-
 const FENCE = /^\s*(?:-\s+)?(`{3,}|~{3,})/
-
 const TITLE_FORMAT = 'MMM do, yyyy'
 const FILE_FORMAT = 'yyyy_MM_dd'
 

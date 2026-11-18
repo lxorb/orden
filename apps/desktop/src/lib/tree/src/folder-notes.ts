@@ -10,9 +10,7 @@ import {
 import { entryAt } from './tree-edits'
 
 const INDEX = /^_?index$/i
-
 export const folderFor = (note: string): string => withoutExtension(note)
-
 export const folderNotePath = (folder: string): string => joinPath(folder, `${nameOf(folder)}.md`)
 
 export const isFolderNote = (note: string): boolean =>

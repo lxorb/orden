@@ -43,9 +43,7 @@
   )
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))
-
   let named = $state<HTMLInputElement>()
-
   let choosing = $state(false)
   let query = $state('')
   let cursor = $state(0)

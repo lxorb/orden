@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { readShortcut } from '@orden/scan/shortcut'
 import { firefoxSidebar } from './firefox'
 import type { FolderWords } from './sidebar-made'

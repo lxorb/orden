@@ -40,7 +40,6 @@ export { marksFromOutside, marksWritten, sheetArrived } from './sheets.svelte'
 export { editHighlights, loadHighlights } from './sidecar'
 
 export const papers = () => import('./papers')
-
 export const handed = () => import('./handed')
 
 export const readPapers: typeof import('./extract').readPapers = (...args) =>

@@ -30,7 +30,6 @@ const contentPolicy = (pictures: string) =>
   ].join('; ')
 
 export const CONTENT_POLICY = contentPolicy('')
-
 export const SHEET_POLICY = contentPolicy(' asset: http://asset.localhost')
 
 export function localSources(html: string): string[] {
@@ -84,7 +83,6 @@ export async function writtenPdf(
 }
 
 const PLACED = /(<(?:img|audio|video|source)\b[^>]*?\bsrc="|<image\b[^>]*?\bhref=")([^"]*)(")/g
-
 const AWAY = /^(?:data:|blob:|https?:|\/\/)/i
 
 function localOf(html: string): string[] {

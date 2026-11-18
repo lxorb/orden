@@ -12,7 +12,6 @@ export interface ImageOptions {
 
 const DEFAULT_WIDTH = 800
 const DEFAULT_SCALE = 2
-
 const XHTML = 'http://www.w3.org/1999/xhtml'
 
 export interface Page {

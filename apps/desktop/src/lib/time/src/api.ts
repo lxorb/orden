@@ -5,9 +5,7 @@ export { openTime }
 export { time } from './time.svelte'
 
 export const wakeTime = () => import('./start.svelte').then(() => undefined)
-
 export const loadTimePanel = () => import('./TimePanel.svelte')
-
 export const loadTimeTab = () => import('./TimeTab.svelte')
 
 export const timeCommands = {

@@ -10,7 +10,6 @@ const DISK: Record<string, string[]> = {
 
 const listed: string[] = []
 const watched: string[] = []
-
 const slow = new Map<string, Promise<void>>()
 
 function held(path: string): () => void {

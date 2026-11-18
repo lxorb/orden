@@ -2,13 +2,9 @@ import { invoke, isDesktop, platform } from '../../platform/src/api'
 import { wheelPixels } from '../../camera/src/api'
 
 const FRESH = 150
-
 const LEARNT = 1.5
-
 const STEADY = 0.3
-
 const GLIDE = 400
-
 const SLOWING = 2
 
 interface Vector {
@@ -103,7 +99,6 @@ export class FreeScroll {
 }
 
 export const freeScroll = new FreeScroll()
-
 let holders = 0
 let unhear: (() => void) | null = null
 

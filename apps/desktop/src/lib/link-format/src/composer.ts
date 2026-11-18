@@ -13,7 +13,6 @@ import { flowItem } from '@orden/markdown/yaml'
 import { nameFromContent } from '../../platform/src/api'
 
 const SEAM = '\n\n---\n\n'
-
 const LISTED = new Set(['aliases', 'alias', 'tags', 'tag', 'cssclasses'])
 
 const edited = (text: string, edit: { from: number; to: number; insert: string } | null): string =>

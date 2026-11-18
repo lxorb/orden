@@ -30,7 +30,6 @@ import { nowHere, todayHere } from './days'
 import { templatesFolder, templateWords } from './templates'
 
 const held = new Map<string, HeldBase>()
-
 const leading = new Set<string>()
 const letGo = new Map<string, AbortController>()
 
@@ -89,7 +88,6 @@ const waiting = new Map<
 >()
 
 const SETTLE = 80
-
 const runs = new Set<Promise<void>>()
 const lastRun = new Map<string, Promise<void>>()
 
@@ -238,7 +236,6 @@ export function heard(
 }
 
 const MAKING = 'orden:repeat-templates'
-
 const MAKING_PATIENCE = 60_000
 
 export const repeatTemplates = (): Promise<void> =>

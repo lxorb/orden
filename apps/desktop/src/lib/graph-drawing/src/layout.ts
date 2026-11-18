@@ -7,16 +7,13 @@ const KEPT_SPEED = 0.6
 const COLD = 0.001
 const TICKS = 300
 const COOLING = 1 - Math.pow(COLD, 1 / TICKS)
-
 const SETTLING_TICKS = 4
 const DRAG_WARMTH = 0.3
 const CARRIED_WARMTH = 0.1
-
 const THETA_SQUARED = 0.81
 const NEAREST_SQUARED = 1
 const DEEPEST = 24
 const IN_A_LEAF = 4
-
 const SPIRAL = Math.PI * (3 - Math.sqrt(5))
 const SPIRAL_STEP = 12
 

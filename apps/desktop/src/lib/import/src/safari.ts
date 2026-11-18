@@ -10,11 +10,9 @@ export interface SafariFiles {
 const PINNED = 'TopScopedBookmarkList'
 const LOCAL = 'Local'
 const PRIVATE = new Set(['private', 'privatepinned'])
-
 const BAR = 'BookmarksBar'
 const MENU = 'BookmarksMenu'
 const READING_LIST = 'com.apple.ReadingList'
-
 const FOLDER = 1
 const TAB = 0
 

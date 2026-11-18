@@ -4,7 +4,6 @@ import type { Box, HandleId, Point } from '../../plane/src/api'
 import { rubbedBetween } from '../../plane/src/api'
 
 export type Tool = 'select' | 'hand' | 'draw' | 'erase' | 'lasso' | PutTool
-
 export type PutTool = 'text' | 'words' | 'file' | 'picture' | 'link' | 'group' | Shape
 
 const PUT: ReadonlySet<Tool> = new Set<Tool>([
@@ -24,11 +23,8 @@ const PUT: ReadonlySet<Tool> = new Set<Tool>([
 ])
 
 export const puts = (tool: Tool): tool is PutTool => PUT.has(tool)
-
 const JOINS: ReadonlySet<Tool> = new Set<Tool>(['line', 'arrow', 'elbow'])
-
 export type PointerKind = 'mouse' | 'pen' | 'touch'
-
 type EdgeEnd = 'from' | 'to'
 
 export interface Hit {
@@ -199,9 +195,7 @@ export const start = (): Machine => ({
 })
 
 const SLOP = 3
-
 export const FORGIVING = 8
-
 const TWO_FINGERS = 250
 
 export interface Step {

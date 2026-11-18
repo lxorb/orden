@@ -36,7 +36,6 @@ import Type from 'lucide/dist/esm/icons/type.mjs'
 import Undo2 from 'lucide/dist/esm/icons/undo-2.mjs'
 import Ungroup from 'lucide/dist/esm/icons/ungroup.mjs'
 import type { IconNode } from 'lucide'
-
 import { type InkTool } from '@orden/markdown/canvas'
 import { type Tool } from './pointer'
 import { shortcuts } from '../../shortcuts/src/api'

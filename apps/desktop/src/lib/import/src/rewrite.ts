@@ -17,15 +17,10 @@ export interface Found {
 }
 
 export type Resolver = (target: string, from: string) => Found | null
-
 export type Reaching = (found: Found, from: string) => boolean
-
 const UNLINKABLE = /[[\]|]/
-
 const SIZE = /^\d+(?:x\d+)?$/
-
 const DIVIDER = /^ {0,3}\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/
-
 const QUOTED = /^(?: {0,3}>[ \t]?)*/
 
 export interface Rewriting {

@@ -64,7 +64,6 @@
   } = $props()
 
   const colour = $derived(shownColour(node.color))
-
   let source = $state<EmbeddedNote | null>(null)
 
   $effect(() => {
@@ -86,7 +85,6 @@
     node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text,
   )
   const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
-
   const html = $derived(words ? cardHtml(words, canvasPath, markup) : '')
 
   const drawing = $derived.by(() => {
@@ -146,7 +144,6 @@
 
   let editor: EditorView | undefined
   let typed = ''
-
   let handed: string | null = null
 
   function hand() {

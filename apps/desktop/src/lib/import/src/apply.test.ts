@@ -1,18 +1,12 @@
 import { type NoteIndex, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import type { ImportPlan, Planned } from './plan'
 
 const wrote: { command: string; path: string }[] = []
-
 let refusing: string | null = null
-
 const recorded: unknown[] = []
-
 const said = new Map<string, string>()
-
 const onDisk = new Set<string>()
-
 const listed = new Map<string, string[]>()
 
 vi.mock('../../platform/src/tauri', () => ({
@@ -44,7 +38,6 @@ vi.mock('../../platform/src/tauri', () => ({
 }))
 
 const came: string[] = []
-
 const described: [string, unknown][] = []
 
 vi.mock('../../workspace/src/api', () => ({
@@ -93,9 +86,7 @@ beforeEach(() => {
 })
 
 const planOf = (files: Planned[]): ImportPlan => ({ format: 'markdown', files, lost: [] })
-
 const note = (path: string, text: string): Planned => ({ kind: 'note', path, text })
-
 const file = (path: string): Planned => ({ kind: 'file', path, bytes: Uint8Array.from([1]) })
 
 function textAt(files: readonly Planned[], path: string): string {

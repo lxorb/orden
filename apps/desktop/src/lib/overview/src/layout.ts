@@ -33,7 +33,6 @@ export interface Panes {
 const GAP = 28
 const ROW_GAP = 60
 const SEAM_GAP = 56
-
 export const WIDEST = 0.46
 
 function shareOf(first: number, second: number): number {

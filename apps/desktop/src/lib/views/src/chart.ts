@@ -4,7 +4,6 @@ import { dayIn } from './values'
 
 export type ChartKind = 'bar' | 'hbar' | 'line' | 'donut' | 'number'
 export const CHART_KINDS: readonly ChartKind[] = ['bar', 'hbar', 'line', 'donut', 'number']
-
 export type Measure = 'count' | 'sum' | 'average' | 'earliest' | 'latest'
 export const MEASURES: readonly Measure[] = ['count', 'sum', 'average', 'earliest', 'latest']
 

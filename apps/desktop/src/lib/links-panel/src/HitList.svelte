@@ -31,7 +31,6 @@
   }
 
   const root = $derived(workspace.activeSpace?.root ?? null)
-
   const noteOf = (row: Row): string | null => ('to' in row ? row.to : row.path)
 
   function placeOf(row: Row) {
@@ -44,13 +43,9 @@
   }
 
   const OVERSCAN = 6
-
   const LEAST = 40
-
   let list = $state<HTMLUListElement>()
-
   const where = new ListView()
-
   let standing = $state<number | null>(null)
   let reaching = $state<number | null>(null)
 

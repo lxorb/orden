@@ -31,15 +31,10 @@
   } = $props()
 
   const FIRST = 2
-
   const CLOSE_UP = 160
-
   const STRETCH = 1.1
-
   const RETRY = 5000
-
   const MOST_TRIES = 60
-
   let sheet = $state<HTMLCanvasElement>()
   let close = $state<HTMLCanvasElement>()
   let paper = $state.raw<Paper | null>(null)
@@ -54,7 +49,6 @@
   )
 
   const wanted = $derived(fit * scale * pixelRatio.now)
-
   const density = $derived(wanted ? densityFor(wanted) : FIRST)
 
   $effect(() => {

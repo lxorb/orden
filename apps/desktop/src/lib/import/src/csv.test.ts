@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { delimiterOf, readCsv, recordsOf } from './csv'
 
 describe('reading a CSV', () => {

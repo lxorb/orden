@@ -3,7 +3,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 const order: string[] = []
 const said: { kind: string; path: string; text: string }[] = []
 let alone = false
-
 let there = false
 
 vi.mock('../../platform/src/tauri', () => ({

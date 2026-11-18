@@ -21,11 +21,8 @@ const tracker = new Tracker({
 })
 
 const fold = new MinuteFold()
-
 let lastInput = Date.now()
-
 let leading = false
-
 const locks = 'locks' in navigator ? navigator.locks : null
 
 if (locks) {

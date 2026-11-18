@@ -37,23 +37,16 @@ import type { Picture } from './pictures'
 import { legalXml } from './xml-legal'
 
 const MONOSPACE = 'Consolas'
-
 const INK = '1A1A1A'
 const CODE_INK = '3F3F46'
 const CODE_FILL = 'F5F5F5'
 const HEAD_FILL = 'EFEFEF'
 const LINE = 'BFBFBF'
-
 const STEP = 720
-
 const ORDERED = 'orden-ordered'
-
 const RUNGS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-
 const DEEPEST_RUNG = RUNGS.length - 1
-
 const PER_INCH = 96
-
 const CHECKS = { open: '☐ ', done: '☑ ' }
 
 const HEADINGS = [

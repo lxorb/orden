@@ -12,7 +12,6 @@ import type { ImportPlan, Planned } from './plan'
 import { decoded } from './sources'
 
 const NOTES = /\.(md|markdown|mdown|mkd|txt|text)$/i
-
 const ADDRESS = /https?:\/\/[^\s<>"')]+/
 
 export function arrivedFrom(json: string): Arrived | null {

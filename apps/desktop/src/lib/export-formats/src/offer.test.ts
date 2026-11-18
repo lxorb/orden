@@ -17,7 +17,6 @@ import {
 const TEN = EXPORT_FORMATS.map((format) => format.id)
 const VARIANTS = EXPORT_VARIANTS.map((variant) => variant.id)
 const KINDS: ExportKind[] = ['note', 'canvas', 'file', 'none']
-
 const RULED = '# One\n\ntext\n\n---\n\n# Two\n\nmore\n'
 
 describe('what each kind of document goes out as', () => {

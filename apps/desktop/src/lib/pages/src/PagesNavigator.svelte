@@ -27,23 +27,16 @@
   import { workspace } from '../../workspace/src/api'
 
   const WIDE = 104
-
   const SETTLE = 600
-
   const follows = (_value: unknown) => undefined
-
   const FIRST = 24
-
   const LEAST = 88
-
   const store = $derived(showing.current?.store ?? null)
   const pages = $derived(store?.pages ?? [])
-
   let list = $state<HTMLUListElement>()
   let wide = $state(0)
   let gap = $state(8)
   const where = new ListView()
-
   const shelves = $derived(shelvesOf(pages, wide, { least: LEAST, gap, edge: 1 }))
   const view = $derived(
     wide > 0
@@ -117,10 +110,8 @@
   })
   const spaceRoot = $derived(workspace.rootHolding(store?.path ?? null))
   const on = $derived(store?.showing ?? 0)
-
   let over = $state<number | null>(null)
   let above = $state(true)
-
   let host = $state<HTMLElement>()
   let palette = $state<Record<string, string>>({})
 

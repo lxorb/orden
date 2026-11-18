@@ -419,7 +419,6 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
 type PdfLib = typeof import('pdf-lib')
 type Sheet = import('pdf-lib').PDFPage
 type Font = import('pdf-lib').PDFFont
-
 type Six = [number, number, number, number, number, number]
 
 function placeOf(scale: number, turn: number, x: number, y: number): Six {

@@ -14,7 +14,6 @@
 
   const chosen = $derived(id ? readIcon(workspace.iconFor(id)) : null)
   const tint = $derived(id ? workspace.tintFor(id) : null)
-
   const drawn = $derived(iconLibrary.drawing(chosen) !== null)
 </script>
 

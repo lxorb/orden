@@ -3,9 +3,7 @@ import { isRecord, isNumber, isString } from '../../platform/src/api'
 export { PDF_SIDECAR as SIDECAR } from '@orden/markdown/links'
 
 const VERSION = 1
-
 export type Quad = readonly [number, number, number, number, number, number, number, number]
-
 export const COLOURS = ['var(--accent)', 'var(--success)', 'var(--callout-warning)'] as const
 
 export interface Highlight {
@@ -26,7 +24,6 @@ export interface Sheet {
 }
 
 export const emptySheet = (): Sheet => ({ version: VERSION, highlights: [] })
-
 export const leftAlone = (held: Held): Sheet => ({ version: VERSION, highlights: [], held })
 
 export const frozen = (sheet: Sheet): Held | null =>
@@ -105,7 +102,6 @@ export interface Box {
 }
 
 export type Point = (x: number, y: number) => readonly [number, number]
-
 export type Transform = readonly [number, number, number, number, number, number]
 
 export const matrixOf = (values: readonly number[]): Transform => [

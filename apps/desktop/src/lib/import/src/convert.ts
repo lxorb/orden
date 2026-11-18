@@ -2,9 +2,7 @@ import { pageLink } from './names'
 import { roamText } from './roam'
 
 const CLOSED_TAG = /(^|[\s(])#([^\s#`[\]\n]|[^\s#`[\]\n][^#`[\]\n]{0,58}[^\s#`[\]\n])#(?![\w#])/g
-
 const ID_LINK = /\[\[(\d{12,14})((\|[^\]\n]*)?)\]\]/g
-
 const ID_NAME = /^(\d{12,14})(?=[\s\-_]|$)/
 
 export interface Converted {
@@ -40,7 +38,6 @@ export function convertTags(text: string): Converted {
 }
 
 const FENCE_OPENS = /^\s*(`{3,}|~{3,})/
-
 const CODE_SPAN = /(`+)(?:[^`]|`(?!\1))*?\1(?!`)/g
 
 export function outsideCode(text: string, change: (words: string) => string): string {
@@ -105,9 +102,7 @@ export function convertIdLinks(text: string, ids: ReadonlyMap<string, string>): 
 }
 
 const ROAM_MARKS = /\{\{\[\[(?:TODO|DONE)\]\]\}\}|\^\^[^^\n]+\^\^|\{\{\[\[[^\]\n]+\]\]\}\}/g
-
 const LIST_MARKER = /^\s*(?:[-*+]|\d{1,9}[.)])\s/
-
 const BARE_BOX = /^(\s*)(\[[ x]\]\s)/
 
 export function convertRoam(text: string): Converted {

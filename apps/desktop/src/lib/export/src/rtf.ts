@@ -7,7 +7,6 @@ const GREY = 2
 const LINK = 3
 const SHADE = 4
 const WASH = 5
-
 const TONE_COLOURS: Record<number, number> = { 1: 6, 2: 7, 4: 8, 5: 9, 6: 10 }
 
 const TONE_WASHES = [
@@ -31,17 +30,11 @@ const HEADER = [
 ].join('')
 
 const STEP = 720
-
 const BODY = '\\sa180\\sl276\\slmult1\\f0\\fs22'
-
 const TIGHT = '\\sa60\\f0\\fs22'
-
 const TERM = '\\sb120\\sa40\\f0\\fs22'
-
 const QUOTE = '\\brdrl\\brdrs\\brdrw20\\brsp80'
-
 const RULE = '\\pard\\brdrb\\brdrs\\brdrw10\\brsp20\\par\n'
-
 const BORDERS = ['t', 'l', 'b', 'r'].map((side) => `\\clbrdr${side}\\brdrs\\brdrw10`).join('')
 
 const SPECIAL: Record<number, string> = {
@@ -178,7 +171,6 @@ function sized(width: number | null, height: number | null): Size | null {
 }
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
-
 const IHDR = 0x49484452
 
 function pngSize(bytes: Uint8Array): Size | null {

@@ -5,7 +5,6 @@ export interface Picked {
 }
 
 export const NOTHING: Picked = { names: new Set(), cursor: null, anchor: null }
-
 export type How = 'one' | 'range' | 'toggle' | 'move'
 
 export function pickedAt(from: Picked, names: readonly string[], name: string, how: How): Picked {

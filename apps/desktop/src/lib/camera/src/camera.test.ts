@@ -25,7 +25,6 @@ import {
 
 const WIDTH = 400
 const HEIGHT = 300
-
 const at = (...values: number[]) => new Float64Array(values)
 
 function screenPoint(camera: Camera, x: number, y: number): { x: number; y: number } {

@@ -1,6 +1,5 @@
 import type { PandocPicture } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-
 import { toBase64 } from '../../platform/src/bytes'
 import { keepPictures, relinked } from './pandoc-pictures'
 

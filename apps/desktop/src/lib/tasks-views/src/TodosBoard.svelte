@@ -20,7 +20,6 @@
   let typed = $state('')
   let openId = $state<string | null>(null)
   let dragged = $state<string | null>(null)
-
   const open = $derived(openId === null ? null : todos.todo(openId))
 
   async function add() {

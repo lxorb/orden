@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { element, elements, plainText, textOf, textsOf, unescapeXml } from './xml'
 
 const ENEX = `<?xml version="1.0" encoding="UTF-8"?>

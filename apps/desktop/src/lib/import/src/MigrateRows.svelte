@@ -10,13 +10,10 @@
   import { isDesktop, isMobile } from '../../platform/src/api'
 
   const folders = !isMobile
-
   const zen = isDesktop
-
   const OBSIDIAN = 'Obsidian'
   const NOTION = 'Notion'
   const ZEN = 'Zen'
-
   const listed = $derived(migrating.browserProfiles?.[0]?.browser ?? null)
 
   $effect(() => untrack(() => void migrating.findBrowsers()))

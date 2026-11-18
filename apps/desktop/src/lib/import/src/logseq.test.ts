@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { logseqNote, readLogseq } from './logseq'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'

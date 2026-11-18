@@ -20,7 +20,6 @@
   const view = $derived(live.view)
   const columns = $derived(live.columns)
   const property = $derived(view?.groupBy?.property)
-
   const summed = $derived(columns.some((column) => view?.summaries[column]))
 
   type Line =

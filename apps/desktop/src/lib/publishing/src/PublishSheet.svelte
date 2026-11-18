@@ -23,7 +23,6 @@
   const liveAt = $derived(blog?.domain ?? (blog?.subdomain ? `${blog.subdomain}.orden.so` : ''))
   const records = $derived(publish.dns.length ? publish.dns : (blog?.dns ?? []))
   const notice = $derived(publish.status ? domainNotice(publish.status) : null)
-
   const showing = $derived(publish.space?.id === workspace.activeSpaceId)
 
   const noteChoices = $derived([
@@ -44,9 +43,7 @@
   ])
 
   const SHOWN = 6
-
   const SHOWN_ANSWERS = 20
-
   const when = (stamp: number) => localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
   async function saveAnswers() {

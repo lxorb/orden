@@ -9,7 +9,6 @@
   const shelves = $derived(shelved(choices, picker.last.id || null))
   const tiles = $derived(shelves.flatMap((one) => one.tiles))
   const setup = $derived(choices.find((one) => one.id === SETUP) ?? null)
-
   let chosenId = $derived(picker.open ? picker.last.id || null : null)
   const chosen = $derived(
     tiles.find((one) => one.id === chosenId && !one.disabled) ??

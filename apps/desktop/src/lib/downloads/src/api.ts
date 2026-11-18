@@ -6,7 +6,6 @@ export interface Press {
 }
 
 let last: Press | null = null
-
 export const lastPress = (): Press | null => last
 
 function heard(event: PointerEvent | MouseEvent) {

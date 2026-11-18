@@ -18,17 +18,11 @@ import {
 } from '../../platform/src/api'
 
 const WAIT = 140
-
 const MOST = 200
-
 const SHORTEST = 2
-
 export const hitKey = (hit: Hit) => `${hit.path}:${hit.page ?? ''}:${hit.line}`
-
 const SORT_KEY = 'orden:search-sort'
-
 const AS_ASKED: SearchOrdering = { sort: 'relevance', descending: false }
-
 const SORTS: readonly SearchSort[] = ['relevance', 'name', 'modified', 'created']
 
 function readOrdering(): SearchOrdering {

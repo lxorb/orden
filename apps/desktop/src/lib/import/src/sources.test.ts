@@ -1,7 +1,6 @@
 import type { PickedFile } from '@orden/contracts'
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
-
 import { insideFolder, sourcesFrom } from './sources'
 
 const words = (body: string) => new TextEncoder().encode(body)

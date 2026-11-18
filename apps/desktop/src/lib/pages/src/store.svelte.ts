@@ -25,9 +25,7 @@ import { stillness } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 
 const MARGIN = 28
-
 export const PEEK = 88
-
 const SETTLE = 420
 
 export class PagesStore extends CanvasStore {

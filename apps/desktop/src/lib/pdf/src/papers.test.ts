@@ -52,7 +52,6 @@ const { parseQuery } = await import('@orden/scan/search/query')
 const { shownName } = await import('@orden/markdown/note-name')
 
 const ROOT = '/space'
-
 const page = (text: string) => text.split(' ')
 
 const found = (source: string, excluded: readonly string[] = []) =>
@@ -368,7 +367,6 @@ describe('a space read back before the file list has said anything', () => {
 })
 
 const settled = () => new Promise((done) => setTimeout(done, 0))
-
 const walked = (notes: string[], folders: string[] = [ROOT]) => ({ notes, folders })
 
 describe('the paper a page note holds', () => {
