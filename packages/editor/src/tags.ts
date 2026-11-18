@@ -2,6 +2,7 @@ import type { Completion, CompletionContext, CompletionResult } from '@codemirro
 import { syntaxTree } from '@codemirror/language'
 import { TAG_NAME } from '@orden/markdown/tags'
 import { enclosingNamed } from './nodes'
+import { bestShown } from './wikilink/best-shown'
 import { fuzzy, noteIndex, type SpaceTag } from './wikilink/notes'
 
 const MOST_SHOWN = 40
@@ -56,17 +57,17 @@ function inFrontMatterTags(context: CompletionContext): boolean {
   return false
 }
 
-function rowsFor(tags: readonly SpaceTag[], needle: string): Completion[] {
+function rowsFor(tags: readonly SpaceTag[], needle: string): { rows: Completion[]; all: boolean } {
   const rows: Completion[] = []
 
   for (const { tag, notes } of tags) {
     if (!fuzzy(tag, needle)) continue
 
     rows.push({ label: tag, detail: String(notes), type: 'keyword' })
-    if (rows.length >= MOST_SHOWN) break
+    if (!needle && rows.length > MOST_SHOWN) break
   }
 
-  return rows
+  return bestShown(rows, needle, MOST_SHOWN)
 }
 
 export function tagCompletions(context: CompletionContext): CompletionResult | null {
@@ -90,6 +91,7 @@ export function tagCompletions(context: CompletionContext): CompletionResult | n
   const line = context.state.doc.lineAt(context.pos)
   if (!front && !name && line.text.slice(0, from - 1 - line.from).trim() === '') return null
 
-  const rows = rowsFor(tags, name.toLowerCase())
-  return rows.length ? { from, options: rows, validFor: STILL_A_NAME } : null
+  const { rows, all } = rowsFor(tags, name.toLowerCase())
+  if (!rows.length) return null
+  return { from, options: rows, ...(all ? { validFor: STILL_A_NAME } : {}) }
 }

@@ -4,6 +4,7 @@ import type { EditorView } from '@codemirror/view'
 import { fold } from '@orden/rooms/fold'
 import { blocksOf, foldName } from '@orden/markdown/links'
 import { inCode } from '../code'
+import { bestShown } from './best-shown'
 import { blockNamer } from './block-namer'
 import {
   fuzzy,
@@ -112,13 +113,6 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
   return rows
 }
 
-function closeness(label: string, needle: string): number {
-  const folded = foldName(label)
-  if (folded === needle) return 0
-  if (folded.startsWith(needle)) return 1
-  return folded.includes(needle) ? 2 : 3
-}
-
 function noteOptions(index: NoteIndex, typed: string): { rows: Completion[]; all: boolean } {
   const needle = foldName(typed.trim())
   const rows: Completion[] = []
@@ -128,13 +122,7 @@ function noteOptions(index: NoteIndex, typed: string): { rows: Completion[]; all
     if (!needle && rows.length > MOST_SHOWN) break
   }
 
-  const ranked = needle
-    ? rows
-        .map((row, at) => ({ row, at, close: closeness(row.label, needle) }))
-        .sort((one, other) => one.close - other.close || one.at - other.at)
-        .map((one) => one.row)
-    : rows
-  return { rows: ranked.slice(0, MOST_SHOWN), all: rows.length <= MOST_SHOWN }
+  return bestShown(rows, needle, MOST_SHOWN)
 }
 
 function matches(note: NoteRef, needle: string): boolean {
@@ -212,7 +200,7 @@ function name(path: string, line: number, target: LinkWrite) {
   }
 }
 
-function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
+function spaceHeadings(index: NoteIndex, typed: string): { rows: Completion[]; all: boolean } {
   const needle = foldName(typed.trim())
   const rows: Completion[] = []
 
@@ -228,11 +216,11 @@ function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
         apply: insert({ ...about(index, note), fragment: heading }),
         type: 'keyword',
       })
-      if (rows.length >= MOST_SHOWN) return rows
+      if (!needle && rows.length > MOST_SHOWN) return bestShown(rows, needle, MOST_SHOWN)
     }
   }
 
-  return rows
+  return bestShown(rows, needle, MOST_SHOWN)
 }
 
 function namedBlocks(index: NoteIndex, needle: string): Completion[] {
@@ -251,7 +239,7 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
         type: 'property',
         boost: 1,
       })
-      if (rows.length >= MOST_SHOWN) return rows
+      if (!needle && rows.length > MOST_SHOWN) return rows
     }
   }
 
@@ -274,12 +262,16 @@ function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
   }
 }
 
-async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[]> {
+async function spaceBlocks(
+  index: NoteIndex,
+  typed: string,
+): Promise<{ rows: Completion[]; all: boolean }> {
   const needle = foldName(typed.trim())
-  const rows = namedBlocks(index, needle)
+  const ids = bestShown(namedBlocks(index, needle), needle, MOST_SHOWN)
+  const rows = ids.rows
   const named = new Set(rows.map((row) => row.label))
 
-  if (!index.searchBlocks || needle.length < LEAST_SEARCHED) return rows
+  if (!index.searchBlocks || needle.length < LEAST_SEARCHED) return ids
 
   const found = await index.searchBlocks(needle, MOST_SHOWN).catch(() => [])
 
@@ -292,7 +284,7 @@ async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[
     if (rows.length >= MOST_SHOWN) break
   }
 
-  return rows
+  return { rows, all: false }
 }
 
 export function wikilinkCompletions(
@@ -308,13 +300,16 @@ export function wikilinkCompletions(
   const across = typed.from + 2 + MARKER
 
   if (inner.startsWith('##')) {
-    const options = spaceHeadings(index, inner.slice(MARKER))
-    return options.length ? { from: across, options, validFor: /^[^[\]\n#|^]*$/ } : null
+    const { rows: options, all } = spaceHeadings(index, inner.slice(MARKER))
+    if (!options.length) return null
+    return { from: across, options, ...(all ? { validFor: /^[^[\]\n#|^]*$/ } : {}) }
   }
 
   if (inner.startsWith('^^')) {
-    return spaceBlocks(index, inner.slice(MARKER)).then((options) =>
-      options.length ? { from: across, options, validFor: /^[^[\]\n#|^]*$/ } : null,
+    return spaceBlocks(index, inner.slice(MARKER)).then(({ rows: options, all }) =>
+      options.length
+        ? { from: across, options, ...(all ? { validFor: /^[^[\]\n#|^]*$/ } : {}) }
+        : null,
     )
   }
 
