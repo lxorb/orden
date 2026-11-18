@@ -675,6 +675,10 @@ class Links {
     )
   }
 
+  private crossed(from: string, to: string): boolean {
+    return (this.relative(from) === null) !== (this.relative(to) === null)
+  }
+
   private cameOut(from: string, to: string): boolean {
     const was = this.relative(from)
     const now = this.relative(to)
@@ -691,7 +695,14 @@ class Links {
     if (op.op === 'moved') elsewhere.forget(op.to)
     const other = this.otherHolding(op.op === 'moved' ? op.from : op.path)
     if (other !== null && this.others.delete(other)) this.changed()
+    const into = op.op === 'moved' ? this.otherHolding(op.to) : null
+    if (into !== null && this.others.delete(into)) this.changed()
     if (op.kind === 'space') return undefined
+    if (op.op === 'moved' && this.crossed(op.from, op.to)) {
+      if (this.relative(op.to) !== null) return this.cameBack(op.to, op.kind === 'folder')
+      this.noteGone(op.from)
+      return undefined
+    }
     if (op.op === 'moved' && this.cameOut(op.from, op.to)) {
       return this.cameBack(op.to, op.kind === 'folder')
     }
