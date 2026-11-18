@@ -9,6 +9,7 @@ mod ssh_config;
 mod tmux;
 mod wire;
 
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -41,9 +42,7 @@ pub struct Spawned {
 
 impl Terminals {
     fn lock(&self) -> MutexGuard<'_, HashMap<String, Held>> {
-        self.sessions
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.sessions.held()
     }
 
     fn held(&self, owner: &str, id: &str) -> Result<(Arc<Session>, bool), String> {
@@ -69,8 +68,7 @@ impl Terminals {
 
     fn ended_since(&self, owner: &str, stamp: u64) -> bool {
         self.loads
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .held()
             .get(owner)
             .is_some_and(|ended| *ended > stamp)
     }
@@ -78,10 +76,7 @@ impl Terminals {
     fn end_where(&self, owner: Option<&str>, kill: bool) {
         if let Some(owner) = owner {
             let ended = self.tick.fetch_add(1, Ordering::SeqCst) + 1;
-            self.loads
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .insert(owner.to_owned(), ended);
+            self.loads.held().insert(owner.to_owned(), ended);
         }
         let ending: Vec<Held> = {
             let mut sessions = self.lock();

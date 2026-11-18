@@ -3,11 +3,12 @@
     reason = "the cef crate's wrap_* macros transmute between a wrapper and the struct it wraps"
 )]
 
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::mpsc::{sync_channel, SyncSender};
-use std::sync::{Arc, Mutex, OnceLock, PoisonError};
+use std::sync::{Arc, Mutex, OnceLock};
 
 #[allow(
     clippy::wildcard_imports,
@@ -72,10 +73,7 @@ enum Answering {
 
 impl Page {
     fn host(&self) -> Option<BrowserHost> {
-        self.host
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .clone()
+        self.host.held().clone()
     }
 
     fn say(&self, text: String) {
@@ -94,12 +92,7 @@ static PAGES: Mutex<Option<HashMap<String, Windowless>>> = Mutex::new(None);
 static NEXT: AtomicI32 = AtomicI32::new(1);
 
 pub fn page(label: &str) -> Option<Windowless> {
-    PAGES
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_ref()?
-        .get(label)
-        .cloned()
+    PAGES.held().as_ref()?.get(label).cloned()
 }
 
 impl orden_agent_web::engines::Windowless for Windowless {
@@ -108,19 +101,11 @@ impl orden_agent_web::engines::Windowless for Windowless {
     }
 
     fn url(&self) -> String {
-        self.page
-            .url
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .clone()
+        self.page.url.held().clone()
     }
 
     fn close(&self) {
-        if let Some(all) = PAGES
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .as_mut()
-        {
+        if let Some(all) = PAGES.held().as_mut() {
             all.remove(&self.label);
         }
         if let Some(host) = self.page.host() {
@@ -141,42 +126,25 @@ impl orden_agent_web::engines::Windowless for Windowless {
             message["sessionId"] = Value::from(session);
         }
         let (answered, answer) = sync_channel(1);
-        self.page
-            .waiting
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(id, answered);
+        self.page.waiting.held().insert(id, answered);
         let page = Arc::clone(&self.page);
         let bytes = message.to_string().into_bytes();
         let posted = on_ui(move || {
             if host.send_dev_tools_message(Some(&bytes)) == 0 {
-                if let Some(waiting) = page
-                    .waiting
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .remove(&id)
-                {
+                if let Some(waiting) = page.waiting.held().remove(&id) {
                     let _ = waiting.try_send(Err("the page refused the message".into()));
                 }
             }
         });
         if !posted {
-            self.page
-                .waiting
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .remove(&id);
+            self.page.waiting.held().remove(&id);
             return Err("the engine's thread could not be reached".into());
         }
         Ok(answer)
     }
 
     fn hear(&self, heard: orden_agent_web::engines::Heard) {
-        self.page
-            .hearing
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .push(Arc::from(heard));
+        self.page.hearing.held().push(Arc::from(heard));
     }
 }
 
@@ -205,7 +173,7 @@ wrap_task! {
 
     impl Task {
         fn execute(&self) {
-            let job = self.job.lock().unwrap_or_else(PoisonError::into_inner).take();
+            let job = self.job.held().take();
             if let Some(job) = job {
                 job();
             }
@@ -264,12 +232,7 @@ pub fn build(
 }
 
 fn finished(page: &Page, outcome: Result<(), String>) {
-    if let Some(built) = page
-        .built
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .take()
-    {
+    if let Some(built) = page.built.held().take() {
         let _ = built.try_send(outcome);
     }
 }
@@ -281,7 +244,7 @@ wrap_request_context_handler! {
 
     impl RequestContextHandler {
         fn on_request_context_initialized(&self, request_context: Option<&mut RequestContext>) {
-            let Some(page) = self.page.lock().unwrap_or_else(PoisonError::into_inner).take() else {
+            let Some(page) = self.page.held().take() else {
                 return;
             };
             let mut client = Agent::new(Arc::clone(&page));
@@ -364,28 +327,20 @@ fn made(page: &Arc<Page>, browser: &Browser) {
     host.set_audio_muted(1);
     let mut observer = Listening::new(Arc::clone(page));
     let observing = host.add_dev_tools_message_observer(Some(&mut observer));
-    *page
-        .observing
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner) = observing;
-    *page.host.lock().unwrap_or_else(PoisonError::into_inner) = Some(host);
+    *page.observing.held() = observing;
+    *page.host.held() = Some(host);
 
     let handle = Windowless {
         label: page.owner.label.clone(),
         page: Arc::clone(page),
     };
     PAGES
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .get_or_insert_with(HashMap::new)
         .insert(handle.label.clone(), handle.clone());
     cdp::follow_view(&View::Windowless(Arc::new(handle.clone())), &handle.label);
     quietened(&handle);
-    let going = page
-        .going
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .take();
+    let going = page.going.held().take();
     if let Some(url) = going {
         handle.tell("Page.navigate", &json!({ "url": url }));
     }
@@ -393,11 +348,7 @@ fn made(page: &Arc<Page>, browser: &Browser) {
 }
 
 fn closed(page: &Page) {
-    if let Some(all) = PAGES
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_mut()
-    {
+    if let Some(all) = PAGES.held().as_mut() {
         if all
             .get(&page.owner.label)
             .is_some_and(|one| std::ptr::eq(Arc::as_ptr(&one.page), page))
@@ -405,25 +356,11 @@ fn closed(page: &Page) {
             all.remove(&page.owner.label);
         }
     }
-    page.observing
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .take();
-    page.host
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .take();
-    page.dialog
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .take();
+    page.observing.held().take();
+    page.host.held().take();
+    page.dialog.held().take();
     quiet::release(&page.owner.label);
-    for (_, waiting) in page
-        .waiting
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .drain()
-    {
+    for (_, waiting) in page.waiting.held().drain() {
         let _ = waiting.try_send(Err("the page has closed".into()));
     }
 }
@@ -453,11 +390,7 @@ fn heard(page: &Arc<Page>, message: &Value) {
         .and_then(Value::as_i64)
         .and_then(|id| i32::try_from(id).ok())
     {
-        let waiting = page
-            .waiting
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(&id);
+        let waiting = page.waiting.held().remove(&id);
         if let Some(waiting) = waiting {
             let _ = waiting.try_send(answer(message));
         }
@@ -508,11 +441,7 @@ fn heard(page: &Arc<Page>, message: &Value) {
         }
         _ => {}
     }
-    let hearing = page
-        .hearing
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .clone();
+    let hearing = page.hearing.held().clone();
     for one in hearing {
         one(method, session, &params);
     }
@@ -545,7 +474,7 @@ pub fn answer_dialog(_app: &AppHandle, label: &str, said: Said) -> Result<(), St
 
 fn settle(page: &Arc<Page>, number: Option<u64>, said: Said) {
     let held = {
-        let mut dialog = page.dialog.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut dialog = page.dialog.held();
         if dialog
             .as_ref()
             .is_some_and(|(one, _)| number.is_none_or(|number| *one == number))
@@ -597,11 +526,7 @@ fn hold(
     answering: Answering,
 ) {
     let number = quiet::NUMBER.fetch_add(1, Ordering::Relaxed);
-    let before = page
-        .dialog
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .replace((number, answering));
+    let before = page.dialog.held().replace((number, answering));
     if let Some((_, before)) = before {
         give(page, before, Said::only(false));
     }
@@ -851,7 +776,7 @@ wrap_jsdialog_handler! {
             let Some(callback) = callback else {
                 return 0;
             };
-            let url = self.page.url.lock().unwrap_or_else(PoisonError::into_inner).clone();
+            let url = self.page.url.held().clone();
             hold(
                 &self.page,
                 DialogKind::Beforeunload,
@@ -864,7 +789,7 @@ wrap_jsdialog_handler! {
         }
 
         fn on_reset_dialog_state(&self, _browser: Option<&mut Browser>) {
-            self.page.dialog.lock().unwrap_or_else(PoisonError::into_inner).take();
+            self.page.dialog.held().take();
             quiet::release(&self.page.owner.label);
         }
     }
@@ -1138,8 +1063,7 @@ wrap_display_handler! {
                 let url = text(url);
                 self.page
                     .url
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
+                    .held()
                     .clone_from(&url);
                 tabs::set(&self.page.owner.tab, |one| one.url = url);
             }

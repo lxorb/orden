@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex, PoisonError};
+use std::sync::{LazyLock, Mutex};
 
 use serde::Deserialize;
 use tauri::{Manager as _, PhysicalPosition, PhysicalSize, Rect, Window, WindowEvent};
@@ -89,7 +90,7 @@ static FOLLOWING: LazyLock<Mutex<HashMap<String, (String, Followed)>>> =
     LazyLock::new(Mutex::default);
 
 fn following<T>(look: impl FnOnce(&mut HashMap<String, (String, Followed)>) -> T) -> T {
-    look(&mut FOLLOWING.lock().unwrap_or_else(PoisonError::into_inner))
+    look(&mut FOLLOWING.held())
 }
 
 #[must_use]

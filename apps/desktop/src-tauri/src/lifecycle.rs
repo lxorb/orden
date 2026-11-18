@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::{Condvar, Mutex, PoisonError};
@@ -51,7 +52,7 @@ impl Installer {
     }
 
     fn closing(&self, label: &str, others: impl IntoIterator<Item = String>) -> usize {
-        let mut closing = self.closing.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut closing = self.closing.held();
         closing.insert(label.to_owned());
         others
             .into_iter()
@@ -70,10 +71,7 @@ impl Installer {
     }
 
     fn gone(&self, label: &str) {
-        self.closing
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(label);
+        self.closing.held().remove(label);
         self.heard(label);
     }
 
@@ -86,9 +84,7 @@ impl Installer {
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, HashSet<String>> {
-        self.unanswered
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+        self.unanswered.held()
     }
 }
 

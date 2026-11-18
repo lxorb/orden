@@ -97,15 +97,16 @@ pub fn read_chosen(app: &tauri::AppHandle<orden_base::Engine>) {
 }
 
 mod engine {
+    use orden_base::Held as _;
     use std::collections::HashMap;
-    use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
+    use std::sync::{LazyLock, Mutex, OnceLock};
 
     const FILE: &str = "interface-zoom";
 
     static CHOSEN: Mutex<f64> = Mutex::new(1.0);
 
     pub fn in_force() -> f64 {
-        *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner)
+        *CHOSEN.held()
     }
 
     pub fn read_chosen(app: &tauri::AppHandle<orden_base::Engine>) {
@@ -115,7 +116,7 @@ mod engine {
             .and_then(|text| text.trim().parse().ok())
             .and_then(super::zoom_of);
         if let Some(zoom) = kept {
-            *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner) = zoom;
+            *CHOSEN.held() = zoom;
         }
     }
 
@@ -126,7 +127,7 @@ mod engine {
         let config = orden_base::paths::config_dir(app)?;
         orden_base::paths::made(&config)?;
         orden_base::paths::write_atomically(&config.join(FILE), zoom.to_string().as_bytes())?;
-        *CHOSEN.lock().unwrap_or_else(PoisonError::into_inner) = zoom;
+        *CHOSEN.held() = zoom;
 
         for window in orden_base::labels::document_windows(app) {
             zooming(window.label());
@@ -156,12 +157,7 @@ mod engine {
     static NATIVE: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);
 
     fn native_of(window: &str) -> f64 {
-        NATIVE
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .get(window)
-            .copied()
-            .unwrap_or(1.0)
+        NATIVE.held().get(window).copied().unwrap_or(1.0)
     }
 
     fn native_read(window: &tauri::Window<orden_base::Engine>) -> f64 {
@@ -180,13 +176,8 @@ mod engine {
         let window = webview.window();
         let native = native_read(&window);
         let label = window.label().to_owned();
-        NATIVE
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(label.clone(), native);
-        SAID.lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(label, ratio);
+        NATIVE.held().insert(label.clone(), native);
+        SAID.held().insert(label, ratio);
         let scale = desktop() * in_force();
         if super::zoom_is_off(ratio, native, scale) {
             let _ = webview.set_zoom(scale);
@@ -195,14 +186,11 @@ mod engine {
 
     pub fn zooming(window: &str) {
         let ratio = native_of(window) * desktop() * in_force();
-        SAID.lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(window.to_owned(), ratio);
+        SAID.held().insert(window.to_owned(), ratio);
     }
 
     pub fn of(window: &tauri::Window<orden_base::Engine>) -> f64 {
-        SAID.lock()
-            .unwrap_or_else(PoisonError::into_inner)
+        SAID.held()
             .get(window.label())
             .copied()
             .unwrap_or_else(|| native_of(window.label()) * desktop() * in_force())

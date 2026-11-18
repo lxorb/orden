@@ -2,6 +2,7 @@ pub mod catalog;
 mod device;
 mod sherpa;
 
+use orden_base::Held as _;
 use std::fs;
 use std::io::{Read as _, Write as _};
 use std::path::{Path, PathBuf};
@@ -293,10 +294,7 @@ pub async fn dictation_local_remove(app: AppHandle) -> Result<(), String> {
 }
 
 fn lock(loaded: &Loaded) -> std::sync::MutexGuard<'_, Option<(sherpa::Engine, Instant, f32)>> {
-    loaded
-        .engine
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    loaded.engine.held()
 }
 
 #[derive(Serialize)]

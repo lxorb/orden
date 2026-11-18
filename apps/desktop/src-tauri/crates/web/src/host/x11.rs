@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
-use std::sync::{LazyLock, Mutex, PoisonError};
+use std::sync::{LazyLock, Mutex};
 
 use orden_web_engine::{Edge, Failure, FailureKind, NativeWindow, Outcome, WindowSystem};
 use x11rb::connection::Connection as _;
@@ -130,7 +131,7 @@ impl WindowSystem for X11 {
 static FRAMED: LazyLock<Mutex<HashSet<u32>>> = LazyLock::new(Mutex::default);
 
 fn framed<T>(look: impl FnOnce(&mut HashSet<u32>) -> T) -> T {
-    look(&mut FRAMED.lock().unwrap_or_else(PoisonError::into_inner))
+    look(&mut FRAMED.held())
 }
 
 pub fn frame(window: u32, scale: f64) -> Result<(), String> {

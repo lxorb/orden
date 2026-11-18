@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use tauri::{AppHandle, Emitter as _};
@@ -23,7 +24,7 @@ static HELD: Mutex<Vec<Held>> = Mutex::new(Vec::new());
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
 fn held() -> std::sync::MutexGuard<'static, Vec<Held>> {
-    HELD.lock().unwrap_or_else(PoisonError::into_inner)
+    HELD.held()
 }
 
 pub fn key(verb: &str, tab: Option<&str>, element: Option<&str>) -> String {

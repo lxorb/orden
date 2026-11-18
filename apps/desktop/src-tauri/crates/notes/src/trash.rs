@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{Mutex, MutexGuard};
 use tauri::AppHandle;
 
 use orden_base::carry::move_whole;
@@ -336,7 +337,7 @@ fn trash_dir(app: &AppHandle) -> Result<PathBuf, String> {
 }
 
 fn locked() -> MutexGuard<'static, ()> {
-    MANIFEST_LOCK.lock().unwrap_or_else(PoisonError::into_inner)
+    MANIFEST_LOCK.held()
 }
 
 fn new_id() -> String {

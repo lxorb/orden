@@ -1,9 +1,10 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc, Mutex, MutexGuard, PoisonError};
+use std::sync::{mpsc, Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -58,7 +59,7 @@ pub struct Host {
 }
 
 fn locked(state: &Mutex<State>) -> MutexGuard<'_, State> {
-    state.lock().unwrap_or_else(PoisonError::into_inner)
+    state.held()
 }
 
 impl Host {
@@ -76,10 +77,7 @@ impl Host {
         let heard_ended = Arc::clone(&ended);
         let heard_writer = Arc::clone(&writer);
         let running = run::open(command, idle, move |heard| {
-            let writer = heard_writer
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .clone();
+            let writer = heard_writer.held().clone();
             match heard {
                 Heard::Line(line) => {
                     if let Some(writer) = writer {
@@ -92,7 +90,7 @@ impl Host {
                 }
             }
         })?;
-        *writer.lock().unwrap_or_else(PoisonError::into_inner) = Some(running.clone());
+        *writer.held() = Some(running.clone());
 
         let host = Self {
             running,

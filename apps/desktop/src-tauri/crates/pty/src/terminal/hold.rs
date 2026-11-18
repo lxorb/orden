@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::{BTreeMap, VecDeque};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
@@ -266,7 +267,7 @@ struct Holder {
 
 impl Holder {
     fn lock(&self) -> MutexGuard<'_, State> {
-        self.state.lock().unwrap_or_else(PoisonError::into_inner)
+        self.state.held()
     }
 
     fn wait<'a>(&self, state: MutexGuard<'a, State>) -> MutexGuard<'a, State> {
@@ -276,18 +277,13 @@ impl Holder {
     }
 
     fn resize(&self, cols: u16, rows: u16) {
-        if let Some(master) = self
-            .master
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .as_deref()
-        {
+        if let Some(master) = self.master.held().as_deref() {
             let _ = master.resize(size(cols, rows));
         }
     }
 
     fn write(&self, bytes: &[u8]) {
-        let mut input = self.input.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut input = self.input.held();
         let _ = input.write_all(bytes).and_then(|()| input.flush());
     }
 }
@@ -353,7 +349,7 @@ fn hold(spec: Spec, say: impl Fn(String)) -> Result<(), String> {
         started: orden_base::clock::now(),
         label: spec.label.clone(),
     };
-    *holder.record.lock().unwrap_or_else(PoisonError::into_inner) = record.clone();
+    *holder.record.held() = record.clone();
     if let Err(error) = write_record(&spec.file, &record) {
         say(format!("{REFUSED}{error}"));
         end_tree(holder.shell);
@@ -536,16 +532,8 @@ fn end(holder: &Arc<Holder>) {
             }
         }
         end_tree(holder.shell);
-        let _ = holder
-            .killer
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .kill();
-        let master = holder
-            .master
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take();
+        let _ = holder.killer.held().kill();
+        let master = holder.master.held().take();
         drop(master);
         holder.lock().swept = true;
         holder.changed.notify_all();
@@ -682,7 +670,7 @@ fn asked(holder: &Arc<Holder>, mut stream: TcpStream) {
 
 fn renamed(holder: &Holder, body: &[u8]) {
     let name = String::from_utf8_lossy(body).trim().to_owned();
-    let mut record = holder.record.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut record = holder.record.held();
     record.label.name = (!name.is_empty()).then(|| name.chars().take(200).collect());
     let _ = write_record(&holder.file, &record);
 }

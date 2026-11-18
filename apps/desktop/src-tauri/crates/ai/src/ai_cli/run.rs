@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -41,15 +42,11 @@ struct Shared {
 
 impl Shared {
     fn child(&self) -> MutexGuard<'_, Option<Child>> {
-        self.child
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.child.held()
     }
 
     fn input(&self) -> MutexGuard<'_, Option<mpsc::Sender<Vec<u8>>>> {
-        self.input
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.input.held()
     }
 
     fn end(&self) {

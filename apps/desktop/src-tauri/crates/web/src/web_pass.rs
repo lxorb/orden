@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Sender};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -310,7 +311,7 @@ impl<J: Send + 'static> Queues<J> {
     }
 
     pub fn spawn(&self, tab: &str, job: J, run: fn(J)) {
-        let mut held = self.held.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut held = self.held.held();
         let job = match held.get(tab) {
             Some(sending) => match sending.send(job) {
                 Ok(()) => return,
@@ -331,10 +332,7 @@ impl<J: Send + 'static> Queues<J> {
     }
 
     pub fn forget(&self, tab: &str) {
-        self.held
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(tab);
+        self.held.held().remove(tab);
     }
 }
 
@@ -362,8 +360,9 @@ fn place_in(tree: Option<&Value>, main: bool, was: &Place) -> Option<Place> {
 pub use engine::binding_called;
 
 mod engine {
+    use orden_base::Held as _;
     use std::collections::HashMap;
-    use std::sync::{LazyLock, Mutex, MutexGuard, PoisonError};
+    use std::sync::{LazyLock, Mutex, MutexGuard};
     use std::time::Duration;
 
     use serde_json::{json, Value};
@@ -397,7 +396,7 @@ mod engine {
     static JOBS: LazyLock<super::Queues<Job>> = LazyLock::new(super::Queues::new);
 
     fn known_frames() -> MutexGuard<'static, Known> {
-        KNOWN.lock().unwrap_or_else(PoisonError::into_inner)
+        KNOWN.held()
     }
 
     pub fn binding_called(

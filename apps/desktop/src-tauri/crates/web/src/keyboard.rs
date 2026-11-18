@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
-use std::sync::{LazyLock, Mutex, PoisonError};
+use std::sync::{LazyLock, Mutex};
 use std::time::Instant;
 
 use tauri::{AppHandle, Emitter as _, Manager as _, Webview};
@@ -76,7 +77,7 @@ impl Homes {
 static HOMES: LazyLock<Mutex<Homes>> = LazyLock::new(Mutex::default);
 
 fn homes<T>(look: impl FnOnce(&mut Homes) -> T) -> T {
-    look(&mut HOMES.lock().unwrap_or_else(PoisonError::into_inner))
+    look(&mut HOMES.held())
 }
 
 fn now() -> u64 {
@@ -178,8 +179,9 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
 }
 
 mod native {
+    use orden_base::Held as _;
     use std::collections::HashMap;
-    use std::sync::{Mutex, PoisonError};
+    use std::sync::Mutex;
 
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Manager, Webview, Window};
@@ -190,23 +192,19 @@ mod native {
         let Some(x11) = crate::host::x11_page(platform) else {
             return;
         };
-        let mut pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut pages = PAGES.held();
         pages.retain(|(one, _, _)| one != label);
         pages.push((label.to_string(), window.to_string(), x11));
     }
 
     pub fn let_go_of(label: &str) {
-        PAGES
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .retain(|(one, _, _)| one != label);
+        PAGES.held().retain(|(one, _, _)| one != label);
     }
 
     #[cfg(target_os = "linux")]
     pub fn x11_took(app: &AppHandle, x11: u32) {
         let found = PAGES
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .iter()
             .find(|(_, _, one)| *one == x11)
             .map(|(label, window, _)| (label.clone(), window.clone()));
@@ -217,8 +215,7 @@ mod native {
 
     pub fn holding(window: &str) -> Option<String> {
         let pages: HashMap<u32, String> = PAGES
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .iter()
             .filter(|(_, holder, _)| holder == window)
             .map(|(label, _, x11)| (*x11, label.clone()))

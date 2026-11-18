@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode, Watcher as _};
@@ -20,7 +21,7 @@ struct Gathered(Mutex<Option<BTreeSet<String>>>);
 
 impl Gathered {
     fn add(&self, folders: Vec<String>) -> bool {
-        let mut held = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut held = self.0.held();
         let first = held.is_none();
         held.get_or_insert_with(BTreeSet::new).extend(folders);
         first
@@ -28,8 +29,7 @@ impl Gathered {
 
     fn take(&self) -> Vec<String> {
         self.0
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .take()
             .map(|folders| folders.into_iter().collect())
             .unwrap_or_default()
@@ -75,7 +75,7 @@ fn folders_of(paths: &[PathBuf]) -> Vec<String> {
 
 impl Watching {
     fn owned(&self) -> std::sync::MutexGuard<'_, HashMap<String, Vec<PathBuf>>> {
-        self.1.lock().unwrap_or_else(PoisonError::into_inner)
+        self.1.held()
     }
 
     fn add(

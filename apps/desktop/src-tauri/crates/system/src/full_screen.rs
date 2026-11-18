@@ -1,9 +1,10 @@
-use std::sync::{Mutex, PoisonError};
+use orden_base::Held as _;
+use std::sync::Mutex;
 
 static FULL: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
 fn noted(label: &str, on: bool, away: bool) -> bool {
-    let mut full = FULL.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut full = FULL.held();
     full.retain(|one| one != label);
     if on {
         full.push(label.to_owned());
@@ -12,10 +13,7 @@ fn noted(label: &str, on: bool, away: bool) -> bool {
 }
 
 pub fn is_on(label: &str) -> bool {
-    FULL.lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .iter()
-        .any(|one| one == label)
+    FULL.held().iter().any(|one| one == label)
 }
 
 #[tauri::command(async)]

@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
@@ -18,7 +19,7 @@ static PRIVATE: Mutex<std::collections::BTreeSet<String>> =
     Mutex::new(std::collections::BTreeSet::new());
 
 fn mark_private(label: &str, private: bool) {
-    let mut marked = PRIVATE.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut marked = PRIVATE.held();
     if private {
         marked.insert(label.to_string());
     } else {
@@ -27,10 +28,7 @@ fn mark_private(label: &str, private: bool) {
 }
 
 pub fn is_private(label: &str) -> bool {
-    PRIVATE
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .contains(label)
+    PRIVATE.held().contains(label)
 }
 
 static ADOPTED: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);

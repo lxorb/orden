@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 
 use serde::{Deserialize, Serialize};
 
@@ -120,12 +121,12 @@ pub fn begin(dir: &Path, version: &str) {
         ..Running::default()
     };
     let _ = PATH.set(marker(dir));
-    *MINE.lock().unwrap_or_else(PoisonError::into_inner) = Some(mine);
+    *MINE.held() = Some(mine);
     write();
 }
 
 fn changed(change: impl FnOnce(&mut Running)) {
-    let mut held = MINE.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = MINE.held();
     if let Some(mine) = held.as_mut() {
         change(mine);
     } else {
@@ -137,7 +138,7 @@ fn changed(change: impl FnOnce(&mut Running)) {
 
 fn write() {
     let Some(path) = PATH.get() else { return };
-    let held = MINE.lock().unwrap_or_else(PoisonError::into_inner);
+    let held = MINE.held();
     let Some(mine) = held.as_ref() else { return };
     let text = serde_json::to_vec(mine).unwrap_or_default();
     let partial = path.with_extension("part");
@@ -155,11 +156,7 @@ pub fn alive() {
 }
 
 pub fn reported() {
-    let already = MINE
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_ref()
-        .is_none_or(|mine| mine.reported);
+    let already = MINE.held().as_ref().is_none_or(|mine| mine.reported);
     if !already {
         changed(|mine| mine.reported = true);
     }
@@ -170,7 +167,7 @@ pub fn leaving() {
 }
 
 pub fn ended_well() {
-    let mut held = MINE.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = MINE.held();
     *held = None;
     if let Some(path) = PATH.get() {
         let _ = std::fs::remove_file(path);

@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use std::cell::Cell;
 use std::fs::{self, OpenOptions};
 use std::io::{Read as _, Seek as _, SeekFrom, Write as _};
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use serde::Serialize;
 use serde_json::Value;
@@ -46,7 +47,7 @@ pub fn write(app: &AppHandle, mut line: Line<'_>) {
     };
     let day = date(line.at);
     let fresh_day = {
-        let mut swept = SWEPT.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut swept = SWEPT.held();
         let fresh = swept.as_deref() != Some(day.as_str());
         *swept = Some(day.clone());
         fresh

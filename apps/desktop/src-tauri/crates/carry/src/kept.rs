@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Sender};
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
@@ -145,16 +146,11 @@ pub fn read_kept(app: &AppHandle) {
     let kept = kept_folder(app)
         .map(|folder| read_back(&folder))
         .unwrap_or_default();
-    *READ.lock().unwrap_or_else(PoisonError::into_inner) = Some(kept);
+    *READ.held() = Some(kept);
 }
 
 pub fn kept_script() -> String {
-    kept_script_of(
-        READ.lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take()
-            .unwrap_or_default(),
-    )
+    kept_script_of(READ.held().take().unwrap_or_default())
 }
 
 pub(crate) fn kept_script_of(kept: Kept) -> String {

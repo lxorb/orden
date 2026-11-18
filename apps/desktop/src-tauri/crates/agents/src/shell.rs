@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
-use std::sync::{Mutex, Once, OnceLock, PoisonError};
+use std::sync::{Mutex, Once, OnceLock};
 use std::time::{Duration, Instant};
 
 use serde::Deserialize;
@@ -57,10 +58,7 @@ static SHELL: Mutex<Option<Shell>> = Mutex::new(None);
 static STARTED: Once = Once::new();
 
 fn with<T>(run: impl FnOnce(&mut Shell) -> T) -> T {
-    run(SHELL
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .get_or_insert_with(Shell::default))
+    run(SHELL.held().get_or_insert_with(Shell::default))
 }
 
 pub fn hosts(app: &AppHandle, window: &tauri::Window) -> bool {

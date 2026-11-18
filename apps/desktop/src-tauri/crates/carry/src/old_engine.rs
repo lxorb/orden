@@ -1,7 +1,8 @@
+use orden_base::Held as _;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{Mutex, MutexGuard};
 
 mod databases;
 
@@ -52,7 +53,7 @@ struct Home {
 }
 
 fn waiting() -> MutexGuard<'static, Option<String>> {
-    WAITING.lock().unwrap_or_else(PoisonError::into_inner)
+    WAITING.held()
 }
 
 fn carry_databases(config: &Path, homes: &[Home]) {

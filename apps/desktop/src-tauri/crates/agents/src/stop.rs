@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use tauri::{AppHandle, Emitter as _};
 
@@ -27,16 +28,14 @@ pub fn stopped() -> bool {
 pub fn stopped_for(agent: &str) -> bool {
     stopped()
         || HALTED
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .as_ref()
             .is_some_and(|all| all.contains(agent))
 }
 
 pub fn halted() -> Vec<String> {
     HALTED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .as_ref()
         .map(|all| all.iter().cloned().collect())
         .unwrap_or_default()
@@ -44,8 +43,7 @@ pub fn halted() -> Vec<String> {
 
 pub fn halt(app: &AppHandle, agent: &str) {
     let fresh = HALTED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .get_or_insert_with(HashSet::new)
         .insert(agent.to_string());
     crate::process::end_all(Some(agent));
@@ -78,7 +76,7 @@ pub fn stop(app: &AppHandle) -> bool {
 
 pub fn resume(app: &AppHandle, agent: Option<&str>) {
     {
-        let mut halted = HALTED.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut halted = HALTED.held();
         match (agent, halted.as_mut()) {
             (None, _) => {
                 STOPPED.store(false, Ordering::SeqCst);
@@ -113,18 +111,13 @@ mod tests {
     #[test]
     fn one_agent_stopped_is_that_agent_and_nobody_else() {
         HALTED
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .get_or_insert_with(HashSet::new)
             .insert("halting".into());
         assert!(stopped_for("halting"));
         assert!(!stopped_for("someone-else"));
         assert!(halted().contains(&"halting".to_string()));
-        if let Some(all) = HALTED
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .as_mut()
-        {
+        if let Some(all) = HALTED.held().as_mut() {
             all.remove("halting");
         }
         assert!(!stopped_for("halting"));

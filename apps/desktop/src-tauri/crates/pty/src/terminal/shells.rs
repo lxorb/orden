@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -110,7 +111,7 @@ impl<T: 'static> Kept<T> {
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, Looks<T>> {
-        self.state.lock().unwrap_or_else(PoisonError::into_inner)
+        self.state.held()
     }
 }
 

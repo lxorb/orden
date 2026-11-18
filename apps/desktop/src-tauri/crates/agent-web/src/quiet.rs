@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
@@ -83,15 +84,10 @@ pub struct Owner {
 }
 
 pub fn dialog_of(label: &str) -> Option<Dialog> {
-    DIALOGS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_ref()?
-        .get(label)
-        .map(|held| Dialog {
-            open_ms: u64::try_from(held.since.elapsed().as_millis()).unwrap_or(u64::MAX),
-            ..held.dialog.clone()
-        })
+    DIALOGS.held().as_ref()?.get(label).map(|held| Dialog {
+        open_ms: u64::try_from(held.since.elapsed().as_millis()).unwrap_or(u64::MAX),
+        ..held.dialog.clone()
+    })
 }
 
 pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), String> {
@@ -102,25 +98,17 @@ pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), Str
 }
 
 pub fn hold(label: &str, dialog: Dialog) {
-    DIALOGS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .get_or_insert_with(HashMap::new)
-        .insert(
-            label.to_string(),
-            Held {
-                dialog,
-                since: Instant::now(),
-            },
-        );
+    DIALOGS.held().get_or_insert_with(HashMap::new).insert(
+        label.to_string(),
+        Held {
+            dialog,
+            since: Instant::now(),
+        },
+    );
 }
 
 pub fn release(label: &str) {
-    if let Some(all) = DIALOGS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_mut()
-    {
+    if let Some(all) = DIALOGS.held().as_mut() {
         all.remove(label);
     }
 }
@@ -136,8 +124,7 @@ pub fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<Path
     orden_base::paths::made(&folder).ok()?;
     let name = orden_web::downloads::clean_name(&name);
     let taken: Vec<String> = DOWNLOADS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .iter()
         .filter(|(_, one)| one.state == DownloadState::Going)
         .map(|(_, one)| one.path.clone())
@@ -149,7 +136,7 @@ pub fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<Path
 }
 
 pub fn noted(agent: &str, download: Download) {
-    let mut all = DOWNLOADS.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut all = DOWNLOADS.held();
     all.push((agent.to_string(), download));
     if all.len() > 500 {
         all.remove(0);
@@ -157,7 +144,7 @@ pub fn noted(agent: &str, download: Download) {
 }
 
 pub fn moved(agent: &str, path: &str, state: DownloadState) {
-    let mut all = DOWNLOADS.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut all = DOWNLOADS.held();
     if let Some((_, one)) = all
         .iter_mut()
         .rev()
@@ -171,8 +158,7 @@ pub fn moved(agent: &str, path: &str, state: DownloadState) {
 
 pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
     DOWNLOADS
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .iter()
         .filter(|(owner, one)| owner == agent && tab.is_none_or(|tab| one.tab == tab))
         .map(|(_, one)| one.clone())
@@ -202,10 +188,7 @@ pub fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> String {
 }
 
 pub fn say(label: &str, level: &str, text: String) {
-    cdp::heard(label)
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .say(level, text);
+    cdp::heard(label).held().say(level, text);
 }
 
 pub fn forget(app: &AppHandle, label: &str) {

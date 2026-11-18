@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::io::{BufRead, Write};
 use std::sync::Mutex;
 
@@ -110,10 +111,7 @@ impl<W: Write + Send> Out<W> {
     pub fn send(&self, message: &Value) {
         let mut line = message.to_string();
         line.push('\n');
-        let mut to = self
-            .0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut to = self.0.held();
         let _ = to.write_all(line.as_bytes()).and_then(|()| to.flush());
     }
 }

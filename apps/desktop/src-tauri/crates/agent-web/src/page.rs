@@ -1,6 +1,7 @@
+use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::Ordering;
-use std::sync::{Arc, LazyLock, Mutex, PoisonError};
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
@@ -624,11 +625,7 @@ impl Page<'_> {
                 backend,
             });
         };
-        let found = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .frame(number);
+        let found = self.heard().held().frame(number);
         found
             .map(|one| Element {
                 session: Some(one.session),
@@ -687,12 +684,7 @@ impl Page<'_> {
 
     fn frames_of(&self, session: Option<&str>) -> Vec<String> {
         let key = session.map(str::to_string);
-        if let Some(known) = self
-            .frame_lists
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .get(&key)
-        {
+        if let Some(known) = self.frame_lists.held().get(&key) {
             return known.clone();
         }
         let tree = cdp::call_in(
@@ -706,18 +698,14 @@ impl Page<'_> {
         if let Ok(tree) = tree {
             frames_under(tree.get("frameTree").unwrap_or(&Value::Null), &mut frames);
         }
-        self.frame_lists
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(key, frames.clone());
+        self.frame_lists.held().insert(key, frames.clone());
         frames
     }
 
     fn frame_read(&self, session: Option<&str>, frame: &str) {
         if let Some(known) = self
             .frame_lists
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .get_mut(&session.map(str::to_string))
         {
             if let Some(at) = known.iter().position(|one| one == frame) {
@@ -760,12 +748,7 @@ impl Page<'_> {
 
     fn world_of_frame(&self, session: Option<&str>, frame: &str) -> Result<i64, Answer> {
         let key = (session.map(str::to_string), frame.to_string());
-        if let Some(world) = self
-            .worlds
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .get(&key)
-        {
+        if let Some(world) = self.worlds.held().get(&key) {
             return Ok(*world);
         }
         let made = cdp::call_in(
@@ -780,22 +763,15 @@ impl Page<'_> {
             .get("executionContextId")
             .and_then(Value::as_i64)
             .ok_or_else(|| Answer::error(Code::Failed, "the page has no world for Orden"))?;
-        self.worlds
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(key, world);
+        self.worlds.held().insert(key, world);
         Ok(world)
     }
 
     fn forget_worlds(&self, session: Option<&str>) {
         self.worlds
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .retain(|(of, _), _| of.as_deref() != session);
-        self.frame_lists
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(&session.map(str::to_string));
+        self.frame_lists.held().remove(&session.map(str::to_string));
     }
 
     fn run_on(
@@ -1101,11 +1077,7 @@ impl Page<'_> {
     }
 
     fn active_in_a_frame(&self) -> Option<Facts> {
-        let frames = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .frames();
+        let frames = self.heard().held().frames();
         let mut held = None;
         for (_, frame) in frames {
             let Ok(Some((facts, _))) = self.active_in(Some(&frame.session), None) else {
@@ -1164,8 +1136,7 @@ impl Page<'_> {
 
     fn frame_session(&self, frame: &str) -> Option<String> {
         self.heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .frames()
             .into_iter()
             .find(|(_, one)| one.id == frame)
@@ -1200,13 +1171,7 @@ impl Page<'_> {
     }
 
     fn main_frame(&self) -> Result<String, Answer> {
-        if let Some(frame) = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .main_frame
-            .clone()
-        {
+        if let Some(frame) = self.heard().held().main_frame.clone() {
             return Ok(frame);
         }
         let tree = self.call("Page.getFrameTree", &json!({}))?;
@@ -1215,21 +1180,14 @@ impl Page<'_> {
             .and_then(Value::as_str)
             .map(str::to_string)
             .ok_or_else(|| Answer::error(Code::Failed, "the page has no frame"))?;
-        self.heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .main_frame = Some(frame.clone());
+        self.heard().held().main_frame = Some(frame.clone());
         Ok(frame)
     }
 
     fn settle(&self, navigations_before: u64) {
         let started = Instant::now();
         let navigated = loop {
-            let navigations = self
-                .heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .navigations;
+            let navigations = self.heard().held().navigations;
             if navigations > navigations_before {
                 break true;
             }
@@ -1239,20 +1197,10 @@ impl Page<'_> {
             std::thread::sleep(Duration::from_millis(10));
         };
         if navigated {
-            let loads = self
-                .heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .loads;
+            let loads = self.heard().held().loads;
             let waiting = Instant::now();
             while waiting.elapsed() < SETTLES && !self.interrupted() {
-                if self
-                    .heard()
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .loads
-                    > loads
-                {
+                if self.heard().held().loads > loads {
                     break;
                 }
                 std::thread::sleep(Duration::from_millis(20));
@@ -1283,10 +1231,7 @@ impl Page<'_> {
     }
 
     fn navigations(&self) -> u64 {
-        self.heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .navigations
+        self.heard().held().navigations
     }
 
     fn point(&self, element: &Element) -> Result<(f64, f64), Answer> {
@@ -1527,11 +1472,7 @@ impl Page<'_> {
     }
 
     fn frame_holding(&self, frame: &str) -> Result<Option<Element>, Answer> {
-        let frames = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .frames();
+        let frames = self.heard().held().frames();
         let parent = frames
             .iter()
             .find(|(_, one)| one.id == frame)
@@ -2015,10 +1956,7 @@ impl Page<'_> {
         let start = self.point(from)?;
         let end = self.point(to)?;
         self.call("Input.setInterceptDrags", &json!({ "enabled": true }))?;
-        self.heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .dragged = None;
+        self.heard().held().dragged = None;
         let dragged = (|| {
             self.mouse("mouseMoved", start, "none", 0, 0)?;
             let now = self.struck(from, start)?;
@@ -2038,12 +1976,7 @@ impl Page<'_> {
                 )?;
                 std::thread::sleep(Duration::from_millis(16));
             }
-            let data = self
-                .heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .dragged
-                .take();
+            let data = self.heard().held().dragged.take();
             if let Some(data) = data {
                 for kind in ["dragEnter", "dragOver", "drop"] {
                     self.call(
@@ -2067,20 +2000,11 @@ impl Page<'_> {
         let input = if facts.kind == "file" {
             element.clone()
         } else {
-            self.heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .chooser = None;
+            self.heard().held().chooser = None;
             self.click(element, "left", 1, 0, gate)?;
             let waiting = Instant::now();
             let chosen = loop {
-                if let Some(node) = self
-                    .heard()
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .chooser
-                    .take()
-                {
+                if let Some(node) = self.heard().held().chooser.take() {
                     break Some(node);
                 }
                 if waiting.elapsed() > Duration::from_secs(3) || self.interrupted() {
@@ -2301,8 +2225,7 @@ impl Page<'_> {
         let mut prefixes = vec![String::new()];
         prefixes.extend(
             self.heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
+                .held()
                 .frames()
                 .into_iter()
                 .map(|(number, _)| format!("f{number}")),
@@ -2319,11 +2242,7 @@ impl Page<'_> {
             nodes: nodes_of(&own),
             owner: None,
         }];
-        let away: Vec<(usize, cdp::Frame)> = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .frames();
+        let away: Vec<(usize, cdp::Frame)> = self.heard().held().frames();
         let away_ids: HashSet<String> = away.iter().map(|(_, frame)| frame.id.clone()).collect();
         let mut whole = away.iter().all(|(_, frame)| frame.parent.is_empty());
         let away = away
@@ -2423,11 +2342,7 @@ impl Page<'_> {
             );
             frames.extend(places);
         }
-        let away = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .frames();
+        let away = self.heard().held().frames();
         for (_, frame) in away {
             frames.push((frame.id.clone(), self.frame_address(&frame)));
         }
@@ -2503,11 +2418,7 @@ impl Page<'_> {
             return None;
         }
         let number = prefix.trim_start_matches('f').parse::<usize>().ok()?;
-        self.heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .frame(number)
-            .map(|frame| frame.session)
+        self.heard().held().frame(number).map(|frame| frame.session)
     }
 
     fn secrets(&self, prefixes: impl IntoIterator<Item = String>) -> Vec<Secret> {
@@ -2696,11 +2607,9 @@ impl Page<'_> {
                 Until::Moment(Moment::Load) => self
                     .isolated("document.readyState")
                     .is_ok_and(|state| state.as_str() == Some("complete")),
-                Until::Moment(Moment::NetworkIdle) => self
-                    .heard()
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .idle_for(Duration::from_millis(500)),
+                Until::Moment(Moment::NetworkIdle) => {
+                    self.heard().held().idle_for(Duration::from_millis(500))
+                }
                 Until::Text { text } => {
                     self.isolated(&format!(
                         "(document.body ? document.body.innerText : '').includes({})",
@@ -2744,11 +2653,7 @@ impl Page<'_> {
             if started.elapsed() >= most {
                 let waiting = match until {
                     Until::Moment(Moment::NetworkIdle) => {
-                        let open = self
-                            .heard()
-                            .lock()
-                            .unwrap_or_else(PoisonError::into_inner)
-                            .in_flight();
+                        let open = self.heard().held().in_flight();
                         let open = still_in_flight(self.limits.as_ref(), open);
                         format!(": still in flight, {}", open.join(", "))
                     }
@@ -2779,11 +2684,7 @@ impl Page<'_> {
     }
 
     fn navigate(&self, url: &str) -> Result<(), Answer> {
-        let loads = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .loads;
+        let loads = self.heard().held().loads;
         let went = self.call("Page.navigate", &json!({ "url": url }))?;
         if let Some(error) = went
             .get("errorText")
@@ -2800,11 +2701,7 @@ impl Page<'_> {
     }
 
     fn step(&self, by: i64) -> Result<(), Answer> {
-        let loads = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .loads;
+        let loads = self.heard().held().loads;
         if by == 0 {
             self.call("Page.reload", &json!({}))?;
         } else {
@@ -2838,13 +2735,7 @@ impl Page<'_> {
     fn loaded_after(&self, loads: u64, most: Duration) {
         let started = Instant::now();
         while started.elapsed() < most && !self.interrupted() {
-            if self
-                .heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .loads
-                > loads
-            {
+            if self.heard().held().loads > loads {
                 return;
             }
             std::thread::sleep(Duration::from_millis(25));
@@ -3014,18 +2905,12 @@ impl Engine for Page<'_> {
     }
 
     fn opened(&self) -> Vec<String> {
-        std::mem::take(
-            &mut self
-                .heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .opened,
-        )
+        std::mem::take(&mut self.heard().held().opened)
     }
 
     fn hosts(&self) -> Vec<String> {
         let heard = self.heard();
-        let held = heard.lock().unwrap_or_else(PoisonError::into_inner);
+        let held = heard.held();
         let (requests, _) = held.requests(None, None);
         let mut hosts: HashSet<String> = requests
             .iter()
@@ -3138,11 +3023,7 @@ impl Engine for Page<'_> {
 
     fn console(&self, since: Option<u64>, level: Option<&str>) -> Result<ConsoleLines, Answer> {
         cdp::listen_to_console(self.view, &self.label);
-        let (lines, next) = self
-            .heard()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .console(since, level);
+        let (lines, next) = self.heard().held().console(since, level);
         let lines = lines
             .into_iter()
             .filter(|(one, whence)| line_readable(self.limits.as_ref(), one, whence))
@@ -3158,10 +3039,7 @@ impl Engine for Page<'_> {
         bodies: bool,
     ) -> Result<Requests, Answer> {
         let heard = self.heard();
-        let (requests, next) = heard
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .requests(since, matching);
+        let (requests, next) = heard.held().requests(since, matching);
         let mut requests: Vec<Request> = requests
             .into_iter()
             .filter(|(one, from)| request_readable(self.limits.as_ref(), one, from))
@@ -3169,10 +3047,7 @@ impl Engine for Page<'_> {
             .collect();
         if bodies {
             for row in requests.iter_mut().rev().take(BODIES) {
-                let found = heard
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .request_id(row.seq);
+                let found = heard.held().request_id(row.seq);
                 if let Some((session, id)) = found {
                     let session = (!session.is_empty()).then_some(session);
                     if let Ok(body) = cdp::call_in(

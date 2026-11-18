@@ -1,8 +1,9 @@
 #![allow(unsafe_code)]
 
+use orden_base::Held as _;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use windows::core::PCWSTR;
@@ -60,7 +61,7 @@ pub fn trace(ips: &mut [usize]) -> usize {
 }
 
 pub fn every_thread(within: Duration) -> Vec<Raw> {
-    let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
+    let _one_at_a_time = ASKING.held();
     let (told, heard) = mpsc::channel();
     let walker = std::thread::Builder::new()
         .name("orden stack walk".to_owned())

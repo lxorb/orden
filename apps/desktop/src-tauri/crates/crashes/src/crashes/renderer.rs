@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use super::report::{self, Report};
@@ -105,7 +106,7 @@ fn millis(span: Duration) -> u64 {
 static PAGES: Mutex<Option<Pages>> = Mutex::new(None);
 
 fn with<T>(work: impl FnOnce(&mut Pages) -> T) -> T {
-    let mut held = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = PAGES.held();
     work(held.get_or_insert_with(Pages::default))
 }
 

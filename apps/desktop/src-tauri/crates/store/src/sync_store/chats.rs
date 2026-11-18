@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use rusqlite::types::Value as Sql;
 use rusqlite::{params_from_iter, Connection, ErrorCode, TransactionBehavior};
 use serde::Deserialize;
@@ -22,9 +23,7 @@ pub struct ChatStores(Mutex<Option<(String, PathBuf, ChatStore)>>);
 
 impl ChatStores {
     fn lock(&self) -> MutexGuard<'_, Option<(String, PathBuf, ChatStore)>> {
-        self.0
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.0.held()
     }
 }
 

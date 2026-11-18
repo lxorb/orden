@@ -396,7 +396,8 @@ pub fn web_download_cancel(webview: tauri::Webview, id: u64) {
 }
 
 mod progress {
-    use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
+    use orden_base::Held as _;
+    use std::sync::{LazyLock, Mutex, OnceLock};
 
     use serde_json::{json, Value};
     use tauri::{AppHandle, Emitter as _, Manager as _, Webview};
@@ -437,15 +438,12 @@ mod progress {
                     else {
                         return;
                     };
-                    BEGUN
-                        .lock()
-                        .unwrap_or_else(PoisonError::into_inner)
-                        .push(Begun {
-                            guid,
-                            url,
-                            view: label.clone(),
-                            id: None,
-                        });
+                    BEGUN.held().push(Begun {
+                        guid,
+                        url,
+                        view: label.clone(),
+                        id: None,
+                    });
                 }
                 "Page.downloadProgress" => moved(&app, &window, params),
                 _ => {}
@@ -470,7 +468,7 @@ mod progress {
         let Some(guid) = text(params, "guid") else {
             return;
         };
-        let mut begun = BEGUN.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut begun = BEGUN.held();
         let Some(at) = begun.iter().position(|one| one.guid == guid) else {
             return;
         };
@@ -517,7 +515,7 @@ mod progress {
         let Some(app) = APP.get() else {
             return;
         };
-        let mut begun = BEGUN.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut begun = BEGUN.held();
         let found = (0..begun.len())
             .find(|&at| begun[at].id == Some(id))
             .or_else(|| {

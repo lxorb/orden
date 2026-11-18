@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -77,9 +78,7 @@ pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Res
     let dir = space_dir(root, space)?;
     let file = format!("{}.json", thread_named(id)?);
     made(&dir)?;
-    let _held = LISTS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _held = LISTS.held();
     write_privately(&dir.join(file), body.as_bytes())?;
     let mut list = read_list(&dir);
     list.insert(id.to_owned(), head);
@@ -89,9 +88,7 @@ pub fn write(root: &Path, space: &str, id: &str, head: Value, body: &str) -> Res
 pub fn delete(root: &Path, space: &str, id: &str) -> Result<(), String> {
     let dir = space_dir(root, space)?;
     let path = dir.join(format!("{}.json", thread_named(id)?));
-    let _held = LISTS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _held = LISTS.held();
     match fs::remove_file(&path) {
         Ok(()) => {}
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
@@ -106,9 +103,7 @@ pub fn delete(root: &Path, space: &str, id: &str) -> Result<(), String> {
 
 pub fn forget(root: &Path, space: &str) -> Result<(), String> {
     let dir = space_dir(root, space)?;
-    let _held = LISTS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _held = LISTS.held();
     match fs::remove_dir_all(&dir) {
         Ok(()) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),

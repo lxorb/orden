@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 use std::time::Duration;
@@ -33,10 +34,7 @@ impl Clipboard {
     }
 
     pub fn listen(&self, listener: Option<Listener>) {
-        *self
-            .listener
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = listener;
+        *self.listener.held() = listener;
     }
 
     pub fn give(&self, text: &str) {
@@ -88,11 +86,7 @@ fn watch(clipboard: &Weak<Clipboard>) {
         if count == clipboard.ours.load(Ordering::SeqCst) || !in_front(clipboard.pid) {
             continue;
         }
-        let listener = clipboard
-            .listener
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone();
+        let listener = clipboard.listener.held().clone();
         let (Some(listener), Some(text)) = (listener, board.stringForType(unsafe_string_type()))
         else {
             continue;

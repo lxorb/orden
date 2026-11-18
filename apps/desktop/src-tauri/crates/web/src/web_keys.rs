@@ -358,8 +358,9 @@ pub fn focus_in(_pages: &[u32]) -> Option<u32> {
 
 #[cfg(target_os = "linux")]
 mod grabbed {
+    use orden_base::Held as _;
     use std::collections::HashMap;
-    use std::sync::{Arc, Mutex, OnceLock, PoisonError};
+    use std::sync::{Arc, Mutex, OnceLock};
 
     use tauri::{AppHandle, Emitter, Manager};
     use x11rb::connection::Connection as _;
@@ -465,7 +466,7 @@ mod grabbed {
                 .ok()
                 .and_then(|cookie| cookie.reply().ok());
             if let Some(read) = read {
-                *self.map.lock().unwrap_or_else(PoisonError::into_inner) = Map {
+                *self.map.held() = Map {
                     first,
                     per: usize::from(read.keysyms_per_keycode),
                     syms: read.keysyms,
@@ -475,14 +476,8 @@ mod grabbed {
 
         fn grab(&self, page: u32) {
             let _ = self.x.ungrab_key(Grab::ANY, page, ModMask::ANY);
-            let holder = self
-                .pages
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .get(&page)
-                .cloned()
-                .unwrap_or_default();
-            let map = self.map.lock().unwrap_or_else(PoisonError::into_inner);
+            let holder = self.pages.held().get(&page).cloned().unwrap_or_default();
+            let map = self.map.held();
             for (sym, mask) in chords(&app_chords(&holder)) {
                 for code in map.keycodes(sym) {
                     for lock in LOCKS {
@@ -502,12 +497,7 @@ mod grabbed {
         }
 
         fn pages(&self) -> Vec<u32> {
-            self.pages
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .keys()
-                .copied()
-                .collect()
+            self.pages.held().keys().copied().collect()
         }
 
         fn focused(&self, pages: &[u32]) -> Option<u32> {
@@ -535,11 +525,7 @@ mod grabbed {
             let Ok(code) = Keycode::try_from(key.detail) else {
                 return;
             };
-            let sym = self
-                .map
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .keysym(code);
+            let sym = self.map.held().keysym(code);
             let Some(vk) = sym.and_then(vk_of) else {
                 return;
             };
@@ -561,13 +547,9 @@ mod grabbed {
                 &every_chord(),
                 grabbing.is_some(),
                 || {
-                    let page = self.focused(&self.pages()).and_then(|page| {
-                        self.pages
-                            .lock()
-                            .unwrap_or_else(PoisonError::into_inner)
-                            .get(&page)
-                            .cloned()
-                    });
+                    let page = self
+                        .focused(&self.pages())
+                        .and_then(|page| self.pages.held().get(&page).cloned());
                     let found = page.is_some();
                     holder = holder.take().or(page);
                     found
@@ -612,17 +594,8 @@ mod grabbed {
                     }
                     _ => continue,
                 };
-                let holder = self
-                    .pages
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .get(&window)
-                    .cloned();
-                let sym = self
-                    .map
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .keysym(code);
+                let holder = self.pages.held().get(&window).cloned();
+                let sym = self.map.held().keysym(code);
                 let (Some(holder), Some(vk)) = (holder, sym.and_then(vk_of)) else {
                     continue;
                 };
@@ -722,11 +695,7 @@ mod grabbed {
             return;
         };
         let Some(grabs) = grabs(&app) else { return };
-        grabs
-            .pages
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(page, window);
+        grabs.pages.held().insert(page, window);
         let focus = ChangeWindowAttributesAux::new().event_mask(EventMask::FOCUS_CHANGE);
         let _ = grabs.x.change_window_attributes(page, &focus);
         grabs.grab(page);

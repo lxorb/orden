@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, MutexGuard, PoisonError};
+use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
@@ -17,7 +18,7 @@ static DROPPED: Mutex<Option<(Instant, Vec<PathBuf>)>> = Mutex::new(None);
 static READ: Mutex<Vec<(Instant, PathBuf)>> = Mutex::new(Vec::new());
 
 fn guarded<T>(lock: &Mutex<T>) -> MutexGuard<'_, T> {
-    lock.lock().unwrap_or_else(PoisonError::into_inner)
+    lock.held()
 }
 
 fn same_dropped(one: &Path, other: &Path) -> bool {

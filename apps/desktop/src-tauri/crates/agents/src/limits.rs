@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::{HashMap, VecDeque};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 const MINUTE: Duration = Duration::from_secs(60);
@@ -65,7 +66,7 @@ pub fn wait_for_room(
     let mut first = false;
     loop {
         let wait = {
-            let mut all = COUNTS.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut all = COUNTS.held();
             let counts = all.get_or_insert_with(Counts::default);
             let now = Instant::now();
             let wait = counts.admit(agent, what, most, now);

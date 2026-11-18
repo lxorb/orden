@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex, PoisonError};
+use std::sync::{LazyLock, Mutex};
 
 use serde::Deserialize;
 use tauri::Webview;
@@ -86,7 +87,7 @@ static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
 type Given = HashMap<String, (Option<Cut>, f64, Shape)>;
 
 fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
-    look(&mut GIVEN.lock().unwrap_or_else(PoisonError::into_inner))
+    look(&mut GIVEN.held())
 }
 
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: f64) {

@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use std::collections::{BTreeMap, HashSet};
 use std::io::Write as _;
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use base64::Engine as _;
@@ -381,16 +382,14 @@ fn web(url: &Url) -> bool {
 
 fn reached(agent: &str, site: &str) -> bool {
     REACHED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .as_ref()
         .is_some_and(|all| all.contains(&(agent.to_owned(), site.to_owned())))
 }
 
 fn remember(agent: &str, site: &str) {
     REACHED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
+        .held()
         .get_or_insert_with(HashSet::new)
         .insert((agent.to_owned(), site.to_owned()));
 }
@@ -685,7 +684,7 @@ mod tests {
         grant.sites.insert("localhost".into(), SiteRule::Deny);
         let seen = Mutex::new(Vec::new());
         let check = |hop: &Url| {
-            let mut all = seen.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut all = seen.held();
             all.push(hop.to_string());
             decided(&grant, hop, false).map(|_| ())
         };
@@ -712,7 +711,7 @@ mod tests {
             "{answer:?}"
         );
         assert_eq!(
-            *seen.lock().unwrap_or_else(PoisonError::into_inner),
+            *seen.held(),
             [
                 format!("http://127.0.0.1:{first_port}/"),
                 format!("http://localhost:{there_port}/"),

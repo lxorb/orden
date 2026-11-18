@@ -8,10 +8,11 @@ pub(crate) mod toast;
 #[cfg(windows)]
 mod toasts;
 
+use orden_base::Held as _;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter as _};
@@ -100,7 +101,7 @@ static STATE: Mutex<State> = Mutex::new(State {
 });
 
 fn in_state<T>(alter: impl FnOnce(&mut State) -> T) -> T {
-    alter(&mut STATE.lock().unwrap_or_else(PoisonError::into_inner))
+    alter(&mut STATE.held())
 }
 
 fn file(app: &AppHandle) -> Option<PathBuf> {

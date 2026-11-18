@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -496,9 +497,7 @@ pub fn connect(
     }
 
     {
-        let _writing = WRITING
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _writing = WRITING.held();
         let mut kept = read_kept(&places.kept);
         kept.about.entry(id.to_owned()).or_default().last = Some(orden_base::clock::now());
         let _ = write_kept(&places.kept, &kept);
@@ -579,9 +578,7 @@ pub fn remote_keep(webview: Webview, kept: Kept) -> Result<Kept, String> {
     let places = places(&webview)?;
     let kept = checked(kept)?;
 
-    let _writing = WRITING
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _writing = WRITING.held();
     let kept = merged(kept, &read_kept(&places.kept));
     write_kept(&places.kept, &kept)?;
     Ok(kept)

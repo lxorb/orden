@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -116,9 +117,7 @@ const SCRIPT: &str = include_str!("former.js");
 static GIVEN: std::sync::Mutex<Option<Former>> = std::sync::Mutex::new(None);
 
 fn given() -> std::sync::MutexGuard<'static, Option<Former>> {
-    GIVEN
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    GIVEN.held()
 }
 
 fn forget_given_after() {

@@ -93,8 +93,9 @@ impl Owed {
 
 #[cfg(target_os = "linux")]
 mod gestures {
+    use orden_base::Held as _;
     use std::collections::HashMap;
-    use std::sync::{Arc, Mutex, OnceLock, PoisonError};
+    use std::sync::{Arc, Mutex, OnceLock};
     use std::time::Duration;
 
     use serde_json::{json, Value};
@@ -147,8 +148,7 @@ mod gestures {
         };
         pinches
             .pages
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
+            .held()
             .insert(page, (app.clone(), label.to_string()));
         let mask = xinput::EventMask {
             deviceid: Device::ALL_MASTER.into(),
@@ -171,15 +171,12 @@ mod gestures {
 
     impl Pinches {
         fn page_at(&self, window: u32) -> Option<tauri::Webview> {
-            let pages = self.pages.lock().unwrap_or_else(PoisonError::into_inner);
+            let pages = self.pages.held();
             let (app, label) = pages.get(&window)?;
             let found = app.get_webview(label);
             if found.is_none() {
                 drop(pages);
-                self.pages
-                    .lock()
-                    .unwrap_or_else(PoisonError::into_inner)
-                    .remove(&window);
+                self.pages.held().remove(&window);
             }
             found
         }

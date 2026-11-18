@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::sync::mpsc;
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 
 use block2::RcBlock;
@@ -128,7 +129,7 @@ fn answered(response: &UNNotificationResponse) {
 pub fn reply_words(placeholder: &str, send: &str) {
     let wanted = Some((placeholder.to_string(), send.to_string()));
     {
-        let mut words = WORDS.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut words = WORDS.held();
         if words.1 == wanted {
             return;
         }
@@ -138,7 +139,7 @@ pub fn reply_words(placeholder: &str, send: &str) {
 }
 
 fn categorise(centre: &UNUserNotificationCenter) {
-    let (reminders, reply) = WORDS.lock().unwrap_or_else(PoisonError::into_inner).clone();
+    let (reminders, reply) = WORDS.held().clone();
     let category = |id: &str, actions: &[Retained<UNNotificationAction>]| {
         UNNotificationCategory::categoryWithIdentifier_actions_intentIdentifiers_options(
             &NSString::from_str(id),
@@ -194,7 +195,7 @@ impl Requests {
             &asked,
         );
 
-        WORDS.lock().unwrap_or_else(PoisonError::into_inner).0 = Some(words.clone());
+        WORDS.held().0 = Some(words.clone());
         categorise(&centre);
 
         if authorization(&centre) == Some(UNAuthorizationStatus::Denied) {

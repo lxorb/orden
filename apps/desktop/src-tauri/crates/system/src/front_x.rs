@@ -1,4 +1,5 @@
-use std::sync::{LazyLock, Mutex, PoisonError};
+use orden_base::Held as _;
+use std::sync::{LazyLock, Mutex};
 
 use x11rb::connection::Connection as _;
 use x11rb::protocol::screensaver::ConnectionExt as _;
@@ -32,7 +33,7 @@ fn opened() -> Option<X> {
 }
 
 fn asked<T>(ask: impl Fn(&X) -> Option<T>) -> Option<T> {
-    let mut held = X.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = X.held();
     let found = held.as_ref().and_then(&ask);
     if found.is_none() && held.as_ref().is_none_or(|x| x.connection.flush().is_err()) {
         *held = opened();

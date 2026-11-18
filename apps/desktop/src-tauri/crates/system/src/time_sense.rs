@@ -1,4 +1,5 @@
-use std::sync::{Mutex, PoisonError};
+use orden_base::Held as _;
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
@@ -53,7 +54,7 @@ pub async fn time_sense() -> Sensed {
 fn sensed() -> Sensed {
     let input = crate::presence::input_idle();
     let ticks = platform::cpu_ticks();
-    let mut held = HELD.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut held = HELD.held();
     let cpu = match (held.ticks, ticks) {
         (Some(was), Some(now)) => busy_share(was, now),
         _ => None,
@@ -69,8 +70,7 @@ fn sensed() -> Sensed {
     drop(held);
     let power = kept.unwrap_or_else(|| {
         let power = platform::power();
-        HELD.lock().unwrap_or_else(PoisonError::into_inner).power =
-            Some((Instant::now(), power.clone()));
+        HELD.held().power = Some((Instant::now(), power.clone()));
         power
     });
 

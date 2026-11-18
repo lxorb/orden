@@ -1,5 +1,6 @@
+use orden_base::Held as _;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -17,15 +18,11 @@ static SHOWN: Mutex<Option<String>> = Mutex::new(None);
 static WANTED: Mutex<Option<String>> = Mutex::new(None);
 
 fn want(label: Option<String>) {
-    *WANTED.lock().unwrap_or_else(PoisonError::into_inner) = label;
+    *WANTED.held() = label;
 }
 
 fn is_wanted(label: &str) -> bool {
-    WANTED
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_deref()
-        == Some(label)
+    WANTED.held().as_deref() == Some(label)
 }
 
 fn fresh_label() -> String {
@@ -33,22 +30,15 @@ fn fresh_label() -> String {
 }
 
 fn taken() -> Option<String> {
-    SHOWN.lock().unwrap_or_else(PoisonError::into_inner).take()
+    SHOWN.held().take()
 }
 
 fn is_shown(label: &str) -> bool {
-    SHOWN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .as_deref()
-        == Some(label)
+    SHOWN.held().as_deref() == Some(label)
 }
 
 fn answering(app: &AppHandle) -> Option<Webview> {
-    let label = SHOWN
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .clone()?;
+    let label = SHOWN.held().clone()?;
     let view = app.get_webview(&label)?;
     let _doing = orden_crashes::stall::doing("extension popup: asked");
     if orden_web::web_answers::answers(&view) {
@@ -181,7 +171,7 @@ pub async fn extension_popup_open(
         )
         .map_err(|error| format!("that popup could not be opened: {error}"));
         let made = made.map(|view| {
-            *SHOWN.lock().unwrap_or_else(PoisonError::into_inner) = Some(label.clone());
+            *SHOWN.held() = Some(label.clone());
             sent(&building, &view, &address);
             Some(label)
         });
@@ -356,8 +346,7 @@ mod tests {
 
     #[test]
     fn the_popup_that_is_open_is_closed_once() {
-        *SHOWN.lock().unwrap_or_else(PoisonError::into_inner) =
-            Some("web-extension-popup-x".into());
+        *SHOWN.held() = Some("web-extension-popup-x".into());
         assert!(is_shown("web-extension-popup-x"));
         assert!(!is_shown("web-extension-popup-y"));
         assert_eq!(taken().as_deref(), Some("web-extension-popup-x"));

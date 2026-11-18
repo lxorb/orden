@@ -25,3 +25,14 @@ pub type Engine = tauri::Wry;
 
 #[cfg(desktop)]
 pub type Engine = tauri::DynRuntime;
+
+pub trait Held<T: ?Sized> {
+    fn held(&self) -> std::sync::MutexGuard<'_, T>;
+}
+
+impl<T: ?Sized> Held<T> for std::sync::Mutex<T> {
+    fn held(&self) -> std::sync::MutexGuard<'_, T> {
+        self.lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+}

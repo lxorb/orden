@@ -1,3 +1,4 @@
+use orden_base::Held as _;
 use std::sync::{Arc, Mutex};
 
 use x11rb::connection::Connection as _;
@@ -79,18 +80,12 @@ impl Clipboard {
     }
 
     pub fn listen(&self, listener: Option<Listener>) {
-        *self
-            .listener
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = listener;
+        *self.listener.held() = listener;
     }
 
     pub fn give(&self, text: &str) {
         let text: String = clipped(text).to_owned();
-        *self
-            .given
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(text);
+        *self.given.held() = Some(text);
         let _ = self
             .x
             .set_selection_owner(self.window, self.atoms.CLIPBOARD, CURRENT_TIME);
@@ -101,10 +96,7 @@ impl Clipboard {
         match event {
             Event::XfixesSelectionNotify(changed) if changed.selection == self.atoms.CLIPBOARD => {
                 if changed.owner != NONE && changed.owner != self.window {
-                    *self
-                        .given
-                        .lock()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
+                    *self.given.held() = None;
                     let _ = self.x.convert_selection(
                         self.window,
                         self.atoms.CLIPBOARD,
@@ -119,11 +111,7 @@ impl Clipboard {
             Event::SelectionNotify(answered) if answered.requestor == self.window => {
                 if answered.property != NONE {
                     if let Some(text) = self.read(answered.property) {
-                        let listener = self
-                            .listener
-                            .lock()
-                            .unwrap_or_else(std::sync::PoisonError::into_inner)
-                            .clone();
+                        let listener = self.listener.held().clone();
                         if let Some(listener) = listener {
                             listener(text);
                         }
@@ -160,11 +148,7 @@ impl Clipboard {
         } else {
             asked.property
         };
-        let given = self
-            .given
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone();
+        let given = self.given.held().clone();
         let a = &self.atoms;
         let served = given.is_some_and(|text| {
             let x = &self.x;

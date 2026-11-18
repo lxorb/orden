@@ -1,5 +1,6 @@
 use notify::event::{AccessKind, AccessMode};
 use notify::{ErrorKind, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use orden_base::Held as _;
 use std::collections::{BTreeSet, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -380,9 +381,7 @@ fn named(roots: &[Root], paths: &[PathBuf]) -> Vec<usize> {
 }
 
 fn lock_watcher(watcher: &Mutex<RecommendedWatcher>) -> MutexGuard<'_, RecommendedWatcher> {
-    watcher
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
+    watcher.held()
 }
 
 struct Shared {
@@ -437,9 +436,7 @@ impl Shared {
     }
 
     fn lock(&self) -> MutexGuard<'_, Queue> {
-        self.queue
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.queue.held()
     }
 
     fn stop(&self) {

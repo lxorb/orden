@@ -1,8 +1,9 @@
+use orden_base::Held as _;
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, PoisonError};
+use std::sync::Mutex;
 
 use tauri::{AppHandle, Manager, Url};
 
@@ -45,7 +46,7 @@ impl Handed {
     }
 
     fn load(&self, kept: impl FnOnce() -> Vec<PathBuf>) {
-        let mut loaded = self.1.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut loaded = self.1.held();
         if *loaded {
             return;
         }
@@ -121,7 +122,7 @@ pub fn admit_handed(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
         let app = app.clone();
         std::thread::spawn(move || {
             let handed = loaded_set(&app);
-            let _writing = WRITING.lock().unwrap_or_else(PoisonError::into_inner);
+            let _writing = WRITING.held();
             if let Err(error) = write_handed_list(&at, &handed.listed()) {
                 orden_base::logs::say(&app, "warn", &format!("handed PDFs: {error}"));
             }
