@@ -915,6 +915,9 @@ pub(crate) fn sources() -> Vec<(String, std::path::PathBuf)> {
                     .expect("under the source")
                     .to_string_lossy()
                     .replace('\\', "/");
+                if prefix.is_empty() && name == "scans.rs" {
+                    continue;
+                }
                 found.push((format!("{prefix}{name}"), path));
             }
         }
