@@ -98,9 +98,9 @@ describe('tasks-views contract', () => {
       todo({ id: 'c', space: 'home', labels: ['later'], start: '2026-12-01' }),
     ])
     const shown = new Shown(w)
-    expect(shown.labels).toEqual(['errand', 'later', 'meeting'])
+    expect(shown.labels).toEqual(['errand', 'meeting'])
     shown.setOnlySpace(true)
-    expect(shown.labels).toEqual(['errand', 'later'])
+    expect(shown.labels).toEqual(['errand'])
     expect(shown.todos.map((t) => t.id)).toEqual(['a'])
   })
 

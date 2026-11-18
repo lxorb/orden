@@ -102,12 +102,15 @@ export class Shown {
   }
 
   get labels(): string[] {
-    return labelsOf(this.world.todos(), {
+    const today = this.world.today()
+    const shown = shownTodos(this.world.todos(), {
       onlySpace: this.narrowed,
       space: this.space?.id ?? null,
       spaceAlso: this.space?.also ?? [],
-      today: this.world.today(),
+      label: ALL_LABELS,
+      today,
     })
+    return labelsOf(shown, { onlySpace: false, space: null, today })
   }
 
   get todos(): Todo[] {
