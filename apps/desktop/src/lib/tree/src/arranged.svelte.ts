@@ -519,7 +519,7 @@ export class SpaceSorting {
       (api, token, spaceId) => api.saveSort(token, spaceId, this.of(root)),
       (landed) => {
         const kept = this.spaces[root]
-        if (kept && !landed) this.keepAs(root, kept.mode, kept.account, false)
+        if (kept && kept.sent !== landed) this.keepAs(root, kept.mode, kept.account, landed)
       },
     )
   }
