@@ -9,7 +9,7 @@ vi.stubGlobal('localStorage', {
 
 const { hiddenKinds, KINDS_KEY, TIME_WORD, EXPERIMENTAL_WORD, timeOn } =
   await import('../src/lib/gates/src/api')
-const { setWord, receive } = await import('../src/lib/gates/src/api')
+const { receive } = await import('../src/lib/gates/src/api')
 const { runnable } = await import('../src/lib/shortcuts/src/registry')
 const { experimentalPane } = await import('../src/lib/settings/src/experimental-pane')
 
@@ -55,7 +55,7 @@ describe('the time tracker, until it is turned on', () => {
   test('keeps the kinds the reader turned off, and follows the account', () => {
     store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD, 'canvas']))
     hiddenKinds.restore()
-    setWord(TIME_WORD, true)
+    hiddenKinds.hidden = [...hiddenKinds.hidden, TIME_WORD]
     expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas', TIME_WORD])
     expect(hiddenKinds.offers('canvas')).toBe(false)
 

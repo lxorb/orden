@@ -148,10 +148,11 @@ describe('the file explorer, under Experimental', () => {
     expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD, 'canvas'])
   })
 
-  test('is told to the account, and followed from it', () => {
+  test('is told to the account, and followed from it once the account heard it', async () => {
     token = 'token'
     field().set(true)
     expect(saved).toEqual([{ hiddenKinds: [EXPERIMENTAL_WORD, EXPLORER_WORD] }])
+    await new Promise((done) => setTimeout(done, 0))
 
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('explorer')).toBe(false)
