@@ -2,21 +2,12 @@ import { blank } from '@orden/pass/envelope'
 import type { Content } from '@orden/pass/types'
 import { flushSync } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { closed, showing, target, typed } from '../test/drawn'
+import { closed, showing, target, typed, until } from '../test/drawn'
 import { PASSWORD, pass } from '../test/opened'
 
 const PassTab = (await import('./PassTab.svelte')).default
 
 const SECRET = 'Tr0ub4dor&3-hidden'
-
-async function until(ready: () => boolean, what: string): Promise<void> {
-  for (let tries = 0; tries < 200; tries++) {
-    flushSync()
-    if (ready()) return
-    await new Promise((done) => setTimeout(done, 20))
-  }
-  throw new Error(`never: ${what}`)
-}
 
 function submitted(form: HTMLFormElement | null) {
   form?.dispatchEvent(new Event('submit', { cancelable: true }))
