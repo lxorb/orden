@@ -400,6 +400,9 @@ export function generalPane(): Pane {
           versionField(),
         ],
       },
+      ...(!__EVEN_PLUGIN__ && isDesktop
+        ? [{ title: 'Browser', fields: settingFieldsIn('general', 'Browser') }]
+        : []),
     ],
   }
 }

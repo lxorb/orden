@@ -21,7 +21,6 @@
   import DefaultBrowser from './DefaultBrowser.svelte'
   import FontPicker from './FontPicker.svelte'
   import {
-    settingFieldsIn,
     type SettingsPart,
     type SettingsPartHost,
     settingsPartsIn,
@@ -66,7 +65,7 @@
   import { dur, fly, slide } from '../../platform/src/api'
   import { waited } from '../../platform/src/api'
 
-  let customBad = $state(false)
+  let refused = $state<string | null>(null)
 
   let leaving = $state(false)
 
@@ -199,6 +198,12 @@
     const value = Number(input.value)
     if (kept || !field.preview) field.set(value)
     else field.preview(value)
+  }
+
+  function typed(field: Extract<Field, { kind: 'text' }>, value: string) {
+    const wrong = (field.check?.(value) ?? null) !== null
+    refused = wrong ? field.label : null
+    if (!wrong) field.set(value)
   }
 
   function placing(side: PictureSide, press: PointerEvent) {
@@ -506,7 +511,7 @@
 {/snippet}
 
 {#snippet row(field: Field, where?: string)}
-  {#if field.kind === 'switch'}
+  {#if field.shown?.() === false}{:else if field.kind === 'switch'}
     {@const held = field.get()}
     {@const locked = field.locked?.() ?? false}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -652,8 +657,9 @@
           spellcheck="false"
           autocapitalize="off"
           autocomplete="off"
-          oninput={field.live ? (event) => field.set(event.currentTarget.value) : undefined}
-          onchange={field.live ? undefined : (event) => field.set(event.currentTarget.value)}
+          aria-invalid={refused === field.label}
+          oninput={field.live ? (event) => typed(field, event.currentTarget.value) : undefined}
+          onchange={field.live ? undefined : (event) => typed(field, event.currentTarget.value)}
         />
       </label>
     {/if}
@@ -673,46 +679,17 @@
   {/if}
 {/snippet}
 
-{#snippet browserRow()}
-  <h3>Browser</h3>
-  <div class="card">
-    <div class="orden-setting setting">
-      <span class="name"
-        ><span class="what"
-          >Default browser<Hint
-            text="Makes Orden the browser that links from other programs open in."
-          /></span
-        ></span
-      >
-      <DefaultBrowser />
-    </div>
-    {#each settingFieldsIn('general', 'Browser') as field (field.key)}
-      {#if field.kind === 'text'}
-        {#if !field.shown || field.shown()}
-          <label class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
-            {@render named(field)}
-            <input
-              class="orden-field is-value"
-              type="url"
-              value={field.get()}
-              placeholder={field.placeholder}
-              spellcheck="false"
-              autocapitalize="off"
-              autocomplete="off"
-              aria-invalid={customBad}
-              onchange={(event) => {
-                customBad = (field.check?.(event.currentTarget.value) ?? null) !== null
-                if (!customBad) field.set(event.currentTarget.value)
-              }}
-            />
-          </label>
-        {/if}
-      {:else}
-        {@render row(field)}
-      {/if}
-    {/each}
+{#snippet defaultBrowser()}
+  <div class="orden-setting setting">
+    <span class="name"
+      ><span class="what"
+        >Default browser<Hint
+          text="Makes Orden the browser that links from other programs open in."
+        /></span
+      ></span
+    >
+    <DefaultBrowser />
   </div>
-  {@render parts('general')}
 {/snippet}
 
 {#snippet parts(section: SettingsSectionId)}
@@ -740,6 +717,7 @@
       <h3>{group.title}</h3>
       {#if group.fields.length}
         <div class="card">
+          {#if group.title === 'Browser'}{@render defaultBrowser()}{/if}
           {#each group.fields as field, index (index)}
             {@render row(field)}
             {#if field.key === 'appearance.mode'}{@render themeTools()}{/if}
@@ -762,7 +740,7 @@
     {/each}
 
     {#if !__EVEN_PLUGIN__ && settings.section === 'general' && isDesktop}
-      {@render browserRow()}
+      {@render parts('general')}
     {/if}
 
     {#if settings.section === 'experimental' && glassesOn()}

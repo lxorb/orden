@@ -21,7 +21,7 @@ export function search(query: string, panes: Pane[], places: Place[]): Hit[] {
   for (const pane of panes) {
     for (const group of pane.groups) {
       for (const field of group.fields) {
-        if (words(field, group, pane).some(has)) {
+        if (field.shown?.() !== false && words(field, group, pane).some(has)) {
           hits.push({ kind: 'field', section: pane.id, pane, group, field })
         }
       }

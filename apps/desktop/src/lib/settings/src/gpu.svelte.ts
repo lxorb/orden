@@ -7,7 +7,14 @@ class Gpu {
 
   line = $state<string | null>(null)
 
-  async ask() {
+  private asked: Promise<void> | null = null
+
+  ask(): Promise<void> {
+    this.asked ??= this.read().catch(() => undefined)
+    return this.asked
+  }
+
+  private async read() {
     this.on = await invoke<boolean>('gpu_chosen')
     this.line = await invoke<string | null>('gpu_line')
   }
