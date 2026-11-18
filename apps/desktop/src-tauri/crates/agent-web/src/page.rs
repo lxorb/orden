@@ -3333,6 +3333,19 @@ mod tests {
         (grant, Store::Reader)
     }
 
+    fn request(url: &str) -> Request {
+        Request {
+            seq: 1,
+            method: "GET".into(),
+            url: url.into(),
+            status: None,
+            kind: "Fetch".into(),
+            ms: None,
+            failed: None,
+            body: None,
+        }
+    }
+
     fn frame(at: &[&str]) -> Whence {
         Whence::Frame(at.iter().map(|one| (*one).to_string()).collect())
     }
@@ -3376,14 +3389,8 @@ mod tests {
     fn a_denied_frame_s_request_is_not_read_whatever_its_host() {
         let limits = denying();
         let row = |url: &str| Request {
-            seq: 1,
-            method: "GET".into(),
-            url: url.into(),
             status: Some(200),
-            kind: "Fetch".into(),
-            ms: None,
-            failed: None,
-            body: None,
+            ..request(url)
         };
         let api = row("https://api.backend.example/accounts");
         assert!(!request_readable(
@@ -3438,16 +3445,7 @@ mod tests {
     #[test]
     fn a_network_wait_names_only_the_requests_the_agent_may_read() {
         let limits = denying();
-        let row = |url: &str| Request {
-            seq: 1,
-            method: "GET".into(),
-            url: url.into(),
-            status: None,
-            kind: "Fetch".into(),
-            ms: None,
-            failed: None,
-            body: None,
-        };
+        let row = request;
         let rows = vec![
             (
                 row("https://bank.example/stream?session=abc"),
@@ -3895,26 +3893,12 @@ mod tests {
 
     #[test]
     fn a_gone_element_says_to_look_again() {
-        assert!(matches!(
-            stale("No node with given id found"),
-            Answer::Error {
-                code: Code::NoSuchRef,
-                ..
-            }
-        ));
-        assert!(matches!(
-            stale("The parameter is incorrect."),
-            Answer::Error {
-                code: Code::NoSuchRef,
-                ..
-            }
-        ));
-        assert!(matches!(
-            stale("Target closed"),
-            Answer::Error {
-                code: Code::Failed,
-                ..
-            }
-        ));
+        let code = |said| match stale(said) {
+            Answer::Error { code, .. } => Some(code),
+            _ => None,
+        };
+        assert_eq!(code("No node with given id found"), Some(Code::NoSuchRef));
+        assert_eq!(code("The parameter is incorrect."), Some(Code::NoSuchRef));
+        assert_eq!(code("Target closed"), Some(Code::Failed));
     }
 }
