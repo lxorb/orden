@@ -23,6 +23,7 @@ class SettingsWindow {
 
   show(section?: SettingsSectionId, space: string | null = null, landsOnField = false) {
     if (!landsOnField) this.asked++
+    this.error = null
     if (section === undefined && space === null && workspace.settingsTab !== null) {
       workspace.openSettings()
       return
@@ -33,7 +34,6 @@ class SettingsWindow {
     this.at = moved ? 'access' : null
     this.section = moved ? 'ai' : (section ?? 'general')
     this.listing = section === undefined
-    this.error = null
     connectors.freshToken = null
     workspace.openSettings()
   }

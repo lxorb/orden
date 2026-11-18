@@ -1,4 +1,4 @@
-import { type Scheme, settingsWindow } from '@orden/contracts'
+import { sayNotice, type Scheme } from '@orden/contracts'
 import { accentColour, theme, type ThemeValue } from '../../../theme/src/api'
 import { chooseFiles, PICTURES } from '../../../ui-controls/src/api'
 import { fileBytes, forget, keepJson, afterQuiet, onceAFrame } from '../../../platform/src/api'
@@ -114,7 +114,7 @@ class Wallpaper {
       if (theme.id !== WALLPAPER_THEME) theme.select(WALLPAPER_THEME)
       return true
     } catch (error) {
-      settingsWindow().error = message(error, 'That picture could not be read.')
+      sayNotice(message(error, 'That picture could not be read.'))
       return false
     }
   }

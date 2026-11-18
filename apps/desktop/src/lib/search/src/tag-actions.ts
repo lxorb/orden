@@ -1,12 +1,12 @@
 import { message } from '../../ui-kit/src/api'
-import { settingsWindow } from '@orden/contracts'
+import { sayNotice } from '@orden/contracts'
 import { isTagName } from '@orden/markdown/tags'
 import { liftedFrom, renamedTo, type TagNode } from './tag-tree'
 import { workspace } from '../../workspace/src/api'
 
 function refusedAsTag(name: string): boolean {
   if (isTagName(name)) return false
-  settingsWindow().error = 'That tag could not be renamed.'
+  sayNotice('That tag could not be renamed.')
   return true
 }
 
@@ -27,7 +27,7 @@ export async function renameTag(node: TagNode) {
   try {
     await workspace.retagNotes(node.path, to)
   } catch (error) {
-    settingsWindow().error = message(error, 'That tag could not be renamed.')
+    sayNotice(message(error, 'That tag could not be renamed.'))
   }
 }
 
@@ -49,6 +49,6 @@ export async function removeTag(node: TagNode) {
   try {
     await workspace.retagNotes(node.path, answer === 'up' ? up : null)
   } catch (error) {
-    settingsWindow().error = message(error, 'That tag could not be deleted.')
+    sayNotice(message(error, 'That tag could not be deleted.'))
   }
 }

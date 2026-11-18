@@ -53,6 +53,7 @@ import {
   portOf,
   portProvided,
   providePort,
+  sayNotice,
   runCommand,
   startHearings,
   spaceId,
@@ -280,6 +281,15 @@ describe('ports', () => {
 
     unbind()
     expect(portProvided('sync.clock')).toBe(false)
+  })
+
+  it('says a notice where the shell shows one, and nowhere before it is bound', () => {
+    expect(() => sayNotice('lost')).not.toThrow()
+    const said: string[] = []
+    const unbind = providePort('shell.notice', { say: (words) => said.push(words) })
+    sayNotice('That image does not fit in your storage.')
+    unbind()
+    expect(said).toEqual(['That image does not fit in your storage.'])
   })
 
   it('throws for a needed port nothing bound, naming it, and hands over the bound one', () => {

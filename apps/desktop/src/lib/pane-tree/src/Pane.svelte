@@ -65,7 +65,7 @@
   import { modes } from '../../modes/src/api'
   import { placement } from './placement.svelte'
   import { rooms } from '../../collab/src/api'
-  import { commandRowsLoaded, settingsWindow, type OpenHow } from '@orden/contracts'
+  import { commandRowsLoaded, type OpenHow, sayNotice } from '@orden/contracts'
   import { appsOn, explorerOn } from '../../gates/src/api'
   import {
     applicationSurface,
@@ -301,7 +301,7 @@
       return src
     } catch (error) {
       void usage.refresh()
-      settingsWindow().error = message(error, 'That image does not fit in your storage.')
+      sayNotice(message(error, 'That image does not fit in your storage.'))
       return null
     }
   }
@@ -310,7 +310,7 @@
     try {
       return await busy.run('Storing the file', () => storeAttachment(file, into.path))
     } catch (error) {
-      settingsWindow().error = message(error, 'That file could not be kept.')
+      sayNotice(message(error, 'That file could not be kept.'))
       return null
     }
   }

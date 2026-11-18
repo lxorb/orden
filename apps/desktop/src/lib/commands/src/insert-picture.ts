@@ -3,7 +3,7 @@ import { encodeTarget } from '@orden/markdown/links'
 import { storeImage, workspace } from '../../workspace/src/api'
 import { busy, message, viewport } from '../../ui-kit/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
-import { settingsWindow } from '@orden/contracts'
+import { sayNotice } from '@orden/contracts'
 import { usage } from '../../accounts/src/api'
 
 export function canInsertPicture(view?: EditorView): boolean {
@@ -34,7 +34,7 @@ export async function putPicture(view: EditorView, file: File): Promise<void> {
     if (src) writeAtCaret(view, `![${alt(file.name)}](${encodeTarget(src)})`)
   } catch (error) {
     void usage.refresh()
-    settingsWindow().error = message(error, 'That image does not fit in your storage.')
+    sayNotice(message(error, 'That image does not fit in your storage.'))
   }
 }
 

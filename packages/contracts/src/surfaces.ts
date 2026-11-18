@@ -107,6 +107,10 @@ export interface QuickAddPort {
   show(prefill?: QuickAddPrefill): void
 }
 
+export interface NoticePort {
+  say(words: string): void
+}
+
 export interface ShellFocusPort {
   editor(): boolean
 }
@@ -119,6 +123,7 @@ export interface SurfacePorts {
   readonly 'commands.app': AppCommandsPort
   readonly search: SearchPort
   readonly 'shell.focus': ShellFocusPort
+  readonly 'shell.notice': NoticePort
   readonly 'shell.sheets': SheetsPort
   readonly 'quick-add.show': QuickAddPort
 }

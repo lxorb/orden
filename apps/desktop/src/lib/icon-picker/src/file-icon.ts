@@ -10,7 +10,7 @@ import { oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { isFolderNote } from '../../tree/src/api'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint, message } from '../../ui-kit/src/api'
 import { changeOf } from '@orden/scan/search/replace'
-import { settingsWindow } from '@orden/contracts'
+import { sayNotice } from '@orden/contracts'
 import { folderOf, isMarkdownPath } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 
@@ -47,7 +47,7 @@ export async function setFileIcon(
   try {
     await workspace.replaceInNotes([changeOf(path, before, [edit])], { anyFile: true })
   } catch (error) {
-    settingsWindow().error = message(error, 'That icon could not be written.')
+    sayNotice(message(error, 'That icon could not be written.'))
   }
 }
 
@@ -62,7 +62,7 @@ async function withoutOwnKeys(path: string, keys: readonly string[]): Promise<vo
   try {
     await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
-    settingsWindow().error = message(error, 'That icon could not be written.')
+    sayNotice(message(error, 'That icon could not be written.'))
   }
 }
 
