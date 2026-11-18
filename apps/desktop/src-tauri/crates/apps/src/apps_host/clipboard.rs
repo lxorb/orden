@@ -245,10 +245,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(
-        clippy::too_many_lines,
-        reason = "one copy and one paste, told in the order they happen"
-    )]
+    #[allow(clippy::too_many_lines)]
     fn carries_text_both_ways_between_the_holder_and_the_application() {
         super::super::in_time(|| {
             use std::time::{Duration, Instant};

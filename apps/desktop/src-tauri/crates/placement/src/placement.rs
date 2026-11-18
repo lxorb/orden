@@ -276,10 +276,7 @@ fn settle<R: Runtime>(window: &WebviewWindow<R>) {
     let _ = window;
 }
 
-#[cfg_attr(
-    not(any(windows, test)),
-    allow(dead_code, reason = "only Windows puts a window back to the pixel")
-)]
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
 fn moves(
     put: (f64, f64),
     at: (f64, f64),
@@ -388,10 +385,7 @@ mod created_away {
         static ASKING: Cell<bool> = const { Cell::new(false) };
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a window hook is a callback the system calls with pointers it owns"
-    )]
+    #[allow(unsafe_code)]
     unsafe extern "system" fn creating(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         if u32::try_from(code) == Ok(HCBT_CREATEWND) && ASKING.get() {
             unsafe {
@@ -407,10 +401,7 @@ mod created_away {
         unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "setting and removing a window hook is a Win32 call"
-    )]
+    #[allow(unsafe_code)]
     pub fn during<T>(making: impl FnOnce() -> T) -> T {
         let hook = unsafe {
             SetWindowsHookExW(

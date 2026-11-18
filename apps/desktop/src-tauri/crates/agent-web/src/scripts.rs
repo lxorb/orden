@@ -64,11 +64,7 @@ pub fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
     Ok(base64::engine::general_purpose::STANDARD.encode(out))
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "clamped to the picture first, which is a few thousand pixels at most"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn pixel(value: f64, most: u32) -> usize {
     value.floor().clamp(0.0, f64::from(most)) as usize
 }

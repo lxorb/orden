@@ -6,13 +6,7 @@ pub enum Act {
 }
 
 impl Act {
-    #[cfg_attr(
-        not(windows),
-        allow(
-            dead_code,
-            reason = "a Windows toast's buttons are links; a Mac's are actions"
-        )
-    )]
+    #[cfg_attr(not(windows), allow(dead_code))]
     fn word(self) -> &'static str {
         match self {
             Self::Done => "done",
@@ -24,13 +18,7 @@ impl Act {
 const HOST: &str = "orden://reminder";
 const OLD_HOST: &str = "nib://reminder";
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "a Windows toast's buttons are links; a Mac's are actions"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn link(act: Act, id: &str, nonce: &str) -> String {
     format!("{HOST}?act={}&id={id}&n={nonce}", act.word())
 }

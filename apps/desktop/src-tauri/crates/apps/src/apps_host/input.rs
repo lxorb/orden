@@ -275,10 +275,7 @@ impl Drop for Input {
     }
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    reason = "clamped to what X takes first"
-)]
+#[allow(clippy::cast_possible_truncation)]
 fn coordinate(value: f64) -> i16 {
     if value.is_finite() {
         value.round().clamp(0.0, f64::from(i16::MAX)) as i16

@@ -17,10 +17,7 @@ mod platform {
     const TYPE: &str = "Orden.Markdown";
     const TYPE_KEY: PCWSTR = w!("Software\\Classes\\Orden.Markdown");
 
-    #[allow(
-        unsafe_code,
-        reason = "the registry has no safe wrapper in the windows crate"
-    )]
+    #[allow(unsafe_code)]
     fn default_of(root: HKEY, key: PCWSTR) -> Option<String> {
         let mut buffer = [0u16; 260];
         let mut size = u32::try_from(std::mem::size_of_val(&buffer)).unwrap_or(0);
@@ -42,15 +39,12 @@ mod platform {
         Some(String::from_utf16_lossy(&buffer[..length])).filter(|text| !text.is_empty())
     }
 
-    #[allow(unsafe_code, reason = "a shell notification, which only Win32 sends")]
+    #[allow(unsafe_code)]
     fn told() {
         unsafe { SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None) };
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "the registry has no safe wrapper in the windows crate"
-    )]
+    #[allow(unsafe_code)]
     pub fn read() -> bool {
         let mut key = HKEY::default();
 
@@ -66,10 +60,7 @@ mod platform {
         true
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "the registry has no safe wrapper in the windows crate"
-    )]
+    #[allow(unsafe_code)]
     pub fn forget() {
         if !read() {
             return;
@@ -95,10 +86,7 @@ mod tests {
         RegCloseKey, RegCreateKeyW, RegSetValueExW, HKEY, HKEY_CURRENT_USER, REG_SZ,
     };
 
-    #[allow(
-        unsafe_code,
-        reason = "the registry has no safe wrapper in the windows crate"
-    )]
+    #[allow(unsafe_code)]
     fn left_by_an_older_build() {
         let mut key = HKEY::default();
         unsafe {

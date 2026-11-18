@@ -233,10 +233,7 @@ pub fn page_scale_seen(webview: tauri::Webview<orden_base::Engine>, ratio: f64) 
     engine::heard(&webview, ratio);
 }
 
-#[allow(
-    clippy::unnecessary_wraps,
-    reason = "the window's scale, elsewhere, can fail"
-)]
+#[allow(clippy::unnecessary_wraps)]
 pub fn of(window: &tauri::Window<orden_base::Engine>) -> tauri::Result<f64> {
     {
         Ok(engine::of(window))

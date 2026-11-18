@@ -13,13 +13,7 @@ pub fn pages_in(args: &[String]) -> Vec<String> {
     given.iter().filter_map(|one| page(one)).collect()
 }
 
-#[cfg_attr(
-    not(target_os = "macos"),
-    allow(
-        dead_code,
-        reason = "only a Mac hands addresses over as addresses; the rule is tested everywhere"
-    )
-)]
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub fn pages_among(urls: &[Url]) -> Vec<String> {
     urls.iter().filter_map(|url| page(url.as_str())).collect()
 }

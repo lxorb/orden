@@ -230,10 +230,7 @@ fn span_of(millis: f64) -> Duration {
 }
 
 fn millis_since_epoch() -> f64 {
-    #[allow(
-        clippy::cast_precision_loss,
-        reason = "a millisecond count this size is exact in an f64 for another 280,000 years"
-    )]
+    #[allow(clippy::cast_precision_loss)]
     {
         STARTED.1 as f64
     }
@@ -251,10 +248,7 @@ pub fn cpu() -> Option<Duration> {
     let mut kernel = FILETIME::default();
     let mut user = FILETIME::default();
 
-    #[allow(
-        unsafe_code,
-        reason = "there is no safe way to ask Windows how much processor this process has had"
-    )]
+    #[allow(unsafe_code)]
     unsafe {
         GetProcessTimes(
             GetCurrentProcess(),
@@ -271,10 +265,7 @@ pub fn cpu() -> Option<Duration> {
     let spent = ticks(kernel).checked_add(ticks(user))?;
 
     Some(Duration::new(spent / 10_000_000, {
-        #[allow(
-            clippy::cast_possible_truncation,
-            reason = "a remainder under ten million times a hundred is under a second of nanoseconds"
-        )]
+        #[allow(clippy::cast_possible_truncation)]
         {
             (spent % 10_000_000) as u32 * PER_TICK
         }
@@ -299,10 +290,7 @@ fn before_main() -> Option<Duration> {
     let mut kernel = FILETIME::default();
     let mut user = FILETIME::default();
 
-    #[allow(
-        unsafe_code,
-        reason = "there is no safe way to ask Windows when this process was created"
-    )]
+    #[allow(unsafe_code)]
     unsafe {
         GetProcessTimes(
             GetCurrentProcess(),
@@ -317,10 +305,7 @@ fn before_main() -> Option<Duration> {
     let ticks = (u64::from(created.dwHighDateTime) << 32) | u64::from(created.dwLowDateTime);
     let since = ticks.checked_sub(TO_EPOCH)?;
     let at = UNIX_EPOCH.checked_add(Duration::new(since / 10_000_000, {
-        #[allow(
-            clippy::cast_possible_truncation,
-            reason = "a remainder under ten million times a hundred is under a second of nanoseconds"
-        )]
+        #[allow(clippy::cast_possible_truncation)]
         {
             (since % 10_000_000) as u32 * 100
         }

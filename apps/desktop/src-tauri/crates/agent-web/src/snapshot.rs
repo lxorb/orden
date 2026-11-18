@@ -597,10 +597,7 @@ pub struct Wanted<'a> {
     pub name: Option<&'a str>,
 }
 
-#[allow(
-    clippy::implicit_hasher,
-    reason = "the secrets are one set the page builds with the default hasher"
-)]
+#[allow(clippy::implicit_hasher)]
 pub fn find(parts: &[Part], secret: &HashSet<(String, u64)>, wanted: &Wanted<'_>) -> Vec<Match> {
     let forest = Forest::new(parts, secret);
     let mut found = Vec::new();

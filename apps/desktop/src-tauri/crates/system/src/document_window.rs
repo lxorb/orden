@@ -33,10 +33,7 @@ fn mark_document(window: &Window, edited: bool, path: String) -> Result<(), Stri
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "Tauri hands the NSWindow over as a bare pointer, and reading one as the object is the only way to it"
-)]
+#[allow(unsafe_code)]
 fn set_document_state(handle: *mut std::ffi::c_void, edited: bool, path: &str) {
     use objc2_app_kit::NSWindow;
     use objc2_foundation::NSString;

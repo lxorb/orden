@@ -53,7 +53,7 @@ impl Drop for Clipboard {
     }
 }
 
-#[allow(unsafe_code, reason = "an AppKit constant, read as the static it is")]
+#[allow(unsafe_code)]
 fn unsafe_string_type() -> &'static NSString {
     unsafe { NSPasteboardTypeString }
 }

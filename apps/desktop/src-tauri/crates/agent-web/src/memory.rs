@@ -37,10 +37,7 @@ fn engine_bytes() -> u64 {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a process's memory is Win32's own question and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn working_set(pid: u32) -> u64 {
     use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::ProcessStatus::{K32GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS};

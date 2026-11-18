@@ -3,10 +3,7 @@ use std::path::{Path, PathBuf};
 const OLD: [&str; 2] = ["Nib.app", "nibeditor.app"];
 const NEW: &str = "Orden.app";
 
-#[cfg_attr(
-    not(target_os = "macos"),
-    allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
-)]
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 const CASKROOMS: [&str; 4] = [
     "/opt/homebrew/Caskroom/nib",
     "/usr/local/Caskroom/nib",
@@ -14,10 +11,7 @@ const CASKROOMS: [&str; 4] = [
     "/usr/local/Caskroom/orden",
 ];
 
-#[cfg_attr(
-    not(any(target_os = "macos", test)),
-    allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
-)]
+#[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn renamed(exe: &Path) -> Option<(PathBuf, PathBuf)> {
     let macos = exe.parent()?;
     let contents = macos.parent()?;
@@ -30,16 +24,10 @@ fn renamed(exe: &Path) -> Option<(PathBuf, PathBuf)> {
     .then(|| (bundle.to_path_buf(), bundle.with_file_name(NEW)))
 }
 
-#[cfg_attr(
-    not(any(target_os = "macos", test)),
-    allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
-)]
+#[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; /bin/sleep 0.5; exec /usr/bin/open -n "$2""#;
 
-#[cfg_attr(
-    not(any(target_os = "macos", test)),
-    allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
-)]
+#[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn brewed(rooms: &[&str]) -> bool {
     rooms.iter().any(|room| Path::new(room).exists())
 }

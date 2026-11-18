@@ -28,10 +28,7 @@ type Prepare = unsafe extern "C" fn(*mut Source, *mut c_int) -> c_int;
 
 static CHROMIUM: OnceLock<Prepare> = OnceLock::new();
 
-#[allow(
-    unsafe_code,
-    reason = "a GLib callback, called by GLib with its own source"
-)]
+#[allow(unsafe_code)]
 unsafe extern "C" fn prepare(source: *mut Source, timeout: *mut c_int) -> c_int {
     let Some(own) = CHROMIUM.get() else {
         return 0;
@@ -45,7 +42,7 @@ unsafe extern "C" fn prepare(source: *mut Source, timeout: *mut c_int) -> c_int 
     }
 }
 
-#[allow(unsafe_code, reason = "dladdr only reads the dynamic linker's tables")]
+#[allow(unsafe_code)]
 fn in_cef(address: *const c_void) -> bool {
     let mut info = libc::Dl_info {
         dli_fname: std::ptr::null(),
@@ -63,16 +60,13 @@ fn in_cef(address: *const c_void) -> bool {
     }
 }
 
-#[allow(unsafe_code, reason = "dlsym only reads the dynamic linker's tables")]
+#[allow(unsafe_code)]
 fn glib(name: &CStr) -> Option<*mut c_void> {
     let found = unsafe { libc::dlsym(libc::RTLD_DEFAULT, name.as_ptr().cast::<c_char>()) };
     (!found.is_null()).then_some(found)
 }
 
-#[allow(
-    unsafe_code,
-    reason = "GLib's sources are read and one of them given other functions, on the thread that runs them"
-)]
+#[allow(unsafe_code)]
 fn quiet() -> usize {
     type Default = unsafe extern "C" fn() -> *mut c_void;
     type Find = unsafe extern "C" fn(*mut c_void, c_uint) -> *mut Source;

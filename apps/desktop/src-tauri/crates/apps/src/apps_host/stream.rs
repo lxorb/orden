@@ -44,10 +44,7 @@ pub enum FromViewer {
         candidate: ViewerCandidate,
     },
     Bye {
-        #[allow(
-            dead_code,
-            reason = "the field is the frame's name and says nothing more"
-        )]
+        #[allow(dead_code)]
         bye: bool,
     },
 }
@@ -1365,10 +1362,7 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
-    #[allow(
-        clippy::too_many_lines,
-        reason = "one viewer's picture, told in the order it changes"
-    )]
+    #[allow(clippy::too_many_lines)]
     fn a_viewer_gets_the_picture_of_the_display_as_it_changes() {
         super::super::in_time(|| {
             use str0m::media::KeyframeRequestKind;
@@ -1494,10 +1488,7 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
-    #[allow(
-        clippy::too_many_lines,
-        reason = "one paste and one copy, told in the order they happen"
-    )]
+    #[allow(clippy::too_many_lines)]
     fn the_clipboard_goes_both_ways_while_the_holder_shares_it() {
         super::super::in_time(|| {
             use x11rb::connection::Connection as _;
@@ -1659,10 +1650,7 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    #[allow(
-        unsafe_code,
-        reason = "the server is tied to this thread with prctl(2) before it runs"
-    )]
+    #[allow(unsafe_code)]
     fn sound_server() -> Option<SoundServer> {
         use std::os::unix::process::CommandExt as _;
 
@@ -1797,10 +1785,7 @@ mod tests {
     }
 
     #[cfg(target_os = "linux")]
-    #[allow(
-        clippy::too_many_lines,
-        reason = "one benchmark, its two halves told in order"
-    )]
+    #[allow(clippy::too_many_lines)]
     fn drawn_and_arrived(measured: bool) {
         super::super::in_time(move || {
             use x11rb::connection::Connection as _;
@@ -2000,7 +1985,7 @@ mod tests {
     }
 
     #[cfg(target_os = "windows")]
-    #[allow(unsafe_code, reason = "a window's text is asked with Win32 messages")]
+    #[allow(unsafe_code)]
     fn text_in(window: windows::Win32::Foundation::HWND) -> String {
         use windows::core::PCWSTR;
         use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};

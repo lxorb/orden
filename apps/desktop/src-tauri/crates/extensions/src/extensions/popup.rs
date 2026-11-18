@@ -208,10 +208,7 @@ pub fn extension_popup_place(app: AppHandle, rect: Rect) {
 }
 
 #[tauri::command]
-#[allow(
-    clippy::unused_async,
-    reason = "an async command runs off the main thread, where closing a page would wait on it"
-)]
+#[allow(clippy::unused_async)]
 pub async fn extension_popup_close(app: AppHandle, label: Option<String>) {
     if label.is_none() {
         want(None);
@@ -309,11 +306,7 @@ fn resized(app: &AppHandle, label: &str, size: LogicalSize<u32>) {
     });
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "clamped to a popup's bounds first, so always a small positive length"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn pixels(length: f64) -> u32 {
     length.ceil().max(0.0) as u32
 }

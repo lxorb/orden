@@ -102,10 +102,7 @@ pub async fn print_pdf(app: AppHandle, request: tauri::ipc::Request<'_>) -> Resu
 const TOO_LONG: &str = "the print took too long";
 
 #[tauri::command]
-#[allow(
-    clippy::unused_async,
-    reason = "one signature for every platform; only a Mac has a dialog to wait for"
-)]
+#[allow(clippy::unused_async)]
 pub async fn print_page(
     webview: tauri::Webview,
     request: tauri::ipc::Request<'_>,

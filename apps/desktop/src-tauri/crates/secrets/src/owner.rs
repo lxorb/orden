@@ -39,10 +39,7 @@ mod platform {
     use objc2_foundation::{NSError, NSString};
     use objc2_local_authentication::{LAContext, LAPolicy};
 
-    #[allow(
-        unsafe_code,
-        reason = "LocalAuthentication is reached only through its Objective-C classes"
-    )]
+    #[allow(unsafe_code)]
     pub fn can() -> bool {
         unsafe {
             LAContext::new()
@@ -51,10 +48,7 @@ mod platform {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "LocalAuthentication is reached only through its Objective-C classes"
-    )]
+    #[allow(unsafe_code)]
     pub fn check(reason: &str, _window: Option<isize>) -> Result<bool, String> {
         let (said, heard) = mpsc::channel();
         let reply = RcBlock::new(move |yes: Bool, error: *mut NSError| {
@@ -125,10 +119,7 @@ mod platform {
         }
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "Windows Hello is asked over a window through its COM interop interface"
-    )]
+    #[allow(unsafe_code)]
     pub fn check(reason: &str, window: Option<isize>) -> Result<bool, String> {
         let message = HSTRING::from(reason);
         let hwnd = window.ok_or("the window that asks has no handle")?;

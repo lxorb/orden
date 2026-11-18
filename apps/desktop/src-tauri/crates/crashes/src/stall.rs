@@ -193,13 +193,7 @@ enum Answer {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Late {
-    #[cfg_attr(
-        not(windows),
-        allow(
-            dead_code,
-            reason = "only Windows can tell a stuck thread from a nested loop"
-        )
-    )]
+    #[cfg_attr(not(windows), allow(dead_code))]
     Stuck,
     Nested,
     Page,
@@ -212,10 +206,7 @@ struct Watched {
 }
 
 impl Watched {
-    #[cfg_attr(
-        windows,
-        allow(unsafe_code, reason = "the thread's number is Win32's to say")
-    )]
+    #[cfg_attr(windows, allow(unsafe_code))]
     fn this_thread(app: &AppHandle) -> Self {
         Self {
             app: app.clone(),
@@ -285,10 +276,7 @@ impl Watched {
     }
 
     #[cfg(windows)]
-    #[allow(
-        unsafe_code,
-        reason = "a thread's state is asked through GetGUIThreadInfo"
-    )]
+    #[allow(unsafe_code)]
     fn held_by_the_person(&self) -> bool {
         use windows::Win32::UI::WindowsAndMessaging::{GetGUIThreadInfo, GUITHREADINFO};
         let mut info = GUITHREADINFO {
@@ -302,22 +290,13 @@ impl Watched {
     }
 
     #[cfg(not(windows))]
-    #[allow(
-        clippy::unused_self,
-        reason = "one signature on every system; only Windows can ask a thread whether a hand holds it"
-    )]
+    #[allow(clippy::unused_self)]
     fn held_by_the_person(&self) -> bool {
         false
     }
 }
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows can ask a thread whether a hand holds it"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn held(flags: u32, menu_shown: impl FnOnce() -> bool) -> bool {
     const MOVE_SIZE: u32 = 0x0000_0002;
     const MENUS: u32 = 0x0000_0004 | 0x0000_0008 | 0x0000_0010;
@@ -325,10 +304,7 @@ fn held(flags: u32, menu_shown: impl FnOnce() -> bool) -> bool {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a thread's windows are walked through EnumThreadWindows, which only the Win32 API has"
-)]
+#[allow(unsafe_code)]
 fn menu_shown(thread: u32) -> bool {
     use windows::Win32::Foundation::{BOOL, HWND, LPARAM};
     use windows::Win32::UI::WindowsAndMessaging::{
@@ -357,10 +333,7 @@ fn menu_shown(thread: u32) -> bool {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a window's thread is asked through SendMessageTimeout, which only the Win32 API has"
-)]
+#[allow(unsafe_code)]
 fn pumps(thread: u32, within: Duration) -> Answer {
     use windows::Win32::Foundation::{BOOL, HWND, LPARAM, WPARAM};
     use windows::Win32::UI::WindowsAndMessaging::{
@@ -471,10 +444,7 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
-    #[allow(
-        unsafe_code,
-        reason = "a window of the test's own, made and pumped through Win32"
-    )]
+    #[allow(unsafe_code)]
     fn a_thread_that_stops_pumping_is_late_and_answers_after() {
         use super::{pumps, Answer, Late};
         use std::sync::mpsc;

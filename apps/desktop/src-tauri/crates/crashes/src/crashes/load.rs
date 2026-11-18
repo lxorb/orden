@@ -27,20 +27,14 @@ pub fn cpu() -> Option<Duration> {
 }
 
 #[cfg(unix)]
-#[allow(
-    unsafe_code,
-    reason = "getrusage fills a struct the C library owns the shape of"
-)]
+#[allow(unsafe_code)]
 fn usage() -> Option<libc::rusage> {
     let mut used: libc::rusage = unsafe { std::mem::zeroed() };
     (unsafe { libc::getrusage(libc::RUSAGE_SELF, &raw mut used) } == 0).then_some(used)
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a process's memory is Win32's to say, through GetProcessMemoryInfo"
-)]
+#[allow(unsafe_code)]
 fn memory() -> Option<u64> {
     use windows::Win32::System::ProcessStatus::{GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS};
     use windows::Win32::System::Threading::GetCurrentProcess;
@@ -61,7 +55,7 @@ fn memory() -> Option<u64> {
 }
 
 #[cfg(target_os = "linux")]
-#[allow(unsafe_code, reason = "sysconf only reads a number the system keeps")]
+#[allow(unsafe_code)]
 fn page_size() -> u64 {
     u64::try_from(unsafe { libc::sysconf(libc::_SC_PAGESIZE) }).unwrap_or(4096)
 }

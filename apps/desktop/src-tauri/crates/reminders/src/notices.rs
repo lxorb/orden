@@ -11,10 +11,7 @@ use std::sync::{Mutex, PoisonError};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter as _, Manager as _};
 
-#[cfg_attr(
-    not(any(windows, target_os = "macos")),
-    allow(dead_code, reason = "Linux hears no presses")
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 const PRESSED: &str = "orden://notice";
 
 const LONGEST_TAG: usize = 64;
@@ -26,37 +23,16 @@ pub struct Notice {
     pub tag: String,
     pub title: String,
     pub body: String,
-    #[cfg_attr(
-        not(any(windows, test)),
-        allow(dead_code, reason = "only a Windows toast has a line for it")
-    )]
+    #[cfg_attr(not(any(windows, test)), allow(dead_code))]
     pub from: String,
-    #[cfg_attr(
-        not(any(windows, target_os = "macos", test)),
-        allow(
-            dead_code,
-            reason = "Linux shows the plugin's notification, with its own sound"
-        )
-    )]
+    #[cfg_attr(not(any(windows, target_os = "macos", test)), allow(dead_code))]
     pub silent: bool,
-    #[cfg_attr(
-        not(any(windows, target_os = "macos", test)),
-        allow(
-            dead_code,
-            reason = "Linux shows a notification with nothing to type in"
-        )
-    )]
+    #[cfg_attr(not(any(windows, target_os = "macos", test)), allow(dead_code))]
     pub reply: Option<Reply>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-#[cfg_attr(
-    not(any(windows, target_os = "macos", test)),
-    allow(
-        dead_code,
-        reason = "Linux shows a notification with nothing to type in"
-    )
-)]
+#[cfg_attr(not(any(windows, target_os = "macos", test)), allow(dead_code))]
 pub struct Reply {
     pub placeholder: String,
     pub send: String,
@@ -64,20 +40,14 @@ pub struct Reply {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
-#[cfg_attr(
-    not(any(windows, target_os = "macos")),
-    allow(dead_code, reason = "Linux hears no presses")
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 pub enum Act {
     Open,
     Reply,
 }
 
 #[derive(Clone, Debug, Serialize)]
-#[cfg_attr(
-    not(any(windows, target_os = "macos")),
-    allow(dead_code, reason = "Linux hears no presses")
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 struct Answer {
     id: String,
     act: Act,
@@ -156,10 +126,7 @@ pub fn clear_all(app: &AppHandle) {
 
 #[cfg_attr(
     not(any(windows, target_os = "macos")),
-    allow(
-        clippy::unnecessary_wraps,
-        reason = "Linux hands the plugin a notification that cannot fail to be asked for"
-    )
+    allow(clippy::unnecessary_wraps)
 )]
 fn shown(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     #[cfg(windows)]
@@ -183,10 +150,7 @@ fn shown(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     }
 }
 
-#[cfg_attr(
-    not(any(windows, target_os = "macos")),
-    allow(dead_code, reason = "Linux hears no presses")
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 pub fn answered(app: &AppHandle, id: &str, act: Act, text: Option<String>) {
     let label = in_windows(|windows| windows.get(id).cloned());
     let window = label

@@ -81,13 +81,7 @@ impl Place {
         self.module_len = fill(&mut self.module, name);
     }
 
-    #[cfg_attr(
-        windows,
-        allow(
-            dead_code,
-            reason = "Windows names no symbol without the program's PDB"
-        )
-    )]
+    #[cfg_attr(windows, allow(dead_code))]
     pub fn name_symbol(&mut self, said: &[u8]) {
         self.symbol_len = fill(&mut self.symbol, said);
     }
@@ -103,10 +97,7 @@ pub fn start() {
     here_on::start();
 }
 
-#[cfg_attr(
-    windows,
-    allow(dead_code, reason = "Windows unwinds a crash from its own context")
-)]
+#[cfg_attr(windows, allow(dead_code))]
 pub fn trace_into(ips: &mut [usize]) -> usize {
     here_on::trace(ips)
 }

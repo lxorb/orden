@@ -205,18 +205,12 @@ pub async fn explorer_places(app: AppHandle) -> Vec<Place> {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "GetLogicalDrives is Win32's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn drive_letters() -> u32 {
     unsafe { windows::Win32::Storage::FileSystem::GetLogicalDrives() }
 }
 
-#[cfg_attr(
-    not(windows),
-    allow(dead_code, reason = "only Windows names its disks by letter")
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn lettered(letters: u32) -> Vec<PathBuf> {
     (b'A'..=b'Z')
         .zip(0..)

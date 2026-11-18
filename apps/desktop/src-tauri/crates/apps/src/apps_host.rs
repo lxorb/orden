@@ -326,11 +326,7 @@ fn run_on_its_display(
 }
 
 #[cfg(target_os = "windows")]
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "clamped to a screen's size first"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn desk_size(view: View) -> (u32, u32) {
     let side = |css: f64| ((css * view.dpr).round().clamp(64.0, 8192.0) as u32) & !1;
     (side(view.width), side(view.height))
@@ -818,10 +814,7 @@ enum Signal {
 }
 
 #[cfg(unix)]
-#[allow(
-    unsafe_code,
-    reason = "kill(2) is the kernel's own call for a process group and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn signal(pid: u32, what: Signal) -> bool {
     let Ok(group) = i32::try_from(pid) else {
         return false;

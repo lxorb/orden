@@ -260,11 +260,7 @@ fn output_args(made: Made) -> Vec<String> {
     words.iter().map(|&one| one.to_owned()).collect()
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "clamped to 10 to 60 first"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn frame_rate(hz: f64) -> u32 {
     if hz.is_finite() {
         hz.clamp(10.0, 60.0).round() as u32

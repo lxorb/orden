@@ -39,11 +39,7 @@ pub fn free_number(root: &Path) -> Option<u32> {
     })
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "clamped to a screen's size first"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn screen(width: f64, height: f64, dpr: f64) -> (u32, u32) {
     let side = |css: f64| {
         let pixels = (css * dpr).round().clamp(f64::from(LEAST), f64::from(MOST)) as u32;
@@ -61,11 +57,7 @@ pub fn within(size: (u32, u32), room: (u32, u32)) -> (u32, u32) {
     (even(size.0, room.0), even(size.1, room.1))
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "a ratio the wire holds to at most 8"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 pub fn dpi(dpr: f64) -> u32 {
     (96.0 * ratio(dpr)).round() as u32
 }
@@ -78,11 +70,7 @@ pub fn ratio(dpr: f64) -> f64 {
     }
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss,
-    reason = "a side of at most 8192 pixels"
-)]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn millimetres(pixels: u32, dpr: f64) -> u32 {
     (f64::from(pixels) * 25.4 / f64::from(dpi(dpr))).round() as u32
 }

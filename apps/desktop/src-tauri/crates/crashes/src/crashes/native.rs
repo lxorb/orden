@@ -101,10 +101,7 @@ fn written(
     if room.is_null() {
         return None;
     }
-    #[allow(
-        unsafe_code,
-        reason = "the room was leaked at install and only this one writer, once, ever touches it"
-    )]
+    #[allow(unsafe_code)]
     let room = unsafe { std::slice::from_raw_parts_mut(room, ROOM) };
     let mut out = Out { room, len: 0 };
     out.push(b"orden-crash 1\nat ");
@@ -154,10 +151,7 @@ fn written(
 
 fn room_bytes(len: usize) -> &'static [u8] {
     let room = ROOMY.load(Ordering::Acquire);
-    #[allow(
-        unsafe_code,
-        reason = "the room was leaked at install and outlives every reader"
-    )]
+    #[allow(unsafe_code)]
     unsafe {
         std::slice::from_raw_parts(room, len.min(ROOM))
     }
@@ -165,10 +159,7 @@ fn room_bytes(len: usize) -> &'static [u8] {
 
 #[cfg(unix)]
 mod here {
-    #![allow(
-        unsafe_code,
-        reason = "a crash is heard through sigaction and written with open and write, which only libc has"
-    )]
+    #![allow(unsafe_code)]
 
     use std::ffi::{c_int, c_void, CString};
     use std::path::Path;
@@ -335,10 +326,7 @@ mod here {
 
 #[cfg(windows)]
 mod here {
-    #![allow(
-        unsafe_code,
-        reason = "a crash is heard through the unhandled-exception filter and written through CreateFileW, which only Win32 has"
-    )]
+    #![allow(unsafe_code)]
 
     use std::os::windows::ffi::OsStrExt as _;
     use std::path::Path;
@@ -539,7 +527,7 @@ mod tests {
     const CHILD: &str = "ORDEN_CRASH_TEST_CHILD";
 
     #[inline(never)]
-    #[allow(unsafe_code, reason = "the test crashes on purpose")]
+    #[allow(unsafe_code)]
     fn crash_here() {
         unsafe {
             std::hint::black_box(std::ptr::null_mut::<u32>()).write_volatile(7);
@@ -547,7 +535,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    #[allow(unsafe_code, reason = "Windows is asked not to show its crash dialog")]
+    #[allow(unsafe_code)]
     fn quietly() {
         use windows::Win32::System::Diagnostics::Debug::{
             SetErrorMode, SEM_FAILCRITICALERRORS, SEM_NOGPFAULTERRORBOX,

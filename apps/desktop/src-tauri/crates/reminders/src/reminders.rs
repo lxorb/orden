@@ -1,10 +1,7 @@
 pub mod link;
 #[cfg(target_os = "macos")]
 pub(crate) mod macos;
-#[cfg_attr(
-    not(any(windows, target_os = "macos")),
-    allow(dead_code, reason = "Linux has no schedule to hand a notification to")
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 pub(crate) mod schedule;
 #[cfg(any(windows, test))]
 mod toast;
@@ -33,33 +30,18 @@ pub struct Planned {
     pub hash: String,
     pub line: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[cfg_attr(
-        not(windows),
-        allow(
-            dead_code,
-            reason = "a Windows toast's snooze; a Mac's snoozes are fixed"
-        )
-    )]
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub tomorrow: Option<u32>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-#[cfg_attr(
-    not(any(windows, target_os = "macos")),
-    allow(dead_code, reason = "Linux shows a reminder with no buttons")
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 pub struct Words {
     pub done: String,
     pub snooze: String,
     pub minutes: String,
     pub hour: String,
-    #[cfg_attr(
-        not(windows),
-        allow(
-            dead_code,
-            reason = "a Windows toast's snooze; a Mac's snoozes are fixed"
-        )
-    )]
+    #[cfg_attr(not(windows), allow(dead_code))]
     pub tomorrow: String,
 }
 

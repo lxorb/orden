@@ -7,10 +7,10 @@ pub mod clipboard {
     pub struct Clipboard;
 
     impl Clipboard {
-        #[allow(clippy::unused_self, reason = "the face of Linux's clipboard")]
+        #[allow(clippy::unused_self)]
         pub fn listen(&self, _listener: Option<Listener>) {}
 
-        #[allow(clippy::unused_self, reason = "the face of Linux's clipboard")]
+        #[allow(clippy::unused_self)]
         pub fn give(&self, _text: &str) {}
     }
 }
@@ -23,7 +23,7 @@ pub mod audio {
             None
         }
 
-        #[allow(clippy::unused_self, reason = "the face of Linux's sound")]
+        #[allow(clippy::unused_self)]
         pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
             None
         }
@@ -95,7 +95,7 @@ impl Desk {
         self.ended.load(Ordering::SeqCst)
     }
 
-    #[allow(unsafe_code, reason = "a thread is moved to a desktop by a Win32 call")]
+    #[allow(unsafe_code)]
     pub fn enter(&self) -> Result<(), String> {
         unsafe { SetThreadDesktop(HDESK(self.handle as _)) }.map_err(|error| error.to_string())
     }
@@ -107,7 +107,7 @@ pub struct Desktop {
     keeper: Option<std::thread::JoinHandle<()>>,
 }
 
-#[allow(unsafe_code, reason = "a window station's name is asked of Win32")]
+#[allow(unsafe_code)]
 fn station() -> String {
     let mut name = [0_u16; 256];
     let size = u32::try_from(name.len() * 2).unwrap_or(512);
@@ -135,7 +135,7 @@ pub fn wide(text: &str) -> Vec<u16> {
 }
 
 impl Desktop {
-    #[allow(unsafe_code, reason = "a desktop is made by a Win32 call")]
+    #[allow(unsafe_code)]
     pub fn start(width: u32, height: u32) -> Result<Desktop, String> {
         static MADE: AtomicU32 = AtomicU32::new(0);
         let name = format!(
@@ -184,10 +184,7 @@ impl Desktop {
         *lock(&self.desk.size) = (width, height);
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a process is started on a desktop, in a job, with Win32 calls"
-    )]
+    #[allow(unsafe_code)]
     pub fn run(&self, argv: &[String], folder: &Path) -> Result<Program, String> {
         let said = |error: windows::core::Error| error.to_string();
         if !spoken_to_cmd(argv) {
@@ -247,7 +244,7 @@ impl Desktop {
 }
 
 impl Drop for Desktop {
-    #[allow(unsafe_code, reason = "a desktop is closed by a Win32 call")]
+    #[allow(unsafe_code)]
     fn drop(&mut self) {
         self.desk.ended.store(true, Ordering::SeqCst);
         if let Some(keeper) = self.keeper.take() {
@@ -284,7 +281,7 @@ impl Program {
         self.pid
     }
 
-    #[allow(unsafe_code, reason = "a job and a process are asked with Win32 calls")]
+    #[allow(unsafe_code)]
     pub fn wait(&self) -> Option<i32> {
         while busy(self.job) {
             std::thread::sleep(ASK_EVERY);
@@ -296,7 +293,7 @@ impl Program {
 }
 
 impl Drop for Program {
-    #[allow(unsafe_code, reason = "handles are closed by a Win32 call")]
+    #[allow(unsafe_code)]
     fn drop(&mut self) {
         programs().remove(&self.pid);
         unsafe {
@@ -306,7 +303,7 @@ impl Drop for Program {
     }
 }
 
-#[allow(unsafe_code, reason = "a job is asked with a Win32 call")]
+#[allow(unsafe_code)]
 fn busy(job: isize) -> bool {
     let mut counts = JOBOBJECT_BASIC_ACCOUNTING_INFORMATION::default();
     let size =
@@ -333,7 +330,7 @@ pub fn close(pid: u32) {
     }
 }
 
-#[allow(unsafe_code, reason = "a job is ended by a Win32 call")]
+#[allow(unsafe_code)]
 pub fn kill(pid: u32) {
     if let Some((job, _)) = programs().get(&pid) {
         let _ = unsafe { TerminateJobObject(HANDLE(*job as _), 1) };
@@ -393,10 +390,7 @@ fn quoted(word: &str) -> String {
     out
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a desktop's windows are walked with Win32 calls"
-)]
+#[allow(unsafe_code)]
 pub fn shown() -> Vec<HWND> {
     let mut found = Vec::new();
     unsafe {
@@ -414,7 +408,7 @@ pub fn shown() -> Vec<HWND> {
     found
 }
 
-#[allow(unsafe_code, reason = "a window's place is asked of Win32")]
+#[allow(unsafe_code)]
 pub fn place_of(window: HWND) -> Option<RECT> {
     let mut place = RECT::default();
     unsafe { GetWindowRect(window, &raw mut place) }.ok()?;
@@ -448,10 +442,7 @@ pub fn centred(size: (i32, i32), view: (i32, i32)) -> (i32, i32) {
     )
 }
 
-#[allow(
-    unsafe_code,
-    reason = "windows are placed and asked to close with Win32 calls"
-)]
+#[allow(unsafe_code)]
 fn keep(desk: &Desk) {
     if desk.enter().is_err() {
         return;
@@ -614,7 +605,7 @@ mod tests {
         assert_eq!(centred((1600, 900), (1200, 800)), (0, 0));
     }
 
-    #[allow(unsafe_code, reason = "a window's process is asked of Win32")]
+    #[allow(unsafe_code)]
     fn process_of(window: HWND) -> u32 {
         let mut pid = 0;
         unsafe {

@@ -165,10 +165,7 @@ fn same(one: &Path, other: &Path) -> bool {
             ))
 }
 
-#[allow(
-    clippy::too_many_arguments,
-    reason = "a command's arguments are what the window names, one each"
-)]
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn explorer_transfer(
     app: AppHandle,

@@ -123,10 +123,7 @@ pub fn start(app: &tauri::AppHandle) {
 static ON_THE_PAD: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a touchpad's own reports reach a program only as raw input, read through user32 and hid.dll"
-)]
+#[allow(unsafe_code)]
 mod raw {
     use std::cell::RefCell;
     use std::collections::HashMap;

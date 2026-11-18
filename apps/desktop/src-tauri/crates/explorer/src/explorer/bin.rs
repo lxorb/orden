@@ -142,10 +142,7 @@ fn restored(ticket: &Ticket) -> Result<PathBuf, String> {
     ))
 }
 
-#[cfg_attr(
-    not(any(target_os = "linux", windows)),
-    allow(dead_code, reason = "a Mac's trash says where it put a file")
-)]
+#[cfg_attr(not(any(target_os = "linux", windows)), allow(dead_code))]
 fn newest_from<T>(
     held: impl Iterator<Item = (T, PathBuf, i64)>,
     back: &Path,

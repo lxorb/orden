@@ -15,11 +15,7 @@ pub fn system() -> &'static dyn WindowSystem {
     }
 }
 
-#[allow(
-    clippy::cast_sign_loss,
-    clippy::useless_conversion,
-    reason = "a window's handle is an X11 id, a view pointer or an HWND by platform; one number holds any of them"
-)]
+#[allow(clippy::cast_sign_loss, clippy::useless_conversion)]
 pub fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<NativeWindow> {
     use raw_window_handle::{HasWindowHandle as _, RawWindowHandle};
 

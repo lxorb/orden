@@ -62,10 +62,7 @@ mod platform {
         };
         let mut process = 0u32;
 
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask Windows when it last had input, or which window is in front"
-        )]
+        #[allow(unsafe_code)]
         let (read, now) = unsafe {
             let read = GetLastInputInfo(&raw mut last).as_bool();
             let front = GetForegroundWindow();
@@ -98,29 +95,19 @@ mod platform {
     const COMBINED: i32 = 0;
     const ANY_INPUT: u32 = !0;
 
-    #[allow(
-        unsafe_code,
-        reason = "CoreGraphics' idle time has no binding in the crates this app uses"
-    )]
+    #[allow(unsafe_code)]
     #[link(name = "CoreGraphics", kind = "framework")]
     unsafe extern "C" {
         fn CGEventSourceSecondsSinceLastEventType(state: i32, event: u32) -> f64;
     }
 
     pub fn system_input() -> Option<Input> {
-        #[allow(
-            unsafe_code,
-            reason = "there is no safe way to ask macOS when it last had input"
-        )]
+        #[allow(unsafe_code)]
         let seconds = unsafe { CGEventSourceSecondsSinceLastEventType(COMBINED, ANY_INPUT) };
         if !seconds.is_finite() || seconds < 0.0 {
             return None;
         }
-        #[allow(
-            clippy::cast_possible_truncation,
-            clippy::cast_sign_loss,
-            reason = "a finite, non-negative number of seconds, as milliseconds"
-        )]
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let idle_ms = (seconds * 1000.0) as u64;
 
         Some(Input {

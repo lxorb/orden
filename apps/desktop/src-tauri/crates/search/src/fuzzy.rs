@@ -202,10 +202,7 @@ fn ranges(body: &str, at: &[usize]) -> Vec<Span> {
     out
 }
 
-#[allow(
-    dead_code,
-    reason = "the twin of the app's fuzzyTerms, which is what sends the terms over; the tests hold the two to the same table"
-)]
+#[allow(dead_code)]
 #[must_use]
 fn fuzzy_terms(query: &Query) -> Vec<String> {
     let mut out = Vec::new();

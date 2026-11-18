@@ -1,7 +1,4 @@
-#![allow(
-    unsafe_code,
-    reason = "other threads' stacks are read through Win32's thread and unwind calls, which have no safe form"
-)]
+#![allow(unsafe_code)]
 
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;

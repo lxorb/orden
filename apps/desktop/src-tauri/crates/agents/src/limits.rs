@@ -55,10 +55,7 @@ impl Counts {
 
 static COUNTS: Mutex<Option<Counts>> = Mutex::new(None);
 
-#[allow(
-    clippy::result_unit_err,
-    reason = "the only failure is the stop, which carries nothing"
-)]
+#[allow(clippy::result_unit_err)]
 pub fn wait_for_room(
     agent: &str,
     what: Counted,

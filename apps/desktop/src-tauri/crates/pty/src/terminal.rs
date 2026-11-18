@@ -190,10 +190,7 @@ pub async fn terminal_shells(webview: Webview) -> Result<Vec<shells::Offered>, S
     .await
 }
 
-#[allow(
-    clippy::too_many_arguments,
-    reason = "a Tauri command takes its arguments one by one"
-)]
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn pty_spawn(
     webview: Webview,

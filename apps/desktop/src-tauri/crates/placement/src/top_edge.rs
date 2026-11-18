@@ -1,9 +1,6 @@
 use tauri::{Runtime, Window};
 
-#[cfg_attr(
-    not(windows),
-    allow(dead_code, reason = "only a Windows window has the strip this decides")
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn resizes_from_top(maximized: bool, minimized: bool, sizing_frame: bool) -> bool {
     sizing_frame && !maximized && !minimized
 }
@@ -28,10 +25,7 @@ mod strip {
 
     const OURS: usize = 0x746f_7065;
 
-    #[allow(
-        unsafe_code,
-        reason = "a window's size and style are heard through a Win32 subclass, which only the Win32 API installs"
-    )]
+    #[allow(unsafe_code)]
     pub fn mind<R: Runtime>(window: &Window<R>) {
         use tauri::Manager as _;
         let Ok(hwnd) = window.hwnd() else {
@@ -47,10 +41,7 @@ mod strip {
         });
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a subclass procedure is called by Windows with the window's own message"
-    )]
+    #[allow(unsafe_code)]
     unsafe extern "system" fn listened(
         window: HWND,
         message: u32,
@@ -70,10 +61,7 @@ mod strip {
         answer
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "the strip is a Win32 child window that Tauri hands out no handle to"
-    )]
+    #[allow(unsafe_code)]
     fn matched(window: HWND) {
         unsafe {
             let Ok(strip) = FindWindowExW(

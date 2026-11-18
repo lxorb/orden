@@ -1,10 +1,4 @@
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows lists processes; the kernel answers elsewhere"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Process {
     pub id: u32,
@@ -12,13 +6,7 @@ pub struct Process {
     pub name: String,
 }
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows lists processes; the kernel answers elsewhere"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 const IDLE: [&str; 13] = [
     "conhost.exe",
     "openconsole.exe",
@@ -35,35 +23,17 @@ const IDLE: [&str; 13] = [
     "git-bash.exe",
 ];
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows lists processes; the kernel answers elsewhere"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 const AGENTS: [&str; 2] = ["claude.exe", "codex.exe"];
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows lists processes; the kernel answers elsewhere"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn idle(one: &Process) -> bool {
     IDLE.contains(&one.name.to_ascii_lowercase().as_str())
 }
 
 type Born<'a> = &'a dyn Fn(u32) -> Option<u64>;
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows lists processes; the kernel answers elsewhere"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn first_below<'a>(
     root: u32,
     processes: &'a [Process],
@@ -97,13 +67,7 @@ fn first_below<'a>(
     None
 }
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows lists processes; the kernel answers elsewhere"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn front_below<'a>(root: u32, processes: &'a [Process], born: Born<'_>) -> Option<&'a Process> {
     let front = first_below(root, processes, idle, |one| !idle(one), born)?;
     let agent = |one: &Process| AGENTS.contains(&one.name.to_ascii_lowercase().as_str());
@@ -113,13 +77,7 @@ pub fn front_below<'a>(root: u32, processes: &'a [Process], born: Born<'_>) -> O
     Some(first_below(front.id, processes, |_| true, agent, born).unwrap_or(front))
 }
 
-#[cfg_attr(
-    not(windows),
-    allow(
-        dead_code,
-        reason = "only Windows lists processes; the kernel answers elsewhere"
-    )
-)]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn busy_below(root: u32, processes: &[Process], born: Born<'_>) -> bool {
     first_below(root, processes, idle, |one| !idle(one), born).is_some()
 }
@@ -163,10 +121,7 @@ fn front_group(shell: u32) -> Option<u32> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "proc_pidinfo is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn front_group(shell: u32) -> Option<u32> {
     let pid = libc::c_int::try_from(shell).ok()?;
     let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_bsdinfo>()).ok()?;
@@ -207,10 +162,7 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
     Some(split_arguments(&line, 1))
 }
 
-#[cfg_attr(
-    not(target_os = "linux"),
-    allow(dead_code, reason = "only Linux's kernel answers in this shape")
-)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn split_arguments(bytes: &[u8], skip: usize) -> Vec<String> {
     bytes
         .strip_suffix(&[0])
@@ -222,10 +174,7 @@ fn split_arguments(bytes: &[u8], skip: usize) -> Vec<String> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "sysctl is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn arguments_of(pid: u32) -> Option<Vec<String>> {
     let pid = libc::c_int::try_from(pid).ok()?;
     let mut most: libc::c_int = 0;
@@ -264,10 +213,7 @@ fn arguments_of(pid: u32) -> Option<Vec<String>> {
     procargs(&buffer[..size.min(buffer.len())])
 }
 
-#[cfg_attr(
-    not(target_os = "macos"),
-    allow(dead_code, reason = "only a Mac's kernel answers in this shape")
-)]
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn procargs(buffer: &[u8]) -> Option<Vec<String>> {
     let count = usize::try_from(i32::from_ne_bytes(buffer.get(..4)?.try_into().ok()?)).ok()?;
     let rest = &buffer[4..];
@@ -289,10 +235,7 @@ fn procargs(buffer: &[u8]) -> Option<Vec<String>> {
 const MOST_COMMAND_LINE: usize = 8200;
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a process's command line is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn arguments_of(pid: u32) -> Option<Vec<String>> {
     use windows::Wdk::System::Threading::{
         NtQueryInformationProcess, ProcessCommandLineInformation,
@@ -366,10 +309,7 @@ fn name_of(pid: u32) -> Option<String> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "proc_pidpath is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn name_of(pid: u32) -> Option<String> {
     let pid = libc::c_int::try_from(pid).ok()?;
     let mut buffer = vec![0_u8; 4096];
@@ -391,10 +331,7 @@ fn name_of(_pid: u32) -> Option<String> {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "the toolhelp snapshot is Win32's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 pub fn processes() -> Vec<Process> {
     use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::Diagnostics::ToolHelp::{
@@ -436,10 +373,7 @@ pub fn processes() -> Vec<Process> {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "a process's start time is Win32's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 fn started() -> impl Fn(u32) -> Option<u64> {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -479,10 +413,7 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "proc_pidinfo is the kernel's own call and has no safe wrapper"
-)]
+#[allow(unsafe_code)]
 pub fn folder(shell: Option<u32>) -> Option<String> {
     let pid = libc::c_int::try_from(shell?).ok()?;
     let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_vnodepathinfo>()).ok()?;
@@ -514,10 +445,7 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
 }
 
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "another process's working folder is in its own memory, which only the kernel's calls read"
-)]
+#[allow(unsafe_code)]
 pub fn folder(shell: Option<u32>) -> Option<String> {
     use std::ffi::c_void;
     use std::mem::{offset_of, size_of};

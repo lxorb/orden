@@ -42,10 +42,7 @@ pub fn twin_of(reader: Option<&str>) -> String {
     }
 }
 
-#[allow(
-    clippy::option_option,
-    reason = "no twin, and a twin of the store every space shares, are two different answers"
-)]
+#[allow(clippy::option_option)]
 pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
     let rest = store?.strip_prefix(TWIN)?;
     if rest.is_empty() {
@@ -193,10 +190,7 @@ pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
 
 pub const UNREAD: u64 = 0;
 
-#[allow(
-    clippy::implicit_hasher,
-    reason = "the secrets are one set the page builds with the default hasher"
-)]
+#[allow(clippy::implicit_hasher)]
 pub fn left_a_part_out(secret: &HashSet<(String, u64)>) -> bool {
     secret.iter().any(|(_, node)| *node == UNREAD)
 }

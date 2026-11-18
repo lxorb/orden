@@ -38,11 +38,7 @@ mod engine {
 
     use super::{Said, PAUSE, PLAY};
 
-    #[allow(
-        clippy::unnecessary_wraps,
-        clippy::needless_pass_by_value,
-        reason = "the same answer as the other engines', whose calls can fail"
-    )]
+    #[allow(clippy::unnecessary_wraps, clippy::needless_pass_by_value)]
     pub fn lull(view: &Webview, paused: bool, said: Said) -> Result<(), String> {
         let told = if paused {
             vec![

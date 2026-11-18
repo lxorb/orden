@@ -1,9 +1,6 @@
 use std::path::{Path, PathBuf};
 
-#[cfg_attr(
-    not(any(target_os = "macos", test)),
-    allow(dead_code, reason = "only a Mac keeps the app in a folder of its own")
-)]
+#[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn bundle_of(exe: &Path) -> Option<PathBuf> {
     let macos = exe.parent()?;
     let contents = macos.parent()?;
@@ -15,19 +12,13 @@ fn bundle_of(exe: &Path) -> Option<PathBuf> {
     (named(macos, "MacOS") && named(contents, "Contents") && app).then(|| bundle.to_path_buf())
 }
 
-#[cfg_attr(
-    not(any(target_os = "macos", test)),
-    allow(dead_code, reason = "only a Mac translocates an app")
-)]
+#[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 fn stuck_at(bundle: &Path, read_only: bool) -> bool {
     read_only || bundle.to_string_lossy().contains("/AppTranslocation/")
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "statfs fills a struct the type system cannot see into"
-)]
+#[allow(unsafe_code)]
 fn read_only(path: &Path) -> bool {
     use std::os::unix::ffi::OsStrExt as _;
 
@@ -72,7 +63,7 @@ fn applications() -> Option<PathBuf> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(unsafe_code, reason = "access takes a C string")]
+#[allow(unsafe_code)]
 fn writable(path: &Path) -> bool {
     use std::os::unix::ffi::OsStrExt as _;
 
@@ -82,10 +73,7 @@ fn writable(path: &Path) -> bool {
     unsafe { libc::access(name.as_ptr(), libc::W_OK) == 0 }
 }
 
-#[cfg_attr(
-    not(any(target_os = "macos", test)),
-    allow(dead_code, reason = "only a Mac moves the app")
-)]
+#[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 const RELAUNCH: &str = r#"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep 0.1; done; /bin/sleep 0.5; exec /usr/bin/open -n "$2""#;
 
 #[cfg(target_os = "macos")]

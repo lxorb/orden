@@ -186,10 +186,7 @@ impl Input {
         self.typed(virtual_key, character, down);
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "an event's Unicode string is written from a buffer the call reads only"
-    )]
+    #[allow(unsafe_code)]
     fn typed(&self, virtual_key: u16, character: Option<char>, down: bool) {
         let Some(event) = CGEvent::new_keyboard_event(None, virtual_key, down) else {
             return;
@@ -217,10 +214,7 @@ impl Drop for Input {
 }
 
 pub fn global(bounds: CGRect, pixels: (usize, usize), x: f64, y: f64) -> CGPoint {
-    #[allow(
-        clippy::cast_precision_loss,
-        reason = "display sizes are far below 2^52"
-    )]
+    #[allow(clippy::cast_precision_loss)]
     let (width, height) = (pixels.0.max(1) as f64, pixels.1.max(1) as f64);
     let inside = |value: f64, most: f64| {
         if value.is_finite() {
@@ -281,7 +275,7 @@ fn mouse(
     Some(event)
 }
 
-#[allow(clippy::too_many_lines, reason = "one table, a row a key")]
+#[allow(clippy::too_many_lines)]
 pub fn key_code(code: &str) -> Option<u16> {
     let found = match code {
         "KeyA" => 0x00,

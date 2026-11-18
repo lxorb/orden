@@ -23,7 +23,7 @@ use objc2_screen_capture_kit::{
 pub enum News {
     Drawn,
     Resized,
-    #[allow(dead_code, reason = "the Linux capture's news, which the stream reads")]
+    #[allow(dead_code)]
     Pointer(String),
     Whole,
     Gone,
@@ -101,17 +101,14 @@ define_class!(
 impl Output {
     fn new(frames: Arc<Frames>) -> Retained<Self> {
         let this = Self::alloc().set_ivars(frames);
-        #[allow(unsafe_code, reason = "a defined class's init through its superclass")]
+        #[allow(unsafe_code)]
         unsafe {
             msg_send![super(this), init]
         }
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a sample buffer's attachments are a CFArray of CFDictionary, read as the NSArray and NSDictionary they bridge to"
-)]
+#[allow(unsafe_code)]
 fn is_new(buffer: &CMSampleBuffer) -> bool {
     unsafe {
         let Some(attachments) = buffer.sample_attachments_array(false) else {
@@ -128,10 +125,7 @@ fn is_new(buffer: &CMSampleBuffer) -> bool {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a pixel buffer's base address is read while it is locked, as CoreVideo asks"
-)]
+#[allow(unsafe_code)]
 fn copied(buffer: &CMSampleBuffer) -> Option<Frame> {
     unsafe {
         let pixels = buffer.image_buffer()?;
@@ -205,10 +199,7 @@ impl Capture {
         })
     }
 
-    #[allow(
-        unsafe_code,
-        reason = "a running stream's configuration is changed by the method ScreenCaptureKit gives for it"
-    )]
+    #[allow(unsafe_code)]
     pub fn grab(&mut self) -> Result<(&[u8], (u16, u16)), String> {
         let now = super::display::pixels_of(self.display);
         if now != self.asked && now.0 > 0 && now.1 > 0 {
@@ -244,7 +235,7 @@ impl Capture {
 }
 
 impl Drop for Capture {
-    #[allow(unsafe_code, reason = "a stream this owns, stopped as it ends")]
+    #[allow(unsafe_code)]
     fn drop(&mut self) {
         *lock(&self.frames.seen) = None;
         unsafe {
@@ -257,10 +248,7 @@ impl Drop for Capture {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a stream configuration's setters, on one this has just made"
-)]
+#[allow(unsafe_code)]
 fn configuration(size: (usize, usize)) -> Retained<SCStreamConfiguration> {
     unsafe {
         let configuration = SCStreamConfiguration::new();
@@ -274,10 +262,7 @@ fn configuration(size: (usize, usize)) -> Retained<SCStreamConfiguration> {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "ScreenCaptureKit answers on a queue of its own, through a block"
-)]
+#[allow(unsafe_code)]
 fn shareable() -> Result<Retained<SCShareableContent>, String> {
     let (tell, heard) = std::sync::mpsc::channel();
     let tell = Mutex::new(Some(tell));
@@ -300,10 +285,7 @@ fn shareable() -> Result<Retained<SCShareableContent>, String> {
         .ok_or_else(|| "this Mac said nothing may be captured".to_owned())
 }
 
-#[allow(
-    unsafe_code,
-    reason = "ScreenCaptureKit's objects, read and made as its headers say"
-)]
+#[allow(unsafe_code)]
 fn filter(display: CGDirectDisplayID, pid: i32) -> Result<Retained<SCContentFilter>, String> {
     let until = Instant::now() + APP_WITHIN;
     loop {
@@ -345,7 +327,7 @@ fn filter(display: CGDirectDisplayID, pid: i32) -> Result<Retained<SCContentFilt
     }
 }
 
-#[allow(unsafe_code, reason = "a stream made, given its output and started")]
+#[allow(unsafe_code)]
 fn start(
     filter: &SCContentFilter,
     configuration: &SCStreamConfiguration,

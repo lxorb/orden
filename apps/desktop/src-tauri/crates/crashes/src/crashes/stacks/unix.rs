@@ -12,7 +12,7 @@ struct UnwindContext {
 
 type Step = extern "C" fn(*mut UnwindContext, *mut c_void) -> c_int;
 
-#[allow(unsafe_code, reason = "the system unwinder is reached through C")]
+#[allow(unsafe_code)]
 unsafe extern "C" {
     fn _Unwind_Backtrace(step: Step, held: *mut c_void) -> c_int;
     fn _Unwind_GetIP(context: *mut UnwindContext) -> usize;
@@ -27,10 +27,7 @@ struct Gathered<'a> {
     len: usize,
 }
 
-#[allow(
-    unsafe_code,
-    reason = "the unwinder hands back the pointer it was given"
-)]
+#[allow(unsafe_code)]
 extern "C" fn step(context: *mut UnwindContext, held: *mut c_void) -> c_int {
     let gathered = unsafe { &mut *held.cast::<Gathered>() };
     if gathered.len >= gathered.ips.len() {
@@ -45,10 +42,7 @@ extern "C" fn step(context: *mut UnwindContext, held: *mut c_void) -> c_int {
     NO_REASON
 }
 
-#[allow(
-    unsafe_code,
-    reason = "the system unwinder walks this thread's own stack"
-)]
+#[allow(unsafe_code)]
 pub fn trace(ips: &mut [usize]) -> usize {
     let _walking = walking();
     let mut gathered = Gathered { ips, len: 0 };
@@ -124,13 +118,13 @@ fn unwinding() -> bool {
 static INSTALLED: Once = Once::new();
 
 #[cfg(target_os = "linux")]
-#[allow(unsafe_code, reason = "a thread's own number is gettid's to say")]
+#[allow(unsafe_code)]
 fn this_thread() -> usize {
     usize::try_from(unsafe { libc::gettid() }).unwrap_or(0)
 }
 
 #[cfg(target_os = "macos")]
-#[allow(unsafe_code, reason = "a thread's own handle is pthread_self's to say")]
+#[allow(unsafe_code)]
 fn this_thread() -> usize {
     unsafe { libc::pthread_self() }
 }
@@ -154,10 +148,7 @@ extern "C" fn answer(_signal: c_int) {
     ANSWERED.store(asked, Ordering::Release);
 }
 
-#[allow(
-    unsafe_code,
-    reason = "a signal handler is installed through sigaction"
-)]
+#[allow(unsafe_code)]
 pub fn start() {
     INSTALLED.call_once(|| unsafe {
         let mut action: libc::sigaction = std::mem::zeroed();
@@ -216,10 +207,7 @@ fn asking(
 }
 
 #[cfg(target_os = "linux")]
-#[allow(
-    unsafe_code,
-    reason = "each thread is asked through tgkill, which only libc has"
-)]
+#[allow(unsafe_code)]
 pub fn every_thread(within: Duration) -> Vec<Raw> {
     start();
     let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
@@ -266,14 +254,8 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unsafe_code,
-    reason = "a task's threads are listed through Mach, which only libc reaches"
-)]
-#[allow(
-    deprecated,
-    reason = "mach_task_self is all libc has for the task, and mach2 is not worth a dependency for one call"
-)]
+#[allow(unsafe_code)]
+#[allow(deprecated)]
 pub fn every_thread(within: Duration) -> Vec<Raw> {
     unsafe extern "C" {
         fn mach_port_deallocate(task: libc::mach_port_t, name: libc::mach_port_t) -> c_int;
@@ -340,10 +322,7 @@ pub fn every_thread(within: Duration) -> Vec<Raw> {
 }
 
 #[cfg(all(test, target_os = "linux"))]
-#[allow(
-    unsafe_code,
-    reason = "one thread is asked through the system's own call"
-)]
+#[allow(unsafe_code)]
 fn one_thread(target: usize, within: Duration) -> Vec<usize> {
     start();
     let _one_at_a_time = ASKING.lock().unwrap_or_else(PoisonError::into_inner);
@@ -358,7 +337,7 @@ fn one_thread(target: usize, within: Duration) -> Vec<usize> {
 static MAIN: std::sync::OnceLock<libc::pthread_t> = std::sync::OnceLock::new();
 
 #[cfg(target_os = "macos")]
-#[allow(unsafe_code, reason = "the main thread is known by asking pthreads")]
+#[allow(unsafe_code)]
 pub fn mark_main() {
     if unsafe { libc::pthread_main_np() } != 0 {
         let _ = MAIN.set(unsafe { libc::pthread_self() });
@@ -373,10 +352,7 @@ fn main_thread() -> Option<libc::pthread_t> {
     MAIN.get().copied()
 }
 
-#[allow(
-    unsafe_code,
-    reason = "dladdr says which loaded image holds an address"
-)]
+#[allow(unsafe_code)]
 pub fn place_of(ip: usize, place: &mut Place) {
     let mut found: libc::Dl_info = unsafe { std::mem::zeroed() };
     if unsafe { libc::dladdr(ip as *const c_void, &raw mut found) } == 0 {
@@ -393,10 +369,7 @@ pub fn place_of(ip: usize, place: &mut Place) {
     }
 }
 
-#[allow(
-    unsafe_code,
-    reason = "dladdr says which loaded image holds an address"
-)]
+#[allow(unsafe_code)]
 fn own_image(base: *mut c_void) -> bool {
     let mut info: libc::Dl_info = unsafe { std::mem::zeroed() };
     let here = own_image as fn(*mut c_void) -> bool as *const c_void;
@@ -411,10 +384,7 @@ mod tests {
 
     const CHILD: &str = "ORDEN_STACKS_TEST_CHILD";
 
-    #[allow(
-        unsafe_code,
-        reason = "the thread is given a small alternate signal stack with a guard below it, as std gives each of its threads one"
-    )]
+    #[allow(unsafe_code)]
     fn small_alternate_stack() {
         let page = 4096;
         unsafe {

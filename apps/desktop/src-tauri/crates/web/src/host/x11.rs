@@ -213,10 +213,7 @@ struct Frame<'a> {
 }
 
 impl Frame<'_> {
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "an edge is a few pixels at any scale"
-    )]
+    #[allow(clippy::cast_possible_truncation)]
     fn run(
         x: &RustConnection,
         screen: usize,
