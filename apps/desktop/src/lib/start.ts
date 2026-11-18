@@ -15,7 +15,7 @@ import {
   mark,
   stallWatch,
 } from './platform/src/api'
-import { startup } from './launch/src/api'
+import { startup, Stops } from './launch/src/api'
 import { choices, modes } from './modes/src/api'
 import { warmDoors } from './features'
 import { recovery } from './history/src/api'
@@ -102,11 +102,7 @@ export function start(): () => void {
 
   if (theme.offerContrast) settings.show('appearance')
 
-  let stopAutomation: (() => void) | null = null
-
-  let stopHanded: (() => void) | null = null
-
-  let stopAgents: (() => void) | null = null
+  const stops = new Stops()
 
   void workspace
     .restore()
@@ -114,12 +110,12 @@ export function start(): () => void {
       mark('space restored')
       if (!__EVEN_PLUGIN__) {
         const { startAutomation } = await (await import('./automation/src/api')).automationStart()
-        stopAutomation = await startAutomation()
-        stopAgents = await listenForAgents()
+        stops.keep(await startAutomation())
+        stops.keep(await listenForAgents())
       }
       if (onTheActivity()) {
         const { startHanded } = await import('./mobile/src/api')
-        stopHanded = startHanded()
+        stops.keep(startHanded())
       }
     })
     .catch((error: unknown) => {
@@ -235,62 +231,50 @@ export function start(): () => void {
     void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
   }
 
-  let stopAnywhere: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup
       .turn('right')
       .then(() => import('./quick-add/src/api'))
       .then((one) => one.quickAnywhere())
-      .then((one) => (stopAnywhere = one.listen()))
+      .then((one) => stops.keep(one.listen()))
   }
 
-  let stopOutsideDrops: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void outsideDrops()
       .then(({ hearOutsideDrops }) => hearOutsideDrops())
-      .then((stop) => (stopOutsideDrops = stop))
+      .then(stops.keep)
       .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
   }
 
   const reporting = !import.meta.env.DEV && !__DRIVEABLE__
 
-  let stopCrashes: (() => void) | null = null
   if (!__EVEN_PLUGIN__ && isDesktop) {
     void startup
       .turn('rooms')
       .then(() => import('./crash-reports/src/api'))
       .then((one) => one.watchCrashes(reporting))
-      .then((stop) => (stopCrashes = stop))
+      .then(stops.keep)
   }
 
-  let stopUsage: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
     void startup
       .turn('rooms')
       .then(() => import('./usage/src/api'))
       .then((one) => one.watchUsage(reporting))
-      .then((stop) => (stopUsage = stop))
+      .then(stops.keep)
   }
 
-  let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
-    void import('./ui-controls/src/api').then((one) => (stopPointer = one.hidePointerWhileTyping()))
+    void import('./ui-controls/src/api').then((one) => stops.keep(one.hidePointerWhileTyping()))
   }
 
   return () => {
-    stopCrashes?.()
-    stopUsage?.()
-    stopPointer?.()
-    stopAnywhere?.()
+    stops.end()
     clearInterval(sweeper)
     clearTimeout(settling)
     stopRecovery()
     stopReloading()
     stopStrayDrops()
-    stopOutsideDrops?.()
     stopLooking()
-    stopAutomation?.()
-    stopHanded?.()
-    stopAgents?.()
   }
 }

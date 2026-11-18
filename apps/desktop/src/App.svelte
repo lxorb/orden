@@ -43,7 +43,7 @@
   } from './lib/frame/src/api'
   import { Sidebar } from './lib/sidebar/src/api'
   import { loadWhatsNew, UpdateNotice, updates } from './lib/updates/src/api'
-  import { startup } from './lib/launch/src/api'
+  import { startup, Stops } from './lib/launch/src/api'
   import { renamed } from './lib/launch/src/renamed.svelte'
   import { account, arriving, usage } from './lib/accounts/src/api'
   import { joining, canWriteIn, share, sharedWithYou } from './lib/sharing/src/api'
@@ -680,12 +680,12 @@
     if (!shortcuts.handle(event, appContext())) shortcuts.writeKey(event)
   }
 
-  let untap: (() => void) | undefined
+  const later = new Stops()
   void startup
     .turn('doors')
     .then(doubleTaps)
-    .then(({ hear }) => (untap = hear(appContext)))
-  onDestroy(() => untap?.())
+    .then(({ hear }) => later.keep(hear(appContext)))
+  onDestroy(() => later.end())
 
   async function showCommands() {
     await paletteDoor.ask()
