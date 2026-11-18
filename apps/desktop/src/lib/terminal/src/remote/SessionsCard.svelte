@@ -34,24 +34,21 @@
 
   const idle = $derived(held.idle().length)
 
-  async function endIdle() {
-    const sure = await prompt.confirm({
-      title: idle === 1 ? 'End the idle session?' : `End ${idle} idle sessions?`,
-      detail: 'What runs in them stops.',
+  const sure = (title: string, them: string) =>
+    prompt.confirm({
+      title,
+      detail: `What runs in ${them} stops.`,
       confirmLabel: 'End',
       danger: true,
     })
-    if (sure) await held.endIdle()
+
+  async function endIdle() {
+    const title = idle === 1 ? 'End the idle session?' : `End ${idle} idle sessions?`
+    if (await sure(title, 'them')) await held.endIdle()
   }
 
   async function end(row: HeldRow) {
-    const sure = await prompt.confirm({
-      title: `End ${named(row)}?`,
-      detail: 'What runs in it stops.',
-      confirmLabel: 'End',
-      danger: true,
-    })
-    if (sure) await held.end(row)
+    if (await sure(`End ${named(row)}?`, 'it')) await held.end(row)
   }
 </script>
 
