@@ -24,18 +24,23 @@ export interface Drafts {
 const inSomeSpace = (ws: Drafts) => (path: string) =>
   ws.spaces.some((one) => within(one.root, path) !== null)
 
-export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
-  const open = ws.tabs.find((tab) => {
+const draftOf = (ws: Drafts, from: string) =>
+  ws.tabs.find((tab) => {
     if (tab.kind !== 'pages' || !isDraft(tab.note)) return false
     const paper = paperOutside(tab.note.text, inSomeSpace(ws))
     return paper !== null && samePath(paper, from)
   })
+
+export async function draftPdf(ws: Drafts, from: string): Promise<Tab | null> {
+  const open = draftOf(ws, from)
   if (open) return open
 
   const text = await asDraft(from, pageSizes).catch((error: unknown) => {
     log('error', `open PDF as a draft: ${from} - ${String(error)}`)
     return null
   })
+  const opened = draftOf(ws, from)
+  if (opened) return opened
   if (text === null) {
     const { unread } = await notices()
     await unread.there(from)
