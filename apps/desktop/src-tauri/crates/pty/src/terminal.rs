@@ -134,11 +134,7 @@ pub fn end_all(app: &AppHandle) {
 }
 
 fn place(webview: &Webview) -> Result<Place, String> {
-    let data = webview
-        .app_handle()
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("could not find the app's data folder: {error}"))?;
+    let data = orden_base::paths::data_dir(webview.app_handle())?;
     let program = std::env::current_exe().map_err(|error| error.to_string())?;
     Ok(Place {
         folder: data.join("terminal-held"),
