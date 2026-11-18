@@ -40,14 +40,11 @@ describe('the addresses a note can show rather than link to', () => {
     expect(webEmbed('https://open.spotify.com/user/x')).toBe(null)
   })
 
-  test('everything else on the web is a link like any other', () => {
+  test('everything else on the web is a link like any other; and so is anything not asked for over https', () => {
     expect(webEmbed('https://example.test/a')).toBe(null)
     expect(webEmbed('https://gist.github.com/a/b')).toBe(null)
     expect(webEmbed('shot.png')).toBe(null)
     expect(webEmbed('')).toBe(null)
-  })
-
-  test('and so is anything not asked for over https', () => {
     expect(webEmbed('http://www.youtube.com/watch?v=abc')).toBe(null)
     expect(webEmbed('javascript:alert(1)')).toBe(null)
   })
@@ -121,14 +118,11 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
     ['https://sketchfab.com/3d-models/a-thing-0d8e5c1e0f7f4a0a9e5b2a7b0e3c1d2f', 'sketchfab'],
   ] as const
 
-  test('each of them is a card saying whose page it stands for', () => {
+  test('each of them is a card saying whose page it stands for; and what it frames is an address of that provider’s, over https', () => {
     for (const [address, id] of listed) {
       expect(named(address), address).toBe(id)
       expect(webCard(address), address).toContain(`data-provider="${id}"`)
     }
-  })
-
-  test('and what it frames is an address of that provider’s, over https', () => {
     for (const [address] of listed) {
       expect(frame(address) ?? '', address).toMatch(/^https:\/\/[\w.-]+\//)
     }
@@ -145,14 +139,11 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
     }
   })
 
-  test('a page of a listed provider that is not a thing to show is a link', () => {
+  test('a page of a listed provider that is not a thing to show is a link; and a domain the list never named stays the link it was', () => {
     expect(webEmbed('https://miro.com/pricing')).toBe(null)
     expect(webEmbed('https://drive.google.com/drive/folders/1A2b3C')).toBe(null)
     expect(webEmbed('https://www.tiktok.com/@orden')).toBe(null)
     expect(webEmbed('https://form.typeform.com/')).toBe(null)
-  })
-
-  test('and a domain the list never named stays the link it was', () => {
     expect(webEmbed('https://embed.example.test/a/b/c')).toBe(null)
     expect(webEmbed('https://notion.test/page/abc123')).toBe(null)
     expect(webCard('https://example.test/a')).toBe(null)
@@ -189,19 +180,13 @@ describe('the card an address is shown as', () => {
     expect(card).not.toContain('src=')
   })
 
-  test('is a link, so a page with no script still goes somewhere', () => {
+  test('is a link, so a page with no script still goes somewhere; takes the room the frame will take, so nothing moves when it loads; and nothing else gets one', () => {
     const card = webCard('https://youtu.be/abc') ?? ''
     expect(card).toContain('href="https://youtu.be/abc"')
     expect(card).toContain('rel="noopener noreferrer nofollow"')
     expect(card).toContain('referrerpolicy="no-referrer"')
-  })
-
-  test('takes the room the frame will take, so nothing moves when it loads', () => {
     expect(webCard('https://x.com/a/status/1')).toContain('--embed-height: 520px')
     expect(webCard('https://youtu.be/abc')).toContain('embed-wide')
-  })
-
-  test('and nothing else gets one', () => {
     expect(webCard('https://example.test/a')).toBe(null)
     expect(webCard('shot.png')).toBe(null)
   })

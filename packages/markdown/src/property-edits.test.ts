@@ -18,13 +18,10 @@ const applied = (source: string, edit: { from: number; to: number; insert: strin
 const NOTE = '---\ntitle: A note\ndone: false\ncount: 3\ntags: [one, two]\n---\n\nWords.\n'
 
 describe('a value typed into a row', () => {
-  test('replaces the value and leaves the rest of the block alone', () => {
+  test('replaces the value and leaves the rest of the block alone; changes the key it names where another is spelled in another case', () => {
     expect(applied(NOTE, writeProperty(NOTE, 'title', 'Another'))).toBe(
       '---\ntitle: Another\ndone: false\ncount: 3\ntags: [one, two]\n---\n\nWords.\n',
     )
-  })
-
-  test('changes the key it names where another is spelled in another case', () => {
     const both = '---\nTitle: a\ntitle: b\n---\n'
     expect(applied(both, writeProperty(both, 'title', 'c'))).toBe('---\nTitle: a\ntitle: c\n---\n')
     expect(applied(both, writeProperty(both, 'Title', null))).toBe('---\ntitle: b\n---\n')
@@ -36,19 +33,12 @@ describe('a value typed into a row', () => {
     expect(written).toContain("title: 'true'")
   })
 
-  test('cannot end the block it is written into', () => {
+  test('cannot end the block it is written into; takes the key away when there is nothing in the field; writes nothing at all when the note already says it', () => {
     const written = applied(NOTE, writeProperty(NOTE, 'title', 'one\n---\nnot the note'))
-
     expect(written.split('\n').filter((line) => line.trim() === '---')).toHaveLength(2)
     expect(readProperties(written)).not.toBeNull()
     expect(written.endsWith('Words.\n')).toBe(true)
-  })
-
-  test('takes the key away when there is nothing in the field', () => {
     expect(applied(NOTE, writeProperty(NOTE, 'title', null))).not.toContain('title:')
-  })
-
-  test('writes nothing at all when the note already says it', () => {
     expect(writeProperty(NOTE, 'title', 'A note')).toBeNull()
   })
 
@@ -84,22 +74,15 @@ describe('a checkbox and a number', () => {
 })
 
 describe('a list', () => {
-  test('is written as the flow sequence every reader of one reads', () => {
+  test('is written as the flow sequence every reader of one reads; replaces the key wherever the note put it; comes back as one line however many lines it was written over', () => {
     expect(writtenList(['one', 'two'])).toBe('[one, two]')
     expect(writtenList([])).toBe('[]')
     expect(writtenList(['one, two'])).toBe("['one, two']")
-  })
-
-  test('replaces the key wherever the note put it', () => {
     expect(applied(NOTE, writeList(NOTE, 'tags', ['one', 'two', 'three']))).toContain(
       'tags: [one, two, three]',
     )
-  })
-
-  test('comes back as one line however many lines it was written over', () => {
     const lines = '---\ntags:\n  - one\n  - two\n  - three\ntitle: A note\n---\n\nWords.\n'
     const written = applied(lines, writeList(lines, 'tags', ['one']))
-
     expect(written).toBe('---\ntags: [one]\ntitle: A note\n---\n\nWords.\n')
     expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual(['one'])
   })
@@ -349,13 +332,9 @@ describe('a key added from the side panel', () => {
 })
 
 describe('a key taken away from the side panel', () => {
-  test('takes its line and leaves every other line as it was', () => {
+  test('takes its line and leaves every other line as it was; takes a list written over several lines with it', () => {
     expect(applied(NOTE, removeProperty(NOTE, 'count'))).toBe(NOTE.replace('count: 3\n', ''))
-  })
-
-  test('takes a list written over several lines with it', () => {
     const note = '---\ntitle: A\ntags:\n  - one\n  - two\ndone: true\n---\nWords.\n'
-
     expect(applied(note, removeProperty(note, 'tags'))).toBe(
       '---\ntitle: A\ndone: true\n---\nWords.\n',
     )
@@ -370,14 +349,11 @@ describe('a key taken away from the side panel', () => {
     ).toBe('Words.\n')
   })
 
-  test('keeps a file’s own line endings', () => {
+  test('keeps a file’s own line endings; and changes nothing for a key the note does not have', () => {
     const note = '---\r\ntitle: A\r\ndone: true\r\n---\r\nWords.\r\n'
     expect(applied(note, removeProperty(note, 'title'))).toBe(
       '---\r\ndone: true\r\n---\r\nWords.\r\n',
     )
-  })
-
-  test('and changes nothing for a key the note does not have', () => {
     expect(removeProperty(NOTE, 'missing')).toBeNull()
   })
 })

@@ -109,11 +109,8 @@ describe('reading a canvas', () => {
     })
   })
 
-  test('leaves out what an edge does not say, so the defaults stay the defaults', () => {
+  test('leaves out what an edge does not say, so the defaults stay the defaults; is an empty canvas for a file that is not one', () => {
     expect(canvas.edges[1]).toEqual({ id: 'e2', fromNode: 'b', toNode: 'c' })
-  })
-
-  test('is an empty canvas for a file that is not one', () => {
     for (const text of ['', 'nonsense', '[]', '{}']) expect(readCanvas(text)).toEqual(EMPTY)
   })
 })
@@ -172,12 +169,9 @@ describe('reading a canvas somebody else wrote', () => {
     expect(canvas.edges[0]).not.toHaveProperty('toEnd')
   })
 
-  test('drops a colour that is neither a preset nor a hex string', () => {
+  test('drops a colour that is neither a preset nor a hex string; drops a subpath that does not begin with a hash, as the spec says it must', () => {
     const nodes = ['red', '7', '#0f0'].map((color, at) => card(String(at), { color }))
     expect(read({ nodes }).nodes.map((node) => node.color)).toEqual([undefined, undefined, '#0f0'])
-  })
-
-  test('drops a subpath that does not begin with a hash, as the spec says it must', () => {
     const file = card('a', { type: 'file', text: undefined, file: 'a.md', subpath: 'Top' })
     expect(read({ nodes: [file] }).nodes[0]).not.toHaveProperty('subpath')
   })
@@ -203,14 +197,10 @@ describe('writing a canvas', () => {
     expect(Object.keys(written.edges[1] ?? {})).toEqual(['id', 'fromNode', 'toNode'])
   })
 
-  test('leaves out what is absent rather than writing it as null', () => {
+  test('leaves out what is absent rather than writing it as null; is read back as what went in, byte for byte the same on its own output', () => {
     const written = writeCanvas({ ...EMPTY, nodes: [{ ...card('a'), type: 'text' }] })
-
     expect(written).not.toContain('color')
     expect(written).not.toContain('null')
-  })
-
-  test('is read back as what went in, byte for byte the same on its own output', () => {
     const canvas = read(SPEC_EXAMPLE)
     expect(readCanvas(writeCanvas(canvas))).toEqual(canvas)
     expect(writeCanvas(readCanvas(writeCanvas(canvas)))).toBe(writeCanvas(canvas))
@@ -269,15 +259,9 @@ describe('what Orden keeps beyond the spec', () => {
   const written = writeCanvas(drawn)
   const parsed = JSON.parse(written) as Record<string, unknown>
 
-  test('writes the spec half as the spec, with no shape in it', () => {
+  test('writes the spec half as the spec, with no shape in it; keeps everything else under one key of its own; reads its own file back exactly, shapes, ink, order and times', () => {
     expect((parsed.nodes as { id: string }[]).map((node) => node.id)).toEqual(['card'])
-  })
-
-  test('keeps everything else under one key of its own', () => {
     expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'orden'])
-  })
-
-  test('reads its own file back exactly, shapes, ink, order and times', () => {
     expect(readCanvas(written)).toEqual(drawn)
   })
 
@@ -334,15 +318,11 @@ describe('what Orden keeps beyond the spec', () => {
     expect(canvas.nodes[1]).not.toHaveProperty('text')
   })
 
-  test('a shape with no size falls back to the same box a card does', () => {
+  test('a shape with no size falls back to the same box a card does; says which names are shapes', () => {
     const canvas = read({ nodes: [], orden: { shapes: [{ id: 'a', shape: 'rect', x: 0, y: 0 }] } })
     const card = read({ nodes: [{ id: 'b', type: 'text', text: 'hi' }] })
-
     expect(canvas.nodes[0]?.width).toBe(card.nodes[0]?.width)
     expect(canvas.nodes[0]?.height).toBe(card.nodes[0]?.height)
-  })
-
-  test('says which names are shapes', () => {
     for (const shape of SHAPES) expect(isShape(shape), shape).toBe(true)
     expect(isShape('blob')).toBe(false)
     expect(isShape(undefined)).toBe(false)
@@ -411,11 +391,8 @@ describe('how translucent a stroke was drawn', () => {
       },
     })
 
-  test('is not there at all in a canvas that never said', () => {
+  test('is not there at all in a canvas that never said; is read back as it was written', () => {
     expect(readCanvas(one()).ink[0]?.opacity).toBeUndefined()
-  })
-
-  test('is read back as it was written', () => {
     expect(readCanvas(one({ opacity: 0.55 })).ink[0]?.opacity).toBe(0.55)
   })
 
@@ -456,13 +433,10 @@ describe('how translucent a stroke was drawn', () => {
     expect(writeCanvas(readCanvas(written))).toBe(written)
   })
 
-  test('is brought back inside what paint can use when a file says otherwise', () => {
+  test('is brought back inside what paint can use when a file says otherwise; a stroke nobody can see is not a stroke, so nought is not allowed', () => {
     expect(readCanvas(one({ opacity: 40 })).ink[0]?.opacity).toBe(1)
     expect(readCanvas(one({ opacity: -3 })).ink[0]?.opacity).toBe(0.05)
     expect(readCanvas(one({ opacity: 'blue' })).ink[0]?.opacity).toBeUndefined()
-  })
-
-  test('a stroke nobody can see is not a stroke, so nought is not allowed', () => {
     expect(clampOpacity(0)).toBe(0.05)
     expect(clampOpacity(1)).toBe(1)
     expect(clampOpacity(0.4449)).toBe(0.44)
@@ -535,26 +509,19 @@ describe('the icon a canvas wears', () => {
     return edit === null ? null : text.slice(0, edit.from) + edit.insert + text.slice(edit.to)
   }
 
-  test('is read off the key that already carries the ink', () => {
+  test('is read off the key that already carries the ink; and an emoji, which is what a vault out of Iconize holds', () => {
     const file = JSON.stringify({ nodes: [], edges: [], orden: { version: 1, icon: 'rocket' } })
     expect(readCanvas(file).icon).toBe('rocket')
-  })
-
-  test('and an emoji, which is what a vault out of Iconize holds', () => {
     expect(readCanvas('{"orden":{"icon":"🚀"}}').icon).toBe('🚀')
   })
 
-  test('is nothing where the file says nothing it could be drawn from', () => {
+  test('is nothing where the file says nothing it could be drawn from; is written first inside the key, and nowhere near the spec half', () => {
     expect(readCanvas('{"nodes":[],"edges":[]}').icon).toBeNull()
     expect(readCanvas('{"orden":{"icon":"   "}}').icon).toBeNull()
     expect(readCanvas('{"orden":{"icon":42}}').icon).toBeNull()
     expect(readCanvas('not json').icon).toBeNull()
-  })
-
-  test('is written first inside the key, and nowhere near the spec half', () => {
     const written = writeCanvas({ ...readCanvas(blankCanvas()), icon: 'rocket' })
     const parsed = JSON.parse(written) as { orden: Record<string, unknown> }
-
     expect(Object.keys(parsed)).toEqual(['nodes', 'edges', 'orden'])
     expect(Object.keys(parsed.orden)).toEqual(['version', 'icon'])
   })
@@ -630,19 +597,12 @@ describe('the icon a canvas wears', () => {
     expect(applied(marked, null)).toBe(before)
   })
 
-  test('is no edit at all where the file already says that', () => {
+  test('is no edit at all where the file already says that; is refused on a file that is not JSON, rather than written over it; but a file with nothing in it yet takes one', () => {
     const marked = applied(blankCanvas(), 'rocket') ?? ''
-
     expect(canvasIconEdit(marked, 'rocket')).toBeNull()
     expect(canvasIconEdit(blankCanvas(), null)).toBeNull()
-  })
-
-  test('is refused on a file that is not JSON, rather than written over it', () => {
     expect(canvasIconEdit('not json at all', 'rocket')).toBeNull()
     expect(canvasIconEdit('[1, 2, 3]', 'rocket')).toBeNull()
-  })
-
-  test('but a file with nothing in it yet takes one', () => {
     expect(readCanvas(applied('', 'rocket') ?? '').icon).toBe('rocket')
   })
 
@@ -668,16 +628,12 @@ describe('the icon a canvas wears', () => {
     expect(bare).toBe(blankCanvas())
   })
 
-  test('changing only the colour is still an edit', () => {
+  test('changing only the colour is still an edit; leaves the cards, the ink and the times exactly where they were', () => {
     const marked = applied(blankCanvas(), 'rocket', 'violet') ?? ''
     expect(readCanvas(applied(marked, 'rocket', 'teal') ?? '').iconColor).toBe('teal')
     expect(readCanvas(applied(marked, 'rocket', null) ?? '').iconColor).toBeNull()
-  })
-
-  test('leaves the cards, the ink and the times exactly where they were', () => {
     const drawn = readCanvas(writeCanvas({ ...readCanvas(blankCanvas()), at: { card: 7 } }))
     const after = readCanvas(applied(writeCanvas(drawn), 'rocket') ?? '')
-
     expect(after.at).toEqual(drawn.at)
     expect(after.nodes).toEqual(drawn.nodes)
   })
@@ -795,19 +751,13 @@ describe('words with no card round them (#421)', () => {
     orden: { words: string[] }
   }
 
-  test('are a card to anybody reading the spec, and listed as words under orden', () => {
+  test('are a card to anybody reading the spec, and listed as words under orden; come back as words, and the card as a card; as a room keeps them, field for field', () => {
     expect(parsed.nodes.map((node) => node.type)).toEqual(['text', 'text'])
     expect(parsed.nodes.some((node) => 'bare' in node)).toBe(false)
     expect(parsed.orden.words).toEqual(['words'])
-  })
-
-  test('come back as words, and the card as a card', () => {
     const back = readCanvas(written)
     expect(back.nodes).toEqual(canvas.nodes)
     expect(writeCanvas(back)).toBe(written)
-  })
-
-  test('as a room keeps them, field for field', () => {
     expect(nodeOf({ ...canvas.nodes[1] })).toEqual(canvas.nodes[1])
   })
 
@@ -850,19 +800,13 @@ describe('something locked in place (#643)', () => {
     orden: { locked: string[]; shapes: Record<string, unknown>[] }
   }
 
-  test('is the record it was to anybody reading the spec, and listed as locked under orden', () => {
+  test('is the record it was to anybody reading the spec, and listed as locked under orden; comes back locked, and the rest as it was; as a room keeps it, field for field', () => {
     expect(parsed.nodes.some((node) => 'locked' in node)).toBe(false)
     expect(parsed.orden.shapes.some((shape) => 'locked' in shape)).toBe(false)
     expect(parsed.orden.locked).toEqual(['photo', 'box'])
-  })
-
-  test('comes back locked, and the rest as it was', () => {
     const back = readCanvas(written)
     expect(back.nodes).toEqual(canvas.nodes)
     expect(writeCanvas(back)).toBe(written)
-  })
-
-  test('as a room keeps it, field for field', () => {
     expect(nodeOf({ ...canvas.nodes[0] })).toEqual(canvas.nodes[0])
     expect(nodeOf({ ...canvas.nodes[2] })).toEqual(canvas.nodes[2])
   })
@@ -1043,11 +987,8 @@ describe('ids a canvas file uses twice', () => {
     ])
   })
 
-  test('the same file is read with the same ids each time', () => {
+  test('the same file is read with the same ids each time; a file whose ids are all its own is read as it is', () => {
     expect(readCanvas(FILE)).toEqual(readCanvas(FILE))
-  })
-
-  test('a file whose ids are all its own is read as it is', () => {
     const plain = JSON.stringify({ nodes: [card('a', 'x')], edges: [] })
     expect(readCanvas(plain).nodes.map((one) => one.id)).toEqual(['a'])
   })

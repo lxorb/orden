@@ -72,17 +72,11 @@ describe('what a diagram is named by', () => {
 })
 
 describe('what a reader who cannot see it is told', () => {
-  test("is mermaid's own description where the author wrote one", () => {
+  test("is mermaid's own description where the author wrote one; is the title where that is all there is; is never the first line of the fence", () => {
     expect(diagramAlt('graph TD\n  accDescr: How a note reaches a page\n  A --> B\n')).toBe(
       'How a note reaches a page',
     )
-  })
-
-  test('is the title where that is all there is', () => {
     expect(diagramAlt('graph TD\n  accTitle: The pipeline\n  A --> B\n')).toBe('The pipeline')
-  })
-
-  test('is never the first line of the fence', () => {
     expect(diagramAlt('graph TD\n  A --> B\n')).toBe('Diagram')
   })
 })

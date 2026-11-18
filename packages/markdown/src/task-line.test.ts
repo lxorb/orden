@@ -144,13 +144,10 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     expect(task?.text).toBe('pay 📅 2026-10-06 the rent')
   })
 
-  test('keeps tags among the words and after them', () => {
+  test('keeps tags among the words and after them; reads a block id at the very end', () => {
     const task = readTask('- [ ] #work call #mum about #home/garden 📅 2026-10-06 #later')
     expect(task?.tags).toEqual(['work', 'mum', 'home/garden', 'later'])
     expect(task?.text).toBe('#work call #mum about')
-  })
-
-  test('reads a block id at the very end', () => {
     expect(readTask('- [ ] a 📅 2026-10-06 ^abc-1')).toMatchObject({
       block: 'abc-1',
       due: '2026-10-06',
@@ -183,17 +180,11 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     })
   })
 
-  test('keeps a value a field cannot hold as an unknown field', () => {
+  test('keeps a value a field cannot hold as an unknown field; refuses dates that do not exist; reads a time with its zone', () => {
     const task = readTask('- [ ] a [due:: someday]')
     expect(task?.due).toBeUndefined()
     expect(task?.fields).toEqual({ due: 'someday' })
-  })
-
-  test('refuses dates that do not exist', () => {
     expect(readTask('- [ ] a 📅 2026-02-30')?.due).toBeUndefined()
-  })
-
-  test('reads a time with its zone', () => {
     expect(readTask('- [ ] a [time:: 16:00 Europe/Zurich]')).toMatchObject({
       time: '16:00',
       zone: 'Europe/Zurich',
@@ -223,18 +214,12 @@ describe("the values of Orden's fields", () => {
     expect(readDuration(written)).toBe(minutes)
   })
 
-  test('a duration that is not one', () => {
+  test('a duration that is not one; times; a zone with digits in its name', () => {
     expect(readDuration('soon')).toBeNull()
     expect(readDuration('')).toBeNull()
-  })
-
-  test('times', () => {
     expect(readTime('9:05')).toEqual({ time: '09:05' })
     expect(readTime('24:00')).toBeNull()
     expect(readTime('16:00:30')).toEqual({ time: '16:00' })
-  })
-
-  test('a zone with digits in its name', () => {
     expect(readTime('16:00 Etc/GMT+5')).toEqual({ time: '16:00', zone: 'Etc/GMT+5' })
     expect(readTime('16:00 EST5EDT')).toEqual({ time: '16:00', zone: 'EST5EDT' })
   })
@@ -302,45 +287,30 @@ describe('words written as a task that no field is read from', () => {
 })
 
 describe('an escaped bracket in a task', () => {
-  test('opens no field', () => {
+  test('opens no field; while one that is not escaped still does', () => {
     const task = readTask('- [ ] a \\[due:: 2026-01-01\\]')
-
     expect(task?.due).toBeUndefined()
     expect(task?.fields).toEqual({})
     expect(task?.text).toBe('a \\[due:: 2026-01-01\\]')
-  })
-
-  test('while one that is not escaped still does', () => {
     expect(readTask('- [ ] a [due:: 2026-01-01]')?.due).toBe('2026-01-01')
   })
 })
 
 describe('code in a task', () => {
-  test('is left as it is by taskWords', () => {
+  test('is left as it is by taskWords; holds no field', () => {
     expect(taskWords('use `std::move` on `x #b` now')).toBe('use `std::move` on `x #b` now')
-  })
-
-  test('holds no field', () => {
     const task = readTask('- [ ] `[due:: 2026-01-01]` x')
-
     expect(task?.due).toBeUndefined()
     expect(task?.fields).toEqual({})
     expect(task?.text).toBe('`[due:: 2026-01-01]` x')
   })
 
-  test('holds no tag at the end of the line', () => {
+  test('holds no tag at the end of the line; holds no tag among the words; while the words around it are still escaped', () => {
     const task = readTask('- [ ] run `git tag #v2`')
-
     expect(task?.tags).toEqual([])
     expect(task?.text).toBe('run `git tag #v2`')
-  })
-
-  test('holds no tag among the words', () => {
     expect(readTask('- [ ] run `a #foo` now')?.tags).toEqual([])
     expect(readTask('- [ ] `#a` #b `#c` #d')?.tags).toEqual(['b', 'd'])
-  })
-
-  test('while the words around it are still escaped', () => {
     expect(taskWords('`a` #b [due:: 2026-01-01]')).toBe('`a` \\#b [due:\\: 2026-01-01]')
   })
 })
@@ -350,12 +320,9 @@ test('an address with two colons in it is left as it is by taskWords', () => {
 })
 
 describe('a parenthesis in the words before a field', () => {
-  test('does not take the field into a key of its own', () => {
+  test('does not take the field into a key of its own; and a field of either kind still reads', () => {
     expect(readTask('- [ ] buy (before work [due:: 2026-05-06])')?.due).toBe('2026-05-06')
     expect(readTask('- [ ] buy [before (due:: 2026-05-06)]')?.due).toBe('2026-05-06')
-  })
-
-  test('and a field of either kind still reads', () => {
     expect(readTask('- [ ] buy (due:: 2026-05-06)')?.due).toBe('2026-05-06')
     expect(readTask('- [ ] buy [due:: 2026-05-06]')?.due).toBe('2026-05-06')
   })

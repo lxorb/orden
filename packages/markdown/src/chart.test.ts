@@ -37,18 +37,12 @@ describe('reading a chart out of a fence', () => {
     expect(readChart('type: polarArea\nseries:\n  - data: [1]\n')?.kind).toBe('polar')
   })
 
-  test('and nothing at all for a kind nothing here draws', () => {
+  test('and nothing at all for a kind nothing here draws; quotes come off, and a key nobody knows is skipped; one series written as a plain list', () => {
     expect(readChart('type: bubble\nseries:\n  - data: [1]\n')).toBeNull()
     expect(chartFigure('type: candlestick\nseries:\n  - data: [1]\n')).toBeNull()
-  })
-
-  test('quotes come off, and a key nobody knows is skipped', () => {
     const chart = readChart('title: "A count"\nstacked: true\nseries:\n  - data: [1]\n')
     expect(chart?.title).toBe('A count')
     expect(chart?.series).toEqual([{ title: '', data: [1] }])
-  })
-
-  test('one series written as a plain list', () => {
     expect(readChart('labels: [a, b]\nseries: [1, 2]\n')?.series).toEqual([
       { title: '', data: [1, 2] },
     ])
@@ -79,13 +73,10 @@ describe('reading a chart out of a fence', () => {
     expect(chart?.series[0]?.data).toEqual([1])
   })
 
-  test('refuses rather than draw zeroes for numbers it cannot read', () => {
+  test('refuses rather than draw zeroes for numbers it cannot read; a value that is not a number is a zero rather than a refusal', () => {
     expect(readChart('type: scatter\nseries:\n  - data: [[1,2],[3,4]]\n')).toBeNull()
     expect(readChart('series:\n  - data: [{x: 1, y: 2}]\n')).toBeNull()
     expect(readChart('series:\n  - title: A\n    data:\n')).toBeNull()
-  })
-
-  test('a value that is not a number is a zero rather than a refusal', () => {
     expect(readChart('series:\n  - data: [1, x, 3]\n')?.series[0]?.data).toEqual([1, 0, 3])
   })
 
@@ -162,21 +153,15 @@ describe('drawing it', () => {
     expect(svg).toContain('A ')
   })
 
-  test('negative numbers hang below a baseline in the right place', () => {
+  test('negative numbers hang below a baseline in the right place; a chart of nothing but zeroes still has a scale', () => {
     const svg = chartSvg(readChart('series:\n  - data: [-4, 4]\n')!)
     expect(svg).toContain('class="chart-axis"')
     expect(svg.match(/<rect class="chart-bar"/g)).toHaveLength(2)
-  })
-
-  test('a chart of nothing but zeroes still has a scale', () => {
     expect(() => chartSvg(readChart('series:\n  - data: [0, 0]\n')!)).not.toThrow()
   })
 
-  test('every number is a hover title, so the picture is not the only reading', () => {
+  test('every number is a hover title, so the picture is not the only reading; scales with the column rather than asking for a width', () => {
     expect(chartSvg(readChart(SALES)!)).toContain('<title>Sales: 5</title>')
-  })
-
-  test('scales with the column rather than asking for a width', () => {
     const svg = chartSvg(readChart(SALES)!)
     expect(svg).toContain('viewBox="0 0 640 340"')
     expect(svg).not.toContain('width="640"')
@@ -192,11 +177,8 @@ describe('the block a fence becomes', () => {
     expect(figure).toContain('Sales')
   })
 
-  test('and no legend when there is nothing to tell apart', () => {
+  test('and no legend when there is nothing to tell apart; a pie names its slices rather than its series', () => {
     expect(chartFigure('series:\n  - title: Sales\n    data: [1]\n')).not.toContain('chart-keys')
-  })
-
-  test('a pie names its slices rather than its series', () => {
     const figure = chartFigure('type: pie\nlabels: [Bern, Zug]\nseries:\n  - data: [1, 2]\n') ?? ''
     expect(figure).toContain('Bern')
     expect(figure).toContain('Zug')
@@ -224,13 +206,10 @@ describe('a chart in a note', () => {
     }
   })
 
-  test('and a fence that is not a chart stays code', () => {
+  test('and a fence that is not a chart stays code; a fence in another language is left alone', () => {
     const html = renderMarkdown('```chart\nnot a chart\n```\n')
     expect(html).toContain('<pre>')
     expect(html).toContain('not a chart')
-  })
-
-  test('a fence in another language is left alone', () => {
     expect(renderMarkdown('```yaml\ntype: bar\nseries:\n  - data: [1]\n```\n')).toContain('<pre>')
   })
 })
@@ -244,13 +223,10 @@ describe('the language the numbers are written in', () => {
     expect(svg).toContain(`>${new Intl.NumberFormat().format(1000)}<`)
   })
 
-  test('and the one the caller names', () => {
+  test('and the one the caller names; through the block a fence becomes', () => {
     const svg = chartSvg(readChart(THOUSANDS)!, { locale: 'de' })
     expect(svg).toContain('<title>Sales: 1.234,5</title>')
     expect(svg).toContain('>1.000<')
-  })
-
-  test('through the block a fence becomes', () => {
     expect(chartFigure(THOUSANDS, { locale: 'de' })).toContain('1.234,5')
     expect(chartFigure(THOUSANDS, { locale: 'en-US' })).toContain('1,234.5')
   })
@@ -291,15 +267,11 @@ describe('the kinds that were drawn as a bar chart', () => {
     expect(svg).not.toContain('<polygon')
   })
 
-  test('a scatter draws the points and no line through them', () => {
+  test('a scatter draws the points and no line through them; a line still draws its line, which is the whole difference', () => {
     const svg = chartSvg(readChart(`type: scatter\n${THREE}`)!)
-
     expect(svg.match(/class="chart-dot"/g)?.length).toBe(3)
     expect(svg).not.toContain('chart-line')
     expect(svg).toContain('class="chart-grid"')
-  })
-
-  test('a line still draws its line, which is the whole difference', () => {
     expect(chartSvg(readChart(`type: line\n${THREE}`)!)).toContain('chart-line')
   })
 

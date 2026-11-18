@@ -18,11 +18,8 @@ describe('somebody else’s words in a note', () => {
     expect(asWords('a \\ b')).toBe('a \\ b')
   })
 
-  test('and keep a bracket that was arithmetic', () => {
+  test('and keep a bracket that was arithmetic; and are otherwise left as they were written', () => {
     expect(asWords('a < b and 3<4')).toBe('a < b and 3<4')
-  })
-
-  test('and are otherwise left as they were written', () => {
     expect(asWords('*Plans* for #2026: 50% done')).toBe('*Plans* for #2026: 50% done')
     expect(asWords('')).toBe('')
   })

@@ -2,18 +2,12 @@ import { describe, expect, test } from 'vitest'
 import { captionIn, languageIn } from './code'
 
 describe('what a fence says', () => {
-  test('one word is the language and nothing else', () => {
+  test('one word is the language and nothing else; the words after it are what the block is; a fence with no info string says nothing', () => {
     expect(languageIn('ts')).toBe('ts')
     expect(captionIn('ts')).toBe('')
-  })
-
-  test('the words after it are what the block is', () => {
     expect(languageIn('ts src/main.ts')).toBe('ts')
     expect(captionIn('ts src/main.ts')).toBe('src/main.ts')
     expect(captionIn('sh  what it does, in words  ')).toBe('what it does, in words')
-  })
-
-  test('a fence with no info string says nothing', () => {
     expect(languageIn('')).toBe('')
     expect(captionIn('')).toBe('')
     expect(languageIn('   ')).toBe('')

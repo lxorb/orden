@@ -20,15 +20,9 @@ describe('the one edit two texts differ by', () => {
     })
   })
 
-  test('an insertion is an empty span', () => {
+  test('an insertion is an empty span; and a deletion is an empty insert; a whole text replaced says so', () => {
     expect(oneEdit('ac', 'abc')).toEqual({ from: 1, to: 1, insert: 'b' })
-  })
-
-  test('and a deletion is an empty insert', () => {
     expect(oneEdit('abc', 'ac')).toEqual({ from: 1, to: 2, insert: '' })
-  })
-
-  test('a whole text replaced says so', () => {
     expect(oneEdit('abc', 'xyz')).toEqual({ from: 0, to: 3, insert: 'xyz' })
   })
 

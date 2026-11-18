@@ -60,12 +60,9 @@ describe('a note read as rows', () => {
     ])
   })
 
-  test('a date with a time is still a date', () => {
+  test('a date with a time is still a date; quotes come off, whichever kind they are', () => {
     expect(said('---\nwhen: 2025-09-08T14:30\n---\n')?.[0]?.kind).toBe('date')
     expect(said('---\nwhen: 2025-09-08 14:30:00\n---\n')?.[0]?.kind).toBe('date')
-  })
-
-  test('quotes come off, whichever kind they are', () => {
     expect(said('---\ntitle: "A plan"\n---\n')?.[0]?.value).toBe('A plan')
     expect(said('---\ntags: [\'one\', "two"]\n---\n')?.[0]?.items).toEqual(['one', 'two'])
   })
@@ -79,16 +76,10 @@ describe('a note read as rows', () => {
     })
   })
 
-  test('yes and no are words, not a checkbox', () => {
+  test('yes and no are words, not a checkbox; a note with no block has no rows; and an empty block reads as no rows rather than as unreadable', () => {
     expect(said('---\nstatus: no\n---\n')?.[0]?.kind).toBe('text')
-  })
-
-  test('a note with no block has no rows', () => {
     expect(readProperties('# Just a note\n')).toBe(null)
     expect(readProperties('')).toBe(null)
-  })
-
-  test('and an empty block reads as no rows rather than as unreadable', () => {
     expect(readProperties('---\n---\n')).toEqual([])
   })
 
@@ -175,11 +166,8 @@ describe('a block this cannot draw', () => {
     expect(readProperties(many((at) => `k${at}:`))).toBe(null)
   })
 
-  test('rather than a table with a row missing', () => {
+  test('rather than a table with a row missing; but Orden’s own page setup is a shape it knows, so those notes keep rows', () => {
     expect(readProperties('---\ntitle: A plan\nweird:\n  ~ what\n---\n')).toBe(null)
-  })
-
-  test('but Orden’s own page setup is a shape it knows, so those notes keep rows', () => {
     expect(said('---\ntitle: A plan\nexport:\n  paper: A4\n  margin: 15mm\n---\n')).toEqual([
       { key: 'title', kind: 'text', value: 'A plan', items: [] },
       { key: 'export', kind: 'map', value: '', items: ['paper: A4', 'margin: 15mm'] },
@@ -215,16 +203,10 @@ describe('the rows as markup', () => {
     expect(html).toContain('class="property-chip">two<')
   })
 
-  test('a checkbox says which way it is', () => {
+  test('a checkbox says which way it is; every row carries the line it was drawn from; nothing a note wrote can end an attribute or open a tag', () => {
     expect(table('---\ndone: true\n---\n')).toContain('property-check is-on')
     expect(table('---\ndone: false\n---\n')).not.toContain('is-on')
-  })
-
-  test('every row carries the line it was drawn from', () => {
     expect(table('---\ntitle: A plan\n---\n')).toContain('data-from="4" data-to="17"')
-  })
-
-  test('nothing a note wrote can end an attribute or open a tag', () => {
     const html = table('---\ntitle: "a\\"><script>alert(1)</script>"\n---\n')
     expect(html).not.toContain('<script')
     expect(html).toContain('&quot;&gt;&lt;script&gt;')
@@ -272,12 +254,9 @@ describe('the three answers', () => {
     )
   })
 
-  test('escape the block, because a note may hold anything', () => {
+  test('escape the block, because a note may hold anything; leave the block out of the note either way', () => {
     const hostile = '---\ntitle: <script>bad()</script>\n---\n\n# Head\n'
     expect(renderMarkdown(hostile, { properties: 'source' })).not.toContain('<script>')
-  })
-
-  test('leave the block out of the note either way', () => {
     for (const mode of PROPERTIES_MODES) {
       expect(renderMarkdown(NOTE, { properties: mode }), mode).toContain('<h1>Head</h1>')
     }

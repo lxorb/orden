@@ -41,17 +41,11 @@ describe('what a tag is', () => {
     expect(opensTag('/')).toBe(false)
   })
 
-  test('and inside emphasis, strike, highlight or a cell', () => {
+  test('and inside emphasis, strike, highlight or a cell; but a mark in the middle of a word opens nothing; but not as the target of a link, which is a heading in the note', () => {
     for (const before of ['*', '_', '~~', '==', 'x **', '(**']) expect(opensTag(before)).toBe(true)
-  })
-
-  test('but a mark in the middle of a word opens nothing', () => {
     for (const before of ['a*', 'a=', 'color=', 'snake_', '3*', 'a~', 'a|', '?q=', 'Note|']) {
       expect(opensTag(before)).toBe(false)
     }
-  })
-
-  test('but not as the target of a link, which is a heading in the note', () => {
     expect(opensTag('](')).toBe(false)
     expect(opensTag(' (')).toBe(true)
   })
@@ -72,13 +66,10 @@ const PARITY: [string, string[]][] = [
 ]
 
 describe('a tag on a page', () => {
-  test('is drawn as a tag, the hash with it', () => {
+  test('is drawn as a tag, the hash with it; nested is one tag', () => {
     expect(renderMarkdown('Filed under #work.')).toBe(
       '<p>Filed under <span class="tag" data-tag="work">#work</span>.</p>\n',
     )
-  })
-
-  test('nested is one tag', () => {
     expect(drawn('Under #work/orden/canvas today')).toEqual(['work/orden/canvas'])
   })
 
@@ -90,13 +81,10 @@ describe('a tag on a page', () => {
     expect(drawn('words (#aside) more')).toEqual(['aside'])
   })
 
-  test('inside emphasis, strike, highlight or a cell, and never as a link target', () => {
+  test('inside emphasis, strike, highlight or a cell, and never as a link target; alike on the page and in the index, row by row', () => {
     expect(drawn('**#a** *#b* ~~#d~~ ==#e== call')).toEqual(['a', 'b', 'd', 'e'])
     expect(drawn('| x | y |\n| - | - |\n|#f|#g|')).toEqual(['f', 'g'])
     expect(drawn('See [setup](#setup) and ![x](#y). Real #setup.')).toEqual(['setup'])
-  })
-
-  test('alike on the page and in the index, row by row', () => {
     for (const [source, tags] of PARITY) expect(drawn(source), source).toEqual(tags)
   })
 

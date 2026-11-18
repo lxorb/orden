@@ -4,18 +4,12 @@ import { firstStart, lineStart, matchesAt, paragraphWindow } from './starts'
 import { codeBlocks, renderMarkdown } from './index'
 
 describe('looking for the fences of a note', () => {
-  test('finds them, whichever mark they were written with', () => {
+  test('finds them, whichever mark they were written with; finds one inside a quote, which is not at the start of its line; reads a note with neither mark in it no further', () => {
     expect(codeBlocks('```ts\nconst a = 1\n```\n')).toEqual([
       { language: 'ts', code: 'const a = 1' },
     ])
     expect(codeBlocks('~~~py\nx = 1\n~~~\n')).toEqual([{ language: 'py', code: 'x = 1' }])
-  })
-
-  test('finds one inside a quote, which is not at the start of its line', () => {
     expect(codeBlocks('> ```ts\n> const a = 1\n> ```\n')).toHaveLength(1)
-  })
-
-  test('reads a note with neither mark in it no further', () => {
     expect(codeBlocks('# Just words\n\nand a `span` of code.\n')).toEqual([])
   })
 })
@@ -32,18 +26,12 @@ describe('how far a block start has to look', () => {
     expect(src.slice(0, paragraphWindow(src))).toBe('one\n   \n')
   })
 
-  test('a carriage return counts as the empty line it is half of', () => {
+  test('a carriage return counts as the empty line it is half of; all of it when there is no blank line; the last line, when the document ends in blanks', () => {
     const src = 'one\r\n\r\nthree'
     expect(paragraphWindow(src)).toBeLessThan(src.length)
-  })
-
-  test('all of it when there is no blank line', () => {
     expect(paragraphWindow('one\ntwo\nthree')).toBe(13)
     expect(paragraphWindow('')).toBe(0)
     expect(paragraphWindow('no newline at all')).toBe(17)
-  })
-
-  test('the last line, when the document ends in blanks', () => {
     expect(paragraphWindow('one\n  ')).toBe(6)
   })
 })
@@ -51,19 +39,10 @@ describe('how far a block start has to look', () => {
 describe('the first place a construct could be', () => {
   const at = (src: string) => firstStart(src, ['xy'], (_src, found) => found)
 
-  test('is where the literal is', () => {
+  test('is where the literal is; is nothing when the literal is absent; is nothing when the literal is past the paragraph; takes the earliest of several literals', () => {
     expect(at('--xy--')).toBe(2)
-  })
-
-  test('is nothing when the literal is absent', () => {
     expect(at('nothing here')).toBeUndefined()
-  })
-
-  test('is nothing when the literal is past the paragraph', () => {
     expect(at('a paragraph\n\nand then xy')).toBeUndefined()
-  })
-
-  test('takes the earliest of several literals', () => {
     const found = firstStart('..b..a..', ['a', 'b'], (_src, found) => found)
     expect(found).toBe(2)
   })
@@ -83,20 +62,11 @@ describe('the first place a construct could be', () => {
 })
 
 describe('the line a place sits on', () => {
-  test('is the newline before it', () => {
+  test('is the newline before it; is nothing when words come first; allows the blanks it is told to; counts the start of the string only when asked', () => {
     expect(lineStart('one\ntwo', 4)).toBe(3)
-  })
-
-  test('is nothing when words come first', () => {
     expect(lineStart('one two', 4)).toBeNull()
-  })
-
-  test('allows the blanks it is told to', () => {
     expect(lineStart('one\n  two', 6, { blanks: 3 })).toBe(3)
     expect(lineStart('one\n      two', 10, { blanks: 3 })).toBeNull()
-  })
-
-  test('counts the start of the string only when asked', () => {
     expect(lineStart('two', 0)).toBeNull()
     expect(lineStart('two', 0, { orString: true })).toBe(0)
   })
@@ -126,13 +96,9 @@ describe('a mark in the middle of a sentence leaves the sentence alone', () => {
     expect(html).toBe('<p>Costs $$5 and $$6 in total.</p>\n')
   })
 
-  test('a bracket that opens no definition', () => {
+  test('a bracket that opens no definition; a definition that is not on a line of its own', () => {
     const html = renderMarkdown('Text with *[a link](https://x)* in it.\n')
-
     expect(html).toBe('<p>Text with <em><a href="https://x">a link</a></em> in it.</p>\n')
-  })
-
-  test('a definition that is not on a line of its own', () => {
     expect(renderMarkdown('Text with *[HTML]: in it.\n')).toBe('<p>Text with *[HTML]: in it.</p>\n')
   })
 

@@ -105,18 +105,12 @@ describe('what a writer makes is what a reader takes', () => {
 })
 
 describe('reading the front matter', () => {
-  test('the block, and nothing where a note has none', () => {
+  test('the block, and nothing where a note has none; a closing fence is a line that says nothing else; an opening fence stands at the left margin', () => {
     expect(frontMatter('---\ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
     expect(frontMatter('No front matter')).toBeNull()
     expect(frontMatter('# Title\n\n---\n\nmore')).toBeNull()
-  })
-
-  test('a closing fence is a line that says nothing else', () => {
     expect(frontMatter('---\ntitle: Hi\n----\n\nBody')).toBeNull()
     expect(frontMatter('---\ntitle: Hi\n--- and more\n\nBody')).toBeNull()
-  })
-
-  test('an opening fence stands at the left margin', () => {
     expect(frontMatter('  ---\ntitle: Hi\n---\n\nBody')).toBeNull()
     expect(frontMatter('\t---\ntitle: Hi\n---\n\nBody')).toBeNull()
     expect(frontMatter('---  \ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
@@ -145,11 +139,8 @@ describe('reading the front matter', () => {
     expect(frontMatterValue(source, 'missing')).toBeNull()
   })
 
-  test('a key with nothing after it says nothing', () => {
+  test('a key with nothing after it says nothing; a block list in a note whose lines end in CRLF', () => {
     expect(frontMatterValue('---\nicon:\n---\n', 'icon')).toBeNull()
-  })
-
-  test('a block list in a note whose lines end in CRLF', () => {
     const source = '---\r\nstatus:\r\n  - open\r\n  -\r\n  - "two"\r\n---\r\nalpha\r\n'
     expect(frontMatterList(source, 'status')).toEqual(['open', 'two'])
   })
@@ -183,49 +174,31 @@ describe('the keys a block holds', () => {
 describe('reading a key as a list', () => {
   const front = (body: string) => `---\n${body}\n---\n\nWords.\n`
 
-  test('reads a flow sequence', () => {
+  test('reads a flow sequence; reads the lines written under the key; reads the lines under the key of a note written with carriage returns', () => {
     expect(frontMatterList(front('aliases: [One, Two]'), 'aliases')).toEqual(['One', 'Two'])
-  })
-
-  test('reads the lines written under the key', () => {
     expect(frontMatterList(front('aliases:\n  - One\n  - Two'), 'aliases')).toEqual(['One', 'Two'])
     expect(frontMatterList(front('aliases:\n- One\n- Two'), 'aliases')).toEqual(['One', 'Two'])
-  })
-
-  test('reads the lines under the key of a note written with carriage returns', () => {
     const note = '---\r\naliases:\r\n  - Foo\r\n  - Bar\r\n---\r\nbody\r\n'
     expect(frontMatterList(note, 'aliases')).toEqual(['Foo', 'Bar'])
   })
 
-  test('reads a single value as a list of one', () => {
+  test('reads a single value as a list of one; takes the quotes off, whichever they are; leaves a comment after an item out of it; stops at the next key of the note’s own', () => {
     expect(frontMatterList(front('aliases: One'), 'aliases')).toEqual(['One'])
-  })
-
-  test('takes the quotes off, whichever they are', () => {
     expect(frontMatterList(front('aliases: ["One", \'Two\']'), 'aliases')).toEqual(['One', 'Two'])
     expect(frontMatterList(front('aliases:\n  - "One two"'), 'aliases')).toEqual(['One two'])
-  })
-
-  test('leaves a comment after an item out of it', () => {
     expect(frontMatterList(front('aliases:\n  - Foo # old name'), 'aliases')).toEqual(['Foo'])
     expect(frontMatterList(front('aliases:\n  - "Foo # bar" # old'), 'aliases')).toEqual([
       'Foo # bar',
     ])
-  })
-
-  test('stops at the next key of the note’s own', () => {
     const body = 'aliases:\n  - One\ntitle: Not an alias\n'
     expect(frontMatterList(front(body), 'aliases')).toEqual(['One'])
   })
 
-  test('is nothing where there is nothing to read', () => {
+  test('is nothing where there is nothing to read; is not read from a key indented under another', () => {
     expect(frontMatterList('Words.\n', 'aliases')).toEqual([])
     expect(frontMatterList(front('title: A note'), 'aliases')).toEqual([])
     expect(frontMatterList(front('aliases:'), 'aliases')).toEqual([])
     expect(frontMatterList(front('aliases: []'), 'aliases')).toEqual([])
-  })
-
-  test('is not read from a key indented under another', () => {
     expect(frontMatterList(front('export:\n  aliases: [One]'), 'aliases')).toEqual([])
   })
 })
@@ -237,17 +210,11 @@ describe('setting a key', () => {
     return source.slice(0, edit.from) + edit.insert + source.slice(edit.to)
   }
 
-  test('opens a block on a note that has none', () => {
+  test('opens a block on a note that has none; and on an empty note; goes in as the last line of a block that has other keys', () => {
     expect(applied('# Plan\n\nwords\n', 'icon', 'rocket')).toBe(
       '---\nicon: rocket\n---\n# Plan\n\nwords\n',
     )
-  })
-
-  test('and on an empty note', () => {
     expect(applied('', 'icon', 'rocket')).toBe('---\nicon: rocket\n---\n')
-  })
-
-  test('goes in as the last line of a block that has other keys', () => {
     expect(applied('---\ntitle: Plan\ntags: [work]\n---\n\nwords', 'icon', 'rocket')).toBe(
       '---\ntitle: Plan\ntags: [work]\nicon: rocket\n---\n\nwords',
     )
@@ -310,18 +277,12 @@ describe('taking a key away', () => {
     return source.slice(0, edit.from) + edit.insert + source.slice(edit.to)
   }
 
-  test('takes its line, and nothing else in the block', () => {
+  test('takes its line, and nothing else in the block; a block that held nothing else goes with it, blank lines and all; a note that never said it is left exactly as it was', () => {
     expect(applied('---\ntitle: Plan\nicon: rocket\ntags: [work]\n---\nwords', 'icon')).toBe(
       '---\ntitle: Plan\ntags: [work]\n---\nwords',
     )
-  })
-
-  test('a block that held nothing else goes with it, blank lines and all', () => {
     expect(applied('---\nicon: rocket\n---\n\n# Plan\n', 'icon')).toBe('# Plan\n')
     expect(applied('---\nicon: rocket\n---\n', 'icon')).toBe('')
-  })
-
-  test('a note that never said it is left exactly as it was', () => {
     expect(frontMatterEdit('---\ntitle: Plan\n---\nwords', 'icon', null)).toBeNull()
     expect(frontMatterEdit('# Plan\n', 'icon', null)).toBeNull()
   })
@@ -442,11 +403,8 @@ describe('writing a block', () => {
     ).toBe("---\npages: 412\nread: true\ncode: '412'\n---")
   })
 
-  test('a block with no rows is no block at all', () => {
+  test('a block with no rows is no block at all; an empty list is still stated, because the caller asked for the row', () => {
     expect(writeFrontMatter([])).toBe('')
-  })
-
-  test('an empty list is still stated, because the caller asked for the row', () => {
     expect(writeFrontMatter([['tags', []]])).toBe('---\ntags: []\n---')
   })
 
