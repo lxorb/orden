@@ -513,7 +513,76 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
     (!path.is_empty()).then(|| String::from_utf8_lossy(&path).into_owned())
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "macos")))]
+#[cfg(windows)]
+#[allow(
+    unsafe_code,
+    reason = "another process's working folder is in its own memory, which only the kernel's calls read"
+)]
+pub fn folder(shell: Option<u32>) -> Option<String> {
+    use std::ffi::c_void;
+    use std::mem::{offset_of, size_of};
+    use windows::Wdk::System::Threading::{NtQueryInformationProcess, ProcessBasicInformation};
+    use windows::Win32::Foundation::{CloseHandle, HANDLE, UNICODE_STRING};
+    use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
+    use windows::Win32::System::Threading::{
+        OpenProcess, PEB, PROCESS_BASIC_INFORMATION, PROCESS_QUERY_LIMITED_INFORMATION,
+        PROCESS_VM_READ, RTL_USER_PROCESS_PARAMETERS,
+    };
+
+    fn read_into(handle: HANDLE, at: usize, into: *mut c_void, size: usize) -> Option<()> {
+        unsafe { ReadProcessMemory(handle, at as *const c_void, into, size, None) }.ok()
+    }
+
+    fn read<T: Default>(handle: HANDLE, at: usize) -> Option<T> {
+        let mut value = T::default();
+        read_into(handle, at, (&raw mut value).cast(), size_of::<T>())?;
+        Some(value)
+    }
+
+    fn folder_of(handle: HANDLE) -> Option<String> {
+        let mut basic = PROCESS_BASIC_INFORMATION::default();
+        let size = u32::try_from(size_of::<PROCESS_BASIC_INFORMATION>()).ok()?;
+        let mut written = 0_u32;
+        let status = unsafe {
+            NtQueryInformationProcess(
+                handle,
+                ProcessBasicInformation,
+                (&raw mut basic).cast(),
+                size,
+                &raw mut written,
+            )
+        };
+        if status.is_err() {
+            return None;
+        }
+        let peb = basic.PebBaseAddress as usize;
+        let parameters: usize = read(handle, peb + offset_of!(PEB, ProcessParameters))?;
+        let dos_path =
+            offset_of!(RTL_USER_PROCESS_PARAMETERS, Reserved2) + 5 * size_of::<*mut c_void>();
+        let path: UNICODE_STRING = read(handle, parameters + dos_path)?;
+        let mut units = vec![0_u16; usize::from(path.Length / 2)];
+        read_into(
+            handle,
+            path.Buffer.0 as usize,
+            units.as_mut_ptr().cast(),
+            units.len() * 2,
+        )?;
+        let path = String::from_utf16_lossy(&units);
+        let path = match path.strip_suffix('\\') {
+            Some(cut) if !cut.ends_with(':') => cut.to_owned(),
+            _ => path,
+        };
+        (!path.is_empty()).then_some(path)
+    }
+
+    let access = PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ;
+    let handle = unsafe { OpenProcess(access, false, shell?) }.ok()?;
+    let found = folder_of(handle);
+    let _ = unsafe { CloseHandle(handle) };
+    found
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 pub fn folder(_shell: Option<u32>) -> Option<String> {
     None
 }
@@ -521,6 +590,17 @@ pub fn folder(_shell: Option<u32>) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
+    #[test]
+    fn a_process_s_folder_is_where_it_works() {
+        let here = std::env::current_dir().unwrap();
+        let found = folder(Some(std::process::id())).unwrap();
+        assert_eq!(
+            std::fs::canonicalize(found).unwrap(),
+            std::fs::canonicalize(here).unwrap()
+        );
+    }
 
     const UNKNOWN: fn(u32) -> Option<u64> = |_| None;
 
