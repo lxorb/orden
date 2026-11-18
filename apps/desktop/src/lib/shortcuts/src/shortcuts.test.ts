@@ -1295,6 +1295,22 @@ describe('on a Mac', () => {
     expect(kept).toEqual([])
   })
 
+  test.each(PLATFORMS)(
+    'lets no keyboard that can be chosen bind a key the system keeps (%s)',
+    async (platform) => {
+      const { presetKeys } = await import('./preset-ids')
+      const kept = PRESETS.flatMap((preset) =>
+        Object.entries(presetKeys(preset, platform)).flatMap(([id, key]) =>
+          key && SYSTEM_KEYS[platform].some((held) => sameCombination(held, key, platform))
+            ? [`${preset.id}: ${id} on ${key}`]
+            : [],
+        ),
+      )
+
+      expect(kept).toEqual([])
+    },
+  )
+
   test('warns about the keys the Mac keeps for itself', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
     const { shortcuts } = await restarted()
