@@ -1,3 +1,5 @@
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+pub mod ahead;
 pub mod highlights;
 pub mod history;
 pub mod notes;

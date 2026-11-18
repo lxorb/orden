@@ -198,7 +198,7 @@ describe('looking for a new version', () => {
 
     expect(endpoints).toHaveLength(1)
     expect(endpoints[0]).not.toContain('/edge/')
-    expect(read('../src-tauri/src/updates.rs')).toContain('/edge/')
+    expect(read('../src-tauri/crates/system/src/updates.rs')).toContain('/edge/')
   })
 })
 

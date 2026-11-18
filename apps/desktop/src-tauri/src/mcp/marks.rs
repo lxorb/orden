@@ -16,7 +16,9 @@ pub fn one_line(words: &str) -> String {
 }
 
 fn breaks(one: char) -> bool {
-    one.is_control() || crate::downloads::is_format(one) || matches!(one, '\u{2028}' | '\u{2029}')
+    one.is_control()
+        || orden_base::letters::is_format(one)
+        || matches!(one, '\u{2028}' | '\u{2029}')
 }
 
 fn inert(words: &str) -> String {
@@ -32,14 +34,14 @@ fn inert(words: &str) -> String {
 }
 
 fn opens(one: char, rest: &str) -> bool {
-    if !matches!(crate::letters::look_alike(one), '<' | '\u{FE64}') {
+    if !matches!(orden_base::letters::look_alike(one), '<' | '\u{FE64}') {
         return false;
     }
     let after: String = rest
         .chars()
-        .filter(|one| !crate::letters::hidden(*one))
+        .filter(|one| !orden_base::letters::hidden(*one))
         .take(64)
-        .map(crate::letters::look_alike)
+        .map(orden_base::letters::look_alike)
         .collect::<String>()
         .to_lowercase();
     let after = after.trim_start();

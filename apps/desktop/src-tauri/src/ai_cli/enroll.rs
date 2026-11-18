@@ -46,7 +46,7 @@ fn offered(app: &AppHandle) -> bool {
         || (!cfg!(debug_assertions)
             && app.config().identifier == SHIPPED
             && orden_placement::placement::away().is_none()
-            && !crate::app_place::app_stuck())
+            && !orden_system::app_place::app_stuck())
 }
 
 fn get_args(name: &str) -> Vec<OsString> {

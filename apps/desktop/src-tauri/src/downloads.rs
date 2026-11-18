@@ -7,6 +7,7 @@ use serde::Serialize;
 use tauri::webview::DownloadEvent;
 use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewBuilder};
 
+use orden_base::letters::{is_blank, is_format};
 use orden_base::paths::is_reserved;
 
 const MOVED: &str = "orden://web-download";
@@ -176,49 +177,6 @@ fn same_path(one: &Path, other: &Path) -> bool {
     one.as_os_str()
         .to_string_lossy()
         .eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
-}
-
-pub(crate) fn is_format(one: char) -> bool {
-    matches!(one,
-        '\u{00AD}'
-        | '\u{0600}'..='\u{0605}'
-        | '\u{061C}'
-        | '\u{06DD}'
-        | '\u{070F}'
-        | '\u{0890}'..='\u{0891}'
-        | '\u{08E2}'
-        | '\u{180E}'
-        | '\u{200B}'
-        | '\u{200E}'..='\u{200F}'
-        | '\u{202A}'..='\u{202E}'
-        | '\u{2060}'..='\u{2064}'
-        | '\u{2066}'..='\u{206F}'
-        | '\u{FEFF}'
-        | '\u{FFF9}'..='\u{FFFB}'
-        | '\u{110BD}'
-        | '\u{110CD}'
-        | '\u{13430}'..='\u{1343F}'
-        | '\u{1BCA0}'..='\u{1BCA3}'
-        | '\u{1D173}'..='\u{1D17A}'
-        | '\u{E0001}'
-        | '\u{E0020}'..='\u{E007F}'
-    )
-}
-
-pub(crate) fn is_blank(one: char) -> bool {
-    matches!(one,
-        '\u{00A0}'
-        | '\u{115F}'..='\u{1160}'
-        | '\u{1680}'
-        | '\u{17B4}'..='\u{17B5}'
-        | '\u{2000}'..='\u{200A}'
-        | '\u{202F}'
-        | '\u{205F}'
-        | '\u{2800}'
-        | '\u{3000}'
-        | '\u{3164}'
-        | '\u{FFA0}'
-    )
 }
 
 pub(crate) fn plain_name(said: &str) -> String {

@@ -2,6 +2,21 @@ use serde::Serialize;
 use tauri::{Manager, ResourceId, Url, Webview};
 use tauri_plugin_updater::UpdaterExt;
 
+pub struct Lifecycle {
+    pub quit: fn(&tauri::AppHandle),
+    pub before_installer: fn(&tauri::AppHandle, &str),
+}
+
+static LIFECYCLE: std::sync::OnceLock<Lifecycle> = std::sync::OnceLock::new();
+
+pub fn hand_lifecycle(lifecycle: Lifecycle) {
+    let _ = LIFECYCLE.set(lifecycle);
+}
+
+pub(crate) fn lifecycle() -> Option<&'static Lifecycle> {
+    LIFECYCLE.get()
+}
+
 const UNSTABLE: &str = "unstable";
 
 const EDGE: &str = "https://github.com/lxorb/orden/releases/download/edge/latest.json";
@@ -65,9 +80,11 @@ pub(crate) fn endpoints(channel: &str) -> Option<Vec<Url>> {
 #[tauri::command]
 pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Found>, String> {
     let (app, label) = (webview.app_handle().clone(), webview.label().to_owned());
-    let mut builder = webview
-        .updater_builder()
-        .on_before_exit(move || crate::lifecycle::before_installer(&app, &label));
+    let mut builder = webview.updater_builder().on_before_exit(move || {
+        if let Some(lifecycle) = lifecycle() {
+            (lifecycle.before_installer)(&app, &label);
+        }
+    });
 
     if let Some(endpoints) = endpoints(&channel) {
         builder = builder
@@ -237,7 +254,8 @@ mod tests {
     #[test]
     fn the_configured_endpoint_is_the_releases_one() {
         let config: serde_json::Value =
-            serde_json::from_str(include_str!("../tauri.conf.json")).expect("the config parses");
+            serde_json::from_str(include_str!("../../../tauri.conf.json"))
+                .expect("the config parses");
         let configured = config["plugins"]["updater"]["endpoints"]
             .as_array()
             .expect("the updater is configured with endpoints");
@@ -249,7 +267,8 @@ mod tests {
     #[test]
     fn both_manifests_are_asked_for_under_the_new_name() {
         let config: serde_json::Value =
-            serde_json::from_str(include_str!("../tauri.conf.json")).expect("the config parses");
+            serde_json::from_str(include_str!("../../../tauri.conf.json"))
+                .expect("the config parses");
         assert_eq!(
             config["plugins"]["updater"]["endpoints"][0].as_str(),
             Some("https://github.com/lxorb/orden/releases/latest/download/latest.json")

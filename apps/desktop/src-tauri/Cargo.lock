@@ -4052,6 +4052,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "block2",
+ "dirs",
  "fontdb",
  "libc",
  "objc2",
@@ -4066,6 +4067,7 @@ dependencies = [
  "tauri",
  "tauri-plugin-deep-link",
  "tauri-plugin-opener",
+ "tauri-plugin-updater",
  "tempfile",
  "tokio",
  "windows 0.58.0",

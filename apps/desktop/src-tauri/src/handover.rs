@@ -42,7 +42,7 @@ pub fn handed_over(identifier: &str) -> bool {
     let mut launch: Vec<String> = std::env::args_os()
         .map(|arg| arg.to_string_lossy().into_owned())
         .collect();
-    if let Some(token) = crate::linux::launched_with() {
+    if let Some(token) = orden_base::linux::launched_with() {
         launch.push(format!("{}{token}", crate::launch::TOKEN_FLAG));
     }
     on_the_bus(identifier, &launch).unwrap_or(false)

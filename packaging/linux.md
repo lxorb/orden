@@ -285,7 +285,7 @@ or `-f suite=unstable -f tag=edge`.
 
 An install from the `.deb` or the `.rpm` - from a repository above or from one file - is
 told of a new version as every other install is, and its notice has Update. Pressing it hands
-the update to PackageKit (`src-tauri/src/system_update.rs`, `packagekit.rs`), which asks for
+the update to PackageKit (`src-tauri/crates/system/src/system_update.rs`, `packagekit.rs`), which asks for
 the password once through polkit, and then Orden restarts:
 
 - **A repository the system has offers that version**: PackageKit updates the package from

@@ -94,7 +94,7 @@ fn with_state<T>(on_held: impl FnOnce(&mut State) -> T) -> T {
 pub fn hold(app: &AppHandle, which: Which, key: Option<String>) -> Option<String> {
     let key = key.filter(|key| !key.trim().is_empty() && allowed(key, cfg!(target_os = "macos")));
     #[cfg(target_os = "linux")]
-    if crate::linux::wayland_session() {
+    if orden_base::linux::wayland_session() {
         return by_portal(app, which, key);
     }
     by_plugin(app, which, key)
@@ -256,7 +256,7 @@ fn keys_now() -> Keys {
 fn wayland() -> bool {
     #[cfg(target_os = "linux")]
     {
-        crate::linux::wayland_session()
+        orden_base::linux::wayland_session()
     }
     #[cfg(not(target_os = "linux"))]
     {
@@ -291,7 +291,7 @@ fn started_by(
 #[tauri::command]
 pub fn global_keys(app: AppHandle) -> Keys {
     #[cfg(target_os = "linux")]
-    if crate::linux::wayland_session() {
+    if orden_base::linux::wayland_session() {
         portal::wake(&app);
     }
     let _ = &app;
@@ -301,7 +301,7 @@ pub fn global_keys(app: AppHandle) -> Keys {
 #[tauri::command]
 pub fn global_keys_change(app: AppHandle) {
     #[cfg(target_os = "linux")]
-    if crate::linux::wayland_session() {
+    if orden_base::linux::wayland_session() {
         portal::reconfigure(&app);
     }
     let _ = app;
