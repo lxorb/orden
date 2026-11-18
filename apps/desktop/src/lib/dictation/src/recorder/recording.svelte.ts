@@ -54,7 +54,8 @@ class Recorder {
       this.path = path
 
       this.held = await record({
-        full: () => this.failed('That is as much as one recording may hold.'),
+        full: () =>
+          void this.stop().then(() => this.failed('That is as much as one recording may hold.')),
       })
 
       this.ticking = setInterval(() => {

@@ -1,12 +1,14 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 
 let opening: ((held: { stop: () => Promise<unknown>; extension: string }) => void) | null = null
+let full: (() => void) | undefined
 const stopped: string[] = []
 
 vi.mock('./microphone', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./microphone')>()),
-  record: () =>
+  record: (listening: { full?: () => void } = {}) =>
     new Promise((resolve) => {
+      full = listening.full
       opening = resolve
     }),
 }))
@@ -36,6 +38,25 @@ test('a stop pressed while the microphone opens stops it as soon as it is open',
     },
     extension: 'weba',
   })
+
+  await vi.waitFor(() => expect(stopped).toEqual(['stopped']))
+  expect(recorder.on).toBe(false)
+})
+
+test('a recording that grows full stops and is kept, not left listening', async () => {
+  void recorder.start()
+  await vi.waitFor(() => expect(opening).not.toBeNull())
+
+  opening?.({
+    stop: () => {
+      stopped.push('stopped')
+      return Promise.resolve({ bytes: new ArrayBuffer(0), seconds: 0 })
+    },
+    extension: 'weba',
+  })
+  await vi.waitFor(() => expect(recorder.on).toBe(true))
+
+  full?.()
 
   await vi.waitFor(() => expect(stopped).toEqual(['stopped']))
   expect(recorder.on).toBe(false)

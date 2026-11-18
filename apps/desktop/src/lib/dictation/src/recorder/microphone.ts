@@ -55,13 +55,13 @@ export async function record(listening: Listening = {}): Promise<Recording> {
   recorder.ondataavailable = (event) => {
     if (!event.data.size) return
 
+    if (full || held + event.data.size > MOST_BYTES) {
+      if (!full) listening.full?.()
+      full = true
+      return
+    }
     chunks.push(event.data)
     held += event.data.size
-    if (held <= MOST_BYTES || full) return
-
-    full = true
-    listening.full?.()
-    if (recorder.state !== 'inactive') recorder.stop()
   }
 
   recorder.start(HANDOVER)
