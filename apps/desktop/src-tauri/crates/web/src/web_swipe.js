@@ -3,13 +3,10 @@
   const NOTCH = 120
   const SLACK = 0.5
 
-  const open = window.open.bind(window)
-
   function say(said) {
     const words = JSON.stringify(said)
     const bound = globalThis.ordenSwiped
     if (typeof bound === 'function') bound(words)
-    else open('about:blank', 'orden-swipe:' + words)
   }
 
   function takes(from) {

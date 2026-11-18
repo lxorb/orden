@@ -72,8 +72,18 @@ fn attached(event: &str) -> Option<Attached> {
         .then_some(Attached::Held(session))
 }
 
-fn pass_binding() -> Value {
-    json!({ "name": crate::web_pass::BINDING, "executionContextName": WORLD })
+fn bindings() -> [(&'static str, Value); 3] {
+    [
+        crate::web_opens::BINDING,
+        crate::web_swipe::BINDING,
+        crate::web_pass::BINDING,
+    ]
+    .map(|name| {
+        (
+            "Runtime.addBinding",
+            json!({ "name": name, "executionContextName": WORLD }),
+        )
+    })
 }
 
 fn let_go() -> (&'static str, String) {
@@ -132,22 +142,15 @@ mod engine {
     use crate::engine::devtools;
 
     use super::{
-        attached, attaching, context_of, evaluating, frame_of, in_frame, let_go, pass_binding,
+        attached, attaching, bindings, context_of, evaluating, frame_of, in_frame, let_go,
         registering, taken_back, world_in, Attached, Cleared, IN_THE_PAGE, MARK,
     };
 
     const PATIENCE: Duration = Duration::from_secs(10);
 
-    fn binding() -> Value {
-        json!({ "name": crate::web_opens::BINDING, "executionContextName": super::WORLD })
-    }
-
     pub(super) fn bound_again(method: &str) -> Vec<(&'static str, Value)> {
         if method == "Page.frameNavigated" {
-            vec![
-                ("Runtime.addBinding", binding()),
-                ("Runtime.addBinding", pass_binding()),
-            ]
+            bindings().to_vec()
         } else {
             Vec::new()
         }
@@ -206,13 +209,9 @@ mod engine {
                 .count()
         });
 
-        let _ = called(view, "Runtime.addBinding", &binding().to_string());
-        let _ = called(
-            view,
-            "Runtime.addBinding",
-            &crate::web_swipe::binding().to_string(),
-        );
-        let _ = called(view, "Runtime.addBinding", &pass_binding().to_string());
+        for (method, params) in bindings() {
+            let _ = called(view, method, &params.to_string());
+        }
         let ours = scripts.is_empty()
             || (enabled
                 && called(
@@ -257,14 +256,10 @@ mod engine {
             let (session, said) = match attached(&params.to_string()) {
                 Some(Attached::Frame(session)) => (
                     session,
-                    [
-                        ("Runtime.addBinding", binding()),
-                        ("Runtime.addBinding", crate::web_swipe::binding()),
-                        ("Runtime.addBinding", pass_binding()),
-                    ]
-                    .into_iter()
-                    .chain(in_frame(&scripts).into_iter().filter_map(parsed))
-                    .collect(),
+                    bindings()
+                        .into_iter()
+                        .chain(in_frame(&scripts).into_iter().filter_map(parsed))
+                        .collect(),
                 ),
                 Some(Attached::Held(session)) => (session, parsed(let_go()).into_iter().collect()),
                 None => return,
@@ -357,7 +352,14 @@ mod tests {
                 params["name"].as_str().expect("a name")
             })
             .collect();
-        assert_eq!(names, [crate::web_opens::BINDING, crate::web_pass::BINDING]);
+        assert_eq!(
+            names,
+            [
+                crate::web_opens::BINDING,
+                crate::web_swipe::BINDING,
+                crate::web_pass::BINDING
+            ]
+        );
         assert!(super::engine::bound_again("Runtime.bindingCalled").is_empty());
     }
 

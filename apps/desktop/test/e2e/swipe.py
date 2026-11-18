@@ -190,10 +190,7 @@ PAGE = f"""<!doctype html>
 <div id="short"><div></div></div>
 <script>
   window.said = []
-  window.open = (url, name) => {{
-    if (String(name).startsWith('orden-swipe:')) window.said.push(JSON.parse(String(name).slice('orden-swipe:'.length)))
-    return null
-  }}
+  window.ordenSwiped = (words) => window.said.push(JSON.parse(words))
   document.getElementById('row').scrollLeft = 200
   document.getElementById('short').scrollLeft = 4
   document.getElementById('map').addEventListener('wheel', (event) => event.preventDefault(), {{ passive: false }})
