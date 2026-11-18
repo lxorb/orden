@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { readSpaceFiles } from '../src/sync-server-engine/src/spaces/files'
-import { call, file, mail, signIn, testEnv, type ShareView, type TestEnv } from './harness'
+import { call, file, joined, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 
 let env: TestEnv
 let token: string
@@ -240,21 +240,7 @@ describe('what a space keeps beside its notes', () => {
 })
 
 describe('a space two people write in', () => {
-  async function writerIn(email: string): Promise<string> {
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${space}/share/invite`, {
-        token,
-        body: { email, role: 'write' },
-      }),
-    )
-
-    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-    if (!link) throw new Error(`no invitation was sent:\n${sent}`)
-
-    const session = await signIn(env, email)
-    await call(env, `/v1/join/${link}`, { method: 'POST', token: session })
-    return session
-  }
+  const writerIn = (email: string) => joined(env, token, space, email)
 
   async function guestIn(): Promise<string> {
     const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {

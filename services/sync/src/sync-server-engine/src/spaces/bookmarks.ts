@@ -1,15 +1,5 @@
-import { Hono } from 'hono'
-import {
-  type Env,
-  listIn,
-  LONGEST_PATH,
-  NOT_AN_OBJECT,
-  objectBody,
-  staysInside,
-  type Variables,
-} from '../../../sync-server/src/api'
-import { fits, writeColumn } from './columns'
-import { atLeast, spaceOf } from './space'
+import { listIn, LONGEST_PATH, staysInside } from '../../../sync-server/src/api'
+import { columnRoute } from './space'
 
 const MOST = 60
 const LONGEST_TEXT = 200
@@ -72,35 +62,20 @@ export function readBookmarks(raw: string): Bookmark[] {
   return held.filter((one): one is Bookmark => wrong([one]) === null).slice(0, MOST)
 }
 
-export const bookmarks = new Hono<{ Bindings: Env; Variables: Variables }>()
-
-bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
-  const space = spaceOf(context)
-
-  const body = await objectBody(context)
-  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
-
-  const sent = body.bookmarks
-  const problem = wrong(sent)
-  if (problem) return context.json({ error: problem }, 400)
-
-  const kept = (sent as Bookmark[]).map(({ kind, path, text, parent, view, id }) => {
-    const entry = bookmarkId(id)
-    return {
-      kind,
-      path,
-      text,
-      ...(parent ? { parent } : {}),
-      ...(view ? { view } : {}),
-      ...(entry ? { id: entry } : {}),
-    }
-  })
-  const written = JSON.stringify(kept)
-  if (!fits(written, 'bookmarks')) {
-    return context.json({ error: 'that is more bookmarks than a space holds' }, 413)
-  }
-
-  await writeColumn(context.env, 'bookmarks', space.id, written)
-
-  return context.json({ bookmarks: kept })
-})
+export const bookmarks = columnRoute(
+  'bookmarks',
+  wrong,
+  (sent: Bookmark[]) =>
+    sent.map(({ kind, path, text, parent, view, id }) => {
+      const entry = bookmarkId(id)
+      return {
+        kind,
+        path,
+        text,
+        ...(parent ? { parent } : {}),
+        ...(view ? { view } : {}),
+        ...(entry ? { id: entry } : {}),
+      }
+    }),
+  'that is more bookmarks than a space holds',
+)

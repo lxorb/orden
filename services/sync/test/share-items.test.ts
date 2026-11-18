@@ -3,7 +3,16 @@ import { subprotocol } from '@orden/rooms'
 import { spacesFor } from '../src/sync-server-machines/src/mcp/tools'
 import { MOST_ITEMS } from '../src/sync-server-engine/src/spaces/space'
 import { purgeExpired } from '../src/sync-server-engine/src/trash'
-import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
+import {
+  call,
+  joined,
+  mail,
+  signIn,
+  testEnv,
+  type JoinView,
+  type ShareView,
+  type TestEnv,
+} from './harness'
 import { doorway } from './room'
 
 const OWNER = 'owner@example.com'
@@ -46,25 +55,8 @@ function itemView(item = note, as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share?item=${item}`, { token: as })
 }
 
-async function inviteLink(email: string, role: 'write' | 'read', item = note): Promise<string> {
-  const sent = await mail(() =>
-    call(env, `/v1/spaces/${space}/share/invite?item=${item}`, {
-      token: owner,
-      body: { email, role },
-    }),
-  )
-
-  const found = /\/join\/([a-f0-9]+)/.exec(sent)
-  if (!found?.[1]) throw new Error(`no invitation was sent:\n${sent}`)
-  return found[1]
-}
-
-async function given(email: string, role: 'write' | 'read', item = note): Promise<string> {
-  const link = await inviteLink(email, role, item)
-  const token = await signIn(env, email)
-  await call(env, `/v1/join/${link}`, { method: 'POST', token })
-  return token
-}
+const given = (email: string, role: 'write' | 'read', item = note) =>
+  joined(env, owner, space, email, role, { item })
 
 async function itemLink(
   role: 'write' | 'read',

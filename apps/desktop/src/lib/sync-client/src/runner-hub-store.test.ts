@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { hash32 } from '@orden/sync-core'
+import { memoryStorage } from '../test/memory-storage'
 const crate = vi.hoisted(() => ({
   held: null as null | { account: string; session: import('./store').SyncStore },
   mems: new Map<string, unknown>(),
@@ -84,19 +85,6 @@ vi.mock('./app-world', async () => {
   }
 })
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('BroadcastChannel', undefined)
 

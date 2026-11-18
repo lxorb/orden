@@ -3,7 +3,17 @@ import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-co
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { MOST_MEMBERS } from '../src/sync-server-engine/src/spaces/share'
-import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
+import {
+  call,
+  invitation,
+  joined,
+  mail,
+  signIn,
+  testEnv,
+  type JoinView,
+  type ShareView,
+  type TestEnv,
+} from './harness'
 import { framed, live } from './sync2'
 
 const NO_FACE = { id: null, avatar: null }
@@ -26,22 +36,10 @@ let guestReader: string
 let waitingGuest: string
 let readingGuest: string
 
-async function invite(email: string, role: 'write' | 'read'): Promise<string> {
-  const link = await inviteLink(email, role)
-  const token = await signIn(env, email)
-  await call(env, `/v1/join/${link}`, { method: 'POST', token })
-  return token
-}
+const invite = (email: string, role: 'write' | 'read') => joined(env, owner, space, email, role)
 
-async function inviteLink(email: string, role: 'write' | 'read'): Promise<string> {
-  const sent = await mail(() =>
-    call(env, `/v1/spaces/${space}/share/invite`, { token: owner, body: { email, role } }),
-  )
-
-  const found = /\/join\/([a-f0-9]+)/.exec(sent)
-  if (!found?.[1]) throw new Error(`no invitation was sent:\n${sent}`)
-  return found[1]
-}
+const inviteLink = (email: string, role: 'write' | 'read') =>
+  invitation(env, owner, space, email, role)
 
 function shareView(as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: as })

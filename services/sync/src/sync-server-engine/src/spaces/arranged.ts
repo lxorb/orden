@@ -1,15 +1,5 @@
-import { Hono } from 'hono'
-import {
-  type Env,
-  LONGEST_PATH,
-  NOT_AN_OBJECT,
-  objectBody,
-  objectIn,
-  staysInside,
-  type Variables,
-} from '../../../sync-server/src/api'
-import { fits, writeColumn } from './columns'
-import { atLeast, spaceOf } from './space'
+import { LONGEST_PATH, objectIn, staysInside } from '../../../sync-server/src/api'
+import { columnRoute } from './space'
 
 const MOST_FOLDERS = 200
 
@@ -75,25 +65,9 @@ export function readArranged(raw: string): Record<string, string[]> {
   return arrangedMap(objectIn(raw))
 }
 
-export const spaceArranged = new Hono<{ Bindings: Env; Variables: Variables }>()
-
-spaceArranged.put('/:id/arranged', atLeast('write'), async (context) => {
-  const space = spaceOf(context)
-
-  const body = await objectBody(context)
-  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
-
-  const sent = body.arranged
-  const problem = wrong(sent)
-  if (problem) return context.json({ error: problem }, 400)
-
-  const kept = arrangedMap(sent)
-  const written = JSON.stringify(kept)
-  if (!fits(written, 'arranged')) {
-    return context.json({ error: 'that is more arranged folders than a space holds' }, 413)
-  }
-
-  await writeColumn(context.env, 'arranged', space.id, written)
-
-  return context.json({ arranged: kept })
-})
+export const spaceArranged = columnRoute(
+  'arranged',
+  wrong,
+  arrangedMap,
+  'that is more arranged folders than a space holds',
+)

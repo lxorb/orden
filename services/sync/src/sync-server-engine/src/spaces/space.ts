@@ -1,11 +1,13 @@
-import type { Context, MiddlewareHandler } from 'hono'
+import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import {
   askInChunks,
   AT_A_TIME,
   type Env,
   newId,
   NO_SUCH_SPACE,
+  NOT_AN_OBJECT,
   now,
+  objectBody,
   places,
   presentSite,
   type Reached,
@@ -15,6 +17,7 @@ import {
   type Variables,
   type Whoever,
 } from '../../../sync-server/src/api'
+import { type Column, fits, writeColumn } from './columns'
 import { dnsRecords } from './addresses'
 import { readArranged } from './arranged'
 import { readBookmarks } from './bookmarks'
@@ -367,4 +370,27 @@ export function presentSpace(
       site: role === 'owner' ? presentSite(readSite(space.site)) : EMPTY_SITE,
     },
   }
+}
+
+export function columnRoute(
+  column: Column,
+  wrong: (sent: unknown) => string | null,
+  keep: (sent: never) => unknown,
+  tooMuch: string,
+) {
+  return new Hono<{ Bindings: Env; Variables: Variables }>().put(
+    `/:id/${column}`,
+    atLeast('write'),
+    async (context) => {
+      const body = await objectBody(context)
+      if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
+      const problem = wrong(body[column])
+      if (problem) return context.json({ error: problem }, 400)
+      const kept = keep(body[column] as never)
+      const written = JSON.stringify(kept)
+      if (!fits(written, column)) return context.json({ error: tooMuch }, 413)
+      await writeColumn(context.env, column, spaceOf(context).id, written)
+      return context.json({ [column]: kept })
+    },
+  )
 }

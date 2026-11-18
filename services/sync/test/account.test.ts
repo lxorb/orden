@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { codeAt } from '../src/sync-server-accounts/src/second'
-import { call, file, mail, signIn, type Answer, type TestEnv, testEnv } from './harness'
+import { call, file, joined, mail, signIn, type Answer, type TestEnv, testEnv } from './harness'
 
 interface LeavingView {
   resendIn?: number
@@ -316,14 +316,7 @@ describe('what is left', () => {
       await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     ).json.space?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${theirs}/share/invite`, {
-        token: other,
-        body: { email: ME, role: 'write' },
-      }),
-    )
-    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-    await call(env, `/v1/join/${link}`, { method: 'POST', token })
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const wrote = await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
       token,
@@ -381,11 +374,7 @@ describe('what is left', () => {
       })
     ).json.note?.id
 
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${mine}/share/invite`, { token, body: { email: OTHER, role: 'read' } }),
-    )
-    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-    await call(env, `/v1/join/${link}`, { method: 'POST', token: other })
+    await joined(env, token, mine ?? '', OTHER, 'read', { as: other })
     expect((await call(env, `/v1/notes/${note}`, { token: other })).status).toBe(200)
 
     expect((await leave()).status).toBe(200)
