@@ -357,7 +357,7 @@ export class Saving {
       this.claimHeld.get(path)?.()
       this.claimHeld.delete(path)
     }
-    return path
+    return this.waiting.has(note) ? null : path
   }
 
   private async claim(note: NoteDoc, folder: string, file: string): Promise<string | null> {
