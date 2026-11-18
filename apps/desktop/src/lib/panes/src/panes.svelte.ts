@@ -213,7 +213,7 @@ export class Panes {
     if (this.count < 2) return
 
     const kept = this.focused
-    this.frame = pane(kept.id, kept.activeTabId)
+    this.frame = kept
     this.focusedId = kept.id
     this.changed()
   }
