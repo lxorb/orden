@@ -7,15 +7,9 @@ mod handover;
 #[cfg(desktop)]
 mod hotkeys;
 #[cfg(desktop)]
-mod kept;
-#[cfg(desktop)]
 mod launch;
 #[cfg(desktop)]
 mod lifecycle;
-#[cfg(desktop)]
-pub mod old_engine;
-#[cfg(desktop)]
-pub mod old_home;
 #[cfg(desktop)]
 mod quick_add;
 #[cfg(test)]
@@ -200,8 +194,8 @@ macro_rules! desktop_commands {
             orden_crashes::crashes::crash_context,
             orden_crashes::crashes::crash_leaving,
             orden_crashes::crashes::crash_drill,
-            kept::kept_write,
-            kept::kept_forget,
+            orden_carry::kept::kept_write,
+            orden_carry::kept::kept_forget,
             orden_system::gpu::gpu_line,
             orden_web::page_scale::page_scale_seen,
             orden_web::page_scale::interface_zoom_chosen,
@@ -233,11 +227,11 @@ macro_rules! desktop_commands {
             orden_notes::outside::outside_spaces,
             orden_notes::outside::take_in_outside,
             orden_notes::outside::settle_outside,
-            old_engine::old_engine_databases,
-            old_engine::old_engine_databases_carried,
-            old_home::former_homes,
-            old_home::keep_after_move,
-            old_home::drop_after_move,
+            orden_carry::old_engine::old_engine_databases,
+            orden_carry::old_engine::old_engine_databases_carried,
+            orden_carry::old_home::former_homes,
+            orden_carry::old_home::keep_after_move,
+            orden_carry::old_home::drop_after_move,
             orden_system::default_browser::default_browser,
             orden_system::default_browser::make_default_browser,
             lifecycle::keep_running,
@@ -909,8 +903,8 @@ mod tests {
 
     const EXCEPTED: [&str; 3] = [
         "orden_base::logs::write_log",
-        "crate::kept::kept_write",
-        "crate::kept::kept_forget",
+        "orden_carry::kept::kept_write",
+        "orden_carry::kept::kept_forget",
     ];
 
     const WAITS: [&str; 38] = [

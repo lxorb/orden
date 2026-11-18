@@ -73,7 +73,7 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
 
 fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<orden_base::Engine>> {
     let builder = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-add.html".into()))
-        .initialization_script(crate::old_home::script())
+        .initialization_script(orden_carry::old_home::script())
         .title("Orden")
         .inner_size(WIDTH, HEIGHT)
         .resizable(false)

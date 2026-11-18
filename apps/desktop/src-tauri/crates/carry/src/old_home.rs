@@ -16,15 +16,15 @@ pub(crate) struct Home {
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Former {
+pub struct Former {
     homes: Vec<Home>,
     waiting: bool,
     dumped: bool,
     after: Option<String>,
 }
 
-pub fn carry_home() {
-    if env!("ORDEN_IDENTIFIER") != NEW {
+pub fn carry_home(identifier: &str) {
+    if identifier != NEW {
         return;
     }
     let moved: Vec<(PathBuf, PathBuf)> = places()
@@ -42,7 +42,7 @@ pub fn carry_home() {
     for spaces in spaces_folders(&config) {
         rebase_spaces_home(&spaces.join(".orden"), &pairs);
     }
-    let former = former_homes();
+    let former = former(identifier);
     *given() = Some(former);
 }
 
@@ -128,7 +128,7 @@ fn forget_given_after() {
     }
 }
 
-pub(crate) fn script() -> String {
+pub fn script() -> String {
     let said = given()
         .as_ref()
         .and_then(|former| serde_json::to_string(former).ok())
@@ -137,8 +137,12 @@ pub(crate) fn script() -> String {
 }
 
 #[tauri::command(async)]
-pub(crate) fn former_homes() -> Former {
-    if env!("ORDEN_IDENTIFIER") != NEW {
+pub fn former_homes(app: tauri::AppHandle) -> Former {
+    former(&app.config().identifier)
+}
+
+fn former(identifier: &str) -> Former {
+    if identifier != NEW {
         return Former {
             homes: Vec::new(),
             waiting: false,
@@ -157,7 +161,7 @@ pub(crate) fn former_homes() -> Former {
 }
 
 #[tauri::command(async)]
-pub(crate) fn keep_after_move(text: String) -> Result<(), String> {
+pub fn keep_after_move(text: String) -> Result<(), String> {
     let file = after_move().ok_or("no settings folder")?;
     if let Some(dir) = file.parent() {
         orden_base::paths::made(dir)?;
@@ -166,7 +170,7 @@ pub(crate) fn keep_after_move(text: String) -> Result<(), String> {
 }
 
 #[tauri::command(async)]
-pub(crate) fn drop_after_move() {
+pub fn drop_after_move() {
     forget_given_after();
     if let Some(file) = after_move() {
         let _ = fs::remove_file(file);
@@ -448,7 +452,7 @@ mod tests {
         let none = script();
         assert!(!none.contains("/* __FORMER__ */ null"));
         assert!(none.contains("__ORDEN_FORMER__ = former") && none.contains("= null"));
-        let former = former_homes();
+        let former = former(NEW);
         *given() = Some(former);
         assert!(script().contains("\"homes\":"));
     }

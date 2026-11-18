@@ -16,7 +16,7 @@ from typing import Any
 
 import crash_told
 
-HOME = pathlib.Path(__file__).resolve().parent.parent / "apps/desktop/src-tauri/src/old_home.rs"
+HOME = pathlib.Path(__file__).resolve().parent.parent / "apps/desktop/src-tauri/crates/carry/src/old_home.rs"
 
 
 def said_in_home(name: str) -> str:

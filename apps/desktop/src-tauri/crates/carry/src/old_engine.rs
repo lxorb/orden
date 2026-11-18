@@ -29,15 +29,11 @@ const LOG_BLOCK: usize = 32768;
 
 type Values = BTreeMap<String, String>;
 
-fn config() -> Option<PathBuf> {
-    dirs::config_dir().map(|dir| dir.join(env!("ORDEN_IDENTIFIER")))
-}
-
-pub fn carry_storage() {
-    let Some(config) = config() else {
+pub fn carry_storage(identifier: &str) {
+    let Some(config) = dirs::config_dir().map(|dir| dir.join(identifier)) else {
         return;
     };
-    let homes: Vec<Home> = [env!("ORDEN_IDENTIFIER"), crate::old_home::OLD]
+    let homes: Vec<Home> = [identifier, crate::old_home::OLD]
         .into_iter()
         .map(|name| Home {
             chromium: dirs::data_local_dir().map(|dir| dir.join(name).join(CHROMIUM_STORAGE)),
@@ -91,7 +87,7 @@ fn databases_carried(config: &Path) {
     }
 }
 
-pub(crate) fn script() -> &'static str {
+pub fn script() -> &'static str {
     if waiting().is_some() {
         WAITING_SCRIPT
     } else {
@@ -100,14 +96,14 @@ pub(crate) fn script() -> &'static str {
 }
 
 #[tauri::command(async)]
-pub(crate) fn old_engine_databases() -> Option<String> {
+pub fn old_engine_databases() -> Option<String> {
     waiting().clone()
 }
 
 #[tauri::command(async)]
-pub(crate) fn old_engine_databases_carried() {
+pub fn old_engine_databases_carried(app: tauri::AppHandle) {
     if waiting().take().is_some() {
-        if let Some(config) = config() {
+        if let Ok(config) = orden_base::paths::config_dir(&app) {
             databases_carried(&config);
         }
     }
@@ -464,7 +460,7 @@ mod tests {
     }
 
     fn fixture() -> PathBuf {
-        crate::app_dir().join("tests/old-engine/chromium")
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/old-engine/chromium")
     }
 
     fn webkit_store(path: &Path, rows: &[(&str, &str)]) {
