@@ -37,6 +37,7 @@ const IDENTITY: Record<string, IdentityKey> = {
   'Mobile Phone': 'secondPhone',
 }
 
+const KNOWN = ['Credit Card', 'Address', 'SSH Key', 'Wi-Fi Password', 'Generic']
 const STREET = ['Address 1', 'Address 2', 'Address 3']
 const SKIPPED_KEYS = new Set(['Language', 'NoteType', 'Notes'])
 const KEY = /^([A-Za-z][A-Za-z0-9 /'.#()&-]{0,48}):(.*)$/
@@ -55,16 +56,12 @@ export function parseLastPass(text: string): Imported {
   }
   const into = new Collector(NAME)
   for (const row of rows) {
-    const { content, kind } = contentOf(row)
-    if (kind !== null) {
-      into.skip(`Kept as a note: Orden has no kind for LastPass's "${kind}".`, content.title)
+    const fields = (row.url ?? '').trim() === NOTE_URL ? noteFieldsOf(row.extra ?? '') : null
+    const content = fields ? noteContent(row.name ?? '', fields) : plainContent(row)
+    if (fields && !KNOWN.includes(fields.type)) {
+      into.skip(`Kept as a note: Orden has no kind for LastPass's "${fields.type}".`, content.title)
     }
-    into.add(
-      itemOf(content, {
-        pinned: row.fav === '1',
-        folder: folderOf(row.grouping ?? ''),
-      }),
-    )
+    into.add(itemOf(content, { pinned: row.fav === '1', folder: folderOf(row.grouping ?? '') }))
   }
   return into.result()
 }
@@ -131,23 +128,20 @@ function rest(fields: NoteFields, used: readonly string[]): Field[] {
     )
 }
 
-function noteContent(title: string, fields: NoteFields): { content: Content; kind: string | null } {
+function noteContent(title: string, fields: NoteFields): Content {
   const get = (key: string): string => fields.values.get(key)?.trim() ?? ''
   switch (fields.type) {
     case 'Credit Card': {
       const used = ['Name on Card', 'Number', 'Security Code', 'Expiration Date', 'Type']
-      return {
-        kind: null,
-        content: cardOf({
-          title,
-          note: fields.notes,
-          holder: get('Name on Card'),
-          number: get('Number'),
-          code: get('Security Code'),
-          expiry: lastPassExpiry(get('Expiration Date')),
-          fields: rest(fields, used),
-        }),
-      }
+      return cardOf({
+        title,
+        note: fields.notes,
+        holder: get('Name on Card'),
+        number: get('Number'),
+        code: get('Security Code'),
+        expiry: lastPassExpiry(get('Expiration Date')),
+        fields: rest(fields, used),
+      })
     }
     case 'Address': {
       const values: Partial<Record<IdentityKey, string>> = {}
@@ -163,56 +157,40 @@ function noteContent(title: string, fields: NoteFields): { content: Content; kin
         value: one.name.includes('Phone') || one.name === 'Fax' ? phoneOf(one.value) : one.value,
         kind: one.kind,
       }))
-      return { kind: null, content: identityOf({ title, note: fields.notes, values, extra }) }
+      return identityOf({ title, note: fields.notes, values, extra })
     }
     case 'SSH Key':
-      return {
-        kind: null,
-        content: sshOf({
-          title,
-          note: fields.notes,
-          privateKey: fields.values.get('Private Key') ?? '',
-          publicKey: get('Public Key'),
-          fields: rest(fields, ['Private Key', 'Public Key']),
-        }),
-      }
+      return sshOf({
+        title,
+        note: fields.notes,
+        privateKey: fields.values.get('Private Key') ?? '',
+        publicKey: get('Public Key'),
+        fields: rest(fields, ['Private Key', 'Public Key']),
+      })
     case 'Wi-Fi Password':
-      return {
-        kind: null,
-        content: wifiOf({
-          title,
-          note: fields.notes,
-          ssid: get('SSID'),
-          password: get('Password'),
-          security: get('Authentication'),
-          fields: rest(fields, ['SSID', 'Password', 'Authentication']),
-        }),
-      }
-    case 'Generic':
-      return { kind: null, content: noteOf(title, fields.notes, rest(fields, [])) }
+      return wifiOf({
+        title,
+        note: fields.notes,
+        ssid: get('SSID'),
+        password: get('Password'),
+        security: get('Authentication'),
+        fields: rest(fields, ['SSID', 'Password', 'Authentication']),
+      })
     default:
-      return { kind: fields.type, content: noteOf(title, fields.notes, rest(fields, [])) }
+      return noteOf(title, fields.notes, rest(fields, []))
   }
 }
 
-function contentOf(row: CsvRecord): { content: Content; kind: string | null } {
-  const title = row.name ?? ''
+function plainContent(row: CsvRecord): Content {
   const extra = row.extra ?? ''
   const url = (row.url ?? '').trim()
-  if (url === NOTE_URL) {
-    const fields = noteFieldsOf(extra)
-    if (fields) return noteContent(title, fields)
-    return { kind: null, content: noteOf(title, extra) }
-  }
-  return {
-    kind: null,
-    content: loginOf({
-      title,
-      note: extra,
-      username: row.username ?? '',
-      password: row.password ?? '',
-      totp: row.totp ?? '',
-      urls: urlsIn(url),
-    }),
-  }
+  if (url === NOTE_URL) return noteOf(row.name ?? '', extra)
+  return loginOf({
+    title: row.name ?? '',
+    note: extra,
+    username: row.username ?? '',
+    password: row.password ?? '',
+    totp: row.totp ?? '',
+    urls: urlsIn(url),
+  })
 }

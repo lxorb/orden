@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { normalizeUrl } from '../urls'
 import { totpOf } from './build'
 import { parseProton } from './proton'
-import type { Imported } from './types'
 import { as, find } from './found'
 
 const SECRET = 'JBSWY3DPEHPK3PXP'

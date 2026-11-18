@@ -44,7 +44,7 @@ export function offersTwoFactorFor(login: Login): boolean {
   })
 }
 
-function reusedOf(logins: readonly LoginItem[]): Map<string, string[]> {
+export function idsByPassword(logins: readonly LoginItem[]): Map<string, string[]> {
   const byPassword = new Map<string, string[]>()
   for (const item of logins) {
     const password = item.content.password
@@ -53,8 +53,12 @@ function reusedOf(logins: readonly LoginItem[]): Map<string, string[]> {
     if (ids) ids.push(item.id)
     else byPassword.set(password, [item.id])
   }
+  return byPassword
+}
+
+function reusedOf(logins: readonly LoginItem[]): Map<string, string[]> {
   const reused = new Map<string, string[]>()
-  for (const ids of byPassword.values()) {
+  for (const ids of idsByPassword(logins).values()) {
     if (ids.length < 2) continue
     for (const id of ids)
       reused.set(

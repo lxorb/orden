@@ -1,5 +1,5 @@
 import type { Item } from './types'
-import { watchedLogins } from './monitor'
+import { idsByPassword, watchedLogins } from './monitor'
 
 export interface FetchedResponse {
   ok: boolean
@@ -80,12 +80,8 @@ export async function rangeOf(
   signal?: AbortSignal,
 ): Promise<Map<string, number>> {
   if (!/^[0-9A-F]{5}$/.test(prefix)) throw new Error('pass: a range is five upper-case hex digits')
-  const response = await fetched(
-    `${RANGE_URL}${prefix}`,
-    { 'Add-Padding': 'true' },
-    fetcher,
-    signal,
-  )
+  const headers = { 'Add-Padding': 'true' }
+  const response = await fetched(`${RANGE_URL}${prefix}`, headers, fetcher, signal)
   if (!response.ok) throw failure('Have I Been Pwned', response.status)
   return parseRange(await response.text())
 }
@@ -111,16 +107,8 @@ export async function compromisedOf(
   options: CompromisedOptions = {},
 ): Promise<Set<string>> {
   const { concurrency = 4, signal } = options
-  const byPassword = new Map<string, string[]>()
-  for (const item of watchedLogins(items)) {
-    const password = item.content.password
-    if (password === '') continue
-    const ids = byPassword.get(password)
-    if (ids) ids.push(item.id)
-    else byPassword.set(password, [item.id])
-  }
   const byPrefix = new Map<string, { suffix: string; ids: string[] }[]>()
-  for (const [password, ids] of byPassword) {
+  for (const [password, ids] of idsByPassword(watchedLogins(items))) {
     const hash = await sha1Hex(password)
     const prefix = hash.slice(0, 5)
     const wanted = byPrefix.get(prefix)

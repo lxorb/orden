@@ -206,50 +206,64 @@ function addressText(address: Record<string, string>): string {
     .join(', ')
 }
 
+function typedField(
+  key: string,
+  id: string,
+  title: string,
+  section: string,
+  value: unknown,
+): OneField {
+  if (key === 'concealed') return oneField(id, title, section, 'hidden', stringOf(value))
+  if (key === 'date') return oneField(id, title, section, 'date', dayOf(dateOf(value)))
+  if (key === 'monthYear') return oneField(id, title, section, 'text', monthYearText(value))
+  if (key !== 'address') return oneField(id, title, section, 'text', stringOf(value))
+  const address = addressOf(value)
+  return { ...oneField(id, title, section, 'text', addressText(address)), address }
+}
+
 function puxField(raw: unknown, section: string, item: OneItem): OneField | null {
   const field = recordOf(raw)
   const id = stringOf(field.id)
   const title = stringOf(field.title)
   const [key, value] = Object.entries(recordOf(field.value))[0] ?? ['', undefined]
-  switch (key) {
-    case 'concealed':
-      return oneField(id, title, section, 'hidden', stringOf(value))
-    case 'totp':
-      return oneField(id, title, section, 'totp', stringOf(value))
-    case 'date':
-      return oneField(id, title, section, 'date', dayOf(dateOf(value)))
-    case 'monthYear':
-      return oneField(id, title, section, 'text', monthYearText(value))
-    case 'email':
-      return oneField(
-        id,
-        title,
-        section,
-        'text',
-        typeof value === 'string' ? value : stringOf(recordOf(value).email_address),
-      )
-    case 'address': {
-      const address = addressOf(value)
-      return { ...oneField(id, title, section, 'text', addressText(address)), address }
+  if (key === 'file') item.attachment = true
+  if (['file', 'reference', ''].includes(key)) return null
+  if (key === 'totp') return oneField(id, title, section, 'totp', stringOf(value))
+  if (key === 'email') {
+    const email = typeof value === 'string' ? value : stringOf(recordOf(value).email_address)
+    return oneField(id, title, section, 'text', email)
+  }
+  if (key !== 'sshKey') return typedField(key, id, title, section, value)
+  const ssh = recordOf(value)
+  const meta = recordOf(ssh.metadata)
+  return {
+    ...oneField(id, title, section, 'hidden', ''),
+    privateKey: stringOf(ssh.privateKey) || stringOf(meta.privateKey),
+    publicKey: stringOf(meta.publicKey),
+  }
+}
+
+function designated(item: OneItem, fields: unknown): void {
+  for (const one of listOf(fields)) {
+    const field = recordOf(one)
+    const designation = stringOf(field.designation)
+    if (designation === 'username') item.username = stringOf(field.value)
+    if (designation === 'password') item.password = stringOf(field.value)
+  }
+}
+
+function sectioned(
+  item: OneItem,
+  sections: readonly unknown[],
+  read: (field: unknown, title: string) => OneField | null,
+): void {
+  for (const one of sections) {
+    const section = recordOf(one)
+    const title = stringOf(section.title)
+    for (const field of listOf(section.fields)) {
+      const parsed = read(field, title)
+      if (parsed) item.fields.push(parsed)
     }
-    case 'sshKey': {
-      const ssh = recordOf(value)
-      const meta = recordOf(ssh.metadata)
-      return {
-        ...oneField(id, title, section, 'hidden', ''),
-        privateKey: stringOf(ssh.privateKey) || stringOf(meta.privateKey),
-        publicKey: stringOf(meta.publicKey),
-      }
-    }
-    case 'file':
-      item.attachment = true
-      return null
-    case 'reference':
-      return null
-    case '':
-      return null
-    default:
-      return oneField(id, title, section, 'text', stringOf(value))
   }
 }
 
@@ -288,20 +302,8 @@ function puxItem(raw: Record<string, unknown>): OneItem {
   item.password = stringOf(details.password)
   item.passkey = Object.keys(recordOf(details.passkey)).length > 0
   item.attachment = recordOf(details.documentAttributes).fileName !== undefined
-  for (const one of listOf(details.loginFields)) {
-    const field = recordOf(one)
-    const designation = stringOf(field.designation)
-    if (designation === 'username') item.username = stringOf(field.value)
-    if (designation === 'password') item.password = stringOf(field.value)
-  }
-  for (const one of listOf(details.sections)) {
-    const section = recordOf(one)
-    const title = stringOf(section.title)
-    for (const field of listOf(section.fields)) {
-      const parsed = puxField(field, title, item)
-      if (parsed) item.fields.push(parsed)
-    }
-  }
+  designated(item, details.loginFields)
+  sectioned(item, listOf(details.sections), (field, title) => puxField(field, title, item))
   return item
 }
 
@@ -309,26 +311,11 @@ function legacyField(raw: unknown, section: string): OneField | null {
   const field = recordOf(raw)
   const id = stringOf(field.n)
   const title = stringOf(field.t)
-  const value = field.v
   const kind = stringOf(field.k)
-  if (id.startsWith('TOTP')) return oneField(id, title, section, 'totp', stringOf(value))
-  switch (kind) {
-    case 'concealed':
-      return oneField(id, title, section, 'hidden', stringOf(value))
-    case 'date':
-      return oneField(id, title, section, 'date', dayOf(dateOf(value)))
-    case 'monthYear':
-      return oneField(id, title, section, 'text', monthYearText(value))
-    case 'address': {
-      const address = addressOf(value)
-      return { ...oneField(id, title, section, 'text', addressText(address)), address }
-    }
-    case 'reference':
-    case 'file':
-      return null
-    default:
-      return oneField(id, title, section, 'text', stringOf(value))
-  }
+  if (id.startsWith('TOTP')) return oneField(id, title, section, 'totp', stringOf(field.v))
+  return kind === 'reference' || kind === 'file'
+    ? null
+    : typedField(kind, id, title, section, field.v)
 }
 
 function legacyCategory(typeName: string): [Category, string] {
@@ -389,12 +376,7 @@ function legacyItem(
   const tags = listOf(recordOf(raw.openContents).tags).map(stringOf)
   item.folder = folders.get(stringOf(raw.folderUuid)) ?? tags[0] ?? null
   item.password = stringOf(secure.password)
-  for (const one of listOf(secure.fields)) {
-    const field = recordOf(one)
-    const designation = stringOf(field.designation)
-    if (designation === 'username') item.username = stringOf(field.value)
-    if (designation === 'password') item.password = stringOf(field.value)
-  }
+  designated(item, secure.fields)
   for (const key of ['cardholder', 'ccnum', 'cvv', 'pin']) {
     const value = stringOf(secure[key])
     if (value !== '') item.fields.push(oneField(key, key, '', 'text', value))
@@ -408,14 +390,7 @@ function legacyItem(
     ...listOf(secure.sections),
     ...listOf(recordOf(secure.unknown_details).sections),
   ]
-  for (const one of sections) {
-    const section = recordOf(one)
-    const title = stringOf(section.title)
-    for (const field of listOf(section.fields)) {
-      const parsed = legacyField(field, title)
-      if (parsed) item.fields.push(parsed)
-    }
-  }
+  sectioned(item, sections, legacyField)
   return item
 }
 
@@ -543,38 +518,13 @@ function add(into: Collector, item: OneItem, vault: string): void {
   if (item.attachment) into.skip('Its file was not imported.', item.title)
   if (item.passkey)
     into.skip('Its passkey stays in 1Password: 1Password does not export it.', item.title)
-  into.add(
-    itemOf(content, {
-      created: item.created,
-      modified: item.modified,
-      pinned: item.pinned,
-      trashed: item.trashed,
-      folder: item.folder,
-    }),
-    vault,
-  )
+  into.add(itemOf(content, item), vault)
 }
 
-const CSV_KNOWN = new Set([
-  'title',
-  'name',
-  'url',
-  'urls',
-  'website',
-  'login_url',
-  'username',
-  'login_username',
-  'password',
-  'login_password',
-  'otpauth',
-  'one-time password',
-  'favorite',
-  'archived',
-  'tags',
-  'notes',
-  'notesplain',
-  'type',
-])
+const CSV_KNOWN = new Set(
+  `title,name,url,urls,website,login_url,username,login_username,password,login_password,otpauth,
+one-time password,favorite,archived,tags,notes,notesplain,type`.split(/,\n?/),
+)
 
 function parseOnePasswordCsv(text: string): Imported {
   const rows = csvRecords(text)

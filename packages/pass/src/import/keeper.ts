@@ -1,6 +1,7 @@
 import type { FieldKind, IdentityKey } from '../types'
 import {
   Collector,
+  type Extra,
   cardOf,
   dateOf,
   expiryOf,
@@ -19,12 +20,6 @@ import {
 import { dayOf, sshOf, wifiOf } from './content'
 import { csvRows } from './csv'
 import type { Imported } from './types'
-
-interface Extra {
-  name: string
-  value: string
-  kind?: FieldKind
-}
 
 interface Custom {
   type: string
@@ -155,22 +150,22 @@ function recordInto(into: Collector, raw: unknown, sharedFolders: Map<string, st
   const placeOf = listOf(record.folders).map(recordOf)[0] ?? {}
   const folderPath = stringOf(placeOf.folder)
   const shared = stringOf(placeOf.shared_folder)
-  const parts = {
-    modified: dateOf(record.last_modified),
-    folder: keeperFolderOf(folderPath),
-  }
+  const parts = { modified: dateOf(record.last_modified), folder: keeperFolderOf(folderPath) }
   const vault = shared === '' ? '' : (sharedFolders.get(shared) ?? keeperFolderOf(shared))
   const take = (wanted: string): Custom | undefined => {
     const at = customs.findIndex((one) => one.type === wanted)
     return at < 0 ? undefined : customs.splice(at, 1)[0]
+  }
+  const takeLabel = (label: string): string => {
+    const at = customs.findIndex((one) => one.label.toLowerCase() === label)
+    return at < 0 ? '' : stringOf(customs.splice(at, 1)[0]?.value)
   }
   const add = (content: Parameters<typeof itemOf>[0]): void => {
     into.add(itemOf(content, parts), vault)
   }
   if (type === 'bankCard') {
     const card = recordOf(take('paymentCard')?.value)
-    const holderAt = customs.findIndex((one) => one.label.toLowerCase() === 'cardholdername')
-    const holder = holderAt < 0 ? '' : stringOf(customs.splice(holderAt, 1)[0]?.value)
+    const holder = takeLabel('cardholdername')
     add(
       cardOf({
         title,
@@ -208,8 +203,7 @@ function recordInto(into: Collector, raw: unknown, sharedFolders: Map<string, st
     return
   }
   if (type === 'wifiCredentials') {
-    const ssidAt = customs.findIndex((one) => one.label.toLowerCase() === 'ssid')
-    const ssid = ssidAt < 0 ? '' : stringOf(customs.splice(ssidAt, 1)[0]?.value)
+    const ssid = takeLabel('ssid')
     add(
       wifiOf({ title, note, ssid, password, security: '', fields: fieldsOf(customs.map(extraOf)) }),
     )
@@ -268,21 +262,16 @@ function parseKeeperCsv(text: string): Imported {
       if (name === 'TFC:Keeper' || name === '$oneTimeCode') totp = value
       else extra.push({ name, value })
     }
-    into.add(
-      itemOf(
-        loginOf({
-          title,
-          username: login,
-          password,
-          urls: [url],
-          note,
-          totp,
-          fields: fieldsOf(extra),
-        }),
-        { folder: keeperFolderOf(folder) },
-      ),
-      keeperFolderOf(shared),
-    )
+    const content = loginOf({
+      title,
+      username: login,
+      password,
+      urls: [url],
+      note,
+      totp,
+      fields: fieldsOf(extra),
+    })
+    into.add(itemOf(content, { folder: keeperFolderOf(folder) }), keeperFolderOf(shared))
   }
   return into.result()
 }

@@ -20,14 +20,6 @@ function parseChromium(text: string, vault: string): Imported {
   return into.result()
 }
 
-export function parseChrome(text: string): Imported {
-  return parseChromium(text, 'Chrome')
-}
-
-export function parseEdge(text: string): Imported {
-  return parseChromium(text, 'Edge')
-}
-
-export function parseBrave(text: string): Imported {
-  return parseChromium(text, 'Brave')
-}
+export const parseChrome = (text: string): Imported => parseChromium(text, 'Chrome')
+export const parseEdge = (text: string): Imported => parseChromium(text, 'Edge')
+export const parseBrave = (text: string): Imported => parseChromium(text, 'Brave')

@@ -8,6 +8,7 @@ import type {
   Identity,
   IdentityKey,
   Login,
+  MatchRule,
   Note,
   Passkey,
   Section,
@@ -84,12 +85,16 @@ export function fieldOf(name: string, value: string, kind: FieldKind = 'text'): 
   return { id: newId(), name, kind, value: kind === 'totp' ? totpOf(value) : value }
 }
 
-export function fieldsOf(
-  entries: readonly { name: string; value: string; kind?: FieldKind }[],
-): Field[] {
+export interface Extra {
+  name: string
+  value: string
+  kind?: FieldKind
+}
+
+export function fieldsOf(entries: readonly Extra[]): Field[] {
   return entries
     .filter((one) => one.value !== '')
-    .map((one) => fieldOf(one.name, one.value, one.kind ?? 'text'))
+    .map((one) => fieldOf(one.name, one.value, one.kind))
 }
 
 export function sectionOf(name: string, fields: Field[]): Section {
@@ -120,6 +125,24 @@ export function websitesOf(urls: readonly string[]): Website[] {
     websites.push({ url, match: 'domain' })
   }
   return websites
+}
+
+export function websitesMatched(
+  entries: readonly unknown[],
+  read: (entry: Record<string, unknown>) => [url: unknown, match: MatchRule | undefined],
+): Website[] {
+  const websites: Website[] = []
+  for (const raw of entries) {
+    const [url, match] = read(recordOf(raw))
+    const [website] = websitesOf([stringOf(url)])
+    if (!website || websites.some((one) => one.url === website.url)) continue
+    websites.push({ ...website, match: match ?? 'domain' })
+  }
+  return websites
+}
+
+export function skippedOnly(name: string, reason: string): Imported {
+  return { vaults: [], skipped: [{ reason, title: name }] }
 }
 
 export interface LoginParts {
@@ -246,7 +269,7 @@ export interface IdentityParts {
   title?: string
   note?: string
   values: Partial<Record<IdentityKey, string>>
-  extra?: readonly { name: string; value: string; kind?: FieldKind }[]
+  extra?: readonly Extra[]
   fields?: Field[]
 }
 
@@ -369,7 +392,7 @@ export function unknownKind(
   kind: string,
   title: string,
   note: string,
-  extra: readonly { name: string; value: string; kind?: FieldKind }[],
+  extra: readonly Extra[],
   parts: ItemParts = {},
   vault = '',
 ): void {
