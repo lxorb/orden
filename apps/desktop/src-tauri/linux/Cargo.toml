@@ -18,6 +18,9 @@ rust-version = "1.89"
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
+[workspace.lints.cargo]
+unused_dependencies = "deny"
+
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 needless_pass_by_value = "allow"
@@ -196,7 +199,6 @@ orden-base = { path = "crates/base" }
 orden-documents = { path = "crates/documents" }
 orden-notes = { path = "crates/notes" }
 orden-search = { path = "crates/search" }
-orden-secrets = { path = "crates/secrets" }
 orden-store = { path = "crates/store" }
 orden-web-engine = { path = "crates/web-engine" }
 tauri = { version = "=3.0.0-alpha.5", features = ["protocol-asset", "unstable", "custom-protocol"] }
@@ -213,6 +215,9 @@ flate2.workspace = true
 rusqlite.workspace = true
 getrandom.workspace = true
 percent-encoding.workspace = true
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+orden-secrets = { path = "crates/secrets" }
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 orden-agent-web = { path = "crates/agent-web" }
