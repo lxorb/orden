@@ -21,32 +21,6 @@ vi.mock('../../platform/src/api', () => ({
   storedText: (key: string) => world.held.get(key) ?? null,
 }))
 
-vi.mock('../../panes/src/api', () => ({
-  Walk: class {
-    private at = 0
-    private readonly order: string[]
-
-    constructor(
-      strip: readonly string[],
-      current: string,
-      private readonly before: readonly string[],
-    ) {
-      const seen = [current, ...before.filter((id) => strip.includes(id))]
-      this.order = [...new Set([...seen, ...strip])]
-    }
-
-    step(direction: number) {
-      this.at = (this.at + direction + this.order.length) % this.order.length
-      return this.order[this.at] ?? null
-    }
-
-    ended(current: string | null) {
-      const rest = this.before.filter((id) => id !== current)
-      return current === null ? rest : [current, ...rest]
-    }
-  },
-}))
-
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     tabsIn: () => world.tabs.map((id) => ({ id })),

@@ -15,24 +15,24 @@ describe('what a folder keeps of the order it is drawn in', () => {
   const three = [file('a.md'), file('b.md'), file('c.md')]
   const mixed = [folder('A'), folder('B'), file('a.md'), file('b.md')]
 
-  test('nothing at all while the order is the one it would have read in anyway', () => {
-    expect(trimmed(three, ['a.md', 'b.md', 'c.md'])).toEqual([])
-  })
-
-  test('only as far as somebody actually arranged', () => {
-    expect(trimmed(three, ['c.md', 'a.md', 'b.md'])).toEqual(['c.md'])
-  })
-
-  test('the whole of a reversed order', () => {
-    expect(trimmed(three, ['c.md', 'b.md', 'a.md'])).toEqual(['c.md', 'b.md'])
-  })
-
-  test('and nothing where the folders lead, which is where they already were', () => {
-    expect(trimmed(mixed, ['A', 'B', 'a.md', 'b.md'])).toEqual([])
-  })
-
-  test('the note somebody put above the folders', () => {
-    expect(trimmed(mixed, ['a.md', 'A', 'B', 'b.md'])).toEqual(['a.md'])
+  test.each([
+    [
+      'nothing while the order is the one it would have read in anyway',
+      'abc',
+      ['a.md', 'b.md', 'c.md'],
+      [],
+    ],
+    ['only as far as somebody actually arranged', 'abc', ['c.md', 'a.md', 'b.md'], ['c.md']],
+    ['the whole of a reversed order', 'abc', ['c.md', 'b.md', 'a.md'], ['c.md', 'b.md']],
+    [
+      'nothing where the folders lead, as they already were',
+      'mixed',
+      ['A', 'B', 'a.md', 'b.md'],
+      [],
+    ],
+    ['the note somebody put above the folders', 'mixed', ['a.md', 'A', 'B', 'b.md'], ['a.md']],
+  ])('%s', (_, which, order, kept) => {
+    expect(trimmed(which === 'abc' ? three : mixed, order)).toEqual(kept)
   })
 
   test('what it keeps draws the order it was given', () => {
@@ -50,28 +50,20 @@ describe('what a folder keeps of the order it is drawn in', () => {
 describe('a row put somewhere by hand', () => {
   const four = ['a.md', 'b.md', 'c.md', 'd.md']
 
-  test('lands above the row it was dropped on', () => {
-    expect(movedTo(four, ['d.md'], 1)).toEqual(['a.md', 'd.md', 'b.md', 'c.md'])
-  })
-
-  test('lands below it', () => {
-    expect(movedTo(four, ['a.md'], 3)).toEqual(['b.md', 'c.md', 'a.md', 'd.md'])
-  })
-
-  test('takes the whole selection with it, in the order the list had them', () => {
-    expect(movedTo(four, ['d.md', 'b.md'], 0)).toEqual(['b.md', 'd.md', 'a.md', 'c.md'])
-  })
-
-  test('goes to the end for an index past it', () => {
-    expect(movedTo(four, ['a.md'], 99)).toEqual(['b.md', 'c.md', 'd.md', 'a.md'])
-  })
-
-  test('changes nothing when it lands where it already was', () => {
-    expect(movedTo(four, ['b.md'], 1)).toEqual(four)
-  })
-
-  test('ignores a name the list does not hold', () => {
-    expect(movedTo(four, ['gone.md'], 0)).toEqual(four)
+  test.each([
+    ['lands above the row it was dropped on', ['d.md'], 1, ['a.md', 'd.md', 'b.md', 'c.md']],
+    ['lands below it', ['a.md'], 3, ['b.md', 'c.md', 'a.md', 'd.md']],
+    [
+      'takes the whole selection, in list order',
+      ['d.md', 'b.md'],
+      0,
+      ['b.md', 'd.md', 'a.md', 'c.md'],
+    ],
+    ['goes to the end for an index past it', ['a.md'], 99, ['b.md', 'c.md', 'd.md', 'a.md']],
+    ['changes nothing landing where it already was', ['b.md'], 1, four],
+    ['ignores a name the list does not hold', ['gone.md'], 0, four],
+  ])('%s', (_, moving, at, order) => {
+    expect(movedTo(four, moving, at)).toEqual(order)
   })
 })
 
@@ -108,27 +100,14 @@ describe('dropping a row beside another', () => {
 describe('one step with a key', () => {
   const three = ['a.md', 'b.md', 'c.md']
 
-  test('up', () => {
-    expect(stepped(three, 'c.md', -1)).toEqual(['a.md', 'c.md', 'b.md'])
-  })
-
-  test('down', () => {
-    expect(stepped(three, 'a.md', 1)).toEqual(['b.md', 'a.md', 'c.md'])
-  })
-
-  test('nothing off the top', () => {
-    expect(stepped(three, 'a.md', -1)).toBeNull()
-  })
-
-  test('nothing off the bottom', () => {
-    expect(stepped(three, 'c.md', 1)).toBeNull()
-  })
-
-  test('nothing for a name the list does not hold', () => {
-    expect(stepped(three, 'gone.md', 1)).toBeNull()
-  })
-
-  test('over a folder as readily as over a note', () => {
-    expect(stepped(['Deep', 'a.md'], 'a.md', -1)).toEqual(['a.md', 'Deep'])
+  test.each([
+    ['up', three, 'c.md', -1, ['a.md', 'c.md', 'b.md']],
+    ['down', three, 'a.md', 1, ['b.md', 'a.md', 'c.md']],
+    ['nothing off the top', three, 'a.md', -1, null],
+    ['nothing off the bottom', three, 'c.md', 1, null],
+    ['nothing for a name the list does not hold', three, 'gone.md', 1, null],
+    ['over a folder as readily as over a note', ['Deep', 'a.md'], 'a.md', -1, ['a.md', 'Deep']],
+  ])('%s', (_, names, name, by, order) => {
+    expect(stepped(names, name, by)).toEqual(order)
   })
 })
