@@ -2213,13 +2213,17 @@ class Workspace {
     if (!root) return
 
     mark('tree asked')
+    const space = this.activeSpaceId
+    let tree: Entry | null
     try {
-      this.tree =
+      tree =
         (await ahead.treeAhead(root, this.treeOptions)) ??
         (await invoke<Entry>('read_tree', { root, options: this.treeOptions }))
     } catch {
-      this.tree = null
+      tree = null
     }
+    if (this.activeSpaceId !== space) return
+    this.tree = tree
     this.saving.across?.listed()
 
     mark('tree read')
