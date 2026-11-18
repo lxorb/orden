@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use x11rb::connection::{Connection as _, RequestConnection};
@@ -13,14 +13,17 @@ use super::clipboard::Clipboard;
 use super::wm::Desk;
 
 const NUMBERS: std::ops::Range<u32> = 100..400;
-const READY_WITHIN: Duration = Duration::from_secs(5);
+const READY_WITHIN: Duration = Duration::from_secs(30);
 const ROOM: u32 = 4096;
 const MOST: u32 = 8192;
 const LEAST: u32 = 64;
-const TRIES: usize = 8;
+const LOSSES: usize = 8;
+
+static STARTING: Mutex<()> = Mutex::new(());
 
 enum Starting {
     Taken,
+    Lost(String),
     Failed(String),
 }
 
@@ -31,8 +34,8 @@ pub struct Display {
     desk: Option<Desk>,
 }
 
-pub fn free_number(root: &Path) -> Option<u32> {
-    NUMBERS.into_iter().find(|number| {
+pub fn free_number(root: &Path, from: u32) -> Option<u32> {
+    (from.max(NUMBERS.start)..NUMBERS.end).find(|number| {
         !root.join(format!(".X{number}-lock")).exists()
             && !root.join(format!(".tX{number}-lock")).exists()
             && !root.join(format!(".X11-unix/X{number}")).exists()
@@ -81,20 +84,28 @@ pub fn available() -> bool {
 
 impl Display {
     pub fn start(width: u32, height: u32, dpr: f64) -> Result<Display, String> {
-        for _ in 0..TRIES {
-            match Display::start_once(width, height, dpr) {
+        let _alone = STARTING.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut from = NUMBERS.start;
+        let mut lost = 0;
+        while let Some(number) = free_number(Path::new("/tmp"), from) {
+            match Display::start_on(number, width, height, dpr) {
                 Ok(display) => return Ok(display),
-                Err(Starting::Taken) => {}
+                Err(Starting::Taken) => from = number + 1,
+                Err(Starting::Lost(why)) => {
+                    lost += 1;
+                    if lost == LOSSES {
+                        return Err(why);
+                    }
+                    from = number + 1;
+                }
                 Err(Starting::Failed(why)) => return Err(why),
             }
         }
-        Err("no display number would start".to_owned())
+        Err("no display number is free".to_owned())
     }
 
-    fn start_once(width: u32, height: u32, dpr: f64) -> Result<Display, Starting> {
+    fn start_on(number: u32, width: u32, height: u32, dpr: f64) -> Result<Display, Starting> {
         let root = Path::new("/tmp");
-        let number =
-            free_number(root).ok_or(Starting::Failed("no display number is free".to_owned()))?;
         let largest = room(width, height);
         let mut server = Command::new("Xvfb")
             .arg(format!(":{number}"))
@@ -116,16 +127,29 @@ impl Display {
             if holder == Some(server.id()) && socket.exists() {
                 break;
             }
-            let gone = matches!(server.try_wait(), Ok(Some(_)));
-            if gone || holder.is_some_and(|pid| pid != server.id()) {
+            if holder.is_some_and(|pid| pid != server.id()) {
                 let _ = server.kill();
                 let _ = server.wait();
                 return Err(Starting::Taken);
             }
+            if let Ok(Some(status)) = server.try_wait() {
+                let other = std::fs::read_to_string(&lock).is_ok() || socket.exists();
+                return Err(if other {
+                    Starting::Taken
+                } else {
+                    Starting::Lost(format!("Xvfb on :{number} stopped at once: {status}"))
+                });
+            }
             if began.elapsed() > READY_WITHIN {
                 let _ = server.kill();
                 let _ = server.wait();
-                return Err(Starting::Taken);
+                if holder == Some(server.id()) {
+                    let _ = std::fs::remove_file(&lock);
+                    let _ = std::fs::remove_file(&socket);
+                }
+                return Err(Starting::Failed(format!(
+                    "Xvfb on :{number} did not come up within {READY_WITHIN:?}"
+                )));
             }
             std::thread::sleep(Duration::from_millis(25));
         }
@@ -318,13 +342,52 @@ mod tests {
         let root = std::env::temp_dir().join(format!("orden-display-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(root.join(".X11-unix")).unwrap();
-        assert_eq!(free_number(&root), Some(100));
+        assert_eq!(free_number(&root, 0), Some(100));
         std::fs::write(root.join(".X100-lock"), "").unwrap();
         std::fs::write(root.join(".X11-unix/X101"), "").unwrap();
-        assert_eq!(free_number(&root), Some(102));
+        assert_eq!(free_number(&root, 0), Some(102));
         std::fs::write(root.join(".tX102-lock"), "").unwrap();
-        assert_eq!(free_number(&root), Some(103));
+        assert_eq!(free_number(&root, 0), Some(103));
+        assert_eq!(free_number(&root, 200), Some(200));
+        assert_eq!(free_number(&root, NUMBERS.end), None);
         let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn starts_every_display_asked_for_at_once() {
+        super::super::in_time(|| {
+            if !crate::apps_host::needed(available(), "xvfb") {
+                return;
+            }
+            let starting: Vec<_> = (0..16)
+                .map(|_| std::thread::spawn(|| Display::start(320, 240, 1.0)))
+                .collect();
+            let displays: Vec<Display> = starting
+                .into_iter()
+                .map(|one| one.join().unwrap().unwrap())
+                .collect();
+            let mut numbers: Vec<u32> = displays.iter().map(|one| one.number).collect();
+            numbers.sort_unstable();
+            numbers.dedup();
+            assert_eq!(numbers.len(), displays.len());
+            for display in &displays {
+                x11rb::connect(Some(display.name().as_str())).unwrap();
+            }
+        });
+    }
+
+    #[test]
+    fn steps_past_a_number_another_server_holds() {
+        super::super::in_time(|| {
+            if !crate::apps_host::needed(available(), "xvfb") {
+                return;
+            }
+            let held = Display::start(320, 240, 1.0).unwrap();
+            let next = Display::start_on(held.number, 320, 240, 1.0);
+            assert!(matches!(next, Err(Starting::Taken)));
+            let other = Display::start(320, 240, 1.0).unwrap();
+            assert_ne!(other.number, held.number);
+        });
     }
 
     #[test]
