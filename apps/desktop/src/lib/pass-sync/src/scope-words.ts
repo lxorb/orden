@@ -20,33 +20,17 @@ export function scopeName(scope: Scope, vaults: readonly Vault[]): string {
 }
 
 export function filterName(filter: TypeFilter): string {
-  switch (filter) {
-    case 'all':
-      return 'All'
-    case 'login':
-      return 'Logins'
-    case 'alias':
-      return 'Aliases'
-    case 'card':
-      return 'Cards'
-    case 'note':
-      return 'Notes'
-    case 'identity':
-      return 'Identities'
-    case 'other':
-      return 'Other'
-  }
+  return {
+    all: 'All',
+    login: 'Logins',
+    alias: 'Aliases',
+    card: 'Cards',
+    note: 'Notes',
+    identity: 'Identities',
+    other: 'Other',
+  }[filter]
 }
 
 export function sortName(sort: Sort): string {
-  switch (sort) {
-    case 'recent':
-      return 'Most recent'
-    case 'title':
-      return 'Title A-Z'
-    case 'newest':
-      return 'Newest'
-    case 'oldest':
-      return 'Oldest'
-  }
+  return { recent: 'Most recent', title: 'Title A-Z', newest: 'Newest', oldest: 'Oldest' }[sort]
 }

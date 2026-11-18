@@ -35,14 +35,7 @@
   })
 
   function modeName(mode: GeneratorMode): string {
-    switch (mode) {
-      case 'random':
-        return 'Random'
-      case 'memorable':
-        return 'Memorable'
-      case 'username':
-        return 'Username'
-    }
+    return { random: 'Random', memorable: 'Memorable', username: 'Username' }[mode]
   }
 
   const separators = $derived(SEPARATORS.map((one) => ({ value: one, label: separatorLabel(one) })))

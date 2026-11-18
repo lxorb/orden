@@ -12,18 +12,12 @@ export function clearWord(after: ClipboardClear): string {
 }
 
 export function pauseWord(pause: Pause): string {
-  switch (pause) {
-    case 'autofill':
-      return 'Autofill'
-    case 'totp':
-      return 'Autofill 2FA codes'
-    case 'suggest':
-      return 'Suggestions'
-    case 'save':
-      return 'Offer to save logins'
-    case 'passkeys':
-      return 'Passkeys'
-    case 'autoLogin':
-      return 'Sign in automatically'
-  }
+  return {
+    autofill: 'Autofill',
+    totp: 'Autofill 2FA codes',
+    suggest: 'Suggestions',
+    save: 'Offer to save logins',
+    passkeys: 'Passkeys',
+    autoLogin: 'Sign in automatically',
+  }[pause]
 }

@@ -5,16 +5,7 @@ import type { InvitedRole } from './share'
 export const INVITED_ROLES: readonly InvitedRole[] = ['viewer', 'editor', 'manager']
 
 export function roleName(role: Role): string {
-  switch (role) {
-    case 'viewer':
-      return 'Can view'
-    case 'editor':
-      return 'Can edit'
-    case 'manager':
-      return 'Can manage'
-    case 'owner':
-      return 'Owner'
-  }
+  return { viewer: 'Can view', editor: 'Can edit', manager: 'Can manage', owner: 'Owner' }[role]
 }
 
 export function stateName(state: MemberState, managing: boolean): string {
