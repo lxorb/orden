@@ -1,4 +1,3 @@
-import '../../sync-ports'
 import { api, type SpaceRole, account, arriving } from '../../accounts/src/api'
 import {
   without,
@@ -224,6 +223,7 @@ class Sync {
   }
 
   private startV1() {
+    this.version = 1
     this.owner = account.user?.id ?? null
     const held = this.load(this.owner)
     this.mirrors = held.mirrors
@@ -289,7 +289,9 @@ class Sync {
     this.save()
 
     const token = account.token
-    if (token) await api.renameSpace(token, mirror.spaceId, name).catch(() => undefined)
+    const { holder, sendName } = await import('../../space-owed/src/api')
+    const accountId = holder()
+    if (token && accountId) await sendName(token, accountId, mirror.spaceId, name)
   }
 
   async moved(from: string, to: string) {
@@ -443,8 +445,13 @@ class Sync {
     this.schedule(owed ? nudgeDelay(Infinity) : this.delay())
   }
 
+  get engineComing(): boolean {
+    return V2 && this.version === 2 && !this.v2
+  }
+
   async pass(): Promise<boolean> {
     if (V2 && this.v2) return await this.v2.passNow()
+    if (this.engineComing) return false
     const first = this.first
     this.first = false
 
@@ -469,12 +476,14 @@ class Sync {
 
     if (!missing && !due) return
 
+    const mine = this.generation
     try {
       await account.loadSpaces()
       this.reconciledAt = Date.now()
     } catch {
       return
     }
+    if (mine !== this.generation || account.token !== token) return
 
     await needPort('sync.pairing').pairSpaces(token, this.pairing)
 
@@ -775,8 +784,9 @@ class Sync {
         continue
       }
 
+      const ids = new Set(Object.values(mine.notes).map((one) => one.id))
       for (const [path, tracked] of Object.entries(stored.notes)) {
-        if (mine.notes[path]) continue
+        if (mine.notes[path] || ids.has(tracked.id)) continue
 
         mine.notes[path] = tracked
         grew = true
@@ -849,7 +859,7 @@ export const sync = new Sync()
 
 providePort('sync.store', {
   get engineReady() {
-    return !(sync.version === 2 && !sync.engine)
+    return !sync.engineComing
   },
   get passing() {
     return sync.passing

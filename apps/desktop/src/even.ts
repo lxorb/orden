@@ -1,5 +1,6 @@
 import './lib/backend-ports'
 import { serveAssets } from './lib/platform/src/api'
+import './lib/sync-ports'
 import './lib/sharing-ports'
 import './lib/plane-ports'
 import './lib/workspace-ports'

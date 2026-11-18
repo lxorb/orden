@@ -52,6 +52,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
+await import('../../src/lib/sync-ports')
 const { account } = await import('../../src/lib/accounts/src/account.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { sync } = await import('../../src/lib/sync-store/src/api')
