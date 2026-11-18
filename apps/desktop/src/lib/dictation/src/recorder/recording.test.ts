@@ -20,6 +20,15 @@ vi.mock('./note', async (importOriginal) => ({
 
 const { recorder } = await import('./recording.svelte')
 
+const open = () =>
+  opening?.({
+    stop: () => {
+      stopped.push('stopped')
+      return Promise.resolve({ bytes: new ArrayBuffer(0), seconds: 0 })
+    },
+    extension: 'weba',
+  })
+
 beforeEach(() => {
   opening = null
   stopped.length = 0
@@ -31,13 +40,7 @@ test('a stop pressed while the microphone opens stops it as soon as it is open',
 
   void recorder.stop()
 
-  opening?.({
-    stop: () => {
-      stopped.push('stopped')
-      return Promise.resolve({ bytes: new ArrayBuffer(0), seconds: 0 })
-    },
-    extension: 'weba',
-  })
+  open()
 
   await vi.waitFor(() => expect(stopped).toEqual(['stopped']))
   expect(recorder.on).toBe(false)
@@ -47,13 +50,7 @@ test('a recording that grows full stops and is kept, not left listening', async 
   void recorder.start()
   await vi.waitFor(() => expect(opening).not.toBeNull())
 
-  opening?.({
-    stop: () => {
-      stopped.push('stopped')
-      return Promise.resolve({ bytes: new ArrayBuffer(0), seconds: 0 })
-    },
-    extension: 'weba',
-  })
+  open()
   await vi.waitFor(() => expect(recorder.on).toBe(true))
 
   full?.()
@@ -69,10 +66,7 @@ test('the time shown counts from the moment the microphone opens, not the wait f
   await vi.waitFor(() => expect(opening).not.toBeNull())
 
   now = 6_000
-  opening?.({
-    stop: () => Promise.resolve({ bytes: new ArrayBuffer(0), seconds: 0 }),
-    extension: 'weba',
-  })
+  open()
   await new Promise((resolve) => setTimeout(resolve, 0))
   now = 7_000
   await vi.waitFor(() => expect(recorder.elapsed).toBeGreaterThan(0))

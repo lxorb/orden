@@ -9,20 +9,20 @@ describe('reading a link', () => {
     expect(link?.args).toEqual({ path: 'notes/Plan.md', heading: 'Later' })
   })
 
-  test('reads both ways of writing the scheme, and the browser one', () => {
-    expect(readUri('orden:open?path=A.md')?.action).toBe('open')
-    expect(readUri('orden:///open?path=A.md')?.action).toBe('open')
-    expect(readUri('web+orden://open?path=A.md')?.action).toBe('open')
-    expect(readUri('ORDEN://Open?path=A.md')?.action).toBe('open')
+  test.each([
+    ['orden:open?path=A.md', 'open'],
+    ['orden:///open?path=A.md', 'open'],
+    ['web+orden://open?path=A.md', 'open'],
+    ['ORDEN://Open?path=A.md', 'open'],
+    ['orden://x-callback-url/new?name=Idea', 'new'],
+    ['orden://files.delete?path=A.md', 'files.delete'],
+  ])('reads %s, in any spelling of the scheme, as %s', (uri, action) => {
+    expect(readUri(uri)?.action).toBe(action)
   })
 
   test('reads no link under the name before the rename', () => {
     expect(readUri('nib://open?path=A.md')).toBeNull()
     expect(isOrdenUri('NIB://Open')).toBe(false)
-  })
-
-  test('reads the x-callback-url spelling as the plain action', () => {
-    expect(readUri('orden://x-callback-url/new?name=Idea')?.action).toBe('new')
   })
 
   test('undoes the encoding a path with a space in it needs', () => {
@@ -46,21 +46,16 @@ describe('reading a link', () => {
     expect(readUri('orden://open?path=A.md&path=B.md')?.args.path).toBe('A.md')
   })
 
-  test('is nothing at all for an address that is not ours', () => {
-    expect(readUri('https://example.com')).toBeNull()
-    expect(readUri('obsidian://open?vault=x')).toBeNull()
-    expect(readUri('javascript:alert(1)')).toBeNull()
-    expect(readUri('nibble://open')).toBeNull()
-  })
-
-  test('reads an action written with a dot in it', () => {
-    expect(readUri('orden://files.delete?path=A.md')?.action).toBe('files.delete')
-  })
-
-  test('is nothing for an action that is not a word', () => {
-    expect(readUri('orden://?path=A.md')).toBeNull()
-    expect(readUri('orden://../../etc?x=1')).toBeNull()
-    expect(readUri('orden://open files')).toBeNull()
+  test.each([
+    'https://example.com',
+    'obsidian://open?vault=x',
+    'javascript:alert(1)',
+    'nibble://open',
+    'orden://?path=A.md',
+    'orden://../../etc?x=1',
+    'orden://open files',
+  ])('is nothing for %s, not ours or not a word', (uri) => {
+    expect(readUri(uri)).toBeNull()
   })
 
   test('says which strings are ours at all', () => {
@@ -71,51 +66,36 @@ describe('reading a link', () => {
 })
 
 describe('where a link may go afterwards', () => {
-  test('the web, and this app itself', () => {
-    expect(callbackKind('https://example.com/done')).toBe('external')
-    expect(callbackKind('http://127.0.0.1/done')).toBe('external')
-    expect(callbackKind('orden://open?path=A.md')).toBe('orden')
-  })
-
-  test('and nowhere else, whatever it is', () => {
-    for (const url of [
-      'file:///etc/passwd',
-      'javascript:alert(1)',
-      'smb://server/share',
-      'shortcuts://x-callback-url/run',
-      'mailto:someone@example.com',
-      'data:text/html,<script>',
-      '//example.com',
-      '',
-    ]) {
-      expect(callbackKind(url), url).toBeNull()
-    }
-
-    expect(callbackKind(null)).toBeNull()
+  test.each([
+    ['https://example.com/done', 'external'],
+    ['http://127.0.0.1/done', 'external'],
+    ['orden://open?path=A.md', 'orden'],
+    ['file:///etc/passwd', null],
+    ['javascript:alert(1)', null],
+    ['smb://server/share', null],
+    ['shortcuts://x-callback-url/run', null],
+    ['mailto:someone@example.com', null],
+    ['data:text/html,<script>', null],
+    ['//example.com', null],
+    ['', null],
+    [null, null],
+  ])('%j is %j', (url, kind) => {
+    expect(callbackKind(url)).toBe(kind)
   })
 })
 
 describe('writing the outcome onto a callback', () => {
-  test('adds what the app has to say', () => {
-    expect(withOutcome('https://example.com/done', { path: 'A.md' })).toBe(
-      'https://example.com/done?path=A.md',
-    )
-  })
-
-  test('keeps what the caller already put there', () => {
-    expect(withOutcome('https://example.com/done?tag=weekly', { path: 'day job/A.md' })).toBe(
+  test.each<[string, Record<string, string>, string]>([
+    ['https://example.com/done', { path: 'A.md' }, 'https://example.com/done?path=A.md'],
+    [
+      'https://example.com/done?tag=weekly',
+      { path: 'day job/A.md' },
       'https://example.com/done?tag=weekly&path=day+job%2FA.md',
-    )
-  })
-
-  test('replaces its own name rather than saying it twice', () => {
-    expect(withOutcome('https://example.com/done?path=old', { path: 'new' })).toBe(
-      'https://example.com/done?path=new',
-    )
-  })
-
-  test('leaves an address with nothing to add alone', () => {
-    expect(withOutcome('https://example.com/done', {})).toBe('https://example.com/done')
+    ],
+    ['https://example.com/done?path=old', { path: 'new' }, 'https://example.com/done?path=new'],
+    ['https://example.com/done', {}, 'https://example.com/done'],
+  ])('%s with %j is %s', (url, said, written) => {
+    expect(withOutcome(url, said)).toBe(written)
   })
 })
 

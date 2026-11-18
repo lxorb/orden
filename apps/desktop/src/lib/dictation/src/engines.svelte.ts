@@ -23,11 +23,6 @@ const NETWORK: readonly Taken[] = ['provider', 'account']
 
 const KEY = 'orden:dictation-engine'
 
-function read(): Engine | null {
-  const kept = storedText(KEY)
-  return ENGINES.find((one) => one === kept) ?? null
-}
-
 export function whereTo(provider: Provider): { local: boolean; host: string } {
   if (provider.kind !== 'compatible') return { local: false, host: 'OpenAI' }
   const host = shownHost(provider.baseUrl ?? '')
@@ -42,7 +37,7 @@ export function deviceHears(): boolean {
 }
 
 class Engines {
-  chosen = $state<Engine | null>(read())
+  chosen = $state<Engine | null>(ENGINES.find((one) => one === storedText(KEY)) ?? null)
 
   usable(engine: Engine): boolean {
     if (engine === 'auto' || engine === 'local') return local.fits

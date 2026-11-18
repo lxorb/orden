@@ -71,25 +71,15 @@ afterEach(() => {
 })
 
 describe('Record', () => {
-  test('is offered over a note of the reader’s own', () => {
-    inFront(MINE, `${MINE}/a.md`)
-    expect(canRecord(view(false))).toBe(true)
-  })
-
-  test('is not offered over a note in a space shared to be read', () => {
-    inFront(THEIRS, `${THEIRS}/a.md`)
-    expect(canRecord(view(true))).toBe(false)
-    expect(canRecord()).toBe(false)
-  })
-
-  test('is not offered over a note in Read-only mode', () => {
-    inFront(MINE, `${MINE}/a.md`)
-    expect(canRecord(view(true))).toBe(false)
-  })
-
-  test('is not offered with no note in front of a space shared to be read', () => {
-    inFront(THEIRS, null)
-    expect(canRecord()).toBe(false)
+  test.each([
+    [MINE, 'a.md', false, true],
+    [THEIRS, 'a.md', true, false],
+    [THEIRS, 'a.md', undefined, false],
+    [MINE, 'a.md', true, false],
+    [THEIRS, null, undefined, false],
+  ])('in %s over %s, Read-only %s, is offered: %s', (root, note, locked, offered) => {
+    inFront(root, note && `${root}/${note}`)
+    expect(canRecord(locked === undefined ? undefined : view(locked))).toBe(offered)
   })
 })
 
@@ -135,18 +125,12 @@ describe('keeping a recording', () => {
     await recorder.stop()
   }
 
-  test('writes nothing into a space shared to be read', async () => {
-    await recordThen(() => readOnly.add(MINE))
-    expect(stored).toEqual([])
-  })
-
-  test('writes nothing beside a note in Read-only mode', async () => {
-    await recordThen(() => (editor.readOnly = true))
-    expect(stored).toEqual([])
-  })
-
-  test('is written beside a note that may be written', async () => {
-    await recordThen(() => undefined)
-    expect(stored).toHaveLength(1)
+  test.each([
+    ['into a space shared to be read', () => void readOnly.add(MINE), 0],
+    ['beside a note in Read-only mode', () => (editor.readOnly = true), 0],
+    ['beside a note that may be written', () => undefined, 1],
+  ])('writes %s that many times: %s', async (_where, change, times) => {
+    await recordThen(change)
+    expect(stored).toHaveLength(times)
   })
 })

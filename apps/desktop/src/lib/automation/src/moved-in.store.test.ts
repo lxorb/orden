@@ -173,13 +173,13 @@ describe('a move under a new name', () => {
 })
 
 describe('a tile of a nested AGENTS.md let go of over the top of the space', () => {
-  const tile = () =>
+  const letGo = async (into: string) => {
     workspace.bookmarks.put(ROOT, [{ kind: 'note', path: 'a/AGENTS.md', text: '' }])
+    await (await (await import('../../workspace/src/api')).essentials()).unkeepInto(0, into)
+  }
 
   test('keeps its tile, and does not take the place of the instructions', async () => {
-    tile()
-    const { unkeepInto } = await (await import('../../workspace/src/api')).essentials()
-    await unkeepInto(0, ROOT)
+    await letGo(ROOT)
 
     expect(workspace.bookmarks.of(ROOT)).toHaveLength(1)
     expect(hard.files.get(`${ROOT}/AGENTS.md`)).toBe('the instructions')
@@ -189,18 +189,14 @@ describe('a tile of a nested AGENTS.md let go of over the top of the space', () 
   test('with none at the top, does not become them', async () => {
     hard.files.delete(`${ROOT}/AGENTS.md`)
     await workspace.loadTree()
-    tile()
-    const { unkeepInto } = await (await import('../../workspace/src/api')).essentials()
-    await unkeepInto(0, ROOT)
+    await letGo(ROOT)
 
     expect(workspace.bookmarks.of(ROOT)).toHaveLength(1)
     expect(hard.files.has(`${ROOT}/AGENTS.md`)).toBe(false)
   })
 
   test('into a folder it moves as ever', async () => {
-    tile()
-    const { unkeepInto } = await (await import('../../workspace/src/api')).essentials()
-    await unkeepInto(0, `${ROOT}/b`)
+    await letGo(`${ROOT}/b`)
 
     expect(workspace.bookmarks.of(ROOT)).toHaveLength(0)
     expect(hard.files.get(`${ROOT}/b/AGENTS.md`)).toBe('a note')

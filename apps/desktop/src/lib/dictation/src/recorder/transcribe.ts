@@ -79,8 +79,8 @@ async function heardByProvider(
     const said = await response.text().catch(() => '')
 
     if (!response.ok) {
-      refused = new Error(refusal(response.status, said, troubleIn))
-      if (!aboutTheModel(said)) throw refused
+      refused = new Error(refusal(response.status, said))
+      if (!/model/i.test(said)) throw refused
 
       if (answering.get(provider.id) === model) answering.delete(provider.id)
       continue
@@ -94,31 +94,16 @@ async function heardByProvider(
 }
 
 function wordsIn(body: string): Words {
-  try {
-    const held: unknown = JSON.parse(body)
-    if (typeof held === 'object' && held !== null) {
-      const said = held as { text?: unknown; language?: unknown }
-      return {
-        text: typeof said.text === 'string' ? said.text : '',
-        language: typeof said.language === 'string' ? said.language : '',
-      }
-    }
-  } catch {
-    // Not JSON, so it is the words.
+  const held = parsed(body)
+  if (typeof held !== 'object' || held === null) return { text: body.trim(), language: '' }
+  const said = held as { text?: unknown; language?: unknown }
+  return {
+    text: typeof said.text === 'string' ? said.text : '',
+    language: typeof said.language === 'string' ? said.language : '',
   }
-
-  return { text: body.trim(), language: '' }
 }
 
-function aboutTheModel(body: string): boolean {
-  return /model/i.test(body)
-}
-
-function refusal(
-  status: number,
-  body: string,
-  troubleIn: (body: unknown) => string | null,
-): string {
+function refusal(status: number, body: string): string {
   const said = troubleIn(parsed(body))
   if (said) return said
 

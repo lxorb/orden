@@ -35,34 +35,26 @@ describe('the prompt', () => {
 })
 
 describe('an answer', () => {
-  test('loses the credits Whisper writes for a quiet room', () => {
-    expect(cleaned('Untertitel der Amara.org-Community', '', 0)).toBe('')
-    expect(cleaned('Thank you for watching.', '', 0)).toBe('')
-    expect(cleaned('Untertitel im Auftrag des ZDF, 2021', '', 0)).toBe('')
-  })
-
-  test('and the credits on the end of real words', () => {
-    expect(cleaned('Schick mir die Folien. Untertitel der Amara.org-Community', '', 3)).toBe(
-      'Schick mir die Folien.',
-    )
-  })
-
-  test('loses a lone filler from a stretch with hardly any speech', () => {
-    expect(cleaned('Obrigado.', '', 0.4)).toBe('')
-    expect(cleaned('E aí', '', 0.2)).toBe('')
-  })
-
-  test('but keeps the same word actually said', () => {
-    expect(cleaned('Danke.', '', 1.4)).toBe('Danke.')
-  })
-
-  test('loses the prompt handed back as the transcript', () => {
-    const prompt = 'Sophie, Herr Bäumler, Daniel, Priya, Emil'
-    expect(cleaned('Sophie, Herr Bäumler, Daniel, Priya, Emil.', prompt, 2)).toBe('')
-  })
-
-  test('but keeps a name from the prompt said on its own', () => {
-    expect(cleaned('Emil', 'Sophie, Emil', 0.8)).toBe('Emil')
-    expect(cleaned('Ask Emil about it.', 'Sophie, Emil', 2)).toBe('Ask Emil about it.')
-  })
+  test.each([
+    ['Untertitel der Amara.org-Community', '', 0, ''],
+    ['Thank you for watching.', '', 0, ''],
+    ['Untertitel im Auftrag des ZDF, 2021', '', 0, ''],
+    ['Schick mir die Folien. Untertitel der Amara.org-Community', '', 3, 'Schick mir die Folien.'],
+    ['Obrigado.', '', 0.4, ''],
+    ['E aí', '', 0.2, ''],
+    ['Danke.', '', 1.4, 'Danke.'],
+    [
+      'Sophie, Herr Bäumler, Daniel, Priya, Emil.',
+      'Sophie, Herr Bäumler, Daniel, Priya, Emil',
+      2,
+      '',
+    ],
+    ['Emil', 'Sophie, Emil', 0.8, 'Emil'],
+    ['Ask Emil about it.', 'Sophie, Emil', 2, 'Ask Emil about it.'],
+  ])(
+    'loses credits, a lone filler and the prompt handed back from %j, keeping what was said',
+    (said, prompt, seconds, kept) => {
+      expect(cleaned(said, prompt, seconds)).toBe(kept)
+    },
+  )
 })

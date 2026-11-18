@@ -28,16 +28,14 @@ const A_MINUTE = 60 * 1000
 const AN_HOUR = 60 * A_MINUTE
 const FIRST_SEND = 30 * 1000
 
-function eventsOf(value: unknown): UsageEvent[] {
-  if (!Array.isArray(value)) return []
-  return value.flatMap((one) => {
-    const event = usageEventOf(one)
-    return typeof event === 'string' ? [] : [event]
-  })
-}
-
 function queuedEvents(): UsageEvent[] {
-  return eventsOf(stored(USAGE_QUEUE))
+  const kept = stored(USAGE_QUEUE)
+  return Array.isArray(kept)
+    ? kept.flatMap((one) => {
+        const event = usageEventOf(one)
+        return typeof event === 'string' ? [] : [event]
+      })
+    : []
 }
 
 function metered(): boolean {

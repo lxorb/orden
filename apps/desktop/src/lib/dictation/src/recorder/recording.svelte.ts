@@ -55,7 +55,7 @@ class Recorder {
 
       this.held = await record({
         full: () =>
-          void this.stop().then(() => this.failed('That is as much as one recording may hold.')),
+          void this.stop().then(() => busy.failed('That is as much as one recording may hold.')),
       })
       this.at = performance.now()
 
@@ -131,10 +131,6 @@ class Recorder {
     else appendTo(path, `\n${embed}\n`)
 
     void workspace.loadTree()
-  }
-
-  private failed(reason: string) {
-    busy.failed(reason)
   }
 }
 

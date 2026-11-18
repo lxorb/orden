@@ -67,7 +67,7 @@ function today(): Tally | null {
   return tally
 }
 
-function add(counts: Record<string, number>, key: string, by = 1): void {
+function add(counts: Partial<Record<string, number>>, key: string, by = 1): void {
   counts[key] = (counts[key] ?? 0) + by
 }
 
@@ -76,8 +76,7 @@ export function ran(id: string | undefined, via: UsageVia): void {
   if (!name) return
   const tally = today()
   if (!tally) return
-  const ways = (tally.commands[name] ??= {})
-  ways[via] = (ways[via] ?? 0) + 1
+  add((tally.commands[name] ??= {}), via)
 }
 
 export function changed(key: string | undefined, value: unknown): void {
@@ -105,7 +104,7 @@ export function spent(kind: 'features' | 'tabs', name: string, minutes = 1): voi
 
 export function started(bucket: UsageStartup): void {
   const tally = today()
-  if (tally) tally.startup[bucket] = (tally.startup[bucket] ?? 0) + 1
+  if (tally) add(tally.startup, bucket)
 }
 
 usageChoice.changes.add(() => {

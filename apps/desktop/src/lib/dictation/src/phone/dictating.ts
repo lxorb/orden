@@ -1,7 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { busy } from '../../../ui-kit/src/api'
 import { writeAtCaret } from '../../../commands/src/api'
-import { log, systemLocale, answer, frameWord, method } from '../../../platform/src/api'
+import { log, systemLocale, answer, frameWord, isRecord, method } from '../../../platform/src/api'
 import { views } from '../../../panes/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { spaced, speechRecogniser } from './dictation'
@@ -123,15 +123,13 @@ function stop(): void {
 }
 
 function said(json: string, view: EditorView): void {
-  let parsed: unknown
+  let held: unknown
   try {
-    parsed = JSON.parse(json)
+    held = JSON.parse(json)
   } catch {
     return
   }
-
-  if (typeof parsed !== 'object' || parsed === null) return
-  const held = parsed as Record<string, unknown>
+  if (!isRecord(held)) return
   const words = typeof held.text === 'string' ? held.text : ''
 
   if (words.trim()) put(view, words)
