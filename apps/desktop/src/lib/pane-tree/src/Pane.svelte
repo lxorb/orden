@@ -17,7 +17,7 @@
     setFind,
     setReadOnlyMode,
   } from '@orden/editor'
-  import { untrack } from 'svelte'
+  import { type Component, untrack } from 'svelte'
   import {
     Door,
     dragged,
@@ -451,29 +451,11 @@
       {@render unreachable()}
     {/await}
   {:else if tab?.kind === 'canvas'}
-    {#key tab.id}
-      {#await canvasSurface() then Canvas}
-        <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(canvasSurface, tab)}
   {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
-    {#key tab.id}
-      {#await pagesSurface() then Pages}
-        <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(pagesSurface, tab)}
   {:else if tab?.kind === 'web'}
-    {#key tab.id}
-      {#await webSurface() then WebTab}
-        <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(webSurface, tab)}
   {:else if tab?.kind === 'view' && tab.path === null}
     {#key tab.id}
       {#await todosBoard() then TodosBoard}
@@ -483,21 +465,9 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'view'}
-    {#key tab.id}
-      {#await viewSurface() then ViewTab}
-        <ViewTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(viewSurface, tab)}
   {:else if tab?.kind === 'channel'}
-    {#key tab.id}
-      {#await chatSurface() then ChatTab}
-        <ChatTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(chatSurface, tab)}
   {:else if tab?.kind === 'chat'}
     {#key tab.id}
       {#await askPanel() then ChatPanel}
@@ -507,41 +477,17 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'terminal'}
-    {#key tab.id}
-      {#await terminalSurface() then TerminalTab}
-        <TerminalTab {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(terminalSurface, tab)}
   {:else if tab?.kind === 'application'}
     {#if appsOn()}
-      {#key tab.id}
-        {#await applicationSurface() then ApplicationTab}
-          <ApplicationTab {tab} />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
+      {@render surface(applicationSurface, tab)}
     {/if}
   {:else if tab?.kind === 'explorer'}
     {#if explorerOn()}
-      {#key tab.id}
-        {#await explorerSurface() then ExplorerTab}
-          <ExplorerTab {tab} focused={workspace.panes.focusedId === pane.id} />
-        {:catch}
-          {@render unreachable()}
-        {/await}
-      {/key}
+      {@render surface(explorerSurface, tab)}
     {/if}
   {:else if tab?.kind === 'pass'}
-    {#key tab.id}
-      {#await passSurface() then PassTab}
-        <PassTab {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(passSurface, tab)}
   {:else if tab?.kind === 'settings'}
     {#key tab.id}
       {#await settingsSurface() then SettingsPanel}
@@ -551,13 +497,7 @@
       {/await}
     {/key}
   {:else if tab?.kind === 'time'}
-    {#key tab.id}
-      {#await timeSurface() then TimeTab}
-        <TimeTab {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(timeSurface, tab)}
   {:else if tab?.coming}
     <div class="coming" role="status">
       {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
@@ -565,13 +505,7 @@
         : 'Loading…'}
     </div>
   {:else if tab?.reading}
-    {#key tab.id}
-      {#await readingSurface() then Reading}
-        <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
+    {@render surface(readingSurface, tab)}
   {:else if stacking}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="stack" data-region="editor">
@@ -666,6 +600,16 @@
     </div>
   {/if}
 </div>
+
+{#snippet surface(load: () => Promise<Component<{ tab: Tab; focused: boolean }>>, shown: Tab)}
+  {#key shown.id}
+    {#await load() then Surface}
+      <Surface tab={shown} focused={workspace.panes.focusedId === pane.id} />
+    {:catch}
+      {@render unreachable()}
+    {/await}
+  {/key}
+{/snippet}
 
 {#snippet unreachable()}
   <div class="coming" role="alert">

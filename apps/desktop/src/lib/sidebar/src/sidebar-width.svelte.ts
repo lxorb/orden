@@ -22,6 +22,8 @@ function write(side: PanelSide, base: string, width: number | null) {
 
 const STEP = 16
 
+const clamped = (width: number) => Math.round(Math.min(WIDEST, Math.max(NARROWEST, width)))
+
 export class SidebarWidth {
   readonly narrowest = NARROWEST
   readonly widest = WIDEST
@@ -56,7 +58,7 @@ export class SidebarWidth {
     const from = this.pixels ?? panel?.getBoundingClientRect().width ?? NARROWEST
 
     const put = (width: number) => {
-      this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, width)))
+      this.pixels = clamped(width)
       write(this.side, this.key, this.pixels)
       return true
     }
@@ -99,16 +101,14 @@ export class SidebarWidth {
 
     const move = (moved: PointerEvent) => {
       const moving = (moved.clientX - startX) * this.towards
-      this.pixels = Math.round(Math.min(WIDEST, Math.max(NARROWEST, from + moving)))
+      this.pixels = clamped(from + moving)
     }
 
     const stop = () => {
       if (!this.ending) return
       this.ending = null
 
-      handle.removeEventListener('pointermove', move)
-      handle.removeEventListener('pointerup', stop)
-      handle.removeEventListener('pointercancel', stop)
+      for (const [type, run] of heard) handle.removeEventListener(type, run)
 
       this.dragging = false
       document.body.style.cursor = ''
@@ -116,9 +116,12 @@ export class SidebarWidth {
       if (this.pixels !== null) write(this.side, this.key, this.pixels)
     }
 
+    const heard = [
+      ['pointermove', move],
+      ['pointerup', stop],
+      ['pointercancel', stop],
+    ] as const
     this.ending = stop
-    handle.addEventListener('pointermove', move)
-    handle.addEventListener('pointerup', stop)
-    handle.addEventListener('pointercancel', stop)
+    for (const [type, run] of heard) handle.addEventListener(type, run)
   }
 }

@@ -5,11 +5,15 @@ import { TAB_KINDS } from '../../tab-kinds/src/api'
 
 const SOURCE = readFileSync(join(import.meta.dirname, './Pane.svelte'), 'utf8')
 
-const SURFACES = [...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then \w+\}([\s\S]*?)\{\/await\}/g)]
+const SURFACES = [...SOURCE.matchAll(/\{#await (\w+)\(\) then \w+\}([\s\S]*?)\{\/await\}/g)]
+const DOORS = [
+  ...SOURCE.matchAll(/\{#await (\w+Surface)\(\) then/g),
+  ...SOURCE.matchAll(/\{@render surface\((\w+Surface), tab\)\}/g),
+]
 
 describe('a surface a pane is filled with', () => {
   test('is every kind of tab a pane can show', () => {
-    expect(SURFACES.map(([, door]) => door).sort()).toEqual([
+    expect(DOORS.map(([, door]) => door).sort()).toEqual([
       'applicationSurface',
       'canvasSurface',
       'chatSurface',
