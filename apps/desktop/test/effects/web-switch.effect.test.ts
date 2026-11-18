@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest'
 import type { Cut } from '../../src/lib/web-tab/src/covers'
+import { elapse, settle } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
@@ -181,11 +182,7 @@ afterEach(() => {
 })
 
 async function frames(): Promise<void> {
-  await vi.advanceTimersByTimeAsync(300)
-}
-
-async function settle(): Promise<void> {
-  for (let turn = 0; turn < 20; turn += 1) await vi.advanceTimersByTimeAsync(0)
+  await elapse(300)
 }
 
 async function launched(): Promise<void> {
@@ -941,7 +938,7 @@ test('a tab turned Separate is built again once, in its own store, and stays', a
   tab.apart = own
   flushSync()
   const fromMenu = pages.rehouse(tab.id, own, 'kept apart')
-  await vi.advanceTimersByTimeAsync(1000)
+  await elapse(1000)
   built()
   holding = null
   await frames()

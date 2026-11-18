@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 const world = vi.hoisted((): { provider: object | null } => ({
   provider: { id: 'p', kind: 'openai', name: 'OpenAI', model: '' },
@@ -49,11 +50,6 @@ function draw(props: Record<string, unknown> = {}) {
       ...props,
     },
   })
-  flushSync()
-}
-
-const settle = async () => {
-  for (let one = 0; one < 3; one++) await new Promise((resolve) => setTimeout(resolve, 0))
   flushSync()
 }
 

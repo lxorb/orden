@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { elapse } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
@@ -79,7 +80,7 @@ afterEach(() => {
 })
 
 async function frames(): Promise<void> {
-  await vi.advanceTimersByTimeAsync(300)
+  await elapse(300)
 }
 
 async function tenTabs(): Promise<string[]> {
@@ -134,7 +135,7 @@ test('and once more after a break long enough to freeze them: woken, not built',
   await frames()
   await cycle(10)
 
-  await vi.advanceTimersByTimeAsync(10 * 60_000)
+  await elapse(10 * 60_000)
   const frozen = asked.filter((one) => one.command === 'web_pause' && one.args.paused === true)
   expect(frozen).toHaveLength(9)
 

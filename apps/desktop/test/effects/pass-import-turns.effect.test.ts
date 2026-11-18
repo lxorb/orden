@@ -1,5 +1,6 @@
-import { flushSync, mount, tick, unmount } from 'svelte'
+import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 
 interface Asked {
   name: string
@@ -45,12 +46,7 @@ async function choose(name: string) {
     value: [{ name, arrayBuffer: async () => bytes.buffer }],
   })
   input.dispatchEvent(new Event('change', { bubbles: true }))
-  for (let turn = 0; turn < 5; turn++) await tick()
-}
-
-const settled = async () => {
-  for (let turn = 0; turn < 5; turn++) await tick()
-  flushSync()
+  await settle()
 }
 
 test('a file read after another was chosen does not stand in for the one chosen last', async () => {
@@ -62,9 +58,9 @@ test('a file read after another was chosen does not stand in for the one chosen 
   expect(asked.map((one) => one.name)).toEqual(['old.csv', 'new.csv'])
 
   asked[1]?.answer([{ name: 'New', items: [{}] }])
-  await settled()
+  await settle()
   asked[0]?.answer([{ name: 'Old', items: [{}, {}, {}] }])
-  await settled()
+  await settle()
 
   expect(document.body.textContent).toContain('new.csv')
   expect(document.body.textContent).toContain('New')
@@ -79,13 +75,13 @@ test('a read that fails after another file was chosen says nothing over it, and 
   document.querySelector<HTMLButtonElement>('button.source')?.click()
   flushSync()
   asked[0]?.fail(new Error('This file could not be read.'))
-  await settled()
+  await settle()
 
   expect(document.querySelector('[role=alert]')).toBeNull()
 
   await choose('new.csv')
   asked[1]?.answer([{ name: 'New', items: [{}] }])
-  await settled()
+  await settle()
   const button = [...document.querySelectorAll<HTMLButtonElement>('.orden-button')].find((one) =>
     one.textContent.includes('Import'),
   )

@@ -12,6 +12,7 @@ import { tools } from '../../src/lib/canvas/src/tools.svelte'
 import { rooms } from '../../src/lib/collab/src/api'
 import { account } from '../../src/lib/accounts/src/api'
 import { NoteDoc, Tab } from '../../src/lib/documents/src/api'
+import { idle } from './settle'
 
 const sockets = vi.hoisted(() => {
   interface Wire {
@@ -109,15 +110,6 @@ afterEach(() => {
   account.token = null
 })
 
-async function until(what: () => boolean, said: string): Promise<void> {
-  for (let tries = 0; tries < 2000; tries++) {
-    if (what()) return
-    await new Promise((resolve) => setTimeout(resolve, 1))
-  }
-
-  throw new Error(`gave up waiting for ${said}`)
-}
-
 function carry(socket: Socket, doc: Y.Doc, awareness: Awareness) {
   for (const message of socket.take()) {
     const back = receive(message, doc, awareness, 'socket')
@@ -145,7 +137,9 @@ async function onThePlane(kind: keyof typeof surfaces): Promise<{ socket: Socket
   const server = new Awareness(doc)
   socket.arrive()
   carry(socket, doc, server)
-  await until(() => rooms.carries('plane-1'), 'the room to catch up')
+  await vi.waitFor(() => expect(rooms.carries('plane-1'), 'the room to catch up').toBe(true), {
+    timeout: 10_000,
+  })
 
   const phone = new Awareness(new Y.Doc())
   phone.setLocalState({ who: { name: 'Phone', accent: 'blue' }, hand: { x: 40, y: 60 } })
@@ -170,7 +164,7 @@ test.each([
 
     account.user = { id: 'drawer', email: 'drawer@example.com', name: null }
     flushSync()
-    await new Promise((resolve) => setTimeout(resolve, 5))
+    await idle(5)
     flushSync()
 
     expect(sockets.opened).toHaveLength(1)

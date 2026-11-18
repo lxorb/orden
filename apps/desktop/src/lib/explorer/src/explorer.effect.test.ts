@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Listing } from './commands'
+import { idle, settle } from '../../../../test/effects/settle'
 
 const DISK: Record<string, string[]> = {
   '/home/me': ['Music', 'Pictures', 'notes.txt', 'plan.pdf'],
@@ -98,14 +99,6 @@ const { workspace } = await import('../../workspace/src/api')
 const ExplorerTab = (await import('./ExplorerTab.svelte')).default
 const { viewOf } = await import('./view.svelte')
 
-const columnSettled = () => new Promise((resolve) => setTimeout(resolve, 200))
-
-const settled = async () => {
-  for (let round = 0; round < 5; round++) await new Promise((resolve) => setTimeout(resolve))
-  await new Promise((resolve) => requestAnimationFrame(resolve))
-  flushSync()
-}
-
 let target: HTMLElement
 let close: (() => void) | undefined
 
@@ -113,7 +106,7 @@ async function explorer() {
   const tab = workspace.openUnsaved('explorer', '', 'me')
   const made = mount(ExplorerTab, { target, props: { tab, focused: true } })
   close = () => void unmount(made)
-  await settled()
+  await settle()
   return { tab, view: viewOf(tab) }
 }
 
@@ -159,11 +152,11 @@ describe('a file explorer', () => {
     press('ArrowDown')
     expect(view.picked.cursor).toBe('Pictures')
     press('Enter')
-    await settled()
+    await settle()
     expect(view.folder).toBe('/home/me/Pictures')
     expect(rows()).toEqual(['a.png'])
     press('Backspace')
-    await settled()
+    await settle()
     expect(view.folder).toBe('/home/me')
     expect(view.picked.cursor).toBe('Pictures')
   })
@@ -184,7 +177,7 @@ describe('a file explorer', () => {
       one.textContent.includes('plan.pdf'),
     )
     row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
-    await settled()
+    await settle()
     expect(opened).toEqual(['/home/me/plan.pdf'])
   })
 
@@ -197,7 +190,7 @@ describe('a file explorer', () => {
         one.textContent.includes('notes.txt'),
       )
       row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
-      await settled()
+      await settle()
       expect(taken).toHaveBeenCalledWith('/home/me/notes.txt')
       expect(opened).toEqual([])
     } finally {
@@ -209,12 +202,12 @@ describe('a file explorer', () => {
   test('hands a picture to the system app when it is opened, looking at nothing in Orden', async () => {
     const { view } = await explorer()
     await view.go('/home/me/Pictures')
-    await settled()
+    await settle()
     const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
       one.textContent.includes('a.png'),
     )
     row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
-    await settled()
+    await settle()
     expect(opened).toEqual(['/home/me/Pictures/a.png'])
     expect(target.querySelector('.look')).toBeNull()
   })
@@ -222,14 +215,14 @@ describe('a file explorer', () => {
   test('goes where a path typed into the bar says', async () => {
     const { view } = await explorer()
     target.querySelector<HTMLElement>('.past')?.click()
-    await settled()
+    await settle()
     const field = target.querySelector<HTMLInputElement>('input.path')
     expect(field?.value).toBe('/home/me')
     if (!field) return
     field.value = '~/Music'
     field.dispatchEvent(new Event('input', { bubbles: true }))
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-    await settled()
+    await settle()
     expect(view.folder).toBe('/home/me/Music')
     expect(target.querySelector('.said')?.textContent).toContain('empty')
   })
@@ -238,14 +231,14 @@ describe('a file explorer', () => {
     await explorer()
     press('n')
     press('F2')
-    await settled()
+    await settle()
     const field = target.querySelector<HTMLInputElement>('input.rename')
     expect(field?.value).toBe('notes.txt')
     expect([field?.selectionStart, field?.selectionEnd]).toEqual([0, 5])
     if (!field) return
     field.value = 'letters.txt'
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-    await settled()
+    await settle()
     expect(changed).toEqual(['rename /home/me/notes.txt letters.txt'])
   })
 
@@ -253,12 +246,12 @@ describe('a file explorer', () => {
     await explorer()
     press('n')
     press('F2')
-    await settled()
+    await settle()
     const field = target.querySelector<HTMLInputElement>('input.rename')
     if (!field) throw new Error('no rename field')
     field.value = 'letters.txt'
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    await settled()
+    await settle()
     expect(target.querySelector('input.rename')).toBeNull()
     expect(changed).toEqual([])
   })
@@ -279,17 +272,17 @@ describe('a file explorer', () => {
         hidden: false,
       },
     ]
-    await settled()
+    await settle()
     view.pick('letters/bank.txt', 'one')
-    await settled()
+    await settle()
     press('F2')
-    await settled()
+    await settle()
     const field = target.querySelector<HTMLInputElement>('input.rename')
     if (!field) throw new Error('no rename field')
     expect(field.value).toBe('bank.txt')
     field.value = 'loan.txt'
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-    await settled()
+    await settle()
     expect(changed).toEqual(['rename /home/me/letters/bank.txt loan.txt'])
   })
 
@@ -307,7 +300,7 @@ describe('a file explorer', () => {
       created: 0,
       hidden: false,
     }))
-    await settled()
+    await settle()
     const names = [...target.querySelectorAll('.entry .name')].map((one) =>
       [...one.querySelectorAll('.orden-row-label, .where')].map((part) => part.textContent),
     )
@@ -328,10 +321,10 @@ describe('a file explorer', () => {
       created: 0,
       hidden: false,
     }))
-    await settled()
+    await settle()
     view.pickAll()
     press('F2')
-    await settled()
+    await settle()
     const [find, replace] = [
       ...target.querySelectorAll<HTMLInputElement>('.many input.orden-field'),
     ]
@@ -342,7 +335,7 @@ describe('a file explorer', () => {
     replace.dispatchEvent(new Event('input', { bubbles: true }))
     flushSync()
     find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-    await settled()
+    await settle()
     expect(changed).toEqual([
       'rename /home/me/letters/draft.txt final.txt',
       'rename /home/me/old/draft.txt final.txt',
@@ -355,12 +348,12 @@ describe('a file explorer', () => {
     const { view } = await explorer()
     press('n')
     press('F2')
-    await settled()
+    await settle()
     const field = target.querySelector<HTMLInputElement>('input.rename')
     if (!field) throw new Error('no rename field')
     field.value = 'let'
     await view.reload()
-    await settled()
+    await settle()
     expect(target.querySelector('input.rename')).toBe(field)
     expect(document.activeElement).toBe(field)
     expect(changed).toEqual([])
@@ -372,7 +365,7 @@ describe('a file explorer', () => {
     press('p')
     press('l')
     press('Delete')
-    await settled()
+    await settle()
     expect(changed).toEqual(['trash /home/me/plan.pdf'])
     expect(ws.undone.last).toEqual({
       kind: 'outside',
@@ -384,14 +377,14 @@ describe('a file explorer', () => {
       ],
     })
     press('N', { ctrlKey: true, shiftKey: true })
-    await settled()
+    await settle()
     expect(changed.at(-1)).toBe('make /home/me New folder')
   })
 
   test('narrows the folder as a filter is typed, and Escape brings the rest back', async () => {
     const { view } = await explorer()
     press('f', { ctrlKey: true })
-    await settled()
+    await settle()
     const field = target.querySelector<HTMLInputElement>('input.filter')
     expect(field).not.toBeNull()
     if (!field) return
@@ -400,7 +393,7 @@ describe('a file explorer', () => {
     flushSync()
     expect(rows()).toEqual(['plan.pdf'])
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    await settled()
+    await settle()
     expect(view.filter).toBe('')
     expect(rows()).toHaveLength(4)
   })
@@ -408,29 +401,27 @@ describe('a file explorer', () => {
   test('reads a film or a sound to look at only once the cursor rests on it', async () => {
     const { view } = await explorer()
     await view.go('/home/me/Sounds')
-    await settled()
+    await settle()
     press('a')
     press(' ')
     for (const name of ['b.mp3', 'c.mp3', 'd.mp3']) {
       view.pick(name, 'one')
       flushSync()
     }
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    await settled()
-    expect(peeked).toEqual(['/home/me/Sounds/d.mp3'])
+    await vi.waitFor(() => expect(peeked).toEqual(['/home/me/Sounds/d.mp3']))
   })
 
   test('looks at a file with Space, its words and its facts, and puts it away again', async () => {
     await explorer()
     press('n')
     press(' ')
-    await settled()
+    await settle()
     const look = target.querySelector('.look')
     expect(look?.textContent).toContain('notes.txt')
     expect(look?.textContent).toContain('hello')
     expect(look?.textContent).toContain('rw-r--r--')
     look?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    await settled()
+    await settle()
     expect(target.querySelector('.look')).toBeNull()
   })
 
@@ -438,10 +429,10 @@ describe('a file explorer', () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     await explorer()
     press('2', { ctrlKey: true })
-    await settled()
+    await settle()
     expect(target.querySelectorAll('.entry.tile').length).toBe(4)
     press('1', { ctrlKey: true })
-    await settled()
+    await settle()
     expect(target.querySelectorAll('.entry.tile').length).toBe(0)
     expect(explorerPrefs.view).toBe('list')
   })
@@ -456,12 +447,12 @@ describe('a file explorer', () => {
     expect(button()?.getAttribute('aria-pressed')).toBe('false')
     expect(shut()).toBe(true)
     button()?.click()
-    await settled()
+    await settle()
     expect(explorerPrefs.hidden).toBe(true)
     expect(button()?.getAttribute('aria-pressed')).toBe('true')
     expect(shut()).toBe(false)
     button()?.click()
-    await settled()
+    await settle()
     expect(shut()).toBe(true)
   })
 
@@ -470,7 +461,7 @@ describe('a file explorer', () => {
     press('n')
     press('ArrowDown', { shiftKey: true })
     press('F2')
-    await settled()
+    await settle()
     const sheet = target.querySelector('.many')
     expect(sheet?.textContent).toContain('plan.pdf')
     const [find, replace] = [
@@ -485,7 +476,7 @@ describe('a file explorer', () => {
     expect(target.querySelector('.many')?.textContent).toContain('Notes.txt')
     expect(target.querySelector('.many')?.textContent).toContain('plaN.pdf')
     find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-    await settled()
+    await settle()
     expect(changed).toEqual([
       'rename /home/me/notes.txt Notes.txt',
       'rename /home/me/plan.pdf plaN.pdf',
@@ -497,7 +488,7 @@ describe('a file explorer', () => {
     press('n')
     press('ArrowDown', { shiftKey: true })
     press('F2')
-    await settled()
+    await settle()
     const cancel = target.querySelector<HTMLButtonElement>('.many button')
     cancel?.focus()
     for (const key of ['Delete', 'Backspace', 'F2', 'a'])
@@ -510,14 +501,14 @@ describe('a file explorer', () => {
         cancelable: true,
       }),
     )
-    await settled()
+    await settle()
     expect(changed).toEqual([])
     expect(target.querySelector('.many')).not.toBeNull()
     cancel?.click()
-    await settled()
+    await settle()
     press('p')
     press(' ')
-    await settled()
+    await settle()
     const look = target.querySelector<HTMLElement>('.look')
     look?.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
@@ -525,7 +516,7 @@ describe('a file explorer', () => {
     look?.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'F2', bubbles: true, cancelable: true }),
     )
-    await settled()
+    await settle()
     expect(changed).toEqual([])
     expect(target.querySelector('input.rename')).toBeNull()
   })
@@ -533,7 +524,7 @@ describe('a file explorer', () => {
   test('a note dragged in from the tree onto a picked folder moves into that folder', async () => {
     await explorer()
     press('p')
-    await settled()
+    await settle()
     const row = [...target.querySelectorAll<HTMLElement>('.entry .orden-row-label')]
       .find((one) => one.textContent === 'Pictures')
       ?.closest<HTMLElement>('.entry')
@@ -549,7 +540,7 @@ describe('a file explorer', () => {
       },
     })
     row.dispatchEvent(drop)
-    await settled()
+    await settle()
     expect(changed).toEqual(['move /home/me/Orden/Work/x.md /home/me/Pictures'])
   })
 
@@ -560,14 +551,14 @@ describe('a file explorer', () => {
     try {
       await explorer()
       press('3', { ctrlKey: true })
-      await settled()
+      await settle()
       press('ArrowDown')
       press('ArrowDown')
-      await columnSettled()
-      await settled()
-      const drawn = target.querySelectorAll('.column li')
-      expect(drawn.length).toBeGreaterThan(0)
-      expect(drawn.length).toBeLessThan(100)
+      await vi.waitFor(() => {
+        flushSync()
+        expect(target.querySelectorAll('.column li').length).toBeGreaterThan(0)
+      })
+      expect(target.querySelectorAll('.column li').length).toBeLessThan(100)
     } finally {
       DISK['/home/me/Pictures'] = kept
       explorerPrefs.show('list')
@@ -578,15 +569,15 @@ describe('a file explorer', () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     const { view } = await explorer()
     press('3', { ctrlKey: true })
-    await settled()
+    await settle()
     expect(explorerPrefs.view).toBe('columns')
     press('ArrowDown')
     press('ArrowDown')
     press('ArrowRight')
-    await settled()
+    await settle()
     expect(view.folder).toBe('/home/me/Pictures')
     press('ArrowLeft')
-    await settled()
+    await settle()
     expect(view.folder).toBe('/home/me')
     explorerPrefs.show('list')
   })
@@ -595,14 +586,13 @@ describe('a file explorer', () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     await explorer()
     press('3', { ctrlKey: true })
-    await settled()
-    await columnSettled()
+    await idle(200)
     listedPaths.length = 0
     press('ArrowDown')
     press('ArrowDown')
-    await columnSettled()
-    await settled()
-    expect(listedPaths.filter((path) => path !== '/home/me')).toEqual(['/home/me/Pictures'])
+    await vi.waitFor(() =>
+      expect(listedPaths.filter((path) => path !== '/home/me')).toEqual(['/home/me/Pictures']),
+    )
     explorerPrefs.show('list')
   })
 })

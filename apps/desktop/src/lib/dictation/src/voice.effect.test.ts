@@ -1,5 +1,6 @@
-import { flushSync, mount, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { settle } from '../../../../test/effects/settle'
 
 const world = vi.hoisted(() => ({
   token: null as string | null,
@@ -93,11 +94,6 @@ let drawn: ReturnType<typeof mount> | undefined
 let action: { destroy: () => void } | undefined
 let entered: number
 const owner = { field: () => field, words: () => ['Sync Worker'] }
-
-const settle = async () => {
-  for (let one = 0; one < 3; one++) await new Promise((resolve) => setTimeout(resolve, 0))
-  flushSync()
-}
 
 function button(): HTMLButtonElement {
   return target.querySelector<HTMLButtonElement>('button.mic')!

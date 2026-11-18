@@ -1,4 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { idle } from './settle'
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
@@ -43,7 +44,7 @@ test('goes a turn after another tab is brought in front, and not in the same tur
 test('stays while the tab overview is up, and goes as it is put away', async () => {
   tabOverview.open = true
   const blank = leftForAnother()
-  await new Promise((done) => setTimeout(done, 20))
+  await idle(20)
   expect(open(blank.id)).toBe(true)
 
   tabOverview.open = false

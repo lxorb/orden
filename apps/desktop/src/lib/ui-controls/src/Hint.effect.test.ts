@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Hint from './Hint.svelte'
+import { settle } from '../../../../test/effects/settle'
 
 const SENTENCE = 'Turns straight quotes into curly ones.'
 
@@ -21,13 +22,6 @@ afterEach(() => {
 })
 
 const button = () => target.querySelector('button')!
-async function settled() {
-  for (let round = 0; round < 5; round++) {
-    await new Promise((done) => setTimeout(done, 0))
-    flushSync()
-  }
-}
-
 const said = () => document.querySelector('.orden-bubble')?.textContent ?? null
 
 function pointer(type: string, pointerType: string) {
@@ -51,7 +45,7 @@ test.each(['touch', 'pen'])(
   'a %s tap shows the sentence, and a second tap puts it away',
   async (kind) => {
     tap(kind)
-    await settled()
+    await settle()
     expect(said()).toBe(SENTENCE)
     tap(kind)
     await vi.waitFor(() => expect(said()).toBeNull())
@@ -60,7 +54,7 @@ test.each(['touch', 'pen'])(
 
 test('a mouse shows the sentence while it rests on the ?', async () => {
   pointer('pointerenter', 'mouse')
-  await settled()
+  await settle()
   expect(said()).toBe(SENTENCE)
   pointer('pointerleave', 'mouse')
   await vi.waitFor(() => expect(said()).toBeNull())
@@ -68,7 +62,7 @@ test('a mouse shows the sentence while it rests on the ?', async () => {
 
 test('the keyboard shows the sentence on reaching the ?', async () => {
   button().focus()
-  await settled()
+  await settle()
   expect(said()).toBe(SENTENCE)
   button().blur()
   await vi.waitFor(() => expect(said()).toBeNull())

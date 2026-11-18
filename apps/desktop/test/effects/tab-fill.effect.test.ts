@@ -1,5 +1,6 @@
-import { flushSync, mount, tick, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 import { warmWindow } from './warm-window'
 
 vi.hoisted(() => {
@@ -110,14 +111,6 @@ async function press(key: string, held: KeyboardEventInit = {}): Promise<Keyboar
 }
 
 const shiftF11 = () => press('F11', { shiftKey: true })
-
-async function settle() {
-  for (let turn = 0; turn < 6; turn++) {
-    await tick()
-    await new Promise((done) => setTimeout(done, 0))
-    flushSync()
-  }
-}
 
 async function window2() {
   workspace.openBlank('Left', '# Left\n\nWords.')

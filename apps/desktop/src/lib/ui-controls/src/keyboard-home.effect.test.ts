@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import app from '../../../App.svelte?raw'
 import crateSide from '../../../../src-tauri/crates/web/src/keyboard.rs?raw'
+import { settle } from '../../../../test/effects/settle'
 
 const crate = vi.hoisted(() => ({
   inPage: true,
@@ -28,26 +29,22 @@ const { IN_PAGE } = await import('./keyboard-home')
 const { overlays } = await import('../../ui-kit/src/overlays')
 const { IN_A_PAGE } = await import('./trap')
 
-async function settled() {
-  await new Promise((done) => setTimeout(done, 40))
-}
-
 async function pageTookIt() {
   await vi.waitFor(() => expect(crate.heard.has(IN_PAGE)).toBe(true))
   crate.heard.get(IN_PAGE)?.()
-  await settled()
+  await settle()
 }
 
 async function windowBlurred() {
   focused = false
   window.dispatchEvent(new FocusEvent('blur'))
-  await settled()
+  await settle()
 }
 
 async function windowFocused() {
   focused = true
   window.dispatchEvent(new FocusEvent('focus'))
-  await settled()
+  await settle()
 }
 
 let blurs = 0
@@ -185,7 +182,7 @@ describe('the keyboard going anywhere else', () => {
     window.dispatchEvent(new Event('pointerdown'))
     field.focus()
     answer()
-    await settled()
+    await settle()
     expect(document.activeElement).toBe(field)
   })
 })

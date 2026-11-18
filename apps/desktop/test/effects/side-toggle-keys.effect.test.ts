@@ -2,6 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { SidebarToggle } from '../../src/lib/titlebar/src/api'
 import { workspace } from '../../src/lib/workspace/src/api'
+import { idle } from './settle'
 
 Element.prototype.getClientRects = () => [new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList
 
@@ -18,12 +19,8 @@ beforeEach(() => {
   flushSync()
 })
 
-async function frames(count = 10) {
-  for (let left = count; left > 0; left--) await new Promise((done) => requestAnimationFrame(done))
-}
-
 afterEach(async () => {
-  await frames()
+  await idle(200)
   void unmount(shown)
   host.remove()
   workspace.panel = null
@@ -37,7 +34,7 @@ test('opened by a key, the toggle keeps the keyboard until Tab takes it in', asy
   flushSync()
 
   expect(workspace.panel).toBe('tree')
-  await frames()
+  await idle(200)
   expect(document.activeElement).toBe(toggle())
 
   toggle()?.dispatchEvent(
@@ -52,7 +49,7 @@ test('opened by a click, the keyboard stays where it was', async () => {
   flushSync()
 
   expect(workspace.panel).toBe('tree')
-  await frames()
+  await idle(200)
   expect(document.activeElement).toBe(toggle())
 })
 
@@ -64,6 +61,6 @@ test('shut by a key, the keyboard stays on the toggle', async () => {
   flushSync()
 
   expect(workspace.panel).toBeNull()
-  await frames()
+  await idle(200)
   expect(document.activeElement).toBe(toggle())
 })

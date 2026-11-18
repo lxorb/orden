@@ -1,5 +1,6 @@
 import { flushSync } from 'svelte'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
+import { settle } from '../../../../../test/effects/settle'
 
 const faked = vi.hoisted(() => ({
   blurs: [] as number[],
@@ -72,10 +73,6 @@ beforeAll(() => {
 
 const sharpCopy = () => document.documentElement.style.getPropertyValue('--wallpaper-sharp')
 
-const settled = async () => {
-  for (let turn = 0; turn < 5; turn++) await new Promise((resolve) => setTimeout(resolve))
-}
-
 describe('the wallpaper sharp copy', () => {
   test('comes back after leaving the wallpaper theme and returning in the same scheme', async () => {
     const { wallpaper } = await import('./wallpaper.svelte')
@@ -89,7 +86,7 @@ describe('the wallpaper sharp copy', () => {
     expect(sharpCopy()).toBe('')
     theme.id = 'wallpaper'
     flushSync()
-    await settled()
+    await settle()
     expect(sharpCopy()).toContain('blob:')
   })
 })
@@ -106,7 +103,7 @@ describe('a picture used as wallpaper from another theme', () => {
     faked.blurs = []
     expect(await wallpaper.take(new Blob(['picture']), 'light')).toBe(true)
     flushSync()
-    await settled()
+    await settle()
     expect(faked.blurs[0]).toBe(60)
   })
 })

@@ -1,5 +1,6 @@
-import { flushSync, mount, tick, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { settle } from '../../../../../test/effects/settle'
 
 const { workspace } = await import('../../../workspace/src/api')
 const Asked = (await import('./Asked.svelte')).default
@@ -39,8 +40,7 @@ test('a write asked in a thread of another space shows the note of the thread’
       thread: { space: 'home' } as never,
     },
   })
-  for (let turn = 0; turn < 5; turn++) await tick()
-  flushSync()
+  await settle()
   expect(target.textContent).toContain('garden plans')
   expect(target.textContent).not.toContain('payroll')
   void unmount(shown)

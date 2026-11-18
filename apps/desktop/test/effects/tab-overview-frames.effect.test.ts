@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { idle } from './settle'
 
 window.matchMedia = ((query: string) => ({
   matches: false,
@@ -237,7 +238,7 @@ test('no frame of the way out, a zoom or the way home makes a layer of its own o
     asked.push(...layered())
   }
   for (let i = 0; i < 8; i++) {
-    await new Promise((go) => setTimeout(go, 60))
+    await idle(60)
     frame()
     asked.push(...layered())
   }

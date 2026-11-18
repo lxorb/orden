@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { flushSync, mount, unmount } from 'svelte'
+import { mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { settle } from './settle'
 import '../../src/lib/theme-ports'
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
@@ -55,14 +56,6 @@ let shown: ReturnType<typeof mount> | null = null
 
 let tints: string[] = []
 let watching: MutationObserver | null = null
-
-async function settle() {
-  await vi.dynamicImportSettled()
-  for (let turn = 0; turn < 4; turn++) {
-    await new Promise((go) => setTimeout(go, 0))
-    flushSync()
-  }
-}
 
 function tint(): string {
   return document.documentElement.style.getPropertyValue('--glass-tint')
