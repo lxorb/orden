@@ -16,7 +16,7 @@ export const priorityTone = (priority: number): string | undefined =>
     ({ 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' }) as Record<number, string>
   )[priority]
 
-export interface Subtask {
+interface Subtask {
   readonly id: string
   readonly title: string
   readonly done: boolean
