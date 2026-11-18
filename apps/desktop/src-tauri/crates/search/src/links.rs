@@ -1507,10 +1507,6 @@ mod tests {
 
         assert_eq!(read.cover.as_deref(), Some("assets/wide.jpg"));
         assert!(read.icon.is_none());
-    }
-
-    #[test]
-    fn and_a_note_with_no_cover_carries_none() {
         let read = note_at("Trips/Plan.md".to_string(), "# Plan\n\nWords.\n");
 
         assert!(read.cover.is_none());
@@ -1647,29 +1643,24 @@ mod tests {
     }
 
     #[test]
-    fn an_empty_link_is_not_one() {
+    fn an_empty_link_an_anchor_an_escape_or_code_is_no_link() {
         assert!(targets("[[]]").is_empty());
         assert!(targets("[[a]b]]").is_empty());
         assert!(targets("[[|only an alias]]").is_empty());
-    }
-
-    #[test]
-    fn a_same_note_anchor_has_no_target() {
         let links = links_in("[[#Heading]]");
         assert_eq!(links[0].target, "");
         assert_eq!(links[0].heading.as_deref(), Some("Heading"));
-    }
-
-    #[test]
-    fn an_escaped_bracket_is_text() {
         assert!(targets("\\[[Note]]").is_empty());
-    }
-
-    #[test]
-    fn code_holds_no_links() {
         assert!(targets("write `[[Note]]` to link").is_empty());
         assert_eq!(targets("```\n[[Note]]\n```\n[[Real]]"), vec!["Real"]);
         assert_eq!(targets("`` ` [[Note]] `` [[Real]]"), vec!["Real"]);
+        assert_eq!(targets("\\` [[Note]] `b`"), vec!["Note"]);
+        assert!(targets("\\\\` [[Note]] `b`").is_empty());
+        assert_eq!(targets("`a\\` [[Note]] `b`"), vec!["Note"]);
+        assert!(targets("`` `[[Plan]]`").is_empty());
+        assert_eq!(targets("`` [[Plan]]"), vec!["Plan"]);
+        assert_eq!(targets("` [[Note]]"), vec!["Note"]);
+        assert!(links_in("[[#^]]").is_empty());
     }
 
     #[test]
@@ -1749,24 +1740,6 @@ mod tests {
         .tasks;
         let texts: Vec<&str> = tasks.iter().map(|task| task.text.as_str()).collect();
         assert_eq!(texts, ["one", "two", "three", "four", "five"]);
-    }
-
-    #[test]
-    fn an_escaped_backtick_opens_no_code_span() {
-        assert_eq!(targets("\\` [[Note]] `b`"), vec!["Note"]);
-        assert!(targets("\\\\` [[Note]] `b`").is_empty());
-        assert_eq!(targets("`a\\` [[Note]] `b`"), vec!["Note"]);
-    }
-
-    #[test]
-    fn a_run_that_never_closes_still_lets_a_later_span_hide_a_link() {
-        assert!(targets("`` `[[Plan]]`").is_empty());
-        assert_eq!(targets("`` [[Plan]]"), vec!["Plan"]);
-    }
-
-    #[test]
-    fn a_code_span_that_never_closes_is_text() {
-        assert_eq!(targets("` [[Note]]"), vec!["Note"]);
     }
 
     #[test]
@@ -1865,25 +1838,15 @@ mod tests {
     }
 
     #[test]
-    fn a_markdown_target_loses_its_encoding_and_keeps_its_heading() {
+    fn a_markdown_target_is_read_as_written() {
         let links = links_in("[x](My%20Note.md#a-heading)");
         assert_eq!(links[0].target, "My Note.md");
         assert_eq!(links[0].heading.as_deref(), Some("a-heading"));
-    }
-
-    #[test]
-    fn an_angled_markdown_target_holds_spaces() {
         assert_eq!(targets("[x](<My Note.md>)"), vec!["My Note.md"]);
-    }
-
-    #[test]
-    fn a_markdown_title_does_not_end_up_in_the_target() {
         assert_eq!(targets("[x](Note.md \"A title\")"), vec!["Note.md"]);
-    }
-
-    #[test]
-    fn several_links_on_one_line_all_count() {
         assert_eq!(targets("[[A]] and [[B|b]] and ![[C]]"), vec!["A", "B", "C"]);
+        assert!(links_in(&"[a](".repeat(5_000)).is_empty());
+        assert!(links_in(&"[[a".repeat(5_000)).is_empty());
     }
 
     #[test]
@@ -1899,31 +1862,17 @@ mod tests {
     }
 
     #[test]
-    fn a_line_of_half_written_links_is_a_line_of_none() {
-        assert!(links_in(&"[a](".repeat(5_000)).is_empty());
-        assert!(links_in(&"[[a".repeat(5_000)).is_empty());
-    }
-
-    #[test]
     fn a_note_says_where_it_points_only_so_many_times() {
         let many = "[[A]] ".repeat(20_000);
         let found = links_in(&many);
 
         assert_eq!(found.len(), super::MOST_LINKS);
         assert!(found[0].text.len() <= super::LINE);
-    }
-
-    #[test]
-    fn what_is_past_the_ceiling_is_the_links_and_nothing_else() {
         let body = format!("{}\n## Later\n", "[[A]] ".repeat(6000));
         let read = prose(&body, 0);
 
         assert_eq!(read.links.len(), super::MOST_LINKS);
         assert_eq!(read.headings, vec!["Later"]);
-    }
-
-    #[test]
-    fn a_link_carries_its_line_and_the_words_around_it() {
         let links = links_in("first\nsecond [[Note]] third");
         assert_eq!(links[0].line, 1);
         assert_eq!(links[0].text, "second [[Note]] third");
@@ -1957,11 +1906,8 @@ mod tests {
             "---\n# my comment\ntitle: x\n---\n# Real\n",
         );
         assert_eq!(read.headings, vec!["Real".to_string()]);
-    }
-
-    #[test]
-    fn a_link_to_an_empty_block_of_nothing_is_no_link() {
-        assert!(links_in("[[#^]]").is_empty());
+        assert_eq!(heading_of("   # Three"), Some((1, "Three".to_string())));
+        assert_eq!(heading_of("    # Four"), None);
     }
 
     #[test]
@@ -2038,12 +1984,6 @@ mod tests {
                 vec!["Intro".to_string(), "Done".to_string()],
             ]
         );
-    }
-
-    #[test]
-    fn a_heading_may_be_indented_up_to_three_spaces() {
-        assert_eq!(heading_of("   # Three"), Some((1, "Three".to_string())));
-        assert_eq!(heading_of("    # Four"), None);
     }
 
     #[test]

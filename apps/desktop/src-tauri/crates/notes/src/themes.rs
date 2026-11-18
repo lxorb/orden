@@ -310,16 +310,8 @@ mod tests {
         assert_eq!(humanise("solarized_light"), "Solarized light");
         assert_eq!(humanise("github"), "Github");
         assert_eq!(humanise(""), "");
-    }
-
-    #[test]
-    fn a_name_that_starts_with_something_other_than_a_letter_survives() {
         assert_eq!(humanise("2026-theme"), "2026 theme");
         assert_eq!(humanise("über-thema"), "Über thema");
-    }
-
-    #[test]
-    fn a_stylesheet_is_one_in_any_case() {
         assert!(is_css(Path::new("a/b.css")));
         assert!(is_css(Path::new("a/b.CSS")));
         assert!(!is_css(Path::new("a/b.scss")));

@@ -302,44 +302,76 @@ mod tests {
     use super::tags_in;
 
     #[test]
-    fn finds_tags_but_not_headings() {
+    fn a_tag_starts_a_word_and_holds_what_a_name_may() {
         assert_eq!(tags_in("# Heading\n#tag here"), vec!["#tag"]);
         assert_eq!(tags_in("## Also a heading"), Vec::<String>::new());
-    }
-
-    #[test]
-    fn a_tag_has_to_start_a_word() {
         assert_eq!(tags_in("a#b"), Vec::<String>::new());
         assert_eq!(tags_in("(#nested)"), vec!["#nested"]);
         assert_eq!(tags_in("issue #42"), Vec::<String>::new());
-    }
-
-    #[test]
-    fn keeps_the_characters_a_tag_may_contain() {
         assert_eq!(
             tags_in("#work/2026 #a-b #c_d"),
             vec!["#work/2026", "#a-b", "#c_d"]
         );
-    }
-
-    #[test]
-    fn a_name_holds_marks_and_emoji_and_is_not_all_digits() {
         assert_eq!(
             tags_in("#हिन्दी #cafe\u{301} #tag👍 #2024-review #2024"),
             vec!["#हिन्दी", "#cafe\u{301}", "#tag👍", "#2024-review"]
         );
-    }
-
-    #[test]
-    fn nests_as_deep_as_somebody_writes_it() {
         assert_eq!(
             tags_in("#work/orden/canvas/deep/deeper"),
             vec!["#work/orden/canvas/deep/deeper"]
         );
+        assert_eq!(tags_in("#a #a #b").len(), 3);
     }
 
     #[test]
-    fn reads_items_past_a_blank_line_or_a_comment_between_them() {
+    fn code_inline_or_fenced_holds_no_tag() {
+        assert_eq!(tags_in("```\n#notatag\n```\n#real"), vec!["#real"]);
+        assert_eq!(
+            tags_in("run `a #no` and #yes, `#not` ``x `#b` y`` #also"),
+            vec!["#yes", "#also"]
+        );
+        assert_eq!(tags_in("`a\nb` #x `c`"), vec!["#x"]);
+        assert_eq!(tags_in("`a\n#b\nc`"), Vec::<String>::new());
+        assert_eq!(tags_in("a `b\n\nc` #t"), vec!["#t"]);
+        assert_eq!(tags_in("- a `x\n- b` #t"), vec!["#t"]);
+        assert_eq!(tags_in("# A `x\nb` #t"), vec!["#t"]);
+        assert_eq!(tags_in("\\` #yes ` #too"), vec!["#yes", "#too"]);
+        assert_eq!(
+            tags_in("> [!example] Button\n> ```css\n> .button { color: #fff; }\n> ```\n> #after\n"),
+            vec!["#after"]
+        );
+        assert_eq!(tags_in("> ```\n> #no\n\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("- item\n\n  ```\n  #no\n  ```\n#yes"), vec!["#yes"]);
+        assert_eq!(
+            tags_in("Notes\n\n    #include <stdio.h>\n\n#yes"),
+            vec!["#yes"]
+        );
+        assert_eq!(tags_in("- item\n\n      #define X\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("> words\n>\n>     #no"), Vec::<String>::new());
+        assert_eq!(tags_in("words\n    #yes"), vec!["#yes"]);
+        assert_eq!(tags_in("````md\n```\n#todo\n```\n````\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("```\n~~~\n#no\n```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("```\n``` ts\n#no\n```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("   ```\n#no\n```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("words\n    ```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("```a`a\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("> ```\n> #no\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn the_front_matter_lists_tags_on_its_key_in_any_shape() {
+        assert_eq!(
+            tags_in("---\ntags: work/orden, other\n---\n\nwords\n"),
+            vec!["#work/orden", "#other"]
+        );
+        assert_eq!(
+            tags_in("---\ntags: [work/orden, other]\n---\n\nwords\n"),
+            vec!["#work/orden", "#other"]
+        );
+        assert_eq!(
+            tags_in("---\ntags:\n  - work/orden\n  - other\n---\n\nwords\n"),
+            vec!["#work/orden", "#other"]
+        );
         assert_eq!(
             tags_in("---\ntags:\n  - a\n\n  - b\n---\n"),
             vec!["#a", "#b"]
@@ -352,177 +384,37 @@ mod tests {
             tags_in("---\r\ntags:\r\n  - a\r\n\r\n  - b\r\n---\r\n"),
             vec!["#a", "#b"]
         );
-    }
-
-    #[test]
-    fn ignores_anything_inside_a_fence() {
-        assert_eq!(tags_in("```\n#notatag\n```\n#real"), vec!["#real"]);
-    }
-
-    #[test]
-    fn ignores_anything_inside_inline_code() {
-        assert_eq!(
-            tags_in("run `a #no` and #yes, `#not` ``x `#b` y`` #also"),
-            vec!["#yes", "#also"]
-        );
-    }
-
-    #[test]
-    fn inline_code_runs_on_across_the_lines_of_a_paragraph() {
-        assert_eq!(tags_in("`a\nb` #x `c`"), vec!["#x"]);
-        assert_eq!(tags_in("`a\n#b\nc`"), Vec::<String>::new());
-    }
-
-    #[test]
-    fn but_not_past_the_end_of_a_block() {
-        assert_eq!(tags_in("a `b\n\nc` #t"), vec!["#t"]);
-        assert_eq!(tags_in("- a `x\n- b` #t"), vec!["#t"]);
-        assert_eq!(tags_in("# A `x\nb` #t"), vec!["#t"]);
-    }
-
-    #[test]
-    fn reads_on_past_a_backtick_that_opens_no_code() {
-        assert_eq!(tags_in("\\` #yes ` #too"), vec!["#yes", "#too"]);
-    }
-
-    #[test]
-    fn ignores_a_fence_inside_a_quote_or_a_callout() {
-        assert_eq!(
-            tags_in("> [!example] Button\n> ```css\n> .button { color: #fff; }\n> ```\n> #after\n"),
-            vec!["#after"]
-        );
-        assert_eq!(tags_in("> ```\n> #no\n\n#yes"), vec!["#yes"]);
-        assert_eq!(tags_in("- item\n\n  ```\n  #no\n  ```\n#yes"), vec!["#yes"]);
-    }
-
-    #[test]
-    fn ignores_indented_code() {
-        assert_eq!(
-            tags_in("Notes\n\n    #include <stdio.h>\n\n#yes"),
-            vec!["#yes"]
-        );
-        assert_eq!(tags_in("- item\n\n      #define X\n#yes"), vec!["#yes"]);
-        assert_eq!(tags_in("> words\n>\n>     #no"), Vec::<String>::new());
-    }
-
-    #[test]
-    fn but_reads_an_indented_line_that_carries_a_paragraph_on() {
-        assert_eq!(tags_in("words\n    #yes"), vec!["#yes"]);
-    }
-
-    #[test]
-    fn closes_a_fence_only_on_the_same_mark_at_least_as_long() {
-        assert_eq!(tags_in("````md\n```\n#todo\n```\n````\n#yes"), vec!["#yes"]);
-        assert_eq!(tags_in("```\n~~~\n#no\n```\n#yes"), vec!["#yes"]);
-        assert_eq!(tags_in("```\n``` ts\n#no\n```\n#yes"), vec!["#yes"]);
-    }
-
-    #[test]
-    fn opens_a_fence_at_three_spaces_of_indent_but_not_four() {
-        assert_eq!(tags_in("   ```\n#no\n```\n#yes"), vec!["#yes"]);
-        assert_eq!(tags_in("words\n    ```\n#yes"), vec!["#yes"]);
-    }
-
-    #[test]
-    fn opens_no_fence_on_backticks_with_a_backtick_after_them() {
-        assert_eq!(tags_in("```a`a\n#yes"), vec!["#yes"]);
-    }
-
-    #[test]
-    fn ends_a_quoted_fence_with_the_quote() {
-        assert_eq!(tags_in("> ```\n> #no\n#yes"), vec!["#yes"]);
-    }
-
-    #[test]
-    fn counts_a_tag_once_per_use() {
-        assert_eq!(tags_in("#a #a #b").len(), 3);
-    }
-
-    #[test]
-    fn reads_a_list_on_the_key() {
-        assert_eq!(
-            tags_in("---\ntags: work/orden, other\n---\n\nwords\n"),
-            vec!["#work/orden", "#other"]
-        );
-    }
-
-    #[test]
-    fn reads_a_list_in_brackets() {
-        assert_eq!(
-            tags_in("---\ntags: [work/orden, other]\n---\n\nwords\n"),
-            vec!["#work/orden", "#other"]
-        );
-    }
-
-    #[test]
-    fn reads_items_under_the_key() {
-        assert_eq!(
-            tags_in("---\ntags:\n  - work/orden\n  - other\n---\n\nwords\n"),
-            vec!["#work/orden", "#other"]
-        );
-    }
-
-    #[test]
-    fn reads_a_flow_list_across_lines_as_the_list_it_is() {
         let note = "---\ntags: [\n  work, # mine\n  # a comment\n  \"b\",\n]\nz: 1\n---\nrest\n";
         assert_eq!(tags_in(note), vec!["#work", "#b"]);
         assert_eq!(tags_in("---\ntags: [a\nz: b\n---\n"), vec!["#a"]);
         assert_eq!(tags_in("---\ntags: [\n  a# b,\n]\n---\n"), vec!["#b"]);
         assert_eq!(tags_in("---\ntags: [a, b]\nz: 1\n---\n"), vec!["#a", "#b"]);
-    }
-
-    #[test]
-    fn takes_the_hash_as_optional_in_the_front_matter() {
         assert_eq!(
             tags_in("---\ntags: [#work/orden]\n---\n\nwords\n"),
             vec!["#work/orden"]
         );
-    }
-
-    #[test]
-    fn takes_either_spelling_of_the_key() {
         assert_eq!(
             tags_in("---\ntag: work/orden\n---\n\nwords\n"),
             vec!["#work/orden"]
         );
-    }
-
-    #[test]
-    fn reads_nothing_under_another_key() {
         assert_eq!(
             tags_in("---\nstatus: done\nproject: Orden\n---\n\nwords\n"),
             Vec::<String>::new()
         );
-    }
-
-    #[test]
-    fn leaves_a_yaml_comment_alone() {
         assert_eq!(
             tags_in("---\nstatus: done # not a tag\n---\n\nwords\n"),
             Vec::<String>::new()
         );
-    }
-
-    #[test]
-    fn a_comment_after_the_tags_is_no_tag() {
         assert_eq!(
             tags_in("---\ntags:\n  - project # active\n---\n\nwords\n"),
             vec!["#project"]
         );
         assert_eq!(tags_in("---\ntags: [a] # old\n---\n\nwords\n"), vec!["#a"]);
         assert_eq!(tags_in("---\ntags: a # old\n---\n"), vec!["#a"]);
-    }
-
-    #[test]
-    fn counts_both_halves_of_a_note() {
         assert_eq!(
             tags_in("---\ntags: [work]\n---\n\nwords #orden\n"),
             vec!["#work", "#orden"]
         );
-    }
-
-    #[test]
-    fn reads_front_matter_tags_in_a_crlf_note() {
         assert_eq!(
             tags_in("---\r\ntags: [work]\r\n---\r\nx\r\n"),
             vec!["#work"]
@@ -534,15 +426,11 @@ mod tests {
     }
 
     #[test]
-    fn a_link_to_a_heading_is_no_tag() {
+    fn a_tag_in_emphasis_counts_and_a_link_to_a_heading_does_not() {
         assert_eq!(
             tags_in("## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n"),
             vec!["#setup"]
         );
-    }
-
-    #[test]
-    fn reads_a_tag_inside_emphasis_strike_highlight_or_a_cell() {
         assert_eq!(
             tags_in("**#a** *#b* ~~#d~~ ==#e== call\n"),
             vec!["#a", "#b", "#d", "#e"]

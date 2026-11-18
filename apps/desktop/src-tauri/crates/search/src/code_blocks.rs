@@ -328,56 +328,28 @@ mod tests {
     }
 
     #[test]
-    fn reads_a_fence_at_the_margin() {
+    fn reads_a_fence_at_the_margin_in_a_quote_or_a_list_and_indented_code() {
         assert_eq!(walk("a\n```\n#x\n```\nb"), "woccw");
-    }
-
-    #[test]
-    fn reads_a_fence_inside_a_quote_and_ends_it_with_the_quote() {
         assert_eq!(walk("> ```css\n> #fff\n> ```\n> b"), "occw");
         assert_eq!(walk("> ```\n> #no\n#yes"), "ocw");
-    }
-
-    #[test]
-    fn reads_a_fence_inside_a_list_item() {
         assert_eq!(walk("- item\n\n  ```\n  #no\n  ```\n#yes"), "wwoccw");
-    }
-
-    #[test]
-    fn reads_indented_code_but_not_an_indented_line_carrying_a_paragraph() {
         assert_eq!(walk("Notes\n\n    #include\n\n#yes"), "wwccw");
         assert_eq!(walk("words\n    #yes"), "ww");
         assert_eq!(walk("- item\n\n      #define X\n#yes"), "wwcw");
         assert_eq!(walk("> words\n>\n>     #no"), "wwc");
+        assert_eq!(walk("```\r\n#x\r\n```\r\nb"), "occw");
     }
 
     #[test]
-    fn closes_a_fence_only_on_the_same_mark_at_least_as_long_with_nothing_after() {
+    fn a_fence_opens_and_closes_only_on_its_own_marks() {
         assert_eq!(walk("````\n```\n#x\n```\n````\nb"), "occccw");
         assert_eq!(walk("```\n~~~\n```\nb"), "occw");
         assert_eq!(walk("```\n``` ts\n```\nb"), "occw");
-    }
-
-    #[test]
-    fn opens_a_fence_at_three_spaces_but_not_four() {
         assert_eq!(walk("   ```\nx\n```\nb"), "occw");
         assert_eq!(walk("words\n    ```\nb"), "www");
-    }
-
-    #[test]
-    fn opens_no_fence_on_backticks_with_a_backtick_after_them() {
         assert_eq!(walk("```a`a\n#yes"), "ww");
-    }
-
-    #[test]
-    fn counts_a_tab_as_the_columns_it_stands_for() {
         assert_eq!(walk("\t#include"), "c");
         assert_eq!(walk(">\t#include"), "w");
         assert_eq!(walk(">\t\t#include"), "c");
-    }
-
-    #[test]
-    fn takes_a_line_break_written_as_crlf() {
-        assert_eq!(walk("```\r\n#x\r\n```\r\nb"), "occw");
     }
 }

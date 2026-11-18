@@ -420,25 +420,13 @@ mod tests {
     }
 
     #[test]
-    fn plan_is_supervised_as_the_grant_says() {
+    fn a_mode_is_laid_over_a_call_as_the_grant_says() {
         let stored = grant();
         assert_eq!(supervised(stored.clone(), Mode::Plan), stored);
-    }
-
-    #[test]
-    fn a_mode_is_laid_over_a_call_never_over_the_grant() {
-        let made = grant();
-        assert_eq!(made.mode, GrantMode::Unsupervised);
-        assert!(made.asks.is_empty());
-    }
-
-    #[test]
-    fn every_turn_asks_where_the_reader_is_once() {
+        let laid = grant();
+        assert_eq!(laid.mode, GrantMode::Unsupervised);
+        assert!(laid.asks.is_empty());
         assert_eq!(CONTEXT, "get_context");
-    }
-
-    #[test]
-    fn the_readers_tabs_are_in_reach_or_not() {
         assert!(made("orden-a".into(), "Orden A", &builtin(true)).holds(Scope::BrowserReader));
         assert!(!made("orden-a".into(), "Orden A", &builtin(false)).holds(Scope::BrowserReader));
     }

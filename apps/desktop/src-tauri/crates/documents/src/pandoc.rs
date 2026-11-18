@@ -1265,16 +1265,12 @@ mod tests {
     }
 
     #[test]
-    fn takes_the_formats_the_window_asks_for() {
+    fn takes_the_formats_the_window_asks_for_and_nothing_that_names_a_file() {
         for format in ["odt", "latex", "mediawiki", "rst", "textile", "opml"] {
             assert!(is_format(format), "{format}");
         }
         assert!(is_format("markdown+tex_math_dollars"));
         assert!(is_format("commonmark_x"));
-    }
-
-    #[test]
-    fn refuses_anything_that_could_name_a_file() {
         assert!(!is_format("evil.lua"));
         assert!(!is_format("./evil.lua"));
         assert!(!is_format("/tmp/evil.lua"));
@@ -1287,21 +1283,13 @@ mod tests {
     }
 
     #[test]
-    fn repeats_what_pandoc_said() {
+    fn repeats_what_pandoc_said_even_when_it_was_nothing_or_not_utf8() {
         assert_eq!(
             complaint(b"  no such format\n", "fallback"),
             "no such format"
         );
-    }
-
-    #[test]
-    fn says_something_when_pandoc_said_nothing() {
         assert_eq!(complaint(b"", "pandoc failed"), "pandoc failed");
         assert_eq!(complaint(b"   \n", "pandoc failed"), "pandoc failed");
-    }
-
-    #[test]
-    fn survives_output_that_is_not_utf8() {
         assert_eq!(complaint(&[0xff, b'a'], "pandoc failed"), "\u{fffd}a");
     }
 }

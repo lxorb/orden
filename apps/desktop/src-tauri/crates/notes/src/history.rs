@@ -382,41 +382,21 @@ mod tests {
     }
 
     #[test]
-    fn everything_from_the_last_day_is_kept() {
+    fn the_sweep_keeps_the_last_day_and_an_hour_apart_until_the_retention() {
         let today = [NOW - 60_000, NOW - 120_000, NOW - HOUR, NOW - DAY + 1];
         assert!(stale(&today, NOW, 7).is_empty());
-    }
-
-    #[test]
-    fn nothing_older_than_the_retention_is_kept() {
         let old = NOW - 8 * DAY;
         assert_eq!(stale(&[old], NOW, 7), vec![old]);
         assert!(stale(&[old], NOW, 30).is_empty());
-    }
-
-    #[test]
-    fn one_version_an_hour_past_the_first_day() {
         let hour = NOW - 2 * DAY;
         let versions = [hour, hour + 10 * 60_000, hour + 20 * 60_000];
         assert_eq!(kept(&versions, 7), vec![hour + 20 * 60_000]);
-    }
-
-    #[test]
-    fn a_version_a_minute_for_a_day_thins_to_a_version_an_hour() {
         let start = NOW - 3 * DAY;
         let versions: Vec<u64> = (0..24 * 60).map(|minute| start + minute * 60_000).collect();
 
         assert_eq!(versions.len(), 1440);
         assert_eq!(kept(&versions, 7).len(), 24);
-    }
-
-    #[test]
-    fn a_note_with_no_versions_has_nothing_to_sweep() {
         assert!(stale(&[], NOW, 7).is_empty());
-    }
-
-    #[test]
-    fn a_retention_too_large_to_multiply_keeps_everything() {
         let versions = [NOW - 60_000, NOW - 8 * DAY, NOW - 400 * DAY];
 
         assert!(stale(&versions, NOW, 1 << 54).is_empty());

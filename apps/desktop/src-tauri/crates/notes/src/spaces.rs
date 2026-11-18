@@ -205,82 +205,50 @@ mod tests {
     }
 
     #[test]
-    fn keeps_an_ordinary_name() {
+    fn a_name_keeps_its_letters_and_loses_what_a_disk_refuses() {
         assert_eq!(folder_name("Journal"), Some("Journal".into()));
         assert_eq!(
             folder_name("Work notes 2026"),
             Some("Work notes 2026".into())
         );
-    }
-
-    #[test]
-    fn strips_characters_windows_refuses() {
         assert_eq!(folder_name("a/b\\c:d"), Some("a b c d".into()));
         assert_eq!(folder_name("what? yes!"), Some("what yes!".into()));
         assert_eq!(folder_name("a<b>c|d*e\"f"), Some("a b c d e f".into()));
-    }
-
-    #[test]
-    fn drops_control_characters() {
         assert_eq!(folder_name("a\nb\tc"), Some("a b c".into()));
         assert_eq!(folder_name("a\u{0}b"), Some("a b".into()));
-    }
-
-    #[test]
-    fn refuses_a_trailing_dot_or_space() {
         assert_eq!(folder_name("Notes."), Some("Notes".into()));
         assert_eq!(folder_name("  Notes  "), Some("Notes".into()));
         assert_eq!(folder_name("Notes..."), Some("Notes".into()));
-    }
-
-    #[test]
-    fn refuses_a_name_with_nothing_left() {
         assert_eq!(folder_name(""), None);
         assert_eq!(folder_name("   "), None);
         assert_eq!(folder_name("///"), None);
         assert_eq!(folder_name("..."), None);
-    }
-
-    #[test]
-    fn a_name_cannot_climb_out_of_the_spaces_folder() {
         assert_eq!(folder_name(".."), None);
         assert_eq!(folder_name("../../elsewhere"), Some("elsewhere".into()));
         assert_eq!(folder_name(r"..\elsewhere"), Some("elsewhere".into()));
-    }
-
-    #[test]
-    fn works_around_the_reserved_names() {
         assert_eq!(folder_name("CON"), Some("CON space".into()));
         assert_eq!(folder_name("nul"), Some("nul space".into()));
         assert_eq!(folder_name("COM1"), Some("COM1 space".into()));
         assert_eq!(folder_name("Console"), Some("Console".into()));
+        assert_eq!(
+            folder_name("Notizen über Bücher"),
+            Some("Notizen über Bücher".into())
+        );
+        assert_eq!(folder_name("日本語"), Some("日本語".into()));
     }
 
     #[test]
-    fn caps_the_length() {
+    fn a_name_is_capped_to_what_a_file_system_holds() {
         let long = "x".repeat(200);
         assert_eq!(
             folder_name(&long).map(|name| name.chars().count()),
             Some(MAX_NAME)
         );
-    }
-
-    #[test]
-    fn a_name_of_wide_letters_still_fits_a_file_system_name() {
         let named = folder_name(&"🌲".repeat(64)).expect("a name");
         assert!(named.len() <= 200, "{}", named.len());
         assert_eq!(
             folder_name(&"日".repeat(64)).map(|one| one.chars().count()),
             Some(64)
         );
-    }
-
-    #[test]
-    fn keeps_letters_other_languages_use() {
-        assert_eq!(
-            folder_name("Notizen über Bücher"),
-            Some("Notizen über Bücher".into())
-        );
-        assert_eq!(folder_name("日本語"), Some("日本語".into()));
     }
 }

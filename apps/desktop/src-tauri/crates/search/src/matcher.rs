@@ -1053,7 +1053,7 @@ mod tests {
     }
 
     #[test]
-    fn a_section_does_not_end_at_a_comment_inside_a_code_fence() {
+    fn a_section_and_a_task_stop_at_nothing_inside_a_code_fence() {
         let body = "# One\nalpha\n```sh\n# comment\n```\nbeta\n";
         assert!(answers(
             &scope("section", &all(&[text("alpha"), text("beta")])),
@@ -1063,19 +1063,8 @@ mod tests {
             &scope("section", &all(&[text("alpha"), text("gamma")])),
             body
         ));
-    }
-
-    #[test]
-    fn a_box_inside_a_code_fence_is_no_task() {
         let body = "```\n- [ ] not a task\n```\n- [ ] a task\n";
         assert_eq!(lines(&scope("task", &text("task")), body), ["- [ ] a task"]);
-    }
-
-    #[test]
-    fn a_pattern_anchored_to_the_end_of_a_line_finds_it_in_a_note_with_crlf() {
-        let body = "a done\r\nb\r\n";
-        assert!(answers(&scope("line", &pattern("done$", false)), body));
-        assert!(!answers(&scope("line", &pattern("b.$", false)), body));
     }
 
     #[test]
@@ -1091,37 +1080,28 @@ mod tests {
     }
 
     #[test]
-    fn words_match_anywhere_in_the_note_folded() {
+    fn words_match_anywhere_folded_in_any_order_one_row_per_line() {
         assert!(answers(&text("alpha"), NOTE));
         assert!(answers(&text("ALPHA"), NOTE));
         assert!(!answers(&text("zeta"), NOTE));
-    }
-
-    #[test]
-    fn all_the_words_have_to_match_in_any_order() {
         assert!(answers(&all(&[text("alpha"), text("gamma")]), NOTE));
         assert!(answers(&all(&[text("gamma"), text("alpha")]), NOTE));
         assert!(!answers(&all(&[text("alpha"), text("zeta")]), NOTE));
-    }
-
-    #[test]
-    fn a_word_brings_back_the_line_it_was_found_on() {
         assert_eq!(lines(&text("gamma"), NOTE), ["Gamma was away."]);
         assert_eq!(marked(&text("gamma"), NOTE), ["Gamma"]);
-    }
-
-    #[test]
-    fn a_word_brings_back_one_row_per_line() {
         assert_eq!(
             lines(&text("beta"), NOTE),
             ["Alpha met Beta on Monday.", "Beta wrote it up. #done"]
         );
-    }
-
-    #[test]
-    fn a_phrase_matches_exactly() {
         assert!(answers(&text("met Beta"), NOTE));
         assert!(!answers(&text("Beta met"), NOTE));
+        assert!(answers(&text("ALPHA"), NOTE));
+        assert!(!answers(&exact("ALPHA"), NOTE));
+        assert!(answers(&exact("Alpha"), NOTE));
+        let path = |one: &str| format!(r#"{{"kind":"path","text":"{one}","fold":true}}"#);
+        assert!(answers(&path("Work/"), NOTE));
+        assert!(answers(&path("work/"), NOTE));
+        assert!(!answers(&path("Drafts/"), NOTE));
     }
 
     #[test]
@@ -1149,21 +1129,6 @@ mod tests {
     }
 
     #[test]
-    fn case_folds_until_it_is_told_not_to() {
-        assert!(answers(&text("ALPHA"), NOTE));
-        assert!(!answers(&exact("ALPHA"), NOTE));
-        assert!(answers(&exact("Alpha"), NOTE));
-    }
-
-    #[test]
-    fn path_reads_where_the_note_is() {
-        let path = |one: &str| format!(r#"{{"kind":"path","text":"{one}","fold":true}}"#);
-        assert!(answers(&path("Work/"), NOTE));
-        assert!(answers(&path("work/"), NOTE));
-        assert!(!answers(&path("Drafts/"), NOTE));
-    }
-
-    #[test]
     fn file_reads_the_note_name_and_shows_a_line_it_never_says() {
         let file = |one: &str| format!(r#"{{"kind":"file","text":"{one}","fold":true}}"#);
         assert!(answers(&file("Meeting"), NOTE));
@@ -1188,6 +1153,8 @@ mod tests {
         assert!(answers(&text("status"), NOTE));
         assert!(!answers(&content("status"), NOTE));
         assert!(answers(&content("alpha"), NOTE));
+        assert!(answers(&content("alpha"), CLOSE));
+        assert!(answers(&content("status"), "---\nstatus: done\n"));
     }
 
     #[test]
@@ -1205,12 +1172,6 @@ mod tests {
     }
 
     #[test]
-    fn content_reads_a_note_with_no_front_matter_from_the_top() {
-        assert!(answers(&content("alpha"), CLOSE));
-        assert!(answers(&content("status"), "---\nstatus: done\n"));
-    }
-
-    #[test]
     fn a_tag_matches_itself_and_its_children() {
         let tag = |one: &str| format!(r#"{{"kind":"tag","tag":"{one}"}}"#);
         assert!(answers(&tag("done"), NOTE));
@@ -1220,10 +1181,6 @@ mod tests {
         assert!(!answers(&tag("work/2025"), NOTE));
         assert!(!answers(&tag("notatag"), NOTE));
         assert!(!answers(&tag("meeting"), NOTE));
-    }
-
-    #[test]
-    fn a_tag_written_with_a_doubled_slash_is_the_tag_the_tree_shows() {
         let tag = |one: &str| format!(r#"{{"kind":"tag","tag":"{one}"}}"#);
         assert!(answers(&tag("a/b"), "see #a//b here\n"));
         assert!(answers(&tag("a"), "see #a//b here\n"));
@@ -1469,14 +1426,13 @@ mod tests {
         assert!(answers(&pattern("gamma", true), NOTE));
         assert_eq!(marked(&pattern("B[a-z]+a on", false), NOTE), ["Beta on"]);
         assert!(!answers(&pattern("([a-", false), NOTE));
-    }
-
-    #[test]
-    fn a_pattern_marks_what_it_matched_outside_ascii() {
         let body = "のnoteのanotherのnote\n";
 
         assert_eq!(marked(&pattern("note", false), body), ["note", "note"]);
         assert_eq!(marked(&pattern("の.", false), body), ["のn", "のa", "のn"]);
+        let body = "a done\r\nb\r\n";
+        assert!(answers(&scope("line", &pattern("done$", false)), body));
+        assert!(!answers(&scope("line", &pattern("b.$", false)), body));
     }
 
     #[test]
@@ -1618,28 +1574,16 @@ mod tests {
     }
 
     #[test]
-    fn a_row_counts_its_line_from_zero_and_stops_where_it_is_told() {
+    fn a_row_counts_marks_and_lines_the_way_the_app_does() {
         let hits = matcher(&text("gamma")).hits(&note(NOTE), 10);
         assert_eq!(hits.first().map(|hit| hit.line), Some(8));
 
         let many = "beta\n".repeat(20);
         assert_eq!(matcher(&text("beta")).hits(&note(&many), 3).len(), 3);
-    }
-
-    #[test]
-    fn a_mark_is_counted_the_way_the_app_counts_it() {
         let hits = matcher(&text("beta")).hits(&note("\u{1f600} beta\n"), 10);
         let first = hits.first().expect("a hit");
         assert_eq!(first.ranges.first().map(|range| range.from), Some(3));
-    }
-
-    #[test]
-    fn line_offsets_start_at_the_top_of_every_line() {
         assert_eq!(line_starts("a\nbb\n\nc"), vec![0, 2, 5, 6]);
-    }
-
-    #[test]
-    fn line_offsets_find_the_line_an_offset_is_on() {
         let starts = line_starts("a\nbb\n\nc");
         assert_eq!(line_at(&starts, 0), 0);
         assert_eq!(line_at(&starts, 1), 0);

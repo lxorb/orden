@@ -312,21 +312,20 @@ mod tests {
     }
 
     #[test]
-    fn no_folder_at_all_is_the_note_s_own() {
+    fn the_folder_is_the_note_s_own_trimmed_to_what_the_markdown_says() {
         let space = path(&["Orden", "Notes"]);
         let here = space.join("Work");
 
         assert_eq!(asset_dir(&here, "", &space), Ok(here.clone()));
-    }
-
-    #[test]
-    fn a_folder_named_after_the_note_sits_beside_it() {
         let space = path(&["Orden", "Notes"]);
 
         assert_eq!(
             asset_dir(&space, "Read me", &space),
             Ok(path(&["Orden", "Notes", "Read me"]))
         );
+        assert_eq!(trimmed("/assets/"), "assets");
+        assert_eq!(trimmed(""), "");
+        assert_eq!(trimmed("../assets"), "../assets");
     }
 
     #[test]
@@ -389,14 +388,7 @@ mod tests {
     }
 
     #[test]
-    fn the_folder_is_trimmed_to_what_the_markdown_says() {
-        assert_eq!(trimmed("/assets/"), "assets");
-        assert_eq!(trimmed(""), "");
-        assert_eq!(trimmed("../assets"), "../assets");
-    }
-
-    #[test]
-    fn encodes_the_rfc_4648_vectors() {
+    fn encodes_bytes_as_rfc_4648_says() {
         assert_eq!(encode(b""), "");
         assert_eq!(encode(b"f"), "Zg==");
         assert_eq!(encode(b"fo"), "Zm8=");
@@ -404,10 +396,6 @@ mod tests {
         assert_eq!(encode(b"foob"), "Zm9vYg==");
         assert_eq!(encode(b"fooba"), "Zm9vYmE=");
         assert_eq!(encode(b"foobar"), "Zm9vYmFy");
-    }
-
-    #[test]
-    fn encodes_bytes_that_are_not_text() {
         assert_eq!(encode(&[0x00, 0xff, 0x80]), "AP+A");
         assert_eq!(encode(&[0xfb, 0xff]), "+/8=");
     }
@@ -433,13 +421,9 @@ mod tests {
     }
 
     #[test]
-    fn keeps_a_plain_picture_name() {
+    fn a_picture_name_is_kept_plain_and_never_names_a_folder() {
         assert_eq!(safe_name("a1b2c3.png"), Some("a1b2c3.png".into()));
         assert_eq!(safe_name("my-image_2.jpeg"), Some("my-image_2.jpeg".into()));
-    }
-
-    #[test]
-    fn a_picture_cannot_name_another_folder() {
         assert_eq!(
             safe_name("../../secret.png"),
             Some("..-..-secret.png".into())
@@ -449,10 +433,6 @@ mod tests {
             safe_name("C:/Windows/x.png"),
             Some("C--Windows-x.png".into())
         );
-    }
-
-    #[test]
-    fn refuses_a_name_that_is_only_dots() {
         assert_eq!(safe_name(""), None);
         assert_eq!(safe_name("."), None);
         assert_eq!(safe_name(".."), None);
