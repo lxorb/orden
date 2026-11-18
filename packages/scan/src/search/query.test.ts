@@ -1,612 +1,173 @@
 import { describe, expect, test } from 'vitest'
-import { isEmpty, parseQuery, type Query } from './query'
+import { isEmpty, parseQuery, type Query, type Unit } from './query'
 
 const word = (text: string, fold = true): Query => ({ kind: 'text', text, fold })
+const all = (...of: Query[]): Query => ({ kind: 'all', of })
+const any = (...of: Query[]): Query => ({ kind: 'any', of })
+const not = (of: Query): Query => ({ kind: 'not', of })
+const scope = (unit: Unit, of: Query): Query => ({ kind: 'scope', unit, of })
+const regex = (source: string, fold = false): Query => ({ kind: 'regex', source, fold })
+const field = (kind: 'path' | 'file' | 'content', text: string, fold = true): Query => ({
+  kind,
+  text,
+  fold,
+})
+type Compare = Extract<Query, { kind: 'property' }>['compare']
+const property = (name: string, value: string | null, compare: Compare = 'has', upto?: string) =>
+  ({ kind: 'property', name, value, compare, ...(upto === undefined ? {} : { upto }) }) as Query
 
-describe('bare words', () => {
-  test('are one term each, all of which must match', () => {
-    expect(parseQuery('alpha beta')).toEqual({ kind: 'all', of: [word('alpha'), word('beta')] })
-  })
+const READ: Record<string, [string, Query][]> = {
+  'bare words': [
+    ['alpha beta', all(word('alpha'), word('beta'))],
+    ['alpha', word('alpha')],
+    ['  alpha \t beta \n ', all(word('alpha'), word('beta'))],
+  ],
+  quoting: [
+    ['"two words"', word('two words')],
+    ['"never closed', word('never closed')],
+    ['"say \\"hello\\""', word('say "hello"')],
+  ],
+  escaping: [
+    ['two\\ words', word('two words')],
+    ['\\-not-excluded', word('-not-excluded')],
+    ['a\\\\b', word('a\\b')],
+    ['alpha\\', word('alpha\\')],
+  ],
+  excluding: [
+    ['-alpha', not(word('alpha'))],
+    ['-"two words"', not(word('two words'))],
+    ['-path:drafts/', not(field('path', 'drafts/'))],
+    ['-(a b)', not(all(word('a'), word('b')))],
+  ],
+  OR: [
+    ['a OR b', any(word('a'), word('b'))],
+    ['a b OR c', any(all(word('a'), word('b')), word('c'))],
+    ['a OR b OR c', any(word('a'), word('b'), word('c'))],
+    ['a or b', all(word('a'), word('or'), word('b'))],
+    ['a OR', word('a')],
+    ['OR a', word('a')],
+  ],
+  nesting: [
+    ['(a OR b) c', all(any(word('a'), word('b')), word('c'))],
+    ['(a (b OR (c d)))', all(word('a'), any(word('b'), all(word('c'), word('d'))))],
+    ['(a b', all(word('a'), word('b'))],
+    ['a ) b', all(word('a'), word('b'))],
+    ['a )) b )', all(word('a'), word('b'))],
+    ['a ()', word('a')],
+  ],
+  'the fields': [
+    ['path:work/2026', field('path', 'work/2026')],
+    ['file:Read', field('file', 'Read')],
+    ['tag:#work', { kind: 'tag', tag: 'work' }],
+    ['tag:work', { kind: 'tag', tag: 'work' }],
+    ['content:plan', field('content', 'plan')],
+    ['content:"the plan"', field('content', 'the plan')],
+    ['case: content:Plan', field('content', 'Plan', false)],
+    ['path:"my notes/"', field('path', 'my notes/')],
+    ['alpha tag:', word('alpha')],
+    ['https://example.com', word('https://example.com')],
+  ],
+  case: [
+    ['Alpha', word('Alpha', true)],
+    ['a case: B c', all(word('a'), word('B', false), word('c', false))],
+  ],
+  'regular expressions': [
+    ['/a.c/', regex('a.c')],
+    ['/a.c/i', regex('a.c', true)],
+    ['/a\\/b/', regex('a\\/b')],
+    ['/[/]x/', regex('[/]x')],
+    ['/notes/2026', word('/notes/2026')],
+    ['/usr/bin', word('/usr/bin')],
+    ['/Users/david', word('/Users/david')],
+    ['/usr/local/bin', word('/usr/local/bin')],
+    ['/dev/null', word('/dev/null')],
+    ['/a/ii', word('/a/ii')],
+    ['/Plan/i', regex('Plan', true)],
+    ['/Plan/gi', regex('Plan', true)],
+    ['/usr/bin line:/TODO/', all(word('/usr/bin'), scope('line', regex('TODO')))],
+    ['/a/x OR /b/', any(word('/a/x'), regex('b'))],
+    ['/notes/2026 line:/TODO/', all(word('/notes/2026'), scope('line', regex('TODO')))],
+    ['/tmp/a.txt OR /plan/i', any(word('/tmp/a.txt'), regex('plan', true))],
+    ['/help /x/', all(word('/help'), regex('x'))],
+    ['/a b/', regex('a b')],
+    ['/[/] x/', regex('[/] x')],
+    ['/a/b/', regex('a/b')],
+    ['/', word('/')],
+    ['/^- /', regex('^- ')],
+    ['/TODO: / plan', all(regex('TODO: '), word('plan'))],
+  ],
+  'a word with brackets': [
+    ['(f(x) notes)', all(word('f(x)'), word('notes'))],
+    ['(print() OR log())', any(word('print()'), word('log()'))],
+    ['-case:Plan', not(word('Plan', false))],
+    ['task:case:Plan', scope('task', word('Plan', false))],
+    ['meeting -case:Plan', all(word('meeting'), not(word('Plan', false)))],
+    ['case:)', all()],
+    ['print()', word('print()')],
+    ['a) OR b', any(word('a)'), word('b'))],
+  ],
+  nearness: [
+    ['line:(a b)', scope('line', all(word('a'), word('b')))],
+    ['block:(a b)', scope('block', all(word('a'), word('b')))],
+    ['section:(a b)', scope('section', all(word('a'), word('b')))],
+    ['line:alpha', scope('line', word('alpha'))],
+    ['line:(a -b)', scope('line', all(word('a'), not(word('b'))))],
+  ],
+  'front matter': [
+    ['[status]', property('status', null)],
+    ['[status:done]', property('status', 'done')],
+    ['[status: done]', property('status', 'done')],
+    ['[Status]', property('status', null)],
+    ['[status', word('[status')],
+    ['[[Meeting]]', word('[[Meeting]]')],
+    ['[x] done', all(word('[x]'), word('done'))],
+    ['[duration:<5]', property('duration', '5', 'lt')],
+    ['[duration:<=5]', property('duration', '5', 'lte')],
+    ['[due:>2026-09-01]', property('due', '2026-09-01', 'gt')],
+    ['[due:>= 2026-09-01]', property('due', '2026-09-01', 'gte')],
+    ['[status:=done]', property('status', 'done', 'is')],
+    ['[pages:100..200]', property('pages', '100', 'range', '200')],
+    ['[pages:..200]', property('pages', '..200')],
+    ['[due:null]', property('due', null, 'null')],
+    ['[status:=null]', property('status', 'null', 'is')],
+    ['[due:>]', property('due', null)],
+  ],
+  tasks: [
+    ['task:(a b)', scope('task', all(word('a'), word('b')))],
+    ['task-todo:plan', scope('task-todo', word('plan'))],
+    ['task-done:plan', scope('task-done', word('plan'))],
+    ['task-todo:', scope('task-todo', all())],
+    ['first-draft:plan', word('first-draft:plan')],
+  ],
+}
 
-  test('collapse to the term itself when there is only one', () => {
-    expect(parseQuery('alpha')).toEqual(word('alpha'))
-  })
-
-  test('ignore whatever whitespace is between them', () => {
-    expect(parseQuery('  alpha \t beta \n ')).toEqual({
-      kind: 'all',
-      of: [word('alpha'), word('beta')],
-    })
-  })
-
-  test('leave an empty field asking nothing', () => {
-    expect(isEmpty(parseQuery(''))).toBe(true)
-    expect(isEmpty(parseQuery('   '))).toBe(true)
+describe.each(Object.entries(READ))('%s', (_, rows) => {
+  test.each(rows)('%j reads as asked', (source, query) => {
+    expect(parseQuery(source)).toEqual(query)
   })
 })
 
-describe('quoting', () => {
-  test('keeps a phrase together', () => {
-    expect(parseQuery('"two words"')).toEqual(word('two words'))
-  })
-
-  test('takes the rest of the query when the quote is never closed', () => {
-    expect(parseQuery('"never closed')).toEqual(word('never closed'))
-  })
-
-  test('reads an escaped quote as a quote', () => {
-    expect(parseQuery('"say \\"hello\\""')).toEqual(word('say "hello"'))
-  })
-
-  test('keeps an empty phrase out of the query', () => {
-    expect(isEmpty(parseQuery('""'))).toBe(true)
-  })
-})
-
-describe('escaping', () => {
-  test('keeps a space inside a word', () => {
-    expect(parseQuery('two\\ words')).toEqual(word('two words'))
-  })
-
-  test('takes a leading dash as a character', () => {
-    expect(parseQuery('\\-not-excluded')).toEqual(word('-not-excluded'))
-  })
-
-  test('takes a backslash as a backslash', () => {
-    expect(parseQuery('a\\\\b')).toEqual(word('a\\b'))
-  })
-
-  test('leaves a trailing backslash alone', () => {
-    expect(parseQuery('alpha\\')).toEqual(word('alpha\\'))
-  })
-})
-
-describe('excluding', () => {
-  test('wraps the term it sits on', () => {
-    expect(parseQuery('-alpha')).toEqual({ kind: 'not', of: word('alpha') })
-  })
-
-  test('reaches a phrase', () => {
-    expect(parseQuery('-"two words"')).toEqual({ kind: 'not', of: word('two words') })
-  })
-
-  test('reaches an operator', () => {
-    expect(parseQuery('-path:drafts/')).toEqual({
-      kind: 'not',
-      of: { kind: 'path', text: 'drafts/', fold: true },
-    })
-  })
-
-  test('reaches a group', () => {
-    expect(parseQuery('-(a b)')).toEqual({
-      kind: 'not',
-      of: { kind: 'all', of: [word('a'), word('b')] },
-    })
-  })
-
-  test('is a word of its own when it stands alone', () => {
-    expect(isEmpty(parseQuery('-'))).toBe(true)
-  })
-})
-
-describe('OR', () => {
-  test('widens two words', () => {
-    expect(parseQuery('a OR b')).toEqual({ kind: 'any', of: [word('a'), word('b')] })
-  })
-
-  test('binds looser than a space', () => {
-    expect(parseQuery('a b OR c')).toEqual({
-      kind: 'any',
-      of: [{ kind: 'all', of: [word('a'), word('b')] }, word('c')],
-    })
-  })
-
-  test('chains', () => {
-    expect(parseQuery('a OR b OR c')).toEqual({
-      kind: 'any',
-      of: [word('a'), word('b'), word('c')],
-    })
-  })
-
-  test('has to be shouted, so the word "or" stays searchable', () => {
-    expect(parseQuery('a or b')).toEqual({
-      kind: 'all',
-      of: [word('a'), word('or'), word('b')],
-    })
-  })
-
-  test('drops the side that is not there', () => {
-    expect(parseQuery('a OR')).toEqual(word('a'))
-    expect(parseQuery('OR a')).toEqual(word('a'))
-  })
-})
-
-describe('nesting', () => {
-  test('groups what is inside the brackets', () => {
-    expect(parseQuery('(a OR b) c')).toEqual({
-      kind: 'all',
-      of: [{ kind: 'any', of: [word('a'), word('b')] }, word('c')],
-    })
-  })
-
-  test('nests as deep as it is written', () => {
-    expect(parseQuery('(a (b OR (c d)))')).toEqual({
-      kind: 'all',
-      of: [
-        word('a'),
-        { kind: 'any', of: [word('b'), { kind: 'all', of: [word('c'), word('d')] }] },
-      ],
-    })
-  })
-
-  test('closes a bracket nobody closed', () => {
-    expect(parseQuery('(a b')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
-  })
-
-  test('drops a bracket nobody opened', () => {
-    expect(parseQuery('a ) b')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
-    expect(parseQuery('a )) b )')).toEqual({ kind: 'all', of: [word('a'), word('b')] })
-  })
-
-  test('leaves an empty group out', () => {
-    expect(parseQuery('a ()')).toEqual(word('a'))
-  })
-})
-
-describe('the fields', () => {
-  test('read a path', () => {
-    expect(parseQuery('path:work/2026')).toEqual({
-      kind: 'path',
-      text: 'work/2026',
-      fold: true,
-    })
-  })
-
-  test('read a note name', () => {
-    expect(parseQuery('file:Read')).toEqual({ kind: 'file', text: 'Read', fold: true })
-  })
-
-  test('read a tag with or without its hash', () => {
-    expect(parseQuery('tag:#work')).toEqual({ kind: 'tag', tag: 'work' })
-    expect(parseQuery('tag:work')).toEqual({ kind: 'tag', tag: 'work' })
-  })
-
-  test('read the note’s own words, which is what content: asks for', () => {
-    expect(parseQuery('content:plan')).toEqual({ kind: 'content', text: 'plan', fold: true })
-    expect(parseQuery('content:"the plan"')).toEqual({
-      kind: 'content',
-      text: 'the plan',
-      fold: true,
-    })
-    expect(parseQuery('case: content:Plan')).toEqual({
-      kind: 'content',
-      text: 'Plan',
-      fold: false,
-    })
-  })
-
-  test('take a quoted value, so a folder may hold a space', () => {
-    expect(parseQuery('path:"my notes/"')).toEqual({
-      kind: 'path',
-      text: 'my notes/',
-      fold: true,
-    })
-  })
-
-  test('are dropped while their value is still being typed', () => {
-    expect(isEmpty(parseQuery('path:'))).toBe(true)
-    expect(isEmpty(parseQuery('content:'))).toBe(true)
-    expect(parseQuery('alpha tag:')).toEqual(word('alpha'))
-  })
-
-  test('leave a word that only looks like one alone', () => {
-    expect(parseQuery('https://example.com')).toEqual(word('https://example.com'))
-  })
-})
-
-describe('case', () => {
-  test('folds by default', () => {
-    expect(parseQuery('Alpha')).toEqual(word('Alpha', true))
-  })
-
-  test('stops folding for every term after it', () => {
-    expect(parseQuery('a case: B c')).toEqual({
-      kind: 'all',
-      of: [word('a'), word('B', false), word('c', false)],
-    })
-  })
-
-  test('is not a term of its own', () => {
-    expect(isEmpty(parseQuery('case:'))).toBe(true)
-  })
-})
-
-describe('regular expressions', () => {
-  test('read what is between the slashes', () => {
-    expect(parseQuery('/a.c/')).toEqual({ kind: 'regex', source: 'a.c', fold: false })
-  })
-
-  test('fold only when the i flag says so', () => {
-    expect(parseQuery('/a.c/i')).toEqual({ kind: 'regex', source: 'a.c', fold: true })
-  })
-
-  test('keep an escaped slash inside the pattern', () => {
-    expect(parseQuery('/a\\/b/')).toEqual({ kind: 'regex', source: 'a\\/b', fold: false })
-  })
-
-  test('let a slash inside a class stay one', () => {
-    expect(parseQuery('/[/]x/')).toEqual({ kind: 'regex', source: '[/]x', fold: false })
-  })
-
-  test('are an ordinary word when nothing closes them', () => {
-    expect(parseQuery('/notes/2026')).toEqual(word('/notes/2026'))
-  })
-
-  test('are a path, not a pattern, where what follows a slash is no set of flags', () => {
-    expect(parseQuery('/usr/bin')).toEqual(word('/usr/bin'))
-    expect(parseQuery('/Users/david')).toEqual(word('/Users/david'))
-    expect(parseQuery('/usr/local/bin')).toEqual(word('/usr/local/bin'))
-    expect(parseQuery('/dev/null')).toEqual(word('/dev/null'))
-    expect(parseQuery('/a/ii')).toEqual(word('/a/ii'))
-    expect(parseQuery('/Plan/i')).toEqual({ kind: 'regex', source: 'Plan', fold: true })
-    expect(parseQuery('/Plan/gi')).toEqual({ kind: 'regex', source: 'Plan', fold: true })
-  })
-
-  test('a path keeps the terms after it as they were', () => {
-    expect(parseQuery('/usr/bin line:/TODO/')).toEqual({
-      kind: 'all',
-      of: [
-        word('/usr/bin'),
-        { kind: 'scope', unit: 'line', of: { kind: 'regex', source: 'TODO', fold: false } },
-      ],
-    })
-    expect(parseQuery('/a/x OR /b/')).toEqual({
-      kind: 'any',
-      of: [word('/a/x'), { kind: 'regex', source: 'b', fold: false }],
-    })
-  })
-
-  test('a path whose last part is not letters keeps the terms after it', () => {
-    expect(parseQuery('/notes/2026 line:/TODO/')).toEqual({
-      kind: 'all',
-      of: [
-        word('/notes/2026'),
-        { kind: 'scope', unit: 'line', of: { kind: 'regex', source: 'TODO', fold: false } },
-      ],
-    })
-    expect(parseQuery('/tmp/a.txt OR /plan/i')).toEqual({
-      kind: 'any',
-      of: [word('/tmp/a.txt'), { kind: 'regex', source: 'plan', fold: true }],
-    })
-    expect(parseQuery('/help /x/')).toEqual({
-      kind: 'all',
-      of: [word('/help'), { kind: 'regex', source: 'x', fold: false }],
-    })
-    expect(parseQuery('/a b/')).toEqual({ kind: 'regex', source: 'a b', fold: false })
-    expect(parseQuery('/[/] x/')).toEqual({ kind: 'regex', source: '[/] x', fold: false })
-  })
-
-  test('close at the slash that ends the word', () => {
-    expect(parseQuery('/a/b/')).toEqual({ kind: 'regex', source: 'a/b', fold: false })
-  })
-
-  test('are an ordinary word when the query is only a slash', () => {
-    expect(parseQuery('/')).toEqual(word('/'))
-  })
-})
-
-describe('a group after a regression of round 31', () => {
-  test('closes after an empty scope or a lone minus', () => {
-    expect(parseQuery('(task-todo: OR task-done:) plan').kind).toBe('all')
-    expect(parseQuery('(a OR line:) b').kind).toBe('all')
-    expect(parseQuery('-(task:) plan').kind).toBe('all')
-  })
-
-  test('a pattern may end in a space', () => {
-    expect(parseQuery('/^- /')).toEqual({ kind: 'regex', source: '^- ', fold: false })
-    expect(parseQuery('/TODO: / plan')).toEqual({
-      kind: 'all',
-      of: [{ kind: 'regex', source: 'TODO: ', fold: false }, word('plan')],
-    })
-  })
-})
-
-describe('a word with brackets in a group', () => {
-  test('keeps its brackets and leaves the group whole', () => {
-    expect(parseQuery('(f(x) notes)')).toEqual({ kind: 'all', of: [word('f(x)'), word('notes')] })
-    expect(parseQuery('(print() OR log())')).toEqual({
-      kind: 'any',
-      of: [word('print()'), word('log()')],
-    })
-  })
-
-  test('case: before a word still takes a minus or a scope', () => {
-    expect(parseQuery('-case:Plan')).toEqual({ kind: 'not', of: word('Plan', false) })
-    expect(parseQuery('task:case:Plan')).toEqual({
-      kind: 'scope',
-      unit: 'task',
-      of: word('Plan', false),
-    })
-    expect(parseQuery('meeting -case:Plan')).toEqual({
-      kind: 'all',
-      of: [word('meeting'), { kind: 'not', of: word('Plan', false) }],
-    })
-  })
-
-  test('a field that gives nothing leaves no bracket behind', () => {
-    expect(parseQuery('case:)')).toEqual({ kind: 'all', of: [] })
-  })
-})
-
-describe('a closing parenthesis outside any group', () => {
-  test('is part of the word it is written in', () => {
-    expect(parseQuery('print()')).toEqual(word('print()'))
-    expect(parseQuery('a) OR b')).toEqual({ kind: 'any', of: [word('a)'), word('b')] })
-    expect(parseQuery('(a OR b) c')).toEqual({
-      kind: 'all',
-      of: [{ kind: 'any', of: [word('a'), word('b')] }, word('c')],
-    })
-  })
-})
-
-describe('nearness', () => {
-  test('holds terms to one line', () => {
-    expect(parseQuery('line:(a b)')).toEqual({
-      kind: 'scope',
-      unit: 'line',
-      of: { kind: 'all', of: [word('a'), word('b')] },
-    })
-  })
-
-  test('holds terms to one paragraph', () => {
-    expect(parseQuery('block:(a b)')).toEqual({
-      kind: 'scope',
-      unit: 'block',
-      of: { kind: 'all', of: [word('a'), word('b')] },
-    })
-  })
-
-  test('holds terms to one heading section', () => {
-    expect(parseQuery('section:(a b)')).toEqual({
-      kind: 'scope',
-      unit: 'section',
-      of: { kind: 'all', of: [word('a'), word('b')] },
-    })
-  })
-
-  test('takes a single term without brackets', () => {
-    expect(parseQuery('line:alpha')).toEqual({
-      kind: 'scope',
-      unit: 'line',
-      of: word('alpha'),
-    })
-  })
-
-  test('nests other operators inside itself', () => {
-    expect(parseQuery('line:(a -b)')).toEqual({
-      kind: 'scope',
-      unit: 'line',
-      of: { kind: 'all', of: [word('a'), { kind: 'not', of: word('b') }] },
-    })
-  })
-
-  test('is dropped when the brackets hold nothing', () => {
-    expect(isEmpty(parseQuery('line:()'))).toBe(true)
-  })
-})
-
-describe('front matter', () => {
-  test('asks whether the key is there', () => {
-    expect(parseQuery('[status]')).toEqual({
-      kind: 'property',
-      name: 'status',
-      value: null,
-      compare: 'has',
-    })
-  })
-
-  test('asks what the value says', () => {
-    expect(parseQuery('[status:done]')).toEqual({
-      kind: 'property',
-      name: 'status',
-      value: 'done',
-      compare: 'has',
-    })
-  })
-
-  test('takes the space after the colon as writing, not as value', () => {
-    expect(parseQuery('[status: done]')).toEqual({
-      kind: 'property',
-      name: 'status',
-      value: 'done',
-      compare: 'has',
-    })
-  })
-
-  test('folds the key, because front matter keys are not shouted', () => {
-    expect(parseQuery('[Status]')).toEqual({
-      kind: 'property',
-      name: 'status',
-      value: null,
-      compare: 'has',
-    })
-  })
-
-  test('is an ordinary word when the bracket never closes', () => {
-    expect(parseQuery('[status')).toEqual(word('[status'))
-  })
-
-  test('is an ordinary word when the brackets are a link or a task box', () => {
-    expect(parseQuery('[[Meeting]]')).toEqual(word('[[Meeting]]'))
-    expect(parseQuery('[docs](http://x)')).toMatchObject({ kind: 'text' })
-    expect(parseQuery('[x] done')).toEqual({ kind: 'all', of: [word('[x]'), word('done')] })
-  })
-
-  test('holds a value against a number or a date', () => {
-    const asked = (source: string) => parseQuery(source)
-
-    expect(asked('[duration:<5]')).toEqual({
-      kind: 'property',
-      name: 'duration',
-      value: '5',
-      compare: 'lt',
-    })
-    expect(asked('[duration:<=5]')).toEqual({
-      kind: 'property',
-      name: 'duration',
-      value: '5',
-      compare: 'lte',
-    })
-    expect(asked('[due:>2026-09-01]')).toEqual({
-      kind: 'property',
-      name: 'due',
-      value: '2026-09-01',
-      compare: 'gt',
-    })
-    expect(asked('[due:>= 2026-09-01]')).toEqual({
-      kind: 'property',
-      name: 'due',
-      value: '2026-09-01',
-      compare: 'gte',
-    })
-  })
-
-  test('takes a value that is exactly this, which the bare form does not', () => {
-    expect(parseQuery('[status:=done]')).toEqual({
-      kind: 'property',
-      name: 'status',
-      value: 'done',
-      compare: 'is',
-    })
-  })
-
-  test('takes a range, both ends included', () => {
-    expect(parseQuery('[pages:100..200]')).toEqual({
-      kind: 'property',
-      name: 'pages',
-      value: '100',
-      compare: 'range',
-      upto: '200',
-    })
-  })
-
-  test('and a range with one end is a value that starts or ends in dots', () => {
-    expect(parseQuery('[pages:..200]')).toEqual({
-      kind: 'property',
-      name: 'pages',
-      value: '..200',
-      compare: 'has',
-    })
-  })
-
-  test('asks for a key the note has not got', () => {
-    expect(parseQuery('[due:null]')).toEqual({
-      kind: 'property',
-      name: 'due',
-      value: null,
-      compare: 'null',
-    })
-  })
-
-  test('and the word itself is asked for the way any other value is', () => {
-    expect(parseQuery('[status:=null]')).toEqual({
-      kind: 'property',
-      name: 'status',
-      value: 'null',
-      compare: 'is',
-    })
-  })
-
-  test('is the key alone while the comparison is still being typed', () => {
-    expect(parseQuery('[due:>]')).toEqual({
-      kind: 'property',
-      name: 'due',
-      value: null,
-      compare: 'has',
-    })
-  })
-})
-
-describe('tasks', () => {
-  test('hold terms to one task item', () => {
-    expect(parseQuery('task:(a b)')).toEqual({
-      kind: 'scope',
-      unit: 'task',
-      of: { kind: 'all', of: [word('a'), word('b')] },
-    })
-  })
-
-  test('come in the two states one can be in', () => {
-    expect(parseQuery('task-todo:plan')).toEqual({
-      kind: 'scope',
-      unit: 'task-todo',
-      of: word('plan'),
-    })
-    expect(parseQuery('task-done:plan')).toEqual({
-      kind: 'scope',
-      unit: 'task-done',
-      of: word('plan'),
-    })
-  })
-
-  test('and with nothing said about them ask which notes have one', () => {
-    expect(parseQuery('task-todo:')).toEqual({
-      kind: 'scope',
-      unit: 'task-todo',
-      of: { kind: 'all', of: [] },
-    })
-    expect(isEmpty(parseQuery('line:'))).toBe(true)
-  })
-
-  test('and a hyphenated word that is not one of them stays a word', () => {
-    expect(parseQuery('first-draft:plan')).toEqual(word('first-draft:plan'))
-  })
+test.each(['', '   ', '""', '-', 'path:', 'content:', 'case:', 'line:()', 'line:'])(
+  '%j asks nothing',
+  (source) => expect(isEmpty(parseQuery(source))).toBe(true),
+)
+
+test('a group closes after an empty scope or a lone minus, and a link is a word', () => {
+  expect(parseQuery('(task-todo: OR task-done:) plan').kind).toBe('all')
+  expect(parseQuery('(a OR line:) b').kind).toBe('all')
+  expect(parseQuery('-(task:) plan').kind).toBe('all')
+  expect(parseQuery('[docs](http://x)')).toMatchObject({ kind: 'text' })
 })
 
 describe('malformed input', () => {
   const NASTY = [
-    '"',
-    '((((',
-    '))))',
-    '-',
-    '--',
-    '- -',
-    '\\',
-    '/',
-    '//',
-    '///',
-    '[',
-    ']',
-    '[]',
-    '[:]',
-    'path:"',
-    'tag:#',
-    'line:',
-    'line:(',
-    'task:',
-    'task-todo:(',
-    'task-',
-    '[a:<]',
-    '[a:..]',
-    '[a:..b]',
-    '[a:>=]',
-    '[a:1..]',
-    'case:case:case:',
-    'OR OR OR',
-    'a OR ) b (',
-    '/(/',
-    '/[/',
-    '\0',
-    '   \n\t  ',
+    ...['"', '((((', '))))', '-', '--', '- -', '\\', '/', '//', '///', '[', ']', '[]', '[:]'],
+    ...['path:"', 'tag:#', 'line:', 'line:(', 'task:', 'task-todo:(', 'task-', '[a:<]', '[a:..]'],
+    ...['[a:..b]', '[a:>=]', '[a:1..]', 'case:case:case:', 'OR OR OR', 'a OR ) b (', '/(/'],
+    ...['/[/', '\0', '   \n\t  '],
   ]
 
-  test.each(NASTY)('never throws on %j', (source) => {
-    expect(() => parseQuery(source)).not.toThrow()
-  })
-
-  test('answers something JSON can carry, whatever it was given', () => {
-    for (const source of NASTY) {
-      expect(() => JSON.stringify(parseQuery(source))).not.toThrow()
-    }
+  test.each(NASTY)('never throws on %j, and answers something JSON can carry', (source) => {
+    expect(() => JSON.stringify(parseQuery(source))).not.toThrow()
   })
 })

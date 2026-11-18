@@ -36,14 +36,6 @@ describe('marks that say what something is', () => {
     expect(one('call `readNote()` first')).toContain('‘readNote()‘')
   })
 
-  test('a fence keeps the lines it was written between', () => {
-    expect(one('```ts\nconst a = 1\n```\n')).toBe(['‘‘‘ts', 'const a = 1', '‘‘‘'].join('\n'))
-  })
-
-  test('a fence with no language still says it is one', () => {
-    expect(lines('```\nplain\n```\n')).toEqual(['‘‘‘', 'plain', '‘‘‘'])
-  })
-
   test('a fence says what it is called, above it, and names its language alone', () => {
     expect(lines('```ts src/main.ts\nconst a = 1\n```\n')).toEqual([
       'src/main.ts',
@@ -102,16 +94,6 @@ describe('a heading', () => {
     expect(lines('## A section\n')[1]).toBe('─'.repeat(28))
   })
 
-  test('is capitals alone at the third level', () => {
-    expect(lines('### Deeper\n')).toEqual(['DEEPER'])
-  })
-
-  test('carries a chevron for each level past the third', () => {
-    expect(lines('#### Four\n')).toEqual(['› FOUR'])
-    expect(lines('##### Five\n')).toEqual(['›› FIVE'])
-    expect(lines('###### Six\n')).toEqual(['››› SIX'])
-  })
-
   test('says which level it is, so a page can start at one', () => {
     const marked = markLines('# One\n\n## Two\n\n### Three\n', { inner: BODY_INNER })
 
@@ -129,28 +111,9 @@ describe('a heading', () => {
 
     expect(marked.map((line) => line.under)).toEqual([false, true, false])
   })
-
-  test('drops the marks inside it too', () => {
-    expect(lines('### A *loud* `code` word\n')).toEqual(['A LOUD ‘CODE‘ WORD'])
-  })
 })
 
 describe('a list', () => {
-  test('marks a bullet, and a deeper one differently', () => {
-    expect(lines('- one\n- two\n')).toEqual(['• one', '• two'])
-    expect(lines('- one\n  - inside\n')).toEqual(['• one', '   · inside'])
-    expect(lines('- one\n  - two\n    - three\n')).toEqual(['• one', '   · two', '      - three'])
-  })
-
-  test('numbers an ordered list as it was numbered', () => {
-    expect(lines('1. one\n2. two\n')).toEqual(['1. one', '2. two'])
-    expect(lines('7. seven\n8. eight\n')).toEqual(['7. seven', '8. eight'])
-  })
-
-  test('draws a task as a box, filled or not', () => {
-    expect(lines('- [ ] to do\n- [x] done\n')).toEqual(['□ to do', '■ done'])
-  })
-
   test('never draws a task with a glyph the font lacks', () => {
     for (const letter of one('- [ ] a\n- [x] b\n')) {
       if (letter === '\n') continue
@@ -169,25 +132,8 @@ describe('a list', () => {
 })
 
 describe('a quote', () => {
-  test('carries a bar down its left', () => {
-    expect(lines('> quoted\n')).toEqual(['│ quoted'])
-  })
-
-  test('carries one bar for each level', () => {
-    expect(lines('> one\n>\n> > two\n')).toEqual(['│ one', '│ │ two'])
-  })
-
-  test('says what kind of callout it is, in capitals', () => {
-    expect(lines('> [!warning]\n> Mind the gap.\n')).toEqual(['│ WARNING', '│ Mind the gap.'])
-  })
-
   test('drops the callout marker itself', () => {
     expect(one('> [!note]\n> Something.\n')).not.toContain('[!note]')
-  })
-
-  test('knows the kinds beyond the five it started with', () => {
-    expect(lines('> [!danger]\n> Mind the gap.\n')).toEqual(['│ DANGER', '│ Mind the gap.'])
-    expect(lines('> [!tldr]\n> The short of it.\n')).toEqual(['│ TLDR', '│ The short of it.'])
   })
 
   test('says a title of the writer’s own rather than the kind, as written', () => {
@@ -199,10 +145,6 @@ describe('a quote', () => {
 
   test('swallows the fold sign, which is not words', () => {
     expect(one('> [!warning]- Shut\n> Behind it.\n')).not.toContain(']-')
-  })
-
-  test('says the name of a kind it has never heard of', () => {
-    expect(lines('> [!recipe]\n> Flour and water.\n')).toEqual(['│ RECIPE', '│ Flour and water.'])
   })
 
   test('takes a marker line with a rule under it for the callout it opens', () => {
@@ -228,14 +170,6 @@ describe('a comment', () => {
   test('is not set on the panel, whichever way it is written', () => {
     expect(one('Words %% to myself %% here.\n')).not.toContain('to myself')
     expect(one('Words <!-- to myself --> here.\n')).not.toContain('to myself')
-  })
-
-  test('leaves the words around it where they were', () => {
-    expect(lines('Words %% aside %% here.\n')).toEqual(['Words  here.'])
-  })
-
-  test('leaves the line it had to itself behind, so the note keeps its shape', () => {
-    expect(lines('%% a note %%\nSecond line.\n')).toEqual(['Second line.'])
   })
 
   test('inside a fence is what the fence is showing', () => {
@@ -274,32 +208,6 @@ describe('nothing in a note is dropped', () => {
     expect(width(lines('---\n')[0] ?? '')).toBe(BODY_INNER)
   })
 
-  test('a picture is what it was described as, with a mark to say it was one', () => {
-    expect(lines('![A diagram](sketch.png)\n')).toEqual(['▤ A diagram'])
-    expect(lines('![](sketch.png)\n')).toEqual(['▤ sketch.png'])
-  })
-
-  test('a picture in the middle of a sentence is its words', () => {
-    expect(one('before ![a mark](m.png) after')).toBe('before a mark after')
-  })
-
-  test('a link is the words it shows', () => {
-    expect(one('see [the docs](https://example.com)')).toBe('see the docs')
-  })
-
-  test('a link with nothing to show is its own address', () => {
-    expect(one('see <https://example.com>')).toBe('see https://example.com')
-  })
-
-  test('a wikilink is the note it names', () => {
-    expect(one('see [[Another note]]')).toBe('see Another note')
-    expect(one('see [[Another note|this way]]')).toBe('see this way')
-  })
-
-  test('an embed reads as the note it names', () => {
-    expect(one('![[Another note]]')).toBe('Another note')
-  })
-
   test('a titled chart is its title, because a panel of one font cannot draw one', () => {
     expect(
       lines('```chart\ntype: bar\ntitle: Two quarters\nseries:\n  - data: [1, 2]\n```\n'),
@@ -311,48 +219,12 @@ describe('nothing in a note is dropped', () => {
     expect(said.join('\n')).toContain('data: [1, 2]')
   })
 
-  test('an embedded file is its name behind the mark that says it is one', () => {
-    expect(lines('![[clip.mp3]]\n')).toEqual(['▤ clip.mp3'])
-    expect(lines('![[demo.mp4]]\n')).toEqual(['▤ demo.mp4'])
-    expect(lines('![[shot.png]]\n')).toEqual(['▤ shot.png'])
-    expect(lines('![[paper.pdf#page=3]]\n')).toEqual(['▤ paper.pdf#page=3'])
-    expect(lines('![[Board.canvas]]\n')).toEqual(['▤ Board.canvas'])
-  })
-
-  test('and a note embedded on its own line carries no such mark', () => {
-    expect(lines('![[Another note]]\n')).toEqual(['Another note'])
-  })
-
   test('a footnote is a superscript, and its note is set under the same mark', () => {
     const set = lines('A claim.[^1]\n\n[^1]: The evidence.\n')
 
     expect(set[0]).toBe('A claim.¹')
     expect(set).toContain('¹')
     expect(set.join('\n')).toContain('The evidence.')
-  })
-
-  test('a footnote named in words keeps its name', () => {
-    expect(one('A claim.[^why]')).toBe('A claim.[^why]')
-  })
-
-  test('a superscript of digits is raised, and anything else is not', () => {
-    expect(one('x^2^')).toBe('x²')
-    expect(one('x^n^')).toBe('xn')
-    expect(one('H~2~O')).toBe('H₂O')
-  })
-
-  test('a definition list keeps the colon that ties it together', () => {
-    expect(lines('Term\n: what it means\n')).toEqual(['Term', ': what it means'])
-  })
-
-  test('an emoji written as a name is the emoji the font can draw', () => {
-    expect(one('smile :grinning:')).toBe('smile 😀')
-    expect(one('ship it :rocket:')).toBe('ship it :rocket:')
-  })
-
-  test('html is the words inside it, without the tags', () => {
-    expect(one('a <b>bold</b> word')).toBe('a bold word')
-    expect(one('<div>block</div>')).toBe('block')
   })
 
   test('a paragraph hard wrapped in the file is one line at the top compaction', () => {
@@ -364,15 +236,6 @@ describe('nothing in a note is dropped', () => {
     expect(flowed('> one two\n> three four\n')).toEqual(['│ one two three four'])
 
     expect(lines('one two\nthree four\n')).toEqual(['one two', 'three four'])
-  })
-
-  test('a hard break is two lines, the second under the words of the first', () => {
-    expect(lines('- one  \n  two\n')).toEqual(['• one', '   two'])
-    expect(lines('one  \ntwo\n')).toEqual(['one', 'two'])
-  })
-
-  test('front matter is not set, as it is not on a page either', () => {
-    expect(one('---\ntitle: A note\n---\n\nWords.\n')).toBe('Words.')
   })
 
   test('leaves nothing of a note unaccounted for', () => {
@@ -613,17 +476,6 @@ describe('a fence, as every parser of a note reads it', () => {
     const last = shape.lastIndexOf('c')
     if (shape.endsWith('w') && last !== -1) expect(said.trimEnd().endsWith('words')).toBe(true)
   })
-
-  test('a block name on a list item is no word of it', () => {
-    expect(lines('- a ^xyz')).toEqual(lines('- a'))
-  })
-})
-
-describe('a quote of several lines', () => {
-  test('draws one bar on each', () => {
-    expect(lines('> a\n> b\n')).toEqual(['│ a', '│ b'])
-    expect(lines('> > a\n> > b\n')).toEqual(['│ │ a', '│ │ b'])
-  })
 })
 
 describe('a word the front matter says as well', () => {
@@ -699,4 +551,64 @@ describe('a front matter value with a comment sign in it', () => {
       expect(texts.join('\n')).not.toContain('note:')
     }
   })
+})
+
+test.each<[unknown, ...Parameters<typeof one>]>([
+  [['‘‘‘ts', 'const a = 1', '‘‘‘'].join('\n'), '```ts\nconst a = 1\n```\n'],
+  ['before a mark after', 'before ![a mark](m.png) after'],
+  ['see the docs', 'see [the docs](https://example.com)'],
+  ['see https://example.com', 'see <https://example.com>'],
+  ['see Another note', 'see [[Another note]]'],
+  ['see this way', 'see [[Another note|this way]]'],
+  ['Another note', '![[Another note]]'],
+  ['A claim.[^why]', 'A claim.[^why]'],
+  ['x²', 'x^2^'],
+  ['xn', 'x^n^'],
+  ['H₂O', 'H~2~O'],
+  ['smile 😀', 'smile :grinning:'],
+  ['ship it :rocket:', 'ship it :rocket:'],
+  ['a bold word', 'a <b>bold</b> word'],
+  ['block', '<div>block</div>'],
+  ['Words.', '---\ntitle: A note\n---\n\nWords.\n'],
+])('%j from %j', (expected, ...args) => {
+  expect(one(...args)).toBe(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof lines>]>([
+  [['‘‘‘', 'plain', '‘‘‘'], '```\nplain\n```\n'],
+  [['DEEPER'], '### Deeper\n'],
+  [['› FOUR'], '#### Four\n'],
+  [['›› FIVE'], '##### Five\n'],
+  [['››› SIX'], '###### Six\n'],
+  [['A LOUD ‘CODE‘ WORD'], '### A *loud* `code` word\n'],
+  [['• one', '• two'], '- one\n- two\n'],
+  [['• one', '   · inside'], '- one\n  - inside\n'],
+  [['• one', '   · two', '      - three'], '- one\n  - two\n    - three\n'],
+  [['1. one', '2. two'], '1. one\n2. two\n'],
+  [['7. seven', '8. eight'], '7. seven\n8. eight\n'],
+  [['□ to do', '■ done'], '- [ ] to do\n- [x] done\n'],
+  [['│ quoted'], '> quoted\n'],
+  [['│ one', '│ │ two'], '> one\n>\n> > two\n'],
+  [['│ WARNING', '│ Mind the gap.'], '> [!warning]\n> Mind the gap.\n'],
+  [['│ DANGER', '│ Mind the gap.'], '> [!danger]\n> Mind the gap.\n'],
+  [['│ TLDR', '│ The short of it.'], '> [!tldr]\n> The short of it.\n'],
+  [['│ RECIPE', '│ Flour and water.'], '> [!recipe]\n> Flour and water.\n'],
+  [['Words  here.'], 'Words %% aside %% here.\n'],
+  [['Second line.'], '%% a note %%\nSecond line.\n'],
+  [['▤ A diagram'], '![A diagram](sketch.png)\n'],
+  [['▤ sketch.png'], '![](sketch.png)\n'],
+  [['▤ clip.mp3'], '![[clip.mp3]]\n'],
+  [['▤ demo.mp4'], '![[demo.mp4]]\n'],
+  [['▤ shot.png'], '![[shot.png]]\n'],
+  [['▤ paper.pdf#page=3'], '![[paper.pdf#page=3]]\n'],
+  [['▤ Board.canvas'], '![[Board.canvas]]\n'],
+  [['Another note'], '![[Another note]]\n'],
+  [['Term', ': what it means'], 'Term\n: what it means\n'],
+  [['• one', '   two'], '- one  \n  two\n'],
+  [['one', 'two'], 'one  \ntwo\n'],
+  [lines('- a'), '- a ^xyz'],
+  [['│ a', '│ b'], '> a\n> b\n'],
+  [['│ │ a', '│ │ b'], '> > a\n> > b\n'],
+])('%j from %j', (expected, ...args) => {
+  expect(lines(...args)).toEqual(expected)
 })

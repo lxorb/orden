@@ -49,69 +49,7 @@ describe('a note whose lines end in CRLF', () => {
   })
 })
 
-describe('words', () => {
-  test('match anywhere in the note, folded', () => {
-    expect(answers('alpha')).toBe(true)
-    expect(answers('ALPHA')).toBe(true)
-    expect(answers('zeta')).toBe(false)
-  })
-
-  test('all have to match, in any order', () => {
-    expect(answers('alpha gamma')).toBe(true)
-    expect(answers('gamma alpha')).toBe(true)
-    expect(answers('alpha zeta')).toBe(false)
-  })
-
-  test('bring back the line they were found on', () => {
-    expect(lines('gamma')).toEqual(['Gamma was away.'])
-  })
-
-  test('mark where they were found', () => {
-    expect(marked('gamma')).toEqual(['Gamma'])
-  })
-
-  test('bring back one row per line, however often they sit on it', () => {
-    expect(lines('beta')).toEqual(['Alpha met Beta on Monday.', 'Beta wrote it up. #done'])
-  })
-})
-
-describe('phrases', () => {
-  test('match exactly', () => {
-    expect(answers('"met Beta"')).toBe(true)
-    expect(answers('"Beta met"')).toBe(false)
-  })
-})
-
-describe('excluding', () => {
-  test('turns a match into a miss', () => {
-    expect(answers('alpha -gamma')).toBe(false)
-    expect(answers('alpha -zeta')).toBe(true)
-  })
-
-  test('on its own keeps every note that does not say it', () => {
-    expect(answers('-zeta')).toBe(true)
-    expect(answers('-alpha')).toBe(false)
-  })
-})
-
-describe('OR', () => {
-  test('takes either side', () => {
-    expect(answers('zeta OR gamma')).toBe(true)
-    expect(answers('zeta OR omega')).toBe(false)
-  })
-
-  test('brings back the lines of whichever side answered', () => {
-    expect(lines('gamma OR zeta')).toEqual(['Gamma was away.'])
-  })
-})
-
 describe('case', () => {
-  test('folds until it is told not to', () => {
-    expect(answers('ALPHA')).toBe(true)
-    expect(answers('case: ALPHA')).toBe(false)
-    expect(answers('case: Alpha')).toBe(true)
-  })
-
   test('folds a capital sigma the same wherever it sits in a word', () => {
     expect(answers('ΟΔΟΣ', { body: 'οδοστρωμα\n' })).toBe(true)
     expect(answers('οδοσ', { body: 'ΟΔΟΣ\n' })).toBe(true)
@@ -119,17 +57,6 @@ describe('case', () => {
 })
 
 describe('path and file', () => {
-  test('read where the note is, relative to the space', () => {
-    expect(answers('path:Work/')).toBe(true)
-    expect(answers('path:work/')).toBe(true)
-    expect(answers('path:Drafts/')).toBe(false)
-  })
-
-  test('read the note name', () => {
-    expect(answers('file:Meeting')).toBe(true)
-    expect(answers('file:Agenda')).toBe(false)
-  })
-
   test('find a note nothing in the text says, and read like the note', () => {
     expect(lines('file:Meeting')).toEqual(['# Meeting notes #work/2026'])
     expect(marked('file:Meeting')).toEqual([])
@@ -142,14 +69,6 @@ describe('path and file', () => {
 })
 
 describe('content', () => {
-  test('asks the note’s own words and not its front matter', () => {
-    expect(answers('orden')).toBe(true)
-    expect(answers('content:orden')).toBe(false)
-    expect(answers('status')).toBe(true)
-    expect(answers('content:status')).toBe(false)
-    expect(answers('content:alpha')).toBe(true)
-  })
-
   test('and brings back the line, folded like any other word', () => {
     expect(lines('content:GAMMA')).toEqual(['Gamma was away.'])
     expect(marked('content:gamma')).toEqual(['Gamma'])
@@ -159,39 +78,9 @@ describe('content', () => {
     expect(answers('content:first', { body: 'the first words\n' })).toBe(true)
     expect(answers('content:status', { body: '---\nstatus: done\n' })).toBe(true)
   })
-
-  test('is exact where the reader said so', () => {
-    expect(answers('case: content:Alpha')).toBe(true)
-    expect(answers('case: content:alpha')).toBe(false)
-  })
-
-  test('and narrows a nearness group rather than widening it', () => {
-    expect(answers('line:(content:alpha content:beta)')).toBe(true)
-    expect(answers('line:(content:alpha content:gamma)')).toBe(false)
-  })
 })
 
 describe('tags', () => {
-  test('match the tag itself', () => {
-    expect(answers('tag:done')).toBe(true)
-    expect(answers('tag:#done')).toBe(true)
-    expect(answers('tag:missing')).toBe(false)
-  })
-
-  test('match their children', () => {
-    expect(answers('tag:work')).toBe(true)
-    expect(answers('tag:work/2026')).toBe(true)
-    expect(answers('tag:work/2025')).toBe(false)
-  })
-
-  test('do not come out of a code fence', () => {
-    expect(answers('tag:notatag')).toBe(false)
-  })
-
-  test('are not headings', () => {
-    expect(answers('tag:Meeting')).toBe(false)
-  })
-
   test('match at every depth, and narrow as the path grows', () => {
     const deep = { body: 'words #work/orden/canvas/edges more\n' }
 
@@ -228,20 +117,6 @@ describe('tags', () => {
 })
 
 describe('front matter', () => {
-  test('answers whether the key is there', () => {
-    expect(answers('[status]')).toBe(true)
-    expect(answers('[due]')).toBe(false)
-  })
-
-  test('answers what the value says', () => {
-    expect(answers('[status:done]')).toBe(true)
-    expect(answers('[status:open]')).toBe(false)
-  })
-
-  test('is only the front matter, not a colon further down', () => {
-    expect(answers('[later]')).toBe(false)
-  })
-
   test('is nothing at all in a note that has none', () => {
     expect(answers('[status]', { body: 'status: done\n' })).toBe(false)
   })
@@ -306,24 +181,6 @@ describe('a regular expression over a note with one very long line', () => {
 })
 
 describe('regular expressions', () => {
-  test('match what they describe', () => {
-    expect(answers('/G[a-z]+a/')).toBe(true)
-    expect(answers('/Z[a-z]+a/')).toBe(false)
-  })
-
-  test('mind case unless the i flag says otherwise', () => {
-    expect(answers('/gamma/')).toBe(false)
-    expect(answers('/gamma/i')).toBe(true)
-  })
-
-  test('mark exactly what they matched', () => {
-    expect(marked('/B[a-z]+a on/')).toEqual(['Beta on'])
-  })
-
-  test('that will not compile match nothing rather than complaining', () => {
-    expect(answers('/([a-/')).toBe(false)
-  })
-
   test('take a character outside the basic plane whole', () => {
     expect(marked('/x./', { body: 'x😀 end' })).toEqual(['x😀'])
     expect(marked('/[^a]/', { body: '😀' })).toEqual(['😀'])
@@ -473,10 +330,6 @@ describe('tasks', () => {
     expect(asked('task:(write plan)')).toEqual(['- [ ] write the plan'])
     expect(answers('task:(write ledger)', { body: TASKS })).toBe(false)
   })
-
-  test('and a space with no tasks answers nothing', () => {
-    expect(answers('task-todo:')).toBe(false)
-  })
 })
 
 describe('front matter held against a value', () => {
@@ -625,4 +478,74 @@ describe('line offsets', () => {
     expect(lineAt(starts, 5)).toBe(2)
     expect(lineAt(starts, 6)).toBe(3)
   })
+})
+
+test.each<[unknown, ...Parameters<typeof answers>]>([
+  [true, 'alpha'],
+  [true, 'ALPHA'],
+  [false, 'zeta'],
+  [true, 'alpha gamma'],
+  [true, 'gamma alpha'],
+  [false, 'alpha zeta'],
+  [true, '"met Beta"'],
+  [false, '"Beta met"'],
+  [false, 'alpha -gamma'],
+  [true, 'alpha -zeta'],
+  [true, '-zeta'],
+  [false, '-alpha'],
+  [true, 'zeta OR gamma'],
+  [false, 'zeta OR omega'],
+  [true, 'ALPHA'],
+  [false, 'case: ALPHA'],
+  [true, 'case: Alpha'],
+  [true, 'path:Work/'],
+  [true, 'path:work/'],
+  [false, 'path:Drafts/'],
+  [true, 'file:Meeting'],
+  [false, 'file:Agenda'],
+  [true, 'orden'],
+  [false, 'content:orden'],
+  [true, 'status'],
+  [false, 'content:status'],
+  [true, 'content:alpha'],
+  [true, 'case: content:Alpha'],
+  [false, 'case: content:alpha'],
+  [true, 'line:(content:alpha content:beta)'],
+  [false, 'line:(content:alpha content:gamma)'],
+  [true, 'tag:done'],
+  [true, 'tag:#done'],
+  [false, 'tag:missing'],
+  [true, 'tag:work'],
+  [true, 'tag:work/2026'],
+  [false, 'tag:work/2025'],
+  [false, 'tag:notatag'],
+  [false, 'tag:Meeting'],
+  [true, '[status]'],
+  [false, '[due]'],
+  [true, '[status:done]'],
+  [false, '[status:open]'],
+  [false, '[later]'],
+  [true, '/G[a-z]+a/'],
+  [false, '/Z[a-z]+a/'],
+  [false, '/gamma/'],
+  [true, '/gamma/i'],
+  [false, '/([a-/'],
+  [false, 'task-todo:'],
+])('%j from %j', (expected, ...args) => {
+  expect(answers(...args)).toBe(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof lines>]>([
+  [['Gamma was away.'], 'gamma'],
+  [['Alpha met Beta on Monday.', 'Beta wrote it up. #done'], 'beta'],
+  [['Gamma was away.'], 'gamma OR zeta'],
+])('%j from %j', (expected, ...args) => {
+  expect(lines(...args)).toEqual(expected)
+})
+
+test.each<[unknown, ...Parameters<typeof marked>]>([
+  [['Gamma'], 'gamma'],
+  [['Beta on'], '/B[a-z]+a on/'],
+])('%j from %j', (expected, ...args) => {
+  expect(marked(...args)).toEqual(expected)
 })

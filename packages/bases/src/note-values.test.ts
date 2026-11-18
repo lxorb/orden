@@ -49,11 +49,6 @@ describe('front matter as values', () => {
     expect(values).toEqual({ status: 'Doing', nested: { a: [1] } })
   })
 
-  test('is nothing for a note without front matter or with a block that is not YAML', () => {
-    expect(noteValues('just words')).toEqual({})
-    expect(noteValues('---\n: : :\n  - [\n---\n')).toEqual({})
-  })
-
   test('a key named kind is a key like any other', () => {
     expect(noteValues('---\n# c\nkind: date\n---\n')).toEqual({ kind: 'date' })
   })
@@ -261,4 +256,11 @@ describe('a key written twice', () => {
   test('and keys keep the order they are written in', () => {
     expect(Object.keys(noteValues('---\nb: 1\na: 2\nb: 3\n---\n'))).toEqual(['b', 'a'])
   })
+})
+
+test.each<[unknown, ...Parameters<typeof noteValues>]>([
+  [{}, 'just words'],
+  [{}, '---\n: : :\n  - [\n---\n'],
+])('%j from %j', (expected, ...args) => {
+  expect(noteValues(...args)).toEqual(expected)
 })
