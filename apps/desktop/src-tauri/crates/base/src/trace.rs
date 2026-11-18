@@ -142,10 +142,6 @@ fn push(step: &str, at: Duration) {
     push_with(step, at, cpu());
 }
 
-fn push_said(step: &str, at: Duration) {
-    push_with(step, at, None);
-}
-
 fn push_with(step: &str, at: Duration, cpu: Option<Duration>) {
     let Ok(mut marks) = MARKS.lock() else { return };
 
@@ -164,7 +160,7 @@ pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>, facts: Optio
     for said in steps {
         let at = span_of(said.at);
         let at = at.saturating_add(shift).saturating_add(*BEFORE);
-        push_said(&format!("window: {}", said.step), at);
+        push_with(&format!("window: {}", said.step), at, None);
     }
 
     let told = MARKS

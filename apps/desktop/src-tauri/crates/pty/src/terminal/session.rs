@@ -270,10 +270,6 @@ impl Session {
         &self.key
     }
 
-    fn same_stream(&self, stream: &Arc<Stream>) -> bool {
-        Arc::ptr_eq(&self.stream, stream)
-    }
-
     pub fn write(&self, bytes: Vec<u8>) {
         let _ = self.input.send(wire::frame(wire::INPUT, &bytes));
     }
@@ -348,7 +344,7 @@ impl Started {
 
         thread::spawn(move || {
             read(reader, &stream);
-            ended(&|session: &Session| session.same_stream(&stream));
+            ended(&|session: &Session| Arc::ptr_eq(&session.stream, &stream));
         });
     }
 }
