@@ -49,9 +49,7 @@ const MARKS: Record<string, string> = {
   'paragraph.rule': '––',
 }
 
-const GLYPHS: Record<string, IconNode> = {
-  'format.link': Link,
-}
+const GLYPHS: Record<string, IconNode> = { 'format.link': Link }
 
 const HIGH = new Set(['paragraph.quote'])
 

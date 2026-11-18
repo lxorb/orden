@@ -34,13 +34,7 @@ export interface World {
   addressOf?: (path: string) => string | null
 }
 
-const LIFT = {
-  bookmarked: 6,
-  recent: 8,
-  here: -24,
-  unavailable: -30,
-  about: 12,
-}
+const LIFT = { bookmarked: 6, recent: 8, here: -24, unavailable: -30, about: 12 }
 
 const noteKey = (path: string) => `note:${path}`
 const pageKey = (url: string) => `page:${url}`

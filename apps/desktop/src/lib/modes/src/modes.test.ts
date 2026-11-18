@@ -795,18 +795,12 @@ describe('taking over what the account holds', () => {
   test('deletes the OpenAI key the glasses kept on the account before they asked the default AI account', async () => {
     const removed: string[] = []
     const was = api.settings
-    api.settings = async () => ({
-      settings: {},
-      key: { set: true, tail: '4f2a' },
-    })
+    api.settings = async () => ({ settings: {}, key: { set: true, tail: '4f2a' } })
     Object.assign(api, { removeAskKey: async (token: string) => void removed.push(token) })
     await modes.adopt('token')
     expect(removed).toEqual(['token'])
 
-    api.settings = async () => ({
-      settings: {},
-      key: { set: false, tail: '' },
-    })
+    api.settings = async () => ({ settings: {}, key: { set: false, tail: '' } })
     await modes.adopt('token')
     expect(removed).toEqual(['token'])
     api.settings = was

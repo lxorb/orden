@@ -122,6 +122,21 @@ const entry = (id: string, view?: EditorView) => () =>
     fullscreen: () => void fullscreen.toggle(workspace.panes),
   })
 
+const keyed = (
+  id: string,
+  label: string,
+  key: string,
+  extra: Partial<Command> = {},
+  view?: EditorView,
+): Command => ({ id, label, hint: shortcuts.hint(key), run: entry(key, view), ...extra })
+
+const commanded = (
+  id: string,
+  label: string,
+  command: string,
+  extra: Partial<Command> = {},
+): Command => ({ id, label, run: () => void runCommand(command), ...extra })
+
 function importCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
 
@@ -131,13 +146,9 @@ function importCommands(): Command[] {
   }
 
   return [
-    { id: 'import', label: 'Import', run: () => void runCommand('import.show') },
+    commanded('import', 'Import', 'import.show'),
     { id: 'import-obsidian', label: 'Import from Obsidian', run: asked('import.obsidian') },
-    {
-      id: 'import-notion',
-      label: 'Import from Notion',
-      run: () => void runCommand('import.notion'),
-    },
+    commanded('import-notion', 'Import from Notion', 'import.notion'),
     ...(isDesktop
       ? [{ id: 'import-zen', label: 'Import from Zen', run: asked('import.zen') }]
       : []),
@@ -180,13 +191,7 @@ function agentRows(): Command[] {
         void runCommand('ai.threads')
       },
     },
-    {
-      id: 'agents-stop',
-      label: 'Stop agents',
-      hint: shortcuts.hint('agents.stop'),
-      ownWindow: true,
-      run: entry('agents.stop'),
-    },
+    keyed('agents-stop', 'Stop agents', 'agents.stop', { ownWindow: true }),
   ]
 }
 
@@ -223,20 +228,10 @@ function tabCommands(): Command[] {
       disabled: workspace.closesAround(id, 'all') === 0,
       run: () => void workspace.closeAround(id, 'all'),
     },
-    {
-      id: 'deselect-tab',
-      label: 'Deselect tab',
-      hint: shortcuts.hint('app.deselect-tab'),
-      disabled: !tab,
-      run: entry('app.deselect-tab'),
-    },
-    {
-      id: 'deselect-all',
-      label: 'Deselect all tabs',
-      hint: shortcuts.hint('app.deselect-all'),
+    keyed('deselect-tab', 'Deselect tab', 'app.deselect-tab', { disabled: !tab }),
+    keyed('deselect-all', 'Deselect all tabs', 'app.deselect-all', {
       disabled: !workspace.tabs.some((one) => workspace.panes.at(one.paneId)),
-      run: entry('app.deselect-all'),
-    },
+    }),
     {
       id: 'duplicate-tab',
       label: 'Duplicate tab',
@@ -267,34 +262,16 @@ function paneCommands(): Command[] {
   if (viewport.touch) return []
 
   return [
-    {
-      id: 'split-right',
-      label: 'Split right',
-      hint: shortcuts.hint('pane.split-right'),
+    keyed('split-right', 'Split right', 'pane.split-right', {
       disabled: !workspace.canSplit('row'),
-      run: entry('pane.split-right'),
-    },
-    {
-      id: 'split-down',
-      label: 'Split down',
-      hint: shortcuts.hint('pane.split-down'),
+    }),
+    keyed('split-down', 'Split down', 'pane.split-down', {
       disabled: !workspace.canSplit('column'),
-      run: entry('pane.split-down'),
-    },
-    {
-      id: 'move-tab-pane',
-      label: 'Move to other pane',
-      hint: shortcuts.hint('pane.move-tab'),
+    }),
+    keyed('move-tab-pane', 'Move to other pane', 'pane.move-tab', {
       disabled: !workspace.canMoveToOtherPane(workspace.activeTabId ?? ''),
-      run: entry('pane.move-tab'),
-    },
-    {
-      id: 'focus-pane',
-      label: 'Other pane',
-      hint: shortcuts.hint('pane.focus-next'),
-      disabled: workspace.panes.count < 2,
-      run: entry('pane.focus-next'),
-    },
+    }),
+    keyed('focus-pane', 'Other pane', 'pane.focus-next', { disabled: workspace.panes.count < 2 }),
     {
       id: 'stack-tabs',
       label: workspace.stacked() ? 'Unstack tabs' : 'Stack tabs',
@@ -317,11 +294,7 @@ function layoutCommands(): Command[] {
   const saved = workspace.layouts.all
 
   return [
-    {
-      id: 'save-layout',
-      label: 'Save layout',
-      run: () => void askForLayoutName(),
-    },
+    { id: 'save-layout', label: 'Save layout', run: () => void askForLayoutName() },
     ...saved.map((one) => ({
       id: `layout:${one.name}`,
       label: `Layout: ${one.name}`,
@@ -609,13 +582,7 @@ function spaceCommands(): Command[] {
         ]
       : []),
     ...(canPublish(space)
-      ? [
-          {
-            id: 'publish',
-            label: 'Publish this space as a blog',
-            run: () => publishSpace(space),
-          },
-        ]
+      ? [{ id: 'publish', label: 'Publish this space as a blog', run: () => publishSpace(space) }]
       : []),
   ]
 }
@@ -633,31 +600,10 @@ export function appCommands(view?: EditorView): Command[] {
 
   return without([
     ...(unsaved
-      ? [
-          {
-            id: 'save',
-            label: 'Save',
-            hint: shortcuts.saveHint,
-            run: () => askPlace(unsaved.id),
-          },
-        ]
+      ? [{ id: 'save', label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(unsaved.id) }]
       : []),
-    {
-      id: 'new',
-      label: 'New note',
-      hint: shortcuts.hint('app.new'),
-      run: entry('app.new'),
-    },
-    ...(__EVEN_PLUGIN__
-      ? []
-      : [
-          {
-            id: 'quick-add',
-            label: 'Add task',
-            hint: shortcuts.hint('app.quick-add'),
-            run: entry('app.quick-add'),
-          },
-        ]),
+    keyed('new', 'New note', 'app.new'),
+    ...(__EVEN_PLUGIN__ ? [] : [keyed('quick-add', 'Add task', 'app.quick-add')]),
     ...commandRows('send', view),
     {
       id: 'new-unique',
@@ -678,21 +624,11 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.createPages(),
     },
     ...(basesOn()
-      ? [
-          {
-            id: 'new-database',
-            label: 'New database',
-            disabled: readOnly,
-            run: () => void runCommand('views.new-database'),
-          },
-        ]
+      ? [commanded('new-database', 'New database', 'views.new-database', { disabled: readOnly })]
       : []),
-    {
-      id: 'new-from-template',
-      label: 'New note from template',
+    commanded('new-from-template', 'New note from template', 'views.pick-template', {
       disabled: readOnly,
-      run: () => void runCommand('views.pick-template'),
-    },
+    }),
     ...(viewport.touch
       ? []
       : [
@@ -702,49 +638,26 @@ export function appCommands(view?: EditorView): Command[] {
             disabled: readOnly,
             run: () => void workspace.createWebsite(),
           },
-          {
-            id: 'new-website',
-            label: 'Open a website',
-            run: () => workspace.openWebsite(),
-          },
+          { id: 'new-website', label: 'Open a website', run: () => workspace.openWebsite() },
         ]),
     ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
       ? [
-          {
-            id: 'new-terminal',
-            label: 'New terminal',
-            ownWindow: true,
-            run: () => void runCommand('terminal.new'),
-          },
-          {
-            id: 'new-remote',
-            label: 'Remote',
-            ownWindow: true,
-            run: () => void runCommand('terminal.remote'),
-          },
+          commanded('new-terminal', 'New terminal', 'terminal.new', { ownWindow: true }),
+          commanded('new-remote', 'Remote', 'terminal.remote', { ownWindow: true }),
         ]
       : []),
     ...(__EVEN_PLUGIN__ || !modes.coder
       ? []
       : [
-          {
-            id: 'new-online-terminal',
-            label: 'New online terminal',
+          commanded('new-online-terminal', 'New online terminal', 'terminal.online', {
             ownWindow: true,
-            run: () => void runCommand('terminal.online'),
-          },
-          {
-            id: 'start-online-machine',
-            label: 'Start online machine',
+          }),
+          commanded('start-online-machine', 'Start online machine', 'terminal.machine-start', {
             ownWindow: true,
-            run: () => void runCommand('terminal.machine-start'),
-          },
-          {
-            id: 'stop-online-machine',
-            label: 'Stop online machine',
+          }),
+          commanded('stop-online-machine', 'Stop online machine', 'terminal.machine-stop', {
             ownWindow: true,
-            run: () => void runCommand('terminal.machine-stop'),
-          },
+          }),
         ]),
     ...(links.websiteNotes
       ? [
@@ -764,12 +677,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => openRandomNote(),
     },
     ...importCommands(),
-    {
-      id: 'convert-syntax',
-      label: 'Convert syntax',
-      disabled: readOnly,
-      run: () => void runCommand('import.convert-syntax'),
-    },
+    commanded('convert-syntax', 'Convert syntax', 'import.convert-syntax', { disabled: readOnly }),
     ...(canPrint
       ? [
           {
@@ -781,61 +689,22 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]
       : []),
-    {
-      id: 'close',
-      label: 'Close note',
-      hint: shortcuts.hint('app.close'),
-      run: entry('app.close'),
-    },
+    keyed('close', 'Close note', 'app.close'),
     ...archiveCommand(),
     ...protectCommands(),
     ...tabCommands(),
-    {
-      id: 'back',
-      label: 'Back',
-      hint: shortcuts.hint('app.back'),
-      disabled: !workspace.active?.canGoBack,
-      run: entry('app.back'),
-    },
-    {
-      id: 'forward',
-      label: 'Forward',
-      hint: shortcuts.hint('app.forward'),
-      disabled: !workspace.active?.canGoForward,
-      run: entry('app.forward'),
-    },
-    {
-      id: 'reopen',
-      label: 'Reopen closed tab',
-      hint: shortcuts.hint('app.reopen'),
-      disabled: !workspace.closed.any,
-      run: entry('app.reopen'),
-    },
+    keyed('back', 'Back', 'app.back', { disabled: !workspace.active?.canGoBack }),
+    keyed('forward', 'Forward', 'app.forward', { disabled: !workspace.active?.canGoForward }),
+    keyed('reopen', 'Reopen closed tab', 'app.reopen', { disabled: !workspace.closed.any }),
     { id: 'space', label: 'New space', run: () => void newSpace() },
     ...commandRows('web', view),
     ...paneCommands(),
     ...layoutCommands(),
-    {
-      id: 'new-window',
-      label: 'New window',
-      hint: shortcuts.hint('app.new-window'),
-      disabled: !isDesktop,
-      run: entry('app.new-window'),
-    },
-    {
-      id: 'close-window',
-      label: 'Close window',
-      hint: shortcuts.hint('app.close-window'),
-      disabled: !isDesktop,
-      run: entry('app.close-window'),
-    },
-    {
-      id: 'new-private',
-      label: 'New private tab',
-      hint: shortcuts.hint('app.new-private'),
+    keyed('new-window', 'New window', 'app.new-window', { disabled: !isDesktop }),
+    keyed('close-window', 'Close window', 'app.close-window', { disabled: !isDesktop }),
+    keyed('new-private', 'New private tab', 'app.new-private', {
       disabled: !isDesktop || viewport.touch,
-      run: entry('app.new-private'),
-    },
+    }),
     {
       id: 'web-history',
       label: 'Browsing history',
@@ -855,25 +724,14 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !workspace.canRedo,
       run: () => void workspace.redoFileAction(),
     },
-    {
-      id: 'settings',
-      label: 'Settings',
-      hint: shortcuts.hint('app.settings'),
-      run: entry('app.settings'),
-    },
+    keyed('settings', 'Settings', 'app.settings'),
     {
       id: 'feedback',
       label: 'Send feedback',
       also: ['feedback', 'bug', 'report'],
       run: showFeedback,
     },
-    {
-      id: 'shortcuts',
-      label: 'Shortcuts',
-      also: ['keyboard shortcuts', 'keys'],
-      hint: shortcuts.hint('app.keys'),
-      run: entry('app.keys'),
-    },
+    keyed('shortcuts', 'Shortcuts', 'app.keys', { also: ['keyboard shortcuts', 'keys'] }),
     {
       id: 'history',
       label: 'Version history',
@@ -922,54 +780,36 @@ export function appCommands(view?: EditorView): Command[] {
     ...blockCommands(view),
     ...foldingCommands(view),
     ...lineCommands(view),
-    {
-      id: 'reading',
-      label: workspace.active?.reading ? 'Leave reading' : 'Reading',
-      hint: shortcuts.hint('app.reading'),
+    keyed('reading', workspace.active?.reading ? 'Leave reading' : 'Reading', 'app.reading', {
       disabled: workspace.active?.kind !== 'note',
-      run: entry('app.reading'),
-    },
-    {
-      id: 'read-only',
-      label: modes.readOnly ? 'Leave read-only' : 'Read-only',
-      hint: shortcuts.hint('app.read-only'),
-      run: entry('app.read-only', view),
-    },
-    {
-      id: 'source',
-      label: modes.sourceIn(view) ? 'Leave source mode' : 'Source mode',
-      hint: shortcuts.hint('app.source'),
-      run: entry('app.source', view),
-    },
-    {
-      id: 'focus',
-      label: modes.focus ? 'Leave focus mode' : 'Focus mode',
-      hint: shortcuts.hint('app.focus'),
-      run: entry('app.focus', view),
-    },
-    {
-      id: 'typewriter',
-      label: modes.typewriter ? 'Leave typewriter mode' : 'Typewriter mode',
-      hint: shortcuts.hint('app.typewriter'),
-      run: entry('app.typewriter', view),
-    },
+    }),
+    keyed('read-only', modes.readOnly ? 'Leave read-only' : 'Read-only', 'app.read-only', {}, view),
+    keyed(
+      'source',
+      modes.sourceIn(view) ? 'Leave source mode' : 'Source mode',
+      'app.source',
+      {},
+      view,
+    ),
+    keyed('focus', modes.focus ? 'Leave focus mode' : 'Focus mode', 'app.focus', {}, view),
+    keyed(
+      'typewriter',
+      modes.typewriter ? 'Leave typewriter mode' : 'Typewriter mode',
+      'app.typewriter',
+      {},
+      view,
+    ),
     ...(viewport.touch
       ? []
       : [
-          {
-            id: 'full-window',
-            label: workspace.panes.fills === null ? 'Full window' : 'Leave full window',
-            hint: shortcuts.hint('app.fill-tab'),
-            disabled: workspace.panes.fills === null && !workspace.activeTabId,
-            run: entry('app.fill-tab'),
-          },
+          keyed(
+            'full-window',
+            workspace.panes.fills === null ? 'Full window' : 'Leave full window',
+            'app.fill-tab',
+            { disabled: workspace.panes.fills === null && !workspace.activeTabId },
+          ),
         ]),
-    {
-      id: 'fullscreen',
-      label: fullscreen.on ? 'Leave fullscreen' : 'Fullscreen',
-      hint: shortcuts.hint('app.fullscreen'),
-      run: entry('app.fullscreen'),
-    },
+    keyed('fullscreen', fullscreen.on ? 'Leave fullscreen' : 'Fullscreen', 'app.fullscreen'),
     ...(isDesktop
       ? [
           {
@@ -1017,24 +857,9 @@ export function appCommands(view?: EditorView): Command[] {
     { id: 'looser', label: 'Looser line spacing', run: () => modes.stepLineHeight(1, view) },
     { id: 'tighter', label: 'Tighter line spacing', run: () => modes.stepLineHeight(-1, view) },
 
-    {
-      id: 'zoom-in',
-      label: 'Zoom in',
-      hint: shortcuts.hint('app.zoom-in'),
-      run: entry('app.zoom-in'),
-    },
-    {
-      id: 'zoom-out',
-      label: 'Zoom out',
-      hint: shortcuts.hint('app.zoom-out'),
-      run: entry('app.zoom-out'),
-    },
-    {
-      id: 'zoom-reset',
-      label: 'Actual size',
-      hint: shortcuts.hint('app.zoom-reset'),
-      run: entry('app.zoom-reset'),
-    },
+    keyed('zoom-in', 'Zoom in', 'app.zoom-in'),
+    keyed('zoom-out', 'Zoom out', 'app.zoom-out'),
+    keyed('zoom-reset', 'Actual size', 'app.zoom-reset'),
 
     ...(isDesktop
       ? [
@@ -1080,13 +905,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => modes.setCodeTheme(palette.id, view),
     })),
     ...(isDesktop
-      ? [
-          {
-            id: 'themes-folder',
-            label: 'Open themes folder',
-            run: () => void openThemesFolder(),
-          },
-        ]
+      ? [{ id: 'themes-folder', label: 'Open themes folder', run: () => void openThemesFolder() }]
       : []),
     ...(isNative
       ? [
@@ -1104,85 +923,25 @@ export function appCommands(view?: EditorView): Command[] {
     { id: 'whats-new', label: 'What is new', run: () => void openExternal(RELEASES_URL) },
     { id: 'report-issue', label: 'Report an issue', run: () => void openExternal(ISSUES_URL) },
     { id: 'source-code', label: 'Source code', run: () => void openExternal(SOURCE_URL) },
-    {
-      id: 'sidebar',
-      label: workspace.panel ? 'Hide left sidebar' : 'Show left sidebar',
-      hint: shortcuts.hint('app.sidebar'),
-      run: entry('app.sidebar'),
-    },
-    {
-      id: 'files',
-      label: 'Files',
-      hint: shortcuts.hint('app.files'),
-      run: entry('app.files'),
-    },
-    {
-      id: 'reveal',
-      label: 'Show in the file list',
-      hint: shortcuts.hint('app.reveal'),
-      disabled: !workspace.active?.path,
-      run: entry('app.reveal'),
-    },
-    {
-      id: 'fold-list',
-      label: 'Collapse the file list',
-      hint: shortcuts.hint('app.fold-list'),
+    keyed('sidebar', workspace.panel ? 'Hide left sidebar' : 'Show left sidebar', 'app.sidebar'),
+    keyed('files', 'Files', 'app.files'),
+    keyed('reveal', 'Show in the file list', 'app.reveal', { disabled: !workspace.active?.path }),
+    keyed('fold-list', 'Collapse the file list', 'app.fold-list', {
       disabled: !workspace.unfolded,
-      run: entry('app.fold-list'),
-    },
-    {
-      id: 'outline-panel',
-      label: 'Outline',
-      hint: shortcuts.hint('app.outline'),
-      run: entry('app.outline'),
-    },
-    {
-      id: 'search-space',
-      label: 'Search this space',
-      hint: shortcuts.hint('app.search'),
-      run: entry('app.search', view),
-    },
-    {
-      id: 'links-panel',
-      label: 'Links',
-      hint: shortcuts.hint('app.links'),
-      run: entry('app.links'),
-    },
-    ...(viewport.touch
-      ? []
-      : [
-          {
-            id: 'ask-panel',
-            label: 'Ask',
-            hint: shortcuts.hint('app.ask'),
-            run: entry('app.ask'),
-          },
-        ]),
-    {
-      id: 'quick-question',
-      label: 'Quick question',
-      hint: shortcuts.hint('app.quick-question'),
-      run: entry('app.quick-question'),
-    },
-    {
-      id: 'reload-app',
-      label: 'Reload Orden',
-      hint: shortcuts.hint('app.reload'),
-      run: entry('app.reload'),
-    },
-    {
-      id: 'scratchpad',
-      label: 'Scratchpad',
-      hint: shortcuts.hint('app.scratchpad'),
-      run: entry('app.scratchpad'),
-    },
-    {
-      id: 'right-sidebar',
-      label: workspace.openOn('right') ? 'Hide right sidebar' : 'Show right sidebar',
-      hint: shortcuts.hint('app.right-sidebar'),
-      disabled: !workspace.right.length,
-      run: entry('app.right-sidebar'),
-    },
+    }),
+    keyed('outline-panel', 'Outline', 'app.outline'),
+    keyed('search-space', 'Search this space', 'app.search', {}, view),
+    keyed('links-panel', 'Links', 'app.links'),
+    ...(viewport.touch ? [] : [keyed('ask-panel', 'Ask', 'app.ask')]),
+    keyed('quick-question', 'Quick question', 'app.quick-question'),
+    keyed('reload-app', 'Reload Orden', 'app.reload'),
+    keyed('scratchpad', 'Scratchpad', 'app.scratchpad'),
+    keyed(
+      'right-sidebar',
+      workspace.openOn('right') ? 'Hide right sidebar' : 'Show right sidebar',
+      'app.right-sidebar',
+      { disabled: !workspace.right.length },
+    ),
     {
       id: 'hold-panel',
       label: workspace.held ? 'Follow the open note' : 'Stay on this note',
@@ -1190,107 +949,35 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: workspace.holdablePanel === null,
       run: () => workspace.holdPanel(workspace.held ? null : (workspace.panelTab?.id ?? null)),
     },
-    {
-      id: 'graph',
-      label: 'Graph',
-      hint: shortcuts.hint('app.graph'),
-      run: entry('app.graph'),
-    },
+    keyed('graph', 'Graph', 'app.graph'),
     ...(__EVEN_PLUGIN__ || !passOn()
       ? []
       : [
-          {
-            id: 'pass',
-            label: 'Pass',
-            hint: shortcuts.hint('app.pass'),
-            run: entry('app.pass'),
-          },
-          {
-            id: 'pass-lock',
-            label: 'Lock Pass',
-            run: () => void runCommand('pass.lock'),
-          },
-          {
-            id: 'pass-new-login',
-            label: 'New login',
-            run: () => void runCommand('pass.new-login'),
-          },
-          {
-            id: 'pass-generate',
-            label: 'Generate password',
-            run: () => void runCommand('pass.generate'),
-          },
+          keyed('pass', 'Pass', 'app.pass'),
+          commanded('pass-lock', 'Lock Pass', 'pass.lock'),
+          commanded('pass-new-login', 'New login', 'pass.new-login'),
+          commanded('pass-generate', 'Generate password', 'pass.generate'),
         ]),
     ...(__EVEN_PLUGIN__
       ? []
       : [
-          {
-            id: 'todos',
-            label: 'Todos',
-            hint: shortcuts.hint('app.tasks'),
-            run: entry('app.tasks'),
-          },
+          keyed('todos', 'Todos', 'app.tasks'),
           ...(timeOn()
             ? [
-                {
-                  id: 'time-tab',
-                  label: 'Open time tracker',
-                  hint: shortcuts.hint('time.tab'),
-                  run: entry('time.tab'),
-                },
-                {
-                  id: 'time-start',
-                  label: 'Start timer',
-                  hint: shortcuts.hint('time.start'),
-                  run: entry('time.start'),
-                },
-                {
-                  id: 'time-stop',
-                  label: 'Stop timer',
-                  hint: shortcuts.hint('time.stop'),
-                  run: entry('time.stop'),
-                },
+                keyed('time-tab', 'Open time tracker', 'time.tab'),
+                keyed('time-start', 'Start timer', 'time.start'),
+                keyed('time-stop', 'Stop timer', 'time.stop'),
               ]
             : []),
         ]),
-    {
-      id: 'region-next',
-      label: 'Next section',
-      hint: shortcuts.hint('app.region-next'),
-      run: entry('app.region-next'),
-    },
-    {
-      id: 'region-previous',
-      label: 'Previous section',
-      hint: shortcuts.hint('app.region-previous'),
-      run: entry('app.region-previous'),
-    },
-    {
-      id: 'spaces',
-      label: 'Spaces',
-      hint: shortcuts.hint('space.switcher'),
-      run: entry('space.switcher'),
-    },
-    {
-      id: 'tab-overview',
-      label: 'Tabs',
-      hint: shortcuts.hint('app.tab-overview'),
-      run: entry('app.tab-overview'),
-    },
-    {
-      id: 'space-next',
-      label: 'Next space',
-      hint: shortcuts.hint('space.next'),
+    keyed('region-next', 'Next section', 'app.region-next'),
+    keyed('region-previous', 'Previous section', 'app.region-previous'),
+    keyed('spaces', 'Spaces', 'space.switcher'),
+    keyed('tab-overview', 'Tabs', 'app.tab-overview'),
+    keyed('space-next', 'Next space', 'space.next', { disabled: workspace.shownSpaces.length < 2 }),
+    keyed('space-previous', 'Previous space', 'space.previous', {
       disabled: workspace.shownSpaces.length < 2,
-      run: entry('space.next'),
-    },
-    {
-      id: 'space-previous',
-      label: 'Previous space',
-      hint: shortcuts.hint('space.previous'),
-      disabled: workspace.shownSpaces.length < 2,
-      run: entry('space.previous'),
-    },
+    }),
 
     ...composerCommands(view),
   ])

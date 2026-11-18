@@ -142,11 +142,7 @@ export function placeCard(
   room: { width: number; height: number },
 ): { spot: Box | null; left: number; top: number } {
   if (!target) {
-    return {
-      spot: null,
-      left: (room.width - card.width) / 2,
-      top: (room.height - card.height) / 2,
-    }
+    return { spot: null, left: (room.width - card.width) / 2, top: (room.height - card.height) / 2 }
   }
   const spot = {
     x: target.x - PAD,

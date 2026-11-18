@@ -14,13 +14,7 @@ const held: {
   refusing: boolean
   standing: { state: string; program?: string }
   starts: boolean
-} = {
-  accounts: [],
-  keys: new Map(),
-  refusing: false,
-  standing: { state: 'missing' },
-  starts: true,
-}
+} = { accounts: [], keys: new Map(), refusing: false, standing: { state: 'missing' }, starts: true }
 
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),

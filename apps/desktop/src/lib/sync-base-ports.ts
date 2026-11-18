@@ -36,10 +36,7 @@ providePort('sync.storage', {
   forget: (name) => forget(name),
 })
 
-providePort('sync.clock', {
-  now: () => Date.now(),
-  waited: (ms) => waited(ms),
-})
+providePort('sync.clock', { now: () => Date.now(), waited: (ms) => waited(ms) })
 
 providePort('sync.account', {
   get token() {
