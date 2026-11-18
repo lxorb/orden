@@ -37,7 +37,7 @@ export const DOCUMENT_KINDS: ReadonlySet<string> = new Set([
   'chat',
 ])
 
-export const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url', 'term', 'chat')"
+const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url', 'term', 'chat')"
 
 export { kindOfName }
 

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
-const loads = vi.hoisted(() => ({ next: Promise.resolve() as Promise<unknown> }))
+const loads = vi.hoisted(() => ({ next: Promise.resolve<unknown>(undefined) }))
 
 vi.mock('../../accounts/src/api', () => ({
   account: { loadSpaces: () => loads.next },
