@@ -6,9 +6,9 @@ import subprocess
 import sys
 import time
 
-from drive_scheme import switch
+from drive_scheme import clicked
 from linux_app import run
-from linux_desk import DESK, OUT, failures, window, ratio, box, press, until
+from linux_desk import DESK, OUT, failures, window, ratio, press, until
 
 SWITCHES = int(sys.argv[4]) if len(sys.argv) > 4 else 10
 
@@ -31,7 +31,7 @@ def tabs():
 
 said = "not tried"
 for _ in range(3):
-    said = switch(run, box, press, "dark")
+    said = clicked(run, "dark")
     if run("document.documentElement.dataset.theme") == "dark":
         break
     time.sleep(1.5)

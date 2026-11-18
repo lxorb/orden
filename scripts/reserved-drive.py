@@ -21,15 +21,15 @@ def until(code, seconds=20):
 
 def command(name, args):
     return run(
-        f"nib.invoke({json.dumps(name)}, {json.dumps(args)})"
+        f"orden.invoke({json.dumps(name)}, {json.dumps(args)})"
         ".then(() => 'done', (error) => 'refused: ' + error)"
     )
 
 def there(path):
-    return run(f"nib.invoke('path_exists', {{ path: {json.dumps(str(path))} }})") is True
+    return run(f"orden.invoke('path_exists', {{ path: {json.dumps(str(path))} }})") is True
 
 def text_of(path):
-    return run(f"nib.invoke('read_note', {{ path: {json.dumps(str(path))} }}).catch(() => null)")
+    return run(f"orden.invoke('read_note', {{ path: {json.dumps(str(path))} }}).catch(() => null)")
 
 root = until("orden.workspace.activeSpace && orden.workspace.activeSpace.root")
 if not root:

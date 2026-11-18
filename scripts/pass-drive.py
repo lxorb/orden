@@ -248,18 +248,24 @@ def joined(port, email, password):
     return True
 
 def pass_turned_on():
-    switch = "document.querySelector('[role=switch][aria-label=\"Password manager\"]')"
-    run("(orden.settings.show('general'), 'shown')")
-    if not until(lambda: app(f"!!{switch}?.getClientRects().length"), 20):
-        fail("Settings shows no Password manager switch")
-        shot("no-switch")
-        return False
-    if app(f"{switch}.getAttribute('aria-checked')") != "true":
-        app(f"({switch}.click(), true)")
-    if not until(lambda: app(f"{switch}?.getAttribute('aria-checked') === 'true'"), 10):
-        fail("the Password manager switch did not turn on")
-        shot("switch-off")
-        return False
+    run("(orden.settings.show('experimental'), 'shown')")
+    for label in ("Enable experimental features", "Password manager"):
+        switch = f"document.querySelector('[role=switch][aria-label=\"{label}\"]')"
+        if not until(lambda: app(f"!!{switch}?.getClientRects().length"), 20):
+            fail(f"Settings shows no {label} switch")
+            shot("no-switch")
+            return False
+        if app(f"{switch}.getAttribute('aria-checked')") != "true":
+            app(f"({switch}.click(), true)")
+            time.sleep(0.5)
+            app(
+                "([...document.querySelectorAll('[role=dialog].sheet .row button.orden-button:not(.is-quiet)')]"
+                ".find((one) => one.textContent.trim() === 'Turn on')?.click(), true)"
+            )
+        if not until(lambda: app(f"{switch}?.getAttribute('aria-checked') === 'true'"), 10):
+            fail(f"the {label} switch did not turn on")
+            shot("switch-off")
+            return False
     run("(orden.settings.open = false, 'shut')")
     time.sleep(0.5)
     return True
@@ -337,7 +343,10 @@ def pass_set_up():
         return False
     note("Pass set up, one login made in the Pass tab")
     settings = {**view, "page": "settings"}
-    run(f"(orden.workspace.openUnsaved('pass', {json.dumps(json.dumps(settings))}, 'Pass'), 'opened')")
+    run(
+        "(() => { const ws = orden.workspace; for (const one of ws.tabs.filter((tab) => tab.kind === 'pass')) ws.close(one.id);"
+        f" ws.openUnsaved('pass', {json.dumps(json.dumps(settings))}, 'Pass'); return 'opened' }})()"
+    )
     switch = """[...document.querySelectorAll('button[role=switch]')].find(
       (one) => one.textContent.trim() === 'Sign in automatically' && one.getClientRects().length)"""
     if not until(lambda: app(f"!!({switch})"), 20):

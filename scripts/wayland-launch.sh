@@ -267,6 +267,7 @@ fi
 [ "${KILL:-0}" = 1 ] && endpoint
 [ "${RESERVED:-0}" = 1 ] && endpoint
 [ "${PDFMARK:-0}" = 1 ] && endpoint
+[ "${IDLE:-0}" = 1 ] && endpoint
 if [ "${EXPORTPDF:-0}" = 1 ]; then
   mkdir -p "$out/spaces"
   ORDEN_SPACES_DIR="$(cd "$out/spaces" && pwd)"

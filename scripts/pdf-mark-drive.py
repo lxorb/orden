@@ -53,7 +53,7 @@ folder = Path(root)
 lecture, leaflet, sketch = folder / "Lecture.pdf", folder / "Leaflet.pdf", folder / "Sketch.pages"
 def put(path, bytes_):
     said = run(
-        f"nib.invoke('write_bytes', {{ path: {json.dumps(str(path))}, base64: {json.dumps(base64.b64encode(bytes_).decode())} }})"
+        f"orden.invoke('write_bytes', {{ path: {json.dumps(str(path))}, base64: {json.dumps(base64.b64encode(bytes_).decode())} }})"
         ".then(() => 'done', (error) => 'refused: ' + error)"
     )
     if said != "done":
@@ -63,7 +63,7 @@ put(lecture, pdf("Lecture"))
 put(leaflet, pdf("Leaflet"))
 BLANK = json.dumps('{"nodes":[],"edges":[]}')
 made_sketch = run(
-    f"nib.invoke('write_note', {{ path: {json.dumps(str(sketch))}, content: {BLANK} }})"
+    f"orden.invoke('write_note', {{ path: {json.dumps(str(sketch))}, content: {BLANK} }})"
     ".then(() => 'done', (error) => 'refused: ' + error)"
 )
 if made_sketch != "done":
@@ -82,7 +82,7 @@ made = str(folder / "Lecture.pages")
 run(f"orden.workspace.openPdf({json.dumps(str(lecture))}); true")
 if not until(f"{LISTED}orden.workspace.entryAt({json.dumps(made)})?.path ?? null"):
     sys.exit("::error::opening the PDF made no page note")
-print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {run(f"nib.invoke('path_exists', {{ path: {json.dumps(str(folder / 'Lecture.pages.pdf'))} }})")}")
+print(f"pdf mark: Lecture.pdf opened, and is {made} now, holding its paper: {run(f"orden.invoke('path_exists', {{ path: {json.dumps(str(folder / 'Lecture.pages.pdf'))} }})")}")
 time.sleep(1.5)
 
 pdf_mark, made_mark, blank_mark = mark(str(leaflet)), mark(made), mark(str(sketch))

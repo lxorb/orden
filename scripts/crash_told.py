@@ -15,8 +15,13 @@ REPORTS = "orden:crash-reports"
 SETUP = "orden:setup"
 
 CODE = f"""(() => {{
-  if (localStorage.getItem({json.dumps(SETUP)}) === null) localStorage.setItem({json.dumps(SETUP)}, '"done"')
+  const kept = localStorage.getItem({json.dumps(SETUP)})
+  if (kept === null || kept.startsWith('{{')) localStorage.setItem({json.dumps(SETUP)}, '"done"')
   if (window.ordenApp?.setup?.showing) window.ordenApp.setup.finish()
+  else if (kept?.startsWith('{{')) {{
+    setTimeout(() => location.reload(), 100)
+    return 'set up'
+  }}
   const sheet = document.querySelector('.orden-screen.sheet[role="dialog"]')
   const box = sheet?.querySelector('input.orden-checkbox')
   const go = sheet?.querySelector('button[data-lands]')
