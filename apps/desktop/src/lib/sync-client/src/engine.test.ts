@@ -563,6 +563,45 @@ describe('an open note', () => {
     expect(kept()).toEqual([])
     part?.()
   })
+
+  test('a version the full account has no room for waits, and the rest of the space still goes', async () => {
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+    const mine = seeded.replace('Monday', 'Tuesday')
+    const part = await attach(
+      one.engine,
+      PLAN,
+      { live: new SharedDoc(mine), latest: mine },
+      () => true,
+    )
+    const kept = () =>
+      (one.engine.core.spaces.get(SPACE)?.outbox ?? []).flatMap(({ record }) =>
+        record.t === 'keep' ? [record.keep.text] : [],
+      )
+
+    one.online = true
+    one.refuses = (route) => route === 'keep'
+    one.refusal = new Refused(507, 'there is no room left on the account')
+    const full = await one.engine.pass(SPACE)
+    expect(full).toMatchObject({ full: true, finished: true })
+    expect(kept()).toEqual([theirs])
+
+    one.refuses = () => false
+    const room = await one.engine.pass(SPACE)
+    expect(room).toMatchObject({ full: false, finished: true })
+    expect(kept()).toEqual([])
+    part?.()
+  })
 })
 
 describe('a key typed while a note and its document are brought together', () => {

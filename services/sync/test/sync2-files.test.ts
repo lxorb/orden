@@ -465,6 +465,7 @@ describe('the bytes an editor names', () => {
       body: { hash, base: await hashOf(mine) },
     })
     expect(answer.status).toBe(404)
+    expect(answer.json).toEqual({ error: 'no such file', blob: hash })
     expect((await call(env, `/v2/files/${space}/${id}`, { token: editor })).text).not.toBe(
       new TextDecoder().decode(bytes(256, 11)),
     )
@@ -652,6 +653,28 @@ describe('the quota, for bytes that went up in parts', () => {
 })
 
 describe('the bytes an account keeps, asked', () => {
+  test('for a space, are the bytes that space holds, whoever sent them', async () => {
+    const data = bytes(3000, 24)
+    const hash = await hashOf(data)
+    await upload(data)
+    await place('ours.bin', hash)
+    const other = (await call(env, '/v1/spaces', { token, body: { name: 'Other' } })).json.space.id
+    await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
+    const hidden = bytes(3000, 25)
+    await upload(hidden)
+    await place('hidden.bin', await hashOf(hidden), token, other)
+    const editor = await invited(env, token, space, 'editor@example.com', 'write')
+    const asked = async (body: object) =>
+      (await call(env, '/v2/blobs/have', { token: editor, body })).json as unknown as {
+        kept: string[]
+      }
+
+    const both = [hash, await hashOf(hidden)]
+    expect(await asked({ space, hashes: both })).toEqual({ kept: [hash] })
+    expect(await asked({ hashes: both })).toEqual({ kept: [] })
+    expect(await asked({ space: other, hashes: both })).toEqual({ kept: [] })
+  })
+
   test('answers its own rows only, and no more than ninety at once', async () => {
     const data = bytes(3000, 21)
     const hash = await hashOf(data)
@@ -666,6 +689,15 @@ describe('the bytes an account keeps, asked', () => {
     })
     expect(asked.status).toBe(200)
     expect((asked.json as unknown as { kept: string[] }).kept).toEqual([hash])
+
+    expect(
+      (
+        await call(env, '/v2/blobs/have', {
+          token,
+          body: { space: 'no such space', hashes: [hash, await hashOf(theirs)] },
+        })
+      ).json,
+    ).toEqual({ kept: [hash] })
 
     const many = Array.from({ length: 91 }, (_, at) => at.toString(16).padStart(64, '0'))
     expect((await call(env, '/v2/blobs/have', { token, body: { hashes: many } })).status).toBe(400)
