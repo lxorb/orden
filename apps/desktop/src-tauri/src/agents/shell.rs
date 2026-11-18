@@ -303,7 +303,7 @@ pub fn notifications(app: &AppHandle) -> bool {
 pub fn notify(app: &AppHandle, title: String, body: String) {
     use tauri_plugin_notification::NotificationExt as _;
 
-    if crate::placement::away().is_some() || !notifications(app) {
+    if orden_placement::placement::away().is_some() || !notifications(app) {
         return;
     }
     let mut built = app.notification().builder().title(title);
@@ -332,7 +332,7 @@ const QUIT: &str = "orden-agents-quit";
 fn tray(app: &AppHandle, on: bool, agents: bool, words: &Words) {
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
-    if !on || crate::placement::away().is_some() {
+    if !on || orden_placement::placement::away().is_some() {
         let _ = app.remove_tray_by_id(TRAY);
         return;
     }
@@ -426,7 +426,7 @@ fn rows<R: tauri::Runtime>(
 pub(crate) fn open(app: &AppHandle) {
     if let Some(window) = host(app) {
         let _ = window.show();
-        crate::placement::raised(&window);
+        orden_placement::placement::raised(&window);
     }
     with(|shell| shell.hidden = None);
 }

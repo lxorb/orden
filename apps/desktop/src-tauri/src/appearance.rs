@@ -31,14 +31,14 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
         changed.map_err(|error| format!("the frame could not be changed: {error}"))?;
 
         #[cfg(not(target_os = "macos"))]
-        crate::top_edge::mind(&window);
+        orden_placement::top_edge::mind(&window);
 
         #[cfg(target_os = "macos")]
         {
             orden_system::lights::refresh(&window);
 
             if let Some(page) = app.get_webview(window.label()) {
-                crate::placement::keyboard_to(&page);
+                orden_placement::placement::keyboard_to(&page);
             }
         }
     }

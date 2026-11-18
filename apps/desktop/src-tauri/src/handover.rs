@@ -232,7 +232,7 @@ fn asked(names: &Names, launch: &[u8]) -> Asked {
         })
     };
 
-    let chosen = if crate::placement::asked_away() {
+    let chosen = if orden_placement::placement::asked_away() {
         match std::env::var("ORDEN_PROBE_NOT_RESPONDING").as_deref() {
             Ok("end") => IDOK,
             Ok("wait") => {

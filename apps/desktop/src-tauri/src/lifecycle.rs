@@ -225,7 +225,7 @@ pub fn update_settled(webview: tauri::Webview) {
 }
 
 pub fn before_installer(app: &AppHandle, from: &str) {
-    crate::placement::note_every_window(app);
+    orden_placement::placement::note_every_window(app);
 
     let installer = app.state::<Installer>();
     let others: Vec<String> = listening_windows(app, Some(from))
@@ -307,14 +307,14 @@ pub fn quit_show(webview: tauri::Webview) {
         crate::agents::shell::open(webview.app_handle());
         return;
     }
-    crate::placement::raised(&window);
+    orden_placement::placement::raised(&window);
 }
 
 pub fn quit_now(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
 
-    crate::placement::note_every_window(app);
+    orden_placement::placement::note_every_window(app);
 
     let windows = document_windows(app);
     if windows.is_empty() {

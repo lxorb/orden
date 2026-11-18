@@ -148,7 +148,7 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
         .iter()
         .any(|one| crate::reminders::link::is_reminder(one));
     if let Some(window) = app.get_window(MAIN).filter(|_| !reminder) {
-        if crate::placement::away().is_none() {
+        if orden_placement::placement::away().is_none() {
             let _ = window.show();
         }
         bring_forward(&window);
@@ -250,7 +250,7 @@ pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
 }
 
 pub fn brought_up(window: &tauri::Window) {
-    if crate::placement::away().is_none() {
+    if orden_placement::placement::away().is_none() {
         let _ = window.show();
     }
     bring_forward(window);
@@ -307,7 +307,10 @@ fn open_again(app: &AppHandle) -> Result<(), String> {
     if label != MAIN {
         return open_window(app, &label);
     }
-    opened(crate::placement::reopened(app, window_builder(app, MAIN)))
+    opened(orden_placement::placement::reopened(
+        app,
+        window_builder(app, MAIN),
+    ))
 }
 
 fn window_builder<'a>(
@@ -336,7 +339,7 @@ fn window_builder<'a>(
 
 fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> Result<(), String> {
     let building = crate::appearance::own_frame(builder);
-    let window = crate::placement::built(building)
+    let window = orden_placement::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
     crate::pinch::let_through(window.as_ref());
     orden_documents::dropped_paths::hear(window.as_ref());
@@ -344,7 +347,7 @@ fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> R
     #[cfg(target_os = "macos")]
     {
         orden_system::lights::hold(&window);
-        if crate::placement::away().is_none() {
+        if orden_placement::placement::away().is_none() {
             window
                 .show()
                 .map_err(|error| format!("could not show the window: {error}"))?;
@@ -365,7 +368,7 @@ fn reopened_label(app: &AppHandle) -> String {
 }
 
 fn bring_forward(window: &tauri::Window) {
-    crate::placement::raised(window);
+    orden_placement::placement::raised(window);
 }
 
 #[tauri::command]

@@ -3,10 +3,10 @@ written down every twenty milliseconds. Windows only.
 
 A probe - a build started through `run_probe` in probe_app.py - must never be the
 window in front of whoever is working at the machine; see
-apps/desktop/src-tauri/src/foreground.rs for how the app holds itself back and why a
-watch that ends it afterwards is not enough. This is the proof that it does, under the
-load that made it fail on 2026-09-30: launches back to back, cold and warm, on an empty
-space and on five thousand notes.
+apps/desktop/src-tauri/crates/placement/src/foreground.rs for how the app holds itself
+back and why a watch that ends it afterwards is not enough. This is the proof that it
+does, under the load that made it fail on 2026-09-30: launches back to back, cold and
+warm, on an empty space and on five thousand notes.
 
 Each launch runs in a process of its own, because the watch in `run_probe` ends the
 whole drive the moment a probe is in view, and a count needs the run to go on. Meanwhile

@@ -106,7 +106,7 @@ fn plain(notice: &Notice) -> bool {
 }
 
 fn probing() -> bool {
-    crate::placement::away().is_some()
+    orden_placement::placement::away().is_some()
 }
 
 #[tauri::command(async)]
@@ -195,7 +195,7 @@ pub fn answered(app: &AppHandle, id: &str, act: Act, text: Option<String>) {
     };
     if act == Act::Open {
         let _ = window.show();
-        crate::placement::raised(&window);
+        orden_placement::placement::raised(&window);
     }
     let answer = Answer {
         id: id.to_string(),

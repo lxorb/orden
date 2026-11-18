@@ -33,7 +33,7 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
         return None;
     }
     let probe = std::env::var(PROBE_KEY).ok();
-    let wanted = key_allowed(key, probe, crate::placement::away().is_some());
+    let wanted = key_allowed(key, probe, orden_placement::placement::away().is_some());
     *HOST.lock().unwrap_or_else(PoisonError::into_inner) = Some(webview.label().to_owned());
     let held = crate::hotkeys::hold(&app, crate::hotkeys::Which::QuickAdd, wanted);
     if ASKED_AT_LAUNCH.swap(false, Ordering::Relaxed) {
@@ -62,13 +62,13 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
             Err(_) => return,
         },
     };
-    if crate::placement::away().is_none() {
+    if orden_placement::placement::away().is_none() {
         under_pointer(app, &window);
         let _ = window.show();
     }
     let _ = token;
-    crate::placement::raised(&window.as_ref().window());
-    crate::placement::keyboard_to(window.as_ref());
+    orden_placement::placement::raised(&window.as_ref().window());
+    orden_placement::placement::keyboard_to(window.as_ref());
 }
 
 fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<orden_base::Engine>> {
@@ -92,7 +92,7 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<orden_bas
 
     let builder = crate::engine::own_profile(builder);
 
-    crate::placement::built(builder)
+    orden_placement::placement::built(builder)
 }
 
 fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<orden_base::Engine>) {
@@ -135,7 +135,7 @@ pub fn quick_add_hide(app: AppHandle, webview: Webview, raise: bool) {
     }
     if raise {
         if let Some(window) = host().and_then(|label| app.get_window(&label)) {
-            crate::placement::raised(&window);
+            orden_placement::placement::raised(&window);
         }
     }
 }
