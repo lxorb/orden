@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const HOUR = 60 * 60 * 1000
 const EVERY = 6 * HOUR
@@ -47,21 +48,6 @@ vi.mock('./updater', () => ({
     return Promise.resolve()
   },
 }))
-
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-
-  return {
-    get length() {
-      return held.size
-    },
-    key: (index) => [...held.keys()][index] ?? null,
-    getItem: (key) => held.get(key) ?? null,
-    setItem: (key, value) => void held.set(key, value),
-    removeItem: (key) => void held.delete(key),
-    clear: () => held.clear(),
-  }
-}
 
 const storage = memoryStorage()
 

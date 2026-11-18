@@ -1,18 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (at) => [...store.keys()][at] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 type Heard = (event: { key: string | null }) => void
 const heard: Heard[] = []

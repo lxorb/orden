@@ -1,12 +1,8 @@
 import { providePort } from '@orden/contracts'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
-const store = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => store.get(key) ?? null,
-  setItem: (key: string, value: string) => void store.set(key, value),
-  removeItem: (key: string) => void store.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const opened: (string | undefined)[] = []
 

@@ -1,14 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const KEY = 'orden:setup'
 
-const kept = new Map<string, string>()
-
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => kept.get(key) ?? null,
-  setItem: (key: string, value: string) => void kept.set(key, value),
-  removeItem: (key: string) => void kept.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 async function fresh() {
   vi.resetModules()
@@ -26,7 +21,7 @@ async function relaunched() {
   return setup
 }
 
-beforeEach(() => kept.clear())
+beforeEach(() => localStorage.clear())
 
 describe('the first-launch setup', () => {
   test('stays away from people who used Orden before it existed', async () => {
@@ -35,7 +30,7 @@ describe('the first-launch setup', () => {
   })
 
   test('stays away from people who finished it, even on a fresh start', async () => {
-    kept.set(KEY, JSON.stringify('done'))
+    localStorage.setItem(KEY, JSON.stringify('done'))
     const setup = await relaunched()
     setup.begin(false)
     expect(setup.showing).toBe(false)
@@ -47,7 +42,7 @@ describe('the first-launch setup', () => {
     expect(setup.showing).toBe(true)
     expect(setup.step).toBe('account')
 
-    kept.clear()
+    localStorage.clear()
     const signed = await fresh()
     signed.begin(true)
     expect(signed.step).toBe('appearance')
@@ -112,7 +107,7 @@ describe('the first-launch setup', () => {
     setup.begin(false)
     setup.finish()
     expect(setup.showing).toBe(false)
-    expect(kept.get(KEY)).toBe(JSON.stringify('done'))
+    expect(localStorage.getItem(KEY)).toBe(JSON.stringify('done'))
 
     const again = await relaunched()
     again.begin(false)
