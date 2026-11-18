@@ -198,7 +198,7 @@ pub fn tray_keep(
 }
 
 pub fn in_tray() -> bool {
-    with(|shell| shell.kept || !shell.said.is_empty())
+    cfg!(any(windows, target_os = "macos")) && with(|shell| shell.kept || !shell.said.is_empty())
 }
 
 #[tauri::command]
@@ -450,6 +450,14 @@ mod tests {
             drawn > 36 * 36 / 4 && drawn < 36 * 36 * 3 / 4,
             "{drawn} pixels drawn"
         );
+    }
+
+    #[test]
+    fn the_app_is_kept_in_a_tray_only_where_there_is_one() {
+        with(|shell| shell.kept = true);
+        let kept = in_tray();
+        with(|shell| shell.kept = false);
+        assert_eq!(kept, cfg!(any(windows, target_os = "macos")));
     }
 
     #[test]
