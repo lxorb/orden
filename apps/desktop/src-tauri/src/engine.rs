@@ -96,6 +96,8 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<orden_base::Engine>>(
 ) -> Result<tauri::WebviewWindowBuilder<'a, orden_base::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
+    #[cfg(not(any(target_os = "macos", windows)))]
+    let building = building.disable_drag_drop_handler();
     let building = {
         let _ = OWN_PROFILE.set(orden_web::engine::app_profile(manager.app_handle())?);
         orden_web::page_scale::read_chosen(manager.app_handle());

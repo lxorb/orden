@@ -8,7 +8,6 @@ let refuse = false
 const PATH = '/home/emil/.cache/nib/images/nib-0011223344556677.png'
 const KEPT = '/home/emil/.cache/so.orden.Orden/images/nib-8899aabbccddeeff.png'
 const kept: Record<string, unknown>[] = []
-let outside: string[] = []
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
@@ -30,7 +29,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
       kept.push(args)
       return refuse ? Promise.reject(new Error('disk full')) : Promise.resolve(KEPT)
     }
-    if (command === 'dropped_paths') return Promise.resolve(outside)
     if (command === 'remote_image') {
       carried.push(args)
       return refuse ? Promise.reject(new Error('Permission denied')) : Promise.resolve(PATH)
@@ -164,7 +162,6 @@ beforeEach(() => {
   typed.length = 0
   carried.length = 0
   kept.length = 0
-  outside = []
   heard.length = 0
   reads.count = 0
   refuse = false
@@ -291,21 +288,7 @@ function drop(session: Opened, transfer: Partial<DataTransfer>): boolean {
   return over.defaultPrevented && event.defaultPrevented
 }
 
-const named = (name: string, type: string) => ({ name, type }) as unknown as File
-
 test('files dropped from another app on a local terminal are their paths at the prompt', async () => {
-  const session = await local('img-5')
-  outside = ['/home/emil/Pictures/shot one.png', '/home/emil/notes.txt']
-
-  const files = [named('shot one.png', 'image/png'), named('notes.txt', 'text/plain')]
-  expect(drop(session, { types: ['Files'], files: files as unknown as FileList })).toBe(true)
-  await vi.waitFor(() =>
-    expect(typed.join('')).toBe("'/home/emil/Pictures/shot one.png' /home/emil/notes.txt"),
-  )
-  expect(kept).toEqual([])
-})
-
-test('rows of the file explorer dropped on a local terminal are their paths too', async () => {
   const session = await local('img-6')
 
   const rows = JSON.stringify(['/etc/hosts', '/tmp/a b'])

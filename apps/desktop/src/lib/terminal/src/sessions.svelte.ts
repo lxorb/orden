@@ -22,7 +22,7 @@ import {
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../../ui-controls/src/api'
-import { droppedPaths, identifier, invoke, localDate, platform } from '../../platform/src/api'
+import { identifier, invoke, localDate, platform } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
 import { owes } from '../../parting/src/api'
 import { SHORTCUTS, shortcuts } from '../../shortcuts/src/api'
@@ -1381,11 +1381,7 @@ class Session {
     const pictures = this.remote ? files.filter((file) => imageKindOf(file.type) !== null) : []
     if (pictures.length) {
       void import('./images').then(({ pictureOf }) => this.carry(pictures.map(pictureOf)))
-      return
     }
-    if (this.online || !files.length) return
-
-    void droppedPaths(files).then((paths) => this.speak(paths))
   }
 
   private droppedRows(paths: readonly string[]) {

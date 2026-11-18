@@ -9,7 +9,6 @@
         "minWidth": 520,
         "minHeight": 400,
         "decorations": true,
-        "dragDropEnabled": true,
         "visible": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true

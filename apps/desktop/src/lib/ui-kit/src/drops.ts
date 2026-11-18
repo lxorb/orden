@@ -1,19 +1,9 @@
 import { isFileDrop, listenOver, outsideRows } from './drag-paths'
-import { droppedPaths } from '../../platform/src/api'
 
 const PDF = /\.pdf$/i
 
-function isPdfPath(path: string): boolean {
-  return PDF.test(path)
-}
-
-function mayHoldPdfs(transfer: DataTransfer | null): boolean {
-  const rows = outsideRows(transfer)
-  if (rows.length) return rows.some(isPdfPath)
-  if (!isFileDrop(transfer)) return false
-
-  const files = [...(transfer?.items ?? [])].filter((one) => one.kind === 'file')
-  return !files.length || files.some((one) => one.type === 'application/pdf' || one.type === '')
+function pdfsOf(transfer: DataTransfer | null): string[] {
+  return outsideRows(transfer).filter((one) => PDF.test(one))
 }
 
 export function guardDrops(opened: (paths: readonly string[]) => void): () => void {
@@ -23,7 +13,7 @@ export function guardDrops(opened: (paths: readonly string[]) => void): () => vo
     ours = false
     if (event.defaultPrevented) return
 
-    const pdfs = mayHoldPdfs(event.dataTransfer)
+    const pdfs = pdfsOf(event.dataTransfer).length > 0
     if (!pdfs && !isFileDrop(event.dataTransfer)) return
 
     event.preventDefault()
@@ -37,13 +27,8 @@ export function guardDrops(opened: (paths: readonly string[]) => void): () => vo
     ours = false
     event.preventDefault()
     event.stopImmediatePropagation()
-    const transfer = event.dataTransfer
-    const rows = outsideRows(transfer)
-    const files = [...(transfer?.files ?? [])]
-    void (rows.length ? Promise.resolve(rows) : pathsOf(files)).then((paths) => {
-      const pdfs = paths.filter(isPdfPath)
-      if (pdfs.length) opened(pdfs)
-    })
+    const pdfs = pdfsOf(event.dataTransfer)
+    if (pdfs.length) opened(pdfs)
   }
 
   const drop = (event: DragEvent) => {
@@ -59,9 +44,4 @@ export function guardDrops(opened: (paths: readonly string[]) => void): () => vo
     window.removeEventListener('drop', taken, true)
     window.removeEventListener('drop', drop)
   }
-}
-
-async function pathsOf(files: readonly File[]): Promise<readonly string[]> {
-  if (!files.length) return []
-  return droppedPaths(files)
 }

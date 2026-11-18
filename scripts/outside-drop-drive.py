@@ -12,7 +12,7 @@ import tempfile
 import threading
 import time
 from typing import Any, Callable
-from native_app import App, config_of, endpoint, known
+from native_app import App, config_of, endpoint
 from fresh_app import ended, fresh
 
 WIDTH, HEIGHT = 1100, 720
@@ -564,7 +564,7 @@ def main() -> int:
         if why:
             wrong.append(why)
         elif not waited(lambda: pages_tabs() > before):
-            known(2197, f"a PDF dropped on a note opened no page note ({pages_tabs()} page tabs, {before} before)")
+            wrong.append(f"a PDF dropped on a note opened no page note ({pages_tabs()} page tabs, {before} before)")
         elif pdfs_in_space():
             wrong.append(f"a PDF dropped on a note was put in the space: {pdfs_in_space()}")
         else:
@@ -575,7 +575,7 @@ def main() -> int:
         if why:
             print(f"::notice::{why}", flush=True)
         elif not waited(lambda: pages_tabs() > before):
-            known(2197, f"a PDF dropped on the tab strip opened no page note ({pages_tabs()} page tabs, {before} before)")
+            wrong.append(f"a PDF dropped on the tab strip opened no page note ({pages_tabs()} page tabs, {before} before)")
         else:
             print("strip: the PDF opened as a page note", flush=True)
 
