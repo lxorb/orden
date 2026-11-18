@@ -1122,6 +1122,14 @@ mod tests {
 
     use super::{chromium_version, headed, id_and_key, pattern, shortcut, translate};
 
+    fn read(at: &std::path::Path, file: &str) -> String {
+        std::fs::read_to_string(at.join(file)).expect("there")
+    }
+
+    fn read_json(at: &std::path::Path, file: &str) -> serde_json::Value {
+        serde_json::from_str(&read(at, file)).expect("json")
+    }
+
     #[test]
     fn a_manifest_v2_add_on_becomes_a_manifest_v3_extension() {
         let firefox = json!({
@@ -1360,20 +1368,14 @@ mod tests {
         )
         .expect("a manifest");
         super::apply(at, "x@example.com").expect("applied");
-        let words: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(at.join("_locales/et/messages.json")).expect("there"),
-        )
-        .expect("words");
+        let words = read_json(at, "_locales/et/messages.json");
         assert_eq!(
             words["onboarding_1_header"],
             json!({ "message": "Tere $first_name$", "placeholders": { "first_name": { "content": "$1" } } })
         );
         assert_eq!(words["plain"]["message"], "x  costs $1 and $$5");
         assert!(words.get("empty").is_none());
-        let manifest: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(at.join("manifest.json")).expect("there"),
-        )
-        .expect("a manifest");
+        let manifest = read_json(at, "manifest.json");
         assert_eq!(manifest["name"], "__MSG_onboarding_1_header__");
     }
 
@@ -1425,7 +1427,7 @@ mod tests {
         .expect("a manifest");
         std::fs::write(at.join("icon.svg"), "<svg/>").expect("a picture");
         super::apply(at, "x@example.com").expect("applied");
-        let layer = std::fs::read_to_string(at.join("orden/firefox.js")).expect("there");
+        let layer = read(at, "orden/firefox.js");
         assert!(!layer.contains(r#""icon":"#), "{layer}");
         assert!(at.join("orden/icon.png").is_file());
     }
@@ -1471,27 +1473,24 @@ mod tests {
         assert_eq!(gaps.apis, ["dns"]);
         assert_eq!(super::gaps_in(at), Some(gaps));
 
-        let popup = std::fs::read_to_string(at.join("popup.html")).expect("there");
+        let popup = read(at, "popup.html");
         assert!(
             popup.starts_with(&format!("<html><head>{}", super::PAGE_SCRIPTS)),
             "{popup}"
         );
-        let background = std::fs::read_to_string(at.join("bg/index.html")).expect("there");
+        let background = read(at, "bg/index.html");
         assert!(
             background.contains(super::BACKGROUND_SCRIPTS),
             "{background}"
         );
-        let layer = std::fs::read_to_string(at.join("orden/firefox.js")).expect("there");
+        let layer = read(at, "orden/firefox.js");
         assert!(layer.starts_with("globalThis.__ordenLayer = "), "{layer}");
         assert!(
             layer.contains(r#""scripts":["lib.js","bg/main.js"]"#),
             "{layer}"
         );
         assert!(at.join("orden/host.js").is_file());
-        let manifest: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(at.join("manifest.json")).expect("there"),
-        )
-        .expect("a manifest");
+        let manifest = read_json(at, "manifest.json");
         assert_eq!(manifest["manifest_version"], 3);
         assert_eq!(manifest["key"], id_and_key("x@example.com").1);
     }

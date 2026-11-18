@@ -15,21 +15,6 @@ pub mod clipboard {
     }
 }
 
-pub mod audio {
-    pub struct Sound;
-
-    impl Sound {
-        pub fn start(_monitor: &str) -> Option<Sound> {
-            None
-        }
-
-        #[allow(clippy::unused_self)]
-        pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
-            None
-        }
-    }
-}
-
 use orden_base::Held as _;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -515,6 +500,24 @@ fn keep(desk: &Desk) {
 }
 
 #[cfg(test)]
+pub fn notepad_on(width: u32, height: u32) -> Option<(Desktop, Program)> {
+    let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
+        .join("System32\\notepad.exe");
+    if !notepad.is_file() {
+        eprintln!("no notepad.exe here: skipped");
+        return None;
+    }
+    let desktop = Desktop::start(width, height).unwrap();
+    let program = desktop
+        .run(
+            &[notepad.to_string_lossy().into_owned()],
+            &std::env::temp_dir(),
+        )
+        .unwrap();
+    Some((desktop, program))
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -618,19 +621,9 @@ mod tests {
 
     #[test]
     fn runs_a_program_on_a_desktop_of_its_own() {
-        let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
-            .join("System32\\notepad.exe");
-        if !notepad.is_file() {
-            eprintln!("no notepad.exe here: skipped");
+        let Some((desktop, program)) = notepad_on(900, 700) else {
             return;
-        }
-        let desktop = Desktop::start(900, 700).unwrap();
-        let program = desktop
-            .run(
-                &[notepad.to_string_lossy().into_owned()],
-                &std::env::temp_dir(),
-            )
-            .unwrap();
+        };
         let desk = desktop.desk();
         let until = std::time::Instant::now() + Duration::from_secs(20);
         let watcher = std::thread::spawn({

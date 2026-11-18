@@ -226,13 +226,14 @@ mod tests {
         }
     }
 
+    fn size(width: f64, height: f64) -> Extent {
+        Extent { width, height }
+    }
+
     fn one_pane() -> (Bounds, Frame) {
         let area = at(240.0, 36.0, 960.0, 724.0);
         let frame = Frame {
-            window: Extent {
-                width: 1200.0,
-                height: 800.0,
-            },
+            window: size(1200.0, 800.0),
             area,
             pane: area,
         };
@@ -248,28 +249,14 @@ mod tests {
     #[test]
     fn one_pane_keeps_the_sidebar_and_the_bars_and_takes_the_rest() {
         let (hole, frame) = one_pane();
-        let now = fitted(
-            hole,
-            &frame,
-            Extent {
-                width: 1500.0,
-                height: 900.0,
-            },
-        );
+        let now = fitted(hole, &frame, size(1500.0, 900.0));
         near(now, at(240.0, 76.0, 1260.0, 784.0));
     }
 
     #[test]
     fn a_window_made_smaller_shrinks_the_page_and_nothing_else() {
         let (hole, frame) = one_pane();
-        let now = fitted(
-            hole,
-            &frame,
-            Extent {
-                width: 1000.0,
-                height: 700.0,
-            },
-        );
+        let now = fitted(hole, &frame, size(1000.0, 700.0));
         near(now, at(240.0, 76.0, 760.0, 584.0));
     }
 
@@ -277,36 +264,19 @@ mod tests {
     fn a_pane_of_two_keeps_its_share() {
         let area = at(240.0, 36.0, 960.0, 724.0);
         let frame = Frame {
-            window: Extent {
-                width: 1200.0,
-                height: 800.0,
-            },
+            window: size(1200.0, 800.0),
             area,
             pane: at(720.0, 36.0, 480.0, 724.0),
         };
         let hole = at(720.0, 76.0, 480.0, 684.0);
-        let now = fitted(
-            hole,
-            &frame,
-            Extent {
-                width: 1440.0,
-                height: 800.0,
-            },
-        );
+        let now = fitted(hole, &frame, size(1440.0, 800.0));
         near(now, at(840.0, 76.0, 600.0, 684.0));
     }
 
     #[test]
     fn a_page_never_folds_to_nothing() {
         let (hole, frame) = one_pane();
-        let now = fitted(
-            hole,
-            &frame,
-            Extent {
-                width: 100.0,
-                height: 50.0,
-            },
-        );
+        let now = fitted(hole, &frame, size(100.0, 50.0));
         assert!(now.width >= 1.0 && now.height >= 1.0);
     }
 
@@ -314,35 +284,18 @@ mod tests {
     fn a_page_filling_the_window_fills_it_at_every_size() {
         let whole = at(0.0, 0.0, 1200.0, 800.0);
         let frame = Frame {
-            window: Extent {
-                width: 1200.0,
-                height: 800.0,
-            },
+            window: size(1200.0, 800.0),
             area: whole,
             pane: whole,
         };
-        let now = fitted(
-            whole,
-            &frame,
-            Extent {
-                width: 1920.0,
-                height: 1080.0,
-            },
-        );
+        let now = fitted(whole, &frame, size(1920.0, 1080.0));
         near(now, at(0.0, 0.0, 1920.0, 1080.0));
     }
 
     #[test]
     fn half_a_pixel_of_rounding_is_no_resize() {
         let (hole, frame) = one_pane();
-        let now = fitted(
-            hole,
-            &frame,
-            Extent {
-                width: 1200.4,
-                height: 799.7,
-            },
-        );
+        let now = fitted(hole, &frame, size(1200.4, 799.7));
         assert_eq!(now, hole);
     }
 
@@ -350,13 +303,7 @@ mod tests {
     fn a_minimised_window_says_nothing_about_the_layout() {
         assert_eq!(extent(0, 0, 1.5), None);
         assert_eq!(extent(1200, 0, 1.0), None);
-        assert_eq!(
-            extent(1800, 1200, 1.5),
-            Some(Extent {
-                width: 1200.0,
-                height: 800.0,
-            })
-        );
+        assert_eq!(extent(1800, 1200, 1.5), Some(size(1200.0, 800.0)));
     }
 
     #[test]

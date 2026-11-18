@@ -12,7 +12,7 @@ use x11rb::rust_connection::RustConnection;
 use x11rb::wrapper::ConnectionExt as _;
 use x11rb::{CURRENT_TIME, NONE};
 
-pub const MOST: usize = 200 * 1024;
+use super::{clipped, MOST_COPIED as MOST};
 
 x11rb::atom_manager! {
     pub Atoms: AtomsCookie {
@@ -199,17 +199,6 @@ impl Clipboard {
     }
 }
 
-pub fn clipped(text: &str) -> &str {
-    if text.len() <= MOST {
-        return text;
-    }
-    let mut end = MOST;
-    while !text.is_char_boundary(end) {
-        end -= 1;
-    }
-    &text[..end]
-}
-
 pub fn latin1(text: &str) -> Vec<u8> {
     text.chars()
         .map(|one| u8::try_from(u32::from(one)).unwrap_or(b'?'))
@@ -234,11 +223,7 @@ mod tests {
         super::super::in_time(|| {
             use std::time::{Duration, Instant};
 
-            if !super::super::display::available() {
-                assert!(
-                    std::env::var_os("CI").is_none(),
-                    "CI installs xvfb for this test"
-                );
+            if !crate::apps_host::needed(super::super::display::available(), "xvfb") {
                 return;
             }
             let display = super::super::display::Display::start(320, 240, 1.0).unwrap();

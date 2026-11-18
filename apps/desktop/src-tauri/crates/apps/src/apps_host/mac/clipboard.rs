@@ -6,7 +6,7 @@ use std::time::Duration;
 use objc2_app_kit::{NSPasteboard, NSPasteboardTypeString, NSWorkspace};
 use objc2_foundation::NSString;
 
-pub const MOST: usize = 200 * 1024;
+use crate::apps_host::clipped;
 const EVERY: Duration = Duration::from_millis(250);
 
 pub type Listener = Arc<dyn Fn(String) + Send + Sync>;
@@ -56,17 +56,6 @@ fn unsafe_string_type() -> &'static NSString {
     unsafe { NSPasteboardTypeString }
 }
 
-pub fn clipped(text: &str) -> &str {
-    if text.len() <= MOST {
-        return text;
-    }
-    let mut end = MOST;
-    while !text.is_char_boundary(end) {
-        end -= 1;
-    }
-    &text[..end]
-}
-
 fn watch(clipboard: &Weak<Clipboard>) {
     let mut seen = NSPasteboard::generalPasteboard().changeCount();
     loop {
@@ -99,18 +88,4 @@ fn in_front(pid: i32) -> bool {
     NSWorkspace::sharedWorkspace()
         .frontmostApplication()
         .is_some_and(|one| one.processIdentifier() == pid)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn cuts_text_at_a_character_within_the_most() {
-        assert_eq!(clipped("hi"), "hi");
-        let long = "é".repeat(MOST);
-        let cut = clipped(&long);
-        assert!(cut.len() <= MOST);
-        assert!(cut.chars().all(|one| one == 'é'));
-    }
 }
