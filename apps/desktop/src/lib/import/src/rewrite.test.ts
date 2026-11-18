@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
-import { findLinks } from '@orden/markdown/links'
-import { encodeTarget, linksFollowed } from './rewrite'
+import { encodeTarget, findLinks } from '@orden/markdown/links'
+import { linksFollowed } from './rewrite'
 
 test('a wikilink to a name holding a dollar sign keeps the name it was written with', () => {
   const out = linksFollowed(
@@ -31,4 +31,14 @@ test('a path written into a link reads back as the same path, blanks and marks a
     ).toEqual([name])
   }
   expect(encodeTarget('Café.md')).toBe('Café.md')
+})
+
+test('links are found as the app finds them: over two lines, in a definition, never in maths', () => {
+  const out = linksFollowed(
+    'A [two\nlines](Old.md) and $[x](Old.md)$.\n\n[d]: Old.md "Old"\n',
+    'Home.md',
+    new Map([['Old.md', 'New.md']]),
+    ['Home.md', 'Old.md'],
+  )
+  expect(out).toBe('A [two\nlines](New.md) and $[x](Old.md)$.\n\n[d]: New.md "Old"\n')
 })
