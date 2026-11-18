@@ -4,13 +4,11 @@ import { paletteCss, rescoped, scopedRoots } from './sample'
 describe('pointing the prose rules at a miniature', () => {
   test('takes the rules for the writing surface', () => {
     const out = rescoped('#write h1 { color: red; }', '.mini')
-
     expect(out).toBe('.mini h1 { color: red; }')
   })
 
   test('takes every mention in a selector list', () => {
     const out = rescoped('#write ul,\n#write ol { margin: 0; }', '.mini')
-
     expect(out).toContain('.mini ul')
     expect(out).toContain('.mini ol')
     expect(out).not.toContain('#write')
@@ -23,7 +21,6 @@ describe('pointing the prose rules at a miniature', () => {
 #write p { margin: 0; }`,
       '.mini',
     )
-
     expect(out).toBe('.mini p { margin: 0; }')
   })
 
@@ -33,7 +30,6 @@ describe('pointing the prose rules at a miniature', () => {
 #write h2 { color: red; }`,
       '.mini',
     )
-
     expect(out).toBe('.mini h2 { color: red; }')
   })
 
@@ -43,7 +39,6 @@ describe('pointing the prose rules at a miniature', () => {
 #write p { color: red; }`,
       '.mini',
     )
-
     expect(out).toBe('.mini p { color: red; }')
   })
 
@@ -60,7 +55,6 @@ describe('pointing the prose rules at a miniature', () => {
 describe('the token blocks restated on the frame', () => {
   test('takes the blocks that belong to no scheme', () => {
     const out = scopedRoots(':root { --space-1: 4px; }', '.mini')
-
     expect(out).toBe('.mini { --space-1: 4px; }')
   })
 
@@ -71,19 +65,16 @@ describe('the token blocks restated on the frame', () => {
 [data-theme='light'] { --bg: #fff; }`,
       '.mini',
     )
-
     expect(out).toBe('')
   })
 
   test('carries the aliases, which is the whole point of doing it', () => {
     const out = scopedRoots(':root { --code-block-bg-color: var(--surface); }', '.mini')
-
     expect(out).toContain('--code-block-bg-color: var(--surface);')
   })
 
   test('is not fooled by the comment above a block', () => {
     const out = scopedRoots(`/* The tokens. */\n:root { --a: 1; }`, '.mini')
-
     expect(out).toBe('.mini { --a: 1; }')
   })
 
@@ -93,7 +84,6 @@ describe('the token blocks restated on the frame', () => {
 #write { color: red; }`,
       '.mini',
     )
-
     expect(out).toBe('')
   })
 })
@@ -114,7 +104,6 @@ describe('the blocks a card is painted from', () => {
 
   test('writes one block per theme and scheme it states', () => {
     const css = paletteCss([theme])
-
     expect(css).toContain(`[data-palette='warm-paper'][data-theme='light']`)
     expect(css).toContain('--bg: #faf6ee;')
     expect(css).not.toContain(`[data-theme='dark']`)
@@ -123,7 +112,6 @@ describe('the blocks a card is painted from', () => {
   test('outranks the block the app writes for that scheme', () => {
     const css = paletteCss([theme])
     const selector = css.slice(0, css.indexOf('{')).trim()
-
     expect(selector.split('[').length - 1).toBe(2)
   })
 

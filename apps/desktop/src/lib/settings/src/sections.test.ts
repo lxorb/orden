@@ -1,24 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: () => Promise.resolve(null),
 }))
-
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-
-  return {
-    get length() {
-      return held.size
-    },
-    key: (at) => [...held.keys()][at] ?? null,
-    getItem: (key) => held.get(key) ?? null,
-    setItem: (key, value) => void held.set(key, value),
-    removeItem: (key) => void held.delete(key),
-    clear: () => held.clear(),
-  }
-}
 
 vi.stubGlobal('localStorage', memoryStorage())
 

@@ -69,7 +69,6 @@ describe('going back to how a space was', () => {
     const made = mount(SyncPane, { target })
     close = () => void unmount(made)
     flushSync()
-
     target.querySelector<HTMLButtonElement>('[aria-label="This space, as it was"]')?.click()
     flushSync()
     const far = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find(
@@ -78,17 +77,14 @@ describe('going back to how a space was', () => {
     if (!far) throw new Error('no 180 days ago')
     far.click()
     flushSync()
-
     button('What would change?')?.click()
     await settled()
     flushSync()
     const looked = world.rolled.at(-1)?.at ?? 0
-
     modes.setKeepVersions(KEEP_MONTH)
     flushSync()
     button('Go back')?.click()
     await settled()
-
     expect(Date.now() - looked).toBeGreaterThan(170 * DAY)
     const went = world.rolled.filter((one) => !one.preview)
     expect(went.every((one) => Date.now() - one.at <= KEEP_MONTH * DAY + 60_000)).toBe(true)

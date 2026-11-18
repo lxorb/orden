@@ -89,9 +89,7 @@ describe('a site taking the keyboard', () => {
     ;(field as HTMLInputElement).select()
     const lost = vi.fn()
     field.addEventListener('blur', lost)
-
     await pageTookIt()
-
     expect(document.activeElement).toBe(document.body)
     expect(lost).toHaveBeenCalledTimes(1)
     expect(document.documentElement.hasAttribute(IN_A_PAGE)).toBe(true)
@@ -109,9 +107,7 @@ describe('a site taking the keyboard', () => {
     const one = control(html)
     one.focus()
     expect(document.activeElement).toBe(one)
-
     await pageTookIt()
-
     expect(document.activeElement).toBe(document.body)
   })
 
@@ -120,9 +116,7 @@ describe('a site taking the keyboard', () => {
     editor.focus()
     getSelection()?.selectAllChildren(editor)
     expect(getSelection()?.isCollapsed).toBe(false)
-
     await pageTookIt()
-
     expect(getSelection()?.isCollapsed ?? true).toBe(true)
   })
 
@@ -134,9 +128,7 @@ describe('a site taking the keyboard', () => {
     expect(app).toContain('onblur={() => overlays.away()}')
     const away = () => overlays.away()
     window.addEventListener('blur', away)
-
     await pageTookIt()
-
     window.removeEventListener('blur', away)
     expect(closed).toHaveBeenCalledTimes(1)
     expect(overlays.depth).toBe(0)
@@ -146,7 +138,6 @@ describe('a site taking the keyboard', () => {
   test('on the engine s blur alone, as on a Mac, and never plays a second one', async () => {
     const field = control('<input value="https://example.com">')
     field.focus()
-
     await windowBlurred()
     expect(document.activeElement).toBe(document.body)
     await pageTookIt()
@@ -167,9 +158,7 @@ describe('a site taking the keyboard', () => {
     field.focus()
     ;(field as HTMLInputElement).select()
     await pageTookIt()
-
     await windowFocused()
-
     expect(document.activeElement).toBe(document.body)
   })
 })
@@ -179,9 +168,7 @@ describe('the keyboard going anywhere else', () => {
     crate.inPage = false
     const field = control('<input value="half typed">')
     field.focus()
-
     await windowBlurred()
-
     expect(document.activeElement).toBe(field)
     expect(document.documentElement.hasAttribute(IN_A_PAGE)).toBe(false)
   })
@@ -193,14 +180,12 @@ describe('the keyboard going anywhere else', () => {
     })
     const field = control('<input value="https://example.com">')
     field.focus()
-
     await vi.waitFor(() => expect(crate.heard.has(IN_PAGE)).toBe(true))
     crate.heard.get(IN_PAGE)?.()
     window.dispatchEvent(new Event('pointerdown'))
     field.focus()
     answer()
     await settled()
-
     expect(document.activeElement).toBe(field)
   })
 })

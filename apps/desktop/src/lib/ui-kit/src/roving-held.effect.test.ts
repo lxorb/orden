@@ -56,7 +56,6 @@ describe('a layer opened by a chord', () => {
     test(`walks and chooses with ${name} held`, () => {
       mount(true)
       expect(standing()).toBe('Food')
-
       expect(press('ArrowDown', held).defaultPrevented).toBe(true)
       expect(standing()).toBe('Uni')
       press('ArrowDown', held)
@@ -67,7 +66,6 @@ describe('a layer opened by a chord', () => {
       expect(standing()).toBe('Work')
       press('End', held)
       expect(standing()).toBe('Uni')
-
       expect(press('Enter', held).defaultPrevented).toBe(true)
       expect(chosen).toEqual(['Uni'])
     })
@@ -99,7 +97,6 @@ describe('Escape that nothing in the list takes', () => {
     let asked = 0
     const unbind = providePort('shell.focus', { editor: () => ++asked > 0 })
     mount(false)
-
     expect(press('Escape', {}).defaultPrevented).toBe(true)
     expect(asked).toBe(1)
     unbind()

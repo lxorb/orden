@@ -18,7 +18,6 @@ describe('the places settings search can land on', () => {
     const shown = new Set(sectionGroups().flatMap((group) => group.map((one) => one.id)))
     const found = places()
     stop()
-
     expect(found.length).toBeGreaterThan(5)
     expect(found.filter((place) => !shown.has(place.section)).map((place) => place.label)).toEqual(
       [],

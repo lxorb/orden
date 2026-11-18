@@ -62,7 +62,6 @@ describe('the blur', () => {
   test('leaves a picture of one colour that colour, edges and all', () => {
     const flat = picture(20, 12, () => [40, 120, 200])
     const out = blurred(flat, 20, 12, 3)
-
     expect(at(out, 20, 0, 0)).toEqual([40, 120, 200, 255])
     expect(at(out, 20, 19, 11)).toEqual([40, 120, 200, 255])
     expect(at(out, 20, 10, 6)).toEqual([40, 120, 200, 255])
@@ -74,7 +73,6 @@ describe('the blur', () => {
       x === 15 && y === 15 ? [255, 255, 255] : [0, 0, 0],
     )
     const out = blurred(point, size, size, 2)
-
     expect(at(out, size, 15, 15)[0]).toBeLessThan(255)
     expect(at(out, size, 13, 15)[0]).toBe(at(out, size, 17, 15)[0])
     expect(at(out, size, 15, 13)[0]).toBe(at(out, size, 15, 17)[0])
@@ -86,7 +84,6 @@ describe('the blur', () => {
   test('makes a picture opaque and leaves what it was given alone', () => {
     const holed = new Uint8ClampedArray([10, 20, 30, 0, 10, 20, 30, 0])
     const out = blurred(holed, 2, 1, 1)
-
     expect(out[3]).toBe(255)
     expect(holed[3]).toBe(0)
   })
@@ -101,7 +98,6 @@ describe('what the picture holds', () => {
   test('is the least and the most of each channel, and the average', () => {
     const two = picture(2, 1, (x) => (x === 0 ? [0, 100, 255] : [200, 50, 55]))
     const { least, most, mean } = measured(two)
-
     expect(least).toEqual([0, 50, 55])
     expect(most).toEqual([200, 100, 255])
     expect(mean).toEqual([100, 75, 155])
@@ -130,7 +126,6 @@ describe('the tone baked into a picture', () => {
     const pixels = sunset()
     toned(pixels, { saturation: 1, tint: 1, colour: [124, 107, 245] })
     expect(at(pixels, 2, 0, 0)).toEqual([124, 107, 245, 255])
-
     const half = sunset()
     toned(half, { saturation: 1, tint: 0.5, colour: [0, 0, 0] })
     expect(at(half, 2, 1, 0)).toEqual([120, 60, 20, 255])

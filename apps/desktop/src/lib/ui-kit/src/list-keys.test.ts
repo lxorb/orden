@@ -41,7 +41,6 @@ describe('walking it', () => {
   test('jumps to what is being spelled, letters in a row counting as one word', () => {
     const first = at(opensAt(0), 'o')
     expect(first.walk.cursor).toBe(2)
-
     const second = walk('b', 1300, KEYBOARDS, first.walk)
     expect(second.walk.cursor).toBe(2)
     expect(second.walk.typed).toBe('ob')
@@ -50,7 +49,6 @@ describe('walking it', () => {
   test('and starts the word again after a pause', () => {
     const first = at(opensAt(0), 'o')
     const later = walk('v', 4000, KEYBOARDS, first.walk)
-
     expect(later.walk.typed).toBe('v')
     expect(later.walk.cursor).toBe(3)
   })
@@ -99,7 +97,6 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
 
   test('and one whose value it does not hold chooses nothing at all', () => {
     const step = at(opensAt(-1), 'Enter')
-
     expect(step.chose).toBeUndefined()
     expect(step.shut).toBe(true)
   })
@@ -113,7 +110,6 @@ describe('a keystroke chooses nothing the keyboard did not walk to', () => {
     const source = readFileSync(join(import.meta.dirname, '../../ui-controls/src/Select.svelte'), {
       encoding: 'utf8',
     })
-
     expect(source).toContain('onmouseenter={() => (hovered = index)}')
     expect(source).not.toMatch(/onmouseenter=\{\(\) => \(walking/)
     expect(source).toContain('aria-activedescendant={open && walking.cursor !== null')

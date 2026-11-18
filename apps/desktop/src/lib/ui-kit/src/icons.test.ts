@@ -78,7 +78,6 @@ describe('searching the library', () => {
 
   test('and one written inside a longer query', () => {
     const found = search(NAMES, 'work journal')
-
     expect(found).toContain('Briefcase')
     expect(found).toContain('NotebookPen')
   })
@@ -93,7 +92,6 @@ describe('searching the library', () => {
       { name: 'Building2', words: 'building2' },
       { name: 'Bug', words: 'bug' },
     ]
-
     expect(rankIcons(entries, 'bug')).toEqual(['Bug', 'Building2'])
   })
 
@@ -259,7 +257,6 @@ describe('what each kind of icon is written as', () => {
     ] as const) {
       const said = writtenIcon(set, name)
       const read = readIcon(said)
-
       expect(read, said).not.toBeNull()
       if (read?.kind === 'emoji') expect(read.text).toBe(name)
       else if (read?.kind === 'set') expect(read.name).toBe(name)

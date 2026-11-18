@@ -98,7 +98,6 @@ describe('the frame', () => {
     )
     expect(frame.tint).toBe('#ffffff')
     expect(frame.scheme).toBe('light')
-
     const paper = frameFor({ colour: SITES.red!, page: true }, 'dark', sides, PAPER.dark)
     expect(paper.wash).toBeGreaterThanOrEqual(PAGE_WASH)
   })
@@ -123,7 +122,6 @@ describe('the frame', () => {
     expect(g).toBeGreaterThan(r + 8)
     expect(g).toBeLessThanOrEqual(Math.round(over(green, MARK_TONE, sides.dark.scrim)[1]))
     expect(frame.wash).toBe(1)
-
     for (const mark of [
       [124, 107, 245],
       [255, 255, 0],

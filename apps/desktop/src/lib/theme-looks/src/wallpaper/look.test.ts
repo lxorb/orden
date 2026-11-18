@@ -90,7 +90,6 @@ describe('every end of every dial', () => {
             const floors = floorsOf(held(span), side, { blur, grain }, sides, 0.5)
             const under = grained(span, grain)
             const aim = aimFor(blur)
-
             for (const dim of [0, 0.9]) {
               const scrim = floors.chrome + (1 - floors.chrome) * dim
               for (const corner of [under.least, under.most]) {
@@ -102,7 +101,6 @@ describe('every end of every dial', () => {
                 }
               }
             }
-
             for (const level of ['clear', 'tinted', 'opaque'] as const) {
               const paper = alphaFor(level, floors.paper)
               const terminal = layered(alphaFor(level, floors.terminal), paper)

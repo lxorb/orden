@@ -114,7 +114,6 @@ describe('the list out over the note', () => {
     at(600)
     vi.advanceTimersByTime(GRACE * 3)
     expect(peek.out).toBe(true)
-
     room.busied = false
     vi.advanceTimersByTime(GRACE)
     expect(peek.out).toBe(false)

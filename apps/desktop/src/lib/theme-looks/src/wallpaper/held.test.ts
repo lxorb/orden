@@ -90,7 +90,6 @@ describe('the dark side', () => {
     write(GOOD)
     expect(heldDark()).toBeNull()
     expect(heldFor('dark')).toEqual(heldWallpaper())
-
     entries.set(DARK_KEY, JSON.stringify({ ...GOOD, blur: 12 }))
     expect(heldFor('dark')?.blur).toBe(12)
     expect(heldFor('light')?.blur).toBe(28)

@@ -9,7 +9,6 @@ describe('a theme on a published page', () => {
     const sheet = pageSheet(
       `/* a comment */\n[data-theme='light'] { ${light} }\n[data-theme="dark"] { ${dark} }`,
     )
-
     expect(sheet.split('\n')).toEqual([
       `:root { ${light} }`,
       `@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { ${dark} } }`,
@@ -21,7 +20,6 @@ describe('a theme on a published page', () => {
 
   test('one side is that side, and the other is the page its own', () => {
     const sheet = pageSheet(`[data-theme = 'light'] { ${light} }`)
-
     expect(sheet).toContain(`:root { ${light} }`)
     expect(sheet).toContain(`:root[data-theme='light'] { ${light} }`)
     expect(sheet).not.toContain('prefers-color-scheme')
@@ -32,7 +30,6 @@ describe('a theme on a published page', () => {
     const sheet = pageSheet(
       ":root { --font-content: 'Semi; colon', serif; }\n#write blockquote { font-style: italic; }",
     )
-
     expect(sheet).toBe(
       ":root { --font-content: 'Semi; colon', serif; }\n#write blockquote { font-style: italic; }",
     )
@@ -40,7 +37,6 @@ describe('a theme on a published page', () => {
 
   test('a block stated for both sides lands on both', () => {
     const sheet = pageSheet(`[data-theme='light'], [data-theme='dark'] { --radius-md: 4px; }`)
-
     expect(sheet).toContain(':root { --radius-md: 4px; }')
     expect(sheet).toContain(":root[data-theme='dark'] { --radius-md: 4px; }")
   })

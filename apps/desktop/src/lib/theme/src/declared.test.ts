@@ -8,7 +8,6 @@ function page(properties: Record<string, string>): (name: string) => string {
 describe('what a theme may declare', () => {
   test('a number in a range, with the unit it is measured in', () => {
     const found = settingOf('blur', 'range "Blur" 0 40 18 px')
-
     expect(found).toMatchObject({ id: 'blur', label: 'Blur', kind: 'range', min: 0, max: 40 })
     expect(found?.initial).toBe(18)
     expect(found?.paint(24, 'dark')).toEqual({ '--orden-blur': '24px' })
@@ -16,13 +15,11 @@ describe('what a theme may declare', () => {
 
   test('and a bare number, which is what a multiplier is', () => {
     const found = settingOf('weight', 'range "Weight" 0 2 1')
-
     expect(found?.paint(1.5, 'dark')).toEqual({ '--orden-weight': '1.5' })
   })
 
   test('a switch, which writes a one or a nought so CSS can do sums with it', () => {
     const found = settingOf('paper', 'switch "Frosted paper" off')
-
     expect(found).toMatchObject({ kind: 'switch', initial: false })
     expect(found?.paint(true, 'dark')).toEqual({ '--orden-paper': '1' })
     expect(found?.paint(false, 'dark')).toEqual({ '--orden-paper': '0' })
@@ -30,7 +27,6 @@ describe('what a theme may declare', () => {
 
   test('a choice, whose first option is where it starts', () => {
     const found = settingOf('depth', 'choice "Depth" "Flat" 0 "Deep" 1')
-
     expect(found).toMatchObject({ kind: 'choice', initial: '0' })
     expect(found?.kind === 'choice' && found.options).toEqual([
       { value: '0', label: 'Flat' },
@@ -40,7 +36,6 @@ describe('what a theme may declare', () => {
 
   test('and a colour, which is a choice whose options are painted rather than read', () => {
     const found = settingOf('glow', 'colour "Glow" "Violet" #7c6bf5 "Blue" #3584e4')
-
     expect(found).toMatchObject({ kind: 'colour', initial: '#7c6bf5' })
     expect(found?.kind === 'colour' && found.options[0]).toEqual({
       value: '#7c6bf5',
@@ -125,14 +120,12 @@ describe('a stylesheet, read', () => {
         '--orden-setting-blur': 'range "Blur" 0 40 20 px',
       }),
     )
-
     expect(found.map((one) => one.id)).toEqual(['tint', 'blur'])
     expect(found[0]?.initial).toBe(82)
   })
 
   test('takes the value off the page and not out of the file, so a scheme can differ', () => {
     const found = declaredIn(CSS, page({ '--orden-setting-tint': 'range "Tint" 60 100 95 %' }))
-
     expect(found).toHaveLength(1)
     expect(found[0]?.initial).toBe(95)
   })
@@ -145,7 +138,6 @@ describe('a stylesheet, read', () => {
         '--orden-setting-blur': 'wobble "Blur" a lot',
       }),
     )
-
     expect(found.map((one) => one.id)).toEqual(['tint'])
   })
 
@@ -159,7 +151,6 @@ describe('a stylesheet, read', () => {
     const answers = Object.fromEntries(
       names.map((id) => [`--orden-setting-${id}`, `range "${id}" 0 10 5`]),
     )
-
     expect(declaredIn(css, page(answers)).map((one) => one.id)).toEqual(names.slice(0, 6))
   })
 })

@@ -63,7 +63,6 @@ describe('the settings an agent is told about', () => {
   test('name where each one is, what it holds, and what it may become, and no more', () => {
     const { all } = world()
     const told = brief(all)
-
     expect(told).toContain('s1 | General > Writing > Check spelling | switch | On | true, false')
     expect(told).toContain(
       's2 | General > Writing > Theme | choice | Light | light (Light), dark (Dark)',
@@ -84,7 +83,6 @@ describe("an agent's answer", () => {
       'Sure: {"say": "Theme is in General.", "show": ["s2", "s2", "s9"], "change": [{"id": "s2", "to": "dark"}, {"id": "s1", "to": false}]}',
       all,
     )
-
     expect(answer.say).toBe('Theme is in General.')
     expect(answer.show.map((one) => one.label)).toEqual(['Theme'])
     expect(answer.changes.map((one) => [one.offer.label, one.from, one.shown])).toEqual([
@@ -92,7 +90,6 @@ describe("an agent's answer", () => {
       ['Check spelling', 'On', 'Off'],
     ])
     expect(held).toMatchObject({ theme: 'light', spell: true })
-
     for (const change of answer.changes) expect(apply(change)).toBe(true)
     expect(held).toMatchObject({ theme: 'dark', spell: false })
   })
@@ -116,7 +113,6 @@ describe("an agent's answer", () => {
       }),
       all,
     )
-
     expect(answer.changes.map((one) => [one.offer.label, one.to])).toEqual([['Text size', 20]])
     expect(held).toMatchObject({ name: 'Mine', locked: false, theme: 'light' })
   })

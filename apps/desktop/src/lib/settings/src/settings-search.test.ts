@@ -129,7 +129,6 @@ describe('searching the settings', () => {
   test('says which pane a hit belongs to', () => {
     const [hit] = search('pdf', panes, places)
     expect(hit?.kind === 'place' ? hit.section : null).toBe('export')
-
     const [field] = search('wait', panes, places)
     expect(field?.kind === 'field' ? field.pane.id : null).toBe('general')
   })

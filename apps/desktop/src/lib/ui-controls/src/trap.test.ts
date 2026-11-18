@@ -83,7 +83,6 @@ describe('the keyboard while a layer is open', () => {
     const row = fake('BUTTON')
     pretendDocument(body, root)
     pretendHTMLElement()
-
     open(layer([row]))
     expect(row.focused).toBe(1)
   })
@@ -93,7 +92,6 @@ describe('the keyboard while a layer is open', () => {
     const root = fake('HTML')
     pretendDocument(body, root)
     pretendHTMLElement()
-
     const node = layer()
     node.tabIndex = 0
     open(node)
@@ -106,14 +104,12 @@ describe('the keyboard while a layer is open', () => {
     root.hasAttribute = (name) => name === 'data-touch'
     pretendDocument(body, root)
     pretendHTMLElement()
-
     const row = fake('BUTTON')
     const menu = layer([row])
     menu.matches = (selector) => selector.startsWith('.orden-host')
     open(menu)
     expect(menu.focused).toBe(1)
     expect(row.focused).toBe(0)
-
     const answer = fake('BUTTON')
     open(layer([answer]))
     expect(answer.focused).toBe(1)
@@ -127,13 +123,11 @@ describe('the keyboard once the layer has gone', () => {
     const opener = fake('BUTTON')
     pretendDocument(body, root)
     pretendHTMLElement()
-
     opener.focus()
     const row = fake('BUTTON')
     const node = layer([row])
     const held = open(node)
     expect(row.focused).toBe(1)
-
     held.destroy()
     expect(opener.focused).toBe(2)
   })
@@ -144,11 +138,9 @@ describe('the keyboard once the layer has gone', () => {
     const opener = fake('BUTTON')
     pretendDocument(body, root)
     pretendHTMLElement()
-
     opener.focus()
     const node = layer([fake('BUTTON')])
     const held = open(node)
-
     active = body
     held.destroy()
     expect(opener.focused).toBe(2)
@@ -160,14 +152,11 @@ describe('the keyboard once the layer has gone', () => {
     const opener = fake('BUTTON')
     pretendDocument(body, root)
     pretendHTMLElement()
-
     opener.focus()
     const node = layer([fake('BUTTON')])
     const held = open(node)
-
     const field = fake('INPUT')
     field.focus()
-
     held.destroy()
     expect(field.focused).toBe(1)
     expect(opener.focused).toBe(1)
@@ -181,7 +170,6 @@ describe('the keyboard once the layer has gone', () => {
     const opener = fake('BUTTON')
     pretendDocument(body, root)
     pretendHTMLElement()
-
     opener.focus()
     const held = open(layer([fake('BUTTON')]))
     active = body
@@ -195,11 +183,9 @@ describe('the keyboard once the layer has gone', () => {
     const opener = fake('BUTTON')
     pretendDocument(body, root)
     pretendHTMLElement()
-
     opener.focus()
     const node = layer([fake('BUTTON')])
     const held = open(node)
-
     opener.isConnected = false
     active = body
     held.destroy()

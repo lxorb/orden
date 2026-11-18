@@ -20,7 +20,6 @@ test('a key out of a page reaches the window’s capture listeners before its bu
   const heard: string[] = []
   hear('bubble', false, heard)
   hear('capture', true, heard)
-
   replay({
     key: 'r',
     code: 'KeyR',
@@ -30,7 +29,6 @@ test('a key out of a page reaches the window’s capture listeners before its bu
     repeat: false,
     down: true,
   })
-
   expect(heard).toEqual([`capture ${Event.CAPTURING_PHASE}`, `bubble ${Event.BUBBLING_PHASE}`])
 })
 
@@ -46,7 +44,6 @@ test('so a web tab’s own key, heard in capture, is taken before the app’s, h
   listening.push(['keydown', app, false], ['keydown', bar, true])
   window.addEventListener('keydown', app)
   window.addEventListener('keydown', bar, true)
-
   replay({
     key: 'r',
     code: 'KeyR',
@@ -56,6 +53,5 @@ test('so a web tab’s own key, heard in capture, is taken before the app’s, h
     repeat: false,
     down: true,
   })
-
   expect(steps).toEqual(['the bar reloads the page'])
 })

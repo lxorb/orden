@@ -45,14 +45,11 @@ describe('a theme opened in the theme store on a phone', () => {
     const made = mount(ThemeStore, { target })
     close = () => void unmount(made)
     flushSync()
-
     store.opened = 'ocean'
     flushSync()
     expect(store.chosen?.id).toBe('ocean')
-
     await backPressed()
     flushSync()
-
     expect(store.opened).toBeNull()
     expect(store.open).toBe(true)
   })
