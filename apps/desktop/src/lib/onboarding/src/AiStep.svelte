@@ -217,7 +217,7 @@
         bind:this={field}
         bind:value={typed}
         oninput={typing}
-        class="field"
+        class="o-field"
         type="password"
         placeholder="API key"
         aria-label="API key"
@@ -231,7 +231,7 @@
     >
   {/if}
 
-  {#if trouble}<p class="error" role="alert">{trouble}</p>{/if}
+  {#if trouble}<p class="o-error" role="alert">{trouble}</p>{/if}
 </Screen>
 
 <style>
@@ -320,29 +320,11 @@
     justify-content: center;
   }
 
-  .field {
-    width: min(360px, 100%);
-    height: 50px;
-    border-radius: 12px;
-    border: 1px solid var(--line-strong);
-    background: var(--card);
-    padding: 0 16px;
-    font: inherit;
-    font-size: 16px;
-    color: var(--text);
-  }
-
   .skip {
     color: var(--accent);
     font-size: 15px;
   }
 
-  .error {
-    margin: 0;
-    color: var(--danger);
-    font-size: 14px;
-    text-align: center;
-  }
   @media (prefers-reduced-motion: reduce) {
     .spin {
       animation: none;
