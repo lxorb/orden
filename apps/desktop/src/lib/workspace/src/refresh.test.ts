@@ -8,10 +8,7 @@ const syncing = vi.hoisted(() => ({ passes: 0, status: 'idle', lastError: null a
 vi.mock('./workspace.svelte', () => ({ workspace: place }))
 providePort('web.pages', {
   ...webPages(),
-  step: (id, how) => {
-    steps.push(`${id}:${how}`)
-    return Promise.resolve()
-  },
+  step: async (id, how) => void steps.push(`${id}:${how}`),
 })
 vi.mock('../../sync-store/src/api', () => ({
   sync: {

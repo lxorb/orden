@@ -58,19 +58,12 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     undone,
     documentAt: () => null,
     entryAt: () => null,
-    fileMoved: (from: string, to: string) => {
-      told.push(`moved ${from} -> ${to}`)
-      return Promise.resolve()
-    },
-    fileGone: (path: string, _kind: string, back?: string) => {
+    fileMoved: async (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
+    fileGone: async (path: string, _kind: string, back?: string) => {
       told.push(`gone ${path}`)
       backs.push(back)
-      return Promise.resolve()
     },
-    fileCame: (path: string) => {
-      told.push(`back ${path}`)
-      return Promise.resolve()
-    },
+    fileCame: async (path: string) => void told.push(`back ${path}`),
     reload: (path: string) => void told.push(`reloaded ${path}`),
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     renameOnDisk: async (from: string, to: string) => {
@@ -85,9 +78,8 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
       told.push(`retargeted ${from} -> ${to}`)
       return Promise.resolve(1)
     },
-    loadTree: () => {
+    loadTree: async () => {
       kept.loaded += 1
-      return Promise.resolve()
     },
     persist: () => {
       kept.wrote += 1
@@ -298,20 +290,13 @@ describe('doing it again', () => {
     const does = {
       ...ws,
       undone: ws.undone,
-      move: (from: string, into: string) => {
+      move: async (from: string, into: string) => {
         asked.push(`move ${from} -> ${into}`)
         if (refuse) return Promise.reject(new Error('taken'))
         ws.undone.record({ kind: 'move', from, to: `${into}/x` })
-        return Promise.resolve()
       },
-      rename: (path: string, name: string) => {
-        asked.push(`rename ${path} -> ${name}`)
-        return Promise.resolve()
-      },
-      remove: (path: string) => {
-        asked.push(`remove ${path}`)
-        return Promise.resolve()
-      },
+      rename: async (path: string, name: string) => void asked.push(`rename ${path} -> ${name}`),
+      remove: async (path: string) => void asked.push(`remove ${path}`),
     }
     return { ws: does as unknown as PutsBack & import('./redoing').DoesAgain, asked }
   }
@@ -595,10 +580,7 @@ describe('an archiving put back', () => {
     const opened: string[] = []
     const ws = Object.assign(store(action), {
       archive: { change: (...args: unknown[]) => void changes.push(args) },
-      openEntry: (path: string) => {
-        opened.push(path)
-        return Promise.resolve()
-      },
+      openEntry: async (path: string) => void opened.push(path),
     }) as unknown as PutsBack
 
     return { ws, changes, opened }
@@ -638,14 +620,12 @@ describe('an archiving put back', () => {
 describe('a gesture of several', () => {
   test('is recorded as one step, and one that recorded one is that one', async () => {
     const undone = new FileActions()
-    await undone.batch(() => {
+    await undone.batch(async () => {
       undone.record({ kind: 'delete', path: '/s/a.md', content: '# a' })
       undone.record({ kind: 'delete', path: '/s/b.md', content: '# b' })
-      return Promise.resolve()
     })
-    await undone.batch(() => {
+    await undone.batch(async () => {
       undone.record({ kind: 'move', from: '/s/c.md', to: '/s/W/c.md' })
-      return Promise.resolve()
     })
 
     expect(undone.stack.map((one) => one.kind)).toEqual(['many', 'move'])
@@ -656,11 +636,10 @@ describe('a gesture of several', () => {
 
   test('is said as its first step where it mixed kinds, and keeps a trash id', async () => {
     const undone = new FileActions()
-    await undone.batch(() => {
+    await undone.batch(async () => {
       undone.record({ kind: 'delete', path: '/s/A/b.md', content: '# b' })
       undone.trashed('/s/A/b.md', 'id-b')
       undone.record({ kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true })
-      return Promise.resolve()
     })
 
     expect(undone.label).toBe('Undo deleting b')
@@ -722,15 +701,13 @@ describe('a gesture of several', () => {
     })
     const asked: string[] = []
     const does = Object.assign(ws, {
-      move: (from: string, into: string) => {
+      move: async (from: string, into: string) => {
         asked.push(`move ${from} -> ${into}`)
         ws.undone.record({ kind: 'move', from, to: `${into}/c.md` })
-        return Promise.resolve()
       },
-      remove: (path: string, folder: boolean) => {
+      remove: async (path: string, folder: boolean) => {
         asked.push(`remove ${path}${folder ? ' folder' : ''}`)
         ws.undone.record({ kind: 'delete', path, content: '' })
-        return Promise.resolve()
       },
       rename: () => Promise.resolve(),
     }) as unknown as PutsBack & import('./redoing').DoesAgain

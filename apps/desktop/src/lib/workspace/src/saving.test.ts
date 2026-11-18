@@ -90,9 +90,8 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     keep: () => undefined,
     wroteAll: () => undefined,
     scheduleSession: () => undefined,
-    loadTree() {
+    async loadTree() {
       this.lists += 1
-      return Promise.resolve()
     },
     persist() {
       this.persisted += 1
@@ -107,10 +106,8 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     born: () => undefined,
     touched: () => undefined,
     keepPaper: () => Promise.resolve(),
-    fileCame(path: string, _kind: 'file' | 'folder', key?: string) {
-      came.push({ path, key })
-      return Promise.resolve()
-    },
+    fileCame: async (path: string, _kind: 'file' | 'folder', key?: string) =>
+      void came.push({ path, key }),
   }
 
   const saving = new Saving(ws)
@@ -521,10 +518,9 @@ describe('a note renamed while its write was in the air', () => {
 
     note.replace('# a typed')
     const writing = saving.write(note)
-    const renaming = saving.holding([note], () => {
+    const renaming = saving.holding([note], async () => {
       order.push(`rename after ${String(written().length)} write`)
       note.path = `${SPACE}/b.md`
-      return Promise.resolve()
     })
 
     await Promise.resolve()
@@ -598,9 +594,8 @@ describe('a note renamed while its write was in the air', () => {
     let ran = false
     await saving.holdingWrites(
       `${SPACE}/a.md`,
-      () => {
+      async () => {
         ran = true
-        return Promise.resolve()
       },
       notStalled,
     )
@@ -626,7 +621,7 @@ describe('a note renamed while its write was in the air', () => {
 
     await saving.holdingWrites(
       `${SPACE}/a.md`,
-      () => {
+      async () => {
         saving.follow({
           op: 'moved',
           from: `${SPACE}/a.md`,
@@ -634,7 +629,6 @@ describe('a note renamed while its write was in the air', () => {
           kind: 'file',
           root: SPACE,
         })
-        return Promise.resolve()
       },
       notStalled,
     )
@@ -669,9 +663,8 @@ describe('a note renamed while its write was in the air', () => {
     closed()
     await vi.waitFor(() => expect(written()).toHaveLength(1))
 
-    const renaming = saving.holdingUnder(`${SPACE}/a.md`, () => {
+    const renaming = saving.holdingUnder(`${SPACE}/a.md`, async () => {
       order.push('renamed')
-      return Promise.resolve()
     })
     for (let turn = 0; turn < 20; turn++) await Promise.resolve()
     expect(order).toEqual([])
@@ -699,14 +692,12 @@ describe('a note renamed while its write was in the air', () => {
     expect(written()).toHaveLength(1)
 
     let ran = false
-    const run = () => {
+    const run = async () => {
       ran = true
-      return Promise.resolve()
     }
     let stalled = 0
-    const later = () => {
+    const later = async () => {
       stalled += 1
-      return Promise.resolve()
     }
 
     const moving = saving.holdingWrites(`${SPACE}/a.md`, run, later)

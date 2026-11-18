@@ -20,11 +20,10 @@ vi.mock('./workspace.svelte', () => ({
         ops.carried.clear()
       }
     },
-    copyMany: (paths: string[], into: string) => {
+    copyMany: async (paths: string[], into: string) => {
       ops.did.push(
         `copy ${paths.join(',')} -> ${into} (${paths.every((one) => ops.carried.has(one) || ops.tree.has(one))})`,
       )
-      return Promise.resolve()
     },
     moveMany: (paths: string[], into: string) => {
       ops.did.push(
