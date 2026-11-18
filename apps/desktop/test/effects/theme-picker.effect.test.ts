@@ -24,7 +24,6 @@ await Promise.all([
   import('../../src/lib/theme-looks/src/wallpaper/sheet'),
   import('../../src/lib/theme-looks/src/wallpaper/settings'),
   import('../../src/lib/theme-looks/src/wallpaper/wallpaper.svelte'),
-  import('../../src/lib/theme/src/material'),
   import('../../src/lib/theme/src/declared'),
   import('../../src/lib/theme-looks/src/picker/ThemePicker.svelte'),
   import('@orden/themes/tokens.css?raw'),

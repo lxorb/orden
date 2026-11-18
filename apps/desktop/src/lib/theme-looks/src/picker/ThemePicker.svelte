@@ -296,11 +296,7 @@
           }}
           onclick={() => choose(one.id)}
         >
-          <Mini
-            looks={looksOf(one)}
-            desk={one.translucent === true}
-            pictured={one.pictured === true}
-          />
+          <Mini looks={looksOf(one)} pictured={one.pictured === true} />
           <span class="name">{one.name}</span>
         </button>
       {/each}

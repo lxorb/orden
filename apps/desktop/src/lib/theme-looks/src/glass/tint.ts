@@ -1,7 +1,5 @@
 import type { Scheme } from '@orden/contracts'
 import {
-  type PaperInks,
-  paperFloor,
   AA,
   hexOf,
   type Lift,
@@ -9,13 +7,10 @@ import {
   type Rgb,
   rgbOf,
   scrimFloor,
-  SHARP,
   type Span,
 } from '../../../ui-controls/src/api'
 import type { Palette } from '../wallpaper/floors'
 import { along, type Stops } from './pairs'
-
-export type Material = 'mica' | 'acrylic' | 'clear' | null
 
 export type Sides = Record<Scheme, Palette>
 
@@ -29,17 +24,13 @@ export interface Frame {
   tint: string
   second?: string
   wash: number
-  floor: number
-  paper: number
-  terminal: number
 }
 
 export interface Dials {
-  opacity: number
   strength: number
 }
 
-export const DIALS: Dials = { opacity: 0.5, strength: 1 }
+export const DIALS: Dials = { strength: 1 }
 
 export interface Bar {
   colour: string
@@ -50,18 +41,6 @@ export const PAGE_WASH = 0.8
 
 export const MARK_TONE = 0.22
 const TONES = [MARK_TONE, 0.16, 0.11, 0.06, 0]
-
-export function spanUnder(material: Material, scheme: Scheme, paper: Rgb): Span {
-  if (material === 'acrylic' || material === 'clear') {
-    return { least: [0, 0, 0], most: [255, 255, 255] }
-  }
-  if (material === 'mica') {
-    return scheme === 'dark'
-      ? { least: [0, 0, 0], most: [58, 58, 58] }
-      : { least: [192, 192, 192], most: [255, 255, 255] }
-  }
-  return { least: paper, most: paper }
-}
 
 const HOVER = 0.1
 
@@ -110,14 +89,11 @@ function carries(side: Palette, colour: Rgb): boolean {
 export function frameFor(
   source: Source,
   app: Scheme,
-  material: Material,
   sides: Sides,
   paper: Rgb,
   dials: Dials = DIALS,
-  inks: PaperInks | null = null,
 ): Frame {
-  const span = spanUnder(material, app, paper)
-  const aim = material === 'clear' ? SHARP + (AIM - AA) : AIM
+  const span: Span = { least: paper, most: paper }
   const strength = Math.min(1, Math.max(0, dials.strength))
 
   let scheme: Scheme
@@ -128,7 +104,7 @@ export function frameFor(
     scheme = bar.scheme
     const solid = rgbOf(bar.colour) ?? source.colour
     tint = rgbOf(hexOf(over(solid, strength, sides[scheme].scrim))) ?? solid
-    stated = material ? dials.opacity : PAGE_WASH
+    stated = PAGE_WASH
   } else {
     scheme = app
     const own = sides[app]
@@ -136,79 +112,37 @@ export function frameFor(
       rgbOf(hexOf(over(source.colour, amount * strength, own.scrim))),
     )
     tint = tone.find((one): one is Rgb => one !== null && carries(own, one)) ?? own.scrim
-    stated = material ? dials.opacity : 1
+    stated = 1
   }
 
   const side = sides[scheme]
-  const lift = floorOf(side, side.scrim, { least: tint, most: tint }, aim)
+  const lift = floorOf(side, side.scrim, { least: tint, most: tint })
   if (lift > 0) tint = rgbOf(hexOf(over(side.scrim, lift, tint))) ?? tint
 
-  const floor = floorOf(side, tint, span, aim)
-  const wash = Math.max(Math.min(1, stated), floor)
-  const under: Span = { least: over(tint, wash, span.least), most: over(tint, wash, span.most) }
-  return {
-    scheme,
-    tint: hexOf(tint),
-    wash,
-    floor,
-    paper: inks ? paperFloor(inks, under) : 1,
-    terminal: inks ? paperFloor(inks, under, true) : 1,
-  }
+  const wash = Math.max(stated, floorOf(side, tint, span))
+  return { scheme, tint: hexOf(tint), wash }
 }
 
 function written(colour: Rgb): Rgb {
   return rgbOf(hexOf(colour)) ?? colour
 }
 
-function boxOf(colours: readonly Rgb[]): Span {
-  const pick = (choose: (...all: number[]) => number) =>
-    [0, 1, 2].map((at) => choose(...colours.map((one) => one[at] ?? 0))) as unknown as Rgb
-  return { least: pick(Math.min), most: pick(Math.max) }
-}
-
 export function pairFor(
   stops: Stops,
   app: Scheme,
-  material: Material,
   sides: Sides,
-  paper: Rgb,
   dials: Dials = DIALS,
-  inks: PaperInks | null = null,
 ): Frame & { second: string } {
-  const span = spanUnder(material, app, paper)
-  const aim = material === 'clear' ? SHARP + (AIM - AA) : AIM
   const strength = Math.min(1, Math.max(0, dials.strength))
   const side = sides[app]
 
   const toned = stops.map((one) => written(over(one, strength, side.scrim)))
   const lift = along([toned[0] ?? side.scrim, toned[1] ?? side.scrim])
-    .map((one) => floorOf(side, side.scrim, { least: one, most: one }, aim, GRAIN))
+    .map((one) => floorOf(side, side.scrim, { least: one, most: one }, AIM, GRAIN))
     .reduce((high, one) => Math.max(high, one), -Infinity)
   const [first, second] = toned.map((one) =>
     lift > 0 ? written(over(side.scrim, lift, one)) : one,
   ) as [Rgb, Rgb]
 
-  const blend = along([first, second])
-  const floor = blend
-    .map((one) => floorOf(side, one, span, aim, GRAIN))
-    .reduce((high, one) => Math.max(high, one), -Infinity)
-  const wash = Math.max(Math.min(1, material ? dials.opacity : 1), floor)
-
-  const box = boxOf([
-    ...blend.flatMap((one) => [over(one, wash, span.least), over(one, wash, span.most)]),
-    ...blend,
-  ])
-  const under: Span = {
-    least: over(BLACK, GRAIN, box.least),
-    most: over(WHITE, GRAIN, box.most),
-  }
-  return {
-    scheme: app,
-    tint: hexOf(first),
-    second: hexOf(second),
-    wash,
-    floor,
-    paper: inks ? paperFloor(inks, under) : 1,
-    terminal: inks ? paperFloor(inks, under, true) : 1,
-  }
+  return { scheme: app, tint: hexOf(first), second: hexOf(second), wash: 1 }
 }

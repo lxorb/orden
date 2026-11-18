@@ -1273,36 +1273,16 @@ describe('the window’s own frame', () => {
   })
 })
 
-describe('translucency, which the glass theme is now', () => {
-  const saved = () =>
-    JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
-
-  async function restartedAsking() {
-    vi.resetModules()
-    const { theme } = await import('../../theme/src/theme.svelte')
-    const adopt = vi.spyOn(theme, 'adoptTranslucency').mockImplementation(() => undefined)
-    ;(await import('./modes.svelte')).modes.restore()
-    return adopt
-  }
-
-  test('is not a mode any more', () => {
-    expect('translucent' in modes).toBe(false)
-  })
-
-  test('a reader who had it on is handed to the theme, and the switch is written away', async () => {
-    localStorage.setItem('orden:modes', JSON.stringify({ translucent: true }))
-    const adopt = await restartedAsking()
-
-    expect(adopt).toHaveBeenCalledOnce()
-    expect(saved()).not.toHaveProperty('translucent')
-    expect(await restartedAsking()).not.toHaveBeenCalled()
-  })
-
-  test('and one who had it off is left alone', async () => {
-    localStorage.setItem('orden:modes', JSON.stringify({ translucent: false }))
-
-    expect(await restartedAsking()).not.toHaveBeenCalled()
-    expect(saved()).not.toHaveProperty('translucent')
+describe('translucency, a switch older builds kept', () => {
+  test('is dropped quietly whichever way it was, and the theme stays as it was (#2162)', async () => {
+    for (const translucent of [true, false]) {
+      localStorage.setItem('orden:modes', JSON.stringify({ translucent, vim: true }))
+      const back = await restarted()
+      expect(back.vim).toBe(true)
+      expect('translucent' in back).toBe(false)
+      expect(localStorage.getItem('orden:modes')).not.toContain('translucent')
+      expect(localStorage.getItem('orden:theme')).not.toBe('glass')
+    }
   })
 })
 

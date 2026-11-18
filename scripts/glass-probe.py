@@ -23,13 +23,12 @@ from probe_app import close_app, main_window, run_probe, sized
 HERE = pathlib.Path(__file__).resolve().parent
 SHOTS = HERE.parent / "target" / "glass-probe"
 
-DWMWA_USE_IMMERSIVE_DARK_MODE = 20
 DWMWA_SYSTEMBACKDROP_TYPE = 38
 DWMSBT_TABBEDWINDOW = 4
 
 FLOOR = 4.5
 
-NOTE = """# A window with a desk behind it
+NOTE = """# A window
 
 Ordinary words, and *some* of them `marked up`, with a [link](https://example.com).
 
@@ -199,22 +198,6 @@ def readings(held: dict, picture: pathlib.Path, where: str) -> None:
         else:
             wrong(line)
 
-DESK = """
-(() => {{
-  document.getElementById('orden-desk')?.remove()
-  const style = document.createElement('style')
-  style.id = 'orden-desk'
-  style.textContent = 'html {{ background: {desk} !important; }}'
-  document.head.append(style)
-  document.documentElement.dataset.translucent = '{material}'
-  return true
-}})()
-"""
-
-UNDESK = """
-(() => { document.getElementById('orden-desk')?.remove(); return true })()
-"""
-
 def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
     app, held = started(exe, identifier, spaces)
     try:
@@ -232,34 +215,13 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
             photographed(app.pid, f"{scheme}-default")
 
             pressed(held, "theme:glass", settle=1.8)
-            backdrop = attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE)
-            if backdrop == DWMSBT_TABBEDWINDOW:
-                say(f"ok   [{scheme}] DWM draws Mica Alt behind the window")
+            if attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE) == DWMSBT_TABBEDWINDOW:
+                wrong(f"[{scheme}] glass put a material behind the window")
             else:
-                wrong(f"[{scheme}] DWM says the backdrop is {backdrop}, not Mica Alt")
-            dark = attribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE)
-            if bool(dark) == (scheme == "dark"):
-                say(f"ok   [{scheme}] and tints it {scheme}")
-            else:
-                wrong(f"[{scheme}] Mica is tinted {'dark' if dark else 'light'}")
-            said = ran(held, "document.documentElement.dataset.translucent ?? ''")
-            if said != "mica":
-                wrong(f"[{scheme}] the page says it stands on {said!r}")
+                say(f"ok   [{scheme}] glass puts no material behind the window")
 
             picture = photographed(app.pid, f"{scheme}-glass")
-            readings(held, picture, f"{scheme} glass, the material as the probe has it")
-
-            desks = {
-                "dark": [("acrylic", "#ffffff"), ("acrylic", "#000000"), ("mica", "rgb(58,58,58)"), ("mica", "#000000")],
-                "light": [("acrylic", "#000000"), ("acrylic", "#ffffff"), ("mica", "rgb(192,192,192)"), ("mica", "#ffffff")],
-            }[scheme]
-            for material, desk in desks:
-                ran(held, DESK.format(desk=desk, material=material))
-                time.sleep(0.6)
-                name = f"{scheme}-glass-{material}-{re.sub(r'[^0-9a-z]+', '', desk)}"
-                readings(held, photographed(app.pid, name), f"{scheme} glass, {material} over {desk}")
-            ran(held, UNDESK)
-            pressed(held, "theme:glass", settle=1.0)
+            readings(held, picture, f"{scheme} glass")
 
         pressed(held, "theme:glass", settle=1.0)
         pressed(held, "new-website", settle=1.5)
@@ -294,10 +256,11 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
                 ".map((one) => one.textContent.replace(/\\s+/g, ' ').trim()))",
             )
         )
-        if "Translucency" in rows:
-            wrong("the Appearance pane still has a Translucency row")
-        else:
-            say("ok   the Appearance pane has no Translucency row")
+        for gone in ("Translucency", "Material", "Opacity"):
+            if gone in rows:
+                wrong(f"the Appearance pane still has a {gone} row")
+            else:
+                say(f"ok   the Appearance pane has no {gone} row")
         photographed(app.pid, "light-glass-settings")
         ran(held, "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
         time.sleep(0.6)
@@ -308,10 +271,6 @@ def looks(exe: pathlib.Path, identifier: str, spaces: pathlib.Path) -> None:
         time.sleep(0.6)
 
         pressed(held, "theme:default")
-        if attribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE) == DWMSBT_TABBEDWINDOW:
-            wrong("going back to the built-in theme left Mica Alt behind the window")
-        else:
-            say("ok   the built-in theme again, and the material is gone")
     finally:
         ended(app)
 
@@ -373,7 +332,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="orden-glass-probe-") as spaces:
         space = pathlib.Path(spaces) / "Notes"
         space.mkdir()
-        (space / "A window with a desk behind it.md").write_text(NOTE, encoding="utf-8")
+        (space / "A window.md").write_text(NOTE, encoding="utf-8")
         (space / "Second note.md").write_text("# Second note\n\nMore words.\n", encoding="utf-8")
         if not said.skip_looks:
             looks(said.exe.resolve(), said.identifier, pathlib.Path(spaces))
@@ -386,7 +345,7 @@ def main() -> int:
             print(f"  - {one}")
         return 1
 
-    print("\nglass stands on Mica Alt, every word on it reads, and it costs a launch nothing")
+    print("\nglass puts no material behind the window, every word on it reads, and it costs a launch nothing")
     return 0
 
 if __name__ == "__main__":

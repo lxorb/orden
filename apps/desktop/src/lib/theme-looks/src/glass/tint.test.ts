@@ -1,7 +1,6 @@
 import type { Scheme } from '@orden/contracts'
 import { glassCss } from '@orden/themes/glass'
 import { describe, expect, test } from 'vitest'
-import { linkOf, type PaperInks } from '../../../ui-controls/src/content-ground'
 import {
   AA,
   hexOf,
@@ -10,22 +9,10 @@ import {
   over,
   ratio,
   rgbOf,
-  SHARP,
 } from '../../../ui-controls/src/legibility'
 import { paletteOf } from '../wallpaper/floors'
 import { along, DAWN, PAIRS, type Stops, stopsOf } from './pairs'
-import {
-  barFor,
-  DIALS,
-  frameFor,
-  GRAIN,
-  type Material,
-  MARK_TONE,
-  PAGE_WASH,
-  pairFor,
-  type Sides,
-  spanUnder,
-} from './tint'
+import { barFor, DIALS, frameFor, GRAIN, MARK_TONE, PAGE_WASH, pairFor, type Sides } from './tint'
 
 const names = { scrim: '--glass-chrome', layer: '--glass-layer' }
 const dark = paletteOf(glassCss, 'dark', names)
@@ -35,7 +22,6 @@ const sides: Sides = { dark, light }
 
 const PAPER: Record<Scheme, Rgb> = { dark: [14, 16, 19], light: [251, 252, 253] }
 const SCHEMES: Scheme[] = ['dark', 'light']
-const MATERIALS: Material[] = ['mica', 'acrylic', 'clear', null]
 
 function rgb(hex: string): Rgb {
   const found = rgbOf(hex)
@@ -103,32 +89,27 @@ describe("a page's bar", () => {
 })
 
 describe('the frame', () => {
-  test('is the page over the material, and mostly the page on paper', () => {
+  test('is mostly the page, and the page alone where it reads as it is', () => {
     const frame = frameFor(
       { colour: SITES['white Google']!, page: true },
       'dark',
-      'mica',
       sides,
       PAPER.dark,
     )
     expect(frame.tint).toBe('#ffffff')
     expect(frame.scheme).toBe('light')
-    expect(frame.wash).toBeGreaterThanOrEqual(frame.floor)
 
-    const paper = frameFor({ colour: SITES.red!, page: true }, 'dark', null, sides, PAPER.dark)
+    const paper = frameFor({ colour: SITES.red!, page: true }, 'dark', sides, PAPER.dark)
     expect(paper.wash).toBeGreaterThanOrEqual(PAGE_WASH)
   })
 
-  test('keeps every word at AA over every colour the material can be, for every site', () => {
+  test('keeps every word at AA over the paper beneath it, for every site and every Tint', () => {
     for (const [name, page] of Object.entries(SITES)) {
       for (const app of SCHEMES) {
-        for (const material of MATERIALS) {
-          const frame = frameFor({ colour: page, page: true }, app, material, sides, PAPER[app])
-          const span = spanUnder(material, app, PAPER[app])
-          for (const under of [span.least, span.most]) {
-            const ground = over(rgb(frame.tint), frame.wash, under)
-            expect(reads(frame.scheme, ground), `${name}, ${app}, ${String(material)}`).toBe(true)
-          }
+        for (const strength of [0, 1]) {
+          const frame = frameFor({ colour: page, page: true }, app, sides, PAPER[app], { strength })
+          const ground = over(rgb(frame.tint), frame.wash, PAPER[app])
+          expect(reads(frame.scheme, ground), `${name}, ${app}, ${strength}`).toBe(true)
         }
       }
     }
@@ -136,11 +117,12 @@ describe('the frame', () => {
 
   test("is a tone of a note's mark, always in the reader's own scheme", () => {
     const green: Rgb = [0, 160, 90]
-    const frame = frameFor({ colour: green, page: false }, 'dark', 'mica', sides, PAPER.dark)
+    const frame = frameFor({ colour: green, page: false }, 'dark', sides, PAPER.dark)
     const [r, g] = rgb(frame.tint)
     expect(g).toBeGreaterThan(sides.dark.scrim[1] + 8)
     expect(g).toBeGreaterThan(r + 8)
     expect(g).toBeLessThanOrEqual(Math.round(over(green, MARK_TONE, sides.dark.scrim)[1]))
+    expect(frame.wash).toBe(1)
 
     for (const mark of [
       [124, 107, 245],
@@ -148,9 +130,7 @@ describe('the frame', () => {
       [0, 0, 0],
     ] as Rgb[]) {
       for (const app of SCHEMES) {
-        expect(frameFor({ colour: mark, page: false }, app, 'mica', sides, PAPER[app]).scheme).toBe(
-          app,
-        )
+        expect(frameFor({ colour: mark, page: false }, app, sides, PAPER[app]).scheme).toBe(app)
       }
     }
   })
@@ -166,99 +146,22 @@ describe('the frame', () => {
     ]
     for (const mark of marks) {
       for (const app of SCHEMES) {
-        for (const material of MATERIALS) {
-          const frame = frameFor({ colour: mark, page: false }, app, material, sides, PAPER[app])
-          const span = spanUnder(material, app, PAPER[app])
-          for (const under of [span.least, span.most]) {
-            const ground = over(rgb(frame.tint), frame.wash, under)
-            expect(
-              reads(frame.scheme, ground),
-              `${mark.join(',')}, ${app}, ${String(material)}`,
-            ).toBe(true)
-          }
-        }
-      }
-    }
-  })
-})
-
-const INKS: Record<Scheme, PaperInks> = {
-  dark: {
-    bg: PAPER.dark,
-    text: dark.text,
-    muted: dark.ink,
-    link: linkOf([124, 107, 245], [255, 255, 255]),
-  },
-  light: {
-    bg: PAPER.light,
-    text: light.text,
-    muted: light.ink,
-    link: linkOf([91, 75, 224], [5, 7, 10]),
-  },
-}
-
-describe("glass's own dials", () => {
-  const sources = [
-    ...Object.values(SITES).map((colour) => ({ colour, page: true })),
-    { colour: [124, 107, 245] as Rgb, page: false },
-    { colour: [255, 255, 0] as Rgb, page: false },
-  ]
-
-  test('hold every word at its aim at every end of Opacity and Tint, over every material', () => {
-    for (const source of sources) {
-      for (const app of SCHEMES) {
-        for (const material of MATERIALS) {
-          for (const opacity of [0, 0.5, 1]) {
-            for (const strength of [0, 1]) {
-              const frame = frameFor(
-                source,
-                app,
-                material,
-                sides,
-                PAPER[app],
-                { opacity, strength },
-                INKS[app],
-              )
-              const what = `${source.colour.join(',')}, ${app}, ${String(material)}, ${opacity}, ${strength}`
-              expect(frame.wash, what).toBeGreaterThanOrEqual(frame.floor)
-              if (material) expect(frame.wash, what).toBeGreaterThanOrEqual(opacity)
-              const span = spanUnder(material, app, PAPER[app])
-              const aim = material === 'clear' ? SHARP : AA
-              for (const under of [span.least, span.most]) {
-                const ground = over(rgb(frame.tint), frame.wash, under)
-                expect(ratio(sides[frame.scheme].ink, ground), what).toBeGreaterThanOrEqual(aim)
-                expect(reads(frame.scheme, ground), what).toBe(true)
-
-                const paper = over(INKS[app].bg, frame.paper, ground)
-                expect(ratio(INKS[app].text, paper), what).toBeGreaterThanOrEqual(7)
-                expect(ratio(INKS[app].muted, paper), what).toBeGreaterThanOrEqual(AA)
-              }
-            }
-          }
-        }
+        const frame = frameFor({ colour: mark, page: false }, app, sides, PAPER[app])
+        const ground = over(rgb(frame.tint), frame.wash, PAPER[app])
+        expect(reads(frame.scheme, ground), `${mark.join(',')}, ${app}`).toBe(true)
       }
     }
   })
 
-  test('at full Opacity are the frame’s colour alone, and with no Tint the chrome’s', () => {
+  test('with no Tint is the chrome’s colour', () => {
     const page = { colour: SITES['Twitter blue']!, page: true }
-    expect(
-      frameFor(page, 'dark', 'mica', sides, PAPER.dark, { opacity: 1, strength: 1 }).wash,
-    ).toBe(1)
-    const plain = frameFor(page, 'dark', 'mica', sides, PAPER.dark, { opacity: 0.5, strength: 0 })
+    const plain = frameFor(page, 'dark', sides, PAPER.dark, { strength: 0 })
     const scheme = barFor(SITES['Twitter blue']!, 'dark', sides).scheme
     expect(rgb(plain.tint)).toEqual(sides[scheme].scrim.map(Math.round))
   })
 
-  test('start where glass always started: half the colour, all of what is open', () => {
-    expect(DIALS).toEqual({ opacity: 0.5, strength: 1 })
-  })
-
-  test('over the desk with no blur ask more than over Mica, which keeps its brightness', () => {
-    const mark = { colour: [124, 107, 245] as Rgb, page: false }
-    const mica = frameFor(mark, 'dark', 'mica', sides, PAPER.dark, { opacity: 0, strength: 1 })
-    const clear = frameFor(mark, 'dark', 'clear', sides, PAPER.dark, { opacity: 0, strength: 1 })
-    expect(clear.floor).toBeGreaterThan(mica.floor)
+  test('starts where glass always started: all of what is open', () => {
+    expect(DIALS).toEqual({ strength: 1 })
   })
 })
 
@@ -297,15 +200,13 @@ describe("glass's own pair", () => {
     expect(pink![0]).toBeGreaterThan(pink![1])
   })
 
-  test('wears each pair it offers as it is, and over Mica lets the material show', () => {
+  test('wears each pair it offers as it is, whole', () => {
     for (const pair of PAIRS) {
       for (const app of SCHEMES) {
-        const stops = stopsOf(pair.id, app, 'violet', dark.scrim)
-        const solid = pairFor(stops, app, null, sides, PAPER[app])
+        const solid = pairFor(stopsOf(pair.id, app, 'violet', dark.scrim), app, sides)
         expect([solid.tint, solid.second], `${pair.id}, ${app}`).toEqual(pair[app])
         expect(solid.scheme).toBe(app)
-        const mica = pairFor(stops, app, 'mica', sides, PAPER[app])
-        expect(mica.floor, `${pair.id}, ${app} over Mica`).toBeLessThanOrEqual(0.8)
+        expect(solid.wash).toBe(1)
       }
     }
   })
@@ -321,7 +222,7 @@ describe("glass's own pair", () => {
     }
   })
 
-  test('keeps every word at its aim over every colour of the blend, the grain and the material', () => {
+  test('keeps every word at AA over every colour of the blend and the grain', () => {
     const pairs: Record<string, (app: Scheme) => Stops> = {
       ...Object.fromEntries(
         PAIRS.map((pair) => [
@@ -334,36 +235,10 @@ describe("glass's own pair", () => {
     }
     for (const [name, stopsFor] of Object.entries(pairs)) {
       for (const app of SCHEMES) {
-        for (const material of MATERIALS) {
-          for (const opacity of [0, 0.5, 1]) {
-            for (const strength of [0, 0.5, 1]) {
-              const frame = pairFor(
-                stopsFor(app),
-                app,
-                material,
-                sides,
-                PAPER[app],
-                { opacity, strength },
-                INKS[app],
-              )
-              const what = `${name}, ${app}, ${String(material)}, ${opacity}, ${strength}`
-              expect(frame.wash, what).toBeGreaterThanOrEqual(frame.floor)
-              if (material) expect(frame.wash, what).toBeGreaterThanOrEqual(opacity)
-              const span = spanUnder(material, app, PAPER[app])
-              const aim = material === 'clear' ? SHARP : AA
-              for (const colour of along([rgb(frame.tint), rgb(frame.second)])) {
-                for (const under of [span.least, span.most]) {
-                  const ground = over(colour, frame.wash, under)
-                  expect(readsGrained(app, ground, aim), what).toBe(true)
-
-                  for (const speck of [white, black]) {
-                    const paper = over(INKS[app].bg, frame.paper, over(speck, GRAIN, ground))
-                    expect(ratio(INKS[app].text, paper), what).toBeGreaterThanOrEqual(7)
-                    expect(ratio(INKS[app].muted, paper), what).toBeGreaterThanOrEqual(AA)
-                  }
-                }
-              }
-            }
+        for (const strength of [0, 0.5, 1]) {
+          const frame = pairFor(stopsFor(app), app, sides, { strength })
+          for (const colour of along([rgb(frame.tint), rgb(frame.second)])) {
+            expect(readsGrained(app, colour, AA), `${name}, ${app}, ${strength}`).toBe(true)
           }
         }
       }
@@ -371,14 +246,11 @@ describe("glass's own pair", () => {
   })
 
   test('with no Tint is the chrome alone, and in the reader’s own scheme whatever its colours', () => {
-    const plain = pairFor(own['white to black']!, 'light', 'mica', sides, PAPER.light, {
-      opacity: 0.5,
-      strength: 0,
-    })
+    const plain = pairFor(own['white to black']!, 'light', sides, { strength: 0 })
     expect(plain.tint).toBe(plain.second)
     expect(rgb(plain.tint)).toEqual(sides.light.scrim.map(Math.round))
     for (const app of SCHEMES) {
-      expect(pairFor(own['red to green']!, app, null, sides, PAPER[app]).scheme).toBe(app)
+      expect(pairFor(own['red to green']!, app, sides).scheme).toBe(app)
     }
   })
 

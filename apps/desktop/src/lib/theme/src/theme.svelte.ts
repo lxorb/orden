@@ -29,7 +29,7 @@ import {
   platform,
 } from '../../platform/src/api'
 import { chrome } from './chrome.svelte'
-import { groundUnknown, rememberGround, standAsBefore, stoodOnNothing } from './ground'
+import { rememberGround } from './ground'
 import {
   type ChosenSettings,
   declares,
@@ -51,7 +51,6 @@ interface ThemeInfo {
   path?: string
   css?: string
   load?: () => Promise<string>
-  translucent?: boolean
   pictured?: boolean
   own?: () => Promise<() => ThemeSetting[]>
   stamp?: Stamp
@@ -106,10 +105,6 @@ export function chosenFirst(css: string): string {
   })
 }
 
-function hasMaterial(): boolean {
-  return isDesktop && platform() === 'windows'
-}
-
 function looks(): Promise<ThemeLooksPort> {
   const found = portOf('theme.looks')
   return found.ok ? Promise.resolve(found.value) : Promise.reject(new Error(found.error.message))
@@ -119,7 +114,6 @@ const GLASS: ThemeInfo = {
   id: GLASS_THEME,
   name: 'Glass',
   variants: ['dark', 'light'],
-  translucent: true,
   load: () => import('@orden/themes/glass').then((module) => module.glassCss),
   own: () => looks().then((port) => port.glassSettings()),
 }
@@ -199,7 +193,6 @@ class Themes {
   private declared = $state<ThemeSetting[]>([])
   private owned = $state<{ id: string; list: () => ThemeSetting[] } | null>(null)
   private loaded = $state<Record<string, string>>({})
-  private material = false
   private owns = true
   files = $state<ThemeInfo[]>([])
   private preferred = $state<Scheme>('dark')
@@ -249,8 +242,6 @@ class Themes {
       this.restoreSettings(first, unwritten)
     } else this.readChosen()
     this.early = earlySheet()
-    if (owns && this.active.translucent === true) standAsBefore()
-    this.material = stoodOnNothing() || groundUnknown()
     this.apply()
     this.listed = this.reload({ atLaunch: true }).catch(() => undefined)
     this.hearOthers()
@@ -382,10 +373,6 @@ class Themes {
     return storedText(STORAGE_KEY) !== null && this.id !== DEFAULT_ID
   }
 
-  adoptTranslucency() {
-    if (this.id === DEFAULT_ID && !__EVEN_PLUGIN__ && hasMaterial()) this.wearId(GLASS_THEME)
-  }
-
   private readChoice(): boolean {
     const saved = storedText(STORAGE_KEY)
     const chosen = storedText(SCHEME_KEY)
@@ -457,7 +444,6 @@ class Themes {
         ...file,
         ...(stamp ? { name: stamp.name, stamp } : {}),
         variants: variantsOf(css),
-        ...(css.includes('[data-translucent]') ? { translucent: true } : {}),
         ...(whole ? { css } : {}),
       }
     })
@@ -748,16 +734,6 @@ class Themes {
     if (theme.pictured === true) this.wakeWallpaper()
 
     this.followWhatIsOpen(theme.id === GLASS_THEME, kept)
-
-    const translucent = theme.translucent === true
-    if (isDesktop && (translucent || this.material)) {
-      this.material = true
-      const dark = this.current === 'dark'
-      const kind = theme.path ? 'clear' : this.materialAsked()
-      void import('./material').then(({ wearMaterial }) =>
-        wearMaterial(translucent, dark, kept, kind),
-      )
-    }
   }
 
   private woken = false
@@ -770,11 +746,6 @@ class Themes {
       .then(() => looks())
       .then((port) => (this.active.pictured === true ? port.wakeWallpaper() : undefined))
       .catch(() => undefined)
-  }
-
-  private materialAsked(): string {
-    const said = this.values.material ?? this.keptFor(GLASS_THEME, 'material')
-    return typeof said === 'string' ? said : 'mica-alt'
   }
 
   private followWhatIsOpen(glass: boolean, kept: boolean) {

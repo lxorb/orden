@@ -1,26 +1,14 @@
-import { isDesktop, platform } from '../../../platform/src/api'
-import { theme, chrome } from '../../../theme/src/api'
+import { theme } from '../../../theme/src/api'
 import type { ThemeSetting, ThemeValue } from '../../../theme/src/api'
-import { contentSetting, rangeSetting } from '../translucent-settings'
+import { rangeSetting } from '../translucent-settings'
 import { ACCENT_PAIR, DAWN, isOwn, ownOf, PAIRS, shownOf, swatchOf } from './pairs'
 import { DIALS, type Dials } from './tint'
 
 const GLASS = 'glass'
 
-const MATERIALS = {
-  'mica-alt': 'Mica Alt',
-  mica: 'Mica',
-  acrylic: 'Acrylic',
-  clear: 'No blur',
-} as const
-
-function hasMaterial(): boolean {
-  return (isDesktop && platform() === 'windows') || chrome.material !== null
-}
-
 export function glassValues(): Record<string, ThemeValue> {
   const values: Record<string, ThemeValue> = {}
-  for (const id of ['material', 'opacity', 'follow', 'tint', 'pair', 'tab', 'content']) {
+  for (const id of ['follow', 'tint', 'pair', 'tab']) {
     const said = theme.values[id] ?? theme.keptFor(GLASS, id)
     if (said !== undefined) values[id] = said
   }
@@ -28,35 +16,7 @@ export function glassValues(): Record<string, ThemeValue> {
 }
 
 export function glassSettings(): ThemeSetting[] {
-  const material = hasMaterial()
   return [
-    ...(material
-      ? ([
-          {
-            id: 'material',
-            label: 'Material',
-            hint: 'What Windows draws behind the window: Mica, Acrylic, or no blur.',
-            own: true,
-            reapplies: true,
-            kind: 'choice',
-            options: Object.entries(MATERIALS).map(([value, name]) => ({ value, label: name })),
-            initial: 'mica-alt',
-            paint: () => ({}),
-          },
-          {
-            ...rangeSetting(
-              'opacity',
-              'Opacity',
-              'How much of the window’s own colour lies over what is behind it.',
-              0,
-              100,
-              Math.round(DIALS.opacity * 100),
-              '%',
-            ),
-            least: () => Math.ceil(chrome.floor * 100),
-          },
-        ] satisfies ThemeSetting[])
-      : []),
     {
       id: 'follow',
       label: 'Follow the page',
@@ -107,15 +67,11 @@ export function glassSettings(): ThemeSetting[] {
       initial: true,
       paint: () => ({}),
     },
-    ...(material ? [contentSetting()] : []),
   ]
 }
 
 export function dialsOf(values: Record<string, ThemeValue>): Dials {
   const percent = (value: ThemeValue | undefined, initial: number) =>
     Math.min(1, Math.max(0, (typeof value === 'number' ? value : initial * 100) / 100))
-  return {
-    opacity: percent(values.opacity, DIALS.opacity),
-    strength: percent(values.tint, DIALS.strength),
-  }
+  return { strength: percent(values.tint, DIALS.strength) }
 }

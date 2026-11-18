@@ -11,7 +11,7 @@ say, shot, wait_for = DRIVE.say, DRIVE.shot, DRIVE.wait_for
 failures = DRIVE.failures
 ORIGIN = DRIVE.origin
 
-NOTE = """# A window with a desk behind it
+NOTE = """# A window
 
 Ordinary words, and *some* of them `marked up`, with a [link](https://example.com)
 and a bit of **weight** in the middle of a sentence that runs on long enough to be
@@ -33,32 +33,6 @@ async ([note, name]) => {
   return ws.notes.length
 }
 """
-
-def grey(level: int) -> str:
-    return f"rgb({level}, {level}, {level})"
-
-DESKS = {
-    "acrylic": {
-        "dark": {"paint": "#ffffff", "under": [grey(255), grey(0)]},
-        "light": {"paint": "#000000", "under": [grey(0), grey(255)]},
-        "busy": (
-            "radial-gradient(60vw 60vh at 12% 18%, #ff5f6d 0%, transparent 60%),"
-            " radial-gradient(70vw 70vh at 78% 22%, #1a2980 0%, transparent 62%),"
-            " radial-gradient(55vw 55vh at 30% 82%, #f7ff00 0%, transparent 58%),"
-            " linear-gradient(120deg, #ffffff, #2b2f38)"
-        ),
-    },
-    "mica": {
-        "dark": {
-            "paint": "linear-gradient(120deg, #1d2338, #2a1c26)",
-            "under": [grey(0), grey(10), grey(32), grey(58), "rgb(22, 30, 72)", "rgb(64, 24, 24)"],
-        },
-        "light": {
-            "paint": "linear-gradient(120deg, #d9dde8, #e8ddd6)",
-            "under": [grey(192), grey(218), grey(243), grey(255), "rgb(206, 214, 240)", "rgb(240, 205, 196)"],
-        },
-    },
-}
 
 READINGS = [
     ("text in the bar", "--text", ["--shell-ground"]),
@@ -126,18 +100,6 @@ MEASURE = """
 
   probe.remove()
   return out
-}
-"""
-
-STAND_ON = """
-([desk, material]) => {
-  document.getElementById('orden-desk')?.remove()
-  const style = document.createElement('style')
-  style.id = 'orden-desk'
-  style.textContent = `html { background: ${desk} !important; background-attachment: fixed !important; }`
-  document.head.append(style)
-  if (material) document.documentElement.dataset.translucent = material
-  else delete document.documentElement.dataset.translucent
 }
 """
 
@@ -270,15 +232,6 @@ def choose(page: Page, theme: str) -> None:
         )
     page.wait_for_timeout(300)
 
-def stand(page: Page, desk: str, material: str | None) -> None:
-    page.evaluate(STAND_ON, [desk, material])
-    page.wait_for_timeout(300)
-    page.evaluate(
-        "() => window.ordenApp.theme.settings.some((one) => one.id === 'content')"
-        " && window.ordenApp.theme.set('content', 'opaque')"
-    )
-    page.wait_for_timeout(100)
-
 def read_over(page: Page, where: str, unders: list[str]) -> None:
     paired = page.evaluate("() => document.documentElement.hasAttribute('data-paired')")
     grounds = ["--glass-from", "--glass-to"] if paired else ["--shell-ground"]
@@ -380,16 +333,8 @@ def drive(browser: Browser, scheme: str) -> None:
 
     read_over(page, f"{scheme}, nothing behind", ["rgb(255, 0, 255)"])
 
-    for material, desks in DESKS.items():
-        side = desks[scheme]
-        stand(page, side["paint"], material)
-        read_over(page, f"{scheme} on {material}", side["under"])
-        shot(page, f"{scheme}-glass-{material}")
+    shot(page, f"{scheme}-glass")
 
-    stand(page, DESKS["acrylic"]["busy"], "acrylic")
-    shot(page, f"{scheme}-glass-busy")
-
-    stand(page, DESKS["mica"][scheme]["paint"], "mica")
     shows(
         f"[{scheme}] the note stands on paper of its own",
         channels(page.evaluate("() => getComputedStyle(document.querySelector('.pane')).backgroundColor")),
@@ -417,11 +362,12 @@ def drive(browser: Browser, scheme: str) -> None:
     rows = page.evaluate(
         "() => [...document.querySelectorAll('.orden-setting')].map((one) => one.textContent.trim())"
     )
-    shows(
-        f"[{scheme}] Appearance has no Translucency row",
-        any("Translucency" in one for one in rows),
-        False,
+    names = page.evaluate(
+        "() => [...document.querySelectorAll('.orden-setting .what')].map((one) => one.textContent.trim())"
     )
+    shows(f"[{scheme}] Appearance has no Translucency row", any("Translucency" in one for one in rows), False)
+    for gone in ("Material", "Opacity", "Content"):
+        shows(f"[{scheme}] Appearance has no {gone} row", gone in names, False)
     shot(page, f"{scheme}-glass-settings")
 
     row = page.locator(".orden-setting", has_text="Tint colour")
@@ -479,8 +425,6 @@ def scrolling(browser: Browser) -> None:
 
     for what in ("default", "glass"):
         choose(page, what)
-        if what == "glass":
-            page.evaluate(STAND_ON, [DESKS["acrylic"]["busy"], "acrylic"])
         page.wait_for_timeout(500)
         seen = page.evaluate(SCROLL)
         say(

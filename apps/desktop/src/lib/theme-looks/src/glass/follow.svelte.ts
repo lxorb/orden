@@ -1,16 +1,8 @@
 import { webPages } from '@orden/contracts'
 import { glassCss } from '@orden/themes/glass'
 import { untrack } from 'svelte'
-import { accentColour, theme, chrome, type Ground } from '../../../theme/src/api'
-import {
-  hexOf,
-  type Rgb,
-  rgbOf,
-  alphaFor,
-  layered,
-  linkOf,
-  type PaperInks,
-} from '../../../ui-controls/src/api'
+import { theme, chrome, type Ground } from '../../../theme/src/api'
+import { hexOf, type Rgb, rgbOf } from '../../../ui-controls/src/api'
 import { isDesktop } from '../../../platform/src/api'
 import { paletteOf } from '../wallpaper/floors'
 import { workspace } from '../../../workspace/src/api'
@@ -18,11 +10,9 @@ import { dominant } from './colours'
 import { grounds } from './grounds.svelte'
 import { pixelsOf } from './pictures'
 import { groundOf } from './reading'
-import { contentOf } from '../translucent-settings'
-import { PAPER, schemeTokens } from '../scheme-tokens'
 import { dialsOf, glassValues } from './settings'
 import { type Stops, stopsOf } from './pairs'
-import { barFor, frameFor, type Material, pairFor, type Sides, type Source } from './tint'
+import { barFor, frameFor, pairFor, type Sides, type Source } from './tint'
 
 const SETTLES = 250
 
@@ -55,10 +45,6 @@ function markColour(src: string | null): Rgb | null {
   return null
 }
 
-function materialOf(said: string | null): Material {
-  return said === 'mica' || said === 'acrylic' || said === 'clear' ? said : null
-}
-
 function paper(): Rgb {
   const said = getComputedStyle(document.documentElement).getPropertyValue('--bg')
   return rgbOf(said) ?? (chrome.app === 'dark' ? [14, 16, 19] : [251, 252, 253])
@@ -82,26 +68,6 @@ function askOnce(tab: string, address: string | null): void {
   if (askedFor.has(key)) return
   askedFor.add(key)
   landed(tab)
-}
-
-// eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
-const inked = new Map<string, PaperInks>()
-function inksOf(sides: Sides): PaperInks {
-  const app = chrome.app
-  const key = `${app} ${theme.accent}`
-  const held = inked.get(key)
-  if (held) return held
-  const side = sides[app]
-  const read = schemeTokens(app, ['--bg', '--text-strong'])
-  const accent = rgbOf(accentColour(theme.accent, app)) ?? side.text
-  const inks = {
-    bg: read['--bg'] ?? PAPER[app],
-    text: side.text,
-    muted: side.ink,
-    link: linkOf(accent, read['--text-strong'] ?? side.text),
-  }
-  inked.set(key, inks)
-  return inks
 }
 
 function sourceOf(sides: Sides): Source | Stops {
@@ -147,33 +113,15 @@ export function follow(): void {
   stop = $effect.root(() => {
     $effect(() => {
       if (!chrome.on) return
-      const material = materialOf(chrome.material)
       const source = sourceOf(sides)
-      const around = [
-        chrome.app,
-        material,
-        sides,
-        paper(),
-        dialsOf(glassValues()),
-        material ? inksOf(sides) : null,
-      ] as const
-      const frame = 'page' in source ? frameFor(source, ...around) : pairFor(source, ...around)
-      const level = material ? contentOf(glassValues().content) : 'opaque'
-      const laid = alphaFor(level, frame.paper)
-      const worn = {
-        scheme: frame.scheme,
-        tint: frame.tint,
-        ...(frame.second ? { second: frame.second } : {}),
-        wash: frame.wash,
-        paper: laid,
-        terminal: layered(alphaFor(level, frame.terminal), laid),
-      }
+      const dials = dialsOf(glassValues())
+      const frame =
+        'page' in source
+          ? frameFor(source, chrome.app, sides, paper(), dials)
+          : pairFor(source, chrome.app, sides, dials)
       const bars = barsOf(sides)
       const tab = workspace.active?.id ?? null
-      untrack(() => {
-        chrome.floor = frame.floor
-        chrome.wear(worn, bars, tab)
-      })
+      untrack(() => chrome.wear(frame, bars, tab))
     })
   })
 }

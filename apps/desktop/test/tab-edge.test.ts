@@ -7,12 +7,7 @@ import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
 import { ACCENTS } from '../src/lib/theme/src/accents'
 import type { Scheme } from '@orden/contracts'
-import {
-  frameFor,
-  type Material,
-  type Sides,
-  spanUnder,
-} from '../src/lib/theme-looks/src/glass/tint'
+import { frameFor, type Sides } from '../src/lib/theme-looks/src/glass/tint'
 import { over, ratio, type Rgb, rgbOf, type Span } from '../src/lib/ui-controls/src/legibility'
 import { floorFor, paletteOf, sheetColour } from '../src/lib/theme-looks/src/wallpaper/floors'
 
@@ -121,7 +116,6 @@ function glass(): Seen[] {
     [29, 155, 240],
     [255, 235, 59],
   ]
-  const materials: Material[] = [null, 'mica', 'acrylic', 'clear']
   const seen: Seen[] = []
   for (const app of SCHEMES) {
     const paper = colour(said(blockOf(TOKENS, app), '--bg'))
@@ -129,26 +123,17 @@ function glass(): Seen[] {
       ...ACCENTS.map((one) => ({ colour: colour(one[app]), page: false })),
       ...pages.map((one) => ({ colour: one, page: true })),
     ]
-    for (const material of materials) {
-      for (const source of sources) {
-        for (const opacity of [0, 1]) {
-          const frame = frameFor(source, app, material, glassSides, paper, {
-            opacity,
-            strength: 1,
-          })
-          const tint = colour(frame.tint)
-          const span = spanUnder(material, app, paper)
-          const frames = through(span).map((under) => over(tint, frame.wash, under))
-          const text = glassSides[frame.scheme].text
-          seen.push(
-            weakest(
-              `glass, ${app}, ${material ?? 'no material'}, ${String(source.colour)}`,
-              frames,
-              builtInEdge(frame.scheme, text),
-            ),
-          )
-        }
-      }
+    for (const source of sources) {
+      const frame = frameFor(source, app, glassSides, paper)
+      const ground = over(colour(frame.tint), frame.wash, paper)
+      const text = glassSides[frame.scheme].text
+      seen.push(
+        weakest(
+          `glass, ${app}, ${String(source.colour)}`,
+          [ground],
+          builtInEdge(frame.scheme, text),
+        ),
+      )
     }
   }
   return seen

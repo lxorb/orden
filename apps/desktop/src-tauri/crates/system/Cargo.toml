@@ -36,9 +36,6 @@ block2.workspace = true
 objc2-foundation.workspace = true
 objc2-app-kit.workspace = true
 
-[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-window-vibrancy.workspace = true
-
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-registry.workspace = true
 windows = { workspace = true, features = [

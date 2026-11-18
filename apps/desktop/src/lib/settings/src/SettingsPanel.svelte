@@ -195,12 +195,7 @@
     input: HTMLInputElement,
     kept: boolean,
   ) {
-    const least = field.least?.() ?? field.min
-    let value = Number(input.value)
-    if (value < least) {
-      value = least
-      input.value = String(least)
-    }
+    const value = Number(input.value)
     if (kept || !field.preview) field.set(value)
     else field.preview(value)
   }
@@ -532,23 +527,19 @@
       />
     </div>
   {:else if field.kind === 'slider'}
-    {@const least = field.least?.() ?? field.min}
-    {@const held = Math.max(field.get(), least)}
+    {@const held = field.get()}
     <div class="orden-setting setting sliding">
       {@render named(field, where)}
       <span class="value">{held}{field.unit ?? ''}</span>
       <input
         class="slider orden-slider"
-        class:floored={least > field.min}
         type="range"
         min={field.min}
         max={field.max}
         step={field.step}
         value={held}
         aria-label={field.label}
-        aria-valuemin={least}
         style:--fill="{fraction(field, held)}%"
-        style:--least="{fraction(field, least)}%"
         oninput={(event) => dialled(field, event.currentTarget, false)}
         onchange={(event) => dialled(field, event.currentTarget, true)}
       />
@@ -1575,13 +1566,6 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  .slider.floored::-webkit-slider-runnable-track {
-    background:
-      linear-gradient(var(--line-strong), var(--line-strong)) left / var(--least) 100% no-repeat,
-      linear-gradient(var(--accent), var(--accent)) left / var(--fill) 100% no-repeat,
-      var(--surface-3);
   }
 
   .pictures {

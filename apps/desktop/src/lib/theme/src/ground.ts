@@ -1,23 +1,6 @@
-import { keep, storedText, invoke, isDesktop } from '../../platform/src/api'
+import { keep, invoke, isDesktop } from '../../platform/src/api'
 
 const KEY = 'orden:ground'
-
-const NOTHING = 'rgba(0, 0, 0, 0)'
-
-export const MATERIAL_KEY = 'orden:material'
-
-export function stoodOnNothing(): boolean {
-  return storedText(KEY) === NOTHING
-}
-
-export function groundUnknown(): boolean {
-  return storedText(KEY) === null
-}
-
-export function standAsBefore(): void {
-  const was = storedText(MATERIAL_KEY)
-  if (was && stoodOnNothing()) document.documentElement.dataset.translucent = was
-}
 
 let asked = false
 
