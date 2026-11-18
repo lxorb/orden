@@ -1,4 +1,4 @@
-import { lines, slugify } from '@orden/markdown/links'
+import { headingRows, slugify } from '@orden/markdown/links'
 
 export interface Heading {
   level: number
@@ -6,19 +6,8 @@ export interface Heading {
   line: number
 }
 
-const HEADING = /^(#{1,6})\s+(.*)$/
-
 export function scanHeadings(text: string): Heading[] {
-  const found: Heading[] = []
-  if (!text) return found
-
-  for (const row of lines(text)) {
-    if (row.code || row.matter) continue
-    const [, hashes = '', title = ''] = HEADING.exec(row.text) ?? []
-    if (hashes) found.push({ level: hashes.length, text: title.trim(), line: row.line })
-  }
-
-  return found
+  return headingRows(text).map(({ level, text: words, line }) => ({ level, text: words, line }))
 }
 
 export function lineOf(text: string, at: number): number {

@@ -462,6 +462,7 @@ fn prose(body: &str, words_from: usize) -> Prose {
     let mut tasks: Vec<Task> = Vec::new();
     let mut section: Vec<(usize, String)> = Vec::new();
     let mut open: Vec<Open> = Vec::new();
+    let mut paragraph = Paragraph::default();
 
     prose_lines(body, words_from, |index, line, fence_name| {
         if let Some(id) = fence_name {
@@ -469,7 +470,11 @@ fn prose(body: &str, words_from: usize) -> Prose {
             return;
         }
 
-        let heading = heading_of(line);
+        let heading = if index >= words_from {
+            paragraph.heading(index, line)
+        } else {
+            None
+        };
         if let Some((level, text)) = heading {
             if index >= words_from {
                 while section.last().is_some_and(|(above, _)| *above >= level) {
@@ -605,6 +610,79 @@ fn heading_of(line: &str) -> Option<(usize, String)> {
     }
 
     Some((hashes, without_closing_hashes(rest).trim().to_string()))
+}
+
+#[derive(Default)]
+struct Paragraph {
+    words: String,
+    last: Option<usize>,
+    blocked: bool,
+}
+
+impl Paragraph {
+    fn heading(&mut self, index: usize, line: &str) -> Option<(usize, String)> {
+        let follows = self.last.is_some_and(|last| last + 1 == index);
+        if !follows {
+            self.words.clear();
+            self.blocked = false;
+        }
+        self.last = Some(index);
+
+        let found = heading_of(line).or_else(|| {
+            underline_level(line)
+                .filter(|_| !self.words.is_empty())
+                .map(|level| (level, self.words.clone()))
+        });
+        let words = line.trim();
+        if found.is_some() || words.is_empty() {
+            self.words.clear();
+            self.blocked = false;
+        } else if self.blocked || not_prose(line) {
+            self.words.clear();
+            self.blocked = true;
+        } else {
+            if !self.words.is_empty() {
+                self.words.push(' ');
+            }
+            self.words.push_str(words);
+        }
+        found
+    }
+}
+
+fn underline_level(line: &str) -> Option<usize> {
+    let trimmed = line.trim_start_matches(' ');
+    if line.len() - trimmed.len() > 3 {
+        return None;
+    }
+    let run = trimmed.trim_end_matches([' ', '\t']);
+    let mark = run.chars().next()?;
+    if !matches!(mark, '=' | '-') || !run.chars().all(|one| one == mark) {
+        return None;
+    }
+    Some(if mark == '=' { 1 } else { 2 })
+}
+
+fn not_prose(line: &str) -> bool {
+    if line.starts_with("    ") || line.starts_with('\t') {
+        return true;
+    }
+    let rest = line.trim_start_matches([' ', '\t']);
+    rest.starts_with(['>', '|']) || is_list_item(line) || is_break(line)
+}
+
+fn is_break(line: &str) -> bool {
+    let trimmed = line.trim_start_matches(' ');
+    if line.len() - trimmed.len() > 3 {
+        return false;
+    }
+    let marks: Vec<char> = trimmed
+        .chars()
+        .filter(|one| !matches!(one, ' ' | '\t'))
+        .collect();
+    marks.len() >= 3
+        && matches!(marks[0], '-' | '*' | '_')
+        && marks.iter().all(|one| *one == marks[0])
 }
 
 fn without_closing_hashes(rest: &str) -> &str {
@@ -1583,6 +1661,23 @@ mod tests {
         assert_eq!(
             source.address.as_deref(),
             Some("view-source:https://a.example/")
+        );
+    }
+
+    #[test]
+    fn a_heading_underlined_with_equals_or_dashes_is_a_heading_too() {
+        let body = "---\ntitle: x\n---\n\nIntro\n=====\n\n- [ ] first\n\nPlan for\nthe week\n--------\n\n- [ ] second\n\n## Done ##\n\n- [ ] third\n\ntext\n\n---\n\n- item\n---\n\n> quoted\nlazy\n===\n\n```\nCode\n===\n```\n";
+        let read = prose(body, 3);
+
+        assert_eq!(read.headings, ["Intro", "Plan for the week", "Done"]);
+        let sections: Vec<Vec<String>> = read.tasks.iter().map(|one| one.section.clone()).collect();
+        assert_eq!(
+            sections,
+            [
+                vec!["Intro".to_string()],
+                vec!["Intro".to_string(), "Plan for the week".to_string()],
+                vec!["Intro".to_string(), "Done".to_string()],
+            ]
         );
     }
 
