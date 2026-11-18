@@ -764,15 +764,32 @@ describe('taking over what the account holds', () => {
     Object.assign(api, was)
   })
 
-  test('brings the formatting marks kept quiet', async () => {
-    const { release, settingsCall } = heldAnswer({ quietMarks: true })
-    api.settings = settingsCall
+  test.each([
+    [{ quietMarks: true }, 'quietMarks', true],
+    [{ silent: true }, 'silent', true],
+    [{ canvasTurns: true }, 'canvasTurns', true],
+    [{ developer: false }, 'coder', false],
+    [{ ligatures: 'code' }, 'ligatures', 'code'],
+    [{ ligatures: true }, 'ligatures', 'all'],
+    [{ ligatures: 'sometimes' }, 'ligatures', 'off'],
+    [{ attachments: 'named' }, 'attachments', 'named'],
+    [{ attachments: 'vault' }, 'attachments', 'space'],
+    [{ undatedInToday: false, silent: true }, 'silent', true],
+  ] as [Held, string, unknown][])(
+    'takes %j from the account as %s %j',
+    async (settings, key, value) => {
+      api.settings = async () => ({ settings })
+      await modes.adopt('token')
+      expect((modes as unknown as Record<string, unknown>)[key]).toBe(value)
+      expect('undatedInToday' in modes).toBe(false)
+    },
+  )
 
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.quietMarks).toBe(true)
+  test('reads false from an older build as off', async () => {
+    modes.setLigatures('all')
+    api.settings = async () => ({ settings: { ligatures: false } })
+    await modes.adopt('token')
+    expect(modes.ligatures).toBe('off')
   })
 
   test('deletes the OpenAI key the glasses kept on the account before they asked the default AI account', async () => {
@@ -793,96 +810,6 @@ describe('taking over what the account holds', () => {
     await modes.adopt('token')
     expect(removed).toEqual(['token'])
     api.settings = was
-  })
-
-  test('brings Silent mode', async () => {
-    const { release, settingsCall } = heldAnswer({ silent: true })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.silent).toBe(true)
-  })
-
-  test('turns a canvas with two fingers where the account says so', async () => {
-    const { release, settingsCall } = heldAnswer({ canvasTurns: true })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.canvasTurns).toBe(true)
-  })
-
-  test('passes over the Today switch an account still holds from older builds (#2162)', async () => {
-    const { release, settingsCall } = heldAnswer({ undatedInToday: false, silent: true })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.silent).toBe(true)
-    expect('undatedInToday' in modes).toBe(false)
-  })
-
-  test('brings Developer mode', async () => {
-    const { release, settingsCall } = heldAnswer({ developer: false })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.coder).toBe(false)
-  })
-
-  test('brings a setting this machine has never chosen', async () => {
-    const { release, settingsCall } = heldAnswer({ ligatures: 'code' })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.ligatures).toBe('code')
-  })
-
-  test('reads a switch from an older build as a scope', async () => {
-    const { release, settingsCall } = heldAnswer({ ligatures: true })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.ligatures).toBe('all')
-  })
-
-  test('and reads false as off', async () => {
-    modes.setLigatures('all')
-    const { release, settingsCall } = heldAnswer({ ligatures: false })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.ligatures).toBe('off')
-  })
-
-  test('ignores a scope it has never heard of', async () => {
-    const { release, settingsCall } = heldAnswer({ ligatures: 'sometimes' })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.ligatures).toBe('off')
   })
 
   test('leaves alone a choice made while the answer was in the air', async () => {
@@ -939,17 +866,6 @@ describe('taking over what the account holds', () => {
     expect(told.calls).toContainEqual({ mode: 'vim', on: true })
   })
 
-  test('brings the attachment folder another machine chose', async () => {
-    const { release, settingsCall } = heldAnswer({ attachments: 'named' })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.attachments).toBe('named')
-  })
-
   test('leaves a folder chosen while the answer was in the air', async () => {
     const { release, settingsCall } = heldAnswer({ attachments: 'named' })
     api.settings = settingsCall
@@ -961,17 +877,6 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.attachments).toBe('note')
-  })
-
-  test('ignores a folder no version of the app knows', async () => {
-    const { release, settingsCall } = heldAnswer({ attachments: 'vault' })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.attachments).toBe('space')
   })
 
   test('carries up what was decided before the session came back', async () => {

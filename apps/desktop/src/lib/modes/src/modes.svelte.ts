@@ -57,6 +57,20 @@ import {
 import { opening } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
+const STALE = [
+  'spellLanguage',
+  'spellWords',
+  'overviewBlur',
+  'flushBottom',
+  'glassesScroll',
+  'translucent',
+  'properties',
+  'frontMatter',
+  'frontMatterDrawn',
+  'canvasTurns',
+  'undatedToday',
+  'undatedInToday',
+]
 const OWED_KEY = 'orden:modes-owed'
 
 const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2]
@@ -346,9 +360,8 @@ class Modes {
   }
 
   restore() {
-    let stale = false
-
     const saved = stored(STORAGE_KEY)
+    const stale = isRecord(saved) && STALE.some((name) => name in saved)
     if (isRecord(saved)) {
       this.opensInSource = on(saved.source, DEFAULTS.opensInSource)
       opening.source = this.opensInSource
@@ -368,10 +381,6 @@ class Modes {
         (isString(saved.spellLanguage) && saved.spellLanguage !== 'system'
           ? [saved.spellLanguage]
           : [])
-      stale ||= 'spellLanguage' in saved
-      stale ||= 'spellWords' in saved
-      stale ||= 'overviewBlur' in saved
-      stale ||= 'flushBottom' in saved
       this.ligatures = ligatureScope(saved.ligatures) ?? DEFAULTS.ligatures
       this.conflicts = conflictRule(saved.conflicts) ?? DEFAULTS.conflicts
       this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
@@ -380,9 +389,7 @@ class Modes {
       if (isCompaction(saved.glassesCompaction)) this.glassesCompaction = saved.glassesCompaction
       this.glassesMarks = marksOf(saved.glassesMarks)
       this.glassesWords = wordsOf(saved.glassesWords)
-      stale ||= 'glassesScroll' in saved
       this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
-      stale ||= 'translucent' in saved
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
       if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
       const tone = toneOf(saved.highlightTone)
@@ -394,10 +401,7 @@ class Modes {
         content: familyName(fonts.content),
         mono: familyName(fonts.mono),
       }
-      stale ||= 'properties' in saved || 'frontMatter' in saved || 'frontMatterDrawn' in saved
       this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
-      stale ||= 'canvasTurns' in saved
-      stale ||= 'undatedToday' in saved || 'undatedInToday' in saved
     }
     setHardBreaks(this.hardBreaks)
     setLinkWriting(this.linkFormat)
@@ -554,9 +558,7 @@ class Modes {
   }
 
   toggleFocus(view?: EditorView) {
-    this.focus = !this.focus
-    this.each(view, (one) => setFocusMode(one, this.focus))
-    this.persist()
+    this.flip('focus', setFocusMode, view)
   }
 
   toggleQuietMarks(view?: EditorView) {
@@ -611,27 +613,19 @@ class Modes {
   }
 
   toggleTypewriter(view?: EditorView) {
-    this.typewriter = !this.typewriter
-    this.each(view, (one) => setTypewriterMode(one, this.typewriter))
-    this.persist()
+    this.flip('typewriter', setTypewriterMode, view)
   }
 
   togglePunctuation(view?: EditorView) {
-    this.punctuation = !this.punctuation
-    this.each(view, (one) => setSmartPunctuation(one, this.punctuation))
-    this.persist()
+    this.flip('punctuation', setSmartPunctuation, view)
   }
 
   toggleNumbers(view?: EditorView) {
-    this.numbers = !this.numbers
-    this.each(view, (one) => setHeadingNumbers(one, this.numbers))
-    this.persist()
+    this.flip('numbers', setHeadingNumbers, view)
   }
 
   toggleLineNumbers(view?: EditorView) {
-    this.lineNumbers = !this.lineNumbers
-    this.each(view, (one) => setCodeLineNumbers(one, this.lineNumbers))
-    this.persist()
+    this.flip('lineNumbers', setCodeLineNumbers, view)
   }
 
   setCodeTheme(id: string, view?: EditorView) {
@@ -641,9 +635,7 @@ class Modes {
   }
 
   toggleSpellcheck(view?: EditorView) {
-    this.spellcheck = !this.spellcheck
-    this.each(view, (one) => setSpellcheck(one, this.spellcheck, this.dictionary))
-    this.persist()
+    this.flip('spellcheck', (one, on) => setSpellcheck(one, on, this.dictionary), view)
   }
 
   private get dictionary(): string | undefined {
@@ -657,23 +649,15 @@ class Modes {
   }
 
   setLigatures(scope: string, view?: EditorView) {
-    const wanted = ligatureScope(scope)
-    if (!wanted || wanted === this.ligatures) return
-
-    this.ligatures = wanted
-    this.each(view, (one) => setLigatures(one, wanted))
-    this.persist()
-    this.share({ ligatures: wanted })
+    this.take('ligatures', ligatureScope(scope) ?? undefined, true, (wanted) =>
+      this.each(view, (one) => setLigatures(one, wanted)),
+    )
   }
 
   setHighlightTone(tone: number | null) {
-    const wanted = highlightTone(tone).tone
-    if (wanted === this.highlightTone) return
-
-    this.highlightTone = wanted
-    setHighlightColour(this.highlight)
-    this.persist()
-    this.share({ highlightTone: wanted })
+    this.take('highlightTone', highlightTone(tone).tone, true, () =>
+      setHighlightColour(this.highlight),
+    )
   }
 
   get highlight(): HighlightColour {
@@ -688,45 +672,23 @@ class Modes {
   }
 
   setLinkFormat(format: string) {
-    if (!isLinkFormat(format) || format === this.linkFormat) return
-
-    this.linkFormat = format
-    setLinkWriting(format)
-    this.persist()
-    this.share({ linkFormat: format })
+    this.take('linkFormat', isLinkFormat(format) ? format : undefined, true, setLinkWriting)
   }
 
   setGlassesBreak(level: string) {
-    const wanted = glassesBreak(level)
-    if (wanted === null || wanted === this.glassesBreak) return
-
-    this.glassesBreak = wanted
-    this.persist()
-    this.share({ glassesBreak: wanted })
+    this.take('glassesBreak', glassesBreak(level) ?? undefined)
   }
 
   setGlassesLineNumbers(on: boolean) {
-    if (on === this.glassesLineNumbers) return
-
-    this.glassesLineNumbers = on
-    this.persist()
-    this.share({ glassesLineNumbers: on })
+    this.take('glassesLineNumbers', on)
   }
 
   setGlassesVoice(on: boolean) {
-    if (on === this.glassesVoice) return
-
-    this.glassesVoice = on
-    this.persist()
-    this.share({ glassesVoice: on })
+    this.take('glassesVoice', on)
   }
 
   setGlassesCompaction(level: string) {
-    if (!isCompaction(level) || level === this.glassesCompaction) return
-
-    this.glassesCompaction = level
-    this.persist()
-    this.share({ glassesCompaction: level })
+    this.take('glassesCompaction', isCompaction(level) ? level : undefined)
   }
 
   setGlassesMark(name: keyof Marks, on: boolean) {
@@ -768,12 +730,7 @@ class Modes {
   }
 
   setVimKeys(on: boolean, view?: EditorView) {
-    if (on === this.vim) return
-
-    this.vim = on
-    this.each(view, (one) => setVim(one, on))
-    this.persist()
-    this.share({ vim: on })
+    this.take('vim', on, true, () => this.each(view, (one) => setVim(one, on)))
   }
 
   vimModeOf(view: EditorView | undefined): VimMode | null {
@@ -805,36 +762,19 @@ class Modes {
   }
 
   setKeepVersions(days: number) {
-    const wanted = KEEP_VERSIONS.find((one) => one === days)
-    if (wanted === undefined || wanted === this.keepVersions) return
-
-    this.keepVersions = wanted
-    this.persist()
-    this.share({ keepVersions: wanted })
+    this.take('keepVersions', keepingOf(days))
   }
 
   setRemindBefore(minutes: number) {
-    if (!REMIND_BEFORE.includes(minutes) || minutes === this.remindBefore) return
-
-    this.remindBefore = minutes
-    this.persist()
-    this.share({ remindBefore: minutes })
+    this.take('remindBefore', remindingOf(minutes))
   }
 
   setCanvasTurns(on: boolean) {
-    if (on === this.canvasTurns) return
-
-    this.canvasTurns = on
-    this.persist()
-    this.share({ canvasTurns: on })
+    this.take('canvasTurns', on)
   }
 
   setCanvasTurnSnaps(on: boolean) {
-    if (on === this.canvasTurnSnaps) return
-
-    this.canvasTurnSnaps = on
-    this.persist()
-    this.share({ canvasTurnSnaps: on })
+    this.take('canvasTurnSnaps', on)
   }
 
   async adopt(token: string): Promise<AccountSettings | null> {
@@ -856,103 +796,41 @@ class Modes {
 
     const unheard = this.owed.sends === asked && !this.owed.standing
 
-    const theirs = ligatureScope(remote.ligatures)
-    if (theirs && unheard && theirs !== this.ligatures) {
-      this.ligatures = theirs
-      this.each(undefined, (one) => setLigatures(one, theirs))
-      this.persist()
+    if (unheard) {
+      const flag = (value: unknown) => (typeof value === 'boolean' ? value : undefined)
+      this.take('ligatures', ligatureScope(remote.ligatures) ?? undefined, false, (scope) =>
+        this.each(undefined, (one) => setLigatures(one, scope)),
+      )
+      this.take('vim', flag(remote.vim), false, (on) =>
+        this.each(undefined, (one) => setVim(one, on)),
+      )
+      this.take(
+        'attachments',
+        isAttachmentFolder(remote.attachments) ? remote.attachments : undefined,
+        false,
+      )
+      this.take('conflicts', conflictRule(remote.conflicts) ?? undefined, false)
+      this.take('keepVersions', keepingOf(remote.keepVersions), false)
+      this.take('remindBefore', remindingOf(remote.remindBefore), false)
+      this.take('canvasTurns', flag(remote.canvasTurns), false)
+      this.take('canvasTurnSnaps', flag(remote.canvasTurnSnaps), false)
+      this.take('highlightTone', toneOf(remote.highlightTone), false, () =>
+        setHighlightColour(this.highlight),
+      )
+      this.take('quietMarks', flag(remote.quietMarks), false, (on) =>
+        this.each(undefined, (one) => setQuietMarks(one, on)),
+      )
+      this.take('silent', flag(remote.silent), false)
+      this.take('developer', flag(remote.developer), false)
+      this.take('hardBreaks', flag(remote.hardBreaks), false, setHardBreaks)
+      this.take(
+        'linkFormat',
+        isLinkFormat(remote.linkFormat) ? remote.linkFormat : undefined,
+        false,
+        setLinkWriting,
+      )
+      this.adoptGlasses(remote)
     }
-
-    const modal = remote.vim
-    if (typeof modal === 'boolean' && unheard && modal !== this.vim) {
-      this.vim = modal
-      this.each(undefined, (one) => setVim(one, modal))
-      this.persist()
-    }
-
-    const folder = remote.attachments
-    if (isAttachmentFolder(folder) && unheard && folder !== this.attachments) {
-      this.attachments = folder
-      this.persist()
-    }
-
-    const clash = conflictRule(remote.conflicts)
-    if (clash && unheard && clash !== this.conflicts) {
-      this.conflicts = clash
-      this.persist()
-    }
-
-    const keeping = keepingOf(remote.keepVersions)
-    if (keeping !== undefined && unheard) {
-      if (keeping !== this.keepVersions) {
-        this.keepVersions = keeping
-        this.persist()
-      }
-    }
-
-    const before = remindingOf(remote.remindBefore)
-    if (before !== undefined && unheard) {
-      if (before !== this.remindBefore) {
-        this.remindBefore = before
-        this.persist()
-      }
-    }
-
-    const turns = remote.canvasTurns
-    if (typeof turns === 'boolean' && unheard && turns !== this.canvasTurns) {
-      this.canvasTurns = turns
-      this.persist()
-    }
-
-    const snaps = remote.canvasTurnSnaps
-    if (typeof snaps === 'boolean' && unheard && snaps !== this.canvasTurnSnaps) {
-      this.canvasTurnSnaps = snaps
-      this.persist()
-    }
-
-    const wanted = toneOf(remote.highlightTone)
-    if (wanted !== undefined && unheard) {
-      if (wanted !== this.highlightTone) {
-        this.highlightTone = wanted
-        setHighlightColour(this.highlight)
-        this.persist()
-      }
-    }
-
-    const quiet = remote.quietMarks
-    if (typeof quiet === 'boolean' && unheard && quiet !== this.quietMarks) {
-      this.quietMarks = quiet
-      this.each(undefined, (one) => setQuietMarks(one, quiet))
-      this.persist()
-    }
-
-    const quietly = remote.silent
-    if (typeof quietly === 'boolean' && unheard && quietly !== this.silent) {
-      this.silent = quietly
-      this.persist()
-    }
-
-    const coding = remote.developer
-    if (typeof coding === 'boolean' && unheard && coding !== this.developer) {
-      this.developer = coding
-      this.persist()
-    }
-
-    const breaking = remote.hardBreaks
-    if (typeof breaking === 'boolean' && unheard && breaking !== this.hardBreaks) {
-      this.hardBreaks = breaking
-      setHardBreaks(breaking)
-      this.persist()
-    }
-
-    const spelling = remote.linkFormat
-    if (isLinkFormat(spelling) && unheard && spelling !== this.linkFormat) {
-      this.linkFormat = spelling
-      setLinkWriting(spelling)
-      this.persist()
-    }
-
-    if (unheard) this.adoptGlasses(remote)
 
     this.tellOfMobile(token, remote)
 
@@ -1018,28 +896,54 @@ class Modes {
     this.owed.send(patch)
   }
 
-  toggleCloseBrackets(view?: EditorView) {
-    this.closeBrackets = !this.closeBrackets
-    this.each(view, (one) => setCloseBrackets(one, this.closeBrackets))
+  private take<K extends keyof typeof DEFAULTS | 'developer'>(
+    key: K,
+    value: Modes[K] | undefined,
+    shared = true,
+    then?: (one: Modes[K]) => void,
+  ) {
+    if (value === undefined || value === this[key]) return
+
+    Object.assign(this, { [key]: value })
+    then?.(value)
     this.persist()
+    if (shared) this.share({ [key]: value })
+  }
+
+  private flip(
+    key:
+      | 'focus'
+      | 'typewriter'
+      | 'punctuation'
+      | 'numbers'
+      | 'lineNumbers'
+      | 'spellcheck'
+      | 'closeBrackets'
+      | 'strict'
+      | 'equationNumbers'
+      | 'rtl',
+    set: (view: EditorView, on: boolean) => void,
+    view?: EditorView,
+  ) {
+    this[key] = !this[key]
+    this.each(view, (one) => set(one, this[key]))
+    this.persist()
+  }
+
+  toggleCloseBrackets(view?: EditorView) {
+    this.flip('closeBrackets', setCloseBrackets, view)
   }
 
   toggleStrict(view?: EditorView) {
-    this.strict = !this.strict
-    this.each(view, (one) => setStrictMode(one, this.strict))
-    this.persist()
+    this.flip('strict', setStrictMode, view)
   }
 
   toggleEquationNumbers(view?: EditorView) {
-    this.equationNumbers = !this.equationNumbers
-    this.each(view, (one) => setEquationNumbers(one, this.equationNumbers))
-    this.persist()
+    this.flip('equationNumbers', setEquationNumbers, view)
   }
 
   toggleRightToLeft(view?: EditorView) {
-    this.rtl = !this.rtl
-    this.each(view, (one) => setRightToLeft(one, this.rtl))
-    this.persist()
+    this.flip('rtl', setRightToLeft, view)
   }
 
   setZoom(value: number) {
@@ -1115,7 +1019,7 @@ class Modes {
   }
 
   private state(): Saved {
-    const state: Saved = {
+    return {
       source: this.opensInSource,
       readOnly: this.readOnly,
       focus: this.focus,
@@ -1161,7 +1065,6 @@ class Modes {
       hardBreaks: this.hardBreaks,
       linkFormat: this.linkFormat,
     }
-    return state
   }
 }
 
