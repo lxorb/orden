@@ -248,9 +248,7 @@ function fromFolder(folder: string, target: string): string | null {
 }
 
 function lineOfTarget(doc: string, jump: NoteJump): number | null {
-  if (jump.block !== null) {
-    return blockIds(doc).find((one) => one.id === jump.block)?.line ?? null
-  }
+  if (jump.block !== null) return blockIds(doc).find((one) => one.id === jump.block)?.line ?? null
   if (jump.heading === null) return null
 
   return lineOfHeading(scanHeadings(doc), jump.heading)
@@ -342,7 +340,9 @@ class Workspace {
   readonly panes = new Panes(() => {
     this.scheduleSession()
     this.saving.hurry()
-    this.writeLeftDrafts()
+    if (!viewport.touch) return
+    const shown = new Set(this.panes.all.map((one) => one.activeTabId))
+    for (const tab of this.tabs) if (!shown.has(tab.id) && unsaved(tab)) void this.save(tab)
   })
   readonly layouts = new Layouts()
   panel = $state<Panel | null>(null)
@@ -830,59 +830,45 @@ class Workspace {
   private async tabsAlong(drafts: Draft[], paneId: string): Promise<(Tab | null)[]> {
     return this.opened.arranging(async () => {
       const made: (Tab | null)[] = []
-
-      for (const written of drafts) {
+      const tabOf = async (written: Draft): Promise<Tab | null> => {
         let draft = written.path ? { ...written, path: this.spelled(written.path) } : written
 
         if (draft.kind === 'pdf' && draft.path) {
-          if (!(await this.opens(draft.path))) {
-            made.push(null)
-            continue
-          }
+          if (!(await this.opens(draft.path))) return null
           const writable = await this.mayTurn(draft.path)
           const held = writable ? null : await this.heldBy(draft.path)
           const turned = writable || held !== null
           const path = held ?? (writable ? await this.pageNoteForPdf(draft.path) : draft.path)
           const doc = turned ? '' : await this.paperText(draft.path)
-          if (!path || doc === null) {
-            made.push(null)
-            continue
-          }
+          if (!path || doc === null) return null
           draft = turned
             ? { ...draft, kind: 'pages', path, name: nameOf(path), dirty: false, doc }
             : { ...draft, dirty: false, doc }
         }
 
-        if (draft.path && !draft.dirty && this.instructionsAt(draft.path)) {
-          made.push(null)
-          continue
-        }
+        if (draft.path && !draft.dirty && this.instructionsAt(draft.path)) return null
 
         const away = viewport.touch || (!!draft.path && draft.address !== undefined)
-        if (draft.kind === 'web' && !isDesktop && away) {
-          made.push(null)
-          continue
-        }
+        if (draft.kind === 'web' && !isDesktop && away) return null
 
         if (draft.path && !(await this.opens(draft.path))) {
           log('info', `restore: ${draft.path} is outside every space, so its tab is not put back`)
-          made.push(null)
-          continue
+          return null
         }
 
-        const same = this.sameDocument(draft)
-        if (same) {
-          made.push(this.viewOf(same, paneId, draft))
-          continue
-        }
+        const shared = draft.share ? this.opened.withKey(draft.share) : null
+        const same =
+          shared && samePath(shared.path, draft.path)
+            ? shared
+            : draft.share
+              ? this.opened.cameBackAs(draft.share)
+              : null
+        if (same) return this.viewOf(same, paneId, draft)
 
         const viewOnce = (note: NoteDoc) =>
           made.find((one) => one?.note === note) ?? this.viewOf(note, paneId, draft)
         const already = draft.path ? this.opened.at(draft.path) : null
-        if (already) {
-          made.push(viewOnce(await this.wordsMeet(already, draft)))
-          continue
-        }
+        if (already) return viewOnce(await this.wordsMeet(already, draft))
 
         const open = { read: false }
         const note =
@@ -904,23 +890,17 @@ class Workspace {
           const back = note
             ? await this.wordsMeet(note, draft)
             : await this.opened.opening(draft.path, () => this.unwrittenBack(draft))
-          made.push(back ? viewOnce(back) : null)
-          continue
+          return back ? viewOnce(back) : null
         }
 
-        made.push(note ? this.viewOf(note, paneId, draft) : null)
+        return note ? this.viewOf(note, paneId, draft) : null
       }
+      for (const written of drafts) made.push(await tabOf(written))
 
       for (const tab of made) if (tab?.note.dirty) this.saving.owed(tab.note)
 
       return made
     })
-  }
-
-  private sameDocument(draft: Draft): NoteDoc | null {
-    const shared = draft.share ? this.opened.withKey(draft.share) : null
-    if (shared && samePath(shared.path, draft.path)) return shared
-    return draft.share ? this.opened.cameBackAs(draft.share) : null
   }
 
   private async wordsMeet(open: NoteDoc, draft: Draft): Promise<NoteDoc> {
@@ -1004,13 +984,7 @@ class Workspace {
       if (!parseAhead(text)) return unread(path).then(() => null)
     }
 
-    return this.opened.make({
-      kind: draft.kind,
-      path,
-      name: draft.name,
-      text,
-      dirty: false,
-    })
+    return this.opened.make({ kind: draft.kind, path, name: draft.name, text, dirty: false })
   }
 
   private viewOf(note: NoteDoc, paneId: string, draft: Draft): Tab {
@@ -1269,14 +1243,7 @@ class Workspace {
   }
 
   openBlank(name = UNTITLED, doc = '', home: string | null = this.activeSpaceId) {
-    const note = this.document({
-      kind: 'note',
-      path: null,
-      name,
-      text: doc,
-      dirty: !!doc,
-      home,
-    })
+    const note = this.document({ kind: 'note', path: null, name, text: doc, dirty: !!doc, home })
     this.add(new Tab(note, this.panes.focusedId))
     this.showNote()
     if (doc) void this.placeAtHome(note)
@@ -1442,8 +1409,11 @@ class Workspace {
     const chosenOn = activate ? chosen : null
     if (chosenOn) {
       this.tabs = this.placed(tab, tab.paneId, this.tabsIn(tab.paneId).indexOf(chosenOn))
-    } else {
-      this.tabs = opener === null ? [...this.tabs, tab] : this.besideOf(tab, opener)
+    } else if (opener === null) this.tabs = [...this.tabs, tab]
+    else {
+      const previous = this.besideLast?.opener === opener ? this.besideLast.tab : null
+      this.besideLast = { opener, tab: tab.id }
+      this.tabs = this.placed(tab, tab.paneId, besideAt(this.tabsIn(tab.paneId), opener, previous))
     }
     if (activate) this.panes.activate(tab.paneId, tab.id)
     if (chosenOn) this.close(chosenOn.id, false)
@@ -1480,14 +1450,11 @@ class Workspace {
     return tab.nowhere && !tab.inPrivate && !webPages().addressOf(tab.id)
   }
 
-  isBlankTab(tab: Tab): boolean {
-    return this.isNewTab(tab) && !webPages().typedInto(tab.id) && !(tab.id in agentMarks.opened)
-  }
-
   closeLeftBlank() {
     const here = this.activeTabId
     for (const tab of this.tabs) {
-      if (tab.id === here || !this.isBlankTab(tab)) continue
+      if (tab.id === here || !this.isNewTab(tab) || webPages().typedInto(tab.id)) continue
+      if (tab.id in agentMarks.opened) continue
       if (this.panes.at(tab.paneId) && this.tabsIn(tab.paneId).length === 1) continue
       this.close(tab.id, false)
     }
@@ -1495,12 +1462,6 @@ class Workspace {
 
   private openedFrom(how: OpenHow, paneId: string): string | null {
     return how.beside ? (this.panes.at(paneId)?.activeTabId ?? null) : null
-  }
-
-  private besideOf(tab: Tab, opener: string): Tab[] {
-    const previous = this.besideLast?.opener === opener ? this.besideLast.tab : null
-    this.besideLast = { opener, tab: tab.id }
-    return this.placed(tab, tab.paneId, besideAt(this.tabsIn(tab.paneId), opener, previous))
   }
 
   onePane() {
@@ -1743,13 +1704,7 @@ class Workspace {
     if (!parseAhead(text)) return unread(path).then(() => null)
     await nextTask()
 
-    const file = this.document({
-      kind: 'canvas',
-      path,
-      name: nameOf(path),
-      text,
-      dirty: false,
-    })
+    const file = this.document({ kind: 'canvas', path, name: nameOf(path), text, dirty: false })
     const tab = new Tab(file, this.panes.focusedId)
     this.arrive(tab, how)
 
@@ -1821,9 +1776,7 @@ class Workspace {
   private async openSite(opening: string, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
-    if (said === null && /\.webloc$/i.test(opening.trim())) {
-      return unread(opening).then(() => null)
-    }
+    if (said === null && /\.webloc$/i.test(opening.trim())) return unread(opening).then(() => null)
 
     if (!isDesktop && (said || viewport.touch)) {
       if (said) await openExternal(said.url)
@@ -2018,13 +1971,7 @@ class Workspace {
     const { parseAhead } = await import('@orden/markdown/canvas')
     if (!parseAhead(text)) return unread(path).then(() => null)
 
-    const file = this.document({
-      kind: 'pages',
-      path,
-      name: nameOf(path),
-      text,
-      dirty: false,
-    })
+    const file = this.document({ kind: 'pages', path, name: nameOf(path), text, dirty: false })
     const tab = new Tab(file, this.panes.focusedId)
     if (page !== null) tab.page = page
     this.arrive(tab, how)
@@ -2158,13 +2105,6 @@ class Workspace {
     }
   }
 
-  private writeLeftDrafts() {
-    if (!viewport.touch) return
-
-    const shown = new Set(this.panes.all.map((one) => one.activeTabId))
-    for (const tab of this.tabs) if (!shown.has(tab.id) && unsaved(tab)) void this.save(tab)
-  }
-
   private dropScaffolding(kept: Tab) {
     for (const other of this.tabsIn(kept.paneId)) {
       if (other.id === kept.id || other.kind !== 'note' || other.path !== null || other.dirty) {
@@ -2275,10 +2215,6 @@ class Workspace {
 
   toggleHidden() {
     this.treeOptions = { ...this.treeOptions, showHidden: !this.treeOptions.showHidden }
-    this.persistTreeOptions()
-  }
-
-  private persistTreeOptions() {
     keepJson(TREE_KEY, this.treeOptions)
     void this.loadTree()
   }
@@ -2426,13 +2362,7 @@ class Workspace {
       return reusable.note
     }
 
-    const note = this.document({
-      kind: 'note',
-      path,
-      name: nameOf(path),
-      text: doc,
-      dirty: false,
-    })
+    const note = this.document({ kind: 'note', path, name: nameOf(path), text: doc, dirty: false })
     if (unwritten) note.onDisk = null
     const tab = new Tab(note, this.panes.focusedId)
     this.walked(tab, path)
@@ -3114,14 +3044,7 @@ class Workspace {
 
   freshEntry(path: string, isFolder: boolean): Entry {
     const at = Date.now()
-    return {
-      name: nameOf(path),
-      path,
-      is_dir: isFolder,
-      modified: at,
-      created: at,
-      children: [],
-    }
+    return { name: nameOf(path), path, is_dir: isFolder, modified: at, created: at, children: [] }
   }
 
   isExpanded(path: string): boolean {
@@ -3609,10 +3532,7 @@ class Workspace {
       let trashId = ''
       await this.fileOps.doing(gone, async () => {
         const entry = await oneWriteAt(path, () =>
-          invoke<{ id: string }>('trash_item', {
-            path,
-            kind: isFolder ? 'folder' : 'note',
-          }),
+          invoke<{ id: string }>('trash_item', { path, kind: isFolder ? 'folder' : 'note' }),
         )
         trashId = entry.id
         return entry.id

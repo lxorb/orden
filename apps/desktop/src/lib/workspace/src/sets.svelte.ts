@@ -288,14 +288,7 @@ class Sets {
     const made = pane(identifier())
     this.carry(tabs, made.id)
     made.activeTabId = workspace.panes.successorOf(tabs.map((tab) => tab.id))
-    return {
-      frame: made,
-      focused: made.id,
-      fills: null,
-      preview: null,
-      held: null,
-      inPage: false,
-    }
+    return { frame: made, focused: made.id, fills: null, preview: null, held: null, inPage: false }
   }
 
   private retidy(key: string) {
@@ -339,10 +332,7 @@ class Sets {
     const aside: Record<string, SetDraft> = { ...this.drafted }
     for (const [key, set] of Object.entries(this.aside)) {
       if (!this.tabsOf(key).length) continue
-      aside[key] = {
-        layout: workspace.layout(set.frame, set.focused),
-        right: workspace.rightPanel,
-      }
+      aside[key] = { layout: workspace.layout(set.frame, set.focused), right: workspace.rightPanel }
     }
     return this.on === GLOBAL && !Object.keys(aside).length ? undefined : { on: this.on, aside }
   }

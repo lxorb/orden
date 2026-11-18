@@ -3,10 +3,7 @@ import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const refreshing = vi.hoisted(() => ({
-  calls: 0,
-  answer: (): Promise<void> => Promise.resolve(),
-}))
+const refreshing = vi.hoisted(() => ({ calls: 0, answer: (): Promise<void> => Promise.resolve() }))
 vi.mock('./refresh', () => ({
   refreshHere: () => {
     refreshing.calls++

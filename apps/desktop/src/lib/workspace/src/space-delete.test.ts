@@ -13,10 +13,7 @@ vi.mock('../../platform/src/tauri', () => ({
   },
 }))
 
-const account = vi.hoisted(() => ({
-  signedIn: true,
-  spaces: [] as { id: string; role: string }[],
-}))
+const account = vi.hoisted(() => ({ signedIn: true, spaces: [] as { id: string; role: string }[] }))
 vi.mock('../../accounts/src/account.svelte', () => ({ account }))
 
 const remote = new Map<string, string>()

@@ -21,12 +21,7 @@ const theirs = { id: 'theirs', name: 'Theirs', root: '/Theirs' }
 const mine = { id: 'mine', name: 'Mine', root: '/Mine' }
 
 function places(spaces: (typeof theirs)[]) {
-  return {
-    spaces,
-    activeSpace: theirs,
-    closed: { stack: [] },
-    persist: () => undefined,
-  } as never
+  return { spaces, activeSpace: theirs, closed: { stack: [] }, persist: () => undefined } as never
 }
 
 const draft = {

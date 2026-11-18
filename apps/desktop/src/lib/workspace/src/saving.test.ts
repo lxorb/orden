@@ -31,9 +31,7 @@ vi.mock('../../platform/src/tauri', () => ({
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
 }))
 
-vi.mock('../../link-index/src/api', () => ({
-  links: { noteSaved: () => undefined },
-}))
+vi.mock('../../link-index/src/api', () => ({ links: { noteSaved: () => undefined } }))
 
 const light = { status: 'off', lastError: null as string | null }
 vi.mock('../../sync-store/src/api', () => ({

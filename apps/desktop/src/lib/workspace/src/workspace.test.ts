@@ -82,10 +82,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const sheet = {
-  asked: [] as string[],
-  answer: null as string | null,
-}
+const sheet = { asked: [] as string[], answer: null as string | null }
 
 const BESIDE_PAPER = JSON.stringify({
   nodes: [
@@ -3580,13 +3577,7 @@ describe('a new file stepping aside from a name the folder already has', () => {
 })
 
 describe('following a link to a note the space has not got', () => {
-  const asked = (target: string) => ({
-    path: null,
-    target,
-    heading: null,
-    block: null,
-    page: null,
-  })
+  const asked = (target: string) => ({ path: null, target, heading: null, block: null, page: null })
 
   beforeEach(() => {
     inSpace()
