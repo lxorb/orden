@@ -142,7 +142,7 @@
 
 <section class="list" aria-label={title}>
   <header class="head">
-    {#if heading || stepped}
+    {#if heading !== null || stepped}
       <button
         class="orden-glyph"
         type="button"
