@@ -284,7 +284,6 @@ describe('signing out in a window with no engine', () => {
     locks.free('orden-sync:local')
     await leaving
     expect(opening.forgotten).toEqual(['a'])
-    expect(windows).toBeDefined()
   })
 })
 

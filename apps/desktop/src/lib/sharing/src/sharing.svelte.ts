@@ -304,8 +304,8 @@ export function trustsHtmlAt(path: string | null): boolean {
 }
 
 interface Someone {
-  email: string | null
-  guest: string | null
+  email?: string | null
+  guest?: string | null
 }
 
 interface Asking {
@@ -534,7 +534,7 @@ class Share {
   }
 }
 
-function whoIs(person: Someone): string {
+export function whoIs(person: Someone): string {
   return `person:${person.guest ?? person.email ?? ''}`
 }
 
