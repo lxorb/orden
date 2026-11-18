@@ -10,12 +10,8 @@ export {
   type BuiltinParams,
   builtinView,
   SMART_SORT,
-  todayAs,
-  whenAs,
-  isWhenFormula,
   isWhen,
   WHEN,
-  WHEN_ASIDE,
   WHEN_GROUPS,
 } from './builtins'
 export {

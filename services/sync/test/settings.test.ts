@@ -169,19 +169,6 @@ describe('Silent mode on an account', () => {
   })
 })
 
-describe('the tasks with no start date in Today, on an account', () => {
-  test('is on or off', async () => {
-    expect((await patch({ undatedInToday: true })).json.settings.undatedInToday).toBe(true)
-    expect((await patch({ undatedInToday: false })).json.settings.undatedInToday).toBe(false)
-  })
-
-  test('is nothing else', async () => {
-    const refused = await patch({ undatedInToday: 'yes' })
-    expect(refused.status).toBe(400)
-    expect(refused.json.error).toBe('undatedInToday must be true or false')
-  })
-})
-
 describe('the spaces an account put away', () => {
   test('are a list of space ids', async () => {
     const kept = await patch({ archivedSpaces: ['a1B2-c3', 'x_9'] })
@@ -646,6 +633,7 @@ describe('a setting the app no longer has', () => {
   const RETIRED: Record<string, unknown> = {
     spellWords: ['orden', 'tauri'],
     pull: 'app.palette',
+    undatedInToday: false,
   }
 
   test('is taken from an older build and kept nowhere', async () => {

@@ -28,7 +28,6 @@ import {
 } from '@orden/editor'
 import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
-import { untrack } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
 import { account, api, type AccountSettings, turnedDown } from '../../accounts/src/api'
 import { viewport } from '../../ui-kit/src/api'
@@ -144,7 +143,6 @@ interface Saved {
   conflicts: string
   keepVersions: number
   remindBefore: number
-  undatedToday: boolean
   turnsCanvas: boolean
   canvasTurnSnaps: boolean
   highlightTone: number | null
@@ -251,7 +249,6 @@ export const DEFAULTS = {
   conflicts: DEFAULT_RULE,
   keepVersions: KEEP_MONTH,
   remindBefore: 0,
-  undatedInToday: true,
   canvasTurns: true,
   canvasTurnSnaps: true,
   highlightTone: null as number | null,
@@ -328,8 +325,6 @@ class Modes {
 
   remindBefore = $state<number>(DEFAULTS.remindBefore)
 
-  undatedInToday = $state(DEFAULTS.undatedInToday)
-
   canvasTurns = $state(DEFAULTS.canvasTurns)
 
   canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
@@ -400,8 +395,7 @@ class Modes {
       stale ||= 'properties' in saved || 'frontMatter' in saved || 'frontMatterDrawn' in saved
       this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
       stale ||= 'canvasTurns' in saved
-      this.undatedInToday = on(saved.undatedToday, DEFAULTS.undatedInToday)
-      stale ||= 'undatedInToday' in saved
+      stale ||= 'undatedToday' in saved || 'undatedInToday' in saved
     }
     setHardBreaks(this.hardBreaks)
     setLinkWriting(this.linkFormat)
@@ -837,14 +831,6 @@ class Modes {
     this.share({ remindBefore: minutes })
   }
 
-  setUndatedInToday(on: boolean) {
-    if (on === this.undatedInToday) return
-
-    this.undatedInToday = on
-    this.persist()
-    this.share({ undatedInToday: on })
-  }
-
   setCanvasTurns(on: boolean) {
     if (on === this.canvasTurns) return
 
@@ -920,12 +906,6 @@ class Modes {
         this.remindBefore = before
         this.persist()
       }
-    }
-
-    const undated = remote.undatedInToday
-    if (typeof undated === 'boolean' && unheard && undated !== this.undatedInToday) {
-      this.undatedInToday = undated
-      this.persist()
     }
 
     const turns = remote.canvasTurns
@@ -1255,7 +1235,6 @@ class Modes {
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,
-      undatedToday: this.undatedInToday,
       turnsCanvas: this.canvasTurns,
       canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
@@ -1271,18 +1250,6 @@ function fieldsOf(state: Saved): Record<string, unknown> {
 }
 
 export const modes = new Modes()
-
-export function watchUndated(changed: () => void): () => void {
-  let was = untrack(() => modes.undatedInToday)
-  return $effect.root(() => {
-    $effect(() => {
-      const now = modes.undatedInToday
-      if (now === was) return
-      was = now
-      untrack(changed)
-    })
-  })
-}
 
 account.forgetWithSession(() => modes.forgetSession())
 account.holdsNoAccount(() => modes.forgetUnowned())

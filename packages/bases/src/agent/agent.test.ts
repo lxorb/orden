@@ -404,12 +404,6 @@ describe('Today without the engine', () => {
     const engine = listTasks(many, { view: 'today' }, context).tasks.map((one) => one.at)
     expect(todayTasks(many, context.today).map((row) => atOf(row))).toEqual(engine)
     expect(engine).toHaveLength(5)
-
-    const undated = listTasks(many, { view: 'today', undated: true }, context).tasks
-    expect(todayTasks(many, context.today, true).map((row) => atOf(row))).toEqual(
-      undated.map((one) => one.at),
-    )
-    expect(undated.length).toBeGreaterThan(engine.length)
   })
 })
 

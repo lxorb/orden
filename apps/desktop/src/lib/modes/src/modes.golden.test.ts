@@ -112,7 +112,6 @@ const AWAY = {
   conflicts: 'theirs',
   keepVersions: 365,
   remindBefore: 15,
-  undatedToday: false,
   turnsCanvas: false,
   canvasTurnSnaps: false,
   highlightTone: 3,

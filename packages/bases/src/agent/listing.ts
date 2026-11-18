@@ -47,7 +47,6 @@ export interface ListAsk {
   base?: { base: Base; view?: string }
   limit?: number
   inboxes?: { space: string; path: string }[]
-  undated?: boolean
   isNote?: TodoistOptions['isNote']
 }
 
@@ -66,10 +65,7 @@ export function listTasks(
     if (!(VIEWS as readonly string[]).includes(name)) {
       throw new AgentError('bad_arguments', `view is ${VIEWS.join(', ')} or a .base path`)
     }
-    base = builtinView(name as BuiltinName, {
-      inboxes: ask.inboxes ?? [],
-      ...(ask.undated ? { undated: true } : {}),
-    })
+    base = builtinView(name as BuiltinName, { inboxes: ask.inboxes ?? [] })
   } else {
     base = everything()
   }

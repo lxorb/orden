@@ -426,20 +426,18 @@ describe('turning a canvas with two fingers (#351)', () => {
 })
 
 describe('the tasks with no start date in Today', () => {
-  test('start in it, and leaving them out is remembered across a restart (#2017)', async () => {
-    expect(modes.undatedInToday).toBe(true)
-    modes.setUndatedInToday(false)
-    expect((await restarted()).undatedInToday).toBe(false)
-    modes.setUndatedInToday(true)
-    expect((await restarted()).undatedInToday).toBe(true)
-  })
-
-  test('come in for a machine an older build wrote the old off down for (#2017)', async () => {
-    localStorage.setItem('orden:modes', JSON.stringify({ undatedInToday: false, vim: true }))
-    const back = await restarted()
-    expect(back.undatedInToday).toBe(true)
-    expect(back.vim).toBe(true)
-    expect(localStorage.getItem('orden:modes')).not.toContain('"undatedInToday"')
+  test('are no setting any more: what older builds wrote down is dropped quietly (#2162)', async () => {
+    for (const old of [
+      { undatedInToday: false, vim: true },
+      { undatedToday: true, vim: true },
+      { undatedToday: 'yes', vim: true },
+    ]) {
+      localStorage.setItem('orden:modes', JSON.stringify(old))
+      const back = await restarted()
+      expect(back.vim).toBe(true)
+      expect('undatedInToday' in back).toBe(false)
+      expect(localStorage.getItem('orden:modes')).not.toContain('undated')
+    }
   })
 })
 
@@ -833,38 +831,16 @@ describe('taking over what the account holds', () => {
     expect(modes.canvasTurns).toBe(true)
   })
 
-  test('keeps the tasks with no start date out of Today where the account says so', async () => {
-    const { release, settingsCall } = heldAnswer({ undatedInToday: false })
+  test('passes over the Today switch an account still holds from older builds (#2162)', async () => {
+    const { release, settingsCall } = heldAnswer({ undatedInToday: false, silent: true })
     api.settings = settingsCall
 
     const adopted = modes.adopt('token')
     release()
     await adopted
 
-    expect(modes.undatedInToday).toBe(false)
-  })
-
-  test('leaves them where this machine put them while the answer was in the air', async () => {
-    const { release, settingsCall } = heldAnswer({ undatedInToday: true })
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    modes.setUndatedInToday(false)
-    release()
-    await adopted
-
-    expect(modes.undatedInToday).toBe(false)
-  })
-
-  test('keeps the new default for an account that never chose (#2017)', async () => {
-    const { release, settingsCall } = heldAnswer({})
-    api.settings = settingsCall
-
-    const adopted = modes.adopt('token')
-    release()
-    await adopted
-
-    expect(modes.undatedInToday).toBe(true)
+    expect(modes.silent).toBe(true)
+    expect('undatedInToday' in modes).toBe(false)
   })
 
   test('brings Developer mode', async () => {

@@ -229,7 +229,6 @@ export interface AccountSettings {
   mobileSeen?: boolean
   attachments?: string
   remindBefore?: number
-  undatedInToday?: boolean
   archivedSpaces?: string[]
   canvasTurns?: boolean
   canvasTurnSnaps?: boolean
