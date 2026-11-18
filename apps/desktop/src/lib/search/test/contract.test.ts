@@ -2,7 +2,9 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import type { SearchPanel } from '@orden/contracts'
-import { changesFor, search, searchWarmth, selectedWords } from '../src/api'
+import { search, searchWarmth } from '../src/api'
+import { changesFor } from '../src/apply'
+import { selectedWords } from '../src/seed'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -43,7 +45,7 @@ describe('the module stands on its own', () => {
   test('loads the selection, the space search and the panel store with it, and the rest through doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
     const loaded = [...api.matchAll(/^export \{[^}]*\} from '([^']+)'/gm)].map((one) => one[1])
-    expect(loaded).toEqual(['./seed', './space', './panel.svelte'])
+    expect(loaded).toEqual(['./space', './panel.svelte'])
     expect(api).toMatch(/import\('\.\/SearchPanel\.svelte'\)/)
     expect(api).toMatch(/import\('\.\/warm\.svelte'\)/)
   })

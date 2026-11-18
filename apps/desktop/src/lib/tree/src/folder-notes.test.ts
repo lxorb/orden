@@ -11,7 +11,7 @@ import {
   renameSteps,
   unnesting,
 } from './folder-notes'
-import { rewriteLinks } from '../../link-index/src/api'
+import { rewriteLinks } from '../../link-index/src/link-rewrite'
 import { noteName } from '../../platform/src/space-paths'
 
 function note(path: string): Entry {
