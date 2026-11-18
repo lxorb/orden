@@ -71,18 +71,6 @@ vi.mock('@xterm/addon-unicode11', () => ({
   },
 }))
 
-globalThis.ResizeObserver = class {
-  observe() {
-    // Nothing is measured here.
-  }
-  unobserve() {
-    // Said above.
-  }
-  disconnect() {
-    // Said above.
-  }
-}
-
 const { sessionOf } = await import('../../src/lib/terminal/src/sessions.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')
 const { NoteDoc, Tab } = await import('../../src/lib/documents/src/api')

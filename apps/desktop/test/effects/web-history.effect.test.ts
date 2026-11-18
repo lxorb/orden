@@ -1,22 +1,6 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 const { default: WebHistory } = await import('../../src/lib/web-tab/src/WebHistory.svelte')
 
 const BOOK = 'orden:web-visits:history-test'

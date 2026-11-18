@@ -1,17 +1,9 @@
 import { afterEach } from 'vitest'
 
 class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
+  observe = () => undefined
+  unobserve = () => undefined
+  disconnect = () => undefined
 }
 
 globalThis.ResizeObserver = NoLayout

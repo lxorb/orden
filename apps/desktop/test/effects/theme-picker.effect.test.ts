@@ -31,22 +31,6 @@ await Promise.all([
 
 Element.prototype.scrollIntoView = () => undefined
 
-class NoLayout {
-  observe() {
-    // Nothing to measure.
-  }
-
-  unobserve() {
-    // Nothing to measure.
-  }
-
-  disconnect() {
-    // Nothing to measure.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 const ROSE = {
   id: 'file:rose',
   name: 'Rose',
