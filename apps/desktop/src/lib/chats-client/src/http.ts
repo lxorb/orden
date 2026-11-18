@@ -1,5 +1,4 @@
-import type { Event, Notify, Pointer } from '@orden/chats'
-import { chatOf } from '@orden/chats'
+import { chatOf, type Event, type Notify, type Pointer } from '@orden/chats'
 import {
   chatListOf,
   type ChatList,
@@ -33,18 +32,16 @@ async function ask(
   }
 }
 
-export async function listChats(): Promise<ChatList | null> {
-  return chatListOf(await ask('/v2/chats'))
-}
+const answered = async (path: string, options?: { method?: string; body?: unknown }) =>
+  (await ask(path, options)) !== null
 
-export async function makeChat(space: string): Promise<Pointer | null> {
-  const said = await ask('/v2/chats', { body: { space } })
-  return chatOf(JSON.stringify(said))
-}
+export const listChats = async (): Promise<ChatList | null> => chatListOf(await ask('/v2/chats'))
 
-export async function moveChat(chat: string, space: string): Promise<boolean> {
-  return (await ask(chatPath(chat), { method: 'PATCH', body: { space } })) !== null
-}
+export const makeChat = async (space: string): Promise<Pointer | null> =>
+  chatOf(JSON.stringify(await ask('/v2/chats', { body: { space } })))
+
+export const moveChat = (chat: string, space: string) =>
+  answered(chatPath(chat), { method: 'PATCH', body: { space } })
 
 export async function eventsOf(
   chat: string,
@@ -72,19 +69,11 @@ export async function sendEvents(
   }
 }
 
-export async function postRead(chat: string, seq: number, back = false): Promise<boolean> {
-  return (await ask(`${chatPath(chat)}/read`, { body: { seq, back } })) !== null
-}
+export const postRead = (chat: string, seq: number, back = false) =>
+  answered(`${chatPath(chat)}/read`, { body: { seq, back } })
 
-export async function putMe(
-  chat: string,
-  notify: Notify | null,
-  mutedUntil: number | null,
-): Promise<boolean> {
-  return (
-    (await ask(`${chatPath(chat)}/me`, { method: 'PUT', body: { notify, mutedUntil } })) !== null
-  )
-}
+export const putMe = (chat: string, notify: Notify | null, mutedUntil: number | null) =>
+  answered(`${chatPath(chat)}/me`, { method: 'PUT', body: { notify, mutedUntil } })
 
 const ROLES = ['read', 'write', 'owner'] as const
 
@@ -114,9 +103,8 @@ export async function noteReachOf(
   return { missing, share: said.share === true }
 }
 
-export async function shareNote(chat: string, space: string, note: string): Promise<boolean> {
-  return (await ask(`${chatPath(chat)}/note`, { body: { space, note } }).catch(() => null)) !== null
-}
+export const shareNote = (chat: string, space: string, note: string) =>
+  answered(`${chatPath(chat)}/note`, { body: { space, note } }).catch(() => false)
 
 export async function scheduledOf(chat: string): Promise<Scheduled[] | null> {
   const said = await ask(`${chatPath(chat)}/scheduled`)
@@ -141,10 +129,8 @@ export async function searchOnAccount(query: string, chat?: string): Promise<Hit
       const message = messageOf(one)
       return message ? [{ chat, message }] : []
     }
-    const message = isRecord(one) ? messageOf(one.message) : null
-    return isRecord(one) && typeof one.chat === 'string' && message
-      ? [{ chat: one.chat, message }]
-      : []
+    const message = isRecord(one) && typeof one.chat === 'string' ? messageOf(one.message) : null
+    return message && isRecord(one) ? [{ chat: String(one.chat), message }] : []
   })
 }
 

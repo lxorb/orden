@@ -298,18 +298,15 @@ class ChatsStore implements Chats {
   }
 
   private async count(chat: string): Promise<void> {
-    {
-      this.counting.delete(chat)
-      const engine = this.engine
-      const me = this.me
-      const row = engine?.chats.get(chat)?.row
-      if (!engine || !me || !row || !this.cache) return
-      const count = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
-      this.countedAt.set(chat, row.readSeq)
-      if (this.unread.get(chat) === count) return
-      this.unread.set(chat, count)
-      this.drawList()
-    }
+    this.counting.delete(chat)
+    const me = this.me
+    const row = this.engine?.chats.get(chat)?.row
+    if (!me || !row || !this.cache) return
+    const count = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
+    this.countedAt.set(chat, row.readSeq)
+    if (this.unread.get(chat) === count) return
+    this.unread.set(chat, count)
+    this.drawList()
   }
 
   private async lookForPointers(): Promise<void> {
@@ -462,15 +459,9 @@ class ChatsStore implements Chats {
   }
 
   async remove(chat: string, message: string): Promise<void> {
-    const engine = this.engine
-    const waiting = engine?.pending(chat).filter((row) => {
-      const event = row.event
-      return event.kind === 'post'
-        ? event.message === message
-        : 'target' in event && event.target === message
-    })
-    if (engine && waiting?.some((row) => row.event.kind === 'post')) {
-      await engine.drop(waiting.map((row) => row.id))
+    const waiting = this.rowsAbout(chat, message)
+    if (this.engine && waiting.some((row) => row.event.kind === 'post')) {
+      await this.engine.drop(waiting.map((row) => row.id))
       return
     }
     await this.send(chat, { kind: 'delete', id: newId(), target: message })
@@ -519,8 +510,9 @@ class ChatsStore implements Chats {
   private rowsAbout(chat: string, message: string) {
     return (this.engine?.pending(chat) ?? []).filter((row) => {
       const event = row.event
-      if (event.kind === 'post') return event.message === message
-      return 'target' in event && event.target === message
+      return event.kind === 'post'
+        ? event.message === message
+        : 'target' in event && event.target === message
     })
   }
 
@@ -535,10 +527,9 @@ class ChatsStore implements Chats {
 
   async notifyFor(chat: string, notify: Notify | null, mutedUntil: number | null): Promise<void> {
     await http.putMe(chat, notify, mutedUntil)
-    const row = this.engine?.chats.get(chat)?.row
-    const engineChat = this.engine?.chats.get(chat)
-    if (row && engineChat) {
-      engineChat.row = { ...row, notify, mutedUntil }
+    const held = this.engine?.chats.get(chat)
+    if (held?.row) {
+      held.row = { ...held.row, notify, mutedUntil }
       this.drawList()
     }
   }

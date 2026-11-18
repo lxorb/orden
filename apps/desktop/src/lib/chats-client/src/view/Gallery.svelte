@@ -9,12 +9,7 @@
     files,
     column,
     onopen,
-  }: {
-    chat: string
-    files: FileRef[]
-    column: number
-    onopen: (index: number) => void
-  } = $props()
+  }: { chat: string; files: FileRef[]; column: number; onopen: (index: number) => void } = $props()
 
   const url = (file: FileRef) => fileUrl(chat, file.preview ?? file.hash)
   const single = $derived(files.length === 1 ? files[0] : undefined)

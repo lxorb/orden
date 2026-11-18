@@ -172,6 +172,21 @@ function mayPost(chat: Seen): void {
   }
 }
 
+async function writing(call: Call, most = Infinity) {
+  const store = await chatsStore()
+  const chat = chatFor(call, store)
+  const words = text(call, 'text') ?? ''
+  if (!words.trim()) throw new Refused('bad_arguments', 'say text')
+  if (words.length > most) {
+    throw new Refused(
+      'bad_arguments',
+      `a message is at most ${most} characters: put the rest in a note and link it`,
+    )
+  }
+  mayPost(chat)
+  return { store, chat, words }
+}
+
 function askFirst(call: Call, chat: Seen, summary: string): Promise<AgentAnswer | null> {
   if (chat.entry.members <= 1) return Promise.resolve(null)
   return asked(call, 'publishing', summary, `chat:${chat.entry.id}`)
@@ -183,11 +198,7 @@ function viaOf(call: Call): { via: { agent: string } } | Record<string, never> {
 }
 
 export async function draftMessage(call: Call): Promise<AgentAnswer> {
-  const store = await chatsStore()
-  const chat = chatFor(call, store)
-  const words = text(call, 'text') ?? ''
-  if (!words.trim()) throw new Refused('bad_arguments', 'say text')
-  mayPost(chat)
+  const { store, chat, words } = await writing(call)
   const parent = maybe(call, 'reply_to') ?? undefined
   if (chat.entry.path) {
     const { openChat } = await import('./view/open')
@@ -198,17 +209,7 @@ export async function draftMessage(call: Call): Promise<AgentAnswer> {
 }
 
 export async function postMessage(call: Call): Promise<AgentAnswer> {
-  const store = await chatsStore()
-  const chat = chatFor(call, store)
-  const words = text(call, 'text') ?? ''
-  if (!words.trim()) throw new Refused('bad_arguments', 'say text')
-  if (words.length > MOST_BODY) {
-    throw new Refused(
-      'bad_arguments',
-      `a message is at most ${MOST_BODY} characters: put the rest in a note and link it`,
-    )
-  }
-  mayPost(chat)
+  const { store, chat, words } = await writing(call, MOST_BODY)
   const parent = maybe(call, 'reply_to')
   const quote = maybe(call, 'quote')
 

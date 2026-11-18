@@ -16,23 +16,14 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 vi.mock('./http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./http')>()),
-  listChats: () =>
-    Promise.resolve({
-      chats: account.chats.map((id) => ({
-        id,
-        space: 'space-1',
-        role: 'owner',
-        members: 1,
-        lastSeq: 0,
-        lastAt: null,
-        lastBy: null,
-        readSeq: 0,
-        mentions: 0,
-        notify: null,
-        mutedUntil: null,
-        meta: { topic: '', posting: 'writers', slowmode: 0 },
-      })),
-    }),
+  listChats: async () => {
+    const { chatRow } = await import('./test-account')
+    return {
+      chats: account.chats.map((id) =>
+        chatRow(id, { space: 'space-1', role: 'owner', members: 1 }),
+      ),
+    }
+  },
   eventsOf: () => Promise.resolve(null),
   stateOf: () => Promise.resolve(null),
 }))

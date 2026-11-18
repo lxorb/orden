@@ -237,10 +237,7 @@
       })
       if (said !== 'send') return
     }
-    page.post(words, {
-      ...(parent ? { parent, alsoToChat } : {}),
-      files: attachments.refs,
-    })
+    page.post(words, { ...(parent ? { parent, alsoToChat } : {}), files: attachments.refs })
     offered = null
     dropped = null
     attachments.clear()
@@ -354,13 +351,7 @@
         run: () => void chooseFiles({ multiple: true }).then((files) => attachments.add(files)),
       },
       ...(onpoll && !parent
-        ? [
-            DIVIDER,
-            {
-              label: 'Poll',
-              run: () => onpoll((poll) => page.post('', { poll })),
-            },
-          ]
+        ? [DIVIDER, { label: 'Poll', run: () => onpoll((poll) => page.post('', { poll })) }]
         : []),
     ])
   }
@@ -626,9 +617,8 @@
   }
 
   .tool,
-  .later {
-    --glyph-size: 18px;
-    flex: none;
+  .later,
+  .send {
     display: grid;
     place-items: center;
     width: 32px;
@@ -636,6 +626,12 @@
     padding: 0;
     border: none;
     border-radius: var(--radius-md);
+  }
+
+  .tool,
+  .later {
+    --glyph-size: 18px;
+    flex: none;
     background: none;
     color: var(--muted);
     cursor: default;
@@ -659,13 +655,6 @@
 
   .send {
     --glyph-size: 16px;
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-md);
     background: var(--accent);
     color: var(--accent-ink);
     transition:
@@ -772,19 +761,7 @@
     font-size: var(--text-xs);
   }
 
-  .waiting {
-    --glyph-size: 12px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0;
-    border: none;
-    background: none;
-    color: inherit;
-    font: inherit;
-    font-variant-numeric: tabular-nums;
-  }
-
+  .waiting,
   .also {
     display: inline-flex;
     align-items: center;
@@ -794,6 +771,12 @@
     background: none;
     color: inherit;
     font: inherit;
+  }
+
+  .waiting {
+    --glyph-size: 12px;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
   }
 
   .tick {

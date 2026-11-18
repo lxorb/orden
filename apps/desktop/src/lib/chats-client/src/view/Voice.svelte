@@ -49,9 +49,7 @@
     node.addEventListener(
       'lostpointercapture',
       () => node.removeEventListener('pointermove', move),
-      {
-        once: true,
-      },
+      { once: true },
     )
   }
 

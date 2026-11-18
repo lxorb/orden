@@ -117,20 +117,15 @@
 
   {#if showing === 'chats' && priorities.on}
     <div class="orden-segmented arranged" role="radiogroup" aria-label="Chats">
-      <button
-        type="button"
-        role="radio"
-        aria-checked={arranged === 'all'}
-        class:on={arranged === 'all'}
-        onclick={() => (arranged = 'all')}>All</button
-      >
-      <button
-        type="button"
-        role="radio"
-        aria-checked={arranged === 'priority'}
-        class:on={arranged === 'priority'}
-        onclick={() => (arranged = 'priority')}>By priority</button
-      >
+      {#each [['all', 'All'], ['priority', 'By priority']] as const as [way, label] (way)}
+        <button
+          type="button"
+          role="radio"
+          aria-checked={arranged === way}
+          class:on={arranged === way}
+          onclick={() => (arranged = way)}>{label}</button
+        >
+      {/each}
     </div>
   {/if}
 

@@ -3,10 +3,8 @@
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack, menu, type MenuEntry, overlays, viewport } from '../../../ui-kit/src/api'
   import { copyText } from '../../../ui-controls/src/api'
-  import { localNumber } from '../../../platform/src/api'
-  import { dur, fly } from '../../../platform/src/api'
-  import { Avatar } from '../../../accounts-ui/src/api'
-  import { showProfile } from '../../../accounts-ui/src/api'
+  import { dur, fly, localNumber } from '../../../platform/src/api'
+  import { Avatar, showProfile } from '../../../accounts-ui/src/api'
   import { people } from '../../../accounts/src/api'
   import type { ChatPage } from './chat.svelte'
   import { mentionText } from './compose'
@@ -58,11 +56,7 @@
     ),
   )
 
-  const RANK_WORDS: Record<Rank, () => string> = {
-    owner: () => 'Owners',
-    member: () => 'Members',
-    bot: () => 'Bots',
-  }
+  const RANK_WORDS: Record<Rank, string> = { owner: 'Owners', member: 'Members', bot: 'Bots' }
 
   $effect(() => (sheet ? overlays.show(onclose, () => [panel]) : undefined))
   $effect(() => closeOnBack(sheet, onclose))
@@ -160,7 +154,7 @@
         {#each shown as row (row.key)}
           {#if 'group' in row}
             <h3 class="group" style:top="{row.top}px" style:height="{row.height}px">
-              <span class="group-name">{RANK_WORDS[row.group.rank]()}</span>
+              <span class="group-name">{RANK_WORDS[row.group.rank]}</span>
               <span class="group-count">{localNumber(row.group.count)}</span>
             </h3>
           {:else}

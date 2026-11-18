@@ -1,8 +1,8 @@
-import type { FileRef, Member, Message, Poll, Preview, Who } from '@orden/chats'
+import type { Member, Message, Who } from '@orden/chats'
 import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../../ui-controls/src/api'
 import { paletteWords } from '../../../workspace/src/api'
-import type { ChatEntry, ChatView, Shown } from '../shapes'
+import type { ChatEntry, ChatView, Draft, Shown } from '../shapes'
 import { trimmed } from './compose'
 import { type Item, rowsOf } from './rows'
 import { saved } from './saved.svelte'
@@ -90,16 +90,7 @@ export class ChatPage {
     this.view.markUnread(message.seq)
   }
 
-  post(
-    text: string,
-    more: {
-      parent?: string
-      alsoToChat?: boolean
-      files?: FileRef[]
-      poll?: Poll
-      preview?: Preview
-    } = {},
-  ): void {
+  post(text: string, more: Omit<Draft, 'body' | 'quote' | 'via'> = {}): void {
     const body = trimmed(text)
     if (!body && !more.files?.length && !more.poll) return
     const quote = this.aside?.kind === 'quote' && !more.parent ? this.aside.message.id : undefined

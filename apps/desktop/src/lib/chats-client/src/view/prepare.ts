@@ -36,13 +36,7 @@ async function picture(file: File): Promise<Prepared> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
     const blob = await encoded(bitmap, bitmap.width, bitmap.height, 0.92)
-    const scale = Math.min(1, PREVIEW_SIDE / Math.max(bitmap.width, bitmap.height))
-    const preview = await encoded(
-      bitmap,
-      Math.round(bitmap.width * scale),
-      Math.round(bitmap.height * scale),
-      0.8,
-    )
+    const preview = await previewOf(bitmap, bitmap.width, bitmap.height)
     return {
       blob,
       name: file.name.replace(/\.[^.]+$/, '') + '.webp',
@@ -75,6 +69,11 @@ async function encoded(
   )
 }
 
+function previewOf(source: CanvasImageSource, width: number, height: number): Promise<Blob> {
+  const scale = Math.min(1, PREVIEW_SIDE / Math.max(width, height))
+  return encoded(source, Math.round(width * scale), Math.round(height * scale), 0.8)
+}
+
 async function videoFrame(file: File): Promise<Partial<Prepared>> {
   const url = URL.createObjectURL(file)
   try {
@@ -86,13 +85,7 @@ async function videoFrame(file: File): Promise<Partial<Prepared>> {
       video.onloadeddata = () => resolve()
       video.onerror = () => reject(new Error('the video would not load'))
     })
-    const scale = Math.min(1, PREVIEW_SIDE / Math.max(video.videoWidth, video.videoHeight))
-    const preview = await encoded(
-      video,
-      Math.round(video.videoWidth * scale),
-      Math.round(video.videoHeight * scale),
-      0.8,
-    )
+    const preview = await previewOf(video, video.videoWidth, video.videoHeight)
     return {
       width: video.videoWidth,
       height: video.videoHeight,

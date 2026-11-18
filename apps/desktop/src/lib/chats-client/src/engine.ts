@@ -179,11 +179,7 @@ export class ChatEngine {
   private async firstCopy(chat: CachedChat): Promise<boolean> {
     const page = await this.remote.state(chat.id)
     if (!page) return false
-    const kept = page.messages.map((message): Kept => ({
-      message,
-      upto: page.seq,
-      marks: marksOf(message, page.seq),
-    }))
+    const kept = keptOf(page, page.messages)
     chat.seq = page.seq
     chat.older = page.next
     chat.complete = page.next === null
@@ -204,17 +200,10 @@ export class ChatEngine {
       if (chat.complete || (chat.seq === 0 && chat.older === null)) return false
       const page = await this.remote.state(id, chat.older ?? undefined)
       if (!page) return false
-      const have = new Set(
-        (
-          await this.cache.messages(
-            id,
-            page.messages.map((one) => one.id),
-          )
-        ).map((one) => one.message.id),
-      )
-      const kept = page.messages
-        .filter((one) => !have.has(one.id))
-        .map((message): Kept => ({ message, upto: page.seq, marks: marksOf(message, page.seq) }))
+      const ids = page.messages.map((one) => one.id)
+      const have = new Set((await this.cache.messages(id, ids)).map((one) => one.message.id))
+      const fresh = page.messages.filter((one) => !have.has(one.id))
+      const kept = keptOf(page, fresh)
       chat.older = page.next
       chat.complete = page.next === null
       await this.cache.write([
@@ -437,6 +426,10 @@ export class ChatEngine {
   tellRead(chat: string, seq: number, back: boolean): Promise<boolean> {
     return this.remote.read(chat, seq, back)
   }
+}
+
+function keptOf(page: StatePage, messages: readonly Message[]): Kept[] {
+  return messages.map((message) => ({ message, upto: page.seq, marks: marksOf(message, page.seq) }))
 }
 
 function metaWith(meta: Meta, event: Extract<Event, { kind: 'meta' }>): Meta {

@@ -11,13 +11,7 @@
   import { sound } from './prepare'
   import { put } from './attachments.svelte'
 
-  const {
-    onsend,
-    ondone,
-  }: {
-    onsend: (file: FileRef) => void
-    ondone: () => void
-  } = $props()
+  const { onsend, ondone }: { onsend: (file: FileRef) => void; ondone: () => void } = $props()
 
   let recording: VoiceRecording | null = null
   let started = $state(0)
