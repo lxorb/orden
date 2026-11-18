@@ -39,7 +39,7 @@ if [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
   site=$!
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TREE:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ]; then
+if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TREE:-0}" = 1 ] || [ "${ZOOM:-0}" = 1 ] || [ "${IDLE:-0}" = 1 ]; then
   config="${XDG_CONFIG_HOME:-$HOME/.config}/${DRIVEN_ID:-so.orden.Orden}"
   mkdir -p "$config"
   printf '{"port":0,"secret":"%s","eval":true,"pid":0}' "$(python3 -c 'import secrets; print(secrets.token_hex(32))')" > "$config/automation.json"

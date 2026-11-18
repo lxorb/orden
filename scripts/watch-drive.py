@@ -34,7 +34,7 @@ if PHASE == "where":
         if root:
             break
         time.sleep(0.25)
-    working = run(f"nib.working({json.dumps(root)})") if root else None
+    working = run(f"orden.working({json.dumps(root)})") if root else None
     print(f"where: the space {root!r} works in {working!r}", file=sys.stderr)
     print(working or "")
     sys.exit(0 if working else 1)

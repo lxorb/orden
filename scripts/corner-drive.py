@@ -92,9 +92,13 @@ for _ in range(40):
     if isinstance(place, dict) and place.get("width", 0) > 10:
         break
     time.sleep(0.25)
-corner = run("parseFloat(getComputedStyle(document.querySelector('main')).getPropertyValue('--card-radius')) || 0")
-if not isinstance(place, dict) or not corner:
-    raise SystemExit(f"::error::no page placed in a rounded card: {place!r}, corner {corner!r}")
+radii = run(
+    "(() => { const card = [...document.querySelectorAll('[data-pane]')].find((one) => one.querySelector('.hole'));"
+    " if (!card) return null; const look = getComputedStyle(card);"
+    " return [parseFloat(look.borderBottomLeftRadius) || 0, parseFloat(look.borderBottomRightRadius) || 0] })()"
+)
+if not isinstance(place, dict) or not isinstance(radii, list):
+    raise SystemExit(f"::error::no page placed in a card: {place!r}, radii {radii!r}")
 
 wide, tall, data = picture()
 
@@ -128,12 +132,14 @@ points = {
     "the top right corner": (x1, y0),
 }
 seen = {name: at(*point) for name, point in points.items()}
-print(f"the card's corner is {corner} px; the page is from {(x0, y0)} to {(x1, y1)}: {seen}")
+print(f"the card's bottom corners are {radii} px; the page is from {(x0, y0)} to {(x1, y1)}: {seen}")
 
 failures = []
-for name in ("the bottom left corner", "the bottom right corner"):
-    if near(seen[name], MAGENTA):
-        failures.append(f"the page is square at {name}: {seen[name]}")
+for name, radius in zip(("the bottom left corner", "the bottom right corner"), radii):
+    if radius and near(seen[name], MAGENTA):
+        failures.append(f"the page is square at {name}, which its card rounds by {radius} px: {seen[name]}")
+    if not radius and not near(seen[name], MAGENTA):
+        failures.append(f"the page is cut at {name}, which its card leaves square: {seen[name]}")
 for name in ("the middle of the bottom edge", "the top left corner", "the top right corner"):
     if not near(seen[name], MAGENTA):
         failures.append(f"the page is not drawn at {name}: {seen[name]}")
