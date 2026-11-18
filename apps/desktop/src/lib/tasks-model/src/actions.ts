@@ -1,7 +1,7 @@
 import type { Priority as QuickPriority } from '@orden/markdown/task-line'
 import { dayOf, shownTodos, sortedTodos } from './query'
 import { openTodos, todos } from './start.svelte'
-import { titledOf, type Priority, type Todo } from './todo'
+import { fittedDescription, titledOf, type Priority, type Todo } from './todo'
 
 interface TaskOut {
   at: string
@@ -46,14 +46,35 @@ export async function addTask(
     import('../../platform/src/api'),
   ])
   const read = parseQuickAdd(said, [region()], new Date())
+  const made = await addEntry({ text: read.text || said, fields: read.fields })
+  return made ? { id: made.id } : null
+}
+
+export interface Asked {
+  readonly text: string
+  readonly description?: string
+  readonly fields: {
+    readonly tags: readonly string[]
+    readonly due?: string
+    readonly deadline?: string
+    readonly priority?: QuickPriority
+  }
+}
+
+export async function addEntry(entry: Asked): Promise<Todo | null> {
+  await openTodos()
+  const titled = titledOf(entry.text)
   const made = await todos.add({
-    ...titledOf(read.text || said),
-    labels: read.fields.tags,
-    start: read.fields.due ?? null,
-    deadline: read.fields.deadline ?? null,
-    priority: priorityOf(read.fields.priority),
+    title: titled.title,
+    description: fittedDescription(
+      [titled.description, entry.description].filter(Boolean).join('\n\n'),
+    ),
+    labels: entry.fields.tags,
+    start: entry.fields.due ?? null,
+    deadline: entry.fields.deadline ?? null,
+    priority: priorityOf(entry.fields.priority),
   })
-  return made.ok ? { id: made.value.id } : null
+  return made.ok ? made.value : null
 }
 
 export async function tickTask(id: string, done: boolean): Promise<boolean> {

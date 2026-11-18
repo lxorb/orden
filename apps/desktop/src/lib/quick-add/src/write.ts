@@ -1,11 +1,5 @@
 import { runCommand } from '@orden/contracts'
-import {
-  fittedDescription,
-  priorityOf,
-  titledOf,
-  todos,
-  type Todo,
-} from '../../tasks-model/src/api'
+import { addEntry, type Todo } from '../../tasks-model/src/api'
 import type { Entry } from './entry'
 
 let adding: Promise<unknown> = Promise.resolve()
@@ -14,26 +8,11 @@ export async function addTask(
   entry: Entry,
   options: { open?: boolean } = {},
 ): Promise<Todo | null> {
-  const added = adding.then(() => addOne(entry))
+  const added = adding.then(() => addEntry(entry))
   adding = added.catch(() => undefined)
   const landed = await added
   if (landed && options.open) {
     await runCommand('views.todos')
   }
   return landed
-}
-
-async function addOne(entry: Entry): Promise<Todo | null> {
-  const titled = titledOf(entry.text)
-  const made = await todos.add({
-    title: titled.title,
-    description: fittedDescription(
-      [titled.description, entry.description].filter(Boolean).join('\n\n'),
-    ),
-    labels: entry.fields.tags,
-    start: entry.fields.due ?? null,
-    deadline: entry.fields.deadline ?? null,
-    priority: priorityOf(entry.fields.priority),
-  })
-  return made.ok ? made.value : null
 }

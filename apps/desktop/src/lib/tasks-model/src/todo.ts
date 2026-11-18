@@ -89,7 +89,7 @@ export function titledOf(text: string): { title: string; description?: string } 
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
-export const isDay = (value: unknown): value is string =>
+const isDay = (value: unknown): value is string =>
   typeof value === 'string' && DAY.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
 
 export const isPriority = (value: unknown): value is Priority =>
