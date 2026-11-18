@@ -14,6 +14,5 @@
     "modes",
     "launch",
     "space-owed"
-  ],
-  "pending": ["apps/desktop/src/lib/sync-ports.ts"]
+  ]
 }

@@ -399,6 +399,7 @@ beforeEach(async () => {
   vi.stubGlobal('localStorage', memoryStorage())
 
   vi.resetModules()
+  await import('../src/lib/sync-ports')
   ;({ account } = await import('../src/lib/accounts/src/account.svelte'))
   ;({ sync } = await import('../src/lib/sync-store/src/api'))
   ;({ workspace } = await import('../src/lib/workspace/src/api'))
