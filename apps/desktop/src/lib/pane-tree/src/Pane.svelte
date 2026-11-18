@@ -118,6 +118,7 @@
       !alone.on &&
       !panesIn(topRow(workspace.panes.frame)).some((one) => one.id === pane.id),
   )
+  const flush = $derived(flushFirst(pane.id))
   const atLeft = $derived(!paneToward(workspace.panes.frame, pane.id, 'left'))
   const atRight = $derived(!paneToward(workspace.panes.frame, pane.id, 'right'))
   const atFoot = $derived(!paneToward(workspace.panes.frame, pane.id, 'down'))
@@ -373,7 +374,9 @@
 <div
   class="pane"
   class:lifted={tabOverview.lifted.includes(pane.id)}
-  class:straight={!stripped && flushFirst(pane.id)}
+  class:straight={!stripped && flush}
+  class:stripped
+  class:flush
   class:at-left={atLeft}
   class:at-right={atRight}
   class:at-foot={atFoot}
@@ -395,200 +398,202 @@
     </div>
   {/if}
 
-  <Door open={finding && writing} load={() => findBar()}>
-    {#snippet children(FindBar)}
-      <FindBar
-        query={spec.query}
-        count={tally.count}
-        current={tally.current}
-        capped={tally.capped}
-        slow={tally.slow ?? false}
-        flags={spec}
-        onflags={(flags: FindFlags) => void look({ ...spec, ...flags })}
-        {replacing}
-        replacement={spec.replace}
-        onreplacing={(open: boolean) => {
-          replacing = open
-        }}
-        onreplacement={(typed: string) => void look({ ...spec, replace: typed })}
-        onreplace={canReplace ? () => void replaceOne() : undefined}
-        onreplaceall={canReplace ? () => void replaceEvery() : undefined}
-        onstep={(by: number) => void stepFinding(by)}
-        onselectall={() => void selectEvery()}
-        onclose={shutFinding}
-        onquery={(typed: string) => void look({ ...spec, query: typed })}
-      />
-    {/snippet}
-  </Door>
-
-  {#if !__EVEN_PLUGIN__}
-    <Door open={archived && !!tab?.path} load={() => archivedStrip()}>
-      {#snippet children(ArchivedStrip)}
-        <ArchivedStrip path={tab?.path ?? ''} />
+  <div class="card">
+    <Door open={finding && writing} load={() => findBar()}>
+      {#snippet children(FindBar)}
+        <FindBar
+          query={spec.query}
+          count={tally.count}
+          current={tally.current}
+          capped={tally.capped}
+          slow={tally.slow ?? false}
+          flags={spec}
+          onflags={(flags: FindFlags) => void look({ ...spec, ...flags })}
+          {replacing}
+          replacement={spec.replace}
+          onreplacing={(open: boolean) => {
+            replacing = open
+          }}
+          onreplacement={(typed: string) => void look({ ...spec, replace: typed })}
+          onreplace={canReplace ? () => void replaceOne() : undefined}
+          onreplaceall={canReplace ? () => void replaceEvery() : undefined}
+          onstep={(by: number) => void stepFinding(by)}
+          onselectall={() => void selectEvery()}
+          onclose={shutFinding}
+          onquery={(typed: string) => void look({ ...spec, query: typed })}
+        />
       {/snippet}
     </Door>
-  {/if}
 
-  {#if tab && behind && locked}
-    {#key tab.id}
-      {#await lockScreen() then LockScreen}
-        <LockScreen path={behind} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
-  {:else if tab?.kind === 'graph'}
-    {#await graphSurface() then Graph}
-      <Graph
-        graph={picture}
-        whole
-        current={workspace.relativeNote}
-        focused={workspace.panes.focusedId === pane.id}
-        onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
-        onescape={() => void workspace.closeAsking(tab.id)}
-      />
-    {:catch}
-      {@render unreachable()}
-    {/await}
-  {:else if tab?.kind === 'canvas'}
-    {@render surface(canvasSurface, tab)}
-  {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
-    {@render surface(pagesSurface, tab)}
-  {:else if tab?.kind === 'web'}
-    {@render surface(webSurface, tab)}
-  {:else if tab?.kind === 'view' && tab.path === null}
-    {#key tab.id}
-      {#await todosBoard() then TodosBoard}
-        <TodosBoard />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
-  {:else if tab?.kind === 'view'}
-    {@render surface(viewSurface, tab)}
-  {:else if tab?.kind === 'channel'}
-    {@render surface(chatSurface, tab)}
-  {:else if tab?.kind === 'chat'}
-    {#key tab.id}
-      {#await askPanel() then ChatPanel}
-        <ChatPanel wide {tab} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
-  {:else if tab?.kind === 'terminal'}
-    {@render surface(terminalSurface, tab)}
-  {:else if tab?.kind === 'application'}
-    {#if appsOn()}
-      {@render surface(applicationSurface, tab)}
+    {#if !__EVEN_PLUGIN__}
+      <Door open={archived && !!tab?.path} load={() => archivedStrip()}>
+        {#snippet children(ArchivedStrip)}
+          <ArchivedStrip path={tab?.path ?? ''} />
+        {/snippet}
+      </Door>
     {/if}
-  {:else if tab?.kind === 'explorer'}
-    {#if explorerOn()}
-      {@render surface(explorerSurface, tab)}
-    {/if}
-  {:else if tab?.kind === 'pass'}
-    {@render surface(passSurface, tab)}
-  {:else if tab?.kind === 'settings'}
-    {#key tab.id}
-      {#await settingsSurface() then SettingsPanel}
-        <SettingsPanel />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
-  {:else if tab?.kind === 'time'}
-    {@render surface(timeSurface, tab)}
-  {:else if tab?.coming}
-    <div class="coming" role="status">
-      {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
-        ? 'Not on this device. It opens once you are online again.'
-        : 'Loading…'}
-    </div>
-  {:else if tab?.reading}
-    {@render surface(readingSurface, tab)}
-  {:else if stacking}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="stack" data-region="editor">
-      {#each columns as one (one.id)}
-        <section
-          class="column"
-          class:is-active={one.id === pane.activeTabId}
-          onfocusin={() => takeColumn(one.id)}
-        >
-          <button
-            class="spine"
-            title={one.shown}
-            aria-label={one.shown}
-            aria-pressed={one.id === pane.activeTabId}
-            onclick={() => workspace.activate(one.id)}
-          >
-            <span class="orden-row-label" dir="auto">{one.shown}</span>
-          </button>
-          <div
-            class="sheet"
-            oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}
-          >
-            <Editor
-              bind:view={columnViews[one.id]}
-              tab={one}
-              focused={workspace.panes.focusedId === pane.id && one.id === pane.activeTabId}
-              kept={held}
-              onimage={saveImage}
-              resolveimage={resolveImage}
-              openlink={followHref}
-              notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
-              opennote={followNote}
-              nameblock={nameBlock}
-              onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
-              onfindslow={tallySlow}
-              onselection={(current: EditorView) => {
-                views.moved(current)
-                placement.remember(current)
-                rooms.moved(current)
-              }}
-            />
-          </div>
-        </section>
-      {/each}
-    </div>
-  {:else if tab}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="editor"
-      data-region="editor"
-      oncontextmenu={(event: MouseEvent) => showMenu(event, view, tab.path)}
-    >
-      <Editor
-        bind:view
-        {tab}
-        focused={workspace.panes.focusedId === pane.id}
-        kept={held}
-        onimage={saveImage}
-        resolveimage={resolveImage}
-        openlink={followHref}
-        notes={(one: Tab) => links.index(one.path, one.note.shared !== null)}
-        opennote={followNote}
-        nameblock={nameBlock}
-        onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
-        onfindslow={tallySlow}
-        onselection={(current: EditorView) => {
-          views.moved(current)
-          placement.remember(current)
-          rooms.moved(current)
-        }}
-      />
-    </div>
-  {:else}
-    {#await emptySurface() then NewHere}
-      <NewHere paneId={pane.id} />
-    {:catch}
-      {@render unreachable()}
-    {/await}
-  {/if}
 
-  {#if paneCorners.draw && workspace.panes.focusedId === pane.id}
-    {@render paneCorners.draw()}
-  {/if}
+    {#if tab && behind && locked}
+      {#key tab.id}
+        {#await lockScreen() then LockScreen}
+          <LockScreen path={behind} focused={workspace.panes.focusedId === pane.id} />
+        {:catch}
+          {@render unreachable()}
+        {/await}
+      {/key}
+    {:else if tab?.kind === 'graph'}
+      {#await graphSurface() then Graph}
+        <Graph
+          graph={picture}
+          whole
+          current={workspace.relativeNote}
+          focused={workspace.panes.focusedId === pane.id}
+          onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
+          onescape={() => void workspace.closeAsking(tab.id)}
+        />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {:else if tab?.kind === 'canvas'}
+      {@render surface(canvasSurface, tab)}
+    {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
+      {@render surface(pagesSurface, tab)}
+    {:else if tab?.kind === 'web'}
+      {@render surface(webSurface, tab)}
+    {:else if tab?.kind === 'view' && tab.path === null}
+      {#key tab.id}
+        {#await todosBoard() then TodosBoard}
+          <TodosBoard />
+        {:catch}
+          {@render unreachable()}
+        {/await}
+      {/key}
+    {:else if tab?.kind === 'view'}
+      {@render surface(viewSurface, tab)}
+    {:else if tab?.kind === 'channel'}
+      {@render surface(chatSurface, tab)}
+    {:else if tab?.kind === 'chat'}
+      {#key tab.id}
+        {#await askPanel() then ChatPanel}
+          <ChatPanel wide {tab} />
+        {:catch}
+          {@render unreachable()}
+        {/await}
+      {/key}
+    {:else if tab?.kind === 'terminal'}
+      {@render surface(terminalSurface, tab)}
+    {:else if tab?.kind === 'application'}
+      {#if appsOn()}
+        {@render surface(applicationSurface, tab)}
+      {/if}
+    {:else if tab?.kind === 'explorer'}
+      {#if explorerOn()}
+        {@render surface(explorerSurface, tab)}
+      {/if}
+    {:else if tab?.kind === 'pass'}
+      {@render surface(passSurface, tab)}
+    {:else if tab?.kind === 'settings'}
+      {#key tab.id}
+        {#await settingsSurface() then SettingsPanel}
+          <SettingsPanel />
+        {:catch}
+          {@render unreachable()}
+        {/await}
+      {/key}
+    {:else if tab?.kind === 'time'}
+      {@render surface(timeSurface, tab)}
+    {:else if tab?.coming}
+      <div class="coming" role="status">
+        {keptAway.offline && tab.path !== null && keptAway.at(tab.path) !== null
+          ? 'Not on this device. It opens once you are online again.'
+          : 'Loading…'}
+      </div>
+    {:else if tab?.reading}
+      {@render surface(readingSurface, tab)}
+    {:else if stacking}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div class="stack" data-region="editor">
+        {#each columns as one (one.id)}
+          <section
+            class="column"
+            class:is-active={one.id === pane.activeTabId}
+            onfocusin={() => takeColumn(one.id)}
+          >
+            <button
+              class="spine"
+              title={one.shown}
+              aria-label={one.shown}
+              aria-pressed={one.id === pane.activeTabId}
+              onclick={() => workspace.activate(one.id)}
+            >
+              <span class="orden-row-label" dir="auto">{one.shown}</span>
+            </button>
+            <div
+              class="sheet"
+              oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}
+            >
+              <Editor
+                bind:view={columnViews[one.id]}
+                tab={one}
+                focused={workspace.panes.focusedId === pane.id && one.id === pane.activeTabId}
+                kept={held}
+                onimage={saveImage}
+                resolveimage={resolveImage}
+                openlink={followHref}
+                notes={(which: Tab) => links.index(which.path, which.note.shared !== null)}
+                opennote={followNote}
+                nameblock={nameBlock}
+                onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+                onfindslow={tallySlow}
+                onselection={(current: EditorView) => {
+                  views.moved(current)
+                  placement.remember(current)
+                  rooms.moved(current)
+                }}
+              />
+            </div>
+          </section>
+        {/each}
+      </div>
+    {:else if tab}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="editor"
+        data-region="editor"
+        oncontextmenu={(event: MouseEvent) => showMenu(event, view, tab.path)}
+      >
+        <Editor
+          bind:view
+          {tab}
+          focused={workspace.panes.focusedId === pane.id}
+          kept={held}
+          onimage={saveImage}
+          resolveimage={resolveImage}
+          openlink={followHref}
+          notes={(one: Tab) => links.index(one.path, one.note.shared !== null)}
+          opennote={followNote}
+          nameblock={nameBlock}
+          onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+          onfindslow={tallySlow}
+          onselection={(current: EditorView) => {
+            views.moved(current)
+            placement.remember(current)
+            rooms.moved(current)
+          }}
+        />
+      </div>
+    {:else}
+      {#await emptySurface() then NewHere}
+        <NewHere paneId={pane.id} />
+      {:catch}
+        {@render unreachable()}
+      {/await}
+    {/if}
+
+    {#if paneCorners.draw && workspace.panes.focusedId === pane.id}
+      {@render paneCorners.draw()}
+    {/if}
+  </div>
 
   {#if workspace.panes.dragging}
     <div class="zones" class:sides={keepsMiddle} style:--band="{EDGE * 100}%">
@@ -653,32 +658,66 @@
     border-start-start-radius: 0;
   }
 
-  .pane:has(> .head) {
-    background: linear-gradient(
-      transparent var(--titlebar-height),
-      var(--content-ground, var(--bg)) 0
-    );
+  .card {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: inherit;
+  }
+
+  .pane:has(> .card > :global(.here)) {
+    background: var(--empty-ground, var(--bg));
+  }
+
+  .pane.stripped,
+  .pane.stripped:has(> .card > :global(.here)) {
+    background: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .pane.stripped > .card {
+    overflow: clip;
+    background: var(--content-ground, var(--bg));
+    box-shadow:
+      var(--card-shadow),
+      0 0 0 1px var(--card-edge);
+  }
+
+  .pane.stripped > .head {
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+  }
+
+  .pane.stripped.flush > .card {
+    border-start-start-radius: 0;
+  }
+
+  .pane.stripped > .card:has(> :global(.here)) {
+    background: var(--empty-ground, var(--bg));
   }
 
   .pane:global([data-underlay])::before {
     background: var(--content-ground, var(--bg));
   }
 
-  .pane:global([data-underlay]):has(> .head)::before {
+  .pane.stripped:global([data-underlay])::before {
     background: linear-gradient(
       transparent var(--titlebar-height),
       var(--content-ground, var(--bg)) 0
     );
   }
 
-  .pane:has(> :global(.here)),
-  .pane:has(> .head):has(> :global(.here)) {
-    background: var(--empty-ground, var(--bg));
+  .pane.stripped:global([data-underlay]) > .card {
+    background: none;
   }
 
   .pane.lifted,
-  .pane.lifted:has(> .head),
-  .pane.lifted:has(> .head):has(> :global(.here)) {
+  .pane.lifted:has(> .card > :global(.here)),
+  .pane.lifted > .card {
     background: none;
     box-shadow: none;
   }
@@ -687,7 +726,7 @@
     opacity: 0;
   }
 
-  :global(html[data-overview]) .pane:has(> :global(.here)) {
+  :global(html[data-overview]) .pane:has(> .card > :global(.here)) {
     opacity: calc(1 - var(--overview-open, 1));
     pointer-events: none;
   }
@@ -806,6 +845,8 @@
     inset: 0;
     z-index: var(--z-grip);
     pointer-events: none;
+    border-radius: inherit;
+    overflow: clip;
   }
 
   .zones.sides .zone.whole {

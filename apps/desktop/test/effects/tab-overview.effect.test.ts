@@ -501,7 +501,7 @@ test('a launcher or top button that comes while the overview is open is under it
   const pane = (await import('../../src/lib/pane-tree/src/Pane.svelte?raw')).default
   const overview = (await import('../../src/lib/overview/src/Overview.svelte?raw')).default
   expect(pane).toMatch(
-    /\.pane:has\(> :global\(\.here\)\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
+    /\.pane:has\(> \.card > :global\(\.here\)\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
   )
   expect(overview).toMatch(
     /\[data-box\] \*\s+\)\s+\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,

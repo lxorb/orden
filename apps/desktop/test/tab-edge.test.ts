@@ -195,7 +195,8 @@ describe('the open tab', () => {
       join(import.meta.dirname, '../src/lib/pane-tree/src/Pane.svelte'),
       'utf8',
     )
-    expect(pane).toContain('class:straight={!stripped && flushFirst(pane.id)}')
+    expect(pane).toContain('const flush = $derived(flushFirst(pane.id))')
+    expect(pane).toContain('class:straight={!stripped && flush}')
     expect(pane).toMatch(/\.pane\.straight \{\s+border-start-start-radius: 0;/)
   })
 })

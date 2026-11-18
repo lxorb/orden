@@ -1143,18 +1143,18 @@ describe("the card's corner a page is placed with", () => {
 
   test('is the token where the panes are, and nothing for a square card', () => {
     frame('10px')
-    expect(cardCorner()).toBe(10)
+    expect(cardCorner()).toEqual([10, 10])
     frame('0px')
-    expect(cardCorner()).toBe(0)
+    expect(cardCorner()).toEqual([0, 0])
     frame('')
-    expect(cardCorner()).toBe(0)
+    expect(cardCorner()).toEqual([0, 0])
   })
 
   test('goes with every placement, nothing where there is no frame to read', async () => {
     await built('round')
     void pages.place('round', MOVED, true)
     await vi.waitFor(() =>
-      expect(last('web_place')).toMatchObject({ tab: 'round', pane: MOVED, corner: 0 }),
+      expect(last('web_place')).toMatchObject({ tab: 'round', pane: MOVED, corner: [0, 0] }),
     )
   })
 
@@ -1170,23 +1170,25 @@ describe("the card's corner a page is placed with", () => {
             : { getPropertyValue: () => '10px' },
       })
     foot('10px', '10px')
-    expect(cardCorner(hole as unknown as Element)).toBe(10)
+    expect(cardCorner(hole as unknown as Element)).toEqual([10, 10])
     foot('0px', '0px')
-    expect(cardCorner(hole as unknown as Element)).toBe(0)
+    expect(cardCorner(hole as unknown as Element)).toEqual([0, 0])
     foot('10px', '0px')
-    expect(cardCorner(hole as unknown as Element)).toBe(0)
+    expect(cardCorner(hole as unknown as Element)).toEqual([10, 0])
+    foot('0px', '10px')
+    expect(cardCorner(hole as unknown as Element)).toEqual([0, 10])
   })
 
   test("goes with the placement as its pane says it, over the window's own", async () => {
     frame('10px')
     await built('foot')
-    void pages.place('foot', MOVED, true, false, { cut: null, frame: null, corner: 0 })
+    void pages.place('foot', MOVED, true, false, { cut: null, frame: null, corner: [0, 10] })
     await vi.waitFor(() =>
-      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: MOVED, corner: 0 }),
+      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: MOVED, corner: [0, 10] }),
     )
     void pages.place('foot', PANE, true)
     await vi.waitFor(() =>
-      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: PANE, corner: 10 }),
+      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: PANE, corner: [10, 10] }),
     )
   })
 })

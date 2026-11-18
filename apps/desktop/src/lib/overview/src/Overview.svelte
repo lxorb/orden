@@ -616,7 +616,7 @@
   function opensOf() {
     opens = [
       ...document.querySelectorAll<HTMLElement>(
-        "header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle], [data-pane]:has(> .here)",
+        "header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle], [data-pane]:has(> .card > .here)",
       ),
     ]
     slides = [

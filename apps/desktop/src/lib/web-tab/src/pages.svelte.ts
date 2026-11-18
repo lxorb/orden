@@ -65,11 +65,13 @@ export interface Frame {
   pane: Rect
 }
 
+export type Foot = readonly [left: number, right: number]
+
 export interface Over {
   cut: Cut | null
   frame: Frame | null
   opacity?: number
-  corner?: number
+  corner?: Foot
 }
 
 const WHOLE: Cut = { all: true, hollows: [] }
@@ -87,7 +89,7 @@ interface Placement {
   cut: Cut | null
   away?: boolean
   opacity?: number
-  corner?: number | undefined
+  corner?: Foot | undefined
 }
 
 export type Layering = 'under' | 'cut' | 'hollows' | 'hide'
@@ -178,18 +180,16 @@ export async function chooseTab(tab: string): Promise<void> {
   workspace.activate(tab)
 }
 
-export function cardCorner(within?: Element | null): number {
-  if (typeof document === 'undefined') return 0
+export function cardCorner(within?: Element | null): Foot {
+  if (typeof document === 'undefined') return [0, 0]
   const card = within?.closest('[data-pane]')
   if (card) {
     const { borderBottomLeftRadius, borderBottomRightRadius } = getComputedStyle(card)
-    return Math.min(
-      parseFloat(borderBottomLeftRadius) || 0,
-      parseFloat(borderBottomRightRadius) || 0,
-    )
+    return [parseFloat(borderBottomLeftRadius) || 0, parseFloat(borderBottomRightRadius) || 0]
   }
   const panes = document.querySelector('main') ?? document.documentElement
-  return parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
+  const round = parseFloat(getComputedStyle(panes).getPropertyValue('--card-radius')) || 0
+  return [round, round]
 }
 
 export function readOpening(said: unknown): Opening | null {
