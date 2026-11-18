@@ -28,14 +28,13 @@ const tree = read('lib/sidebar/src/Tree.svelte')
 const switcher = read('lib/sidebar/src/SpaceSwitcher.svelte')
 const shared = readFileSync(`${THEMES}base.css`, 'utf8')
 
-const naming = tree.slice(
-  tree.indexOf('{#if named?.path === entry.path}'),
-  tree.indexOf('{:else if own}'),
-)
+const namingAt = tree.indexOf('{#if named?.path === entry.path}')
+const naming = tree.slice(namingAt, tree.indexOf('{:else}', namingAt))
 
 describe('the row a name is being typed on', () => {
-  test('is found by this test at all', () => {
+  test('is found by this test at all, and only that row', () => {
     expect(naming).toContain('<NameField')
+    expect(naming).not.toContain('role="treeitem"')
   })
 
   test('is the same row it was a moment ago', () => {
