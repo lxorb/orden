@@ -1,11 +1,13 @@
+import { imageResolver } from '../images'
 import { syntaxTree } from '@codemirror/language'
-import type { SyntaxNode } from '@lezer/common'
+import type { SyntaxNode, Tree } from '@lezer/common'
 import {
   type ChangeDesc,
   type EditorState,
   Facet,
   type Range,
   type SelectionRange,
+  StateEffect,
   StateField,
   type Text,
   type Transaction,
@@ -15,14 +17,15 @@ import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
 import { readChart } from '@orden/markdown/chart'
 import { htmlBlockCard } from '@orden/markdown/html-block'
+import { iframeCard } from '@orden/markdown/web-embed'
 import { type EmbedKind, embedKind } from '@orden/markdown/links'
 import { coverOf } from '@orden/markdown/cover'
 import { CoverWidget } from './cover'
 import { keptCover, keptCoverChanged } from './kept-cover'
-import { embedOfBlock, embedWidget } from '../wikilink/embed'
+import { drawnAsLink, embedOfBlock, embedWidget } from '../wikilink/embed'
 import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, type NoteIndex } from '../wikilink/notes'
-import { standsAlone } from '../table/navigation'
+import { standsAlone, tableWrite } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
 import { noReveal, overlaps } from './reveal'
@@ -30,11 +33,10 @@ import {
   BaseWidget,
   ChartWidget,
   DiagramWidget,
+  labelOf,
   MathWidget,
   QueryWidget,
-  recordEquationLabel,
   RENDERED_LANGUAGES,
-  resetEquationLabels,
 } from './render'
 import { headings, TocWidget } from './toc'
 import { WebEmbedWidget } from './web'
@@ -55,22 +57,40 @@ function mathIn(doc: Text, node: { from: number; to: number }): string {
   return doc.sliceString(first.to, last.from)
 }
 
-function collectEquationLabels(state: EditorState): Map<number, number> {
+interface Equations {
+  numbers: ReadonlyMap<number, number>
+  labels: ReadonlyMap<string, number>
+}
+
+const UNNUMBERED: Equations = { numbers: new Map(), labels: new Map() }
+
+const counted = new WeakMap<Text, { tree: Tree; equations: Equations }>()
+
+export function equationsOf(state: EditorState): Equations {
+  if (!state.facet(numberEquations)) return UNNUMBERED
+
+  const tree = syntaxTree(state)
+  const known = counted.get(state.doc)
+  if (known?.tree === tree) return known.equations
+
   const numbers = new Map<number, number>()
+  const labels = new Map<string, number>()
   let counter = 0
-  syntaxTree(state).iterate({
+  tree.iterate({
     enter: (node) => {
       if (node.name !== 'BlockMath') return node.type.is('Block')
 
       counter += 1
       numbers.set(node.from, counter)
-
-      recordEquationLabel(mathIn(state.doc, node), counter)
+      const label = labelOf(mathIn(state.doc, node))
+      if (label !== undefined) labels.set(label, counter)
       return false
     },
   })
 
-  return numbers
+  const equations = { numbers, labels }
+  counted.set(state.doc, { tree, equations })
+  return equations
 }
 
 interface Span {
@@ -95,7 +115,7 @@ function scan(
   state: EditorState,
   reveals: boolean,
   region: Span,
-  equationNumbers: ReadonlyMap<number, number>,
+  equations: Equations,
   out: Scanned,
 ) {
   const { ranges, spans } = out
@@ -115,7 +135,11 @@ function scan(
 
   if (kept && region.from === 0) {
     ranges.push(
-      Decoration.widget({ widget: new CoverWidget(kept), block: true, side: -1 }).range(0),
+      Decoration.widget({
+        widget: new CoverWidget(kept, state.facet(imageResolver)(kept.src)),
+        block: true,
+        side: -1,
+      }).range(0),
     )
   }
 
@@ -133,7 +157,7 @@ function scan(
           const tex = mathIn(doc, node).trim()
           ranges.push(
             Decoration.replace({
-              widget: new MathWidget(tex, true, equationNumbers.get(node.from)),
+              widget: new MathWidget(tex, true, equations.numbers.get(node.from), equations.labels),
               block: true,
             }).range(span.from, span.to),
           )
@@ -146,7 +170,7 @@ function scan(
           if (cover) {
             ranges.push(
               Decoration.widget({
-                widget: new CoverWidget(cover),
+                widget: new CoverWidget(cover, state.facet(imageResolver)(cover.src)),
                 block: true,
                 side: -1,
               }).range(span.from),
@@ -181,44 +205,47 @@ function scan(
         }
 
         case 'Paragraph': {
-          const embed = embedOfBlock(state, node.from, node.to)
-          if (embed && !MEDIA.has(embedKind(embed.target))) {
-            const span = found(node.from, node.to)
-            if (span.revealed) return false
+          const last = doc.lineAt(node.to).number
+          for (let number = doc.lineAt(node.from).number; number <= last; number++) {
+            const line = doc.line(number)
+            const start = line.from + line.text.length - line.text.trimStart().length
+            const embed = embedOfBlock(state, start, line.to)
+            if (embed && !MEDIA.has(embedKind(embed.target)) && !drawnAsLink(state, embed)) {
+              const span = found(line.from, line.to)
+              if (!span.revealed) {
+                ranges.push(
+                  Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(
+                    span.from,
+                    span.to,
+                  ),
+                )
+              }
+              continue
+            }
+
+            if (line.length > TOC_MAX || !/\[toc\]/i.test(line.text)) continue
+
+            const span = found(line.from, line.to)
+            if (!/^\s*\[toc\]\s*$/i.test(line.text)) continue
+
+            out.toc = true
+            if (span.revealed) continue
 
             ranges.push(
-              Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(
+              Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(
                 span.from,
                 span.to,
               ),
             )
-            return false
           }
-
-          if (node.to - node.from > TOC_MAX) return false
-          if (!/\[toc\]/i.test(doc.sliceString(node.from, node.to))) return false
-          const line = doc.lineAt(node.from)
-          if (!/\[toc\]/i.test(line.text)) return false
-
-          const span = found(line.from, line.to)
-          if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
-
-          out.toc = true
-          if (span.revealed) return false
-
-          ranges.push(
-            Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(
-              span.from,
-              span.to,
-            ),
-          )
           return false
         }
 
         case 'HTMLBlock': {
-          if (!standsAlone(state, node.from) || !trustsMarkup(state)) return false
+          if (!standsAlone(state, node.from)) return false
 
-          const card = htmlBlockCard(doc.sliceString(node.from, node.to))
+          const text = doc.sliceString(node.from, node.to)
+          const card = (trustsMarkup(state) ? htmlBlockCard(text) : null) ?? frameOverLines(text)
           if (card === null) return false
 
           const span = found(node.from, node.to)
@@ -260,17 +287,24 @@ function scan(
   })
 }
 
+const FRAME_CLOSED = /<\/iframe\s*>/i
+
+function frameOverLines(text: string): string | null {
+  const closed = FRAME_CLOSED.exec(text)
+  const end = closed ? closed.index + closed[0].length : text.length
+  const frame = text.slice(0, end)
+  if (!frame.includes('\n') || text.slice(end).trim()) return null
+  return iframeCard(closed ? frame : text)
+}
+
 function chosenFor(state: EditorState, reveals: boolean, spans: readonly Span[]) {
   const wholeNoteParsed = syntaxTree(state).length === state.doc.length
   return reveals || (wholeNoteParsed && !crosses(spans, state.selection.ranges))
 }
 
 function buildBlocks(state: EditorState, reveals = true): Blocks {
-  resetEquationLabels()
-  const numbered = state.facet(numberEquations)
-  const equationNumbers = numbered ? collectEquationLabels(state) : new Map<number, number>()
   const out: Scanned = { ranges: [], spans: [], toc: false }
-  scan(state, reveals, { from: 0, to: state.doc.length }, equationNumbers, out)
+  scan(state, reveals, { from: 0, to: state.doc.length }, equationsOf(state), out)
 
   return {
     decorations: Decoration.set(out.ranges, true),
@@ -365,6 +399,15 @@ function touched(regions: readonly Span[], from: number, to: number) {
 
 const MOST_SETTLED = 64
 
+function withNeighbourLines(doc: Text, from: number, to: number): Span {
+  const first = doc.lineAt(from)
+  const last = doc.lineAt(to)
+  return {
+    from: first.number > 1 ? doc.line(first.number - 1).from : first.from,
+    to: last.number < doc.lines ? doc.line(last.number + 1).to : last.to,
+  }
+}
+
 function fewer(wanted: Span[]): Span[] {
   if (wanted.length <= MOST_SETTLED) return wanted
 
@@ -388,7 +431,9 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   if (!transaction.docChanged && oldTree !== newTree && oldEnd === newTree.length) return null
 
   const wanted: Span[] = []
-  changes.iterChangedRanges((_fromA, _toA, fromB, toB) => wanted.push({ from: fromB, to: toB }))
+  changes.iterChangedRanges((_fromA, _toA, fromB, toB) =>
+    wanted.push(withNeighbourLines(state.doc, fromB, toB)),
+  )
   if (oldEnd !== newTree.length) {
     const from = Math.min(oldEnd, newTree.length)
     wanted.push({ from, to: state.doc.length })
@@ -414,7 +459,7 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   if (!first || !last) return { ...value, spans, chosen }
 
   const out: Scanned = { ranges: [], spans: [], toc: value.toc }
-  for (const region of regions) scan(state, chosen, region, new Map(), out)
+  for (const region of regions) scan(state, chosen, region, UNNUMBERED, out)
 
   const kept = spans.filter((span) => !touched(regions, span.from, span.to))
   const all = [...kept, ...out.spans].sort((one, other) => one.from - other.from)
@@ -457,6 +502,32 @@ function insideALine(doc: Text, at: number): boolean {
   return /\p{L}/u.test(line.text.slice(0, at - line.from))
 }
 
+function mayMakeATable(doc: Text, at: number): boolean {
+  const line = doc.lineAt(at)
+  const next = line.number < doc.lines ? doc.line(line.number + 1).text : ''
+  return line.text.includes('|') || next.includes('|')
+}
+
+function mayMakeAnHtmlBlock(doc: Text, at: number): boolean {
+  return doc.lineAt(at).text.includes('<')
+}
+
+function mayMoveMaths(doc: Text, at: number): boolean {
+  return doc.lineAt(at).text.includes('$$')
+}
+
+const LINE_BLOCK = /^\s*(?:!\[\[|\[toc\])/i
+
+function byALineBlock(doc: Text, at: number): boolean {
+  const line = doc.lineAt(at)
+  const first = Math.max(1, line.number - 1)
+  const last = Math.min(doc.lines, line.number + 1)
+  for (let number = first; number <= last; number++) {
+    if (LINE_BLOCK.test(doc.line(number).text)) return true
+  }
+  return false
+}
+
 function onlyProse(transaction: Transaction, value: Blocks): boolean {
   if (value.toc) return false
 
@@ -483,6 +554,12 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
       ordinary =
         PUNCTUATION.test(written) && !BLOCK_MARKS.test(written) && insideALine(after, fromB)
     }
+    ordinary =
+      ordinary &&
+      !mayMakeATable(after, fromB) &&
+      !mayMakeAnHtmlBlock(after, fromB) &&
+      !mayMoveMaths(after, fromB) &&
+      !byALineBlock(after, fromB)
   })
 
   return ordinary
@@ -506,6 +583,17 @@ function settingsChanged(transaction: Transaction): boolean {
   )
 }
 
+export const openBlocksHere = StateEffect.define()
+
+function swappedIn(transaction: Transaction): boolean {
+  if (!transaction.docChanged) return false
+  let kept = false
+  transaction.changes.iterGaps((_from, _to, length) => {
+    if (length > 0) kept = true
+  })
+  return !kept
+}
+
 export const blockDecorations = StateField.define<Blocks>({
   create: (state) => buildBlocks(state, false),
 
@@ -513,11 +601,17 @@ export const blockDecorations = StateField.define<Blocks>({
     const moved =
       transaction.selection !== undefined &&
       !transaction.startState.selection.eq(transaction.state.selection)
-    const chosen = value.chosen || transaction.docChanged || moved
+    const outside = isExternal(transaction)
+    const typed = transaction.docChanged && !outside && !transaction.annotation(tableWrite)
+    const chosen = value.chosen || typed || moved
 
     if (settingsChanged(transaction)) return buildBlocks(transaction.state, chosen)
 
-    if (isExternal(transaction)) return buildBlocks(transaction.state, false)
+    if (transaction.effects.some((effect) => effect.is(openBlocksHere))) {
+      return buildBlocks(transaction.state, true)
+    }
+
+    if (outside && swappedIn(transaction)) return buildBlocks(transaction.state, false)
 
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
 

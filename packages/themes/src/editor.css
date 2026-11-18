@@ -1107,58 +1107,8 @@
   height: 1.2em;
 }
 
-.orden-numbered #write {
-  counter-reset: orden-h1 orden-h2 orden-h3 orden-h4 orden-h5 orden-h6;
-}
-
-.orden-numbered .cm-line.orden-h1 {
-  counter-increment: orden-h1;
-  counter-reset: orden-h2 orden-h3 orden-h4 orden-h5 orden-h6;
-}
-.orden-numbered .cm-line.orden-h2 {
-  counter-increment: orden-h2;
-  counter-reset: orden-h3 orden-h4 orden-h5 orden-h6;
-}
-.orden-numbered .cm-line.orden-h3 {
-  counter-increment: orden-h3;
-  counter-reset: orden-h4 orden-h5 orden-h6;
-}
-.orden-numbered .cm-line.orden-h4 {
-  counter-increment: orden-h4;
-  counter-reset: orden-h5 orden-h6;
-}
-.orden-numbered .cm-line.orden-h5 {
-  counter-increment: orden-h5;
-  counter-reset: orden-h6;
-}
-.orden-numbered .cm-line.orden-h6 {
-  counter-increment: orden-h6;
-}
-
-.orden-numbered .cm-line.orden-h1::before {
-  content: counter(orden-h1) '  ';
-  color: var(--muted);
-}
-.orden-numbered .cm-line.orden-h2::before {
-  content: counter(orden-h1) '.' counter(orden-h2) '  ';
-  color: var(--muted);
-}
-.orden-numbered .cm-line.orden-h3::before {
-  content: counter(orden-h1) '.' counter(orden-h2) '.' counter(orden-h3) '  ';
-  color: var(--muted);
-}
-.orden-numbered .cm-line.orden-h4::before {
-  content: counter(orden-h1) '.' counter(orden-h2) '.' counter(orden-h3) '.' counter(orden-h4) '  ';
-  color: var(--muted);
-}
-.orden-numbered .cm-line.orden-h5::before {
-  content: counter(orden-h1) '.' counter(orden-h2) '.' counter(orden-h3) '.' counter(orden-h4) '.'
-    counter(orden-h5) '  ';
-  color: var(--muted);
-}
-.orden-numbered .cm-line.orden-h6::before {
-  content: counter(orden-h1) '.' counter(orden-h2) '.' counter(orden-h3) '.' counter(orden-h4) '.'
-    counter(orden-h5) '.' counter(orden-h6) '  ';
+.orden-numbered .cm-line[data-heading-number]::before {
+  content: attr(data-heading-number) '  ';
   color: var(--muted);
 }
 

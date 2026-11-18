@@ -1,3 +1,4 @@
+import { languageIn } from '@orden/markdown/code'
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
 import { door } from '@orden/markdown/door'
 
@@ -20,7 +21,8 @@ export const fenceLanguages: () => Promise<readonly LanguageDescription[]> = doo
   }),
 )
 
-export function fenceLanguage(info: string): LanguageDescription | null {
+export function fenceLanguage(written: string): LanguageDescription | null {
+  const info = languageIn(written) || written
   if (here) return LanguageDescription.matchLanguageName(here, info, true)
 
   return LanguageDescription.of({ name: info, load: () => meant(info) })

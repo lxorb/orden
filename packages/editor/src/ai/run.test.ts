@@ -183,6 +183,29 @@ describe('asking', () => {
     )
   })
 
+  test('streams the answer inside the list item or quote the fence is in', async () => {
+    for (const [doc, lead] of [
+      ['1. a\n\n   ```ai\n   question here\n   ```\n2. b\n', '   '],
+      ['> ```ai\n> question here\n> ```\n', '> '],
+    ] as const) {
+      const runner = held()
+      const view = new Fake(doc)
+      const fence = aiFenceAt(view.state, doc.indexOf('```ai') - lead.length)
+      expect(fence?.prompt).toBe('question here')
+      askAiFence(view, fence!)
+
+      runner.ask.started('m')
+      runner.ask.wrote('line one\n\nline two')
+      runner.finish()
+      await settled(view)
+
+      expect(view.text).toContain(
+        `${lead}${ANSWER_OPEN}\n${lead}*answered by m, ${dated()}*\n${lead.trimEnd()}\n` +
+          `${lead}line one\n${lead.trimEnd()}\n${lead}line two\n${lead}${ANSWER_CLOSE}`,
+      )
+    }
+  })
+
   test('takes the blank space off the end of what the model sent', async () => {
     const runner = held()
     const view = new Fake(PLAIN)
@@ -339,3 +362,35 @@ function dated(): string {
   const two = (value: number) => String(value).padStart(2, '0')
   return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`
 }
+
+describe('asking again over an answer whose closing mark was deleted', () => {
+  test('keeps the notes and the second question written below it', async () => {
+    const doc =
+      '```ai\nfirst question\n```\n\n' +
+      `${ANSWER_OPEN}\n*answered by m*\n\nold answer, its closing line deleted\n\n` +
+      'My own notes written later.\n\n' +
+      '```ai\nsecond question\n```\n\n' +
+      `${ANSWER_OPEN}\n*answered by m*\n\nsecond answer\n${ANSWER_CLOSE}\n`
+    let asked: AiAsk | null = null
+    let finish: () => void = () => undefined
+    setAiRunner((ask) => {
+      asked = ask
+      return new Promise<void>((resolve) => (finish = resolve))
+    })
+
+    const view = new Fake(doc)
+    expect(askAiFence(view, aiFenceAt(view.state, doc.indexOf('first'))!)).toBe(true)
+    const ask = asked as AiAsk | null
+    ask?.started('m2')
+    ask?.wrote('new answer')
+    finish()
+    for (let turn = 0; turn < 100 && askingAt(view.state, 0); turn++) {
+      await new Promise((resolve) => setTimeout(resolve, 5))
+    }
+
+    expect(view.text).toContain('new answer')
+    expect(view.text).toContain('My own notes written later.')
+    expect(view.text).toContain('second question')
+    expect(view.text).toContain('second answer')
+  })
+})

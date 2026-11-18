@@ -1,9 +1,7 @@
-import { syntaxTree } from '@codemirror/language'
 import { Compartment, type EditorState, type Extension } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { door } from '@orden/markdown/door'
-import { fenceCode, fenceLanguage } from '../fence'
-import { enclosingNamed } from '../nodes'
+import { fenceCode, fenceLanguage, fenceNear } from '../fence'
 import { openViews } from '../open-views'
 
 const RUNNABLE = new Set(['js', 'javascript', 'mjs', 'cjs'])
@@ -18,7 +16,7 @@ export interface RunnableFence {
 }
 
 export function runnableFenceAt(state: EditorState, pos: number): RunnableFence | null {
-  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, -1), 'FencedCode')
+  const node = fenceNear(state, pos)
   if (!node || !isRunnableLanguage(fenceLanguage(state, node))) return null
 
   return {

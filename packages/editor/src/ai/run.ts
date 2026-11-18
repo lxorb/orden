@@ -1,4 +1,3 @@
-import { syntaxTree } from '@codemirror/language'
 import {
   type EditorState,
   type Extension,
@@ -7,10 +6,9 @@ import {
   StateField,
   type TransactionSpec,
 } from '@codemirror/state'
-import { fenceCode, fenceLanguage } from '../fence'
+import { fenceCode, fenceLanguage, fenceLead, fenceNear, opensFence } from '../fence'
 import { todayHere } from '../task-days'
 import { documentOf, type SharedDoc } from '../shared'
-import { enclosingNamed } from '../nodes'
 import { answerParts, answerSpan, isAiLanguage, mentionsNote } from './block'
 
 export interface AiAsk {
@@ -39,10 +37,11 @@ export interface AiFence {
   to: number
   closeLine: number
   prompt: string
+  lead: string
 }
 
 export function aiFenceAt(state: EditorState, pos: number): AiFence | null {
-  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, 1), 'FencedCode')
+  const node = fenceNear(state, pos)
   if (!node || !isAiLanguage(fenceLanguage(state, node))) return null
 
   const close = state.doc.lineAt(Math.min(node.to, state.doc.length))
@@ -51,6 +50,7 @@ export function aiFenceAt(state: EditorState, pos: number): AiFence | null {
     to: close.to,
     closeLine: close.number - 1,
     prompt: fenceCode(state, node),
+    lead: fenceLead(state, node),
   }
 }
 
@@ -66,7 +66,6 @@ const openAsk = StateEffect.define<{ id: number; from: number; stop: () => void 
 const beganAnswer = StateEffect.define<{ id: number; body: number }>()
 const wroteAnswer = StateEffect.define<{ id: number; at: number }>()
 const closeAsk = StateEffect.define<number>()
-const FENCE = /^[\s>]*(?:`{3,}|~{3,})/
 
 const asks = StateField.define<readonly AiRun[]>({
   create: () => [],
@@ -84,7 +83,7 @@ const asks = StateField.define<readonly AiRun[]>({
           at: run.at === null ? null : transaction.changes.mapPos(run.at, 1),
         }))
         .filter((run) => {
-          const alive = run.from <= doc.length && FENCE.test(doc.lineAt(run.from).text)
+          const alive = run.from <= doc.length && opensFence(doc.lineAt(run.from).text)
           if (!alive) run.stop()
           return alive
         })
@@ -133,7 +132,13 @@ let counter = 0
 const runOf = (state: EditorState, id: number): AiRun | null =>
   (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
 
-function holderOf(view: AiView, note: SharedDoc | null, id: number): AiView | null {
+function holderOf(
+  view: AiView,
+  note: SharedDoc | null,
+  turn: number | undefined,
+  id: number,
+): AiView | null {
+  if (note && note.turn !== turn) return null
   if (runOf(view.state, id)) return view
   return note?.holding((state) => runOf(state, id) !== null) ?? null
 }
@@ -148,10 +153,11 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
   const controller = new AbortController()
   const ask = runner
   const shows = documentOf(view)
+  const turn = shows?.turn
   view.dispatch({ effects: openAsk.of({ id, from: fence.from, stop: () => controller.abort() }) })
 
   const holding = (then: (holder: AiView) => void) => {
-    const holder = holderOf(view, shows, id)
+    const holder = holderOf(view, shows, turn, id)
     if (holder) then(holder)
     else controller.abort()
   }
@@ -169,7 +175,7 @@ export function askAiFence(view: AiView, fence: AiFence): boolean {
   )
     .catch(() => undefined)
     .finally(() => {
-      const holder = holderOf(view, shows, id)
+      const holder = holderOf(view, shows, turn, id)
       if (!holder) return
       trimAnswer(holder, id)
       holder.dispatch({ effects: closeAsk.of(id) })
@@ -186,16 +192,26 @@ function beginAnswer(view: AiView, id: number, model: string) {
   const found = aiFenceAt(view.state, live.from)
   if (!found) return
 
-  const { head, tail } = answerParts(`answered by ${model}, ${todayHere()}`)
-  const existing = answerSpan(view.state.doc.toString().split('\n'), found.closeLine)
+  const parts = answerParts(`answered by ${model}, ${todayHere()}`)
+  const head = within(parts.head, found.lead)
+  const tail = within(parts.tail, found.lead)
+  const existing = answerSpan(view.state.doc.toString().split('\n'), found.closeLine, found.lead)
   const span = existing ?? { from: found.to, to: found.to }
-  const lead = existing ? '' : '\n\n'
+  const lead = existing ? '' : within('\n\n', found.lead)
+  const from = existing ? span.from + found.lead.length : span.from
 
   view.dispatch({
-    changes: { from: span.from, to: span.to, insert: `${lead}${head}${tail}` },
-    effects: beganAnswer.of({ id, body: span.from + lead.length + head.length }),
+    changes: { from, to: span.to, insert: `${lead}${head}${tail}` },
+    effects: beganAnswer.of({ id, body: from + lead.length + head.length }),
     scrollIntoView: true,
   })
+}
+
+function within(text: string, lead: string): string {
+  if (!lead) return text
+  return text.replace(/\n(?=(\n?))/g, (_all, blank: string) =>
+    blank ? `\n${lead.trimEnd()}` : `\n${lead}`,
+  )
 }
 
 function writeAnswer(view: AiView, id: number, text: string) {
@@ -203,9 +219,10 @@ function writeAnswer(view: AiView, id: number, text: string) {
   if (!live) return
   if (live.at === null || !text) return
 
+  const written = within(text, aiFenceAt(view.state, live.from)?.lead ?? '')
   view.dispatch({
-    changes: { from: live.at, insert: text },
-    effects: wroteAnswer.of({ id, at: live.at + text.length }),
+    changes: { from: live.at, insert: written },
+    effects: wroteAnswer.of({ id, at: live.at + written.length }),
   })
 }
 

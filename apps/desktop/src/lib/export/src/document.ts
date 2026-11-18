@@ -9,7 +9,7 @@ import {
 import { calloutOf } from '@orden/markdown/callouts'
 import { coverOf } from '@orden/markdown/cover'
 import { stripFrontMatter } from '@orden/markdown/front-matter'
-import { embedKind, embedSize, shownText, withoutBlockIds } from '@orden/markdown/links'
+import { embedKind, embedSize, shownText, sizedAlt, withoutBlockIds } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
 import { stemOf } from '../../files-out/src/api'
 
@@ -25,6 +25,9 @@ export interface Span {
   sub?: boolean
   href?: string
   picture?: string
+  width?: number
+  height?: number
+  zoom?: number
   maths?: boolean
   note?: string
 }
@@ -135,8 +138,9 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
 
     case 'image': {
       const image = token as Tokens.Image
-      const words = image.text === '' ? (image.title ?? '') : image.text
-      return [{ ...marks, text: words, picture: image.href }]
+      const { alt, size } = sizedAlt(image.text)
+      const words = alt === '' ? (image.title ?? '') : alt
+      return [{ ...marks, text: words, picture: image.href, ...sizeOf(size) }]
     }
 
     case 'codespan':
@@ -152,8 +156,9 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'embed': {
       const link = token.link as Wikilink | undefined
       if (link?.embed === true && embedKind(link.target) === 'image') {
-        const named = embedSize(link.alias) === null ? (link.alias ?? '') : ''
-        return [{ ...marks, text: named, picture: link.target }]
+        const size = embedSize(link.alias)
+        const named = size === null ? (link.alias ?? '') : ''
+        return [{ ...marks, text: named, picture: link.target, ...sizeOf(size) }]
       }
       return [{ ...marks, text: link ? shownText(link) : token.raw }]
     }
@@ -161,15 +166,18 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'br':
       return [{ ...marks, text: '\n' }]
 
-    case 'html':
-      return /^<br\s*\/?>$/i.test(token.raw.trim()) ? [{ ...marks, text: '\n' }] : []
+    case 'html': {
+      if (/^<br\s*\/?>$/i.test(token.raw.trim())) return [{ ...marks, text: '\n' }]
+      return picturesOfHtml(token.raw).map((one) => ({ ...marks, ...one }))
+    }
 
     case 'text':
     case 'escape':
     case 'emoji': {
       const nested = (token as Tokens.Generic).tokens
       if (nested?.length) return spansOf(nested, marks)
-      return [{ ...marks, text: String((token as Tokens.Generic).text ?? '') }]
+      const text = String((token as Tokens.Generic).text ?? '')
+      return [{ ...marks, text: SOFT_BREAK.test(text) ? ` ${text}` : text }]
     }
 
     default: {
@@ -287,12 +295,13 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
         const link = token.link as Wikilink | undefined
         if (!link) break
 
-        const named = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+        const size = embedSize(link.alias)
+        const named = size === null ? (link.alias ?? '') : ''
         out.push({
           kind: 'paragraph',
           spans: [
             embedKind(link.target) === 'image'
-              ? { text: named, picture: link.target }
+              ? { text: named, picture: link.target, ...sizeOf(size) }
               : { text: shownText(link) },
           ],
         })
@@ -345,12 +354,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       case 'html': {
         const html = String((token as Tokens.Generic).text ?? '')
         if (PAGE_BREAK.test(html)) out.push({ kind: 'break' })
-        for (const words of wordsOfHtml(html)) {
-          const spans = words
-            .split('\n')
-            .flatMap((text, at) => (at ? [{ text: '\n' }, { text }] : [{ text }]))
-          out.push({ kind: 'paragraph', spans })
-        }
+        for (const spans of paragraphsOfHtml(html)) out.push({ kind: 'paragraph', spans })
         break
       }
 
@@ -418,9 +422,28 @@ function entitiesRead(text: string): string {
   })
 }
 
-function wordsOfHtml(source: string): string[] {
-  const out: string[] = []
+function linesOf(text: string): Span[] {
+  return text
+    .split('\n')
+    .flatMap((part, at) => (at ? [{ text: '\n' }, { text: part }] : [{ text: part }]))
+    .filter((span) => span.text !== '')
+}
+
+function trimmedEnds(spans: readonly Span[]): Span[] {
+  const said = spans.map((span) =>
+    span.picture === undefined ? { text: span.text.replace(/[ \t]*\n[ \t]*/g, '\n') } : span,
+  )
+  const first = said[0]
+  if (first?.picture === undefined && first) said[0] = { text: first.text.trimStart() }
+  const last = said.at(-1)
+  if (last?.picture === undefined && last) said[said.length - 1] = { text: last.text.trimEnd() }
+  return said.flatMap((span) => (span.picture === undefined ? linesOf(span.text) : [span]))
+}
+
+function paragraphsOfHtml(source: string): Span[][] {
+  const out: Span[][] = []
   let line = ''
+  let spans: Span[] = []
   let skipping: { name: string; depth: number } | null = null
   let pre = 0
   let at = 0
@@ -429,10 +452,15 @@ function wordsOfHtml(source: string): string[] {
     if (skipping !== null) return
     line += entitiesRead(pre ? raw : raw.replace(/\s+/g, ' '))
   }
-  const end = () => {
-    const said = line.replace(/[ \t]*\n[ \t]*/g, '\n').trim()
-    if (said) out.push(said)
+  const words = () => {
+    if (line) spans.push({ text: line })
     line = ''
+  }
+  const end = () => {
+    words()
+    const said = trimmedEnds(spans)
+    if (said.length) out.push(said)
+    spans = []
   }
 
   const comment = source.lastIndexOf('<!--')
@@ -459,7 +487,10 @@ function wordsOfHtml(source: string): string[] {
     if (!closing && (HIDDEN.test(tag) || (NOT_SHOWN.test(name) && !drawn))) {
       if (!alone) skipping = { name, depth: 1 }
     } else if (name === 'br') line += '\n'
-    else if (STARTS_LINE.test(name)) {
+    else if (name === 'img' && !closing) {
+      words()
+      spans.push(...picturesOfHtml(tag))
+    } else if (STARTS_LINE.test(name)) {
       end()
       if (name === 'pre') pre += closing ? -1 : 1
     } else if (/^t[dh]$/.test(name) && !closing && line.trim()) line += ' '
@@ -552,6 +583,87 @@ function flowed(blocks: Block[], hard: boolean): Block[] {
         return block
     }
   })
+}
+
+const SOFT_BREAK = /^[ \t]*\n[ \t]*$/
+
+const IMG_TAG = /<img\b(?:"[^"]*"|'[^']*'|[^'">])*>/gi
+
+function attributeOf(tag: string, name: string): string | null {
+  const found = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag)
+  return found ? (found[1] ?? found[2] ?? '') : null
+}
+
+const ZOOM = /(?:^|;)\s*zoom\s*:\s*(\d+(?:\.\d+)?)%/i
+
+function pixelsOf(tag: string, name: string): number | undefined {
+  const written = /^\s*(\d+)\s*(?:px)?\s*$/i.exec(attributeOf(tag, name) ?? '')?.[1]
+  return written ? Number(written) || undefined : undefined
+}
+
+function htmlSizeOf(tag: string): Pick<Span, 'width' | 'height' | 'zoom'> {
+  const width = pixelsOf(tag, 'width')
+  const height = pixelsOf(tag, 'height')
+  const zoom = Number(ZOOM.exec(attributeOf(tag, 'style') ?? '')?.[1]) || undefined
+  return {
+    ...(width ? { width } : {}),
+    ...(height ? { height } : {}),
+    ...(zoom && !width && !height ? { zoom } : {}),
+  }
+}
+
+function sizeOf(
+  size: { width: number; height: number | null } | null,
+): Pick<Span, 'width' | 'height'> {
+  if (size === null) return {}
+  return size.height ? { width: size.width, height: size.height } : { width: size.width }
+}
+
+export interface Size {
+  width: number
+  height: number
+}
+
+export function sizedPicture(natural: Size, span: Span): Size {
+  if (span.width && span.height) return { width: span.width, height: span.height }
+  if (span.width) {
+    return { width: span.width, height: Math.round((natural.height * span.width) / natural.width) }
+  }
+  if (span.height) {
+    return {
+      width: Math.round((natural.width * span.height) / natural.height),
+      height: span.height,
+    }
+  }
+  if (span.zoom) {
+    const scale = span.zoom / 100
+    return { width: Math.round(natural.width * scale), height: Math.round(natural.height * scale) }
+  }
+  return natural
+}
+
+function picturesOfHtml(html: string): Span[] {
+  return [...html.matchAll(IMG_TAG)].flatMap((tag) => {
+    const src = attributeOf(tag[0], 'src')
+    return src
+      ? [
+          {
+            text: decodeEntities(attributeOf(tag[0], 'alt') ?? ''),
+            picture: decodeEntities(src),
+            ...htmlSizeOf(tag[0]),
+          },
+        ]
+      : []
+  })
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&')
 }
 
 export function picturesIn(doc: Doc): string[] {

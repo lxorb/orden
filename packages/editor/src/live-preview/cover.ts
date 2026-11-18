@@ -1,7 +1,6 @@
 import type { EditorView } from '@codemirror/view'
 import { COVER_MIDDLE, COVER_POSITION_KEY, type Cover, coverOf } from '@orden/markdown/cover'
 import { frontMatterEdit } from '@orden/markdown/front-matter'
-import { imageResolver } from '../images'
 import { applied, clearOfBlock } from './front-matter'
 import { coverMover, keptCover } from './kept-cover'
 import { OrdenWidget } from './widget'
@@ -31,16 +30,33 @@ function writePosition(view: EditorView, position: number) {
 }
 
 export class CoverWidget extends OrdenWidget {
-  constructor(private readonly cover: Cover) {
+  constructor(
+    private readonly cover: Cover,
+    private readonly address: string,
+  ) {
     super()
   }
 
   override eq(other: CoverWidget) {
-    return other.cover.src === this.cover.src && other.cover.position === this.cover.position
+    return (
+      other.address === this.address &&
+      other.cover.src === this.cover.src &&
+      other.cover.position === this.cover.position
+    )
   }
 
   override get estimatedHeight() {
     return 230
+  }
+
+  override updateDOM(host: HTMLElement): boolean {
+    const picture = host.querySelector('img')
+    const handle = host.querySelector('.orden-cover-drag')
+    if (!picture || !handle) return false
+    if (picture.getAttribute('src') !== this.address) return false
+    picture.style.objectPosition = `50% ${this.cover.position}%`
+    handle.setAttribute('aria-valuenow', String(this.cover.position))
+    return true
   }
 
   toDOM(view: EditorView) {
@@ -52,7 +68,7 @@ export class CoverWidget extends OrdenWidget {
     host.append(band)
 
     const picture = document.createElement('img')
-    picture.src = view.state.facet(imageResolver)(this.cover.src)
+    picture.src = this.address
     picture.alt = ''
     picture.draggable = false
     picture.style.objectPosition = `50% ${this.cover.position}%`

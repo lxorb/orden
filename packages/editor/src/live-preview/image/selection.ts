@@ -2,13 +2,13 @@ import { EditorSelection, type EditorState, type StateCommand } from '@codemirro
 import type { Command } from '@codemirror/view'
 import type { BindingSpec } from '../../shortcuts'
 import { openParagraphBelow } from '../../tail'
-import { noReveal } from '../reveal'
+import { noReveal, overlaps } from '../reveal'
 import { imageAt, imageEndingAt, type ImageSpan, sourceCaret } from './markup'
 
 const inside = (pos: number, from: number, to: number) => pos > from && pos < to
 
 export function imageRevealed(state: EditorState, from: number, to: number): boolean {
-  if (state.facet(noReveal)) return false
+  if (state.facet(noReveal)) return overlaps(state, from + 1, to - 1)
   return state.selection.ranges.some(
     (range) => inside(range.from, from, to) || inside(range.to, from, to),
   )

@@ -1,4 +1,4 @@
-import { type EditorState, Facet } from '@codemirror/state'
+import { type EditorState, Facet, StateField } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 
 export const noReveal = Facet.define<boolean, boolean>({
@@ -34,8 +34,26 @@ export function revealed(state: EditorState, node: SyntaxNode): boolean {
   return overlaps(state, parent.from, parent.to)
 }
 
+export const foundMatch = StateField.define<{ from: number; to: number } | null>({
+  create: () => null,
+  update(value, transaction) {
+    if (transaction.selection) {
+      if (!transaction.isUserEvent('select.search')) return null
+      const { from, to } = transaction.selection.main
+      return from < to ? { from, to } : null
+    }
+    if (!value || !transaction.docChanged) return value
+    const from = transaction.changes.mapPos(value.from, 1)
+    const to = transaction.changes.mapPos(value.to, -1)
+    return from < to ? { from, to } : null
+  },
+})
+
 export function overlaps(state: EditorState, from: number, to: number): boolean {
-  if (state.facet(noReveal)) return false
+  if (state.facet(noReveal)) {
+    const found = state.field(foundMatch, false)
+    return !!found && found.from <= to && found.to >= from
+  }
   return state.selection.ranges.some((range) => range.from <= to && range.to >= from)
 }
 

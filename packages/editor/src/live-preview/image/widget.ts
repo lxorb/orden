@@ -1,6 +1,6 @@
-import { EditorSelection } from '@codemirror/state'
+import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { imageResolver } from '../../images'
+import { later } from '../../shared'
 import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
 import {
@@ -8,6 +8,7 @@ import {
   type ImageSpan,
   type ImageSpec,
   imageMarkup,
+  retag,
   sourceCaret,
   withZoom,
 } from './markup'
@@ -15,6 +16,7 @@ import { resizeTo } from './size'
 import { selectedImage, selectionOver } from './selection'
 
 const NATURAL = new Map<string, { width: number; height: number }>()
+const DRAG_START = 3
 
 function displayWidth(spec: ImageSpec, natural: number | undefined): string {
   if (spec.zoom !== 100)
@@ -82,17 +84,31 @@ function select(view: EditorView, image: ImageSpan, extend = false) {
   view.focus()
 }
 
-function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent: string) {
-  const insert = imageMarkup(next)
-  const wasSelected = selectedImage(view.state)?.from === image.from
+function rewritten(
+  state: EditorState,
+  image: ImageSpan,
+  next: ImageSpec,
+  userEvent: string,
+): TransactionSpec {
+  const written = image.tag ?? image
+  const original = state.doc.sliceString(written.from, written.to)
+  const insert = /^<img\b/i.test(original)
+    ? retag(original, next)
+    : imageMarkup(next, image.tag !== undefined)
+  const wasSelected = selectedImage(state)?.from === image.from
+  const changes = state.changes({ from: written.from, to: written.to, insert })
 
-  view.dispatch({
-    changes: { from: image.from, to: image.to, insert },
+  return {
+    changes,
     selection: wasSelected
-      ? EditorSelection.range(image.from, image.from + insert.length)
+      ? EditorSelection.range(image.from, changes.mapPos(image.to, 1))
       : undefined,
     userEvent,
-  })
+  }
+}
+
+function rewrite(view: EditorView, image: ImageSpan, next: ImageSpec, userEvent: string) {
+  view.dispatch(rewritten(view.state, image, next, userEvent))
 }
 
 function remove(view: EditorView, image: ImageSpan) {
@@ -105,7 +121,10 @@ function remove(view: EditorView, image: ImageSpan) {
 }
 
 export class ImageWidget extends OrdenWidget {
-  constructor(readonly spec: ImageSpec) {
+  constructor(
+    readonly spec: ImageSpec,
+    private readonly address: string,
+  ) {
     super()
   }
 
@@ -113,6 +132,7 @@ export class ImageWidget extends OrdenWidget {
     const a = this.spec
     const b = other.spec
     return (
+      this.address === other.address &&
       a.src === b.src &&
       a.alt === b.alt &&
       a.title === b.title &&
@@ -171,7 +191,7 @@ export class ImageWidget extends OrdenWidget {
       tools: toolbar.tools,
     })
 
-    const src = view.state.facet(imageResolver)(this.spec.src)
+    const src = this.address
     frame.dataset.src = src
     const known = NATURAL.get(src)
     if (known) {
@@ -213,8 +233,8 @@ export class ImageWidget extends OrdenWidget {
     return frame
   }
 
-  override updateDOM(frame: HTMLElement, view: EditorView): boolean {
-    if (frame.dataset.src !== view.state.facet(imageResolver)(this.spec.src)) return false
+  override updateDOM(frame: HTMLElement): boolean {
+    if (frame.dataset.src !== this.address) return false
     return this.sync(frame, this.spec)
   }
 
@@ -256,17 +276,32 @@ export class ImageWidget extends OrdenWidget {
     alt.spellcheck = false
     alt.setAttribute('aria-label', 'Describe the image')
 
-    let held: { image: ImageSpan; text: string } | null = null
-    const stillThere = () => {
+    let held: {
+      image: ImageSpan
+      text: string
+      land: ReturnType<typeof later>
+    } | null = null
+    const stillThere = (state: EditorState) => {
       if (!held) return null
-      return view.state.sliceDoc(held.image.from, held.image.to) === held.text ? held.image : null
+      return state.sliceDoc(held.image.from, held.image.to) === held.text ? held.image : null
     }
     const commitAlt = () => {
-      const current = imageOfFrame(view, frame) ?? stillThere()
-      if (!current) return
       const next = alt.value.trim()
-      if (next === current.alt) return
-      rewrite(view, current, { ...current, alt: next }, 'input.image.alt')
+      const landing = held?.land
+      if (!landing) {
+        const current = imageOfFrame(view, frame)
+        if (current && next !== current.alt) {
+          rewrite(view, current, { ...current, alt: next }, 'input.image.alt')
+        }
+        return
+      }
+
+      landing((state) => {
+        const current =
+          (state === view.state ? imageOfFrame(view, frame) : null) ?? stillThere(state)
+        if (!current || next === current.alt) return null
+        return rewritten(state, current, { ...current, alt: next }, 'input.image.alt')
+      })
     }
 
     alt.addEventListener('keydown', (event) => {
@@ -282,7 +317,9 @@ export class ImageWidget extends OrdenWidget {
     })
     alt.addEventListener('focus', () => {
       const image = imageOfFrame(view, frame)
-      held = image ? { image, text: view.state.sliceDoc(image.from, image.to) } : null
+      held = image
+        ? { image, text: view.state.sliceDoc(image.from, image.to), land: later(view) }
+        : null
     })
     alt.addEventListener('blur', () => queueMicrotask(commitAlt))
     this.onDestroy(frame, () => queueMicrotask(commitAlt))
@@ -386,17 +423,16 @@ export class ImageWidget extends OrdenWidget {
     const lineWidth = frame.closest('.cm-line')?.getBoundingClientRect().width ?? natural
     const sign = handle.dataset.corner?.endsWith('e') ? 1 : -1
     let zoom = image.zoom
+    let dragged = false
 
     frame.classList.add('is-resizing')
     frame.dataset.corner = handle.dataset.corner
     showSize(parts.badge, zoom, natural)
-    try {
-      handle.setPointerCapture(event.pointerId)
-    } catch {
-      // Left uncaptured.
-    }
+    captured(handle, event.pointerId)
 
     const move = (moved: PointerEvent) => {
+      if (!dragged && Math.abs(moved.clientX - startX) < DRAG_START) return
+      dragged = true
       zoom = resizeTo(
         startWidth,
         sign * (moved.clientX - startX),
@@ -419,7 +455,7 @@ export class ImageWidget extends OrdenWidget {
 
       const current = imageOfFrame(view, frame)
       if (!current) return
-      if (zoom === current.zoom && !current.width) {
+      if (!dragged || (zoom === current.zoom && !current.width)) {
         this.sync(frame, current)
         return
       }
@@ -433,5 +469,14 @@ export class ImageWidget extends OrdenWidget {
 
   override ignoreEvent() {
     return true
+  }
+}
+
+function captured(handle: HTMLElement, pointer: number): boolean {
+  try {
+    handle.setPointerCapture(pointer)
+    return true
+  } catch {
+    return false
   }
 }

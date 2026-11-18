@@ -7,6 +7,7 @@ import { pressedByKey } from '../press'
 import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/door'
 import { isAiLanguage } from '../ai/block'
 import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
+import { later } from '../shared'
 
 export class BulletWidget extends OrdenWidget {
   constructor(private readonly depth: number) {
@@ -300,17 +301,23 @@ export class FenceHeaderWidget extends OrdenWidget {
     field.spellcheck = false
 
     const written = view.state.sliceDoc(this.infoFrom, this.infoTo)
+    const opening = view.state.doc.lineAt(this.infoFrom)
+    const ticked = view.state.sliceDoc(opening.from, this.infoFrom).trimEnd().endsWith('`')
+    const land = later(view)
     let done = false
     const commit = () => {
       if (done) return
       done = true
-      const next = field.value.trim().replace(/\s+/g, '')
+      const next = field.value.replace(ticked ? /[\s`]+/g : /\s+/g, '')
       field.replaceWith(label)
 
       if (next === this.language) return
       queueMicrotask(() => {
-        if (view.state.sliceDoc(this.infoFrom, this.infoTo) !== written) return
-        view.dispatch({ changes: { from: this.infoFrom, to: this.infoTo, insert: next } })
+        land((state) =>
+          state.sliceDoc(this.infoFrom, this.infoTo) === written
+            ? { changes: { from: this.infoFrom, to: this.infoTo, insert: next } }
+            : null,
+        )
       })
     }
 

@@ -1,9 +1,19 @@
 import { syntaxTree } from '@codemirror/language'
+import { calloutOf } from '@orden/markdown/callouts'
 import type { ChangeSpec, EditorState, Line } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { frontMatterSpan } from '../live-preview/front-matter'
 import { enclosing } from '../nodes'
-import { above, below, gap, indentOf, itemsAround, type Side } from './separation'
+import {
+  above,
+  below,
+  gap,
+  indentOf,
+  itemsAround,
+  holderQuote,
+  leadOf,
+  type Side,
+} from './separation'
 import type { BlockSpan } from './span'
 import { writtenLine } from './span'
 
@@ -13,6 +23,7 @@ interface Measured {
   up: Line | null
   down: Line | null
   nests: SyntaxNode[]
+  holder: string
 }
 
 function measure(state: EditorState, span: BlockSpan): Measured {
@@ -30,6 +41,7 @@ function measure(state: EditorState, span: BlockSpan): Measured {
     up: writtenLine(state, first.number - 1, -1),
     down: writtenLine(state, last.number + 1, 1),
     nests,
+    holder: holderQuote(first.text, span.kind === 'quote'),
   }
 }
 
@@ -55,6 +67,19 @@ function strangerAt(state: EditorState, block: Measured, at: number): SyntaxNode
   return found
 }
 
+function opensCalloutAt(state: EditorState, block: Measured, at: number): boolean {
+  const doc = state.doc
+  const inside = block.first.from + leadOf(block.first.text)
+  for (const node of enclosing(syntaxTree(state).resolveInner(inside, 1))) {
+    if (node.name !== 'Blockquote' || node.from >= inside) continue
+    const first = doc.lineAt(node.from)
+    if (first.from !== at) continue
+    const opened = first.text.indexOf('[!')
+    if (opened >= 0 && calloutOf(first.text.slice(opened))) return true
+  }
+  return false
+}
+
 function landingOf(
   state: EditorState,
   span: BlockSpan,
@@ -76,6 +101,8 @@ function landingOf(
         ? doc.lineAt(stranger.from).from
         : settled(state, doc.lineAt(stranger.to).to + 1)
   }
+
+  if (to < block.first.from && opensCalloutAt(state, block, to)) return null
 
   const end = block.down ? block.down.from : doc.length
   return to >= block.first.from && to <= end ? null : to
@@ -119,7 +146,7 @@ function cut(state: EditorState, block: Measured): ChangeSpec & { from: number; 
     const upper = doc.sliceString(up.to, first.from)
     const lower = doc.sliceString(last.to, down.from)
     const wider = breaks(upper) >= breaks(lower) ? upper : lower
-    const between = gap(state, above(state, up), below(state, down), wider)
+    const between = gap(state, above(state, up), below(state, down), wider, block.holder)
     return { from: up.to, to: down.from, insert: between }
   }
 
@@ -145,9 +172,13 @@ export function moveBlock(
 
   const doc = state.doc
   const staying = to < doc.length
-  const leaving = block.nests.filter(
-    (item) => !(staying && doc.lineAt(item.from).from < to && item.to >= to),
-  )
+  const downward = to > block.last.to
+  const lastAbove = writtenLine(state, (staying ? doc.lineAt(to).number : doc.lines + 1) - 1, -1)
+  const leaving = block.nests.filter((item) => {
+    if (doc.lineAt(item.from).from >= to) return true
+    if (staying && item.to >= to) return false
+    return !(downward && lastAbove !== null && item.to >= lastAbove.to)
+  })
   const { text, taken } = bodyAt(state, block, leaving[0])
 
   const own: Side = {
@@ -155,13 +186,14 @@ export function moveBlock(
     item: below(state, block.first).item,
     indent: indentOf(text),
     moving: true,
+    quote: block.holder,
   }
 
   const lower = staying ? doc.lineAt(to) : null
   const upper = writtenLine(state, (lower ? lower.number : doc.lines + 1) - 1, -1)
   const existing = upper && lower ? doc.sliceString(upper.to, lower.from) : null
-  const before = upper ? gap(state, above(state, upper), own, existing) : ''
-  const after = lower ? gap(state, own, below(state, lower), existing) : ''
+  const before = upper ? gap(state, above(state, upper), own, existing, block.holder) : ''
+  const after = lower ? gap(state, own, below(state, lower), existing, block.holder) : ''
 
   const from = upper ? upper.to : (lower?.from ?? 0)
   const put = { from, to: upper && lower ? lower.from : from, insert: before + text + after }
@@ -179,7 +211,13 @@ export function copyBlock(state: EditorState, span: BlockSpan): BlockEdit {
   const doc = state.doc
   const text = doc.sliceString(block.first.from, block.last.to)
   const existing = block.down ? doc.sliceString(block.last.to, block.down.from) : null
-  const between = gap(state, above(state, block.last), below(state, block.first), existing)
+  const between = gap(
+    state,
+    above(state, block.last),
+    below(state, block.first),
+    existing,
+    block.holder,
+  )
 
   return {
     changes: [{ from: block.last.to, insert: between + text }],

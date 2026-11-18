@@ -72,7 +72,8 @@
       "turndown@7.2.4": "patches/turndown@7.2.4.patch",
       "knip@6.44.1": "patches/knip@6.44.1.patch",
       "style-mod@4.1.3": "patches/style-mod@4.1.3.patch",
-      "@codemirror/state@6.7.2": "patches/@codemirror__state@6.7.2.patch"
+      "@codemirror/state@6.7.2": "patches/@codemirror__state@6.7.2.patch",
+      "@codemirror/search@6.7.2": "patches/@codemirror__search@6.7.2.patch"
     }
   }
 }

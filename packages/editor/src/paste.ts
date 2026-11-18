@@ -7,10 +7,13 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
-import { rangeInCode } from './code'
+import { syntaxTree } from '@codemirror/language'
+import { rangeWrittenAsIs } from './code'
 import { ourOwn } from './copy'
+import { fenceLead, fenceNear } from './fence'
 import { wordsBesidePicture } from './images'
 import { loadLineCommands } from './line-door'
+import { enclosingNamed } from './nodes'
 import { later } from './shared'
 
 const converter = (): Promise<(html: string) => string> =>
@@ -38,7 +41,8 @@ export function delimitedToTable(text: string): string | null {
   if (
     separator === ',' &&
     lines.some((line) => /,\s/.test(line)) &&
-    !rows.flat().some((cell) => /^[\d$€£%.,+-]+$/.test(cell))
+    (lines.some((line) => /[.!?]$/.test(line.trimEnd())) ||
+      !rows.flat().some((cell) => /^[\d$€£%.,+-]+$/.test(cell)))
   ) {
     return null
   }
@@ -61,10 +65,17 @@ export interface Landing {
   range: SelectionRange
 }
 
-export const plainAt = (range: SelectionRange, text: string): Landing => ({
-  changes: { from: range.from, to: range.to, insert: text },
-  range: EditorSelection.cursor(range.from + text.length),
-})
+export function withLineFeeds(text: string): string {
+  return text.replace(/\r\n?/g, '\n')
+}
+
+export function plainAt(range: SelectionRange, written: string): Landing {
+  const text = withLineFeeds(written)
+  return {
+    changes: { from: range.from, to: range.to, insert: text },
+    range: EditorSelection.cursor(range.from + text.length),
+  }
+}
 
 export function everywhere(
   state: EditorState,
@@ -76,19 +87,86 @@ export function everywhere(
 const inserted = (state: EditorState, text: string): TransactionSpec =>
   everywhere(state, (range) => plainAt(range, text))
 
-function insert(view: EditorView, text: string) {
-  view.dispatch(inserted(view.state, text))
+function codeLead(state: EditorState, range: SelectionRange): string {
+  const block =
+    fenceNear(state, range.from) ??
+    enclosingNamed(syntaxTree(state).resolveInner(range.from, 1), 'BlockMath')
+  return block ? fenceLead(state, block) : ''
+}
+
+function heldInCode(state: EditorState, text: string): TransactionSpec | null {
+  if (!/[\r\n]/.test(text) || state.selection.ranges.every((range) => !codeLead(state, range))) {
+    return null
+  }
+  return everywhere(state, (range) =>
+    plainAt(range, text.replace(/\r\n?|\n/g, `\n${codeLead(state, range)}`)),
+  )
 }
 
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
+
+function endsAtLineStart(state: EditorState, range: SelectionRange, text: string): boolean {
+  if (range.empty || range.to === 0 || /\r?\n$/.test(text)) return false
+  return state.doc.lineAt(range.to).from === range.to
+}
+
 export const ADDRESS = /^(?:https?:\/\/|mailto:|www\.)[^\s<>]+$/i
+
+const STYLED_BLOCK = /<div\b[^>]*\bstyle\s*=\s*(["'])(.*?)\1/gis
+
+const KEPT_SPACES = /(?:^|;)\s*white-space\s*:\s*pre\s*(?:;|$)/i
+
+const MONOSPACED = /(?:^|;)\s*font-family\s*:[^;]*(?:monospace|consolas|menlo|monaco|courier)/i
+
+function fromCodeEditor(html: string): boolean {
+  for (const [, , style = ''] of html.matchAll(STYLED_BLOCK)) {
+    if (KEPT_SPACES.test(style) && MONOSPACED.test(style)) return true
+  }
+  return false
+}
+
+function longestTicks(code: string): number {
+  return [...code.matchAll(/`+/g)].reduce((most, [run]) => Math.max(most, run.length), 0)
+}
+
+function fenced(code: string): string {
+  const fence = '`'.repeat(Math.max(2, longestTicks(code)) + 1)
+  return `${fence}\n${code}\n${fence}`
+}
+
+function inlineCode(code: string): string {
+  const ticks = '`'.repeat(longestTicks(code) + 1)
+  const padded = code.startsWith('`') || code.endsWith('`') ? ` ${code} ` : code
+  return `${ticks}${padded}${ticks}`
+}
+
+function codeEditorPaste(html: string, text: string): string | null {
+  if (!text || !fromCodeEditor(html)) return null
+  const code = withLineFeeds(text).replace(/\n+$/, '')
+  if (!code.trim()) return null
+  return code.includes('\n') ? fenced(code) : inlineCode(code.trim())
+}
+
+const LIST_HTML = /mso-list|<(?:ul|ol)\b/i
+
+const TABLE_HTML = /<table\b/i
+
+const LINKED_CELLS = /<t[dh]\b[^>]*>(?:(?!<\/t[dh]>)[\s\S])*<(?:a|code)\b/i
+
+function tablePaste(html: string, text: string): string | null {
+  if (TABLE_HTML.test(html) ? LINKED_CELLS.test(html) : LIST_HTML.test(html)) return null
+  return delimitedToTable(text)
+}
 
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
   const ours = copiedHere(html, text)
   if (ours) return ours
 
-  const table = delimitedToTable(text)
+  const code = codeEditorPaste(html, text)
+  if (code) return code
+
+  const table = tablePaste(html, text)
   if (table) return table
 
   if (!html.trim()) return null
@@ -96,9 +174,6 @@ export async function pastedMarkdown(html: string, text: string): Promise<string
   const htmlToMarkdown = await converter()
   return htmlToMarkdown(html) || null
 }
-
-const inCode = (state: EditorState) =>
-  state.selection.ranges.some((range) => rangeInCode(state, range))
 
 export const richPaste = (): Extension =>
   EditorView.domEventHandlers({
@@ -121,7 +196,13 @@ export const richPaste = (): Extension =>
         return true
       }
 
-      if (inCode(view.state)) return false
+      if (view.state.selection.ranges.some((range) => rangeWrittenAsIs(view.state, range))) {
+        const held = heldInCode(view.state, text)
+        if (!held) return false
+        event.preventDefault()
+        view.dispatch(held)
+        return true
+      }
 
       if (
         view.state.selection.ranges.length === 1 &&
@@ -135,17 +216,25 @@ export const richPaste = (): Extension =>
         return true
       }
 
-      if (copiedHere(html, text)) return false
-
-      const table = delimitedToTable(text)
-      if (table) {
+      const ready = copiedHere(html, text) ?? codeEditorPaste(html, text) ?? tablePaste(html, text)
+      if (ready) {
         event.preventDefault()
         const land = later(view)
-        void loadLineCommands().then(({ placed }) => land((state) => placed(state, table)))
+        void loadLineCommands().then(({ placed }) => land((state) => placed(state, ready)))
         return true
       }
 
-      if (!html.trim()) return false
+      if (!html.trim()) {
+        if (
+          !view.state.selection.ranges.some((range) => endsAtLineStart(view.state, range, text))
+        ) {
+          return false
+        }
+        event.preventDefault()
+        const land = later(view)
+        void loadLineCommands().then(({ plainly }) => land((state) => plainly(state, text)))
+        return true
+      }
 
       event.preventDefault()
       const land = later(view)
@@ -171,7 +260,13 @@ export const pasteHere: Command = (view) => {
       if (!clipboard) return
       const { linkedPaste, placed, plainly } = await loadLineCommands()
       if (land((state) => linkedPaste(state, clipboard.text))) return
-      if (land((state) => (inCode(state) ? inserted(state, clipboard.text) : null))) return
+
+      const inCodeNow = land((state) =>
+        state.selection.ranges.some((range) => rangeWrittenAsIs(state, range))
+          ? (heldInCode(state, clipboard.text) ?? inserted(state, clipboard.text))
+          : null,
+      )
+      if (inCodeNow) return
 
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
       if (markdown) land((state) => placed(state, markdown))
@@ -208,10 +303,10 @@ async function readClipboard(): Promise<{ html: string; text: string } | null> {
 export const pastePlain: Command = (view) => {
   if (view.state.readOnly) return false
 
-  navigator.clipboard
-    .readText()
-    .then((text) => {
-      if (text) insert(view, text)
+  const land = later(view)
+  void Promise.all([navigator.clipboard.readText(), loadLineCommands()])
+    .then(([text, { plainly }]) => {
+      if (text) land((state) => heldInCode(state, text) ?? plainly(state, text))
     })
     .catch(() => undefined)
   return true

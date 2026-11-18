@@ -1,6 +1,9 @@
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
+import { parsed } from '../test/parsed'
 import { lowerCase, titleCase, upperCase } from './case'
+import { ordenMarkdownExtensions } from './markdown/extensions'
 
 function run(command: StateCommand, doc: string, from: number, to = from) {
   let state = EditorState.create({ doc, selection: EditorSelection.range(from, to) })
@@ -58,5 +61,45 @@ describe('changing case', () => {
     const state = EditorState.create({ doc: 'LOUD', selection: EditorSelection.range(0, 4) })
     upperCase({ state, dispatch: () => (dispatched = true) })
     expect(dispatched).toBe(false)
+  })
+})
+
+function recasedNote(command: StateCommand, doc: string): string {
+  let state = parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.range(0, doc.length),
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
+    }),
+  )
+  command({ state, dispatch: (transaction) => (state = transaction.state) })
+  return state.doc.toString()
+}
+
+describe('changing case over a note with links and block ids in it', () => {
+  test('title case changes the link text and leaves the link address alone', () => {
+    expect(recasedNote(titleCase, 'see [the docs](https://example.com/api/readme) now')).toBe(
+      'See [The Docs](https://example.com/api/readme) Now',
+    )
+  })
+
+  test('upper case changes the picture text and leaves the picture path alone', () => {
+    expect(recasedNote(upperCase, 'a cat ![cat](attachments/cat.png)')).toBe(
+      'A CAT ![CAT](attachments/cat.png)',
+    )
+  })
+
+  test('upper case leaves the block id other notes link to alone', () => {
+    expect(recasedNote(upperCase, 'remember this ^intro1')).toBe('REMEMBER THIS ^intro1')
+  })
+
+  test('lower case leaves a block id written with capitals alone', () => {
+    expect(recasedNote(lowerCase, 'KEEP THIS ^Plan-A')).toBe('keep this ^Plan-A')
+  })
+
+  test('upper case changes the shown words of a wikilink and leaves where it points alone', () => {
+    expect(recasedNote(upperCase, 'go [[Plan#^Step-1|next step]]')).toBe(
+      'GO [[Plan#^Step-1|NEXT STEP]]',
+    )
   })
 })

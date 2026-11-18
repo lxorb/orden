@@ -13,15 +13,27 @@ export const mentionsNote = (prompt: string): boolean => NOTE_MENTION.test(promp
 export function answerSpan(
   lines: readonly string[],
   closeLine: number,
+  lead = '',
 ): { from: number; to: number } | null {
+  const bare = (line: string | undefined) => {
+    const text = line ?? ''
+    if (lead && text.startsWith(lead)) return text.slice(lead.length).trim()
+    if (lead && text.startsWith(lead.trimEnd())) return text.slice(lead.trimEnd().length).trim()
+    return text.trim()
+  }
   let at = closeLine + 1
-  while (at < lines.length && lines[at]?.trim() === '') at++
+  while (at < lines.length && bare(lines[at]) === '') at++
 
-  if (!OPENS.has(lines[at]?.trim() ?? '')) return null
+  if (!OPENS.has(bare(lines[at]))) return null
   const opened = at
 
-  while (at < lines.length && !CLOSES.has(lines[at]?.trim() ?? '')) at++
-  const closed = Math.min(at, lines.length - 1)
+  at++
+  while (at < lines.length && !CLOSES.has(bare(lines[at]))) {
+    if (OPENS.has(bare(lines[at]))) return null
+    at++
+  }
+  if (at >= lines.length) return null
+  const closed = at
 
   return {
     from: offsetOf(lines, opened),

@@ -113,6 +113,6 @@ export function nameFromTitle(title: string): string | null {
     .join('')
     .replace(/[.\s]+$/, '')
 
-  if (!cut) return null
+  if (!/[^\s.-]/.test(cut)) return null
   return isReserved(cut) ? `_${cut}` : cut
 }

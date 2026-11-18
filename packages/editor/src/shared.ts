@@ -32,8 +32,10 @@ export function later(
 ) => boolean {
   const asked = view.state
   const note = documentOf(view)
+  const turn = note?.turn
 
   return (write) => {
+    if (note && note.turn !== turn) return true
     if (documentOf(view) === note) {
       const { state } = view
       const since = state.doc === asked.doc ? null : (note?.since(asked.doc.toString()) ?? null)
@@ -47,7 +49,13 @@ export function later(
     if (!spec) return false
 
     const made = asked.update(spec)
-    note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent))
+    note.local(
+      made.changes,
+      made.newSelection,
+      view,
+      made.annotation(Transaction.userEvent),
+      asked.selection,
+    )
     return true
   }
 }
@@ -188,6 +196,8 @@ export class SharedDoc {
 
   private ownUndo = 0
   private ownRedo = 0
+  private taken = 0
+
   private recent: { before: Text; changes: ChangeSet; by: Made; at: number }[] = []
   private held: ChangeSet | null = null
 
@@ -210,6 +220,7 @@ export class SharedDoc {
   }
 
   takeOn(text: string) {
+    this.taken++
     const held = this.state.doc.toString()
 
     if (held !== text) {
@@ -234,6 +245,10 @@ export class SharedDoc {
 
   get text(): Text {
     return this.state.doc
+  }
+
+  get turn(): number {
+    return this.taken
   }
 
   get roomWords(): Text {
@@ -297,7 +312,14 @@ export class SharedDoc {
     if (onDocument.get(view) === this) onDocument.delete(view)
   }
 
-  local(changes: ChangeSet, selection: EditorSelection, from: DocView, userEvent?: string) {
+  local(
+    changes: ChangeSet,
+    selection: EditorSelection,
+    from: DocView,
+    userEvent?: string,
+    before?: EditorSelection,
+  ) {
+    if (before && !before.eq(this.state.selection)) this.selected(before)
     const made = this.state.update({
       changes,
       selection,
@@ -563,11 +585,13 @@ export const sharing = (): Extension => [
 ]
 
 export const undoEdit: Command = (view) => {
+  if (view.state.readOnly) return false
   const shared = documentOf(view)
   return shared ? shared.undo(view) : undo(view)
 }
 
 export const redoEdit: Command = (view) => {
+  if (view.state.readOnly) return false
   const shared = documentOf(view)
   return shared ? shared.redo(view) : redo(view)
 }

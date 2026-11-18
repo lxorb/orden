@@ -1,11 +1,11 @@
-import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
+import type { ChangeSpec, EditorState, Line, StateCommand } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
+import type { SyntaxNode } from '@lezer/common'
 import {
   blockIdOf,
   freeBlockId,
   blockIds,
-  nameIndent,
   itemLines,
   layoutOf,
   openFenceIn,
@@ -14,23 +14,26 @@ import {
 } from '@orden/markdown/links'
 import { indentItems, outdentItems } from '../list-keys'
 import { headingLevel, headingText } from '../headings'
+import { landInWords } from '../live-preview/item-start'
 import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
 import { verbatimLines } from './verbatim'
 import { type BlockShape, shaped, wordsOf } from './shape'
-import { blockAt, type BlockKind, blocksIn, type BlockSpan, writtenLine } from './span'
+import { blockAt, type BlockKind, blocksIn, type BlockSpan, withListIds, writtenLine } from './span'
 
-export function blocksFor(view: EditorView, pos: number): BlockSpan[] {
+export function blocksFor(view: EditorView, pos: number, named = true): BlockSpan[] {
   const range = view.state.selection.main
   const pressed = blockAt(view.state, pos)
+  const owned = (spans: BlockSpan[]) => (named ? withListIds(view.state, spans) : spans)
 
-  if (range.empty || pos < range.from || pos > range.to) return pressed ? [pressed] : []
+  const picked = pressed ? [pressed] : []
+  if (range.empty || pos < range.from || pos > range.to) return owned(picked)
 
   const covered = blocksIn(view.state, range.from, range.to).filter(
     (span) => span.to >= range.from && span.from <= range.to,
   )
 
-  return covered.length ? covered : pressed ? [pressed] : []
+  return owned(covered.length ? covered : picked)
 }
 
 function runOf(spans: BlockSpan[]): BlockSpan | null {
@@ -41,22 +44,31 @@ function runOf(spans: BlockSpan[]): BlockSpan | null {
   return { from: first.from, to, kind: first.kind }
 }
 
-export function duplicateBlocks(view: EditorView, pos: number): boolean {
-  const spans = blocksFor(view, pos)
-  if (!spans.length) return false
-
-  const changes: ChangeSpec[] = []
-  let caret: number | null = null
-
-  for (const span of [...spans].reverse()) {
-    const edit = copyBlock(view.state, span)
-    changes.push(...edit.changes)
-    caret ??= edit.caret
+function outermost(spans: readonly BlockSpan[]): BlockSpan[] {
+  const kept: BlockSpan[] = []
+  for (const span of spans) {
+    const holder = kept.at(-1)
+    if (holder && span.from >= holder.from && span.to <= holder.to) continue
+    kept.push(span)
   }
+  return kept
+}
+
+export function duplicateBlocks(view: EditorView, pos: number): boolean {
+  const spans = outermost(blocksFor(view, pos, false))
+  const last = spans.at(-1)
+  if (!last) return false
+
+  const changes = view.state.changes(spans.flatMap((span) => copyBlock(view.state, span).changes))
+  const caret = copyBlock(view.state, last).caret
+  const lastCopy = { from: 0, fromB: 0 }
+  changes.iterChanges((from, _to, fromB) => Object.assign(lastCopy, { from, fromB }))
+  const landing = caret === null ? null : lastCopy.fromB + caret - lastCopy.from
 
   view.dispatch({
     changes,
-    ...(caret === null ? {} : { selection: { anchor: caret } }),
+    ...(landing === null ? {} : { selection: { anchor: landing } }),
+    annotations: landInWords.of(true),
     scrollIntoView: true,
   })
   view.focus()
@@ -72,6 +84,7 @@ export function deleteBlocks(view: EditorView, pos: number): boolean {
   view.dispatch({
     changes: cut.changes,
     selection: { anchor: cut.caret ?? run.from },
+    annotations: landInWords.of(true),
     scrollIntoView: true,
   })
   view.focus()
@@ -118,8 +131,9 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const last = doc.lineAt(ownEnd(view.state, span))
   if (openFenceIn(rows, at, last.number - 1)) return null
   const under = writtenLine(view.state, last.number + 1, 1)
-  const already =
-    under && ownLine(under.text)
+  const already = ownLine(last.text)
+    ? blockIdOf(last.text)
+    : span.kind !== 'list' && under && ownLine(under.text)
       ? blockIdOf(under.text)
       : span.kind !== 'code' && blockIdOf(last.text)
   if (already) return `#^${already}`
@@ -129,7 +143,7 @@ export function blockTarget(view: EditorView, pos: number): string | null {
 
   if (verbatim.has(last.number)) {
     const below = last.number < doc.lines ? doc.line(last.number + 1).text.trim() : ''
-    const insert = `\n\n${nameIndent(rows, at)}^${id}${below ? '\n' : ''}`
+    const insert = `\n\n${itemIndent(view.state, span, last)}^${id}${below ? '\n' : ''}`
     view.dispatch({ changes: { from: last.to, to: last.to, insert } })
     return `#^${id}`
   }
@@ -137,6 +151,19 @@ export function blockTarget(view: EditorView, pos: number): string | null {
   const end = last.from + last.text.trimEnd().length
   view.dispatch({ changes: { from: end, to: end, insert: ` ^${id}` } })
   return `#^${id}`
+}
+
+function itemIndent(state: EditorState, span: BlockSpan, last: Line): string {
+  const item = [...enclosing(syntaxTree(state).resolveInner(last.to, -1))].find(
+    (node) => node.name === 'ListItem' && state.doc.lineAt(node.from).from <= span.from,
+  )
+  if (!item) return ''
+
+  const line = state.doc.lineAt(item.from)
+  const marked = (item.getChild('ListMark')?.to ?? item.from) - line.from
+  const space = INDENT.exec(line.text.slice(marked))?.[0].length ?? 0
+  const column = marked + (space >= 1 && space <= 4 ? space : 1)
+  return INDENT.exec(last.text.slice(0, column))?.[0] ?? ''
 }
 
 function ownEnd(state: EditorState, span: BlockSpan): number {
@@ -161,8 +188,27 @@ interface Counting {
   nth: number
 }
 
-function numberedLine(text: string, counting: Counting[]): string {
-  const { indent, words } = wordsOf(text)
+function startsAnItem(state: EditorState, line: Line): boolean {
+  let found = false
+  syntaxTree(state).iterate({
+    from: line.from,
+    to: line.to,
+    enter: (node) => {
+      if (found) return false
+      if (node.name === 'ListMark' && node.from >= line.from && node.from <= line.to) found = true
+      return !found
+    },
+  })
+  return found
+}
+
+function numberedLine(
+  text: string,
+  counting: Counting[],
+  listed: boolean,
+  quoted: boolean,
+): string {
+  const { lead, indent, words } = wordsOf(text, listed, quoted)
   const written = indent.length
 
   while (counting.length > 1 && (counting.at(-1)?.written ?? 0) > written) counting.pop()
@@ -175,7 +221,36 @@ function numberedLine(text: string, counting: Counting[]): string {
   const mark = `${level.nth}. `
   level.nth++
   level.column = level.at + mark.length
-  return ' '.repeat(level.at) + mark + words
+  return lead + ' '.repeat(level.at) + mark + words
+}
+
+const LISTED = new Set<BlockShape>(['bullet', 'numbered', 'task'])
+
+const INDENT = /^[ \t]*/
+
+const BARE_QUOTE = /^[ \t]*(?:>[ \t]*)+$/
+
+const QUOTE_MARKS = /^(?:[ \t]*>)*/
+
+const LINE_LEAD = /^(?:[ \t]*>)*[ \t]*/
+
+const ITEM_CONTENT = /^(?:[ \t]*>)*[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)?/
+
+const contentColumn = (text: string) => ITEM_CONTENT.exec(text)?.[0].length ?? 0
+
+function itemsHolding(state: EditorState, line: Line): number[] {
+  const at = line.from + (LINE_LEAD.exec(line.text)?.[0].length ?? 0)
+  return [...enclosing(syntaxTree(state).resolveInner(at, 1))]
+    .filter((node) => node.name === 'ListItem')
+    .map((node) => state.doc.lineAt(node.from).number)
+}
+
+function shiftedIn(text: string, shift: number, holder: string): string {
+  const quote = holder.length && text.startsWith(holder) ? holder.length : 0
+  const indent = text.slice(0, quote + (INDENT.exec(text.slice(quote))?.[0].length ?? 0))
+  if (shift > 0) return indent + ' '.repeat(shift) + text.slice(indent.length)
+  const spaces = / *$/.exec(indent)?.[0].length ?? 0
+  return indent.slice(0, indent.length - Math.min(spaces, -shift)) + text.slice(indent.length)
 }
 
 export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape): boolean {
@@ -193,28 +268,101 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
     const first = doc.lineAt(span.from).number
     const last = span.kind !== 'heading' ? doc.lineAt(Math.min(span.to, doc.length)).number : first
     const verbatim = verbatimLines(view.state, span.from, doc.line(last).to)
+    const itemwise = span.kind === 'list' || (LISTED.has(shape) && span.kind !== 'quote')
+    const quoted = span.kind !== 'quote'
+    const shifts = new Map<number, number>()
 
     for (let number = first; number <= last; number++) {
-      if (verbatim.has(number) || seen.has(number)) continue
+      if (seen.has(number)) continue
       seen.add(number)
       const line = doc.line(number)
-      if (!wordsOf(line.text).words.trim()) continue
+      if (!line.text.trim() || (number > first && ownLine(line.text.replace(QUOTE_MARKS, ''))))
+        continue
+
+      const items = itemwise && number > first ? itemsHolding(view.state, line) : [number]
+      if (items[0] !== number || (itemwise && number > first && !LISTED.has(shape))) {
+        const owner = items.find((item) => shifts.has(item)) ?? first
+        const holder = QUOTE_MARKS.exec(doc.line(owner).text)?.[0] ?? ''
+        const text = shiftedIn(line.text, shifts.get(owner) ?? 0, holder)
+        if (text !== line.text) changes.push({ from: line.from, to: line.to, insert: text })
+        continue
+      }
+
+      const listed = startsAnItem(view.state, line)
+      if (verbatim.has(number)) continue
+      if (!wordsOf(line.text, listed, quoted).words.trim()) {
+        if (!quoted && shape !== 'quote' && BARE_QUOTE.test(line.text)) {
+          changes.push({ from: line.from, to: line.to, insert: '' })
+        }
+        continue
+      }
 
       const into: BlockShape = heading && number > first ? 'paragraph' : shape
       const text =
-        into === 'numbered' ? numberedLine(line.text, counting) : shaped(line.text, into, nth)
+        into === 'numbered'
+          ? numberedLine(line.text, counting, listed, quoted)
+          : shaped(line.text, into, nth, listed, quoted)
       if (into === 'numbered') nth++
+      if (itemwise) shifts.set(number, contentColumn(text) - contentColumn(line.text))
       if (text === line.text) continue
 
       changes.push({ from: line.from, to: line.to, insert: text })
     }
   }
 
+  if (!LISTED.has(shape)) changes.push(...restartedAfter(view.state, spans))
   if (!changes.length) return false
 
-  view.dispatch({ changes, userEvent: 'input' })
+  view.dispatch({ changes, userEvent: 'input', annotations: landInWords.of(true) })
   view.focus()
   return true
+}
+
+function itemAt(state: EditorState, from: number): SyntaxNode | null {
+  const line = state.doc.lineAt(from)
+  for (const node of enclosing(
+    syntaxTree(state).resolveInner(line.from + (LINE_LEAD.exec(line.text)?.[0].length ?? 0), 1),
+  )) {
+    if (node.name === 'ListItem' && state.doc.lineAt(node.from).from === line.from) return node
+  }
+  return null
+}
+
+function siblingItem(node: SyntaxNode, side: -1 | 1): SyntaxNode | null {
+  for (let next = side < 0 ? node.prevSibling : node.nextSibling; next;) {
+    if (next.name === 'ListItem') return next
+    next = side < 0 ? next.prevSibling : next.nextSibling
+  }
+  return null
+}
+
+function restartedAfter(state: EditorState, spans: readonly BlockSpan[]): ChangeSpec[] {
+  const picked = new Set(spans.map((span) => span.from))
+  const starts = (node: SyntaxNode) => state.doc.lineAt(node.from).from
+  const changes: ChangeSpec[] = []
+  const done = new Set<number>()
+
+  for (const span of spans) {
+    if (span.kind !== 'list' && span.kind !== 'paragraph') continue
+    const item = itemAt(state, span.from)
+    if (item?.parent?.name !== 'OrderedList' || done.has(item.parent.from)) continue
+    const above = siblingItem(item, -1)
+    if (above && !picked.has(starts(above))) continue
+    done.add(item.parent.from)
+
+    let count = 0
+    for (let next = siblingItem(item, 1); next; next = siblingItem(next, 1)) {
+      if (count === 0 && picked.has(starts(next))) continue
+      const mark = next.getChild('ListMark')
+      if (!mark) break
+      count++
+      const written = state.sliceDoc(mark.from, mark.to)
+      const said = `${count}${written.slice(-1)}`
+      if (said !== written) changes.push({ from: mark.from, to: mark.to, insert: said })
+    }
+  }
+
+  return changes
 }
 
 function overBlocks(view: EditorView, pos: number, command: StateCommand): boolean {
@@ -249,7 +397,13 @@ function nextWritten(state: EditorState, from: number, delta: -1 | 1): number | 
 
 function beside(state: EditorState, run: BlockSpan, delta: -1 | 1): BlockSpan | null {
   const at = nextWritten(state, delta < 0 ? run.from : run.to, delta)
-  return at === null ? null : blockAt(state, at)
+  if (at === null) return null
+  const text = state.doc.lineAt(at).text
+  const lead = /^(?:[ \t]*>)+[ \t]*/.exec(text)?.[0].length ?? 0
+  const found = blockAt(state, lead ? at + lead + 1 : at)
+  if (!found || found.from > run.from || found.to < run.to || !ownLine(text)) return found
+  const line = state.doc.lineAt(at)
+  return { from: line.from, to: line.to, kind: 'paragraph' }
 }
 
 function levelAt(state: EditorState, pos: number): number | null {

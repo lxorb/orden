@@ -1938,6 +1938,16 @@ select:focus-visible,
   font-size: 0.94em;
 }
 
+#write .reading-table {
+  max-width: 100%;
+  margin: 1.6em 0;
+  overflow-x: auto;
+}
+
+#write .reading-table > table {
+  margin: 0;
+}
+
 #write th,
 #write td {
   border: 1px solid var(--table-border-color);

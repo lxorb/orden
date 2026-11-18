@@ -57,4 +57,72 @@ describe('an input method in a table cell', () => {
       '| a     | b   |\n| ----- | --- |\n| 1中文 | 2   |\n\nend',
     )
   })
+
+  test('keeps the words being composed when another cell is written meanwhile', () => {
+    const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nend'
+    const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
+    open.push(view)
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
+      (one) => one.textContent === '1',
+    )
+    if (!cell) throw new Error('the table drew no cell holding 1')
+    cell.tabIndex = 0
+    cell.focus()
+    cell.textContent = '1x'
+    cell.dispatchEvent(new InputEvent('input', { bubbles: true }))
+
+    cell.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
+    compose(cell, '1xか')
+    const three = view.state.doc.toString().indexOf('| 3') + 3
+    view.dispatch({ changes: { from: three, insert: 'Z' } })
+    cell.dispatchEvent(new CompositionEvent('compositionend', { data: 'か', bubbles: true }))
+
+    expect(cell.isConnected).toBe(true)
+    expect(cell.textContent).toBe('1xか')
+    expect(view.state.doc.toString()).toContain('| 1xか |')
+    expect(view.state.doc.toString()).toContain('3Z')
+  })
+
+  test('does not write the words being composed into a row another writer moved there', () => {
+    const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nend'
+    const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
+    open.push(view)
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
+      (one) => one.textContent === '1',
+    )
+    if (!cell) throw new Error('the table drew no cell holding 1')
+    cell.tabIndex = 0
+    cell.focus()
+
+    cell.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
+    compose(cell, '1か')
+    const rows = view.state.doc.toString().indexOf('| 1')
+    const end = view.state.doc.toString().indexOf('\n\nend')
+    view.dispatch({ changes: { from: rows, to: end, insert: '| 3 | 4 |\n| 1 | 2 |' } })
+    cell.dispatchEvent(new CompositionEvent('compositionend', { data: 'か', bubbles: true }))
+
+    const written = view.state.doc.toString().split('\n').slice(2, 4)
+    expect(written.map((row) => row.split('|')[2]?.trim())).toEqual(['4', '2'])
+    expect(written.map((row) => row.split('|')[1]?.trim())).not.toContain('3か')
+    expect(view.state.doc.toString()).toContain('3')
+  })
+
+  test('does not write the words being composed into a twin row another writer moved there', () => {
+    const doc = '| task | state |\n| --- | --- |\n| A | todo |\n| B | todo |\n\nend'
+    const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
+    open.push(view)
+    const cell = view.dom.querySelector<HTMLElement>('td[data-row="0"][data-column="1"]')
+    if (!cell) throw new Error('the table drew no state cell for A')
+    cell.tabIndex = 0
+    cell.focus()
+
+    cell.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }))
+    compose(cell, 'todoか')
+    const rows = view.state.doc.toString().indexOf('| A')
+    const end = view.state.doc.toString().indexOf('\n\nend')
+    view.dispatch({ changes: { from: rows, to: end, insert: '| B | todo |\n| A | todo |' } })
+    cell.dispatchEvent(new CompositionEvent('compositionend', { data: 'か', bubbles: true }))
+
+    expect(view.state.doc.toString()).not.toMatch(/\| B +\| todoか/)
+  })
 })

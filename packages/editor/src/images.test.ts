@@ -2,14 +2,19 @@ import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { imageHandling, type ImageSink, receiveImages, wordsBesidePicture } from './images'
+import { type NoteIndex, noteIndex } from './wikilink/notes'
 
 const PICTURE = [new File([new Uint8Array([1])], 'a.png', { type: 'image/png' })]
 
-function surface(doc: string, caret: number, readOnly = false) {
+function surface(doc: string, caret: number, readOnly = false, space?: NoteIndex) {
   let state = EditorState.create({
     doc,
     selection: EditorSelection.cursor(caret),
-    extensions: [imageHandling(() => Promise.resolve(null)), EditorState.readOnly.of(readOnly)],
+    extensions: [
+      imageHandling(() => Promise.resolve(null)),
+      EditorState.readOnly.of(readOnly),
+      ...(space ? [noteIndex.of(space)] : []),
+    ],
   })
 
   const dispatch = (spec: TransactionSpec) => {
@@ -122,6 +127,68 @@ describe('a dropped picture', () => {
   })
 })
 
+describe('two drops written at the same time', () => {
+  test('each land where they were dropped, whichever is written first', async () => {
+    const first = heldSink()
+    const second = heldSink()
+    const editor = surface('one\ntwo\nthree\n', 0)
+
+    const one = receiveImages(editor.view, PICTURE, first.sink, 3)
+    const other = receiveImages(
+      editor.view,
+      [new File([new Uint8Array([1])], 'b.png', { type: 'image/png' })],
+      second.sink,
+      13,
+    )
+    first.settle('assets/a.png')
+    await one
+    await settled()
+    second.settle('assets/b.png')
+    await other
+    await settled()
+
+    expect(editor.doc).toBe('one![](assets/a.png)\ntwo\nthree![](assets/b.png)\n')
+  })
+
+  test('a paste meanwhile does not send the drop to the caret', async () => {
+    const dropped = heldSink()
+    const pasted = heldSink()
+    const editor = surface('one\ntwo\n', 0)
+
+    const drop = receiveImages(editor.view, PICTURE, dropped.sink, 3)
+    const paste = receiveImages(
+      editor.view,
+      [new File([new Uint8Array([1])], 'b.png', { type: 'image/png' })],
+      pasted.sink,
+      null,
+    )
+    dropped.settle('assets/a.png')
+    await drop
+    await settled()
+    pasted.settle('assets/b.png')
+    await paste
+    await settled()
+
+    expect(editor.doc).toBe('one![](assets/a.png)![](assets/b.png)\ntwo\n')
+  })
+})
+
+describe('a file still being read when it is dropped', () => {
+  test('lands where the drop point ended up after typing above it meanwhile', async () => {
+    let read: (files: File[]) => void = () => undefined
+    const reading = new Promise<File[]>((resolve) => (read = resolve))
+    const editor = surface('top\n\nend', 0)
+
+    const writing = receiveImages(editor.view, reading, () => Promise.resolve('assets/a.png'), 5)
+    editor.dispatch({ changes: { from: 3, insert: ' words' } })
+    read(PICTURE)
+    await writing
+    await settled()
+
+    expect(editor.doc).toBe('top words\n\n![](assets/a.png)end')
+  })
+})
+
 describe('a dropped file that is not a picture', () => {
   const file = (name: string, type: string) => new File([new Uint8Array([1])], name, { type })
 
@@ -145,6 +212,49 @@ describe('a dropped file that is not a picture', () => {
     await receiveImages(editor.view, dropped, (one) => Promise.resolve(`../assets/${one.name}`), 0)
 
     expect(editor.doc).toBe('![](../assets/a.png)\n![[b.pdf]]')
+  })
+})
+
+describe('a dropped file named like another file in the space', () => {
+  const file = (name: string) => new File([new Uint8Array([1])], name, { type: 'application/pdf' })
+  const space = (files: string[]): NoteIndex => ({
+    notes: [],
+    files,
+    path: 'Notes/Today.md',
+    read: () => Promise.resolve(null),
+  })
+
+  test('is embedded by its path in the space, so the link opens this one', async () => {
+    const editor = surface('', 0, false, space(['report.pdf']))
+    await receiveImages(
+      editor.view,
+      [file('report.pdf')],
+      () => Promise.resolve('../assets/report.pdf'),
+      0,
+    )
+    expect(editor.doc).toBe('![[assets/report.pdf]]')
+  })
+
+  test('by its name when its path holds a mark a link reads as its end', async () => {
+    const editor = surface('', 0, false, space(['report.pdf']))
+    await receiveImages(
+      editor.view,
+      [file('report.pdf')],
+      () => Promise.resolve('../C# tips/report.pdf'),
+      0,
+    )
+    expect(editor.doc).toBe('![[report.pdf]]')
+  })
+
+  test('and by its name alone when no other file has it', async () => {
+    const editor = surface('', 0, false, space(['assets/report.pdf', 'other.pdf']))
+    await receiveImages(
+      editor.view,
+      [file('report.pdf')],
+      () => Promise.resolve('../assets/report.pdf'),
+      0,
+    )
+    expect(editor.doc).toBe('![[report.pdf]]')
   })
 })
 

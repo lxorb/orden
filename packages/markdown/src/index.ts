@@ -26,6 +26,7 @@ import {
 } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref, WORTH_REMEMBERING } from './tags'
+import { ownPicture } from './picture-tag'
 import { iframeCard, iframesAhead, webCard } from './web-embed'
 import {
   type EmbeddedNote,
@@ -47,7 +48,7 @@ import {
   maths,
   scripts,
 } from './extensions'
-import { noSetextHeadings } from './blocks'
+import { noSetextHeadings, picturesAsWords } from './blocks'
 
 export interface RenderOptions {
   footnotes?: boolean
@@ -181,6 +182,10 @@ function addressToken(
   return { type: 'link', raw, text: raw, href, tokens: [{ type: 'text', raw, text: raw }] }
 }
 
+function doubledTilde(src: string): false | undefined {
+  return src.startsWith('~~') ? false : undefined
+}
+
 function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Link | undefined {
   const token = addressToken.call(this, src, tokens)
   if (!token) return undefined
@@ -204,6 +209,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
   marked.use(
     noSetextHeadings,
+    picturesAsWords,
     maths,
     highlight,
     scripts,
@@ -222,7 +228,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
     }),
   )
   marked.use(hashtags(options.tagHref))
-  marked.use({ tokenizer: { url: bareAddress } })
+  marked.use({ tokenizer: { url: bareAddress, del: doubledTilde } })
 
   const taken = new Map<string, number>()
 
@@ -321,7 +327,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const { tags, rest: text } = iframesAhead(written)
         const cards = tags.map((tag) => iframeCard(tag) ?? '').join('')
         if (text !== written && !text.trim()) return cards
-        if (options.escapeHtml) return cards + escape(text)
+        if (options.escapeHtml) return cards + (ownPicture(text) ?? escape(text))
 
         return cards + (htmlBlockCard(text) ?? ownMarkup(text))
       },

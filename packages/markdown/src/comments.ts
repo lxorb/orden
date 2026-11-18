@@ -18,7 +18,10 @@ function opening(line: string, at: number): { from: number; to: number; close: s
   return found
 }
 
-function stripLine(line: string, inside: string | null): { text: string; inside: string | null } {
+export function stripLine(
+  line: string,
+  inside: string | null,
+): { text: string; inside: string | null } {
   let out = ''
   let at = 0
   let open = inside
@@ -68,48 +71,66 @@ function stripLine(line: string, inside: string | null): { text: string; inside:
   return { text: out, inside: open }
 }
 
+const QUOTE_LEAD = /^(?:[ \t]*>)+/
+
+function keptInQuote(line: string, text: string, quoted: string): string {
+  if (!quoted || text.startsWith(quoted)) return text
+  const lead = QUOTE_LEAD.exec(line)?.[0] ?? ''
+  return lead.replace(/[ \t]/g, '') === quoted.replace(/[ \t]/g, '') ? lead + text : text
+}
+
 export function withoutComments(source: string): string {
   if (!COMMENTS.some((one) => source.includes(one.open))) return source
+  return strippedLines(source).join('\n')
+}
 
-  const lines = source.split('\n')
-  const out: string[] = []
-  let code = new CodeBlocks()
-  let inside: string | null = null
+export class CommentLines {
+  private code = new CodeBlocks()
+  private quoted = ''
+  inside: string | null = null
 
-  for (const line of lines) {
-    if (inside) {
-      const stripped = stripLine(line, inside)
-      inside = stripped.inside
-      out.push(stripped.text)
-      code.line(stripped.text)
-      continue
-    }
-
-    const before = code.copy()
-    const kind = code.line(line)
-    if (kind === CODE) {
-      out.push(line)
-      continue
-    }
-
-    if (kind === OPENS) {
-      const mark = code.fence ?? ''
-      const opens = line.indexOf(mark) + mark.length
-      out.push(line.slice(0, opens) + stripLine(line.slice(opens), null).text)
-      continue
-    }
-
-    const stripped = stripLine(line, inside)
-    inside = stripped.inside
-    out.push(stripped.text)
-
-    if (stripped.text !== line) {
-      code = before
-      code.line(stripped.text)
-    }
+  copy(): CommentLines {
+    const twin = new CommentLines()
+    twin.code = this.code.copy()
+    twin.quoted = this.quoted
+    twin.inside = this.inside
+    return twin
   }
 
-  return out.join('\n')
+  line(line: string): string {
+    if (this.inside) {
+      const stripped = stripLine(line, this.inside)
+      this.inside = stripped.inside
+      const text = keptInQuote(line, stripped.text, this.quoted)
+      this.code.line(text)
+      return text
+    }
+
+    const before = this.code.copy()
+    const kind = this.code.line(line)
+    if (kind === CODE) return line
+
+    if (kind === OPENS) {
+      const mark = this.code.fence ?? ''
+      const opens = line.indexOf(mark) + mark.length
+      return line.slice(0, opens) + stripLine(line.slice(opens), null).text
+    }
+
+    const stripped = stripLine(line, null)
+    this.inside = stripped.inside
+    if (this.inside) this.quoted = QUOTE_LEAD.exec(line)?.[0] ?? ''
+
+    if (stripped.text !== line) {
+      this.code = before
+      this.code.line(stripped.text)
+    }
+    return stripped.text
+  }
+}
+
+function strippedLines(source: string): string[] {
+  const reader = new CommentLines()
+  return source.split('\n').map((line) => reader.line(line))
 }
 
 export function noteWithoutComments(source: string): string {

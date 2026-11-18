@@ -32,6 +32,16 @@ interface CaretFromPoint {
   caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
 }
 
+export function offsetAtPoint(element: HTMLElement, x: number, y: number): number | null {
+  const finder: CaretFromPoint = document
+  const range = finder.caretRangeFromPoint?.(x, y) ?? null
+  const position = range ? null : finder.caretPositionFromPoint?.(x, y)
+  const node = range?.startContainer ?? position?.offsetNode
+  const offset = range?.startOffset ?? position?.offset
+  if (!node || offset === undefined || !element.contains(node)) return null
+  return offsetOf(element, node, offset)
+}
+
 export function selectAtPoint(element: HTMLElement, x: number, y: number) {
   const finder: CaretFromPoint = document
   let range = finder.caretRangeFromPoint?.(x, y) ?? null

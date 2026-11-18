@@ -12,6 +12,19 @@ export const escape = (text: string): string =>
 export const escapeAll = (text: string): string =>
   text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 
+const NAMED: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
+
+export function attributeText(written: string): string {
+  return written.replace(
+    /&(?:#(\d+)|#x([\da-f]+)|(amp|lt|gt|quot|apos));/gi,
+    (whole, decimal?: string, hex?: string, name?: string) => {
+      if (name) return NAMED[name.toLowerCase()] ?? whole
+      const code = decimal === undefined ? Number.parseInt(hex ?? '', 16) : Number(decimal)
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole
+    },
+  )
+}
+
 const SAFE_SCHEMES = new Set(['http', 'https', 'mailto', 'tel'])
 const SAFE_DATA_IMAGE = /^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|x-icon);/i
 const withoutBlanks = (target: string): string => target.replace(/[\s\p{Cc}\p{Cf}]/gu, '')
@@ -58,8 +71,3 @@ export function fragment(name: string): string {
     return ''
   }
 }
-
-const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
-
-export const attributeText = (value: string): string =>
-  value.replace(/&(amp|lt|gt|quot|#39);/g, (whole, name: string) => ENTITIES[name] ?? whole)

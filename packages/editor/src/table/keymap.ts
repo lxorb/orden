@@ -39,7 +39,7 @@ const forward = (view: EditorView, range: SelectionRange) => view.moveByChar(ran
 const backward = (view: EditorView, range: SelectionRange) => view.moveByChar(range, false)
 
 export const insertTableToEdit: Command = (view) => {
-  insertTable()(view)
+  if (!insertTable()(view)) return false
 
   const span = tableAt(view.state, view.state.selection.main.head)
   if (!span) return true

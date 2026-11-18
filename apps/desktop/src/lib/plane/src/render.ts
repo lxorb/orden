@@ -1,6 +1,6 @@
 import { type EmbeddedNote, hardBreaks, renderMarkdown } from '@orden/markdown'
 import { pageOfSubpath } from '@orden/markdown/canvas'
-import { embedKind } from '@orden/markdown/links'
+import { embedKind, isTabFile, parseWikilink, sectionOf } from '@orden/markdown/links'
 import { BASE } from '../../accounts/src/api'
 import { accountAddress } from '../../workspace/src/api'
 import { isPicturePath, assetUrl, joinPath } from '../../platform/src/api'
@@ -57,7 +57,7 @@ export function keptByAccount(file: string, signedIn: boolean): string | null {
   return accountAddress(`${BASE}/${file}`)
 }
 
-export type FileShown = 'picture' | 'sound' | 'film' | 'pdf' | 'words'
+export type FileShown = 'picture' | 'sound' | 'film' | 'pdf' | 'file' | 'words'
 
 export function fileShown(file: string): FileShown {
   const bare = file.replace(/[?#].*$/, '')
@@ -65,13 +65,19 @@ export function fileShown(file: string): FileShown {
   const kind = embedKind(bare)
   if (kind === 'audio') return 'sound'
   if (kind === 'video') return 'film'
-  return kind === 'pdf' ? 'pdf' : 'words'
+  if (kind === 'pdf') return 'pdf'
+  return isTabFile(bare) ? 'file' : 'words'
 }
 
-export function fileSource(
+export async function fileSource(
   file: string,
   canvasPath: string | null = null,
+  subpath?: string,
 ): Promise<EmbeddedNote | null> {
-  if (fileShown(file) !== 'words') return Promise.resolve(null)
-  return links.embedNote(file, null, canvasPath)
+  if (fileShown(file) !== 'words') return null
+  const note = await links.embedNote(file, null, canvasPath)
+  const named = subpath ? parseWikilink(`x${subpath}`) : null
+  if (!note || !named) return note
+  const text = sectionOf(note.text, named)
+  return text === null ? null : { ...note, text }
 }

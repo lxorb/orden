@@ -1,8 +1,15 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blockIdOf, blockSpan, headingRows, lines, slugify } from '@orden/markdown/links'
+import {
+  blockIdOf,
+  blockSpan,
+  blockSpanAt,
+  headingRows,
+  lines,
+  slugify,
+} from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
-import { DocError } from './problem'
 import { isRecord } from '../../platform/src/api'
+import { DocError } from './problem'
 
 export type Anchor =
   | { quote: string; prefix?: string; suffix?: string }
@@ -13,14 +20,15 @@ export type Anchor =
   | { start: true }
   | { end: true }
 
-type Shape = 'words' | 'line' | 'paragraph' | 'edge'
+type Shape = 'words' | 'line' | 'item' | 'paragraph' | 'edge'
 
 export interface Place {
   from: number
   to: number
   shape: Shape
   keep?: string
-  under?: number
+  indent?: string
+  after?: number
 }
 
 export function oneEnding(words: string): string {
@@ -221,20 +229,28 @@ function under(heading: HeadingAt, wanted: readonly string[]): boolean {
   return true
 }
 
-function section(anchor: Extract<Anchor, { heading: string }>, text: string): Place {
-  const wanted = steps(anchor.heading)
-  const whole = anchor.heading.trim()
-
-  const found = headingsIn(text).filter(
+function headingsNamed(headings: readonly HeadingAt[], named: string): HeadingAt[] {
+  const wanted = steps(named)
+  const whole = named.trim()
+  return headings.filter(
     (heading) => under(heading, wanted) || (wanted.length > 1 && names(whole, heading.title)),
   )
+}
 
-  const exact = found.filter((heading) => {
-    const said = [...heading.path, heading.title].map((step) => step.trim())
-    return said.length === wanted.length && said.every((step, at) => step === wanted[at])
-  })
-  const fits = exact.length > 0 && (anchor.nth ?? 1) <= exact.length
-  const heading = one(fits ? exact : found, anchor, anchor.nth)
+export function headingAnchor(
+  headings: readonly HeadingAt[],
+  heading: HeadingAt,
+): { heading: string; nth?: number } {
+  const path = headingPath(heading)
+  const found = headingsNamed(headings, path)
+  const nth = found.indexOf(heading) + 1
+  return found.length > 1 && nth > 0 ? { heading: path, nth } : { heading: path }
+}
+
+function section(anchor: Extract<Anchor, { heading: string }>, text: string): Place {
+  const found = headingsNamed(headingsIn(text), anchor.heading)
+
+  const heading = one(found, anchor, anchor.nth)
   return { from: heading.from, to: heading.to, shape: 'paragraph' }
 }
 
@@ -245,17 +261,28 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
   )
   const row = one(marked, anchor, undefined)
 
-  const span = blockSpan(rows, row.line)
   const alone = row.text.trim() === `^${anchor.block}`
+  const span = blockSpan(rows, row.line)
   const start = rows[span.first] ?? row
   const end = alone ? row : (rows[span.last] ?? row)
-
+  const apart = alone && row.line > 0 && !rows[row.line - 1]?.text.trim()
+  const indent = leadOf(start.text)
+  const keep = alone
+    ? `${apart ? '\n\n' : '\n'}${leadOf(row.text)}^${anchor.block}`
+    : ` ^${anchor.block}`
   return {
     from: start.from,
     to: end.from + end.text.length,
-    shape: 'paragraph',
-    keep: alone ? `${span.apart ? '\n\n' : '\n'}^${anchor.block}` : ` ^${anchor.block}`,
+    shape: ITEM.test(start.text) && !(alone && apart) ? 'item' : 'paragraph',
+    keep,
+    ...(indent ? { indent } : {}),
   }
+}
+
+const ITEM = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]/
+
+function leadOf(line: string): string {
+  return /^[ \t]*/.exec(line)?.[0] ?? ''
 }
 
 export function taskWords(line: string): string | null {
@@ -267,6 +294,25 @@ export function taskWords(line: string): string | null {
   return (id ? words.slice(0, words.lastIndexOf(`^${id}`)) : words).trim()
 }
 
+function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Place {
+  const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
+  const rows = [...lines(text)]
+  const found = rows.filter((row) => !row.code && taskWords(row.text) === wanted)
+
+  const row = one(found, anchor, anchor.nth)
+  const id = blockIdOf(row.text)
+  const indent = leadOf(row.text)
+  const end = rows[blockSpanAt(text, row.line).end] ?? row
+  return {
+    from: row.from,
+    to: row.from + row.text.length,
+    shape: 'item',
+    after: Math.max(row.from + row.text.length, end.from + end.text.length),
+    ...(id ? { keep: ` ^${id}` } : {}),
+    ...(indent ? { indent } : {}),
+  }
+}
+
 export function taskIn<T extends { anchor: Anchor }>(rows: readonly T[], value: unknown): T {
   const anchor = readAnchor(value)
   if (!('task' in anchor)) throw new DocError('bad_anchor', value, 'at is {task, nth?}')
@@ -274,25 +320,4 @@ export function taskIn<T extends { anchor: Anchor }>(rows: readonly T[], value: 
   const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
   const found = rows.filter((row) => 'task' in row.anchor && row.anchor.task === wanted)
   return one(found, anchor, anchor.nth)
-}
-
-function taskNamed(anchor: Extract<Anchor, { task: string }>, text: string): Place {
-  const wanted = (taskWords(anchor.task) ?? anchor.task).trim()
-  const rows = [...lines(text)]
-  const found = rows.filter((row) => !row.code && !row.matter && taskWords(row.text) === wanted)
-
-  const row = one(found, anchor, anchor.nth)
-  const to = row.from + row.text.length
-  const depth = indentOf(row.text)
-  let under = to
-  for (const next of rows.slice(rows.indexOf(row) + 1)) {
-    if (!next.text.trim()) continue
-    if (indentOf(next.text) <= depth) break
-    under = next.from + next.text.length
-  }
-  return { from: row.from, to, shape: 'line', ...(under > to ? { under } : {}) }
-}
-
-function indentOf(line: string): number {
-  return (/^[ \t]*/.exec(line)?.[0] ?? '').replace(/\t/g, '    ').length
 }

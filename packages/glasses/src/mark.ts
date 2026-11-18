@@ -457,6 +457,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
   switch (token.type) {
     case 'space': {
+      if (nest.quote > 0) break
       const from = where.take(raw)
       if (sheet.compaction !== 'none') break
 
@@ -662,12 +663,16 @@ interface Definition {
 
 function definitions(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const items = 'items' in token && Array.isArray(token.items) ? (token.items as Definition[]) : []
-  const from = where.take(rawOf(token))
+  const lines = rawOf(token)
+    .split('\n')
+    .filter((line) => line.trim())
+  let next = 0
+  const place = () => where.take(lines[next++] ?? '')
 
   for (const item of items) {
-    sheet.add(inlineWords(item.term, sheet.marks, sheet.flow), from, nest)
+    sheet.add(inlineWords(item.term, sheet.marks, sheet.flow), place(), nest)
     for (const detail of item.details) {
-      sheet.add(`: ${inlineWords(detail, sheet.marks, sheet.flow)}`, from, {
+      sheet.add(`: ${inlineWords(detail, sheet.marks, sheet.flow)}`, place(), {
         depth: nest.depth + 1,
         quote: nest.quote,
       })

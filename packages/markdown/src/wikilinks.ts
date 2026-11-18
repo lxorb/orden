@@ -4,6 +4,7 @@ import { DOCUMENT, iconMarkup, PLANE } from './icons'
 import {
   embedKind,
   embedSize,
+  isTabFile,
   pageFragment,
   parseWikilink,
   sectionOf,
@@ -44,13 +45,15 @@ export function embedSink(): Embeds {
   return { sections: [], marker: (at) => `<!--orden:embed:${stamp}:${at}-->` }
 }
 
-const EMBED_LINE = new RegExp(`^!\\[\\[(${INNER})\\]\\][ \\t]*(?:\\r?\\n+|$)`)
+const EMBED_LINE = new RegExp(`^ {0,3}!\\[\\[(${INNER})\\]\\][ \\t]*(?:\\r?\\n+|$)`)
+
 const EMBED_AT = new RegExp(`!\\[\\[${INNER}\\]\\][ \\t]*(?=\\r?\\n|$)`, 'y')
 const WIKILINK_AT_START = new RegExp(`^(!?)\\[\\[(${INNER})\\]\\]`)
 
 function embedLine(src: string, at: number): number | null {
-  const line = lineStart(src, at, { orString: true })
-  return line !== null && matchesAt(EMBED_AT, src, at) ? line : null
+  const line = lineStart(src, at, { orString: true, blanks: 3 })
+  if (line === null || (line === 0 && at > 0 && !src.startsWith('\n'))) return null
+  return !src.slice(line, at).includes('\t') && matchesAt(EMBED_AT, src, at) ? line : null
 }
 
 export function wikilinks(options: {
@@ -170,10 +173,12 @@ function frame(
   link: Wikilink,
   options: { resolveEmbed?: EmbedResolver; embeds: Embeds },
 ): string | null {
+  if (isTabFile(link.target)) return null
   const found = options.resolveEmbed?.(link) ?? null
   if (found === null) return null
 
   const note = typeof found === 'string' ? { text: found, escapeHtml: false } : found
+  if (note.path !== undefined && isTabFile(note.path)) return null
   const section = sectionOf(note.text, link)
   if (section === null) return null
 

@@ -1,4 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import { syntaxTree } from '@codemirror/language'
 import {
   EditorSelection,
   EditorState,
@@ -327,6 +328,34 @@ describe('a link to a block', () => {
     expect(blockIds(said).map((one) => one.id)).toEqual([target?.slice(2)])
   })
 
+  test('a fence in a list item takes it inside the item, so the list stays one list', () => {
+    const doc = '1. a\n\n   ```js\n   x()\n   ```\n2. b\n'
+    const pos = doc.indexOf('```js')
+    const { view, said } = viewOf(doc, pos)
+    const [target] = blockTargets(view, pos)
+
+    const top: string[] = []
+    for (let node = syntaxTree(view.state).topNode.firstChild; node; node = node.nextSibling) {
+      top.push(node.name)
+    }
+    expect(top).toEqual(['OrderedList'])
+    expect(said()).toBe(doc.replace('1. a', `1. a ${target?.slice(1) ?? ''}`))
+  })
+
+  test('a fence written on the item line itself takes it inside the item too', () => {
+    const doc = '- ```js\n  x()\n  ```\n- b\n'
+    const pos = doc.indexOf('js')
+    const { view, said } = viewOf(doc, pos)
+    const [target] = blockTargets(view, pos)
+
+    const top: string[] = []
+    for (let node = syntaxTree(view.state).topNode.firstChild; node; node = node.nextSibling) {
+      top.push(node.name)
+    }
+    expect(top).toEqual(['BulletList'])
+    expect(said()).toBe(`- \`\`\`js\n  x()\n  \`\`\`\n\n  ${target?.slice(1) ?? ''}\n\n- b\n`)
+  })
+
   test.each([
     [
       'a\n\n```\ncode\n```\n\n^abc123\n\nb\n',
@@ -384,6 +413,26 @@ describe('a line with a rule under it', () => {
   )
 })
 
+describe('turning a block of several lines into a list', () => {
+  test('a paragraph of two lines becomes one item, its second line inside it', () => {
+    const { view, said } = viewOf('One line\nand another\n', 0)
+    turnBlocksInto(view, 0, 'bullet')
+    expect(said()).toBe('- One line\n  and another\n')
+  })
+
+  test('the second line of an item stays part of it, not a child item', () => {
+    const { view, said } = viewOf('- a\n  more words\n', 0)
+    turnBlocksInto(view, 0, 'task')
+    expect(said()).toBe('- [ ] a\n  more words\n')
+  })
+
+  test('the second paragraph of an item moves in with the wider number', () => {
+    const { view, said } = viewOf('- a\n\n  second paragraph\n', 0)
+    turnBlocksInto(view, 0, 'numbered')
+    expect(said()).toBe('1. a\n\n   second paragraph\n')
+  })
+})
+
 describe('turning a nested list into numbers', () => {
   test('each level counts for itself and stays nested', () => {
     const { view, said } = viewOf('- a\n  - b\n    - c\n  - d\n- e\n', 0, 28)
@@ -402,6 +451,32 @@ describe('the two that were already there', () => {
     expect(deleteBlocks(deleted.view, deleted.at)).toBe(true)
     expect(deleted.said()).not.toContain('Second words.')
     expect(deleted.said()).toContain('Last words.')
+  })
+})
+
+describe('duplicating a selection over blocks that hold other blocks', () => {
+  test('copies a heading with its section once', () => {
+    const doc = '# H\n\npara'
+    const { view, said } = viewOf(doc, 0, doc.length)
+    expect(duplicateBlocks(view, 1)).toBe(true)
+    expect(said()).toBe('# H\n\npara\n\n# H\n\npara')
+  })
+
+  test('copies a nested list once', () => {
+    const doc = '- a\n  - b\n'
+    const { view, said } = viewOf(doc, 0, doc.length - 1)
+    expect(duplicateBlocks(view, 1)).toBe(true)
+    expect(said().match(/- b/g)?.length).toBe(2)
+    expect(said().match(/- a/g)?.length).toBe(2)
+  })
+
+  test('leaves the caret at the copy of the last block', () => {
+    const doc = 'a\n\nb\n'
+    const { view, said } = viewOf(doc, 0, doc.indexOf('b') + 1)
+    expect(duplicateBlocks(view, 0)).toBe(true)
+    const caret = view.state.selection.main.head
+    expect(said().slice(caret, caret + 1)).toBe('b')
+    expect(said().indexOf('b')).toBeLessThan(caret)
   })
 })
 

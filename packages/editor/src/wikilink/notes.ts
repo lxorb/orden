@@ -1,6 +1,8 @@
 import { type EditorState, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import {
+  decodeFragment,
+  decodeTarget,
   foldName,
   isTabFile,
   type LinkKind,
@@ -236,6 +238,22 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   return resolveNote(index, `/${target}`) ?? resolveNote(index, target)
 }
 
+export function spacePathOf(index: NoteIndex, written: string): string {
+  return relativeParts(index, written).join('/')
+}
+
+const LINK_MARKS = /[#|[\]^]/
+
+const fileNameOf = (path: string) => path.slice(path.lastIndexOf('/') + 1)
+
+export function fileLinkName(index: NoteIndex, path: string): string {
+  const name = fileNameOf(path)
+  const shared = index.files.some(
+    (other) => foldName(other) !== foldName(path) && foldName(fileNameOf(other)) === foldName(name),
+  )
+  return shared && path && !LINK_MARKS.test(path) ? path : name
+}
+
 const freelyWritten = (target: string): boolean =>
   !/^\.{1,2}(?:[/\\]|$)/.test(target.trim()) && !/^[/\\]/.test(target.trim())
 
@@ -334,6 +352,28 @@ export function jumpFor(index: NoteIndex, link: Wikilink, kind: LinkKind): NoteJ
     page: null,
     kind,
   }
+}
+
+export function jumpForHref(index: NoteIndex, href: string, wiki: boolean): NoteJump | null {
+  const hash = href.indexOf('#')
+  const target = decodeTarget(hash === -1 ? href : href.slice(0, hash))
+  const said = hash === -1 ? null : decodeFragment(href.slice(hash + 1)) || null
+  if (!target) return null
+
+  if (isTabFile(target)) {
+    const path = wiki ? target : resolveFile(index, target, 'markdown')
+    return path === null
+      ? null
+      : { path, target, heading: null, block: null, page: pageFragment(said) }
+  }
+
+  const found = wiki
+    ? { path: target }
+    : (resolveRelative(index, target) ?? resolveNote(index, target))
+  if (!found) return null
+
+  const block = said?.startsWith('^') ? said.slice(1) : null
+  return { path: found.path, target, heading: block === null ? said : null, block, page: null }
 }
 
 const MARKDOWN_NAME = /\.(md|markdown|mdown|mkd)$/i

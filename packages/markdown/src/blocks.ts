@@ -21,6 +21,9 @@ export const blockMath: TokenizerExtension = {
   },
 }
 
+const OPENS_BLOCK =
+  /^(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|#{1,6}(?:[ \t]|$)|>|\||`{3,}|~{3,}|\$\$|<|\[[^\]]*\]:|(?:[-*_][ \t]*){3,}$)/
+
 export const definitionList: TokenizerExtension = {
   name: 'definitionList',
   level: 'block',
@@ -39,6 +42,7 @@ export const definitionList: TokenizerExtension = {
     }
 
     if (!items.length || items.some((item) => !item.details.length)) return undefined
+    if (items.some((item) => OPENS_BLOCK.test(item.term))) return undefined
 
     return {
       type: 'definitionList',
@@ -54,5 +58,13 @@ export const definitionList: TokenizerExtension = {
 export const noSetextHeadings: MarkedExtension = {
   tokenizer: {
     lheading: () => undefined,
+  },
+}
+
+const LONE_PICTURE = /^ {0,3}<img\b(?:"[^"\n]*"|'[^'\n]*'|[^'">\n])*>[ \t]*(?:\n|$)/i
+
+export const picturesAsWords: MarkedExtension = {
+  tokenizer: {
+    html: (src: string) => (LONE_PICTURE.test(src) ? undefined : false),
   },
 }

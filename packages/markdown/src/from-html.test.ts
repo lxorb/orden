@@ -213,6 +213,18 @@ describe('a page as markdown', () => {
 
   test('nested lines line up under the text above them; a ticked item keeps one space between its box and its words', () => {
     expect(htmlToMarkdown('<ul><li>one<ul><li>under</li></ul></li></ul>')).toBe('- one\n  - under')
+  })
+
+  test('a list written straight inside a list, as Apple Notes and Google Docs write it, nests under the item before it', () => {
+    expect(htmlToMarkdown('<ul><li>a</li><ul><li>b</li></ul><li>c</li></ul>')).toBe(
+      '- a\n  - b\n- c',
+    )
+    expect(htmlToMarkdown('<ol><li>a</li><ol><li>b</li></ol><li>c</li></ol>')).toBe(
+      '1. a\n   1. b\n2. c',
+    )
+  })
+
+  test('a ticked item keeps one space between its box and its words', () => {
     expect(htmlToMarkdown('<ul><li><input type="checkbox" checked>done</li></ul>')).toBe(
       '- [x] done',
     )

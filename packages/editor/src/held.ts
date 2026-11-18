@@ -6,6 +6,7 @@ import {
 } from '@codemirror/state'
 import { isExternal } from './external'
 import type { DocView, SharedDoc } from './shared'
+import { flushTableEdits } from './table/view'
 
 export interface StateView extends DocView {
   setState(state: EditorState): void
@@ -101,6 +102,7 @@ export class HeldState implements DocView {
   }
 
   take(view: StateView) {
+    flushTableEdits()
     this.note.handOver(view, this, () => {
       this.held = view.state
       this.place = view.scrollSnapshot()

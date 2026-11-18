@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { hrefOf } from './links'
+import { hrefOf, linkDestination } from './links'
 
 describe('what a link target is to a browser', () => {
   test.each([
@@ -23,4 +23,14 @@ describe('what a link target is to a browser', () => {
     '#heading',
     '',
   ])('%j belongs to the app or the note', (link) => expect(hrefOf(link)).toBeNull())
+})
+
+describe('an address written the ways markdown lets it be', () => {
+  test('between angle brackets, as a paste writes one with odd parentheses', () => {
+    expect(hrefOf(linkDestination('<https://x.com/a)b>'))).toBe('https://x.com/a)b')
+  })
+
+  test('with its brackets escaped', () => {
+    expect(hrefOf(linkDestination('https://x.com/a\\(b\\)'))).toBe('https://x.com/a(b)')
+  })
 })

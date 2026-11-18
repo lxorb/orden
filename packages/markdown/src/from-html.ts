@@ -116,11 +116,20 @@ function holdsOnly(parent: Element, one: Node): boolean {
 
 const angled = (tex: string): string => tex.replace(/</g, '\\lt ').replace(/>/g, '\\gt ')
 
+const BESIDE_ROWS = new Set(['CAPTION', 'COLGROUP', 'COL'])
+
 function firstBody(element: Element | null): boolean {
   if (element?.nodeName !== 'TBODY') return false
 
-  const before = element.previousElementSibling
-  return before === null || (before.nodeName === 'THEAD' && !before.textContent.trim())
+  for (
+    let before = element.previousElementSibling;
+    before;
+    before = before.previousElementSibling
+  ) {
+    if (BESIDE_ROWS.has(before.nodeName)) continue
+    if (before.nodeName !== 'THEAD' || before.textContent.trim()) return false
+  }
+  return true
 }
 
 function headed(table: HTMLTableElement): boolean {
@@ -136,6 +145,11 @@ function headed(table: HTMLTableElement): boolean {
     first.previousElementSibling === null &&
     [...first.cells].every((one) => one.nodeName === 'TH')
   )
+}
+
+function alone(table: HTMLTableElement): boolean {
+  const cells = table.rows[0]?.cells
+  return table.rows.length === 1 && cells?.length === 1 && cells[0]?.nodeName === 'TD'
 }
 
 function spanOf(cell: Element): number {
@@ -198,6 +212,8 @@ function emptyHeading(table: HTMLTableElement): string {
 
   return `|${'  |'.repeat(across)}\n|${' --- |'.repeat(across)}`
 }
+
+const LISTS = new Set(['UL', 'OL'])
 
 const OWNS_A_LINE = new Set(['P', 'DIV', 'DD', 'LI', 'TD', 'TH', 'BLOCKQUOTE', 'SECTION', 'BODY'])
 const HEADING = /^H[1-6]$/
@@ -275,10 +291,10 @@ function indexer(): (parent: Element | null, node: Node) => number {
       places = new Map()
       const kids = parent.children
 
-      for (let at = 0; at < kids.length; at++) {
+      let items = 0
+      for (const kid of Array.from(kids)) {
         work.walked += 1
-        const kid = kids[at]
-        if (kid) places.set(kid, at)
+        if (kid.nodeName === 'LI') places.set(kid, items++)
       }
 
       counted.set(parent, places)
@@ -313,6 +329,10 @@ function preformattedText(node: Node): string {
   return [...node.childNodes].map(preformattedText).join('')
 }
 
+const WORD_LIST = /mso-list\s*:\s*l\d+\s+level(\d+)/i
+
+const WORD_LIST_MARK = /mso-list\s*:\s*ignore/i
+
 const BLOCKS =
   'address,article,aside,blockquote,div,dl,figure,footer,form,h1,h2,h3,h4,h5,h6,header,hr,li,main,nav,ol,p,pre,section,table,ul'
 
@@ -320,6 +340,40 @@ const HEAVY = /(?:^|;)\s*font-weight\s*:\s*(?:bold|bolder|[6-9]00)\b/iu
 const LIGHT = /(?:^|;)\s*font-weight\s*:\s*(?:normal|lighter|[1-5]00)\b/iu
 const SLANTED = /(?:^|;)\s*font-style\s*:\s*(?:italic|oblique)\b/iu
 const UPRIGHT = /(?:^|;)\s*font-style\s*:\s*normal\b/iu
+
+const STRUCK = /(?:^|;)\s*text-decoration(?:-line)?\s*:[^;]*\bline-through\b/iu
+const RAISED = /(?:^|;)\s*vertical-align\s*:\s*(super|sub)\b/iu
+
+function styledAs(node: Element): 'del' | 'sup' | 'sub' | null {
+  const style = node.getAttribute('style') ?? ''
+  const raised = RAISED.exec(style)?.[1]?.toLowerCase()
+  if (raised === 'super') return 'sup'
+  if (raised === 'sub') return 'sub'
+  return STRUCK.test(style) ? 'del' : null
+}
+
+const MARKED_BY: Readonly<Record<'del' | 'sup' | 'sub', readonly string[]>> = {
+  del: ['DEL', 'S'],
+  sup: ['SUP'],
+  sub: ['SUB'],
+}
+
+function markedAbove(node: Element, kind: 'del' | 'sup' | 'sub'): boolean {
+  for (let up = node.parentElement; up; up = up.parentElement) {
+    if (MARKED_BY[kind].includes(up.nodeName)) return true
+    if (up.nodeName === 'SPAN' && styledAs(up) === kind && marksFor(up) === null) return true
+  }
+  return false
+}
+
+function joined(node: Element, side: -1 | 1): boolean {
+  for (let next = side < 0 ? node.previousSibling : node.nextSibling; next;) {
+    if (next.nodeType === 1) return true
+    if (next.textContent?.trim()) return false
+    next = side < 0 ? next.previousSibling : next.nextSibling
+  }
+  return false
+}
 
 function marksFor(node: Element): string | null {
   const style = node.getAttribute('style') ?? ''
@@ -468,7 +522,20 @@ function footnoteDefLabel(node: Element): string | null {
 const quoted = (lines: readonly string[]): string =>
   lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
 
-function converter(options: FromHtmlOptions): TurndownService {
+const FROM_A_SHEET =
+  /<google-sheets-html-origin|\bdata-sheets-root\b|urn:schemas-microsoft-com:office:excel/i
+
+const FROM_LIBREOFFICE = /<meta\b[^>]*\bcontent=["']?LibreOffice/i
+
+const CALC_CELLS = /\bsd(?:val|num)=|<colgroup\b[^>]*\bwidth=/i
+
+function fromASheet(html: string): boolean {
+  return FROM_A_SHEET.test(html) || (FROM_LIBREOFFICE.test(html) && CALC_CELLS.test(html))
+}
+
+function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
+  const heads = (table: HTMLTableElement) => sheet || headed(table)
+
   const service = new TurndownService({
     headingStyle: 'atx',
     hr: '---',
@@ -527,6 +594,27 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
+  service.addRule('styled', {
+    filter: (node) =>
+      node.nodeName === 'SPAN' &&
+      marksFor(node) === null &&
+      styledAs(node) !== null &&
+      !node.closest('code,pre'),
+    replacement: (content, node) => {
+      const words = /^(\s*)([\s\S]*?)(\s*)$/u.exec(content)
+      const core = words?.[2] ?? ''
+      if (!core) return content
+      const styled = styledAs(node)
+      if (styled && markedAbove(node, styled)) return content
+      const marker = styled === 'sup' ? '^' : styled === 'sub' ? '~' : '~~'
+      const marked = styled === 'del' || (!core.includes(marker) && !/\s/u.test(core))
+      const written = marked
+        ? `${marker}${core}${marker}`
+        : `<${styled ?? ''}>${core}</${styled ?? ''}>`
+      return `${words?.[1] ?? ''}${written}${words?.[3] ?? ''}`
+    },
+  })
+
   service.addRule('heading', {
     filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
     replacement: (content, node) => {
@@ -549,6 +637,20 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (_content, node) => ((node as HTMLInputElement).checked ? '[x] ' : '[ ] '),
   })
 
+  service.addRule('list', {
+    filter: ['ul', 'ol'],
+    replacement: (content, node) => {
+      const parent = node.parentNode
+      const above = node.previousElementSibling?.nodeName === node.nodeName && joined(node, -1)
+      const below = node.nextElementSibling?.nodeName === node.nodeName && joined(node, 1)
+      if (parent?.nodeName === 'LI') {
+        const after = parent.lastElementChild === node ? '' : below ? '\n' : '\n\n'
+        return `\n${content}${after}`
+      }
+      return `${above ? '\n' : '\n\n'}${content}${below ? '\n' : '\n\n'}`
+    },
+  })
+
   service.addRule('listItem', {
     filter: 'li',
     replacement: (content, node, settings) => {
@@ -569,14 +671,37 @@ function converter(options: FromHtmlOptions): TurndownService {
             box + (options.plainTasks === true ? taskWords(words) : withFields(words)),
         )
 
-      const ends = node.nextSibling && !body.endsWith('\n') ? '\n' : ''
-      return `${marker} ${body}${ends}`
+      const ended = body.replace(/\n[ \t]*$/, '\n')
+      const ends = node.nextSibling && !ended.endsWith('\n') ? '\n' : ''
+      return `${marker} ${ended}${ends}`
+    },
+  })
+
+  service.addRule('strayList', {
+    filter: (node) => LISTS.has(node.nodeName) && LISTS.has(node.parentNode?.nodeName ?? ''),
+    replacement: (content, node, settings) => {
+      const parent = node.parentNode as Element
+      let item = node.previousSibling
+      while (item && item.nodeName !== 'LI') item = item.previousSibling
+      if (!item) return `\n\n${content}\n\n`
+
+      const from = Number(parent.getAttribute('start') ?? 1) || 1
+      const marker =
+        parent.nodeName === 'OL'
+          ? `${from + indexIn(parent, item)}.`
+          : (settings.bulletListMarker ?? '-')
+      const indent = ' '.repeat(marker.length + 1)
+      const lines = content.replace(/^\n+|\n+$/g, '').replace(/\n/g, `\n${indent}`)
+      return `${indent}${lines}\n`
     },
   })
 
   service.addRule('struck', {
     filter: ['del', 's'],
-    replacement: (content) => (content ? `~~${content}~~` : ''),
+    replacement: (content, node) => {
+      if (!content) return ''
+      return markedAbove(node, 'del') ? content : `~~${content}~~`
+    },
   })
 
   service.addRule('highlight', {
@@ -600,9 +725,10 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content, node) => {
       if (!content) return ''
 
-      const tag = node.nodeName.toLowerCase()
+      const tag = node.nodeName === 'SUP' ? 'sup' : 'sub'
+      if (markedAbove(node, tag)) return content
       const marker = tag === 'sup' ? '^' : '~'
-      const holds = !content.includes(marker) && !/^\s|\s$/.test(content)
+      const holds = !content.includes(marker) && !/\s/.test(content)
 
       return holds ? `${marker}${content}${marker}` : `<${tag}>${content}</${tag}>`
     },
@@ -617,6 +743,7 @@ function converter(options: FromHtmlOptions): TurndownService {
         .trim()
       const first = (node as Element).previousElementSibling === null
       const table = (node as Element).closest('table')
+      if (table && alone(table)) return content.trim()
       const held = table ? (gapsOf(table).before.get(node) ?? 0) : 0
 
       return `${first ? '|' : ''}${'  |'.repeat(held)} ${said} |${'  |'.repeat(spanOf(node) - 1)}`
@@ -628,9 +755,9 @@ function converter(options: FromHtmlOptions): TurndownService {
     replacement: (content, node) => {
       const row = node as HTMLTableRowElement
       const table = row.closest('table')
-      const heading = table !== null && table.rows[0] === row && headed(table)
+      const heading = table !== null && table.rows[0] === row && heads(table)
       const after = table ? (gapsOf(table).after.get(row) ?? 0) : 0
-      if (!heading) return `\n${content}${'  |'.repeat(after)}`
+      if (!heading || alone(table)) return `\n${content}${'  |'.repeat(after)}`
 
       const borders = [...row.cells].flatMap((one) => {
         const align = (one.getAttribute('align') ?? '').toLowerCase()
@@ -641,14 +768,27 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
+  const captions = new WeakMap<Node, string>()
+
+  service.addRule('caption', {
+    filter: 'caption',
+    replacement: (content, node) => {
+      captions.set(node, content.replace(/\s*\n+\s*/g, ' ').trim())
+      return ''
+    },
+  })
+
   service.addRule('table', {
     filter: (node) => node.nodeName === 'TABLE',
     replacement: (content, node) => {
+      const table = node as HTMLTableElement
       const rows = content.replace(/^\n+/, '').trimEnd()
-      if (!rows) return ''
-      if (headed(node as HTMLTableElement)) return `\n\n${rows}\n\n`
+      const caption = table.caption ? (captions.get(table.caption) ?? '') : ''
+      const above = caption ? `\n\n${caption}` : ''
+      if (!rows) return above ? `${above}\n\n` : ''
+      if (alone(table) || heads(table)) return `${above}\n\n${rows}\n\n`
 
-      return `\n\n${emptyHeading(node as HTMLTableElement)}\n${rows}\n\n`
+      return `${above}\n\n${emptyHeading(table)}\n${rows}\n\n`
     },
   })
 
@@ -692,7 +832,8 @@ function converter(options: FromHtmlOptions): TurndownService {
         return linkedBlocks(content, target)
       }
 
-      return `[${content}](${target})`
+      const label = content.replace(/^\^((?:[^^\s\\]|\\[\s\S])+)\^/u, '<sup>$1</sup>')
+      return `[${label}](${target})`
     },
   })
 
@@ -782,6 +923,27 @@ function converter(options: FromHtmlOptions): TurndownService {
     },
   })
 
+  service.addRule('wordListMark', {
+    filter: (node) =>
+      node.nodeType === 1 && WORD_LIST_MARK.test((node as Element).getAttribute('style') ?? ''),
+    replacement: () => '',
+  })
+
+  service.addRule('wordListItem', {
+    filter: (node) =>
+      node.nodeName === 'P' && WORD_LIST.test((node as Element).getAttribute('style') ?? ''),
+    replacement: (content, node) => {
+      const words = content.trim()
+      if (!words) return ''
+
+      const style = (node as Element).getAttribute('style') ?? ''
+      const level = Number(WORD_LIST.exec(style)?.[1] ?? 1)
+      const shown = (node as Element).querySelector('[style*="mso-list"]')?.textContent ?? ''
+      const number = /^\s*(\d+)[.)]/.exec(shown)?.[1]
+      const marker = number ? `${number}.` : '-'
+      return `\n${'    '.repeat(Math.max(0, level - 1))}${marker} ${words}\n`
+    },
+  })
   return service
 }
 
@@ -808,5 +970,5 @@ function tidy(markdown: string): string {
 
 export function htmlToMarkdown(html: string, options: FromHtmlOptions = {}): string {
   if (!html.trim()) return ''
-  return tidy(converter(options).turndown(html))
+  return tidy(converter(options, fromASheet(html)).turndown(html))
 }

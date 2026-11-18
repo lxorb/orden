@@ -1,4 +1,4 @@
-import { escape } from './html'
+import { escape, escapeAll } from './html'
 import { cardMarkup, iframeCard } from './web-embed'
 
 const SCRIPTED = /<script\b[^>]*>[\s\S]*?<\/script\s*>/i
@@ -11,7 +11,7 @@ export function htmlBlockCard(html: string): string | null {
   return cardMarkup({
     extra: 'embed-html',
     shape: FIRST_HEIGHT,
-    data: ` data-srcdoc="${escape(html)}"`,
+    data: ` data-srcdoc="${escapeAll(html)}"`,
     mark: 'play',
     name: 'HTML',
     href: null,

@@ -1,5 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
-import type { ChangeSpec, EditorState } from '@codemirror/state'
+import { Annotation, type ChangeSet, type ChangeSpec, EditorState } from '@codemirror/state'
+import type { EditorView } from '@codemirror/view'
 import { enclosingNamed } from '../nodes'
 import { overlaps } from '../live-preview/reveal'
 import type { TableModel } from './model'
@@ -72,10 +73,10 @@ export function lineBeside(state: EditorState, span: TableSpan, side: Side): Lin
       return { from: line.from, to: line.to, made: false, changes: [] }
     }
     return {
-      from: span.to + 1,
-      to: span.to + 1,
+      from: span.to + 2,
+      to: span.to + 2,
       made: true,
-      changes: { from: span.to, insert: '\n' },
+      changes: { from: span.to, insert: '\n\n' },
     }
   }
 
@@ -108,5 +109,39 @@ export function cellBefore(model: TableModel, at: CellAddress): Step {
 export const cellBelow = (model: TableModel, at: CellAddress): CellAddress | 'below' =>
   at.row + 1 < model.rows.length ? { row: at.row + 1, column: at.column } : 'below'
 
-export const cellAbove = (at: CellAddress): CellAddress | 'above' =>
-  at.row > -1 ? { row: at.row - 1, column: at.column } : 'above'
+export function cellAbove(at: CellAddress): CellAddress | 'above' {
+  return at.row > -1 ? { row: at.row - 1, column: at.column } : 'above'
+}
+
+export const tableWrite = Annotation.define<boolean>()
+
+let writing = 0
+const collecting = new WeakMap<EditorView, ChangeSet[]>()
+
+export function changesDuring(view: EditorView, run: () => unknown): ChangeSet[] {
+  const made: ChangeSet[] = []
+  collecting.set(view, made)
+  try {
+    run()
+  } finally {
+    collecting.delete(view)
+  }
+  return made
+}
+
+export function noteChanges(view: EditorView, changes: ChangeSet) {
+  collecting.get(view)?.push(changes)
+}
+
+export function writingTable<T>(run: () => T): T {
+  writing++
+  try {
+    return run()
+  } finally {
+    writing--
+  }
+}
+
+export const tableWrites = EditorState.transactionExtender.of(() =>
+  writing ? { annotations: tableWrite.of(true) } : null,
+)

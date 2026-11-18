@@ -3,13 +3,25 @@ import {
   type ChangeSpec,
   EditorSelection,
   EditorState,
+  StateEffect,
   Text,
   Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import type { EditorView } from '@codemirror/view'
-import { type DocView, documentOf, fromInput, letGo, SharedDoc, sharedOf, sharing } from './shared'
+import {
+  type DocView,
+  documentOf,
+  later,
+  fromInput,
+  letGo,
+  redoEdit,
+  SharedDoc,
+  sharedOf,
+  sharing,
+  undoEdit,
+} from './shared'
 
 class Pane implements DocView {
   private held: EditorState
@@ -422,6 +434,20 @@ describe('an undo that arrives as input rather than as a key', () => {
     expect(pane.text).toBe('Hello there')
   })
 
+  test('changes nothing in a note that is read-only', () => {
+    const note = new SharedDoc('Hello')
+    const pane = new Pane(note)
+    pane.type(5, ' there')
+    pane.dispatch({ effects: StateEffect.appendConfig.of(EditorState.readOnly.of(true)) })
+
+    const view = pane as unknown as EditorView
+    expect(undoEdit(view)).toBe(false)
+    expect(fromInput('historyUndo')?.(view)).toBe(false)
+    expect(pane.text).toBe('Hello there')
+    expect(note.text.toString()).toBe('Hello there')
+    expect(redoEdit(view)).toBe(false)
+  })
+
   test.each([['insertText'], ['deleteContentBackward']])('%j', (input) =>
     expect(fromInput(input)).toBeNull(),
   )
@@ -626,6 +652,23 @@ describe('words from the room while somebody composes (#544)', () => {
     expect(note.text.toString()).toBe(room.words)
   })
 
+  test('are let go of when the note takes on another note while they wait', () => {
+    const note = new SharedDoc('hello world')
+    const pane = new Composing(note, 11)
+
+    pane.composing = true
+    pane.type(11, 'に')
+    note.arrived([{ from: 0, to: 0, insert: 'a long word from the room ' }])
+    note.takeOn('hi')
+    pane.composing = false
+
+    expect(() => {
+      note.settle()
+    }).not.toThrow()
+    expect(note.text.toString()).toBe('hi')
+    expect(pane.text).toBe('hi')
+  })
+
   test('wait inside the word too, and land where the room has them', () => {
     const note = new SharedDoc('hello world')
     const pane = new Composing(note, 8)
@@ -803,5 +846,19 @@ describe('the steps undo takes back in a document', () => {
 
     expect(note.undo(pane)).toBe(true)
     expect(note.text.toString()).toBe('')
+  })
+})
+
+describe('a write asked for before the note in the tab was replaced', () => {
+  test('is not written into the note that took its place', () => {
+    const note = new SharedDoc('![A cat](cat.png)')
+    const pane = new Pane(note)
+    const land = later(pane)
+
+    note.takeOn('![A cat](cat.png) in another note')
+    land(() => ({ changes: { from: 2, to: 7, insert: 'A dog' } }))
+
+    expect(note.text.toString()).toBe('![A cat](cat.png) in another note')
+    expect(pane.text).toBe('![A cat](cat.png) in another note')
   })
 })

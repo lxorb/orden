@@ -9,7 +9,11 @@ const bodies: Record<string, string> = {
   'Plan.md': '# Plan\n\nThe plan itself.\n\n## Why it works\n\nBecause.\n',
 }
 
-const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from: [] }
+const asked: { embeds: string[]; from: (string | null)[]; pictures: string[] } = {
+  embeds: [],
+  from: [],
+  pictures: [],
+}
 
 vi.mock('../../link-index/src/api', () => ({
   links: {
@@ -32,7 +36,10 @@ vi.mock('../../link-index/src/api', () => ({
       )
     },
   },
-  notePicture: (src: string) => `asset://${src}`,
+  notePicture: (src: string) => {
+    asked.pictures.push(src)
+    return `asset://${src}`
+  },
   picturesOf:
     (_path: string | null, _source: string, finish: (path: string) => string) =>
     (src: string, wikilink: boolean) => (wikilink ? finish(`/space/att/${src}`) : null),

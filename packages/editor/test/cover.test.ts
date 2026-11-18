@@ -68,7 +68,7 @@ function drawn() {
     state: { facet: () => (src: string) => src },
     requestMeasure,
   } as unknown as EditorView
-  const widget = new CoverWidget({ src: 'assets/sky.png', position: 50 })
+  const widget = new CoverWidget({ src: 'assets/sky.png', position: 50 }, 'assets/sky.png')
   const block = widget.toDOM(view) as unknown as StandIn
   return { widget, block, requestMeasure }
 }

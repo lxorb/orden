@@ -1,3 +1,4 @@
+import { imageResolver } from '../images'
 import { syntaxTree } from '@codemirror/language'
 import { type EditorState, type Line, type Range, StateEffect, type Text } from '@codemirror/state'
 import {
@@ -11,15 +12,15 @@ import {
 import type { SyntaxNode } from '@lezer/common'
 import { askingAt, asksMoved } from '../ai/run'
 import { concealable, hide, meta } from './conceal'
-import { numberEquations } from './blocks'
+import { equationsOf, numberEquations } from './blocks'
 import { dragging } from './dragging'
 import { blockMarkRevealed, lineRevealed, noReveal, overlaps, quietMarks, revealed } from './reveal'
 import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
-import { HEADING_LEVEL } from '../headings'
+import { HEADING_LEVEL, headingNumbersOf, numberHeadings } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
-import { bareTarget, hrefOf, linkTitle } from '../links'
-import { enclosingNamed } from '../nodes'
+import { bareHref, bareTarget, hrefOf, linkDestination, linkTitle } from '../links'
+import { enclosingNamed, linkAddress, linkBrackets } from '../nodes'
 import { tagTitle } from '../tag-press'
 import { calloutOf } from '@orden/markdown/callouts'
 import { readChart } from '@orden/markdown/chart'
@@ -27,13 +28,14 @@ import { onEngines } from '@orden/markdown/engines'
 import { readHighlight } from '@orden/markdown/highlights'
 import { blockIdOf, embedKind, linkTarget } from '@orden/markdown/links'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
-import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
+import { drawnAsLink, embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
 import { trustChanged } from '../markup'
 import { archivedLink, noteIndex, resolves } from '../wikilink/notes'
 import { iframeCard, webCard } from '@orden/markdown/web-embed'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import { WebEmbedWidget } from './web'
+import { referenceOf } from './definitions'
 import { door } from '@orden/markdown/door'
 import {
   BulletWidget,
@@ -63,12 +65,27 @@ class Decorator {
   private readonly lineClasses = new Map<number, Set<string>>()
   private readonly lineAttrs = new Map<number, Record<string, string>>()
   private readonly claimed: { from: number; to: number }[] = []
+  private readonly unlinked = new Set<number>()
 
   constructor(private readonly state: EditorState) {}
 
   build(ranges: readonly { from: number; to: number }[]) {
-    for (const { from, to } of ranges)
-      syntaxTree(this.state).iterate({ from, to, enter: (node) => this.visit(node.node) })
+    const visited = new Map<string, boolean>()
+    for (const { from, to } of ranges) {
+      syntaxTree(this.state).iterate({
+        from,
+        to,
+        enter: (node) => {
+          if (ranges.length < 2) return this.visit(node.node)
+          const key = `${node.name}:${node.from}:${node.to}`
+          const seen = visited.get(key)
+          if (seen !== undefined) return seen
+          const deeper = this.visit(node.node)
+          visited.set(key, deeper)
+          return deeper
+        },
+      })
+    }
 
     for (const { from, to } of ranges) this.blockNames(from, to)
 
@@ -103,88 +120,120 @@ class Decorator {
     const lineClass = LINE_CLASS[name]
     if (lineClass) {
       if (HEADING_LEVEL[name] && !this.spaced(node.firstChild)) return false
-      this.markLines(node, lineClass)
+      this.markLines(node, lineClass, false, this.headingNumber(node))
       return name !== 'FrontMatter'
     }
 
-    const visit = this.visits[name]
-    if (visit) return visit(node) !== false
-    if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
-    return true
-  }
-
-  private readonly concealShown = (node: SyntaxNode) =>
-    this.conceal(node.from, node.to, revealed(this.state, node))
-
-  private readonly mark = (className: string) => (node: SyntaxNode) => {
-    this.marks.push(Decoration.mark({ class: className }).range(node.from, node.to))
-  }
-
-  private readonly comment = (node: SyntaxNode) => {
-    this.conceal(node.from, node.to, overlaps(this.state, node.from, node.to))
-    return false
-  }
-
-  private readonly blockMark = (node: SyntaxNode) =>
-    this.conceal(node.from, this.eatSpace(node.to), blockMarkRevealed(this.state, node))
-
-  private readonly visits: Record<string, (node: SyntaxNode) => unknown> = {
-    Blockquote: (node) => this.blockquote(node),
-    FencedCode: (node) => this.fence(node),
-    CodeBlock: (node) => {
-      this.markLines(node, 'orden-code')
-      this.numberLines(node.from, node.to, false)
-    },
-    ListItem: (node) => {
-      this.markLines(node, 'orden-li', true)
-      this.commentFields(this.state.doc.lineAt(node.from))
-    },
-    HeaderMark: this.blockMark,
-    QuoteMark: this.blockMark,
-    CodeMark: this.concealShown,
-    CodeInfo: this.concealShown,
-    ListMark: (node) => this.listMark(node),
-    TaskMarker: (node) => this.taskMarker(node),
-    HorizontalRule: (node) =>
-      this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from)),
-    Image: (node) => this.image(node),
-    HTMLTag: (node) => this.htmlImage(node),
-    HTMLBlock: (node) => this.htmlImage(node),
-    Comment: this.comment,
-    CommentBlock: this.comment,
-    PercentComment: this.comment,
-    Emoji: (node) => this.emoji(node),
-    InlineMath: (node) => this.inlineMath(node),
-    BlockMath: (node) => this.blockMath(node),
-    Escape: (node) =>
-      this.conceal(node.from, node.from + 1, overlaps(this.state, node.from, node.to)),
-    TableDelimiter: (node) => this.tableDelimiter(node),
-    InlineCode: this.mark('orden-inline-code'),
-    Subscript: this.mark('orden-sub'),
-    Superscript: this.mark('orden-sup'),
-    Link: (node) => this.link(node),
-    Wikilink: (node) => this.wikilink(node),
-    Hashtag: (node) => {
-      this.tag(node)
-      return false
-    },
-    URL: (node) => {
-      if (concealable(node)) {
-        this.concealShown(node)
-        return
+    switch (name) {
+      case 'Blockquote':
+        this.blockquote(node)
+        return true
+      case 'FencedCode':
+        return this.fence(node)
+      case 'CodeBlock':
+        this.markLines(node, 'orden-code')
+        this.numberLines(node.from, node.to, false)
+        return true
+      case 'ListItem':
+        this.markLines(node, 'orden-li', true)
+        this.commentFields(this.state.doc.lineAt(node.from))
+        return true
+      case 'HeaderMark':
+        this.conceal(node.from, this.eatSpace(node.to), blockMarkRevealed(this.state, node))
+        return true
+      case 'QuoteMark': {
+        const spaced = /^[ \t]/.test(this.state.doc.sliceString(node.to, node.to + 1))
+        this.conceal(node.from, node.to + (spaced ? 1 : 0), blockMarkRevealed(this.state, node))
+        return true
       }
-      const written = this.state.doc.sliceString(node.from, node.to)
-      const bare = node.parent?.name !== 'Autolink'
-      const after = this.state.doc.sliceString(node.to, node.to + 1)
-      this.linkText(node.from, node.to, bare ? bareTarget(written, after) : written)
-    },
-    Highlight: (node) => this.highlight(node),
+      case 'CodeMark':
+        this.conceal(node.from, node.to, revealed(this.state, node))
+        return true
+      case 'ListMark':
+        this.listMark(node)
+        return true
+      case 'TaskMarker':
+        this.taskMarker(node)
+        return true
+      case 'HorizontalRule':
+        this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
+        return true
+      case 'Image':
+        return this.image(node)
+      case 'HTMLTag':
+      case 'HTMLBlock':
+        return this.htmlImage(node)
+      case 'Comment':
+      case 'CommentBlock':
+      case 'PercentComment': {
+        const to = this.commentEnd(node)
+        this.conceal(node.from, to, overlaps(this.state, node.from, to))
+        return false
+      }
+      case 'Emoji':
+        return this.emoji(node)
+      case 'InlineMath':
+        return this.inlineMath(node)
+      case 'BlockMath':
+        return this.blockMath(node)
+      case 'CodeInfo':
+        this.conceal(node.from, node.to, revealed(this.state, node))
+        return true
+      case 'Escape':
+        this.conceal(node.from, node.from + 1, overlaps(this.state, node.from, node.to))
+        return true
+      case 'TableDelimiter':
+        this.tableDelimiter(node)
+        return true
+      case 'InlineCode':
+        this.marks.push(Decoration.mark({ class: 'orden-inline-code' }).range(node.from, node.to))
+        return true
+      case 'Link':
+        this.link(node)
+        return true
+      case 'Wikilink':
+        return this.wikilink(node)
+      case 'Hashtag':
+        this.tag(node)
+        return false
+      case 'URL':
+        if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
+        else if (!this.inLinkWords(node)) {
+          const written = this.state.doc.sliceString(node.from, node.to)
+          const bare = node.parent?.name !== 'Autolink'
+          const after = this.state.doc.sliceString(node.to, node.to + 1)
+          const target = bare ? bareTarget(written, after) : written
+          this.linkText(node.from, node.to, bareHref(target))
+        }
+        return true
+      case 'Highlight':
+        this.highlight(node)
+        return true
+      case 'Subscript':
+        this.marks.push(Decoration.mark({ class: 'orden-sub' }).range(node.from, node.to))
+        return true
+      case 'Superscript':
+        this.marks.push(Decoration.mark({ class: 'orden-sup' }).range(node.from, node.to))
+        return true
+      default:
+        if (node.name === 'LinkMark' && node.parent && this.unlinked.has(node.parent.from)) {
+          return true
+        }
+        if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
+        return true
+    }
+  }
+
+  private inLinkWords(url: SyntaxNode): boolean {
+    const link = url.parent
+    if (link?.name !== 'Link' && link?.name !== 'Image') return false
+    return !this.unlinked.has(link.from)
   }
 
   private link(node: SyntaxNode) {
-    const open = node.firstChild
-    const close = open?.nextSibling
-    if (!open || !close || open.name !== 'LinkMark' || close.name !== 'LinkMark') return
+    const brackets = linkBrackets(node)
+    if (!brackets) return
+    const { open, close } = brackets
 
     const note = noteLinkOfNode(this.state, node)
     if (note) {
@@ -192,8 +241,21 @@ class Decorator {
       return
     }
 
-    const url = node.getChild('URL')
-    const target = url ? this.state.doc.sliceString(url.from, url.to) : ''
+    const url = linkAddress(node)
+    if (url || node.getChildren('LinkMark').length > 2) {
+      const target = url ? linkDestination(this.state.doc.sliceString(url.from, url.to)) : ''
+      this.linkText(open.to, close.from, target)
+      return
+    }
+
+    const reference = referenceOf(this.state, node)
+    if (!reference) return
+    if (reference.target === undefined) {
+      this.unlinked.add(node.from)
+      return
+    }
+    const { label, target } = reference
+    if (label) this.conceal(label.from, label.to, overlaps(this.state, node.from, node.to))
     this.linkText(open.to, close.from, target)
   }
 
@@ -206,14 +268,23 @@ class Decorator {
     if (link.embed && !shown) {
       const kind = embedKind(link.target)
       if (kind === 'image') {
-        this.inlineWidget(node, new EmbedImageWidget(link), false)
+        this.inlineWidget(
+          node,
+          new EmbedImageWidget(link, this.state.facet(imageResolver)(link.target)),
+          false,
+        )
         return false
       }
       if (kind === 'audio' || kind === 'video') {
-        this.inlineWidget(node, new EmbedMediaWidget(link, kind), false)
+        this.inlineWidget(
+          node,
+          new EmbedMediaWidget(link, kind, this.state.facet(imageResolver)(link.target)),
+          false,
+        )
         return false
       }
-      if (embedOfBlock(this.state, node.from, node.to)) return false
+      const block = embedOfBlock(this.state, node.from, node.to)
+      if (block && !drawnAsLink(this.state, block)) return false
     }
 
     const open = node.firstChild
@@ -319,7 +390,22 @@ class Decorator {
     this.conceal(open.to, open.to + from, overlaps(this.state, node.from, node.to))
   }
 
-  private inlineWidget(node: SyntaxNode, widget: WidgetType, show: boolean) {
+  private commentEnd(node: SyntaxNode): number {
+    if (node.name !== 'CommentBlock') return node.to
+    const text = this.state.doc.sliceString(node.from, node.to)
+    const closed = text.indexOf('-->')
+    return closed < 0 ? node.to : node.from + closed + 3
+  }
+
+  private iframeEnd(node: SyntaxNode): number {
+    const text = this.state.doc.sliceString(node.from, node.to)
+    const closed = /<\/iframe\s*>/i.exec(text)
+    if (closed) return node.from + closed.index + closed[0].length
+    const tag = /^<iframe\b[^>]*>/i.exec(text)
+    return tag ? node.from + tag[0].length : node.to
+  }
+
+  private inlineWidget(node: { from: number; to: number }, widget: WidgetType, show: boolean) {
     if (show || node.from >= node.to || this.isClaimed(node.from, node.to)) return
     this.hidden.push(Decoration.replace({ widget }).range(node.from, node.to))
   }
@@ -387,7 +473,11 @@ class Decorator {
     if (overlaps(this.state, node.from, node.to)) return true
 
     const tex = this.state.doc.sliceString(node.from + 1, node.to - 1)
-    this.inlineWidget(node, new MathWidget(tex, false), false)
+    this.inlineWidget(
+      node,
+      new MathWidget(tex, false, undefined, equationsOf(this.state).labels),
+      false,
+    )
     return false
   }
 
@@ -462,7 +552,7 @@ class Decorator {
     if (imageRevealed(this.state, node.from, node.to)) return true
 
     const image = imageOfNode(this.state, node)
-    if (!image) return true
+    if (!image) return !!linkAddress(node)
 
     const card = webCard(image.src)
     if (card) {
@@ -470,7 +560,11 @@ class Decorator {
       return false
     }
 
-    this.inlineWidget(node, new ImageWidget(image), false)
+    this.inlineWidget(
+      node,
+      new ImageWidget(image, this.state.facet(imageResolver)(image.src)),
+      false,
+    )
     return false
   }
 
@@ -516,7 +610,8 @@ class Decorator {
       const closer = node.name === 'HTMLTag' ? this.closingIframe(node) : null
       if (overlaps(this.state, node.from, closer?.to ?? node.to)) return true
 
-      this.inlineWidget(node, new WebEmbedWidget(framed), false)
+      const end = node.name === 'HTMLBlock' ? this.iframeEnd(node) : node.to
+      this.inlineWidget({ from: node.from, to: end }, new WebEmbedWidget(framed), false)
       if (closer) {
         this.conceal(closer.from, closer.to, false)
         this.claimed.push({ from: closer.from, to: closer.to })
@@ -596,6 +691,11 @@ class Decorator {
       if (number < first || number > last) continue
       this.addLineAttrs(line.from, { 'data-code-number': String(number - first + 1) })
     }
+  }
+
+  private headingNumber(node: SyntaxNode): Record<string, string> | undefined {
+    const number = headingNumbersOf(this.state).get(node.from)
+    return number === undefined ? undefined : { 'data-heading-number': number }
   }
 
   private markLines(
@@ -686,6 +786,7 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
         update.startState.facet(quietMarks) !== update.state.facet(quietMarks) ||
         update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
+        update.startState.facet(numberHeadings) !== update.state.facet(numberHeadings) ||
         update.startState.facet(noteIndex) !== update.state.facet(noteIndex) ||
         trustChanged(update.startState, update.state)
       const landed = update.transactions.some((one) =>

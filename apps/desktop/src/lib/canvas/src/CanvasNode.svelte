@@ -73,9 +73,10 @@
     if (node.type !== 'file' || fileShown(node.file) !== 'words') return
 
     const wanted = node.file
+    const subpath = node.subpath
     links.locksSeen()
     let mine = true
-    void fileSource(wanted, canvasPath).then((text) => {
+    void fileSource(wanted, canvasPath, subpath).then((text) => {
       if (mine) source = text
     })
 
@@ -88,7 +89,10 @@
     node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text,
   )
   const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
-  const html = $derived(words ? cardHtml(words, canvasPath, markup) : '')
+
+  const drawnFrom = $derived(node.type === 'file' ? (source?.path ?? canvasPath) : canvasPath)
+
+  const html = $derived(words ? cardHtml(words, drawnFrom, markup) : '')
 
   const drawing = $derived.by(() => {
     if (node.type !== 'shape') return null
@@ -299,6 +303,10 @@
         {scale}
         {seen}
       />
+    {:else if shown === 'file'}
+      <div class="card link">
+        <span class="url">{node.file}</span>
+      </div>
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
       <div class="card page embed orden-rendered" use:embeds>{@html html}</div>

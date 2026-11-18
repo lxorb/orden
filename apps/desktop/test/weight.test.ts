@@ -419,8 +419,8 @@ describe('what reading a note fetches', () => {
 
   function waitedFor(surface: string): string {
     const source = readFileSync(surface, 'utf8')
-    const found = /prepareFences[^}]*\}\s*=\s*await import\('([^']+)'\)/.exec(source)
-    expect(found, 'the surface no longer awaits prepareFences').not.toBeNull()
+    const found = /prepareNote[^}]*\}\s*=\s*await import\('([^']+)'\)/.exec(source)
+    expect(found, 'the surface no longer awaits prepareNote').not.toBeNull()
 
     const file = relativeFile(surface, found?.[1] ?? '')
     expect(file, `nothing at ${found?.[1]}`).not.toBeNull()

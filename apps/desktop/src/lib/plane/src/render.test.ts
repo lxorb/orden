@@ -113,7 +113,8 @@ describe('a file card', () => {
     expect(fileShown('sounds/Song.mp3')).toBe('sound')
     expect(fileShown('papers/Thesis.pdf')).toBe('pdf')
     expect(fileShown('Plan.md')).toBe('words')
-    expect(fileShown('Board.canvas')).toBe('words')
+    expect(fileShown('Board.canvas')).toBe('file')
+    expect(fileShown('Books.base')).toBe('file')
   })
 
   test('of a film, a sound or a PDF is never read as words', async () => {

@@ -2,6 +2,7 @@ import { OrdenWidget } from './widget'
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { withoutBlockIds } from '@orden/markdown/links'
 import { headingLevel, headingText } from '../headings'
 
 export interface Heading {
@@ -28,7 +29,8 @@ export function headings(state: EditorState): Heading[] {
       const level = headingLevel(node.name)
       if (level === null) return !NO_HEADINGS_INSIDE.has(node.name)
 
-      found.push({ level, text: headingText(state.doc.lineAt(node.from).text), from: node.from })
+      const own = withoutBlockIds(state.doc.sliceString(node.from, node.to))
+      found.push({ level, text: headingText(own), from: node.from })
       return false
     },
   })
@@ -76,6 +78,7 @@ export class TocWidget extends OrdenWidget {
         view.dispatch({
           selection: { anchor: entry.from },
           effects: EditorView.scrollIntoView(entry.from, { y: 'start', yMargin: 72 }),
+          userEvent: 'select',
         })
         view.focus()
       })
