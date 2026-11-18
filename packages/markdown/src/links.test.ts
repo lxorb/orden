@@ -36,6 +36,10 @@ import {
   withoutBlockIds,
 } from './links'
 
+const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
+const id = () => 'n'
+const targets = (text: string) => findLinks(text).map((one) => one.target)
+
 describe('what is between the brackets', () => {
   test('a bare name', () => {
     expect(parseWikilink('Note')).toEqual({
@@ -144,174 +148,87 @@ describe('the words a link shows', () => {
   })
 })
 
-describe('which targets belong to the space', () => {
-  test('a relative path and a fragment do', () => {
-    expect(isNoteTarget('Note.md')).toBe(true)
-    expect(isNoteTarget('../other/Note.md')).toBe(true)
-    expect(isNoteTarget('#heading')).toBe(true)
+describe('what a target names', () => {
+  test.each<[(target: string) => boolean, string[], string[]]>([
+    [
+      isNoteTarget,
+      ['Note.md', '../other/Note.md', '#heading'],
+      ['https://x.dev', 'mailto:a@b.dev', '//x.dev/a', 'javascript:alert(1)'],
+    ],
+    [
+      isPdfTarget,
+      ['paper.pdf', 'reading/Deep Learning.PDF', '  paper.pdf  '],
+      ['paper', 'paper.pdf.md', 'pdf', ''],
+    ],
+    [
+      isCanvasTarget,
+      ['Board.canvas', 'boards/Quarter.CANVAS', '  Board.canvas  '],
+      ['Board', 'Board.canvas.md', 'canvas', ''],
+    ],
+    [
+      isImageTarget,
+      ['a/b/pic.PNG', 'shot.jpeg', 'drawing.svg', '  frame.apng  '],
+      ['Note.md', 'Note', 'png', ''],
+    ],
+    [
+      isAudioTarget,
+      ['take.MP3', 'a/b/talk.m4a', '  memo.opus  '],
+      ['Note.md', 'mp3', 'song.mp3.md'],
+    ],
+    [isVideoTarget, ['demo.mp4', 'clip.MOV'], ['']],
+    [
+      isWebTarget,
+      ['Svelte docs.url', 'reading/Svelte docs.URL', 'Svelte docs.webloc', '  Svelte docs.url  '],
+      ['Svelte docs', 'Svelte docs.url.md', 'url', ''],
+    ],
+    [
+      isTabFile,
+      ['paper.pdf', 'Board.canvas', 'Svelte docs.url'],
+      ['Note.md', 'shot.png', '', 'take.mp3'],
+    ],
+  ])('%o', (is, yes, no) => {
+    expect(yes.filter((one) => !is(one))).toEqual([])
+    expect(no.filter(is)).toEqual([])
   })
 
-  test('the web does not', () => {
-    expect(isNoteTarget('https://x.dev')).toBe(false)
-    expect(isNoteTarget('mailto:a@b.dev')).toBe(false)
-    expect(isNoteTarget('//x.dev/a')).toBe(false)
-    expect(isNoteTarget('javascript:alert(1)')).toBe(false)
-  })
-})
-
-describe('which targets name a PDF', () => {
-  test('anything ending in the extension, in either case', () => {
-    expect(isPdfTarget('paper.pdf')).toBe(true)
-    expect(isPdfTarget('reading/Deep Learning.PDF')).toBe(true)
-    expect(isPdfTarget('  paper.pdf  ')).toBe(true)
-  })
-
-  test('and nothing else', () => {
-    expect(isPdfTarget('paper')).toBe(false)
-    expect(isPdfTarget('paper.pdf.md')).toBe(false)
-    expect(isPdfTarget('pdf')).toBe(false)
-    expect(isPdfTarget('')).toBe(false)
-  })
-})
-
-describe('which targets name a canvas', () => {
-  test('anything ending in the extension, in either case', () => {
-    expect(isCanvasTarget('Board.canvas')).toBe(true)
-    expect(isCanvasTarget('boards/Quarter.CANVAS')).toBe(true)
-    expect(isCanvasTarget('  Board.canvas  ')).toBe(true)
+  test('an embed is one kind per file, a container read as what it usually holds', () => {
+    const kinds = {
+      'shot.png': 'image',
+      'take.mp3': 'audio',
+      'demo.mp4': 'video',
+      'paper.pdf': 'pdf',
+      'Board.canvas': 'canvas',
+      'Another note': null,
+      '': null,
+      'a.webm': 'video',
+      'a.weba': 'audio',
+      'a.ogg': 'audio',
+      'a.ogv': 'video',
+    }
+    for (const [target, kind] of Object.entries(kinds)) expect(embedKind(target)).toBe(kind)
   })
 
-  test('and nothing else', () => {
-    expect(isCanvasTarget('Board')).toBe(false)
-    expect(isCanvasTarget('Board.canvas.md')).toBe(false)
-    expect(isCanvasTarget('canvas')).toBe(false)
-    expect(isCanvasTarget('')).toBe(false)
-  })
-})
-
-describe('which targets name a picture', () => {
-  test('every extension a browser draws, in either case', () => {
-    expect(isImageTarget('a/b/pic.PNG')).toBe(true)
-    expect(isImageTarget('shot.jpeg')).toBe(true)
-    expect(isImageTarget('drawing.svg')).toBe(true)
-    expect(isImageTarget('  frame.apng  ')).toBe(true)
-  })
-
-  test('and nothing else', () => {
-    expect(isImageTarget('Note.md')).toBe(false)
-    expect(isImageTarget('Note')).toBe(false)
-    expect(isImageTarget('png')).toBe(false)
-    expect(isImageTarget('')).toBe(false)
-  })
-})
-
-describe('which targets name sound or a film', () => {
-  test('the extensions a browser plays, in either case', () => {
-    expect(isAudioTarget('take.MP3')).toBe(true)
-    expect(isAudioTarget('a/b/talk.m4a')).toBe(true)
-    expect(isAudioTarget('  memo.opus  ')).toBe(true)
-    expect(isVideoTarget('demo.mp4')).toBe(true)
-    expect(isVideoTarget('clip.MOV')).toBe(true)
-  })
-
-  test('and nothing else', () => {
-    expect(isAudioTarget('Note.md')).toBe(false)
-    expect(isAudioTarget('mp3')).toBe(false)
-    expect(isAudioTarget('song.mp3.md')).toBe(false)
-    expect(isVideoTarget('')).toBe(false)
-  })
-})
-
-describe('what kind of thing an embed names', () => {
-  test('one answer per file, and none for a note', () => {
-    expect(embedKind('shot.png')).toBe('image')
-    expect(embedKind('take.mp3')).toBe('audio')
-    expect(embedKind('demo.mp4')).toBe('video')
-    expect(embedKind('paper.pdf')).toBe('pdf')
-    expect(embedKind('Board.canvas')).toBe('canvas')
-    expect(embedKind('Another note')).toBe(null)
-    expect(embedKind('')).toBe(null)
-  })
-
-  test('a container either can be in is read as what it usually holds', () => {
-    expect(embedKind('a.webm')).toBe('video')
-    expect(embedKind('a.weba')).toBe('audio')
-    expect(embedKind('a.ogg')).toBe('audio')
-    expect(embedKind('a.ogv')).toBe('video')
-  })
-
-  test('is a wider question than what opens in a tab of its own', () => {
-    expect(embedKind('take.mp3')).toBe('audio')
-    expect(isTabFile('take.mp3')).toBe(false)
-  })
-})
-
-describe('the size an embed asks for', () => {
-  test('a width on its own, or a width and a height', () => {
+  test('the size an embed asks for is a width, or a width and a height, never words', () => {
     expect(embedSize('300')).toEqual({ width: 300, height: null })
     expect(embedSize('300x200')).toEqual({ width: 300, height: 200 })
+    for (const words of ['the sketch', '300 wide', 'x200', '', null])
+      expect(embedSize(words)).toBe(null)
   })
 
-  test('and nothing at all for words', () => {
-    expect(embedSize('the sketch')).toBe(null)
-    expect(embedSize('300 wide')).toBe(null)
-    expect(embedSize('x200')).toBe(null)
-    expect(embedSize('')).toBe(null)
-    expect(embedSize(null)).toBe(null)
-  })
-})
-
-describe('which targets name a website', () => {
-  test('a shortcut written by either system, in either case', () => {
-    expect(isWebTarget('Svelte docs.url')).toBe(true)
-    expect(isWebTarget('reading/Svelte docs.URL')).toBe(true)
-    expect(isWebTarget('Svelte docs.webloc')).toBe(true)
-    expect(isWebTarget('  Svelte docs.url  ')).toBe(true)
-  })
-
-  test('and nothing else', () => {
-    expect(isWebTarget('Svelte docs')).toBe(false)
-    expect(isWebTarget('Svelte docs.url.md')).toBe(false)
-    expect(isWebTarget('url')).toBe(false)
-    expect(isWebTarget('')).toBe(false)
-  })
-})
-
-describe('which targets open in a tab of their own', () => {
-  test('a PDF, a canvas and a website, and no other file', () => {
-    expect(isTabFile('paper.pdf')).toBe(true)
-    expect(isTabFile('Board.canvas')).toBe(true)
-    expect(isTabFile('Svelte docs.url')).toBe(true)
-    expect(isTabFile('Note.md')).toBe(false)
-    expect(isTabFile('shot.png')).toBe(false)
-    expect(isTabFile('')).toBe(false)
-  })
-})
-
-describe('the page a fragment names', () => {
-  test('is the number after page=', () => {
-    expect(pageFragment('page=3')).toBe(3)
-    expect(pageFragment('page=1')).toBe(1)
-    expect(pageFragment('PAGE=12')).toBe(12)
-    expect(pageFragment(' page=7 ')).toBe(7)
-  })
-
-  test('read out of a link the way it is written', () => {
+  test('the page a fragment names is the number after page=, from the first page on', () => {
+    for (const [fragment, page] of [
+      ['page=3', 3],
+      ['page=1', 1],
+      ['PAGE=12', 12],
+      [' page=7 ', 7],
+    ] as const) {
+      expect(pageFragment(fragment)).toBe(page)
+    }
     expect(pageFragment(parseWikilink('paper.pdf#page=3')?.heading ?? null)).toBe(3)
     expect(pageFragment(parseWikilink('paper.pdf')?.heading ?? null)).toBeNull()
-  })
-
-  test('is nothing for a fragment that is not one', () => {
-    expect(pageFragment(null)).toBeNull()
-    expect(pageFragment('Some Heading')).toBeNull()
-    expect(pageFragment('page')).toBeNull()
-    expect(pageFragment('page=')).toBeNull()
-    expect(pageFragment('page=3a')).toBeNull()
-    expect(pageFragment('pages=3')).toBeNull()
-  })
-
-  test('is nothing before the first page', () => {
-    expect(pageFragment('page=0')).toBeNull()
+    for (const not of [null, 'Some Heading', 'page', 'page=', 'page=3a', 'pages=3', 'page=0']) {
+      expect(pageFragment(not)).toBeNull()
+    }
   })
 })
 
@@ -370,20 +287,19 @@ describe('finding the links in a note', () => {
   })
 
   test('a fenced block holds no links', () => {
-    expect(findLinks('```\n[[Note]]\n```\n[[Real]]').map((one) => one.target)).toEqual(['Real'])
+    expect(targets('```\n[[Note]]\n```\n[[Real]]')).toEqual(['Real'])
   })
 
   test('a block closes on its own mark and on nothing else', () => {
     const shown = '```\n~~~\n[[Inside]]\n~~~\n```\n[[Real]]'
-    expect(findLinks(shown).map((one) => one.target)).toEqual(['Real'])
+    expect(targets(shown)).toEqual(['Real'])
 
     const named = '```\n[[One]]\n```ts\n[[Two]]\n```\n[[Real]]'
-    expect(findLinks(named).map((one) => one.target)).toEqual(['Real'])
-    expect(findLinks('~~~md\n[[Note]]\n~~~').map((one) => one.target)).toEqual([])
+    expect(targets(named)).toEqual(['Real'])
+    expect(targets('~~~md\n[[Note]]\n~~~')).toEqual([])
   })
 
   test('a block in a quote, in a list item or indented is code too', () => {
-    const targets = (text: string) => findLinks(text).map((one) => one.target)
     expect(targets('> ```\n> [[Example]]\n> ```\n\n[[Real]]\n')).toEqual(['Real'])
     expect(targets('Words.\n\n    [[Example]]\n\n[[Real]]\n')).toEqual(['Real'])
     expect(targets('- a\n  ```\n  [[Example]]\n  ```\n- [[Real]]\n')).toEqual(['Real'])
@@ -392,7 +308,7 @@ describe('finding the links in a note', () => {
 
   test('a fence in the front matter opens no code below it', () => {
     const note = '---\nscript: |\n  ```\nup: "[[Up]]"\n---\n- [ ] t [[L]]\n'
-    expect(findLinks(note).map((one) => one.target)).toEqual(['Up', 'L'])
+    expect(targets(note)).toEqual(['Up', 'L'])
   })
 
   test('a link in a quoted front matter value is read the way the value means it', () => {
@@ -416,34 +332,33 @@ describe('finding the links in a note', () => {
   })
 
   test('a shorter fence or one with a backtick in its info string closes nothing', () => {
-    const targets = (text: string) => findLinks(text).map((one) => one.target)
     expect(targets('````md\n```\n````\n[[Plan]]')).toEqual(['Plan'])
     expect(targets('```a`b\n[[Plan]]')).toEqual(['Plan'])
     expect(targets('~~~md\n```js\n[[Example]]\n```\n~~~\n[[Real]]\n')).toEqual(['Real'])
   })
 
   test('inline code holds no links', () => {
-    expect(findLinks('write `[[Note]]` to link').map((one) => one.target)).toEqual([])
-    expect(findLinks('`a` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
+    expect(targets('write `[[Note]]` to link')).toEqual([])
+    expect(targets('`a` [[Note]] `b`')).toEqual(['Note'])
   })
 
   test('an escaped backtick opens no code span', () => {
-    expect(findLinks('\\` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
-    expect(findLinks('\\\\` [[Note]] `b`').map((one) => one.target)).toEqual([])
-    expect(findLinks('`a\\` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
+    expect(targets('\\` [[Note]] `b`')).toEqual(['Note'])
+    expect(targets('\\\\` [[Note]] `b`')).toEqual([])
+    expect(targets('`a\\` [[Note]] `b`')).toEqual(['Note'])
   })
 
   test('a run that never closes still lets a later span hide a link', () => {
-    expect(findLinks('`` `[[Plan]]`').map((one) => one.target)).toEqual([])
-    expect(findLinks('`` [[Plan]]').map((one) => one.target)).toEqual(['Plan'])
+    expect(targets('`` `[[Plan]]`')).toEqual([])
+    expect(targets('`` [[Plan]]')).toEqual(['Plan'])
   })
 
   test('a code span that never closes is text', () => {
-    expect(findLinks('` [[Note]]').map((one) => one.target)).toEqual(['Note'])
+    expect(targets('` [[Note]]')).toEqual(['Note'])
   })
 
   test('a double backtick span holds a backtick and still hides a link', () => {
-    expect(findLinks('`` ` [[Note]] `` [[Real]]').map((one) => one.target)).toEqual(['Real'])
+    expect(targets('`` ` [[Note]] `` [[Real]]')).toEqual(['Real'])
   })
 
   test('an escaped bracket is not a link', () => {
@@ -452,10 +367,7 @@ describe('finding the links in a note', () => {
   })
 
   test('a link inside a heading or a list is still a link', () => {
-    expect(findLinks('# See [[Note]]\n- and [[Other]]').map((one) => one.target)).toEqual([
-      'Note',
-      'Other',
-    ])
+    expect(targets('# See [[Note]]\n- and [[Other]]')).toEqual(['Note', 'Other'])
   })
 
   test('brackets inside the link end it, the way Obsidian does', () => {
@@ -693,12 +605,10 @@ describe('a markdown link that never closes', () => {
 })
 
 describe('a markdown target the way a link names a file', () => {
-  const only = (text: string) => findLinks(text).map((link) => link.target)
-
   test('every escape is undone, reserved characters too, as links.rs reads it', () => {
-    expect(only('[S](C%23.md)')).toEqual(['C#.md'])
-    expect(only('[S](Why%3F.md)')).toEqual(['Why?.md'])
-    expect(only('[S](a%2520b.md)')).toEqual(['a%20b.md'])
+    expect(targets('[S](C%23.md)')).toEqual(['C#.md'])
+    expect(targets('[S](Why%3F.md)')).toEqual(['Why?.md'])
+    expect(targets('[S](a%2520b.md)')).toEqual(['a%20b.md'])
     expect(decodeTarget('100%')).toBe('100%')
     expect(decodeTarget('a%20b%')).toBe('a b%')
     expect(decodeTarget('%FF.md')).toBe('%FF.md')
@@ -728,7 +638,7 @@ describe('a markdown target the way a link names a file', () => {
       '<x>.pdf',
     ]) {
       expect(decodeTarget(encodeTarget(name))).toBe(name)
-      expect(only(`[S](${encodeTarget(name)})`)).toEqual([name])
+      expect(targets(`[S](${encodeTarget(name)})`)).toEqual([name])
     }
   })
 
@@ -802,7 +712,7 @@ describe('parentheses and brackets in a markdown link', () => {
     expect(findLinks('[[a]](b.md)').map((link) => [link.kind, link.target])).toEqual([
       ['wikilink', 'a'],
     ])
-    expect(findLinks('[x [[a]] y](b.md)').map((link) => link.target)).toEqual(['a'])
+    expect(targets('[x [[a]] y](b.md)')).toEqual(['a'])
   })
 
   test('words between the target and the bracket are no link, as in CommonMark', () => {
@@ -967,7 +877,6 @@ describe('a block name on a line of its own', () => {
   })
 
   test('a block next to front matter, code, maths or a heading is that block alone', () => {
-    const block = (text: string, id: string) => sectionOf(text, { heading: null, block: id })
     expect(block('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', 'p')).toBe('First para')
     expect(block('a\n\n```\nx\n``` ^abc123\n\n# After\n\nb\n', 'abc123')).toBe('```\nx\n```')
     expect(block('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n', 'm')).toBe('$$\na\n\nb\n$$')
@@ -1131,7 +1040,7 @@ describe('a closing fence an older build named', () => {
     expect(blockIds('```\n``` ^a b\n```\n')).toEqual([])
     const shown = '```\n``` ^a b\n```\n\n[[L]] words\n'
     expect(renderMarkdown(shown)).toContain('``` ^a b')
-    expect(findLinks(shown).map((one) => one.target)).toEqual(['L'])
+    expect(targets(shown)).toEqual(['L'])
   })
 
   test('on the fence that opens is its info string and no name', () => {
@@ -1199,7 +1108,6 @@ describe('a line of links nothing closes', () => {
 
 describe('a block beside maths, a comment or a pre', () => {
   const id = () => 'new123'
-  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
 
   test('a paragraph over maths with a blank line in it is named alone', () => {
     const note = 'Intro\n$$\na\n\nb\n$$\n\n# Next\n\ntext\n'
@@ -1258,7 +1166,6 @@ describe('a block beside maths, a comment or a pre', () => {
 
 describe('a block in a list, a fence in a fence, and code after code', () => {
   const id = () => 'new123'
-  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
 
   test('a fence holding a shorter fence is one block', () => {
     const note = 'Example:\n\n````md\n```js\nx\n```\n```` ^abc\n\nafter\n'
@@ -1305,8 +1212,6 @@ describe('a block in a list, a fence in a fence, and code after code', () => {
 })
 
 describe('a block in a quote, a loose item, or under an item', () => {
-  const id = () => 'n'
-  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
   const quotes = (text: string) => renderMarkdown(text).split('<blockquote').length - 1
 
   test('a name for an indented line of a paragraph is no code', () => {
@@ -1351,9 +1256,6 @@ describe('a block in a quote, a loose item, or under an item', () => {
 })
 
 describe('a paragraph right over a quote, and a name before a later step', () => {
-  const id = () => 'n'
-  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
-
   test('the paragraph and the callout under it are two blocks', () => {
     const note =
       'Before you start:\n> [!warning] Back up first\n> It wipes the disk.\n\nNext para\n'
@@ -1373,9 +1275,6 @@ describe('a paragraph right over a quote, and a name before a later step', () =>
 })
 
 describe('a block beside a heading, a quote line in a comment, and a comment under a quote', () => {
-  const id = () => 'n'
-  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
-
   test('a comment holding a line that starts with > is one block', () => {
     const note = 'Intro\n\n<!--\nDraft quote:\n> Old wording here\nmore notes\n-->\n\nAfter\n'
     const named = namedBlock(note, 2, id)?.source ?? ''
@@ -1399,9 +1298,6 @@ describe('a block beside a heading, a quote line in a comment, and a comment und
 })
 
 describe('a name under a list holding code, and code right under words', () => {
-  const id = () => 'n'
-  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
-
   test('a name written under a list whose item holds code is the whole list', () => {
     const note = '- one\n- Install:\n  ```bash\n  npm i\n  ```\n\n^x\n'
     expect(block(note, 'x')).toBe('- one\n- Install:\n  ```bash\n  npm i\n  ```')
@@ -1418,8 +1314,6 @@ describe('a name under a list holding code, and code right under words', () => {
 })
 
 describe('blocks that touch: code, tables, lists and their neighbours', () => {
-  const id = () => 'n'
-  const block = (text: string, name: string) => sectionOf(text, { heading: null, block: name })
   const listed = (text: string) => blocksOf(text).map((one) => [one.line, one.id])
 
   test('the block list gives code right under words an entry of its own', () => {

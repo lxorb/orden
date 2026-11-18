@@ -19,6 +19,19 @@ import {
 import { mergeCanvasFiles } from './canvas-merge'
 import { emptyPages, pagesFromPdf } from './pages'
 
+const read = (file: object) => readCanvas(JSON.stringify(file))
+const card = (id: string, more: object = {}) => ({
+  id,
+  type: 'text',
+  x: 0,
+  y: 0,
+  width: 10,
+  height: 10,
+  text: '',
+  ...more,
+})
+const EMPTY = { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null, iconColor: null }
+
 const SPEC_EXAMPLE = {
   nodes: [
     { id: 'a', type: 'text', x: 0, y: 0, width: 250, height: 60, text: '# Hello', color: '1' },
@@ -63,7 +76,7 @@ const SPEC_EXAMPLE = {
 }
 
 describe('reading a canvas', () => {
-  const canvas = readCanvas(JSON.stringify(SPEC_EXAMPLE))
+  const canvas = read(SPEC_EXAMPLE)
 
   test('takes every kind of node the spec names', () => {
     expect(canvas.nodes.map((node) => node.type)).toEqual(['text', 'file', 'link', 'group'])
@@ -101,57 +114,37 @@ describe('reading a canvas', () => {
   })
 
   test('is an empty canvas for a file that is not one', () => {
-    const empty = { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null, iconColor: null }
-    expect(readCanvas('')).toEqual(empty)
-    expect(readCanvas('nonsense')).toEqual(empty)
-    expect(readCanvas('[]')).toEqual(empty)
-    expect(readCanvas('{}')).toEqual(empty)
+    for (const text of ['', 'nonsense', '[]', '{}']) expect(readCanvas(text)).toEqual(EMPTY)
   })
 })
 
 describe('reading a canvas somebody else wrote', () => {
   test('drops a node with no id, no known type, or nothing of its own in it', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [
-          { type: 'text', x: 0, y: 0, width: 10, height: 10, text: 'no id' },
-          { id: 'x', type: 'sticky', x: 0, y: 0, width: 10, height: 10 },
-          { id: 'y', type: 'text', x: 0, y: 0, width: 10, height: 10 },
-          { id: 'z', type: 'file', x: 0, y: 0, width: 10, height: 10, file: '' },
-          { id: 'ok', type: 'text', x: 0, y: 0, width: 10, height: 10, text: '' },
-        ],
-      }),
-    )
-
+    const canvas = read({
+      nodes: [
+        { ...card(''), id: undefined, text: 'no id' },
+        { id: 'x', type: 'sticky', x: 0, y: 0, width: 10, height: 10 },
+        card('y', { text: undefined }),
+        { ...card('z', { type: 'file', file: '' }), text: undefined },
+        card('ok'),
+      ],
+    })
     expect(canvas.nodes.map((node) => node.id)).toEqual(['ok'])
   })
 
-  test('fills in a position and a size that were never written', () => {
-    const [node] = readCanvas(
-      JSON.stringify({ nodes: [{ id: 'a', type: 'text', text: '' }] }),
-    ).nodes
-
-    expect(node).toMatchObject({ x: 0, y: 0, width: 250, height: 60 })
-  })
-
-  test('rounds a position to whole pixels, which is what the spec says', () => {
-    const [node] = readCanvas(
-      JSON.stringify({ nodes: [{ id: 'a', type: 'text', text: '', x: 10.6, y: -3.2 }] }),
-    ).nodes
-
+  test('fills in a position and a size that were never written, rounding a position to whole pixels', () => {
+    expect(read({ nodes: [{ id: 'a', type: 'text', text: '' }] }).nodes[0]).toMatchObject({
+      x: 0,
+      y: 0,
+      width: 250,
+      height: 60,
+    })
+    const [node] = read({ nodes: [{ id: 'a', type: 'text', text: '', x: 10.6, y: -3.2 }] }).nodes
     expect(node).toMatchObject({ x: 11, y: -3 })
   })
 
   test('of two nodes sharing an id, the first keeps it, which is what every edge meant, and the second is kept under its own', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [
-          { id: 'a', type: 'text', x: 0, y: 0, width: 10, height: 10, text: 'first' },
-          { id: 'a', type: 'text', x: 0, y: 0, width: 10, height: 10, text: 'second' },
-        ],
-      }),
-    )
-
+    const canvas = read({ nodes: [card('a', { text: 'first' }), card('a', { text: 'second' })] })
     expect(canvas.nodes).toHaveLength(2)
     expect(canvas.nodes[0]).toMatchObject({ id: 'a', text: 'first' })
     expect(canvas.nodes[1]).toMatchObject({ text: 'second' })
@@ -159,73 +152,40 @@ describe('reading a canvas somebody else wrote', () => {
   })
 
   test('drops an edge that names a node the canvas does not hold', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 10, height: 10, text: '' }],
-        edges: [
-          { id: 'e', fromNode: 'a', toNode: 'gone' },
-          { id: 'f', fromNode: 'a', toNode: 'a' },
-        ],
-      }),
-    )
-
-    expect(canvas.edges.map((edge) => edge.id)).toEqual(['f'])
+    const edges = [
+      { id: 'e', fromNode: 'a', toNode: 'gone' },
+      { id: 'f', fromNode: 'a', toNode: 'a' },
+    ]
+    expect(read({ nodes: [card('a')], edges }).edges.map((edge) => edge.id)).toEqual(['f'])
   })
 
   test('drops a side, an end or a background style it has never heard of', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [
-          { id: 'a', type: 'text', x: 0, y: 0, width: 10, height: 10, text: '' },
-          {
-            id: 'g',
-            type: 'group',
-            x: 0,
-            y: 0,
-            width: 10,
-            height: 10,
-            backgroundStyle: 'stretched',
-          },
-        ],
-        edges: [{ id: 'e', fromNode: 'a', toNode: 'a', fromSide: 'sideways', toEnd: 'circle' }],
-      }),
-    )
-
+    const canvas = read({
+      nodes: [
+        card('a'),
+        card('g', { type: 'group', text: undefined, backgroundStyle: 'stretched' }),
+      ],
+      edges: [{ id: 'e', fromNode: 'a', toNode: 'a', fromSide: 'sideways', toEnd: 'circle' }],
+    })
     expect(canvas.nodes[1]).not.toHaveProperty('backgroundStyle')
     expect(canvas.edges[0]).not.toHaveProperty('fromSide')
     expect(canvas.edges[0]).not.toHaveProperty('toEnd')
   })
 
   test('drops a colour that is neither a preset nor a hex string', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [
-          { id: 'a', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '', color: 'red' },
-          { id: 'b', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '', color: '7' },
-          { id: 'c', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '', color: '#0f0' },
-        ],
-      }),
-    )
-
-    expect(canvas.nodes.map((node) => node.color)).toEqual([undefined, undefined, '#0f0'])
+    const nodes = ['red', '7', '#0f0'].map((color, at) => card(String(at), { color }))
+    expect(read({ nodes }).nodes.map((node) => node.color)).toEqual([undefined, undefined, '#0f0'])
   })
 
   test('drops a subpath that does not begin with a hash, as the spec says it must', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [
-          { id: 'a', type: 'file', x: 0, y: 0, width: 1, height: 1, file: 'a.md', subpath: 'Top' },
-        ],
-      }),
-    )
-
-    expect(canvas.nodes[0]).not.toHaveProperty('subpath')
+    const file = card('a', { type: 'file', text: undefined, file: 'a.md', subpath: 'Top' })
+    expect(read({ nodes: [file] }).nodes[0]).not.toHaveProperty('subpath')
   })
 })
 
 describe('writing a canvas', () => {
   test('writes only the fields the spec defines', () => {
-    const written = JSON.parse(writeCanvas(readCanvas(JSON.stringify(SPEC_EXAMPLE)))) as {
+    const written = JSON.parse(writeCanvas(read(SPEC_EXAMPLE))) as {
       nodes: Record<string, unknown>[]
       edges: Record<string, unknown>[]
     }
@@ -244,59 +204,28 @@ describe('writing a canvas', () => {
   })
 
   test('leaves out what is absent rather than writing it as null', () => {
-    const written = writeCanvas({
-      nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
-      edges: [],
-      ink: [],
-      at: {},
-      gone: {},
-    })
+    const written = writeCanvas({ ...EMPTY, nodes: [{ ...card('a'), type: 'text' }] })
 
     expect(written).not.toContain('color')
     expect(written).not.toContain('null')
   })
 
-  test('is read back as what went in', () => {
-    const canvas = readCanvas(JSON.stringify(SPEC_EXAMPLE))
+  test('is read back as what went in, byte for byte the same on its own output', () => {
+    const canvas = read(SPEC_EXAMPLE)
     expect(readCanvas(writeCanvas(canvas))).toEqual(canvas)
-  })
-
-  test('is byte for byte the same on its own output', () => {
-    const once = writeCanvas(readCanvas(JSON.stringify(SPEC_EXAMPLE)))
-    const twice = writeCanvas(readCanvas(once))
-
-    expect(twice).toBe(once)
+    expect(writeCanvas(readCanvas(writeCanvas(canvas)))).toBe(writeCanvas(canvas))
   })
 
   test('holds two empty lists before anybody has drawn on it', () => {
-    expect(readCanvas(blankCanvas())).toEqual({
-      nodes: [],
-      edges: [],
-      ink: [],
-      at: {},
-      gone: {},
-      icon: null,
-      iconColor: null,
-    })
+    expect(readCanvas(blankCanvas())).toEqual(EMPTY)
     expect(blankCanvas()).not.toContain('orden')
     expect(blankCanvas().endsWith('\n')).toBe(true)
   })
 
   test('keeps the order the nodes were in, which is the order they stack in', () => {
     const canvas: Canvas = {
-      nodes: ['c', 'a', 'b'].map((id) => ({
-        id,
-        type: 'text' as const,
-        x: 0,
-        y: 0,
-        width: 1,
-        height: 1,
-        text: '',
-      })),
-      edges: [],
-      ink: [],
-      at: {},
-      gone: {},
+      ...EMPTY,
+      nodes: ['c', 'a', 'b'].map((id) => ({ ...card(id), type: 'text' })),
     }
 
     expect(readCanvas(writeCanvas(canvas)).nodes.map((node) => node.id)).toEqual(['c', 'a', 'b'])
@@ -304,11 +233,8 @@ describe('writing a canvas', () => {
 })
 
 describe('a fresh id', () => {
-  test('is sixteen hex characters, which is what Obsidian writes', () => {
+  test('is sixteen hex characters, which is what Obsidian writes, and not the last one', () => {
     expect(freshId()).toMatch(/^[0-9a-f]{16}$/)
-  })
-
-  test('is not the last one', () => {
     const seen = new Set(Array.from({ length: 200 }, () => freshId()))
     expect(seen.size).toBe(200)
   })
@@ -394,27 +320,23 @@ describe('what Orden keeps beyond the spec', () => {
   })
 
   test('drops words that are not words, and writes none where there are none', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [],
-        orden: {
-          shapes: [
-            { id: 'a', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: 7 },
-            { id: 'b', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: '' },
-          ],
-        },
-      }),
-    )
+    const canvas = read({
+      nodes: [],
+      orden: {
+        shapes: [
+          { id: 'a', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: 7 },
+          { id: 'b', shape: 'rect', x: 0, y: 0, width: 1, height: 1, text: '' },
+        ],
+      },
+    })
 
     expect(canvas.nodes[0]).not.toHaveProperty('text')
     expect(canvas.nodes[1]).not.toHaveProperty('text')
   })
 
   test('a shape with no size falls back to the same box a card does', () => {
-    const canvas = readCanvas(
-      JSON.stringify({ nodes: [], orden: { shapes: [{ id: 'a', shape: 'rect', x: 0, y: 0 }] } }),
-    )
-    const card = readCanvas(JSON.stringify({ nodes: [{ id: 'b', type: 'text', text: 'hi' }] }))
+    const canvas = read({ nodes: [], orden: { shapes: [{ id: 'a', shape: 'rect', x: 0, y: 0 }] } })
+    const card = read({ nodes: [{ id: 'b', type: 'text', text: 'hi' }] })
 
     expect(canvas.nodes[0]?.width).toBe(card.nodes[0]?.width)
     expect(canvas.nodes[0]?.height).toBe(card.nodes[0]?.height)
@@ -427,27 +349,20 @@ describe('what Orden keeps beyond the spec', () => {
   })
 
   test('still opens a canvas whose orden block is nonsense', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 1, height: 1, text: '' }],
-        orden: 'what',
-      }),
-    )
+    const canvas = read({ nodes: [card('a')], orden: 'what' })
 
     expect(canvas.nodes).toHaveLength(1)
     expect(canvas.ink).toEqual([])
   })
 
   test('keeps a stroke of one point and drops a shape with no shape', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [],
-        orden: {
-          ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [1, 2, 0.5, 0, 0, 0] }],
-          shapes: [{ id: 'b', shape: 'blob', x: 0, y: 0, width: 1, height: 1 }],
-        },
-      }),
-    )
+    const canvas = read({
+      nodes: [],
+      orden: {
+        ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [1, 2, 0.5, 0, 0, 0] }],
+        shapes: [{ id: 'b', shape: 'blob', x: 0, y: 0, width: 1, height: 1 }],
+      },
+    })
 
     expect(canvas.ink.map((one) => one.points.length)).toEqual([1])
     expect(canvas.ink[0]?.points[0]).toEqual({
@@ -462,12 +377,10 @@ describe('what Orden keeps beyond the spec', () => {
   })
 
   test('drops a stroke with no points at all', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [],
-        orden: { ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [] }] },
-      }),
-    )
+    const canvas = read({
+      nodes: [],
+      orden: { ink: [{ id: 'a', tool: 'pen', color: '1', size: 2, points: [] }] },
+    })
 
     expect(canvas.ink).toEqual([])
   })
@@ -476,12 +389,7 @@ describe('what Orden keeps beyond the spec', () => {
     const theirs = JSON.parse(written) as { nodes: Record<string, unknown>[] }
     theirs.nodes.push({ id: 'new', type: 'text', x: 9, y: 9, width: 1, height: 1, text: 'theirs' })
 
-    expect(readCanvas(JSON.stringify(theirs)).nodes.map((node) => node.id)).toEqual([
-      'card',
-      'box',
-      'ray',
-      'new',
-    ])
+    expect(read(theirs).nodes.map((node) => node.id)).toEqual(['card', 'box', 'ray', 'new'])
   })
 })
 
@@ -564,13 +472,9 @@ describe('how translucent a stroke was drawn', () => {
 
 describe('a canvas from somewhere else', () => {
   test('brings a node from beyond the plane back onto it', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [
-          { id: 'a', type: 'text', x: 1e308, y: -1e308, width: 1e308, height: 5, text: 'far' },
-        ],
-      }),
-    )
+    const canvas = read({
+      nodes: [{ id: 'a', type: 'text', x: 1e308, y: -1e308, width: 1e308, height: 5, text: 'far' }],
+    })
 
     const [node] = canvas.nodes
     expect(node?.x).toBe(FURTHEST)
@@ -580,22 +484,20 @@ describe('a canvas from somewhere else', () => {
   })
 
   test('brings a stroke drawn beyond the plane back onto it', () => {
-    const canvas = readCanvas(
-      JSON.stringify({
-        nodes: [],
-        orden: {
-          ink: [
-            {
-              id: 'a',
-              tool: 'pen',
-              color: '1',
-              size: 1e308,
-              points: [1e308, -1e308, 400, 0, 0, 0, 2, 2, 0.5, 0, 0, 8],
-            },
-          ],
-        },
-      }),
-    )
+    const canvas = read({
+      nodes: [],
+      orden: {
+        ink: [
+          {
+            id: 'a',
+            tool: 'pen',
+            color: '1',
+            size: 1e308,
+            points: [1e308, -1e308, 400, 0, 0, 0, 2, 2, 0.5, 0, 0, 8],
+          },
+        ],
+      },
+    })
 
     const stroke = canvas.ink[0]
     expect(stroke?.points[0]).toMatchObject({ x: FURTHEST, y: -FURTHEST, pressure: 1 })
@@ -604,22 +506,20 @@ describe('a canvas from somewhere else', () => {
 
   test('drops a stroke colour that is neither a preset, a hex, nor the page ink', () => {
     const one = (color: unknown) =>
-      readCanvas(
-        JSON.stringify({
-          nodes: [],
-          orden: {
-            ink: [
-              {
-                id: 'a',
-                tool: 'pen',
-                color,
-                size: 2,
-                points: [0, 0, 0.5, 0, 0, 0, 1, 1, 0.5, 0, 0, 8],
-              },
-            ],
-          },
-        }),
-      ).ink[0]?.color
+      read({
+        nodes: [],
+        orden: {
+          ink: [
+            {
+              id: 'a',
+              tool: 'pen',
+              color,
+              size: 2,
+              points: [0, 0, 0.5, 0, 0, 0, 1, 1, 0.5, 0, 0, 8],
+            },
+          ],
+        },
+      }).ink[0]?.color
 
     expect(one('3')).toBe('3')
     expect(one('#abcdef')).toBe('#abcdef')
@@ -819,7 +719,7 @@ describe('writing a canvas a piece at a time', () => {
 
   test.each([
     ['an empty plane', readCanvas(blankCanvas())],
-    ['the spec example', readCanvas(JSON.stringify(SPEC_EXAMPLE))],
+    ['the spec example', read(SPEC_EXAMPLE)],
     ['a drawn plane', plane(3)],
     [
       'a plane with no icon colour and no times',

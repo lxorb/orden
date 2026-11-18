@@ -187,13 +187,11 @@ export function isNoteTarget(target: string): boolean {
 
 export const PDF_SIDECAR = '.highlights.json'
 
-export function isPdfTarget(target: string): boolean {
-  return /\.pdf$/i.test(target.trim())
-}
+const ending = (pattern: RegExp) => (target: string) => pattern.test(target.trim())
 
-export function isCanvasTarget(target: string): boolean {
-  return /\.canvas$/i.test(target.trim())
-}
+export const isPdfTarget = ending(/\.pdf$/i)
+
+export const isCanvasTarget = ending(/\.canvas$/i)
 
 export function isBaseTarget(target: string): boolean {
   return /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
@@ -211,52 +209,34 @@ export function isTermTarget(target: string | null): boolean {
   return target !== null && /\.term$/i.test(target)
 }
 
-export function isPagesTarget(target: string): boolean {
-  return /\.pages$/i.test(target.trim())
-}
+export const isPagesTarget = ending(/\.pages$/i)
 
-export function isWebTarget(target: string): boolean {
-  return /\.(url|webloc)$/i.test(target.trim())
-}
+export const isWebTarget = ending(/\.(url|webloc)$/i)
 
-const IMAGE = /\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i
+export const isImageTarget = ending(/\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i)
 
-export function isImageTarget(target: string): boolean {
-  return IMAGE.test(target.trim())
-}
+export const isAudioTarget = ending(/\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|weba)$/i)
 
-const AUDIO = /\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|weba)$/i
-
-const VIDEO = /\.(mp4|m4v|webm|mov|ogv|mkv|avi)$/i
-
-export function isAudioTarget(target: string): boolean {
-  return AUDIO.test(target.trim())
-}
-
-export function isVideoTarget(target: string): boolean {
-  return VIDEO.test(target.trim())
-}
+export const isVideoTarget = ending(/\.(mp4|m4v|webm|mov|ogv|mkv|avi)$/i)
 
 export type EmbedKind = 'image' | 'audio' | 'video' | 'pdf' | 'canvas' | 'base'
 
-export function embedKind(target: string): EmbedKind | null {
-  if (isImageTarget(target)) return 'image'
-  if (isVideoTarget(target)) return 'video'
-  if (isAudioTarget(target)) return 'audio'
-  if (isPdfTarget(target)) return 'pdf'
-  if (isCanvasTarget(target)) return 'canvas'
-  if (isBaseTarget(target)) return 'base'
+const EMBEDS: readonly [EmbedKind, (target: string) => boolean][] = [
+  ['image', isImageTarget],
+  ['video', isVideoTarget],
+  ['audio', isAudioTarget],
+  ['pdf', isPdfTarget],
+  ['canvas', isCanvasTarget],
+  ['base', isBaseTarget],
+]
 
-  return null
+export function embedKind(target: string): EmbedKind | null {
+  return EMBEDS.find(([, is]) => is(target))?.[0] ?? null
 }
 
 export function isTabFile(target: string): boolean {
-  return (
-    isPdfTarget(target) ||
-    isCanvasTarget(target) ||
-    isPagesTarget(target) ||
-    isWebTarget(target) ||
-    isBaseTarget(target)
+  return [isPdfTarget, isCanvasTarget, isPagesTarget, isWebTarget, isBaseTarget].some((is) =>
+    is(target),
   )
 }
 
@@ -445,27 +425,40 @@ function defined(line: string, offset: number, at: number, found: FoundLink[], l
   const written = said?.[2] ?? said?.[3]
   if (!said || written === undefined || (!loose && !isNoteTarget(written))) return
 
+  const open = line.indexOf('[')
+  const link = markdownFound(
+    written,
+    offset + line.indexOf(written, open + (said[1]?.length ?? 0) + 3),
+    {
+      alias: said[1] ?? null,
+      embed: false,
+      from: offset + open,
+      to: offset + line.trimEnd().length,
+      line: at,
+    },
+  )
+  if (link) found.push(link)
+}
+
+function markdownFound(
+  written: string,
+  targetFrom: number,
+  rest: Pick<FoundLink, 'alias' | 'embed' | 'from' | 'to' | 'line'>,
+): FoundLink | null {
   const hash = written.indexOf('#')
   const target = hash === -1 ? written : written.slice(0, hash)
   const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
-  if (!target && !fragment) return
-
-  const open = line.indexOf('[')
-  const targetFrom = offset + line.indexOf(written, open + (said[1]?.length ?? 0) + 3)
+  if (!target && !fragment) return null
   const block = fragment.startsWith('^') ? fragment.slice(1) : null
-  found.push({
+  return {
+    ...rest,
     target: decodeTarget(target),
     heading: block === null ? fragment || null : null,
     block,
-    alias: said[1] ?? null,
-    embed: false,
     kind: 'markdown',
-    from: offset + open,
-    to: offset + line.trimEnd().length,
     targetFrom,
     targetTo: targetFrom + target.length,
-    line: at,
-  })
+  }
 }
 
 function blanked(text: string, from: number, to: number): string {
@@ -626,31 +619,16 @@ function collect(
     const link = markdownLinkAt(line, open, ends, loose)
     if (!link) continue
 
-    const { written, writtenFrom, label } = link
     after ??= { label: link.labelTo, to: link.to }
-    if (!loose && !isNoteTarget(written)) continue
-
-    const hash = written.indexOf('#')
-    const target = hash === -1 ? written : written.slice(0, hash)
-    const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
-    if (!target && !fragment) continue
-
-    const targetFrom = offset + writtenFrom
-    const block = fragment.startsWith('^') ? fragment.slice(1) : null
-
-    found.push({
-      target: decodeTarget(target),
-      heading: block === null ? fragment || null : null,
-      block,
-      alias: label,
+    if (!loose && !isNoteTarget(link.written)) continue
+    const one = markdownFound(link.written, offset + link.writtenFrom, {
+      alias: link.label,
       embed,
-      kind: 'markdown',
       from,
       to: offset + link.to,
-      targetFrom,
-      targetTo: targetFrom + target.length,
       line: lineOf(open),
     })
+    if (one) found.push(one)
   }
 }
 
