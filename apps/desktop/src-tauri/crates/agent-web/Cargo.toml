@@ -13,7 +13,6 @@ workspace = true
 orden-agents = { path = "../agents" }
 orden-base = { path = "../base" }
 orden-documents = { path = "../documents" }
-orden-pty = { path = "../pty" }
 orden-web = { path = "../web" }
 tauri.workspace = true
 serde.workspace = true
@@ -22,6 +21,7 @@ base64.workspace = true
 png.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
+orden-pty = { path = "../pty" }
 windows = { workspace = true, features = [
   "Win32_Foundation",
   "Win32_System_ProcessStatus",

@@ -12,7 +12,6 @@ workspace = true
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 orden-base = { path = "../base" }
 orden-placement = { path = "../placement" }
-tauri-plugin-opener.workspace = true
 tauri-plugin-updater.workspace = true
 tauri.workspace = true
 serde.workspace = true
@@ -39,6 +38,7 @@ objc2-foundation.workspace = true
 objc2-app-kit.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
+tauri-plugin-opener.workspace = true
 windows-registry.workspace = true
 windows = { workspace = true, features = [
   "Win32_Devices_HumanInterfaceDevice",
