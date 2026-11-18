@@ -149,43 +149,28 @@ fn sealed(role: &str) -> bool {
 }
 
 fn pressable_role(role: &str) -> bool {
-    matches!(
-        role,
-        "button"
-            | "link"
-            | "menuitem"
-            | "menuItem"
-            | "tab"
-            | "checkbox"
-            | "radio"
-            | "switch"
-            | "option"
-            | "textbox"
-            | "combobox"
-            | "treeitem"
-            | "cell"
-            | "row"
-            | "listitem"
-            | "heading"
-            | "label"
-    )
+    [
+        "button", "link", "menuitem", "menuItem", "tab", "checkbox", "radio", "switch", "option",
+        "textbox", "combobox", "treeitem", "cell", "row", "listitem", "heading", "label",
+    ]
+    .contains(&role)
 }
 
 fn has_value(role: &str) -> bool {
-    matches!(
-        role,
-        "textbox"
-            | "searchbox"
-            | "combobox"
-            | "spinbutton"
-            | "slider"
-            | "textField"
-            | "date"
-            | "dateTime"
-            | "inputTime"
-            | "time"
-            | "colorWell"
-    )
+    [
+        "textbox",
+        "searchbox",
+        "combobox",
+        "spinbutton",
+        "slider",
+        "textField",
+        "date",
+        "dateTime",
+        "inputTime",
+        "time",
+        "colorWell",
+    ]
+    .contains(&role)
 }
 
 fn quoted(name: &str) -> String {

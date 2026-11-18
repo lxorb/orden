@@ -557,28 +557,15 @@ pub fn labels() -> Vec<String> {
         .unwrap_or_default()
 }
 
-const EVENTS: [&str; 20] = [
-    "Network.requestWillBeSent",
-    "Network.responseReceived",
-    "Network.loadingFinished",
-    "Network.loadingFailed",
-    "Runtime.consoleAPICalled",
-    "Runtime.exceptionThrown",
-    "Runtime.executionContextCreated",
-    "Runtime.executionContextDestroyed",
-    "Runtime.executionContextsCleared",
-    "Log.entryAdded",
-    "Page.fileChooserOpened",
-    "Target.attachedToTarget",
-    "Target.targetInfoChanged",
-    "Page.frameNavigated",
-    "Page.frameAttached",
-    "Page.frameDetached",
-    "Page.frameStartedNavigating",
-    "Page.loadEventFired",
-    "Input.dragIntercepted",
-    "Target.detachedFromTarget",
-];
+const EVENTS: &str = concat!(
+    "Network.requestWillBeSent|Network.responseReceived|Network.loadingFinished",
+    "|Network.loadingFailed|Runtime.consoleAPICalled|Runtime.exceptionThrown",
+    "|Runtime.executionContextCreated|Runtime.executionContextDestroyed",
+    "|Runtime.executionContextsCleared|Log.entryAdded|Page.fileChooserOpened",
+    "|Target.attachedToTarget|Target.targetInfoChanged|Page.frameNavigated|Page.frameAttached",
+    "|Page.frameDetached|Page.frameStartedNavigating|Page.loadEventFired",
+    "|Input.dragIntercepted|Target.detachedFromTarget",
+);
 
 pub fn follow_view(view: &View, label: &str) {
     {
@@ -587,7 +574,7 @@ pub fn follow_view(view: &View, label: &str) {
             return;
         }
         let hearing = move |method: &str, session: Option<&str>, params: &Value| {
-            if EVENTS.contains(&method) {
+            if EVENTS.split('|').any(|one| one == method) {
                 let mut held = page.held();
                 heard_event(
                     &mut held,
