@@ -8,8 +8,6 @@ import {
 } from '../../../sync-server/src/api'
 import { fits, writeColumn } from './columns'
 import { atLeast, spaceOf } from './space'
-import { deviceOf } from '../sync2/device'
-import { v1Wrote } from '../sync2/maps'
 
 const MOST_GROUPS = 6
 const LONGEST_QUERY = 200
@@ -159,7 +157,6 @@ spaceGraph.put('/:id/graph', atLeast('write'), async (context) => {
   }
 
   await writeColumn(context.env, 'graph', space.id, written)
-  await v1Wrote(context.env, space, 'graph', kept, await deviceOf(context))
 
   return context.json({ graph: kept })
 })

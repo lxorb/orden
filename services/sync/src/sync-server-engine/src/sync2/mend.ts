@@ -14,7 +14,6 @@ import {
 } from '../../../sync-server/src/api'
 import { noteKey } from '../notes'
 import { ingestInto } from '../rooms'
-import { reproject } from './maps'
 import { applyOps } from './ops'
 import { DOCUMENT_KINDS } from './tree'
 
@@ -302,7 +301,6 @@ async function mendSpace(env: Env, space: Reached, later: Later): Promise<Mendin
   const owner = { ...space, role: 'owner' as const }
   const done = await applyOps(env, owner, space.user_id, MENDER, mender.ops)
   if (done.changed) {
-    await reproject(env, space.id, done.tree)
     await pokeSpace(env, later, space.id, done.cursor, MENDER)
   }
   mender.done.protected = await protectLikewise(env, space.user_id, space.id, mender.guarded)
