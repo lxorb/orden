@@ -1,5 +1,4 @@
 {
-  "known": "#2201: on Windows CEF the engine's own work sometimes stops partway through a run, and from then on no agent page is built",
   "proves": "an element inside a frame from another site, which runs in a process of its own, is in the snapshot with a frame ref and is pressed as trusted input",
   "steps": [
     {

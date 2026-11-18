@@ -1,5 +1,4 @@
 {
-  "known": "#2201: on Windows CEF the engine's own work sometimes stops partway through a run, and from then on no agent page is built",
   "proves": "an agent starts a helper on the reader's AI account and gets its answer back, the same through orden mcp as through the endpoint, and a model nobody offers is refused with the ones there are",
   "grant": {
     "sites": {
