@@ -67,34 +67,27 @@ describe('what a theme may declare', () => {
 
 describe('what a theme may not', () => {
   test.each([
-    ['a kind nobody has heard of', 'colour-wheel "Glow" #fff'],
-    ['nothing at all', ''],
-    ['a range with no numbers in it', 'range "Blur" low high middle'],
-    ['a range that starts outside itself', 'range "Blur" 0 40 90 px'],
-    ['a range that runs backwards', 'range "Blur" 40 0 20 px'],
-    ['a unit that is not a length', 'range "Blur" 0 40 18 furlongs'],
-    ['a range with something extra on the end', 'range "Blur" 0 40 18 px please'],
-    ['a switch that is neither on nor off', 'switch "Paper" maybe'],
-    ['a choice with an option missing its value', 'choice "Depth" "Flat" 0 "Deep"'],
-    ['a choice with no options at all', 'choice "Depth"'],
-    ['a colour that is not one', 'colour "Glow" "Violet" rebeccapurple'],
-    ['a quote left open', 'range "Blur 0 40 18 px'],
-  ])('refuses %s', (_what, spec) => {
-    expect(settingOf('thing', spec)).toBeNull()
-  })
-
-  test('refuses an id that is not a word', () => {
-    expect(settingOf('Blur!', 'range "Blur" 0 40 18 px')).toBeNull()
-  })
-
-  test('refuses a label long enough to be a sentence', () => {
-    const long = `range "${'a'.repeat(25)}" 0 40 18 px`
-    expect(settingOf('blur', long)).toBeNull()
-  })
-
-  test('refuses a list longer than a row of controls', () => {
-    const many = Array.from({ length: 13 }, (_one, at) => `"O${at}" ${at}`).join(' ')
-    expect(settingOf('depth', `choice "Depth" ${many}`)).toBeNull()
+    ['a kind nobody has heard of', 'thing', 'colour-wheel "Glow" #fff'],
+    ['nothing at all', 'thing', ''],
+    ['a range with no numbers in it', 'thing', 'range "Blur" low high middle'],
+    ['a range that starts outside itself', 'thing', 'range "Blur" 0 40 90 px'],
+    ['a range that runs backwards', 'thing', 'range "Blur" 40 0 20 px'],
+    ['a unit that is not a length', 'thing', 'range "Blur" 0 40 18 furlongs'],
+    ['a range with something extra on the end', 'thing', 'range "Blur" 0 40 18 px please'],
+    ['a switch that is neither on nor off', 'thing', 'switch "Paper" maybe'],
+    ['a choice with an option missing its value', 'thing', 'choice "Depth" "Flat" 0 "Deep"'],
+    ['a choice with no options at all', 'thing', 'choice "Depth"'],
+    ['a colour that is not one', 'thing', 'colour "Glow" "Violet" rebeccapurple'],
+    ['a quote left open', 'thing', 'range "Blur 0 40 18 px'],
+    ['an id that is not a word', 'Blur!', 'range "Blur" 0 40 18 px'],
+    ['a label long enough to be a sentence', 'blur', `range "${'a'.repeat(25)}" 0 40 18 px`],
+    [
+      'a list longer than a row of controls',
+      'depth',
+      `choice "Depth" ${Array.from({ length: 13 }, (_one, at) => `"O${at}" ${at}`).join(' ')}`,
+    ],
+  ])('refuses %s', (_what, id, spec) => {
+    expect(settingOf(id, spec)).toBeNull()
   })
 
   test('and writes one property, named after itself, whatever it was handed', () => {
