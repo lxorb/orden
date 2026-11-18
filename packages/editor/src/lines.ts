@@ -135,8 +135,27 @@ function runAround(state: EditorState, number: number): Run {
   return { first, last }
 }
 
+function propertiesIn(state: EditorState, lines: Lines, rows: Lines): Run {
+  let anchor = lines.first
+  for (let at = lines.first; at <= lines.last; at++) {
+    const text = state.doc.line(at).text
+    if (text.trim() !== '' && yamlLevel(text) < yamlLevel(state.doc.line(anchor).text)) anchor = at
+  }
+  const run = propertyRun(state, anchor, rows)
+  const items = (run.items ?? []).filter(
+    (item) => item.last >= lines.first && item.first <= lines.last,
+  )
+  const [top, bottom] = [items[0], items.at(-1)]
+  if (!top || !bottom || lines.last > run.last) return lines
+  return { first: top.first, last: bottom.last, items }
+}
+
 function itemsIn(state: EditorState, lines: Lines): Run {
   const line = state.doc.line(lines.first)
+  const rows = verbatimRows(state, line)
+  if (rows && verbatimBlockAt(state, line)?.name === 'FrontMatter' && lines.last <= rows.last) {
+    return propertiesIn(state, lines, rows)
+  }
   const list = verbatimRows(state, line) || blank(line) ? null : listAround(state, line)
   if (!list?.items || lines.last > list.last) return lines
   const items = list.items.filter((item) => item.last >= lines.first && item.first <= lines.last)
