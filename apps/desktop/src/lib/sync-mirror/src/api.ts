@@ -2,13 +2,13 @@ export { type Answer, type Clash, type ConflictRule, conflictRule, DEFAULT_RULE 
 export {
   type Mirror,
   MIRRORS_KEY,
+  mirrorsFor,
   type Moving,
   newMirror,
   readMirror,
   savedRecord,
   type Tracked,
   type Untold,
-  within,
 } from './mirror'
 export type { Joined, Waiting } from './pass'
 export { record } from './record.svelte'

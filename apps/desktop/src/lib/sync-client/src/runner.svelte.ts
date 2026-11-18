@@ -12,7 +12,7 @@ import {
   type Said,
   windows,
 } from '../../platform/src/api'
-import { notePass, readMirror, type Mirror } from '../../sync-mirror/src/api'
+import { MIRRORS_KEY, mirrorsFor, notePass } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
 import { isRecord } from './shape'
 import { calledAlso, revived } from './revived'
@@ -99,27 +99,18 @@ const NUDGE = 2_000
 const FALLBACK = 30_000
 const HIDDEN_FALLBACK = 5 * 60_000
 
-const MIRRORS = 'orden:mirrors'
-
 const FIRST = 'first:'
 
 function v1Spaces(accountId: string): Map<string, V1Space> {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once by the first pass; nothing renders from it
   const out = new Map<string, V1Space>()
-  const saved = stored(MIRRORS)
-  if (!isRecord(saved)) return out
-  if (typeof saved.account === 'string' && saved.account !== accountId) return out
-  const held = isRecord(saved.mirrors) ? saved.mirrors : saved
-  for (const [root, one] of Object.entries(held)) {
-    const mirror: Mirror | null = readMirror(root, one)
-    if (mirror) {
-      out.set(mirror.spaceId, {
-        cursor: mirror.cursor,
-        notes: mirror.notes,
-        ...(mirror.moving ? { moving: mirror.moving } : {}),
-        ...(mirror.untold ? { untold: mirror.untold } : {}),
-      })
-    }
+  for (const mirror of Object.values(mirrorsFor(stored(MIRRORS_KEY), accountId))) {
+    out.set(mirror.spaceId, {
+      cursor: mirror.cursor,
+      notes: mirror.notes,
+      ...(mirror.moving ? { moving: mirror.moving } : {}),
+      ...(mirror.untold ? { untold: mirror.untold } : {}),
+    })
   }
   return out
 }
@@ -584,7 +575,7 @@ class Runner {
       )
       const done = new Set([...kept].filter((id) => !gone.has(id)))
       const mirrors = await this.mirrorsNow(engine, user.id, listings, done, gone)
-      back = keepJson(MIRRORS, { account: user.id, seen: true, mirrors })
+      back = keepJson(MIRRORS_KEY, { account: user.id, seen: true, mirrors })
       return back
     } catch (error) {
       log('warn', `sync: the way back to v1 waits - ${String(error)}`)
@@ -634,13 +625,8 @@ class Runner {
     gone: ReadonlySet<string> = new Set(),
   ): Promise<Record<string, unknown>> {
     const out: Record<string, unknown> = {}
-    const saved = stored(MIRRORS)
-    if (isRecord(saved) && (typeof saved.account !== 'string' || saved.account === accountId)) {
-      const held = isRecord(saved.mirrors) ? saved.mirrors : saved
-      for (const [root, one] of Object.entries(held)) {
-        const mirror = readMirror(root, one)
-        if (mirror && !done.has(mirror.spaceId) && !gone.has(mirror.spaceId)) out[root] = one
-      }
+    for (const [root, mirror] of Object.entries(mirrorsFor(stored(MIRRORS_KEY), accountId))) {
+      if (!done.has(mirror.spaceId) && !gone.has(mirror.spaceId)) out[root] = mirror
     }
     return { ...out, ...(await mirrorsFrom(engine.core, listings, (id) => done.has(id))) }
   }
@@ -689,7 +675,7 @@ class Runner {
       try {
         const done = await this.kept(engine)
         const mirrors = done.size ? await this.mirrorsNow(engine, accountId, null, done) : null
-        if (mirrors) keepJson(MIRRORS, { account: accountId, seen: true, mirrors })
+        if (mirrors) keepJson(MIRRORS_KEY, { account: accountId, seen: true, mirrors })
       } catch (error) {
         log('warn', `sync: signing out kept no mirrors - ${String(error)}`)
       }
@@ -973,7 +959,7 @@ class Runner {
       const paired = pairing.pairs()
       const local = workspace().spaces.map((space) => space.root)
       const remote = account().spaces.map((space) => ({ id: space.id, role: space.role }))
-      for (const one of pairsFromV1(stored(MIRRORS), this.accountId, local, remote, paired)) {
+      for (const one of pairsFromV1(stored(MIRRORS_KEY), this.accountId, local, remote, paired)) {
         changes.push(...core.addSpace(one.spaceId, one.root, one.role))
       }
     }

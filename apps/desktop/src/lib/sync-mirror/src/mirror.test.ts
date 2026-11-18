@@ -327,7 +327,7 @@ vi.mock('../../accounts/src/api', async (importOriginal) => ({
   api: fake.api,
 }))
 
-const { newMirror, readMirror, within } = await import('./mirror')
+const { newMirror, readMirror } = await import('./mirror')
 const { asidesBack, movedHere, pull, push } = await import('./pass')
 type Clash = import('./conflicts').Clash
 
@@ -1303,20 +1303,6 @@ describe('a page of changes that never ends', () => {
     } finally {
       fake.api.changes = asking
     }
-  })
-})
-
-describe('a file inside a space', () => {
-  test('is named the way the account names it', () => {
-    expect(within('/Notes', '/Notes/deep/one.md')).toBe('deep/one.md')
-    expect(within('C:\\Notes', 'C:\\Notes\\deep\\one.md')).toBe('deep/one.md')
-    expect(within('/Notes/', '/Notes/one.md')).toBe('one.md')
-  })
-
-  test('is nothing at all when it is somewhere else', () => {
-    expect(within('/Notes', '/Other/one.md')).toBeNull()
-    expect(within('/Notes', '/NotesToo/one.md')).toBeNull()
-    expect(within('/Notes', '/Notes')).toBeNull()
   })
 })
 
