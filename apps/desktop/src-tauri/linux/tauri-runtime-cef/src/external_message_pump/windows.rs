@@ -20,8 +20,10 @@ use windows::{
   Win32::{
     Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM},
     System::LibraryLoader::GetModuleHandleW,
+    UI::Input::KeyboardAndMouse::GetCapture,
     UI::WindowsAndMessaging::{
-      CreateWindowExW, DefWindowProcW, DestroyWindow, GWLP_USERDATA, GetWindowLongPtrW,
+      CreateWindowExW, DefWindowProcW, DestroyWindow, GWLP_USERDATA, GetClassNameW,
+      GetWindowLongPtrW,
       HWND_MESSAGE, KillTimer, PostMessageW, RegisterClassExW, SetTimer, SetWindowLongPtrW,
       WINDOW_EX_STYLE, WM_TIMER, WM_USER, WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
     },
@@ -38,6 +40,21 @@ const K_CLASS_NAME: PCWSTR = w!("TauriCEFMainTargetHWND");
 const K_MSG_HAVE_WORK: u32 = WM_USER + 1;
 
 const TIMER_ID: usize = 1;
+
+const DRAG_CAPTURE: &str = "CLIPBRDWNDCLASS";
+
+pub(super) fn in_native_drag() -> bool {
+  let capture = unsafe { GetCapture() };
+  if capture.0.is_null() {
+    return false;
+  }
+  let mut name = [0u16; 32];
+  let length = unsafe { GetClassNameW(capture, &mut name) };
+  usize::try_from(length)
+    .ok()
+    .and_then(|length| name.get(..length))
+    .is_some_and(|name| String::from_utf16_lossy(name) == DRAG_CAPTURE)
+}
 
 pub(super) struct PlatformPump {
   // HWND owned by the thread that CefDoMessageLoopWork should be invoked on.
