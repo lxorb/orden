@@ -301,3 +301,27 @@ describe('the modules a drive loads from the dev server', () => {
     expect(gone).toEqual([])
   })
 })
+
+describe('the requests a drive holds or refuses', () => {
+  test('are routed on the context when the service worker fetches them', () => {
+    const SERVED = /\/assets\/|\/asset\/|:\/\/\[\^\/\]\+\//
+    const routed = drives.flatMap((name) => {
+      const text = read(E2E, name)
+      const named = new Map(
+        [...text.matchAll(/^\s*([A-Za-z_]+) = (?:re\.compile\()?r?["'](.*)["']/gm)].map((found) => [
+          caught(found),
+          caught(found, 2),
+        ]),
+      )
+      const blocked = text.includes('service_workers="block"')
+      return [...text.matchAll(/\b(\w+)\.route\(\s*([^,]+),/g)]
+        .filter((found) => caught(found) !== 'context' && !blocked)
+        .filter((found) => {
+          const said = caught(found, 2)
+          return SERVED.test(said) || SERVED.test(named.get(said.trim()) ?? '')
+        })
+        .map((found) => `${name}: ${found[0]}`)
+    })
+    expect(routed).toEqual([])
+  })
+})

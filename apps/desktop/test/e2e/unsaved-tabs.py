@@ -35,7 +35,7 @@ def late(page: Page) -> None:
         page.wait_for_timeout(LATE)
         route.continue_()
 
-    page.route("**/assets/carrying-*.js", held)
+    page.context.route("**/assets/carrying-*.js", held)
 
 def typed(page: Page, words: str) -> None:
     page.evaluate("() => window.ordenApp.workspace.openBlank()")
