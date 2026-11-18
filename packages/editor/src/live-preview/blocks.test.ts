@@ -30,11 +30,10 @@ function afterMove(doc: string, from: number, to: number) {
   return { was, is: now.field(blockDecorations) }
 }
 
-function spans(doc: string, cursor = 0): string[] {
-  return state(doc, cursor)
+const spans = (doc: string, cursor = 0): string[] =>
+  state(doc, cursor)
     .field(blockDecorations)
     .spans.map((span) => doc.slice(span.from, span.to))
-}
 
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |'
 const PROSE = 'one **two** three [four](five) `six`\n\nseven eight nine\n\n'
@@ -222,9 +221,8 @@ describe('a caret put where a block is drawn', () => {
       const doc = `intro\n\n${block}\n\n# One\n\ntail\n`
       const from = doc.indexOf(block)
 
-      for (let at = from; at <= from + block.length; at++) {
+      for (let at = from; at <= from + block.length; at++)
         expect(overCaret(doc, at), `${what} at ${at - from}`).toEqual([])
-      }
     })
 
     test(`${what} is drawn again once the caret is off its lines`, () => {

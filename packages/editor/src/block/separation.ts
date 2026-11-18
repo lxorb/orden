@@ -10,15 +10,10 @@ export interface Side {
   moving: boolean
 }
 
-export function indentOf(text: string): number {
-  return text.length - text.trimStart().length
-}
+export const indentOf = (text: string): number => text.length - text.trimStart().length
 
-export function itemsAround(state: EditorState, pos: number): SyntaxNode[] {
-  return [...enclosing(syntaxTree(state).resolveInner(pos, -1))].filter(
-    (node) => node.name === 'ListItem',
-  )
-}
+export const itemsAround = (state: EditorState, pos: number): SyntaxNode[] =>
+  [...enclosing(syntaxTree(state).resolveInner(pos, -1))].filter((node) => node.name === 'ListItem')
 
 function itemStarting(state: EditorState, line: Line): SyntaxNode | null {
   let found: SyntaxNode | null = null
@@ -31,13 +26,19 @@ function itemStarting(state: EditorState, line: Line): SyntaxNode | null {
   return found
 }
 
-export function above(state: EditorState, line: Line): Side {
-  return { items: itemsAround(state, line.to), item: null, indent: 0, moving: false }
-}
+export const above = (state: EditorState, line: Line): Side => ({
+  items: itemsAround(state, line.to),
+  item: null,
+  indent: 0,
+  moving: false,
+})
 
-export function below(state: EditorState, line: Line, indent = indentOf(line.text)): Side {
-  return { items: [], item: itemStarting(state, line), indent, moving: false }
-}
+export const below = (state: EditorState, line: Line, indent = indentOf(line.text)): Side => ({
+  items: [],
+  item: itemStarting(state, line),
+  indent,
+  moving: false,
+})
 
 function markerOf(state: EditorState, item: SyntaxNode): { number: number | null; tail: string } {
   const mark = item.getChild('ListMark')
@@ -78,9 +79,8 @@ function listAt(state: EditorState, items: SyntaxNode[], indent: number): Syntax
   return item?.parent ?? null
 }
 
-function blank(existing: string | null): string {
-  return existing !== null && existing.split('\n').length > 2 ? existing : '\n\n'
-}
+const blank = (existing: string | null): string =>
+  existing !== null && existing.split('\n').length > 2 ? existing : '\n\n'
 
 export function gap(state: EditorState, upper: Side, lower: Side, existing: string | null): string {
   if (!joins(state, upper, lower)) return blank(existing)

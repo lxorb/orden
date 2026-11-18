@@ -230,6 +230,4 @@ function build(view: EditorView): DecorationSet {
   return Decoration.set(marks, true)
 }
 
-export function blockHandles(): Extension {
-  return [carrying, handles]
-}
+export const blockHandles = (): Extension => [carrying, handles]

@@ -57,8 +57,7 @@ describe('highlighting a graphql fence', () => {
   })
 
   test('always moves forward, whatever it is given', () => {
-    for (const line of ['', '   ', '{}', '$', '@', '...', '"""', '"unclosed', '「」']) {
+    for (const line of ['', '   ', '{}', '$', '@', '...', '"""', '"unclosed', '「」'])
       expect(() => tokens(line)).not.toThrow()
-    }
   })
 })

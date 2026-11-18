@@ -6,12 +6,12 @@ import { ViewUpdate } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { GROWS_AT_MOST, measuredGrowth } from '../../../scripts/growth'
 
-function seeded(seed: number): () => number {
-  return () => {
+const seeded =
+  (seed: number): (() => number) =>
+  () => {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff
     return seed / 0x80000000
   }
-}
 
 function edits(count: number, random: () => number): Transaction[] {
   let state = EditorState.create({ doc: 'abc\n'.repeat(400) })

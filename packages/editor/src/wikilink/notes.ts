@@ -65,21 +65,16 @@ const setIndex = StateEffect.define<NoteIndex>()
 const indexField = StateField.define<NoteIndex>({
   create: () => EMPTY,
   update(value, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(setIndex)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(setIndex)) return effect.value
     return value
   },
   provide: (field) => noteIndex.from(field),
 })
 
-export function noteIndexExtension(index: NoteIndex | undefined): Extension {
-  return indexField.init(() => index ?? EMPTY)
-}
+export const noteIndexExtension = (index: NoteIndex | undefined): Extension =>
+  indexField.init(() => index ?? EMPTY)
 
-export function noteIndexEffect(index: NoteIndex): StateEffect<unknown> {
-  return setIndex.of(index)
-}
+export const noteIndexEffect = (index: NoteIndex): StateEffect<unknown> => setIndex.of(index)
 
 export function setNoteIndex(view: EditorView, index: NoteIndex) {
   view.dispatch({ effects: setIndex.of(index) })
@@ -137,9 +132,7 @@ export function fuzzy(text: string, needle: string): boolean {
 
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
-function comparable(path: string): string {
-  return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
-}
+const comparable = (path: string): string => foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 
 function folderOf(path: string): string {
   const at = path.replace(/\\/g, '/').lastIndexOf('/')
@@ -182,9 +175,8 @@ function lookupOf(notes: readonly NoteRef[]): Lookup {
     const path = comparable(note.path)
     filed(made.paths, path, note)
     filed(made.ends, path, note)
-    for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1)) {
+    for (let at = path.indexOf('/'); at !== -1; at = path.indexOf('/', at + 1))
       filed(made.ends, path.slice(at + 1), note)
-    }
     for (const alias of note.aliases) filed(made.aliases, comparable(alias), note)
   }
   lookups.set(notes, made)
@@ -246,9 +238,8 @@ export function resolveRelative(index: NoteIndex, target: string): NoteRef | nul
   return resolveNote(index, `/${target}`) ?? resolveNote(index, target)
 }
 
-function freelyWritten(target: string): boolean {
-  return !/^\.{1,2}(?:[/\\]|$)/.test(target.trim()) && !/^[/\\]/.test(target.trim())
-}
+const freelyWritten = (target: string): boolean =>
+  !/^\.{1,2}(?:[/\\]|$)/.test(target.trim()) && !/^[/\\]/.test(target.trim())
 
 function relativeParts(index: NoteIndex, target: string): string[] {
   const written = target.replace(/\\/g, '/')

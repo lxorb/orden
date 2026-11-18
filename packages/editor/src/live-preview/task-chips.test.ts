@@ -12,15 +12,14 @@ beforeAll(async () => {
   await loadTaskChips()
 })
 
-function stateOf(doc: string, cursor: number) {
-  return parsed(
+const stateOf = (doc: string, cursor: number) =>
+  parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-}
 
 function hidden(state: EditorState): string[] {
   const out: string[] = []

@@ -35,9 +35,8 @@ export function alignedColumn(
   }
 }
 
-function afterRemoval(index: number, removed: number, left: number): number {
-  return Math.min(index > removed ? index - 1 : index, left - 1)
-}
+const afterRemoval = (index: number, removed: number, left: number): number =>
+  Math.min(index > removed ? index - 1 : index, left - 1)
 
 export function movedColumn(
   base: TableModel,
@@ -58,12 +57,10 @@ export function movedColumn(
   }
 }
 
-export function insertedColumn(base: TableModel, after: number): Edit {
-  return {
-    next: insertColumn(base, after + 1),
-    focus: { at: { row: -1, column: after + 1 }, offset: 0 },
-  }
-}
+export const insertedColumn = (base: TableModel, after: number): Edit => ({
+  next: insertColumn(base, after + 1),
+  focus: { at: { row: -1, column: after + 1 }, offset: 0 },
+})
 
 export function removedColumn(base: TableModel, column: number, focused: Focus | undefined): Edit {
   const next = removeColumn(base, column)
@@ -123,9 +120,10 @@ export function movedRow(
   }
 }
 
-export function insertedRow(base: TableModel, after: number, column = 0): Edit {
-  return { next: insertRow(base, after + 1), focus: { at: { row: after + 1, column }, offset: 0 } }
-}
+export const insertedRow = (base: TableModel, after: number, column = 0): Edit => ({
+  next: insertRow(base, after + 1),
+  focus: { at: { row: after + 1, column }, offset: 0 },
+})
 
 export function removedRow(base: TableModel, row: number, focused: Focus | undefined): Edit {
   const next = removeRow(base, row)

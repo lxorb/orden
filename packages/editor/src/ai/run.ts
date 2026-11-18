@@ -119,25 +119,20 @@ export interface AiView {
   dispatch: (spec: TransactionSpec) => void
 }
 
-export function askingAt(state: EditorState, from: number): boolean {
-  return (state.field(asks, false) ?? []).some((run) => run.from === from)
-}
+export const askingAt = (state: EditorState, from: number): boolean =>
+  (state.field(asks, false) ?? []).some((run) => run.from === from)
 
 export function stopAskAt(view: AiView, from: number) {
-  for (const run of view.state.field(asks, false) ?? []) {
-    if (run.from === from) run.stop()
-  }
+  for (const run of view.state.field(asks, false) ?? []) if (run.from === from) run.stop()
 }
 
-export function asksMoved(before: EditorState, after: EditorState): boolean {
-  return before.field(asks, false) !== after.field(asks, false)
-}
+export const asksMoved = (before: EditorState, after: EditorState): boolean =>
+  before.field(asks, false) !== after.field(asks, false)
 
 let counter = 0
 
-function runOf(state: EditorState, id: number): AiRun | null {
-  return (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
-}
+const runOf = (state: EditorState, id: number): AiRun | null =>
+  (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
 
 function holderOf(view: AiView, note: SharedDoc | null, id: number): AiView | null {
   if (runOf(view.state, id)) return view

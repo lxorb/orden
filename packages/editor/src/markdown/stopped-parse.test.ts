@@ -65,12 +65,11 @@ function innerAt(state: EditorState, tree: Tree, needle: string): string {
   return tree.resolveInner(at, 1).name
 }
 
-function paragraph(lines: number, tags: boolean): string {
-  return Array.from(
+const paragraph = (lines: number, tags: boolean): string =>
+  Array.from(
     { length: lines },
     (_, i) => `word ${i} and *more* \`x\` text${tags && i % 50 === 7 ? ` <b>t${i}</b>` : ''} here`,
   ).join('\n')
-}
 
 const cases = {
   'in the middle, with tags': (body: string) =>
@@ -101,9 +100,8 @@ describe('a long paragraph typed into', () => {
         .parse(state.doc.toString())
       expect(shape(tree)).toBe(shape(fresh))
       const text = state.doc.toString()
-      for (let at = text.indexOf('<b>'); at >= 0; at = text.indexOf('<b>', at + 1)) {
+      for (let at = text.indexOf('<b>'); at >= 0; at = text.indexOf('<b>', at + 1))
         expect(tree.resolveInner(at + 1, 1).name, `tag at ${at}`).toBe('TagName')
-      }
       expect(innerAt(state, tree, 'first')).toBe('VariableDefinition')
       if (doc.includes('second')) expect(innerAt(state, tree, 'second')).toBe('VariableDefinition')
       if (doc.includes('<b>')) expect(innerAt(state, tree, '<b>t1457')).toBe('TagName')
@@ -147,8 +145,7 @@ describe('a parse whose inner parses were stopped', () => {
 
     const tree = parser.parse(doc, TreeFragment.addTree(kept, [], false))
     const fresh = parser.parse(doc)
-    for (let at = 0; at < doc.length; at += 7) {
+    for (let at = 0; at < doc.length; at += 7)
       expect(tree.resolveInner(at, 1).name, `at ${at}`).toBe(fresh.resolveInner(at, 1).name)
-    }
   })
 })

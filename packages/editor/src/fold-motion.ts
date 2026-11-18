@@ -45,9 +45,8 @@ export function shuttingAt(state: EditorState, from: number, to: number): boolea
   return !!now?.ranges.some((range) => range.from >= from && range.from <= to)
 }
 
-export function shuttingChanged(update: ViewUpdate): boolean {
-  return update.startState.field(shutting, false) !== update.state.field(shutting, false)
-}
+export const shuttingChanged = (update: ViewUpdate): boolean =>
+  update.startState.field(shutting, false) !== update.state.field(shutting, false)
 
 export function stopShutting(view: EditorView): void {
   view.dispatch({ effects: stopShut.of(null) })
@@ -133,19 +132,20 @@ function boxesOf(view: EditorView, range: FoldRange): Move[] {
   return moves
 }
 
-function frame(room: Box, shown: number): Keyframe {
-  return { ...room, opacity: String(shown), overflow: 'hidden' }
-}
+const frame = (room: Box, shown: number): Keyframe => ({
+  ...room,
+  opacity: String(shown),
+  overflow: 'hidden',
+})
 
-function animate(moves: readonly Move[], out: boolean, ms: number, easing: string): Animation[] {
-  return moves.map(({ el, room }) =>
+const animate = (moves: readonly Move[], out: boolean, ms: number, easing: string): Animation[] =>
+  moves.map(({ el, room }) =>
     el.animate(out ? [frame(room, 1), frame(NO_ROOM, 0)] : [frame(NO_ROOM, 0), frame(room, 1)], {
       duration: ms,
       easing,
       fill: out ? 'both' : 'backwards',
     }),
   )
-}
 
 const running = ViewPlugin.fromClass(
   class {
@@ -248,6 +248,4 @@ export function openFolds(target: FoldTarget, ranges: readonly FoldRange[]): voi
     .catch(() => undefined)
 }
 
-export function foldMovement(): Extension {
-  return [shutting, running]
-}
+export const foldMovement = (): Extension => [shutting, running]

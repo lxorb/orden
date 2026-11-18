@@ -4,9 +4,8 @@ import { describe, expect, test } from 'vitest'
 import { editorState } from './editor'
 import { parsed } from '../test/parsed'
 
-function opened(doc: string): EditorState {
-  return parsed(editorState({ doc, selection: { anchor: doc.length } }))
-}
+const opened = (doc: string): EditorState =>
+  parsed(editorState({ doc, selection: { anchor: doc.length } }))
 
 function enterCommands(state: EditorState): StateCommand[] {
   const found = state
@@ -25,9 +24,8 @@ function pressEnter(doc: string, times: number): string {
 
   for (let press = 0; press < times; press++) {
     let next = state
-    for (const run of enterCommands(state)) {
+    for (const run of enterCommands(state))
       if (run({ state, dispatch: (transaction) => (next = transaction.state) })) break
-    }
     state = parsed(next)
   }
 

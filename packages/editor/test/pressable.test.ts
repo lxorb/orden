@@ -22,9 +22,7 @@ const files = sourceFiles(SOURCE).map((path) => ({
   text: readFileSync(path, 'utf8'),
 }))
 
-function outOfTheTabOrder(text: string): boolean {
-  return text.includes('tabIndex = -1')
-}
+const outOfTheTabOrder = (text: string): boolean => text.includes('tabIndex = -1')
 
 describe('a button the editor draws into a note', () => {
   test('the scan finds the files', () => {

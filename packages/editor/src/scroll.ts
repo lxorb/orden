@@ -6,13 +6,11 @@ export function topLine(view: EditorView): number {
   return view.lineBlockAtHeight(Math.max(0, top)).from
 }
 
-export function caretLine(view: EditorView): number {
-  return view.state.doc.lineAt(view.state.selection.main.head).number - 1
-}
+export const caretLine = (view: EditorView): number =>
+  view.state.doc.lineAt(view.state.selection.main.head).number - 1
 
-export function placeAt(pos: number): StateEffect<unknown> | null {
-  return pos > 0 ? EditorView.scrollIntoView(pos, { y: 'start' }) : null
-}
+export const placeAt = (pos: number): StateEffect<unknown> | null =>
+  pos > 0 ? EditorView.scrollIntoView(pos, { y: 'start' }) : null
 
 export function showLine(view: EditorView, pos: number) {
   const place = placeAt(

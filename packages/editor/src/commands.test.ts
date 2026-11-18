@@ -389,9 +389,8 @@ describe('over a range', () => {
   })
 
   test('the caret ticks no line that is not a task, and says so', () => {
-    for (const doc of ['just words', '- a bullet', '1. a number', '']) {
+    for (const doc of ['just words', '- a bullet', '1. a number', ''])
       expect(apply(tickTaskAtCaret, doc, doc.length), doc).toMatchObject({ took: false, doc })
-    }
     expect(apply(tickTaskAtCaret, '- [ ] one\n- [ ] two', 0, 19).took).toBe(false)
   })
 

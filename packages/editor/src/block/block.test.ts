@@ -37,9 +37,8 @@ function state(doc = NOTE): EditorState {
   )
 }
 
-function said(one: EditorState, span: BlockSpan | null): [string, string] | null {
-  return span ? [span.kind, one.doc.sliceString(span.from, span.to)] : null
-}
+const said = (one: EditorState, span: BlockSpan | null): [string, string] | null =>
+  span ? [span.kind, one.doc.sliceString(span.from, span.to)] : null
 
 function after(one: EditorState, edit: BlockEdit | null): string {
   if (!edit) throw new Error('nothing to apply')

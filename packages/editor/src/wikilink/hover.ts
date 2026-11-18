@@ -69,8 +69,9 @@ export const notePreviews = hoverTooltip(
   },
 )
 
-function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
-  return (view: EditorView): TooltipView => {
+const cardFor =
+  (link: LinkSpan, path: string | null, side: -1 | 1) =>
+  (view: EditorView): TooltipView => {
     const dom = document.createElement('div')
     dom.className = 'orden-note-preview'
 
@@ -170,7 +171,6 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
       },
     }
   }
-}
 
 function anchorOf(source: string, section: string): number {
   if (section === source) return 0

@@ -93,9 +93,7 @@ function applyEffect(panels: readonly RunPanel[], effect: StateEffect<unknown>):
     )
   }
 
-  if (effect.is(dropRun)) {
-    return panels.filter((panel) => panel.run !== effect.value)
-  }
+  if (effect.is(dropRun)) return panels.filter((panel) => panel.run !== effect.value)
 
   return null
 }
@@ -264,9 +262,7 @@ class RunPanelWidget extends OrdenWidget {
     const panel = this.panel
     if (panel.status === 'running') return 'Running…'
     if (panel.status === 'stopped') return 'Stopped'
-    if (panel.status === 'timeout') {
-      return `Timed out after ${Math.round(panel.elapsed / 1000)} s`
-    }
+    if (panel.status === 'timeout') return `Timed out after ${Math.round(panel.elapsed / 1000)} s`
     return ''
   }
 }

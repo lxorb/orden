@@ -10,6 +10,5 @@ export function unprintable(text: string): boolean {
   return true
 }
 
-export function refuseControlCharacters(): Extension {
-  return Prec.highest(EditorView.inputHandler.of((_view, _from, _to, typed) => unprintable(typed)))
-}
+export const refuseControlCharacters = (): Extension =>
+  Prec.highest(EditorView.inputHandler.of((_view, _from, _to, typed) => unprintable(typed)))

@@ -37,9 +37,7 @@ function itemOf(text: string): Item | null {
   }
 }
 
-function quoteOf(text: string): number {
-  return QUOTE.exec(text)?.[0].length ?? 0
-}
+const quoteOf = (text: string): number => QUOTE.exec(text)?.[0].length ?? 0
 
 function itemAbove(state: EditorState, number: number, depth: number): Item | null {
   for (let at = number - 1; at >= 1; at--) {
@@ -55,11 +53,8 @@ function itemAbove(state: EditorState, number: number, depth: number): Item | nu
   return null
 }
 
-function itemLines(state: EditorState): boolean {
-  return selectedLines(state).some(
-    (line) => itemOf(line.text) !== null && !inCode(state, line.from),
-  )
-}
+const itemLines = (state: EditorState): boolean =>
+  selectedLines(state).some((line) => itemOf(line.text) !== null && !inCode(state, line.from))
 
 function hanging(state: EditorState, line: Line, item: Item): Line[] {
   const held: Line[] = []
@@ -192,8 +187,9 @@ function tableAt(state: EditorState, at: number): { from: number; to: number } |
   return enclosingNamed(syntaxTree(state).resolveInner(at, 1), 'Table')
 }
 
-export function moveLineOver(delta: -1 | 1): StateCommand {
-  return (target) => {
+export const moveLineOver =
+  (delta: -1 | 1): StateCommand =>
+  (target) => {
     const { state, dispatch } = target
     const { doc } = state
     const library = delta < 0 ? moveLineUp : moveLineDown
@@ -230,4 +226,3 @@ export function moveLineOver(delta: -1 | 1): StateCommand {
     )
     return true
   }
-}

@@ -13,9 +13,13 @@ const TAGS: SpaceTag[] = [
   { tag: 'reading', notes: 4 },
 ]
 
-function index(tags: readonly SpaceTag[] = TAGS): NoteIndex {
-  return { notes: [], files: [], path: null, tags, read: () => Promise.resolve(null) }
-}
+const index = (tags: readonly SpaceTag[] = TAGS): NoteIndex => ({
+  notes: [],
+  files: [],
+  path: null,
+  tags,
+  read: () => Promise.resolve(null),
+})
 
 function state(doc: string, at: number, space = index()): EditorState {
   const built = EditorState.create({
@@ -30,13 +34,11 @@ function state(doc: string, at: number, space = index()): EditorState {
   return built.update({}).state
 }
 
-function rowsAt(doc: string, at = doc.length, space = index()): CompletionResult | null {
-  return tagCompletions(new CompletionContext(state(doc, at, space), at, false))
-}
+const rowsAt = (doc: string, at = doc.length, space = index()): CompletionResult | null =>
+  tagCompletions(new CompletionContext(state(doc, at, space), at, false))
 
-function labels(found: CompletionResult | null): string[] {
-  return (found?.options ?? []).map((one) => one.label)
-}
+const labels = (found: CompletionResult | null): string[] =>
+  (found?.options ?? []).map((one) => one.label)
 
 describe('a hash in the middle of a line', () => {
   test.each([

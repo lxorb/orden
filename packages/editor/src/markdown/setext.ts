@@ -57,8 +57,7 @@ export function setextEdits(text: string): SetextEdit[] {
 
 export function withoutSetext(text: string): string {
   let out = text
-  for (const edit of setextEdits(text).reverse()) {
+  for (const edit of setextEdits(text).reverse())
     out = out.slice(0, edit.from) + edit.insert + out.slice(edit.to)
-  }
   return out
 }

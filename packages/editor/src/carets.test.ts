@@ -15,13 +15,11 @@ import {
   sideFor,
 } from './carets'
 
-function stateOn(doc: string): EditorState {
-  return EditorState.create({ doc, extensions: [remoteCarets()] })
-}
+const stateOn = (doc: string): EditorState =>
+  EditorState.create({ doc, extensions: [remoteCarets()] })
 
-function withPeers(doc: string, peers: readonly Peer[]): EditorState {
-  return stateOn(doc).update({ effects: setPeers.of(peers) }).state
-}
+const withPeers = (doc: string, peers: readonly Peer[]): EditorState =>
+  stateOn(doc).update({ effects: setPeers.of(peers) }).state
 
 const MAC: Peer = { id: 1, name: 'Mac', colour: '#3584e4', head: 4, anchor: 4 }
 const PHONE: Peer = { id: 2, name: 'iPhone', colour: '#33c7ba', head: 9, anchor: 5 }
@@ -50,9 +48,7 @@ function marks(state: EditorState): { from: number; to: number; kind: string }[]
   return found.sort((one, two) => one.from - two.from || one.kind.localeCompare(two.kind))
 }
 
-function carets(state: EditorState): number[] {
-  return caretsAt(state).map((one) => one.head)
-}
+const carets = (state: EditorState): number[] => caretsAt(state).map((one) => one.head)
 
 function ranges(state: EditorState): { from: number; to: number }[] {
   return marks(state)

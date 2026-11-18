@@ -25,9 +25,8 @@ function quiet(state: EditorState, node: SyntaxNode): boolean {
   return node.name !== 'CodeMark' || node.parent?.name === 'InlineCode'
 }
 
-export function blockMarkRevealed(state: EditorState, node: SyntaxNode): boolean {
-  return !quiet(state, node) && lineRevealed(state, node.from)
-}
+export const blockMarkRevealed = (state: EditorState, node: SyntaxNode): boolean =>
+  !quiet(state, node) && lineRevealed(state, node.from)
 
 export function revealed(state: EditorState, node: SyntaxNode): boolean {
   if (quiet(state, node)) return false

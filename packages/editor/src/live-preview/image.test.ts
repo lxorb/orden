@@ -24,15 +24,14 @@ import {
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-function state(doc: string, selection: { anchor: number; head?: number } = { anchor: 0 }) {
-  return parsed(
+const state = (doc: string, selection: { anchor: number; head?: number } = { anchor: 0 }) =>
+  parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.single(selection.anchor, selection.head ?? selection.anchor),
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-}
 
 function run(command: StateCommand, from: EditorState): { anchor: number; head: number } | null {
   const states: EditorState[] = []

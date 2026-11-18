@@ -122,9 +122,8 @@ function buildLigatures(
   ranges?: readonly { from: number; to: number }[],
 ): DecorationSet {
   const out: Range<Decoration>[] = []
-  for (const one of ligaturesIn(state, ranges, scope)) {
+  for (const one of ligaturesIn(state, ranges, scope))
     out.push(markFor(one.glyph).range(one.from, one.to))
-  }
   return Decoration.set(out, true)
 }
 
@@ -140,9 +139,8 @@ export function ligatures(scope: Exclude<LigatureScope, 'off'>): Extension {
 
         update(update: ViewUpdate) {
           const reparsed = syntaxTree(update.state) !== syntaxTree(update.startState)
-          if (update.docChanged || update.viewportChanged || update.selectionSet || reparsed) {
+          if (update.docChanged || update.viewportChanged || update.selectionSet || reparsed)
             this.decorations = buildLigatures(update.view.state, scope, update.view.visibleRanges)
-          }
         }
       },
       { decorations: (plugin) => plugin.decorations },

@@ -24,9 +24,7 @@ export interface DocView {
 
 const onDocument = new WeakMap<DocView, SharedDoc>()
 
-export function documentOf(view: DocView): SharedDoc | null {
-  return onDocument.get(view) ?? null
-}
+export const documentOf = (view: DocView): SharedDoc | null => onDocument.get(view) ?? null
 
 export function later(
   view: DocView,
@@ -69,17 +67,14 @@ const setShared = StateEffect.define<SharedDoc | null>()
 const sharedField = StateField.define<SharedDoc | null>({
   create: () => null,
   update: (current, transaction) => {
-    for (const effect of transaction.effects) {
-      if (effect.is(setShared)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(setShared)) return effect.value
 
     return current
   },
 })
 
-export function sharedOf(state: EditorState): SharedDoc | null {
-  return state.field(sharedField, false) ?? null
-}
+export const sharedOf = (state: EditorState): SharedDoc | null =>
+  state.field(sharedField, false) ?? null
 
 interface Landing {
   view: DocView
@@ -148,8 +143,8 @@ const wholeCharacters = EditorState.transactionFilter.of((made) => {
   return mended.length ? [made, { changes: mended, sequential: true }] : made
 })
 
-function documentState(doc: string | Text): EditorState {
-  return EditorState.create({
+const documentState = (doc: string | Text): EditorState =>
+  EditorState.create({
     doc,
     extensions: [
       history(),
@@ -158,7 +153,6 @@ function documentState(doc: string | Text): EditorState {
       EditorState.allowMultipleSelections.of(true),
     ],
   })
-}
 
 export interface Heard {
   changes: ChangeSet
@@ -178,9 +172,8 @@ function holds(doc: Text, words: string): boolean {
   if (doc.length !== words.length) return false
 
   let at = 0
-  for (const chunk = doc.iter(); !chunk.next().done; at += chunk.value.length) {
+  for (const chunk = doc.iter(); !chunk.next().done; at += chunk.value.length)
     if (!words.startsWith(chunk.value, at)) return false
-  }
 
   return true
 }
@@ -287,9 +280,8 @@ export class SharedDoc {
     this.views.add(taking)
     onDocument.set(taking, this)
 
-    if (sharedOf(taking.state) !== this) {
+    if (sharedOf(taking.state) !== this)
       taking.dispatch({ effects: setShared.of(this), annotations: external.of(true) })
-    }
     this.settle()
   }
 
@@ -400,9 +392,8 @@ export class SharedDoc {
   announce(effects: readonly StateEffect<unknown>[]) {
     if (!effects.length) return
 
-    for (const view of this.views) {
+    for (const view of this.views)
       view.dispatch({ effects: [...effects], annotations: external.of(true), filter: false })
-    }
   }
 
   undo(asked: DocView): boolean {
@@ -561,20 +552,18 @@ export class SharedDoc {
   }
 }
 
-export function sharing(): Extension {
-  return [
-    sharedField,
-    wholeCharacters,
-    EditorState.transactionExtender.of((transaction) =>
-      sharedOf(transaction.startState) ? { annotations: Transaction.addToHistory.of(false) } : null,
-    ),
-    EditorView.domEventHandlers({
-      compositionend: (_event, view) => {
-        setTimeout(() => documentOf(view)?.settle(), 0)
-      },
-    }),
-  ]
-}
+export const sharing = (): Extension => [
+  sharedField,
+  wholeCharacters,
+  EditorState.transactionExtender.of((transaction) =>
+    sharedOf(transaction.startState) ? { annotations: Transaction.addToHistory.of(false) } : null,
+  ),
+  EditorView.domEventHandlers({
+    compositionend: (_event, view) => {
+      setTimeout(() => documentOf(view)?.settle(), 0)
+    },
+  }),
+]
 
 export const undoEdit: Command = (view) => {
   const shared = documentOf(view)

@@ -106,9 +106,8 @@ describe('the blocks drawn after an edit', () => {
     const after = widgetsIn(current.field(blockDecorations).decorations)
     expect(after).toHaveLength(60)
     expect(after.slice(0, 30).filter((widget, index) => widget === before[index])).toHaveLength(30)
-    if (parsedWhole) {
+    if (parsedWhole)
       expect(after.filter((widget, index) => widget === before[index])).toHaveLength(59)
-    }
     expect(described(current.field(blockDecorations).decorations, current.doc.toString())).toEqual(
       described(buildBlockDecorations(current), current.doc.toString()),
     )

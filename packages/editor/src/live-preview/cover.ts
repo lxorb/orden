@@ -8,13 +8,10 @@ import { OrdenWidget } from './widget'
 
 const STEP = 5
 
-function inside(value: number): number {
-  return Math.min(100, Math.max(0, Math.round(value)))
-}
+const inside = (value: number): number => Math.min(100, Math.max(0, Math.round(value)))
 
-function shownCover(view: EditorView): Cover | null {
-  return keptCover(view.state) ?? coverOf(view.state.doc.toString())
-}
+const shownCover = (view: EditorView): Cover | null =>
+  keptCover(view.state) ?? coverOf(view.state.doc.toString())
 
 function writePosition(view: EditorView, position: number) {
   const mover = view.state.facet(coverMover)

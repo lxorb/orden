@@ -44,8 +44,8 @@ export const openTailDown: Command = (view) => {
   return open(view)
 }
 
-export function openTail(): Extension {
-  return EditorView.domEventHandlers({
+export const openTail = (): Extension =>
+  EditorView.domEventHandlers({
     mousedown(event, view) {
       if (view.state.readOnly || event.button !== 0) return false
 
@@ -58,4 +58,3 @@ export function openTail(): Extension {
       return true
     },
   })
-}

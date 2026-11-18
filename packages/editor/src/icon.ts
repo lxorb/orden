@@ -9,9 +9,8 @@ export function iconElement(parts: IconParts, className?: string): SVGElement {
 
   for (const [tag, attributes] of parts) {
     const child = document.createElementNS(SVG_NS, tag)
-    for (const [name, value] of Object.entries(attributes)) {
+    for (const [name, value] of Object.entries(attributes))
       if (value !== undefined) child.setAttribute(name, String(value))
-    }
     svg.append(child)
   }
 

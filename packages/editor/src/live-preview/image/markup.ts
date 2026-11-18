@@ -20,14 +20,13 @@ export interface ImageSpan extends ImageSpec {
 
 const IMAGE_NODES = new Set(['Image', 'HTMLTag', 'HTMLBlock'])
 
-function unescapeAttr(value: string): string {
-  return value
+const unescapeAttr = (value: string): string =>
+  value
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
-}
 
 function attribute(tag: string, name: string): string | undefined {
   const match = new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag)
@@ -53,25 +52,21 @@ export function parseHtmlImage(tag: string): ImageSpec | null {
   return spec
 }
 
-export function withZoom(image: ImageSpec, zoom: number): ImageSpec {
-  return { src: image.src, alt: image.alt, title: image.title, zoom }
-}
+export const withZoom = (image: ImageSpec, zoom: number): ImageSpec => ({
+  src: image.src,
+  alt: image.alt,
+  title: image.title,
+  zoom,
+})
 
-function bareAddress(url: string): string {
-  return url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
-}
+const bareAddress = (url: string): string =>
+  url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
 
-function writtenAddress(src: string): string {
-  return /[\s<>()]/.test(src) ? `<${src}>` : src
-}
+const writtenAddress = (src: string): string => (/[\s<>()]/.test(src) ? `<${src}>` : src)
 
-function writtenAlt(alt: string): string {
-  return alt.replace(/[[\]]/g, '\\$&')
-}
+const writtenAlt = (alt: string): string => alt.replace(/[[\]]/g, '\\$&')
 
-function readAlt(written: string): string {
-  return written.replace(/\\([[\]])/g, '$1')
-}
+const readAlt = (written: string): string => written.replace(/\\([[\]])/g, '$1')
 
 function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | null {
   const url = node.getChild('URL')
@@ -104,9 +99,8 @@ export function imageOfNode(state: EditorState, node: SyntaxNode): ImageSpan | n
 }
 
 function imageNode(state: EditorState, pos: number, side: -1 | 1): SyntaxNode | null {
-  for (const node of enclosing(syntaxTree(state).resolveInner(pos, side))) {
+  for (const node of enclosing(syntaxTree(state).resolveInner(pos, side)))
     if (IMAGE_NODES.has(node.name) && (side > 0 ? node.from : node.to) === pos) return node
-  }
   return null
 }
 
@@ -122,9 +116,8 @@ export function imageEndingAt(state: EditorState, pos: number): ImageSpan | null
 
 export function imageMarkup(spec: ImageSpec): string {
   const zoomed = spec.zoom !== 100
-  if (!zoomed && !spec.width) {
+  if (!zoomed && !spec.width)
     return `![${writtenAlt(spec.alt)}](${writtenAddress(spec.src)}${spec.title ? ` "${spec.title}"` : ''})`
-  }
 
   const attrs = [`src="${attributeValue(spec.src)}"`, `alt="${attributeValue(spec.alt)}"`]
   if (spec.title) attrs.push(`title="${attributeValue(spec.title)}"`)

@@ -64,9 +64,8 @@ function viewWith(above: { from: number; to: number }[]): EditorView {
   return view
 }
 
-function lineText(view: EditorView): string {
-  return view.contentDOM.querySelectorAll('.cm-line')[2]?.textContent ?? ''
-}
+const lineText = (view: EditorView): string =>
+  view.contentDOM.querySelectorAll('.cm-line')[2]?.textContent ?? ''
 
 describe('a replaced range that starts under one of higher precedence', () => {
   test.each([

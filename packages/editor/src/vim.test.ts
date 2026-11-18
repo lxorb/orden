@@ -34,11 +34,10 @@ function surface() {
   return { view: view as unknown as EditorView, current: () => state }
 }
 
-function modal(state: EditorState): boolean {
-  return state
+const modal = (state: EditorState): boolean =>
+  state
     .facet(EditorView.editorAttributes)
     .some((attrs) => typeof attrs === 'object' && attrs.class === 'orden-vim')
-}
 
 describe('modal editing', () => {
   test('is off until it is asked for', () => {

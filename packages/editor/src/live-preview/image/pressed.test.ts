@@ -30,9 +30,8 @@ describe('the picture a press landed on', () => {
   })
 
   test('is none for a note, a PDF or a link, which are not pictures', () => {
-    for (const doc of ['a ![[Plan]] b', 'a ![[paper.pdf]] b', 'a [[cat.png]] b', 'a b c']) {
+    for (const doc of ['a ![[Plan]] b', 'a ![[paper.pdf]] b', 'a [[cat.png]] b', 'a b c'])
       expect(pictureAt(state(doc), 2), doc).toBeNull()
-    }
   })
 
   test('is loaded through the resolver the note is drawn with', () => {

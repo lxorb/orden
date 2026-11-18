@@ -7,8 +7,8 @@ import { quietMarks } from './reveal'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
-function decorated(doc: string, cursor: number, quiet: boolean) {
-  return buildDecorations(
+const decorated = (doc: string, cursor: number, quiet: boolean) =>
+  buildDecorations(
     parsed(
       EditorState.create({
         doc,
@@ -20,7 +20,6 @@ function decorated(doc: string, cursor: number, quiet: boolean) {
       }),
     ),
   )
-}
 
 function lineClasses(doc: string, cursor: number, quiet: boolean): string[] {
   const out: string[] = []

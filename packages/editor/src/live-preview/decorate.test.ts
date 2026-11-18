@@ -463,9 +463,8 @@ describe('inline code', () => {
 
 describe('headings', () => {
   test('every depth styles its line as that depth', () => {
-    for (let depth = 1; depth <= 6; depth++) {
+    for (let depth = 1; depth <= 6; depth++)
       expect(lineClasses(`${'#'.repeat(depth)} Title`)).toContain(`orden-h${depth}`)
-    }
   })
 
   test('a line with = or - under it is no heading, only a hash makes one', () => {

@@ -8,9 +8,7 @@ import { noteIndex } from './notes'
 
 const REMOTE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
 
-function written(src: string): string {
-  return decodeTarget(src.replace(/&amp;/g, '&'))
-}
+const written = (src: string): string => decodeTarget(src.replace(/&amp;/g, '&'))
 
 export async function renderNote(
   source: string,

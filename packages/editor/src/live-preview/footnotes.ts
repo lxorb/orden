@@ -69,16 +69,14 @@ function footnoteParts(state: EditorState): FootnotePart[] {
   return parts
 }
 
-export function definitionOf(state: EditorState, label: string): FootnotePart | null {
-  return footnoteParts(state).find((one) => one.kind === 'def' && one.label === label) ?? null
-}
+export const definitionOf = (state: EditorState, label: string): FootnotePart | null =>
+  footnoteParts(state).find((one) => one.kind === 'def' && one.label === label) ?? null
 
-export function definitionWords(state: EditorState, definition: FootnotePart): string {
-  return state
+export const definitionWords = (state: EditorState, definition: FootnotePart): string =>
+  state
     .sliceDoc(definition.labelTo, definition.to)
     .replace(/^\]:[ \t]*/, '')
     .trim()
-}
 
 const cameFrom = new WeakMap<EditorView, { label: string; at: number }>()
 
@@ -115,9 +113,8 @@ export function followFootnote(view: EditorView, part: FootnotePart): boolean {
   return true
 }
 
-function revealed(state: EditorState, part: FootnotePart): boolean {
-  return state.selection.ranges.some((range) => range.from <= part.to && range.to >= part.from)
-}
+const revealed = (state: EditorState, part: FootnotePart): boolean =>
+  state.selection.ranges.some((range) => range.from <= part.to && range.to >= part.from)
 
 const numberMark = Decoration.mark({ class: 'orden-footnote-number' })
 

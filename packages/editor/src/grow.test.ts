@@ -5,15 +5,14 @@ import { parsed } from '../test/parsed'
 import { expandSelection, shrinkSelection } from './grow'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 
-function stateOf(doc: string, caret: number): EditorState {
-  return parsed(
+const stateOf = (doc: string, caret: number): EditorState =>
+  parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(caret),
       extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })],
     }),
   )
-}
 
 function press(state: EditorState, command: StateCommand): EditorState {
   let next = state

@@ -3,9 +3,7 @@ import { headingLevel, headingText } from './headings'
 
 describe('which nodes are headings', () => {
   test('the six written with hashes', () => {
-    for (let level = 1; level <= 6; level++) {
-      expect(headingLevel(`ATXHeading${level}`)).toBe(level)
-    }
+    for (let level = 1; level <= 6; level++) expect(headingLevel(`ATXHeading${level}`)).toBe(level)
   })
 
   test('nothing else is one', () => {

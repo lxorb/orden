@@ -99,8 +99,7 @@ describe('deleting a line', () => {
 
   test('never leaves the caret inside an emoji on the line that comes up', () => {
     expect(note(deleteLine, 'a|bc\n😀x')).toBe('|😀x')
-    for (const key of [deleteCharBackward, deleteCharForward] as unknown as StateCommand[]) {
+    for (const key of [deleteCharBackward, deleteCharForward] as unknown as StateCommand[])
       expect(note(key, note(deleteLine, 'zz\na|bc\n😀x'))).not.toMatch(/\p{Cs}/u)
-    }
   })
 })

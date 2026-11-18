@@ -1,3 +1,2 @@
-export function attributeValue(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-}
+export const attributeValue = (value: string): string =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;')

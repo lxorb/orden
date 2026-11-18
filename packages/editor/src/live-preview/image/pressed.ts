@@ -34,16 +34,16 @@ export function pressedPicture(view: EditorView, target: EventTarget | null): Pi
   return pictureAt(view.state, view.posAtDOM(drawn))
 }
 
-export function pictureUrl(state: EditorState, picture: Picture): string {
-  return state.facet(imageResolver)(picture.src, picture.wikilink)
-}
+export const pictureUrl = (state: EditorState, picture: Picture): string =>
+  state.facet(imageResolver)(picture.src, picture.wikilink)
 
 export function showPicture(view: EditorView, picture: Picture) {
   openLightbox(view, pictureUrl(view.state, picture), picture.alt)
 }
 
-export function deletePicture(picture: Picture): StateCommand {
-  return ({ state, dispatch }) => {
+export const deletePicture =
+  (picture: Picture): StateCommand =>
+  ({ state, dispatch }) => {
     const still = pictureAt(state, picture.from)
     if (state.readOnly || still?.to !== picture.to) return false
 
@@ -56,4 +56,3 @@ export function deletePicture(picture: Picture): StateCommand {
     )
     return true
   }
-}

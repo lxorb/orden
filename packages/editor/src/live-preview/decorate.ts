@@ -67,9 +67,8 @@ class Decorator {
   constructor(private readonly state: EditorState) {}
 
   build(ranges: readonly { from: number; to: number }[]) {
-    for (const { from, to } of ranges) {
+    for (const { from, to } of ranges)
       syntaxTree(this.state).iterate({ from, to, enter: (node) => this.visit(node.node) })
-    }
 
     for (const { from, to } of ranges) this.blockNames(from, to)
 
@@ -509,9 +508,8 @@ class Decorator {
       this.conceal(node.from, node.to, shown)
       this.conceal(next.from, next.to, shown)
       this.claimed.push({ from: next.from, to: next.to })
-      if (node.to < next.from) {
+      if (node.to < next.from)
         this.marks.push(Decoration.mark({ class: 'orden-underline' }).range(node.to, next.from))
-      }
       return true
     }
     return false
@@ -583,9 +581,8 @@ class Decorator {
 
   private depth(node: SyntaxNode): number {
     let depth = 0
-    for (let parent = node.parent; parent; parent = parent.parent) {
+    for (let parent = node.parent; parent; parent = parent.parent)
       if (parent.name === 'BulletList') depth++
-    }
     return Math.max(depth - 1, 0)
   }
 

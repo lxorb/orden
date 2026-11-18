@@ -49,6 +49,5 @@ export const noteDrops: Extension = EditorView.domEventHandlers({
   },
 })
 
-function carried(event: DragEvent, view: EditorView): readonly string[] {
-  return view.state.facet(noteCarrier)(event.dataTransfer)
-}
+const carried = (event: DragEvent, view: EditorView): readonly string[] =>
+  view.state.facet(noteCarrier)(event.dataTransfer)

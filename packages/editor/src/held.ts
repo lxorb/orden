@@ -19,12 +19,8 @@ interface EditContextKeeper {
   reset(state: EditorState): void
 }
 
-function keeperOf(view: StateView): EditContextKeeper | null {
-  return (
-    (view as { observer?: { editContext?: EditContextKeeper | null } }).observer?.editContext ??
-    null
-  )
-}
+const keeperOf = (view: StateView): EditContextKeeper | null =>
+  (view as { observer?: { editContext?: EditContextKeeper | null } }).observer?.editContext ?? null
 
 function endComposing(view: StateView): () => void {
   const real = view as StateView & { contentDOM?: HTMLElement; focus?: () => void }

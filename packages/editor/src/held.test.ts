@@ -25,9 +25,8 @@ class Surface implements StateView {
     this.state = this.state.update(spec).state
     this.done.push('dispatch')
 
-    for (const effect of [spec.effects ?? []].flat()) {
+    for (const effect of [spec.effects ?? []].flat())
       if (effect.is(scrolledTo)) this.at = effect.value
-    }
   }
 
   scrollSnapshot() {
@@ -39,13 +38,12 @@ class Composing extends Surface {
   composing = true
 }
 
-function stateFor(doc: string, cursor = 0): EditorState {
-  return EditorState.create({
+const stateFor = (doc: string, cursor = 0): EditorState =>
+  EditorState.create({
     doc,
     selection: EditorSelection.cursor(Math.min(cursor, doc.length)),
     extensions: [history(), sharing()],
   })
-}
 
 describe('a note waiting its turn', () => {
   test('takes every change made to the words while it waits', () => {

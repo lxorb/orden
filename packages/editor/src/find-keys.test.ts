@@ -33,9 +33,8 @@ function pressed(run: (view: EditorView) => boolean, doc = 'the wind, and the wi
   }
 }
 
-function asks(sent: TransactionSpec[]): number {
-  return sent.filter((spec) => Array.isArray(spec.effects) || !!spec.effects).length
-}
+const asks = (sent: TransactionSpec[]): number =>
+  sent.filter((spec) => Array.isArray(spec.effects) || !!spec.effects).length
 
 describe('the find keys before the engine is here', () => {
   test('Control+F puts the bar up, and says the press is spent', () => {

@@ -69,8 +69,7 @@ describe('highlighting a makefile fence', () => {
   })
 
   test('always moves forward, whatever it is given', () => {
-    for (const line of ['', '\t', '   ', '$', '$(', ':::', '「」', '"unclosed', '#']) {
+    for (const line of ['', '\t', '   ', '$', '$(', ':::', '「」', '"unclosed', '#'])
       expect(() => tokens(line)).not.toThrow()
-    }
   })
 })

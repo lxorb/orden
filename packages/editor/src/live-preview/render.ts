@@ -19,14 +19,13 @@ export function recordEquationLabel(tex: string, number: number) {
   if (label !== undefined) equationNumbers.set(label, number)
 }
 
-export function prepare(tex: string): string {
-  return tex
+export const prepare = (tex: string): string =>
+  tex
     .replace(/\\label\s*\{[^}]*\}/g, '')
     .replace(/\\(?:eq)?ref\s*\{([^}]+)\}/g, (whole, name: string) => {
       const number = equationNumbers.get(name)
       return number ? `(${number})` : whole
     })
-}
 
 abstract class PictureWidget extends OrdenWidget {
   override ignoreEvent() {
@@ -262,9 +261,8 @@ export class BaseWidget extends OrdenWidget {
   }
 }
 
-function themeColour(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
+const themeColour = (name: string): string =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
 let drawing: Promise<unknown> = Promise.resolve()
 
@@ -294,9 +292,7 @@ const MOST_SHARED_STYLES = 64
 const OWN_ID = '\u0000'
 
 function keepStylesShared() {
-  for (const { style } of sharedStyles.values()) {
-    if (!style.isConnected) document.head.append(style)
-  }
+  for (const { style } of sharedStyles.values()) if (!style.isConnected) document.head.append(style)
 }
 
 function shareStyle(svg: SVGSVGElement | null, id: string) {

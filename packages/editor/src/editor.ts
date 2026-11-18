@@ -251,9 +251,8 @@ const mathsPreview = ViewPlugin.fromClass(
   },
 )
 
-function coveredBelow(covered: () => number) {
-  return EditorView.scrollMargins.of(() => ({ bottom: covered() }))
-}
+const coveredBelow = (covered: () => number) =>
+  EditorView.scrollMargins.of(() => ({ bottom: covered() }))
 
 export function createEditor(options: EditorOptions): EditorView {
   const view = new EditorView({ parent: options.parent, state: editorState(options) })

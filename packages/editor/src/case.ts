@@ -2,14 +2,14 @@ import { EditorSelection, type StateCommand } from '@codemirror/state'
 
 const WORD_START = /(^|[^\p{L}\p{N}'’])(\p{L})/gu
 
-function titled(text: string): string {
-  return text
+const titled = (text: string): string =>
+  text
     .toLocaleLowerCase()
     .replace(WORD_START, (_, before: string, letter: string) => before + letter.toLocaleUpperCase())
-}
 
-function recased(change: (text: string) => string): StateCommand {
-  return ({ state, dispatch }) => {
+const recased =
+  (change: (text: string) => string): StateCommand =>
+  ({ state, dispatch }) => {
     const { ranges, mainIndex } = state.selection
     const words = ranges.map((range) => (range.empty ? state.wordAt(range.head) : range))
     const changes = state.changes(
@@ -44,7 +44,6 @@ function recased(change: (text: string) => string): StateCommand {
     )
     return true
   }
-}
 
 export const upperCase = recased((text) => text.toLocaleUpperCase())
 export const lowerCase = recased((text) => text.toLocaleLowerCase())

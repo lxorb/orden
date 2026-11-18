@@ -16,13 +16,9 @@ export const imageResolver = Facet.define<ImageResolver, ImageResolver>({
   combine: (values) => values[0] ?? ((src) => src),
 })
 
-function isImage(file: File): boolean {
-  return file.type.startsWith('image/')
-}
+const isImage = (file: File): boolean => file.type.startsWith('image/')
 
-function isKept(file: File): boolean {
-  return isImage(file) || embedKind(file.name) !== null
-}
+const isKept = (file: File): boolean => isImage(file) || embedKind(file.name) !== null
 
 function markdownFor(file: File, path: string): string {
   if (isImage(file)) return `![](${encodeTarget(path)})`
@@ -49,9 +45,7 @@ const dropPoint = StateField.define<number | null>({
   create: () => null,
 
   update(value, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(dropAt)) return effect.value
-    }
+    for (const effect of transaction.effects) if (effect.is(dropAt)) return effect.value
     if (value === null || !transaction.docChanged) return value
     return transaction.changes.mapPos(value, 1)
   },

@@ -71,8 +71,9 @@ function wrapEach(
   return { changes, range: EditorSelection.range(range.from, range.to + grown) }
 }
 
-export function marksAcross(mark: string): StateCommand {
-  return ({ state, dispatch }) => {
+export const marksAcross =
+  (mark: string): StateCommand =>
+  ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
       const held = inside(state, range.from, range.to)
       return wrapEach(state, partsOf(state, held.from, held.to), held, mark)
@@ -81,7 +82,6 @@ export function marksAcross(mark: string): StateCommand {
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
-}
 
 const INLINE_MARKERS = /(\*\*|\*|~~|==|`|(?<![\p{L}\p{N}])__?|__?(?![\p{L}\p{N}]))/gu
 
