@@ -43,24 +43,25 @@ class FakeWindow implements Resizable {
 
 const settled = () => new Promise((done) => setTimeout(done, 0))
 
+async function following(maximized = false) {
+  const window = new FakeWindow()
+  window.maximized = maximized
+  const state = new WindowState()
+  const stop = state.follow(() => Promise.resolve(window))
+  await settled()
+  return { window, state, stop }
+}
+
 describe('whether the window is maximised', () => {
   test('starts from what the window says, not from a guess', async () => {
-    const window = new FakeWindow()
-    window.maximized = true
-    const state = new WindowState()
-
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { state, stop } = await following(true)
 
     expect(state.maximized).toBe(true)
     stop()
   })
 
   test('follows a window maximised by something other than the button', async () => {
-    const window = new FakeWindow()
-    const state = new WindowState()
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { window, state, stop } = await following()
     expect(state.maximized).toBe(false)
 
     window.resize(true)
@@ -71,11 +72,7 @@ describe('whether the window is maximised', () => {
   })
 
   test('follows a maximised window dragged off the top of the screen', async () => {
-    const window = new FakeWindow()
-    window.maximized = true
-    const state = new WindowState()
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { window, state, stop } = await following(true)
 
     window.resize(false)
     await settled()
@@ -85,10 +82,7 @@ describe('whether the window is maximised', () => {
   })
 
   test('the button says what happened rather than what it asked for', async () => {
-    const window = new FakeWindow()
-    const state = new WindowState()
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { window, state, stop } = await following()
 
     window.stubborn = true
     await state.toggle(window)
@@ -98,10 +92,7 @@ describe('whether the window is maximised', () => {
   })
 
   test('the button and the window agree when the toggle works', async () => {
-    const window = new FakeWindow()
-    const state = new WindowState()
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { window, state, stop } = await following()
 
     await state.toggle(window)
     expect(state.maximized).toBe(true)
@@ -113,10 +104,7 @@ describe('whether the window is maximised', () => {
   })
 
   test('stops listening when the bar goes', async () => {
-    const window = new FakeWindow()
-    const state = new WindowState()
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { window, state, stop } = await following()
     expect(window.listeners).toBe(1)
 
     stop()
@@ -141,10 +129,7 @@ describe('whether the window is maximised', () => {
   })
 
   test('asks the window only when its size changed', async () => {
-    const window = new FakeWindow()
-    const state = new WindowState()
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { window, stop } = await following()
 
     const before = window.asked
     await settled()
@@ -160,11 +145,7 @@ describe('whether the window is maximised', () => {
 
 describe('whether the window is full screen', () => {
   test('follows the window in and out of it', async () => {
-    const window = new FakeWindow()
-    const state = new WindowState()
-
-    const stop = state.follow(() => Promise.resolve(window))
-    await settled()
+    const { window, state, stop } = await following()
     expect(state.fullscreen).toBe(false)
 
     window.resize(false, true)
