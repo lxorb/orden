@@ -4,11 +4,11 @@ import { describe, expect, test } from 'vitest'
 import {
   conflictRule,
   DEFAULT_RULE,
+  mirrorsFor,
   newMirror,
   readMirror,
   returning,
   savedRecord,
-  within,
 } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
@@ -70,10 +70,14 @@ describe('what the sync remembers', () => {
     expect(conflictRule(3)).toBeNull()
   })
 
-  test('a path inside a space is read relative to its root, whichever way its slashes lean', () => {
-    expect(within('/Notes/', '/Notes/a/b.md')).toBe('a/b.md')
-    expect(within('C:\\Notes', 'C:\\Notes\\a.md')).toBe('a.md')
-    expect(within('/Notes', '/Notebook/a.md')).toBeNull()
+  test('what is kept of the first engine is read for its own account alone, in either shape it was written', () => {
+    const mirrors = { '/Notes': { ...newMirror('s1', '/Notes'), cursor: 4 } }
+    expect(Object.keys(mirrorsFor({ account: 'u1', mirrors }, 'u1'))).toEqual(['/Notes'])
+    expect(mirrorsFor({ account: 'u1', mirrors }, 'u1')['/Notes']?.cursor).toBe(4)
+    expect(mirrorsFor({ account: 'u2', mirrors }, 'u1')).toEqual({})
+    expect(Object.keys(mirrorsFor({ mirrors }, 'u1'))).toEqual(['/Notes'])
+    expect(Object.keys(mirrorsFor(mirrors, 'u1'))).toEqual(['/Notes'])
+    expect(mirrorsFor('nonsense', 'u1')).toEqual({})
   })
 
   test('a mirror written down is read back, and nonsense is no mirror', () => {

@@ -1,6 +1,5 @@
-import { readMirror } from '../../sync-mirror/src/api'
+import { mirrorsFor } from '../../sync-mirror/src/api'
 import { samePath } from '../../platform/src/api'
-import { isRecord } from './shape'
 
 export interface V1Pair {
   root: string
@@ -15,17 +14,13 @@ export function pairsFromV1(
   remote: readonly { id: string; role: string }[],
   paired: readonly { root: string; spaceId: string }[],
 ): V1Pair[] {
-  if (!isRecord(saved)) return []
-  if (typeof saved.account === 'string' && saved.account !== accountId) return []
-  const held = isRecord(saved.mirrors) ? saved.mirrors : saved
   const roots = paired.map((one) => one.root)
   const spaces = new Set(paired.map((one) => one.spaceId))
   const out: V1Pair[] = []
-  for (const [kept, one] of Object.entries(held)) {
-    const mirror = readMirror(kept, one)
-    const space = mirror && remote.find((candidate) => candidate.id === mirror.spaceId)
+  for (const [kept, mirror] of Object.entries(mirrorsFor(saved, accountId))) {
+    const space = remote.find((candidate) => candidate.id === mirror.spaceId)
     const root = local.find((here) => samePath(here, kept))
-    if (!mirror || !space || root === undefined) continue
+    if (!space || root === undefined) continue
     if (roots.some((had) => samePath(had, root)) || spaces.has(mirror.spaceId)) continue
     roots.push(root)
     spaces.add(mirror.spaceId)

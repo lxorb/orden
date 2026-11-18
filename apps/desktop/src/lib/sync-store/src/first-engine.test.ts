@@ -24,7 +24,7 @@ const { sync } = await import('./sync.svelte')
 
 const listening = { addEventListener: () => undefined, removeEventListener: () => undefined }
 vi.stubGlobal('document', { ...listening, hidden: false })
-vi.stubGlobal('window', listening)
+vi.stubGlobal('window', { ...listening, __TAURI_OS_PLUGIN_INTERNALS__: { platform: 'macos' } })
 
 function mirrorOf(notes: Record<string, { id: string; version: number; hash: string }>) {
   return {
@@ -71,6 +71,14 @@ describe('the first sync engine', () => {
     expect(asked).toEqual([sent, sent])
     await settleNames('session', 'u1')
     expect(asked).toEqual([sent, sent])
+  })
+
+  test('finds a note however a disk that folds case spells the space it is in', () => {
+    const note = { id: 'n1', version: 2, hash: 'h' }
+    held.set('orden:mirrors', JSON.stringify(mirrorOf({ 'Plan.md': note })))
+    sync.start()
+
+    expect(sync.tracked('/spaces/work/Plan.md')?.id).toBe('n1')
   })
 
   test('rereading what was kept does not bring back the old place of a note that moved', () => {

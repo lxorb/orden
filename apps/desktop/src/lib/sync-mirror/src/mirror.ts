@@ -41,14 +41,6 @@ export function newMirror(spaceId: string, root: string, shared = false): Mirror
   return { spaceId, root, cursor: 0, notes: {}, offered: {}, files: {}, dropped: false, shared }
 }
 
-export function within(root: string, path: string): string | null {
-  const folder = root.replace(/\\/g, '/').replace(/\/+$/, '')
-  const file = path.replace(/\\/g, '/')
-
-  if (!file.startsWith(`${folder}/`)) return null
-  return file.slice(folder.length + 1)
-}
-
 export interface Stamp {
   modified: number
   len: number
@@ -84,6 +76,12 @@ export function savedRecord(saved: unknown): Saved | null {
     seen: saved.seen === true || Object.keys(mirrors).length > 0,
     mirrors,
   }
+}
+
+export function mirrorsFor(saved: unknown, accountId: string): Record<string, Mirror> {
+  const record = savedRecord(saved)
+  if (!record || (record.whose !== null && record.whose !== accountId)) return {}
+  return record.mirrors
 }
 
 export function readMirror(root: string, value: unknown): Mirror | null {

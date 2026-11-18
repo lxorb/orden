@@ -14,6 +14,7 @@ import {
   joinPath,
   rootedAt,
   samePath,
+  within,
 } from '../../platform/src/api'
 import { startup } from '../../launch/src/api'
 import { untrack } from 'svelte'
@@ -31,7 +32,6 @@ import {
   savedRecord,
   type Tracked,
   type Waiting,
-  within,
 } from '../../sync-mirror/src/api'
 import type { HoldCheck } from '@orden/sync-core'
 import {
@@ -318,7 +318,7 @@ class Sync {
     for (const mirror of Object.values(this.mirrors)) {
       const was = within(mirror.root, from)
       const now = within(mirror.root, to)
-      if (was === null || now === null) continue
+      if (!was || !now) continue
 
       for (const [path, tracked] of Object.entries(mirror.notes)) {
         if (path !== was && !path.startsWith(`${was}/`)) continue
