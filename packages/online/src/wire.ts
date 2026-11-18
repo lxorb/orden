@@ -338,14 +338,44 @@ export function clientFrameOf(raw: string): ClientFrame | null {
   }
 }
 
-export function serverFrameOf(raw: string): ServerFrame | null {
-  const value = parsed(raw)
-  if (!isRecord(value)) return null
+type SessionFrame = Extract<
+  ServerFrame,
+  { t: 'screen' | 'program' | 'ended' | 'browse' | 'called' | 'image' }
+>
+
+function sessionFrameOf(value: Fields): SessionFrame | null | undefined {
   switch (value.t) {
     case 'screen': {
       const screen = screenOf(value)
       return screen ? { t: 'screen', ...screen } : null
     }
+    case 'program': {
+      const program = programOf(value)
+      return program ? { t: 'program', ...program } : null
+    }
+    case 'ended':
+      return isCode(value.code) ? { t: 'ended', code: value.code } : null
+    case 'browse':
+      return isWebUrl(value.url) ? { t: 'browse', url: value.url } : null
+    case 'called':
+      return isLoopbackUrl(value.url) && isStatus(value.status)
+        ? { t: 'called', url: value.url, status: value.status }
+        : null
+    case 'image':
+      return isImageId(value.id) && isPathOrNone(value.path)
+        ? { t: 'image', id: value.id, path: value.path }
+        : null
+    default:
+      return undefined
+  }
+}
+
+export function serverFrameOf(raw: string): ServerFrame | null {
+  const value = parsed(raw)
+  if (!isRecord(value)) return null
+  const shared = sessionFrameOf(value)
+  if (shared !== undefined) return shared
+  switch (value.t) {
     case 'size': {
       const { cols, rows, by } = value
       if (!isCells(cols) || !isCells(rows) || !(by === null || isId(by))) return null
@@ -365,10 +395,6 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return isId(value.who) && isCount(value.seq)
         ? { t: 'typed', who: value.who, seq: value.seq }
         : null
-    case 'program': {
-      const program = programOf(value)
-      return program ? { t: 'program', ...program } : null
-    }
     case 'machine': {
       const { state, reason } = value
       if (!oneOf(MACHINE_STATES, state)) return null
@@ -379,20 +405,8 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return typeof value.up === 'boolean' ? { t: 'link', up: value.up } : null
     case 'role':
       return typeof value.type === 'boolean' ? { t: 'role', type: value.type } : null
-    case 'ended':
-      return isCode(value.code) ? { t: 'ended', code: value.code } : null
     case 'refused':
       return oneOf(REFUSALS, value.error) ? { t: 'refused', error: value.error } : null
-    case 'browse':
-      return isWebUrl(value.url) ? { t: 'browse', url: value.url } : null
-    case 'called':
-      return isLoopbackUrl(value.url) && isStatus(value.status)
-        ? { t: 'called', url: value.url, status: value.status }
-        : null
-    case 'image':
-      return isImageId(value.id) && isPathOrNone(value.path)
-        ? { t: 'image', id: value.id, path: value.path }
-        : null
     case 'note':
       return oneOf(NOTES, value.note) ? { t: 'note', note: value.note } : null
     case 'held': {
@@ -474,32 +488,11 @@ export function ordendFrameOf(bytes: Uint8Array): OrdendFrame | null {
 
   const { session } = value
   if (!isId(session)) return null
-  switch (value.t) {
-    case 'out':
-      return isCount(value.seq) && value.data instanceof Uint8Array
-        ? { t: 'out', session, seq: value.seq, data: value.data }
-        : null
-    case 'screen': {
-      const screen = screenOf(value)
-      return screen ? { t: 'screen', session, ...screen } : null
-    }
-    case 'program': {
-      const program = programOf(value)
-      return program ? { t: 'program', session, ...program } : null
-    }
-    case 'ended':
-      return isCode(value.code) ? { t: 'ended', session, code: value.code } : null
-    case 'browse':
-      return isWebUrl(value.url) ? { t: 'browse', session, url: value.url } : null
-    case 'called':
-      return isLoopbackUrl(value.url) && isStatus(value.status)
-        ? { t: 'called', session, url: value.url, status: value.status }
-        : null
-    case 'image':
-      return isImageId(value.id) && isPathOrNone(value.path)
-        ? { t: 'image', session, id: value.id, path: value.path }
-        : null
-    default:
-      return null
+  if (value.t === 'out') {
+    return isCount(value.seq) && value.data instanceof Uint8Array
+      ? { t: 'out', session, seq: value.seq, data: value.data }
+      : null
   }
+  const shared = sessionFrameOf(value)
+  return shared ? { ...shared, session } : null
 }
