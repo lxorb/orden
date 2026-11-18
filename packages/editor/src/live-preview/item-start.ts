@@ -18,8 +18,9 @@ import {
 } from '@codemirror/commands'
 import { deleteMarkupBackward } from '@codemirror/lang-markdown'
 import type { SyntaxNode } from '@lezer/common'
-import { Direction, EditorView, keymap } from '@codemirror/view'
+import { Direction, EditorView } from '@codemirror/view'
 import { isExternal } from '../external'
+import { type BindingSpec, boundKeymap } from '../shortcuts'
 import { readHighlight } from '@orden/markdown/highlights'
 import { quietMarks } from './reveal'
 
@@ -512,18 +513,36 @@ const leadKept = EditorState.transactionFilter.of((transaction) => {
   }
 })
 
-export const itemStart = [
-  snapped,
-  leadKept,
-  Prec.high(
-    keymap.of([
-      { key: 'Enter', run: pushHeadingDown },
-      { key: 'Backspace', run: deleteBesideMarks(-1) },
-      { key: 'Delete', run: deleteBesideMarks(1) },
-      { key: 'Mod-Backspace', mac: 'Alt-Backspace', run: deleteWordOverMarks(-1) },
-      { key: 'Mod-Delete', mac: 'Alt-Delete', run: deleteWordOverMarks(1) },
-      { key: 'ArrowLeft', run: (view) => backOutOfWords(view, Direction.LTR) },
-      { key: 'ArrowRight', run: (view) => backOutOfWords(view, Direction.RTL) },
-    ]),
-  ),
+export const itemStartBindings: BindingSpec[] = [
+  { id: 'marks.heading-down', key: 'Enter', run: pushHeadingDown, contextual: true },
+  { id: 'marks.backspace', key: 'Backspace', run: deleteBesideMarks(-1), contextual: true },
+  { id: 'marks.delete', key: 'Delete', run: deleteBesideMarks(1), contextual: true },
+  {
+    id: 'marks.delete-word-behind',
+    key: 'Mod-Backspace',
+    mac: 'Alt-Backspace',
+    run: deleteWordOverMarks(-1),
+    contextual: true,
+  },
+  {
+    id: 'marks.delete-word-ahead',
+    key: 'Mod-Delete',
+    mac: 'Alt-Delete',
+    run: deleteWordOverMarks(1),
+    contextual: true,
+  },
+  {
+    id: 'marks.leave-left',
+    key: 'ArrowLeft',
+    run: (view) => backOutOfWords(view, Direction.LTR),
+    contextual: true,
+  },
+  {
+    id: 'marks.leave-right',
+    key: 'ArrowRight',
+    run: (view) => backOutOfWords(view, Direction.RTL),
+    contextual: true,
+  },
 ]
+
+export const itemStart = [snapped, leadKept, Prec.high(boundKeymap(itemStartBindings))]

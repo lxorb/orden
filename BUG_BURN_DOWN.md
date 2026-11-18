@@ -1643,7 +1643,7 @@ Seen, judged minor, left as they are:
 - After typing above a table, the first key in a header cell draws the table again, which drops dragged column widths and the remembered sort order (the widget compares against a position that was mapped, not rebuilt).
 - With the focus in a cell and nothing typed yet, rows moved by another writer leave the focus on the same row number, so the next key goes into the other record (the cell's text visibly changes first).
 - A plain-text paste that waits for the clipboard is written into whatever note the pane shows by then, and does not check again for a read-only note.
-- A `"` straight after `*`, `_`, `—` or `>` becomes a closing quote.
+- A `"` straight after `*`, `_`, an em dash or `>` becomes a closing quote.
 - Ticking one of two identical task lines while a line is added above can tick the other one.
 - Shift-Tab on a numbered item does not renumber the outer siblings after it.
 - Mod-Enter in a task inside a quote does nothing.

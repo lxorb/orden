@@ -462,7 +462,11 @@ mod tests {
     fn keeps_the_extension_of_a_name_it_shortens() {
         let long = format!("{}.pdf", "Minutes of the meeting ".repeat(10));
         let safe = safe_name(&long).unwrap_or_default();
-        assert!(safe.ends_with(".pdf"), "{safe}");
+        assert_eq!(
+            Path::new(&safe).extension().and_then(|ext| ext.to_str()),
+            Some("pdf"),
+            "{safe}"
+        );
         assert_eq!(safe.chars().count(), MAX_NAME);
     }
 
