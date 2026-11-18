@@ -13,14 +13,17 @@ export interface Notes {
   replaceInNotes(changes: readonly Change[], keeping?: Keeping): Promise<number>
 }
 
-const moving = new Set<string>()
+const moving = new Map<string, Promise<void>>()
 
-export function moveOwnKeysSoon(root: string, workspace: Notes, signedIn: boolean): void {
-  if (moving.has(root) || workspace.itemMeta.movedFromText(root)) return
-  moving.add(root)
-  void moveOwnKeys(root, workspace, signedIn)
+export function moveOwnKeysSoon(root: string, workspace: Notes, signedIn: boolean): Promise<void> {
+  const running = moving.get(root)
+  if (running) return running
+  if (workspace.itemMeta.movedFromText(root)) return Promise.resolve()
+  const moved = moveOwnKeys(root, workspace, signedIn)
     .catch((error: unknown) => log('warn', `own keys stayed in the notes: ${String(error)}`))
     .finally(() => moving.delete(root))
+  moving.set(root, moved)
+  return moved
 }
 
 function mayMove(root: string, workspace: Notes, signedIn: boolean): boolean {
