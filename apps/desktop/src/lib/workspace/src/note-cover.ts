@@ -4,7 +4,7 @@ import { storeImage } from './assets'
 import { busy, message } from '../../ui-kit/src/api'
 import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
 import { changeOf } from '@orden/scan/search/replace'
-import { settingsWindow } from '@orden/contracts'
+import { sayNotice } from '@orden/contracts'
 import { isMarkdownPath } from '../../platform/src/api'
 import { usage } from '../../accounts/src/api'
 import { workspace } from './workspace.svelte'
@@ -28,7 +28,7 @@ export async function setCover(path: string, src: string | null): Promise<void> 
   try {
     await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
-    settingsWindow().error = message(error, 'That cover could not be written.')
+    sayNotice(message(error, 'That cover could not be written.'))
   }
 }
 
@@ -42,7 +42,7 @@ export async function chooseCover(path: string): Promise<void> {
     if (src) await setCover(path, src)
   } catch (error) {
     void usage.refresh()
-    settingsWindow().error = message(error, 'That image does not fit in your storage.')
+    sayNotice(message(error, 'That image does not fit in your storage.'))
   }
 }
 

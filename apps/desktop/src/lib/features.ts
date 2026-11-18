@@ -31,7 +31,7 @@ import { loadGraph } from './graph-view/src/api'
 import { archive, loadArchive, loadArchivedStrip, showArchive, unarchive } from './archive/src/api'
 import { loadPrivateMark, loadWebTab, siteDropping, webDataSheet } from './web-tab/src/api'
 import { warmCalls } from './accounts/src/api'
-import { focusEditor, noteCovers, paneMoves } from './workspace/src/api'
+import { focusEditor, noteCovers, notices, paneMoves } from './workspace/src/api'
 import { previewCards } from './pane-tree/src/api'
 import { startup } from './launch/src/api'
 import {
@@ -93,6 +93,12 @@ providePort('settings.ask', {
 })
 providePort('shell.sheets', sheets)
 providePort('shell.focus', { editor: focusEditor })
+providePort('shell.notice', {
+  say: (words) => {
+    if (__EVEN_PLUGIN__) settings.error = words
+    else void notices().then(({ gateNote }) => gateNote.show(words))
+  },
+})
 providePort('quick-add.show', {
   show: (prefill = {}) => {
     if (__EVEN_PLUGIN__) return

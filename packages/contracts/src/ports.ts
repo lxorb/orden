@@ -10,6 +10,7 @@ import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
 import type { SettingsPorts, SettingsWindowPort } from './settings'
 import type { SharingPorts } from './sharing'
 import type {
+  NoticePort,
   QuickAddPort,
   QuickAddPrefill,
   SearchPort,
@@ -140,7 +141,6 @@ export function settingsWindow(): SettingsWindowPort {
   return (
     (provided.get('settings.window') as SettingsWindowPort | undefined) ?? {
       open: false,
-      error: null,
       at: null,
       historyOpen: false,
       show: () => undefined,
@@ -155,6 +155,10 @@ export function askSheet(id: SheetId): Promise<void> {
 
 export function showQuickAdd(prefill?: QuickAddPrefill): void {
   ;(provided.get('quick-add.show') as QuickAddPort | undefined)?.show(prefill)
+}
+
+export function sayNotice(words: string): void {
+  ;(provided.get('shell.notice') as NoticePort | undefined)?.say(words)
 }
 
 export function focusEditorRegion(): boolean {
