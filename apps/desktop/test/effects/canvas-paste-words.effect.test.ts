@@ -16,18 +16,6 @@ vi.mock('../../src/lib/workspace/src/api', async (actual) => ({
 }))
 
 Element.prototype.hasPointerCapture = () => false
-globalThis.ResizeObserver = class {
-  observe() {
-    // jsdom does no layout: nothing is measured here.
-  }
-  unobserve() {
-    // Said above.
-  }
-  disconnect() {
-    // Said above.
-  }
-}
-
 let host: HTMLElement
 let note: NoteDoc
 let close: () => void

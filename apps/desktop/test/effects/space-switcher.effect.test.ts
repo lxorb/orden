@@ -8,22 +8,6 @@ import { workspace } from '../../src/lib/workspace/src/api'
 
 Element.prototype.scrollIntoView = () => undefined
 
-class NoLayout {
-  observe() {
-    // Nothing to measure.
-  }
-
-  unobserve() {
-    // Nothing to measure.
-  }
-
-  disconnect() {
-    // Nothing to measure.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 const SPACES = [
   { id: 'vis', name: 'VIS', root: '/spaces/VIS' },
   { id: 'journal', name: 'Journal', root: '/spaces/Journal' },

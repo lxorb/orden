@@ -20,22 +20,6 @@ vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
   hearHere: () => Promise.resolve(() => undefined),
 }))
 
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const rect = this.isConnected
     ? { x: 0, y: 40, width: 800, height: 560 }

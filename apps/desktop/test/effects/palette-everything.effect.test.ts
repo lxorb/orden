@@ -15,22 +15,6 @@ Element.prototype.animate = () =>
 
 Element.prototype.scrollIntoView = () => undefined
 
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 const { default: Palette } = await (await import('../../src/lib/palette/src/api')).loadPalette()
 await import('../../src/lib/settings/src/api')
 await (await import('@orden/contracts')).registered()

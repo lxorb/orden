@@ -12,12 +12,6 @@ providePort('settings.window', settings)
 
 Element.prototype.animate = () =>
   ({ finished: Promise.resolve(), cancel: () => undefined }) as unknown as Animation
-globalThis.ResizeObserver = class {
-  observe = () => undefined
-  unobserve = () => undefined
-  disconnect = () => undefined
-}
-
 let shown: ReturnType<typeof mount> | undefined
 
 afterEach(() => {

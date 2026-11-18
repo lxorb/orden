@@ -4,22 +4,6 @@ import { EditorState, type EditorView } from '@orden/editor'
 import FormatBar from '../../src/lib/surfaces/src/FormatBar.svelte'
 import { reactive } from './runes.svelte'
 
-class NoLayout {
-  observe() {
-    // jsdom does no layout; the bar's size is never asked for here.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 let target: HTMLElement
 let shown: (ReturnType<typeof mount> & { follow(view: EditorView): void }) | undefined
 

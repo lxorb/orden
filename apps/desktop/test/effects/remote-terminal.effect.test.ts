@@ -114,17 +114,6 @@ vi.mock('@xterm/addon-unicode11', () => ({
   },
 }))
 
-globalThis.ResizeObserver = class {
-  observe() {
-    // Nothing is measured here.
-  }
-  unobserve() {
-    // Said above.
-  }
-  disconnect() {
-    // Said above.
-  }
-}
 Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { load: () => Promise.resolve([]) },

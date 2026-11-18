@@ -18,22 +18,6 @@ vi.mock('@orden/themes/glass', () => ({
   glassCss: readFileSync(resolve('../../packages/themes/src/glass.css'), 'utf8'),
 }))
 
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 Element.prototype.animate = () =>
   ({
     cancel: () => undefined,

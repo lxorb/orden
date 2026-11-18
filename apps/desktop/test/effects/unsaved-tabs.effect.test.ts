@@ -15,22 +15,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-class NoLayout {
-  observe() {
-    // Nothing moves in jsdom.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 window.matchMedia = ((query: string) => ({
   matches: query.includes('reduce'),
   media: query,

@@ -18,22 +18,6 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 
 vi.mock('../../src/lib/start', () => ({ start: () => () => undefined }))
 
-class NoLayout {
-  observe() {
-    // jsdom never moves anything.
-  }
-
-  unobserve() {
-    // Said above.
-  }
-
-  disconnect() {
-    // Said above.
-  }
-}
-
-globalThis.ResizeObserver = NoLayout
-
 const moved: { keyframes: Keyframe[]; options: KeyframeAnimationOptions }[] = []
 Element.prototype.animate = function animate(keyframes, options) {
   moved.push({
