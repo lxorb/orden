@@ -13,7 +13,7 @@ import {
 import { withoutComments } from './comments'
 import { type Cover, coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
-import { attributeUrl, escape, safeHref, safeSrc } from './html'
+import { attributeUrl, escape, pathHref, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
 import {
   blockAnchorsDrawn,
@@ -258,17 +258,19 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const nested = from && options.resolveNoteFrom ? localLink(token.href) : null
         const there =
           nested && from ? (options.resolveNoteFrom?.(nested.target, from) ?? null) : null
-        if (nested && there !== null && safeHref(there)) {
+        const nestedHref = nested && there !== null ? pathHref(there) : null
+        if (nested && nestedHref !== null) {
           const title = token.title ? ` title="${escape(token.title)}"` : ''
-          return `<a class="wikilink" href="${attributeUrl(there)}${nested.fragment}"${title}>${body}</a>`
+          return `<a class="wikilink" href="${nestedHref}${nested.fragment}"${title}>${body}</a>`
         }
 
         const resolve = options.resolveNoteHref
         const written = resolve ? noteLink(token.href) : null
         if (resolve && written) {
           const found = resolve(written.target)
-          if (found === null || !safeHref(found)) return body
-          return `<a href="${attributeUrl(found)}${written.fragment}">${body}</a>`
+          const foundHref = found === null ? null : pathHref(found)
+          if (foundHref === null) return body
+          return `<a href="${foundHref}${written.fragment}">${body}</a>`
         }
 
         const href = safeHref(token.href) ? attributeUrl(token.href) : ''

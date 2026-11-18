@@ -6,6 +6,8 @@ const NOTES: Record<string, string> = {
   plan: '/notes/plan',
   spark: '/notes/spark',
   'paper.pdf': '/i/abc.pdf',
+  intro: 'C#/Intro.md',
+  're: lunch': 'Re: lunch.md',
 }
 
 const resolveLink = (link: Wikilink) => {
@@ -24,6 +26,15 @@ describe('a wikilink on a page', () => {
   test('is an anchor when the caller can resolve it', () => {
     expect(renderMarkdown('see [[Plan]] now', { resolveLink })).toContain(
       '<a class="wikilink" href="/notes/plan">Plan</a>',
+    )
+  })
+
+  test('names a path holding # or : as a path, not as a fragment or a scheme', () => {
+    expect(renderMarkdown('[[Intro#Start]]', { resolveLink })).toContain(
+      'href="C%23/Intro.md#start"',
+    )
+    expect(renderMarkdown('[[Re: lunch]]', { resolveLink })).toContain(
+      '<a class="wikilink" href="Re%3a%20lunch.md">Re: lunch</a>',
     )
   })
 
