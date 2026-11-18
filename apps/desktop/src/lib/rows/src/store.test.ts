@@ -7,6 +7,14 @@ import { type Host, type RowsChange, RowsStore } from './store'
 const WORK = '/spaces/Work'
 const HOME = '/spaces/Home'
 
+const moved = (from: string, to: string, kind: 'file' | 'folder' = 'file') => ({
+  op: 'moved' as const,
+  from,
+  to,
+  kind,
+  root: WORK,
+})
+
 const scanned = (path: string, content: string): ScannedNote => ({
   ...scanNote(path, content),
   ...scanRows(content),
@@ -217,13 +225,7 @@ describe('the rows of every space', () => {
     disk.delete(`${WORK}/A/Plan.md`)
     disk.set(`${WORK}/B/Plan.md`, after)
     store.saved(`${WORK}/B/Plan.md`, after)
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/A/Plan.md`,
-      to: `${WORK}/B/Plan.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/A/Plan.md`, `${WORK}/B/Plan.md`))
 
     expect(tasks(store.of())).toEqual(['Work:B/Plan.md:Read [s](../A/Spec.md)'])
     expect(store.of().map((row) => row.file.ctime)).toEqual([1, 1])
@@ -241,13 +243,7 @@ describe('the rows of every space', () => {
     disk.delete(`${WORK}/Plan.md`)
     disk.set(`${WORK}/Road.md`, after)
     store.saved(`${WORK}/Road.md`, after)
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Plan.md`,
-      to: `${WORK}/Road.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Plan.md`, `${WORK}/Road.md`))
 
     expect(store.of().map((row) => row.path)).toEqual(['Road.md', 'Road.md'])
     const link = { kind: 'link', target: 'Road' }
@@ -264,28 +260,16 @@ describe('the rows of every space', () => {
     await settled()
     heard.length = 0
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Projects/Launch.md`,
-      to: `${WORK}/Projects/Launch v2.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Projects/Launch.md`, `${WORK}/Projects/Launch v2.md`))
     const there = heard.find((one) => one.path === 'Projects/Launch v2.md')
     expect(there?.added).toHaveLength(1)
     expect(there?.from).toMatchObject({ space: 'Work', path: 'Projects/Launch.md' })
     expect(there?.from?.rows[0]?.note).toEqual({ status: 'Doing' })
 
     heard.length = 0
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Projects`,
-      to: `${WORK}/Archive/Projects`,
-      kind: 'folder',
-      root: WORK,
-    })
-    const moved = heard.find((one) => one.path === 'Archive/Projects/Launch v2.md')
-    expect(moved?.from?.path).toBe('Projects/Launch v2.md')
+    void store.follow(moved(`${WORK}/Projects`, `${WORK}/Archive/Projects`, 'folder'))
+    const inside = heard.find((one) => one.path === 'Archive/Projects/Launch v2.md')
+    expect(inside?.from?.path).toBe('Projects/Launch v2.md')
     store.saved(`${WORK}/New.md`, 'x\n')
     expect(heard.at(-1)?.from).toBeUndefined()
   })
@@ -299,23 +283,11 @@ describe('the rows of every space', () => {
     await store.follow({ op: 'created', path: `${WORK}/New.md`, kind: 'file', root: WORK })
     expect(tasks(store.of())).toEqual(['Work:New.md:Fresh'])
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/New.md`,
-      to: `${WORK}/Done/Old.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/New.md`, `${WORK}/Done/Old.md`))
     expect(tasks(store.of())).toEqual(['Work:Done/Old.md:Fresh'])
     expect(store.of()[0]?.file).toMatchObject({ name: 'Old.md', basename: 'Old', folder: 'Done' })
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Done`,
-      to: `${WORK}/Archive`,
-      kind: 'folder',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Done`, `${WORK}/Archive`, 'folder'))
     expect(tasks(store.of())).toEqual(['Work:Archive/Old.md:Fresh'])
 
     void store.follow({ op: 'removed', path: `${WORK}/Archive`, kind: 'folder', root: WORK })
@@ -332,16 +304,10 @@ describe('the rows of every space', () => {
     answer(HOME)
     await settled()
 
-    void store.follow({
-      op: 'moved',
-      from: `${WORK}/Plan.md`,
-      to: `${HOME}/Plan.md`,
-      kind: 'file',
-      root: WORK,
-    })
+    void store.follow(moved(`${WORK}/Plan.md`, `${HOME}/Plan.md`))
     expect(tasks(store.of())).toEqual(['Home:Plan.md:Go'])
-    const [, moved] = store.of()
-    expect(moved && store.rootOf(moved)).toBe(HOME)
+    const [, other] = store.of()
+    expect(other && store.rootOf(other)).toBe(HOME)
   })
 
   test('what happens while a space is being read is done again over what it brings back', async () => {
