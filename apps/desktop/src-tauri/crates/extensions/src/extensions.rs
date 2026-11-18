@@ -8,15 +8,11 @@ use tauri::{AppHandle, Emitter as _};
 mod amo;
 mod fetch;
 mod firefox;
-#[cfg(test)]
-mod given;
 pub mod library;
 pub mod link;
 mod manifest;
 pub mod popup;
 mod unzip;
-#[cfg(test)]
-pub mod welcome;
 
 mod chromium;
 pub mod tabs;
