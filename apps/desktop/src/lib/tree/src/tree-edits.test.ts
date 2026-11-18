@@ -2,23 +2,7 @@ import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree } from './tree-order'
-
-function file(path: string): Entry {
-  return {
-    name: path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1),
-    path,
-    is_dir: false,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
-
-const folder = (path: string, children: Entry[] = []): Entry => ({
-  ...file(path),
-  is_dir: true,
-  children,
-})
+import { file, folder } from './entries'
 
 function root(): Entry {
   return folder('/N', [
