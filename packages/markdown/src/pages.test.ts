@@ -612,12 +612,10 @@ describe('a page out of a PDF', () => {
   })
 })
 
-describe('the paper a page note holds', () => {
-  test('is the note with .pdf after it; names the note it belongs to, and nothing else does', () => {
-    expect(paperOf('/s/Lecture 4.pages')).toBe('/s/Lecture 4.pages.pdf')
-    expect(holderOf('/s/Lecture 4.pages.pdf')).toBe('/s/Lecture 4.pages')
-    expect(holderOf('/s/Lecture 4.PAGES.PDF')).toBe('/s/Lecture 4.PAGES')
-    expect(holderOf('/s/Lecture 4.pdf')).toBeNull()
-    expect(holderOf('/s/Lecture 4.pages')).toBeNull()
-  })
+test('the paper a page note holds: is the note with .pdf after it; names the note it belongs to, and nothing else does', () => {
+  expect(paperOf('/s/Lecture 4.pages')).toBe('/s/Lecture 4.pages.pdf')
+  expect(holderOf('/s/Lecture 4.pages.pdf')).toBe('/s/Lecture 4.pages')
+  expect(holderOf('/s/Lecture 4.PAGES.PDF')).toBe('/s/Lecture 4.PAGES')
+  expect(holderOf('/s/Lecture 4.pdf')).toBeNull()
+  expect(holderOf('/s/Lecture 4.pages')).toBeNull()
 })

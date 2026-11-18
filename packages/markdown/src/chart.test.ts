@@ -90,16 +90,14 @@ describe('reading a chart out of a fence', () => {
   })
 })
 
-describe('a flow list over several lines', () => {
-  test('reads as the one list it is', () => {
-    const chart = readChart(
-      'labels: [\n  a,\n  b\n]\nseries:\n  - title: s\n    data: [\n      1,\n      2\n    ]\n',
-    )
-    expect(chart?.labels).toEqual(['a', 'b'])
-    expect(chart?.series[0]?.data).toEqual([1, 2])
-    expect(readChart('data: [\n1,\n2\n]\n')).toBeNull()
-    expect(readChart('series: [\n1,\n2\n]\n')?.series[0]?.data).toEqual([1, 2])
-  })
+test('a flow list over several lines: reads as the one list it is', () => {
+  const chart = readChart(
+    'labels: [\n  a,\n  b\n]\nseries:\n  - title: s\n    data: [\n      1,\n      2\n    ]\n',
+  )
+  expect(chart?.labels).toEqual(['a', 'b'])
+  expect(chart?.series[0]?.data).toEqual([1, 2])
+  expect(readChart('data: [\n1,\n2\n]\n')).toBeNull()
+  expect(readChart('series: [\n1,\n2\n]\n')?.series[0]?.data).toEqual([1, 2])
 })
 
 describe('drawing it', () => {
@@ -354,20 +352,15 @@ describe('numbers at the ends of what a number can be', () => {
   })
 })
 
-describe('what a comment is not', () => {
-  test('a hash inside a list; a title that begins with one; a key whose list is below it still opens with a comment beside it', () => {
-    expect(readChart('labels: [#1, #2]\nseries: [1, 2]')?.labels).toEqual(['#1', '#2'])
-    expect(readChart('labels: [a #1, b #2] # note\nseries: [1, 2]')?.labels).toEqual([
-      'a #1',
-      'b #2',
-    ])
-    expect(readChart('series: [1, 2] # [3]')?.series[0]?.data).toEqual([1, 2])
-    expect(readChart('title: #1 Sales\nseries: [1]')?.title).toBe('#1 Sales')
-    expect(readChart('title: Issue #12\nseries: [1]')?.title).toBe('Issue')
-    const chart = readChart(
-      'labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n',
-    )
-    expect(chart?.labels).toEqual(['a'])
-    expect(chart?.series[0]?.data).toEqual([1])
-  })
+test('what a comment is not: a hash inside a list; a title that begins with one; a key whose list is below it still opens with a comment beside it', () => {
+  expect(readChart('labels: [#1, #2]\nseries: [1, 2]')?.labels).toEqual(['#1', '#2'])
+  expect(readChart('labels: [a #1, b #2] # note\nseries: [1, 2]')?.labels).toEqual(['a #1', 'b #2'])
+  expect(readChart('series: [1, 2] # [3]')?.series[0]?.data).toEqual([1, 2])
+  expect(readChart('title: #1 Sales\nseries: [1]')?.title).toBe('#1 Sales')
+  expect(readChart('title: Issue #12\nseries: [1]')?.title).toBe('Issue')
+  const chart = readChart(
+    'labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n',
+  )
+  expect(chart?.labels).toEqual(['a'])
+  expect(chart?.series[0]?.data).toEqual([1])
 })

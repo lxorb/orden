@@ -280,14 +280,12 @@ describe('words written as a task that no field is read from', () => {
   })
 })
 
-describe('an escaped bracket in a task', () => {
-  test('opens no field; while one that is not escaped still does', () => {
-    const task = readTask('- [ ] a \\[due:: 2026-01-01\\]')
-    expect(task?.due).toBeUndefined()
-    expect(task?.fields).toEqual({})
-    expect(task?.text).toBe('a \\[due:: 2026-01-01\\]')
-    expect(readTask('- [ ] a [due:: 2026-01-01]')?.due).toBe('2026-01-01')
-  })
+test('an escaped bracket in a task: opens no field; while one that is not escaped still does', () => {
+  const task = readTask('- [ ] a \\[due:: 2026-01-01\\]')
+  expect(task?.due).toBeUndefined()
+  expect(task?.fields).toEqual({})
+  expect(task?.text).toBe('a \\[due:: 2026-01-01\\]')
+  expect(readTask('- [ ] a [due:: 2026-01-01]')?.due).toBe('2026-01-01')
 })
 
 describe('code in a task', () => {
@@ -313,11 +311,9 @@ test('an address with two colons in it is left as it is by taskWords', () => {
   expect(taskWords('see https://example.com/a::b')).toBe('see https://example.com/a::b')
 })
 
-describe('a parenthesis in the words before a field', () => {
-  test('does not take the field into a key of its own; and a field of either kind still reads', () => {
-    expect(readTask('- [ ] buy (before work [due:: 2026-05-06])')?.due).toBe('2026-05-06')
-    expect(readTask('- [ ] buy [before (due:: 2026-05-06)]')?.due).toBe('2026-05-06')
-    expect(readTask('- [ ] buy (due:: 2026-05-06)')?.due).toBe('2026-05-06')
-    expect(readTask('- [ ] buy [due:: 2026-05-06]')?.due).toBe('2026-05-06')
-  })
+test('a parenthesis in the words before a field: does not take the field into a key of its own; and a field of either kind still reads', () => {
+  expect(readTask('- [ ] buy (before work [due:: 2026-05-06])')?.due).toBe('2026-05-06')
+  expect(readTask('- [ ] buy [before (due:: 2026-05-06)]')?.due).toBe('2026-05-06')
+  expect(readTask('- [ ] buy (due:: 2026-05-06)')?.due).toBe('2026-05-06')
+  expect(readTask('- [ ] buy [due:: 2026-05-06]')?.due).toBe('2026-05-06')
 })

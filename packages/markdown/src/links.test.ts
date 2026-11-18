@@ -115,12 +115,10 @@ describe('a link written back as source', () => {
   })
 })
 
-describe('the words a link shows', () => {
-  test('the alias when it has one, the target when it does not', () => {
-    expect(shownText(parseWikilink('Note|shown')!)).toBe('shown')
-    expect(shownText(parseWikilink('Note#Heading')!)).toBe('Note#Heading')
-    expect(linkTarget(parseWikilink('Note#^id')!)).toBe('Note#^id')
-  })
+test('the words a link shows: the alias when it has one, the target when it does not', () => {
+  expect(shownText(parseWikilink('Note|shown')!)).toBe('shown')
+  expect(shownText(parseWikilink('Note#Heading')!)).toBe('Note#Heading')
+  expect(linkTarget(parseWikilink('Note#^id')!)).toBe('Note#^id')
 })
 
 describe('what a target names', () => {
@@ -450,14 +448,12 @@ describe('the part of a note a link points into', () => {
   })
 })
 
-describe('how many links one note is read for', () => {
-  test('is the same ceiling the crate keeps; and a note that says it more often than that is read to the ceiling; while a note anybody wrote is read whole', () => {
-    expect(MOST_LINKS).toBe(5000)
-    const many = findLinks(['[[A]] '.repeat(4000), '[[B]] '.repeat(4000), ''].join('\n'))
-    expect(many).toHaveLength(MOST_LINKS)
-    expect(many[0]?.target).toBe('A')
-    expect(findLinks('see [[A]] and [[B]]')).toHaveLength(2)
-  })
+test('how many links one note is read for: is the same ceiling the crate keeps; and a note that says it more often than that is read to the ceiling; while a note anybody wrote is read whole', () => {
+  expect(MOST_LINKS).toBe(5000)
+  const many = findLinks(['[[A]] '.repeat(4000), '[[B]] '.repeat(4000), ''].join('\n'))
+  expect(many).toHaveLength(MOST_LINKS)
+  expect(many[0]?.target).toBe('A')
+  expect(findLinks('see [[A]] and [[B]]')).toHaveLength(2)
 })
 
 describe('a name as something to compare', () => {
@@ -609,15 +605,13 @@ describe('parentheses and brackets in a markdown link', () => {
   })
 })
 
-describe('what a wikilink cannot name', () => {
-  test('the characters its own grammar or Obsidian takes for something else', () => {
-    for (const name of ['C# basics', 'a^b', 'a[b]', 'a]b', 'a|b']) {
-      expect(wikilinkCannotName(name)).toBe(true)
-    }
-    for (const name of ['Plan', 'a (1)', 'folder/Plan', 'é ü', 'a&b']) {
-      expect(wikilinkCannotName(name)).toBe(false)
-    }
-  })
+test('what a wikilink cannot name: the characters its own grammar or Obsidian takes for something else', () => {
+  for (const name of ['C# basics', 'a^b', 'a[b]', 'a]b', 'a|b']) {
+    expect(wikilinkCannotName(name)).toBe(true)
+  }
+  for (const name of ['Plan', 'a (1)', 'folder/Plan', 'é ü', 'a&b']) {
+    expect(wikilinkCannotName(name)).toBe(false)
+  }
 })
 
 describe('a size after a bar in a picture words', () => {
@@ -868,13 +862,11 @@ describe('naming a block by where it ends', () => {
   })
 })
 
-describe('a size of nothing', () => {
-  test('is no size: the picture is not drawn away', () => {
-    expect(sizedAlt('x|0')).toEqual({ alt: 'x|0', size: null })
-    expect(embedSize('0')).toBeNull()
-    expect(embedSize('0x20')).toBeNull()
-    expect(embedSize('300')).toEqual({ width: 300, height: null })
-  })
+test('a size of nothing: is no size: the picture is not drawn away', () => {
+  expect(sizedAlt('x|0')).toEqual({ alt: 'x|0', size: null })
+  expect(embedSize('0')).toBeNull()
+  expect(embedSize('0x20')).toBeNull()
+  expect(embedSize('300')).toEqual({ width: 300, height: null })
 })
 
 describe('a closing fence an older build named', () => {

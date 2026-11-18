@@ -61,23 +61,19 @@ describe('the first place a construct could be', () => {
   })
 })
 
-describe('the line a place sits on', () => {
-  test('is the newline before it; is nothing when words come first; allows the blanks it is told to; counts the start of the string only when asked', () => {
-    expect(lineStart('one\ntwo', 4)).toBe(3)
-    expect(lineStart('one two', 4)).toBeNull()
-    expect(lineStart('one\n  two', 6, { blanks: 3 })).toBe(3)
-    expect(lineStart('one\n      two', 10, { blanks: 3 })).toBeNull()
-    expect(lineStart('two', 0)).toBeNull()
-    expect(lineStart('two', 0, { orString: true })).toBe(0)
-  })
+test('the line a place sits on: is the newline before it; is nothing when words come first; allows the blanks it is told to; counts the start of the string only when asked', () => {
+  expect(lineStart('one\ntwo', 4)).toBe(3)
+  expect(lineStart('one two', 4)).toBeNull()
+  expect(lineStart('one\n  two', 6, { blanks: 3 })).toBe(3)
+  expect(lineStart('one\n      two', 10, { blanks: 3 })).toBeNull()
+  expect(lineStart('two', 0)).toBeNull()
+  expect(lineStart('two', 0, { orString: true })).toBe(0)
 })
 
-describe('matching at one place', () => {
-  test('holds the pattern to that place', () => {
-    const pattern = /ab/y
-    expect(matchesAt(pattern, 'xxabxx', 2)).toBe(true)
-    expect(matchesAt(pattern, 'xxabxx', 1)).toBe(false)
-  })
+test('matching at one place: holds the pattern to that place', () => {
+  const pattern = /ab/y
+  expect(matchesAt(pattern, 'xxabxx', 2)).toBe(true)
+  expect(matchesAt(pattern, 'xxabxx', 1)).toBe(false)
 })
 
 describe('a mark in the middle of a sentence leaves the sentence alone', () => {

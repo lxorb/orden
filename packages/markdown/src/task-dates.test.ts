@@ -65,11 +65,9 @@ describe('in an Obsidian vault', () => {
   })
 })
 
-describe('a scheduled date', () => {
-  test('places a task on its day and never makes it late', () => {
-    const task = line('Water the plants ⏳ 2026-10-01')
-    expect(dayOf(task)).toBe('2026-10-01')
-    expect(hasStarted(task, TODAY)).toBe(true)
-    expect(isLate(task, TODAY)).toBe(false)
-  })
+test('a scheduled date: places a task on its day and never makes it late', () => {
+  const task = line('Water the plants ⏳ 2026-10-01')
+  expect(dayOf(task)).toBe('2026-10-01')
+  expect(hasStarted(task, TODAY)).toBe(true)
+  expect(isLate(task, TODAY)).toBe(false)
 })

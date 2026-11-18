@@ -37,15 +37,13 @@ describe('the cover a note names', () => {
   })
 })
 
-describe('where the band is taken from', () => {
-  test('is the middle for anything a number cannot be made of; stays inside the picture; is a whole number, because a pointer wrote it', () => {
-    for (const said of [null, undefined, '', 'middle', 'NaN']) {
-      expect(coverPosition(said), String(said)).toBe(COVER_MIDDLE)
-    }
-    expect(coverPosition('-40')).toBe(0)
-    expect(coverPosition('180')).toBe(100)
-    expect(coverPosition('43.7183')).toBe(44)
-  })
+test('where the band is taken from: is the middle for anything a number cannot be made of; stays inside the picture; is a whole number, because a pointer wrote it', () => {
+  for (const said of [null, undefined, '', 'middle', 'NaN']) {
+    expect(coverPosition(said), String(said)).toBe(COVER_MIDDLE)
+  }
+  expect(coverPosition('-40')).toBe(0)
+  expect(coverPosition('180')).toBe(100)
+  expect(coverPosition('43.7183')).toBe(44)
 })
 
 describe('the banner every surface draws', () => {

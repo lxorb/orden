@@ -10,33 +10,29 @@ import {
   stripFrontMatter,
 } from './index'
 
-describe('front matter', () => {
-  test('is not rendered; can be read on its own; leaves a document without it alone; a block nobody closed is the note’s own words; answers a single field', () => {
-    expect(renderMarkdown('---\ntitle: Hi\n---\n\nBody.\n')).not.toContain('title: Hi')
-    expect(renderMarkdown('---\ntitle: Hi\n---\n\nBody.\n')).toContain('Body.')
-    expect(frontMatter('---\ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
-    expect(frontMatter('No front matter')).toBeNull()
-    expect(stripFrontMatter('# Title')).toBe('# Title')
-    const open = '---\nstatus: done\n\n# Plan\n'
-    const html = renderMarkdown(open, { properties: 'properties' })
-    expect(frontMatter(open)).toBeNull()
-    expect(stripFrontMatter(open)).toBe(open)
-    expect(html).toContain('status: done')
-    expect(html).not.toContain('class="properties"')
-    const source = '---\ntitle: "Field Notes"\nauthor: Ada\nexport:\n  paper: A5\n---\n\nBody'
-    expect(frontMatterValue(source, 'title')).toBe('Field Notes')
-    expect(frontMatterValue(source, 'author')).toBe('Ada')
-    expect(frontMatterValue(source, 'paper')).toBeNull()
-    expect(frontMatterValue(source, 'missing')).toBeNull()
-    expect(frontMatterValue('# No matter', 'title')).toBeNull()
-  })
+test('front matter: is not rendered; can be read on its own; leaves a document without it alone; a block nobody closed is the note’s own words; answers a single field', () => {
+  expect(renderMarkdown('---\ntitle: Hi\n---\n\nBody.\n')).not.toContain('title: Hi')
+  expect(renderMarkdown('---\ntitle: Hi\n---\n\nBody.\n')).toContain('Body.')
+  expect(frontMatter('---\ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
+  expect(frontMatter('No front matter')).toBeNull()
+  expect(stripFrontMatter('# Title')).toBe('# Title')
+  const open = '---\nstatus: done\n\n# Plan\n'
+  const html = renderMarkdown(open, { properties: 'properties' })
+  expect(frontMatter(open)).toBeNull()
+  expect(stripFrontMatter(open)).toBe(open)
+  expect(html).toContain('status: done')
+  expect(html).not.toContain('class="properties"')
+  const source = '---\ntitle: "Field Notes"\nauthor: Ada\nexport:\n  paper: A5\n---\n\nBody'
+  expect(frontMatterValue(source, 'title')).toBe('Field Notes')
+  expect(frontMatterValue(source, 'author')).toBe('Ada')
+  expect(frontMatterValue(source, 'paper')).toBeNull()
+  expect(frontMatterValue(source, 'missing')).toBeNull()
+  expect(frontMatterValue('# No matter', 'title')).toBeNull()
 })
 
-describe('titles', () => {
-  test('reads the first heading; is null when there is no heading', () => {
-    expect(documentTitle('---\na: b\n---\n\n# Real title\n\ntext')).toBe('Real title')
-    expect(documentTitle('just text')).toBeNull()
-  })
+test('titles: reads the first heading; is null when there is no heading', () => {
+  expect(documentTitle('---\na: b\n---\n\n# Real title\n\ntext')).toBe('Real title')
+  expect(documentTitle('just text')).toBeNull()
 })
 
 describe('a single newline', () => {
@@ -922,16 +918,14 @@ describe('nesting thousands deep', () => {
   })
 })
 
-describe('a markdown picture with a size after a bar', () => {
-  test('is drawn at that size, as Obsidian does; and words after a bar are words', () => {
-    expect(renderMarkdown('![\\|100x200](a.png)')).toContain(
-      '<img src="a.png" alt="" width="100" height="200">',
-    )
-    expect(renderMarkdown('![a cat|300](a.png)')).toContain(
-      '<img src="a.png" alt="a cat" width="300">',
-    )
-    expect(renderMarkdown('![a|b](a.png)')).toContain('alt="a|b"')
-  })
+test('a markdown picture with a size after a bar: is drawn at that size, as Obsidian does; and words after a bar are words', () => {
+  expect(renderMarkdown('![\\|100x200](a.png)')).toContain(
+    '<img src="a.png" alt="" width="100" height="200">',
+  )
+  expect(renderMarkdown('![a cat|300](a.png)')).toContain(
+    '<img src="a.png" alt="a cat" width="300">',
+  )
+  expect(renderMarkdown('![a|b](a.png)')).toContain('alt="a|b"')
 })
 
 describe('a named block on a page a link to it is followed on', () => {

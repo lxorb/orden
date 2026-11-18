@@ -135,10 +135,8 @@ describe('the words of someone else', () => {
   })
 })
 
-describe('in a note of the reader’s own', () => {
-  test('a tag the renderer never saw is no way past what it holds back', () => {
-    const html = renderMarkdown('x <kbd>k</kbd> <kbd> <iframe src=javascript:alert(1) "">\n')
-    expect(html).toContain('<kbd>k</kbd>')
-    expect(live(html.replace(/<\/?kbd>/g, ''))).toEqual([])
-  })
+test('in a note of the reader’s own: a tag the renderer never saw is no way past what it holds back', () => {
+  const html = renderMarkdown('x <kbd>k</kbd> <kbd> <iframe src=javascript:alert(1) "">\n')
+  expect(html).toContain('<kbd>k</kbd>')
+  expect(live(html.replace(/<\/?kbd>/g, ''))).toEqual([])
 })

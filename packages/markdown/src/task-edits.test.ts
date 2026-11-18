@@ -193,16 +193,14 @@ describe('a change', () => {
   })
 })
 
-describe('unknown fields an object would answer from its prototype', () => {
-  test('are removed, changed and added like any other', () => {
-    expect(changedTask('- [ ] Pay [toString:: 1]', { fields: {} })).toBe('- [ ] Pay')
-    expect(changedTask('- [ ] Pay [toString:: 1]', { fields: { toString: '2' } })).toBe(
-      '- [ ] Pay [toString:: 2]',
-    )
-    expect(changedTask('- [ ] Pay', { fields: { constructor: '1' } })).toBe(
-      '- [ ] Pay [constructor:: 1]',
-    )
-  })
+test('unknown fields an object would answer from its prototype: are removed, changed and added like any other', () => {
+  expect(changedTask('- [ ] Pay [toString:: 1]', { fields: {} })).toBe('- [ ] Pay')
+  expect(changedTask('- [ ] Pay [toString:: 1]', { fields: { toString: '2' } })).toBe(
+    '- [ ] Pay [toString:: 2]',
+  )
+  expect(changedTask('- [ ] Pay', { fields: { constructor: '1' } })).toBe(
+    '- [ ] Pay [constructor:: 1]',
+  )
 })
 
 describe('code in a task', () => {
@@ -250,13 +248,11 @@ function readTaskOf(line: string) {
   return found
 }
 
-describe('a field arriving in front of one glued to the words', () => {
-  test('stands apart from them, so a tag is a tag; and adds no second blank where there is one', () => {
-    expect(changedTask('- [ ] x⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
-      '- [ ] x #new ⏫ 📅 2026-01-02',
-    )
-    expect(changedTask('- [ ] x ⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
-      '- [ ] x #new ⏫ 📅 2026-01-02',
-    )
-  })
+test('a field arriving in front of one glued to the words: stands apart from them, so a tag is a tag; and adds no second blank where there is one', () => {
+  expect(changedTask('- [ ] x⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
+    '- [ ] x #new ⏫ 📅 2026-01-02',
+  )
+  expect(changedTask('- [ ] x ⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
+    '- [ ] x #new ⏫ 📅 2026-01-02',
+  )
 })

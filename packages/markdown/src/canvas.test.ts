@@ -210,12 +210,10 @@ describe('writing a canvas', () => {
   })
 })
 
-describe('a fresh id', () => {
-  test('is sixteen hex characters, which is what Obsidian writes, and not the last one', () => {
-    expect(freshId()).toMatch(/^[0-9a-f]{16}$/)
-    const seen = new Set(Array.from({ length: 200 }, () => freshId()))
-    expect(seen.size).toBe(200)
-  })
+test('a fresh id: is sixteen hex characters, which is what Obsidian writes, and not the last one', () => {
+  expect(freshId()).toMatch(/^[0-9a-f]{16}$/)
+  const seen = new Set(Array.from({ length: 200 }, () => freshId()))
+  expect(seen.size).toBe(200)
 })
 
 describe('what Orden keeps beyond the spec', () => {

@@ -634,19 +634,17 @@ describe('a page as markdown', () => {
   })
 })
 
-describe('a checked list item', () => {
-  test('reads none of its words as a field of the task', async () => {
-    const { readTask } = await import('./task-line')
-    const html =
-      '<ul><li><input type="checkbox">task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]</li></ul>'
-    const line = htmlToMarkdown(html, { plainTasks: true }).trim()
-    const task = readTask(line)
-    expect(task).toMatchObject({ tags: [] })
-    expect(task?.due).toBeUndefined()
-    expect(task?.recurrence).toBeUndefined()
-    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
-    expect(task?.fields).toEqual({})
-  })
+test('a checked list item: reads none of its words as a field of the task', async () => {
+  const { readTask } = await import('./task-line')
+  const html =
+    '<ul><li><input type="checkbox">task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]</li></ul>'
+  const line = htmlToMarkdown(html, { plainTasks: true }).trim()
+  const task = readTask(line)
+  expect(task).toMatchObject({ tags: [] })
+  expect(task?.due).toBeUndefined()
+  expect(task?.recurrence).toBeUndefined()
+  expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
+  expect(task?.fields).toEqual({})
 })
 
 test('a to-do keeps its code as it was written', () => {
@@ -750,29 +748,25 @@ describe('a heading cell across two columns', () => {
   })
 })
 
-describe('a loose task list', () => {
-  test('keeps the box of an item whose words sit in a paragraph', () => {
-    expect(
-      htmlToMarkdown(
-        '<ul><li><p><input type="checkbox"> x</p></li><li><p><input type="checkbox" checked> y</p></li></ul>',
-      ),
-    ).toMatch(/^- \[ \] x\n+- \[x\] y$/u)
-  })
+test('a loose task list: keeps the box of an item whose words sit in a paragraph', () => {
+  expect(
+    htmlToMarkdown(
+      '<ul><li><p><input type="checkbox"> x</p></li><li><p><input type="checkbox" checked> y</p></li></ul>',
+    ),
+  ).toMatch(/^- \[ \] x\n+- \[x\] y$/u)
 })
 
-describe('marks and what stands beside them', () => {
-  test('a heading holds its line break as a space; marks that could not close write no stars; a linked picture with a bracket in its words stays a linked picture', () => {
-    expect(htmlToMarkdown('<h1>a<br>b</h1>')).toBe('# a b')
-    expect(renderMarkdown(htmlToMarkdown('<p><b>"x"</b>y</p>'))).not.toContain('*')
-    expect(renderMarkdown(htmlToMarkdown('<p>y<i>"x"</i></p>'))).not.toContain('*')
-    expect(htmlToMarkdown('<p><b>"x"</b> y</p>')).toBe('**"x"** y')
-    expect(htmlToMarkdown('<p><b>x</b>y</p>')).toBe('**x**y')
-    const html = renderMarkdown(
-      htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p]q"></a>'),
-    )
-    expect(html).toContain('<img')
-    expect(html).not.toContain('](')
-  })
+test('marks and what stands beside them: a heading holds its line break as a space; marks that could not close write no stars; a linked picture with a bracket in its words stays a linked picture', () => {
+  expect(htmlToMarkdown('<h1>a<br>b</h1>')).toBe('# a b')
+  expect(renderMarkdown(htmlToMarkdown('<p><b>"x"</b>y</p>'))).not.toContain('*')
+  expect(renderMarkdown(htmlToMarkdown('<p>y<i>"x"</i></p>'))).not.toContain('*')
+  expect(htmlToMarkdown('<p><b>"x"</b> y</p>')).toBe('**"x"** y')
+  expect(htmlToMarkdown('<p><b>x</b>y</p>')).toBe('**x**y')
+  const html = renderMarkdown(
+    htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p]q"></a>'),
+  )
+  expect(html).toContain('<img')
+  expect(html).not.toContain('](')
 })
 
 describe('marks beside marks', () => {
@@ -793,61 +787,51 @@ describe('marks beside marks', () => {
   })
 })
 
-describe('a table with two heading rows', () => {
-  test('has one line of dashes', () => {
-    const said = htmlToMarkdown(
-      '<table><thead><tr><th>a</th></tr><tr><th>b</th></tr></thead><tbody><tr><td>c</td></tr></tbody></table>',
-    )
-    expect(said).toBe('| a |\n| --- |\n| b |\n| c |')
-  })
+test('a table with two heading rows: has one line of dashes', () => {
+  const said = htmlToMarkdown(
+    '<table><thead><tr><th>a</th></tr><tr><th>b</th></tr></thead><tbody><tr><td>c</td></tr></tbody></table>',
+  )
+  expect(said).toBe('| a |\n| --- |\n| b |\n| c |')
 })
 
-describe('a link around a task list', () => {
-  test('goes inside the item, past its box', () => {
-    const said = htmlToMarkdown(
-      '<a href="https://u.co"><ul><li><input type="checkbox"> x</li></ul></a>',
-    )
-    expect(said).toBe('- [ ] [x](https://u.co)')
-  })
+test('a link around a task list: goes inside the item, past its box', () => {
+  const said = htmlToMarkdown(
+    '<a href="https://u.co"><ul><li><input type="checkbox"> x</li></ul></a>',
+  )
+  expect(said).toBe('- [ ] [x](https://u.co)')
 })
 
-describe('alt ending in a backslash, in a link', () => {
-  test('stays a picture', () => {
-    const html = renderMarkdown(
-      htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p\\"></a>'),
-    )
-    expect(html).toContain('<img')
-    expect(html).not.toContain('](')
-  })
+test('alt ending in a backslash, in a link: stays a picture', () => {
+  const html = renderMarkdown(
+    htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p\\"></a>'),
+  )
+  expect(html).toContain('<img')
+  expect(html).not.toContain('](')
 })
 
-describe('a table with a cell over several rows', () => {
-  test('a cell that spans rows leaves its column empty below, so no cell shifts', () => {
-    const markdown = htmlToMarkdown(
-      '<table><tr><th>a</th><th>b</th><th>c</th></tr>' +
-        '<tr><td rowspan="2">1</td><td>2</td><td>3</td></tr>' +
-        '<tr><td>4</td><td>5</td></tr>' +
-        '<tr><td>6</td><td rowspan="2">7</td><td>8</td></tr>' +
-        '<tr><td>9</td><td>10</td></tr></table>',
-    )
-    expect(markdown).toBe(
-      '| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n|  | 4 | 5 |\n| 6 | 7 | 8 |\n| 9 |  | 10 |',
-    )
-  })
+test('a table with a cell over several rows: a cell that spans rows leaves its column empty below, so no cell shifts', () => {
+  const markdown = htmlToMarkdown(
+    '<table><tr><th>a</th><th>b</th><th>c</th></tr>' +
+      '<tr><td rowspan="2">1</td><td>2</td><td>3</td></tr>' +
+      '<tr><td>4</td><td>5</td></tr>' +
+      '<tr><td>6</td><td rowspan="2">7</td><td>8</td></tr>' +
+      '<tr><td>9</td><td>10</td></tr></table>',
+  )
+  expect(markdown).toBe(
+    '| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n|  | 4 | 5 |\n| 6 | 7 | 8 |\n| 9 |  | 10 |',
+  )
 })
 
-describe('a form', () => {
-  test('its words are kept and its controls are not; with nothing but controls and what names them is nothing', () => {
-    const said = htmlToMarkdown('<p>intro</p><form><p>body</p><button>Send</button></form>')
-    expect(said).toContain('intro')
-    expect(said).toContain('body')
-    expect(said).not.toContain('Send')
-    expect(
-      htmlToMarkdown(
-        '<p>intro</p><form><label>Mail</label><input><select><option>a</option></select></form>',
-      ),
-    ).toBe('intro')
-  })
+test('a form: its words are kept and its controls are not; with nothing but controls and what names them is nothing', () => {
+  const said = htmlToMarkdown('<p>intro</p><form><p>body</p><button>Send</button></form>')
+  expect(said).toContain('intro')
+  expect(said).toContain('body')
+  expect(said).not.toContain('Send')
+  expect(
+    htmlToMarkdown(
+      '<p>intro</p><form><label>Mail</label><input><select><option>a</option></select></form>',
+    ),
+  ).toBe('intro')
 })
 
 describe('a form that asks for something', () => {
