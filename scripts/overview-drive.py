@@ -331,7 +331,7 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
     kept = distinct(smalls)
     print(f"[{name}] {len(kept)} of them drawn anew", flush=True)
     for i, length, many, far in flashes(smalls, kept):
-        known(2199, f"[{name}] frames {i}-{i + length - 1} flash in {many} cells, up to {far} from both sides")
+        known(2205, f"[{name}] frames {i}-{i + length - 1} flash in {many} cells, up to {far} from both sides")
     for k in range(1, len(kept)):
         share = sum(one > FAR for one in cells(smalls[kept[k - 1]], smalls[kept[k]])) / (CELLS[0] * CELLS[1])
         if share > MOST:

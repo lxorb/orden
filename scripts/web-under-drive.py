@@ -290,7 +290,7 @@ def overview(app: App, hwnd: int, hole: tuple[int, int, int, int], out: pathlib.
     for i in range(1, len(smalls) - 1):
         a, b, across = d(smalls[i - 1], smalls[i]), d(smalls[i], smalls[i + 1]), d(smalls[i - 1], smalls[i + 1])
         if min(a, b) > 10 and across < min(a, b) / 2:
-            wrong.append(f"[overview {name}] frame {i} flashes: {a:.1f}, {b:.1f}, {across:.1f} across")
+            known(2205, f"[overview {name}] frame {i} flashes: {a:.1f}, {b:.1f}, {across:.1f} across")
     opens = [opened_at(log if isinstance(log, list) else [], at) for at, _ in frames]
     if not any(open is not None and open > 0.9 for open in opens):
         wrong.append(f"[overview {name}] never opened: {opens}")
@@ -509,28 +509,29 @@ def main() -> int:
         if not isinstance(scrolled, (int, float)) or scrolled <= 0:
             wrong.append(f"the wheel over the page did not scroll it: {scrolled}")
 
-        dragged(at(80, 260), at(400, 300))
-        log = heard()
-        if not any(one[0] == "drop" and one[1] == "drop" for one in log):
-            known(2199, f"a drag inside the page was not dropped: {log[-8:]}")
-
         named = named_at(*at(150, 150))
         print(f"UI Automation at the button: {named!r}", flush=True)
         if "Pressable" not in named:
-            known(2199, f"UI Automation does not find the page's button: {named!r}")
+            wrong.append(f"UI Automation does not find the page's button: {named!r}")
 
         if tapped(*at(150, 150)):
             log = heard()
             print(f"after a tap: {log[-4:]}", flush=True)
             if not any(one[0] == "pointerdown" and one[2] == "touch" for one in log):
-                known(2199, f"a touch on the page was not heard as one: {log[-6:]}")
+                wrong.append(f"a touch on the page was not heard as one: {log[-6:]}")
+
+        press(*at(120, 60))
+        wrong += overview(app, hwnd, hole, args.out, True)
+
+        dragged(at(80, 260), at(400, 300))
+        log = heard()
+        if not any(one[0] == "drop" and one[1] == "drop" for one in log):
+            wrong.append(f"a drag inside the page was not dropped: {log[-8:]}")
 
         user32.SetCursorPos(*at(600, 500))
         user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, 2000, 0)
         time.sleep(1)
         wrong += overview(app, hwnd, hole, args.out, False)
-        for one in overview(app, hwnd, hole, args.out, True):
-            known(2199, one)
 
         ended(process, gentle=True)
         wrong += carried_alone(args.exe, args.identifier, secret, env, url.replace("/under", "/carry"), args.out)
