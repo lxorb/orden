@@ -1,8 +1,8 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { describe, expect, test } from 'vitest'
+import { svelte, walk } from './files'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 const BASE = fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url))
@@ -15,14 +15,6 @@ interface Node {
   attributes?: { type: string; name?: string; value?: unknown }[]
   fragment?: { nodes: Node[] }
   [key: string]: unknown
-}
-
-function components(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return components(path)
-    return one.name.endsWith('.svelte') ? [path] : []
-  })
 }
 
 function classOf(node: Node): string {
@@ -56,7 +48,7 @@ function holdsAPress(bubble: Node): boolean {
   return false
 }
 
-const bubbles = components(SRC).flatMap((file) => {
+const bubbles = walk(SRC, svelte).flatMap((file) => {
   const tree = parse(readFileSync(file, 'utf8'), { modern: true })
   return [...elements(tree.fragment)]
     .filter((one) => classOf(one).split(/\s+/).includes('orden-bubble'))

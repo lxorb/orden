@@ -1,19 +1,15 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const TAURI = fileURLToPath(new URL('../src-tauri', import.meta.url))
 
-function rust(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) return rust(path)
-    return name.endsWith('.rs') ? [path] : []
-  })
-}
-
-const sources = () => [...rust(join(TAURI, 'src')), ...rust(join(TAURI, 'crates'))]
+const sources = () => [
+  ...walk(join(TAURI, 'src'), (path) => path.endsWith('.rs')),
+  ...walk(join(TAURI, 'crates'), (path) => path.endsWith('.rs')),
+]
 
 function tables(manifest: string): { header: string; body: string }[] {
   const out: { header: string; body: string }[] = []

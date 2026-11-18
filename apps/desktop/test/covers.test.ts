@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
+import { svelte, walk } from './files'
 import { COVERS } from '../src/lib/web-tab/src/covers'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
@@ -63,14 +64,6 @@ interface Node {
   name?: string
   attributes?: { type: string; name?: string; value?: unknown }[]
   [key: string]: unknown
-}
-
-function components(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return components(path)
-    return one.name.endsWith('.svelte') ? [path] : []
-  })
 }
 
 function classesOf(node: Node): string[] {
@@ -148,7 +141,7 @@ interface Found {
 
 function layersOfTheWindow(): Found[] {
   const found: Found[] = []
-  for (const path of components(SRC)) {
+  for (const path of walk(SRC, svelte)) {
     const file = path.slice(SRC.length).replaceAll('\\', '/')
     const source = readFileSync(path, 'utf8')
     const tree = parse(source, { modern: true })
@@ -220,7 +213,7 @@ test('every bubble is placed in the window, where nothing that holds it can cut 
   const OWN = new Set(['orden-bubble', 'is-pressable', 'orden-host'])
   const bubbles: string[] = []
   const cut: string[] = []
-  for (const path of components(SRC)) {
+  for (const path of walk(SRC, svelte)) {
     const file = path.slice(SRC.length).replaceAll('\\', '/')
     const source = readFileSync(path, 'utf8')
     const tree = parse(source, { modern: true })

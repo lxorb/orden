@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const SRC = join(ROOT, 'apps', 'desktop', 'src')
@@ -9,13 +10,7 @@ const SRC = join(ROOT, 'apps', 'desktop', 'src')
 const TRACE = readFileSync(join(SRC, 'lib', 'platform', 'src', 'trace.ts'), 'utf8')
 const PREFIX = /performance\.mark\(`([^`$]*)\$\{step\}`\)/.exec(TRACE)?.[1] ?? ''
 
-function walk(dir: string, keep: (name: string) => boolean): string[] {
-  return readdirSync(dir, { withFileTypes: true, recursive: true })
-    .filter((one) => one.isFile() && keep(one.name))
-    .map((one) => join(one.parentPath, one.name))
-}
-
-const marking = walk(SRC, (name) => /\.(ts|svelte)$/.test(name) && !name.includes('.test.'))
+const marking = walk(SRC, (path) => /\.(ts|svelte)$/.test(path) && !path.includes('.test.'))
   .map((path) => readFileSync(path, 'utf8'))
   .filter((text) =>
     /import \{[^}]*\bmark(?:Painted)?\b[^}]*\} from '[./]*(?:lib\/)?(?:platform\/src\/api|trace)'/.test(
@@ -30,8 +25,8 @@ const STEPS = new Set(
 )
 
 const DRIVES = [
-  ...walk(join(ROOT, 'apps', 'desktop', 'test', 'e2e'), (name) => name.endsWith('.py')),
-  ...walk(join(ROOT, 'scripts'), (name) => /\.(py|mjs|ts|sh)$/.test(name)),
+  ...walk(join(ROOT, 'apps', 'desktop', 'test', 'e2e'), (path) => path.endsWith('.py')),
+  ...walk(join(ROOT, 'scripts'), (path) => /\.(py|mjs|ts|sh)$/.test(path)),
 ].map((path) => ({ path: path.slice(ROOT.length), text: readFileSync(path, 'utf8') }))
 
 const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

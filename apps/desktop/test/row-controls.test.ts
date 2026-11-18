@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
+import { svelte, walk } from './files'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 
@@ -11,14 +12,6 @@ interface Node {
   name?: string
   attributes?: { type: string; name?: string; value?: unknown }[]
   [key: string]: unknown
-}
-
-function components(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return components(path)
-    return one.name.endsWith('.svelte') ? [path] : []
-  })
 }
 
 function classesOf(node: Node): string[] {
@@ -51,7 +44,7 @@ function* elements(node: unknown, inRow = false): Generator<{ node: Node; inRow:
 }
 
 test('no row of settings ends in an action that is as wide as a card', () => {
-  const files = components(SRC)
+  const files = walk(SRC, svelte)
   expect(files.length).toBeGreaterThan(100)
 
   const wide = files.flatMap((file) => {
@@ -93,7 +86,7 @@ function says(node: Node): boolean {
 test('the words a row of settings is named by are its .name', () => {
   const WORDS = new Set(['span', 'div', 'p', 'strong', 'small'])
   const VALUES = new Set(['name', 'text', 'hint', 'value', 'is-value', 'key', 'mark'])
-  const bare = components(SRC).flatMap((file) => {
+  const bare = walk(SRC, svelte).flatMap((file) => {
     const tree = parse(readFileSync(file, 'utf8'), { modern: true })
     return [...elements(tree.fragment)]
       .filter(({ node }) => classesOf(node).includes('orden-setting'))

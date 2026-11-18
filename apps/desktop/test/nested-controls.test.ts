@@ -1,8 +1,8 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'svelte/compiler'
 import { expect, test } from 'vitest'
+import { svelte, walk } from './files'
 
 const SRC = fileURLToPath(new URL('../src/', import.meta.url))
 
@@ -28,14 +28,6 @@ const CONTROL_ROLES = new Set([
   'tab',
 ])
 const CONTROL_COMPONENTS = new Set(['Hint'])
-
-function components(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return components(path)
-    return one.name.endsWith('.svelte') ? [path] : []
-  })
-}
 
 function roleOf(node: Node): string | null {
   const role = node.attributes?.find((one) => one.type === 'Attribute' && one.name === 'role')
@@ -80,7 +72,7 @@ function named(node: Node): string {
 }
 
 test('no control holds another, which a screen reader cannot reach and a press reaches twice', () => {
-  const files = components(SRC)
+  const files = walk(SRC, svelte)
   expect(files.length).toBeGreaterThan(100)
 
   const found = files.flatMap((file) => {

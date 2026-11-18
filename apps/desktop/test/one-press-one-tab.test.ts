@@ -1,19 +1,12 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { code, walk } from './files'
 
 const SRC = fileURLToPath(new URL('../src', import.meta.url))
 
-function files(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) return files(path)
-    return /\.(svelte|ts)$/.test(name) && !name.endsWith('.test.ts') ? [path] : []
-  })
-}
-
-const pressed = files(SRC).flatMap((path) => {
+const pressed = walk(SRC, code).flatMap((path) => {
   const text = readFileSync(path, 'utf8')
   return [...text.matchAll(/followHref\([^)]*\bevent\)/g)].map((one) => ({
     path: path.slice(SRC.length + 1),

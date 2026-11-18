@@ -1,23 +1,14 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 
 const ROUTERS = new Set(['tauri.ts', 'native.ts', 'native-sync-store.ts'])
 
 const ON_DISK_ON_PURPOSE = new Set(['quick-add/src/shortcuts.ts'])
-
-function sources(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return one.name === 'internal' ? [] : sources(path)
-    return /\.(ts|svelte)$/.test(one.name) && !/\.test\.ts$|\.fixture\.ts$/.test(one.name)
-      ? [path]
-      : []
-  })
-}
 
 function fileCommands(): string[] {
   const roots = readFileSync(join(LIB, 'web-backend/src/internal/roots.ts'), 'utf8')
@@ -47,7 +38,11 @@ describe('a file in a space', () => {
     const commands = fileCommands()
     expect(commands).toContain('read_note')
     const wrong: string[] = []
-    for (const path of sources(LIB)) {
+    for (const path of walk(
+      LIB,
+      (path) => /\.(ts|svelte)$/.test(path) && !/\.test\.ts$|\.fixture\.ts$/.test(path),
+      ['internal'],
+    )) {
       const at = relative(LIB, path).replace(/\\/g, '/')
       if (ROUTERS.has(at) || ON_DISK_ON_PURPOSE.has(at)) continue
       const text = readFileSync(path, 'utf8')

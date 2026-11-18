@@ -1,24 +1,16 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { code, walk } from './files'
 
 const EDITOR = fileURLToPath(new URL('../../../packages/editor/src/', import.meta.url))
 
-function sources(dir: string, found: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) sources(path, found)
-    else if (name.endsWith('.ts') && !name.endsWith('.test.ts')) found.push(path)
-  }
-
-  return found
-}
-
-const files = sources(EDITOR).map((path) => ({
-  name: path.slice(EDITOR.length).replace(/\\/g, '/'),
-  text: readFileSync(path, 'utf8'),
-}))
+const files = walk(EDITOR, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')).map(
+  (path) => ({
+    name: path.slice(EDITOR.length).replace(/\\/g, '/'),
+    text: readFileSync(path, 'utf8'),
+  }),
+)
 
 describe('the editor package', () => {
   test('was found', () => {
@@ -48,19 +40,9 @@ describe('the editor package', () => {
 
 const APP = fileURLToPath(new URL('../src/', import.meta.url))
 
-function markup(dir: string, found: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) markup(path, found)
-    else if ((name.endsWith('.ts') || name.endsWith('.svelte')) && !name.endsWith('.test.ts'))
-      found.push(path)
-  }
-  return found
-}
-
 describe('the menus and the palette', () => {
   test('never spell a shortcut out by hand', () => {
-    const guilty = markup(APP)
+    const guilty = walk(APP, code)
       .map((path) => ({
         name: path.slice(APP.length).replace(/\\/g, '/'),
         text: readFileSync(path, 'utf8'),

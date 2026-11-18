@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 import { frontMatterValue, stripFrontMatter } from '@orden/markdown/front-matter'
 import { openerFor } from '../src/lib/workspace/src/openers'
 import { kindOfName } from '../src/lib/sync-client/src/create'
@@ -52,21 +53,11 @@ describe('a meeting note already on a disk', () => {
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const APP = join(ROOT, 'apps/desktop/src')
 
-function files(dir: string, keep: (path: string) => boolean): string[] {
-  const out: string[] = []
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name)
-    if (statSync(path).isDirectory()) out.push(...files(path, keep))
-    else if (keep(path)) out.push(path)
-  }
-  return out
-}
-
 const read = (path: string) => readFileSync(path, 'utf8')
 
 describe('no surface offers to make one', () => {
   test('no row of the app carries the id or the words', () => {
-    const source = files(
+    const source = walk(
       APP,
       (path) =>
         /\.(ts|svelte)$/.test(path) &&

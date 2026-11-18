@@ -1,30 +1,23 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
+import { code, walk } from './files'
 
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 const EDITOR = fileURLToPath(new URL('../../../packages/editor/src', import.meta.url))
 
-function sources(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((one) => {
-    const path = join(dir, one.name)
-    if (one.isDirectory()) return sources(path)
-    return /\.(ts|svelte)$/.test(one.name) && !one.name.endsWith('.test.ts') ? [path] : []
-  })
-}
-
 const read = (path: string) => readFileSync(path, 'utf8')
 
 test('a person picture address is built in one place, from a checked hash', () => {
-  const builders = sources(LIB)
+  const builders = walk(LIB, code)
     .filter((path) => /\/i\/\$\{[^}]*\}\.webp/.test(read(path)))
     .map((path) => relative(LIB, path).replaceAll('\\', '/'))
   expect(builders).toEqual(['accounts/src/client.ts'])
 })
 
 test('every person picture falls back when it fails to load, never showing a broken picture', () => {
-  const pictures = sources(LIB)
+  const pictures = walk(LIB, code)
     .filter((path) => path.endsWith('.svelte'))
     .flatMap((path) => {
       const text = read(path)
@@ -46,7 +39,7 @@ test('every person picture falls back when it fails to load, never showing a bro
 })
 
 test('no face is painted as a background, where a failed load leaves an empty circle', () => {
-  const painted = [...sources(LIB), ...sources(EDITOR)]
+  const painted = [...walk(LIB, code), ...walk(EDITOR, code)]
     .filter((path) =>
       /backgroundImage = `url\("\$\{this\.face|background-image=\{[^}]*face/.test(read(path)),
     )

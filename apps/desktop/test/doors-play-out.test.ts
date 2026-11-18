@@ -1,23 +1,11 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { svelte, walk } from './files'
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const LIB = join(SOURCE, 'lib')
-
-function components(): string[] {
-  const out: string[] = []
-  const walk = (dir: string) => {
-    for (const name of readdirSync(dir)) {
-      const path = join(dir, name)
-      if (statSync(path).isDirectory()) walk(path)
-      else if (name.endsWith('.svelte')) out.push(path)
-    }
-  }
-  walk(SOURCE)
-  return out
-}
 
 function markup(text: string): string {
   return text
@@ -85,7 +73,7 @@ describe('a component fetched through a door', () => {
     const named = doors()
     const wrong: string[] = []
 
-    for (const file of components()) {
+    for (const file of walk(SOURCE, svelte)) {
       const body = markup(readFileSync(file, 'utf8'))
       const awaits = /\{#await\s+(?:(\w+)\(\)|import\('([^']+\.svelte)'\))\s+then\b/g
       for (const [, door, path] of body.matchAll(awaits)) {
@@ -114,7 +102,7 @@ describe('a popup', () => {
     const popup = /class="[^"]*\borden-layer\b|role="(?:menu|dialog|listbox)"/
     const wrong: string[] = []
 
-    for (const file of components()) {
+    for (const file of walk(SOURCE, svelte)) {
       const body = markup(readFileSync(file, 'utf8'))
       for (const match of body.matchAll(/<[a-zA-Z][\w-]*/g)) {
         const tag = body.slice(match.index, tagEnd(body, match.index) + 1)

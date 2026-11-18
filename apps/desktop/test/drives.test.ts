@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { walk } from './files'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const E2E = join(ROOT, 'apps', 'desktop', 'test', 'e2e')
@@ -14,22 +15,9 @@ const drives = readdirSync(E2E)
   .filter((name) => name.endsWith('.py'))
   .sort()
 
-function sourcesUnder(dir: string, found: string[] = []): string[] {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === 'dist') continue
-    const path = join(dir, entry.name)
-    if (entry.isDirectory()) sourcesUnder(path, found)
-    else if (/\.(ts|svelte|css|html)$/.test(entry.name)) found.push(path)
-  }
-
-  return found
-}
-
-const sources = [
-  ...sourcesUnder(join(ROOT, 'apps', 'desktop', 'src')),
-  ...sourcesUnder(join(ROOT, 'packages')),
-  ...sourcesUnder(join(ROOT, 'services')),
-]
+const sources = ['apps/desktop/src', 'packages', 'services'].flatMap((dir) =>
+  walk(join(ROOT, dir), (path) => /\.(ts|svelte|css|html)$/.test(path), ['node_modules', 'dist']),
+)
 
 const IN_CSS = /\.(-?[A-Za-z_][\w-]*)/g
 const STYLE = /<style[^>]*>([\s\S]*?)<\/style>/g
