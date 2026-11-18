@@ -2,6 +2,7 @@ import { invoke } from '../../platform/src/api'
 import { placesForgotten } from './place'
 import { siteIcons } from './site-icons.svelte'
 import { visited } from './visited'
+import { originOf } from './web-data'
 import { ownStore, webData } from './web-data.svelte'
 
 const RANGES = {
@@ -27,15 +28,6 @@ export interface Asked {
 export function sinceFor(range: Range, now: number): number {
   const back = RANGES[range]
   return back === null ? 0 : now - back
-}
-
-function originOf(url: string): string | null {
-  try {
-    const at = new URL(url)
-    return at.protocol === 'https:' || at.protocol === 'http:' ? at.origin : null
-  } catch {
-    return null
-  }
 }
 
 export function sitesSince(books: readonly string[], since: number): string[] {

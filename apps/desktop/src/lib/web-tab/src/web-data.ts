@@ -22,3 +22,12 @@ export function storeName(choice: WebData, space: string, site: string | null): 
 
   return `site_${id}_${site.toLowerCase().replace(UNSAFE, '-')}`.slice(0, LONGEST)
 }
+
+export function originOf(url: string): string | null {
+  try {
+    const at = new URL(url)
+    return at.protocol === 'https:' || at.protocol === 'http:' ? at.origin : null
+  } catch {
+    return null
+  }
+}

@@ -145,6 +145,7 @@ describe('SimpleLogin', () => {
     const { fetcher, asked } = fake({ 'DELETE /api/aliases/3': [200, { deleted: true }] })
     await aliasClient('simplelogin', 'k', fetcher).remove('3')
     expect(asked[0]?.method).toBe('DELETE')
+    expect(asked[0]?.url).toBe('https://app.simplelogin.io/api/aliases/3')
   })
 
   test('counts the last 14 days of activity across pages and stops at older ones', async () => {

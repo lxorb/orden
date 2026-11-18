@@ -1,4 +1,5 @@
 import type { KdfParams } from '@orden/pass/crypto'
+import { isRecord } from '../../platform/src/api'
 import { kdfParamsIn } from '@orden/pass/crypto'
 import type { DeviceSeal } from '@orden/pass/device'
 import type { Keyring } from '@orden/pass/keys'
@@ -147,10 +148,6 @@ async function put(name: StoreName, value: unknown, key?: IDBValidKey): Promise<
 
 function versionsOf(vault: string, id: string): IDBKeyRange {
   return IDBKeyRange.bound([vault, id, -Infinity], [vault, id, Infinity])
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function deviceSealIn(value: unknown): DeviceSeal | null {

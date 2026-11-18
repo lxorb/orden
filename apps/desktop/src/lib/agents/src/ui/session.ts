@@ -1,4 +1,4 @@
-import { localDate, nameOf } from '../../../platform/src/api'
+import { isRecord, localDate, nameOf } from '../../../platform/src/api'
 import { wordFor } from './words'
 
 export interface Call {
@@ -13,10 +13,6 @@ export interface Call {
 }
 
 const KEPT = 200
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
 
 function text(value: unknown): string | null {
   return typeof value === 'string' && value !== '' ? value : null
