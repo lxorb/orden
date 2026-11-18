@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Glyph from './Glyph.svelte'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import ArrowDownToLine from 'lucide/dist/esm/icons/arrow-down-to-line.mjs'
@@ -73,9 +74,7 @@
 
   const progress = $derived(progressOf(downloads.list))
   const RING = 2 * Math.PI * 10
-
   const mark = $derived(siteMark(page.icon, page.url))
-
   let marked = $state(true)
 
   $effect(() => {
@@ -83,9 +82,7 @@
   })
 
   let field = $state<{ take(): void }>()
-
   const resting = $derived(shownUrl(page.url ?? ''))
-
   const started = untrack(() => page.url === null)
 
   onMount(() => {
@@ -162,11 +159,7 @@
     oncontextmenu={(event) => onhistory(false, event)}
     use:longPress={(event) => onhistory(false, event)}
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each ArrowLeft as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
+    <Glyph icon={ArrowLeft} />
   </button>
 
   <button
@@ -179,11 +172,7 @@
     oncontextmenu={(event) => onhistory(true, event)}
     use:longPress={(event) => onhistory(true, event)}
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each ArrowRight as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
+    <Glyph icon={ArrowRight} />
   </button>
 
   <button
@@ -220,11 +209,7 @@
     {#if mark && marked}
       <img class="mark" src={mark} alt="" draggable="false" onerror={() => (marked = false)} />
     {:else}
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        {#each page.url?.startsWith('https:') ? Lock : Globe as [tag, attrs], index (index)}
-          <svelte:element this={tag} {...attrs} />
-        {/each}
-      </svg>
+      <Glyph icon={page.url?.startsWith('https:') ? Lock : Globe} />
     {/if}
   </button>
 
@@ -260,11 +245,7 @@
       onclick={ondownloads}
       transition:scale={{ start: 0.6, duration: dur(160), easing: cubicOut }}
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        {#each ArrowDownToLine as [tag, attrs], index (index)}
-          <svelte:element this={tag} {...attrs} />
-        {/each}
-      </svg>
+      <Glyph icon={ArrowDownToLine} />
       {#if progress !== null}
         <svg
           class="ring"
@@ -285,11 +266,7 @@
   {/if}
 
   <button class="orden-glyph" title="More" aria-label="More" aria-haspopup="menu" onclick={onmenu}>
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each Ellipsis as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
+    <Glyph icon={Ellipsis} />
   </button>
 </div>
 

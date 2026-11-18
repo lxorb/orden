@@ -3,7 +3,6 @@ import { SEARCH } from '@orden/scan/typed'
 import { engineById, engineHome, isEngineAddress } from '@orden/scan/engines'
 
 const KEY = 'orden:search-engine'
-
 export const CUSTOM = 'custom'
 
 interface Choice {

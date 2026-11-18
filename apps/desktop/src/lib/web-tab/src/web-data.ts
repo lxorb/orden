@@ -7,7 +7,6 @@ export function isWebData(value: unknown): value is WebData {
 }
 
 const UNSAFE = /[^a-z0-9.-]/g
-
 const LONGEST = 160
 
 export function siteOf(host: string, registrable: (host: string) => string | null): string {

@@ -31,22 +31,14 @@ vi.stubGlobal('window', {})
 vi.stubGlobal('requestAnimationFrame', (go: () => void) => setTimeout(go, 0))
 
 let building: (() => void) | null = null
-
 let refuse = false
-
 let looked: Record<string, unknown> | null = null
-
 let pausing: Promise<void> | null = null
-
 let holdingLooks = false
 const heldLooks: (() => void)[] = []
-
 let refusing = false
-
 let photographing: Promise<void> | null = null
-
 let photo: string | null = null
-
 let cuts: boolean | 'under' = false
 const cutsOf = new Map<string, boolean | 'under'>()
 
@@ -103,6 +95,19 @@ async function asked(): Promise<() => void> {
     await new Promise<void>((go) => setTimeout(go, 0))
   }
   throw new Error('no page was ever asked for')
+}
+
+async function built(
+  tab = 'a',
+  url = SITE,
+  pane = PANE,
+  visible = true,
+  over?: Parameters<typeof pages.show>[4],
+): Promise<void> {
+  building = null
+  const shown = pages.show(tab, url, pane, visible, over)
+  ;(await asked())()
+  await shown
 }
 
 async function looks(): Promise<() => void> {
@@ -244,10 +249,7 @@ describe('while a page is being built', () => {
 
 test('a page the crate will not build leaves the pane its card', async () => {
   refuse = true
-  const shown = pages.show('a', SITE, PANE)
-  const arrive = await asked()
-  arrive()
-  await shown
+  await built()
 
   const page = pages.of('a')
   expect(page.openable).toBe(false)
@@ -255,10 +257,7 @@ test('a page the crate will not build leaves the pane its card', async () => {
 })
 
 test('a page that was built is placed and shown', async () => {
-  const shown = pages.show('a', SITE, PANE)
-  const arrive = await asked()
-  arrive()
-  await shown
+  await built()
 
   expect(pages.of('a').live).toBe(true)
   expect(last('web_open')).toMatchObject({ tab: 'a', url: SITE, pane: PANE })
@@ -266,10 +265,7 @@ test('a page that was built is placed and shown', async () => {
 
 describe('a page asked for while something is over the pane', () => {
   test('is built anyway', async () => {
-    const shown = pages.show('a', SITE, PANE, false)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('a', SITE, PANE, false)
     await settle()
 
     expect(commands().filter((one) => one === 'web_open')).toHaveLength(1)
@@ -277,10 +273,7 @@ describe('a page asked for while something is over the pane', () => {
   })
 
   test('and is put out of sight rather than over the thing that covered it', async () => {
-    const shown = pages.show('a', SITE, PANE, false)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('a', SITE, PANE, false)
     await settle()
 
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: false })
@@ -293,10 +286,7 @@ describe('a page asked for while something is over the pane', () => {
       cut: { all: false, hollows: [{ x: 500, y: 520, width: 280, height: 60, radius: 8 }] },
       frame: null,
     }
-    const shown = pages.show('a', SITE, PANE, false, over)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('a', SITE, PANE, false, over)
     await vi.waitFor(() => expect(last('web_place')).toMatchObject({ visible: true }))
 
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, cut: over.cut })
@@ -306,10 +296,7 @@ describe('a page asked for while something is over the pane', () => {
   })
 
   test('and is shown the moment nothing is over it any more', async () => {
-    const shown = pages.show('a', SITE, PANE, false)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('a', SITE, PANE, false)
     await settle()
     calls.length = 0
 
@@ -329,10 +316,7 @@ describe('a page drawn under the app', () => {
 
   test('arrives under a layer shown, with the layer taken out of its input', async () => {
     cuts = 'under'
-    const shown = pages.show('a', SITE, PANE, false, over)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('a', SITE, PANE, false, over)
     await settle()
 
     expect(pages.under).toBe(true)
@@ -346,10 +330,7 @@ describe('a page drawn under the app', () => {
 
   test('stays shown under a scrim, which takes all of its input, and is never photographed', async () => {
     cuts = 'under'
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built()
     await settle()
     calls.length = 0
 
@@ -362,10 +343,7 @@ describe('a page drawn under the app', () => {
 
   test('is told the opacity it is drawn at, and is hidden when its tab is', async () => {
     cuts = 'under'
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built()
     await settle()
 
     await pages.show('a', SITE, PANE, true, { cut: null, frame: null, opacity: 0.5 })
@@ -406,10 +384,7 @@ describe('a page drawn under the app', () => {
 
   test('an engine that says nothing of it is told no opacity', async () => {
     cuts = true
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built()
     await settle()
 
     await pages.show('a', SITE, MOVED)
@@ -422,10 +397,7 @@ describe('a page drawn under the app', () => {
 })
 
 test('a page that lands is photographed once, not once per report', async () => {
-  const shown = pages.show('a', SITE, PANE)
-  const arrive = await asked()
-  arrive()
-  await shown
+  await built()
   await settle()
   const moved = await hearing('orden://web-tab')
   calls.length = 0
@@ -441,10 +413,7 @@ test('a page that lands is photographed once, not once per report', async () => 
 
 describe('while the address is being typed', () => {
   async function typing() {
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built()
     await settle()
     const moved = await hearing('orden://web-tab')
     const went = (url: string) =>
@@ -478,15 +447,11 @@ describe("a page's mark", () => {
   const NEW = 'data:image/png;base64,bmV3'
 
   async function loaded() {
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built()
     await settle()
 
     const moved = await hearing('orden://web-tab')
     const iconed = await hearing('orden://web-icon')
-
     const load = (loading: boolean) =>
       moved({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
     const mark = (icon: string) => iconed({ payload: { tab: 'a', icon } })
@@ -582,10 +547,7 @@ describe('a tab closed while its page is in front', () => {
   }
 
   async function reading(): Promise<void> {
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built()
     pages.of('a').path = FILE
     looked = PLACE
     calls.length = 0
@@ -625,10 +587,7 @@ describe('a tab closed while its page is in front', () => {
 
 describe('a tab that has closed', () => {
   test('is not given a page again by anything that asks after it', async () => {
-    const shown = pages.show('closed', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('closed')
 
     pages.forget('closed')
     await settle()
@@ -653,9 +612,7 @@ describe('where a page keeps what the site stores', () => {
     const page = pages.of('private')
     page.inPrivate = true
     page.space = 'w'
-    const shown = pages.show('private', SITE, PANE)
-    ;(await asked())()
-    await shown
+    await built('private')
     expect(last('web_open')).toMatchObject({
       tab: 'private',
       profile: { store: null, private: true },
@@ -665,18 +622,14 @@ describe('where a page keeps what the site stores', () => {
 
   test('in the store every page shares, until its web note keeps its own', async () => {
     pages.of('a').space = 'w'
-    const shown = pages.show('a', SITE, PANE)
-    ;(await asked())()
-    await shown
+    await built()
 
     expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: false } })
   })
 
   test('a web note kept apart is built in its own store', async () => {
     pages.of('apart').own = '3f9a0c17e2b4d685'
-    const shown = pages.show('apart', SITE, PANE)
-    ;(await asked())()
-    await shown
+    await built('apart')
 
     expect(last('web_open')).toMatchObject({
       tab: 'apart',
@@ -780,9 +733,7 @@ describe('where a page keeps what the site stores', () => {
   })
 
   test('a rehouse that leaves a page in the store it was built in loads nothing again', async () => {
-    const shown = pages.show('a', SITE, PANE)
-    ;(await asked())()
-    await shown
+    await built()
     calls.length = 0
 
     await pages.rehouse('a', null, 'nothing moved')
@@ -808,13 +759,6 @@ describe('a page out of sight', () => {
     saver.set('off')
     await settle()
   })
-
-  async function built(tab: string, url = SITE): Promise<void> {
-    building = null
-    const shown = pages.show(tab, url, PANE)
-    ;(await asked())()
-    await shown
-  }
 
   function away(tab: string, minutes: number): void {
     pages.hide(tab, PANE)
@@ -1171,10 +1115,7 @@ describe("the card's corner a page is placed with", () => {
   })
 
   test('goes with every placement, nothing where there is no frame to read', async () => {
-    const shown = pages.show('round', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('round')
     void pages.place('round', MOVED, true)
     await vi.waitFor(() =>
       expect(last('web_place')).toMatchObject({ tab: 'round', pane: MOVED, corner: 0 }),
@@ -1202,10 +1143,7 @@ describe("the card's corner a page is placed with", () => {
 
   test("goes with the placement as its pane says it, over the window's own", async () => {
     frame('10px')
-    const shown = pages.show('foot', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('foot')
     void pages.place('foot', MOVED, true, false, { cut: null, frame: null, corner: 0 })
     await vi.waitFor(() =>
       expect(last('web_place')).toMatchObject({ tab: 'foot', pane: MOVED, corner: 0 }),
@@ -1238,10 +1176,7 @@ describe('a page a person presses in or types into', () => {
   })
 
   test('makes its tab, in the other pane, the one being worked in', async () => {
-    const shown = pages.show('b', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('b')
 
     const chosen = await hearing('orden://web-chosen')
     chosen({ payload: { tab: 'b' } })
@@ -1266,7 +1201,6 @@ describe('a page a person presses in or types into', () => {
 
 describe('a tab that closes itself when its download starts', () => {
   const FILE = 'https://example.com/slides.pdf'
-
   let did: string[] = []
   let inFront = 'b'
 
@@ -1289,20 +1223,13 @@ describe('a tab that closes itself when its download starts', () => {
   })
 
   async function downloadFromB(id: number): Promise<void> {
-    const shownA = pages.show('a', SITE, PANE)
-    const arriveA = await asked()
-    arriveA()
-    await shownA
+    await built()
 
     const opening = await hearing('orden://web-open')
     opening({ payload: { tab: 'a', url: FILE } })
     await settle()
 
-    building = null
-    const shownB = pages.show('b', FILE, PANE)
-    const arriveB = await asked()
-    arriveB()
-    await shownB
+    await built('b', FILE)
     await settle()
 
     const download = await hearing('orden://web-download')
@@ -1326,13 +1253,6 @@ describe('a tab that closes itself when its download starts', () => {
 })
 
 describe('a page whose process died', () => {
-  async function livePage(tab: string) {
-    const shown = pages.show(tab, SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
-  }
-
   const crash = async (tab: string) => {
     const page = await hearing('orden://web-page')
     page({ payload: { tab, said: 'crashed' } })
@@ -1340,7 +1260,7 @@ describe('a page whose process died', () => {
   }
 
   test('goes, keeps its trail, and is not built again on its own', async () => {
-    await livePage('crashing')
+    await built('crashing')
     calls.length = 0
 
     await crash('crashing')
@@ -1355,7 +1275,7 @@ describe('a page whose process died', () => {
   })
 
   test('comes back with Reload', async () => {
-    await livePage('reloading')
+    await built('reloading')
     await crash('reloading')
 
     await pages.step('reloading', 'reload')
@@ -1372,7 +1292,7 @@ describe('a page whose process died', () => {
   })
 
   test('comes back with an address typed over it', async () => {
-    await livePage('typed')
+    await built('typed')
     await crash('typed')
 
     await pages.go('typed', 'https://example.org/')
@@ -1394,7 +1314,7 @@ describe('a page whose process died', () => {
   })
 
   test('Reload closes what may be left of it first', async () => {
-    await livePage('left')
+    await built('left')
     await crash('left')
     calls.length = 0
 
@@ -1404,7 +1324,7 @@ describe('a page whose process died', () => {
   })
 
   test('one that did not arrive goes the same way, says why, and comes back with Reload', async () => {
-    await livePage('failing')
+    await built('failing')
     calls.length = 0
     const page = await hearing('orden://web-page')
     page({
@@ -1437,7 +1357,7 @@ describe('a page whose process died', () => {
   })
 
   test('one the engine could not say the address of keeps the tab where it was going', async () => {
-    await livePage('nameless')
+    await built('nameless')
     const page = await hearing('orden://web-page')
     page({
       payload: { tab: 'nameless', said: 'arrived', url: '', failure: 'other', bare: true },
@@ -1450,7 +1370,7 @@ describe('a page whose process died', () => {
   })
 
   test('one an engine drew its own page for stays', async () => {
-    await livePage('drawn')
+    await built('drawn')
     const page = await hearing('orden://web-page')
     page({
       payload: { tab: 'drawn', said: 'arrived', url: SITE, failure: 'other', bare: false },
@@ -1461,16 +1381,12 @@ describe('a page whose process died', () => {
   })
 
   test('a build that is refused after Reload offers Reload again', async () => {
-    await livePage('refused')
+    await built('refused')
     await crash('refused')
     await pages.step('refused', 'reload')
 
-    building = null
     refuse = true
-    const shown = pages.show('refused', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
+    await built('refused')
     refuse = false
 
     expect(pages.of('refused').crashed).toBe(true)
@@ -1478,7 +1394,7 @@ describe('a page whose process died', () => {
   })
 
   test('a page on its way out says so to nobody', async () => {
-    await livePage('parked')
+    await built('parked')
     await pages.park('parked')
     await crash('parked')
     expect(pages.of('parked').crashed).toBe(false)
@@ -1486,16 +1402,8 @@ describe('a page whose process died', () => {
 })
 
 describe('a page parked out of sight', () => {
-  async function livePage(tab: string) {
-    const shown = pages.show(tab, SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
-    building = null
-  }
-
   test('keeps its page when its tab is shown again while it is asked where it is', async () => {
-    await livePage('chosen')
+    await built('chosen')
     pages.hide('chosen', PANE)
     await settle()
     calls.length = 0
@@ -1514,7 +1422,7 @@ describe('a page parked out of sight', () => {
   })
 
   test('goes, its trail kept, when nobody chose it in the meantime', async () => {
-    await livePage('left')
+    await built('left')
     pages.hide('left', PANE)
     await settle()
     calls.length = 0
@@ -1527,7 +1435,7 @@ describe('a page parked out of sight', () => {
   })
 
   test('says first whether something typed into it would be lost', async () => {
-    await livePage('typed')
+    await built('typed')
     pages.hide('typed', PANE)
     await settle()
 

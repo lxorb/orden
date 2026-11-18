@@ -4,7 +4,6 @@ import { MOST_VISITS } from './visits'
 import type { Visit } from '@orden/scan/visits'
 
 const CLOCKED = process.env.ORDEN_PERF === '1'
-
 const NOW = Date.UTC(2026, 8, 27)
 
 const full: Visit[] = Array.from({ length: MOST_VISITS }, (_, index) => ({

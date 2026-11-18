@@ -3,7 +3,6 @@ import { frontMatterValue } from '@orden/markdown/front-matter'
 import { clipNote, clipSource, keptBody, webTitleOf, webUrlOf } from './note'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
-
 const WAS = `---
 url: https://svelte.dev/docs
 title: Svelte docs

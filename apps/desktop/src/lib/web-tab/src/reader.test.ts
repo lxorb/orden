@@ -13,7 +13,6 @@ const READER = readFileSync(
   'utf8',
 )
 const FIXTURES = join(import.meta.dirname, '../../../../../../packages/markdown/src/fixtures')
-
 const NEWS: [string, string] = ['news.html', 'https://ledger.example/news/2026/lake.html']
 const DOCS: [string, string] = ['docs.html', 'https://rivulet.example/docs/streams.html']
 
@@ -84,7 +83,6 @@ describe('what is selected', () => {
     const page = pageOf(name, url)
     selectedIn(page, 'pre')
     const answered = read(page, true)
-
     const article = await articleOf(answered)
     expect(article.kind).toBe('selection')
     expect(article.title).toBe('Streams - Rivulet 3.2 documentation')

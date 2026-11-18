@@ -1,7 +1,6 @@
 import { isRecord, keepJson, stored } from '../../platform/src/api'
 
 const STORAGE_KEY = 'orden:web-places'
-
 const KEEPS = 200
 
 export interface Place {

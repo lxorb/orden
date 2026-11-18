@@ -4,9 +4,7 @@ import { drawable, favicons, MARK, MARKS, type Seen } from './pages.svelte'
 
 const MOST_PAGES = 500
 const MOST_TEXT = 512 * 1024
-
 const QUIET = 2000
-
 let writing: ReturnType<typeof setTimeout> | undefined
 
 function idOf(picture: string): string {
@@ -81,7 +79,6 @@ export function write() {
   writing = undefined
   const index = favicons.index()
   const { sizes, pictures, unwritten } = favicons
-
   const wanted = new Set([...index.values()].map(([id]) => id))
   const adding = [...unwritten].filter(([id]) => wanted.has(id))
   unwritten.clear()

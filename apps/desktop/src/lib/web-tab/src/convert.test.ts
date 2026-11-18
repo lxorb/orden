@@ -107,7 +107,6 @@ describe('a note that is a website', () => {
 
   test('is written as a shortcut beside it, and the note goes', async () => {
     const { ws, shown } = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })
-
     const target = await asShortcut(ws, NOTE)
 
     expect(target).toBe(`${SPACE}/Svelte docs.url`)
@@ -122,7 +121,6 @@ describe('a note that is a website', () => {
     const protection = new Protection()
     protection.set(SPACE, NOTE, 'password')
     const { ws } = store({ [NOTE]: urlNote('https://bank.example/?session=s3cret', 'Bank') })
-
     const target = await asShortcut({ ...ws, protection }, NOTE)
 
     expect(protection.agentsMay(target)).toBe(false)
@@ -156,7 +154,6 @@ describe('a note in a space that is not on screen', () => {
       [`${SPACE}/Svelte docs.url`]: "somebody else's file",
     })
     const away = { ...ws, entryAt: () => null } as Converts
-
     const target = await asShortcut(away, NOTE)
 
     expect(target).toBe(`${SPACE}/Svelte docs 2.url`)

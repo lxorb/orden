@@ -64,7 +64,6 @@
   } = $props()
 
   const id = $props.id()
-
   let field = $state<HTMLInputElement>()
   let editing = $state(false)
   let typed = $state('')
@@ -72,7 +71,6 @@
   let active = $state(-1)
   let shut = $state(false)
   let composing = false
-
   const listing = $derived(editing && !shut && rows.length > 0)
   const byValue = $derived(new Map(rows.map((one) => [valueOf(one), one])))
 

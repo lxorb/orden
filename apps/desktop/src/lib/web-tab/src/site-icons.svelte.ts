@@ -2,13 +2,9 @@ import { account, api } from '../../accounts/src/api'
 import { isNumber, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden:site-icons'
-
 const MOST_SITES = 300
-
 const MOST_TEXT = 1024 * 1024
-
 const AGAIN_MS = 30_000
-
 const QUIET_MS = 10 * 60_000
 
 function unknownTo(error: unknown): boolean {
@@ -170,7 +166,6 @@ class SiteIcons {
     const token = account.accountToken
     if (!site || !token || this.quiet()) return
     const label = labelOf(url, title)
-
     const said = icon ?? ''
     if (this.told.get(site) === said) return
     this.told.set(site, said)

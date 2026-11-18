@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Glyph from './Glyph.svelte'
   import { onMount } from 'svelte'
   import Puzzle from 'lucide/dist/esm/icons/puzzle.mjs'
   import { Switch } from '../../ui-controls/src/api'
@@ -35,11 +36,7 @@
       {#if one.picture}
         <img src={one.picture} alt="" draggable="false" />
       {:else}
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          {#each Puzzle as [tag, attrs], index (index)}
-            <svelte:element this={tag} {...attrs} />
-          {/each}
-        </svg>
+        <Glyph icon={Puzzle} />
       {/if}
       <span class="what">
         <span class="named">{one.name}</span>

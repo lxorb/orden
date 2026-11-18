@@ -6,11 +6,8 @@ export interface Hollow extends Rect {
 }
 
 const PAINTERS = ['body', 'main', 'main > .middle', '[data-pane]'] as const
-
 const holes = new Map<string, Hollow>()
-
 const given = new Map<HTMLElement, string>()
-
 const ATTRIBUTE = 'data-underlay'
 const SLACK = 0.5
 
