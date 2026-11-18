@@ -710,15 +710,6 @@
   color: inherit;
 }
 
-.orden-task-hint {
-  margin-inline-start: 0.5em;
-  color: var(--muted);
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  opacity: 0.8;
-  pointer-events: none;
-}
-
 .orden-rule {
   display: inline-block;
   width: 100%;

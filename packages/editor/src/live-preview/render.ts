@@ -261,15 +261,6 @@ export class BaseWidget extends OrdenWidget {
   }
 }
 
-export async function diagramSvg(code: string, language: string): Promise<string> {
-  const host = document.createElement('div')
-
-  if (language === 'flow') await drawFlowchart(host, code)
-  else await drawMermaid(host, language === 'sequence' ? sequenceToMermaid(code) : code)
-
-  return host.innerHTML
-}
-
 function themeColour(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }

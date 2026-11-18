@@ -11,10 +11,8 @@ import { type Callout, calloutOf } from '@orden/markdown/callouts'
 import { closesFence } from '@orden/markdown/fences'
 import { blockIdOf } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
-import { EditorView } from '@codemirror/view'
 import { inCode } from './code'
 import { marksAcross } from './line-door'
-import { noteIndex } from './wikilink/notes'
 import { headingLevel } from './headings'
 import { enclosing, enclosingNamed } from './nodes'
 
@@ -246,17 +244,11 @@ function taskable(state: EditorState, line: Line): boolean {
 export const toggleTask: StateCommand = (target) => {
   const { state, dispatch } = target
   const changes: ChangeSpec[] = []
-  const help = target instanceof EditorView ? state.facet(noteIndex).tasks : undefined
-  const ticking: number[] = []
 
   for (const line of selectedLines(state)) {
     if (!taskable(state, line)) continue
 
     const task = taskAt(line.text)
-    if (task && help) {
-      ticking.push(line.number)
-      continue
-    }
     if (task) {
       const at = line.from + task.box + 1
       changes.push({ from: at, to: at + task.mark.length, insert: task.done ? ' ' : 'x' })
@@ -268,12 +260,6 @@ export const toggleTask: StateCommand = (target) => {
     changes.push({ from: line.from + indent, to: line.from + marker, insert: '- [ ] ' })
   }
 
-  if (ticking.length && help && target instanceof EditorView) {
-    void import('./task-tick').then(({ tickLines }) =>
-      tickLines(target, help, state.doc, ticking, changes),
-    )
-    return true
-  }
   if (!changes.length) return false
 
   const set = state.changes(changes)
