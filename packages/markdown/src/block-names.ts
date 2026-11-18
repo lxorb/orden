@@ -27,9 +27,7 @@ function nameStandsApart(run: readonly Row[]): boolean {
   return run.some((row) => row.text.includes('|') && TABLE_RULE.test(row.text))
 }
 
-function listed(row: Row | undefined): boolean {
-  return !!row && !row.code && LIST_ITEM.test(row.text)
-}
+const listed = (row: Row | undefined): boolean => !!row && !row.code && LIST_ITEM.test(row.text)
 
 function endOf(rows: readonly Row[], line: number): number {
   const { held: blocks, goesOn, runOf } = layoutOf(rows)

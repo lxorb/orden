@@ -29,12 +29,11 @@ export const OPEN: IconParts = ExternalLink
 
 export const MARKS: Readonly<Record<'play' | 'open', IconParts>> = { play: PLAY, open: OPEN }
 
-function attributes(written: Readonly<Record<string, string | number | undefined>>): string {
-  return Object.entries(written)
+const attributes = (written: Readonly<Record<string, string | number | undefined>>): string =>
+  Object.entries(written)
     .filter(([, value]) => value !== undefined)
     .map(([name, value]) => ` ${name}="${String(value)}"`)
     .join('')
-}
 
 export function iconMarkup(parts: IconParts, className: string): string {
   const dress = attributes({ ...ICON_ATTRIBUTES, class: className })

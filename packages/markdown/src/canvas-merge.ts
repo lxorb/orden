@@ -3,9 +3,8 @@ import { holdsExtras, mergedExtras } from './canvas-extras'
 
 export const TOMBSTONE_KEPT = 90 * 24 * 60 * 60 * 1000
 
-function byId<T extends Thing>(things: readonly T[]): Map<string, T> {
-  return new Map(things.map((thing) => [thing.id, thing]))
-}
+const byId = <T extends Thing>(things: readonly T[]): Map<string, T> =>
+  new Map(things.map((thing) => [thing.id, thing]))
 
 export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   const changed: string[] = []
@@ -273,9 +272,7 @@ export function standing<T extends object>(
   return out
 }
 
-function timeOf(canvas: Canvas, id: string): number {
-  return timeIn(canvas.at, id) ?? 0
-}
+const timeOf = (canvas: Canvas, id: string): number => timeIn(canvas.at, id) ?? 0
 
 function later<T extends Thing>(ours: T, ourTime: number, theirs: T, theirTime: number): T {
   if (ourTime !== theirTime) return ourTime > theirTime ? ours : theirs
@@ -471,12 +468,9 @@ export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now())
   return writeCanvas(merged(mine, yours, now))
 }
 
-function weighs(canvas: Canvas): boolean {
-  return (
-    holdsExtras(canvas.extras) ||
-    canvas.nodes.length > 0 ||
-    canvas.ink.length > 0 ||
-    Object.keys(canvas.gone).length > 0 ||
-    !!canvas.icon
-  )
-}
+const weighs = (canvas: Canvas): boolean =>
+  holdsExtras(canvas.extras) ||
+  canvas.nodes.length > 0 ||
+  canvas.ink.length > 0 ||
+  Object.keys(canvas.gone).length > 0 ||
+  !!canvas.icon

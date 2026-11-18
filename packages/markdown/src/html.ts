@@ -6,34 +6,28 @@ const ESCAPES: Record<string, string> = {
   "'": '&#39;',
 }
 
-export function escape(text: string): string {
-  return text.replace(/&(?!#?\w+;)|[<>"']/g, (character) => ESCAPES[character] ?? character)
-}
+export const escape = (text: string): string =>
+  text.replace(/&(?!#?\w+;)|[<>"']/g, (character) => ESCAPES[character] ?? character)
 
-export function escapeAll(text: string): string {
-  return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
-}
+export const escapeAll = (text: string): string =>
+  text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 
 const SAFE_SCHEMES = new Set(['http', 'https', 'mailto', 'tel'])
 
 const SAFE_DATA_IMAGE = /^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|x-icon);/i
 
-function withoutBlanks(target: string): string {
-  return target.replace(/[\s\p{Cc}\p{Cf}]/gu, '')
-}
+const withoutBlanks = (target: string): string => target.replace(/[\s\p{Cc}\p{Cf}]/gu, '')
 
-function schemeOf(target: string): string {
-  return /^([a-z][a-z\d+.-]*):/i.exec(withoutBlanks(target))?.[1]?.toLowerCase() ?? ''
-}
+const schemeOf = (target: string): string =>
+  /^([a-z][a-z\d+.-]*):/i.exec(withoutBlanks(target))?.[1]?.toLowerCase() ?? ''
 
 export function safeHref(target: string): boolean {
   const scheme = schemeOf(target)
   return scheme === '' || SAFE_SCHEMES.has(scheme)
 }
 
-export function safeSrc(target: string): boolean {
-  return safeHref(target) || SAFE_DATA_IMAGE.test(withoutBlanks(target))
-}
+export const safeSrc = (target: string): boolean =>
+  safeHref(target) || SAFE_DATA_IMAGE.test(withoutBlanks(target))
 
 const CODE_SCHEMES = new Set(['javascript', 'vbscript', 'data', 'blob', 'filesystem'])
 
@@ -69,6 +63,5 @@ export function fragment(name: string): string {
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
 
-export function attributeText(value: string): string {
-  return value.replace(/&(amp|lt|gt|quot|#39);/g, (whole, name: string) => ENTITIES[name] ?? whole)
-}
+export const attributeText = (value: string): string =>
+  value.replace(/&(amp|lt|gt|quot|#39);/g, (whole, name: string) => ENTITIES[name] ?? whole)

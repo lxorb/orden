@@ -9,18 +9,14 @@ const MOST_LINES = 1500
 
 const MOST_CELLS = 8_000_000
 
-function lines(text: string): string[] {
-  return text.length ? text.split('\n') : []
-}
+const lines = (text: string): string[] => (text.length ? text.split('\n') : [])
 
 export interface Work {
   matched: number
   cells: number
 }
 
-function nothing(): Work {
-  return { matched: 0, cells: 0 }
-}
+const nothing = (): Work => ({ matched: 0, cells: 0 })
 
 const work = nothing()
 

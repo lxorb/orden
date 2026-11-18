@@ -30,10 +30,8 @@ export function readHighlight(inner: string): { colour: HighlightColour; from: n
   return { colour: PLAIN, from: 0 }
 }
 
-export function highlightTone(tone: number | null): HighlightColour {
-  return HIGHLIGHT_COLOURS.find((one) => one.tone === tone) ?? PLAIN
-}
+export const highlightTone = (tone: number | null): HighlightColour =>
+  HIGHLIGHT_COLOURS.find((one) => one.tone === tone) ?? PLAIN
 
-export function writeHighlight(words: string, colour: HighlightColour): string {
-  return colour.emoji === null ? words : `${colour.emoji} ${words}`
-}
+export const writeHighlight = (words: string, colour: HighlightColour): string =>
+  colour.emoji === null ? words : `${colour.emoji} ${words}`

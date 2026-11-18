@@ -4,6 +4,4 @@ export function setHardBreaks(on: boolean) {
   hard = on
 }
 
-export function hardBreaks(): boolean {
-  return hard
-}
+export const hardBreaks = (): boolean => hard

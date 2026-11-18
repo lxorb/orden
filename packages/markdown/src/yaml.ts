@@ -1,8 +1,6 @@
 const QUOTED = /^(["'])([\s\S]*)\1$/
 
-export function isQuoted(value: string): boolean {
-  return QUOTED.test(value.trim())
-}
+export const isQuoted = (value: string): boolean => QUOTED.test(value.trim())
 
 export function unquoted(value: string): string {
   const trimmed = value.trim()
@@ -42,9 +40,8 @@ export function uncommented(value: string): string {
 
 const FLOW = /^\[([\s\S]*)\]$/
 
-export function flowItems(value: string): string[] | null {
-  return writtenFlowItems(value)?.map(unquoted) ?? null
-}
+export const flowItems = (value: string): string[] | null =>
+  writtenFlowItems(value)?.map(unquoted) ?? null
 
 export function writtenFlowItems(value: string): string[] | null {
   const found = FLOW.exec(value.trim())
@@ -98,24 +95,18 @@ export function writtenListItem(line: string): string | null {
   return found === null ? null : (found[1] ?? '').trim()
 }
 
-export function oneLine(value: string): string {
-  return value.replace(/\s+/gu, ' ').trim()
-}
+export const oneLine = (value: string): string => value.replace(/\s+/gu, ' ').trim()
 
-function ambiguous(value: string): boolean {
-  return (
-    !value ||
-    /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
-    /:\s|:$|\s#/.test(value) ||
-    /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
-    /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
-    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
-  )
-}
+const ambiguous = (value: string): boolean =>
+  !value ||
+  /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
+  /:\s|:$|\s#/.test(value) ||
+  /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
+  /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
+  /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
 
-function quoted(value: string): string {
-  return value.includes("'") ? JSON.stringify(value) : `'${value}'`
-}
+const quoted = (value: string): string =>
+  value.includes("'") ? JSON.stringify(value) : `'${value}'`
 
 export function scalar(value: string): string {
   const said = oneLine(value)

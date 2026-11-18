@@ -8,9 +8,7 @@ import { taskWords } from './task-line'
 
 const ESCAPED_FIELD = /\\\[([^[\]\\]*?::[^[\]\\]*?)\\\](?!\()/g
 
-function withFields(words: string): string {
-  return words.replace(ESCAPED_FIELD, '[$1]')
-}
+const withFields = (words: string): string => words.replace(ESCAPED_FIELD, '[$1]')
 
 export const NEVER = [
   'script',
@@ -110,9 +108,8 @@ function texOf(maths: Element): string {
   return angled(said.replace(/\s+/g, ' ').trim())
 }
 
-function saysAFormula(node: Element): boolean {
-  return node.nodeName.toLowerCase() === 'math' || node.hasAttribute('data-tex')
-}
+const saysAFormula = (node: Element): boolean =>
+  node.nodeName.toLowerCase() === 'math' || node.hasAttribute('data-tex')
 
 function drawnBeside(node: Element): boolean {
   if (node.getAttribute('aria-hidden') !== 'true') return false
@@ -138,9 +135,7 @@ function holdsOnly(parent: Element, one: Node): boolean {
   return true
 }
 
-function angled(tex: string): string {
-  return tex.replace(/</g, '\\lt ').replace(/>/g, '\\gt ')
-}
+const angled = (tex: string): string => tex.replace(/</g, '\\lt ').replace(/>/g, '\\gt ')
 
 function firstBody(element: Element | null): boolean {
   if (element?.nodeName !== 'TBODY') return false
@@ -281,9 +276,7 @@ export interface Work {
   walked: number
 }
 
-function nothing(): Work {
-  return { lists: 0, items: 0, walked: 0 }
-}
+const nothing = (): Work => ({ lists: 0, items: 0, walked: 0 })
 
 const work = nothing()
 
@@ -333,11 +326,10 @@ const IN_DESTINATION = /[\s\p{Cc}()<>\\"]/gu
 
 const KEPT: Record<string, string> = { '(': '%28', ')': '%29' }
 
-export function destination(address: string): string {
-  return address.replace(IN_DESTINATION, (character) => {
+export const destination = (address: string): string =>
+  address.replace(IN_DESTINATION, (character) => {
     return KEPT[character] ?? encodeURIComponent(character)
   })
-}
 
 function preformattedText(node: Node): string {
   if (node.nodeName === 'BR') return '\n'
@@ -450,13 +442,10 @@ function calloutType(node: Element): string | null {
   return named?.slice('markdown-alert-'.length) ?? null
 }
 
-function calloutHead(node: Element): Element | null {
-  return (
-    Array.from(node.children).find((one) =>
-      CALLOUT_HEAD.some((name) => one.classList.contains(name)),
-    ) ?? null
-  )
-}
+const calloutHead = (node: Element): Element | null =>
+  Array.from(node.children).find((one) =>
+    CALLOUT_HEAD.some((name) => one.classList.contains(name)),
+  ) ?? null
 
 const FOOTNOTE_LABEL = /^[^\]\s]+$/
 
@@ -488,12 +477,9 @@ function footnoteRefLabel(node: Element): string | null {
   return null
 }
 
-function isBackLink(node: Element): boolean {
-  return (
-    node.nodeName === 'A' &&
-    (node.classList.contains('footnote-back') || node.hasAttribute('data-footnote-backref'))
-  )
-}
+const isBackLink = (node: Element): boolean =>
+  node.nodeName === 'A' &&
+  (node.classList.contains('footnote-back') || node.hasAttribute('data-footnote-backref'))
 
 function footnoteDefLabel(node: Element): string | null {
   if (node.nodeName !== 'LI') return null
@@ -505,9 +491,8 @@ function footnoteDefLabel(node: Element): string | null {
   return fromFragment(`#${node.id}`, /^#(?:user-content-)?fn-/)
 }
 
-function quoted(lines: readonly string[]): string {
-  return lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
-}
+const quoted = (lines: readonly string[]): string =>
+  lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
 
 function converter(options: FromHtmlOptions): TurndownService {
   const service = new TurndownService({

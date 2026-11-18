@@ -52,9 +52,8 @@ export function codeSpans(text: string): [number, number][] {
   return out
 }
 
-export function inCode(code: [number, number][], at: number): boolean {
-  return code.some(([from, to]) => at >= from && at < to)
-}
+export const inCode = (code: [number, number][], at: number): boolean =>
+  code.some(([from, to]) => at >= from && at < to)
 
 function closingRun(text: string, from: number, length: number): number {
   for (let at = text.indexOf('`', from); at !== -1;) {
@@ -88,9 +87,7 @@ export function opensTagAt(text: string, at: number): boolean {
   return false
 }
 
-export function opensTag(before: string): boolean {
-  return opensTagAt(before, before.length)
-}
+export const opensTag = (before: string): boolean => opensTagAt(before, before.length)
 
 const LEADING_SPACE = /\s*/y
 
@@ -120,9 +117,8 @@ export function tagNameAt(text: string, at: number): string | null {
   return NAME_AT.exec(text)?.[0] ?? null
 }
 
-export function isTagName(name: string): boolean {
-  return name !== '' && !/\/\/|\/$/.test(name) && tagAt(`#${name}`, 0) === name
-}
+export const isTagName = (name: string): boolean =>
+  name !== '' && !/\/\/|\/$/.test(name) && tagAt(`#${name}`, 0) === name
 
 export function tagAt(text: string, at: number): string | null {
   if (!opensTagAt(text, at)) return null
@@ -166,9 +162,7 @@ interface Holding {
   [HELD]?: Record<symbol, unknown>
 }
 
-function heldOn(list: object, slot: symbol): unknown {
-  return (list as Holding)[HELD]?.[slot]
-}
+const heldOn = (list: object, slot: symbol): unknown => (list as Holding)[HELD]?.[slot]
 
 function holdOn(list: object, slot: symbol, value: unknown): void {
   const holder = list as Holding
@@ -217,9 +211,10 @@ export function hashtags(href?: TagHref): MarkedExtension {
 
 export const WORTH_REMEMBERING = 256
 
-export function remembering(extension: MarkedExtension): MarkedExtension {
-  return { ...extension, extensions: extension.extensions?.map(remembered) ?? null }
-}
+export const remembering = (extension: MarkedExtension): MarkedExtension => ({
+  ...extension,
+  extensions: extension.extensions?.map(remembered) ?? null,
+})
 
 function remembered(extension: TokenizerAndRendererExtension): TokenizerAndRendererExtension {
   if (!('tokenizer' in extension) || extension.level !== 'inline') return extension

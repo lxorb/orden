@@ -251,9 +251,7 @@ function escaped(text: string, at: number): boolean {
   return (at - before) % 2 === 1
 }
 
-function isBlank(character: string | undefined): boolean {
-  return character === ' ' || character === '\t'
-}
+const isBlank = (character: string | undefined): boolean => character === ' ' || character === '\t'
 
 function fieldAtEnd(head: string): Found | null {
   const shut = head.at(-1)
@@ -278,16 +276,13 @@ const HASH = /#/g
 
 const MOST_FIELDS = 40
 
-function keyOf(written: string): string {
-  return written
+const keyOf = (written: string): string =>
+  written
     .trim()
     .toLowerCase()
     .replace(/[\s_-]+/g, '')
-}
 
-export function fieldOfKey(key: string): FieldName | undefined {
-  return FIELD_BY_KEY.get(keyOf(key))
-}
+export const fieldOfKey = (key: string): FieldName | undefined => FIELD_BY_KEY.get(keyOf(key))
 
 const TIME = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s+([A-Za-z_][\w+-]*(?:\/[\w+-]+)*))?$/
 
@@ -358,15 +353,14 @@ export function readRemind(value: string): Remind[] | null {
   return out
 }
 
-export function writeRemind(remind: readonly Remind[]): string {
-  return remind
+export const writeRemind = (remind: readonly Remind[]): string =>
+  remind
     .map((one) => {
       if ('before' in one) return writeBefore(one.before)
       if ('at' in one) return `${one.at} ${one.time}`
       return one.time
     })
     .join(', ')
-}
 
 export function isDate(value: string): boolean {
   const found = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
@@ -376,19 +370,17 @@ export function isDate(value: string): boolean {
   return date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 }
 
-function emptyFields(status: string): TaskFields {
-  return {
-    text: '',
-    status,
-    done: status === 'x' || status === 'X',
-    cancelled: status === '-',
-    remind: [],
-    priority: NO_PRIORITY,
-    tags: [],
-    dependsOn: [],
-    fields: Object.create(null) as Record<string, string>,
-  }
-}
+const emptyFields = (status: string): TaskFields => ({
+  text: '',
+  status,
+  done: status === 'x' || status === 'X',
+  cancelled: status === '-',
+  remind: [],
+  priority: NO_PRIORITY,
+  tags: [],
+  dependsOn: [],
+  fields: Object.create(null) as Record<string, string>,
+})
 
 function setField(fields: TaskFields, field: FieldName, value: string): boolean {
   switch (field) {
@@ -459,9 +451,8 @@ const DATE_FIELDS: ReadonlySet<FieldToken['field']> = new Set([
   'deadline',
 ])
 
-function heldLength(field: FieldToken['field'], value: string): number {
-  return DATE_FIELDS.has(field) ? Math.min(10, value.length) : value.length
-}
+const heldLength = (field: FieldToken['field'], value: string): number =>
+  DATE_FIELDS.has(field) ? Math.min(10, value.length) : value.length
 
 function trailingTokens(
   line: string,
@@ -644,9 +635,7 @@ export function parseTask(line: string): ParsedTask | null {
   }
 }
 
-export function readTask(line: string): TaskFields | null {
-  return parseTask(line)?.fields ?? null
-}
+export const readTask = (line: string): TaskFields | null => parseTask(line)?.fields ?? null
 
 const FIELD_EMOJI = /(🔺|⏫|🔼|🔽|⏬|✅|❌|📅|📆|🗓|⏳|⌛|🛫|➕|🔁|🏁|🆔|⛔)\uFE0F?/gu
 
@@ -683,6 +672,4 @@ function endsKey(words: string, colon: number): boolean {
   return false
 }
 
-export function plainTaskWords(words: string): string {
-  return taskWords(plainWords(words))
-}
+export const plainTaskWords = (words: string): string => taskWords(plainWords(words))

@@ -16,17 +16,13 @@ const SIDES: readonly Side[] = ['top', 'right', 'bottom', 'left']
 const ENDS: readonly End[] = ['none', 'arrow']
 const BACKGROUNDS: readonly BackgroundStyle[] = ['cover', 'ratio', 'repeat']
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
 
-function isString(value: unknown): value is string {
-  return typeof value === 'string'
-}
+const isString = (value: unknown): value is string => typeof value === 'string'
 
-function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
-}
+const isNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value)
 
 interface NodeBase {
   id: string
@@ -65,9 +61,7 @@ interface GroupNode extends NodeBase {
 export const SHAPES = ['rect', 'ellipse', 'rhombus', 'triangle', 'line', 'arrow', 'elbow'] as const
 export type Shape = (typeof SHAPES)[number]
 
-export function isShape(value: unknown): value is Shape {
-  return SHAPES.some((one) => one === value)
-}
+export const isShape = (value: unknown): value is Shape => SHAPES.some((one) => one === value)
 
 interface ShapeNode extends NodeBase {
   type: 'shape'
@@ -82,9 +76,7 @@ export { endless, isPaper, type Paper, PAPER_NAMES, PAPERS, paperSized } from '.
 export const PATTERNS = ['blank', 'lines', 'grid', 'dots'] as const
 export type Pattern = (typeof PATTERNS)[number]
 
-export function isPattern(value: unknown): value is Pattern {
-  return PATTERNS.some((one) => one === value)
-}
+export const isPattern = (value: unknown): value is Pattern => PATTERNS.some((one) => one === value)
 
 interface PageNode extends NodeBase {
   type: 'page'
@@ -97,9 +89,7 @@ interface PageNode extends NodeBase {
 export type CanvasNode = TextNode | FileNode | LinkNode | GroupNode | ShapeNode | PageNode
 export type NodeKind = CanvasNode['type']
 
-export function isPage(node: CanvasNode): node is PageNode {
-  return node.type === 'page'
-}
+export const isPage = (node: CanvasNode): node is PageNode => node.type === 'page'
 
 export type { PageNode }
 
@@ -127,9 +117,8 @@ export const INK_TOOLS = [
 
 export type InkTool = (typeof INK_TOOLS)[number]
 
-export function isInkTool(value: unknown): value is InkTool {
-  return INK_TOOLS.some((one) => one === value)
-}
+export const isInkTool = (value: unknown): value is InkTool =>
+  INK_TOOLS.some((one) => one === value)
 
 export interface InkPoint {
   x: number
@@ -161,17 +150,15 @@ export interface Canvas {
   extras?: Extras
 }
 
-export function emptyCanvas(): Canvas {
-  return {
-    nodes: [],
-    edges: [],
-    ink: [],
-    at: noTimes(),
-    gone: noTimes(),
-    icon: null,
-    iconColor: null,
-  }
-}
+export const emptyCanvas = (): Canvas => ({
+  nodes: [],
+  edges: [],
+  ink: [],
+  at: noTimes(),
+  gone: noTimes(),
+  icon: null,
+  iconColor: null,
+})
 
 function colourOf(value: unknown): CanvasColour | undefined {
   if (!isString(value)) return undefined
@@ -182,20 +169,16 @@ function colourOf(value: unknown): CanvasColour | undefined {
 
 export const FURTHEST = 1e9
 
-function held(value: number): number {
-  return Math.min(FURTHEST, Math.max(-FURTHEST, value))
-}
+const held = (value: number): number => Math.min(FURTHEST, Math.max(-FURTHEST, value))
 
-function pixels(value: unknown, fallback: number): number {
-  return isNumber(value) ? held(Math.round(value)) : fallback
-}
+const pixels = (value: unknown, fallback: number): number =>
+  isNumber(value) ? held(Math.round(value)) : fallback
 
 export const DEFAULT_WIDTH = 250
 export const DEFAULT_HEIGHT = 60
 
-function one<T extends string>(value: unknown, allowed: readonly T[]): T | undefined {
-  return allowed.find((entry) => entry === value)
-}
+const one = <T extends string>(value: unknown, allowed: readonly T[]): T | undefined =>
+  allowed.find((entry) => entry === value)
 
 function colour(value: unknown): { color?: CanvasColour } {
   const found = colourOf(value)
@@ -276,9 +259,8 @@ export function edgeOf(value: unknown, nodes: ReadonlySet<string>): CanvasEdge |
   }
 }
 
-function or(value: number, otherwise: number): number {
-  return Number.isFinite(value) ? value : otherwise
-}
+const or = (value: number, otherwise: number): number =>
+  Number.isFinite(value) ? value : otherwise
 
 export function packed(points: readonly InkPoint[]): number[] {
   const out: number[] = []
@@ -439,17 +421,16 @@ function asSpecNode(page: PageNode, at: number): CanvasNode {
   return { ...base, type: 'group', label: `Page ${at + 1}` }
 }
 
-function writtenPage(page: PageNode): Record<string, unknown> {
-  return { id: page.id, paper: page.paper, pattern: page.pattern }
-}
+const writtenPage = (page: PageNode): Record<string, unknown> => ({
+  id: page.id,
+  paper: page.paper,
+  pattern: page.pattern,
+})
 
-export function noTimes(): Record<string, number> {
-  return Object.create(null) as Record<string, number>
-}
+export const noTimes = (): Record<string, number> => Object.create(null) as Record<string, number>
 
-export function timeIn(times: Readonly<Record<string, number>>, id: string): number | undefined {
-  return Object.hasOwn(times, id) ? times[id] : undefined
-}
+export const timeIn = (times: Readonly<Record<string, number>>, id: string): number | undefined =>
+  Object.hasOwn(times, id) ? times[id] : undefined
 
 function readTimes(value: unknown): Record<string, number> {
   if (!isRecord(value)) return noTimes()
@@ -485,9 +466,7 @@ export function nodeOf(value: unknown): CanvasNode | null {
   return readNode(value)
 }
 
-export function readCanvas(text: string): Canvas {
-  return canvasIn(text) ?? emptyCanvas()
-}
+export const readCanvas = (text: string): Canvas => canvasIn(text) ?? emptyCanvas()
 
 export function holdsCanvas(text: string): boolean {
   if (!text.trim()) return false
@@ -694,55 +673,48 @@ function writtenNode(node: CanvasNode): Record<string, unknown> {
   }
 }
 
-function writtenShape(node: ShapeNode): Record<string, unknown> {
-  return {
-    id: node.id,
-    shape: node.shape,
-    x: node.x,
-    y: node.y,
-    width: node.width,
-    height: node.height,
-    ...(node.color === undefined ? {} : { color: node.color }),
-    ...(node.fill ? { fill: true } : {}),
-    ...(node.up ? { up: true } : {}),
-    ...(node.text === undefined ? {} : { text: node.text }),
-  }
-}
+const writtenShape = (node: ShapeNode): Record<string, unknown> => ({
+  id: node.id,
+  shape: node.shape,
+  x: node.x,
+  y: node.y,
+  width: node.width,
+  height: node.height,
+  ...(node.color === undefined ? {} : { color: node.color }),
+  ...(node.fill ? { fill: true } : {}),
+  ...(node.up ? { up: true } : {}),
+  ...(node.text === undefined ? {} : { text: node.text }),
+})
 
-function writtenStroke(stroke: InkStroke): Record<string, unknown> {
-  return {
-    id: stroke.id,
-    tool: stroke.tool,
-    color: stroke.color,
-    size: Math.round(stroke.size * 100) / 100,
-    ...(stroke.opacity === undefined ? {} : { opacity: clampOpacity(stroke.opacity) }),
-    points: packed(stroke.points),
-  }
-}
+const writtenStroke = (stroke: InkStroke): Record<string, unknown> => ({
+  id: stroke.id,
+  tool: stroke.tool,
+  color: stroke.color,
+  size: Math.round(stroke.size * 100) / 100,
+  ...(stroke.opacity === undefined ? {} : { opacity: clampOpacity(stroke.opacity) }),
+  points: packed(stroke.points),
+})
 
-function writtenEdge(edge: CanvasEdge): Record<string, unknown> {
-  return {
-    id: edge.id,
-    fromNode: edge.fromNode,
-    ...(edge.fromSide === undefined ? {} : { fromSide: edge.fromSide }),
-    ...(edge.fromEnd === undefined ? {} : { fromEnd: edge.fromEnd }),
-    toNode: edge.toNode,
-    ...(edge.toSide === undefined ? {} : { toSide: edge.toSide }),
-    ...(edge.toEnd === undefined ? {} : { toEnd: edge.toEnd }),
-    ...(edge.color === undefined ? {} : { color: edge.color }),
-    ...(edge.label === undefined ? {} : { label: edge.label }),
-  }
-}
+const writtenEdge = (edge: CanvasEdge): Record<string, unknown> => ({
+  id: edge.id,
+  fromNode: edge.fromNode,
+  ...(edge.fromSide === undefined ? {} : { fromSide: edge.fromSide }),
+  ...(edge.fromEnd === undefined ? {} : { fromEnd: edge.fromEnd }),
+  toNode: edge.toNode,
+  ...(edge.toSide === undefined ? {} : { toSide: edge.toSide }),
+  ...(edge.toEnd === undefined ? {} : { toEnd: edge.toEnd }),
+  ...(edge.color === undefined ? {} : { color: edge.color }),
+  ...(edge.label === undefined ? {} : { label: edge.label }),
+})
 
 const ORDEN_VERSION = 1
 
 const TABS = ['', '\t', '\t\t', '\t\t\t']
 
-function printed(value: unknown, depth: number): string {
-  return JSON.stringify(value, null, '\t')
+const printed = (value: unknown, depth: number): string =>
+  JSON.stringify(value, null, '\t')
     .split('\n')
     .join(`\n${TABS[depth] ?? ''}`)
-}
 
 function kept<T extends object>(depth: number, fields: (thing: T) => unknown) {
   const texts = new WeakMap<T, string>()
@@ -777,9 +749,8 @@ function listed(texts: readonly string[], depth: number): string[] {
   return out
 }
 
-function isIndex(key: string): boolean {
-  return /^(?:0|[1-9]\d{0,9})$/.test(key) && Number(key) < 2 ** 32 - 1
-}
+const isIndex = (key: string): boolean =>
+  /^(?:0|[1-9]\d{0,9})$/.test(key) && Number(key) < 2 ** 32 - 1
 
 function timeLines(times: Record<string, number>): string[] {
   const keys = Object.keys(times).sort()
@@ -871,15 +842,12 @@ function ownRuns(canvas: Canvas): string[][] {
   ]
 }
 
-export function writeCanvas(canvas: Canvas): string {
-  return canvasRuns(canvas)
+export const writeCanvas = (canvas: Canvas): string =>
+  canvasRuns(canvas)
     .map((run) => run.join(''))
     .join('')
-}
 
-export function blankCanvas(): string {
-  return writeCanvas(emptyCanvas())
-}
+export const blankCanvas = (): string => writeCanvas(emptyCanvas())
 
 export function canvasIconEdit(
   text: string,

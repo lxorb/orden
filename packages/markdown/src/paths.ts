@@ -1,8 +1,6 @@
 const FORBIDDEN = /[\\/:*?"<>|]|\p{Cc}/gu
 
-export function withoutForbidden(name: string): string {
-  return name.replace(FORBIDDEN, ' ')
-}
+export const withoutForbidden = (name: string): string => name.replace(FORBIDDEN, ' ')
 
 export function numbered(path: string, counter: number): string {
   if (counter <= 1) return path
@@ -29,17 +27,14 @@ export function freePath(path: string, taken: (candidate: string) => boolean): s
   return `${folder}${freeStem(stem, (one) => taken(`${folder}${one}${extension}`))}${extension}`
 }
 
-export function freeName(name: string, taken: (candidate: string) => boolean): string {
-  return taken(name) ? freeStem(name, taken) : name
-}
+export const freeName = (name: string, taken: (candidate: string) => boolean): string =>
+  taken(name) ? freeStem(name, taken) : name
 
 const COUNTED = /^(.*\S) ([1-9]\d{0,2})$/su
 
 const STACKED = /^(.*?\S)(?: 2){2,}$/su
 
-export function uncounted(stem: string): string {
-  return COUNTED.exec(stem)?.[1] ?? stem
-}
+export const uncounted = (stem: string): string => COUNTED.exec(stem)?.[1] ?? stem
 
 function freeStem(stem: string, taken: (candidate: string) => boolean): string {
   const counted = COUNTED.exec(stem)

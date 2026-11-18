@@ -31,9 +31,7 @@ const DEEPEST_PARENS = 32
 
 const BLANK = /\s/
 
-function endsTarget(one: string): boolean {
-  return (one <= ' ' || one >= '\u0080') && BLANK.test(one)
-}
+const endsTarget = (one: string): boolean => (one <= ' ' || one >= '\u0080') && BLANK.test(one)
 
 interface MarkdownLink {
   label: string
@@ -43,9 +41,8 @@ interface MarkdownLink {
   to: number
 }
 
-function isImageOpen(line: string, open: number): boolean {
-  return line[open - 1] === '!' && line[open - 2] !== '\\'
-}
+const isImageOpen = (line: string, open: number): boolean =>
+  line[open - 1] === '!' && line[open - 2] !== '\\'
 
 export function labelEnds(line: string): Map<number, number> {
   const ends = new Map<number, number>()
@@ -177,13 +174,9 @@ function schemeOf(target: string): string {
   return /^([a-z][a-z\d+.-]*):/i.exec(target)?.[1]?.toLowerCase() ?? ''
 }
 
-export function foldName(name: string): string {
-  return name.normalize('NFC').toLowerCase()
-}
+export const foldName = (name: string): string => name.normalize('NFC').toLowerCase()
 
-export function isNoteTarget(target: string): boolean {
-  return schemeOf(target) === ''
-}
+export const isNoteTarget = (target: string): boolean => schemeOf(target) === ''
 
 export const PDF_SIDECAR = '.highlights.json'
 
@@ -193,21 +186,16 @@ export const isPdfTarget = ending(/\.pdf$/i)
 
 export const isCanvasTarget = ending(/\.canvas$/i)
 
-export function isBaseTarget(target: string): boolean {
-  return /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
-}
+export const isBaseTarget = (target: string): boolean =>
+  /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
 
-export function isChatTarget(target: string): boolean {
-  return /\.chat$/i.test(target)
-}
+export const isChatTarget = (target: string): boolean => /\.chat$/i.test(target)
 
-export function isApplicationTarget(target: string | null): boolean {
-  return target !== null && /\.application$/i.test(target)
-}
+export const isApplicationTarget = (target: string | null): boolean =>
+  target !== null && /\.application$/i.test(target)
 
-export function isTermTarget(target: string | null): boolean {
-  return target !== null && /\.term$/i.test(target)
-}
+export const isTermTarget = (target: string | null): boolean =>
+  target !== null && /\.term$/i.test(target)
 
 export const isPagesTarget = ending(/\.pages$/i)
 
@@ -230,15 +218,11 @@ const EMBEDS: readonly [EmbedKind, (target: string) => boolean][] = [
   ['base', isBaseTarget],
 ]
 
-export function embedKind(target: string): EmbedKind | null {
-  return EMBEDS.find(([, is]) => is(target))?.[0] ?? null
-}
+export const embedKind = (target: string): EmbedKind | null =>
+  EMBEDS.find(([, is]) => is(target))?.[0] ?? null
 
-export function isTabFile(target: string): boolean {
-  return [isPdfTarget, isCanvasTarget, isPagesTarget, isWebTarget, isBaseTarget].some((is) =>
-    is(target),
-  )
-}
+export const isTabFile = (target: string): boolean =>
+  [isPdfTarget, isCanvasTarget, isPagesTarget, isWebTarget, isBaseTarget].some((is) => is(target))
 
 const SIZE = /^(\d+)(?:x(\d+))?$/
 
@@ -286,9 +270,7 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
 
 const NOT_IN_WIKILINK = /[#^[\]|`]/
 
-export function wikilinkCannotName(name: string): boolean {
-  return NOT_IN_WIKILINK.test(name)
-}
+export const wikilinkCannotName = (name: string): boolean => NOT_IN_WIKILINK.test(name)
 
 export function formatWikilink(link: Wikilink): string {
   const alias = link.alias === null ? '' : `|${link.alias}`
@@ -301,9 +283,7 @@ export function linkTarget(link: Wikilink): string {
   return link.target
 }
 
-export function shownText(link: Wikilink): string {
-  return link.alias ?? linkTarget(link)
-}
+export const shownText = (link: Wikilink): string => link.alias ?? linkTarget(link)
 
 export function shownSpan(inner: string): { from: number; to: number } {
   const bar = inner.indexOf('|')
@@ -318,9 +298,7 @@ export function shownSpan(inner: string): { from: number; to: number } {
   return { from, to }
 }
 
-function isBlank(character: string | undefined): boolean {
-  return character === ' ' || character === '\t'
-}
+const isBlank = (character: string | undefined): boolean => character === ' ' || character === '\t'
 
 function escaped(line: string, from: number, at: number): boolean {
   let slashes = 0
@@ -461,9 +439,8 @@ function markdownFound(
   }
 }
 
-function blanked(text: string, from: number, to: number): string {
-  return text.slice(0, from) + text.slice(from, to).replace(/[^\n]/g, ' ') + text.slice(to)
-}
+const blanked = (text: string, from: number, to: number): string =>
+  text.slice(0, from) + text.slice(from, to).replace(/[^\n]/g, ' ') + text.slice(to)
 
 function commentsBlanked(text: string): string {
   let out = text
@@ -567,9 +544,7 @@ export function* lines(text: string): Generator<Row> {
   }
 }
 
-export function rowsOf(text: string): Row[] {
-  return [...lines(text)]
-}
+export const rowsOf = (text: string): Row[] => [...lines(text)]
 
 function collect(
   line: string,
@@ -640,9 +615,8 @@ const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
 
 const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
-function bytesOf(run: string): Uint8Array {
-  return Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))
-}
+const bytesOf = (run: string): Uint8Array =>
+  Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))
 
 export function decodeTarget(target: string): string {
   try {
@@ -654,32 +628,27 @@ export function decodeTarget(target: string): string {
 
 const MUST_ENCODE = /[%\\<>#?:()|`]|\s/gu
 
-export function encodeTarget(path: string): string {
-  return path.replace(MUST_ENCODE, (one) =>
+export const encodeTarget = (path: string): string =>
+  path.replace(MUST_ENCODE, (one) =>
     one.charCodeAt(0) < 0x80
       ? `%${one.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`
       : encodeURIComponent(one),
   )
-}
 
-export function decodeFragment(fragment: string): string {
-  return fragment.replace(ESCAPES, (run) => UTF8.decode(bytesOf(run)))
-}
+export const decodeFragment = (fragment: string): string =>
+  fragment.replace(ESCAPES, (run) => UTF8.decode(bytesOf(run)))
 
 export function blockIdOf(line: string): string | null {
   if (!line.includes('^')) return null
   return BLOCK_ID.exec(line)?.[1] ?? null
 }
 
-export function slugify(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .trim()
-      .replace(/[^\p{L}\p{N}\s_-]/gu, '')
-      .replace(/\s+/g, '-') || 'section'
-  )
-}
+export const slugify = (text: string): string =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
+    .replace(/\s+/g, '-') || 'section'
 
 const HEADING = /^[ \t]{0,3}(#{1,6})[ \t]+(.*)\r?$/
 
@@ -687,9 +656,7 @@ const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
 
 const CLOSING_HASHES = /[ \t]+#+[ \t]*$/
 
-export function isHeading(line: string): boolean {
-  return HEADING.test(line)
-}
+export const isHeading = (line: string): boolean => HEADING.test(line)
 
 export function headingText(line: string): string {
   const found = HEADING_LINE.exec(line)
@@ -742,9 +709,7 @@ export function headingRows(text: string): HeadingRow[] {
   return found
 }
 
-export function headingsOf(text: string): string[] {
-  return headingRows(text).map((one) => one.text)
-}
+export const headingsOf = (text: string): string[] => headingRows(text).map((one) => one.text)
 
 export function sectionOf(
   source: string,
@@ -1173,16 +1138,10 @@ export function blocksOf(text: string): NoteBlock[] {
   return found
 }
 
-export function withoutBlockIds(text: string): string {
-  return replacingBlockIds(text, (kept) => kept)
-}
+export const withoutBlockIds = (text: string): string => replacingBlockIds(text, (kept) => kept)
 
-export function blockIdsBlanked(text: string): string {
-  return replacingBlockIds(
-    text,
-    (kept, length, row) => kept + (row.code ? ' ' : '\t').repeat(length),
-  )
-}
+export const blockIdsBlanked = (text: string): string =>
+  replacingBlockIds(text, (kept, length, row) => kept + (row.code ? ' ' : '\t').repeat(length))
 
 const ANCHOR_OPEN = '\uE0F0'
 const ANCHOR_CLOSE = '\uE0F1'
@@ -1249,10 +1208,9 @@ function replacingBlockIds(
   return at === 0 ? text : out + text.slice(at)
 }
 
-function firstWords(line: string): string {
-  return line
+const firstWords = (line: string): string =>
+  line
     .replace(BLOCK_ID, '')
     .replace(/^\s*>?\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+)?/, '')
     .trim()
     .slice(0, BLOCK_LABEL)
-}

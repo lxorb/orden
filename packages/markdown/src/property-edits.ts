@@ -10,9 +10,8 @@ export interface KeptItem {
   block?: true
 }
 
-export function writtenList(items: readonly ListItem[]): string {
-  return `[${items.map(writtenItem).join(', ')}]`
-}
+export const writtenList = (items: readonly ListItem[]): string =>
+  `[${items.map(writtenItem).join(', ')}]`
 
 function writtenItem(item: ListItem): string {
   if (item === null || typeof item === 'boolean') return String(item)

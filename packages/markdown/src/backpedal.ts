@@ -12,13 +12,10 @@ const AMPERSAND = 38
 
 const SEMICOLON = 59
 
-function plain(code: number): boolean {
-  return !MARKS.has(code) && code !== OPEN && code !== AMPERSAND
-}
+const plain = (code: number): boolean => !MARKS.has(code) && code !== OPEN && code !== AMPERSAND
 
-function alphanumeric(code: number): boolean {
-  return (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122)
-}
+const alphanumeric = (code: number): boolean =>
+  (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122)
 
 interface Stop {
   at: number

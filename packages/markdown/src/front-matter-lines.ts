@@ -19,13 +19,9 @@ interface Open {
   depth: number
 }
 
-function isBlank(one: string | undefined): boolean {
-  return one === ' ' || one === '\t'
-}
+const isBlank = (one: string | undefined): boolean => one === ' ' || one === '\t'
 
-function wordsIn(text: string): number {
-  return text.trim().split(/\s+/u).filter(Boolean).length
-}
+const wordsIn = (text: string): number => text.trim().split(/\s+/u).filter(Boolean).length
 
 export function isKeyLine(text: string): boolean {
   const past = pastKey(text, 0)

@@ -7,21 +7,17 @@ interface Dated {
   deadline?: string | undefined
 }
 
-export function startOf(task: Dated, due: DueReads = 'start'): string | undefined {
-  return task.start ?? (due === 'start' ? task.due : undefined)
-}
+export const startOf = (task: Dated, due: DueReads = 'start'): string | undefined =>
+  task.start ?? (due === 'start' ? task.due : undefined)
 
-export function deadlineOf(task: Dated, due: DueReads = 'start'): string | undefined {
-  return task.deadline ?? (dueIsDeadline(task, due) ? task.due : undefined)
-}
+export const deadlineOf = (task: Dated, due: DueReads = 'start'): string | undefined =>
+  task.deadline ?? (dueIsDeadline(task, due) ? task.due : undefined)
 
-function dueIsDeadline(task: Dated, due: DueReads): boolean {
-  return due === 'deadline' || task.start !== undefined
-}
+const dueIsDeadline = (task: Dated, due: DueReads): boolean =>
+  due === 'deadline' || task.start !== undefined
 
-export function dayOf(task: Dated, due: DueReads = 'start'): string | undefined {
-  return startOf(task, due) ?? task.scheduled ?? deadlineOf(task, due)
-}
+export const dayOf = (task: Dated, due: DueReads = 'start'): string | undefined =>
+  startOf(task, due) ?? task.scheduled ?? deadlineOf(task, due)
 
 export function hasStarted(task: Dated, today: string, due: DueReads = 'start'): boolean {
   const start = startOf(task, due)
