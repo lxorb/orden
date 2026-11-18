@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from './disk'
 
 const files = new Map<string, string>()
 const asked: string[] = []
@@ -80,19 +81,6 @@ vi.mock('../src/lib/sharing/src/api', async (importOriginal) => ({
     ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../src/lib/workspace/src/api')

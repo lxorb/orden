@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from './disk'
 
 let frames = 0
 
@@ -66,21 +67,6 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
     }
   },
 }))
-
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-
-  return {
-    get length() {
-      return held.size
-    },
-    key: (at) => [...held.keys()][at] ?? null,
-    getItem: (key) => held.get(key) ?? null,
-    setItem: (key, value) => void held.set(key, value),
-    removeItem: (key) => void held.delete(key),
-    clear: () => held.clear(),
-  }
-}
 
 vi.stubGlobal('localStorage', memoryStorage())
 
