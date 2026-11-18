@@ -10,23 +10,27 @@ const world = vi.hoisted(() => ({
   unowned: [] as (() => void)[],
 }))
 
-vi.mock('../../accounts/src/api', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../../accounts/src/api')>()
+vi.mock('../../accounts/src/account.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../accounts/src/account.svelte')>()),
+  account: {
+    get user() {
+      return world.user
+    },
+    get noAccountForSure() {
+      return world.token === null
+    },
+    get accountToken() {
+      return world.user ? 'token' : null
+    },
+    forgetWithSession: (clear: () => void) => void world.leaving.push(clear),
+    holdsNoAccount: (clear: () => void) => void world.unowned.push(clear),
+  },
+}))
+
+vi.mock('../../accounts/src/client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../accounts/src/client')>()
   return {
     ...original,
-    account: {
-      get user() {
-        return world.user
-      },
-      get noAccountForSure() {
-        return world.token === null
-      },
-      get accountToken() {
-        return world.user ? 'token' : null
-      },
-      forgetWithSession: (clear: () => void) => void world.leaving.push(clear),
-      holdsNoAccount: (clear: () => void) => void world.unowned.push(clear),
-    },
     api: {
       saveSettings: (_token: string, patch: unknown) => {
         world.saved.push(patch)

@@ -1,6 +1,5 @@
 import { defaultKeyFor, type EditorView, type KeyOverrides, setShortcutKeys } from '@orden/editor'
-import type { AccountSettings } from '../../accounts/src/api'
-import { AccountOwed } from './account-owed'
+import { AccountOwed, type AccountSettings } from '../../accounts/src/api'
 import { tapOf } from '../../double-tap/src/api'
 import {
   currentPlatform,

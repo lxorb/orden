@@ -177,6 +177,16 @@ describe('the account', () => {
     expect(store.has('orden:hidden-kinds')).toBe(false)
   })
 
+  test('keeps a change it was not told of yet over the older list it still holds', () => {
+    setWord(EXPERIMENTAL_WORD, true)
+    token = 'token'
+
+    receive({ hiddenKinds: [] })
+
+    expect(hiddenKinds.hidden).toEqual([EXPERIMENTAL_WORD])
+    expect(saved).toEqual([['token', { hiddenKinds: [EXPERIMENTAL_WORD] }]])
+  })
+
   test('that never heard of it takes this machine’s list', () => {
     setKind('pages', false)
     token = 'token'

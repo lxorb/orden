@@ -1,4 +1,6 @@
-import { account, api, type AccountSettings, turnedDown } from '../../accounts/src/api'
+import { account } from './account.svelte'
+import { api, turnedDown } from './client'
+import type { AccountSettings } from './routes'
 import { forget, isRecord, keepJson, stored } from '../../platform/src/api'
 
 export class AccountOwed {

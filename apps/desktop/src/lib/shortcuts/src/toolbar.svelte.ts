@@ -1,7 +1,6 @@
 import Link from 'lucide/dist/esm/icons/link.mjs'
 import type { IconNode } from 'lucide'
-import type { AccountSettings } from '../../accounts/src/api'
-import { AccountOwed } from './account-owed'
+import { AccountOwed, type AccountSettings } from '../../accounts/src/api'
 import { BY_ID, known, runnable } from './registry'
 import { forget, isString, keepJson, stored } from '../../platform/src/api'
 
