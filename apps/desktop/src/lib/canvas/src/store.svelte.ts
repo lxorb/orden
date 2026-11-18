@@ -180,6 +180,8 @@ export class CanvasStore implements PlaneSurface {
   }
 
   undo() {
+    this.during = null
+    if (this.readOnly) return
     if (this.shared) {
       this.shared.undo()
       return
@@ -195,6 +197,8 @@ export class CanvasStore implements PlaneSurface {
   }
 
   redo() {
+    this.during = null
+    if (this.readOnly) return
     if (this.shared) {
       this.shared.redo()
       return
