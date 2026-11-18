@@ -62,33 +62,19 @@ import { type Machine, PtySource, remoteShell, type Said, type Source } from './
 import { hostIdOf, hostShell, readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 
 const SCROLLBACK = 5000
-
 const QUIET = 2000
-
 const FLOOD = 10_000
-
 const RESTING = 300
-
 const KERNEL_SAYS = ['linux', 'macos']
-
 const AFTER_ENTER = 500
-
 const ASK_AFTER = 300
-
 const ASK_EVERY = 1000
-
 const NOTICE_EVERY = 4000
-
 const OFFERED_FOR = 60_000
-
 const RELINK_GRACE = 5000
-
 const CONNECTED_AFTER = 10_000
-
 const FIRST_RETRY = 1000
-
 const LONGEST_RETRY = 15_000
-
 const MOST_RETRIES = 40
 
 function held(key: string): Promise<boolean> {

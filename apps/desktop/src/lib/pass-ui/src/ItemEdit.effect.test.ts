@@ -20,7 +20,6 @@ vi.mock('../../protect/src/device', () => ({
 const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ItemEdit = (await import('./ItemEdit.svelte')).default
-
 const FAST = { m: 64, t: 1, p: 1 }
 configurePass({ kdf: FAST, pinKdf: FAST })
 

@@ -1,7 +1,6 @@
 import type { IModes } from '@xterm/xterm'
 
 const MARKS = ['\x1b]133;A', '\x1b]633;A'].map((mark) => new TextEncoder().encode(mark))
-
 const BEL = 0x07
 const ESC = 0x1b
 const BACKSLASH = 0x5c

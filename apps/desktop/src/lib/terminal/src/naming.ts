@@ -1,11 +1,8 @@
 import { nameOf } from '../../platform/src/api'
 
 const BETWEEN = ', '
-
 const TITLE_MOST = 120
-
 const DECORATION = /^[^\p{L}\p{N}"'([{<]+/u
-
 const CONSOLE_TITLE = /^(?:administrator:\s*)?[a-z]:\\.*\.(?:exe|com|bat|cmd)\b/i
 
 export function programTitle(raw: string): string | null {

@@ -117,7 +117,6 @@ class PassSync {
 }
 
 export const passSync = new PassSync()
-
 let started = false
 
 export function startPassSync(): void {

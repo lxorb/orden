@@ -22,7 +22,6 @@ const NO_SUCH_VAULT = 'no such vault'
 export const NO_SUCH_ITEM = 'no such item'
 const NOT_YOUR_ROLE = 'your role in this vault does not allow that'
 const TAKEN = 'that id is taken'
-
 const PREFIX = '/v2/pass'
 
 export class Refused extends Error {

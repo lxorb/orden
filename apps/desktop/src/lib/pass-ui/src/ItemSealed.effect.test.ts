@@ -22,7 +22,6 @@ const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const { menu } = await import('../../ui-kit/src/api')
 const ItemView = (await import('./ItemView.svelte')).default
-
 const FAST = { m: 64, t: 1, p: 1 }
 configurePass({ kdf: FAST, pinKdf: FAST })
 

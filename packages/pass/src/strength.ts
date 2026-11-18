@@ -8,7 +8,6 @@ export interface StrengthOf {
 }
 
 export const STRENGTH_BITS = { weak: 40, strong: 70 } as const
-
 export const COMMON_PASSWORDS: readonly string[] = `123456
 password
 123456789

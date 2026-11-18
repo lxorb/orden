@@ -18,7 +18,6 @@ const HISTORY_AWAY = '/.orden-locked-history'
 type Buried = Record<string, Record<string, Way>>
 
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
-
 const inSpace = (at: string) => at === '' || lockable(fitted(at))
 
 function readBuried(): Buried {

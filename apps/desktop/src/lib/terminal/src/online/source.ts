@@ -23,7 +23,6 @@ const WAIT = 20_000
 const LOOK_EVERY = 100
 const PASS_AT_MOST = 3_000
 const ASK_EVERY = 250
-
 const pause = (ms: number) => new Promise((settle) => setTimeout(settle, ms))
 
 async function termIdOf(path: string, until: number): Promise<string | null> {
@@ -96,7 +95,6 @@ export interface Place {
 }
 
 const FRAMES_A_SECOND = INPUT_RATE / 2
-
 const LANDS_WITHIN = 20_000
 
 export class OnlineSource implements Source {

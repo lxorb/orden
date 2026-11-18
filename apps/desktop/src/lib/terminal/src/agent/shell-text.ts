@@ -19,7 +19,6 @@ const SCRIPTS = `test build dev start stop restart lint check format typecheck p
   serve`.split(/\s+/)
 
 const SCRIPT_BY_SHAPE = /^[\w-]+:[\w:-]+$/
-
 const TOOLS = ['tsc', 'vitest', 'jest', 'eslint', 'prettier']
 const OPTIONS_FREE = [
   ...PLAIN,

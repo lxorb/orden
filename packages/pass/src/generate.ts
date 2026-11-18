@@ -43,7 +43,6 @@ export const DEFAULT_MEMORABLE: MemorableRule = {
 
 export const RANDOM_LENGTH = { min: 4, max: 64 } as const
 export const MEMORABLE_WORDS = { min: 1, max: 10 } as const
-
 export const LOWER = 'abcdefghjkmnpqrstuvwxyz'
 export const UPPER = 'ABCDEFGHJKMNPQRSTUVWXYZ'
 export const DIGITS = '23456789'

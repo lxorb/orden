@@ -14,7 +14,6 @@ export interface Place {
 }
 
 export const LINES = 1000
-
 export const MOST = 512 * 1024
 
 export function fitted(serialize: (lines: number) => string, most = MOST): string | null {
@@ -45,9 +44,7 @@ function readHistory(value: unknown): History | null {
 }
 
 const closed = new Map<string, History>()
-
 const KEPT_CLOSED = 12
-
 const turns = new Map<string, Promise<void>>()
 
 function inTurn(key: string, run: () => Promise<unknown>): Promise<void> {

@@ -27,7 +27,6 @@ vi.mock('../../files-out/src/save', () => ({
 const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const PassSettings = (await import('./PassSettings.svelte')).default
-
 const FAST = { m: 64, t: 1, p: 1 }
 const PASSWORD = 'correct horse battery staple'
 configurePass({ kdf: FAST, pinKdf: FAST })

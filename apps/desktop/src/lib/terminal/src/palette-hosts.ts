@@ -3,7 +3,6 @@ import { isDesktop } from '../../platform/src/api'
 import { type Destination, destinationOf, type Host, hostFor, said } from './remote/hosts'
 
 let known: readonly Host[] = []
-
 const opening = async () => await import('./remote/open')
 
 async function open(id: string) {

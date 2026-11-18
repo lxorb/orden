@@ -8,7 +8,6 @@ import type { Accepted, Handover, KeyProof } from '@orden/pass/wire'
 const NAME = 'orden-pass'
 const VERSION = 2
 const THIS = 'this'
-
 const KEPT_VERSIONS = 30
 export const KEPT_AFTER_DELETE = 30 * 24 * 60 * 60 * 1000
 

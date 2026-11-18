@@ -32,7 +32,6 @@ const OWNER_KEY = 'orden:protect-password-account'
 export type Way = 'password' | 'device'
 
 export const SPACE = ''
-
 const MOST_PROTECTED = 400
 
 export interface Lock {
@@ -48,7 +47,6 @@ export interface Hashed extends Cost {
 }
 
 const MOST_N = 1 << 20
-
 const MOST_WORK = 1 << 19
 
 export function hashedOf(value: unknown): Hashed | null {
@@ -72,7 +70,6 @@ export function hashedOf(value: unknown): Hashed | null {
 }
 
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
-
 export const lockable = (key: string) => insideItsSpace(key.replace(/^[A-Za-z]:/, '_'))
 
 export const fitted = (key: string) =>

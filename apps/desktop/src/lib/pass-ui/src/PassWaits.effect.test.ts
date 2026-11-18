@@ -26,7 +26,6 @@ vi.mock('../../gates/src/api', async (original) => ({
 const { account } = await import('../../accounts/src/account.svelte')
 const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const PassTab = (await import('./PassTab.svelte')).default
-
 const FAST = { m: 64, t: 1, p: 1 }
 configurePass({ kdf: FAST, pinKdf: FAST })
 

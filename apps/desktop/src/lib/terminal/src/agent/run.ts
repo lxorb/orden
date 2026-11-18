@@ -21,7 +21,6 @@ import { shutNothingFor } from './free'
 
 const WAIT = 60_000
 const MOST_WAIT = 600_000
-
 const MOST_OUTPUT = 100_000
 const KEPT = MOST_OUTPUT * 4
 

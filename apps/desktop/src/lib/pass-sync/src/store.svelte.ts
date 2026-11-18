@@ -111,14 +111,11 @@ export interface Unlock {
 }
 
 export const PIN_TRIES = 5
-
 const DEVICE_SECRET = 'pass-device'
-
 const LEFT_BEHIND = 'orden:pass-left-behind'
 const HIBP = 'hibp'
 const ALIAS = 'alias'
 const SEALED_HERE = [HIBP, ALIAS]
-
 let kdf: KdfParams = PASSWORD_KDF
 let pinKdf: KdfParams = PIN_KDF
 
