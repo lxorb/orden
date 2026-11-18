@@ -4,15 +4,12 @@ import {
   chunks,
   deviceIn,
   type Env,
-  hooks,
   now,
   places,
-  readBody,
   sha256,
   tokenIn,
   type Variables,
 } from '../../../sync-server/src/api'
-import { roomsSignedOut } from '../rooms'
 
 export interface Hello {
   device: string
@@ -20,8 +17,6 @@ export interface Hello {
   platform: string
   app: string
 }
-
-const NO_SUCH_DEVICE = 'no such device'
 
 export async function deviceOfSession(
   env: Env,
@@ -71,21 +66,6 @@ export async function markSeen(env: Env, user: string, device: string): Promise<
   await env.DB.prepare('update devices set last_seen_at = ? where id = ? and user_id = ?')
     .bind(now(), device, user)
     .run()
-}
-
-async function revokeDevice(env: Env, user: string, device: string): Promise<boolean> {
-  const login = await env.DB.prepare(
-    `select s.token_hash from devices d join sessions s on s.id = d.session_id and s.user_id = d.user_id
-      where d.id = ? and d.user_id = ? and d.revoked_at is null`,
-  )
-    .bind(device, user)
-    .first<{ token_hash: string }>()
-  if (!(await endDevice(env, user, device))) return false
-
-  await hooks().machines.machinesSignedOut(env, user, login ? [login.token_hash] : [])
-
-  await roomsSignedOut(env, user)
-  return true
 }
 
 async function endDevice(env: Env, user: string, device: string): Promise<boolean> {
@@ -175,30 +155,4 @@ devices.get('/', async (context) => {
       current: one.current === 1,
     })),
   })
-})
-
-devices.patch('/:id', async (context) => {
-  const user = context.get('user')
-  const body = await readBody(context)
-  const given = body.text('name', 400)
-  if (body.problem) return context.json({ error: body.problem }, 400)
-
-  const name = deviceIn(given ?? '')
-  if (!name) return context.json({ error: 'give the device a name' }, 400)
-
-  const id = context.req.param('id')
-  const changed = await context.env.DB.prepare(
-    'update devices set name = ? where id = ? and user_id = ? and revoked_at is null',
-  )
-    .bind(name, id, user.id)
-    .run()
-  if (!changed.meta.changes) return context.json({ error: NO_SUCH_DEVICE }, 404)
-  return context.json({ ok: true, name })
-})
-
-devices.delete('/:id', async (context) => {
-  const user = context.get('user')
-  const ended = await revokeDevice(context.env, user.id, context.req.param('id'))
-  if (!ended) return context.json({ error: NO_SUCH_DEVICE }, 404)
-  return context.json({ ok: true })
 })

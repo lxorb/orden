@@ -9,7 +9,6 @@ import {
   type PullDoc,
   type PushAnswer,
   type PushDoc,
-  type SnapshotDoc,
   unframe,
 } from '@orden/sync-core'
 import {
@@ -29,7 +28,7 @@ import { seedOf, seedsAnything, snapshotKey } from '../rooms/epoch'
 import { noteKind } from '../rooms/kind'
 import { allows, reachedItem, reachedSpace } from '../spaces/space'
 import { prepareSpace } from './prepare'
-import { DOCUMENT_KINDS, DOCUMENTS_SQL } from './tree'
+import { DOCUMENT_KINDS } from './tree'
 
 type Asking = Whoever & { program?: true }
 
@@ -279,39 +278,4 @@ export async function keepDoc(
 
   await keepVersionNow(env, found.note.id, request.text, request.device)
   return 'kept'
-}
-
-const PAGE_BYTES = 4 * 1024 * 1024
-const PAGE_DOCS = 200
-
-export async function snapshotPage(
-  env: Env,
-  spaceId: string,
-  after: string,
-): Promise<{ docs: SnapshotDoc[]; next: string | null }> {
-  const { results } = await env.DB.prepare(
-    `select * from notes where space_id = ? and deleted = 0 and kind in ${DOCUMENTS_SQL}
-        and id > ? order by id limit ?`,
-  )
-    .bind(spaceId, after, PAGE_DOCS)
-    .all<Note>()
-
-  const docs: SnapshotDoc[] = []
-  let bytes = 0
-  for (const note of results) {
-    if (docs.length && bytes >= PAGE_BYTES) return { docs, next: docs.at(-1)?.id ?? null }
-
-    const held = await documentOf(env, note)
-    const epoch = note.epoch ?? 0
-    if (!held) {
-      continue
-    }
-    const doc: SnapshotDoc = { id: note.id, epoch, seq: held.seq, update: held.update }
-    if (note.epoch_base) doc.epochBase = note.epoch_base
-    docs.push(doc)
-    bytes += held.update.length
-  }
-
-  const last = results.at(-1)
-  return { docs, next: results.length === PAGE_DOCS && last ? last.id : null }
 }

@@ -243,21 +243,6 @@ describe('bytes under a hash that is not theirs', () => {
       })
       expect(sent.status).toBe(400)
     }
-    const started = await call<{ upload: string }>(env, '/v2/blobs/parts', {
-      token: stranger,
-      body: { hash: key, size: named.length },
-    })
-    const part = await call<{ part: number; etag: string }>(
-      env,
-      `/v2/blobs/parts/${started.json.upload}/1`,
-      { method: 'PUT', token: stranger, raw: named },
-    )
-    const done = await call(env, `/v2/blobs/parts/${started.json.upload}`, {
-      token: stranger,
-      body: { parts: [part.json] },
-    })
-    expect(done.status).toBe(400)
-
     const stored = await env.NOTES.get(`blobs/${key}`)
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(drawing)
     expect(stored!.httpMetadata?.contentType).toBe('image/svg+xml')

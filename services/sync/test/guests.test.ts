@@ -584,10 +584,6 @@ describe('a guest session', () => {
       go: (token) => call(env, '/v1/sessions', { method: 'DELETE', token }),
     },
     { what: 'the devices', go: (token) => call(env, '/v2/devices', { token }) },
-    {
-      what: 'ending a device',
-      go: (token) => call(env, '/v2/devices/device-x', { method: 'DELETE', token }),
-    },
   ]
 
   for (const closed of CLOSED) {

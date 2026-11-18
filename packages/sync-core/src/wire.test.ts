@@ -23,7 +23,6 @@ import {
   pushResponseOf,
   PUSH_BATCH,
   roomNews,
-  snapshotPageOf,
   unframe,
 } from './wire'
 
@@ -408,13 +407,6 @@ describe('documents', () => {
       device: 'laptop',
     })
     expect(keepRequestOf({ id: 'n', text: 3, device: 'laptop' })).toBeNull()
-
-    const page = {
-      docs: [{ id: 'a', epoch: 1, epochBase: 'h', seq: 2, update: bytes(1) }],
-      next: 'a',
-    }
-    expect(snapshotPageOf(unframe(frame(page)))).toEqual(page)
-    expect(snapshotPageOf({ docs: [], next: null })).toEqual({ docs: [], next: null })
   })
 })
 

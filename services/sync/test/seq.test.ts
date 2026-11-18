@@ -96,7 +96,7 @@ describe('the cursor of a space', () => {
     expect(Math.max(...seqs)).toBe(next - 1)
   })
 
-  test('moves with the row when a file is replaced and a map is written (sync v2)', async () => {
+  test('moves with the row when a file is replaced (sync v2)', async () => {
     const space = await newSpace('Two', true)
     const bytes = (seed: number) => Uint8Array.from({ length: 64 }, (_, at) => (at + seed) % 251)
     const hashOf = async (data: Uint8Array) =>
@@ -131,16 +131,6 @@ describe('the cursor of a space', () => {
       body: { hash: await hashOf(second), base: await hashOf(first) },
     })
     expect(replaced.json.ok).toBe(true)
-    const mapped = await call<{ cursor: number }>(env, `/v2/spaces/${space}/maps`, {
-      method: 'PATCH',
-      token,
-      body: {
-        entries: [
-          { map: 'bookmark', key: 'b1', value: { kind: 'note', path: 'a.bin', text: 'a', at: 1 } },
-          { map: 'bookmark', key: 'b2', value: { kind: 'note', path: 'a.bin', text: 'b', at: 2 } },
-        ],
-      },
-    })
 
     expect(alone).toEqual([])
     const { seqs, next } = numbered(space)
@@ -150,6 +140,5 @@ describe('the cursor of a space', () => {
       seq: number
     }
     expect(replaced.json.seq).toBe(file.seq)
-    expect(mapped.json.cursor).toBe(next - 1)
   })
 })

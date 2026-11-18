@@ -1,29 +1,13 @@
-import { Hono } from 'hono'
-import {
-  byteLength,
-  type Env,
-  laterOf,
-  mayChangeTree,
-  newId,
-  NOT_AN_OBJECT,
-  now,
-  pokeSpace,
-  type Space,
-  TOO_MANY_CHANGES,
-  type Variables,
-} from '../../../sync-server/src/api'
+import { byteLength, type Env, newId, now, type Space } from '../../../sync-server/src/api'
 import { bookmarkId, readBookmarks } from '../spaces/bookmarks'
 import { MOST_BYTES } from '../spaces/columns'
 import { readExcluded } from '../spaces/excluded'
 import { readGraph } from '../spaces/graph'
 import { readIcons, readTints } from '../spaces/icons'
 import { readArranged } from '../spaces/arranged'
-import { atLeast, spaceOf } from '../spaces/space'
-import { deviceOf, whoseId } from './device'
 import { readTree, type Tree } from './tree'
 
 export type MapName = 'bookmark' | 'icon' | 'order' | 'graph' | 'excluded'
-const MAPS: readonly MapName[] = ['bookmark', 'icon', 'order', 'graph', 'excluded']
 
 export interface Entry {
   map: MapName
@@ -36,54 +20,14 @@ interface Kept extends Entry {
   at: number
 }
 
-const LONGEST_KEY = 512
-const MOST_CHANGED = 200
-const PAGE = 1000
-const MOST_ENTRIES = 10_000
-
 const PATH = 'path:'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function isPosition(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
-}
-
 function unplaced(value: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(value).filter(([field]) => field !== 'at'))
-}
-
-function holds(map: MapName, key: string, value: unknown): boolean {
-  if (value === null) return true
-  switch (map) {
-    case 'bookmark':
-      if (!isRecord(value) || !isPosition(value.at)) return false
-      return readBookmarks(JSON.stringify([unplaced(value)])).length === 1
-    case 'icon': {
-      if (!isRecord(value) || typeof value.icon !== 'string') return false
-      const icon = readIcons(JSON.stringify({ x: value.icon }))
-      if (!('x' in icon)) return false
-      if (value.tint === undefined) return true
-      return typeof value.tint === 'string' && 'x' in readTints(JSON.stringify({ x: value.tint }))
-    }
-    case 'order':
-      return isPosition(value)
-    case 'graph':
-      return Object.hasOwn(readGraph(JSON.stringify({ [key]: value })), key)
-    case 'excluded':
-      return value === true && readExcluded(JSON.stringify([key])).includes(key)
-  }
-}
-
-function entryOf(value: unknown): Entry | null {
-  if (!isRecord(value)) return null
-  const { map, key } = value
-  const name = MAPS.find((one) => one === map)
-  if (!name || typeof key !== 'string' || !key || key.length > LONGEST_KEY) return null
-  const held = value.value === undefined ? null : value.value
-  return holds(name, key, held) ? { map: name, key, value: held } : null
 }
 
 type Child = ReturnType<Tree['lookup']>
@@ -203,19 +147,6 @@ async function keptIn(env: Env, spaceId: string): Promise<Kept[]> {
   }))
 }
 
-function overlaid(
-  kept: readonly Kept[],
-  changes: readonly Entry[],
-  seq: number,
-  at: number,
-): Kept[] {
-  const byKey = new Map(kept.map((one) => [`${one.map}\u0000${one.key}`, one]))
-  changes.forEach((one, index) => {
-    byKey.set(`${one.map}\u0000${one.key}`, { ...one, seq: seq + index, at })
-  })
-  return [...byKey.values()]
-}
-
 async function writeAtBlock(
   env: Env,
   spaceId: string,
@@ -285,22 +216,6 @@ function writing(
     )
   }
   return out
-}
-
-async function writeEntries(
-  env: Env,
-  spaceId: string,
-  changes: readonly Entry[],
-  by: string,
-): Promise<number | null> {
-  const [kept, tree] = [await keptIn(env, spaceId), await readTree(env, spaceId)]
-  const at = now()
-  const provisional = overlaid(kept, changes, 0, at)
-  const columns = projected(provisional, tree)
-  if (provisional.length > MOST_ENTRIES || !fitting(columns)) return null
-
-  const stamped = changes.map((one, index) => ({ ...one, seq: index, at }))
-  return await writeAtBlock(env, spaceId, stamped, columns, by)
 }
 
 export async function v1Wrote(env: Env, space: Space, map: MapName, value: unknown, by: string) {
@@ -432,80 +347,3 @@ export async function reproject(env: Env, spaceId: string, after: Tree): Promise
   if (!fitting(columns)) return
   await env.DB.batch(writing(env, spaceId, [], columns, '', 0))
 }
-
-async function entriesSince(
-  env: Env,
-  spaceId: string,
-  since: number,
-): Promise<{ entries: Kept[]; cursor: number; more: boolean }> {
-  const { results } = await env.DB.prepare(
-    `select map, key, value, seq, at from space_entries
-      where space_id = ? and seq > ? order by seq limit ?`,
-  )
-    .bind(spaceId, since, PAGE + 1)
-    .all<{ map: MapName; key: string; value: string | null; seq: number; at: number }>()
-
-  const page = results.slice(0, PAGE)
-  return {
-    entries: page.map((row) => ({
-      map: row.map,
-      key: row.key,
-      value: row.value === null ? null : (JSON.parse(row.value) as unknown),
-      seq: row.seq,
-      at: row.at,
-    })),
-    cursor: page.at(-1)?.seq ?? since,
-    more: results.length > PAGE,
-  }
-}
-
-interface App {
-  Bindings: Env
-  Variables: Variables
-}
-
-function changesIn(body: unknown): Entry[] | null {
-  if (!isRecord(body) || !Array.isArray(body.entries) || body.entries.length > MOST_CHANGED) {
-    return null
-  }
-  const out: Entry[] = []
-  for (const one of body.entries as unknown[]) {
-    const entry = entryOf(one)
-    if (!entry) return null
-    out.push(entry)
-  }
-  return out
-}
-
-const NOT_AN_ENTRY = 'that is not an entry this space keeps'
-
-const TOO_MUCH_ABOUT_THE_TREE = 'that is more than a space keeps about its tree'
-
-export const v2Maps = new Hono<App>()
-
-v2Maps.get('/:space/maps', atLeast('read', 'space'), async (context) => {
-  const space = spaceOf(context)
-  const asked = Math.floor(Number(context.req.query('since') ?? 0))
-  const since = Number.isFinite(asked) && asked > 0 ? asked : 0
-  return context.json(await entriesSince(context.env, space.id, since))
-})
-
-v2Maps.patch('/:space/maps', atLeast('write', 'space'), async (context) => {
-  const space = spaceOf(context)
-  const body: unknown = await context.req.json().catch(() => undefined)
-  if (!isRecord(body)) return context.json({ error: NOT_AN_OBJECT }, 400)
-  const changes = changesIn(body)
-  if (!changes) return context.json({ error: NOT_AN_ENTRY }, 400)
-  if (!(await mayChangeTree(context.env, whoseId(context.get('who'))))) {
-    return context.json({ error: TOO_MANY_CHANGES }, 429)
-  }
-  if (!changes.length) return context.json({ cursor: 0 })
-
-  const device = await deviceOf(context)
-  const cursor = await writeEntries(context.env, space.id, changes, device)
-  if (cursor === null) {
-    return context.json({ error: TOO_MUCH_ABOUT_THE_TREE }, 413)
-  }
-  await pokeSpace(context.env, laterOf(context), space.id, cursor, device)
-  return context.json({ cursor })
-})

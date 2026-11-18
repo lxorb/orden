@@ -7,7 +7,6 @@ import {
   roomNews,
   seedPlane,
   seedUpdate,
-  type SnapshotPage,
 } from '@orden/sync-core'
 import { receive, syncStep1, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
@@ -477,28 +476,7 @@ describe('a canvas on sync v2', () => {
   })
 })
 
-describe('the bulk read and the kept side', () => {
-  test('a first sync reads every document, woken or not, in id order', async () => {
-    const one = await made('One.md', 'one\n')
-    const two = await made('Two.md', 'two\n')
-    await prepare()
-    const device = new Device(one, 'one\n', 'laptop')
-    await device.push(device.type(4, 'more\n'))
-    await rooms.settle()
-
-    const { value } = await framed<SnapshotPage>(env, `/v2/spaces/${space}/snapshot`, token)
-    const texts = new Map(
-      value.docs.map((doc) => {
-        const read = new Y.Doc()
-        Y.applyUpdateV2(read, doc.update)
-        return [doc.id, read.getText(TEXT).toJSON()]
-      }),
-    )
-    expect(texts.get(one)).toBe('one\nmore\n')
-    expect(texts.get(two)).toBe('two\n')
-    expect(value.next).toBeNull()
-  })
-
+describe('the kept side', () => {
   test('the side a modal answer let go of is kept as a version, named after its device', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
