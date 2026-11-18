@@ -3,7 +3,7 @@ use std::time::Duration;
 use serde_json::json;
 use tauri::{AppHandle, Manager as _};
 
-use super::engines::View;
+use crate::engines::View;
 use orden_agents::grants::Spaces;
 use orden_agents::verbs::{window, ReaderTab};
 
@@ -64,5 +64,5 @@ pub fn page(app: &AppHandle, tab: &str) -> Option<View> {
         serde_json::to_value(lend).unwrap_or_default(),
         LENDING,
     );
-    super::engines::view(app, &label)
+    crate::engines::view(app, &label)
 }

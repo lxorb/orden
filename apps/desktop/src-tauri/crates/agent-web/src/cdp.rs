@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
-use super::engines::View;
+use crate::engines::View;
 use orden_agents::verbs::{ConsoleLine, Request};
 
 pub const PATIENCE: Duration = Duration::from_secs(30);
@@ -77,7 +77,7 @@ fn asked(
                 params.clone(),
             );
             std::thread::spawn(move || {
-                let said = crate::engine::devtools::call(
+                let said = orden_web::engine::devtools::call(
                     &view,
                     session.as_deref(),
                     &method,
@@ -602,9 +602,9 @@ pub fn follow_view(view: &View, label: &str) {
         };
         match view {
             View::Webview(webview) => {
-                let _ = crate::engine::devtools::hear(webview, hearing);
+                let _ = orden_web::engine::devtools::hear(webview, hearing);
             }
-            View::Windowless(windowless) => windowless.hear(hearing),
+            View::Windowless(windowless) => windowless.hear(Box::new(hearing)),
         }
     }
 }
@@ -759,7 +759,7 @@ fn text_at(value: &Value, key: &str) -> String {
         .to_string()
 }
 
-pub use super::engines::cut;
+pub use crate::engines::cut;
 
 pub fn awake(view: &View, label: &str, own: bool) {
     let page = heard(label);
@@ -795,7 +795,7 @@ pub fn awake(view: &View, label: &str, own: bool) {
                 Some(&frame.session),
                 method,
                 &json!({}),
-                super::page::FRAME_PATIENCE,
+                crate::page::FRAME_PATIENCE,
             );
         }
         if let Ok(tree) = call_in(
@@ -803,7 +803,7 @@ pub fn awake(view: &View, label: &str, own: bool) {
             Some(&frame.session),
             "Page.getFrameTree",
             &json!({}),
-            super::page::FRAME_PATIENCE,
+            crate::page::FRAME_PATIENCE,
         ) {
             if let Some(tree) = tree.get("frameTree") {
                 page.lock()
@@ -926,7 +926,7 @@ pub fn sleep_idle(app: &tauri::AppHandle) {
         if !sleepy {
             continue;
         }
-        let Some(view) = super::engines::view(app, &label) else {
+        let Some(view) = crate::engines::view(app, &label) else {
             forget(&label);
             continue;
         };

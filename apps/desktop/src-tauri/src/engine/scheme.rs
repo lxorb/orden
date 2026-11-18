@@ -16,7 +16,7 @@ pub(crate) fn wear(platform: &tauri::webview::PlatformWebview, scheme: Scheme) {
     };
     context.set_chrome_color_scheme(cef::ColorVariant::from(variant), 0);
     ground(&mut browser);
-    crate::agents::engines::cef::on_ui(move || ground(&mut browser));
+    crate::engine::windowless::on_ui(move || ground(&mut browser));
 }
 
 fn ground(browser: &mut cef::Browser) {

@@ -1,8 +1,6 @@
-pub mod cef;
-
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use serde_json::{Map, Value};
@@ -17,7 +15,7 @@ use orden_agents::verbs::{
 };
 use orden_documents::pdf::PdfPage;
 
-pub use super::page::Element;
+pub use crate::page::Element;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ReaderStore {
@@ -58,10 +56,51 @@ pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
         .map(Some)
 }
 
+pub type Heard = Box<dyn Fn(&str, Option<&str>, &Value) + Send + Sync>;
+
+pub trait Windowless: Send + Sync {
+    fn label(&self) -> &str;
+    fn url(&self) -> String;
+    fn close(&self);
+    fn ask(
+        &self,
+        session: Option<&str>,
+        method: &str,
+        params: &Value,
+    ) -> Result<crate::cdp::Answering, String>;
+    fn hear(&self, heard: Heard);
+}
+
+pub type Build = fn(
+    &AppHandle,
+    &crate::quiet::Owner,
+    Option<&str>,
+    (u32, u32),
+    Option<&str>,
+) -> Result<(), String>;
+
+pub struct Pages {
+    pub page: fn(&str) -> Option<Arc<dyn Windowless>>,
+    pub build: Build,
+    pub answer_dialog: fn(&AppHandle, &str, crate::quiet::Said) -> Result<(), String>,
+}
+
+static PAGES: OnceLock<Pages> = OnceLock::new();
+
+pub fn hand(pages: Pages) {
+    let _ = PAGES.set(pages);
+}
+
+pub fn pages() -> Result<&'static Pages, String> {
+    PAGES
+        .get()
+        .ok_or_else(|| "the engine has not started".to_owned())
+}
+
 #[derive(Clone)]
 pub enum View {
     Webview(Webview),
-    Windowless(cef::Windowless),
+    Windowless(Arc<dyn Windowless>),
 }
 
 impl View {
@@ -90,18 +129,18 @@ impl View {
 }
 
 pub fn view(app: &AppHandle, label: &str) -> Option<View> {
-    if let Some(page) = cef::page(label) {
+    if let Some(page) = pages().ok().and_then(|pages| (pages.page)(label)) {
         return Some(View::Windowless(page));
     }
     app.get_webview(label).map(View::Webview)
 }
 
 pub fn forget(label: &str) {
-    super::cdp::forget(label);
+    crate::cdp::forget(label);
 }
 
 pub fn opened(label: &str, tab: &str) {
-    super::cdp::heard(label)
+    crate::cdp::heard(label)
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .opened
@@ -109,7 +148,7 @@ pub fn opened(label: &str, tab: &str) {
 }
 
 pub fn sleep_idle(app: &AppHandle) {
-    super::cdp::sleep_idle(app);
+    crate::cdp::sleep_idle(app);
 }
 
 pub const NAME: &str = "Chromium";
@@ -154,6 +193,10 @@ pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
 
 pub const UNREAD: u64 = 0;
 
+#[allow(
+    clippy::implicit_hasher,
+    reason = "the secrets are one set the page builds with the default hasher"
+)]
 pub fn left_a_part_out(secret: &HashSet<(String, u64)>) -> bool {
     secret.iter().any(|(_, node)| *node == UNREAD)
 }

@@ -46,21 +46,21 @@ fn no_paper() -> Answer {
 }
 
 fn taken(app: &AppHandle, caller: &Caller, tab: &str, asked: Asked) -> Answer {
-    use super::engines::{self, Engine};
+    use crate::engines::{self, Engine};
     use orden_agents::verbs::Captured;
 
     if engines::cannot(VERB).is_some() {
         return engines::refused(VERB);
     }
 
-    if super::tabs::find(caller.id(), tab).is_some() && !caller.holds(Scope::Browser) {
+    if crate::tabs::find(caller.id(), tab).is_some() && !caller.holds(Scope::Browser) {
         return Answer::error(
             Code::NotGranted,
             "this agent was not granted tabs of its own",
         );
     }
     let since = orden_agents::stop::generation();
-    super::browser::on_tab(app, caller, tab, VERB, since, false, |_, page| {
+    crate::browser::on_tab(app, caller, tab, VERB, since, false, |_, page| {
         let url = Engine::url(page);
         let captured = match asked.shape {
             CaptureAs::Clip => Engine::clip(page).map(|(url, title, html)| Captured {

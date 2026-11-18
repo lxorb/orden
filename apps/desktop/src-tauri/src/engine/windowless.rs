@@ -17,10 +17,11 @@ use cef::*;
 use serde_json::{json, Value};
 use tauri::AppHandle;
 
-use super::super::cdp;
-use super::super::quiet::{self, Owner, Said};
-use super::super::tabs;
-use super::View;
+use orden_agent_web::cdp;
+use orden_agent_web::engines::View;
+use orden_agent_web::engines::Windowless as _;
+use orden_agent_web::quiet::{self, Owner, Said};
+use orden_agent_web::tabs;
 use orden_agents::verbs::{Dialog, DialogKind, Download, DownloadState};
 
 const FRAME_RATE: i32 = 60;
@@ -101,12 +102,12 @@ pub fn page(label: &str) -> Option<Windowless> {
         .cloned()
 }
 
-impl Windowless {
-    pub fn label(&self) -> &str {
+impl orden_agent_web::engines::Windowless for Windowless {
+    fn label(&self) -> &str {
         &self.label
     }
 
-    pub fn url(&self) -> String {
+    fn url(&self) -> String {
         self.page
             .url
             .lock()
@@ -114,7 +115,7 @@ impl Windowless {
             .clone()
     }
 
-    pub fn close(&self) {
+    fn close(&self) {
         if let Some(all) = PAGES
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -127,7 +128,7 @@ impl Windowless {
         }
     }
 
-    pub fn ask(
+    fn ask(
         &self,
         session: Option<&str>,
         method: &str,
@@ -170,17 +171,23 @@ impl Windowless {
         Ok(answer)
     }
 
-    pub fn tell(&self, method: &str, params: &Value) {
-        let _ = self.ask(None, method, params);
-    }
-
-    pub fn hear(&self, heard: impl Fn(&str, Option<&str>, &Value) + Send + Sync + 'static) {
+    fn hear(&self, heard: orden_agent_web::engines::Heard) {
         self.page
             .hearing
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .push(Arc::new(heard));
+            .push(Arc::from(heard));
     }
+}
+
+impl Windowless {
+    pub fn tell(&self, method: &str, params: &Value) {
+        let _ = self.ask(None, method, params);
+    }
+}
+
+pub(crate) fn shared(label: &str) -> Option<Arc<dyn orden_agent_web::engines::Windowless>> {
+    page(label).map(|one| Arc::new(one) as Arc<dyn orden_agent_web::engines::Windowless>)
 }
 
 type Work = Arc<Mutex<Option<Box<dyn FnOnce() + Send>>>>;
@@ -372,7 +379,7 @@ fn made(page: &Arc<Page>, browser: &Browser) {
         .unwrap_or_else(PoisonError::into_inner)
         .get_or_insert_with(HashMap::new)
         .insert(handle.label.clone(), handle.clone());
-    cdp::follow_view(&View::Windowless(handle.clone()), &handle.label);
+    cdp::follow_view(&View::Windowless(Arc::new(handle.clone())), &handle.label);
     quietened(&handle);
     let going = page
         .going

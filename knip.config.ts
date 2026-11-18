@@ -34,7 +34,7 @@ export default {
     'apps/desktop/src-tauri/crates/web/src/page_scheme.js',
     'apps/desktop/src-tauri/src/former.js',
     'apps/desktop/src-tauri/src/kept.js',
-    'apps/desktop/src-tauri/src/agents/engines/snapshot.js',
+    'apps/desktop/src-tauri/crates/agent-web/src/snapshot.js',
     'apps/desktop/src-tauri/crates/extensions/src/extensions/firefox/*.js',
   ],
   workspaces: {

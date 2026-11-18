@@ -1,0 +1,6 @@
+{
+  "name": "agent-web",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["agents", "base", "documents", "pty", "web"]
+}

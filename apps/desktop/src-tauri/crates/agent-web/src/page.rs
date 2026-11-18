@@ -5,9 +5,9 @@ use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
-use super::cdp::{self, Heard, Whence};
-use super::engines::{self, Engine, Gate, Page, Tree, SETTLED, UNREAD};
-use super::scripts::{self, paint_over, png_size, CARET_ALL, CARET_END};
+use crate::cdp::{self, Heard, Whence};
+use crate::engines::{self, Engine, Gate, Page, Tree, SETTLED, UNREAD};
+use crate::scripts::{self, paint_over, png_size, CARET_ALL, CARET_END};
 use orden_agents::grants::Grant;
 use orden_agents::keys::{self, Key};
 use orden_agents::policy::{self, Facts, Field};
@@ -333,7 +333,7 @@ static PRESSED: LazyLock<String> = LazyLock::new(|| {
     .concat()
 });
 
-pub(super) const FRAME_PATIENCE: Duration = Duration::from_secs(8);
+pub const FRAME_PATIENCE: Duration = Duration::from_secs(8);
 
 const MOST_ON_FRAMES: Duration = Duration::from_secs(10);
 
@@ -588,7 +588,7 @@ impl Page<'_> {
 
     fn call(&self, method: &str, params: &Value) -> Result<Value, Answer> {
         cdp::call_until(self.view, None, method, params, || {
-            super::quiet::dialog_of(&self.label).is_some()
+            crate::quiet::dialog_of(&self.label).is_some()
         })
         .map(Option::unwrap_or_default)
         .map_err(|why| Answer::error(Code::Failed, why))
@@ -600,7 +600,7 @@ impl Page<'_> {
             element.session.as_deref(),
             method,
             params,
-            || super::quiet::dialog_of(&self.label).is_some(),
+            || crate::quiet::dialog_of(&self.label).is_some(),
         )
         .map(Option::unwrap_or_default)
         .map_err(|why| stale(&why))
@@ -1279,7 +1279,7 @@ impl Page<'_> {
     }
 
     fn interrupted(&self) -> bool {
-        orden_agents::stop::cancelled(self.since) || super::quiet::dialog_of(&self.label).is_some()
+        orden_agents::stop::cancelled(self.since) || crate::quiet::dialog_of(&self.label).is_some()
     }
 
     fn navigations(&self) -> u64 {
@@ -2735,7 +2735,7 @@ impl Page<'_> {
             if orden_agents::stop::cancelled(self.since) {
                 return Err(Answer::error(Code::Stopped, "the reader pressed the stop"));
             }
-            if super::quiet::dialog_of(&self.label).is_some() {
+            if crate::quiet::dialog_of(&self.label).is_some() {
                 return Err(Answer::error(
                     Code::Failed,
                     "the page is holding a dialog: answer it with browser_dialog",

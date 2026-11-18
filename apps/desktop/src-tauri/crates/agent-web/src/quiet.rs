@@ -5,14 +5,14 @@ use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
 
-use super::cdp;
+use crate::cdp;
 use orden_agents::verbs::{Dialog, Download, DownloadState};
 
-pub(super) const DIALOG_PATIENCE: Duration = Duration::from_secs(30);
+pub const DIALOG_PATIENCE: Duration = Duration::from_secs(30);
 
-pub(super) const MOST_DOWNLOAD: i64 = 500 * 1024 * 1024;
+pub const MOST_DOWNLOAD: i64 = 500 * 1024 * 1024;
 
-pub(super) const STUBS: &str = r"(() => {
+pub const STUBS: &str = r"(() => {
   const nothing = () => undefined
   try { Object.defineProperty(window, 'print', { value: nothing, writable: false, configurable: false }) } catch (_) {}
   for (const kind of [window.HTMLInputElement, window.HTMLSelectElement]) {
@@ -38,14 +38,14 @@ pub struct Said {
 }
 
 impl Said {
-    pub(super) fn only(accept: bool) -> Self {
+    pub fn only(accept: bool) -> Self {
         Said {
             accept,
             ..Said::default()
         }
     }
 
-    pub(super) fn chosen<'a>(&self, offered: impl IntoIterator<Item = &'a str>) -> Option<usize> {
+    pub fn chosen<'a>(&self, offered: impl IntoIterator<Item = &'a str>) -> Option<usize> {
         if !self.accept {
             return None;
         }
@@ -73,7 +73,7 @@ impl Said {
     }
 }
 
-pub(super) static NUMBER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+pub static NUMBER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 #[derive(Clone)]
 pub struct Owner {
@@ -98,10 +98,10 @@ pub fn answer_dialog(app: &AppHandle, label: &str, said: Said) -> Result<(), Str
     if dialog_of(label).is_none() {
         return Err("the page is holding no dialog".into());
     }
-    super::engines::cef::answer_dialog(app, label, said)
+    (crate::engines::pages()?.answer_dialog)(app, label, said)
 }
 
-pub(super) fn hold(label: &str, dialog: Dialog) {
+pub fn hold(label: &str, dialog: Dialog) {
     DIALOGS
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
@@ -115,7 +115,7 @@ pub(super) fn hold(label: &str, dialog: Dialog) {
         );
 }
 
-pub(super) fn release(label: &str) {
+pub fn release(label: &str) {
     if let Some(all) = DIALOGS
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
@@ -125,7 +125,7 @@ pub(super) fn release(label: &str) {
     }
 }
 
-pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<PathBuf> {
+pub fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Option<PathBuf> {
     let name = std::path::Path::new(suggested)
         .file_name()
         .map_or_else(|| std::ffi::OsString::from("download"), ToOwned::to_owned);
@@ -148,7 +148,7 @@ pub(super) fn destination(app: &AppHandle, agent: &str, suggested: &str) -> Opti
     }))
 }
 
-pub(super) fn noted(agent: &str, download: Download) {
+pub fn noted(agent: &str, download: Download) {
     let mut all = DOWNLOADS.lock().unwrap_or_else(PoisonError::into_inner);
     all.push((agent.to_string(), download));
     if all.len() > 500 {
@@ -156,7 +156,7 @@ pub(super) fn noted(agent: &str, download: Download) {
     }
 }
 
-pub(super) fn moved(agent: &str, path: &str, state: DownloadState) {
+pub fn moved(agent: &str, path: &str, state: DownloadState) {
     let mut all = DOWNLOADS.lock().unwrap_or_else(PoisonError::into_inner);
     if let Some((_, one)) = all
         .iter_mut()
@@ -179,7 +179,7 @@ pub fn downloads_of(agent: &str, tab: Option<&str>) -> Vec<Download> {
         .collect()
 }
 
-pub(super) fn signing_in(realm: &str) -> String {
+pub fn signing_in(realm: &str) -> String {
     let realm = realm.trim();
     if realm.is_empty() {
         "The site asks to sign in: answer with username and password".to_string()
@@ -188,7 +188,7 @@ pub(super) fn signing_in(realm: &str) -> String {
     }
 }
 
-pub(super) fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> String {
+pub fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> String {
     let all: Vec<&str> = offered.into_iter().collect();
     if all.is_empty() {
         "The site asks for a client certificate, and none is installed that it takes: accept to go on without one"
@@ -201,7 +201,7 @@ pub(super) fn certificates<'a>(offered: impl IntoIterator<Item = &'a str>) -> St
     }
 }
 
-pub(super) fn say(label: &str, level: &str, text: String) {
+pub fn say(label: &str, level: &str, text: String) {
     cdp::heard(label)
         .lock()
         .unwrap_or_else(PoisonError::into_inner)

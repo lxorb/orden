@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom'
 import { expect, test } from 'vitest'
-import agent from '../../src-tauri/src/agents/engines/snapshot.js?raw'
-import page from '../../src-tauri/src/agents/page.rs?raw'
+import agent from '../../src-tauri/crates/agent-web/src/snapshot.js?raw'
+import page from '../../src-tauri/crates/agent-web/src/page.rs?raw'
 
 function rawString(name: string): string {
   const start = page.indexOf(`const ${name}: &str = r"`)
