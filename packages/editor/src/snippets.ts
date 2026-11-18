@@ -25,12 +25,25 @@ function folded(text: string): string {
   return text.normalize('NFC').toLowerCase()
 }
 
+const UNSPACED =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u
+const ASCII = /^[\x20-\x7e]*$/
+
+function onBoundary(before: string, at: number): boolean {
+  const low = before.charCodeAt(at - 1)
+  const paired = low >= 0xdc00 && low <= 0xdfff && at > 1
+  const previous = before.slice(paired ? at - 2 : at - 1, at)
+  return !IN_WORD.test(previous) || UNSPACED.test(previous)
+}
+
 function typedLength(before: string, trigger: string, whole: boolean): number {
   const wanted = folded(trigger)
-  const most = Math.min(before.length, wanted.length * 4)
-  for (let length = most; length >= 2; length--) {
+  const plain = ASCII.test(wanted)
+  const most = Math.min(before.length, plain ? wanted.length : wanted.length * 4)
+  const least = plain && whole ? wanted.length : 2
+  for (let length = most; length >= least; length--) {
     const typed = folded(before.slice(before.length - length))
-    if (typed.length < 2 || IN_WORD.test(before[before.length - length - 1] ?? '')) continue
+    if (typed.length < 2 || !onBoundary(before, before.length - length)) continue
     if (whole ? typed === wanted : wanted.startsWith(typed)) return length
   }
   return 0

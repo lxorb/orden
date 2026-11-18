@@ -331,6 +331,7 @@ export function wikilinkCompletions(
   if (hash === -1) {
     const { rows: options, all } = noteOptions(index, inner)
     if (!options.length) return null
+    if (inner.includes('/')) return { from: typed.from + 2, options, filter: false }
     return { from: typed.from + 2, options, ...(all ? { validFor: /^[^[\]\n#|]*$/ } : {}) }
   }
 
@@ -350,6 +351,6 @@ export function wikilinkCompletions(
   }
 
   return blockOptions(index, target, note, after.slice(1)).then((options) =>
-    options.length ? { from, options, validFor: /^\^[^[\]\n|]*$/ } : null,
+    options.length ? { from: from + 1, options, validFor: /^[^[\]\n|^]*$/ } : null,
   )
 }

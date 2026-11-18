@@ -30,26 +30,54 @@ export async function drawDiagram(
   language: string,
   scheme: Scheme,
   where: DiagramFor = 'document',
+  pictures = true,
 ): Promise<string> {
   if (__EVEN_PLUGIN__) throw new Error('no diagrams in the Even Realities plugin')
 
   if (language === 'flow') return drawFlowchart(code, scheme)
-  return drawMermaid(language === 'sequence' ? sequenceToMermaid(code) : code, scheme, where)
+  const mermaid = language === 'sequence' ? sequenceToMermaid(code) : code
+  return drawMermaid(pictures ? mermaid : withoutPictures(mermaid), scheme, where, pictures)
 }
 
-async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor): Promise<string> {
+const PICTURE_KEY = /(\bimg\s*:\s*)(?:"[^"\n]*"|'[^'\n]*'|[^,}\n]*)/gi
+
+const PICTURE_TAGS = /<\/?(?:img|image|picture|source)\b[^>]*>/gi
+
+function withoutPictures(code: string): string {
+  return code.replace(/@\{[^}]*\}/g, (shape) => shape.replace(PICTURE_KEY, '$1""'))
+}
+
+const SECURE = [
+  'secure',
+  'securityLevel',
+  'startOnLoad',
+  'maxTextSize',
+  'suppressErrorRendering',
+  'maxEdges',
+  'dompurifyConfig',
+  'htmlLabels',
+]
+
+async function drawMermaid(
+  code: string,
+  scheme: Scheme,
+  where: DiagramFor,
+  pictures: boolean,
+): Promise<string> {
   const { default: mermaid } = await import('mermaid')
 
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
+    secure: SECURE,
     theme: scheme === 'light' ? 'default' : 'dark',
     fontFamily: where === 'page' ? PAGE_FONT : FONT,
     ...(where === 'page' ? { htmlLabels: false } : {}),
+    dompurifyConfig: pictures ? {} : { FORBID_TAGS: ['img', 'image', 'picture', 'source'] },
   })
 
   const { svg } = await mermaid.render(`orden-export-${sequence++}`, code)
-  return svg
+  return pictures ? svg : svg.replace(PICTURE_TAGS, '')
 }
 
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {

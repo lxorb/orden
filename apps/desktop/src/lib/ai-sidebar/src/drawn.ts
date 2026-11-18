@@ -34,10 +34,16 @@ export function withCodeBars(html: string, copy: string, sized = false): string 
   })
 }
 
-function fromElsewhere(src: string): boolean {
-  const read = attributeText(src)
-  const head = read.split(/[/?#\\]/, 1)[0] ?? ''
-  return /^[\\/]{2}/.test(read) || head.includes(':') || head.includes('&')
+const UNREAD_ENTITY = /&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[\da-f]+;)/i
+
+function beforePath(src: string): string {
+  return src.split(/[/?#\\]/, 1)[0] ?? ''
+}
+
+function fromElsewhere(src: string, read: string): boolean {
+  return (
+    /^[\\/]{2}/.test(read) || beforePath(read).includes(':') || UNREAD_ENTITY.test(beforePath(src))
+  )
 }
 
 function pictures(html: string, from: string | null, shown: ReadonlySet<string>): string {
@@ -45,10 +51,11 @@ function pictures(html: string, from: string | null, shown: ReadonlySet<string>)
     const src = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
     if (!src) return ''
     if (/^data:/i.test(src)) return whole
-    if (!fromElsewhere(src)) {
-      return `<img${attributes.replace(`src="${src}"`, () => `src="${escape(notePicture(src, from, ''))}"`)}>`
+    const read = attributeText(src)
+    if (!fromElsewhere(src, read)) {
+      return `<img${attributes.replace(`src="${src}"`, () => `src="${escape(notePicture(read, from, ''))}"`)}>`
     }
-    if (shown.has(src)) return whole
+    if (shown.has(read)) return whole
     const alt = /\balt="([^"]*)"/.exec(attributes)?.[1] ?? ''
     const host = /^(?:[a-z][a-z\d+.-]*:)?\/\/([^/?#]+)/i.exec(src)?.[1] ?? src
     return (
