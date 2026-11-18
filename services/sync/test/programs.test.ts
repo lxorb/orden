@@ -56,8 +56,6 @@ describe('what a program may reach', () => {
     for (const [method, path] of [
       ['GET', '/v2/hub'],
       ['GET', '/v2/devices'],
-      ['PATCH', '/v2/devices/abc'],
-      ['DELETE', '/v2/devices/abc'],
     ] as const) {
       expect(programMayReach(method, path, false), `${method} ${path}`).toBe(false)
     }
@@ -85,15 +83,11 @@ describe('what a program may reach', () => {
     for (const [method, path] of [
       ['POST', '/v2/spaces/abc/ops'],
       ['POST', '/v2/spaces/abc/prepare'],
-      ['GET', '/v2/spaces/abc/snapshot'],
-      ['GET', '/v2/spaces/abc/maps'],
-      ['PATCH', '/v2/spaces/abc/maps'],
       ['POST', '/v2/docs/push'],
       ['POST', '/v2/docs/keep'],
       ['GET', '/v2/files/abc/def'],
       ['PUT', '/v2/files/abc/def'],
       ['PUT', `/v2/blobs/${'a'.repeat(64)}`],
-      ['POST', '/v2/blobs/parts'],
     ] as const) {
       expect(programMayReach(method, path, false), `${method} ${path}`).toBe(false)
     }
@@ -243,7 +237,6 @@ describe('a token acting for somebody', () => {
     const key = 'k'.repeat(43)
     for (const [method, path] of [
       ['GET', '/v2/devices'],
-      ['DELETE', '/v2/devices/abc'],
       ['GET', `/v2/web/${key}`],
       ['PUT', `/v2/web/${key}`],
       ['PUT', `/v2/web/chunks/${key}`],

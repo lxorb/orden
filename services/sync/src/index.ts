@@ -54,7 +54,6 @@ import {
   sweepMisnamed,
   v2Blobs,
   v2Files,
-  v2Maps,
   sweepTreeOps,
   spaces,
   join,
@@ -299,7 +298,6 @@ app.route('/v2/ai', aiVault)
 app.route('/v2/pass', pass)
 
 app.route('/v2/spaces', v2Spaces)
-app.route('/v2/spaces', v2Maps)
 app.route('/v2/docs', v2Docs)
 app.route('/v2/files', v2Files)
 app.route('/v2/blobs', v2Blobs)

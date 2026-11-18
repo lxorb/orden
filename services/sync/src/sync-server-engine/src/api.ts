@@ -66,7 +66,6 @@ export {
   standing,
 } from './sync2/gate'
 export { v2Docs, v2Spaces } from './sync2'
-export { v2Maps } from './sync2/maps'
 export { everyoneBack, isMode, rolloutView, setRollout, startingVersion } from './sync2/rollout'
 export { sweepTreeOps } from './sync2/tree'
 export { time } from './time'

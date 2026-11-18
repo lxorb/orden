@@ -100,21 +100,6 @@ describe('a device no longer signed in', () => {
     expect(sent.tokens.sort()).toEqual(['laptop-token', 'lost-phone-token'])
   })
 
-  test('is pushed nothing once it is ended from the devices list', async () => {
-    const { phone, laptop } = await setUp()
-    const ended = await call(env, `/v2/devices/${phone.id}`, {
-      method: 'DELETE',
-      token: laptop.token,
-    })
-    expect(ended.status).toBe(200)
-    expect((await call(env, '/v1/me', { token: phone.token })).status).toBe(401)
-    expect(targets()).toEqual(['laptop-token'])
-
-    const sent = fcm()
-    await sendDue(env, AT, sent.send)
-    expect(sent.tokens).toEqual(['laptop-token'])
-  })
-
   test('nor once its session is ended from the sessions list', async () => {
     const { phone, laptop } = await setUp()
     await call(env, `/v1/sessions/${phone.session}`, { method: 'DELETE', token: laptop.token })

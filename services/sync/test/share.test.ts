@@ -330,29 +330,9 @@ ROUTES.push(
     go: (token) => call(env, `/v2/spaces/${space}/feed?since=0`, { token }),
   },
   {
-    what: 'reading the documents in bulk',
-    needs: 'read',
-    go: (token) => call(env, `/v2/spaces/${space}/snapshot`, { token }),
-  },
-  {
     what: 'making the tree into rows',
     needs: 'read',
     go: (token) => call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' }),
-  },
-  {
-    what: "reading the space's maps",
-    needs: 'read',
-    go: (token) => call(env, `/v2/spaces/${space}/maps?since=0`, { token }),
-  },
-  {
-    what: "changing the space's maps",
-    needs: 'write',
-    go: (token) =>
-      call(env, `/v2/spaces/${space}/maps`, {
-        method: 'PATCH',
-        token,
-        body: { entries: [{ map: 'graph', key: 'orphans', value: true }] },
-      }),
   },
   {
     what: 'fetching a file',

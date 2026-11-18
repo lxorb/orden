@@ -446,24 +446,6 @@ describe('the door', () => {
     door.asked.length = 0
     await call(env, '/v1/auth/signout', { method: 'POST', token: writer })
     expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(writer)] }])
-
-    const tablet = await session(OWNER)
-    const tabletSession = (
-      env.db.prepare('select id from sessions where token_hash = ?').get(await sha256(tablet)) as {
-        id: string
-      }
-    ).id
-    env.db
-      .prepare(
-        `insert into devices (id, user_id, session_id, name, platform, created_at)
-         values ('device-tablet', ?, ?, 'Tablet', 'ios', 1)`,
-      )
-      .run(idOf(OWNER), tabletSession)
-    door.asked.length = 0
-    expect(
-      (await call(env, '/v2/devices/device-tablet', { method: 'DELETE', token: phone })).status,
-    ).toBe(200)
-    expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(tablet)] }])
   })
 
   test('a guest signing out tells the machine of the terminal it may be watching', async () => {

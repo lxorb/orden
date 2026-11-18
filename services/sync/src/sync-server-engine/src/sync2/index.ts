@@ -27,7 +27,7 @@ import {
 } from '../../../sync-server/src/api'
 import { atLeast, refusal, spaceOf } from '../spaces/space'
 import { deviceOf, whoseId } from './device'
-import { keepDoc, pullDocs, pushDocs, snapshotPage } from './docs'
+import { keepDoc, pullDocs, pushDocs } from './docs'
 import { answer, requestBody } from './envelope'
 import { feedPage } from './feed'
 import { mendedSpace } from './mend'
@@ -90,13 +90,6 @@ v2Spaces.get('/:space/feed', atLeast('read', 'space'), async (context) => {
   if (space.role === 'owner') await mendedSpace(context.env, space, laterOf(context))
   const page = await feedPage(context.env, space.id, cursorIn(context.req.query('since')))
   return answer(context, { ...page, device: await deviceOf(context) })
-})
-
-v2Spaces.get('/:space/snapshot', atLeast('read', 'space'), async (context) => {
-  const space = spaceOf(context)
-  await preparedSpace(context.env, space)
-  const after = context.req.query('after') ?? ''
-  return answer(context, await snapshotPage(context.env, space.id, after))
 })
 
 v2Spaces.post('/:space/index', atLeast('read', 'space'), async (context) => {

@@ -25,10 +25,6 @@ const HASH = /^[a-f0-9]{64}$/
 
 const ONE_REQUEST = 64 * 1024 * 1024
 
-const PART = 8 * 1024 * 1024
-
-const LARGEST = 1024 * 1024 * 1024
-
 export const NO_SUCH_FILE = 'no such file'
 
 export const WRONG_BYTES = 'those bytes are not that hash'
@@ -79,27 +75,6 @@ async function hashOf(object: R2ObjectBody): Promise<string> {
     return hex(await stream.digest)
   }
   return hex(await crypto.subtle.digest('SHA-256', await object.arrayBuffer()))
-}
-
-async function stagedSpellsADiagramName(env: Env, upload: Upload): Promise<boolean> {
-  if (upload.size > ONE_REQUEST) return false
-  const staged = await env.NOTES.get(upload.staging)
-  return staged !== null && spellsADiagramName(await staged.arrayBuffer())
-}
-
-type FixedLength = new (length: number) => TransformStream<Uint8Array, Uint8Array>
-
-async function moveInto(env: Env, from: string, to: string, type: string): Promise<void> {
-  const object = await env.NOTES.get(from)
-  if (!object) return
-  const Fixed = (globalThis as unknown as { FixedLengthStream?: FixedLength }).FixedLengthStream
-  const metadata = { httpMetadata: { contentType: type } }
-  if (Fixed) {
-    const { readable, writable } = new Fixed(object.size)
-    await Promise.all([object.body.pipeTo(writable), env.NOTES.put(to, readable, metadata)])
-    return
-  }
-  await env.NOTES.put(to, await object.arrayBuffer(), metadata)
 }
 
 async function keepBlob(
@@ -213,32 +188,6 @@ v2Blobs.put('/:hash', async (context) => {
   return context.json({ hash, stored: true }, 201)
 })
 
-const UPLOADS = 'upload'
-const A_DAY = 24 * 60 * 60 * 1000
-
-interface Upload {
-  user: string
-  hash: string
-  size: number
-  type: string
-  staging: string
-}
-
-function stagingKey(hash: string): string {
-  return `uploads/${hash}/${crypto.randomUUID()}`
-}
-
-async function uploadOf(env: Env, id: string, user: string): Promise<Upload | null> {
-  const row = await env.DB.prepare(
-    'select value from cached where scope = ? and key = ? and until > ?',
-  )
-    .bind(UPLOADS, id, now())
-    .first<{ value: string }>()
-  const [owner, hash, size, type, staging] = (row?.value ?? '').split(':')
-  if (owner !== user || !hash || !size || !type || !staging) return null
-  return { user: owner, hash, size: Number(size), type: decodeURIComponent(type), staging }
-}
-
 const MOST_ASKED = 90
 
 v2Blobs.post('/have', async (context) => {
@@ -269,157 +218,6 @@ v2Blobs.post('/have', async (context) => {
     .bind(user.id, ...hashes)
     .all<{ hash: string }>()
   return context.json({ kept: results.map((one) => one.hash) })
-})
-
-v2Blobs.post('/parts', async (context) => {
-  const user = context.get('user')
-  const body: unknown = await context.req.json().catch(() => null)
-  const { hash, size, type } = (typeof body === 'object' && body !== null ? body : {}) as Record<
-    string,
-    unknown
-  >
-  if (typeof hash !== 'string' || !HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
-  if (typeof size !== 'number' || !Number.isSafeInteger(size) || size <= 0 || size > LARGEST) {
-    return context.json({ error: TOO_BIG }, 413)
-  }
-
-  if ((await held(context.env, user.id, hash)).mine) return context.json({ hash, stored: false })
-  if (!(await fits(context.env, user.id, size))) return context.json({ error: OUT_OF_SPACE }, 507)
-
-  const declared = typeOf(typeof type === 'string' ? type : undefined)
-
-  const staging = stagingKey(hash)
-  const upload = await context.env.NOTES.createMultipartUpload(staging, {
-    httpMetadata: { contentType: declared },
-  })
-  await context.env.DB.prepare(
-    'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
-  )
-    .bind(
-      UPLOADS,
-      upload.uploadId,
-      `${user.id}:${hash}:${String(size)}:${encodeURIComponent(declared)}:${staging}`,
-      now() + A_DAY,
-    )
-    .run()
-
-  return context.json({ upload: upload.uploadId, part: PART }, 201)
-})
-
-function isPartNumber(part: unknown): part is number {
-  return typeof part === 'number' && Number.isSafeInteger(part) && part >= 1 && part <= 10_000
-}
-
-function r2Code(error: unknown): number | null {
-  const { code, message } = (error ?? {}) as { code?: unknown; message?: unknown }
-  if (typeof code === 'number') return code
-  const said = typeof message === 'string' ? /\((\d+)\)$/.exec(message) : null
-  return said?.[1] ? Number(said[1]) : null
-}
-
-function isTheListsFault(error: unknown): boolean {
-  const code = r2Code(error)
-  return code === 10011 || code === 10025 || code === 10048
-}
-
-function isUploadGone(error: unknown): boolean {
-  return r2Code(error) === 10024
-}
-
-async function forgetUpload(env: Env, id: string): Promise<void> {
-  await env.DB.prepare('delete from cached where scope = ? and key = ?').bind(UPLOADS, id).run()
-}
-
-v2Blobs.put('/parts/:upload/:part', async (context) => {
-  const user = context.get('user')
-  const upload = await uploadOf(context.env, context.req.param('upload'), user.id)
-  if (!upload) return context.json({ error: NO_SUCH_FILE }, 404)
-
-  const part = Number(context.req.param('part'))
-  if (!isPartNumber(part)) return context.json({ error: TOO_BIG }, 413)
-  const body = await context.req.arrayBuffer()
-  if (body.byteLength > PART) return context.json({ error: TOO_BIG }, 413)
-
-  const uploading = context.env.NOTES.resumeMultipartUpload(
-    upload.staging,
-    context.req.param('upload'),
-  )
-  try {
-    const uploaded = await uploading.uploadPart(part, body)
-    return context.json({ part: uploaded.partNumber, etag: uploaded.etag })
-  } catch (error) {
-    if (isUploadGone(error)) {
-      await forgetUpload(context.env, context.req.param('upload'))
-      return context.json({ error: NO_SUCH_FILE }, 404)
-    }
-    throw error
-  }
-})
-
-v2Blobs.post('/parts/:upload', async (context) => {
-  const user = context.get('user')
-  const id = context.req.param('upload')
-  const upload = await uploadOf(context.env, id, user.id)
-  if (!upload) return context.json({ error: NO_SUCH_FILE }, 404)
-
-  const body: unknown = await context.req.json().catch(() => null)
-  const listed =
-    typeof body === 'object' && body !== null ? (body as { parts?: unknown }).parts : null
-  if (!Array.isArray(listed)) return context.json({ error: WRONG_BYTES }, 400)
-  const parts: R2UploadedPart[] = []
-  for (const one of listed as unknown[]) {
-    const { part, etag } = (typeof one === 'object' && one !== null ? one : {}) as Record<
-      string,
-      unknown
-    >
-    if (!isPartNumber(part) || typeof etag !== 'string')
-      return context.json({ error: WRONG_BYTES }, 400)
-    parts.push({ partNumber: part, etag })
-  }
-
-  try {
-    await context.env.NOTES.resumeMultipartUpload(upload.staging, id).complete(parts)
-  } catch (error) {
-    if (isUploadGone(error)) {
-      await forgetUpload(context.env, id)
-      return context.json({ error: NO_SUCH_FILE }, 404)
-    }
-    if (isTheListsFault(error)) return context.json({ error: WRONG_BYTES }, 400)
-    throw error
-  }
-  await context.env.DB.prepare('delete from cached where scope = ? and key = ?')
-    .bind(UPLOADS, id)
-    .run()
-
-  const staged = await context.env.NOTES.get(upload.staging)
-  const right =
-    staged !== null &&
-    staged.size === upload.size &&
-    (await hashOf(staged)) === upload.hash &&
-    !(await stagedSpellsADiagramName(context.env, upload))
-  if (!right) {
-    await context.env.NOTES.delete(upload.staging)
-    return context.json({ error: WRONG_BYTES }, 400)
-  }
-
-  const mine = (await held(context.env, user.id, upload.hash)).mine
-  if (!mine && !(await fits(context.env, user.id, upload.size))) {
-    await context.env.NOTES.delete(upload.staging)
-    return context.json({ error: OUT_OF_SPACE }, 507)
-  }
-
-  const placed =
-    !(await held(context.env, user.id, upload.hash)).there ||
-    !(await holdsItsName(context.env, upload.hash, upload.size))
-  const move = () => moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
-  if (placed) await move()
-  if (!(await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type))) {
-    await context.env.NOTES.delete(upload.staging)
-    return context.json({ error: OUT_OF_SPACE }, 507)
-  }
-  if (!(await stillThere(context.env, upload.hash))) await move()
-  await context.env.NOTES.delete(upload.staging)
-  return context.json({ hash: upload.hash, stored: true }, 201)
 })
 
 export const v2Files = new Hono<App>()

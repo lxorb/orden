@@ -184,19 +184,6 @@ export interface KeepRequest {
   device: string
 }
 
-export interface SnapshotDoc {
-  id: string
-  epoch: number
-  epochBase?: string
-  seq: number
-  update: Uint8Array
-}
-
-export interface SnapshotPage {
-  docs: SnapshotDoc[]
-  next: string | null
-}
-
 export const ROOM_V2 = 'orden.v2'
 
 export const ROOM_V2_NAMES: readonly string[] = ['orden.v2', 'nib.v2']
@@ -577,28 +564,6 @@ export function keepRequestOf(value: unknown): KeepRequest | null {
   if (!isRecord(value) || !isId(value.id) || !isId(value.device)) return null
   if (typeof value.text !== 'string' || value.text.length > MOST_KEPT) return null
   return { id: value.id, text: value.text, device: value.device }
-}
-
-function snapshotDocOf(value: unknown): SnapshotDoc | null {
-  if (!isRecord(value) || !isId(value.id) || !isCount(value.epoch) || !isCount(value.seq)) {
-    return null
-  }
-  if (!isBytes(value.update)) return null
-  if (value.epochBase !== undefined && typeof value.epochBase !== 'string') return null
-  const doc: SnapshotDoc = {
-    id: value.id,
-    epoch: value.epoch,
-    seq: value.seq,
-    update: value.update,
-  }
-  if (typeof value.epochBase === 'string') doc.epochBase = value.epochBase
-  return doc
-}
-
-export function snapshotPageOf(value: unknown): SnapshotPage | null {
-  if (!isRecord(value) || !(value.next === null || isId(value.next))) return null
-  const docs = listOf(value.docs, snapshotDocOf)
-  return docs ? { docs, next: value.next } : null
 }
 
 export function deviceFrameOf(value: unknown): DeviceFrame | null {

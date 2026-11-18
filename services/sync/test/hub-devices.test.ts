@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type TestEnv, testEnv } from './harness'
-import { computer, hangUp, type Hubs, hubs, send } from './hub-fakes'
+import { computer, hangUp, type Hubs, hubs } from './hub-fakes'
 
 interface DevicesView {
   devices: {
@@ -54,49 +54,6 @@ describe('the devices', () => {
     ])
   })
 
-  test('keep the name the account gave them, whatever they say about themselves', async () => {
-    const laptop = await computer(env, running, EMAIL, 'Laptop')
-    const renamed = await call<DevicesView>(env, `/v2/devices/${laptop.id}`, {
-      method: 'PATCH',
-      token: laptop.token,
-      body: { name: '  Emil’s ThinkPad ' },
-    })
-    expect(renamed.json.name).toBe('Emil’s ThinkPad')
-
-    const { hub: made } = running.of(laptop.user)
-    await send(made, laptop.socket, {
-      t: 'hello',
-      device: laptop.id,
-      name: 'Windows desktop',
-      platform: 'windows',
-      app: '1.1.0',
-    })
-
-    const listed = await call<DevicesView>(env, '/v2/devices', { token: laptop.token })
-    expect(listed.json.devices[0]).toMatchObject({ name: 'Emil’s ThinkPad', app: '1.1.0' })
-  })
-
-  test('refuse an empty name, and a device the account does not have', async () => {
-    const laptop = await computer(env, running, EMAIL, 'Laptop')
-
-    const empty = await call<DevicesView>(env, `/v2/devices/${laptop.id}`, {
-      method: 'PATCH',
-      token: laptop.token,
-      body: { name: '   ' },
-    })
-    expect(empty.status).toBe(400)
-    expect(empty.json.error).toBe('give the device a name')
-
-    const other = await computer(env, running, 'other@example.com', 'Other')
-    const theirs = await call<DevicesView>(env, `/v2/devices/${other.id}`, {
-      method: 'PATCH',
-      token: laptop.token,
-      body: { name: 'Mine now' },
-    })
-    expect(theirs.status).toBe(404)
-    expect(theirs.json.error).toBe('no such device')
-  })
-
   test('say when they were last here', async () => {
     const laptop = await computer(env, running, EMAIL, 'Laptop')
     vi.setSystemTime(Date.now() + 60_000)
@@ -111,7 +68,7 @@ describe('the devices', () => {
   test('leave out the ones that were ended', async () => {
     const laptop = await computer(env, running, EMAIL, 'Laptop')
     const desktop = await computer(env, running, EMAIL, 'Desktop')
-    await call(env, `/v2/devices/${desktop.id}`, { method: 'DELETE', token: laptop.token })
+    await call(env, `/v1/sessions/${desktop.session}`, { method: 'DELETE', token: laptop.token })
 
     const listed = await call<DevicesView>(env, '/v2/devices', { token: laptop.token })
     expect(listed.json.devices.map((one) => one.id)).toEqual([laptop.id])
