@@ -1,5 +1,5 @@
 import { type Canvas, type InkStroke, writeCanvas } from '@orden/markdown/canvas'
-import { type PlaneSurface, type Point, type SharedPlane } from '@orden/markdown/plane'
+import { type PlaneSurface, type Point, type Pushed, type SharedPlane } from '@orden/markdown/plane'
 import { readPlane } from '@orden/rooms/plane'
 import { HAND, handsIn, saidHand } from './hands'
 import { type Entering, JoinedRoom } from './joined'
@@ -26,8 +26,8 @@ export class PlaneRoom extends JoinedRoom implements SharedPlane {
     return writeCanvas(readPlane(this.door.doc))
   }
 
-  push(before: Canvas, after: Canvas) {
-    this.binding.push(before, after)
+  push(before: Canvas, after: Canvas, how?: Pushed) {
+    this.binding.push(before, after, how)
   }
 
   undo(): boolean {

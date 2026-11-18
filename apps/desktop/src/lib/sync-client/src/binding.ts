@@ -182,7 +182,7 @@ export async function attachPlane(
     const binding = new PlaneBinding(live, surface, holds, MINE)
     binding.together()
     surface.shared = {
-      push: (before, after) => binding.push(before, after),
+      push: (before, after, how) => binding.push(before, after, how),
       undo: () => binding.undo(),
       redo: () => binding.redo(),
       hand: (at, drawing) => join.hand?.(at, drawing),

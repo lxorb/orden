@@ -19,6 +19,7 @@ const { pens } = await import('./pens.svelte')
 type Canvas = import('@orden/markdown/canvas').Canvas
 type CanvasNode = import('@orden/markdown/canvas').CanvasNode
 type Shared = import('@orden/markdown/plane').SharedPlane
+type Pushed = import('@orden/markdown/plane').Pushed
 
 function card(id: string, x = 0): CanvasNode {
   return { id, type: 'text', x, y: 0, width: 250, height: 60, text: id }
@@ -34,12 +35,14 @@ function opened(text = blankCanvas()) {
   return { store: new CanvasStore(tab), note, tab }
 }
 
-function room(): Shared & { pushed: Canvas[]; undone: number } {
+function room(): Shared & { pushed: Canvas[]; hows: Pushed[]; undone: number } {
   return {
     pushed: [],
+    hows: [],
     undone: 0,
-    push(_before: Canvas, after: Canvas) {
+    push(_before: Canvas, after: Canvas, how: Pushed = 'step') {
       this.pushed.push(after)
+      this.hows.push(how)
     },
     undo() {
       this.undone++
@@ -521,6 +524,94 @@ describe('a version put back from the history (#533)', () => {
     store.follow()
 
     expect(ids(store.canvas)).toEqual(['later'])
+  })
+})
+
+describe('undo while a room comes and goes (#2173)', () => {
+  test('has nothing from before the room to take back once the room is gone', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('before')] })
+    store.shared = room()
+    store.edit({ ...store.canvas, nodes: [card('before'), card('in-the-room', 300)] })
+    store.shared = null
+
+    expect(store.canUndo).toBe(false)
+    store.undo()
+    expect(ids(store.canvas)).toEqual(['before', 'in-the-room'])
+  })
+
+  test('has nothing to take back in a room just joined', () => {
+    const { store } = opened()
+    store.shared = room()
+    store.historyIs({ undo: true, redo: true })
+    store.shared = room()
+
+    expect(store.canUndo).toBe(false)
+    expect(store.canRedo).toBe(false)
+  })
+
+  test('hands the room the steps of one drag as one step', () => {
+    const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a')] }))
+    const shared = room()
+    store.shared = shared
+    for (const x of [10, 20, 30]) store.edit({ ...store.canvas, nodes: [card('a', x)] }, 'drag')
+    store.edit({ ...store.canvas, nodes: [card('a', 40)] })
+
+    expect(shared.hows).toEqual(['step', 'more', 'more', 'step'])
+  })
+})
+
+describe('a rename the plane follows (#2173)', () => {
+  const linked = (file: string): CanvasNode => ({
+    id: 'f',
+    type: 'file',
+    file,
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 400,
+  })
+  const renamed = (canvas: Canvas): Canvas => ({
+    ...canvas,
+    nodes: canvas.nodes.map((node) => (node.id === 'f' ? linked('New.md') : node)),
+  })
+  const files = (canvas: Canvas) =>
+    canvas.nodes.map((node) => (node.type === 'file' ? node.file : node.id))
+
+  test('is no step undo takes back', () => {
+    const { store } = opened(
+      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }),
+    )
+    store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('a')] })
+    store.relinked(renamed)
+    store.undo()
+
+    expect(files(store.canvas)).toEqual(['New.md'])
+  })
+
+  test('and the steps undo goes back to point at the new name too', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [linked('Old.md')] })
+    store.edit({ ...store.canvas, nodes: [linked('Old.md'), card('a')] })
+    store.relinked(renamed)
+
+    store.undo()
+    expect(files(store.canvas)).toEqual(['New.md'])
+    store.undo()
+    expect(files(store.canvas)).toEqual([])
+    store.redo()
+    expect(files(store.canvas)).toEqual(['New.md'])
+  })
+
+  test('goes to a room aside, where undo does not reach it', () => {
+    const { store } = opened(
+      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }),
+    )
+    const shared = room()
+    store.shared = shared
+    store.relinked(renamed)
+
+    expect(shared.hows).toEqual(['aside'])
   })
 })
 

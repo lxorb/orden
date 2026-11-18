@@ -11,7 +11,7 @@ import {
   writeCanvas,
 } from '@orden/markdown/canvas'
 import { ordered } from '../../canvas/src/arrange'
-import type { Hand, PlaneSurface, Reachable, SharedPlane } from '@orden/markdown/plane'
+import type { Hand, PlaneSurface, Pushed, Reachable, SharedPlane } from '@orden/markdown/plane'
 import { PlaneBinding } from './plane-bind'
 
 class Device implements PlaneSurface {
@@ -57,11 +57,11 @@ class Device implements PlaneSurface {
     this.reachable = reachable
   }
 
-  edit(next: Canvas) {
+  edit(next: Canvas, how?: Pushed) {
     const before = this.canvas
     const after = stamped(before, next, (this.clock += 1000))
     this.canvas = after
-    this.binding.push(before, after)
+    this.binding.push(before, after, how)
   }
 
   undo(): boolean {
@@ -87,7 +87,7 @@ class Device implements PlaneSurface {
   private join() {
     this.binding.together()
     this.shared = {
-      push: (before, after) => this.binding.push(before, after),
+      push: (before, after, how) => this.binding.push(before, after, how),
       undo: () => this.binding.undo(),
       redo: () => this.binding.redo(),
       hand: () => undefined,
@@ -370,6 +370,42 @@ describe('undo on a shared plane', () => {
 
     expect(one.redo()).toBe(true)
     expect(one.canvas.ink.map((held) => held.id)).toEqual(['mine'])
+  })
+
+  test('takes back a whole drag at once, however many steps it pushed', () => {
+    const one = Device.opening(withNodes(emptyCanvas(), [card('a')]))
+    one.edit(withNodes(one.canvas, [card('a', 10)]))
+    for (const x of [20, 30, 40]) one.edit(withNodes(one.canvas, [card('a', x)]), 'more')
+
+    expect(one.undo()).toBe(true)
+    expect(one.canvas.nodes[0]?.x).toBe(0)
+    expect(one.canUndo).toBe(false)
+  })
+
+  test('keeps two drags two steps', () => {
+    const one = Device.opening(withNodes(emptyCanvas(), [card('a')]))
+    one.edit(withNodes(one.canvas, [card('a', 10)]))
+    one.edit(withNodes(one.canvas, [card('a', 20)]), 'more')
+    one.edit(withNodes(one.canvas, [card('a', 30)]))
+    one.edit(withNodes(one.canvas, [card('a', 40)]), 'more')
+
+    one.undo()
+    expect(one.canvas.nodes[0]?.x).toBe(20)
+    one.undo()
+    expect(one.canvas.nodes[0]?.x).toBe(0)
+  })
+
+  test('never takes back what was pushed aside, and still reaches past it', () => {
+    const one = Device.opening(withNodes(emptyCanvas(), [card('a'), card('b')]))
+    const two = Device.joining(one)
+    one.edit(withNodes(one.canvas, [card('a', 50), card('b')]))
+    one.edit(withNodes(one.canvas, [card('a', 50), card('b', 70)]), 'aside')
+    carry(one, two)
+    expect(two.canvas.nodes.map((node) => node.x)).toEqual([50, 70])
+
+    one.undo()
+    expect(one.canvas.nodes.map((node) => node.x)).toEqual([0, 70])
+    expect(one.canUndo).toBe(false)
   })
 })
 
