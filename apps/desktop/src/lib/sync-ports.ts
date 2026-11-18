@@ -140,13 +140,13 @@ providePort('sync.workspace', {
   metaFromEngine: (root) => workspace.itemMeta.fromEngine(root),
   notesDescribed: async (root) => {
     const { moveOwnKeysSoon } = await import('./workspace/src/own-keys-moved')
-    moveOwnKeysSoon(root, workspace, true)
+    void moveOwnKeysSoon(root, workspace, true)
     const { keepSetextMarked } = await import('./workspace/src/setext')
     keepSetextMarked(workspace, root)
   },
   spaceUnpaired: async (root) => {
     const { moveOwnKeysSoon } = await import('./workspace/src/own-keys-moved')
-    moveOwnKeysSoon(root, workspace, false)
+    void moveOwnKeysSoon(root, workspace, false)
   },
   hearWrites: (hearing) => hearWrites(hearing),
   rootMoves: () => rootsMoved(),
