@@ -3,21 +3,7 @@ import { type FoundLink, isPagesTarget } from '@orden/markdown/links'
 import { paperOf } from '@orden/markdown/pages'
 import { folderOf } from '../../platform/src/api'
 import { skim, type Span } from '@orden/scan/json-skim'
-import { type Move, type Placed, retargetLinks } from './link-rewrite'
-
-export function rewriteCanvasLinks(
-  text: string,
-  source: string,
-  move: Move,
-  points: (link: FoundLink) => boolean,
-): string | null {
-  return retargetCanvas(
-    text,
-    source,
-    (file) => (file === move.from ? move.to : null),
-    (link) => (points(link) ? move.to : null),
-  )
-}
+import { type Placed, retargetLinks } from './link-rewrite'
 
 export function retargetCanvas(
   text: string,

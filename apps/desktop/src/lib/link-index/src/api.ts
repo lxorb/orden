@@ -6,7 +6,6 @@ export {
   type Retargeting,
   spaceLinks,
 } from './links.svelte'
-export { rewriteLinks } from './link-rewrite'
 export {
   notePicture,
   pictureBeside,
