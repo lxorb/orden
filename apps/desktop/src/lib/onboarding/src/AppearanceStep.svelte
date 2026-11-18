@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { theme, type SchemeChoice } from '../../theme/src/api'
+  import Card from './Card.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
 
@@ -39,13 +40,7 @@
 >
   <div class="cards rise" role="radiogroup" aria-label="Appearance">
     {#each LOOKS as look (look.id)}
-      <button
-        class="card"
-        type="button"
-        role="radio"
-        aria-checked={theme.scheme === look.id}
-        onclick={() => pick(look.id)}
-      >
+      <Card label={look.name} checked={theme.scheme === look.id} tight onpick={() => pick(look.id)}>
         {#if look.id === 'system'}
           <span class="mini auto">
             {@render mini('light')}
@@ -54,8 +49,7 @@
         {:else}
           {@render mini(look.id)}
         {/if}
-        <span class="label"><span class="ring" aria-hidden="true"></span>{look.name}</span>
-      </button>
+      </Card>
     {/each}
   </div>
 </Screen>
@@ -66,64 +60,6 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-  }
-
-  .card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 12px 12px;
-    border-radius: 16px;
-    border: 1.5px solid transparent;
-    cursor: pointer;
-    background: var(--card);
-    box-shadow:
-      var(--shadow-sm),
-      0 8px 24px rgb(16 24 40 / 0.08);
-    color: var(--text);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    transition:
-      border-color 0.25s var(--ease-out),
-      transform 0.25s var(--ease-out);
-  }
-
-  .card:hover {
-    transform: translateY(-2px);
-  }
-
-  .card[aria-checked='true'] {
-    border-color: var(--accent);
-  }
-
-  .label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .ring {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 1.5px solid var(--line-strong);
-    display: grid;
-    place-items: center;
-  }
-
-  .card[aria-checked='true'] .ring {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .card[aria-checked='true'] .ring::after {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #fff;
   }
 
   .mini {
@@ -213,10 +149,6 @@
   @media (max-width: 640px) {
     .cards {
       gap: 8px;
-    }
-
-    .card {
-      padding: 10px 8px;
     }
   }
 </style>

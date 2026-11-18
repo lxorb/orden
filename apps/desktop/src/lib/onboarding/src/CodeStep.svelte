@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Coding } from './flow'
+  import Card from './Card.svelte'
   import Screen from './Screen.svelte'
   import { settleMarkdown, setup } from './setup-state.svelte'
 
@@ -30,35 +31,21 @@
   quiet={{ label: 'Skip', onclick: skip }}
 >
   <div class="cards rise" role="radiogroup" aria-label="Do you write code?">
-    <button
-      class="card"
-      type="button"
-      role="radio"
-      aria-checked={picked === 'yes'}
-      onclick={() => (picked = 'yes')}
-    >
+    <Card label="Yes" checked={picked === 'yes'} onpick={() => (picked = 'yes')}>
       <span class="term" dir="ltr" aria-hidden="true"
         ><span class="p">{PROMPT}</span>
         {TYPED}<br /><span class="ok">✓</span>
         {ANSWERED}<br /><span class="p">{PROMPT}</span> <span class="caret"></span></span
       >
-      <span class="label"><span class="ring" aria-hidden="true"></span>Yes</span>
-    </button>
-    <button
-      class="card"
-      type="button"
-      role="radio"
-      aria-checked={picked === 'no'}
-      onclick={() => (picked = 'no')}
-    >
+    </Card>
+    <Card label="No" checked={picked === 'no'} onpick={() => (picked = 'no')}>
       <span class="write" aria-hidden="true">
         <i style:width="45%" style:height="9px"></i>
         <span class="todo"><b></b><i style:width="70%"></i></span>
         <span class="todo"><b></b><i style:width="55%"></i></span>
         <i style:width="80%"></i>
       </span>
-      <span class="label"><span class="ring" aria-hidden="true"></span>No</span>
-    </button>
+    </Card>
   </div>
 </Screen>
 
@@ -68,64 +55,6 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
-  }
-
-  .card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 12px 12px;
-    border-radius: 16px;
-    border: 1.5px solid transparent;
-    cursor: pointer;
-    background: var(--card);
-    box-shadow:
-      var(--shadow-sm),
-      0 8px 24px rgb(16 24 40 / 0.08);
-    color: var(--text);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    transition:
-      border-color 0.25s var(--ease-out),
-      transform 0.25s var(--ease-out);
-  }
-
-  .card:hover {
-    transform: translateY(-2px);
-  }
-
-  .card[aria-checked='true'] {
-    border-color: var(--accent);
-  }
-
-  .label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .ring {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 1.5px solid var(--line-strong);
-    display: grid;
-    place-items: center;
-  }
-
-  .card[aria-checked='true'] .ring {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .card[aria-checked='true'] .ring::after {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #fff;
   }
 
   .term {
