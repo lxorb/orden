@@ -1,9 +1,9 @@
-import type { Role, Vault } from '@orden/pass/types'
+import type { Vault } from '@orden/pass/types'
 import type { Member } from '@orden/pass/wire'
 import type { Person } from '../../pass-sync/src/people'
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { closed, draw, landed, target, typed } from '../test/drawn'
+import { button, closed, draw, landed, target, typed, vaultAs } from '../test/drawn'
 
 interface Signed {
   user: { id: string; email: string; name: string } | null
@@ -57,23 +57,6 @@ const ShareSheet = (await import('./ShareSheet.svelte')).default
 const FieldRow = (await import('./FieldRow.svelte')).default
 const CODE = '1a2b 3c4d 5e6f 7a8b 9c0d 1e2f 3a4b 5c6d'
 
-function vaultAs(role: Role, hidePasswordsFromViewers = false): Vault {
-  return {
-    v: 1,
-    id: 'v1',
-    name: 'Family',
-    description: '',
-    color: 'purple',
-    icon: 'home',
-    folders: [],
-    hidePasswordsFromViewers,
-    rev: 1,
-    role,
-    members: 4,
-    shared: true,
-  }
-}
-
 const MEMBERS: Member[] = [
   { email: 'ada@example.com', name: 'Ada', role: 'owner', state: 'active', pub: 'P1' },
   { email: 'bob@example.com', name: 'Bob', role: 'editor', state: 'active', pub: 'P2' },
@@ -118,14 +101,6 @@ async function shown() {
   return ui
 }
 
-function button(name: string, within: ParentNode = target): HTMLButtonElement {
-  const found = [...within.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name || one.getAttribute('aria-label') === name,
-  )
-  if (!found) throw new Error(`no ${name} button`)
-  return found
-}
-
 function member(email: string): HTMLElement {
   const found = target.querySelector<HTMLElement>(`[data-member="${email}"]`)
   if (!found) throw new Error(`no ${email}`)
@@ -166,7 +141,7 @@ describe('sharing a vault', () => {
   test('warns when somebody’s key is not the one this device knew', async () => {
     fake.pass.person.mockResolvedValue(personAt('eve@example.com', 'changed'))
     await shown()
-    typed(target.querySelector<HTMLInputElement>('input[type="email"]')!, 'eve@example.com')
+    typed(target.querySelector<HTMLInputElement>('input[type="email"]'), 'eve@example.com')
     await vi.waitFor(() => expect(target.querySelector('[data-changed]')).not.toBe(null))
   })
 
@@ -210,7 +185,7 @@ describe('sharing a vault', () => {
       known: 'new',
     })
     await shown()
-    typed(target.querySelector<HTMLInputElement>('input[type="email"]')!, 'new@example.com')
+    typed(target.querySelector<HTMLInputElement>('input[type="email"]'), 'new@example.com')
     await vi.waitFor(() =>
       expect(target.querySelector('[data-safety]')?.textContent).toContain('not set up Pass'),
     )

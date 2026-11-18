@@ -1,9 +1,9 @@
 import { blank } from '@orden/pass/envelope'
-import type { Item, Role, Vault } from '@orden/pass/types'
+import type { Item, Vault } from '@orden/pass/types'
 import type { LinkRow } from '@orden/pass/wire'
 import { flushSync } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { closed, draw, landed, target, typed } from '../test/drawn'
+import { button, closed, draw, landed, target, typed, vaultAs } from '../test/drawn'
 
 const HOUR = 3600e3
 const DAY = 24 * HOUR
@@ -46,23 +46,6 @@ const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const LinkSheet = (await import('./LinkSheet.svelte')).default
 const LinksPage = (await import('./LinksPage.svelte')).default
 
-function vaultAs(role: Role): Vault {
-  return {
-    v: 1,
-    id: 'v1',
-    name: 'Family',
-    description: '',
-    color: 'purple',
-    icon: 'home',
-    folders: [],
-    hidePasswordsFromViewers: false,
-    rev: 1,
-    role,
-    members: 2,
-    shared: true,
-  }
-}
-
 const ITEM: Item = {
   id: 'i1',
   vault: 'v1',
@@ -104,14 +87,6 @@ function sheet() {
   ui.sheet = { kind: 'link', item: 'i1' }
   draw(LinkSheet, { ui })
   return ui
-}
-
-function button(name: string): HTMLButtonElement {
-  const found = [...target.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name || one.getAttribute('aria-label') === name,
-  )
-  if (!found) throw new Error(`no ${name} button`)
-  return found
 }
 
 function option(name: string): HTMLElement {

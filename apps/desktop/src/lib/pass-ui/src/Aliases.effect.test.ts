@@ -1,7 +1,7 @@
 import { blank } from '@orden/pass/envelope'
 import type { Alias, Item } from '@orden/pass/types'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import { closed, showing, target, typed } from '../test/drawn'
+import { button, closed, showing, target, typed } from '../test/drawn'
 import { opened, pass } from '../test/opened'
 
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
@@ -67,14 +67,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function buttonNamed(name: string): HTMLButtonElement {
-  const button = [...target.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name,
-  )
-  if (!button) throw new Error(`no ${name}`)
-  return button
-}
-
 describe('Settings > Aliases', () => {
   test('tests a key, connects it and keeps it sealed, then disconnects', async () => {
     showing(SettingsAliases, {})
@@ -84,16 +76,16 @@ describe('Settings > Aliases', () => {
       return field
     })
     typed(key, 'sl-key')
-    buttonNamed('Test connection').click()
+    button('Test connection').click()
     await vi.waitFor(() => expect(target.textContent).toContain('Connected. 1 mailboxes.'))
     expect(await pass.aliasProvider()).toBeNull()
 
     target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
-    await vi.waitFor(() => expect(buttonNamed('Disconnect')).toBeTruthy())
+    await vi.waitFor(() => expect(button('Disconnect')).toBeTruthy())
     expect(await pass.aliasProvider()).toMatchObject({ provider: 'simplelogin', key: 'sl-key' })
     await vi.waitFor(() => expect(target.textContent).toContain('me@example.com'))
 
-    buttonNamed('Disconnect').click()
+    button('Disconnect').click()
     await vi.waitFor(() => expect(target.querySelector('input[type="password"]')).not.toBeNull())
     expect(await pass.aliasProvider()).toBeNull()
   })
