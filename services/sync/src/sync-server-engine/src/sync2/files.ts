@@ -12,7 +12,7 @@ import {
   type Variables,
 } from '../../../sync-server/src/api'
 import { atNextSeq, changesBy, placedOn, TAKEN_SEQ } from '../notes'
-import { atLeast, spaceOf } from '../spaces/space'
+import { atLeast, reachedSpace, spaceOf } from '../spaces/space'
 import { deviceOf } from './device'
 import { blobSizes, revive } from './ops'
 
@@ -244,8 +244,10 @@ const MOST_ASKED = 90
 v2Blobs.post('/have', async (context) => {
   const user = context.get('user')
   const body: unknown = await context.req.json().catch(() => null)
-  const hashes =
-    typeof body === 'object' && body !== null ? (body as { hashes?: unknown }).hashes : null
+  const { hashes, space: asked } = (typeof body === 'object' && body !== null ? body : {}) as {
+    hashes?: unknown
+    space?: unknown
+  }
   if (
     !Array.isArray(hashes) ||
     hashes.length > MOST_ASKED ||
@@ -254,6 +256,13 @@ v2Blobs.post('/have', async (context) => {
     return context.json({ error: NOT_A_HASH }, 400)
   }
   if (!hashes.length) return context.json({ kept: [] })
+  const space =
+    typeof asked === 'string' ? await reachedSpace(context.env, context.get('who'), asked) : null
+  if (space) {
+    return context.json({
+      kept: [...(await blobSizes(context.env, space, user.id, hashes)).keys()],
+    })
+  }
   const { results } = await context.env.DB.prepare(
     `select distinct hash from blobs where user_id = ? and hash in (${hashes.map(() => '?').join(', ')})`,
   )
@@ -464,7 +473,7 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const size = (
     await blobSizes(context.env, space, who.kind === 'user' ? who.user.id : null, [hash])
   ).get(hash)
-  if (size === undefined) return context.json({ error: NO_SUCH_FILE }, 404)
+  if (size === undefined) return context.json({ error: NO_SUCH_FILE, blob: hash }, 404)
 
   const device = await deviceOf(context)
   if (file.deleted) await revive(context.env, space.id, device, id)
