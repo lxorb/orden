@@ -1,5 +1,5 @@
 {
-  "known": "#2201: on Windows CEF the agents' own browser builds no page",
+  "known": "#2201: on Windows CEF the engine's own work sometimes stops partway through a run, and from then on no agent page is built",
   "proves": "keys pressed into an agent's page through the engine arrive trusted, and neither the window in front nor the app's focus moves, whether the app's keyboard is nowhere yet or in a page of the reader's",
   "steps": [
     {

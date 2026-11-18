@@ -1,5 +1,5 @@
 {
-  "known": "#2201: on Windows CEF the agents' own browser builds no page",
+  "known": "#2201: on Windows CEF the engine's own work sometimes stops partway through a run, and from then on no agent page is built",
   "proves": "a snapshot is the page's accessibility tree with refs, marked as the page's words, and a ref still reaches its element after another snapshot",
   "steps": [
     {

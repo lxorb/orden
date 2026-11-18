@@ -1,5 +1,5 @@
 {
-  "known": "#2201: on Windows CEF the agents' own browser builds no page",
+  "known": "#2201: on Windows CEF the engine's own work sometimes stops partway through a run, and from then on no agent page is built",
   "proves": "a download from an agent's tab lands in the agent's own folder and is listed",
   "steps": [
     {
@@ -56,7 +56,7 @@
       "expect": {
         "status": "ok",
         "contains": {
-          "result.downloads": "nib agents"
+          "result.downloads": "orden agents"
         }
       }
     }
