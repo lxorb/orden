@@ -1,6 +1,6 @@
 {
-  "known": "#2201: on Windows CEF the agents' own browser builds no page",
   "proves": "a press on Place order in a card form answers needs_approval and orders nothing, and the reader's Allow lets the same press through",
+  "via": ["sidebar"],
   "steps": [
     {
       "call": "browser_open",

@@ -69,6 +69,12 @@ jobs:
           python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/orden.exe \
             --identifier "$IDENTIFIER" --via mcp --out mcp.json
 
+      - name: Through a sidebar agent
+        if: always()
+        run: |
+          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/orden.exe \
+            --identifier "$IDENTIFIER" --via sidebar --out sidebar.json
+
       - name: What an agent set up costs the launch
         if: always()
         run: |
@@ -82,4 +88,5 @@ jobs:
           path: |
             endpoint.json
             mcp.json
+            sidebar.json
           if-no-files-found: ignore

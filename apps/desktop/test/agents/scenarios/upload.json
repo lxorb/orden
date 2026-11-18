@@ -1,6 +1,21 @@
 {
-  "known": "#2201: on Windows CEF the agents' own browser builds no page",
   "proves": "a file chooser is answered by browser_upload with a file inside a space and never shown, and a file outside every space asks first",
+  "via": ["sidebar"],
+  "grant": {
+    "scopes": [
+      "context",
+      "notes.read",
+      "notes.write",
+      "tree",
+      "workspace",
+      "browser",
+      "browser.reader",
+      "browser.script",
+      "browser.network",
+      "browser.storage",
+      "files"
+    ]
+  },
   "steps": [
     {
       "call": "browser_open",

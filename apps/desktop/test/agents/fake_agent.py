@@ -7,7 +7,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
-from typing import Any
+from typing import Any, Callable
 
 Answer = dict[str, Any]
 
@@ -148,17 +148,7 @@ class Mcp:
         ms = (time.perf_counter() - started) * 1000
         if "error" in said:
             return answer("error", ms, code="rpc", message=str(said["error"].get("message")))
-        result = said.get("result") or {}
-        text = "\n".join(str(one.get("text", "")) for one in result.get("content", []) if one.get("type") == "text")
-        pictures = [one for one in result.get("content", []) if one.get("type") == "image"]
-        untrusted = marked_source(text)
-        said = (result.get("_meta") or {}).get(ANSWER_META)
-        if isinstance(said, dict) and said.get("status") in ("ok", "needs_approval", "error"):
-            return {**said, "ms": round(ms, 1), "text": text, "pictures": len(pictures),
-                    "untrusted": said.get("untrusted") or untrusted}
-        status = "error" if result.get("isError") else "ok"
-        return answer(status, ms, text=text, message=text if status == "error" else None,
-                      untrusted=untrusted, pictures=len(pictures), result=None)
+        return from_tool(said.get("result") or {}, ms)
 
     def has(self, verb: str) -> bool:
         return verb in self.tools
@@ -170,6 +160,52 @@ class Mcp:
             self.process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             self.process.kill()
+
+def from_tool(result: dict[str, Any], ms: float) -> Answer:
+
+    text = "\n".join(str(one.get("text", "")) for one in result.get("content", []) if one.get("type") == "text")
+    pictures = [one for one in result.get("content", []) if one.get("type") == "image"]
+    untrusted = marked_source(text)
+    said = (result.get("_meta") or {}).get(ANSWER_META)
+    if isinstance(said, dict) and said.get("status") in ("ok", "needs_approval", "error"):
+        return {**said, "ms": round(ms, 1), "text": text, "pictures": len(pictures),
+                "untrusted": said.get("untrusted") or untrusted}
+    status = "error" if result.get("isError") else "ok"
+    return answer(status, ms, text=text, message=text if status == "error" else None,
+                  untrusted=untrusted, pictures=len(pictures), result=None)
+
+class Sidebar:
+
+    name = "sidebar"
+
+    AGENT = {"id": "claude-code", "name": "Claude Code"}
+
+    def __init__(self, reader: Callable[[str, float], dict[str, Any]], mode: str = "auto") -> None:
+        self.reader = reader
+        self.mode = mode
+        listed = self.invoke("ai_agent_tools", {"agent": self.AGENT, "mode": mode})
+        self.absent = "" if listed["status"] == "ok" else f"ai_agent_tools: {listed.get('message')}"
+        tools = (listed.get("result") or {}).get("tools", []) if not self.absent else []
+        self.tools = {str(one.get("name")) for one in tools}
+
+    def invoke(self, command: str, args: dict[str, Any], seconds: float = 60) -> dict[str, Any]:
+        return self.reader(f"return await window.__TAURI_INTERNALS__.invoke({json.dumps(command)}, {json.dumps(args)})", seconds)
+
+    def call(self, verb: str, args: dict[str, Any], seconds: float = 60) -> Answer:
+        if verb not in self.tools:
+            return answer("missing", 0, message=f"the sidebar's {self.mode} mode lists no tool called {verb}")
+        started = time.perf_counter()
+        said = self.invoke("ai_agent_call", {"agent": self.AGENT, "mode": self.mode, "tool": verb, "args": args}, seconds)
+        ms = (time.perf_counter() - started) * 1000
+        if said["status"] != "ok" or not isinstance(said.get("result"), dict):
+            return answer("error", ms, code="window", message=str(said.get("message") or said.get("result")))
+        return from_tool(said["result"], ms)
+
+    def has(self, verb: str) -> bool:
+        return verb in self.tools
+
+    def close(self) -> None:
+        return
 
 def marked_source(text: str) -> str | None:
 
