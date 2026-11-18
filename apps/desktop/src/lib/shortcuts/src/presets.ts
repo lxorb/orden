@@ -5,6 +5,7 @@ export interface Preset {
   id: Exclude<PresetId, 'custom'>
   label: () => string
   keys: KeyOverrides
+  mac?: KeyOverrides
   vim: boolean
 }
 
@@ -52,6 +53,16 @@ const NOTION: KeyOverrides = {
   'edit.move-block-down': 'Mod-Shift-ArrowDown',
 }
 
+const NOTION_MAC: KeyOverrides = {
+  'paragraph.heading-1': 'Mod-Alt-1',
+  'paragraph.heading-2': 'Mod-Alt-2',
+  'paragraph.heading-3': 'Mod-Alt-3',
+  'paragraph.task-list': 'Mod-Alt-4',
+  'paragraph.bullet-list': 'Mod-Alt-5',
+  'paragraph.ordered-list': 'Mod-Alt-6',
+  'paragraph.code-block': 'Mod-Alt-8',
+}
+
 const VSCODE: KeyOverrides = {
   'app.palette': 'Mod-p',
   'app.palette.alt': 'Shift Shift',
@@ -72,7 +83,7 @@ const VSCODE: KeyOverrides = {
 
 export const PRESETS: Preset[] = [
   { id: 'default', label: () => 'Default', keys: {}, vim: false },
-  { id: 'notion', label: () => 'Notion', keys: NOTION, vim: false },
+  { id: 'notion', label: () => 'Notion', keys: NOTION, mac: NOTION_MAC, vim: false },
   { id: 'obsidian', label: () => 'Obsidian', keys: OBSIDIAN, vim: false },
   { id: 'vscode', label: () => 'VS Code', keys: VSCODE, vim: false },
   { id: 'vim', label: () => 'Vim', keys: {}, vim: true },

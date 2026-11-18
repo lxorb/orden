@@ -11,7 +11,7 @@ import {
   viewport,
 } from '../../ui-kit/src/api'
 import { modes } from '../../modes/src/api'
-import { knownPreset, type PresetId } from './preset-ids'
+import { knownPreset, type PresetId, presetKeys } from './preset-ids'
 import type { Preset } from './presets'
 import {
   without,
@@ -103,9 +103,9 @@ class Shortcuts {
     return held === null || this.unkept ? this.overrides : usable(held)
   }
 
-  choose(preset: Pick<Preset, 'id' | 'keys' | 'vim'>) {
+  choose(preset: Pick<Preset, 'id' | 'keys' | 'mac' | 'vim'>) {
     this.preset = preset.id
-    this.overrides = { ...preset.keys }
+    this.overrides = presetKeys(preset, this.platform)
     this.settle()
     modes.setVimKeys(preset.vim)
   }
