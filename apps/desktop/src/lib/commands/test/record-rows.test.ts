@@ -1,12 +1,8 @@
 import { expect, test, vi } from 'vitest'
 import { commandRowsLoaded, registerCommandRows } from '@orden/contracts'
+import { memoryStorage } from '../../../../test/disk'
 
-const held = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => held.get(key) ?? null,
-  setItem: (key: string, value: string) => void held.set(key, value),
-  removeItem: (key: string) => void held.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const { blockCommands, blockRows } = await import('../src/api')
 

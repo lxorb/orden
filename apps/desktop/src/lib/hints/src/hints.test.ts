@@ -1,19 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-
-  return {
-    get length() {
-      return held.size
-    },
-    key: (index) => [...held.keys()][index] ?? null,
-    getItem: (key) => held.get(key) ?? null,
-    setItem: (key, value) => void held.set(key, value),
-    removeItem: (key) => void held.delete(key),
-    clear: () => held.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('document', {

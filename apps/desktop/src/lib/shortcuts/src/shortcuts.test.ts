@@ -10,21 +10,7 @@ import {
 } from '@orden/editor'
 import { parseCombination, sameCombination } from '../../ui-kit/src/keys'
 import { BROWSER_KEYS, SYSTEM_KEYS } from './registry'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../test/disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })

@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
-const store = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => store.get(key) ?? null,
-  setItem: (key: string, value: string) => void store.set(key, value),
-  removeItem: (key: string) => void store.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const saved = vi.hoisted(() => [] as [string, unknown][])
 vi.mock('../../accounts/src/client', async (actual) => ({
@@ -34,7 +30,7 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
-  store.clear()
+  localStorage.clear()
   saved.length = 0
   hiddenKinds.restore()
 })
@@ -133,11 +129,11 @@ describe('turning a kind off', () => {
 
   test('is undone by turning it on, and the default is stored as nothing', () => {
     setKind('canvas', false)
-    expect(JSON.parse(store.get('orden:hidden-kinds') ?? '[]')).toEqual(['canvas'])
+    expect(JSON.parse(localStorage.getItem('orden:hidden-kinds') ?? '[]')).toEqual(['canvas'])
 
     setKind('canvas', true)
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('orden:hidden-kinds')).toBe(false)
+    expect(localStorage.getItem('orden:hidden-kinds')).toBeNull()
   })
 
   test('is refused for the last kind offered', () => {
@@ -178,7 +174,7 @@ describe('the account', () => {
 
     receive({ hiddenKinds: null })
     expect(hiddenKinds.offers('canvas')).toBe(true)
-    expect(store.has('orden:hidden-kinds')).toBe(false)
+    expect(localStorage.getItem('orden:hidden-kinds')).toBeNull()
   })
 
   test('keeps a change it was not told of yet over the older list it still holds', () => {
