@@ -1,4 +1,11 @@
-import { answer, frameWord, method, speechRecogniser, systemLocale } from '../../platform/src/api'
+import {
+  answer,
+  frameWord,
+  isRecord,
+  method,
+  speechRecogniser,
+  systemLocale,
+} from '../../platform/src/api'
 import type { Hooks, Listening } from './listening'
 import { type Field, Spot } from './spot'
 
@@ -74,16 +81,17 @@ export class DeviceSession {
 
   private phoneSaid(json: string): void {
     if (this.over) return
-    let held: Record<string, unknown>
+    let held: unknown
     try {
-      const parsed: unknown = JSON.parse(json)
-      if (typeof parsed !== 'object' || parsed === null) return
-      held = parsed as Record<string, unknown>
+      held = JSON.parse(json)
     } catch {
       return
     }
+    if (!isRecord(held)) return
 
-    if (typeof held.level === 'number') this.hooks.level(phoneLevel(held.level))
+    if (typeof held.level === 'number') {
+      this.hooks.level(Math.min(1, Math.max(0, (held.level + 2) / 12)))
+    }
     if (typeof held.partial === 'string') this.heard(held.partial, false)
     if (typeof held.text === 'string' && held.text.trim()) this.heard(held.text, true)
     if (held.state === 'refused') {
@@ -157,12 +165,8 @@ export class DeviceSession {
   }
 
   private heard(words: string, sure: boolean): void {
-    if (sure) {
-      this.sure.push(words.trim())
-      this.live = ''
-    } else {
-      this.live = words.trim()
-    }
+    if (sure) this.sure.push(words.trim())
+    this.live = sure ? '' : words.trim()
     this.show()
   }
 
@@ -244,8 +248,4 @@ export class DeviceSession {
     this.spot.release()
     this.hooks.ended()
   }
-}
-
-function phoneLevel(rms: number): number {
-  return Math.min(1, Math.max(0, (rms + 2) / 12))
 }

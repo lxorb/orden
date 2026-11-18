@@ -29,6 +29,12 @@ const hooks = () => ({
   trouble: (said: string) => trouble.push(said),
 })
 
+async function opened() {
+  const one = new DeviceSession(field, hooks())
+  await one.open()
+  return one
+}
+
 function result(...parts: [string, boolean][]) {
   return { results: parts.map(([transcript, isFinal]) => ({ isFinal, 0: { transcript } })) }
 }
@@ -81,8 +87,7 @@ afterEach(() => {
 
 describe('the web’s recogniser', () => {
   test('listens on, with partial words, in the system’s language', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     expect(made[0]).toMatchObject({
       continuous: true,
       interimResults: true,
@@ -92,8 +97,7 @@ describe('the web’s recogniser', () => {
   })
 
   test('draws partial words as live and keeps the sentences it is sure of', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     made[0]!.onresult?.(result(['Hallo Welt.', true], [' wie geht', false]))
     expect(field.value).toBe('Hallo Welt. wie geht')
     expect(box.querySelector('[data-heard] mark')).not.toBeNull()
@@ -103,8 +107,7 @@ describe('the web’s recogniser', () => {
   })
 
   test('is started again when it ends itself, keeping what it heard', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     made[0]!.onresult?.(result(['Erster Satz.', true]))
     made[0]!.onend?.()
     expect(made[0]!.started).toBe(2)
@@ -113,8 +116,7 @@ describe('the web’s recogniser', () => {
   })
 
   test('finishes with its last words, as plain text', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    const one = await opened()
     made[0]!.onresult?.(result(['Fast fertig', false]))
     await one.finish()
     expect(made[0]!.stopped).toBe(1)
@@ -125,24 +127,21 @@ describe('the web’s recogniser', () => {
   test('puts the field back on Escape', async () => {
     field.value = 'Notiz'
     field.setSelectionRange(5, 5)
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    const one = await opened()
     made[0]!.onresult?.(result(['und mehr', false]))
     one.cancel()
     expect(field.value).toBe('Notiz')
   })
 
   test('says a microphone refused, and stops', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     made[0]!.onerror?.({ error: 'not-allowed' })
     expect(trouble).toEqual(['That microphone could not be opened.'])
     expect(ended).toBe(1)
   })
 
   test('shows that it hears a voice', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     made[0]!.onspeechstart?.()
     expect(levels.at(-1)).toBeGreaterThan(0)
   })
@@ -169,15 +168,13 @@ describe('Android’s recogniser', () => {
     (window as { __ordenHeard?: (text: string) => void }).__ordenHeard?.(JSON.stringify(json))
 
   test('is turned on through the activity, with the page’s word', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     expect(phone?.on).toEqual([true])
     expect(made).toEqual([])
   })
 
   test('draws its partial words as live, keeps its sentences, and feeds the meter', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     said({ state: 'listening', partial: 'Kannst du' })
     expect(field.value).toBe('Kannst du')
     expect(box.querySelector('[data-heard] mark')).not.toBeNull()
@@ -188,8 +185,7 @@ describe('Android’s recogniser', () => {
   })
 
   test('keeps what it heard when the phone stops listening by itself', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    await opened()
     said({ state: 'listening', partial: 'Hallo' })
     said({ state: 'off' })
     expect(field.value).toBe('Hallo')
@@ -197,8 +193,7 @@ describe('Android’s recogniser', () => {
   })
 
   test('is turned off when finished', async () => {
-    const one = new DeviceSession(field, hooks())
-    await one.open()
+    const one = await opened()
     await one.finish()
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(phone?.on).toEqual([true, false])

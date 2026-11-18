@@ -4,13 +4,7 @@
   import { HOLD } from './keys'
   import { type Dictates, voice } from './voice.svelte'
 
-  const {
-    owner,
-    below = false,
-  }: {
-    owner: Dictates
-    below?: boolean
-  } = $props()
+  const { owner, below = false }: { owner: Dictates; below?: boolean } = $props()
 
   const hearing = $derived(voice.of(owner))
   const asking = $derived(voice.asking === owner)

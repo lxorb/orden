@@ -15,22 +15,14 @@ vi.mock('../../accounts/src/api', () => ({
   },
 }))
 
-const kept = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => kept.get(key) ?? null,
-  setItem: (key: string, value: string) => kept.set(key, value),
-  removeItem: (key: string) => kept.delete(key),
-  clear: () => kept.clear(),
-})
+vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
 
 const { feedback } = await import('./feedback.svelte')
 const { log } = await import('../../platform/src/api')
 
 beforeEach(() => {
-  api.answer = null
-  api.fails = null
-  api.sent = []
-  kept.clear()
+  Object.assign(api, { answer: null, fails: null, sent: [] })
+  localStorage.clear()
   feedback.show()
 })
 

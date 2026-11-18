@@ -9,16 +9,11 @@ import { languageName, transcriptCallout } from './transcript'
 
 async function bytesOf(target: string, notePath: string | null): Promise<ArrayBuffer | null> {
   const found = !target.includes('/') ? links.fileFor(target, notePath) : null
-  const path = found ?? beside(notePath, target)
+  const path = found ?? (notePath ? joinPath(notePath.replace(/[\\/][^\\/]*$/, ''), target) : null)
   if (!path) return null
 
   const response = await fetch(assetUrl(path)).catch(() => null)
   return response?.ok ? response.arrayBuffer() : null
-}
-
-function beside(notePath: string | null, target: string): string | null {
-  if (!notePath) return null
-  return joinPath(notePath.replace(/[\\/][^\\/]*$/, ''), target)
 }
 
 export async function transcribeInto(view: EditorView, at: number, target: string) {

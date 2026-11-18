@@ -10,24 +10,14 @@ afterEach(() => {
 })
 
 describe('which container to record into', () => {
-  test('is Opus in a WebM wherever that is offered', () => {
-    supporting(['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'])
-    expect(bestContainer()).toBe('audio/webm;codecs=opus')
-  })
-
-  test('and the plain type where the parameter is refused', () => {
-    supporting(['audio/webm'])
-    expect(bestContainer()).toBe('audio/webm')
-  })
-
-  test('is AAC in an MP4 on WebKit', () => {
-    supporting(['audio/mp4;codecs=mp4a.40.2', 'audio/mp4'])
-    expect(bestContainer()).toBe('audio/mp4;codecs=mp4a.40.2')
-  })
-
-  test('is the platform default where it will name none of them', () => {
-    supporting([])
-    expect(bestContainer()).toBe('')
+  test.each([
+    [['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'], 'audio/webm;codecs=opus'],
+    [['audio/webm'], 'audio/webm'],
+    [['audio/mp4;codecs=mp4a.40.2', 'audio/mp4'], 'audio/mp4;codecs=mp4a.40.2'],
+    [[], ''],
+  ])('among %j is %j: Opus in WebM, plain WebM, AAC in MP4, or the default', (types, best) => {
+    supporting(types)
+    expect(bestContainer()).toBe(best)
   })
 
   test('and nothing at all where there is no recorder', () => {
@@ -36,21 +26,15 @@ describe('which container to record into', () => {
 })
 
 describe('what a recording is called', () => {
-  test('says sound rather than film, whatever the codec was', () => {
-    expect(extensionOf('audio/webm;codecs=opus')).toBe('weba')
-    expect(extensionOf('audio/webm')).toBe('weba')
-    expect(extensionOf('audio/mp4;codecs=mp4a.40.2')).toBe('m4a')
-    expect(extensionOf('audio/ogg;codecs=opus')).toBe('oga')
-  })
-
-  test('and falls back to sound for a type nothing here knows', () => {
-    expect(extensionOf('')).toBe('weba')
-    expect(extensionOf('audio/flurble')).toBe('weba')
-  })
-
-  test('is the minute it was made in', () => {
-    const at = new Date(2026, 8, 12, 14, 32, 9)
-    expect(recordingName(at, 'weba')).toBe('recording-2026-09-12-1432.weba')
+  test.each([
+    ['audio/webm;codecs=opus', 'weba'],
+    ['audio/webm', 'weba'],
+    ['audio/mp4;codecs=mp4a.40.2', 'm4a'],
+    ['audio/ogg;codecs=opus', 'oga'],
+    ['', 'weba'],
+    ['audio/flurble', 'weba'],
+  ])('says sound rather than film for %j, falling back to sound: %s', (type, extension) => {
+    expect(extensionOf(type)).toBe(extension)
   })
 
   test('with every field padded, so a folder sorts', () => {

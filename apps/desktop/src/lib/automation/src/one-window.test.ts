@@ -82,12 +82,8 @@ async function openWindow(label: string) {
 
 describe('with two windows open', () => {
   beforeEach(async () => {
-    world.listeners.length = 0
-    world.ran.length = 0
-    world.claims = true
-    world.hangs = false
-    world.deadlines.length = 0
-    world.results.length = 0
+    Object.assign(world, { listeners: [], ran: [], claims: true, hangs: false })
+    Object.assign(world, { deadlines: [], results: [] })
     await openWindow('main')
     await openWindow('orden-2')
   })

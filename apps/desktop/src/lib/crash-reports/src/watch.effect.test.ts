@@ -54,25 +54,21 @@ test('once it is answered, waiting reports go at start', () => {
   expect(world.sent).toBe(1)
 })
 
-test('reports turned off in another window are not sent from this one', () => {
+test.each([
+  [true, false],
+  [false, true],
+])('reports turned off in another window while watched (%s) are on: %s', (watching, on) => {
   localStorage.setItem('orden:crash-reports-told', 'true')
   crashReports.set(true)
   stop = watchForCrashes(true)
   flushSync()
+  if (!watching) {
+    stop()
+    stop = null
+  }
 
   localStorage.setItem('orden:crash-reports', 'false')
   window.dispatchEvent(new StorageEvent('storage', { key: 'orden:crash-reports' }))
 
-  expect(crashReports.on).toBe(false)
-})
-
-test('a stopped watch hears no other window', () => {
-  localStorage.setItem('orden:crash-reports-told', 'true')
-  crashReports.set(true)
-  watchForCrashes(true)()
-
-  localStorage.setItem('orden:crash-reports', 'false')
-  window.dispatchEvent(new StorageEvent('storage', { key: 'orden:crash-reports' }))
-
-  expect(crashReports.on).toBe(true)
+  expect(crashReports.on).toBe(on)
 })

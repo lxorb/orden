@@ -2,22 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
-
-vi.stubGlobal('localStorage', memoryStorage())
+vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { dispatch, isVerb, linkHearsFrom, verbForAction } = await import('./verbs')
@@ -62,19 +47,15 @@ describe('the table', () => {
     })
   })
 
-  test('joins a verb written as two words, which is how a terminal sends one', async () => {
-    expect(await dispatch('files', {}, ['list'])).toEqual({
-      ok: false,
-      error: 'there is no space open',
-    })
-  })
-
-  test('leaves a one-word verb alone even when a value follows it', async () => {
-    expect(await dispatch('tags', {}, ['list'])).toEqual({
-      ok: false,
-      error: 'there is no space open',
-    })
-  })
+  test.each(['files', 'tags'])(
+    'joins %s list into one verb only where the two words are one, as a terminal sends it',
+    async (verb) => {
+      expect(await dispatch(verb, {}, ['list'])).toEqual({
+        ok: false,
+        error: 'there is no space open',
+      })
+    },
+  )
 
   test('will not change anything until the caller says yes', async () => {
     for (const verb of ['files.write', 'files.move', 'files.delete', 'properties.set', 'eval']) {

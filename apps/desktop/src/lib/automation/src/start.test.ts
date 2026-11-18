@@ -47,14 +47,7 @@ vi.mock('../../platform/src/tauri', () => ({
   },
 }))
 
-vi.stubGlobal('localStorage', {
-  length: 0,
-  key: () => null,
-  getItem: () => null,
-  setItem: () => undefined,
-  removeItem: () => undefined,
-  clear: () => undefined,
-} satisfies Storage)
+vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
 
 const { startAutomation } = await import('./start')

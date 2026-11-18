@@ -25,16 +25,18 @@ export async function startAutomation(): Promise<() => void> {
   }
 
   const stopping: (() => void)[] = []
+  const takeStartup = async () => {
+    for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) await follow(uri)
+  }
 
   if (isDesktop) stopping.push(...(await startHearings()))
-
-  for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) {
-    await follow(uri)
-  }
+  await takeStartup()
 
   stopping.push(
     await hearHere<string[]>('orden://open-url', (event) => {
-      void followAll(event.payload)
+      void (async () => {
+        for (const uri of event.payload) await follow(uri)
+      })()
     }),
   )
 
@@ -48,9 +50,7 @@ export async function startAutomation(): Promise<() => void> {
       }),
     )
     await invoke('automation_listening')
-    for (const uri of await invoke<string[]>('take_startup_uris').catch(() => [])) {
-      await follow(uri)
-    }
+    await takeStartup()
   }
 
   return () => {
@@ -75,7 +75,9 @@ async function answer(id: number, asked: Request) {
 
     const verb = typeof asked.verb === 'string' ? asked.verb : ''
     const args = isRecord(asked.args) ? asked.args : {}
-    const rest = Array.isArray(asked.rest) ? asked.rest.filter(isText) : []
+    const rest = Array.isArray(asked.rest)
+      ? asked.rest.filter((one): one is string => typeof one === 'string')
+      : []
     const caller = callerOf(asked.agent, asked.thread)
 
     const result = await Promise.race([
@@ -86,14 +88,6 @@ async function answer(id: number, asked: Request) {
   } finally {
     due.end()
   }
-}
-
-function isText(value: unknown): value is string {
-  return typeof value === 'string'
-}
-
-async function followAll(uris: readonly string[]) {
-  for (const uri of uris) await follow(uri)
 }
 
 async function follow(uri: string, depth = 0): Promise<void> {
@@ -138,16 +132,11 @@ async function follow(uri: string, depth = 0): Promise<void> {
 }
 
 function plainly(value: unknown): Record<string, string> {
-  if (!isRecord(value)) return {}
-
-  const out: Record<string, string> = {}
-  for (const [name, held] of Object.entries(value)) {
-    if (typeof held === 'string' || typeof held === 'number' || typeof held === 'boolean') {
-      out[name] = String(held)
-    }
-  }
-
-  return out
+  return Object.fromEntries(
+    Object.entries(isRecord(value) ? value : {})
+      .filter(([, held]) => ['string', 'number', 'boolean'].includes(typeof held))
+      .map(([name, held]) => [name, String(held)]),
+  )
 }
 
 async function went(url: string | null, depth: number, outcome: Record<string, string>) {

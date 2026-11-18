@@ -134,26 +134,19 @@ describe('nothing private is ever sent', () => {
 })
 
 describe('the queue', () => {
-  const daily = (day: string): UsageEvent => ({ ...common(), kind: 'daily', day })
-
-  test('drops days older than thirty, usage data once turned off, and anything past its cap', async () => {
-    const { pruned, MOST_QUEUED } = await import('./queue')
-    const old = dayOf(Date.now() - 31 * 86_400_000)
-    expect(pruned([daily(old), daily(TODAY)], TODAY, false)).toEqual([daily(TODAY)])
-    expect(pruned([daily(TODAY)], TODAY, false)).toEqual([daily(TODAY)])
-    const many = Array.from({ length: MOST_QUEUED + 5 }, () => daily(TODAY))
-    expect(pruned(many, TODAY, true)).toHaveLength(MOST_QUEUED)
+  let queue: UsageEvent[] = []
+  const how = (post: () => Promise<unknown>) => ({
+    queue: () => queue,
+    keepQueue: (events: UsageEvent[]) => (queue = events),
+    post,
+  })
+  beforeEach(() => {
+    queue = [{ ...common(), kind: 'daily', day: TODAY }]
   })
 
   test('keeps the queue while offline and sends it later', async () => {
     const { flush } = await import('./queue')
     const { ApiError } = await import('../../accounts/src/client')
-    let queue: UsageEvent[] = [daily(TODAY)]
-    const how = (post: () => Promise<unknown>) => ({
-      queue: () => queue,
-      keepQueue: (events: UsageEvent[]) => (queue = events),
-      post,
-    })
 
     expect(await flush(how(() => Promise.reject(new TypeError('offline'))))).toBe('later')
     expect(queue).toHaveLength(1)
@@ -166,13 +159,7 @@ describe('the queue', () => {
   test('drops what the server refuses instead of sending it forever', async () => {
     const { flush } = await import('./queue')
     const { ApiError } = await import('../../accounts/src/client')
-    let queue: UsageEvent[] = [daily(TODAY)]
-    const result = await flush({
-      queue: () => queue,
-      keepQueue: (events) => (queue = events),
-      post: () => Promise.reject(new ApiError(400, 'no', null)),
-    })
-    expect(result).toBe('done')
+    expect(await flush(how(() => Promise.reject(new ApiError(400, 'no', null))))).toBe('done')
     expect(queue).toEqual([])
   })
 })

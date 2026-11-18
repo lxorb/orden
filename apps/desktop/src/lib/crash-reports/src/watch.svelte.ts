@@ -44,15 +44,14 @@ export function watchForCrashes(sending: boolean): () => void {
     })
   })
 
-  if (!sending) {
-    return () => {
-      clearInterval(beating)
-      clearTimeout(shaping)
-      stopShape()
-      document.removeEventListener('visibilitychange', alive)
-      unheard()
-    }
+  const stopWatching = () => {
+    clearInterval(beating)
+    clearTimeout(shaping)
+    stopShape()
+    document.removeEventListener('visibilitychange', alive)
+    unheard()
   }
+  if (!sending) return stopWatching
 
   const how = nativeSending(
     () => crashReports.on,
@@ -76,13 +75,9 @@ export function watchForCrashes(sending: boolean): () => void {
   void listen(TOLD, send).then((stop) => (unlisten = stop))
 
   return () => {
-    clearInterval(beating)
+    stopWatching()
     clearInterval(again)
-    clearTimeout(shaping)
-    stopShape()
     stopAnswer()
     unlisten?.()
-    document.removeEventListener('visibilitychange', alive)
-    unheard()
   }
 }

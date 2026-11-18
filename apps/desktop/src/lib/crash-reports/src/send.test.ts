@@ -24,14 +24,8 @@ function sending(on: boolean, answer: (report: CrashReport) => unknown = () => (
     on: () => on,
     channel: () => 'unstable',
     waiting: () => Promise.resolve(kept),
-    sent: (id) => {
-      sent.push(id)
-      return Promise.resolve()
-    },
-    unsent: (id) => {
-      unsent.push(id)
-      return Promise.resolve()
-    },
+    sent: (id) => Promise.resolve(void sent.push(id)),
+    unsent: (id) => Promise.resolve(void unsent.push(id)),
     post: (one) => {
       posted.push(one)
       const said = answer(one)

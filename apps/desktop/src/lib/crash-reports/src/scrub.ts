@@ -71,21 +71,12 @@ export function scrubbedText(text: string): string {
   return secretsOut(scrubbedLog(text))
 }
 
-function moduleOf(said: string): string {
-  const name = said.split(/[\\/]/).pop() ?? ''
-  return NAME.test(name) && name ? name : '?'
-}
-
-function symbolOf(said: string | undefined): string | undefined {
-  return said && SYMBOL.test(said) ? said : undefined
-}
-
-function frameOf(frame: CrashFrame): CrashFrame {
-  const symbol = symbolOf(frame.symbol)
+function frameOf({ module, offset, symbol }: CrashFrame): CrashFrame {
+  const name = module.split(/[\\/]/).pop() ?? ''
   return {
-    module: moduleOf(frame.module),
-    offset: OFFSET.test(frame.offset) ? frame.offset : '0x0',
-    ...(symbol ? { symbol } : {}),
+    module: NAME.test(name) && name ? name : '?',
+    offset: OFFSET.test(offset) ? offset : '0x0',
+    ...(symbol && SYMBOL.test(symbol) ? { symbol } : {}),
   }
 }
 
