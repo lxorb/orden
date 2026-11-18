@@ -25,7 +25,6 @@ const EMPTY: Contents = {
 }
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
-
 const isText = (one: [string, unknown]): one is [string, string] => typeof one[1] === 'string'
 
 function mergedMap<T, B>(

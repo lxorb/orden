@@ -14,7 +14,6 @@
   import ChatWindow from './ChatWindow.svelte'
 
   const { rail = false, quiet = false }: { rail?: boolean; quiet?: boolean } = $props()
-
   let field = $state<HTMLInputElement>()
   let lit = $state(0)
 
@@ -24,7 +23,6 @@
   }
 
   let archivedShown = $state(false)
-
   const stateIn = (one: ThreadHead) => chat.states.get(one.id) ?? stateOf(one)
 
   const found = $derived.by(() => {
@@ -37,7 +35,6 @@
   const active = $derived(ordered(found, chat.states, chat.unread))
   const shownArchived = $derived(archivedShown ? archived : [])
   const rows = $derived([...active, ...shownArchived])
-
   let upper = $state<{ reach: (index: number) => void }>()
   let lower = $state<{ reach: (index: number) => void }>()
 
@@ -147,7 +144,6 @@
       />
     </div>
   </div>
-
   <ul class="list" role="listbox" use:scrollbar>
     {#if agentMarks.heard && !chat.listQuery}
       {#await agentRows() then AgentRows}

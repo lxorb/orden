@@ -13,7 +13,6 @@ export interface Move {
 type Heard = (moves: readonly Move[]) => void
 
 const heard = new Set<Heard>()
-
 let ledger: Move[] | null = null
 
 function isMove(value: unknown): value is Move {

@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 const { workspace } = await import('../../../workspace/src/api')
 const { unlocks } = await import('../../../protect/src/unlocked.svelte')
 const Changes = (await import('./Changes.svelte')).default
-
 const ROOT = '/space'
 const NOTE = `${ROOT}/Diary.md`
 const LOCK = { root: ROOT, key: 'Diary.md', way: 'password' as const }

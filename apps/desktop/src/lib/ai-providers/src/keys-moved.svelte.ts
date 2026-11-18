@@ -3,7 +3,6 @@ import { hasKey } from './keys'
 import { ai } from './store.svelte'
 
 const KEY = 'orden:keys-moved'
-
 const KEYED = new Set(['anthropic', 'openai', 'gemini', 'chatgpt'])
 
 class KeysMoved {

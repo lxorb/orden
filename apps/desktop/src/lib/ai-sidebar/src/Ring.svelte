@@ -6,7 +6,6 @@
   import { attachedIn, bandsOf } from './ring'
 
   const { next }: { next: number } = $props()
-
   const here = hostHere()
   const open = $derived(chat.popover === 'context' && chat.host === here)
   const head = $derived(chat.head)
@@ -91,7 +90,6 @@
         <span class="count">{say(bands.used + bands.next)}</span>
       {/if}
     </button>
-
     {#if open}
       <div
         class="tray orden-layer"

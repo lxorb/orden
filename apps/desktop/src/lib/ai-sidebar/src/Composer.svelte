@@ -93,7 +93,6 @@
   })
 
   const next = $derived(estimateText(chat.text) + attached)
-
   const mention = $derived(mentionAt(chat.text, caret))
   const slash = $derived(/^\/[\w-]*$/.test(chat.text) ? chat.text.slice(1) : null)
 
@@ -132,7 +131,6 @@
   }
 
   const found = $derived(mention && hushed !== chat.text ? ranked(candidates(), mention.query) : [])
-
   const slashing = $derived(slash !== null)
 
   $effect(() => {
@@ -389,7 +387,6 @@
   }
 
   const mode = $derived(head?.mode ?? FIRST_MODE)
-
   const searching = $derived(chat.chips.some((one) => one.kind === 'web'))
 
   function toggleWeb() {
@@ -438,7 +435,6 @@
   })
 
   const thread = $derived(chat.head ? chat.thread : null)
-
   let escaped = 0
 
   const goal = $derived(
@@ -468,11 +464,9 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="foot" bind:this={foot} onkeydown={footKey}>
   <Queue />
-
   {#if thread}
     <Rewinding {thread} panel={chat} />
   {/if}
-
   {#if chat.changing}
     <div class="editing" transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}>
       <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
@@ -481,7 +475,6 @@
       >
     </div>
   {/if}
-
   {#if goal}
     <div
       class="goal"
@@ -513,7 +506,6 @@
       <p class="reason">{goal.reason}</p>
     {/if}
   {/if}
-
   <div class="box-wrap">
     {#if rows.length}
       <Suggest
@@ -573,7 +565,6 @@
           {/each}
         </div>
       {/if}
-
       <textarea
         bind:this={field}
         bind:value={chat.text}
@@ -589,7 +580,6 @@
         onkeyup={onInput}
         onpaste={onPaste}
         ondrop={onDrop}></textarea>
-
       <div class="controls">
         <button
           class="orden-glyph plus"

@@ -18,7 +18,6 @@
   let busy = $state(false)
   let trouble = $state<string | null>(null)
   let root = $state<HTMLElement>()
-
   const plan = $derived(picked ? review.plan(thread, picked) : null)
   const rows = $derived(plan ? plan.choices.length : messages.length)
 

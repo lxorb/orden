@@ -3,7 +3,6 @@ import { activated, added, type Accounts, NONE, removed, updated, used } from '.
 import { baseOf, type Contents, merged, type Side } from './merge'
 
 const side = (contents: Contents): Side => ({ contents, prints: { ...contents.keys } })
-
 const two: Accounts = added(added(NONE, 'anthropic').state, 'anthropic').state
 const start: Contents = { accounts: two, keys: { anthropic: 'sk-1' }, seen: {} }
 const base = baseOf(start, { ...start.keys })

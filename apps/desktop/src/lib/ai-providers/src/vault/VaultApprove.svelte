@@ -7,10 +7,8 @@
   import type { Vault } from './vault.svelte'
 
   const { vault }: { vault: Vault } = $props()
-
   const asking = $derived(vault.asking[0] ?? null)
   const device = $derived(asking?.name ?? '')
-
   let card = $state<HTMLElement>()
 
   $effect(() => {

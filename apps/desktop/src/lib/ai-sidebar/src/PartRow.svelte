@@ -11,7 +11,6 @@
 
   type Row = Extract<Part, { kind: 'thinking' | 'tool' }>
   const { part, live = false }: { part: Row; live?: boolean } = $props()
-
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
 
@@ -24,9 +23,7 @@
   )
 
   const going = $derived(live && (part.kind === 'thinking' ? !part.ms : part.state === 'running'))
-
   const helper = $derived(part.kind === 'tool' ? helperOf(part) : null)
-
   const command = $derived(part.kind === 'tool' && verbOf(part.verb) === 'Ran')
 
   const detail = $derived.by(() => {
@@ -56,15 +53,12 @@
     change={part.kind === 'tool' ? part.change : undefined}
     onpress={() => void press()}
   />
-
   {#if part.kind === 'tool' && part.state === 'asking' && part.result?.approval}
     <Approval {part} thread={chat.thread} />
   {/if}
-
   {#if helper && (open || going)}
     <Spawned threads={[helper]} />
   {/if}
-
   {#if open && detail}
     <pre
       class="detail"

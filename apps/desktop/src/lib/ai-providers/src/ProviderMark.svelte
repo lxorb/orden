@@ -6,7 +6,6 @@
   import type { Provider } from './providers'
 
   const { account }: { account: Pick<Provider, 'kind' | 'baseUrl' | 'name'> } = $props()
-
   const brand = $derived(accountBrand(account))
 </script>
 

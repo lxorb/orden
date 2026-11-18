@@ -5,7 +5,6 @@ export type { Front, Listed, Mention, MentionKind, NoteChanges, Panel } from '..
 export type { PanelCommand, ReviewPanel, Row, Source, TaskTool } from '../../ai-chat/src/api'
 
 const parts = await sidebarParts()
-
 export const { alwaysOffered, chat, chatToTab, checkpoints, citationLinks, citedIn } = parts
 export const { compactsAt, crateAnswers, DEFAULT_ASK, dictation, estimate, estimateText } = parts
 export const { filled, following, forkAt, instructionsSent, lasted, linkedAnswer } = parts

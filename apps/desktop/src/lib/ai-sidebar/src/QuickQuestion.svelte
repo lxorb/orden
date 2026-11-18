@@ -20,7 +20,6 @@
   import type { Dictates } from '../../dictation/src/api'
 
   const { quick = sheet, docked = false }: { quick?: typeof sheet; docked?: boolean } = $props()
-
   let talk = $state<HTMLElement>()
   let field = $state<HTMLTextAreaElement>()
 
@@ -41,7 +40,6 @@
   })
 
   const follows = (..._values: unknown[]) => undefined
-
   let atEnd = true
 
   function onScroll() {
@@ -115,7 +113,6 @@
     })
   }
   const show = (src: string) => pictures.add(src)
-
   const copied = new Copied()
 
   const MARKS: Record<ContextKind, string> = {
@@ -170,11 +167,9 @@
         spellcheck="false"
         onpaste={onPaste}
         onkeydown={onKey}></textarea>
-
       {#if showsDictateButton()}
         <span class="voice"><DictateButton owner={voiceField} below /></span>
       {/if}
-
       {#if quick.running}
         <button class="go" title="Stop" aria-label="Stop" onclick={() => quick.stop()}>
           <svg viewBox="0 0 13 13"
@@ -193,7 +188,6 @@
         </button>
       {/if}
     </div>
-
     {#if quick.context !== null || quick.texts.length > 0}
       <div class="chips" transition:fade={{ duration: dur(120) }}>
         {#if quick.context}
@@ -217,7 +211,6 @@
       >
     </p>
   {/if}
-
   {#if turns.length || quick.trouble}
     <div class="talk" bind:this={talk} use:scrollbar onscroll={onScroll}>
       {#each turns as turn, at (at)}
@@ -238,21 +231,17 @@
           {/if}
         {/if}
       {/each}
-
       {#if waiting}
         <Thinking />
       {/if}
-
       {#if quick.asking && workspace.offers('ask')}
         <div class="acts" in:fade={{ duration: dur(120) }}>
           {@render onward()}
         </div>
       {/if}
-
       {#if quick.trouble}
         <p class="wrong">{quick.trouble}</p>
       {/if}
-
       {#if done}
         <div class="acts" in:fade={{ duration: dur(120) }}>
           {#if !docked}
@@ -324,7 +313,6 @@
     transition:fade={{ duration: LAYER.fade }}
     onclick={() => quick.close()}
   ></div>
-
   <div
     class="orden-screen quick"
     use:trap

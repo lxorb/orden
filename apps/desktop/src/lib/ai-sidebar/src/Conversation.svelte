@@ -23,7 +23,6 @@
 
   let talk = $state<HTMLElement>()
   let atEnd = $state(true)
-
   const turns = $derived(chat.turns)
   const thread = $derived(chat.head ? chat.thread : null)
   const id = $derived(chat.head?.id ?? '')
@@ -71,13 +70,10 @@
     'M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z'
   const EDIT = 'M8.7 2.3l2 2-6 6-2.6.6.6-2.6z'
   const REWIND = 'M2.4 6.5a4.1 4.1 0 1 0 1.2-2.9M2.4 2v2.6H5M6.5 4.4v2.3l1.6 1'
-
   const follows = (..._values: unknown[]) => undefined
-
   const FIRST_TURNS = 40
   const MORE_TURNS = 20
   const NEAR_TOP = 600
-
   const starts: Record<string, number> = {}
   let moved = $state(0)
   const from = $derived.by(() => {
@@ -90,7 +86,6 @@
     return start
   })
   const shown = $derived(from ? turns.slice(from) : turns)
-
   let reaching = false
   async function earlier(box: HTMLElement) {
     if (!from || reaching) return
@@ -159,13 +154,11 @@
         <button class="link" onclick={() => settingsWindow().show('ai')}>Settings › AI</button>
       </p>
     {/if}
-
     {#if parent}
       <button class="orden-row is-short up" onclick={() => void chat.openThread(parent.id)}>
         <span class="orden-row-label">↰ {parent.title || 'Untitled'}</span>
       </button>
     {/if}
-
     {#if hello && recent.length}
       <div class="home" in:fade={{ duration: dur(150) }}>
         <h2 class="heading">Chats</h2>
@@ -196,7 +189,6 @@
         </ul>
       </div>
     {/if}
-
     {#each shown as turn, at (turn.id)}
       {@const index = from + at}
       {#if turn.role === 'you'}
@@ -243,28 +235,22 @@
         />
       {/if}
     {/each}
-
     {#if thread && !running}
       <ChangesCard {thread} />
     {/if}
-
     {#if pending !== undefined}
       <div class="said is-pending"><p class="bubble" dir="auto">{pending}</p></div>
     {/if}
-
     {#each steering as words, at (at)}
       <div class="said steered is-pending"><p class="bubble" dir="auto">{words}</p></div>
     {/each}
-
     {#if waiting}
       <Thinking />
     {/if}
-
     {#if chat.trouble}
       <p class="wrong">{chat.trouble}</p>
     {/if}
   </div>
-
   {#if !atEnd && turns.length}
     <button
       class="down orden-layer"

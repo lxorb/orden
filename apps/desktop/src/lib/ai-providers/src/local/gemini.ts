@@ -1,7 +1,6 @@
 import { eventIn, type Heard, record, saysLimit, saysSignedOut } from './heard'
 
 const OWN = /^mcp_orden_/
-
 const QUOTA = /quota|resource_exhausted|\b429\b/i
 
 export function geminiReader(): (line: string) => Heard {

@@ -9,11 +9,8 @@
     row: Snippet<[T, number, Place]>
   }
   const { heads, role, row }: Props = $props()
-
   const OVERSCAN = 8
-
   const LEAST = 28
-
   let list = $state<HTMLUListElement>()
   const where = new ListView()
   let standing = $state<number | null>(null)

@@ -1,9 +1,7 @@
 export type Mode = 'approve' | 'auto' | 'full' | 'plan'
 
 export const MODES: readonly Mode[] = ['approve', 'auto', 'full', 'plan']
-
 const CYCLE: readonly Mode[] = ['approve', 'auto', 'plan']
-
 export const FIRST_MODE: Mode = 'approve'
 
 const WORDS: Record<Mode, string> = {

@@ -6,7 +6,6 @@ const AUTH_INFO = new TextEncoder().encode('nib ai vault auth')
 const SEAL_LABEL = new TextEncoder().encode('nib ai vault 1')
 const NONCE = 12
 const POINT = 65
-
 const subtle = (): SubtleCrypto => globalThis.crypto.subtle
 
 export interface DeviceKey {

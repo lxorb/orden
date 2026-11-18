@@ -51,7 +51,6 @@ vi.stubGlobal('fetch', (url: string, init: RequestInit) => {
 const { complete, wasStopped } = await import('./complete')
 const { ai } = await import('./store.svelte')
 const { plans } = await import('./local/status.svelte')
-
 const CLAUDE_CODE = { id: 'claude-code', kind: 'claude-code' as const, name: '', model: '' }
 const CHATGPT = { id: 'chatgpt', kind: 'chatgpt' as const, name: '', model: 'gpt-plan' }
 const ASKED = [

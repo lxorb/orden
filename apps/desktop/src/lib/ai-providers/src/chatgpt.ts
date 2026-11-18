@@ -3,7 +3,6 @@ import { limitSentence } from './local/trouble'
 import { plans } from './local/status.svelte'
 
 export const USAGE = 'https://chatgpt.com/codex/settings/usage'
-
 const NAME = 'ChatGPT'
 
 export async function planToken(): Promise<string> {

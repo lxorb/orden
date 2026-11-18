@@ -1,7 +1,6 @@
 import { type Drawing, pictureOf } from '../../feedback/src/api'
 
 export const MOST_CHAT_PICTURES = 20
-
 export const MOST_CHAT_TEXT = 4_000_000
 
 export function textHeld(chips: readonly { kind: string; text?: string }[]): number {

@@ -15,9 +15,7 @@ function drawsHere(code: string): boolean {
 }
 
 const PICTURE = /<img\b([^>]*)>/gi
-
 const HERE = [new URL('http://here.invalid/'), new URL('here-only://here.invalid/')]
-
 const DRIVE = /^[a-z]:[\\/]/i
 
 function placeOf(src: string): { here: boolean; host: string } {
@@ -59,7 +57,6 @@ export function withCodeBars(html: string, copy: string, sized = false): string 
 }
 
 const WRITTEN = /&(amp|lt|gt|quot|#39);/g
-
 const WRITTEN_AS: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }
 
 function unwritten(attribute: string): string {
@@ -97,7 +94,6 @@ export interface AnswerOptions {
 }
 
 export const LINES_A_GROUP = 50
-
 const CODE_INSIDE = /(<pre><code[^>]*>)([\s\S]*?)(<\/code><\/pre>)/g
 
 function openSpan(html: string): string {
