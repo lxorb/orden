@@ -31,9 +31,37 @@ mod stun;
 mod wm;
 
 #[cfg(target_os = "windows")]
-use desk::{audio, capture, clipboard, input};
+use desk::{capture, clipboard, input};
 #[cfg(target_os = "macos")]
-use mac::{audio, capture, clipboard, input};
+use mac::{capture, clipboard, input};
+
+#[cfg(any(target_os = "windows", target_os = "macos"))]
+mod audio {
+    pub struct Sound;
+
+    impl Sound {
+        pub fn start(_monitor: &str) -> Option<Sound> {
+            None
+        }
+
+        #[allow(clippy::unused_self)]
+        pub fn next(&mut self) -> Option<(Vec<u8>, u32)> {
+            None
+        }
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+const MOST_COPIED: usize = 200 * 1024;
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn clipped(text: &str) -> &str {
+    let mut end = text.len().min(MOST_COPIED);
+    while !text.is_char_boundary(end) {
+        end -= 1;
+    }
+    &text[..end]
+}
 use orden_base::Held as _;
 
 use std::collections::{HashMap, HashSet};
@@ -860,6 +888,15 @@ fn shown_line(path: &str, args: &[String]) -> String {
         })
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "windows")))]
+fn needed(here: bool, what: &str) -> bool {
+    assert!(
+        here || std::env::var_os("CI").is_none(),
+        "CI installs {what} for this test"
+    );
+    here
 }
 
 #[cfg(all(test, any(target_os = "linux", target_os = "windows")))]

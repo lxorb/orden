@@ -1119,14 +1119,7 @@ mod tests {
         use str0m::change::SdpAnswer;
         use str0m::media::Direction;
 
-        let new = || {
-            RtcConfig::new()
-                .clear_codecs()
-                .enable_vp8(true)
-                .set_crypto_provider(provider())
-                .build(Instant::now())
-        };
-        let (mut host, mut viewer) = (new(), new());
+        let (mut host, mut viewer) = (rtc(true), rtc(true));
         let host_at: SocketAddr = "10.0.0.1:5000".parse().unwrap();
         let viewer_at: SocketAddr = "10.0.0.2:5000".parse().unwrap();
         host.add_local_candidate(Candidate::host(host_at, "udp").unwrap());
@@ -1212,6 +1205,16 @@ mod tests {
         assert!(arrived, "the frame did not arrive");
     }
 
+    fn rtc(vp8: bool) -> Rtc {
+        let config = RtcConfig::new();
+        let config = if vp8 {
+            config.clear_codecs().enable_vp8(true)
+        } else {
+            config
+        };
+        config.set_crypto_provider(provider()).build(Instant::now())
+    }
+
     fn hand_over(other: &mut Rtc, sent: &str0m::net::Transmit, to: SocketAddr) {
         let came = Receive::new(Protocol::Udp, sent.source, to, &sent.contents).unwrap();
         other
@@ -1224,21 +1227,18 @@ mod tests {
         use str0m::media::Direction;
 
         let answer_to = |video: bool| {
-            let mut viewer = RtcConfig::new()
-                .set_crypto_provider(provider())
-                .build(Instant::now());
+            let mut viewer = rtc(false);
             let mut change = viewer.sdp_api();
             if video {
                 change.add_media(MediaKind::Video, Direction::RecvOnly, None, None, None);
             }
             change.add_channel("input".to_owned());
             let (offer, _) = change.apply().unwrap();
-            let mut host = RtcConfig::new()
-                .clear_codecs()
-                .enable_vp8(true)
-                .set_crypto_provider(provider())
-                .build(Instant::now());
-            host.sdp_api().accept_offer(offer).unwrap().to_sdp_string()
+            rtc(true)
+                .sdp_api()
+                .accept_offer(offer)
+                .unwrap()
+                .to_sdp_string()
         };
         assert!(answers_video(&answer_to(true)));
         assert!(!answers_video(&answer_to(false)));
@@ -1280,9 +1280,7 @@ mod tests {
             use str0m::media::Direction;
 
             let screen = Arc::new(Mutex::new(Screen { display, hz: 30.0 }));
-            let mut rtc = RtcConfig::new()
-                .set_crypto_provider(provider())
-                .build(Instant::now());
+            let mut rtc = rtc(false);
             let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
             let local = socket.local_addr().unwrap();
             let mine = Candidate::host(local, "udp").unwrap();
@@ -1361,11 +1359,7 @@ mod tests {
 
             let ready =
                 super::super::display::available() && super::super::installed::on_path("ffmpeg");
-            if !ready {
-                assert!(
-                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                    "CI installs xvfb and ffmpeg for this test"
-                );
+            if !crate::apps_host::needed(ready, "xvfb and ffmpeg") {
                 return;
             }
             let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
@@ -1491,11 +1485,7 @@ mod tests {
 
             let ready =
                 super::super::display::available() && super::super::installed::on_path("ffmpeg");
-            if !ready {
-                assert!(
-                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                    "CI installs xvfb and ffmpeg for this test"
-                );
+            if !crate::apps_host::needed(ready, "xvfb and ffmpeg") {
                 return;
             }
             let display = super::super::display::Display::start(320, 240, 1.0).unwrap();
@@ -1706,11 +1696,7 @@ mod tests {
             let ready = super::super::display::available()
                 && super::super::installed::on_path("ffmpeg")
                 && audio::available();
-            if !ready {
-                assert!(
-                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                    "CI installs xvfb, ffmpeg and pulseaudio for this test"
-                );
+            if !crate::apps_host::needed(ready, "xvfb, ffmpeg and pulseaudio") {
                 return;
             }
             let _server = sound_server();
@@ -1785,11 +1771,7 @@ mod tests {
 
             let ready =
                 super::super::display::available() && super::super::installed::on_path("ffmpeg");
-            if !ready {
-                assert!(
-                    std::env::var_os("CI").is_none() || !cfg!(target_os = "linux"),
-                    "CI installs xvfb and ffmpeg for this test"
-                );
+            if !crate::apps_host::needed(ready, "xvfb and ffmpeg") {
                 return;
             }
             let display = super::super::display::Display::start(640, 400, 1.0).unwrap();
@@ -1885,22 +1867,12 @@ mod tests {
         super::super::in_time(|| {
             use super::super::desk;
 
-            let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
-                .join("System32\\notepad.exe");
-            if encoder::ffmpeg().is_none() || !notepad.is_file() {
-                assert!(
-                    std::env::var_os("CI").is_none(),
-                    "CI installs ffmpeg for this test"
-                );
+            if !crate::apps_host::needed(encoder::ffmpeg().is_some(), "ffmpeg") {
                 return;
             }
-            let desktop = desk::Desktop::start(640, 480).unwrap();
-            let program = desktop
-                .run(
-                    &[notepad.to_string_lossy().into_owned()],
-                    &std::env::temp_dir(),
-                )
-                .unwrap();
+            let Some((desktop, program)) = desk::notepad_on(640, 480) else {
+                return;
+            };
             let (peer, mut viewer, mid, _) = Viewer::connect(desktop.name(), None, None);
             let frames = std::cell::RefCell::new(Vec::<Vec<u8>>::new());
             let channel = std::cell::Cell::new(None);

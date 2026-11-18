@@ -753,6 +753,12 @@ mod tests {
         alt: true,
     };
 
+    const SHIFT: Held = Held {
+        ctrl: false,
+        shift: true,
+        alt: false,
+    };
+
     fn asked(code: &str, ctrl: bool, shift: bool, alt: bool) -> Option<Chord> {
         Chord::of(&Asked {
             code: code.into(),
@@ -839,11 +845,7 @@ mod tests {
         assert_eq!(raw(0x12, ALT, true, false, false), None);
         assert_eq!(raw(0x12, Held::default(), false, false, false), None);
         assert_eq!(raw(0x31, ALT, true, false, true), None);
-        let ctrl = Held {
-            ctrl: true,
-            ..Held::default()
-        };
-        assert_eq!(raw(0x54, ctrl, true, false, true), None);
+        assert_eq!(raw(0x54, CTRL, true, false, true), None);
         assert_eq!(raw(0x74, Held::default(), true, false, true), None);
         assert_eq!(raw(0x45, ALT, true, false, true), None);
         assert_eq!(
@@ -926,53 +928,47 @@ mod tests {
     }
 
     #[test]
-    fn a_new_tab_and_the_last_one_closed_are_the_browser_s() {
-        assert_eq!(down(0x54, false), Some(("t", "KeyT")));
-        assert_eq!(down(0x54, true), Some(("T", "KeyT")));
-    }
-
-    #[test]
-    fn so_are_closing_going_round_and_a_new_window() {
-        assert_eq!(down(0x57, false), Some(("w", "KeyW")));
-        assert_eq!(down(0x09, false), Some(("Tab", "Tab")));
-        assert_eq!(down(0x09, true), Some(("Tab", "Tab")));
-        assert_eq!(down(0x4E, true), Some(("N", "KeyN")));
-        assert_eq!(down(0x22, false), Some(("PageDown", "PageDown")));
-        assert_eq!(down(0x21, true), Some(("PageUp", "PageUp")));
-    }
-
-    #[test]
-    fn and_the_nine_tabs_by_number() {
-        assert_eq!(down(0x31, false), Some(("1", "Digit1")));
-        assert_eq!(down(0x39, false), Some(("9", "Digit9")));
-        assert_eq!(down(0x31, true), None);
-        assert_eq!(down(0x30, false), None);
+    fn the_browser_s_own_ctrl_chords_are_taken_and_the_rest_left_to_the_page() {
+        for (vk, shift, taken) in [
+            (0x54, false, Some(("t", "KeyT"))),
+            (0x54, true, Some(("T", "KeyT"))),
+            (0x57, false, Some(("w", "KeyW"))),
+            (0x09, false, Some(("Tab", "Tab"))),
+            (0x09, true, Some(("Tab", "Tab"))),
+            (0x4E, true, Some(("N", "KeyN"))),
+            (0x22, false, Some(("PageDown", "PageDown"))),
+            (0x21, true, Some(("PageUp", "PageUp"))),
+            (0x31, false, Some(("1", "Digit1"))),
+            (0x39, false, Some(("9", "Digit9"))),
+            (0x31, true, None),
+            (0x30, false, None),
+            (0x46, false, None),
+            (0x47, false, None),
+            (0x47, true, None),
+            (0x46, true, None),
+            (0x4C, false, None),
+            (0x44, false, None),
+            (0x44, true, None),
+            (0x20, true, None),
+            (0x20, false, None),
+            (0x4B, false, None),
+            (0x50, false, None),
+            (0x52, false, None),
+        ] {
+            assert_eq!(down(vk, shift), taken, "{vk:#x} {shift}");
+        }
     }
 
     #[test]
     fn and_f6_to_the_address_field() {
         let alone = |vk, held| meaning(vk, held, true, false).map(|one| one.key);
         assert_eq!(alone(0x75, Held::default()), Some("F6"));
-
-        let shift = Held {
-            shift: true,
-            ..Held::default()
-        };
-        assert_eq!(alone(0x75, shift), None);
+        assert_eq!(alone(0x75, SHIFT), None);
         assert_eq!(alone(0x75, CTRL), None);
     }
 
     #[test]
     fn finding_and_the_address_field_s_other_keys_are_the_page_s_first() {
-        for (vk, shift) in [
-            (0x46, false),
-            (0x47, false),
-            (0x47, true),
-            (0x46, true),
-            (0x4C, false),
-        ] {
-            assert_eq!(down(vk, shift), None, "{vk:#x}");
-        }
         for shift in [false, true] {
             let bare = Held {
                 shift,
@@ -980,17 +976,7 @@ mod tests {
             };
             assert_eq!(meaning(0x72, bare, true, false), None);
         }
-        let alt = Held {
-            alt: true,
-            ..Held::default()
-        };
-        assert_eq!(meaning(0x44, alt, true, false), None);
-    }
-
-    #[test]
-    fn ctrl_d_is_the_page_s_first_as_in_chrome() {
-        assert_eq!(down(0x44, false), None);
-        assert_eq!(down(0x44, true), None);
+        assert_eq!(meaning(0x44, ALT, true, false), None);
     }
 
     #[test]
@@ -1004,12 +990,6 @@ mod tests {
         assert_eq!(said["alt"], false);
         assert_eq!(said["repeat"], false);
         assert_eq!(said["down"], true);
-    }
-
-    #[test]
-    fn ctrl_shift_space_is_the_page_s_first() {
-        assert_eq!(down(0x20, true), None);
-        assert_eq!(down(0x20, false), None);
     }
 
     #[test]
@@ -1042,40 +1022,29 @@ mod tests {
 
     #[test]
     fn everything_else_is_the_page_s() {
-        for vk in [0x4C, 0x4B, 0x46, 0x50, 0x52] {
-            assert_eq!(down(vk, false), None, "{vk:#x}");
-        }
         assert_eq!(meaning(0x74, Held::default(), true, false), None);
         assert_eq!(meaning(0x54, Held::default(), true, false), None);
     }
 
     #[test]
     fn alt_held_on_its_own_is_told_and_left_to_the_page() {
-        let alt = Held {
-            alt: true,
-            ..Held::default()
-        };
         let said = |vk, held, repeat| told(vk, held, true, repeat).map(|one| one.key);
 
         assert_eq!(said(0x12, Held::default(), false), Some("Alt"));
-        assert_eq!(said(0x12, alt, false), Some("Alt"));
-        assert_eq!(said(0x12, alt, true), None);
-        assert_eq!(said(0x25, alt, false), Some("Unidentified"));
-        assert_eq!(said(0x44, alt, false), Some("Unidentified"));
+        assert_eq!(said(0x12, ALT, false), Some("Alt"));
+        assert_eq!(said(0x12, ALT, true), None);
+        assert_eq!(said(0x25, ALT, false), Some("Unidentified"));
+        assert_eq!(said(0x44, ALT, false), Some("Unidentified"));
         assert_eq!(said(0x44, Held::default(), false), None);
-        assert_eq!(meaning(0x12, alt, true, false), None);
-        assert_eq!(told(0x12, alt, false, false), None);
+        assert_eq!(meaning(0x12, ALT, true, false), None);
+        assert_eq!(told(0x12, ALT, false, false), None);
     }
 
     #[test]
     fn altgr_and_alt_with_shift_are_never_a_hold() {
         assert_eq!(told(0x12, Held { alt: true, ..CTRL }, true, false), None);
         assert_eq!(told(0x32, Held { alt: true, ..CTRL }, true, false), None);
-        let shift = Held {
-            shift: true,
-            ..Held::default()
-        };
-        assert_eq!(told(0x12, shift, true, false), None);
+        assert_eq!(told(0x12, SHIFT, true, false), None);
         let held = Held {
             alt: true,
             shift: true,
@@ -1117,11 +1086,7 @@ mod tests {
 
     #[test]
     fn f11_and_shift_f11_are_the_window_s_and_leave_the_page_its_keyboard() {
-        let shift = Held {
-            shift: true,
-            ..Held::default()
-        };
-        let filled = meaning(0x7A, shift, true, false);
+        let filled = meaning(0x7A, SHIFT, true, false);
         let named = filled.as_ref().map(|one| (one.key, one.code));
         assert_eq!(named, Some(("F11", "F11")));
         assert!(filled.as_ref().is_some_and(|one| one.held.shift));

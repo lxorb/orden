@@ -303,110 +303,91 @@ mod engine {
 mod tests {
     use super::{shape_of, Cut, Hollow};
 
-    fn hollow(x: f64, y: f64, width: f64, height: f64) -> Hollow {
-        Hollow {
-            x,
-            y,
-            width,
-            height,
-            radius: 0.0,
+    fn cut(all: bool, hollows: &[(f64, f64, f64, f64, f64)]) -> Cut {
+        let hollows = hollows
+            .iter()
+            .map(|&(x, y, width, height, radius)| Hollow {
+                x,
+                y,
+                width,
+                height,
+                radius,
+            })
+            .collect();
+        Cut { all, hollows }
+    }
+
+    #[test]
+    fn the_page_is_cut_round_its_corner_and_what_lies_over_it_in_screen_pixels() {
+        let menu = cut(false, &[(10.0, 20.0, 200.0, 100.0, 0.0)]);
+        for (over, (width, height), scale, corner, shape) in [
+            (
+                None,
+                (800, 600),
+                1.5,
+                10.0,
+                Some(vec![(0, 0, 800, 600, 30)]),
+            ),
+            (None, (800, 600), 1.5, 0.0, None),
+            (None, (800, 600), 1.0, 0.0, None),
+            (None, (8, 600), 1.0, 10.0, Some(vec![(0, 0, 8, 600, 8)])),
+            (Some(Cut::default()), (800, 600), 1.0, 0.0, None),
+            (
+                Some(cut(true, &[])),
+                (800, 600),
+                1.0,
+                10.0,
+                Some(Vec::new()),
+            ),
+            (Some(cut(true, &[])), (800, 600), 1.0, 0.0, Some(Vec::new())),
+            (
+                Some(menu),
+                (800, 600),
+                1.0,
+                10.0,
+                Some(vec![(0, 0, 800, 600, 20), (10, 20, 210, 120, 0)]),
+            ),
+            (
+                Some(cut(false, &[(10.0, 20.0, 200.0, 100.0, 8.0)])),
+                (1200, 900),
+                1.5,
+                0.0,
+                Some(vec![(0, 0, 1200, 900, 0), (15, 30, 315, 180, 24)]),
+            ),
+            (
+                Some(cut(false, &[(-40.0, -10.0, 100.0, 50.0, 0.0)])),
+                (800, 600),
+                1.0,
+                0.0,
+                Some(vec![(0, 0, 800, 600, 0), (-40, -10, 60, 40, 0)]),
+            ),
+            (
+                Some(cut(false, &[(-248.0, 85.0, 328.0, 240.0, 12.0)])),
+                (1000, 700),
+                1.0,
+                0.0,
+                Some(vec![(0, 0, 1000, 700, 0), (-248, 85, 80, 325, 24)]),
+            ),
+            (
+                Some(cut(false, &[(900.0, 10.0, 100.0, 50.0, 0.0)])),
+                (800, 600),
+                1.0,
+                0.0,
+                None,
+            ),
+            (
+                Some(cut(false, &[(-140.0, 10.0, 100.0, 50.0, 0.0)])),
+                (800, 600),
+                1.0,
+                0.0,
+                None,
+            ),
+        ] {
+            assert_eq!(
+                shape_of(over.as_ref(), width, height, scale, corner),
+                shape,
+                "{over:?}"
+            );
         }
-    }
-
-    #[test]
-    fn the_page_wears_the_card_s_corner_at_its_bottom() {
-        assert_eq!(
-            shape_of(None, 800, 600, 1.5, 10.0),
-            Some(vec![(0, 0, 800, 600, 30)])
-        );
-        assert_eq!(shape_of(None, 800, 600, 1.5, 0.0), None);
-        let cut = Cut {
-            all: false,
-            hollows: vec![hollow(10.0, 20.0, 200.0, 100.0)],
-        };
-        assert_eq!(
-            shape_of(Some(&cut), 800, 600, 1.0, 10.0),
-            Some(vec![(0, 0, 800, 600, 20), (10, 20, 210, 120, 0)])
-        );
-        let all = Cut {
-            all: true,
-            hollows: Vec::new(),
-        };
-        assert_eq!(shape_of(Some(&all), 800, 600, 1.0, 10.0), Some(Vec::new()));
-        assert_eq!(
-            shape_of(None, 8, 600, 1.0, 10.0),
-            Some(vec![(0, 0, 8, 600, 8)])
-        );
-    }
-
-    #[test]
-    fn nothing_over_the_page_is_the_whole_page() {
-        assert_eq!(shape_of(None, 800, 600, 1.0, 0.0), None);
-        assert_eq!(shape_of(Some(&Cut::default()), 800, 600, 1.0, 0.0), None);
-    }
-
-    #[test]
-    fn a_sheet_over_everything_leaves_nothing() {
-        let all = Cut {
-            all: true,
-            hollows: Vec::new(),
-        };
-        assert_eq!(shape_of(Some(&all), 800, 600, 1.0, 0.0), Some(Vec::new()));
-    }
-
-    #[test]
-    fn a_menu_is_taken_out_of_the_page_in_screen_pixels() {
-        let cut = Cut {
-            all: false,
-            hollows: vec![Hollow {
-                radius: 8.0,
-                ..hollow(10.0, 20.0, 200.0, 100.0)
-            }],
-        };
-        assert_eq!(
-            shape_of(Some(&cut), 1200, 900, 1.5, 0.0),
-            Some(vec![(0, 0, 1200, 900, 0), (15, 30, 315, 180, 24)])
-        );
-    }
-
-    #[test]
-    fn a_layer_reaching_past_the_page_keeps_its_own_shape() {
-        let cut = Cut {
-            all: false,
-            hollows: vec![hollow(-40.0, -10.0, 100.0, 50.0)],
-        };
-        assert_eq!(
-            shape_of(Some(&cut), 800, 600, 1.0, 0.0),
-            Some(vec![(0, 0, 800, 600, 0), (-40, -10, 60, 40, 0)])
-        );
-    }
-
-    #[test]
-    fn a_menu_over_the_page_s_edge_has_its_corners_where_the_menu_has_them() {
-        let cut = Cut {
-            all: false,
-            hollows: vec![Hollow {
-                radius: 12.0,
-                ..hollow(-248.0, 85.0, 328.0, 240.0)
-            }],
-        };
-        assert_eq!(
-            shape_of(Some(&cut), 1000, 700, 1.0, 0.0),
-            Some(vec![(0, 0, 1000, 700, 0), (-248, 85, 80, 325, 24)])
-        );
-    }
-
-    #[test]
-    fn a_layer_beside_the_page_is_no_cut() {
-        let cut = Cut {
-            all: false,
-            hollows: vec![hollow(900.0, 10.0, 100.0, 50.0)],
-        };
-        assert_eq!(shape_of(Some(&cut), 800, 600, 1.0, 0.0), None);
-        let left = Cut {
-            all: false,
-            hollows: vec![hollow(-140.0, 10.0, 100.0, 50.0)],
-        };
-        assert_eq!(shape_of(Some(&left), 800, 600, 1.0, 0.0), None);
     }
 }

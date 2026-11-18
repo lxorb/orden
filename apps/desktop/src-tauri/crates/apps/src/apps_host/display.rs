@@ -282,11 +282,7 @@ mod tests {
         use x11rb::wrapper::ConnectionExt as _;
 
         super::super::in_time(|| {
-            if !available() {
-                assert!(
-                    std::env::var_os("CI").is_none(),
-                    "CI installs xvfb for this test"
-                );
+            if !crate::apps_host::needed(available(), "xvfb") {
                 return;
             }
             let display = Display::start(320, 240, 1.0).unwrap();
@@ -361,11 +357,7 @@ mod tests {
         super::super::in_time(|| {
             use x11rb::connection::Connection as _;
 
-            if !available() {
-                assert!(
-                    std::env::var_os("CI").is_none(),
-                    "CI installs xvfb for this test"
-                );
+            if !crate::apps_host::needed(available(), "xvfb") {
                 return;
             }
             let display = Display::start(640, 480, 1.0).unwrap();

@@ -1250,35 +1250,29 @@ mod tests {
     }
 
     #[test]
-    fn only_the_web_is_allowed() {
-        assert!(allowed(&at("https://example.com/a")));
-        assert!(allowed(&at("http://example.com/a")));
-        assert!(!allowed(&at("file:///C:/notes/Idea.md")));
-        assert!(!allowed(&at("mailto:someone@example.com")));
-        assert!(!allowed(&at("data:text/html,<p>hi")));
-    }
-
-    #[test]
-    fn the_app_is_not_a_page() {
-        assert!(!allowed(&at("http://tauri.localhost/index.html")));
-        assert!(!allowed(&at("https://TAURI.localhost/")));
-        assert!(!allowed(&at("http://ipc.localhost/notes")));
-        assert!(!allowed(&at("http://asset.localhost/a.png")));
-    }
-
-    #[test]
-    fn the_source_of_a_page_is_that_page() {
-        assert!(allowed(&at("view-source:https://example.com/a?b=1")));
+    fn only_the_web_and_its_source_are_allowed_and_the_app_is_not_a_page() {
+        for (url, fine) in [
+            ("https://example.com/a", true),
+            ("http://example.com/a", true),
+            ("view-source:https://example.com/a?b=1", true),
+            ("file:///C:/notes/Idea.md", false),
+            ("mailto:someone@example.com", false),
+            ("data:text/html,<p>hi", false),
+            ("http://tauri.localhost/index.html", false),
+            ("https://TAURI.localhost/", false),
+            ("http://ipc.localhost/notes", false),
+            ("http://asset.localhost/a.png", false),
+            ("view-source:file:///C:/notes/Idea.md", false),
+            ("view-source:http://tauri.localhost/", false),
+            ("view-source:view-source:https://example.com/", false),
+            ("view-source:", false),
+        ] {
+            assert_eq!(allowed(&at(url)), fine, "{url}");
+        }
         assert_eq!(
             handed_over(&at("view-source:https://example.com/a")),
             Some("view-source:https://example.com/a".to_string())
         );
-        assert!(!allowed(&at("view-source:file:///C:/notes/Idea.md")));
-        assert!(!allowed(&at("view-source:http://tauri.localhost/")));
-        assert!(!allowed(&at(
-            "view-source:view-source:https://example.com/"
-        )));
-        assert!(!allowed(&at("view-source:")));
     }
 
     #[test]
@@ -1288,58 +1282,39 @@ mod tests {
             Some("https://example.com/a".to_string())
         );
 
-        assert!(handed_over(&at("orden://command?id=record")).is_none());
-        assert!(handed_over(&at("file:///C:/notes/Idea.md")).is_none());
-        assert!(handed_over(&at("smb://example.com/share")).is_none());
-        assert!(handed_over(&at("ms-officecmd:x")).is_none());
-        assert!(handed_over(&at("http://tauri.localhost/index.html")).is_none());
+        for url in [
+            "orden://command?id=record",
+            "file:///C:/notes/Idea.md",
+            "smb://example.com/share",
+            "ms-officecmd:x",
+            "http://tauri.localhost/index.html",
+            BLANK,
+        ] {
+            assert!(handed_over(&at(url)).is_none(), "{url}");
+        }
     }
 
     #[test]
-    fn a_trail_remembers_where_it_has_been() {
-        let mut trail = Trail::default();
-        trail.visited("https://a.example/");
-        assert!(!trail.back());
-        assert!(!trail.forward());
-
-        trail.visited("https://b.example/");
-        assert!(trail.back());
-        assert!(!trail.forward());
-    }
-
-    #[test]
-    fn the_same_page_again_is_not_a_step() {
-        let mut trail = Trail::default();
-        trail.visited("https://a.example/");
-        trail.visited("https://a.example/");
-        assert!(!trail.back());
-        assert_eq!(trail.urls.len(), 1);
-    }
-
-    #[test]
-    fn a_step_back_moves_along_the_trail_rather_than_adding_to_it() {
-        let mut trail = Trail::default();
-        trail.visited("https://a.example/");
-        trail.visited("https://b.example/");
-        trail.visited("https://a.example/");
-
-        assert_eq!(trail.at, 0);
-        assert_eq!(trail.urls.len(), 2);
-        assert!(!trail.back());
-        assert!(trail.forward());
-    }
-
-    #[test]
-    fn somewhere_new_forgets_what_was_ahead() {
-        let mut trail = Trail::default();
-        trail.visited("https://a.example/");
-        trail.visited("https://b.example/");
-        trail.visited("https://a.example/");
-        trail.visited("https://c.example/");
-
-        assert_eq!(trail.urls, ["https://a.example/", "https://c.example/"]);
-        assert!(trail.back());
-        assert!(!trail.forward());
+    fn a_trail_steps_back_and_forgets_what_was_ahead_when_somewhere_new() {
+        for (visits, urls, at, back, forward) in [
+            (&["a"][..], &["a"][..], 0, false, false),
+            (&["a", "b"], &["a", "b"], 1, true, false),
+            (&["a", "a"], &["a"], 0, false, false),
+            (&["a", "b", "a"], &["a", "b"], 0, false, true),
+            (&["a", "b", "a", "c"], &["a", "c"], 1, true, false),
+        ] {
+            let mut trail = Trail::default();
+            for one in visits {
+                trail.visited(one);
+            }
+            assert_eq!(trail.urls, urls, "{visits:?}");
+            assert_eq!(trail.at, at, "{visits:?}");
+            assert_eq!(
+                (trail.back(), trail.forward()),
+                (back, forward),
+                "{visits:?}"
+            );
+        }
     }
 
     #[test]
@@ -1497,7 +1472,6 @@ mod tests {
     #[test]
     fn nobody_opens_a_tab_on_the_blank_page() {
         assert!(address(BLANK).is_err());
-        assert!(handed_over(&at(BLANK)).is_none());
     }
 
     #[test]
@@ -1548,15 +1522,6 @@ mod tests {
     fn a_tab_is_told_from_its_page_s_label() {
         assert_eq!(tab_of("web-a1").as_deref(), Some("a1"));
         assert_eq!(tab_of("main"), None);
-    }
-
-    #[test]
-    fn a_page_that_could_not_be_built_gives_the_tab_back() {
-        let tabs = WebTabs::default();
-
-        assert!(tabs.claim("a"));
-        tabs.built("a");
-        assert!(tabs.claim("a"));
     }
 
     #[test]

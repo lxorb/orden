@@ -258,24 +258,13 @@ impl Canvas {
 
 #[cfg(test)]
 mod tests {
-    use super::super::Desktop;
     use super::*;
 
     #[test]
     fn draws_a_desktop_nobody_looks_at() {
-        let notepad = std::path::PathBuf::from(std::env::var("SystemRoot").unwrap())
-            .join("System32\\notepad.exe");
-        if !notepad.is_file() {
-            eprintln!("no notepad.exe here: skipped");
+        let Some((desktop, program)) = super::super::notepad_on(640, 480) else {
             return;
-        }
-        let desktop = Desktop::start(640, 480).unwrap();
-        let program = desktop
-            .run(
-                &[notepad.to_string_lossy().into_owned()],
-                &std::env::temp_dir(),
-            )
-            .unwrap();
+        };
         let (tell, news) = std::sync::mpsc::channel();
         let mut capture = Capture::open(&desktop.name(), tell).unwrap();
         let until = std::time::Instant::now() + Duration::from_secs(20);

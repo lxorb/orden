@@ -347,11 +347,7 @@ mod tests {
             use std::time::Duration;
             use x11rb::protocol::xproto::Rectangle;
 
-            if !super::super::display::available() {
-                assert!(
-                    std::env::var_os("CI").is_none(),
-                    "CI installs xvfb for this test"
-                );
+            if !crate::apps_host::needed(super::super::display::available(), "xvfb") {
                 return;
             }
             let display = super::super::display::Display::start(320, 240, 1.0).unwrap();

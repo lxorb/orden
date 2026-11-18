@@ -450,11 +450,7 @@ mod tests {
     #[allow(clippy::too_many_lines)]
     fn fills_the_screen_with_the_main_window_and_follows_it() {
         super::super::in_time(|| {
-            if !super::super::display::available() {
-                assert!(
-                    std::env::var_os("CI").is_none(),
-                    "CI installs xvfb for this test"
-                );
+            if !crate::apps_host::needed(super::super::display::available(), "xvfb") {
                 return;
             }
             let display = super::super::display::Display::start(800, 600, 1.0).unwrap();

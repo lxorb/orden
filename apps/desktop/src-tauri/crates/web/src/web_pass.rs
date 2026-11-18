@@ -687,11 +687,15 @@ mod tests {
     }
 
     fn place() -> Place {
+        framed("F1", "https://a.example", "https://a.example/login", true)
+    }
+
+    fn framed(frame: &str, origin: &str, url: &str, top: bool) -> Place {
         Place {
-            frame: "F1".into(),
-            origin: "https://a.example".into(),
-            url: "https://a.example/login".into(),
-            top: true,
+            frame: frame.into(),
+            origin: origin.into(),
+            url: url.into(),
+            top,
         }
     }
 
@@ -910,24 +914,14 @@ mod tests {
         assert_eq!(
             frames,
             vec![
-                Place {
-                    frame: "C".into(),
-                    origin: "https://pay.example".into(),
-                    url: "https://pay.example/card#x".into(),
-                    top: false,
-                },
-                Place {
-                    frame: "M".into(),
-                    origin: "https://a.example".into(),
-                    url: "https://a.example/".into(),
-                    top: true,
-                },
-                Place {
-                    frame: "S".into(),
-                    origin: "https://a.example".into(),
-                    url: "about:srcdoc".into(),
-                    top: false,
-                },
+                framed(
+                    "C",
+                    "https://pay.example",
+                    "https://pay.example/card#x",
+                    false
+                ),
+                framed("M", "https://a.example", "https://a.example/", true),
+                framed("S", "https://a.example", "about:srcdoc", false),
             ]
         );
         let other = frames_in(Some(&tree), false);
