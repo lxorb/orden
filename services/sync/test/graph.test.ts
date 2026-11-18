@@ -1,31 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { readGraph } from '../src/sync-server-engine/src/spaces/graph'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { spaceField } from './space-field'
 
-let env: TestEnv
-let token: string
-let space: string
-
-beforeEach(async () => {
-  env = testEnv()
-  token = await signIn(env, 'a@b.dev')
-  space = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
-})
-
-afterEach(() => env.close())
-
-function put(graph: unknown) {
-  return call(env, `/v1/spaces/${space}/graph`, { method: 'PUT', token, body: { graph } })
-}
-
-async function listed() {
-  const { json } = await call(env, '/v1/spaces', { token })
-  return json.spaces.find((one) => one.id === space)?.graph
-}
-
-function column(raw: string) {
-  env.db.prepare('update spaces set graph = ? where id = ?').run(raw, space)
-}
+const { put, listed, column, kept, owned } = spaceField('graph')
 
 const DRAWN = {
   filter: 'tag:work -path:archive',
@@ -43,34 +20,8 @@ const DRAWN = {
   depth: 2,
 }
 
-describe("how a space's graph is drawn", () => {
-  test('starts as nothing said, which is the app asking for its defaults', async () => {
-    expect(await listed()).toEqual({})
-  })
-
-  test('is kept whole, and rides the space listing', async () => {
-    const set = await put(DRAWN)
-    expect(set.status).toBe(200)
-    expect(set.json.graph).toEqual(DRAWN)
-
-    expect(await listed()).toEqual(DRAWN)
-  })
-
-  test('is replaced by what arrives, which is how a filter is cleared', async () => {
-    await put(DRAWN)
-    await put({ filter: '' })
-
-    expect(await listed()).toEqual({ filter: '' })
-  })
-
-  test('marks the space as changed, so another device notices', async () => {
-    const before = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-    await put(DRAWN)
-    const after = (await call(env, '/v1/spaces', { token })).json.spaces[0]?.updatedAt ?? 0
-
-    expect(after).toBeGreaterThanOrEqual(before)
-  })
-})
+kept({}, DRAWN, { filter: '' })
+owned({}, DRAWN)
 
 describe('what a space may say about its graph', () => {
   test('is an object, and never a list or a word', async () => {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { sha256 } from '../src/sync-server/src/crypto'
 import { presenceOf } from '../src/sync-server-engine/src/people/presence'
 import { profileChanges, statusIn } from '../src/sync-server-engine/src/people/profile'
-import { call, mail, signIn, testEnv, type TestEnv } from './harness'
+import { call, joined, mail, signIn, type TestEnv, testEnv } from './harness'
 import { connect, hangUp, hub, send } from './hub-fakes'
 import { invited } from './sync2'
 
@@ -105,19 +105,7 @@ describe('the routes', () => {
     return (await call(env, '/v1/me', { token })).json.user.id
   }
 
-  async function invite(email: string): Promise<string> {
-    const sent = await mail(() =>
-      call(env, `/v1/spaces/${space}/share/invite`, {
-        token: owner,
-        body: { email, role: 'write' },
-      }),
-    )
-    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1]
-    if (!link) throw new Error(`no invitation was sent:\n${sent}`)
-    const token = await signIn(env, email)
-    await call(env, `/v1/join/${link}`, { method: 'POST', token })
-    return token
-  }
+  const invite = (email: string) => joined(env, owner, space, email)
 
   async function seen(token: string, ids: string[]): Promise<Record<string, unknown>[]> {
     const { json } = await call<PeopleReply>(env, `/v2/people?ids=${ids.join(',')}`, { token })

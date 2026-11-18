@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
+import {
+  call,
+  invitation,
+  mail,
+  signIn,
+  testEnv,
+  type JoinView,
+  type ShareView,
+  type TestEnv,
+} from './harness'
 
 const NO_FACE = { id: null, avatar: null }
 const A_FACE = { id: expect.any(String), avatar: null }
@@ -42,15 +51,8 @@ async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Pro
   return found[1]
 }
 
-async function inviteLink(email: string, role: 'write' | 'read'): Promise<string> {
-  const sent = await mail(() =>
-    call(env, `/v1/spaces/${space}/share/invite`, { token: owner, body: { email, role } }),
-  )
-
-  const found = /\/join\/([a-f0-9]+)/.exec(sent)
-  if (!found?.[1]) throw new Error(`no invitation was sent:\n${sent}`)
-  return found[1]
-}
+const inviteLink = (email: string, role: 'write' | 'read') =>
+  invitation(env, owner, space, email, role)
 
 function follow(token: string, options: { as?: string; body?: unknown } = {}) {
   return call(env, `/v1/join/${token}`, {

@@ -2,6 +2,7 @@ import '../../sync-ports'
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
 import { hash32 } from '@orden/sync-core'
+import { memoryStorage } from '../test/memory-storage'
 const said = vi.hoisted(() => [] as string[])
 const stores = vi.hoisted(() => new Map<string, unknown>())
 vi.mock('./store', async (importOriginal) => {
@@ -58,19 +59,6 @@ vi.mock('./app-world', () => {
   }
 })
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { runner } = await import('./runner.svelte')

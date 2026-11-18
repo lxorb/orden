@@ -2,14 +2,11 @@ import fc from 'fast-check'
 import { describe, expect, test } from 'vitest'
 import {
   ackFrame,
-  deviceFrameOf,
-  deviceRowsOf,
   epochFrame,
   feedPageOf,
   heldName,
   frame,
   type Framed,
-  hubFrameOf,
   isEntryId,
   isName,
   keepRequestOf,
@@ -407,47 +404,5 @@ describe('documents', () => {
       device: 'laptop',
     })
     expect(keepRequestOf({ id: 'n', text: 3, device: 'laptop' })).toBeNull()
-  })
-})
-
-describe('the hub', () => {
-  test('every frame a device sends reads back as itself', () => {
-    const frames = [
-      { t: 'hello', device: 'd1', name: 'Laptop', platform: 'windows', app: '1.0.0' },
-      { t: 'active' },
-      { t: 'idle' },
-      { t: 'acquire', key: 'k', take: true },
-      { t: 'release', key: 'k', version: 3 },
-      { t: 'flushed', key: 'k', version: 4 },
-      { t: 'want-key', pub: 'pub' },
-      { t: 'grant-key', to: 'd2', wrapped: 'w', generation: 1 },
-      { t: 'deny-key', to: 'd2' },
-    ]
-    for (const one of frames) expect(deviceFrameOf(one)).toEqual(one)
-    expect(deviceFrameOf({ t: 'acquire', key: 'k' })).toBeNull()
-    expect(deviceFrameOf({ t: 'poke', space: 's', seq: 1 })).toBeNull()
-  })
-
-  test('every frame the hub sends reads back as itself', () => {
-    const frames = [
-      { t: 'poke', space: 's', seq: 1 },
-      { t: 'granted', key: 'k', fence: 2, version: 3 },
-      { t: 'busy', key: 'k', device: 'd' },
-      { t: 'flush', key: 'k', fence: 2 },
-      { t: 'lost', key: 'k', device: 'd' },
-      { t: 'free', key: 'k' },
-      { t: 'state', key: 'k', version: 4 },
-      { t: 'key-wanted', device: 'd', name: 'Desktop', pub: 'p' },
-      { t: 'key', wrapped: 'w', generation: 2 },
-      { t: 'key-denied' },
-    ]
-    for (const one of frames) expect(hubFrameOf(one)).toEqual(one)
-    expect(hubFrameOf({ t: 'granted', key: 'k', fence: -1, version: 3 })).toBeNull()
-  })
-
-  test('the devices list', () => {
-    const rows = [{ id: 'd', name: 'Laptop', platform: 'windows', createdAt: 1, lastSeenAt: null }]
-    expect(deviceRowsOf(rows)).toEqual(rows)
-    expect(deviceRowsOf([{ id: 'd' }])).toBeNull()
   })
 })

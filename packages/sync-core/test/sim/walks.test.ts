@@ -1,16 +1,7 @@
-import { describe, expect, test } from 'vitest'
+import { expect, test } from 'vitest'
+import { failedSeeds } from './roads'
 import { simulate } from './run'
 
-const SEEDS = 1000
-
-describe('random walks', () => {
-  test(`${String(SEEDS)} seeds of the reference account and devices hold every check`, async () => {
-    const failed: string[] = []
-    for (let seed = 1; seed <= SEEDS; seed++) {
-      const report = await simulate({ seed })
-      if (report.failures.length) failed.push(`seed ${String(seed)}: ${report.failures.join('; ')}`)
-      if (failed.length >= 5) break
-    }
-    expect(failed).toEqual([])
-  }, 600_000)
-})
+test('1000 seeds of the reference account and devices hold every check', async () => {
+  expect(await failedSeeds(1, 1000, (seed) => simulate({ seed }))).toEqual([])
+}, 600_000)

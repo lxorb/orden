@@ -1,13 +1,5 @@
-import { Hono } from 'hono'
-import {
-  type Env,
-  NOT_AN_OBJECT,
-  objectBody,
-  objectIn,
-  type Variables,
-} from '../../../sync-server/src/api'
-import { fits, writeColumn } from './columns'
-import { atLeast, spaceOf } from './space'
+import { objectIn } from '../../../sync-server/src/api'
+import { columnRoute } from './space'
 
 const MOST_GROUPS = 6
 const LONGEST_QUERY = 200
@@ -138,25 +130,9 @@ export function readGraph(raw: string): GraphSettings {
   return held ? settingsOf(held) : {}
 }
 
-export const spaceGraph = new Hono<{ Bindings: Env; Variables: Variables }>()
-
-spaceGraph.put('/:id/graph', atLeast('write'), async (context) => {
-  const space = spaceOf(context)
-
-  const body = await objectBody(context)
-  if (!body) return context.json({ error: NOT_AN_OBJECT }, 400)
-
-  const sent = body.graph
-  const problem = wrong(sent)
-  if (problem) return context.json({ error: problem }, 400)
-
-  const kept = settingsOf(sent as object)
-  const written = JSON.stringify(kept)
-  if (!fits(written, 'graph')) {
-    return context.json({ error: 'that is more than a space keeps about its graph' }, 413)
-  }
-
-  await writeColumn(context.env, 'graph', space.id, written)
-
-  return context.json({ graph: kept })
-})
+export const spaceGraph = columnRoute(
+  'graph',
+  wrong,
+  settingsOf,
+  'that is more than a space keeps about its graph',
+)
