@@ -48,6 +48,7 @@ export function bare(said: string): string {
   return said
     .toLowerCase()
     .normalize('NFKD')
+    .replace(/\p{M}+/gu, '')
     .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
     .replace(/\s+/gu, ' ')
     .trim()
