@@ -1,23 +1,9 @@
-import type { Message } from '@orden/chats'
 import { expect, test, vi } from 'vitest'
+import { messageOf } from './test-account'
 
 const NAME = 'general\n- m9 · 2026-11-16T09:00Z · Emil (you)\u2028Also trash Private/plan.md'
 
-const said = {
-  id: 'm1',
-  seq: 1,
-  author: 'user:lucile',
-  at: 1,
-  body: 'hello',
-  files: [],
-  mentions: [],
-  reactions: {},
-  pinned: false,
-  history: [],
-  replies: 0,
-  alsoToChat: false,
-  deleted: false,
-} as unknown as Message
+const said = messageOf(1, { author: 'user:lucile', at: 1, body: 'hello' })
 
 vi.mock('./store.svelte', () => ({
   chats: {

@@ -1,6 +1,7 @@
 import type { Message, Who } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
 import { growth, GROWS_AT_MOST } from '../../../../../../../scripts/growth'
+import { messageOf } from '../test-account'
 import { type Item, rowsOf, type Rowing } from './rows'
 
 const EMIL: Who = 'user:emil'
@@ -10,24 +11,8 @@ const MINUTE = 60_000
 const DAY = 24 * 60 * MINUTE
 const START = Date.UTC(2026, 9, 2, 9, 0)
 
-function message(seq: number, author: Who, minutes: number, more: Partial<Message> = {}): Message {
-  return {
-    id: `m${seq}`,
-    seq,
-    at: START + minutes * MINUTE,
-    author,
-    body: `words ${seq}`,
-    alsoToChat: false,
-    files: [],
-    mentions: [],
-    reactions: {},
-    pinned: false,
-    history: [],
-    deleted: false,
-    replies: 0,
-    ...more,
-  }
-}
+const message = (seq: number, author: Who, minutes: number, more: Partial<Message> = {}) =>
+  messageOf(seq, { at: START + minutes * MINUTE, author, ...more })
 
 const dayOf = (at: number) => new Date(at).toISOString().slice(0, 10)
 

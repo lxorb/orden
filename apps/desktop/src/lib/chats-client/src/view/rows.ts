@@ -1,5 +1,6 @@
 import type { Message, Who } from '@orden/chats'
 import { GROUP_WITHIN } from '@orden/chats/limits'
+import { keepsRow } from '../fold'
 
 export type Item<M extends Message = Message> =
   | { kind: 'day'; key: string; day: string; at: number }
@@ -15,14 +16,10 @@ export interface Rowing<M extends Message = Message> {
   reads: ReadonlyMap<Who, number>
 }
 
-function shown(message: Message): boolean {
-  return !message.deleted || message.replies > 0
-}
-
 export function rowsOf<M extends Message>(rowing: Rowing<M>): Item<M>[] {
   const { me, readAtOpen, dayOf } = rowing
   const items: Item<M>[] = []
-  const placed = rowing.messages.filter(shown)
+  const placed = rowing.messages.filter(keepsRow)
   const seen = seenAt(placed, rowing.reads, me)
 
   let lastDay: string | null = null
@@ -77,13 +74,8 @@ function seenAt(
   if (reads.size === 0 || messages.length === 0) return out
   const order = [...reads].filter(([who]) => who !== me).sort(([, a], [, b]) => a - b)
   for (const [who, seq] of order) {
-    const at = lastAtOrBefore(messages, seq)
-    if (at === -1) continue
-    const id = messages[at]?.id
-    if (id === undefined) continue
-    const list = out.get(id) ?? []
-    list.push(who)
-    out.set(id, list)
+    const id = messages[lastAtOrBefore(messages, seq)]?.id
+    if (id !== undefined) out.set(id, [...(out.get(id) ?? []), who])
   }
   return out
 }
