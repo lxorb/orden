@@ -1,4 +1,14 @@
-import { blockAround, blockIdOf, itemColumn, itemHolding, ownLine, type Row, rowsOf } from './links'
+import {
+  blockAround,
+  blockIdOf,
+  indentOf,
+  itemColumn,
+  itemHolding,
+  ownLine,
+  type Row,
+  rowsOf,
+  withoutColumns,
+} from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)\r?$/u
 
@@ -28,10 +38,6 @@ const CLOSERS: readonly (readonly [RegExp, string])[] = [
   [/^ {0,3}<!--/u, '-->'],
   [/^ {0,3}<(?:pre|script|style)\b/iu, '</'],
 ]
-
-function indentOf(text: string): number {
-  return /^[ \t]*/u.exec(text)?.[0].length ?? 0
-}
 
 function itemEnd(rows: readonly Row[], owner: number): number {
   const depth = indentOf(rows[owner]?.text ?? '')
@@ -138,7 +144,11 @@ export function namedBlock(
   const name = id()
   if (nameStandsApart(rows.slice(start, end + 1))) {
     const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
-    const lead = (lines[start] ?? '').slice(0, itemColumn(lines, start))
+    const first = lines[start] ?? ''
+    const lead = first.slice(
+      0,
+      first.length - withoutColumns(first, itemColumn(lines, start)).length,
+    )
     lines.splice(end + 1, 0, ending, `${lead}^${name}${ending}`, ...beneath)
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`

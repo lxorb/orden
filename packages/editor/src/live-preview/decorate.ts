@@ -27,7 +27,7 @@ import { onEngines } from '@orden/markdown/engines'
 import { readHighlight } from '@orden/markdown/highlights'
 import { blockIdOf, embedKind, linkTarget } from '@orden/markdown/links'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
-import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
+import { drawnAsLink, embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
 import { trustChanged } from '../markup'
 import { archivedLink, noteIndex, resolves } from '../wikilink/notes'
@@ -273,7 +273,8 @@ class Decorator {
         this.inlineWidget(node, new EmbedMediaWidget(link, kind), false)
         return false
       }
-      if (embedOfBlock(this.state, node.from, node.to)) return false
+      const block = embedOfBlock(this.state, node.from, node.to)
+      if (block && !drawnAsLink(this.state, block)) return false
     }
 
     const open = node.firstChild

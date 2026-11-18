@@ -663,7 +663,9 @@ export function itemColumn(lines: readonly string[], at: number): number {
     const line = lines[above] ?? ''
     if (!line.trim()) continue
     const item = LIST_ITEM.exec(line)
-    if (item && (item[1]?.length ?? 0) < indent) return Math.min(indent, item[0].length)
+    if (item && indentOf(item[1] ?? '') < indent) {
+      return Math.min(indent, indentOf(item[1] ?? '') + item[0].length - (item[1]?.length ?? 0))
+    }
     if (indentOf(line) < indent) return 0
   }
   return 0
@@ -671,7 +673,7 @@ export function itemColumn(lines: readonly string[], at: number): number {
 
 function outOfItem(block: readonly string[], column: number): string {
   return block
-    .map((line) => line.slice(Math.min(column, indentOf(line))))
+    .map((line) => withoutColumns(line, column))
     .join('\n')
     .trimEnd()
 }
@@ -686,8 +688,24 @@ export function blockSpanAt(source: string, at: number): { start: number; end: n
 
 const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
 
-function indentOf(line: string): number {
-  return /^[ \t]*/.exec(line)?.[0].length ?? 0
+export function indentOf(line: string): number {
+  let columns = 0
+  for (const one of /^[ \t]*/.exec(line)?.[0] ?? '') {
+    columns = one === '\t' ? columns + 4 - (columns % 4) : columns + 1
+  }
+  return columns
+}
+
+export function withoutColumns(line: string, wanted: number): string {
+  let columns = 0
+  let at = 0
+  while (at < line.length && columns < wanted) {
+    const one = line[at]
+    if (one !== ' ' && one !== '\t') break
+    columns = one === '\t' ? columns + 4 - (columns % 4) : columns + 1
+    at++
+  }
+  return ' '.repeat(Math.max(0, columns - wanted)) + line.slice(at)
 }
 
 export function itemHolding(lines: readonly string[], at: number): number | null {
@@ -697,7 +715,7 @@ export function itemHolding(lines: readonly string[], at: number): number | null
     const line = lines[above] ?? ''
     if (!line.trim()) return null
     const item = LIST_ITEM.exec(line)
-    if (item) return (item[1]?.length ?? 0) < indent ? above : null
+    if (item) return indentOf(item[1] ?? '') < indent ? above : null
   }
   return null
 }
@@ -718,7 +736,7 @@ function itemSection(lines: readonly string[], at: number): Section | null {
   const text = lines
     .slice(owner, end + 1)
     .map((line, index) => (owner + index === at ? line.replace(BLOCK_ID, '') : line))
-    .map((line) => line.slice(Math.min(depth, indentOf(line))))
+    .map((line) => withoutColumns(line, depth))
     .join('\n')
     .trimEnd()
 

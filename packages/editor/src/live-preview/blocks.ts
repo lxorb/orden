@@ -21,7 +21,7 @@ import { type EmbedKind, embedKind } from '@orden/markdown/links'
 import { coverOf } from '@orden/markdown/cover'
 import { CoverWidget } from './cover'
 import { keptCover, keptCoverChanged } from './kept-cover'
-import { embedOfBlock, embedWidget } from '../wikilink/embed'
+import { drawnAsLink, embedOfBlock, embedWidget } from '../wikilink/embed'
 import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, type NoteIndex } from '../wikilink/notes'
 import { standsAlone, tableWrite } from '../table/navigation'
@@ -205,7 +205,7 @@ function scan(
             const line = doc.line(number)
             const start = line.from + line.text.length - line.text.trimStart().length
             const embed = embedOfBlock(state, start, line.to)
-            if (embed && !MEDIA.has(embedKind(embed.target))) {
+            if (embed && !MEDIA.has(embedKind(embed.target)) && !drawnAsLink(state, embed)) {
               const span = found(line.from, line.to)
               if (!span.revealed) {
                 ranges.push(

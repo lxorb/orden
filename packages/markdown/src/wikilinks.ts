@@ -44,9 +44,8 @@ const WIKILINK_AT_START = new RegExp(`^(!?)\\[\\[(${INNER})\\]\\]`)
 
 function embedLine(src: string, at: number): number | null {
   const line = lineStart(src, at, { orString: true, blanks: 3 })
-  return line !== null && !src.slice(line, at).includes('\t') && matchesAt(EMBED_AT, src, at)
-    ? line
-    : null
+  if (line === null || (line === 0 && at > 0 && !src.startsWith('\n'))) return null
+  return !src.slice(line, at).includes('\t') && matchesAt(EMBED_AT, src, at) ? line : null
 }
 
 export function wikilinks(options: {
@@ -169,6 +168,7 @@ function frame(
   if (found === null) return null
 
   const note = typeof found === 'string' ? { text: found, escapeHtml: false } : found
+  if (note.path !== undefined && isTabFile(note.path)) return null
   const section = sectionOf(note.text, link)
   if (section === null) return null
 

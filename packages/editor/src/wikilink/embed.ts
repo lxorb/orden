@@ -6,6 +6,7 @@ import { DOCUMENT, PLANE } from '@orden/markdown/icons'
 import {
   embedKind,
   embedSize,
+  isTabFile,
   linkTarget,
   pageFragment,
   parseWikilink,
@@ -192,6 +193,15 @@ export class EmbedWidget extends OrdenWidget {
 }
 
 const filling = new WeakMap<HTMLElement, number>()
+
+export function drawnAsLink(state: EditorState, link: LinkSpan): boolean {
+  const kind = embedKind(link.target)
+  if (kind === 'pdf' || kind === 'canvas' || kind === 'base') return false
+  if (isTabFile(link.target)) return true
+  if (!link.target) return false
+  const path = resolveLink(state.facet(noteIndex), link, link.kind)?.path ?? null
+  return path !== null && isTabFile(path)
+}
 
 export function embedWidget(
   state: EditorState,
