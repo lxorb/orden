@@ -81,15 +81,12 @@ describe('the wallpaper sharp copy', () => {
     const { wallpaper } = await import('./wallpaper.svelte')
     const theme = faked.theme
     if (!theme) throw new Error('no theme')
-
     expect(await wallpaper.take(new Blob(['picture']), 'dark')).toBe(true)
     flushSync()
     expect(sharpCopy()).toContain('blob:')
-
     theme.id = 'default'
     flushSync()
     expect(sharpCopy()).toBe('')
-
     theme.id = 'wallpaper'
     flushSync()
     await settled()
@@ -107,11 +104,9 @@ describe('a picture used as wallpaper from another theme', () => {
     faked.kept.set('blur', 60)
     flushSync()
     faked.blurs = []
-
     expect(await wallpaper.take(new Blob(['picture']), 'light')).toBe(true)
     flushSync()
     await settled()
-
     expect(faked.blurs[0]).toBe(60)
   })
 })
@@ -127,7 +122,6 @@ describe('a picture another window chose', () => {
     }
     theme.id = 'wallpaper'
     flushSync()
-
     const theirs = {
       picture: 'data:image/png;base64,THEIRS',
       blur: 12,
@@ -136,7 +130,6 @@ describe('a picture another window chose', () => {
     }
     localStorage.setItem('orden:wallpaper', JSON.stringify(theirs))
     window.dispatchEvent(new StorageEvent('storage', { key: 'orden:wallpaper' }))
-
     expect(wallpaper.held.main?.picture).toBe(theirs.picture)
     expect(rewore).toBe(1)
   })

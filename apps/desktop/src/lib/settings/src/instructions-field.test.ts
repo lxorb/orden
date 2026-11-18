@@ -34,7 +34,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, writes, made } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     expect(field.text).toBe('# Rules')
     await field.flush()
     expect(writes).toEqual([])
@@ -46,7 +45,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const field = new InstructionsField(PATH, hands)
     await field.load()
     expect(field.text).toBe('')
-
     await field.flush()
     expect(made).toEqual([])
     expect(writes).toEqual([])
@@ -56,7 +54,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, writes } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('# Rules\n- tea')
     await vi.advanceTimersByTimeAsync(SETTLES_AFTER)
     expect(writes).toEqual([{ before: '# Rules', after: '# Rules\n- tea', first: true }])
@@ -66,7 +63,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, writes } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('one')
     await field.flush()
     field.type('two')
@@ -78,7 +74,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, held } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('# Rules, changed')
     await field.flush()
     expect(held.text).toBe('# Rules, changed')
@@ -88,7 +83,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, made } = disk(null)
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('# Rules')
     await field.flush()
     expect(made).toEqual(['# Rules'])
@@ -98,7 +92,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, made } = disk(null)
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('# R')
     field.type('')
     await field.flush()
@@ -109,7 +102,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, held, writes } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('')
     await field.flush()
     expect(held.text).toBe('')
@@ -121,7 +113,6 @@ describe('the field for a space’s AGENTS.md', () => {
     held.unreadable = true
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     expect(field.unreadable).toBe(true)
     field.type('over it')
     await field.flush()
@@ -133,7 +124,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.heard('# Rules from the agent')
     expect(field.text).toBe('# Rules from the agent')
   })
@@ -142,7 +132,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands } = disk(null)
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.heard('# Arrived')
     expect(field.text).toBe('# Arrived')
   })
@@ -151,12 +140,10 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, held } = disk('one\n\ntwo\n')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('one, typed\n\ntwo\n')
     held.text = 'one\n\ntwo, theirs\n'
     field.heard(held.text)
     expect(field.text).toBe('one, typed\n\ntwo\n')
-
     await field.flush()
     expect(held.text).toBe('one, typed\n\ntwo, theirs\n')
     expect(field.text).toBe('one, typed\n\ntwo, theirs\n')
@@ -166,7 +153,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('mine')
     await field.flush()
     field.heard('mine')
@@ -178,7 +164,6 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, writes } = disk('# Theirs')
     const field = new InstructionsField(PATH, hands, () => true)
     await field.load()
-
     field.type('mine')
     await field.flush()
     expect(field.text).toBe('# Theirs')
@@ -190,12 +175,10 @@ describe('the field for a space’s AGENTS.md', () => {
     hands.write.mockImplementationOnce(() => Promise.reject(new Error('disk')))
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('mine')
     await field.flush()
     expect(field.text).toBe('mine')
     expect(field.dirty).toBe(true)
-
     await field.flush()
     expect(held.text).toBe('mine')
   })
@@ -204,12 +187,10 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, held } = disk('# Rules')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     held.refusing = true
     field.type('mine')
     await field.flush()
     expect(field.dirty).toBe(true)
-
     held.refusing = false
     await field.flush()
     expect(held.text).toBe('mine')
@@ -220,11 +201,9 @@ describe('the field for a space’s AGENTS.md', () => {
     const { hands, made } = disk(null)
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     hands.space.mockResolvedValue(false)
     field.type('# After it went')
     await vi.advanceTimersByTimeAsync(SETTLES_AFTER)
-
     expect(made).toEqual([])
     expect(field.locked).toBe(true)
     expect(field.text).toBe('# After it went')
@@ -235,11 +214,9 @@ describe('the field for a space’s AGENTS.md', () => {
     hands.write.mockImplementationOnce(() => new Promise<boolean>(() => undefined))
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('one')
     void field.flush()
     await vi.advanceTimersByTimeAsync(GIVES_UP_AFTER)
-
     field.type('two')
     await field.flush()
     expect(writes.at(-1)?.after).toBe('two')
@@ -255,14 +232,12 @@ describe('the field for a space’s AGENTS.md', () => {
     const field = new InstructionsField(PATH, hands)
     await field.load()
     expect(field.text).toBe('one\ntwo\n')
-
     field.type('one\ntwo\nthree\n')
     await field.flush()
     field.type('one\ntwo\nthree\nfour\n')
     await field.flush()
     field.type('one\ntwo\nthree\nfour\nfive\n')
     await field.flush()
-
     expect(writes.map((one) => one.first)).toEqual([true, false, false])
     expect(field.text).toBe('one\ntwo\nthree\nfour\nfive\n')
     expect(held.text).toBe('one\r\ntwo\r\nthree\r\nfour\r\nfive\r\n')
@@ -272,10 +247,8 @@ describe('the field for a space’s AGENTS.md', () => {
     const { writes, hands } = disk('one\r\ntwo\r\n')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('one\ntwo\n')
     await field.flush()
-
     expect(field.dirty).toBe(false)
     expect(writes).toEqual([])
   })
@@ -284,11 +257,9 @@ describe('the field for a space’s AGENTS.md', () => {
     const { held, hands } = disk('one\r\ntwo\r\n')
     const field = new InstructionsField(PATH, hands)
     await field.load()
-
     field.type('one\ntwo\nmine\n')
     held.text = 'theirs\r\none\r\ntwo\r\n'
     await field.flush()
-
     expect(field.text).toBe('theirs\none\ntwo\nmine\n')
   })
 })

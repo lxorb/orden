@@ -12,9 +12,7 @@ describe('the settings window', () => {
     )
     vi.spyOn(workspace, 'openSettings').mockImplementation(() => undefined)
     settings.error = 'that did not work'
-
     settings.show()
-
     expect(settings.error).toBeNull()
   })
 })

@@ -43,9 +43,7 @@ describe('two panes scrolling together', () => {
     const left = new End()
     const right = new End()
     linkScroll(left, right)
-
     left.scrollTo(420)
-
     expect(right.shown).toEqual([420])
     expect(right.top()).toBe(420)
   })
@@ -54,9 +52,7 @@ describe('two panes scrolling together', () => {
     const left = new End()
     const right = new End()
     linkScroll(left, right)
-
     left.scrollTo(100)
-
     expect(left.shown).toEqual([])
   })
 
@@ -64,11 +60,9 @@ describe('two panes scrolling together', () => {
     const left = new End()
     const right = new End()
     linkScroll(left, right)
-
     left.scrollTo(100)
     vi.advanceTimersByTime(200)
     right.scrollTo(300)
-
     expect(left.shown).toEqual([300])
   })
 
@@ -76,11 +70,9 @@ describe('two panes scrolling together', () => {
     const left = new End()
     const right = new End()
     linkScroll(left, right)
-
     left.scrollTo(100)
     left.scrollTo(200)
     left.scrollTo(300)
-
     expect(right.shown).toEqual([100, 200, 300])
     expect(left.shown).toEqual([])
   })
@@ -89,10 +81,8 @@ describe('two panes scrolling together', () => {
     const left = new End()
     const right = new End()
     const stop = linkScroll(left, right)
-
     stop()
     left.scrollTo(50)
-
     expect(right.shown).toEqual([])
   })
 })

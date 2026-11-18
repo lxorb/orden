@@ -9,10 +9,8 @@ afterEach(() => {
 describe('sharing the clipboard with apps', () => {
   test('stops in this window when another window turns it off', () => {
     expect(clipboardSharing.on).toBe(true)
-
     localStorage.setItem('orden:apps-clipboard', 'no')
     window.dispatchEvent(new StorageEvent('storage', { key: 'orden:apps-clipboard' }))
-
     expect(clipboardSharing.on).toBe(false)
   })
 })

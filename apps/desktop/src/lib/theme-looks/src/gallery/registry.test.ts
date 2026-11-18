@@ -18,7 +18,6 @@ const entry = (patch: Record<string, unknown> = {}) => ({
 describe('reading the catalogue', () => {
   test('takes an entry that says everything it has to', () => {
     const [theme] = readIndex({ themes: [entry()] })
-
     expect(theme?.name).toBe('Warm Paper')
     expect(theme?.variants).toEqual(['light'])
     expect(theme?.palettes.light).toEqual({ '--bg': '#faf6ee' })
@@ -35,7 +34,6 @@ describe('reading the catalogue', () => {
         }),
       ],
     })
-
     expect(theme?.palettes.light['--syntax-number']).toBe('#8a4b00')
     expect(theme?.palettes.dark['--syntax-number']).toBe('#ffc861')
   })
@@ -61,13 +59,11 @@ describe('reading the catalogue', () => {
     const themes = readIndex({
       themes: [entry({ id: 'a' }), null, 'nonsense', entry({ id: 'b' }), { id: 'c' }],
     })
-
     expect(themes.map((one) => one.id)).toEqual(['a', 'b'])
   })
 
   test('keeps the first of two entries sharing an id', () => {
     const themes = readIndex({ themes: [entry({ name: 'First' }), entry({ name: 'Second' })] })
-
     expect(themes).toHaveLength(1)
     expect(themes[0]?.name).toBe('First')
   })
@@ -82,7 +78,6 @@ describe('reading the catalogue', () => {
     const [theme] = readIndex({
       themes: [{ id: 'a', name: 'A', author: 'B', version: '1.0.0', variants: ['dark'] }],
     })
-
     expect(theme?.description).toBe('')
     expect(theme?.tags).toEqual([])
     expect(theme?.licence).toBe('')
@@ -102,7 +97,6 @@ describe('reading the catalogue', () => {
         }),
       ],
     })
-
     expect(theme?.tags).toEqual(['warm', 'ok'])
     expect(theme?.palettes.light).toEqual({ '--bg': '#fff' })
     expect(theme?.palettes.dark).toEqual({})
@@ -127,7 +121,6 @@ describe('reading the catalogue', () => {
         }),
       ],
     })
-
     expect(theme?.palettes.light).toEqual({
       '--accent': 'rgb(124 107 245 / 0.15)',
       '--danger': '#f2555a',
@@ -149,7 +142,6 @@ describe('reading the catalogue', () => {
         }),
       ],
     })
-
     expect(theme?.palettes.light).toEqual({ '--font-content': `'Half (', serif` })
   })
 
@@ -158,7 +150,6 @@ describe('reading the catalogue', () => {
     const [theme] = readIndex({
       themes: [entry({ palettes: { light: { '--font-content': stack }, dark: {} } })],
     })
-
     expect(theme?.palettes.light['--font-content']).toBe(stack)
   })
 
@@ -166,7 +157,6 @@ describe('reading the catalogue', () => {
     for (const version of ['1.0', 'next', '1.0.0-beta', '1.0.0 */ x', '']) {
       expect(readIndex({ themes: [entry({ version })] }), version).toEqual([])
     }
-
     expect(readIndex({ themes: [entry({ version: '10.2.30' })] })).toHaveLength(1)
   })
 

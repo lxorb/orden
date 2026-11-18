@@ -7,7 +7,6 @@ describe('a moment, said shortly', () => {
 
   test('is only a time for one from today, whichever date style was asked for', () => {
     const earlier = new Date(2026, 8, 28, 9, 5)
-
     expect(when(earlier.getTime(), 'medium', now)).toBe(time(earlier))
     expect(when(earlier.getTime(), 'short', now)).toBe(time(earlier))
   })
@@ -16,7 +15,6 @@ describe('a moment, said shortly', () => {
     const before = new Date(2026, 8, 27, 23, 59)
     const said = (dateStyle: 'short' | 'medium') =>
       new Intl.DateTimeFormat('en', { dateStyle, timeStyle: 'short' }).format(before)
-
     expect(when(before.getTime(), 'medium', now)).toBe(said('medium'))
     expect(when(before.getTime(), 'short', now)).toBe(said('short'))
     expect(said('medium')).not.toBe(said('short'))
@@ -25,7 +23,6 @@ describe('a moment, said shortly', () => {
   test('and for the same day of another month or year', () => {
     const lastYear = new Date(2025, 8, 28, 9, 5)
     const lastMonth = new Date(2026, 7, 28, 9, 5)
-
     expect(when(lastYear.getTime(), 'short', now)).not.toBe(time(lastYear))
     expect(when(lastMonth.getTime(), 'short', now)).not.toBe(time(lastMonth))
   })

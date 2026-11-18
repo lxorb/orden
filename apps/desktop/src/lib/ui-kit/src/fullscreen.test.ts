@@ -55,7 +55,6 @@ describe('turning it on and off', () => {
     await fullscreen.toggle(panes)
     expect(fullscreen.on).toBe(true)
     expect(asked).toEqual([true])
-
     await fullscreen.toggle(panes)
     expect(fullscreen.on).toBe(false)
     expect(asked).toEqual([true, false])
@@ -64,9 +63,7 @@ describe('turning it on and off', () => {
   test('asking twice for what is already so changes nothing', async () => {
     await fullscreen.enter(panes)
     await fullscreen.enter(panes)
-
     expect(asked).toEqual([true])
-
     await fullscreen.leave()
     await fullscreen.leave()
     expect(asked).toEqual([true, false])
@@ -75,7 +72,6 @@ describe('turning it on and off', () => {
   test('a window that refuses is not an error', async () => {
     refuses = true
     await fullscreen.enter(panes)
-
     expect(fullscreen.on).toBe(true)
     expect(asked).toEqual([])
   })
@@ -87,7 +83,6 @@ describe('turning it on and off', () => {
       page.fullscreenElement = {}
       await fullscreen.enter(panes)
       expect(fullscreen.on).toBe(true)
-
       page.fullscreenElement = null
       page.dispatchEvent(new Event('fullscreenchange'))
       await vi.waitFor(() => expect(fullscreen.on).toBe(false))
@@ -102,23 +97,18 @@ describe('the way out', () => {
   test('fades once nothing has moved, and lights again when something does', async () => {
     await fullscreen.enter(panes)
     expect(fullscreen.idle).toBe(false)
-
     vi.advanceTimersByTime(IDLE + 10)
     expect(fullscreen.idle).toBe(true)
-
     fullscreen.stir()
     expect(fullscreen.idle).toBe(false)
-
     vi.advanceTimersByTime(IDLE + 10)
     expect(fullscreen.idle).toBe(true)
   })
 
   test('is not re-armed sixty times a second by a moving hand', async () => {
     await fullscreen.enter(panes)
-
     const start = Date.now()
     for (let step = 0; step < 20; step++) fullscreen.stir(start + step * 10)
-
     vi.advanceTimersByTime(IDLE + 10)
     expect(fullscreen.idle).toBe(true)
   })
@@ -133,7 +123,6 @@ describe('the tab it shows', () => {
   test('is the pane being worked in alone, and every pane comes back', async () => {
     await fullscreen.enter(panes)
     expect(panes.fills).toBe('left')
-
     await fullscreen.leave()
     expect(panes.fills).toBe(null)
   })
@@ -142,7 +131,6 @@ describe('the tab it shows', () => {
     panes.fills = 'left'
     await fullscreen.enter(panes)
     expect(panes.fills).toBe('left')
-
     await fullscreen.leave()
     expect(panes.fills).toBe('left')
   })
@@ -153,7 +141,6 @@ describe('the tab it shows', () => {
     panes.focusedId = 'right'
     fullscreen.follow()
     expect(panes.fills).toBe('right')
-
     await fullscreen.leave()
     expect(panes.fills).toBe(null)
   })
@@ -162,7 +149,6 @@ describe('the tab it shows', () => {
     await fullscreen.enter(panes)
     panes.focusedId = 'right'
     fullscreen.follow()
-
     expect(fullscreen.on).toBe(true)
     expect(panes.fills).toBe('right')
   })
@@ -171,7 +157,6 @@ describe('the tab it shows', () => {
     await fullscreen.enter(panes)
     panes.shown.left = 'tab-3'
     fullscreen.follow()
-
     expect(fullscreen.on).toBe(true)
     expect(panes.fills).toBe('left')
   })
@@ -182,7 +167,6 @@ describe('the tab it shows', () => {
     fullscreen.follow()
     expect(fullscreen.on).toBe(false)
     expect(panes.fills).toBe(null)
-
     await Promise.resolve()
     await Promise.resolve()
     expect(asked).toEqual([true, false])
@@ -191,7 +175,6 @@ describe('the tab it shows', () => {
   test('a pane showing nothing is never put full screen', async () => {
     panes = twoPanes({ left: null, right: 'tab-2' })
     await fullscreen.enter(panes)
-
     expect(fullscreen.on).toBe(false)
     expect(panes.fills).toBe(null)
     expect(asked).toEqual([])
@@ -223,7 +206,6 @@ describe('Escape', () => {
 describe('what is kept of it', () => {
   test('and nothing about it is written down', () => {
     const source = readFileSync(join(import.meta.dirname, './fullscreen.svelte.ts'), 'utf8')
-
     expect(source).not.toContain('localStorage')
     expect(source).not.toContain('persist')
   })
@@ -262,7 +244,6 @@ describe('the shell', () => {
     expect(app).toContain('{#if !bare}')
     expect(app).toContain('{#if hasStatusBar(workspace.active?.kind) && !bare && !filled}')
     expect(app).toContain('&& !bare}\n    <button class="fab"')
-
     const gone = branches(app).find((one) => one.includes('class="panels"'))
     expect(gone, 'the panels are not left out').toBeDefined()
     expect(gone).toContain('<Sidebar')

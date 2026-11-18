@@ -101,7 +101,6 @@ describe('the floor', () => {
       test(`reads on the ${side} side over ${name}, and the hundredth below it does not`, () => {
         const one = palette(side)
         const floor = floorFor(one, span)
-
         expect(floor).toBeLessThan(1)
         for (const under of [span.least, span.most])
           expect(readsEverywhere(one, floor, under)).toBe(true)

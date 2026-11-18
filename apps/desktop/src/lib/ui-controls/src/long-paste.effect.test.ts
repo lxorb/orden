@@ -78,12 +78,10 @@ describe('a very long paste', () => {
     flushSync()
     const field = target.querySelector('textarea')
     if (!field) throw new Error('no field')
-
     expect(pasted(field, LONG).defaultPrevented).toBe(true)
     expect(asked.take).toHaveBeenCalledWith('Text', LONG)
     expect(pasted(field, 'a short line').defaultPrevented).toBe(false)
     expect(asked.take).toHaveBeenCalledTimes(1)
-
     pasted(field, 'x'.repeat(2_000_001))
     expect(asked.take).toHaveBeenCalledTimes(1)
     expect(asked.refuse).toHaveBeenCalledOnce()
@@ -91,11 +89,9 @@ describe('a very long paste', () => {
 
   test('into the quick add line goes to the description, not the line', () => {
     const field = quickAdd()
-
     expect(pasted(field, LONG).defaultPrevented).toBe(true)
     expect(field.value).toBe('')
     expect(description()?.value).toBe(LONG)
-
     pasted(field, LONG)
     expect(description()?.value).toBe(`${LONG}\n\n${LONG}`)
     expect(pasted(field, 'Call mum tomorrow').defaultPrevented).toBe(false)
@@ -103,7 +99,6 @@ describe('a very long paste', () => {
 
   test('of many lines still offers one task a line', () => {
     const field = quickAdd()
-
     expect(pasted(field, `${LONG}\none more`).defaultPrevented).toBe(true)
     expect(description()).toBeNull()
     expect(target.querySelector('.pasted')).not.toBeNull()
@@ -111,7 +106,6 @@ describe('a very long paste', () => {
 
   test('of many lines while editing goes to the description too', () => {
     const field = quickAdd({ mode: 'edit', prefill: { text: 'Call mum' } })
-
     expect(pasted(field, `${LONG}\none more`).defaultPrevented).toBe(true)
     expect(field.value).toBe('Call mum')
     expect(description()?.value).toBe(`${LONG}\none more`)

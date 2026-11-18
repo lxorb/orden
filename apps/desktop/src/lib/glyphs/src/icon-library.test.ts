@@ -50,7 +50,6 @@ describe('asking for a set', () => {
     iconLibrary.load('flat-color-icons')
     iconLibrary.load('flat-color-icons')
     await settled()
-
     expect(asked.filter((one) => one === 'flat-color-icons')).toHaveLength(1)
     expect(iconLibrary.loaded['flat-color-icons']).toBeDefined()
   })
@@ -59,7 +58,6 @@ describe('asking for a set', () => {
     asked = []
     iconLibrary.load('another')
     expect(iconLibrary.loading('another')).toBe(true)
-
     await settled()
     expect(iconLibrary.loading('another')).toBe(false)
   })
@@ -68,7 +66,6 @@ describe('asking for a set', () => {
     asked = []
     iconLibrary.load('refuses')
     await settled()
-
     expect(iconLibrary.absent.refuses).toBe(true)
     expect(iconLibrary.loading('refuses')).toBe(false)
   })
@@ -77,7 +74,6 @@ describe('asking for a set', () => {
     asked = []
     iconLibrary.load('nothing-here')
     await settled()
-
     expect(asked).toEqual([])
     expect(iconLibrary.loading('nothing-here')).toBe(false)
     expect(iconLibrary.absent['nothing-here']).toBeUndefined()
@@ -96,7 +92,6 @@ describe('what to draw for a written icon', () => {
   test('a line icon comes out of the stroked set, in any spelling', async () => {
     iconLibrary.load()
     await settled()
-
     expect(iconLibrary.drawing({ kind: 'lucide', name: 'rocket' })?.kind).toBe('stroked')
     expect(iconLibrary.drawing({ kind: 'lucide', name: 'LiRocket' })?.kind).toBe('stroked')
     expect(iconLibrary.setFor({ kind: 'lucide', name: 'rocket' })).toBe('lucide')
@@ -122,7 +117,6 @@ describe('what to draw for a written icon', () => {
     async (name) => {
       iconLibrary.load()
       await settled()
-
       expect(iconLibrary.drawing({ kind: 'set', set: name, name: 'x' })).toBeNull()
       expect(iconLibrary.loading(name)).toBe(false)
       expect(iconLibrary.spaceShape(name)).toBeNull()

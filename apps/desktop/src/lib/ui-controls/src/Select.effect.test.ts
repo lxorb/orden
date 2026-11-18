@@ -34,13 +34,11 @@ test('the open list hangs outside the card that would clip it, and still chooses
   const trigger = card.querySelector<HTMLButtonElement>('[role="combobox"]')
   trigger?.click()
   flushSync()
-
   const list = document.querySelector<HTMLElement>('[role="listbox"]')
   expect(list).not.toBeNull()
   expect(card.contains(list)).toBe(false)
   expect(list?.style.position).toBe('fixed')
   expect(trigger?.getAttribute('aria-expanded')).toBe('true')
-
   const addy = [...(list?.querySelectorAll<HTMLElement>('[role="option"]') ?? [])].find((one) =>
     one.textContent.includes('addy.io'),
   )

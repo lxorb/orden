@@ -140,7 +140,6 @@ describe('Settings > Space', () => {
     let box = await shown()
     expect(document.activeElement).not.toBe(box)
     close?.()
-
     settings.landsOnField = true
     box = await shown()
     expect(document.activeElement).toBe(box)
@@ -220,12 +219,10 @@ describe('Settings > Space', () => {
     const box = await shown()
     typed(box, '# Rules, typing')
     const reads = disk.reads
-
     settings.section = settings.section === 'space' ? 'general' : 'space'
     flushSync()
     await settled()
     flushSync()
-
     expect(disk.reads).toBe(reads)
     expect(box.value).toBe('# Rules, typing')
     expect(target.querySelector('textarea')).toBe(box)
@@ -235,7 +232,6 @@ describe('Settings > Space', () => {
     disk.files.set('/space/AGENTS.md', '# Rules')
     const box = await shown()
     typed(box, '# Rules, last keys')
-
     settleUp()
     expect(stillWriting()).toBe(true)
     await settled()

@@ -37,7 +37,6 @@ describe('a drop on the file list', () => {
   test('moves its own rows, and lets the one dragging choose a copy instead', () => {
     const rows = transfer()
     carry(rows, ['/s/a.md'])
-
     expect(rows.effectAllowed).toBe('copyMove')
     expect(landing(drop(rows), 'win')).toBe('move')
   })
@@ -45,7 +44,6 @@ describe('a drop on the file list', () => {
   test('copies them with Ctrl held, and with Alt on a Mac', () => {
     const rows = transfer()
     carry(rows, ['/s/a.md'])
-
     expect(landing(drop(rows, { ctrlKey: true }), 'win')).toBe('copy')
     expect(landing(drop(rows, { ctrlKey: true }), 'linux')).toBe('copy')
     expect(landing(drop(rows, { altKey: true }), 'mac')).toBe('copy')
@@ -54,7 +52,6 @@ describe('a drop on the file list', () => {
 
   test('copies in files from outside the app, whatever is held', () => {
     const files = transfer(['Files'])
-
     expect(isFileDrop(files)).toBe(true)
     expect(landing(drop(files), 'win')).toBe('copy')
   })
@@ -63,11 +60,9 @@ describe('a drop on the file list', () => {
     const link = transfer(['text/uri-list', 'text/html', 'text/plain'])
     expect(isLinkDrop(link)).toBe(true)
     expect(landing(drop(link), 'win')).toBe('copy')
-
     const picture = transfer(['text/uri-list', 'text/html', 'Files'])
     expect(isLinkDrop(picture)).toBe(false)
     expect(isFileDrop(picture)).toBe(true)
-
     expect(isLinkDrop(transfer(['text/plain', 'text/html']))).toBe(false)
   })
 
@@ -85,7 +80,6 @@ describe('a bookmark carried over the file list', () => {
     expect(landing(drop(tile), 'linux')).toBe('move')
     carriedNothing()
     expect(landing(drop(tile), 'linux')).toBeNull()
-
     const search = transfer()
     carryBookmark(search, { kind: 'search', path: '', text: 'x' }, 1)
     expect(landing(drop(search), 'linux')).toBeNull()
@@ -98,7 +92,6 @@ describe('rows of the file explorer, carried where files are taken', () => {
     carryFromExplorer(rows, ['/home/me/Downloads/a.png', '/home/me/b.pdf'], false)
     expect(carriesFiles(rows)).toBe(true)
     expect(outsideRows(rows)).toEqual(['/home/me/Downloads/a.png', '/home/me/b.pdf'])
-
     const hidden = { types: rows.types, getData: () => '' } as unknown as DataTransfer
     expect(outsideRows(hidden)).toEqual(['/home/me/Downloads/a.png', '/home/me/b.pdf'])
     carriedNothing()
@@ -109,7 +102,6 @@ describe('rows of the file explorer, carried where files are taken', () => {
     carryFromExplorer(pdfs, ['/home/me/a.pdf', '/home/me/B.PDF'], false)
     expect(carriedIntoNotes.carries(pdfs)).toBe(false)
     expect(carriedIntoNotes.read(pdfs)).toBe(null)
-
     const mixed = transfer()
     carryFromExplorer(mixed, ['/home/me/a.pdf', '/home/me/b.png'], false)
     expect(carriedIntoNotes.carries(mixed)).toBe(true)
@@ -138,10 +130,8 @@ describe('a bookmark carried', () => {
     const here = await import('./drag-paths')
     const mark = transfer()
     here.carryBookmark(mark, MARKS[1]!, 1, true)
-
     expect(here.draggedBookmark(mark)).toBe(MARKS[1])
     expect(here.carriedMark()).toBe(MARKS[1])
-
     here.carriedNothing()
     expect(here.draggedBookmark(mark)).toBeNull()
     expect(here.carriedMark()).toBeNull()
@@ -151,22 +141,18 @@ describe('a bookmark carried', () => {
 describe('a row carried by its place in a list', () => {
   test('is taken in the window it was picked up in', async () => {
     const here = await import('./drag-paths')
-
     const mark = transfer()
     here.carryBookmark(mark, MARKS[2]!, 2)
     expect(here.isBookmarkDrag(mark)).toBe(true)
     expect(here.draggedBookmark(mark)).toBe(MARKS[2])
-
     const section = transfer()
     here.carrySection(section, 3)
     expect(here.isSectionDrag(section)).toBe(true)
     expect(here.draggedSection(section)).toBe(3)
-
     const sheet = transfer()
     here.carryPage(sheet, { note: '/s/a.pages', page: 'p2' })
     expect(here.isPageDrag(sheet)).toBe(true)
     expect(here.draggedPage(sheet)).toEqual({ note: '/s/a.pages', page: 'p2' })
-
     const asked = transfer()
     here.carryAiChat(asked, { id: 't1', title: 'Plans' })
     expect(here.isAiChatDrag(asked)).toBe(true)
@@ -187,10 +173,8 @@ describe('a row carried by its place in a list', () => {
     const asked = transfer()
     there.carryAiChat(asked, { id: 't1', title: 'Plans' })
     there.carriedNothing()
-
     vi.resetModules()
     const here = await import('./drag-paths')
-
     expect(here.isBookmarkDrag(mark)).toBe(false)
     expect(here.draggedBookmark(mark)).toBeNull()
     expect(here.isSectionDrag(section)).toBe(false)

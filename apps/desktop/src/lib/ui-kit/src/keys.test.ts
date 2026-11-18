@@ -160,7 +160,6 @@ describe('matching a keystroke against a binding', () => {
     expect(matchesCombination('Mod-Alt-7', germanBrace, 'win')).toBe(false)
     const polishO = press('ó', { ctrlKey: true, altKey: true, code: 'KeyO' })
     expect(matchesCombination('Mod-Alt-o', polishO, 'win')).toBe(false)
-
     const usTwo = press('2', { ctrlKey: true, altKey: true, code: 'Digit2' })
     expect(matchesCombination('Mod-Alt-2', usTwo, 'win')).toBe(true)
     expect(

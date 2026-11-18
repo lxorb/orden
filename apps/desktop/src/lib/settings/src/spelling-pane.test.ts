@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const told = vi.hoisted(() => ({ lists: [] as string[][] }))
 
@@ -7,20 +8,6 @@ vi.mock('../../spelling/src/api', async (original) => ({
   choosable: true,
   tellEngine: (languages: string[]) => void told.lists.push([...languages]),
 }))
-
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-  return {
-    get length() {
-      return held.size
-    },
-    key: (at) => [...held.keys()][at] ?? null,
-    getItem: (key) => held.get(key) ?? null,
-    setItem: (key, value) => void held.set(key, value),
-    removeItem: (key) => void held.delete(key),
-    clear: () => held.clear(),
-  }
-}
 
 vi.stubGlobal('localStorage', memoryStorage())
 
@@ -91,9 +78,7 @@ describe('the dictionaries on Orden’s own Chromium', () => {
     if (own?.kind !== 'switch') throw new Error('no own dictionary')
     own.set(false)
     expect(inForceNow(modes.spellLanguages)).not.toContain(first)
-
     resetPane(spellingPane(undefined))
-
     expect(inForceNow(modes.spellLanguages)).toEqual([first])
     expect(told.lists.at(-1)).toEqual([first])
   })

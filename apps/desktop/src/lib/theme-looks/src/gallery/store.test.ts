@@ -1,19 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
+import { memoryStorage } from '../../../../../test/disk'
 
 function stubs() {
   vi.stubGlobal('localStorage', memoryStorage())
@@ -180,36 +166,28 @@ describe('what the grid shows', () => {
 describe('the catalogue', () => {
   test('is read once and not again while it is fresh', async () => {
     const asked = serving([entry()])
-
     await store.load()
     await store.load()
-
     expect(asked).toEqual([expect.stringContaining('index.json')])
     expect(store.themes).toHaveLength(1)
   })
 
   test('is read again when it is asked for outright', async () => {
     const asked = serving([entry()])
-
     await store.load()
     await store.load(true)
-
     expect(asked).toHaveLength(2)
   })
 
   test('has no card for a theme the app ships with', async () => {
     serving([entry(), entry({ id: 'contrast', name: 'Contrast' })])
-
     await store.load(true)
-
     expect(store.themes.map((one) => one.id)).toEqual(['warm-paper'])
   })
 
   test('a registry that will not answer says so and shows nothing', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('nope', { status: 500 })))
-
     await store.load()
-
     expect(store.themes).toEqual([])
     expect(store.error).toBe('could not reach the theme store')
   })
@@ -219,10 +197,8 @@ describe('installing, updating and removing', () => {
   test('writes the theme, stamps it, and puts the app on it', async () => {
     serving([entry()])
     await store.load()
-
     expect(store.installed('warm-paper')).toBe(false)
     await store.install(entry({}) as never)
-
     expect(folder.files.get('warm-paper')).toContain('--bg: #faf6ee;')
     expect(folder.files.get('warm-paper')).toContain('"version":"1.0.0"')
     expect(store.installed('warm-paper')).toBe(true)
@@ -234,9 +210,7 @@ describe('installing, updating and removing', () => {
     serving([entry({ variants: ['light', 'dark'] })], PAIR)
     await store.load()
     theme.setScheme('dark')
-
     await store.install(entry({ variants: ['light', 'dark'] }) as never)
-
     expect(theme.current).toBe('dark')
     expect(theme.active.variants).toEqual(['light', 'dark'])
   })
@@ -246,11 +220,9 @@ describe('installing, updating and removing', () => {
     await store.load()
     theme.setScheme('light')
     await store.install(entry({ variants: ['light', 'dark'] }) as never)
-
     theme.toggle()
     expect(theme.current).toBe('dark')
     expect(store.using('warm-paper')).toBe(true)
-
     theme.toggle()
     expect(theme.current).toBe('light')
     expect(store.using('warm-paper')).toBe(true)
@@ -261,7 +233,6 @@ describe('installing, updating and removing', () => {
     await store.load()
     await store.install(entry({}) as never)
     expect(theme.accentIsTheme).toBe(true)
-
     await store.remove('warm-paper')
     expect(theme.accentIsTheme).toBe(false)
   })
@@ -270,7 +241,6 @@ describe('installing, updating and removing', () => {
     serving([entry()])
     await store.load()
     await store.install(entry({}) as never)
-
     expect(store.updatable(entry() as never)).toBe(false)
     expect(store.updatable(entry({ version: '1.0.1' }) as never)).toBe(true)
     expect(store.updatable(entry({ version: '0.9.0' }) as never)).toBe(false)
@@ -280,10 +250,8 @@ describe('installing, updating and removing', () => {
     serving([entry()])
     await store.load()
     await store.install(entry({}) as never)
-
     serving([entry({ version: '2.0.0' })], sheet('#111111'))
     await store.install(entry({ version: '2.0.0' }) as never)
-
     expect(folder.files.size).toBe(1)
     expect(folder.files.get('warm-paper')).toContain('--bg: #111111;')
     expect(store.updatable(entry({ version: '2.0.0' }) as never)).toBe(false)
@@ -294,10 +262,8 @@ describe('installing, updating and removing', () => {
     await store.load()
     await store.install(entry({}) as never)
     theme.select('default')
-
     serving([entry({ version: '2.0.0' })], sheet('#111111'))
     await store.install(entry({ version: '2.0.0' }) as never)
-
     expect(folder.files.get('warm-paper')).toContain('--bg: #111111;')
     expect(theme.id).toBe('default')
     expect(store.using('warm-paper')).toBe(false)
@@ -307,10 +273,8 @@ describe('installing, updating and removing', () => {
     serving([entry()])
     await store.load()
     await store.install(entry({}) as never)
-
     serving([entry({ version: '2.0.0' })], sheet('#111111'))
     await store.install(entry({ version: '2.0.0' }) as never)
-
     expect(store.using('warm-paper')).toBe(true)
   })
 
@@ -318,9 +282,7 @@ describe('installing, updating and removing', () => {
     serving([entry()])
     await store.load()
     await store.install(entry({}) as never)
-
     await store.remove('warm-paper')
-
     expect(folder.files.size).toBe(0)
     expect(store.installed('warm-paper')).toBe(false)
     expect(store.using('warm-paper')).toBe(false)
@@ -334,10 +296,8 @@ describe('installing, updating and removing', () => {
     const worn = theme.look()
     let told = 0
     const stop = theme.picked(() => told++)
-
     await store.remove('warm-paper')
     stop()
-
     expect(told).toBe(1)
     expect(theme.look().theme).toBe('default')
     expect(theme.look().css).toBe('')
@@ -348,7 +308,6 @@ describe('installing, updating and removing', () => {
     serving([entry()], `${sheet('#faf6ee')}\n.sidebar { display: none; }`)
     await store.load()
     await store.install(entry({}) as never)
-
     expect(store.refused).toEqual({
       id: 'warm-paper',
       notes: ['.sidebar is not a selector a theme may set'],
@@ -360,7 +319,6 @@ describe('installing, updating and removing', () => {
     serving([entry()], '.sidebar { display: none; }')
     await store.load()
     await store.install(entry({}) as never)
-
     expect(folder.files.size).toBe(0)
     expect(store.error).toBe('that theme has nothing a theme may set')
   })
@@ -369,9 +327,7 @@ describe('installing, updating and removing', () => {
     serving([entry()])
     await store.load()
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('', { status: 404 })))
-
     await store.install(entry({}) as never)
-
     expect(folder.files.size).toBe(0)
     expect(store.error).toBe('could not fetch that theme')
   })
@@ -379,7 +335,6 @@ describe('installing, updating and removing', () => {
   test('a theme somebody dropped in by hand does not belong to the store', async () => {
     folder.files.set('night-owl', sheet('#001122'))
     await theme.reload()
-
     expect(theme.files).toHaveLength(1)
     expect(store.installed('night-owl')).toBe(false)
   })
@@ -390,13 +345,10 @@ describe('keeping up with the catalogue', () => {
 
   test('puts the given themes in the folder, once, and wears none of them', async () => {
     serving(given())
-
     await store.keepUp()
-
     expect([...folder.files.keys()].sort()).toEqual([...GIVEN_THEMES].sort())
     expect(GIVEN_THEMES.every((id) => store.installed(id))).toBe(true)
     expect(theme.id).toBe('default')
-
     await store.remove('rose')
     store.themes = []
     await store.keepUp()
@@ -407,11 +359,9 @@ describe('keeping up with the catalogue', () => {
     serving([entry()])
     await store.load()
     await store.install(entry({}) as never)
-
     serving([entry({ version: '1.1.0' })], PAIR)
     store.themes = []
     await store.keepUp()
-
     expect(folder.files.get('warm-paper')).toContain('"version":"1.1.0"')
     expect(store.using('warm-paper')).toBe(true)
     expect(theme.active.variants).toEqual(['light', 'dark'])
@@ -427,18 +377,14 @@ describe('keeping up with the catalogue', () => {
       entry({ id: 'night-owl', name: 'Night Owl', version: '9.0.0' }),
     ])
     store.themes = []
-
     await store.keepUp()
-
     expect(asked.filter((url) => url.endsWith('theme.css'))).toEqual([])
     expect(folder.files.get('night-owl')).toBe(sheet('#001122'))
   })
 
   test('a catalogue that will not answer changes nothing and says nothing', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('nope', { status: 500 })))
-
     await store.keepUp()
-
     expect(folder.files.size).toBe(0)
     expect(store.error).toBe(null)
     serving(given())
@@ -450,10 +396,8 @@ describe('keeping up with the catalogue', () => {
 describe('the light and dark switch', () => {
   test('is live on the built-in, which states both schemes', () => {
     expect(theme.switchable).toBe(true)
-
     theme.setScheme('dark')
     expect(theme.switchable).toBe(true)
-
     theme.toggle()
     expect(theme.current).toBe('light')
   })
@@ -462,11 +406,8 @@ describe('the light and dark switch', () => {
     serving([entry()])
     await store.load()
     await store.install(entry({}) as never)
-
     expect(theme.switchable).toBe(false)
-
     theme.toggle()
-
     expect(store.using('warm-paper')).toBe(true)
     expect(theme.current).toBe('light')
   })
@@ -476,12 +417,9 @@ describe('the light and dark switch', () => {
     serving([pair], PAIR)
     await store.load()
     await store.install(pair as never)
-
     expect(theme.switchable).toBe(true)
-
     const was = theme.current
     theme.toggle()
-
     expect(theme.current).not.toBe(was)
     expect(store.using('warm-paper')).toBe(true)
   })
@@ -491,9 +429,7 @@ describe('the light and dark switch', () => {
     await store.load()
     await store.install(entry({}) as never)
     expect(theme.switchable).toBe(false)
-
     await store.remove('warm-paper')
-
     expect(theme.switchable).toBe(true)
   })
 })

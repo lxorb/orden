@@ -27,7 +27,6 @@ describe('the icon picker', () => {
     )
     await tabKindLoaded('terminal')
     const target = { kind: 'terminal', tab: 't1' } as const
-
     expect(wornBy(target)).toBe('star')
     expect(tintOf(target)).toBe('red')
     wear(target, 'rocket', null)
