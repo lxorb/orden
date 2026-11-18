@@ -149,15 +149,13 @@ describe('reading the front matter', () => {
   })
 })
 
-describe('the keys a block holds', () => {
-  test('are its top-level ones, as written, and none where there is no block', () => {
-    expect(
-      frontMatterKeys(
-        '---\ntitle: Trip\naliases:\n  - One\n# a note\nDue date: soon\n---\nWords: no\n',
-      ),
-    ).toEqual(['title', 'aliases', 'Due date'])
-    expect(frontMatterKeys('Words: no\n')).toEqual([])
-  })
+test('the keys a block holds: are its top-level ones, as written, and none where there is no block', () => {
+  expect(
+    frontMatterKeys(
+      '---\ntitle: Trip\naliases:\n  - One\n# a note\nDue date: soon\n---\nWords: no\n',
+    ),
+  ).toEqual(['title', 'aliases', 'Due date'])
+  expect(frontMatterKeys('Words: no\n')).toEqual([])
 })
 
 describe('reading a key as a list', () => {

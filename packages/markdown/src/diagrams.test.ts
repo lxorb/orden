@@ -11,16 +11,14 @@ import {
 const SPACE = '7d1f4e8c-0000-4000-8000-000000000001'
 const CODE = 'graph TD\n  A[A note] --> B[A published page]\n'
 
-describe('which fences are a picture', () => {
-  test('is the three the editor and the exporter draw; reads a language whatever case it was written in', () => {
-    expect([...DIAGRAM_LANGUAGES]).toEqual(['mermaid', 'flow', 'sequence'])
-    expect(isDiagram('mermaid')).toBe(true)
-    expect(isDiagram('Mermaid')).toBe(true)
-    expect(isDiagram('SEQUENCE')).toBe(true)
-    expect(isDiagram('chart')).toBe(false)
-    expect(isDiagram('ts')).toBe(false)
-    expect(isDiagram('')).toBe(false)
-  })
+test('which fences are a picture: is the three the editor and the exporter draw; reads a language whatever case it was written in', () => {
+  expect([...DIAGRAM_LANGUAGES]).toEqual(['mermaid', 'flow', 'sequence'])
+  expect(isDiagram('mermaid')).toBe(true)
+  expect(isDiagram('Mermaid')).toBe(true)
+  expect(isDiagram('SEQUENCE')).toBe(true)
+  expect(isDiagram('chart')).toBe(false)
+  expect(isDiagram('ts')).toBe(false)
+  expect(isDiagram('')).toBe(false)
 })
 
 describe('what a diagram is named by', () => {
@@ -64,14 +62,12 @@ describe('what a diagram is named by', () => {
   })
 })
 
-describe('what a reader who cannot see it is told', () => {
-  test("is mermaid's own description where the author wrote one; is the title where that is all there is; is never the first line of the fence", () => {
-    expect(diagramAlt('graph TD\n  accDescr: How a note reaches a page\n  A --> B\n')).toBe(
-      'How a note reaches a page',
-    )
-    expect(diagramAlt('graph TD\n  accTitle: The pipeline\n  A --> B\n')).toBe('The pipeline')
-    expect(diagramAlt('graph TD\n  A --> B\n')).toBe('Diagram')
-  })
+test("what a reader who cannot see it is told: is mermaid's own description where the author wrote one; is the title where that is all there is; is never the first line of the fence", () => {
+  expect(diagramAlt('graph TD\n  accDescr: How a note reaches a page\n  A --> B\n')).toBe(
+    'How a note reaches a page',
+  )
+  expect(diagramAlt('graph TD\n  accTitle: The pipeline\n  A --> B\n')).toBe('The pipeline')
+  expect(diagramAlt('graph TD\n  A --> B\n')).toBe('Diagram')
 })
 
 describe('the figure a drawn fence becomes', () => {

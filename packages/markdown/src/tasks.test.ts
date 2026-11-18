@@ -50,11 +50,9 @@ describe('a task item', () => {
   })
 })
 
-describe('where a tick is written', () => {
-  test('the box, so one character changes and the rest of the line does not', () => {
-    const task = taskAt('  * [x] buy milk')
-    expect(task?.box).toBe(4)
-    expect(task?.done).toBe(true)
-    expect(taskAt('- buy milk')).toBeNull()
-  })
+test('where a tick is written: the box, so one character changes and the rest of the line does not', () => {
+  const task = taskAt('  * [x] buy milk')
+  expect(task?.box).toBe(4)
+  expect(task?.done).toBe(true)
+  expect(taskAt('- buy milk')).toBeNull()
 })

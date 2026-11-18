@@ -41,25 +41,21 @@ describe('the first spelling nobody has', () => {
   })
 })
 
-describe('a name that grew a run of numbers', () => {
-  test('is the name it grew from (#1630); leaves one number, or numbers that are not a run, alone', () => {
-    expect(unstacked('AbaClient Manager 2 2 2 2 2 2 2.application')).toBe(
-      'AbaClient Manager.application',
-    )
-    expect(unstacked('a/b/Notes 2 2')).toBe('a/b/Notes')
-    expect(unstacked('Plan 2.md')).toBe('Plan 2.md')
-    expect(unstacked('Plan 3 2.md')).toBe('Plan 3 2.md')
-    expect(unstacked('2 2.md')).toBe('2 2.md')
-  })
+test('a name that grew a run of numbers: is the name it grew from (#1630); leaves one number, or numbers that are not a run, alone', () => {
+  expect(unstacked('AbaClient Manager 2 2 2 2 2 2 2.application')).toBe(
+    'AbaClient Manager.application',
+  )
+  expect(unstacked('a/b/Notes 2 2')).toBe('a/b/Notes')
+  expect(unstacked('Plan 2.md')).toBe('Plan 2.md')
+  expect(unstacked('Plan 3 2.md')).toBe('Plan 3 2.md')
+  expect(unstacked('2 2.md')).toBe('2 2.md')
 })
 
-describe('what a file may not hold', () => {
-  test('becomes a space, so the name is still a name; takes the control characters a pasted title carries; leaves everything a file may hold', () => {
-    expect(withoutForbidden('Plans: 2026')).toBe('Plans  2026')
-    expect(withoutForbidden('a/b\\c:d*e?f"g<h>i|j')).toBe('a b c d e f g h i j')
-    expect(withoutForbidden('one\ntwo\tthree ')).toBe('one two three ')
-    expect(withoutForbidden("Plans & more (2026) - Emil's")).toBe("Plans & more (2026) - Emil's")
-  })
+test('what a file may not hold: becomes a space, so the name is still a name; takes the control characters a pasted title carries; leaves everything a file may hold', () => {
+  expect(withoutForbidden('Plans: 2026')).toBe('Plans  2026')
+  expect(withoutForbidden('a/b\\c:d*e?f"g<h>i|j')).toBe('a b c d e f g h i j')
+  expect(withoutForbidden('one\ntwo\tthree ')).toBe('one two three ')
+  expect(withoutForbidden("Plans & more (2026) - Emil's")).toBe("Plans & more (2026) - Emil's")
 })
 
 describe('where the other copy goes', () => {
