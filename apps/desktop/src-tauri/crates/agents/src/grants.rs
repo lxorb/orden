@@ -227,6 +227,13 @@ impl Grant {
         grant
     }
 
+    #[must_use]
+    pub fn with_full_permissions(mut self) -> Self {
+        self.mode = Mode::Autonomous;
+        self.scopes = Scope::ALL.into_iter().collect();
+        self
+    }
+
     pub fn holds(&self, scope: Scope) -> bool {
         self.mode == Mode::Autonomous || self.scopes.contains(&scope)
     }

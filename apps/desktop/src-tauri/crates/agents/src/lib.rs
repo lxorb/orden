@@ -107,9 +107,8 @@ pub fn caller_for(app: &AppHandle, token: &str) -> Option<Caller> {
     (host()?.lent)(app, token).map(|grant| Caller::Agent(Box::new(grant)))
 }
 
-fn connected(mut grant: Grant) -> Grant {
-    grant.mode = grants::Mode::Autonomous;
-    grant
+fn connected(grant: Grant) -> Grant {
+    grant.with_full_permissions()
 }
 
 pub fn session_of(asked: &Value) -> String {
@@ -296,6 +295,10 @@ mod tests {
         assert!(grant.asks_nothing());
         for scope in Scope::ALL {
             assert!(grant.holds(scope), "{scope:?}");
+            assert!(
+                grant.scopes.contains(&scope),
+                "{scope:?} is held and not told"
+            );
         }
         let agent = Caller::Agent(Box::new(grant.clone()));
         assert!(may_ask_the_window(&agent, "write_setting").is_ok());

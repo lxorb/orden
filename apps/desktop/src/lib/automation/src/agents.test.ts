@@ -59,6 +59,25 @@ describe('an agent at the dispatcher', () => {
     }
   })
 
+  test('a client under Full permissions reaches every agent row, whatever scopes its grant kept', async () => {
+    const full = callerOf({
+      id: 'codex',
+      name: 'Codex',
+      scopes: [],
+      spaces: 'all',
+      mode: 'autonomous',
+    })
+    for (const verb of Object.keys(AGENT_WINDOW_VERBS)) {
+      reached.length = 0
+      expect(await dispatch(verb, {}, [], 'here', full), verb).toEqual({
+        ok: true,
+        status: 'ok',
+        result: { ran: verb },
+      })
+      expect(reached, verb).toEqual([{ name: verb, agent: 'codex' }])
+    }
+  })
+
   test('never reaches the command line own verbs, eval among them', async () => {
     const every = agentHolding(...Object.values(AGENT_WINDOW_VERBS).filter((one) => one !== null))
     for (const verb of [

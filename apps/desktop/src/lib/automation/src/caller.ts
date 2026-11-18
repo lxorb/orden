@@ -55,6 +55,11 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
   }
 }
 
+export const fullPermissions = (grant: { mode?: string } | null | undefined): boolean =>
+  grant?.mode === 'autonomous'
+
 export function holds(caller: Caller, scope: Scope): boolean {
-  return caller.agent === null || caller.agent.scopes.includes(scope)
+  return (
+    caller.agent === null || fullPermissions(caller.agent) || caller.agent.scopes.includes(scope)
+  )
 }

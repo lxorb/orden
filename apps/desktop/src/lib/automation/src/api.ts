@@ -5,6 +5,8 @@ export {
   answerThreadSpaces,
   type Caller,
   callerOf,
+  fullPermissions,
+  holds,
   READER,
   refusal,
   threadSpaceOf,

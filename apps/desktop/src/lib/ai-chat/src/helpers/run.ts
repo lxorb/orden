@@ -1,3 +1,4 @@
+import { fullPermissions } from '../../../automation/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { invoke, isDesktop } from '../../../platform/src/api'
 import { type Effort, type Mode, type Thread, usable, ai } from '../../../ai-providers/src/api'
@@ -78,7 +79,7 @@ function strictnessAt(sites: Reach['sites'], host: string): number {
 const supervision = (grant: Reach) => SUPERVISION[grant.mode ?? 'unsupervised'] ?? 0
 
 const asksAbout = (grant: Reach, category: string) =>
-  grant.mode !== 'autonomous' && grant.asks?.[category] !== false
+  !fullPermissions(grant) && grant.asks?.[category] !== false
 
 function sitesWithin(helper: Reach, parent: Reach): boolean {
   const hosts = [...Object.keys(helper.sites), ...Object.keys(parent.sites)].map(siteNamed)
@@ -97,13 +98,16 @@ function inside(helper: Reach, parent: Reach): boolean {
   const spaces =
     parent.spaces === 'all' ||
     (helper.spaces !== 'all' && helper.spaces.every((one) => parent.spaces.includes(one)))
+  const held =
+    fullPermissions(parent) ||
+    (helper.scopes.every((one) => parent.scopes.includes(one)) &&
+      helper.programs.every((one) => parent.programs.includes(one)) &&
+      (helper.scripts ?? []).every((script) =>
+        (parent.scripts ?? []).some((one) => covering(one, siteNamed(script))),
+      ))
   return (
     spaces &&
-    helper.scopes.every((one) => parent.scopes.includes(one)) &&
-    helper.programs.every((one) => parent.programs.includes(one)) &&
-    (helper.scripts ?? []).every((script) =>
-      (parent.scripts ?? []).some((one) => covering(one, siteNamed(script))),
-    ) &&
+    held &&
     supervision(helper) >= supervision(parent) &&
     sitesWithin(helper, parent) &&
     asksWithin(helper, parent)
@@ -117,7 +121,8 @@ export function offeredWithin(
   all: readonly Held[] | null,
 ): Offered[] {
   if (!reach) return [...listed]
-  const asker = all?.find((one) => one.id === reach.id) ?? reach
+  const kept = all?.find((one) => one.id === reach.id)
+  const asker = kept ? { ...kept, ...(reach.mode ? { mode: reach.mode } : {}) } : reach
   return listed.filter(({ provider }) => {
     if (provider.id === parent) return true
     const theirs = all === null ? null : grantOf(all, provider.id)
@@ -214,7 +219,12 @@ export async function runAgent(
   const instructions = await notes.wordsOf(profile)
   const all = await grants()
   const reach = asker.reach ?? (parent && all ? grantOf(all, parent.provider) : null)
-  if (parent && !asker.reach && isDesktop && !reach?.scopes.includes('agents')) {
+  if (
+    parent &&
+    !asker.reach &&
+    isDesktop &&
+    !(fullPermissions(reach) || reach?.scopes.includes('agents'))
+  ) {
     return { refused: 'this agent may not run helpers: its grant does not hold agents' }
   }
   const effort = first(word(args, 'effort'), profile?.effort)

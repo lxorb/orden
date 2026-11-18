@@ -68,10 +68,7 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
             grant.mode = GrantMode::Confirm;
             grant.asks.clear();
         }
-        Mode::Full => {
-            grant.mode = GrantMode::Autonomous;
-            grant.scopes = Scope::ALL.into_iter().collect();
-        }
+        Mode::Full => grant = grant.with_full_permissions(),
         Mode::Auto | Mode::Plan => {}
     }
     grant
@@ -368,6 +365,10 @@ mod tests {
         }
         for scope in Scope::ALL {
             assert!(agent.holds(scope), "{scope:?}");
+            assert!(
+                agent.scopes.contains(&scope),
+                "{scope:?} is held and not told"
+            );
         }
     }
 

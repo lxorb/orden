@@ -1,5 +1,5 @@
-import type { AgentAnswer, AgentCaller as Caller } from '@orden/contracts'
-import { said, type Said, words, yes } from '../../automation/src/api'
+import type { AgentAnswer, AgentCaller as Caller, AgentScope as Scope } from '@orden/contracts'
+import { holds, said, type Said, words, yes } from '../../automation/src/api'
 import type { Agent as Writer } from '../../agent-docs/src/api'
 import { Refused } from './problem'
 
@@ -71,12 +71,8 @@ export function writerOf(call: Call): Writer {
   return caller.thread ? { id, name, thread: caller.thread } : { id, name }
 }
 
-function holding(call: Call, scope: string): boolean {
-  return call.caller.agent === null || call.caller.agent.scopes.includes(scope)
-}
-
-export function needScope(call: Call, scope: string, why: string): void {
-  if (!holding(call, scope)) {
+export function needScope(call: Call, scope: Scope, why: string): void {
+  if (!holds(call.caller, scope)) {
     throw new Refused('not_granted', `${why} needs ${scope}, which this agent was not granted`)
   }
 }
