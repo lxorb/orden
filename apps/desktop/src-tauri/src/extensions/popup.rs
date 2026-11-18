@@ -51,10 +51,10 @@ fn answering(app: &AppHandle) -> Option<Webview> {
         .clone()?;
     let view = app.get_webview(&label)?;
     let _doing = orden_crashes::stall::doing("extension popup: asked");
-    if crate::web_answers::answers(&view) {
+    if orden_web::web_answers::answers(&view) {
         Some(view)
     } else {
-        crate::web_answers::said(app);
+        orden_web::web_answers::said(app);
         None
     }
 }
@@ -127,7 +127,7 @@ pub async fn extension_popup_open(
             .map_err(|error| error.to_string())??
             .parse()
             .map_err(|_| "that extension's popup has no address".to_string())?;
-    let store = crate::web_stores::named(store.as_deref())?.map(str::to_owned);
+    let store = orden_web::web_stores::named(store.as_deref())?.map(str::to_owned);
 
     let builder = WebviewBuilder::new(label.clone(), WebviewUrl::External(blank()?))
         .focused(orden_placement::placement::away().is_none())
@@ -165,14 +165,14 @@ pub async fn extension_popup_open(
         }
         closed(&building);
         if let Some(page) = building.get_webview(&crate::web_tabs::label_of(&tab)) {
-            if !crate::web_answers::answers(&page) {
-                crate::web_answers::said(&building);
-                let _ = sending.try_send(Err(crate::web_answers::NOT_ANSWERING.to_owned()));
+            if !orden_web::web_answers::answers(&page) {
+                orden_web::web_answers::said(&building);
+                let _ = sending.try_send(Err(orden_web::web_answers::NOT_ANSWERING.to_owned()));
                 return;
             }
         }
         let _ = &store;
-        let scale = crate::page_scale::of(&window).unwrap_or(1.0);
+        let scale = orden_web::page_scale::of(&window).unwrap_or(1.0);
         let made = crate::engine::add_child(
             &window,
             builder,
@@ -198,7 +198,7 @@ pub async fn extension_popup_open(
 pub fn extension_popup_place(app: AppHandle, rect: Rect) {
     if let Some(view) = answering(&app) {
         let _doing = orden_crashes::stall::doing("extension_popup_place");
-        let scale = crate::page_scale::of(&view.window()).unwrap_or(1.0);
+        let scale = orden_web::page_scale::of(&view.window()).unwrap_or(1.0);
         let _ = view.set_position(PhysicalPosition::new(rect.x * scale, rect.y * scale));
         let _ = view.set_size(PhysicalSize::new(
             rect.width.max(1.0) * scale,
@@ -228,12 +228,12 @@ fn closed(app: &AppHandle) {
         return;
     };
     let _doing = orden_crashes::stall::doing("extension popup: closing");
-    if crate::web_answers::answers(&view) {
+    if orden_web::web_answers::answers(&view) {
         let _ = view.close();
     } else {
-        crate::web_answers::said(app);
-        crate::web_answers::put_away(&view);
-        crate::web_answers::close_when_answering(app, label);
+        orden_web::web_answers::said(app);
+        orden_web::web_answers::put_away(&view);
+        orden_web::web_answers::close_when_answering(app, label);
     }
 }
 

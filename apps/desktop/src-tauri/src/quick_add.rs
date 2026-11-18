@@ -54,8 +54,8 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
         Some(window) => window,
         None => match quick_window(app) {
             Ok(window) => {
-                if let Some(id) = crate::host::window_id(&window.as_ref().window()) {
-                    let _ = crate::host::system().float(id);
+                if let Some(id) = orden_web::host::window_id(&window.as_ref().window()) {
+                    let _ = orden_web::host::system().float(id);
                 }
                 window
             }

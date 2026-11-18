@@ -37,7 +37,7 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .unwrap_or_default();
     let loading = with_extensions(&mut asked, &firefox);
     let settings = orden_web_engine::EngineSettings::default()
-        .with_switches(crate::page_scale::switches())
+        .with_switches(orden_web::page_scale::switches())
         .with_switches(asked);
     let mut engine = Cef::default()
         .sandbox(sandbox)
@@ -159,7 +159,7 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<orden_base::Engine>>(
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
     let building = {
         let _ = OWN_PROFILE.set(app_profile(manager.app_handle())?);
-        crate::page_scale::read_chosen(manager.app_handle());
+        orden_web::page_scale::read_chosen(manager.app_handle());
         crate::kept::read_kept(manager.app_handle());
         own_window(building)
     };
@@ -174,9 +174,9 @@ pub(crate) fn own_window<M: tauri::Manager<orden_base::Engine>>(
         .browser_runtime_style(RuntimeStyle::Alloy)
         .initialization_script(crate::kept::kept_script())
         .initialization_script(crate::window_drag::SCRIPT)
-        .initialization_script(crate::page_drag::SCRIPT)
+        .initialization_script(orden_web::page_drag::SCRIPT)
         .initialization_script(orden_system::gpu::SCRIPT)
-        .initialization_script(crate::page_scale::SCRIPT)
+        .initialization_script(orden_web::page_scale::SCRIPT)
         .initialization_script(crate::keyboard::PRESS_SCRIPT)
         .initialization_script(crate::page_scheme::SCRIPT);
     match OWN_PROFILE.get() {
@@ -199,6 +199,27 @@ pub(crate) fn own_profile<M: tauri::Manager<orden_base::Engine>>(
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
 pub(crate) use orden_web_engine::internal;
+
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::useless_conversion,
+    reason = "the engine's window handle is an X11 id, a view pointer or an HWND by platform; one number holds any of them"
+)]
+pub(crate) fn page_id(
+    webview: &tauri::webview::PlatformWebview,
+) -> Option<orden_web_engine::NativeWindow> {
+    use cef::{ImplBrowser as _, ImplBrowserHost as _};
+
+    let handle = webview
+        .downcast_ref::<tauri_runtime_cef::Webview>()
+        .and_then(|view| view.browser().host())
+        .map(|host| host.window_handle())?;
+    #[cfg(windows)]
+    let raw = handle.0 as usize as u64;
+    #[cfg(not(windows))]
+    let raw = handle as usize as u64;
+    (raw != 0).then_some(orden_web_engine::NativeWindow(raw))
+}
 
 pub(crate) mod devtools;
 pub(crate) mod renderer;

@@ -1,6 +1,6 @@
-pub(crate) const STORES: &str = "web-stores";
+pub const STORES: &str = "web-stores";
 
-pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
+pub fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
     match orden_web_engine::StoreName::parse(asked) {
         Ok(Some(_)) => Ok(asked.filter(|name| !name.is_empty())),
         Ok(None) => Ok(None),
@@ -9,7 +9,7 @@ pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
 }
 
 #[cfg(test)]
-pub(crate) fn identifier(name: &str) -> [u8; 16] {
+pub fn identifier(name: &str) -> [u8; 16] {
     fn hashed(name: &str, start: u64) -> u64 {
         name.bytes().fold(start, |hash, byte| {
             (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)

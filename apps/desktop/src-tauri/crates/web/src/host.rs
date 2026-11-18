@@ -4,7 +4,7 @@ use orden_web_engine::WindowSystem;
 #[cfg(target_os = "linux")]
 mod x11;
 
-pub(crate) fn system() -> &'static dyn WindowSystem {
+pub fn system() -> &'static dyn WindowSystem {
     #[cfg(target_os = "linux")]
     {
         &x11::X11
@@ -20,7 +20,7 @@ pub(crate) fn system() -> &'static dyn WindowSystem {
     clippy::useless_conversion,
     reason = "a window's handle is an X11 id, a view pointer or an HWND by platform; one number holds any of them"
 )]
-pub(crate) fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<NativeWindow> {
+pub fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<NativeWindow> {
     use raw_window_handle::{HasWindowHandle as _, RawWindowHandle};
 
     let handle = window.window_handle().ok()?;
@@ -34,25 +34,17 @@ pub(crate) fn window_id(window: &tauri::Window<orden_base::Engine>) -> Option<Na
     (raw != 0).then_some(NativeWindow(raw))
 }
 
-#[allow(
-    clippy::cast_possible_truncation,
-    clippy::useless_conversion,
-    reason = "the engine's window handle is an X11 id, a view pointer or an HWND by platform; one number holds any of them"
-)]
-pub(crate) fn page_id(webview: &tauri::webview::PlatformWebview) -> Option<NativeWindow> {
-    use cef::{ImplBrowser as _, ImplBrowserHost as _};
+static PAGE_ID: std::sync::OnceLock<fn(&tauri::webview::PlatformWebview) -> Option<NativeWindow>> =
+    std::sync::OnceLock::new();
 
-    let handle = webview
-        .downcast_ref::<tauri_runtime_cef::Webview>()
-        .and_then(|view| view.browser().host())
-        .map(|host| host.window_handle())?;
-    #[cfg(windows)]
-    let raw = handle.0 as usize as u64;
-    #[cfg(not(windows))]
-    let raw = handle as usize as u64;
-    (raw != 0).then_some(NativeWindow(raw))
+pub fn hand_page_id(page_id: fn(&tauri::webview::PlatformWebview) -> Option<NativeWindow>) {
+    let _ = PAGE_ID.set(page_id);
 }
 
-pub(crate) fn x11_page(webview: &tauri::webview::PlatformWebview) -> Option<u32> {
+pub fn page_id(webview: &tauri::webview::PlatformWebview) -> Option<NativeWindow> {
+    PAGE_ID.get().and_then(|page_id| page_id(webview))
+}
+
+pub fn x11_page(webview: &tauri::webview::PlatformWebview) -> Option<u32> {
     page_id(webview).and_then(NativeWindow::as_x11)
 }

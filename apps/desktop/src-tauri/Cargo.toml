@@ -148,6 +148,7 @@ tauri-plugin-opener = "2"
 tauri-plugin-deep-link = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-notification = "~2.4"
+raw-window-handle = "0.6"
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
 notify = "8"
@@ -233,6 +234,7 @@ orden-placement = { path = "crates/placement" }
 orden-pty = { path = "crates/pty" }
 orden-reminders = { path = "crates/reminders" }
 orden-system = { path = "crates/system" }
+orden-web = { path = "crates/web" }
 fontdb.workspace = true
 png.workspace = true
 tauri = { version = "2", features = ["protocol-asset", "devtools"] }
@@ -249,7 +251,7 @@ rustls.workspace = true
 ring = "0.17"
 tokio.workspace = true
 libloading.workspace = true
-raw-window-handle = "0.6"
+raw-window-handle.workspace = true
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
 tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }

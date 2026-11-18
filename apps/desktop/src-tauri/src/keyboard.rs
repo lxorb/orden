@@ -193,7 +193,7 @@ mod native {
     static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
 
     pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
-        let Some(x11) = crate::host::x11_page(platform) else {
+        let Some(x11) = orden_web::host::x11_page(platform) else {
             return;
         };
         let mut pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);

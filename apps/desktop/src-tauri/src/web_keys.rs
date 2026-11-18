@@ -718,7 +718,7 @@ mod grabbed {
     }
 
     pub fn listen(webview: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
-        let Some(page) = crate::host::x11_page(webview) else {
+        let Some(page) = orden_web::host::x11_page(webview) else {
             return;
         };
         let Some(grabs) = grabs(&app) else { return };
