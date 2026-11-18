@@ -1,22 +1,20 @@
+import { door } from '@orden/markdown/door'
 import { identifier, within, isDesktop } from '../../platform/src/api'
 import { cancelJob, type Entry, FOUND, type Found, searchBelow } from './commands'
 
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the searches by job, never drawn
 const running = new Map<string, Search>()
-let hearing: Promise<unknown> | null = null
+const hearing = door(() =>
+  import('@tauri-apps/api/event').then(({ listen }) =>
+    listen<{ job: string; found: Found[] }>(FOUND, ({ payload }) => {
+      running.get(payload.job)?.heard(payload.found)
+    }),
+  ),
+)
 
 function hear(): Promise<unknown> {
   if (!isDesktop) return Promise.resolve()
-  hearing ??= import('@tauri-apps/api/event')
-    .then(({ listen }) =>
-      listen<{ job: string; found: Found[] }>(FOUND, ({ payload }) => {
-        running.get(payload.job)?.heard(payload.found)
-      }),
-    )
-    .catch(() => {
-      hearing = null
-    })
-  return hearing
+  return hearing().catch(() => undefined)
 }
 
 function relativeName(root: string, one: Found): string {

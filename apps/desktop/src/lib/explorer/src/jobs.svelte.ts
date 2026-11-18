@@ -1,3 +1,4 @@
+import { door } from '@orden/markdown/door'
 import { identifier, isDesktop } from '../../platform/src/api'
 import { cancelJob, PROGRESS } from './commands'
 
@@ -15,7 +16,17 @@ const SHOWN_AFTER = 400
 
 class Jobs {
   list = $state<Running[]>([])
-  #hearing: Promise<unknown> | null = null
+  #hearing = door(() =>
+    import('@tauri-apps/api/event').then(({ listen }) =>
+      listen<{ job: string; bytes: number; total: number; items: number; count: number }>(
+        PROGRESS,
+        ({ payload }) => {
+          const { job, bytes, total, items, count } = payload
+          this.change(job, { bytes, total, items, count })
+        },
+      ),
+    ),
+  )
 
   async run<T>(label: string, work: (id: string) => Promise<T>): Promise<T> {
     const heard = this.hear()
@@ -43,20 +54,7 @@ class Jobs {
 
   private hear(): Promise<unknown> {
     if (!isDesktop) return Promise.resolve()
-    this.#hearing ??= import('@tauri-apps/api/event')
-      .then(({ listen }) =>
-        listen<{ job: string; bytes: number; total: number; items: number; count: number }>(
-          PROGRESS,
-          ({ payload }) => {
-            const { job, bytes, total, items, count } = payload
-            this.change(job, { bytes, total, items, count })
-          },
-        ),
-      )
-      .catch(() => {
-        this.#hearing = null
-      })
-    return this.#hearing
+    return this.#hearing().catch(() => undefined)
   }
 }
 
