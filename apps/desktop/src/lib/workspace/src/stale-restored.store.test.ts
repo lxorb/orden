@@ -126,8 +126,7 @@ describe.each(Object.entries(ways))('%s', (_, back) => {
 describe('the closed stack and its base', () => {
   const close = async () => {
     await workspace.open(PATH)
-    const tab = workspace.tabs.at(-1)
-    if (!tab) throw new Error('no tab')
+    const tab = workspace.tabs.at(-1)!
     const end = tab.note.live.text.length
     tab.note.live.edit([{ from: end, to: end, insert: 'TYPED\n' }], { userEvent: 'input' })
     workspace.close(tab.id)

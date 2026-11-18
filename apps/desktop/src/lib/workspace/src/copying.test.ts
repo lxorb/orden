@@ -1,5 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const { told, disk, reads } = vi.hoisted(() => ({
   reads: [] as string[],
@@ -37,12 +38,7 @@ vi.mock('../../file-writes/src/api', async (original) => ({
   writeFile: async (path: string, content: string) => void disk.set(path, content),
 }))
 
-const stored = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => stored.get(key) ?? null,
-  setItem: (key: string, value: string) => void stored.set(key, value),
-  removeItem: (key: string) => void stored.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const { serveWorkspace } = await import('./services')
 serveWorkspace({

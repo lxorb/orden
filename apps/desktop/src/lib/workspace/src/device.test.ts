@@ -1,29 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 import { DeviceView } from './device.svelte'
-
-function memory(): Storage {
-  const held = new Map<string, string>()
-
-  return {
-    get length() {
-      return held.size
-    },
-    key: (at: number) => [...held.keys()][at] ?? null,
-    getItem: (key: string) => held.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      held.set(key, value)
-    },
-    removeItem: (key: string) => {
-      held.delete(key)
-    },
-    clear: () => held.clear(),
-  }
-}
 
 let store: Storage
 
 beforeEach(() => {
-  store = memory()
+  store = memoryStorage()
   vi.stubGlobal('localStorage', store)
 })
 

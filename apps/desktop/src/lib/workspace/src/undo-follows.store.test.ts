@@ -30,8 +30,7 @@ async function fresh(files: Record<string, string>) {
 }
 
 async function spaceRenamed(to: string) {
-  const space = workspace.spaces[0]
-  if (!space) throw new Error('no space')
+  const space = workspace.spaces[0]!
   const from = space.root
   await d.invoke('rename_note', { from, to })
   space.root = to

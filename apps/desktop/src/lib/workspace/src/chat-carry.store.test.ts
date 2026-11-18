@@ -56,8 +56,7 @@ const space = (id: string, role: 'owner' | 'write', people: string[] = []) =>
   ({ id, name: id, role, shared: role !== 'owner', people }) as never
 
 beforeEach(async () => {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   one.reset()
   for (const root of [SHARED, OWNERS, MINE]) one.folders.add(root)
   one.files.set(POINTER, chatText({ v: 1, chat: CHAT }))
@@ -140,8 +139,7 @@ test('a name already taken there, the account is not asked and nothing moves', a
 })
 
 test('the file refused after the chat moved, the chat is moved back', async () => {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   const real = one.invoke.bind(one)
   vi.spyOn(one, 'invoke').mockImplementation((command, args) => {
     if (command === 'rename_note') throw new Error('something already lives there')

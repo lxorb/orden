@@ -56,8 +56,7 @@ const single = (one: object) => ({
 })
 
 beforeEach(async () => {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   one.reset()
   one.folders.add(ROOT)
   workspace.spaces = [{ id: 'one', name: 'One', root: ROOT }]
@@ -127,8 +126,7 @@ test('a tab closed within the pause: once the write has landed the entry holds n
   disk.current?.files.set(PATH, 'base\n')
   await workspace.loadTree()
   await workspace.open(PATH)
-  const tab = workspace.tabs[0]
-  if (!tab) throw new Error('no tab')
+  const tab = workspace.tabs[0]!
   tab.note.replace('base\nCHANGED-MY-MIND\n')
   const { id } = tab
   workspace.close(id)

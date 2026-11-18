@@ -42,8 +42,7 @@ async function window(setsRead?: unknown) {
 const fetched = async () => (await import('./sets.svelte')).sets
 
 beforeEach(() => {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   one.reset()
   one.folders.add(WORK.root).add(FOOD.root)
   one.files.set(`${WORK.root}/Plan.md`, '# Plan\n')
@@ -99,8 +98,7 @@ describe('a tab that is one of its kind', () => {
     workspace.openSettings()
     const food = workspace.settingsTab
     await workspace.selectSpace('work')
-    const work = workspace.settingsTab
-    if (!work) throw new Error('no Settings in work')
+    const work = workspace.settingsTab!
 
     await sets.adopt([work], 'food')
 

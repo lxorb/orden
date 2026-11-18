@@ -47,8 +47,7 @@ describe('renaming a tag in one note', () => {
   })
 
   test('with the way back, so undoing it moves no caret', () => {
-    const made = change('work/orden', 'work/core')
-    if (!made) throw new Error('nothing changed')
+    const made = change('work/orden', 'work/core')!
 
     let out = ''
     let at = 0
@@ -82,8 +81,7 @@ describe('taking a tag away', () => {
   })
 
   test('with the way back, which puts every one of them back', () => {
-    const made = change('work/orden', null)
-    if (!made) throw new Error('nothing changed')
+    const made = change('work/orden', null)!
 
     let out = ''
     let at = 0
