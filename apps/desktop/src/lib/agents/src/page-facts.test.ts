@@ -138,18 +138,16 @@ describe('where an element is', () => {
   })
 })
 
-function named(document: Document, selector: string): Said {
-  const found = document.querySelector(selector)
-  if (!found) throw new Error(`no ${selector}`)
-  return factsOf(found)
+function hit(html: string, at = '#hit'): Said {
+  const element = page(html).querySelector(at)
+  if (!element) throw new Error(`no ${at}`)
+  return factsOf(element)
 }
 
 describe('what is no control is not named by all it holds', () => {
   test('a column of cards', () => {
-    const facts = named(
-      page(
-        '<div id="c"><h3>To do</h3><div class="card">Pay rent</div><div class="card">Buy milk</div></div>',
-      ),
+    const facts = hit(
+      '<div id="c"><h3>To do</h3><div class="card">Pay rent</div><div class="card">Buy milk</div></div>',
       '#c',
     )
     expect(facts.control).toBe(false)
@@ -163,7 +161,7 @@ describe('what is no control is not named by all it holds', () => {
       '<svg aria-label="Delete"></svg>',
       '<img alt="Delete">',
     ]) {
-      const facts = named(page(`<div id="r"><span>Ann</span> Lunch? ${icon}</div>`), '#r')
+      const facts = hit(`<div id="r"><span>Ann</span> Lunch? ${icon}</div>`, '#r')
       expect(facts.name, icon).not.toContain('Delete')
       expect(facts.name, icon).toContain('Lunch')
     }
@@ -172,7 +170,7 @@ describe('what is no control is not named by all it holds', () => {
   test('a long stretch of words is no name', () => {
     const words =
       'Pay attention to this long paragraph of writing about nothing much at all, please'
-    expect(named(page(`<div id="p">${words}</div>`), '#p').name).toBe('')
+    expect(hit(`<div id="p">${words}</div>`, '#p').name).toBe('')
   })
 
   test.each([
@@ -182,7 +180,7 @@ describe('what is no control is not named by all it holds', () => {
     ['its own label', '<div id="x" aria-label="Pay now"><i></i><i></i></div>'],
     ['nothing but a picture', '<div id="x"><img alt="Pay now"></div>'],
   ])('and the true asks stay: %s', (_how, html) => {
-    expect(named(page(html), '#x').name).toContain('Pay now')
+    expect(hit(html, '#x').name).toContain('Pay now')
   })
 
   test('a control says it is one', () => {
@@ -191,13 +189,13 @@ describe('what is no control is not named by all it holds', () => {
       '<a id="x" href="/y">a</a>',
       '<div id="x" role="button">a</div>',
     ]) {
-      expect(named(page(html), '#x').control, html).toBe(true)
+      expect(hit(html, '#x').control, html).toBe(true)
     }
-    expect(named(page('<div id="x">a</div>'), '#x').control).toBe(false)
+    expect(hit('<div id="x">a</div>', '#x').control).toBe(false)
   })
 
   test('a link around a picture is a link', () => {
-    const facts = named(page('<a id="x" href="/h"><img alt="How to delete things"></a>'), '#x')
+    const facts = hit('<a id="x" href="/h"><img alt="How to delete things"></a>', '#x')
     expect(facts.link).toBe(true)
   })
 })
@@ -235,12 +233,6 @@ describe('a huge page', () => {
 })
 
 describe('a press no control holds goes to what acts for it', () => {
-  const hit = (html: string, at = '#hit') => {
-    const element = page(html).querySelector(at)
-    if (!element) throw new Error('no element')
-    return factsOf(element)
-  }
-
   test.each([
     ['a handler', '<div onclick="pay()"><div>Pay now</div><div id=hit>20.00 EUR</div></div>'],
     [
@@ -360,12 +352,6 @@ describe('what a press lands on that is no element', () => {
 })
 
 describe('what acts for a press, by its first line', () => {
-  const hit = (html: string, at = '#hit') => {
-    const element = page(html).querySelector(at)
-    if (!element) throw new Error('no element')
-    return factsOf(element)
-  }
-
   test('a long part under a short first line', () => {
     const terms = 'Your plan renews automatically every month until you cancel it in your account'
     const facts = hit(`<div onclick="pay()"><div>Pay now</div><div id=hit>${terms}</div></div>`)
@@ -425,14 +411,8 @@ describe('what acts for a press, by its first line', () => {
 })
 
 describe('a link that goes somewhere, and one that does more', () => {
-  const on = (html: string) => {
-    const link = page(html).querySelector('a')
-    if (!link) throw new Error('no link')
-    return factsOf(link)
-  }
-
   test('a plain address is a link', () => {
-    expect(on('<a href="/delete-account">Delete account</a>').link).toBe(true)
+    expect(hit('<a href="/delete-account">Delete account</a>', 'a').link).toBe(true)
   })
 
   test.each([
@@ -441,7 +421,7 @@ describe('a link that goes somewhere, and one that does more', () => {
     '<a href="/users/1" role="button">Delete account</a>',
     '<a href="x" onclick="del()">Delete account</a>',
   ])('%s is a press', (html) => {
-    expect(on(html).link).toBe(false)
+    expect(hit(html, 'a').link).toBe(false)
   })
 })
 
@@ -516,12 +496,6 @@ describe('a secret region in what is read', () => {
 })
 
 describe('what acts for a press offers its lines to the policy', () => {
-  const hit = (html: string, at = '#hit') => {
-    const element = page(html).querySelector(at)
-    if (!element) throw new Error('no element')
-    return factsOf(element)
-  }
-
   test('every short line of something built to be pressed', () => {
     const facts = hit(
       '<div onclick="pay()"><div id=hit>Order summary</div><div>Pay now</div></div>',
@@ -581,17 +555,11 @@ describe('what acts for a press offers its lines to the policy', () => {
 })
 
 describe('what draws its own face asks', () => {
-  const on = (html: string) => {
-    const element = page(html).querySelector('#hit')
-    if (!element) throw new Error('no element')
-    return factsOf(element)
-  }
-
   test.each([
     ['a canvas with a handler', '<canvas id=hit onclick="x()"></canvas>'],
     ['a component with nothing readable', '<x-pay id=hit onclick="x()"></x-pay>'],
   ])('%s', (_, html) => {
-    expect(on(html).opaque).toBe(true)
+    expect(hit(html).opaque).toBe(true)
   })
 
   test.each([
@@ -600,7 +568,7 @@ describe('what draws its own face asks', () => {
     ['an empty div with a handler', '<div id=hit onclick="x()"></div>'],
     ['a component that says', '<x-b id=hit onclick="x()">Open</x-b>'],
   ])('and not %s', (_, html) => {
-    expect(on(html).opaque).toBe(false)
+    expect(hit(html).opaque).toBe(false)
   })
 })
 

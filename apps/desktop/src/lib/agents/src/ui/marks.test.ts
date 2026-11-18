@@ -125,6 +125,7 @@ describe('a note an agent writes in', () => {
 
 describe('the overview', () => {
   test('puts back who is stopped, and when, for a window arriving', () => {
+    const seen = nothing()
     const overview: Overview = {
       agents: [],
       tabs: [],
@@ -133,7 +134,6 @@ describe('the overview', () => {
       halted: ['claude'],
       connected: ['claude'],
     }
-    const seen = nothing()
     overviewed(seen, overview, 100)
 
     expect(seen.halted).toEqual({ claude: 100 })
@@ -142,40 +142,19 @@ describe('the overview', () => {
 
   test('keeps only the questions still waiting', () => {
     const seen = nothing()
-    heard(
-      seen,
-      {
-        kind: 'asked',
-        approval: {
-          id: 'q1',
-          agent: 'claude',
-          name: 'Claude',
-          category: 'paying',
-          summary: 'Pay',
-          asked: 0,
-          answer: 'pending',
-        },
-      },
-      1,
-    )
+    const approval = {
+      id: 'q1',
+      agent: 'claude',
+      name: 'Claude',
+      category: 'paying',
+      summary: 'Pay',
+      asked: 0,
+      answer: 'pending',
+    } as const
+    heard(seen, { kind: 'asked', approval }, 1)
     expect(seen.approvals).toHaveLength(1)
 
-    heard(
-      seen,
-      {
-        kind: 'answered',
-        approval: {
-          id: 'q1',
-          agent: 'claude',
-          name: 'Claude',
-          category: 'paying',
-          summary: 'Pay',
-          asked: 0,
-          answer: 'expired',
-        },
-      },
-      2,
-    )
+    heard(seen, { kind: 'answered', approval: { ...approval, answer: 'expired' } }, 2)
     expect(seen.approvals).toEqual([])
   })
 })

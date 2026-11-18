@@ -80,20 +80,6 @@
 {/if}
 
 <style>
-  pre {
-    width: 100%;
-    margin: 0;
-    padding: var(--space-3);
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    overflow-x: auto;
-    color: var(--muted-strong);
-  }
-
   .disclose {
     display: inline-flex;
     align-items: center;

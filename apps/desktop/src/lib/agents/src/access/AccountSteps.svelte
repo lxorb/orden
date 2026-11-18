@@ -158,17 +158,6 @@
     line-height: 1.6;
   }
 
-  .hint {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .hint.bad {
-    color: var(--danger);
-  }
-
   .hint.spaced {
     margin-top: var(--space-3);
   }
@@ -301,20 +290,6 @@
 
   .fresh {
     padding-inline-start: 0;
-  }
-
-  pre {
-    width: 100%;
-    margin: 0;
-    padding: var(--space-3);
-    background: var(--bg);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    overflow-x: auto;
-    color: var(--muted-strong);
   }
 
   .orden-button {
