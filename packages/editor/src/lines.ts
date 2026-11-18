@@ -79,10 +79,41 @@ function verbatimRows(state: EditorState, line: Line): Lines | null {
 
 const HEADING_LINE = /^ {0,3}#{1,6}(?:[ \t]|$)/
 
+function yamlLevel(text: string): number {
+  const indent = /^[ \t]*/.exec(text)?.[0].length ?? 0
+  return indent + (/^-(?:[ \t]|$)/.test(text.slice(indent)) ? 1 : 0)
+}
+
+function propertyRun(state: EditorState, number: number, rows: Lines): Run {
+  const doc = state.doc
+  const level = yamlLevel(doc.line(number).text)
+  const within = (at: number) => {
+    const text = doc.line(at).text
+    return text.trim() === '' || yamlLevel(text) >= level
+  }
+  let first = number
+  let last = number
+  while (first > rows.first && within(first - 1)) first--
+  while (last < rows.last && within(last + 1)) last++
+
+  const items: Lines[] = []
+  for (let at = first; at <= last; at++) {
+    const text = doc.line(at).text
+    const previous = items.at(-1)
+    const starts = text.trim() !== '' && yamlLevel(text) === level
+    if (previous && !starts) previous.last = at
+    else items.push({ first: at, last: at })
+  }
+  return { first, last, items }
+}
+
 function runAround(state: EditorState, number: number): Run {
   const doc = state.doc
   const line = doc.line(number)
   const verbatim = verbatimRows(state, line)
+  if (verbatim && !blank(line) && verbatimBlockAt(state, line)?.name === 'FrontMatter') {
+    return propertyRun(state, number, verbatim)
+  }
   const list = verbatim || blank(line) ? null : listAround(state, line)
   if (list) return list
   if (!verbatim && HEADING_LINE.test(line.text)) return { first: number, last: number }
