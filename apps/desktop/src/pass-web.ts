@@ -1,6 +1,7 @@
 import './lib/backend-ports'
 import { serveAssets } from './lib/platform/src/api'
 import './lib/sync-ports'
+import './lib/theme-ports'
 import '@orden/themes'
 import { mount } from 'svelte'
 import { PassWeb } from './lib/pass-ui/src/api'
