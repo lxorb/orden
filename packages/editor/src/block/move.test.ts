@@ -230,11 +230,10 @@ describe('a heading', () => {
     expect(down(doc, '# One')).toBe('# Two\n\nbeta\n\n# One\n\nalpha\n')
   })
 
-  test('steps over its sibling sections, not the words of the one above', () => {
-    const doc = '# A\n\na\n\n## B\n\nb\n\n## C\n\nc\n'
-    expect(up(doc, '## C')).toBe('# A\n\na\n\n## C\n\nc\n\n## B\n\nb\n')
-    expect(up('# A\n\na\n\n## C\n\nc\n', '## C')).toBe('## C\n\nc\n\n# A\n\na\n')
-  })
+  test.each([
+    ['# A\n\na\n\n## B\n\nb\n\n## C\n\nc\n', '# A\n\na\n\n## C\n\nc\n\n## B\n\nb\n', '## C'],
+    ['# A\n\na\n\n## C\n\nc\n', '## C\n\nc\n\n# A\n\na\n', '## C'],
+  ])('%j', (input, wanted, extra) => expect(up(input, extra)).toBe(wanted))
 
   test('a paragraph moves through one a line at a time, either way', () => {
     const into = down(doc, 'alpha')

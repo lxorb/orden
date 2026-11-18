@@ -168,10 +168,10 @@ describe('what may still change the document', () => {
     return view.state
   }
 
-  test('nothing anyone types', () => {
-    const typed = { changes: { from: 0, insert: 'x' }, userEvent: 'input.type' }
-    expect(afterChange(locked(), typed)).toBe('# Note')
-  })
+  test.each([
+    [locked(), '# Note', { changes: { from: 0, insert: 'x' }, userEvent: 'input.type' }],
+    [locked(), '# Note', { changes: { from: 2, to: 6, insert: 'Read' } }],
+  ])('%j', (input, wanted, extra) => expect(afterChange(input, extra)).toBe(wanted))
 
   test('nothing pasted, dropped or dragged out', () => {
     const state = locked()
@@ -181,10 +181,6 @@ describe('what may still change the document', () => {
     expect(afterChange(state, { changes: { from: 0, to: 6 }, userEvent: 'move.drop' })).toBe(
       '# Note',
     )
-  })
-
-  test('and not a widget dispatching straight at the view either', () => {
-    expect(afterChange(locked(), { changes: { from: 2, to: 6, insert: 'Read' } })).toBe('# Note')
   })
 
   test('a note arriving from outside still lands', () => {

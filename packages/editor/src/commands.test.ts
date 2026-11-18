@@ -413,16 +413,15 @@ describe('over a range', () => {
 })
 
 describe('a callout is asked to fold', () => {
-  test('says nothing about folding until it is asked', () => {
-    expect(calloutSign(stateOf(CALLOUT, 4))).toBe('')
-    expect(calloutSign(stateOf('> [!note]- Mind the gap\n', 4))).toBe('-')
-    expect(calloutSign(stateOf('> [!note]+ Mind the gap\n', 4))).toBe('+')
-  })
+  test.each([
+    [stateOf(CALLOUT, 4), ''],
+    [stateOf('> [!note]- Mind the gap\n', 4), '-'],
+    [stateOf('> [!note]+ Mind the gap\n', 4), '+'],
+  ])('%j', (input, wanted) => expect(calloutSign(input)).toBe(wanted))
 
-  test('and nothing at all where the caret is not in one', () => {
-    expect(calloutSign(stateOf('Plain words.\n', 3))).toBeNull()
-    expect(calloutSign(stateOf('> A plain quote\n', 5))).toBeNull()
-  })
+  test.each([[stateOf('Plain words.\n', 3)], [stateOf('> A plain quote\n', 5)]])('%j', (input) =>
+    expect(calloutSign(input)).toBeNull(),
+  )
 })
 
 describe('marks over a selection that holds what is not words', () => {
@@ -445,9 +444,9 @@ describe('marks over a selection that holds what is not words', () => {
     expect(across(doc)).toBe(wanted)
   })
 
-  test('italic over bold paragraphs adds to them, and comes off', () => {
-    expect(across('**a**\n\n**b**', '*')).toBe('***a***\n\n***b***')
-    expect(across('***a***\n\n***b***', '*')).toBe('**a**\n\n**b**')
-    expect(across('*a*\n\n*b*', '*')).toBe('a\n\nb')
-  })
+  test.each([
+    ['**a**\n\n**b**', '***a***\n\n***b***', '*'],
+    ['***a***\n\n***b***', '**a**\n\n**b**', '*'],
+    ['*a*\n\n*b*', 'a\n\nb', '*'],
+  ])('%j', (input, wanted, extra) => expect(across(input, extra)).toBe(wanted))
 })

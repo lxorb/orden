@@ -48,29 +48,20 @@ describe('inline code', () => {
 })
 
 describe('emphasis', () => {
-  test('bold', () => {
-    const doc = '**bold** x'
-    expect(click(doc, 6)).toBe(8)
-    expect(click(doc, 2)).toBe(0)
-  })
+  test.each([
+    ['**bold** x', 8, 6],
+    ['**bold** x', 0, 2],
+    ['**bold `code`** x', 15, 12],
+    ['**bold `code`** x', 7, 8],
+    ['**a**`b`', 5, 3],
+    ['**a**`b`', 5, 6],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toBe(wanted))
 
   test.each([
     ['_i_ x', 3, 2],
     ['~~s~~ x', 5, 3],
     ['==h== x', 5, 3],
   ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
-
-  test('nested constructs snap all the way out', () => {
-    const doc = '**bold `code`** x'
-    expect(click(doc, 12)).toBe(15)
-    expect(click(doc, 8)).toBe(7)
-  })
-
-  test('adjacent constructs meet between their marks', () => {
-    const doc = '**a**`b`'
-    expect(click(doc, 3)).toBe(5)
-    expect(click(doc, 6)).toBe(5)
-  })
 })
 
 describe('links', () => {
@@ -94,29 +85,20 @@ describe('constructs that are not applicable', () => {
     expect(click(doc, doc.length)).toBe(doc.length)
   })
 
-  test('inline math is replaced wholesale', () => {
-    const doc = 'mass $E$ here'
-    expect(click(doc, 5)).toBe(5)
-    expect(click(doc, 8)).toBe(8)
-  })
+  test.each([
+    ['mass $E$ here', 5, 5],
+    ['mass $E$ here', 8, 8],
+    ['---\ntitle: Hi\n---\n\nbody', 3, 3],
+    ['Term\n: a meaning', 6, 6],
+    ['[^1]: the note', 4, 4],
+    ['*[HTML]: Markup', 2, 2],
+    ['text[^1] more', 8, 7],
+  ])('%j', (input, wanted, extra) => expect(click(input, extra)).toBe(wanted))
 
   test.each([
     ['# Title', 2, 2],
     ['> quoted', 2, 2],
   ])('%j', (input, wanted, extra) => expect(click(input, extra)).toEqual(wanted))
-
-  test('marks that open a whole line are block marks too', () => {
-    const front = '---\ntitle: Hi\n---\n\nbody'
-    expect(click(front, 3)).toBe(3)
-    expect(click('Term\n: a meaning', 6)).toBe(6)
-    expect(click('[^1]: the note', 4)).toBe(4)
-    expect(click('*[HTML]: Markup', 2)).toBe(2)
-  })
-
-  test('a footnote reference in prose still snaps', () => {
-    const doc = 'text[^1] more'
-    expect(click(doc, 7)).toBe(8)
-  })
 })
 
 describe('only clicks', () => {
@@ -135,9 +117,8 @@ describe('only clicks', () => {
     expect(after.state.selection.main).toMatchObject({ from: 3, to: 7 })
   })
 
-  test('the pure function reports the same landing spots', () => {
-    const doc = 'a `code` b' + PARK
-    expect(snapOutward(state(doc, doc.length), 7)).toBe(8)
-    expect(snapOutward(state(doc, doc.length), 3)).toBe(2)
-  })
+  test.each([
+    [state('a `code` b' + PARK, ('a `code` b' + PARK).length), 8, 7],
+    [state('a `code` b' + PARK, ('a `code` b' + PARK).length), 2, 3],
+  ])('%j', (input, wanted, extra) => expect(snapOutward(input, extra)).toBe(wanted))
 })

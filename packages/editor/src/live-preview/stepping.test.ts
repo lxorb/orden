@@ -40,23 +40,14 @@ describe('a press onto a block that draws itself', () => {
     expect(edgeBeside(state(doc, blank), blank, false)).toBe(at(doc, '$$\n\nbelow') + 2)
   })
 
-  test('one line at a time, so a line clear of the block is an ordinary press', () => {
-    const doc = FORMULA
-    expect(edgeBeside(state(doc, 0), 0, true)).toBe(null)
-    expect(edgeBeside(state(doc, at(doc, 'below')), at(doc, 'below'), false)).toBe(null)
-  })
-
-  test('nothing where the line it aims at is ordinary text', () => {
-    const doc = 'one\ntwo\nthree\n'
-    expect(edgeBeside(state(doc, 0), 0, true)).toBe(null)
-    expect(edgeBeside(state(doc, 5), 5, false)).toBe(null)
-  })
-
-  test('nothing off either end of the note', () => {
-    const doc = FORMULA
-    expect(edgeBeside(state(doc, 0), 0, false)).toBe(null)
-    expect(edgeBeside(state(doc, doc.length), doc.length, true)).toBe(null)
-  })
+  test.each([
+    [state(FORMULA, 0), null, 0, true],
+    [state(FORMULA, at(FORMULA, 'below')), null, at(FORMULA, 'below'), false],
+    [state('one\ntwo\nthree\n', 0), null, 0, true],
+    [state('one\ntwo\nthree\n', 5), null, 5, false],
+    [state(FORMULA, 0), null, 0, false],
+    [state(FORMULA, FORMULA.length), null, FORMULA.length, true],
+  ])('%j', (input, wanted, extra, last) => expect(edgeBeside(input, extra, last)).toBe(wanted))
 
   test('nothing for the block the caret is already in, which is showing its source', () => {
     const doc = FORMULA

@@ -60,10 +60,9 @@ describe('parsing', () => {
     expect(parseTable('| a | b |\n| - | - |\n| 1 |  |')?.rows).toEqual([['1', '']])
   })
 
-  test('rejects text that is not a table', () => {
-    expect(parseTable('just a paragraph')).toBeNull()
-    expect(parseTable('| a |\nnot a delimiter\n| 1 |')).toBeNull()
-  })
+  test.each([['just a paragraph'], ['| a |\nnot a delimiter\n| 1 |']])('%j', (input) =>
+    expect(parseTable(input)).toBeNull(),
+  )
 })
 
 describe('a cell that ends in a backslash', () => {
@@ -213,15 +212,11 @@ describe('sorting by a column', () => {
     for (const source of orders) expect(sorted(source, 0)).toEqual(['999', '1,000', '5x'])
   })
 
-  test('the other way round when asked', () => {
-    expect(sorted('| a |\n| - |\n| pear |\n| apple |', 0, 'down')).toEqual(['pear', 'apple'])
-  })
-
-  test('an empty cell is last whichever way the column runs', () => {
-    const source = '| a |\n| - |\n| b |\n|  |\n| a |'
-    expect(sorted(source, 0, 'up')).toEqual(['a', 'b', ''])
-    expect(sorted(source, 0, 'down')).toEqual(['b', 'a', ''])
-  })
+  test.each([
+    ['| a |\n| - |\n| pear |\n| apple |', ['pear', 'apple'], 0, 'down' as const],
+    ['| a |\n| - |\n| b |\n|  |\n| a |', ['a', 'b', ''], 0, 'up' as const],
+    ['| a |\n| - |\n| b |\n|  |\n| a |', ['b', 'a', ''], 0, 'down' as const],
+  ])('%j', (input, wanted, extra, last) => expect(sorted(input, extra, last)).toEqual(wanted))
 
   test('rows that tie stay in the order they were written', () => {
     const model = parseTable('| a | b |\n| - | - |\n| x | one |\n| x | two |\n| a | three |')!

@@ -78,10 +78,10 @@ describe('parsing an img tag', () => {
     expect(parseHtmlImage("<img src='a.png' alt='x'>")).toMatchObject({ src: 'a.png', alt: 'x' })
   })
 
-  test('ignores tags that are not images', () => {
-    expect(parseHtmlImage('<div style="page-break-after: always;"></div>')).toBeNull()
-    expect(parseHtmlImage('<video src="a.mp4"></video>')).toBeNull()
-  })
+  test.each([['<div style="page-break-after: always;"></div>'], ['<video src="a.mp4"></video>']])(
+    '%j',
+    (input) => expect(parseHtmlImage(input)).toBeNull(),
+  )
 })
 
 describe('writing an image back', () => {
@@ -168,11 +168,11 @@ describe('finding images by position', () => {
     expect(imageAt(state(doc), 3)?.src).toBe('cat.png')
   })
 
-  test('answers null for anything else', () => {
-    expect(imageAt(state(`text ${MD}`), 4)).toBeNull()
-    expect(imageAt(state('plain'), 0)).toBeNull()
-    expect(imageAt(state('<div style="page-break-after: always;"></div>'), 0)).toBeNull()
-  })
+  test.each([
+    [state(`text ${MD}`), 4],
+    [state('plain'), 0],
+    [state('<div style="page-break-after: always;"></div>'), 0],
+  ])('%j', (input, extra) => expect(imageAt(input, extra)).toBeNull())
 
   test('reads a title from the markdown form', () => {
     expect(imageAt(state('![a](b.png "Title")'), 0)?.title).toBe('Title')
@@ -201,10 +201,10 @@ describe('the selected image', () => {
     expect(selectedImage(state(MD, { anchor: 0, head: MD.length }))?.src).toBe('cat.png')
   })
 
-  test('is nothing for a caret or a wider selection', () => {
-    expect(selectedImage(state(MD, { anchor: 0 }))).toBeNull()
-    expect(selectedImage(state(`a ${MD}`, { anchor: 0, head: MD.length + 2 }))).toBeNull()
-  })
+  test.each([[state(MD, { anchor: 0 })], [state(`a ${MD}`, { anchor: 0, head: MD.length + 2 })]])(
+    '%j',
+    (input) => expect(selectedImage(input)).toBeNull(),
+  )
 })
 
 describe('keys beside an image', () => {
@@ -217,11 +217,11 @@ describe('keys beside an image', () => {
     [selectImageAhead, { anchor: from, head: to }, state(doc, { anchor: from })],
   ])('%j', (input, wanted, extra) => expect(run(input, extra)).toEqual(wanted))
 
-  test('both give way anywhere else', () => {
-    expect(run(selectImageBehind, state(doc, { anchor: 1 }))).toBeNull()
-    expect(run(selectImageAhead, state(doc, { anchor: to }))).toBeNull()
-    expect(run(selectImageBehind, state(doc, { anchor: from, head: to }))).toBeNull()
-  })
+  test.each([
+    [selectImageBehind, state(doc, { anchor: 1 })],
+    [selectImageAhead, state(doc, { anchor: to })],
+    [selectImageBehind, state(doc, { anchor: from, head: to })],
+  ])('%j', (input, extra) => expect(run(input, extra)).toBeNull())
 
   test('give way while the markup is showing', () => {
     const revealed = parsed(
@@ -247,37 +247,32 @@ describe('keys on a selected image', () => {
   const to = 2 + MD.length
   const selected = state(doc, { anchor: from, head: to })
 
-  test('Enter puts the caret at the end of the alt text, showing the markup', () => {
-    const caret = from + 2 + 'A cat'.length
-    expect(run(editSelectedImage, selected)).toEqual({ anchor: caret, head: caret })
-  })
+  test.each([
+    [
+      editSelectedImage,
+      { anchor: from + 2 + 'A cat'.length, head: from + 2 + 'A cat'.length },
+      selected,
+    ],
+    [leaveSelectedImage, { anchor: to, head: to }, selected],
+  ])('%j', (input, wanted, extra) => expect(run(input, extra)).toEqual(wanted))
 
-  test('Escape steps off to just after the picture', () => {
-    expect(run(leaveSelectedImage, selected)).toEqual({ anchor: to, head: to })
-  })
-
-  test('neither applies without a selected image', () => {
-    expect(run(editSelectedImage, state(doc, { anchor: to }))).toBeNull()
-    expect(run(leaveSelectedImage, state(doc, { anchor: 0, head: doc.length }))).toBeNull()
-  })
+  test.each([
+    [editSelectedImage, state(doc, { anchor: to })],
+    [leaveSelectedImage, state(doc, { anchor: 0, head: doc.length })],
+  ])('%j', (input, extra) => expect(run(input, extra)).toBeNull())
 })
 
 describe('where the caret goes to edit the markup', () => {
-  test('after the alt in the markdown form', () => {
-    const doc = `a ${MD}`
-    expect(sourceCaret(state(doc), imageAt(state(doc), 2)!)).toBe(2 + 2 + 'A cat'.length)
-  })
+  test.each([
+    [state(`a ${MD}`), 2 + 2 + 'A cat'.length, imageAt(state(`a ${MD}`), 2)!],
+    [state('<img src="a.png">'), 1, imageAt(state('<img src="a.png">'), 0)!],
+  ])('%j', (input, wanted, extra) => expect(sourceCaret(input, extra)).toBe(wanted))
 
   test('after the alt attribute in the tag form', () => {
     const doc = `a ${TAG}`
     const tag = imageAt(state(doc), 2)!
     const caret = sourceCaret(state(doc), tag)
     expect(doc.slice(caret - 5, caret + 1)).toBe('A cat"')
-  })
-
-  test('just inside a tag with no alt', () => {
-    const doc = '<img src="a.png">'
-    expect(sourceCaret(state(doc), imageAt(state(doc), 0)!)).toBe(1)
   })
 })
 
