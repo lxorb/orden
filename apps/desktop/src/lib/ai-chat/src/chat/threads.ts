@@ -15,21 +15,19 @@ import {
   isSessionState,
   movedSince,
   type SessionState,
+  type Compaction,
+  type Effort,
+  type Mode,
+  type NoticeCode,
+  type Part,
+  type Thread,
+  type ThreadHead,
+  type ToolOutput,
+  type ToolState,
+  type Turn,
+  type Usage,
 } from '../../../ai-providers/src/api'
 import { isEffort } from './effort'
-import type {
-  Compaction,
-  Effort,
-  Mode,
-  NoticeCode,
-  Part,
-  Thread,
-  ThreadHead,
-  ToolOutput,
-  ToolState,
-  Turn,
-  Usage,
-} from '../../../ai-providers/src/api'
 import { noUsage } from './usage'
 import { webMeta } from '../../../web-backend/src/api'
 
@@ -508,8 +506,7 @@ async function web() {
     const raw = await meta.get(listKey(space))
     try {
       const read: unknown = raw ? JSON.parse(raw) : []
-      const list: unknown[] = Array.isArray(read) ? read : []
-      return list
+      return Array.isArray(read) ? (read as unknown[]) : []
     } catch {
       return []
     }
@@ -588,13 +585,10 @@ export function unreadOf(heads: readonly ThreadHead[]): Set<string> {
 }
 
 export async function readThread(space: string, id: string): Promise<Thread | null> {
-  let text: string | null
-  if (isNative) {
-    text = await invoke<string | null>('ai_thread_read', { space, id })
-  } else {
-    const store = await web()
-    text = (await store.meta.get(store.threadKey(space, id))) ?? null
-  }
+  const store = isNative ? null : await web()
+  const text = store
+    ? await store.meta.get(store.threadKey(space, id))
+    : await invoke<string | null>('ai_thread_read', { space, id })
   if (!text) return null
   let value: unknown
   try {

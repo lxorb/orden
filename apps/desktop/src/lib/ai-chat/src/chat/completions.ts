@@ -1,4 +1,4 @@
-import { conversationUrl } from '../../../ai-providers/src/api'
+import { conversationUrl, type ToolOutput, type Usage } from '../../../ai-providers/src/api'
 import { wireEffort } from './effort'
 import { learnt } from './learned'
 import { outputText, type Call, type Step } from './transcript'
@@ -8,12 +8,12 @@ import {
   argsOf,
   type Ask,
   type Heard,
+  PartsReader,
   type Reader,
   record,
   text,
   type Wire,
 } from './wire'
-import type { Part, ToolOutput, Usage } from '../../../ai-providers/src/api'
 
 type Message = Record<string, unknown>
 
@@ -121,16 +121,12 @@ interface Arriving {
   part: number
 }
 
-class CompletionsReader implements Reader {
-  readonly parts: Part[] = []
+class CompletionsReader extends PartsReader implements Reader {
   private readonly calls = new Map<number, Arriving>()
   private readonly made = crypto.randomUUID()
   private words = ''
   private finish = ''
-  private thinking: { part: number; started: number } | null = null
   private usage: Usage | undefined
-
-  constructor(private readonly window: number | null) {}
 
   heard(event: unknown): Heard {
     const said = record(event)
@@ -155,28 +151,9 @@ class CompletionsReader implements Reader {
     return { changed, ...(model ? { model } : {}), ...(this.usage ? { usage: this.usage } : {}) }
   }
 
-  private think(words: string): number {
-    if (!this.thinking) {
-      this.parts.push({ kind: 'thinking', text: '', ms: 0 })
-      this.thinking = { part: this.parts.length - 1, started: Date.now() }
-    }
-    const part = this.parts[this.thinking.part]
-    if (part?.kind === 'thinking') {
-      part.text += words
-      part.ms = Date.now() - this.thinking.started
-    }
-    return this.thinking.part
-  }
-
-  private say(words: string): number {
+  protected override say(words: string): number {
     this.words += words
-    const last = this.parts.at(-1)
-    if (last?.kind === 'text') {
-      last.text += words
-      return this.parts.length - 1
-    }
-    this.parts.push({ kind: 'text', text: words })
-    return this.parts.length - 1
+    return super.say(words)
   }
 
   private call(piece: Record<string, unknown>): number {
@@ -184,8 +161,8 @@ class CompletionsReader implements Reader {
     const fn = record(piece.function)
     let arriving = this.calls.get(index)
     if (!arriving) {
-      this.parts.push({ kind: 'tool', id: '', verb: '', args: {}, state: 'running' })
-      arriving = { id: '', name: '', json: '', part: this.parts.length - 1 }
+      const part = this.add({ kind: 'tool', id: '', verb: '', args: {}, state: 'running' })
+      arriving = { id: '', name: '', json: '', part }
       this.calls.set(index, arriving)
     }
     arriving.id = text(piece.id) || arriving.id

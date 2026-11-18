@@ -1,4 +1,4 @@
-import { conversationUrl } from '../../../ai-providers/src/api'
+import { conversationUrl, type ToolOutput, type Usage } from '../../../ai-providers/src/api'
 import { ANTHROPIC_COMPACT_BETA } from './catalogue'
 import { wireEffort } from './effort'
 import type { Call, Step } from './transcript'
@@ -9,12 +9,12 @@ import {
   type Ask,
   type Ending,
   type Heard,
+  PartsReader,
   type Reader,
   record,
   text,
   type Wire,
 } from './wire'
-import type { Part, ToolOutput, Usage } from '../../../ai-providers/src/api'
 
 export const PER_MESSAGE_BETA = 'mid-conversation-output-config-2026-07-01'
 const FAST_BETA = 'fast-mode-2026-02-01'
@@ -159,19 +159,14 @@ interface Open {
   started: number
 }
 
-class AnthropicReader implements Reader {
-  readonly parts: Part[] = []
+class AnthropicReader extends PartsReader implements Reader {
   private readonly blocks: Block[] = []
   private readonly open = new Map<number, Open>()
-  private usage: Usage
+  private usage: Usage = anthropicUsage({}, this.window)
   private counted: Record<string, unknown> = {}
   private stop = ''
   private over = false
   private category = ''
-
-  constructor(private readonly window: number | null) {
-    this.usage = anthropicUsage({}, window)
-  }
 
   heard(event: unknown): Heard {
     const said = record(event)
@@ -215,13 +210,8 @@ class AnthropicReader implements Reader {
     else if (kind === 'thinking')
       open.part = this.add({ kind: 'thinking', text: text(block.thinking), ms: 0 })
     else if (kind === 'tool_use' || kind === 'server_tool_use') {
-      open.part = this.add({
-        kind: 'tool',
-        id: text(block.id),
-        verb: text(block.name),
-        args: {},
-        state: 'running',
-      })
+      const [id, verb] = [text(block.id), text(block.name)]
+      open.part = this.add({ kind: 'tool', id, verb, args: {}, state: 'running' })
     }
     return { changed: open.part === null ? [] : [open.part] }
   }
@@ -267,9 +257,8 @@ class AnthropicReader implements Reader {
     if (!open) return { changed: [] }
     this.open.delete(index)
     const { block } = open
-    if (block.type === 'tool_use' || block.type === 'server_tool_use') {
+    if (block.type === 'tool_use' || block.type === 'server_tool_use')
       block.input = argsOf(open.json)
-    }
     this.blocks.push(block)
     if (open.part === null) return { changed: [] }
     const part = this.parts[open.part]
@@ -281,21 +270,14 @@ class AnthropicReader implements Reader {
     return { changed: [open.part] }
   }
 
-  private add(part: Part): number {
-    this.parts.push(part)
-    return this.parts.length - 1
-  }
-
   finished(saidDone: boolean): boolean {
     return saidDone || this.over || this.stop !== ''
   }
 
   answer(): Answer {
-    for (const open of this.open.values()) {
-      if (open.block.type !== 'tool_use' && open.block.type !== 'server_tool_use') {
+    for (const open of this.open.values())
+      if (open.block.type !== 'tool_use' && open.block.type !== 'server_tool_use')
         this.blocks.push(open.block)
-      }
-    }
     this.open.clear()
     const calls: Call[] = this.blocks
       .filter((one) => one.type === 'tool_use')

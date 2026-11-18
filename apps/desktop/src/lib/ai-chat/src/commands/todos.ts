@@ -1,6 +1,5 @@
 import type { Thread } from '../../../ai-providers/src/api'
-import type { Host } from './host'
-import { sendHere } from './host'
+import { type Host, sendHere } from './host'
 
 const PLAN = [
   'Plan my day.',

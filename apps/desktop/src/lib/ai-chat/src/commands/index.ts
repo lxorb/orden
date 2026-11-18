@@ -1,6 +1,6 @@
 import { settingsWindow } from '@orden/contracts'
 import { isEffort } from '../chat/effort'
-import type { Effort, Thread } from '../../../ai-providers/src/api'
+import { type Effort, type Thread, FIRST_MODE, noMoreThan } from '../../../ai-providers/src/api'
 import { sign, doctor, status, usage } from './account'
 import { availability } from './available'
 import { catchup, reply } from './chats'
@@ -17,7 +17,6 @@ import { planDay, showTasks } from './todos'
 import type { CommandContext, Panel, PanelCommand } from './types'
 import { explain, review, rewrite, summarize } from './words'
 import { message } from '../../../ui-kit/src/api'
-import { FIRST_MODE, noMoreThan } from '../../../ai-providers/src/api'
 
 interface ReviewCommands {
   rewind(context: CommandContext): void | Promise<void>

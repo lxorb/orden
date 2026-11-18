@@ -5,6 +5,17 @@ import {
   onMoves,
   type Provider,
   type ProviderKind,
+  type Api,
+  type Draft,
+  type Engine,
+  type EngineEvent,
+  type ModelInfo,
+  type Part,
+  type Stop,
+  type Thread,
+  type ToolOutput,
+  type Turn,
+  type Usage,
 } from '../../../ai-providers/src/api'
 import { anthropic } from './anthropic'
 import { always, type Answers, crateAnswers } from './approvals'
@@ -19,20 +30,15 @@ import { Refused, wasStopped } from './request'
 import { responses } from './responses'
 import { type Adjusted, round } from './round'
 import { crateTools, type Tools } from './tools'
-import { baseEffort, type Call, stepsOf, type Step } from './transcript'
-import type {
-  Api,
-  Draft,
-  Engine,
-  EngineEvent,
-  ModelInfo,
-  Part,
-  Stop,
-  Thread,
-  ToolOutput,
-  Turn,
-  Usage,
-} from '../../../ai-providers/src/api'
+import {
+  baseEffort,
+  type Call,
+  errorText,
+  modelTurn,
+  stepsOf,
+  type Step,
+  youTurn,
+} from './transcript'
 import { added, estimate, shouldCompact } from './usage'
 import type { ToolDef, Wire } from './wire'
 
@@ -105,22 +111,6 @@ export interface Setup {
   instructions?(thread: Thread): Promise<string>
 }
 
-function fresh(): string {
-  return crypto.randomUUID()
-}
-
-function modelTurn(thread: Thread): Turn {
-  return {
-    id: fresh(),
-    role: 'model',
-    at: Date.now(),
-    parts: [],
-    provider: thread.provider,
-    model: thread.model,
-    effort: thread.effort,
-  }
-}
-
 function lastModel(thread: Thread): string {
   for (let at = thread.turns.length - 1; at >= 0; at--) {
     const turn = thread.turns[at]
@@ -191,11 +181,7 @@ export function createApiEngine(setup: Setup): Engine {
       provider = providerOf(thread)
       api = apiOf(provider.kind) ?? 'completions'
     } catch (error) {
-      on({
-        type: 'done',
-        stop: 'error',
-        error: error instanceof Error ? error.message : String(error),
-      })
+      on({ type: 'done', stop: 'error', error: errorText(error) })
       return
     }
     const wire = WIRES[api]
@@ -208,22 +194,17 @@ export function createApiEngine(setup: Setup): Engine {
 
     const switched = lastModel(thread)
     const context = await tools.context(provider, thread.id).catch(() => '')
-    const you: Turn = {
-      id: fresh(),
-      role: 'you',
-      at: Date.now(),
-      draft: message,
-      parts: [],
-      effort: thread.effort,
-      ...(context ? { context } : {}),
+    const begin = (made: Turn) => {
+      thread.turns.push(made)
+      on({ type: 'turn', turn: made })
+      return made
     }
+    const you = youTurn(thread, message, context ? { context } : {})
     thread.turns.push(you)
     if (!thread.title) thread.title = message.text.trim().split('\n')[0]?.slice(0, 80) ?? ''
     on({ type: 'turn', turn: you })
 
-    let turn = modelTurn(thread)
-    thread.turns.push(turn)
-    on({ type: 'turn', turn })
+    let turn = begin(modelTurn(thread))
     const say = (part: Part) => {
       turn.parts.push(part)
       on({ type: 'part', turn: turn.id, index: turn.parts.length - 1, part })
@@ -353,26 +334,13 @@ export function createApiEngine(setup: Setup): Engine {
         if (steered.length) {
           close(true)
           steps = [...steps, { role: 'native', messages: addedNow }]
-          for (const words of steered) {
-            const draft: Draft = { text: words, attachments: [] }
-            const said: Turn = {
-              id: fresh(),
-              role: 'you',
-              at: Date.now(),
-              draft,
-              steered: true,
-              parts: [],
-              effort: thread.effort,
-            }
-            thread.turns.push(said)
-            on({ type: 'turn', turn: said })
+          for (const text of steered) {
+            const said = begin(youTurn(thread, { text, attachments: [] }, { steered: true }))
             steps = [...steps, ...stepsOf({ turns: [said] }, api, model.id)]
           }
           addedNow = []
           used = null
-          turn = modelTurn(thread)
-          thread.turns.push(turn)
-          on({ type: 'turn', turn })
+          turn = begin(modelTurn(thread))
           continue
         }
         if (ending === 'end') break
@@ -386,7 +354,7 @@ export function createApiEngine(setup: Setup): Engine {
         say({ kind: 'notice', code: 'stopped', text: '' })
         on({ type: 'done', stop: 'stopped' })
       } else {
-        const words = error instanceof Error ? error.message : String(error)
+        const words = errorText(error)
         if (error instanceof Refused) {
           const window = windowIn(words)
           if (window) learn(provider.id, model.id, { window })

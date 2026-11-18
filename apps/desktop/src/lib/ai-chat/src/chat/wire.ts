@@ -1,6 +1,12 @@
-import type { Provider } from '../../../ai-providers/src/api'
+import type {
+  Provider,
+  Effort,
+  ModelInfo,
+  Part,
+  ToolOutput,
+  Usage,
+} from '../../../ai-providers/src/api'
 import type { Call, Step } from './transcript'
-import type { Effort, ModelInfo, Part, ToolOutput, Usage } from '../../../ai-providers/src/api'
 
 export interface ToolDef {
   name: string
@@ -50,6 +56,34 @@ export interface Wire {
   request(ask: Ask): { url: string; body: unknown; headers: Record<string, string> }
   reader(window: number | null): Reader
   results(results: { call: Call; output: ToolOutput }[]): unknown[]
+}
+
+export abstract class PartsReader {
+  readonly parts: Part[] = []
+  protected thinking: { part: number; started: number } | null = null
+
+  constructor(protected readonly window: number | null) {}
+
+  protected add(part: Part): number {
+    return this.parts.push(part) - 1
+  }
+
+  protected think(words: string): number {
+    this.thinking ??= { part: this.add({ kind: 'thinking', text: '', ms: 0 }), started: Date.now() }
+    const part = this.parts[this.thinking.part]
+    if (part?.kind === 'thinking') {
+      part.text += words
+      part.ms = Date.now() - this.thinking.started
+    }
+    return this.thinking.part
+  }
+
+  protected say(words: string): number {
+    const last = this.parts.at(-1)
+    if (last?.kind !== 'text') return this.add({ kind: 'text', text: words })
+    last.text += words
+    return this.parts.length - 1
+  }
 }
 
 export function record(value: unknown): Record<string, unknown> {

@@ -1,4 +1,4 @@
-import { geminiUrl } from '../../../ai-providers/src/api'
+import { geminiUrl, type ToolOutput, type Usage } from '../../../ai-providers/src/api'
 import { wireEffort } from './effort'
 import { learnt } from './learned'
 import type { Call, Step } from './transcript'
@@ -8,12 +8,12 @@ import {
   type Ask,
   type Ending,
   type Heard,
+  PartsReader,
   type Reader,
   record,
   text,
   type Wire,
 } from './wire'
-import type { Part, ToolOutput, Usage } from '../../../ai-providers/src/api'
 
 type Piece = Record<string, unknown>
 
@@ -145,17 +145,13 @@ export const gemini: Wire = {
   },
 }
 
-class GeminiReader implements Reader {
-  readonly parts: Part[] = []
+class GeminiReader extends PartsReader implements Reader {
   private readonly kept: Piece[] = []
   private readonly calls: Call[] = []
   private finish = ''
   private blocked = ''
   private usage: Usage | undefined
-  private thinking: { part: number; started: number } | null = null
   private readonly made = crypto.randomUUID()
-
-  constructor(private readonly window: number | null) {}
 
   heard(event: unknown): Heard {
     const said = record(event)
@@ -183,8 +179,7 @@ class GeminiReader implements Reader {
       this.calls.push({ id, name: text(call.name), args })
       this.kept.push({ ...piece })
       this.thinking = null
-      this.parts.push({ kind: 'tool', id, verb: text(call.name), args, state: 'running' })
-      return [this.parts.length - 1]
+      return [this.add({ kind: 'tool', id, verb: text(call.name), args, state: 'running' })]
     }
     if (typeof piece.text !== 'string') {
       if (Object.keys(piece).length) this.kept.push({ ...piece })
@@ -219,28 +214,9 @@ class GeminiReader implements Reader {
     })
   }
 
-  private think(words: string): number {
-    if (!this.thinking) {
-      this.parts.push({ kind: 'thinking', text: '', ms: 0 })
-      this.thinking = { part: this.parts.length - 1, started: Date.now() }
-    }
-    const part = this.parts[this.thinking.part]
-    if (part?.kind === 'thinking') {
-      part.text += words
-      part.ms = Date.now() - this.thinking.started
-    }
-    return this.thinking.part
-  }
-
-  private say(words: string): number {
+  protected override say(words: string): number {
     this.thinking = null
-    const last = this.parts.at(-1)
-    if (last?.kind === 'text') {
-      last.text += words
-      return this.parts.length - 1
-    }
-    this.parts.push({ kind: 'text', text: words })
-    return this.parts.length - 1
+    return super.say(words)
   }
 
   finished(saidDone: boolean): boolean {
