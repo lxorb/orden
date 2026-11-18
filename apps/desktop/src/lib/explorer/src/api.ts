@@ -1,11 +1,10 @@
-export { carry, changeable, renamePath, trash } from './changes'
-export { listFolder, makeIn } from './commands'
+export { carry, changeable, trash } from './changes'
 export { moved } from './follow'
-export { inASpace, openExplorer } from './open'
+export { openExplorer } from './open'
 export { places } from './places.svelte'
 export { showInExplorer } from './reveal'
 export { redoOutside, undoOutside } from './undo'
-export { type ExplorerView, viewOf } from './view.svelte'
+export { viewOf } from './view.svelte'
 
 export const loadExplorerTab = () =>
   __EVEN_PLUGIN__

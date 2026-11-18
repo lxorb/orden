@@ -6,11 +6,9 @@ export {
   PRIORITY_NAMES,
   priorityTone,
   type Priority,
-  type Subtask,
   type Todo,
   type TodoPatch,
   titledOf,
-  fittedDescription,
 } from './todo'
 export {
   ALL_LABELS,
