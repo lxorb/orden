@@ -1,5 +1,5 @@
 import { account } from '../../accounts/src/api'
-import { identifier, samePath, invoke, windows } from '../../platform/src/api'
+import { identifier, samePath, invoke, windows, within } from '../../platform/src/api'
 import { forgetHome, homeOf, leftByAnother, leftGone, leftMoved } from '../../left-spaces/src/api'
 import type { Space } from './workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
@@ -122,7 +122,7 @@ export async function dropSpace(ws: HoldsSpaces, id: string) {
   await invoke('delete_space', { path: space.root })
   const trash = await invoke<{ id: string; from: string }[]>('list_trash').catch(() => [])
   for (const one of trash) {
-    if (samePath(one.from, space.root) || one.from.startsWith(`${space.root}/`)) {
+    if (within(space.root, one.from) !== null) {
       await invoke('purge_trash', { id: one.id }).catch(() => undefined)
     }
   }
