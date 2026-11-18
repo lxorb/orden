@@ -54,6 +54,27 @@ function down(over: Partial<Down> = {}): Down {
   }
 }
 
+type Over<Kind> = Partial<Extract<Input, { kind: Kind }>>
+
+const move = (at: typeof HERE, over: Over<'move'> = {}): Input => ({
+  kind: 'move',
+  id: 1,
+  at,
+  screen: at,
+  samples: [],
+  hit: NOTHING,
+  ...over,
+})
+
+const up = (at: typeof HERE, over: Over<'up'> = {}): Input => ({
+  kind: 'up',
+  id: 1,
+  at,
+  screen: at,
+  hit: NOTHING,
+  ...over,
+})
+
 function hit(over: Partial<Hit>): Hit {
   return { ...NOTHING, ...over }
 }
@@ -109,18 +130,7 @@ describe('picking with the arrow', () => {
 
   test('a band says what it covers as it is dragged', () => {
     const { effects } = play(
-      [
-        down(),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 90, y: 60 },
-          screen: { x: 90, y: 60 },
-          samples: [],
-          hit: NOTHING,
-        },
-        { kind: 'up', id: 1, at: { x: 90, y: 60 }, screen: { x: 90, y: 60 }, hit: NOTHING },
-      ],
+      [down(), move({ x: 90, y: 60 }), up({ x: 90, y: 60 })],
       context({ picked: ['a'] }),
     )
 
@@ -132,17 +142,7 @@ describe('picking with the arrow', () => {
 
   test('a band held with shift keeps what was already picked', () => {
     const { effects } = play(
-      [
-        down({ shift: true }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 9, y: 6 },
-          screen: { x: 9, y: 6 },
-          samples: [],
-          hit: NOTHING,
-        },
-      ],
+      [down({ shift: true }), move({ x: 9, y: 6 })],
       context({ picked: ['a'] }),
     )
 
@@ -169,23 +169,9 @@ describe('dragging', () => {
     const { effects } = play(
       [
         down({ hit: hit({ node: 'a' }) }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 40, y: 20 },
-          screen: { x: 40, y: 20 },
-          samples: [],
-          hit: NOTHING,
-        },
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 80, y: 20 },
-          screen: { x: 80, y: 20 },
-          samples: [],
-          hit: NOTHING,
-        },
-        { kind: 'up', id: 1, at: { x: 80, y: 20 }, screen: { x: 80, y: 20 }, hit: NOTHING },
+        move({ x: 40, y: 20 }),
+        move({ x: 80, y: 20 }),
+        up({ x: 80, y: 20 }),
       ],
       where,
     )
@@ -198,31 +184,10 @@ describe('dragging', () => {
     const { effects } = play(
       [
         down({ id: 2, pointer: 'touch', hit: hit({ node: 'a' }) }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 300, y: 300 },
-          screen: { x: 300, y: 300 },
-          samples: [],
-          hit: NOTHING,
-        },
-        {
-          kind: 'move',
-          id: 2,
-          at: { x: 40, y: 20 },
-          screen: { x: 40, y: 20 },
-          samples: [],
-          hit: NOTHING,
-        },
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 310, y: 310 },
-          screen: { x: 310, y: 310 },
-          samples: [],
-          hit: NOTHING,
-        },
-        { kind: 'up', id: 2, at: { x: 40, y: 20 }, screen: { x: 40, y: 20 }, hit: NOTHING },
+        move({ x: 300, y: 300 }),
+        move({ x: 40, y: 20 }, { id: 2 }),
+        move({ x: 310, y: 310 }),
+        up({ x: 40, y: 20 }, { id: 2 }),
       ],
       where,
     )
@@ -234,18 +199,7 @@ describe('dragging', () => {
 
   test('a drag that was really a click records nothing', () => {
     const { effects } = play(
-      [
-        down({ hit: hit({ node: 'a' }) }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 1, y: 1 },
-          screen: { x: 1, y: 1 },
-          samples: [],
-          hit: NOTHING,
-        },
-        { kind: 'up', id: 1, at: { x: 1, y: 1 }, screen: { x: 1, y: 1 }, hit: NOTHING },
-      ],
+      [down({ hit: hit({ node: 'a' }) }), move({ x: 1, y: 1 }), up({ x: 1, y: 1 })],
       where,
     )
 
@@ -256,8 +210,8 @@ describe('dragging', () => {
     const { effects } = play(
       [
         down({ hit: hit({ node: 'a' }) }),
-        { kind: 'move', id: 1, at: HERE, screen: { x: 100, y: 0 }, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: HERE, screen: { x: 100, y: 0 }, hit: NOTHING },
+        move(HERE, { screen: { x: 100, y: 0 } }),
+        up(HERE, { screen: { x: 100, y: 0 } }),
       ],
       context({ scale: 0.5 }),
     )
@@ -285,10 +239,7 @@ describe('panning', () => {
   })
 
   test('a finger tapped on the plane and lifted clears what was picked', () => {
-    const { effects } = play(
-      [down({ pointer: 'touch' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
-      context({ picked: ['a'] }),
-    )
+    const { effects } = play([down({ pointer: 'touch' }), up(HERE)], context({ picked: ['a'] }))
 
     expect(verbs(effects)).toEqual(['leave', 'clear'])
   })
@@ -297,8 +248,8 @@ describe('panning', () => {
     const { effects } = play(
       [
         down({ pointer: 'touch' }),
-        { kind: 'move', id: 1, at: HERE, screen: { x: 60, y: 0 }, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: HERE, screen: { x: 60, y: 0 }, hit: NOTHING },
+        move(HERE, { screen: { x: 60, y: 0 } }),
+        up(HERE, { screen: { x: 60, y: 0 } }),
       ],
       context({ picked: ['a'] }),
     )
@@ -308,10 +259,7 @@ describe('panning', () => {
 
   test('a pan says how far the plane moved, on screen', () => {
     const { effects } = play(
-      [
-        down({ button: 1 }),
-        { kind: 'move', id: 1, at: HERE, screen: { x: 30, y: -10 }, samples: [], hit: NOTHING },
-      ],
+      [down({ button: 1 }), move(HERE, { screen: { x: 30, y: -10 } })],
       context(),
     )
 
@@ -323,7 +271,7 @@ describe('two fingers', () => {
   const pinch: Input[] = [
     down({ id: 1, pointer: 'touch', screen: { x: 0, y: 0 } }),
     down({ id: 2, pointer: 'touch', screen: { x: 100, y: 0 } }),
-    { kind: 'move', id: 2, at: HERE, screen: { x: 200, y: 0 }, samples: [], hit: NOTHING },
+    move(HERE, { id: 2, screen: { x: 200, y: 0 } }),
   ]
 
   test('a second finger turns a pan into a pinch', () => {
@@ -342,8 +290,8 @@ describe('two fingers', () => {
     const { machine, effects } = play(
       [
         ...pinch.slice(0, 2),
-        { kind: 'move', id: 1, at: HERE, screen: { x: 20, y: 0 }, samples: [], hit: NOTHING },
-        { kind: 'move', id: 2, at: HERE, screen: { x: 120, y: 0 }, samples: [], hit: NOTHING },
+        move(HERE, { screen: { x: 20, y: 0 } }),
+        move(HERE, { id: 2, screen: { x: 120, y: 0 } }),
       ],
       context(),
     )
@@ -358,10 +306,7 @@ describe('two fingers', () => {
   })
 
   test('lifting one goes back to panning with the other', () => {
-    const { machine } = play(
-      [...pinch, { kind: 'up', id: 2, at: HERE, screen: { x: 200, y: 0 }, hit: NOTHING }],
-      context(),
-    )
+    const { machine } = play([...pinch, up(HERE, { id: 2, screen: { x: 200, y: 0 } })], context())
 
     expect(machine.gesture).toMatchObject({ kind: 'pan', id: 1 })
   })
@@ -372,14 +317,9 @@ describe('two fingers turning the view (#351)', () => {
     const moves: Input[] = []
     for (let step = 1; step <= steps; step++) {
       const angle = ((degrees * step) / steps) * (Math.PI / 180)
-      moves.push({
-        kind: 'move',
-        id: 2,
-        at: HERE,
-        screen: { x: 100 * Math.cos(angle), y: 100 * Math.sin(angle) },
-        samples: [],
-        hit: NOTHING,
-      })
+      moves.push(
+        move(HERE, { id: 2, screen: { x: 100 * Math.cos(angle), y: 100 * Math.sin(angle) } }),
+      )
     }
     return [
       down({ id: 1, pointer: 'touch', screen: { x: 0, y: 0 } }),
@@ -411,29 +351,21 @@ describe('two fingers turning the view (#351)', () => {
     const { effects } = play(
       [
         down({ hit: hit({ node: 'a' }) }),
-        { kind: 'move', id: 1, at: HERE, screen: { x: 40, y: 0 }, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: HERE, screen: { x: 40, y: 0 }, hit: NOTHING },
+        move(HERE, { screen: { x: 40, y: 0 } }),
+        up(HERE, { screen: { x: 40, y: 0 } }),
       ],
       context({ turn: Math.PI / 2 }),
     )
-    const move = effects.find((one) => one.do === 'move')
-    expect(move).toMatchObject({ do: 'move' })
-    if (move?.do !== 'move') return
-    expect(move.dx).toBeCloseTo(0)
-    expect(move.dy).toBeCloseTo(-40)
+    const moved = effects.find((one) => one.do === 'move')
+    expect(moved).toMatchObject({ do: 'move' })
+    if (moved?.do !== 'move') return
+    expect(moved.dx).toBeCloseTo(0)
+    expect(moved.dy).toBeCloseTo(-40)
   })
 })
 
 describe('a pointer the system takes back', () => {
   const where = context()
-  const move = (id: number, x: number): Input => ({
-    kind: 'move',
-    id,
-    at: { x, y: 0 },
-    screen: { x, y: 0 },
-    samples: [],
-    hit: NOTHING,
-  })
 
   test('ends the gesture it was driving', () => {
     const { machine } = play(
@@ -449,8 +381,8 @@ describe('a pointer the system takes back', () => {
       [
         down({ id: 2, pointer: 'touch', hit: hit({ node: 'a' }) }),
         { kind: 'cancel', id: 7 },
-        move(2, 50),
-        { kind: 'up', id: 2, at: { x: 50, y: 0 }, screen: { x: 50, y: 0 }, hit: NOTHING },
+        move({ x: 50, y: 0 }, { id: 2 }),
+        up({ x: 50, y: 0 }, { id: 2 }),
       ],
       where,
     )
@@ -477,32 +409,20 @@ describe('palm rejection', () => {
     const drawing = play(
       [
         down({ id: 1, pointer: 'pen' }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 9, y: 9 },
-          screen: HERE,
-          samples: [{ x: 9, y: 9, pressure: 0.7, tiltX: 0, tiltY: 0, t: 8 }],
-          hit: NOTHING,
-        },
+        move(
+          { x: 9, y: 9 },
+          { screen: HERE, samples: [{ x: 9, y: 9, pressure: 0.7, tiltX: 0, tiltY: 0, t: 8 }] },
+        ),
       ],
       where,
     )
 
-    const palm = step(
-      drawing.machine,
-      { kind: 'up', id: 7, at: HERE, screen: HERE, hit: NOTHING },
-      where,
-    )
+    const palm = step(drawing.machine, up(HERE, { id: 7 }), where)
 
     expect(palm.effects).toEqual([])
     expect(palm.machine.gesture?.kind).toBe('draw')
 
-    const pen = step(
-      palm.machine,
-      { kind: 'up', id: 1, at: { x: 9, y: 9 }, screen: HERE, hit: NOTHING },
-      where,
-    )
+    const pen = step(palm.machine, up({ x: 9, y: 9 }, { screen: HERE }), where)
 
     expect(verbs(pen.effects)).toEqual(['stroke'])
   })
@@ -518,22 +438,12 @@ describe('palm rejection', () => {
     expect(pen.machine.driver?.id).toBe(2)
     expect(pen.machine.penDown).toBe(true)
 
-    const dragged = step(
-      pen.machine,
-      { kind: 'move', id: 1, at: HERE, screen: { x: 90, y: 0 }, samples: [], hit: NOTHING },
-      where,
-    )
+    const dragged = step(pen.machine, move(HERE, { screen: { x: 90, y: 0 } }), where)
     expect(dragged.effects).toEqual([])
   })
 
   test('the glass answers a finger again once the pen is off it', () => {
-    const pen = play(
-      [
-        down({ id: 1, pointer: 'pen' }),
-        { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING },
-      ],
-      context({ tool: 'draw' }),
-    )
+    const pen = play([down({ id: 1, pointer: 'pen' }), up(HERE)], context({ tool: 'draw' }))
 
     expect(pen.machine.penDown).toBe(false)
     const finger = step(pen.machine, down({ id: 2, pointer: 'touch' }), context())
@@ -568,7 +478,7 @@ describe('a finger on a device that has a pen', () => {
 
   test('tapped on the plane and lifted clears what was picked', () => {
     const { effects } = play(
-      [down({ pointer: 'touch' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
+      [down({ pointer: 'touch' }), up(HERE)],
       tablet({ tool: 'draw', picked: ['a'] }),
     )
 
@@ -670,10 +580,7 @@ describe('drawing', () => {
     ]
 
     const { machine } = play(
-      [
-        down({ pointer: 'pen' }),
-        { kind: 'move', id: 1, at: { x: 2, y: 2 }, screen: HERE, samples, hit: NOTHING },
-      ],
+      [down({ pointer: 'pen' }), move({ x: 2, y: 2 }, { screen: HERE, samples })],
       where,
     )
 
@@ -685,15 +592,11 @@ describe('drawing', () => {
     const { effects } = play(
       [
         down({ pointer: 'pen' }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 5, y: 5 },
-          screen: HERE,
-          samples: [{ x: 5, y: 5, pressure: 0.6, tiltX: 3, tiltY: -2, t: 8 }],
-          hit: NOTHING,
-        },
-        { kind: 'up', id: 1, at: { x: 5, y: 5 }, screen: HERE, hit: NOTHING },
+        move(
+          { x: 5, y: 5 },
+          { screen: HERE, samples: [{ x: 5, y: 5, pressure: 0.6, tiltX: 3, tiltY: -2, t: 8 }] },
+        ),
+        up({ x: 5, y: 5 }, { screen: HERE }),
       ],
       where,
     )
@@ -704,10 +607,7 @@ describe('drawing', () => {
   })
 
   test('a pen down and up in one place is a stroke of one point', () => {
-    const { effects } = play(
-      [down({ pointer: 'pen' }), { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING }],
-      where,
-    )
+    const { effects } = play([down({ pointer: 'pen' }), up(HERE)], where)
 
     const strokes = effects.filter((one) => one.do === 'stroke')
     expect(strokes).toHaveLength(1)
@@ -734,11 +634,7 @@ describe('drawing', () => {
 describe('rubbing out', () => {
   test('cuts a hole under the eraser at every point of the drag', () => {
     const { effects } = play(
-      [
-        down(),
-        { kind: 'move', id: 1, at: { x: 5, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'move', id: 1, at: { x: 9, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
-      ],
+      [down(), move({ x: 5, y: 0 }, { screen: HERE }), move({ x: 9, y: 0 }, { screen: HERE })],
       context({ tool: 'erase' }),
     )
 
@@ -747,11 +643,7 @@ describe('rubbing out', () => {
 
   test('rubs out as far as the eraser is lifted, where it lifts past the last move', () => {
     const { effects } = play(
-      [
-        down(),
-        { kind: 'move', id: 1, at: { x: 5, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: { x: 9, y: 0 }, screen: HERE, hit: NOTHING },
-      ],
+      [down(), move({ x: 5, y: 0 }, { screen: HERE }), up({ x: 9, y: 0 }, { screen: HERE })],
       context({ tool: 'erase' }),
     )
 
@@ -784,10 +676,7 @@ describe('rubbing out', () => {
 
   test('goes on reaching that far through the whole drag', () => {
     const { effects } = play(
-      [
-        down(),
-        { kind: 'move', id: 1, at: { x: 5, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
-      ],
+      [down(), move({ x: 5, y: 0 }, { screen: HERE })],
       context({ tool: 'erase', eraser: { whole: false, size: 30, stroke: STROKE_RUB }, scale: 1 }),
     )
 
@@ -799,17 +688,7 @@ describe('rubbing out', () => {
 
   test('answers along the way it went between two events, not only at each, in one go', () => {
     const { effects } = play(
-      [
-        down(),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 25, y: 0 },
-          screen: { x: 25, y: 0 },
-          samples: [],
-          hit: NOTHING,
-        },
-      ],
+      [down(), move({ x: 25, y: 0 })],
       context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 1 }),
     )
 
@@ -825,17 +704,7 @@ describe('rubbing out', () => {
 
   test('walks no way the plane moved by itself under a still hand', () => {
     const { effects } = play(
-      [
-        down(),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 900, y: 0 },
-          screen: { x: 1, y: 0 },
-          samples: [],
-          hit: NOTHING,
-        },
-      ],
+      [down(), move({ x: 900, y: 0 }, { screen: { x: 1, y: 0 } })],
       context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 1 }),
     )
 
@@ -847,17 +716,7 @@ describe('rubbing out', () => {
 
   test('walks the way a hand went at any zoom', () => {
     const { effects } = play(
-      [
-        down(),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 10, y: 0 },
-          screen: { x: 20, y: 0 },
-          samples: [],
-          hit: NOTHING,
-        },
-      ],
+      [down(), move({ x: 10, y: 0 }, { screen: { x: 20, y: 0 } })],
       context({ tool: 'erase', eraser: { whole: false, size: 10, stroke: STROKE_RUB }, scale: 2 }),
     )
 
@@ -908,9 +767,9 @@ describe('the lasso', () => {
     const { effects } = play(
       [
         down(),
-        { kind: 'move', id: 1, at: { x: 10, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'move', id: 1, at: { x: 10, y: 10 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: { x: 10, y: 10 }, screen: HERE, hit: NOTHING },
+        move({ x: 10, y: 0 }, { screen: HERE }),
+        move({ x: 10, y: 10 }, { screen: HERE }),
+        up({ x: 10, y: 10 }, { screen: HERE }),
       ],
       context({ tool: 'lasso' }),
     )
@@ -929,7 +788,7 @@ describe('the lasso', () => {
     const { effects } = play(
       [
         down({ at: { x: 50, y: 50 }, hit: hit({ ink: 'inside' }) }),
-        { kind: 'move', id: 1, at: { x: 70, y: 50 }, screen: HERE, samples: [], hit: NOTHING },
+        move({ x: 70, y: 50 }, { screen: HERE }),
       ],
       where,
     )
@@ -971,13 +830,7 @@ describe('the tools that put something down', () => {
 
   test('one nobody dragged lands at its own size where the press was', () => {
     for (const tool of PUT) {
-      const { effects } = play(
-        [
-          down({ at: { x: 30, y: 40 } }),
-          { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING },
-        ],
-        context({ tool }),
-      )
+      const { effects } = play([down({ at: { x: 30, y: 40 } }), up(HERE)], context({ tool }))
 
       expect(effects.at(-1), tool).toEqual({ do: 'place', tool, at: { x: 30, y: 40 } })
     }
@@ -987,8 +840,8 @@ describe('the tools that put something down', () => {
     const { effects } = play(
       [
         down({ at: { x: 0, y: 0 } }),
-        { kind: 'move', id: 1, at: { x: 60, y: 40 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: { x: 60, y: 40 }, screen: HERE, hit: NOTHING },
+        move({ x: 60, y: 40 }, { screen: HERE }),
+        up({ x: 60, y: 40 }, { screen: HERE }),
       ],
       context({ tool: 'rect' }),
     )
@@ -1003,10 +856,7 @@ describe('the tools that put something down', () => {
 
   test('a card is drawn at the size it is being dragged to, while it is being dragged', () => {
     const { machine } = play(
-      [
-        down({ at: { x: 0, y: 0 } }),
-        { kind: 'move', id: 1, at: { x: 200, y: 90 }, screen: HERE, samples: [], hit: NOTHING },
-      ],
+      [down({ at: { x: 0, y: 0 } }), move({ x: 200, y: 90 }, { screen: HERE })],
       context({ tool: 'text' }),
     )
 
@@ -1022,21 +872,8 @@ describe('the tools that put something down', () => {
       const { effects } = play(
         [
           down({ at: { x: 0, y: 0 }, hit: hit({ node: 'a' }) }),
-          {
-            kind: 'move',
-            id: 1,
-            at: { x: 300, y: 200 },
-            screen: HERE,
-            samples: [],
-            hit: hit({ node: 'b' }),
-          },
-          {
-            kind: 'up',
-            id: 1,
-            at: { x: 300, y: 200 },
-            screen: HERE,
-            hit: hit({ node: 'b' }),
-          },
+          move({ x: 300, y: 200 }, { screen: HERE, hit: hit({ node: 'b' }) }),
+          up({ x: 300, y: 200 }, { screen: HERE, hit: hit({ node: 'b' }) }),
         ],
         context({ tool }),
       )
@@ -1056,8 +893,8 @@ describe('the tools that put something down', () => {
     const { effects } = play(
       [
         down({ at: { x: 0, y: 0 }, hit: hit({ node: 'a' }) }),
-        { kind: 'move', id: 1, at: { x: 300, y: 20 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: { x: 300, y: 20 }, screen: HERE, hit: NOTHING },
+        move({ x: 300, y: 20 }, { screen: HERE }),
+        up({ x: 300, y: 20 }, { screen: HERE }),
       ],
       context({ tool: 'arrow' }),
     )
@@ -1069,15 +906,8 @@ describe('the tools that put something down', () => {
     const { effects } = play(
       [
         down({ at: { x: 0, y: 0 }, hit: hit({ node: 'a' }) }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 300, y: 200 },
-          screen: HERE,
-          samples: [],
-          hit: hit({ node: 'b' }),
-        },
-        { kind: 'up', id: 1, at: { x: 300, y: 200 }, screen: HERE, hit: hit({ node: 'b' }) },
+        move({ x: 300, y: 200 }, { screen: HERE, hit: hit({ node: 'b' }) }),
+        up({ x: 300, y: 200 }, { screen: HERE, hit: hit({ node: 'b' }) }),
       ],
       context({ tool: 'rect' }),
     )
@@ -1091,8 +921,8 @@ describe('moving an end of a connector', () => {
     const { effects } = play(
       [
         down({ hit: hit({ endpoint: { id: 'e', end: 'to' } }) }),
-        { kind: 'move', id: 1, at: { x: 90, y: 90 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: { x: 90, y: 90 }, screen: HERE, hit: hit({ node: 'c' }) },
+        move({ x: 90, y: 90 }, { screen: HERE }),
+        up({ x: 90, y: 90 }, { screen: HERE, hit: hit({ node: 'c' }) }),
       ],
       context({ picked: ['e'] }),
     )
@@ -1102,10 +932,7 @@ describe('moving an end of a connector', () => {
 
   test('leaves it where it was when it was dropped on nothing', () => {
     const { effects } = play(
-      [
-        down({ hit: hit({ endpoint: { id: 'e', end: 'from' } }) }),
-        { kind: 'up', id: 1, at: HERE, screen: HERE, hit: NOTHING },
-      ],
+      [down({ hit: hit({ endpoint: { id: 'e', end: 'from' } }) }), up(HERE)],
       context({ picked: ['e'] }),
     )
 
@@ -1184,8 +1011,8 @@ describe('connecting', () => {
     const { effects } = play(
       [
         down({ hit: hit({ port: { id: 'a', side: 'right' } }) }),
-        { kind: 'move', id: 1, at: { x: 200, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: { x: 200, y: 0 }, screen: HERE, hit: hit({ node: 'b' }) },
+        move({ x: 200, y: 0 }, { screen: HERE }),
+        up({ x: 200, y: 0 }, { screen: HERE, hit: hit({ node: 'b' }) }),
       ],
       context(),
     )
@@ -1199,7 +1026,7 @@ describe('connecting', () => {
     const { effects } = play(
       [
         down({ hit: hit({ port: { id: 'a', side: 'right' } }) }),
-        { kind: 'up', id: 1, at: { x: 200, y: 0 }, screen: HERE, hit: NOTHING },
+        up({ x: 200, y: 0 }, { screen: HERE }),
       ],
       context(),
     )
@@ -1274,14 +1101,7 @@ describe('a second finger', () => {
     const { machine } = play(
       [
         down({ id: 1, pointer: 'touch', sample: nib }),
-        {
-          kind: 'move',
-          id: 1,
-          at: { x: 9, y: 9 },
-          screen: { x: 9, y: 9 },
-          samples: [nib],
-          hit: NOTHING,
-        },
+        move({ x: 9, y: 9 }, { samples: [nib] }),
         second({ time: 900 }),
       ],
       context({ tool: 'draw' }),
@@ -1295,7 +1115,7 @@ describe('a second finger', () => {
     const { machine } = play(
       [
         down({ id: 1, pointer: 'touch', screen: { x: 0, y: 0 } }),
-        { kind: 'move', id: 1, at: HERE, screen: { x: 40, y: 0 }, samples: [], hit: NOTHING },
+        move(HERE, { screen: { x: 40, y: 0 } }),
         second({ screen: { x: 140, y: 0 } }),
       ],
       context(),
@@ -1438,7 +1258,7 @@ describe('a contact that turns out to be a pen', () => {
     const { machine } = play(
       [
         down({ pointer: 'pen', sample: nib }),
-        { kind: 'move', id: 1, at: { x: 9, y: 9 }, screen: HERE, samples: [nib], hit: NOTHING },
+        move({ x: 9, y: 9 }, { screen: HERE, samples: [nib] }),
         penned,
       ],
       context({ tool: 'draw' }),
@@ -1451,7 +1271,7 @@ describe('a contact that turns out to be a pen', () => {
     const { machine, effects } = play(
       [
         down({ pointer: 'pen', sample: nib }),
-        { kind: 'move', id: 1, at: { x: 9, y: 9 }, screen: HERE, samples: [nib], hit: NOTHING },
+        move({ x: 9, y: 9 }, { screen: HERE, samples: [nib] }),
         { ...penned, eraser: true },
       ],
       context({ tool: 'draw' }),
@@ -1465,7 +1285,7 @@ describe('a contact that turns out to be a pen', () => {
     const { effects } = play(
       [
         down({ pointer: 'pen', sample: nib }),
-        { kind: 'move', id: 1, at: { x: 9, y: 9 }, screen: HERE, samples: [nib], hit: NOTHING },
+        move({ x: 9, y: 9 }, { screen: HERE, samples: [nib] }),
         { ...penned, eraser: true, hit: hit({ stroke: 's1' }) },
       ],
       context({ tool: 'draw', eraser: { whole: true, size: RUB, stroke: 6 } }),
@@ -1476,11 +1296,7 @@ describe('a contact that turns out to be a pen', () => {
 
   test('leaves a plane that has been panned where the hand put it', () => {
     const { machine } = play(
-      [
-        down({ pointer: 'touch' }),
-        { kind: 'move', id: 1, at: HERE, screen: { x: 80, y: 0 }, samples: [], hit: NOTHING },
-        penned,
-      ],
+      [down({ pointer: 'touch' }), move(HERE, { screen: { x: 80, y: 0 } }), penned],
       context({ tool: 'draw', penSeen: true }),
     )
 
@@ -1502,10 +1318,7 @@ describe('the lasso pulled out as a box', () => {
 
   test('is the four corners of the box, so what draws it and what reads it agree', () => {
     const { machine } = play(
-      [
-        down({ at: { x: 0, y: 0 } }),
-        { kind: 'move', id: 1, at: { x: 10, y: 6 }, screen: HERE, samples: [], hit: NOTHING },
-      ],
+      [down({ at: { x: 0, y: 0 } }), move({ x: 10, y: 6 }, { screen: HERE })],
       where,
     )
 
@@ -1521,8 +1334,8 @@ describe('the lasso pulled out as a box', () => {
     const { effects } = play(
       [
         down({ at: { x: 0, y: 0 } }),
-        { kind: 'move', id: 1, at: { x: 10, y: 6 }, screen: HERE, samples: [], hit: NOTHING },
-        { kind: 'up', id: 1, at: { x: 10, y: 6 }, screen: HERE, hit: NOTHING },
+        move({ x: 10, y: 6 }, { screen: HERE }),
+        up({ x: 10, y: 6 }, { screen: HERE }),
       ],
       where,
     )
@@ -1564,23 +1377,15 @@ describe('straightening what was drawn', () => {
 
 describe('a finger held on the bare plane, then moved', () => {
   const at = (x: number, y: number) => ({ x, y })
-  const move = (x: number, y: number): Input => ({
-    kind: 'move',
-    id: 1,
-    at: at(x, y),
-    screen: at(x, y),
-    samples: [],
-    hit: NOTHING,
-  })
 
   test('puts the menu away and draws a lasso from where it was held', () => {
     const { machine, effects } = play(
       [
         down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }),
         { kind: 'held', at: at(10, 10) },
-        move(40, 10),
-        move(40, 40),
-        move(10, 40),
+        move(at(40, 10)),
+        move(at(40, 40)),
+        move(at(10, 40)),
       ],
       context(),
     )
@@ -1597,9 +1402,9 @@ describe('a finger held on the bare plane, then moved', () => {
       [
         down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }),
         { kind: 'held', at: at(10, 10) },
-        move(40, 10),
-        move(40, 40),
-        { kind: 'up', id: 1, at: at(10, 40), screen: at(10, 40), hit: NOTHING },
+        move(at(40, 10)),
+        move(at(40, 40)),
+        up(at(10, 40)),
       ],
       context(),
     )
@@ -1611,8 +1416,8 @@ describe('a finger held on the bare plane, then moved', () => {
       [
         down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }),
         { kind: 'held', at: at(10, 10) },
-        move(11, 10),
-        { kind: 'up', id: 1, at: at(11, 10), screen: at(11, 10), hit: NOTHING },
+        move(at(11, 10)),
+        up(at(11, 10)),
       ],
       context(),
     )
@@ -1622,7 +1427,7 @@ describe('a finger held on the bare plane, then moved', () => {
 
   test('a finger that moved at once moves the plane, as it always has', () => {
     const { effects } = play(
-      [down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }), move(60, 10)],
+      [down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }), move(at(60, 10))],
       context(),
     )
     expect(verbs(effects)).toContain('pan')
@@ -1633,7 +1438,7 @@ describe('a finger held on the bare plane, then moved', () => {
       [
         down({ pointer: 'touch', hit: hit({ node: 'a' }) }),
         { kind: 'held', at: at(7, 8) },
-        move(80, 80),
+        move(at(80, 80)),
       ],
       context(),
     )

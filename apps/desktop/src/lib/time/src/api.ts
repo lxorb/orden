@@ -1,6 +1,5 @@
 import { startTimer, stopTimer } from './commands'
 import { openTime } from './open'
-export { startTimer, stopTimer }
 export { trackingMenu } from './menu'
 export { openTime }
 export { time } from './time.svelte'

@@ -71,13 +71,6 @@ export function machineLanguages(): readonly string[] {
   return typeof navigator === 'undefined' ? [] : navigator.languages
 }
 
-export function chosenOf(saved: unknown): string[] {
-  if (!Array.isArray(saved)) return []
-  return [
-    ...new Set(saved.filter((one): one is string => typeof one === 'string' && KNOWN.has(one))),
-  ]
-}
-
 export function tellEngine(languages: readonly string[]): void {
   if (!choosable) return
   void invoke('spell_languages', { languages }).catch(() => undefined)

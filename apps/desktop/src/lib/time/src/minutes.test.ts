@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MinuteFold, type Sample, shadeOf } from './minutes'
+import { MinuteFold, type Sample } from './minutes'
 
 const sample = (seconds: number, change: Partial<Sample> = {}): Sample => ({
   at: seconds * 1000,
@@ -33,7 +33,6 @@ describe('a minute of what the computer did', () => {
     expect(minute?.active).toBe(10)
     expect(minute?.samples).toBe(3)
     expect(minute?.cpu).toBeCloseTo(0.4)
-    expect(minute && shadeOf(minute)).toBe('active')
   })
 
   test('closes when the next minute starts, and leaves a gap where the computer slept', () => {
@@ -43,15 +42,15 @@ describe('a minute of what the computer did', () => {
 
   test('is locked or shut for the whole minute once it was so for a moment', () => {
     const [locked] = fold([sample(0), sample(5, { locked: true })])
-    expect(locked && shadeOf(locked)).toBe('locked')
+    expect(locked?.locked).toBe(true)
     expect(locked?.active).toBe(5)
     const [shut] = fold([sample(0, { lid: false, locked: true })])
-    expect(shut && shadeOf(shut)).toBe('shut')
+    expect(shut?.lid).toBe(false)
   })
 
   test('is idle with nobody at it, and keeps what the system could not say as unknown', () => {
     const [minute] = fold([sample(0, { idleMs: 120_000, battery: null, lid: null, cpu: null })])
-    expect(minute && shadeOf(minute)).toBe('idle')
+    expect(minute?.active).toBe(0)
     expect(minute?.battery).toBeNull()
     expect(minute?.lid).toBeNull()
     expect(minute?.cpu).toBeNull()
