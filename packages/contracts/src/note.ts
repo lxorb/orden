@@ -28,14 +28,6 @@ export interface Heading {
   readonly line: number
 }
 
-export interface HeldEditPort {
-  readonly flush: () => void
-}
-
-export interface NotePorts {
-  readonly 'edits.held': HeldEditPort
-}
-
 export const UNTITLED = 'Untitled'
 
 export function unixLines(text: string): string {

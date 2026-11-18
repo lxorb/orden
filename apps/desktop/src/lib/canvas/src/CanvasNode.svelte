@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { providePort } from '@orden/contracts'
+  import { holdEdits } from '@orden/contracts'
   import { onDestroy } from 'svelte'
   import {
     createEditor,
@@ -179,7 +179,7 @@
     })
     if (readOnly) setReadOnlyMode(editor, true)
     editor.focus()
-    const release = providePort('edits.held', { flush: hand })
+    const release = holdEdits(hand)
 
     return {
       destroy: () => {

@@ -5,7 +5,6 @@ import type { BackendPorts } from './backend'
 import type { ChatPorts } from './chats'
 import type { FilePorts } from './files'
 import type { ImportPorts } from './import'
-import type { HeldEditPort, NotePorts } from './note'
 import type { PreviewPorts } from './previews'
 import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
 import type { SettingsPorts, SettingsWindowPort } from './settings'
@@ -37,7 +36,6 @@ export type PortMap = AccountPorts &
   BackendPorts &
   ChatPorts &
   FilePorts &
-  NotePorts &
   ImportPorts &
   PreviewPorts &
   QuittingPorts &
@@ -99,8 +97,18 @@ export function whenPortProvided<Name extends PortName>(
   waiting.set(name, uses)
 }
 
+const heldEdits = new Set<() => void>()
+
+export function holdEdits(flush: () => void): () => void {
+  const held = () => flush()
+  heldEdits.add(held)
+  return () => {
+    heldEdits.delete(held)
+  }
+}
+
 export function flushHeldEdits(): void {
-  ;(provided.get('edits.held') as HeldEditPort | undefined)?.flush()
+  for (const flush of [...heldEdits]) flush()
 }
 
 export function mayStop(why: StopReason): Promise<boolean> {

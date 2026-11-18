@@ -54,15 +54,7 @@ export {
   type ItemMeta,
   type MetaPatch,
 } from './item'
-export {
-  type Heading,
-  type HeldEditPort,
-  type NoteContent,
-  type NotePorts,
-  type NoteStart,
-  UNTITLED,
-  unixLines,
-} from './note'
+export { type Heading, type NoteContent, type NoteStart, UNTITLED, unixLines } from './note'
 export {
   type Account,
   type AccountPorts,
@@ -190,6 +182,7 @@ export {
   askSheet,
   flushHeldEdits,
   focusEditorRegion,
+  holdEdits,
   mayStop,
   type PortMap,
   type PortName,
