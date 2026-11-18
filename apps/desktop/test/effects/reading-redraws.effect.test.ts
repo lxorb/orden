@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { world } from './reading-embed-world.svelte'
+import { idle } from './settle'
 
 vi.mock('../../src/lib/reading/src/drawn', () => ({ inlineFiles: () => () => undefined }))
 vi.mock('../../src/lib/reading/src/render', () => ({
@@ -26,6 +27,8 @@ vi.mock('../../src/lib/link-index/src/api', () => ({
     },
     index: () => null,
     locksSeen: () => '',
+    reachedOf: (_from: string | null, link: { target: string }) =>
+      world.version > 0 ? `${link.target}.md` : null,
   },
 }))
 vi.mock('../../src/lib/workspace/src/api', () => ({
@@ -37,8 +40,6 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
 }))
 
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
-
-const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
 
 const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
 
@@ -74,7 +75,7 @@ async function opened(doc: string) {
   document.body.append(target)
   shown = mount(Reading, { target, props: { tab: tab as never, focused: true } })
   flushSync()
-  await wait(50)
+  await idle(50)
   await frames()
   flushSync()
   return target
@@ -102,7 +103,7 @@ test('another note saved in the space leaves a long note with a picture where it
 
   world.version++
   flushSync()
-  await wait(400)
+  await idle(400)
   flushSync()
 
   expect(box.scrollTop).toBe(2400)
@@ -116,7 +117,7 @@ test('links drawn before the space index arrived are drawn again once it does', 
   world.embedded = 'See linked Plan'
   world.version++
   flushSync()
-  await wait(400)
+  await idle(400)
   flushSync()
 
   expect(target.querySelector('article')?.textContent).toBe('TripSee linked Plan')

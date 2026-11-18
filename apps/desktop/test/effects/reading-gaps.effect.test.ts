@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { world } from './reading-embed-world.svelte'
+import { idle } from './settle'
 
 const ROW = 24
 
@@ -34,6 +35,7 @@ vi.mock('../../src/lib/link-index/src/api', () => ({
     },
     index: () => null,
     locksSeen: () => '',
+    reachedOf: () => null,
   },
 }))
 
@@ -64,8 +66,6 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
 }))
 
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
-
-const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
 
 const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
 
@@ -136,7 +136,7 @@ async function opened(doc: string) {
   document.body.append(target)
   shown = mount(Reading, { target, props: { tab: tab as never, focused: true } })
   flushSync()
-  await wait(50)
+  await idle(50)
   await frames()
   flushSync()
   const box = target.querySelector<HTMLElement>('.scroller')
@@ -147,7 +147,7 @@ async function opened(doc: string) {
 async function anotherNoteSaved() {
   world.version++
   flushSync()
-  await wait(400)
+  await idle(400)
   flushSync()
 }
 
@@ -159,7 +159,7 @@ const lines = (count: number) =>
 test('a reader who stops where the top edge falls between two paragraphs stays there when another note is saved', async () => {
   const layout = await opened(`# Trip\n\n${lines(300)}\n\n# Home\n\nEnd.`)
   layout.scrollTo(4800 + 20)
-  await wait(50)
+  await idle(50)
 
   await anotherNoteSaved()
 
@@ -170,7 +170,7 @@ test('leaving the reading view where the top edge falls between two paragraphs h
   const doc = `# Trip\n\n${lines(300)}\n\n# Home\n\nEnd.`
   const layout = await opened(doc)
   layout.scrollTo(4800 + 20)
-  await wait(50)
+  await idle(50)
 
   expect(tab.anchor ?? 0).toBeGreaterThan(doc.indexOf('Day 150 '))
 })

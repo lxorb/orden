@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { scanNote } from '@orden/scan/note'
+import { idle } from './settle'
 
 const ROOT = '/space'
 
@@ -33,8 +34,6 @@ await links.build(ROOT)
 
 const CanvasNode = (await import('../../src/lib/canvas/src/CanvasNode.svelte')).default
 
-const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
-
 let shown: ReturnType<typeof mount> | null = null
 
 afterEach(() => {
@@ -60,7 +59,7 @@ async function cardFor(file: string): Promise<string> {
   })
   flushSync()
   for (let round = 0; round < 20 && !target.querySelector('.card'); round++) {
-    await wait(25)
+    await idle(25)
     flushSync()
   }
   return target.textContent

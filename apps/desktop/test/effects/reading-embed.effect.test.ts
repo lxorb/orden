@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, expect, test, vi } from 'vitest'
 import { world } from './reading-embed-world.svelte'
+import { idle } from './settle'
 
 vi.mock('../../src/lib/reading/src/drawn', () => ({ inlineFiles: () => () => undefined }))
 vi.mock('../../src/lib/reading/src/render', () => ({
@@ -38,8 +39,6 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
 
 const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).default
 
-const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
-
 let shown: ReturnType<typeof mount> | null = null
 
 afterEach(() => {
@@ -70,7 +69,7 @@ async function opened() {
   document.body.append(target)
   shown = mount(Reading, { target, props: { tab: tab as never, focused: true } })
   flushSync()
-  await wait(50)
+  await idle(50)
   flushSync()
   return target
 }
@@ -82,7 +81,7 @@ test('an embedded note saved elsewhere shows its new words in the reading view',
   world.embedded = 'second words'
   world.version++
   flushSync()
-  await wait(400)
+  await idle(400)
   flushSync()
 
   expect(target.querySelector('article')?.textContent).toBe('Todaysecond words')
