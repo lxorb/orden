@@ -3,7 +3,7 @@
   import { fileMark } from '../../marks/src/api'
   import { shownName } from '../../platform/src/api'
   import { nameOf } from '../../platform/src/api'
-  import { isShared, share } from '../../sharing/src/api'
+  import { isShared, share, whoIs } from '../../sharing/src/api'
   import { called } from '../../accounts/src/api'
   import type { GivenRole, Member, Sharing } from '../../accounts/src/api'
   import { Copyable, QrCode } from '../../ui-controls/src/api'
@@ -39,8 +39,6 @@
     if (person.guest) return [person.email, 'Guest']
     return [person.email, person.pending && 'Invited']
   }
-
-  const keyOf = (person: Member | Waiting) => `person:${person.guest ?? person.email ?? ''}`
 
   const faceOf = (person: Member | Waiting | Sharing['owner'], named: string): Face => ({
     name: named,
@@ -185,10 +183,10 @@
     {:else}
       {#if who.requests.length}
         <h3>Waiting</h3>
-        {#each who.requests as person (keyOf(person))}
+        {#each who.requests as person (whoIs(person))}
           <div
             class="row person asking"
-            class:waiting={share.waiting(keyOf(person))}
+            class:waiting={share.waiting(whoIs(person))}
             transition:fade={{ duration: dur(130) }}
           >
             {@render face(faceOf(person, name(person)), pressFor(person))}
@@ -228,10 +226,10 @@
         <span class="fixed">Owner</span>
       </div>
 
-      {#each who.members as person (keyOf(person))}
+      {#each who.members as person (whoIs(person))}
         <div
           class="row person"
-          class:waiting={share.waiting(keyOf(person))}
+          class:waiting={share.waiting(whoIs(person))}
           transition:fade={{ duration: dur(130) }}
         >
           <span class="worn" class:pending={person.pending}>
