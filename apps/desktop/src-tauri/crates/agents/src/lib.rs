@@ -14,7 +14,6 @@ pub mod policy;
 pub mod process;
 pub mod program;
 pub mod shell;
-pub mod snapshot;
 pub mod stop;
 pub mod system;
 pub mod verbs;

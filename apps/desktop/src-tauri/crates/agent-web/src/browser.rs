@@ -4,13 +4,13 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter as _};
 
 use crate::engines::{self, Element, Engine, Page, ReaderStore, View};
+use crate::snapshot::{self, Asked, Wanted};
 use crate::tabs::{self, Tab};
 use orden_agents::approvals::{self, Asking};
 use orden_agents::files::hidden_within;
 use orden_agents::grants::{Grant, Scope, SiteRule, Spaces};
 use orden_agents::keys;
 use orden_agents::policy::{self, Act, Facts};
-use orden_agents::snapshot::{self, Asked, Wanted};
 use orden_agents::verbs::{
     Acted, Answer, Category, Closed, Code, Dialog, DownloadList, Evaluated, Event, FieldValue,
     Found, Opened, PageText, Picture, Snapped, StorageOp, Store, Stored, TabList, Verb, Waited,
