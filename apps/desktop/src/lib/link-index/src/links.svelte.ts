@@ -83,6 +83,8 @@ export function readsWords(path: string): boolean {
   return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
 }
 
+const ADDRESSED = /^(?:[a-z][a-z0-9+.-]*:|\/|\.\.?\/)/i
+
 function besideNote(files: readonly string[], folder: string, name: string): string | null {
   const wanted = foldName(folder ? `${folder}/${name}` : name)
   return files.find((path) => foldName(path) === wanted) ?? null
@@ -1472,6 +1474,7 @@ class Links {
   }
 
   fileFor(name: string, notePath: string | null): string | null {
+    if (ADDRESSED.test(name)) return null
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null

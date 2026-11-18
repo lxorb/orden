@@ -159,29 +159,42 @@
       : { elements: [], offsets: [] }
   }
 
+  function spanOf(
+    box: HTMLElement,
+    page: HTMLElement,
+    elements: readonly HTMLElement[],
+    index: number,
+  ): { from: number; to: number } {
+    const base = box.getBoundingClientRect().top - box.scrollTop
+    const at = (element: Element) => element.getBoundingClientRect().top - base
+    const target = elements[index]
+    const next = elements[index + 1]
+    const last = page.lastElementChild
+    const end = last ? last.getBoundingClientRect().bottom - base : box.scrollHeight
+    return { from: target ? at(target) : 0, to: next ? at(next) : end }
+  }
+
   function show(position: number) {
     const box = scroller
+    const page = surface
     const { elements, offsets } = headings()
     if (!box) return
 
     const { index, fraction } = sectionAt(position, offsets, tab.doc.length)
     const target = elements[index]
-    if (!target) {
+    if (target && !fraction) {
+      target.scrollIntoView({ block: 'start' })
+      return
+    }
+    if (!page) {
       box.scrollTop = 0
       return
     }
 
-    target.scrollIntoView({ block: 'start' })
-    if (!fraction) return
-
-    const next = elements[index + 1]
-    if (!next) return
-
-    const from = target.getBoundingClientRect().top
-    const to = next.getBoundingClientRect().top
+    const { from, to } = spanOf(box, page, elements, index)
     box.scrollTop = Math.max(
       0,
-      Math.min(box.scrollTop + (to - from) * fraction, box.scrollHeight - box.clientHeight),
+      Math.min(from + (to - from) * fraction, box.scrollHeight - box.clientHeight),
     )
   }
 
@@ -189,17 +202,17 @@
     const box = scroller
     const page = surface
     const { elements, offsets } = headings()
-    if (!box || !page || !elements.length) return { section: { index: -1, fraction: 0 }, offsets }
+    if (!box || !page) return { section: { index: -1, fraction: 0 }, offsets }
 
     const edge = box.getBoundingClientRect()
     const found = document.elementFromPoint(edge.left + edge.width / 2, edge.top + 1)
 
     let block = found instanceof HTMLElement ? found : null
     while (block && block.parentElement !== page) block = block.parentElement
-    if (!block) return { section: { index: -1, fraction: 0 }, offsets }
+    if (!block && elements.length) return { section: { index: -1, fraction: 0 }, offsets }
 
     const blocks = [...page.children]
-    const where = blocks.indexOf(block)
+    const where = block ? blocks.indexOf(block) : -1
     let index = -1
     for (let one = 0; one < elements.length; one++) {
       const element = elements[one]
@@ -207,14 +220,9 @@
       index = one
     }
 
-    const target = elements[index]
-    const next = elements[index + 1]
-    if (!target || !next) return { section: { index, fraction: 0 }, offsets }
-
-    const from = target.getBoundingClientRect().top
-    const to = next.getBoundingClientRect().top
+    const { from, to } = spanOf(box, page, elements, index)
     const span = to - from
-    const fraction = span > 0 ? Math.min(1, Math.max(0, (edge.top - from) / span)) : 0
+    const fraction = span > 0 ? Math.min(1, Math.max(0, (box.scrollTop - from) / span)) : 0
 
     return { section: { index, fraction }, offsets }
   }

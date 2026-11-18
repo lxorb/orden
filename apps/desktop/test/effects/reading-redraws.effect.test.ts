@@ -40,6 +40,8 @@ const Reading = (await import('../../src/lib/reading/src/Reading.svelte')).defau
 
 const wait = (ms: number) => new Promise((done) => setTimeout(done, ms))
 
+const frames = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+
 let shown: ReturnType<typeof mount> | null = null
 
 afterEach(() => {
@@ -73,6 +75,7 @@ async function opened(doc: string) {
   shown = mount(Reading, { target, props: { tab: tab as never, focused: true } })
   flushSync()
   await wait(50)
+  await frames()
   flushSync()
   return target
 }

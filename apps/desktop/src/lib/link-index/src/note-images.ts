@@ -4,7 +4,7 @@ import { links } from './links.svelte'
 
 export function notePicture(src: string, notePath: string | null, source: string): string {
   const name = decodeTarget(src)
-  const found = !name.includes('/') ? links.fileFor(name, notePath) : null
+  const found = links.fileFor(name, notePath)
 
   if (found) return assetUrl(found)
 

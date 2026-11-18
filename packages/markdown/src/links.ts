@@ -635,6 +635,7 @@ export function sectionLine(
 
 interface Section {
   from: number
+  to: number
   text: string
 }
 
@@ -652,7 +653,15 @@ function blockSection(source: string, wanted: string): Section | null {
   const block = lines.slice(start, end + 1)
   block[found.line - start] = (lines[found.line] ?? '').replace(BLOCK_ID, '')
 
-  return { from: start, text: block.join('\n').trimEnd() }
+  return { from: start, to: end, text: block.join('\n').trimEnd() }
+}
+
+export function blockSpanAt(source: string, at: number): { start: number; end: number } {
+  const lines = source.split('\n')
+  if (ownLine(lines[at] ?? '')) return { start: blockAbove(source, lines, at).from, end: at }
+  const item = itemSection(lines, at)
+  if (item) return { start: item.from, end: item.to }
+  return blockAround(rowsOf(source), at)
 }
 
 const LIST_ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]/
@@ -693,7 +702,7 @@ function itemSection(lines: readonly string[], at: number): Section | null {
     .join('\n')
     .trimEnd()
 
-  return { from: owner, text }
+  return { from: owner, to: end, text }
 }
 
 export function ownLine(line: string): boolean {
@@ -720,7 +729,7 @@ function blockAbove(source: string, lines: readonly string[], under: number): Se
   const rows = rowsOf(source)
   let last = under - 1
   while (last > 0 && !(lines[last] ?? '').trim() && !rows[last]?.code) last--
-  if (last < 0) return { from: 0, text: '' }
+  if (last < 0) return { from: 0, to: 0, text: '' }
 
   const touching = last === under - 1
   const item = touching ? itemSection(lines, last) : null
@@ -730,6 +739,7 @@ function blockAbove(source: string, lines: readonly string[], under: number): Se
 
   return {
     from: start,
+    to: last,
     text: lines
       .slice(start, last + 1)
       .join('\n')

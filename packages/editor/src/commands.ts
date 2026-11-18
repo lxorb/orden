@@ -878,11 +878,12 @@ export const leaveQuote: StateCommand = ({ state, dispatch }) => {
   const levels = marks.split('>').length - 1
   const lead = levels > 1 ? `${'> '.repeat(levels - 1).trimEnd()} ` : ''
   const left = state.update({ changes: { from: line.from, to: line.to, insert: lead } })
-  const kept = (apartFromWordsAbove(left.newDoc, line.from + lead.length)?.insert ?? '') + lead
+  const apart = apartFromWords(left.newDoc, line.from + lead.length)
+  const kept = (apart?.above ?? '') + lead
 
   dispatch(
     state.update({
-      changes: { from: line.from, to: line.to, insert: kept },
+      changes: { from: line.from, to: line.to, insert: kept + (apart?.below ?? '') },
       selection: { anchor: line.from + kept.length },
       scrollIntoView: true,
       userEvent: 'input',
@@ -1191,10 +1192,10 @@ function endEmptyTask(state: EditorState): TransactionSpec | null {
   if (quote === undefined || range.head !== line.to || inCode(state, line.from)) return null
 
   const left = state.update({ changes: { from: line.from, to: line.to, insert: quote } })
-  const apart = apartFromWordsAbove(left.newDoc, line.from + quote.length)
-  const insert = (apart?.insert ?? '') + quote
+  const apart = apartFromWords(left.newDoc, line.from + quote.length)
+  const insert = (apart?.above ?? '') + quote
   return {
-    changes: { from: line.from, to: line.to, insert },
+    changes: { from: line.from, to: line.to, insert: insert + (apart?.below ?? '') },
     selection: { anchor: line.from + insert.length },
     userEvent: 'input',
   }
@@ -1202,13 +1203,19 @@ function endEmptyTask(state: EditorState): TransactionSpec | null {
 
 const QUOTED_LEAD = /^(?:[ \t]*>[ \t]?)*/u
 
-function apartFromWordsAbove(doc: Text, head: number): { from: number; insert: string } | null {
+function hasWords(doc: Text, number: number): boolean {
+  if (number < 1 || number > doc.lines) return false
+  return !!doc.line(number).text.replace(QUOTED_LEAD, '').trim()
+}
+
+function apartFromWords(doc: Text, head: number): { above: string; below: string } | null {
   const line = doc.lineAt(head)
   const lead = QUOTED_LEAD.exec(line.text)?.[0] ?? ''
-  if (head !== line.to || line.text !== lead || line.number < 2) return null
-  const above = doc.line(line.number - 1).text
-  if (!above.replace(QUOTED_LEAD, '').trim()) return null
-  return { from: line.from, insert: `${lead.trimEnd()}\n` }
+  if (head !== line.to || line.text !== lead) return null
+  const blank = lead.trimEnd()
+  const above = hasWords(doc, line.number - 1) ? `${blank}\n` : ''
+  const below = above && hasWords(doc, line.number + 1) ? `\n${blank}` : ''
+  return above ? { above, below } : null
 }
 
 const ITEM_LEAD = /^(?:[ \t]*>[ \t]?)*[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+(?:\[.\][ \t]+)?$/u
@@ -1341,8 +1348,11 @@ const continueListsAt: StateCommand = ({ state, dispatch }) => {
         if (!before?.empty) return
         const line = state.doc.lineAt(before.head)
         if (before.head !== line.to || !ITEM_LEAD.test(line.text)) return
-        const left = apartFromWordsAbove(made.newDoc, range.head)
-        if (left) apart.push(left)
+        const left = apartFromWords(made.newDoc, range.head)
+        if (!left) return
+        const shown = made.newDoc.lineAt(range.head)
+        apart.push({ from: shown.from, insert: left.above })
+        if (left.below) apart.push({ from: shown.to + 1, insert: `${left.below.slice(1)}\n` })
       })
       if (!boxes.length && !apart.length) {
         dispatch(made)

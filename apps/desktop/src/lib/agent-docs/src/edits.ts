@@ -85,6 +85,21 @@ function apartFromAfter(words: string, gap: number, text: string, at: number): s
   return words + '\n'.repeat(Math.max(0, gap - have))
 }
 
+const CHILD_ITEM = /^[ \t]+(?:[-*+]|\d+[.)])[ \t]/
+
+function withKept(words: string, keep: string): string {
+  const trimmed = words.replace(/\n+$/, '')
+  if (keep.startsWith('\n')) return trimmed + keep
+  const lines = trimmed.split('\n')
+  const child = lines.findIndex((line, at) => at > 0 && CHILD_ITEM.test(line))
+  if (child < 1) return trimmed + keep
+  return [
+    ...lines.slice(0, child - 1),
+    `${lines[child - 1] ?? ''}${keep}`,
+    ...lines.slice(child),
+  ].join('\n')
+}
+
 function gapOf(place: Place): number {
   if (place.shape === 'words') return 0
   return place.shape === 'line' ? 1 : 2
@@ -96,7 +111,7 @@ function placed(text: string, place: Place, doing: Doing): Replacement {
   switch (doing.kind) {
     case 'replace': {
       const keep = place.keep && !doing.words.includes(place.keep.trim()) ? place.keep : ''
-      const words = keep ? doing.words.replace(/\n+$/, '') + keep : doing.words
+      const words = keep ? withKept(doing.words, keep) : doing.words
       return { from: place.from, to: place.to, insert: words }
     }
 

@@ -70,7 +70,7 @@ async function look(): Promise<Pick<HtmlOptions, 'scheme' | 'accent' | 'codeThem
 
 function pictureFile(src: string, path: string | null, text: string): string | null {
   const name = decodeTarget(src)
-  const found = name.includes('/') ? null : links.fileFor(name, path)
+  const found = links.fileFor(name, path)
   return found ?? imagePath(src, path, text)
 }
 

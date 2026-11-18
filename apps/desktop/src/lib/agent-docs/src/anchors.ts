@@ -1,5 +1,5 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blockAround, blockIdOf, headingText, lines, slugify } from '@orden/markdown/links'
+import { blockIdOf, blockSpanAt, headingText, lines, slugify } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
 
@@ -242,16 +242,15 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
   const row = one(marked, anchor, undefined)
 
   const alone = row.text.trim() === `^${anchor.block}`
-  const under = alone && row.line > 0 && !!rows[row.line - 1]?.text.trim()
-  const first = blockAround(rows, under ? row.line - 1 : row.line).start
-  const last = under ? row.line : blockAround(rows, row.line).end
+  const { start: first, end: last } = blockSpanAt(text, row.line)
   const start = rows[first] ?? row
   const end = rows[last] ?? row
+  const apart = alone && row.line > 0 && !rows[row.line - 1]?.text.trim()
   return {
     from: start.from,
     to: end.from + end.text.length,
     shape: 'paragraph',
-    keep: alone ? `\n^${anchor.block}` : ` ^${anchor.block}`,
+    keep: alone ? `${apart ? '\n\n' : '\n'}^${anchor.block}` : ` ^${anchor.block}`,
   }
 }
 
