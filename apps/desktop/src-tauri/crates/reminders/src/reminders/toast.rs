@@ -50,6 +50,10 @@ pub fn xml(one: &Planned, nonce: &str, words: &Words) -> String {
 }
 
 fn escaped(text: &str) -> String {
+    escaped_keeping(text, false)
+}
+
+pub(crate) fn escaped_keeping(text: &str, lines: bool) -> String {
     let mut out = String::with_capacity(text.len());
     for character in text.chars() {
         match character {
@@ -58,7 +62,7 @@ fn escaped(text: &str) -> String {
             '>' => out.push_str("&gt;"),
             '"' => out.push_str("&quot;"),
             '\'' => out.push_str("&apos;"),
-            one if one.is_control() && one != '\t' => out.push(' '),
+            one if one.is_control() && one != '\t' && !(lines && one == '\n') => out.push(' '),
             '\u{FFFE}' | '\u{FFFF}' => out.push(' '),
             one => out.push(one),
         }

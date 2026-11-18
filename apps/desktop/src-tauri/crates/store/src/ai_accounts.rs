@@ -13,7 +13,7 @@ const MOST_BYTES: usize = 256 * 1024;
 
 static WRITING: Mutex<()> = Mutex::new(());
 
-fn ours(webview: &tauri::Webview) -> Result<(), String> {
+pub(crate) fn ours(webview: &tauri::Webview) -> Result<(), String> {
     let label = webview.label();
     #[cfg(desktop)]
     let own = orden_base::labels::is_document_window(label);

@@ -4,26 +4,14 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use serde_json::Value;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
+use crate::ai_accounts::ours;
 use orden_base::paths::{made, write_privately};
 
 const MOST_BYTES: usize = 64 * 1024 * 1024;
 
 static LISTS: Mutex<()> = Mutex::new(());
-
-fn ours(webview: &tauri::Webview) -> Result<(), String> {
-    let label = webview.label();
-    #[cfg(desktop)]
-    let own = orden_base::labels::is_document_window(label);
-    #[cfg(mobile)]
-    let own = true;
-    if own && label == webview.window().label() {
-        Ok(())
-    } else {
-        Err("only Orden's own window may ask that".into())
-    }
-}
 
 const LIST: &str = "index";
 
@@ -49,11 +37,7 @@ fn thread_named(id: &str) -> Result<&str, String> {
 }
 
 fn root(app: &AppHandle) -> Result<PathBuf, String> {
-    let folder = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("could not find the app's data folder: {error}"))?;
-    Ok(folder.join("ai").join("threads"))
+    Ok(crate::ai_accounts::root(app)?.join("threads"))
 }
 
 fn space_dir(root: &Path, space: &str) -> Result<PathBuf, String> {

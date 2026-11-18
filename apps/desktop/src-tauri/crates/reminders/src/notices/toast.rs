@@ -47,20 +47,7 @@ pub fn xml(notice: &Notice) -> String {
 }
 
 fn escaped(text: &str) -> String {
-    let mut out = String::with_capacity(text.len());
-    for character in text.chars() {
-        match character {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&apos;"),
-            one if one.is_control() && one != '\t' && one != '\n' => out.push(' '),
-            '\u{FFFE}' | '\u{FFFF}' => out.push(' '),
-            one => out.push(one),
-        }
-    }
-    out
+    crate::reminders::toast::escaped_keeping(text, true)
 }
 
 #[cfg(test)]

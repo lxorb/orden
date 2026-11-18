@@ -39,8 +39,6 @@ pub struct Spawned {
     fresh: bool,
 }
 
-const REFUSED: &str = "not a window of this app";
-
 impl Terminals {
     fn lock(&self) -> MutexGuard<'_, HashMap<String, Held>> {
         self.sessions
@@ -157,12 +155,7 @@ fn place(webview: &Webview) -> Result<Place, String> {
 }
 
 fn owner(webview: &Webview) -> Result<String, String> {
-    let label = webview.label();
-    if label == webview.window().label() && orden_base::labels::is_document_window(label) {
-        Ok(label.to_owned())
-    } else {
-        Err(REFUSED.to_owned())
-    }
+    orden_base::labels::own_window(webview)
 }
 
 fn usable(id: &str) -> Result<(), String> {

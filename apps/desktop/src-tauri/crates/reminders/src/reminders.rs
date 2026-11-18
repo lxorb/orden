@@ -4,7 +4,7 @@ pub(crate) mod macos;
 #[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 pub(crate) mod schedule;
 #[cfg(any(windows, test))]
-mod toast;
+pub(crate) mod toast;
 #[cfg(windows)]
 mod toasts;
 
