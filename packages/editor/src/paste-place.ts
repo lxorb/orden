@@ -7,7 +7,6 @@ import {
 import { everywhere, type Landing, plainAt } from './paste'
 
 const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
-
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 
 const OPENS_BLOCK =

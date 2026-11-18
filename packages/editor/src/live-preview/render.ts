@@ -149,9 +149,7 @@ export class DiagramWidget extends PictureWidget {
 }
 
 const drawnDiagrams = new Map<string, string>()
-
 const MOST_DRAWN = 100
-
 const MOST_DRAWN_LENGTH = 16_000_000
 
 let drawnLength = 0
@@ -286,9 +284,7 @@ async function drawMermaid(host: HTMLElement, code: string, shared = false) {
 }
 
 const sharedStyles = new Map<string, { name: string; style: HTMLStyleElement }>()
-
 const MOST_SHARED_STYLES = 64
-
 const OWN_ID = '\u0000'
 
 function keepStylesShared() {

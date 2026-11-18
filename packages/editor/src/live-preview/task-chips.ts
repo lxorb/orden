@@ -127,7 +127,6 @@ export function taskDrawing(
 }
 
 const COMMENT_FIELD = /[ \t]*\[(at|by)::[ \t]*([^\]]*?)[ \t]*\]/g
-
 const TASK_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[.\]/
 
 export function commentDrawing(

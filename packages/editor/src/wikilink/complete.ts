@@ -25,15 +25,10 @@ function opened(view: EditorView, from: number): number {
 }
 
 const MOST_SHOWN = 40
-
 const LEAST_SEARCHED = 2
-
 const MARKER = 2
-
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
-
 const typing = (context: CompletionContext) => context.matchBefore(/\[\[[^[\]\n]*/)
-
 const REST_OF_LINK = /^([^[\]\n]*)\]\]/
 
 const insert =
@@ -214,7 +209,6 @@ interface Held {
 }
 
 const holdTyped = StateEffect.define<Held>()
-
 const dropTyped = StateEffect.define<object>()
 
 const heldTyped = StateField.define<readonly Held[]>({

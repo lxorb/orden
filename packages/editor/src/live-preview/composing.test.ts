@@ -7,11 +7,9 @@ import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import '@orden/markdown/eager'
 import { livePreviewDecorations } from './decorate'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
+import { noRects } from '../../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
+beforeAll(noRects)
 
 const open: EditorView[] = []
 

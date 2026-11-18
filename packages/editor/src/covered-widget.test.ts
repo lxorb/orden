@@ -1,18 +1,10 @@
 // @vitest-environment jsdom
 import { EditorState, Prec, StateEffect, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
-import { afterEach, beforeAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { keptViews } from '../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
-
-const open: EditorView[] = []
-
-afterEach(() => {
-  for (const view of open.splice(0)) view.destroy()
-})
+const open = keptViews()
 
 class Gap extends WidgetType {
   constructor(readonly block: boolean) {

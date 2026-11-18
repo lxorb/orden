@@ -185,6 +185,5 @@ const lazilyOnState =
   }
 
 export const gotoLine = lazily((found) => found.gotoLine)
-
 export const selectNextOccurrence = lazilyOnState((found) => found.selectNextOccurrence)
 export const selectSelectionMatches = lazilyOnState((found) => found.selectSelectionMatches)

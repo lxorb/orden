@@ -82,7 +82,6 @@ function insert(view: EditorView, text: string) {
 
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 const EMPTY_ITEM = /^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?$/
-
 export const ADDRESS = /^(?:https?:\/\/|mailto:|www\.)[^\s<>]+$/i
 
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {

@@ -65,7 +65,6 @@ export interface Parts {
 }
 
 const PARTS = new WeakMap<HTMLElement, Parts>()
-
 export const partsOf = (frame: HTMLElement): Parts | null => PARTS.get(frame) ?? null
 
 export function imageOfFrame(view: EditorView, frame: HTMLElement): ImageSpan | null {

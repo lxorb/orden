@@ -4,7 +4,6 @@ const KEYWORDS =
   /^(query|mutation|subscription|fragment|on|type|interface|union|enum|input|scalar|schema|extend|implements|directive|repeatable)\b/
 
 const NAMES_A_TYPE = /^(fragment|on|type|interface|union|enum|input|scalar|extend|implements)$/
-
 const ATOMS = /^(true|false|null)\b/
 
 interface GraphQLState {

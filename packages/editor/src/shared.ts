@@ -23,7 +23,6 @@ export interface DocView {
 }
 
 const onDocument = new WeakMap<DocView, SharedDoc>()
-
 export const documentOf = (view: DocView): SharedDoc | null => onDocument.get(view) ?? null
 
 export function later(
@@ -189,9 +188,7 @@ export class SharedDoc {
 
   private ownUndo = 0
   private ownRedo = 0
-
   private recent: { before: Text; changes: ChangeSet; by: Made; at: number }[] = []
-
   private held: ChangeSet | null = null
 
   get holdingBack(): boolean {

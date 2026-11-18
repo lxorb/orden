@@ -14,7 +14,6 @@ export interface SelectionBlock {
 }
 
 const SAME = 0.5
-
 const NO_ARC = 0.05
 
 interface Point {
@@ -230,5 +229,4 @@ function rounded(corners: readonly Point[], radius: number): string {
 }
 
 const place = (at: Point): string => `${round(at.x)} ${round(at.y)}`
-
 const round = (value: number): number => Math.round(value * 100) / 100

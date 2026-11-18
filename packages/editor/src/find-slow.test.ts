@@ -53,7 +53,6 @@ afterAll(() => {
 })
 
 const WILD = '(a+)+b'
-
 const RUN = `${'a'.repeat(40)}!`
 
 function viewOf(doc: string, onSlow?: (view: EditorView) => void) {

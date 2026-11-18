@@ -6,13 +6,13 @@ import { createEditor } from '../editor'
 import { selectIn } from './caret'
 import { editableCellAt, pasteIntoCell } from './view'
 import { flushTableEdits } from './widget'
+import { noRects } from '../../test/views'
 
 const TABLE = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
 const open: EditorView[] = []
 
 beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  noRects()
   Object.defineProperty(document, 'execCommand', { configurable: true, value: () => false })
 })
 

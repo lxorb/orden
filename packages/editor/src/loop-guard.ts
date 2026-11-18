@@ -3,9 +3,7 @@ import { parser } from '@lezer/javascript'
 import { backtracksWildly, patternJudge } from '@orden/markdown/pattern-cost'
 
 export const LOOP_LIMIT = 3000
-
 const SPIN = '__ordenSpin'
-
 const LOOPS = new Set(['ForStatement', 'WhileStatement', 'DoStatement'])
 
 export function guarded(code: string): string | null {

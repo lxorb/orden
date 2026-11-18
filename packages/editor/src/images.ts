@@ -17,7 +17,6 @@ export const imageResolver = Facet.define<ImageResolver, ImageResolver>({
 })
 
 const isImage = (file: File): boolean => file.type.startsWith('image/')
-
 const isKept = (file: File): boolean => isImage(file) || embedKind(file.name) !== null
 
 function markdownFor(file: File, path: string): string {

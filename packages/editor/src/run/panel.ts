@@ -33,11 +33,8 @@ export const openRun = StateEffect.define<{
 }>()
 
 export const addRunLines = StateEffect.define<{ run: number; lines: readonly RunLine[] }>()
-
 export const closeRun = StateEffect.define<{ run: number; status: RunStatus; elapsed: number }>()
-
 export const dropRun = StateEffect.define<number>()
-
 const FENCE = /^[\s>]*(?:`{3,}|~{3,})/
 
 function mapPanels(panels: readonly RunPanel[], transaction: Transaction): RunPanel[] {

@@ -6,7 +6,6 @@ import { FRAME_SCRIPT } from '../frame-text'
 import { parseRunMessage, runnerDocument } from './protocol'
 
 const RUN_TIME_LIMIT = 10_000
-
 const RUN_START_LIMIT = 45_000
 
 interface Sandbox {

@@ -3,9 +3,7 @@ import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
 import { blockAt } from './block/span'
 
 export const landed = StateEffect.define<number>()
-
 const SEEN_FOR = 1400
-
 const gone = StateEffect.define()
 
 function markedAt(state: EditorState, pos: number): { from: number; to: number } | null {

@@ -107,94 +107,78 @@ class Decorator {
       return name !== 'FrontMatter'
     }
 
-    switch (name) {
-      case 'Blockquote':
-        this.blockquote(node)
-        return true
-      case 'FencedCode':
-        return this.fence(node)
-      case 'CodeBlock':
-        this.markLines(node, 'orden-code')
-        this.numberLines(node.from, node.to, false)
-        return true
-      case 'ListItem':
-        this.markLines(node, 'orden-li', true)
-        this.commentFields(this.state.doc.lineAt(node.from))
-        return true
-      case 'HeaderMark':
-      case 'QuoteMark':
-        this.conceal(node.from, this.eatSpace(node.to), blockMarkRevealed(this.state, node))
-        return true
-      case 'CodeMark':
-        this.conceal(node.from, node.to, revealed(this.state, node))
-        return true
-      case 'ListMark':
-        this.listMark(node)
-        return true
-      case 'TaskMarker':
-        this.taskMarker(node)
-        return true
-      case 'HorizontalRule':
-        this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from))
-        return true
-      case 'Image':
-        return this.image(node)
-      case 'HTMLTag':
-      case 'HTMLBlock':
-        return this.htmlImage(node)
-      case 'Comment':
-      case 'CommentBlock':
-      case 'PercentComment':
-        this.conceal(node.from, node.to, overlaps(this.state, node.from, node.to))
-        return false
-      case 'Emoji':
-        return this.emoji(node)
-      case 'InlineMath':
-        return this.inlineMath(node)
-      case 'BlockMath':
-        return this.blockMath(node)
-      case 'CodeInfo':
-        this.conceal(node.from, node.to, revealed(this.state, node))
-        return true
-      case 'Escape':
-        this.conceal(node.from, node.from + 1, overlaps(this.state, node.from, node.to))
-        return true
-      case 'TableDelimiter':
-        this.tableDelimiter(node)
-        return true
-      case 'InlineCode':
-        this.marks.push(Decoration.mark({ class: 'orden-inline-code' }).range(node.from, node.to))
-        return true
-      case 'Link':
-        this.link(node)
-        return true
-      case 'Wikilink':
-        return this.wikilink(node)
-      case 'Hashtag':
-        this.tag(node)
-        return false
-      case 'URL':
-        if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
-        else {
-          const written = this.state.doc.sliceString(node.from, node.to)
-          const bare = node.parent?.name !== 'Autolink'
-          const after = this.state.doc.sliceString(node.to, node.to + 1)
-          this.linkText(node.from, node.to, bare ? bareTarget(written, after) : written)
-        }
-        return true
-      case 'Highlight':
-        this.highlight(node)
-        return true
-      case 'Subscript':
-        this.marks.push(Decoration.mark({ class: 'orden-sub' }).range(node.from, node.to))
-        return true
-      case 'Superscript':
-        this.marks.push(Decoration.mark({ class: 'orden-sup' }).range(node.from, node.to))
-        return true
-      default:
-        if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
-        return true
-    }
+    const visit = this.visits[name]
+    if (visit) return visit(node) !== false
+    if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
+    return true
+  }
+
+  private readonly concealShown = (node: SyntaxNode) =>
+    this.conceal(node.from, node.to, revealed(this.state, node))
+
+  private readonly mark = (className: string) => (node: SyntaxNode) => {
+    this.marks.push(Decoration.mark({ class: className }).range(node.from, node.to))
+  }
+
+  private readonly comment = (node: SyntaxNode) => {
+    this.conceal(node.from, node.to, overlaps(this.state, node.from, node.to))
+    return false
+  }
+
+  private readonly blockMark = (node: SyntaxNode) =>
+    this.conceal(node.from, this.eatSpace(node.to), blockMarkRevealed(this.state, node))
+
+  private readonly visits: Record<string, (node: SyntaxNode) => unknown> = {
+    Blockquote: (node) => this.blockquote(node),
+    FencedCode: (node) => this.fence(node),
+    CodeBlock: (node) => {
+      this.markLines(node, 'orden-code')
+      this.numberLines(node.from, node.to, false)
+    },
+    ListItem: (node) => {
+      this.markLines(node, 'orden-li', true)
+      this.commentFields(this.state.doc.lineAt(node.from))
+    },
+    HeaderMark: this.blockMark,
+    QuoteMark: this.blockMark,
+    CodeMark: this.concealShown,
+    CodeInfo: this.concealShown,
+    ListMark: (node) => this.listMark(node),
+    TaskMarker: (node) => this.taskMarker(node),
+    HorizontalRule: (node) =>
+      this.inlineWidget(node, new RuleWidget(), lineRevealed(this.state, node.from)),
+    Image: (node) => this.image(node),
+    HTMLTag: (node) => this.htmlImage(node),
+    HTMLBlock: (node) => this.htmlImage(node),
+    Comment: this.comment,
+    CommentBlock: this.comment,
+    PercentComment: this.comment,
+    Emoji: (node) => this.emoji(node),
+    InlineMath: (node) => this.inlineMath(node),
+    BlockMath: (node) => this.blockMath(node),
+    Escape: (node) =>
+      this.conceal(node.from, node.from + 1, overlaps(this.state, node.from, node.to)),
+    TableDelimiter: (node) => this.tableDelimiter(node),
+    InlineCode: this.mark('orden-inline-code'),
+    Subscript: this.mark('orden-sub'),
+    Superscript: this.mark('orden-sup'),
+    Link: (node) => this.link(node),
+    Wikilink: (node) => this.wikilink(node),
+    Hashtag: (node) => {
+      this.tag(node)
+      return false
+    },
+    URL: (node) => {
+      if (concealable(node)) {
+        this.concealShown(node)
+        return
+      }
+      const written = this.state.doc.sliceString(node.from, node.to)
+      const bare = node.parent?.name !== 'Autolink'
+      const after = this.state.doc.sliceString(node.to, node.to + 1)
+      this.linkText(node.from, node.to, bare ? bareTarget(written, after) : written)
+    },
+    Highlight: (node) => this.highlight(node),
   }
 
   private link(node: SyntaxNode) {
@@ -664,7 +648,6 @@ export function buildDecorations(
 }
 
 const enginesLanded = StateEffect.define()
-
 const COMPOSITION_SETTLES = 50
 
 export const livePreviewDecorations = ViewPlugin.fromClass(

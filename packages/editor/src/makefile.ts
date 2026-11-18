@@ -4,9 +4,7 @@ const DIRECTIVES =
   /^(ifeq|ifneq|ifdef|ifndef|else|endif|define|endef|undefine|include|-include|sinclude|export|unexport|override|vpath|private)\b/
 
 const ASSIGNED = /^[A-Za-z_.][\w.-]*(?=[ \t]*(::=|:=|\?=|\+=|!=|=))/
-
 const TARGET = /^[^\s:#=]+(?=[ \t]*:)/
-
 const OPERATORS = /^(::=|:=|\?=|\+=|!=|=|::|:|\||;|&)/
 
 interface MakefileState {

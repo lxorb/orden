@@ -3,11 +3,9 @@ import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { beforeAll, expect, test } from 'vitest'
 import { type CarriedFiles, imageHandling } from './images'
+import { noRects } from '../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
+beforeAll(noRects)
 
 const ROWS = {
   types: ['text/orden-explorer'],

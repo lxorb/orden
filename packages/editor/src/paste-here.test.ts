@@ -7,10 +7,10 @@ import { parsed } from '../test/parsed'
 import { loadLineCommands } from './line-door'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { pasteHere } from './paste'
+import { noRects } from '../test/views'
 
 beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  noRects()
   return import('@orden/markdown/from-html')
 })
 

@@ -2,11 +2,8 @@ export type BlockShape =
   'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'bullet' | 'numbered' | 'task' | 'quote'
 
 const INDENT = /^[ \t]*/
-
 const QUOTED = /^(?:>[ \t]?)+/
-
 const HASHES = /^#{1,6}[ \t]+/
-
 const MARKER = /^(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?/
 
 export function wordsOf(text: string): { indent: string; words: string } {

@@ -7,9 +7,7 @@ export const ANSWER_OPEN = '<!--orden:ai-->'
 export const ANSWER_CLOSE = '<!--/orden:ai-->'
 const OPENS = new Set([ANSWER_OPEN, '<!--nib:ai-->'])
 const CLOSES = new Set([ANSWER_CLOSE, '<!--/nib:ai-->'])
-
 const NOTE_MENTION = /@note\b/i
-
 export const mentionsNote = (prompt: string): boolean => NOTE_MENTION.test(prompt)
 
 export function answerSpan(

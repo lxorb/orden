@@ -41,7 +41,6 @@ function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
 }
 
 const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase().toUpperCase()
-
 const WHOLE_NOTE = 1e9
 
 function definedAddress(

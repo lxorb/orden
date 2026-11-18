@@ -14,9 +14,7 @@ import { noteIndex, resolveLink } from './notes'
 import { renderNote } from './preview'
 
 const DELAY = 300
-
 const MOST_PREVIEWED = 4000
-
 const MOST_EDITED = 40_000
 
 export interface PreviewNote {

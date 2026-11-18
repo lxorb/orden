@@ -63,9 +63,7 @@ const bareAddress = (url: string): string =>
   url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
 
 const writtenAddress = (src: string): string => (/[\s<>()]/.test(src) ? `<${src}>` : src)
-
 const writtenAlt = (alt: string): string => alt.replace(/[[\]]/g, '\\$&')
-
 const readAlt = (written: string): string => written.replace(/\\([[\]])/g, '$1')
 
 function parseMarkdownImage(state: EditorState, node: SyntaxNode): ImageSpec | null {

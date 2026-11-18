@@ -203,7 +203,6 @@ const lineAt = (at: number) => {
   return { top, bottom: top + 20 }
 }
 const seen = { top: 200, bottom: 400 }
-
 const at = (head: number, name = `at ${head}`) => ({ head, name })
 
 describe('a caret out of sight', () => {
