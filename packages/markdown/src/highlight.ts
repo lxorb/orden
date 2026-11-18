@@ -19,9 +19,8 @@ const codeHighlighter = tagHighlighter([
 
 const IN_CODE: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;' }
 
-function escapeCode(text: string): string {
-  return text.replace(/[&<>]/g, (character) => IN_CODE[character] ?? character)
-}
+const escapeCode = (text: string): string =>
+  text.replace(/[&<>]/g, (character) => IN_CODE[character] ?? character)
 
 const lastParsed = new WeakMap<Parser, { code: string; tree: Tree }>()
 

@@ -23,9 +23,7 @@ export interface Source extends Origin {
 
 const LAZY = ['data-src', 'data-original', 'data-lazy-src', 'data-actualsrc']
 
-function isPlaceholder(src: string): boolean {
-  return !src || src.startsWith('data:')
-}
+const isPlaceholder = (src: string): boolean => !src || src.startsWith('data:')
 
 const CANDIDATE = /[\s,]*([^\s,](?:\S*[^\s,])?)(?:\s+([^,]*))?/g
 
@@ -40,9 +38,7 @@ export function widestOf(srcset: string): string | null {
   return best?.url ?? null
 }
 
-function followable(address: URL): boolean {
-  return !runsCode(address) && address.protocol !== 'data:'
-}
+const followable = (address: URL): boolean => !runsCode(address) && address.protocol !== 'data:'
 
 function undefer(root: ParentNode): void {
   for (const image of root.querySelectorAll('img')) {
@@ -202,9 +198,7 @@ function contentOf(node: ParentNode, base: string): string {
   return (holder.innerHTML ?? '').trim()
 }
 
-function baseOf(document: Document, url: string): string {
-  return document.baseURI || url
-}
+const baseOf = (document: Document, url: string): string => document.baseURI || url
 
 function readable(
   document: Document,

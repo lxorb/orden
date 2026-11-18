@@ -22,13 +22,9 @@ function landed() {
   for (const listen of [...listeners]) listen()
 }
 
-export function mathsEngine(): Maths | null {
-  return maths
-}
+export const mathsEngine = (): Maths | null => maths
 
-export function emojiTable(): Emoji | null {
-  return emoji
-}
+export const emojiTable = (): Emoji | null => emoji
 
 export function useMaths(engine: Maths) {
   maths = engine
@@ -40,23 +36,15 @@ export function useEmoji(table: Emoji) {
   landed()
 }
 
-export function loadMaths(): Promise<void> {
-  return maths ? Promise.resolve() : fetchMaths()
-}
+export const loadMaths = (): Promise<void> => (maths ? Promise.resolve() : fetchMaths())
 
-export function loadEmoji(): Promise<void> {
-  return emoji ? Promise.resolve() : fetchEmoji()
-}
+export const loadEmoji = (): Promise<void> => (emoji ? Promise.resolve() : fetchEmoji())
 
-function hasMaths(source: string): boolean {
-  return source.includes('$')
-}
+const hasMaths = (source: string): boolean => source.includes('$')
 
 const SHORTCODE = /:[a-z0-9_+-]+:/i
 
-function hasEmoji(source: string): boolean {
-  return source.includes(':') && SHORTCODE.test(source)
-}
+const hasEmoji = (source: string): boolean => source.includes(':') && SHORTCODE.test(source)
 
 export function loadFor(source: string): Promise<void> {
   const wanted: Promise<void>[] = []

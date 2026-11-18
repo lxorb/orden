@@ -82,9 +82,7 @@ function askedHeight(tag: string): Shape {
   return Number.isInteger(written) && written >= 80 && written <= 1200 ? written : 'video'
 }
 
-function domainOf(url: URL): string {
-  return url.hostname.toLowerCase().replace(/^www\./, '')
-}
+const domainOf = (url: URL): string => url.hostname.toLowerCase().replace(/^www\./, '')
 
 const OPENING = /\s*<\/?iframe\b(?:"[^"]*"|'[^']*'|[^'">])*>?/iy
 

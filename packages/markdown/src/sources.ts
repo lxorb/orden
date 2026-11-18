@@ -11,9 +11,8 @@ export function sourcesOf(html: string, keep: (src: string) => boolean = () => t
   return [...found]
 }
 
-export function mapSources(html: string, swap: (src: string) => string | null): string {
-  return html.replace(SOURCE, (whole: string, before: string, src: string, after: string) => {
+export const mapSources = (html: string, swap: (src: string) => string | null): string =>
+  html.replace(SOURCE, (whole: string, before: string, src: string, after: string) => {
     const next = swap(src)
     return next === null ? whole : `${before}${next}${after}`
   })
-}

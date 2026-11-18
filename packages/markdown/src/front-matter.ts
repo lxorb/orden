@@ -30,13 +30,9 @@ const KEY = /^("(?:[^"\\]|\\.)*"|'(?:[^']|'')*'|[^\s#-].*?)[ \t]*:(?=\s|$)/
 
 const NAME = /^(?![\s#\-?:,[\]{}&*!|>'"%@`])(?!.*:(?:\s|$))(?!.*\s#)[^\p{Cc}\p{Zl}\p{Zp}]+(?<!\s)$/u
 
-export function isPropertyName(name: string): boolean {
-  return NAME.test(name) && isKeyLine(`${name}: x`)
-}
+export const isPropertyName = (name: string): boolean => NAME.test(name) && isKeyLine(`${name}: x`)
 
-function keyWritten(key: string): string {
-  return isKeyLine(`${key}: x`) ? key : JSON.stringify(key)
-}
+const keyWritten = (key: string): string => (isKeyLine(`${key}: x`) ? key : JSON.stringify(key))
 
 export function frontMatterBlock(source: string): FrontMatterBlock | null {
   const lines = frontMatterLines(source)
@@ -51,9 +47,7 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
   }
 }
 
-export function opensFrontMatter(source: string): boolean {
-  return frontMatterLines(source) !== null
-}
+export const opensFrontMatter = (source: string): boolean => frontMatterLines(source) !== null
 
 export type FrontMatterRow = readonly [
   key: string,
@@ -274,9 +268,8 @@ function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyL
   return to === line.to ? line : { ...line, to, value: { ...line.value, to } }
 }
 
-function cutTo(source: string, line: KeyLine): number {
-  return source.startsWith('\r\n', line.to) ? line.to + 2 : Math.min(line.to + 1, source.length)
-}
+const cutTo = (source: string, line: KeyLine): number =>
+  source.startsWith('\r\n', line.to) ? line.to + 2 : Math.min(line.to + 1, source.length)
 
 function blankAfter(source: string, at: number): number {
   let over = at

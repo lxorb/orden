@@ -6,9 +6,8 @@ export type PropertiesMode = 'properties' | 'source' | 'hidden'
 
 export const PROPERTIES_MODES: readonly PropertiesMode[] = ['properties', 'source', 'hidden']
 
-export function propertiesMode(value: unknown): PropertiesMode {
-  return PROPERTIES_MODES.find((one) => one === value) ?? 'hidden'
-}
+export const propertiesMode = (value: unknown): PropertiesMode =>
+  PROPERTIES_MODES.find((one) => one === value) ?? 'hidden'
 
 export type PropertyKind = 'text' | 'list' | 'number' | 'date' | 'checkbox' | 'map'
 
@@ -185,15 +184,12 @@ export function propertiesTable(properties: readonly Property[]): string {
   return `<div class="properties" role="table">${rows}</div>`
 }
 
-function row(property: Property): string {
-  return (
-    `<div class="property orden-row is-short" role="row"` +
-    ` data-key="${escape(property.key)}" data-from="${property.from}" data-to="${property.to}">` +
-    `<span class="property-key orden-row-label" role="rowheader">${escape(property.key)}</span>` +
-    `<span class="property-value" role="cell">${value(property)}</span>` +
-    `</div>`
-  )
-}
+const row = (property: Property): string =>
+  `<div class="property orden-row is-short" role="row"` +
+  ` data-key="${escape(property.key)}" data-from="${property.from}" data-to="${property.to}">` +
+  `<span class="property-key orden-row-label" role="rowheader">${escape(property.key)}</span>` +
+  `<span class="property-value" role="cell">${value(property)}</span>` +
+  `</div>`
 
 export function propertiesSource(source: string): string {
   const block = frontMatterBlock(source)

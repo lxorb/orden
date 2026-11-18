@@ -18,13 +18,10 @@ export const GUTTER = 40
 export const GROWTH = 600
 const HEADROOM = 240
 
-export function pagesOf(canvas: Canvas): PageNode[] {
-  return canvas.nodes.filter(isPage)
-}
+export const pagesOf = (canvas: Canvas): PageNode[] => canvas.nodes.filter(isPage)
 
-export function pageCount(canvas: Canvas): number {
-  return canvas.nodes.reduce((count, node) => (isPage(node) ? count + 1 : count), 0)
-}
+export const pageCount = (canvas: Canvas): number =>
+  canvas.nodes.reduce((count, node) => (isPage(node) ? count + 1 : count), 0)
 
 export function laidOut(pages: readonly PageNode[]): PageNode[] {
   let y = 0
@@ -71,9 +68,8 @@ export function settled(canvas: Canvas, before: readonly PageNode[] = pagesOf(ca
   return { ...canvas, nodes, ink }
 }
 
-export function columnHeight(pages: readonly PageNode[]): number {
-  return pages.reduce((tall, page) => tall + page.height + GUTTER, 0) - (pages.length ? GUTTER : 0)
-}
+export const columnHeight = (pages: readonly PageNode[]): number =>
+  pages.reduce((tall, page) => tall + page.height + GUTTER, 0) - (pages.length ? GUTTER : 0)
 
 export function newPage(paper: Paper = 'a4', pattern: Pattern = 'blank'): PageNode {
   const size = PAPERS[paper]
@@ -198,9 +194,8 @@ function columnOf<T extends Box>(pages: readonly T[]): Column<T> {
   return { pages, stacked }
 }
 
-function holds(page: Box, x: number, y: number): boolean {
-  return x >= page.x && x < page.x + page.width && y >= page.y && y < page.y + page.height
-}
+const holds = (page: Box, x: number, y: number): boolean =>
+  x >= page.x && x < page.x + page.width && y >= page.y && y < page.y + page.height
 
 function firstEndingBelow(pages: readonly Box[], y: number): number {
   let low = 0
@@ -325,13 +320,12 @@ export function grown(canvas: Canvas, lowest: ReadonlyMap<string, number>): Canv
   return settled({ ...canvas, nodes }, pagesOf(canvas))
 }
 
-export function emptyPages(paper: Paper = 'a4'): Canvas {
-  return { ...emptyCanvas(), nodes: [newPage(paper)] }
-}
+export const emptyPages = (paper: Paper = 'a4'): Canvas => ({
+  ...emptyCanvas(),
+  nodes: [newPage(paper)],
+})
 
-export function blankPages(paper: Paper = 'a4'): string {
-  return writeCanvas(emptyPages(paper))
-}
+export const blankPages = (paper: Paper = 'a4'): string => writeCanvas(emptyPages(paper))
 
 export function pagesFromPdf(
   file: string,
@@ -388,14 +382,10 @@ function inkOwnerOf<T extends Box>(
   return ownerOf({ x, y, width, height }, column)
 }
 
-export function paperOf(pages: string): string {
-  return `${pages}.pdf`
-}
+export const paperOf = (pages: string): string => `${pages}.pdf`
 
-export function holderOf(path: string): string | null {
-  return /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
-}
+export const holderOf = (path: string): string | null =>
+  /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
 
-export function pairOf(path: string): string | null {
-  return holderOf(path) ?? (/\.pages$/i.test(path) ? paperOf(path) : null)
-}
+export const pairOf = (path: string): string | null =>
+  holderOf(path) ?? (/\.pages$/i.test(path) ? paperOf(path) : null)

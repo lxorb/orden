@@ -49,9 +49,7 @@ export function lineStart(
   return src[start - 1] === '\n' ? start - 1 : null
 }
 
-function isBlank(character: string | undefined): boolean {
-  return character === ' ' || character === '\t'
-}
+const isBlank = (character: string | undefined): boolean => character === ' ' || character === '\t'
 
 export function matchesAt(pattern: RegExp, src: string, at: number): boolean {
   pattern.lastIndex = at

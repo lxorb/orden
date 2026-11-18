@@ -8,6 +8,4 @@ export function absolute(value: string, base?: string): URL | null {
   }
 }
 
-export function runsCode(address: URL): boolean {
-  return RUNS.has(address.protocol)
-}
+export const runsCode = (address: URL): boolean => RUNS.has(address.protocol)

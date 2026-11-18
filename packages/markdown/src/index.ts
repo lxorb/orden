@@ -82,8 +82,8 @@ export interface Heading {
   id: string
 }
 
-function plainText(html: string): string {
-  return html
+const plainText = (html: string): string =>
+  html
     .replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -91,7 +91,6 @@ function plainText(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .trim()
-}
 
 const defaults = Renderer.prototype as Renderer
 
@@ -153,17 +152,14 @@ const SCHEME = /^(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)/
 
 const MAIL_RUNS = new WeakMap<Token[], { from: number; to: number }>()
 
-function inMail(code: number): boolean {
-  return (
-    (code >= 48 && code <= 57) ||
-    (code >= 65 && code <= 90) ||
-    (code >= 97 && code <= 122) ||
-    code === 46 ||
-    code === 95 ||
-    code === 43 ||
-    code === 45
-  )
-}
+const inMail = (code: number): boolean =>
+  (code >= 48 && code <= 57) ||
+  (code >= 65 && code <= 90) ||
+  (code >= 97 && code <= 122) ||
+  code === 46 ||
+  code === 95 ||
+  code === 43 ||
+  code === 45
 
 function mailAhead(src: string, tokens: Token[] | undefined): boolean {
   if (!inMail(src.charCodeAt(0))) return false
@@ -211,9 +207,8 @@ function bareAddress(this: Tokenizer, src: string, tokens?: Token[]): Tokens.Lin
   }
 }
 
-function linksFrom(resolve: LinkResolver, from: EmbeddedNote | undefined): LinkResolver {
-  return from ? (link) => resolve(link, from) : resolve
-}
+const linksFrom = (resolve: LinkResolver, from: EmbeddedNote | undefined): LinkResolver =>
+  from ? (link) => resolve(link, from) : resolve
 
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
@@ -354,9 +349,8 @@ const publishing = renderer({ escapeHtml: true }, [], embedSink())
 
 export { frontMatter, frontMatterList, frontMatterValue, stripFrontMatter } from './front-matter'
 
-export function documentTitle(source: string): string | null {
-  return /^#\s+(.+)$/m.exec(stripFrontMatter(source))?.[1]?.trim() ?? null
-}
+export const documentTitle = (source: string): string | null =>
+  /^#\s+(.+)$/m.exec(stripFrontMatter(source))?.[1]?.trim() ?? null
 
 function captioned(html: string, caption: string): string {
   if (!caption || html.startsWith('<figure')) return html
@@ -381,24 +375,19 @@ export function codeBlocks(source: string): CodeBlock[] {
   return found
 }
 
-export function lexMarkdown(source: string): Token[] {
-  return trusting.lexer(source)
-}
+export const lexMarkdown = (source: string): Token[] => trusting.lexer(source)
 
-function needsOwn(options: RenderOptions): boolean {
-  return (
-    options.toc === true ||
-    options.code !== undefined ||
-    options.resolveLink !== undefined ||
-    options.resolveNoteHref !== undefined ||
-    options.resolveNoteFrom !== undefined ||
-    options.tagHref !== undefined ||
-    options.resolveEmbed !== undefined ||
-    options.resolvePicture !== undefined ||
-    options.headings !== undefined ||
-    options.locale !== undefined
-  )
-}
+const needsOwn = (options: RenderOptions): boolean =>
+  options.toc === true ||
+  options.code !== undefined ||
+  options.resolveLink !== undefined ||
+  options.resolveNoteHref !== undefined ||
+  options.resolveNoteFrom !== undefined ||
+  options.tagHref !== undefined ||
+  options.resolveEmbed !== undefined ||
+  options.resolvePicture !== undefined ||
+  options.headings !== undefined ||
+  options.locale !== undefined
 
 function inside(options: RenderOptions): RenderOptions {
   const rest = { ...options }

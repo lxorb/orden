@@ -2,9 +2,8 @@ import { escape } from './html'
 
 export const DIAGRAM_LANGUAGES: ReadonlySet<string> = new Set(['mermaid', 'flow', 'sequence'])
 
-export function isDiagram(language: string): boolean {
-  return DIAGRAM_LANGUAGES.has(language.toLowerCase())
-}
+export const isDiagram = (language: string): boolean =>
+  DIAGRAM_LANGUAGES.has(language.toLowerCase())
 
 export type DiagramScheme = 'light' | 'dark'
 
