@@ -156,45 +156,35 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
   return [{ label: 'Archive', run: () => void archiving.value.archive(paths) }]
 }
 
-function moveEntry(entry: Entry): MenuEntry[] {
-  if (!viewport.touch) return []
-  const targets = moveTargets({
-    moving: entry.path,
+const targetsFor = (moving: string | null) =>
+  moveTargets({
+    moving,
     tree: workspace.tree,
     spaces: workspace.spaces,
     here: workspace.activeSpace?.root ?? null,
-  }).filter((target) => canWriteAt(target.id))
-  if (!targets.length) return []
+  })
 
-  return [{ label: 'Move', run: () => void moveTo(entry, targets) }]
+function moveEntry(entry: Entry): MenuEntry[] {
+  if (!viewport.touch) return []
+  const targets = targetsFor(entry.path).filter((target) => canWriteAt(target.id))
+  return targets.length ? [{ label: 'Move', run: () => void moveInto([entry.path], targets) }] : []
 }
 
-async function moveAllTo(paths: readonly string[]) {
-  const asked = (moving: string | null) =>
-    moveTargets({
-      moving,
-      tree: workspace.tree,
-      spaces: workspace.spaces,
-      here: workspace.activeSpace?.root ?? null,
-    })
-  const each = paths.map((path) => new Set(asked(path).map((target) => target.id)))
-  const targets = asked(null).filter(
+function moveAllTo(paths: readonly string[]) {
+  const each = paths.map((path) => new Set(targetsFor(path).map((target) => target.id)))
+  const targets = targetsFor(null).filter(
     (target) =>
       canWriteAt(target.id) &&
       movesInto(paths, target.id) &&
       paths.every((path, at) => each[at]?.has(target.id) === true || folderOf(path) === target.id),
   )
-
-  const { prompt } = await import('../../ui-kit/src/api')
-  const into = await prompt.find({ title: 'Move to', options: targets })
-  if (into) await workspace.moveMany([...paths], into)
+  return moveInto([...paths], targets)
 }
 
-async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
+async function moveInto(paths: string[], targets: MoveTarget[]) {
   const { prompt } = await import('../../ui-kit/src/api')
-  const into = await prompt.find({ title: 'Move to', options: [...targets] })
-
-  if (into) await workspace.moveMany([entry.path], into)
+  const into = await prompt.find({ title: 'Move to', options: targets })
+  if (into) await workspace.moveMany(paths, into)
 }
 
 async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
@@ -255,13 +245,7 @@ export async function refuseDeleting(paths: readonly string[]) {
 }
 
 function revealEntry(entry: Entry): MenuEntry[] {
-  if (!isDesktop) return []
-  return [
-    {
-      label: showLabel(),
-      run: () => void reveal(entry.path),
-    },
-  ]
+  return isDesktop ? [{ label: showLabel(), run: () => void reveal(entry.path) }] : []
 }
 
 const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {

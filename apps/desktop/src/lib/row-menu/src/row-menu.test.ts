@@ -1,20 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 import { providePort } from '@orden/contracts'
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 vi.stubGlobal('localStorage', memoryStorage())
 
 const shareable = { yes: false }
@@ -42,27 +29,20 @@ const { hiddenKinds } = await import('../../gates/src/api')
 const { PROTECTION_WORD } = await import('../../sharing/src/protect/gate')
 type Entry = import('../../workspace/src/api').Entry
 
-function note(path: string): Entry {
-  return {
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: false,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
+const entry = (path: string, is_dir: boolean, children: Entry[] = []): Entry => ({
+  name: path.split('/').pop() ?? path,
+  path,
+  is_dir,
+  modified: 0,
+  created: 0,
+  children,
+})
+const note = (path: string) => entry(path, false)
+const folder = (path: string, children: Entry[] = []) => entry(path, true, children)
 
-function folder(path: string, children: Entry[] = []): Entry {
-  return {
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: true,
-    modified: 0,
-    created: 0,
-    children,
-  }
-}
+const PAPER = ['Rename', 'Choose an icon', 'Archive', 'Protect', 'Duplicate', 'Delete']
+const NOTE = ['New note inside', ...PAPER.slice(0, 2), 'Set cover', ...PAPER.slice(2)]
+const shared = (rows: string[]) => [...rows.slice(0, -2), 'Share', ...rows.slice(-2)]
 
 const nested = folder('/s/A', [note('/s/A/A.md'), note('/s/A/B.md')])
 const plain = folder('/s/Projects', [note('/s/Projects/plan.md')])
@@ -123,16 +103,7 @@ describe('every row', () => {
 
 describe('a note', () => {
   test('can hold a note, and can be copied', () => {
-    expect(labels(loose)).toEqual([
-      'New note inside',
-      'Rename',
-      'Choose an icon',
-      'Set cover',
-      'Archive',
-      'Protect',
-      'Duplicate',
-      'Delete',
-    ])
+    expect(labels(loose)).toEqual(NOTE)
   })
 })
 
@@ -189,14 +160,7 @@ describe('a chat', () => {
 
 describe('a paper', () => {
   test('holds nothing, wears an icon and duplicates as a paper', () => {
-    expect(labels(paper)).toEqual([
-      'Rename',
-      'Choose an icon',
-      'Archive',
-      'Protect',
-      'Duplicate',
-      'Delete',
-    ])
+    expect(labels(paper)).toEqual(PAPER)
   })
 })
 
@@ -244,47 +208,9 @@ describe('a file the account has a copy of', () => {
   test('says who else may have it, beside what the space says about it', () => {
     shareable.yes = true
 
-    expect(labels(loose)).toEqual([
-      'New note inside',
-      'Rename',
-      'Choose an icon',
-      'Set cover',
-      'Archive',
-      'Protect',
-      'Share',
-      'Duplicate',
-      'Delete',
-    ])
-  })
-
-  test('and a note that holds notes is shared as the note it is drawn as', () => {
-    shareable.yes = true
-
-    expect(labels(nested)).toEqual([
-      'New note inside',
-      'Rename',
-      'Choose an icon',
-      'Set cover',
-      'Archive',
-      'Protect',
-      'Share',
-      'Duplicate',
-      'Delete',
-    ])
-  })
-
-  test('and so can a paper', () => {
-    shareable.yes = true
-
-    expect(labels(paper)).toEqual([
-      'Rename',
-      'Choose an icon',
-      'Archive',
-      'Protect',
-      'Share',
-      'Duplicate',
-      'Delete',
-    ])
+    expect(labels(loose)).toEqual(shared(NOTE))
+    expect(labels(nested)).toEqual(shared(NOTE))
+    expect(labels(paper)).toEqual(shared(PAPER))
   })
 })
 
