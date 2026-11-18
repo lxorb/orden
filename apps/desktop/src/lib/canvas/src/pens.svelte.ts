@@ -12,7 +12,6 @@ export interface Nib {
 
 export const DOCKS = ['top', 'bottom', 'left', 'right'] as const
 export type Dock = (typeof DOCKS)[number]
-
 export const upright = (dock: Dock): boolean => dock === 'left' || dock === 'right'
 
 export function nearestDock(at: { x: number; y: number }, width: number, height: number): Dock {
@@ -36,12 +35,9 @@ export function nearestDock(at: { x: number; y: number }, width: number, height:
 }
 
 export const PEN_SLOTS = 3
-
 export const MOST_RECENT = 6
-
 export const LEAST_WIDTH = 0.5
 export const MOST_WIDTH = 30
-
 export const LEAST_RUB = 2
 export const MOST_RUB = 64
 export const RUB = 10

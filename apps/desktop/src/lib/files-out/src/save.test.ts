@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const calls: { command: string; args: Record<string, unknown> }[] = []
-
 const onDisk = new Set<string>()
-
 let typed = ''
 
 vi.mock('../../platform/src/tauri', () => ({

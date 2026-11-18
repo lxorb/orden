@@ -6,7 +6,6 @@
   const { zoom }: { zoom: number } = $props()
 
   const HELD = 600
-
   let shown = $state(false)
   let last = 0
   let timer: ReturnType<typeof setTimeout> | undefined

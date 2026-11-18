@@ -3,7 +3,6 @@ import { inkPath, outlineOf } from '../../plane/src/api'
 import type { Nib } from './pens.svelte'
 
 const SAMPLES = 44
-
 const pressureAt = (share: number): number => 0.3 + 0.7 * Math.sin(Math.PI * share) ** 0.7
 
 export function sampleStroke(nib: Nib, width: number, height: number): InkStroke {

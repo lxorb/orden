@@ -4,7 +4,6 @@ import { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEB, unpack, WEB } from '../..
 import { firstVisiting } from '../../workspace/src/api'
 
 type FirstVisit = Awaited<ReturnType<typeof firstVisiting>>['firstVisit']
-
 const WATCH = 500
 
 class TakingOver {

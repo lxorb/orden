@@ -24,14 +24,11 @@
     'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
 
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
-
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
-
   let warm = $state<Warming>()
   void searchWarmth().then((one) => (warm = one))
 
   const writable = $derived(canWriteAt(workspace.activeSpace?.root ?? ''))
-
   let field = $state<HTMLInputElement>()
 
   $effect(() => {
@@ -75,7 +72,6 @@
   )
 
   const tags = $derived(tagTree(workspace.tags))
-
   const tagPaths = $derived(nodesIn(tags).map((node) => node.path))
 
   const asking = $derived(

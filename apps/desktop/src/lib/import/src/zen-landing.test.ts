@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import { toBase64 } from '../../platform/src/bytes'
 import { writeShortcut } from '@orden/scan/shortcut'
 import type { Planned } from './plan'
@@ -7,13 +6,10 @@ import { mozLz4Of, SIDEBAR } from './zen.fixture'
 import { ZEN_1_17, ZEN_1_17_PLACES } from './zen-versions.fixture'
 
 const disk = new Map<string, string>()
-
 const written: { root: string; files: Planned[] }[] = []
-
 const spaces: { id: string; name: string; root: string }[] = []
 const done: string[] = []
 const marks: { kind: string; path: string; text: string }[] = []
-
 let sidebar: unknown = SIDEBAR
 let firefoxSession: unknown = null
 let places: unknown = null

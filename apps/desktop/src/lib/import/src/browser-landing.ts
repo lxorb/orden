@@ -21,7 +21,6 @@ interface Read {
 }
 
 const CONTAINERS = 'Containers stay in Firefox'
-
 const SAVED = (browser: string) => `Saved tab groups and the reading list stay in ${browser}`
 const WORKSPACES = (browser: string) => `${browser}’s workspaces come in as one space`
 const KEPT: Partial<Record<BrowserId, (browser: string) => string>> = {

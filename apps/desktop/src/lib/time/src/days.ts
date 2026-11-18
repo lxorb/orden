@@ -2,11 +2,8 @@ import { midnightOf } from '../../platform/src/api'
 import type { Span } from './records'
 
 export const HOUR = 3_600_000
-
 export const MINUTE = 60_000
-
 export const counts = (ms: number): boolean => ms >= MINUTE / 2
-
 export type Range = 'day' | 'week' | 'month'
 
 export interface Piece {

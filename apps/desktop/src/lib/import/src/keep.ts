@@ -1,13 +1,11 @@
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords } from '@orden/markdown/task-line'
-
 import { dayOf, noteText, type Meta } from './meta'
 import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 const ASSETS = 'assets'
-
 const ARCHIVE = 'Archive'
 
 interface KeepNote {

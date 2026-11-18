@@ -8,10 +8,8 @@
   let langs = $state<string[]>([navigator.language])
   let smart = $state(true)
   let shown = $state(0)
-
   const channel = new BroadcastChannel(CHANNEL)
   const say = (said: Said) => channel.postMessage(said)
-
   const asked = asking(say, 10_000)
 
   channel.onmessage = (event: MessageEvent) => {
@@ -26,7 +24,6 @@
   }
 
   const hide = (raise = false) => void invoke('quick_add_hide', { raise }).catch(() => undefined)
-
   let sending = 0
   let failed = false
 

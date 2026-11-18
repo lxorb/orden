@@ -3,7 +3,6 @@ import { flowSource, keepSafeLinks } from '@orden/editor/flow'
 import type { Scheme } from '../../theme/src/api'
 
 const FONT = "'Geist', ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
-
 const PAGE_FONT = "ui-sans-serif, system-ui, 'Segoe UI', sans-serif"
 
 const FLOW = {
@@ -22,7 +21,6 @@ const FLOW = {
 }
 
 let sequence = 0
-
 export type DiagramFor = 'document' | 'page'
 
 export async function drawDiagram(

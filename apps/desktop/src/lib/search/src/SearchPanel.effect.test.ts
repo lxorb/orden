@@ -6,7 +6,6 @@ import { taskHash } from '@orden/bases'
 const { search } = await import('./panel.svelte')
 const { workspace } = await import('../../workspace/src/api')
 const SearchPanel = (await import('./SearchPanel.svelte')).default
-
 const PAPER = '/space/Paper.pdf'
 
 const page = (page: number): Hit => ({

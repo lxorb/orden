@@ -58,7 +58,6 @@ export function fenceAt(text: string, code: string): { from: number; to: number 
 }
 
 const fenceViews = new Map<string, Shown>()
-
 const KEPT_PLACES = 200
 
 function remember(key: string, place: Shown) {

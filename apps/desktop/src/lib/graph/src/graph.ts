@@ -22,11 +22,9 @@ export interface NoteGraph {
 }
 
 export type Resolve = (from: string, link: { kind: LinkKind; target: string }) => string | null
-
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 const CANVAS = /\.canvas$/i
 const EXTENSION = /\.[A-Za-z0-9]{1,8}$/
-
 const MISSING = '?'
 const EMBEDDED = '!'
 

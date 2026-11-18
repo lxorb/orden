@@ -1,5 +1,4 @@
 import { destination, htmlToMarkdown } from '@orden/markdown/from-html'
-
 import { folderPlan, isJunk } from './folder'
 import { dayOf } from './meta'
 import { Names, safeName } from './names'
@@ -8,15 +7,10 @@ import type { Source } from './sources'
 import { closingOf, tagsIn, unescapeXml } from './xml'
 
 const ENTRY = /(^|\/)entries\/[^/]+\.html?$/i
-
 const RESOURCE = /(^|\/)resources\/[^/]+$/i
-
 const HEIC = /\.(heic|heif)$/i
-
 const DAY = /(\d{4}-\d{2}-\d{2})/
-
 const MEDIA = new Set(['img', 'video', 'audio', 'source'])
-
 const DRAWN = /assetType_(stateOfMind|motionActivity|genericMap|multiPinMap)\b/i
 
 interface Entry {

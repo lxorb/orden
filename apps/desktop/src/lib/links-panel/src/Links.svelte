@@ -24,17 +24,14 @@
   } = $props()
 
   const NOTHING: NoteGraph = { nodes: [], edges: [] }
-
   const path = $derived(workspace.panelTab?.path ?? null)
   const root = $derived(workspace.activeSpace?.root ?? null)
-
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
 
   const chatLinks = held(
     () => surfaceLoad('chat-links') as Promise<{ default: Component<{ path: string }> }>,
   )
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
-
   const attachments = $derived(workspace.graphSettings.here.attachments)
 
   const around = $derived.by(() => {
@@ -46,7 +43,6 @@
   })
 
   const follows = (_value: unknown) => undefined
-
   let mentions = $state<Reference[]>([])
 
   $effect(() => {

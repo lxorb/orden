@@ -64,9 +64,7 @@ function inTurn(folder: string, command: string): Promise<void> {
 }
 
 export const watchFolder = (folder: string): Promise<void> => inTurn(folder, 'explorer_watch')
-
 export const unwatchFolder = (folder: string): Promise<void> => inTurn(folder, 'explorer_unwatch')
-
 export const CHANGED = 'explorer://changed'
 
 export interface Pair {

@@ -20,7 +20,6 @@ function graphOf(scanned: ScannedNote[]): NoteGraph {
 }
 
 const space = (notes: Record<string, string>) => graphOf(scan(notes))
-
 const named = (graph: NoteGraph) => graph.nodes.map((node) => node.name)
 
 const joins = (graph: NoteGraph): string[] =>

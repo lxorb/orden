@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { fromBase64 } from '../../platform/src/bytes'
 import { readShortcut } from '@orden/scan/shortcut'
 import { chromiumSidebar } from './chromium'

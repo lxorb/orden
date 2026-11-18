@@ -9,15 +9,10 @@ import {
 } from '../../platform/src/api'
 
 const KEY = 'orden:palette-picks'
-
 const USED_KEY = 'orden:palette-used'
-
 const DAY = 24 * 60 * 60 * 1000
-
 export const HALF_LIFE = 7 * DAY
-
 const MOST = 400
-
 const SETTLING = 3000
 
 export interface Use {

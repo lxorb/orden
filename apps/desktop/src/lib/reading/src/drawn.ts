@@ -8,13 +8,9 @@ export interface Drawn extends FileDrawing {
 }
 
 const FIRST_PAGE = 1
-
 const AHEAD = '400px'
-
 const FALLBACK_WIDTH = 640
-
 const MOST_PIXELS = 4 * 1024 * 1024
-
 const DRAWN = 'embed-drawn'
 const SHEET = 'embed-sheet'
 

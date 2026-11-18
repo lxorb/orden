@@ -2,7 +2,6 @@ import { encodeTarget, slugify, wikilinkCannotName } from '@orden/markdown/links
 import { folderOf, nameOf, relativePath } from '../../platform/src/api'
 
 export type LinkFormat = 'wikilink' | 'shortest' | 'relative' | 'absolute'
-
 export const LINK_FORMATS: readonly LinkFormat[] = ['wikilink', 'shortest', 'relative', 'absolute']
 
 export const isLinkFormat = (value: unknown): value is LinkFormat =>
@@ -67,7 +66,6 @@ const bareFragment = (fragment: string): string =>
   fragment.startsWith('^') ? fragment.slice(1) : fragment
 
 const EXTENSION = /\.[^./]+$/
-
 const withExtension = (name: string): string => (EXTENSION.test(name) ? name : `${name}.md`)
 
 function markdownFragment(fragment: string): string {

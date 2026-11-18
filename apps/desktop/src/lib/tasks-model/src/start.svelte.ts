@@ -4,9 +4,7 @@ import { todoServer } from './server'
 import { TodoStore, type StoreWorld } from './store.svelte'
 
 const LOOK_AGAIN = 60_000
-
 const DEVICE = 'orden:todos-device'
-
 const OWNER = 'orden:todos-owner'
 
 const browserWorld: StoreWorld = {
@@ -45,9 +43,7 @@ function ownerOf(token: string | null, user: { id: string } | null): string | nu
 }
 
 let started = false
-
 let firstOpened: () => void = () => undefined
-
 const opened = new Promise<void>((done) => (firstOpened = done))
 
 export async function openTodos(): Promise<void> {

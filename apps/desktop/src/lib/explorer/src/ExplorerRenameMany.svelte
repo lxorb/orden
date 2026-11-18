@@ -16,7 +16,6 @@
   let replace = $state('')
   let numbered = $state(false)
   let first = $state<HTMLInputElement>()
-
   const names = $derived(paths.map((one) => nameOf(one)))
   const next = $derived(renamedAll(names, { find, replace, numbered }))
   const listed = $derived(

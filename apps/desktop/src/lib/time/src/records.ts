@@ -1,11 +1,8 @@
 import { readTint } from '../../ui-kit/src/api'
 
 const LONGEST_NAME = 80
-
 const LONGEST_NOTE = 1000
-
 const MOST_TAGS = 12
-
 const LONGEST_TAG = 40
 
 export interface Activity {
@@ -18,11 +15,8 @@ export interface Activity {
 }
 
 export type Lane = 'app' | 'site' | 'space' | 'tab'
-
 export const LANES: readonly Lane[] = ['app', 'site', 'space', 'tab']
-
 type Source = 'manual' | 'timer' | Lane
-
 const SOURCES: readonly Source[] = ['manual', 'timer', ...LANES]
 
 export interface Span {

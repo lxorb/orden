@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { md5 } from './md5'
 
 const hashOf = (text: string): string => md5(new TextEncoder().encode(text))

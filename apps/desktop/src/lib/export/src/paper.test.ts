@@ -7,7 +7,6 @@ import { toDocx } from './docx'
 import { toRtf } from './rtf'
 
 const NOTE = '# A page\n\nWords on it.\n'
-
 const setup = (over: Partial<PageSetup> = {}): PageSetup => ({ ...DEFAULT_PAGE_SETUP, ...over })
 
 async function docxPage(source: string, page: PageSetup) {

@@ -29,7 +29,6 @@ function folder(path: string, ...children: Entry[]): Entry {
 }
 
 const note = (path: string): Entry => ({ ...folder(path), is_dir: false })
-
 const BASE = `views:
   - type: kanban
     name: Board

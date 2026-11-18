@@ -1,7 +1,6 @@
 import { renderMarkdown } from '@orden/markdown'
 import { describe, expect, test } from 'vitest'
 import { linearly } from '../../../../../../scripts/growth'
-
 import type { ImportPlan } from './plan'
 import { detect } from './read'
 import { sourceOf, type Source } from './sources'

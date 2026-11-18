@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { readZenSession } from './zen'
 import { SIDEBAR } from './zen.fixture'
 

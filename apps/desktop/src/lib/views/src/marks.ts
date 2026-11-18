@@ -10,9 +10,6 @@ export const LAYOUT_MARKS: Record<Layout, string> = {
 }
 
 export const FILTER_MARK = 'M1.5 2.5h10l-4 4.6v4l-2-1.1V7.1z'
-
 export const GROUP_MARK = 'M1.5 2.2h10M1.5 4.6h6.5M1.5 8.3h10M1.5 10.7h6.5'
-
 export const ADD_MARK = 'M6.5 2v9M2 6.5h9'
-
 export const LOCK_MARK = 'M3.2 6.2h6.6v5H3.2zM4.6 6.2V4.4a1.9 1.9 0 0 1 3.8 0v1.8'

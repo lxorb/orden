@@ -3,7 +3,6 @@ import { type Peek, peekAt } from './commands'
 import { pictureBlob } from './preview'
 
 export const THUMB_MOST = 8 * 1024 * 1024
-
 const AT_ONCE = 4
 const SIDE = 224
 const KEPT = 400

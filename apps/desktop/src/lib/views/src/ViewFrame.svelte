@@ -20,10 +20,8 @@
 
   const live = $derived(kit.live)
   const layout = $derived(layoutOf(live.view?.type ?? 'table'))
-
   let adding = $state(false)
   let asked = $state(0)
-
   const ghost = ghostOwner()
   onDestroy(ghost.release)
 

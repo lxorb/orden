@@ -2,7 +2,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { scanNote } from '@orden/scan/note'
 
 const ROOT = '/space'
-
 const FIXTURE = `---
 title: Everything
 tags:

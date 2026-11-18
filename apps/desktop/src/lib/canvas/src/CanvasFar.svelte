@@ -57,7 +57,6 @@
   }
 
   const follows = (..._values: unknown[]) => undefined
-
   let frame = 0
   let painted = false
   $effect(() => {

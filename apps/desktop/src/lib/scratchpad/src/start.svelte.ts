@@ -10,9 +10,7 @@ import { PadSync } from './sync'
 const AFTER_WRITING = 1_500
 const WHILE_SHOWN = 30_000
 const PATIENCE = 60_000
-
 const sync = new PadSync(scratchpad, padDisk(), (name, run) => inTurn(() => name, run, PATIENCE))
-
 let going: Promise<unknown> | null = null
 let again = false
 let signedInAs: string | null = null

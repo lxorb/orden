@@ -4,15 +4,10 @@ import { hasNotionId, looksLikePapers } from './names'
 import type { Rows } from './table'
 
 const PEEK = 20
-
 const CLOSED_TAG = /(^|[\s(])#[^\s#`[\]\n](?:[^#`[\]\n]{0,58}[^\s#`[\]\n])?#(?![\w#])/m
-
 const VAULT = /^([^/]+\/)?\.obsidian\//
-
 const ENTRY = /(^|\/)entries\/[^/]+\.html?$/i
-
 const APPLE_HTML = /Cocoa HTML Writer|Apple-converted-space|-apple-system-font/i
-
 const PANDOC = /\.(docx|odt|rtf|epub|rst|textile|tex|opml|org|docbook|fb2)$/i
 
 export async function detect(sources: readonly Source[]): Promise<FormatId | null> {

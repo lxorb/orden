@@ -1,6 +1,5 @@
 <script lang="ts">
   import { dropOver, Facts, segmented, viewport } from '../../ui-kit/src/api'
-
   import { droppedFiles, pickFiles } from '../../ui-controls/src/api'
   import { choices } from '../../modes/src/api'
   import { dur, fade } from '../../platform/src/api'
@@ -30,7 +29,6 @@
   }
 
   let over = $state(false)
-
   const plan = $derived(importing.plan)
   const counts = $derived(importing.counts)
 

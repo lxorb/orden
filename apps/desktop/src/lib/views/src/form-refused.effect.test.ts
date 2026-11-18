@@ -17,7 +17,6 @@ vi.mock('./add', () => ({
 }))
 
 const FormLayout = (await import('./FormLayout.svelte')).default
-
 const base = readBase('views:\n  - type: form\n')
 
 function shown(adds: boolean) {

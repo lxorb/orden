@@ -31,7 +31,6 @@ const { forgetPaperText, keepAtMost, keepPaperText, paperFiles, paperText, paper
 
 const A_PAPER = 100
 const ALL_PAPERS = 400
-
 const PAPER = '/space/papers/Ink.pdf'
 
 function pages(count: number, each = 20): [number, string][] {

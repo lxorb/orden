@@ -144,7 +144,6 @@ function folderOf(one: Said): SidebarFolder | null {
 }
 
 const flag = (value: unknown): boolean => value === true || value === 'true' || value === 1
-
 const idOf = (one: Said): string | null => text(one.zenSyncId) ?? text(one.zenPinnedId)
 
 function tabsOf(tabs: Said[]): SidebarTab[] {

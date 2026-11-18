@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-
 import { bearTags, bearWords, readBear } from './bear'
 import { sourceOf, type Source } from './sources'
 

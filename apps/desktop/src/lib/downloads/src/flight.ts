@@ -16,9 +16,7 @@ import {
 } from './path'
 
 const SIZE = 28
-
 const AT_ONCE = 5
-
 const APART = 70
 
 function boxOf(node: Element): Box {
@@ -62,7 +60,6 @@ function areaOf(): Box {
 }
 
 const pagesInWindow = (): boolean => document.querySelector('.webbar') !== null
-
 const engineCuts = (): boolean => pagesInWindow() && webPages().cuts
 
 function pageOf(tab: string, cuts: boolean): Point | null {

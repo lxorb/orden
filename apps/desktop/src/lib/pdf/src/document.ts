@@ -56,7 +56,6 @@ export interface OpenPdf {
 }
 
 const LENT_FOR = 10_000
-
 const lent = new Map<string, { opened: OpenPdf; timer: ReturnType<typeof setTimeout> }>()
 
 function lend(path: string, opened: OpenPdf) {

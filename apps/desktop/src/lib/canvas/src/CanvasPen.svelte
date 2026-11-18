@@ -13,11 +13,9 @@
 
   const WIDE = 288
   const TALL = 62
-
   const line = $derived(samplePath(nib, WIDE, TALL))
   const ink = $derived(shownInk(nib.colour))
   const multiply = $derived(INK_STYLES[nib.tool].multiply)
-
   const shown = $derived(nib.colour === 'ink' ? null : nib.colour)
 
   function setTool(tool: InkTool) {

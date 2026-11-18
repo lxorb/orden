@@ -84,7 +84,6 @@ const PICTURES: Picture[] = [
 ]
 
 const doc = documentOf(CORPUS, CORPUS_NAME)
-
 let zip: JSZip
 let document_: string
 let styles: string

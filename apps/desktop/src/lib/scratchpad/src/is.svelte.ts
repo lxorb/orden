@@ -1,5 +1,4 @@
 import type { EditorView } from '@orden/editor'
-
 import { focusEditor, workspace } from '../../workspace/src/api'
 import { nameOf, isRecord, keepJson, stored } from '../../platform/src/api'
 

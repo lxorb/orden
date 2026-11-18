@@ -10,7 +10,6 @@ export interface Pose {
 }
 
 const KEYS = ['x', 'y', 'w', 'h', 'tab', 'alpha'] as const
-
 const TAB_RADIUS = 8
 
 export class Flight {

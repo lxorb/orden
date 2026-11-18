@@ -98,7 +98,6 @@
   import { rooms } from '../../collab/src/api'
   import { canWriteIn, trustsHtmlIn } from '../../sharing/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
-
   import { pages as pagesState } from './showing.svelte'
   import type { Tab } from '../../documents/src/api'
   import { workspace } from '../../workspace/src/api'
@@ -115,9 +114,7 @@
   })
 
   const A_TWITCH = 6
-
   const A_PAUSE = 220
-
   const INKING: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
 
   const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>([
@@ -130,44 +127,28 @@
   ])
 
   const GRACE = 160
-
   const follows = (_value: unknown) => undefined
-
   let host = $state<HTMLElement>()
   let width = $state(0)
   let height = $state(0)
   let palette = $state<Record<string, string>>({})
-
   const pages = $derived(store.pages)
   const canvas = $derived(store.canvas)
   const camera = $derived(store.camera)
   const showing = $derived(store.showing)
-
   const unit = $derived(1 / camera.scale)
-
   const writable = $derived(!store.readOnly)
   const trusted = $derived(trustsHtmlIn(tab.note))
-
   const cards = $derived(canvas.nodes.filter((node) => node.type !== 'page'))
-
   let rise = $state(0)
-
   let pull = $state.raw<Pulling>(noPull())
-
   let falling = 0
-
   const slot = $derived(store.slot)
-
   const reach = $derived(reachFor((store.last?.height ?? 0) * camera.scale))
-
   const view = $derived<Camera>(rise ? { ...camera, y: camera.y + rise / camera.scale } : camera)
-
   const sight = $derived(inSight(pages, view, turnOf(view) ? Math.hypot(width, height) : height))
-
   const near = $derived(pages.slice(sight.from, sight.to))
-
   const STILL = 250
-
   let still = $state(true)
 
   $effect(() => {
@@ -282,9 +263,7 @@
   }
 
   const MOST_HITS = 500
-
   const AROUND = 24
-
   let finding = $state(false)
   let askedFind = $state(0)
   let term = $state('')
@@ -451,7 +430,6 @@
   })
 
   const NO_MARKS: readonly Highlight[] = []
-
   const NO_HITS: readonly PaperHit[] = []
 
   const marksOn = $derived.by(() => {
@@ -497,7 +475,6 @@
   }
 
   const contacts = new Contacts()
-
   const right = new RightPan()
 
   $effect(() => holdFreeScroll())
@@ -542,7 +519,6 @@
   let gesture = $state.raw<Gesture | null>(null)
   let predicted = $state.raw<InkPoint[]>([])
   let pointing = $state.raw<Point | null>(null)
-
   let driver = $state.raw<{ id: number; touch: boolean; screen: Point; since: number } | null>(null)
 
   const live = $derived.by(() => {

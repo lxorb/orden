@@ -58,29 +58,20 @@
 
   const LINES = 30
   const GRID = 19
-
   let paper = $state.raw<ImageBitmap | null>(null)
   let lost = $state(false)
   let sheet = $state<HTMLCanvasElement>()
-
   const paperFile = $derived(page.file)
   const paperNumber = $derived(page.page)
   const sheetWide = $derived(page.width)
-
   const backed = $derived(!!paperFile && !!paperNumber)
-
   const wanted = $derived(pixelRatio.now / unit)
-
   const density = $derived(densityFor(wanted))
-
   const CLOSE_UP = 160
-
   const STRETCH = 1.1
-
   let close = $state<HTMLCanvasElement>()
   let paperWide = $state(0)
   let closeUp = $state.raw<Part | null>(null)
-
   let lastPart: Part | null = null
 
   const part = $derived.by((): Part | null => {
@@ -214,7 +205,6 @@
   onDestroy(() => (paper = null))
 
   const WORDS_AFTER = 200
-
   let words = $state<HTMLDivElement>()
   let read = $state.raw<Words | null>(null)
 

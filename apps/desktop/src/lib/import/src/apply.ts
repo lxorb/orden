@@ -1,11 +1,9 @@
 import { freePath } from '@orden/markdown/paths'
-
 import type { Entry } from '@orden/contracts'
 import { insideOnly, invoke, log, onDisk, joinPath, samePath, sha256 } from '../../platform/src/api'
 import { holderOf, pairOf, paperOf } from '@orden/markdown/pages'
 import { workspace } from '../../workspace/src/api'
 import { writeBytes, writeFile } from '../../file-writes/src/api'
-
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
 import {
@@ -93,7 +91,6 @@ function judged(files: readonly Planned[]): Planned[] {
 }
 
 const UNWRITABLE = 'That import could not be written.'
-
 const ESCAPING = 'That import would have landed outside the space, so nothing was written.'
 
 async function restampedOnDisk(

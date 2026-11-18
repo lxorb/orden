@@ -4,7 +4,6 @@ import { dayIn, isDateValue } from './values'
 
 export type Scale = 'day' | 'week' | 'month' | 'quarter'
 export const SCALES: readonly Scale[] = ['day', 'week', 'month', 'quarter']
-
 export const DAY_WIDTH: Record<Scale, number> = { day: 36, week: 14, month: 4.5, quarter: 1.6 }
 
 export interface Bar {

@@ -24,7 +24,6 @@
   let day = $state(midnightOf(first.day ?? Date.now()))
   let period = $state<'week' | 'month'>('week')
   let picked = $state<Picked | null>(null)
-
   const ticker = ticking()
   const now = $derived(ticker.now)
 

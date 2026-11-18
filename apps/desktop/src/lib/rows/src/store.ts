@@ -45,7 +45,6 @@ export interface Host {
 }
 
 const CHUNK = 250
-
 const encoder = new TextEncoder()
 const bytesOf = (text: string): number => encoder.encode(text).length
 

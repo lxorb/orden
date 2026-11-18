@@ -23,9 +23,7 @@ export function turnedBy(x: number, y: number, angle: number): { x: number; y: n
 
 export const CLOSEST = 4
 export const FURTHEST = 0.04
-
 export const PAPER_CLOSEST = 32
-
 export const SMALLEST_DOT = 1.1
 
 export const clampScale = (scale: number, closest = CLOSEST): number =>
@@ -38,7 +36,6 @@ export function wheelZoom(deltaY: number): number {
 }
 
 const LINE = 40
-
 const PAGE = 800
 
 export interface Turned {
@@ -68,7 +65,6 @@ interface Gesture extends UIEvent {
 }
 
 let gesturing = false
-
 export const pinching = (): boolean => gesturing
 
 export function heldGestures(
@@ -132,7 +128,6 @@ export class Twist {
 }
 
 export const TURN_SNAP = (20 * Math.PI) / 180
-
 const RIGHT = Math.PI / 2
 const STRETCH = RIGHT / 2 / (RIGHT / 2 - TURN_SNAP)
 

@@ -15,7 +15,6 @@ import type { MenuItem } from '../../ui-kit/src/api'
 import { PANDOC_FORMATS, EXPORT_FORMATS } from '../../export-formats/src/api'
 
 export const SETUP = 'page-setup'
-
 type Shelf = 'documents' | 'text' | 'web' | 'pictures' | 'other'
 
 const SHELVES: readonly { id: Shelf; label: string }[] = [

@@ -10,7 +10,6 @@ export interface Face {
 
 const BUDGET = 20_000_000
 export const LARGEST = BUDGET / 50
-
 export const sizeOf = (face: Face): number => (face.html?.length ?? 0) + (face.shot?.length ?? 0)
 
 export function isFace(value: unknown): value is Face {

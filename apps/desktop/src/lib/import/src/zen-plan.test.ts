@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { readShortcut } from '@orden/scan/shortcut'
 import { readZenSession, type ZenSession } from './zen'
 import { SIDEBAR } from './zen.fixture'

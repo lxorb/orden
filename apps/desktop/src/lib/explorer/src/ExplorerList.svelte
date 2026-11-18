@@ -26,10 +26,8 @@
   let width = $state(0)
   let rowHeight = $state(28)
   let spelling: Spelling = { typed: '', typedAt: 0 }
-
   const SPARE = 8
   const TILE = 112
-
   const rows = $derived(view.rows)
   const grid = $derived(explorerPrefs.view === 'grid')
   const columns = $derived(grid ? Math.max(1, Math.floor(Math.max(0, width - 16) / TILE)) : 1)

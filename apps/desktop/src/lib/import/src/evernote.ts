@@ -2,7 +2,6 @@ import { fromBase64, MIME_TYPES } from '../../platform/src/api'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
 import { taskLine } from '@orden/markdown/task-edits'
 import { NO_PRIORITY, plainTaskWords, type Remind } from '@orden/markdown/task-line'
-
 import { dayOf, noteText, wallClock, type Meta } from './meta'
 import { md5 } from './md5'
 import { Names, safeName, titleFrom } from './names'
@@ -177,7 +176,6 @@ interface EvernoteTask {
 }
 
 const TASK_GROUP = /<div\b([^>]*--en-task-group:\s*true[^>]*?)\s*(?:\/>|>\s*<\/div>)/gi
-
 const PLACE = '\uE001'
 
 function tasksOf(note: string): Map<string, string[]> {
@@ -286,9 +284,7 @@ function withTasks(
 }
 
 const VOID = /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i
-
 const CHECKED = /checked\s*=\s*["']?true/i
-
 const box = (checked: boolean): string => `<input type="checkbox"${checked ? ' checked' : ''}>`
 
 function withoutEvernote(

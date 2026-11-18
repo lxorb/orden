@@ -40,7 +40,6 @@ export const withPictures = (
   )
 
 const MEASURE = 'orden:reading'
-
 export const tagAnchor: TagHref = (tag) => `#${tag}`
 
 export async function readingHtml(

@@ -20,7 +20,6 @@ vi.mock('./add', () => ({
 }))
 
 const BoardNew = (await import('./BoardNew.svelte')).default
-
 let target: HTMLElement
 let close: (() => void) | undefined
 

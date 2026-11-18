@@ -15,7 +15,6 @@ interface Length {
 }
 
 const DEFAULT_MARGIN: Length = { amount: '20', unit: 'mm' }
-
 const isUnit = (value: string): value is Unit => UNITS.some((unit) => unit === value)
 
 function parseLength(value: string): Length | null {

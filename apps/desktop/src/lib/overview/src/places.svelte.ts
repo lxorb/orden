@@ -4,13 +4,9 @@ import type { Box } from './layout'
 import { type Keyed, lastingKeys } from './tab-keys'
 
 const KEY = 'orden:overview-places'
-
 const WINDOWS = 'orden:overview-windows-2'
-
 const WINDOWS_BEFORE = 'orden:overview-windows'
-
 const CAMERA = 'orden:overview-camera'
-
 const APART = 360
 
 export function readPlaces(value: unknown): Record<string, Box> {

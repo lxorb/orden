@@ -12,9 +12,7 @@ const DISK: Record<string, string[]> = {
 }
 
 const opened: string[] = []
-
 const peeked: string[] = []
-
 const listedPaths: string[] = []
 
 vi.mock('./commands', () => ({

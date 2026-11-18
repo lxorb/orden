@@ -4,9 +4,7 @@ import { log, movedTo, relativeTo, samePath, within } from '../../platform/src/a
 export { inFlight, landing, onLanded } from './landing'
 
 export type Kind = SyncFileKind
-
 export type FileOp = SyncFileOp
-
 export type Follower = (op: FileOp) => unknown
 
 export type Doer = (op: FileOp, run: () => Promise<unknown>) => Promise<void>

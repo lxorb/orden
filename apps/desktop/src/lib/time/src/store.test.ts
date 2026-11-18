@@ -7,7 +7,6 @@ import type { Span } from './records'
 import { TimeStore } from './store.svelte'
 
 const M = 60_000
-
 let owners = 0
 const owner = () => `owner-${(owners += 1)}`
 

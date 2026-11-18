@@ -12,7 +12,6 @@ import { keepJson, stored, invoke } from '../../platform/src/api'
 import { shapesOnly } from './svg-file'
 
 const MOST = 100
-
 const BIGGEST = 512 * 1024
 
 export interface DiagramFence {

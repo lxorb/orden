@@ -42,7 +42,6 @@ function tabFor(kind: TabKind, path: string | null, text = ''): InstanceType<typ
 }
 
 const drawn = (tab: InstanceType<typeof Tab>): string => render(TabMark, { props: { tab } }).body
-
 const SITE = 'https://svelte.dev/docs'
 const FAVICON = 'https://svelte.dev/favicon.png'
 const FOUND = 'https://svelte.dev/found.png'

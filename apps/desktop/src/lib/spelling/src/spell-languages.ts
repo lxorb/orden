@@ -25,7 +25,6 @@ export const DICTIONARIES: readonly Dictionary[] = [
 ]
 
 const KNOWN = new Set(DICTIONARIES.map((one) => one.id))
-
 export const choosable = isDesktop && platform() === 'linux'
 
 export function dictionaryFor(tag: string, preferred: readonly string[] = []): string {

@@ -1,6 +1,5 @@
 import { plainWords } from '@orden/markdown/escapes'
 import { htmlToMarkdown } from '@orden/markdown/from-html'
-
 import { folderPlan, isJunk, isNoteFile } from './folder'
 import type { Meta } from './meta'
 import { keptName, Names, safeName, safeParts, withoutNotionId } from './names'
@@ -8,9 +7,7 @@ import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
 
 const HTML = /\.(html?|xhtml)$/i
-
 const TEXT = /\.txt$/i
-
 const PLAIN_TEXT: ReadonlySet<FormatId> = new Set(['apple-notes'])
 
 const MARKDOWN_SAYS = [

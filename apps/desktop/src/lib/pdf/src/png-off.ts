@@ -8,7 +8,6 @@ interface Said {
 }
 
 type Png = string | Uint8Array | null
-
 type Draw = (drawing: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => void
 
 interface Waiting {

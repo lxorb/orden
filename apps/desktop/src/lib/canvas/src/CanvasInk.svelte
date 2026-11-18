@@ -26,18 +26,13 @@
   } = $props()
 
   const MARGIN = 240
-
   const NEAREST = 0.55
   const FURTHEST = 1.8
-
   let below = $state<HTMLCanvasElement>()
   let above = $state<HTMLCanvasElement>()
-
   const ratio = $derived(Math.min(2, pixelRatio.now))
-
   const wide = $derived(Math.max(1, width + 2 * MARGIN))
   const tall = $derived(Math.max(1, height + 2 * MARGIN))
-
   let painted = $state.raw<Camera | null>(null)
 
   const shift = $derived.by(() => {
@@ -52,9 +47,7 @@
   })
 
   let mode = $state<InkMode>(wantedInkMode())
-
   const tiles = new InkTiles()
-
   const contexts = new WeakMap<HTMLCanvasElement, CanvasRenderingContext2D | null>()
 
   function contextOf(element: HTMLCanvasElement, wanted: InkMode): CanvasRenderingContext2D | null {
@@ -126,9 +119,7 @@
   }
 
   const follows = (_value: unknown) => undefined
-
   let everDrawn = false
-
   let edited = 0
 
   function redraw() {

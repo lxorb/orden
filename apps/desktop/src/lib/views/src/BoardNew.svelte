@@ -28,7 +28,6 @@
   let words = $state('')
   let field = $state<HTMLInputElement>()
   let making = false
-
   let seen = untrack(() => asked)
   $effect(() => {
     if (asked <= seen) return

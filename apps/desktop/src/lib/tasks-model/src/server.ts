@@ -3,7 +3,6 @@ import { inboxPageOf } from '@orden/sync-core'
 import type { TodoServer } from './records'
 
 const ROUTE = '/v2/inbox'
-
 const MISSING = new Set([404, 405])
 
 async function answered(

@@ -7,13 +7,9 @@ import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
 
 export type Rows = 'table' | 'notes'
-
 const TABLE = /\.(csv|tsv)$/i
-
 const DATES = /^(created|created time|created at|date|last edited time|last modified|updated)$/i
-
 const TITLES = /^(name|title|task|subject)$/i
-
 const LABELS = /^(tags?|labels?)$/i
 
 export async function readTable(

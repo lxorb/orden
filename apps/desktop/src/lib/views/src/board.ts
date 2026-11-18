@@ -12,7 +12,6 @@ import { bare, isNoteProperty } from './columns'
 import { dayIn, isDateValue } from './values'
 
 const DEFAULT_SIZE: CardSize = 'medium'
-
 export const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
 
 export const sizeOf = (size: CardSize | undefined, notes: boolean): CardSize =>
@@ -64,7 +63,6 @@ export function checklists(rows: readonly Row[]): Map<string, { done: number; to
 }
 
 export const noteKey = (row: Pick<Row, 'space' | 'path'>): string => `${row.space}\n${row.path}`
-
 export const cardKey = (row: Row): string => `${row.space}:${rowId(row)}`
 
 export function isDoneGroup(base: Base | null, property: string | undefined, key: Value): boolean {

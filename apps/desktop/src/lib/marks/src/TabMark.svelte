@@ -14,11 +14,8 @@
   const { tab }: { tab: Tab } = $props()
 
   const traits = $derived(TAB_KINDS[tab.kind])
-
   const mark = $derived(traits.mark)
-
   const page = $derived<WebPageSeen | null>(mark === 'web' ? webPages().of(tab.id) : null)
-
   const file = $derived(page && tab.path !== null ? readWebFile(tab.path, tab.doc) : null)
 
   const found = $derived(
@@ -28,7 +25,6 @@
   )
 
   const worn = $derived(agentMarks.on[tab.id] ?? null)
-
   const opened = $derived(tab.id in agentMarks.opened)
   const front = $derived(workspace.showing(tab.paneId)?.id === tab.id)
   $effect(() => {

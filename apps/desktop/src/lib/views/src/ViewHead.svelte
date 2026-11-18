@@ -113,7 +113,6 @@
     )
   }
   let renaming = $state(false)
-
   const toggle = (which: NonNullable<typeof open>) => (open = open === which ? null : which)
 
   function pick(next: Layout) {

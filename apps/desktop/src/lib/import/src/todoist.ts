@@ -251,9 +251,7 @@ export function planOf(account: Account): ImportPlan & { inbox?: string } {
 }
 
 const WORDS = 'Some repeating dates stay as words under their tasks'
-
 const ELSEWHERE = '\0elsewhere'
-
 const HEADER = ['TYPE', 'CONTENT', 'DESCRIPTION', 'PRIORITY', 'INDENT']
 
 export function isTodoistCsv(text: string): boolean {
@@ -294,7 +292,6 @@ function linkTo(file: Json): string {
 }
 
 const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
-
 const personOf = (said: string) => said.replace(/\s*\(\d+\)\s*$/, '').trim()
 
 export function csvProject(name: string, text: string, at: number): Account {

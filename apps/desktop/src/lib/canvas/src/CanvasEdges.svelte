@@ -38,7 +38,6 @@
   const WEIGHT = 2
   const ARROW = 9
   const LABEL = 12
-
   const SPAN = 80000
   const HALF = SPAN / 2
 

@@ -19,9 +19,7 @@ import {
 } from '../src/api'
 
 const TODAY = '2026-11-14'
-
 const NOON = Date.parse(`${TODAY}T12:00:00`)
-
 let clock = NOON
 
 function world(server: MemoryTodoServer | null, disks = new Map<string, MemoryTodoDisk>()) {

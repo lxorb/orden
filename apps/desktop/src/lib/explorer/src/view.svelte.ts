@@ -313,7 +313,6 @@ export class ExplorerView {
 }
 
 const SAID_FOR = 6000
-
 export const LIST_WAIT = 8000
 
 class Unanswered extends Error {}
@@ -335,11 +334,8 @@ function why(error: unknown, folder: string): string {
 }
 
 const MOST_REST = 2000
-
 const rest = (ms: number): Promise<void> => new Promise((done) => setTimeout(done, ms))
-
 const fresh = (folder: string): Spec => ({ folder, back: [], ahead: [] })
-
 const views = new WeakMap<Tab, ExplorerView>()
 
 export function viewOf(tab: Tab): ExplorerView {

@@ -30,7 +30,6 @@
 
   let facts = $state<Facts | null>(null)
   const SETTLED_MS = 150
-
   let media = $state<{ shown: 'picture' | 'sound' | 'film'; url: string } | null>(null)
   let text = $state<{ words: string; cut: boolean } | null>(null)
   let count = $state<Count | null>(null)

@@ -16,21 +16,13 @@ const paperAway = () =>
     : import('./paper-away')
 
 const SCALE = 2
-
 const ROUGH = 0.5
-
 const SHARP = 4
-
 const DENSITIES = [ROUGH, SCALE, SHARP]
-
 const MOST_PIXELS = 16 * 1024 * 1024
-
 const CLOSE_PIXELS = 64 * 1024 * 1024
-
 const KEPT = 24
-
 const SIDE = 16384
-
 const KEPT_PIXELS = 64 * 1024 * 1024
 
 export function paperPlaces(file: string, note: string | null, root: string | null): string[] {
@@ -71,9 +63,7 @@ interface Job {
 }
 
 const held = new Map<string, Held>()
-
 const queue: Job[] = []
-
 let pumping = false
 
 export interface PaperAt {

@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { arcSidebar } from './arc'
 import { SIDEBAR } from './arc.fixture'
 import { sidebarImport } from './sidebar-plan'

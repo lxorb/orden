@@ -186,7 +186,6 @@ function piecesOf(html: string): Piece[] {
 }
 
 const ATTRIBUTE = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>/]+)))?/g
-
 const ALIGNMENTS = new Set(['left', 'center', 'right', 'justify'])
 
 function attributesOf(source: string): string {

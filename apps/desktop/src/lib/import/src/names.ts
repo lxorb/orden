@@ -3,7 +3,6 @@ import { freePath, withoutForbidden } from '@orden/markdown/paths'
 import { isReserved } from '../../platform/src/api'
 
 const LONGEST = 96
-
 const NOTION_ID = /[ -][0-9a-f]{32}$/i
 
 export function looksLikePapers(paths: readonly string[]): boolean {

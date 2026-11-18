@@ -28,7 +28,6 @@
   } = $props()
 
   const inSpace = $derived(spaces.find((one) => isTodoSpace(one, todo.space)) ?? null)
-
   let title = $state('')
   let description = $state('')
   let newLabel = $state('')

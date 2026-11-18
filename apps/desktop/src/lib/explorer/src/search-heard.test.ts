@@ -1,7 +1,6 @@
 import { expect, test, vi } from 'vitest'
 
 type Heard = (event: { payload: { job: string; found: unknown[] } }) => void
-
 const ears = vi.hoisted(() => ({ heard: null as Heard | null }))
 
 vi.mock('../../platform/src/tauri', () => ({ isDesktop: true }))

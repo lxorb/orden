@@ -2,7 +2,6 @@ import type { Camera } from '../../camera/src/api'
 import { isRecord, keepJson, stored } from '../../platform/src/api'
 
 const STORAGE_KEY = 'orden:canvas-views'
-
 const KEEPS = 300
 
 export interface KeptView extends Camera {

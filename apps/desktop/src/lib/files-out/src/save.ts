@@ -26,7 +26,6 @@ export type Payload =
     }
 
 const FOLDER_KEY = 'orden:export-folder'
-
 const EXPORTS = 'Exports'
 
 function remember(target: string) {

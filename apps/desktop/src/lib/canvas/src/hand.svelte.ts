@@ -2,7 +2,6 @@ import { keep, storedText } from '../../platform/src/api'
 
 const SEEN = 'orden:pen-seen'
 const DRAWS = 'orden:finger-draws'
-
 const saved = (key: string): boolean => storedText(key) === 'yes'
 
 function remember(key: string, on: boolean) {

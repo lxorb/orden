@@ -26,7 +26,6 @@
   const rows = $derived(rowsOf(view?.filters, holds))
   const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
-
   let typed = $state('')
   const EXAMPLE = 'today & #work | overdue'
 

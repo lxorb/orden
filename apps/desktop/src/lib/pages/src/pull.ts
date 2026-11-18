@@ -1,10 +1,7 @@
 export const LEAST_REACH = 96
 export const MOST_REACH = 160
-
 const GIVE = 3
-
 export const FALL = 250
-
 export const SETTLE = 300
 
 export function reachFor(pageOnScreen: number): number {

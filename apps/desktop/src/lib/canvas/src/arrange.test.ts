@@ -14,7 +14,6 @@ const card = (id: string, x: number, y: number, width = 100, height = 100): Canv
 })
 
 const plane = (nodes: CanvasNode[]): Canvas => ({ nodes, edges: [], ink: [], at: {}, gone: {} })
-
 const at = (canvas: Canvas) => canvas.nodes.map((node) => [node.id, node.x, node.y])
 const order = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
 

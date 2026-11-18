@@ -29,7 +29,6 @@ const ChartLayout = (await import('./ChartLayout.svelte')).default
 const FormLayout = (await import('./FormLayout.svelte')).default
 const { toneColour } = await import('./chips')
 const Cell = (await import('./Cell.svelte')).default
-
 const TODAY = '2026-10-04'
 
 function kitOf(base: Base, rows: readonly Row[], spec = {}) {

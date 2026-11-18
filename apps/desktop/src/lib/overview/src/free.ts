@@ -2,7 +2,6 @@ import type { Box, Slot } from './layout'
 
 const APART_X = 28
 const APART_Y = 60
-
 const ROUNDS = 200
 
 function clearOf(a: Box, b: Box, under = APART_Y): { x: number; y: number } | null {

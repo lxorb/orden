@@ -7,7 +7,6 @@ import { parseQuery } from '@orden/scan/search/query'
 import { services } from './services'
 
 const MOST = 40
-
 const PER_NOTE = 5
 
 function queryIn(code: string): string {

@@ -10,7 +10,6 @@ const WAYS: Record<string, Way> = {
 }
 
 export const wayOf = (key: string): Way | null => WAYS[key] ?? null
-
 const middle = (box: Box) => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 })
 
 export function walk(boxes: readonly Box[], from: number, way: Way): number {

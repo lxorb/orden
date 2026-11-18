@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { readJournal } from './journal'
 import { detect } from './read'
 import { sourceOf, type Source } from './sources'

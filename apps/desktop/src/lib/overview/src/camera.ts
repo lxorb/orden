@@ -35,7 +35,6 @@ export function lookingAt(what: Box, room: Box): Camera {
 
 const READABLE = 240
 const OPENS_FARTHEST = 0.2
-
 type Span = readonly [start: number, size: number]
 
 function along(here: Span, whole: Span, room: Span, zoom: number): number {

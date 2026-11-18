@@ -7,7 +7,6 @@ import { dueOf } from './goals'
 import { time } from './time.svelte'
 
 const TOLD = 'orden:time-told'
-
 const KEPT = 100
 
 function toldNow(): Set<string> {

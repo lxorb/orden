@@ -270,7 +270,6 @@ const view = (x: number, y: number, scale = 1) => ({
 })
 
 const whole = view(6000, 6000, 0.05)
-
 const palette = {}
 
 function settle(paint: () => boolean, most = 400): number[] {

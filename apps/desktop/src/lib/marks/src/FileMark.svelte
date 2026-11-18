@@ -33,9 +33,7 @@
   const source = $derived(sourceMark(mark, path, url))
   const shown = $derived<FileMark>(source.mark)
   const worn = $derived(chosen ?? readIcon(source.icon))
-
   const favicon = $derived(mark === 'web' ? faviconFor(path, url) : null)
-
   let broken = $state(false)
 
   $effect(() => {

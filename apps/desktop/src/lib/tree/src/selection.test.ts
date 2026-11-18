@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { outermost, Selection } from './selection.svelte'
 
 const ROWS = ['/a.md', '/f', '/f/b.md', '/f/c.md', '/d.md']
-
 let picked: Selection
 
 beforeEach(() => {

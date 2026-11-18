@@ -1,5 +1,4 @@
 import { htmlToMarkdown } from '@orden/markdown/from-html'
-
 import { folderPlan, isJunk } from './folder'
 import { dayOf, freeKey, type Meta, noteText, propertyName, type Property } from './meta'
 import { hasNotionId, Names, pageLink, safeName, safeParts, withoutNotionId } from './names'
@@ -19,9 +18,7 @@ import { elements, closingOf, tagsIn, unescapeXml } from './xml'
 const HTML = /\.html?$/i
 const MARKDOWN = /\.(md|markdown)$/i
 const CSV = /\.csv$/i
-
 const PROPERTY = /^([A-Z][^:\n.]{0,39}): *(.*)$/
-
 const MADE = /^(created|created time|created at|date)$/i
 const CHANGED = /^(last edited time|last edited|last modified|updated)$/i
 const LABELS = /^(tags?|multi-select|select|labels?)$/i

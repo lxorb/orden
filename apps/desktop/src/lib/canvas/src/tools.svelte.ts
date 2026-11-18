@@ -4,7 +4,6 @@ import { DEFAULT_INK } from '../../plane/src/api'
 import { type Tool } from './pointer'
 
 export const HOLD = 250
-
 const SPRUNG: ReadonlySet<Tool> = new Set<Tool>(['lasso'])
 
 interface Held {

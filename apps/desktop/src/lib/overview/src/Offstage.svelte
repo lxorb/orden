@@ -31,7 +31,6 @@
   const SETTLED = 250
   const SOONEST = 800
   const LONGEST = 2500
-
   const tried = new SvelteSet<string>()
   const next = $derived(
     tabs.find(

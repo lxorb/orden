@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import { sourceOf, type Source } from './sources'
 import { type LinkFormat, linkWriting, setLinkWriting } from '../../link-format/src/api'
 

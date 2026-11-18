@@ -40,9 +40,7 @@ interface Last {
 }
 
 const LAST = 'last'
-
 const MOST_ROUNDS = 4
-
 const NOTHING = Y.encodeStateVector(new Y.Doc())
 
 function keptOf(value: unknown): Kept | null {

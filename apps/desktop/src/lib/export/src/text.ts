@@ -1,7 +1,6 @@
 import type { Block, Doc, Item, Span } from './document'
 
 const STEP = '  '
-
 const CHECKS = { true: '[x] ', false: '[ ] ' }
 
 function spanText(span: Span): string {
@@ -24,7 +23,6 @@ function textOf(spans: readonly Span[]): string {
 }
 
 const GRAPHEMES = new Intl.Segmenter()
-
 const shownWidth = (text: string): number => [...GRAPHEMES.segment(text)].length
 
 function widths(rows: readonly string[][]): number[] {

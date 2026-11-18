@@ -18,13 +18,11 @@
     live.columns.filter((one) => isNoteProperty(one) && bare(one) !== base?.orden.id?.property),
   )
   const required = $derived(new Set(view?.orden.required ?? []))
-
   let title = $state('')
   let values = $state<Record<string, string | boolean>>({})
   let missing = $state<string[]>([])
   let sent = $state<{ path: string; name: string } | null>(null)
   let sending = $state(false)
-
   const kindOf = (field: string) => (base ? editorOf(base, field, live.rows) : 'text')
 
   function valueOf(field: string, said: string | boolean): Value | null {

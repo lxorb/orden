@@ -31,7 +31,6 @@ export interface AppleNotes {
 }
 
 const NO_ACCESS = 'no access'
-
 const NO_DATABASE = 'no database'
 
 export function notesFault(error: unknown): { noAccess: boolean; said: string } {

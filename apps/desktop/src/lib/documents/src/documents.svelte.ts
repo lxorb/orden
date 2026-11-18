@@ -7,7 +7,6 @@ import { writeEdited } from './in-turn'
 import { type TabKind, TAB_KINDS } from '../../tab-kinds/src/api'
 
 export const UNTITLED = 'Untitled'
-
 export const opening = { source: false }
 
 export type { TabKind }

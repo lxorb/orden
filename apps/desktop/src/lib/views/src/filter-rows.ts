@@ -31,11 +31,8 @@ export interface FilterRows {
 
 export type Holds = 'truth' | 'number' | 'link' | 'other'
 export type HoldsOf = (property: string) => Holds | undefined
-
 const askedByNull = (holds: Holds | undefined) => holds === 'truth' || holds === 'link'
-
 export const takesValue = (op: Operator): boolean => op !== 'empty' && op !== 'filled'
-
 const CLOCK = /^(today|now)\(\)(\s*[+-]\s*"[^"]*")?$/
 
 function literal(value: string, text: boolean): string {

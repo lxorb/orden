@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
-
 import { renderMarkdown } from '@orden/markdown'
 import { readTask } from '@orden/markdown/task-line'
-
 import { readKeep } from './keep'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'

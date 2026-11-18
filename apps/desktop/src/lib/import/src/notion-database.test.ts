@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { kindOf, notionDate, pagesIn, valueAs } from './notion-database'
 
 describe('a Notion date', () => {

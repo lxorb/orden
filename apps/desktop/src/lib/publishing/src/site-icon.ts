@@ -1,7 +1,6 @@
 const SIZE = 32
 const RADIUS = 7
 const INSET = 5
-
 const GROUND = '#17161c'
 const INK = '#f4f3f8'
 

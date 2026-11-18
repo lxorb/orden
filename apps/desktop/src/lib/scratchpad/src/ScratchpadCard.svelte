@@ -26,7 +26,6 @@
   const NARROWEST = 240
   const WIDEST = 560
   const fit = (width: number) => Math.round(Math.min(WIDEST, Math.max(NARROWEST, width)))
-
   let host: HTMLDivElement
   let view = $state<EditorView | null>(null)
   let path: string | null = null

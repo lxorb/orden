@@ -113,9 +113,7 @@ function quotedInMatter(text: string, edits: readonly Edit[]): Edit[] {
 }
 
 const VALUE_OPENS = /^(?:[ \t]*-[ \t]+|[ \t]*[^\s#-][^:]*?[ \t]*:[ \t]+)/
-
 const INDICATOR = /^(?:[-?:](?:\s|$)|[,[\]{}#&*!|>'"%@`])/
-
 const OPENS_VALUE = /^([ \t]*)(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)(\S.*)$/
 
 function plainLines(text: string, from: number, to: number): Set<number> {

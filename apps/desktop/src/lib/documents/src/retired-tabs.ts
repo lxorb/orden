@@ -1,7 +1,6 @@
 import { isRecord, isString } from '../../platform/src/api'
 
 const RETIRED_CHAT = 'connected-chat\n'
-
 export const isRetiredChat = (chat: string): boolean => chat.startsWith(RETIRED_CHAT)
 
 export const isRetiredTab = (value: unknown): boolean =>

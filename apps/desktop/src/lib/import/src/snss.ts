@@ -28,11 +28,8 @@ const TAB_NAVIGATION_PATH_PRUNED = 24
 const SET_TAB_GROUP = 25
 const SET_TAB_GROUP_METADATA = 26
 const SET_TAB_GROUP_METADATA_2 = 27
-
 const SIGNATURE = [0x53, 0x4e, 0x53, 0x53]
-
 const CLEAR = new Set([1, 3])
-
 const NORMAL = 0
 
 interface Tab {

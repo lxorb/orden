@@ -18,7 +18,6 @@ import { sync } from '../../sync-store/src/api'
 import type { Space } from '../../workspace/src/api'
 
 type Address = 'subdomain' | 'domain'
-
 type Blog = RemoteSpace['blog']
 
 interface Form {

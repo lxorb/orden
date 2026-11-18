@@ -27,7 +27,6 @@ const { workspace } = await import('../../workspace/src/api')
 const { search } = await import('./panel.svelte')
 
 const hit = (path: string): Hit => ({ path, name: path, line: 1, text: 'tulip', ranges: [] })
-
 const later = (ms: number) => new Promise((done) => setTimeout(done, ms))
 
 const until = async (held: () => boolean) => {

@@ -38,7 +38,6 @@ const { lineOfTask: taskLine } = await import('@orden/bases')
 const { FileActions } = await import('../../file-undo/src/api')
 const { NoteDoc } = await import('../../documents/src/api')
 type HoldsNotes = import('../../workspace/src/note-text').HoldsNotes
-
 const PATH = '/space/Plan.md'
 
 const rowsFor = (text: string): Row[] =>

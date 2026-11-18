@@ -27,7 +27,6 @@ export const isSortMode = (value: unknown): value is SortMode =>
   SORT_MODES.some((one) => one === value)
 
 const READING = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
-
 const EXACTLY = new Intl.Collator(undefined, { numeric: true })
 
 export function byName(one: string, other: string): number {

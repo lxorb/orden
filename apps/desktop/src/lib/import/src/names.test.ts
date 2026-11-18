@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-
 import { hasNotionId, keptName, Names, safeName, titleFrom, withoutNotionId } from './names'
 
 describe('a title as a file name', () => {

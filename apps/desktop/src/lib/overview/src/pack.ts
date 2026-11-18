@@ -12,7 +12,6 @@ export interface Shift {
 }
 
 export const meets = (a: Outline, b: Outline, gap: number): boolean => gapOf(a, b) < gap - 0.01
-
 const AROUND = 2
 
 export function packed(

@@ -104,7 +104,6 @@ async function rewriteTask(
 }
 
 export const deleteTask = (row: Row): Promise<boolean> => rewriteTask(row, withoutTask, 'deleted')
-
 export const duplicateTask = (row: Row): Promise<boolean> => rewriteTask(row, duplicatedTask)
 
 export async function linkToTask(row: Row): Promise<string | null> {

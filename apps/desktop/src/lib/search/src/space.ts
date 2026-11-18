@@ -14,7 +14,6 @@ export interface Found {
 }
 
 const PAPERS = 20
-
 let asked = 0
 
 export async function searchSpace(
