@@ -103,6 +103,21 @@ describe('a plane in a space somebody shared to read', () => {
     expect(note.dirty).toBe(false)
   })
 
+  test('nor an undo or redo of what was done before it became read only', () => {
+    const { store, note } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.undo()
+    store.edit({ ...store.canvas, nodes: [card('b')] })
+    store.readOnly = true
+    const before = note.text
+
+    store.undo()
+    expect(ids(store.canvas)).toEqual(['b'])
+    store.redo()
+    expect(ids(store.canvas)).toEqual(['b'])
+    expect(note.text).toBe(before)
+  })
+
   test('while one nobody shared takes every edit', () => {
     const { store, note } = opened()
 
@@ -137,6 +152,20 @@ describe('a gesture that edits as it goes', () => {
     expect(ids(store.canvas)).toEqual(['a', 'b', 'c'])
     expect(store.canRedo).toBe(false)
     expect(store.canUndo).toBe(true)
+  })
+
+  test('an undo ends the drag, so what the same drag does next is a step of its own', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] }, 'width')
+    store.undo()
+    expect(ids(store.canvas)).toEqual([])
+
+    store.edit({ ...store.canvas, nodes: [card('b')] }, 'width')
+    expect(store.canRedo).toBe(false)
+    store.undo()
+    expect(ids(store.canvas)).toEqual([])
+    store.redo()
+    expect(ids(store.canvas)).toEqual(['b'])
   })
 
   test('and only that drag, never one before it or what came after it', () => {
