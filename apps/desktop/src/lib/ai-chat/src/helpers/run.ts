@@ -179,12 +179,15 @@ async function offered(deadline: AbortSignal | undefined): Promise<Offered[]> {
   const listed = await Promise.all(
     usableOnes.map(async (provider) => {
       let timer: ReturnType<typeof setTimeout> | undefined
+      let gaveUp: () => void = () => undefined
       const late = new Promise<[]>((done) => {
-        timer = setTimeout(() => done([]), LISTING)
-        deadline?.addEventListener('abort', () => done([]), { once: true })
+        gaveUp = () => done([])
+        timer = setTimeout(gaveUp, LISTING)
+        deadline?.addEventListener('abort', gaveUp, { once: true })
       })
       const models = await Promise.race([chat.loadModels(provider), late])
       clearTimeout(timer)
+      deadline?.removeEventListener('abort', gaveUp)
       return { provider, models }
     }),
   )

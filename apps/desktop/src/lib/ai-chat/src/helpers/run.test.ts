@@ -87,3 +87,31 @@ describe('a helper asked for through the endpoint', () => {
     expect(helpers.all).toEqual([])
   })
 })
+
+describe('a long-lived deadline', () => {
+  test('is left holding no listener once the models are listed and the helper said', async () => {
+    const due = new AbortController()
+    const signal = due.signal
+    let held = 0
+    const add = signal.addEventListener.bind(signal)
+    const remove = signal.removeEventListener.bind(signal)
+    signal.addEventListener = (...args: Parameters<typeof add>) => {
+      held += 1
+      add(...args)
+    }
+    signal.removeEventListener = (...args: Parameters<typeof remove>) => {
+      held -= 1
+      remove(...args)
+    }
+
+    const answering = runAgent(
+      { prompt: 'Find the herons.' },
+      { thread: null, mode: 'auto' },
+      signal,
+    )
+    await vi.advanceTimersByTimeAsync(2 * ENDPOINT_PATIENCE)
+    await answering
+
+    expect(held).toBe(0)
+  })
+})

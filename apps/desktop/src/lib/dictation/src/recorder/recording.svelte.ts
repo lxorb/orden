@@ -57,6 +57,7 @@ class Recorder {
         full: () =>
           void this.stop().then(() => this.failed('That is as much as one recording may hold.')),
       })
+      this.at = performance.now()
 
       this.ticking = setInterval(() => {
         this.elapsed = (performance.now() - this.at) / 1000
