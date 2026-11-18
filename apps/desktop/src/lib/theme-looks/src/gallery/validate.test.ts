@@ -150,18 +150,25 @@ describe('what a theme may not set', () => {
     expect(reviewed.refused[1]).toContain('@media')
   })
 
-  test('refuses a nested rule rather than reading past it', () => {
-    const reviewed = review(`[data-theme='dark'] { &:hover { --bg: red; } }`)
-    expect(reviewed.css).toBe('')
-  })
-
-  test('a name spelled with a CSS escape is not the name it spells', () => {
-    const reviewed = review(String.raw`#write p { p\6fsition: fixed; }`)
-    expect(reviewed.css).toBe('')
-    expect(reviewed.refused[0]).toContain('is not a property a theme may set')
-    const token = review(String.raw`[data-theme='dark'] { --b\67 : red; }`)
-    expect(token.css).toBe('')
-  })
+  test.each([
+    [`[data-theme='dark'] { &:hover { --bg: red; } }`, undefined],
+    [tokens('--bg: red);'), ['--bg is not a value a theme may set']],
+    [`[data-theme='dark'] { --a: "{"; --bg: red; }`, undefined],
+    [tokens(`--bg: #000;`.repeat(9000)), ['the file is larger than 48 kB']],
+    [tokens('--bg\n--text: #eee;'), ['--bg\n--text is not a property a theme may set']],
+    [
+      String.raw`#write p { p\6fsition: fixed; }`,
+      [expect.stringContaining('is not a property a theme may set')],
+    ],
+    [String.raw`[data-theme='dark'] { --b\67 : red; }`, undefined],
+  ])(
+    'comes to nothing for a nested rule, a stray bracket or brace, a file too big, a declaration left open or a CSS escape: %j',
+    (css, refused) => {
+      const reviewed = review(css)
+      expect(reviewed.css).toBe('')
+      if (refused) expect(reviewed.refused).toEqual(refused)
+    },
+  )
 
   test('refuses a value with a function nobody closed', () => {
     const reviewed = review(`[data-theme='dark'] { --bg: rgb(0,0,0 } #write h1 { color: red; }`)
@@ -170,27 +177,10 @@ describe('what a theme may not set', () => {
     expect(reviewed.css).toContain('#write h1')
   })
 
-  test('refuses a bracket that closes nothing', () => {
-    const reviewed = review(tokens('--bg: red);'))
-    expect(reviewed.css).toBe('')
-    expect(reviewed.refused).toEqual(['--bg is not a value a theme may set'])
-  })
-
   test('a bracket inside a string is not a bracket', () => {
     const reviewed = review(tokens(`--font-content: 'Half (', serif;`))
     expect(reviewed.css).toContain(`'Half (', serif`)
     expect(reviewed.refused).toEqual([])
-  })
-
-  test('a brace inside a string costs the rule rather than letting it out', () => {
-    const reviewed = review(`[data-theme='dark'] { --a: "{"; --bg: red; }`)
-    expect(reviewed.css).toBe('')
-  })
-
-  test('refuses a file too big to be a theme', () => {
-    const reviewed = review(tokens(`--bg: #000;`.repeat(9000)))
-    expect(reviewed.css).toBe('')
-    expect(reviewed.refused).toEqual(['the file is larger than 48 kB'])
   })
 
   test('stops reading past the rule it will read', () => {
@@ -211,12 +201,6 @@ describe('the shape of the sheet', () => {
     const reviewed = review(tokens(`--font-content: 'Semi; colon', serif;\n--bg: #000;`))
     expect(reviewed.css).toContain(`'Semi; colon', serif`)
     expect(reviewed.css).toContain('--bg: #000;')
-  })
-
-  test('a declaration left unfinished takes the next one with it', () => {
-    const reviewed = review(tokens('--bg\n--text: #eee;'))
-    expect(reviewed.css).toBe('')
-    expect(reviewed.refused).toEqual(['--bg\n--text is not a property a theme may set'])
   })
 
   test('nothing at all comes out empty rather than throwing', () => {
