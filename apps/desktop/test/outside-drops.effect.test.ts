@@ -1,15 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-const handed = vi.hoisted(() => ({ paths: [] as string[], asked: [] as string[][] }))
-
-vi.mock('../src/lib/platform/src/api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../src/lib/platform/src/api')>()),
-  droppedPaths: (files: readonly File[]) => {
-    handed.asked.push(files.map((one) => one.name))
-    return Promise.resolve(handed.paths)
-  },
-}))
-
 class Transfer {
   kept = new Map<string, string>()
   held: File[] = []
@@ -123,8 +113,6 @@ beforeEach(() => {
   opened = []
   read = []
   heard = []
-  handed.paths = []
-  handed.asked = []
   document.elementFromPoint = () => under
   stop = guardDrops((paths) => void opened.push([...paths]))
 })
@@ -263,7 +251,7 @@ describe('a file dropped on Orden from another app, as Linux hands it over', () 
   })
 })
 
-describe('a file dropped on Orden from another app, as WebView2 and WebKit hand it over', () => {
+describe('a file the page is handed by the engine itself, without its path', () => {
   function native(type: string, on: Element, files: File[]): Drag {
     const transfer = new Native()
     for (const one of files) transfer.items.add(one)
@@ -273,28 +261,15 @@ describe('a file dropped on Orden from another app, as WebView2 and WebKit hand 
     return event
   }
 
-  test('a PDF nothing takes is let in and opened from where it lies', async () => {
+  test('a PDF nothing takes is refused, as only the host hands over where it lies', () => {
     const pane = place('pane')
     const paper = new File(['%PDF-'], 'paper.pdf', { type: 'application/pdf' })
-    handed.paths = ['C:\\far\\paper.pdf']
 
     const over = native('dragover', pane, [paper])
     expect(over.defaultPrevented).toBe(true)
-    expect(over.dataTransfer?.dropEffect).toBe('copy')
-    native('drop', pane, [paper])
-
-    await vi.waitFor(() => expect(opened).toEqual([['C:\\far\\paper.pdf']]))
-    expect(handed.asked).toEqual([['paper.pdf']])
-  })
-
-  test('another kind of file nothing takes is refused', () => {
-    const pane = place('pane')
-    const song = new File(['ID3'], 'song.mp3', { type: 'audio/mpeg' })
-
-    const over = native('dragover', pane, [song])
-
-    expect(over.defaultPrevented).toBe(true)
     expect(over.dataTransfer?.dropEffect).toBe('none')
+    expect(native('drop', pane, [paper]).defaultPrevented).toBe(true)
+    expect(opened).toEqual([])
   })
 
   test('a PDF a place takes for itself is left to it', () => {
@@ -311,7 +286,6 @@ describe('a file dropped on Orden from another app, as WebView2 and WebKit hand 
     native('drop', canvas, [paper])
 
     expect(dropped).toBe(1)
-    expect(handed.asked).toEqual([])
     expect(opened).toEqual([])
   })
 })

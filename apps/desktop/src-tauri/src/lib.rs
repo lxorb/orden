@@ -218,7 +218,6 @@ macro_rules! desktop_commands {
             orden_web::page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
-            orden_documents::dropped_paths::dropped_paths,
             orden_documents::handed_pdfs::same_pdf,
             launch::new_window,
             launch::show_window,
@@ -557,7 +556,6 @@ fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
 #[cfg(desktop)]
 fn first_window(handle: &tauri::AppHandle) {
     orden_web::pinch::first_window(handle);
-    orden_documents::dropped_paths::first_window(handle);
 }
 
 fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {

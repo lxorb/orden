@@ -341,7 +341,6 @@ fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> R
     let window = orden_placement::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
     orden_web::pinch::let_through(window.as_ref());
-    orden_documents::dropped_paths::hear(window.as_ref());
 
     #[cfg(target_os = "macos")]
     {
@@ -592,6 +591,7 @@ mod tests {
             let text = std::fs::read_to_string(&path).unwrap_or_default();
             let text = text.split("#[cfg(test)]").next().unwrap_or_default();
             let built = text.matches("WebviewWindowBuilder::new(").count()
+                + text.matches("WebviewWindowBuilder::from_config(").count()
                 + text.matches("WebviewBuilder::new(").count();
             if text.matches(".disable_drag_drop_handler()").count() < built {
                 taken.push(name);

@@ -9,9 +9,10 @@ on:
       - apps/desktop/src-tauri/crates/web/**
       - apps/desktop/src-tauri/crates/**
       - apps/desktop/src-tauri/Cargo.toml
-      - apps/desktop/src/lib/drops.ts
-      - apps/desktop/src/lib/drag-paths.ts
-      - apps/desktop/src/lib/outside-drops.ts
+      - apps/desktop/src-tauri/linux/tauri-runtime-cef/**
+      - apps/desktop/src/lib/ui-kit/src/drops.ts
+      - apps/desktop/src/lib/ui-kit/src/drag-paths.ts
+      - apps/desktop/src/lib/ui-kit/src/outside-drops.ts
       - scripts/web-tab-drive.py
       - scripts/gesture-drive.py
       - scripts/outside-drop-drive.py

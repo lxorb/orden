@@ -7,13 +7,9 @@ use tauri::AppHandle;
 
 use orden_base::paths::{folded, inside, is_pdf};
 
-const FRESH: Duration = Duration::from_secs(30);
-
 const READABLE: Duration = Duration::from_secs(15 * 60);
 
 const MOST_READABLE: usize = 256;
-
-static DROPPED: Mutex<Option<(Instant, Vec<PathBuf>)>> = Mutex::new(None);
 
 static READ: Mutex<Vec<(Instant, PathBuf)>> = Mutex::new(Vec::new());
 
@@ -48,14 +44,6 @@ pub fn dropped_readable(path: &str) -> Option<PathBuf> {
     readable_dropped_at(path, Instant::now())
 }
 
-fn taken_dropped(now: Instant) -> Vec<PathBuf> {
-    let dropped = guarded(&DROPPED).take();
-    dropped
-        .filter(|(at, _)| now.saturating_duration_since(*at) < FRESH)
-        .map(|(_, paths)| paths)
-        .unwrap_or_default()
-}
-
 fn seen_where_dropped(app: &AppHandle, paths: &[PathBuf]) {
     use tauri::Manager as _;
 
@@ -67,39 +55,9 @@ fn seen_where_dropped(app: &AppHandle, paths: &[PathBuf]) {
     }
 }
 
-fn handed_as_pdfs(app: &AppHandle, paths: &[PathBuf]) {
-    let pdfs: Vec<PathBuf> = paths
-        .iter()
-        .filter(|one| is_pdf(one) && one.is_file())
-        .cloned()
-        .collect();
-    crate::handed_pdfs::admit_handed(app, pdfs);
-}
-
 pub fn dropped(app: &AppHandle, paths: &[PathBuf]) {
     let_dropped_be_read(paths, Instant::now());
     seen_where_dropped(app, paths);
     let pdfs: Vec<PathBuf> = paths.iter().filter(|one| is_pdf(one)).cloned().collect();
     crate::handed_pdfs::admit_handed(app, pdfs);
 }
-
-#[tauri::command(async)]
-pub fn dropped_paths(app: AppHandle) -> Vec<String> {
-    let paths = taken_dropped(Instant::now());
-    seen_where_dropped(&app, &paths);
-    handed_as_pdfs(&app, &paths);
-    paths
-        .into_iter()
-        .map(|one| one.to_string_lossy().into_owned())
-        .collect()
-}
-
-pub fn first_window(app: &AppHandle) {
-    use tauri::Manager as _;
-
-    if let Some(window) = app.get_webview_window("main") {
-        hear(window.as_ref());
-    }
-}
-
-pub fn hear(_webview: &tauri::Webview) {}

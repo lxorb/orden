@@ -6,13 +6,7 @@ const read = (name: string) =>
     app: { windows: Record<string, unknown>[] }
   }
 
-const OWN = [
-  'decorations',
-  'titleBarStyle',
-  'hiddenTitle',
-  'trafficLightPosition',
-  'dragDropEnabled',
-]
+const OWN = ['decorations', 'titleBarStyle', 'hiddenTitle', 'trafficLightPosition']
 
 describe("a Mac's window", () => {
   const base = read('tauri.conf.json').app.windows
@@ -30,7 +24,7 @@ describe("a Mac's window", () => {
     expect(mac[0]).toMatchObject({ decorations: true, titleBarStyle: 'Overlay', hiddenTitle: true })
   })
 
-  test("and the engine's drop handler on, since its view takes a drag before the window does", () => {
-    expect(mac[0]).toMatchObject({ dragDropEnabled: true })
+  test("and the engine's drop handler left to the code, which builds every window alike", () => {
+    expect([...base, ...mac].filter((one) => 'dragDropEnabled' in one)).toEqual([])
   })
 })
