@@ -6,7 +6,10 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+vi.stubGlobal('navigator', {
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+  language: 'en',
+})
 
 vi.mock('../src/lib/platform/src/tauri', async (actual) => ({
   ...(await actual<typeof import('../src/lib/platform/src/tauri')>()),

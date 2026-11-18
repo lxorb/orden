@@ -1,4 +1,4 @@
-import { registered, settingFieldsIn } from '@orden/contracts'
+import { registered } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
 import { modes } from '../../modes/src/api'
 import { declaredPanes } from './preferences'
@@ -52,7 +52,6 @@ export async function declarations(view?: EditorView): Promise<Field[]> {
     ...rows,
     ...(await themeDeclarations()),
     ...shortcutFields(),
-    ...settingFieldsIn('general', 'Browser'),
     ...(__EVEN_PLUGIN__ ? [] : [relockField()]),
   ]
   const seen = new Set<string>()
