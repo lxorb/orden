@@ -38,13 +38,9 @@ pub enum Ask {
     Chats,
     Window {
         chat: String,
-        #[serde(default)]
         parent: Option<String>,
-        #[serde(default)]
         before: Option<i64>,
-        #[serde(default)]
         after: Option<i64>,
-        #[serde(default)]
         around: Option<i64>,
         limit: u32,
     },
@@ -65,9 +61,7 @@ pub enum Ask {
         authors: Vec<String>,
         #[serde(default)]
         reply: bool,
-        #[serde(default)]
         since: Option<i64>,
-        #[serde(default)]
         until: Option<i64>,
         limit: u32,
     },
@@ -93,10 +87,8 @@ pub enum Change {
         space: String,
         seq: i64,
         read_seq: i64,
-        #[serde(default)]
         oldest: Option<i64>,
         complete: bool,
-        #[serde(default)]
         row: Option<String>,
     },
     Message {
@@ -105,7 +97,6 @@ pub enum Change {
         seq: i64,
         at: i64,
         author: String,
-        #[serde(default)]
         parent: Option<String>,
         main: bool,
         deleted: bool,
@@ -113,7 +104,6 @@ pub enum Change {
         has: String,
         upto: i64,
         json: String,
-        #[serde(default)]
         marks: Option<String>,
     },
     Unmessage {
@@ -126,7 +116,6 @@ pub enum Change {
         event: String,
         made_at: i64,
         tries: i64,
-        #[serde(default)]
         refused: Option<String>,
     },
     Unqueue {

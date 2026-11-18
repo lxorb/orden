@@ -246,15 +246,12 @@ fn note_at(relative: String, body: &str) -> Note {
 struct CanvasFile {
     #[serde(default)]
     nodes: Vec<serde_json::Value>,
-    #[serde(default)]
     orden: Option<CanvasOwn>,
-    #[serde(default)]
     nib: Option<CanvasOwn>,
 }
 
 #[derive(Default, Deserialize)]
 struct CanvasOwn {
-    #[serde(default)]
     icon: Option<String>,
     #[serde(default, rename = "iconColor")]
     icon_color: Option<String>,

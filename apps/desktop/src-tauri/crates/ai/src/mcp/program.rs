@@ -135,12 +135,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_program_is_this_one() {
+    fn the_program_is_this_one_as_its_package_names_it() {
         let found = program().expect("a path");
         assert!(found.is_absolute());
         if !cfg!(target_os = "linux") {
             assert_eq!(found, std::env::current_exe().expect("this test"));
         }
+        let deb = Path::new("/usr/bin/nib");
+        assert_eq!(chosen(deb, None, &[PathBuf::from("/usr/bin")], links), deb);
     }
 
     const NOW: &str = "/nix/store/aaa-orden-0.15.0/bin/.nib-wrapped";
@@ -184,12 +186,6 @@ mod tests {
             chosen(Path::new(NOW), None, &path[..2], links),
             PathBuf::from("/nix/store/aaa-orden-0.15.0/bin/nib")
         );
-    }
-
-    #[test]
-    fn a_package_s_binary_is_named_as_it_is() {
-        let deb = Path::new("/usr/bin/nib");
-        assert_eq!(chosen(deb, None, &[PathBuf::from("/usr/bin")], links), deb);
     }
 
     #[test]

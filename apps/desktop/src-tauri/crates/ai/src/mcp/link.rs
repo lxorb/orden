@@ -81,6 +81,11 @@ impl Link {
         link
     }
 
+    fn paired(&self) -> Option<(Endpoint, Kept)> {
+        let held = self.held();
+        Some((held.endpoint.clone()?, held.kept.clone()?))
+    }
+
     fn held(&self) -> MutexGuard<'_, Held> {
         self.held.held()
     }
@@ -312,11 +317,7 @@ impl Link {
     }
 
     fn regrant(&self) {
-        let (endpoint, kept) = {
-            let held = self.held();
-            (held.endpoint.clone(), held.kept.clone())
-        };
-        let (Some(endpoint), Some(kept)) = (endpoint, kept) else {
+        let Some((endpoint, kept)) = self.paired() else {
             return;
         };
         match grant_of(&endpoint, &kept.token, &self.session) {
@@ -388,11 +389,7 @@ impl Link {
     }
 
     fn call_once(&self, verb: &str, args: &Value) -> Outcome {
-        let (endpoint, kept) = {
-            let held = self.held();
-            (held.endpoint.clone(), held.kept.clone())
-        };
-        let (Some(endpoint), Some(kept)) = (endpoint, kept) else {
+        let Some((endpoint, kept)) = self.paired() else {
             return Outcome::failed("not_paired", self.sentence());
         };
         let mut asked = json!({ "verb": verb, "args": args, "rest": [], "session": self.session });
@@ -426,11 +423,7 @@ impl Link {
     }
 
     pub fn bye(&self) {
-        let (endpoint, kept) = {
-            let held = self.held();
-            (held.endpoint.clone(), held.kept.clone())
-        };
-        if let (Some(endpoint), Some(kept)) = (endpoint, kept) {
+        if let Some((endpoint, kept)) = self.paired() {
             let asked = json!({ "verb": "agent_bye", "args": {}, "session": self.session });
             let _ = app::post(&endpoint, Some(&kept.token), &asked, Duration::from_secs(3));
         }

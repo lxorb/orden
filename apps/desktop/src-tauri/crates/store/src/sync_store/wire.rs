@@ -17,7 +17,6 @@ pub enum Query {
     },
     Scan {
         table: String,
-        #[serde(default)]
         space: Option<String>,
     },
 }

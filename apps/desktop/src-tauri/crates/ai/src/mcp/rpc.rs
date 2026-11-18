@@ -144,26 +144,18 @@ mod tests {
     }
 
     #[test]
-    fn what_is_not_a_request_is_said_with_the_id_it_had() {
+    fn what_is_not_a_request_is_said_and_odd_params_or_blank_lines_pass() {
         assert_eq!(read("hello").map_err(|one| one.code), Err(NOT_JSON));
         assert_eq!(read("[]").map_err(|one| one.code), Err(NOT_A_REQUEST));
         let refused = read(r#"{"id":7}"#).expect_err("no method");
         assert_eq!((refused.id, refused.code), (json!(7), NOT_A_REQUEST));
         let refused = read(r#"{"id":{},"method":"ping"}"#).expect_err("an object id");
         assert_eq!(refused.code, NOT_A_REQUEST);
-    }
-
-    #[test]
-    fn params_that_are_not_an_object_are_read_as_none() {
         let Ok(Message::Request { params, .. }) = read(r#"{"id":1,"method":"ping","params":3}"#)
         else {
             panic!("a request");
         };
         assert_eq!(params, json!({}));
-    }
-
-    #[test]
-    fn lines_are_read_to_the_end_of_input_past_blank_ones() {
         let mut input = std::io::Cursor::new(b"\r\n{\"a\":1}\r\n\n{\"b\":2}".to_vec());
         assert_eq!(next_line(&mut input).as_deref(), Some("{\"a\":1}"));
         assert_eq!(next_line(&mut input).as_deref(), Some("{\"b\":2}"));

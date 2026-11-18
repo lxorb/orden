@@ -677,13 +677,20 @@ mod tests {
     }
 
     #[test]
-    fn a_place_is_written_with_slashes() {
+    fn a_place_is_written_with_slashes_and_numbered_when_taken() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let base = dir.path();
         let (from, name) =
             manifest_place(base, &base.join("Work").join("Idea.md")).expect("placed");
         assert_eq!((from.as_str(), name.as_str()), ("Work/Idea.md", "Idea.md"));
         assert!(manifest_place(base, base).is_err());
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Idea.md"), "the one that stayed").expect("a note");
+
+        let target = restore_target(base, &entry("1-0", "Idea.md", "Idea.md")).expect("a place");
+        assert_eq!(target, base.join("Idea 2.md"));
+        assert!(Path::new(&target).parent().is_some());
     }
 
     #[test]
@@ -695,17 +702,6 @@ mod tests {
         folder.kind = "folder".into();
 
         assert_eq!(restore_target(base, &folder), Ok(base.join("Report.pages")));
-    }
-
-    #[test]
-    fn a_restore_numbers_a_name_whose_place_is_taken() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let base = dir.path();
-        std::fs::write(base.join("Idea.md"), "the one that stayed").expect("a note");
-
-        let target = restore_target(base, &entry("1-0", "Idea.md", "Idea.md")).expect("a place");
-        assert_eq!(target, base.join("Idea 2.md"));
-        assert!(Path::new(&target).parent().is_some());
     }
 
     #[test]
@@ -770,28 +766,20 @@ mod tests {
     }
 
     #[test]
-    fn the_manifest_is_the_camel_case_the_window_reads() {
+    fn a_manifest_unwritten_is_empty_and_one_unreadable_is_kept() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        assert!(read_manifest(dir.path()).is_empty());
+        let dir = tempfile::tempdir().expect("a temp folder");
+        std::fs::write(dir.path().join(MANIFEST), "{ not json").expect("a broken manifest");
+
+        assert!(read_manifest(dir.path()).is_empty());
+        assert!(dir.path().join("manifest.json.unreadable").exists());
         let dir = tempfile::tempdir().expect("a temp folder");
         write_manifest(dir.path(), &[entry("1-0", "Idea.md", "Idea.md")]).expect("the manifest");
 
         let text = std::fs::read_to_string(dir.path().join(MANIFEST)).expect("the file");
         assert!(text.contains("\"trashedAt\""));
         assert!(!text.contains("trashed_at"));
-    }
-
-    #[test]
-    fn nothing_written_yet_reads_as_an_empty_trash() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        assert!(read_manifest(dir.path()).is_empty());
-    }
-
-    #[test]
-    fn a_manifest_that_cannot_be_read_is_kept_rather_than_lost() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        std::fs::write(dir.path().join(MANIFEST), "{ not json").expect("a broken manifest");
-
-        assert!(read_manifest(dir.path()).is_empty());
-        assert!(dir.path().join("manifest.json.unreadable").exists());
     }
 
     #[cfg(unix)]
@@ -856,16 +844,12 @@ mod tests {
     }
 
     #[test]
-    fn a_pdf_deleted_alone_leaves_its_highlights() {
+    fn deleting_alone_or_by_hand_takes_only_what_it_should() {
         let dir = a_space();
         trash(dir.path(), "X.pdf", true);
 
         assert!(!dir.path().join("X.pdf").exists());
         assert!(dir.path().join("X.pdf.highlights.json").exists());
-    }
-
-    #[test]
-    fn a_page_note_deleted_alone_takes_its_paper() {
         let dir = a_space();
         trash(dir.path(), "L.pages", true);
 

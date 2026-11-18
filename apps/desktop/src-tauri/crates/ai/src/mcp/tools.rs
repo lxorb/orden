@@ -13,7 +13,6 @@ pub struct Tool {
     pub description: String,
     #[serde(rename = "inputSchema")]
     pub input: Value,
-    #[serde(default)]
     pub annotations: Option<Value>,
 }
 
@@ -339,21 +338,19 @@ mod tests {
     }
 
     #[test]
-    fn the_readers_tabs_alone_reach_acting_but_not_a_tab_of_its_own() {
+    fn an_agent_is_shown_only_the_tools_its_reach_allows() {
         let shown = listed_names(&grant(&[Scope::BrowserReader]), None);
         assert!(shown.contains("browser_click"));
         assert!(shown.contains("browser_snapshot"));
         assert!(!shown.contains("browser_open"));
         assert!(!shown.contains("browser_downloads"));
-    }
-
-    #[test]
-    fn scripts_need_the_scope_and_a_site() {
         let mut scripted = grant(&[Scope::Browser, Scope::BrowserScript]);
         assert!(!reaches(&scripted, "browser_evaluate"));
         scripted.scripts.push("example.com".into());
         assert!(reaches(&scripted, "browser_evaluate"));
         assert!(!reaches(&grant(&[Scope::Browser]), "browser_evaluate"));
+        let names: Vec<&str> = unpaired().iter().map(|tool| tool.name.as_str()).collect();
+        assert_eq!(names, ["agent_status"]);
     }
 
     #[test]
@@ -383,12 +380,6 @@ mod tests {
             hidden,
             BTreeSet::from(["browser_evaluate", "write_setting"])
         );
-    }
-
-    #[test]
-    fn a_client_not_yet_paired_is_shown_its_status_alone() {
-        let names: Vec<&str> = unpaired().iter().map(|tool| tool.name.as_str()).collect();
-        assert_eq!(names, ["agent_status"]);
     }
 
     #[test]

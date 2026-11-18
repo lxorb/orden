@@ -290,9 +290,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_version_asked_for_is_answered_when_spoken() {
+    fn an_id_still_being_answered_is_not_taken_twice_and_the_version_is_answered() {
         assert_eq!(VERSIONS[0], "2025-11-25");
         assert!(VERSIONS.contains(&"2025-06-18"));
+        let calls = Calls::default();
+        assert_eq!(calls.begin("1"), Ok(()));
+        assert_eq!(calls.begin("1"), Err(Refused::Twice));
+        assert!(calls.end("1"));
+        assert_eq!(calls.begin("1"), Ok(()));
     }
 
     #[test]
@@ -338,15 +343,6 @@ mod tests {
         assert_eq!(calls.begin("late"), Err(Refused::Busy));
         assert!(calls.end("0"));
         assert_eq!(calls.begin("late"), Ok(()));
-    }
-
-    #[test]
-    fn an_id_still_being_answered_is_not_taken_twice() {
-        let calls = Calls::default();
-        assert_eq!(calls.begin("1"), Ok(()));
-        assert_eq!(calls.begin("1"), Err(Refused::Twice));
-        assert!(calls.end("1"));
-        assert_eq!(calls.begin("1"), Ok(()));
     }
 
     #[test]
