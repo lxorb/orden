@@ -13,6 +13,7 @@ import { oneEdit } from '@orden/markdown/edits'
 import {
   blockIdOf,
   blockIds,
+  embedKind,
   foldName,
   type FoundLink,
   freeBlockId,
@@ -514,6 +515,7 @@ class Links {
   private changed() {
     this.read.clear()
     this.resolved.clear()
+    this.filesFound.clear()
     this.version++
   }
 
@@ -1466,15 +1468,42 @@ class Links {
       from !== null && other !== null
         ? this.otherTarget(other, from, link)
         : this.resolveFrom(source, link)
-    return found === null ? null : relativePath(folderOf(source), found)
+    const shown = found ?? (link.embed ? this.mediaFile(link.target, from, other, source) : null)
+    return shown === null ? null : relativePath(folderOf(source), shown)
+  }
+
+  private mediaFile(
+    target: string,
+    from: string | null,
+    other: string | null,
+    source: string,
+  ): string | null {
+    const kind = embedKind(target)
+    if (kind !== 'image' && kind !== 'audio' && kind !== 'video') return null
+    if (ADDRESSED.test(target)) return null
+    const index =
+      other !== null && from !== null ? this.otherIndex(other, from) : this.spaceFiles(null)
+    return (
+      besideNote(index.files, folderOf(source), target) ?? resolveFile(index, target, 'wikilink')
+    )
   }
 
   fileNamed(name: string): string | null {
     return resolveFile(this.spaceFiles(null), name, 'wikilink')
   }
 
+  private filesFound = new Map<string, string | null>()
+
   fileFor(name: string, notePath: string | null): string | null {
     if (ADDRESSED.test(name)) return null
+    const key = `${String(this.version)}\n${this.root ?? ''}\n${notePath ?? ''}\n${name}`
+    if (this.filesFound.has(key)) return this.filesFound.get(key) ?? null
+    const found = this.fileFound(name, notePath)
+    this.filesFound.set(key, found)
+    return found
+  }
+
+  private fileFound(name: string, notePath: string | null): string | null {
     const other = notePath === null ? null : this.otherHolding(notePath)
     const root = other ?? this.root
     if (root === null) return null

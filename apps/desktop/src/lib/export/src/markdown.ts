@@ -31,6 +31,8 @@ const DEFINITION = new RegExp(
   String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`,
 )
 
+const IMG_SOURCE = /<img\b[^>]*?\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)')/gi
+
 const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
 
 function asLink(link: FoundLink, target: string): string {
@@ -118,6 +120,15 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
       if (edit) edits.push(edit)
     }
 
+    for (const match of line.matchAll(IMG_SOURCE)) {
+      if (inCode(spans, at + match.index)) continue
+      const written = match[1] ?? match[2] ?? ''
+      const wanted = rename(written)
+      if (wanted === null || wanted === written) continue
+      const from = at + match.index + match[0].length - written.length - 1
+      edits.push({ from, to: from + written.length, text: wanted.replaceAll('"', '%22') })
+    }
+
     const definition: RegExpExecArray | null = paragraph ? null : DEFINITION.exec(line)
     if (definition) {
       const from = at + (definition[1]?.length ?? 0)
@@ -130,6 +141,13 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
   }
 
   return edits
+}
+
+function mediaEmbed(link: FoundLink, target: string): string | null {
+  const kind = embedKind(link.target)
+  if (!link.embed || (kind !== 'image' && kind !== 'audio' && kind !== 'video')) return null
+  const words = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+  return `![${words}](${asSource(target, '')})`
 }
 
 function pictureEmbed(link: FoundLink, rename: (src: string) => string | null): string | null {
@@ -162,7 +180,10 @@ export function toMarkdown(source: string, options: MarkdownOptions = {}): strin
       edits.push({
         from: found.from,
         to: found.to,
-        text: target === null ? shownText(found) : asLink(found, target),
+        text:
+          target === null
+            ? shownText(found)
+            : ((options.picture ? null : mediaEmbed(found, target)) ?? asLink(found, target)),
       })
     }
   }

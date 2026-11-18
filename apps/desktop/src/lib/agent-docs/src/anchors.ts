@@ -1,5 +1,12 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blockIdOf, blockSpanAt, headingText, lines, slugify } from '@orden/markdown/links'
+import {
+  blockIdOf,
+  blockSpanAt,
+  headingText,
+  lines,
+  slugify,
+  wordRows,
+} from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
 
@@ -178,8 +185,9 @@ export function headingsIn(text: string): HeadingAt[] {
     }
   }
 
+  const seen = new Set([...wordRows(text)].map((row) => row.line))
   for (const row of lines(text)) {
-    const hashes = row.code ? undefined : HEADING.exec(row.text)?.[1]
+    const hashes = seen.has(row.line) ? HEADING.exec(row.text)?.[1] : undefined
     if (hashes) {
       close(hashes.length)
       const heading: HeadingAt = {

@@ -157,8 +157,10 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'br':
       return [{ ...marks, text: '\n' }]
 
-    case 'html':
-      return /^<br\s*\/?>$/i.test(token.raw.trim()) ? [{ ...marks, text: '\n' }] : []
+    case 'html': {
+      if (/^<br\s*\/?>$/i.test(token.raw.trim())) return [{ ...marks, text: '\n' }]
+      return picturesOfHtml(token.raw).map((one) => ({ ...marks, ...one }))
+    }
 
     case 'text':
     case 'escape':
@@ -342,6 +344,17 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
       case 'html': {
         const html = String((token as Tokens.Generic).text ?? '')
         if (PAGE_BREAK.test(html)) out.push({ kind: 'break' })
+        const pictures = picturesOfHtml(html)
+        if (
+          pictures.length &&
+          !html
+            .replace(IMG_TAG, '')
+            .replace(/<\/?p>/gi, '')
+            .trim()
+        ) {
+          out.push({ kind: 'paragraph', spans: pictures })
+          break
+        }
         for (const words of wordsOfHtml(html)) {
           const spans = words
             .split('\n')
@@ -553,6 +566,29 @@ function flowed(blocks: Block[], hard: boolean): Block[] {
         return block
     }
   })
+}
+
+const IMG_TAG = /<img\b[^>]*>/gi
+
+function attributeOf(tag: string, name: string): string | null {
+  const found = new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag)
+  return found ? (found[1] ?? found[2] ?? '') : null
+}
+
+function picturesOfHtml(html: string): { text: string; picture: string }[] {
+  return [...html.matchAll(IMG_TAG)].flatMap((tag) => {
+    const src = attributeOf(tag[0], 'src')
+    return src ? [{ text: attributeOf(tag[0], 'alt') ?? '', picture: decodeEntities(src) }] : []
+  })
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&')
 }
 
 export function picturesIn(doc: Doc): string[] {

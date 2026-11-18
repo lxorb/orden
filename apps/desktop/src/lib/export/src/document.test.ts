@@ -88,7 +88,11 @@ describe('a block of raw HTML', () => {
     expect(said('<!-- a note -->\n')).toEqual([])
     expect(said('<div title="a > b"></div>\n')).toEqual([])
     expect(said('<div><style>x</style>w1</div>\n')).toEqual(['w1'])
-    expect(said('<img src="a.png">\n')).toEqual([])
+  })
+
+  test('a picture written as an img tag is a picture, with no words', () => {
+    const { blocks } = documentOf('<img src="a.png">\n', 'Note.md')
+    expect(blocks).toEqual([{ kind: 'paragraph', spans: [{ text: '', picture: 'a.png' }] }])
   })
 
   test('a page break is still one, and adds no words', () => {

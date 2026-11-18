@@ -527,7 +527,7 @@ function hiddenLines(text: string, rows: readonly Row[]): Set<number> {
   return hidden
 }
 
-function* wordRows(text: string): Generator<Row> {
+export function* wordRows(text: string): Generator<Row> {
   const rows = rowsOf(text)
   const hidden = hiddenLines(text, rows)
   for (const row of rows) {
@@ -672,8 +672,12 @@ export function itemColumn(lines: readonly string[], at: number): number {
 }
 
 function outOfItem(block: readonly string[], column: number): string {
+  const least = block
+    .filter((line) => line.trim())
+    .reduce((most, line) => Math.min(most, indentOf(line)), Infinity)
+  const cut = least >= column && least < column + 4 ? least : column
   return block
-    .map((line) => withoutColumns(line, column))
+    .map((line) => withoutColumns(line, cut))
     .join('\n')
     .trimEnd()
 }
@@ -709,7 +713,8 @@ export function leadTo(line: string, wanted: number): string {
 }
 
 export function withoutColumns(line: string, wanted: number): string {
-  return line.slice(leadTo(line, wanted).length)
+  const lead = leadTo(line, wanted)
+  return ' '.repeat(Math.max(0, indentOf(lead) - wanted)) + line.slice(lead.length)
 }
 
 export function itemHolding(lines: readonly string[], at: number): number | null {
