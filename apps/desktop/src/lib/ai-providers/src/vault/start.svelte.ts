@@ -111,7 +111,6 @@ let started = false
 export function startVault(): void {
   if (started) return
   started = true
-
   const soon = afterQuiet(() => void vault.refresh(), SETTLE)
   ai.onLocalChange(soon)
   keysMoved(soon)
@@ -128,7 +127,6 @@ export function startVault(): void {
   if (typeof window !== 'undefined') {
     window.addEventListener('focus', () => void vault.refresh())
   }
-
   $effect.root(() => {
     $effect(() => {
       const who = account.user?.id ?? null
@@ -137,7 +135,6 @@ export function startVault(): void {
         else vault.signedOut()
       })
     })
-
     const asking = $derived(vault.asking.length > 0)
     $effect(() => {
       if (!asking) return

@@ -6,11 +6,7 @@ export interface Contents {
   seen: Record<string, string>
 }
 
-export interface Base {
-  accounts: Accounts
-  keys: Record<string, string>
-  seen: Record<string, string>
-}
+export type Base = Contents
 
 export interface Side {
   contents: Contents
@@ -30,6 +26,8 @@ const EMPTY: Contents = {
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
+const isText = (one: [string, unknown]): one is [string, string] => typeof one[1] === 'string'
+
 function mergedMap<T, B>(
   base: Record<string, B> | null,
   local: Record<string, T>,
@@ -41,10 +39,8 @@ function mergedMap<T, B>(
   for (const id of ids) {
     const mine = local[id]
     const theirs = remote[id]
-    let kept: T | undefined
-    if (!base) kept = theirs ?? mine
-    else if (!(id in base)) kept = theirs ?? mine
-    else kept = changedFrom('local', id, mine) ? mine : theirs
+    const kept =
+      !base || !(id in base) ? (theirs ?? mine) : changedFrom('local', id, mine) ? mine : theirs
     if (kept !== undefined) out[id] = kept
   }
   return out
@@ -68,7 +64,6 @@ function mergedAccounts(base: Accounts | null, local: Accounts, remote: Accounts
   const order = [...remote.accounts, ...local.accounts]
     .map((one) => one.id)
     .filter((id, at, all) => all.indexOf(id) === at && id in merged)
-
   const records = <T>(pick: (one: Accounts) => Record<string, T>) =>
     mergedMap(
       base ? pick(base) : null,
@@ -168,11 +163,7 @@ export function contentsIn(value: unknown): Contents {
   const { accounts, keys, seen } = value as Record<string, unknown>
   const texts = (record: unknown): Record<string, string> =>
     typeof record === 'object' && record !== null
-      ? Object.fromEntries(
-          Object.entries(record).filter(
-            (one): one is [string, string] => typeof one[1] === 'string',
-          ),
-        )
+      ? Object.fromEntries(Object.entries(record).filter(isText))
       : {}
   return { accounts: accountsIn(accounts), keys: texts(keys), seen: texts(seen) }
 }

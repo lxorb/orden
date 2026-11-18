@@ -61,7 +61,6 @@ const KNOWN: ReadonlySet<string> = new Set([
 
 export function accountBrand(account: Pick<Provider, 'kind' | 'baseUrl' | 'name'>): string | null {
   if (account.kind !== 'compatible') return KINDS[account.kind] ?? null
-
   const port = portOf(account.baseUrl)
   const site = siteBrand(account.baseUrl)
   const host = site === null ? null : (HOSTS[site] ?? site)

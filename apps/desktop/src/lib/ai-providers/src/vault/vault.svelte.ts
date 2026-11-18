@@ -168,7 +168,6 @@ export class Vault {
       await this.register(device)
       this.registered = account
     }
-
     for (let tries = 0; tries < TRIES; tries++) {
       const read = await this.read(device)
       const me = read.devices.find((one) => one.id === device.id)
@@ -182,7 +181,6 @@ export class Vault {
       this.allowed = read.devices
         .filter((one) => one.approved)
         .map((one) => ({ id: one.id, name: one.name, mine: one.id === device.id }))
-
       if (!this.key) {
         const allowers = others.filter((one) => one.approved)
         if (read.blob || allowers.length) {
@@ -199,7 +197,6 @@ export class Vault {
         if (await this.first(device, me)) continue
         return
       }
-
       const marker = await this.markerOf(this.key)
       const joined = await this.joined(account)
       if (
@@ -217,7 +214,6 @@ export class Vault {
         this.standing = 'offered'
         return
       }
-
       this.digits = ''
       this.offeredBy = ''
       this.mineAsking = null
@@ -258,27 +254,25 @@ export class Vault {
 
   private async ask(device: DeviceKey, me: Listed, devices: Listed[]): Promise<void> {
     const asking = this.mineAsking
-    if (!asking || (me.pub !== null && !asking.answer)) {
+    const answer = asking?.answer
+    if (
+      !asking ||
+      (me.pub !== null && !answer) ||
+      (answer && (me.nonce !== answer.nonce || me.nonceFrom !== answer.from))
+    ) {
       await this.register(device)
       this.digits = ''
       this.again = true
       return
     }
-    if (asking.answer) {
-      if (me.nonce !== asking.answer.nonce || me.nonceFrom !== asking.answer.from) {
-        await this.register(device)
-        this.digits = ''
-        this.again = true
-        return
-      }
-      this.digits = asking.answer.digits
+    if (answer) {
+      this.digits = answer.digits
       return
     }
     if (!me.nonce || !me.nonceFrom) {
       this.digits = ''
       return
     }
-
     const answering = devices.find((one) => one.id === me.nonceFrom)
     if (!answering?.pub) {
       this.digits = ''
@@ -383,7 +377,6 @@ export class Vault {
       before = beforeIn(parsed)
       remote = await sideOf(contentsIn(parsed))
     }
-
     const base = this.world.loadBase(account)
     const { contents, moved } = remote
       ? merged(base, here, remote)
@@ -398,7 +391,6 @@ export class Vault {
       this.world.keepBase(account, baseOf(contents, prints))
       return true
     }
-
     try {
       await this.world.call('/v2/ai/vault', 'PUT', {
         rev: read.rev,
@@ -421,16 +413,17 @@ export class Vault {
     if (!key || !device || !shown) return
     const read = await this.read(device)
     const listed = read.devices.find((one) => one.id === id && !one.approved)
-    if (listed?.pub !== shown.pub) {
-      this.asking = this.asking.filter((one) => one.id !== id)
-      this.answered.delete(id)
-      return
+    if (listed?.pub === shown.pub) {
+      await this.world.call(`/v2/ai/devices/${id}/wrap`, 'PUT', {
+        wrapped: await wrap(key, shown.pub),
+        from: device.id,
+        auth: await authOf(key),
+      })
     }
-    await this.world.call(`/v2/ai/devices/${id}/wrap`, 'PUT', {
-      wrapped: await wrap(key, shown.pub),
-      from: device.id,
-      auth: await authOf(key),
-    })
+    this.forgetAsking(id)
+  }
+
+  private forgetAsking(id: string): void {
     this.asking = this.asking.filter((one) => one.id !== id)
     this.answered.delete(id)
   }
@@ -444,8 +437,7 @@ export class Vault {
     await this.world
       .call(`/v2/ai/devices/${id}`, 'DELETE', key ? { auth: await authOf(key) } : {})
       .catch(() => undefined)
-    this.asking = this.asking.filter((one) => one.id !== id)
-    this.answered.delete(id)
+    this.forgetAsking(id)
   }
 
   async startOver(): Promise<void> {
@@ -478,7 +470,6 @@ export class Vault {
         this.signedOut()
         return true
       }
-
       const opened = read.blob ? await open(key, read.blob).catch(() => null) : null
       if (read.blob && opened === null) return false
       const parsed: unknown = opened === null ? null : JSON.parse(opened)

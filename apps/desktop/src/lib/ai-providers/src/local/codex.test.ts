@@ -29,7 +29,6 @@ describe('an answer', () => {
       }),
       said('turn/completed', { threadId: 't', turn: { id: 'u', status: 'completed' } }),
     ].map(read)
-
     expect(heard.map((one) => one.text ?? '').join('')).toBe('Herons wait.')
     expect(heard.at(-1)?.ended).toBe('end')
   })
@@ -89,7 +88,6 @@ describe('an answer', () => {
       }),
     ).tool
     expect(done?.done).toEqual({ text: 'Herons wade.', error: false })
-
     const other = { ...item, server: 'somebody-else' }
     expect(read(said('item/started', { ...turn, item: other }))).toEqual({})
   })

@@ -86,7 +86,6 @@
     const anchor = (event.target as Element | null)?.closest('a')
     const href = anchor?.getAttribute('href')
     if (!anchor || !href) return
-
     event.preventDefault()
     if (href.startsWith('#')) return
     const elsewhere = /^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')

@@ -27,7 +27,6 @@ test('a note and a folder dropped on the panel are chips, each once', () => {
     ...entry('/s', true),
     children: [entry('/s/Herons.md'), entry('/s/Birds', true)],
   }
-
   expect(drop(['/s/Herons.md', '/s/Birds'])).toBe(true)
   drop(['/s/Herons.md'])
   expect(chat.chips).toEqual([

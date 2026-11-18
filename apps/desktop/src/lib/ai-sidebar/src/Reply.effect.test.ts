@@ -30,18 +30,15 @@ test('a formula already drawn is drawn again once its engine lands, and never as
     props: { turn: turn as never, sources: [], last: true, live: false },
   })
   flushSync()
-
   const words = () => target.querySelector('.words')
   expect(words()?.querySelector('strong')?.textContent).toBe('bold')
   expect(words()?.textContent).not.toContain('\\(')
   expect(words()?.textContent).not.toContain('\\[')
   expect(words()?.classList.contains('waiting')).toBe(true)
   expect(words()?.querySelectorAll('.math-inline, .math-block')).toHaveLength(2)
-
   await idle(300)
   expect(engines.mathsEngine()).toBeNull()
   expect(words()?.classList.contains('waiting')).toBe(true)
-
   land()
   await vi.waitFor(
     () => {
@@ -52,7 +49,6 @@ test('a formula already drawn is drawn again once its engine lands, and never as
   )
   expect(words()?.querySelector('.math-block .katex-display')).not.toBeNull()
   expect(words()?.classList.contains('waiting')).toBe(false)
-
   void unmount(shown)
   target.remove()
 })

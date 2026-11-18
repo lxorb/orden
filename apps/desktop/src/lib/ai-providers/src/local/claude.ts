@@ -6,19 +6,15 @@ const OWN = /^mcp__orden__/
 export function claudeReader(): (line: string) => Heard {
   let streamed = false
   let counted: Counted = {}
-
   return (line) => {
     const event = eventIn(line)
     if (!event || event.parent_tool_use_id) return {}
-
     switch (event.type) {
       case 'system':
         if (event.subtype === 'compact_boundary') return { compacted: true }
         return event.subtype === 'init' ? named(event.model) : {}
-
       case 'stream_event':
         return streamEvent(record(event.event))
-
       case 'assistant': {
         const content = record(event.message)?.content
         const tool = toolUse(content)
@@ -27,25 +23,20 @@ export function claudeReader(): (line: string) => Heard {
         const text = textOf(content)
         return text ? { text } : {}
       }
-
       case 'user': {
         const tool = toolResult(record(event.message)?.content)
         return tool ? { tool } : {}
       }
-
       case 'rate_limit_event': {
         const limit = limitIn(record(event.rate_limit_info))
         return limit ? { limit } : {}
       }
-
       case 'result':
         return result(event)
-
       default:
         return {}
     }
   }
-
   function streamEvent(inner: Record<string, unknown> | null): Heard {
     if (inner?.type === 'message_start') {
       streamed = false
@@ -67,7 +58,6 @@ export function claudeReader(): (line: string) => Heard {
     streamed = true
     return { text: delta.text }
   }
-
   function result(event: Record<string, unknown>): Heard {
     const window = windowIn(record(event.modelUsage))
     const usage: Heard = window ? { usage: { ...counted, window } } : {}

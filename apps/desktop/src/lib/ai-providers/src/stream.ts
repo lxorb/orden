@@ -3,25 +3,20 @@ export const SSE_DONE = '[DONE]'
 export function sseLines(held: string, chunk: string): { payloads: string[]; rest: string } {
   const last = chunk.lastIndexOf('\n')
   if (last < 0) return { payloads: [], rest: held + chunk }
-
   const lines = (held + chunk.slice(0, last)).split('\n')
   const rest = chunk.slice(last + 1)
   const payloads: string[] = []
-
   for (const line of lines) {
     const said = line.replace(/\r$/, '')
     if (!said.startsWith('data:')) continue
-
     const payload = said.slice('data:'.length).trim()
     if (payload) payloads.push(payload)
   }
-
   return { payloads, rest }
 }
 
 export function sseJson(payload: string): unknown {
   if (payload === SSE_DONE) return null
-
   try {
     return JSON.parse(payload)
   } catch {
@@ -36,7 +31,6 @@ export async function* sseEvents(
   const reader = body.getReader()
   const decoder = new TextDecoder()
   let held = ''
-
   try {
     for (;;) {
       const { done: ended, value } = await reader.read()

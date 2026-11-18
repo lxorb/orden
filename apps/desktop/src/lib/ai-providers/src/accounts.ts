@@ -1,5 +1,5 @@
 import { withOrWithout, isRecord, isString } from '../../platform/src/api'
-import { isLocal, type Provider, type ProviderKind } from './providers'
+import { isLocal, KIND_NAMES, type Provider, type ProviderKind } from './providers'
 
 export type Vendor = string
 
@@ -19,16 +19,6 @@ export interface Accounts {
 }
 
 export const NONE: Accounts = { accounts: [], active: {}, defaultVendor: '', uses: {} }
-
-const FIRST: Record<Exclude<ProviderKind, 'compatible'>, string> = {
-  anthropic: 'anthropic',
-  openai: 'openai',
-  gemini: 'gemini',
-  chatgpt: 'chatgpt',
-  'claude-code': 'claude-code',
-  codex: 'codex',
-  'gemini-cli': 'gemini-cli',
-}
 
 export function repeatable(kind: ProviderKind): boolean {
   return kind !== 'chatgpt'
@@ -53,7 +43,7 @@ export function vendorOf(account: Pick<Provider, 'id' | 'kind'>): Vendor {
 
 function isKind(value: unknown): value is ProviderKind {
   if (value === 'claude-code' && !__CLAUDE_CODE__) return false
-  return value === 'compatible' || (isString(value) && Object.hasOwn(FIRST, value))
+  return isString(value) && Object.hasOwn(KIND_NAMES, value)
 }
 
 function isId(value: unknown): value is string {
@@ -64,7 +54,6 @@ function accountIn(value: unknown): Account | null {
   if (!isRecord(value)) return null
   const { id, kind, name, baseUrl, model, own } = value
   if (!isId(id) || !isKind(kind) || !isString(name)) return null
-
   return {
     id,
     kind,
@@ -100,14 +89,8 @@ export function accountsIn(value: unknown): Accounts {
   })
 }
 
-export function accountsText(state: Accounts): string {
-  return JSON.stringify({
-    version: 1,
-    accounts: state.accounts,
-    active: state.active,
-    defaultVendor: state.defaultVendor,
-    uses: state.uses,
-  })
+export function accountsText({ accounts, active, defaultVendor, uses }: Accounts): string {
+  return JSON.stringify({ version: 1, accounts, active, defaultVendor, uses })
 }
 
 export function vendors(state: Accounts): Vendor[] {
@@ -152,10 +135,9 @@ export function isActive(state: Accounts, id: string): boolean {
 }
 
 export function freshId(kind: ProviderKind, taken: (id: string) => boolean): string {
-  if (kind !== 'compatible' && !taken(FIRST[kind])) return FIRST[kind]
-  const stem = kind === 'compatible' ? 'compatible' : FIRST[kind]
+  if (kind !== 'compatible' && !taken(kind)) return kind
   for (let number = kind === 'compatible' ? 1 : 2; ; number++) {
-    const id = `${stem}-${number}`
+    const id = `${kind}-${number}`
     if (!taken(id)) return id
   }
 }
@@ -180,7 +162,6 @@ function tidied(state: Accounts): Accounts {
 export function added(state: Accounts, kind: ProviderKind): { state: Accounts; account: Account } {
   const held = repeatable(kind) ? undefined : state.accounts.find((one) => one.kind === kind)
   if (held) return { state, account: held }
-
   const id = freshId(kind, (one) => state.accounts.some((there) => there.id === one))
   const account: Account = {
     id,
@@ -254,12 +235,10 @@ export function migrated(old: unknown): Accounts {
   const accounts = accountsIn({ accounts: old.providers }).accounts
   const state: Accounts = { accounts, active: {}, defaultVendor: '', uses: {} }
   const named = (id: unknown) => (isString(id) ? vendorNamed(state, id) : null)
-
   const active: Record<Vendor, string> = {}
   const defaultId = isString(old.defaultId) ? old.defaultId : ''
   const fallback = accounts.find((one) => one.id === defaultId)
   if (fallback) active[vendorOf(fallback)] = fallback.id
-
   const uses: Record<string, Vendor> = {}
   for (const [feature, id] of Object.entries(namesIn(old.uses))) {
     const vendor = named(id)

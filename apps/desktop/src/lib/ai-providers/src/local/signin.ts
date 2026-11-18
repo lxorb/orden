@@ -72,7 +72,6 @@ async function typeInTerminal(
 ): Promise<boolean> {
   const terminal = portOf('terminal.lines')
   if (!terminal.ok) return false
-
   const windows = platform() === 'windows'
   return await terminal.value.typeIn(
     `${loginLine(kind, program, windows, out, home)}\r`,

@@ -10,7 +10,6 @@ interface Secrets {
 function bridge(): Secrets | undefined {
   const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__
   if (typeof found !== 'object' || found === null) return undefined
-
   const shape = found as Partial<Secrets>
   return typeof shape.secretRead === 'function' &&
     typeof shape.secretWrite === 'function' &&
@@ -35,8 +34,7 @@ export async function keysInFile(): Promise<boolean> {
 }
 
 export async function readKey(provider: Provider): Promise<string> {
-  const found = await read(provider.id)
-  return found ?? ''
+  return (await read(provider.id)) ?? ''
 }
 
 export async function hasKey(id: string): Promise<boolean> {
@@ -52,11 +50,7 @@ export function keysMoved(listener: () => void): () => void {
 
 export async function writeKey(id: string, secret: string, quiet = false): Promise<void> {
   const trimmed = secret.trim()
-  if (!trimmed) {
-    await forgetKey(id, quiet)
-    return
-  }
-
+  if (!trimmed) return forgetKey(id, quiet)
   await writeSecret(id, trimmed)
   if (!quiet) for (const one of moved) one()
 }
@@ -74,9 +68,7 @@ export async function writeSecret(id: string, secret: string): Promise<void> {
   else await invoke<null>('secret_write', { name: id, secret })
 }
 
-export function readSecret(id: string): Promise<string | null> {
-  return read(id)
-}
+export const readSecret = (id: string): Promise<string | null> => read(id)
 
 async function read(id: string): Promise<string | null> {
   const phone = isMobile ? bridge() : undefined

@@ -37,6 +37,9 @@ export interface Heard {
   goal?: GoalState
 }
 
+export const record = (value: unknown): Record<string, unknown> | null =>
+  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
+
 export function eventIn(line: string): Record<string, unknown> | null {
   try {
     const value: unknown = JSON.parse(line)

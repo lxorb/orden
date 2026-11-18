@@ -5,13 +5,11 @@ import { sseJson, sseLines, SSE_DONE } from './stream'
 function inPieces(stream: string, size: number): string[] {
   let held = ''
   const out: string[] = []
-
   for (let at = 0; at < stream.length; at += size) {
     const { payloads, rest } = sseLines(held, stream.slice(at, at + size))
     held = rest
     out.push(...payloads)
   }
-
   return out
 }
 
@@ -48,9 +46,7 @@ describe('splitting a stream into events', () => {
   test('reads one huge event in small chunks without going over what it holds each time', () => {
     const event = (length: number) => `data: {"text":"${'x'.repeat(length)}"}\n\n`
     const huge = event(1_000_000)
-
     const read = linearly((length) => inPieces(event(length), 64), 1_000_000)
-
     expect(read).toHaveLength(1)
     expect(read[0]).toHaveLength(huge.length - 'data: \n\n'.length)
   })

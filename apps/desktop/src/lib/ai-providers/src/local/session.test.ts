@@ -48,13 +48,11 @@ test('what is said to a session reaches it one at a time, in the order it was sa
   const closed = session.close()
   await settle()
   expect(asked).toEqual(['model'])
-
   answers.get('model')?.()
   await model
   await expect(interrupt).rejects.toThrow('not answering')
   await settle()
   expect(asked).toEqual(['model', 'interrupt', 'turn'])
-
   answers.get('turn')?.()
   await turn
   await settle()
@@ -66,7 +64,6 @@ test('what is said to a session reaches it one at a time, in the order it was sa
 test('a session of an account the vault moved to a fresh id goes by the agent rights it had, as that account', async () => {
   const { keepMoves } = await import('../moves')
   keepMoves({ cx: 'cx-2' })
-
   await openSession(
     {
       tool: 'codex',
@@ -77,7 +74,6 @@ test('a session of an account the vault moved to a fresh id goes by the agent ri
     },
     () => undefined,
   )
-
   expect(opened.at(-1)).toMatchObject({
     agent: { id: 'cx', name: 'Codex', readerTabs: true },
     account: 'cx-2',

@@ -48,7 +48,6 @@ test('an answer is not drawn again when another tab comes to the front', () => {
   const drawn = drawing.count
   expect(drawn).toBeGreaterThan(0)
   expect(target.querySelector('.words strong')?.textContent).toBe('this')
-
   for (const [id, path] of [
     ['b', '/n/Work/Hovering.md'],
     ['c', '/n/Work/Wading.md'],
@@ -56,7 +55,6 @@ test('an answer is not drawn again when another tab comes to the front', () => {
     front.set('tab', { id, path })
     flushSync()
   }
-
   expect(drawing.count).toBe(drawn)
   void unmount(shown)
   target.remove()

@@ -1,11 +1,11 @@
 import type { GoalState } from '../chat/types'
-import { type Counted, eventIn, type Heard, type Limit, saysLimit, saysSignedOut } from './heard'
+import { type Counted, eventIn, type Heard, type Limit, record } from './heard'
+import { saysLimit, saysSignedOut } from './heard'
 
 const NEAR = 80
 
 export function codexReader(): (line: string) => Heard {
   const said = new Map<string, number>()
-
   function more(id: string, text: string, whole: boolean): Heard {
     const before = said.get(id) ?? 0
     const gap = before === 0 && said.size > 0 && !said.has(id) ? '\n\n' : ''
@@ -13,22 +13,18 @@ export function codexReader(): (line: string) => Heard {
     said.set(id, whole ? text.length : before + text.length)
     return next ? { text: gap + next } : {}
   }
-
   return (line) => {
     const event = eventIn(line)
     const params = record(event?.params)
     if (!event || !params) return {}
-
     switch (event.method) {
       case 'item/agentMessage/delta':
         return typeof params.delta === 'string'
           ? more(text(params.itemId), params.delta, false)
           : {}
-
       case 'item/reasoning/summaryTextDelta':
       case 'item/reasoning/textDelta':
         return typeof params.delta === 'string' && params.delta ? { thinking: params.delta } : {}
-
       case 'item/started':
       case 'item/completed': {
         const item = record(params.item)
@@ -39,64 +35,47 @@ export function codexReader(): (line: string) => Heard {
         if (item?.type === 'contextCompaction' && done) return { compacted: true }
         return {}
       }
-
       case 'thread/compacted':
         return { compacted: true }
-
       case 'thread/goal/updated': {
         const goal = goalIn(record(params.goal)?.status)
         return goal ? { goal } : {}
       }
-
       case 'thread/goal/cleared':
         return { goal: 'cleared' }
-
       case 'thread/tokenUsage/updated': {
         const usage = record(params.tokenUsage)
         return { usage: countsIn(record(usage?.last), usage?.modelContextWindow) }
       }
-
       case 'account/rateLimits/updated': {
         const limit = limitIn(record(params.rateLimits))
         return limit ? { limit } : {}
       }
-
       case 'error':
         return params.willRetry === true ? {} : trouble(record(params.error))
-
       case 'turn/completed': {
         const turn = record(params.turn)
         if (turn?.status === 'completed') return { ended: 'end' }
         if (turn?.status === 'interrupted') return { ended: 'stopped' }
         return { ended: 'error', ...trouble(record(turn?.error)) }
       }
-
       default:
         return {}
     }
   }
 }
 
-function goalIn(status: unknown): GoalState | null {
-  switch (status) {
-    case 'active':
-      return 'pursuing'
-    case 'complete':
-      return 'met'
-    case 'budgetLimited':
-      return 'budget_limited'
-    case 'paused':
-    case 'blocked':
-    case 'usageLimited':
-      return 'paused'
-    default:
-      return null
-  }
+const GOALS: Record<string, GoalState> = {
+  active: 'pursuing',
+  complete: 'met',
+  budgetLimited: 'budget_limited',
+  paused: 'paused',
+  blocked: 'paused',
+  usageLimited: 'paused',
 }
 
-function record(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
-}
+const goalIn = (status: unknown): GoalState | null =>
+  typeof status === 'string' && Object.hasOwn(GOALS, status) ? (GOALS[status] ?? null) : null
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : ''

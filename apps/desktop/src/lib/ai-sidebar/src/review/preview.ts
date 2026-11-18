@@ -64,11 +64,9 @@ export async function previewOf(
   const given = record(args)
   const path = said(given.path)
   if (!path || said(given.tab)) return null
-
   const named = said(given.space)
   const space = named ? spaceNamed(spaces, named) : spaces.find((one) => one.id === open)
   if (!space) return null
-
   const relative = notePath(path) ?? path
   const at = insideSpace(space.root, relative)
   if (!protection.agentsMay(at)) return null

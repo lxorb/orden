@@ -24,7 +24,6 @@ function endsAlike(mine: Node, theirs: Node): boolean {
 function patchChildren(old: Node, fresh: Node): void {
   let mine = old.firstChild
   let theirs = fresh.firstChild
-
   while (mine && theirs) {
     const next = theirs.nextSibling
     if (!sameShell(mine, theirs)) {
@@ -38,7 +37,6 @@ function patchChildren(old: Node, fresh: Node): void {
     mine = mine.nextSibling
     theirs = next
   }
-
   while (mine) {
     const next: ChildNode | null = mine.nextSibling
     mine.remove()

@@ -79,7 +79,6 @@ test('what is drawn above the screen keeps the reader where they were', () => {
   run()
   expect(top).toBeGreaterThan(400)
   expect(height - top).toBe(600)
-
   top = 0
   seen = 100
   height = 1_000
@@ -115,16 +114,13 @@ test('long answers drawn at once in one list measure it once a step, not once an
     node.getBoundingClientRect = () => ({ top: -500, height: 0 }) as DOMRect
   }
   box.getBoundingClientRect = () => ({ top: 0 }) as DOMRect
-
   const alone = steps()
   drawInPieces(document.createElement('div'), long, alone.later)
   const stepsOfOne = alone.run()
-
   const { later, run } = steps()
   drawInPieces(first, long, later)
   drawInPieces(second, long, later)
   const ran = run()
-
   expect(ran).toBe(stepsOfOne)
   expect(reads).toBe(2 * ran)
   expect(first.innerHTML).toBe(long)

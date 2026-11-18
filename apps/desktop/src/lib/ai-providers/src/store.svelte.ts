@@ -52,24 +52,21 @@ class Ai {
 
   readonly defaultAccount = $derived<Account | null>(defaultOf(this.state))
 
-  readonly chosen = $derived<Provider | null>(
-    [activeOf(this.state, this.state.defaultVendor), ...actives(this.state)].find(
-      (one): one is Account => !!one && usable(one),
-    ) ?? null,
-  )
+  readonly chosen = $derived(this.firstThat(usable))
 
   readonly ready = $derived(this.chosen !== null)
 
-  readonly transcriber = $derived<Provider | null>(
-    [activeOf(this.state, this.state.defaultVendor), ...actives(this.state)].find(
-      (one): one is Account => !!one && transcribes(one),
-    ) ?? null,
-  )
+  readonly transcriber = $derived(this.firstThat(transcribes))
 
   private stamp = ''
   private synced: Promise<void> | null = null
   private writing: Promise<void> = Promise.resolve()
   private local = new Set<() => void>()
+
+  private firstThat(test: (one: Provider) => boolean): Provider | null {
+    const all = [activeOf(this.state, this.state.defaultVendor), ...actives(this.state)]
+    return all.find((one): one is Account => !!one && test(one)) ?? null
+  }
 
   onLocalChange(listener: () => void): () => void {
     this.local.add(listener)
@@ -121,7 +118,6 @@ class Ai {
     const read = parsedText(kept.text)
     if (read) this.took(read)
     if (!first) return
-
     const earlier = storedText(MOVED) === null ? migrated(stored(EARLIER)) : NONE
     const brought = read ? merged(read, earlier) : this.state
     if (!read || brought !== read) await this.change((state) => merged(state, brought))

@@ -14,7 +14,6 @@ describe('a conversation as one prompt', () => {
       { role: 'assistant', content: 'Herons [1].' },
       { role: 'user', content: 'For how long?' },
     ])
-
     expect(prompt).toBe(
       [
         '<instructions>\nCite by number.\n\n<passage n="1">Herons</passage>\n</instructions>',
@@ -45,7 +44,6 @@ describe('a run that did not answer', () => {
       false,
     )
     expect(said).toBe('Your Claude plan is at its limit for now.')
-
     const until = troubleOf(
       'Codex',
       'ChatGPT',
