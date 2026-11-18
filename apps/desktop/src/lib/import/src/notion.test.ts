@@ -2,20 +2,13 @@ import { readBase } from '@orden/bases'
 import { describe, expect, test } from 'vitest'
 import { notionPage, readNotion } from './notion'
 import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
+import { file, noteAt } from './fixtures'
 
 const PLAN = '1a2b3c4d5e6f78901a2b3c4d5e6f7890'
 const SUB = 'aaaabbbbccccddddeeeeffff00001111'
 const TASKS = '99998888777766665555444433332222'
 const ROW = '11112222333344445555666677778888'
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
 const pathsOf = (plan: ImportPlan): string[] => plan.files.map((one) => one.path)
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
 
 function fenced(note: string): string {
   const found = /```base\n([\s\S]*?)\n```/.exec(note)
