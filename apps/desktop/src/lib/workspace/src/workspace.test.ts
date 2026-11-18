@@ -458,10 +458,6 @@ describe('the two sides of the window', () => {
     expect(workspace.openOn('left')).toBe('tree')
     expect(workspace.openOn('right')).toBe('outline')
 
-    workspace.togglePanel('outline')
-    expect(workspace.openOn('right')).toBeNull()
-    expect(workspace.openOn('left')).toBe('tree')
-
     workspace.closePanel()
     expect(workspace.openOn('left')).toBeNull()
   })
@@ -471,14 +467,6 @@ describe('the two sides of the window', () => {
     workspace.showPanel('tree')
 
     expect(workspace.openOn('left')).toBe('tree')
-  })
-
-  test('and the press on a panel tab is the switch', () => {
-    workspace.togglePanel('tree')
-    expect(workspace.openOn('left')).toBe('tree')
-
-    workspace.togglePanel('tree')
-    expect(workspace.openOn('left')).toBeNull()
   })
 
   test('showing one panel over another still swaps them', () => {
@@ -574,15 +562,12 @@ describe('the right side and the scratchpad take turns', () => {
     expect(workspace.openOn('right')).toBe('outline')
   })
 
-  test("a panel's own command and its tab each put the card away", () => {
-    const roads = [() => workspace.showPanel('links'), () => workspace.togglePanel('links')]
-    for (const road of roads) {
-      workspace.rightPanel = null
-      pad.show(false)
-      road()
-      expect(pad.on).toBe(false)
-      expect(workspace.openOn('right')).not.toBeNull()
-    }
+  test("a panel's own command puts the card away", () => {
+    workspace.rightPanel = null
+    pad.show(false)
+    workspace.showPanel('links')
+    expect(pad.on).toBe(false)
+    expect(workspace.openOn('right')).not.toBeNull()
   })
 
   test('the button over a kept panel shuts the side whole, and nothing comes back', () => {

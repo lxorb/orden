@@ -11,12 +11,13 @@ vi.stubGlobal('localStorage', {
 })
 
 const gates = await import('../src/api')
+const { shownOf } = await import('../src/gates.svelte')
 
 describe('the kinds and the experiments that are on', () => {
   test('the gated kinds stay chosen whatever is hidden, the rest follow the hidden list', () => {
     expect(gates.chosenOn('chat', ['chat'])).toBe(true)
     expect(gates.chosenOn('canvas', ['canvas'])).toBe(false)
-    expect(gates.shownOf(['note', 'canvas'], ['note', 'canvas'])).toEqual(['note'])
+    expect(shownOf(['note', 'canvas'], ['note', 'canvas'])).toEqual(['note'])
   })
 
   test('an experiment is on only while the experimental switch is on too', () => {

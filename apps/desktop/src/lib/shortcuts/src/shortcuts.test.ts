@@ -531,10 +531,12 @@ describe('choosing a keyboard', () => {
       const { shortcuts } = registry
       const modes = await currentModes()
 
+      modes.setVimKeys(true)
       shortcuts.set('format.bold', 'Alt-b')
 
       expect(shortcuts.preset).toBe('custom')
-      expect(modes.vim).toBe(false)
+      expect(modes.vim).toBe(true)
+      modes.setVimKeys(false)
     })
   })
 

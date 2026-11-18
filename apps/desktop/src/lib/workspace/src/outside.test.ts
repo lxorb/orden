@@ -27,7 +27,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 }))
 
 const { takeIn } = await import('./outside')
-const { movedRoot, ROOTS_MOVED, rootsMoved } = await import('./roots-moved')
+const { ROOTS_MOVED, rootsMoved } = await import('./roots-moved')
 const { OUTSIDE_FOLDER: OUTSIDE } = await import('@orden/contracts')
 
 const SESSION = JSON.stringify({
@@ -100,14 +100,5 @@ describe('a folder outside, taken in', () => {
     expect(await takeIn()).toBe(false)
     expect(localStorage.getItem(OUTSIDE)).toBeNull()
     expect(localStorage.getItem(ROOTS_MOVED)).toBeNull()
-  })
-})
-
-describe('a root that moved', () => {
-  test('is the root itself or anything under it, never one beside it', () => {
-    const moves = [{ from: '/Vault/Work', to: '/Spaces/Work 2' }]
-    expect(movedRoot('/Vault/Work', moves)).toBe('/Spaces/Work 2')
-    expect(movedRoot('/Vault/Work/inner', moves)).toBe('/Spaces/Work 2/inner')
-    expect(movedRoot('/Vault/Workshop', moves)).toBeNull()
   })
 })

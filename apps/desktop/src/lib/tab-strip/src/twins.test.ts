@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
-import { initialOf, siteLook, twins } from './twins'
+import { initialOf } from '../../marks/src/api'
+import { siteLook, twins } from './twins'
 
 test('only the tabs whose look another shares wear a letter', () => {
   const tabs = [

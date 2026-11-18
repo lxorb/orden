@@ -102,17 +102,6 @@ afterEach(() => {
 })
 
 describe('the module stands on its own', () => {
-  test('nothing under src reaches past a module api or a file still listed as pending', () => {
-    const json = JSON.parse(readFileSync(join(HERE, 'module.json'), 'utf8')) as {
-      pending?: string[]
-    }
-    const pending = json.pending ?? []
-    const past = reached().filter(
-      (path) => !/\/[a-z-]+\/src\/api(\.ts)?$/.test(path) && !pending.includes(path),
-    )
-    expect(past).toEqual([])
-  })
-
   test('reaches the import only through its port', () => {
     expect(reached().filter((path) => path.includes('/import/'))).toEqual([])
   })

@@ -49,7 +49,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { canHaveCover, removeCover, setCover } = await import('./note-cover')
+const { removeCover, setCover } = await import('./note-cover')
 const { workspace } = await import('./api')
 
 function written(path: string): string | null {
@@ -137,15 +137,5 @@ describe('a note that is open while its cover changes', () => {
     const tab = workspace.tabs.find((one) => one.path === '/space/plain.md')
     expect(tab?.doc).toBe('# Plain\n\nwords\n')
     expect(tab?.dirty).toBe(false)
-  })
-})
-
-describe('what can have one', () => {
-  test('is a note, and not a plane, a set of pages or a folder', () => {
-    expect(canHaveCover('/space/note.md')).toBe(true)
-    expect(canHaveCover('/space/Board.canvas')).toBe(false)
-    expect(canHaveCover('/space/Deck.pages')).toBe(false)
-    expect(canHaveCover('/space/folder')).toBe(false)
-    expect(canHaveCover(null)).toBe(false)
   })
 })

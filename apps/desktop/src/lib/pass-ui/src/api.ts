@@ -1,4 +1,4 @@
-export { default as PassWeb } from './web/PassWeb.svelte'
+export const loadPassWeb = () => import('./web/PassWeb.svelte')
 
 export const loadPassTab = () =>
   __EVEN_PLUGIN__

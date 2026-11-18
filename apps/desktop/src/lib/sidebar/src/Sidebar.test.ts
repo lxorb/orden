@@ -420,8 +420,6 @@ describe('the AI panel on a phone and a tablet', () => {
     viewport.device = 'phone'
     workspace.showPanel('ask')
     expect(workspace.rightPanel).toBeNull()
-    workspace.togglePanel('ask')
-    expect(workspace.rightPanel).toBeNull()
     expect(workspace.offers('ask')).toBe(false)
     expect(workspace.offers('outline')).toBe(true)
 

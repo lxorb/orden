@@ -101,8 +101,7 @@ export async function addNote(
   made: NewNote = {},
 ): Promise<string | null> {
   const space =
-    (file === null ? null : spaceHolding(workspace.spaces, file)) ??
-    workspace.activeSpace
+    (file === null ? null : spaceHolding(workspace.spaces, file)) ?? workspace.activeSpace
   if (!space) return null
   const view = base.views[at]
   const place = rowPlace(base, view?.name)

@@ -1,4 +1,4 @@
-import { movedTo, isRecord, isString, keepJson, stored } from '../../platform/src/api'
+import { isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 export const ROOTS_MOVED = 'orden:roots-moved'
 
@@ -19,12 +19,4 @@ export function noteRootsMoved(moves: readonly RootMoved[]): void {
   if (!moves.length) return
   const kept = rootsMoved().filter((one) => !moves.some((move) => move.from === one.from))
   keepJson(ROOTS_MOVED, [...kept, ...moves])
-}
-
-export function movedRoot(root: string, moves: readonly RootMoved[]): string | null {
-  for (const { from, to } of moves) {
-    const now = movedTo(root, from, to)
-    if (now !== null) return now
-  }
-  return null
 }

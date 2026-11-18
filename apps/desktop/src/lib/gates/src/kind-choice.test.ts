@@ -19,7 +19,7 @@ vi.mock('../../accounts/src/client', async (actual) => ({
 }))
 
 const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } =
-  await import('./api')
+  await import('./gates.svelte')
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('../../new-here/src/api')
 const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()

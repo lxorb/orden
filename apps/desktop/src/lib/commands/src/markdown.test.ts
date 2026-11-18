@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-const { tidies } = await import('./api')
+const { tidies } = await import('./commands')
 
 describe('tidying up', () => {
   test('is offered for a note, saved or not', () => {
