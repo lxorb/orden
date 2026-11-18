@@ -334,12 +334,7 @@ const NEVER_OPTIONAL: [&str; 9] = [
 fn split(list: Option<&Value>, gaps: &mut Gaps) -> (Vec<String>, Vec<String>) {
     let mut names = Vec::new();
     let mut hosts = Vec::new();
-    for one in list
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(Value::as_str)
-    {
+    for one in strs(list) {
         match one {
             "webRequestBlocking" => gaps.say("blocking"),
             "contextualIdentities" => gaps.say("containers"),
@@ -366,11 +361,19 @@ fn split(list: Option<&Value>, gaps: &mut Gaps) -> (Vec<String>, Vec<String>) {
     (names, hosts)
 }
 
-fn patterns(list: Option<&Value>) -> Vec<String> {
+fn strs(list: Option<&Value>) -> impl Iterator<Item = &str> {
     list.and_then(Value::as_array)
         .into_iter()
         .flatten()
         .filter_map(Value::as_str)
+}
+
+fn relatives(list: Option<&Value>) -> Vec<String> {
+    strs(list).map(relative).collect()
+}
+
+fn patterns(list: Option<&Value>) -> Vec<String> {
+    strs(list)
         .filter(|one| pattern(one))
         .map(str::to_owned)
         .collect()
@@ -409,14 +412,7 @@ fn background_of(background: Option<&Value>) -> Option<Background> {
     if let Some(page) = background.get("page").and_then(Value::as_str) {
         return Some(Background::Page(relative(page)));
     }
-    let scripts: Vec<String> = background
-        .get("scripts")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(Value::as_str)
-        .map(relative)
-        .collect();
+    let scripts: Vec<String> = relatives(background.get("scripts"));
     if !scripts.is_empty() {
         return Some(Background::Scripts(scripts, module));
     }
@@ -505,16 +501,7 @@ fn content_script(script: &Value) -> Option<Value> {
             json!(patterns(script.get("exclude_matches"))),
         );
     }
-    let files = |field: &str| -> Vec<String> {
-        script
-            .get(field)
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-            .filter_map(Value::as_str)
-            .map(relative)
-            .collect()
-    };
+    let files = |field: &str| -> Vec<String> { relatives(script.get(field)) };
     let mut js = files("js");
     if !js.is_empty() && script.get("world").and_then(Value::as_str) != Some("MAIN") {
         js.splice(
@@ -546,14 +533,7 @@ fn accessible(resources: &[Value]) -> Vec<Value> {
         .filter_map(Value::as_object)
         .filter_map(|one| {
             let mut one = one.clone();
-            let listed: Vec<String> = one
-                .get("resources")
-                .and_then(Value::as_array)
-                .into_iter()
-                .flatten()
-                .filter_map(Value::as_str)
-                .map(relative)
-                .collect();
+            let listed: Vec<String> = relatives(one.get("resources"));
             let matches: Vec<String> = patterns(one.get("matches"))
                 .iter()
                 .map(String::as_str)

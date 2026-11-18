@@ -559,24 +559,27 @@ mod tests {
     }
 
     #[test]
-    fn a_server_name_is_kept_as_it_is() {
-        assert_eq!(name("Lecture 3 - Sorting.pdf"), "Lecture 3 - Sorting.pdf");
-        assert_eq!(name("Übung (1).zip"), "Übung (1).zip");
-    }
-
-    #[test]
-    fn a_name_is_never_a_path() {
-        assert_eq!(name("../../etc/passwd"), "_.._etc_passwd");
-        assert_eq!(name(r"..\..\Windows\win.ini"), r"_.._Windows_win.ini");
-        assert_eq!(name("a/b.pdf"), "a_b.pdf");
-    }
-
-    #[test]
-    fn what_a_file_system_refuses_is_replaced() {
-        assert_eq!(name("what: a \"title\"?.pdf"), "what_ a _title__.pdf");
-        assert_eq!(name("tab\there.txt"), "tab_here.txt");
-        assert_eq!(name("report.pdf. . "), "report.pdf");
-        assert_eq!(name(".hidden"), "hidden");
+    fn a_name_keeps_what_it_can_and_is_never_a_path_a_device_or_nothing() {
+        for (said, kept) in [
+            ("Lecture 3 - Sorting.pdf", "Lecture 3 - Sorting.pdf"),
+            ("Übung (1).zip", "Übung (1).zip"),
+            ("../../etc/passwd", "_.._etc_passwd"),
+            (r"..\..\Windows\win.ini", r"_.._Windows_win.ini"),
+            ("a/b.pdf", "a_b.pdf"),
+            ("what: a \"title\"?.pdf", "what_ a _title__.pdf"),
+            ("tab\there.txt", "tab_here.txt"),
+            ("report.pdf. . ", "report.pdf"),
+            (".hidden", "hidden"),
+            ("CON.pdf", "_CON.pdf"),
+            ("nul", "_nul"),
+            ("com1.tar.gz", "_com1.tar.gz"),
+            ("COM¹.pdf", "_COM¹.pdf"),
+            ("CONSOLE.pdf", "CONSOLE.pdf"),
+            ("", "download"),
+            (" . ", "download"),
+        ] {
+            assert_eq!(name(said), kept, "{said}");
+        }
     }
 
     #[test]
@@ -611,21 +614,6 @@ mod tests {
             "invoice.pdf .exe"
         );
         assert_eq!(name("Lecture  3.pdf"), "Lecture 3.pdf");
-    }
-
-    #[test]
-    fn a_device_name_is_not_a_file_name() {
-        assert_eq!(name("CON.pdf"), "_CON.pdf");
-        assert_eq!(name("nul"), "_nul");
-        assert_eq!(name("com1.tar.gz"), "_com1.tar.gz");
-        assert_eq!(name("COM¹.pdf"), "_COM¹.pdf");
-        assert_eq!(name("CONSOLE.pdf"), "CONSOLE.pdf");
-    }
-
-    #[test]
-    fn nothing_left_is_download() {
-        assert_eq!(name(""), "download");
-        assert_eq!(name(" . "), "download");
     }
 
     #[test]
@@ -711,25 +699,17 @@ mod tests {
         std::env::temp_dir().join("orden-downloads-test-that-does-not-exist")
     }
 
+    fn begun(downloads: &Downloads, url: &str, file: &str) -> super::Download {
+        downloads
+            .start("a", url, Path::new(file), &tmp())
+            .expect("started")
+    }
+
     #[test]
     fn two_downloads_of_one_name_at_once_get_two_files() {
         let downloads = Downloads::default();
-        let one = downloads
-            .start(
-                "a",
-                "https://x.example/f",
-                Path::new("C:/elsewhere/Report.pdf"),
-                &tmp(),
-            )
-            .expect("the first");
-        let two = downloads
-            .start(
-                "a",
-                "https://x.example/f",
-                Path::new("C:/elsewhere/report.pdf"),
-                &tmp(),
-            )
-            .expect("the second");
+        let one = begun(&downloads, "https://x.example/f", "C:/elsewhere/Report.pdf");
+        let two = begun(&downloads, "https://x.example/f", "C:/elsewhere/report.pdf");
 
         assert_eq!(one.name, "Report.pdf");
         assert_eq!(two.name, "report (1).pdf");
@@ -740,9 +720,7 @@ mod tests {
     #[test]
     fn a_download_is_followed_from_start_to_end() {
         let downloads = Downloads::default();
-        let made = downloads
-            .start("a", "https://x.example/f", Path::new("f.pdf"), &tmp())
-            .expect("started");
+        let made = begun(&downloads, "https://x.example/f", "f.pdf");
         assert_eq!(made.state, State::Going);
         assert!(downloads.saved(made.id).is_err());
 
@@ -756,21 +734,15 @@ mod tests {
         assert_eq!(done.received, 40);
         assert_eq!(downloads.saved(made.id).expect("saved"), made.path);
 
-        let again = downloads
-            .start("a", "https://x.example/f", Path::new("f.pdf"), &tmp())
-            .expect("again");
+        let again = begun(&downloads, "https://x.example/f", "f.pdf");
         assert_eq!(again.name, "f.pdf");
     }
 
     #[test]
     fn an_engine_that_names_no_path_is_matched_by_address() {
         let downloads = Downloads::default();
-        let one = downloads
-            .start("a", "https://x.example/one", Path::new("one.pdf"), &tmp())
-            .expect("one");
-        let two = downloads
-            .start("a", "https://x.example/two", Path::new("two.pdf"), &tmp())
-            .expect("two");
+        let one = begun(&downloads, "https://x.example/one", "one.pdf");
+        let two = begun(&downloads, "https://x.example/two", "two.pdf");
 
         let ended = downloads
             .finish("https://x.example/two", None, false)
@@ -783,12 +755,8 @@ mod tests {
     #[test]
     fn a_download_that_knows_only_its_address_is_matched_oldest_first() {
         let downloads = Downloads::default();
-        let one = downloads
-            .start("a", "https://x.example/f", Path::new("f.pdf"), &tmp())
-            .expect("one");
-        let two = downloads
-            .start("a", "https://x.example/f", Path::new("f.pdf"), &tmp())
-            .expect("two");
+        let one = begun(&downloads, "https://x.example/f", "f.pdf");
+        let two = begun(&downloads, "https://x.example/f", "f.pdf");
 
         assert_eq!(
             downloads.going_from("https://x.example/f", &[]),
@@ -817,13 +785,9 @@ mod tests {
     #[test]
     fn a_stopped_download_keeps_its_name_until_the_engine_lets_go() {
         let downloads = Downloads::default();
-        let first = downloads
-            .start("a", "https://x.example/r", Path::new("report.pdf"), &tmp())
-            .expect("first");
+        let first = begun(&downloads, "https://x.example/r", "report.pdf");
         downloads.cancelled(first.id).expect("stopped");
-        let second = downloads
-            .start("a", "https://x.example/r", Path::new("report.pdf"), &tmp())
-            .expect("second");
+        let second = begun(&downloads, "https://x.example/r", "report.pdf");
         assert_eq!(second.name, "report (1).pdf");
 
         assert!(downloads
@@ -835,9 +799,7 @@ mod tests {
         assert_eq!(done.id, second.id);
         assert_eq!(done.state, State::Done);
 
-        let third = downloads
-            .start("a", "https://x.example/r", Path::new("report.pdf"), &tmp())
-            .expect("third");
+        let third = begun(&downloads, "https://x.example/r", "report.pdf");
         assert_eq!(third.name, "report.pdf");
     }
 }
