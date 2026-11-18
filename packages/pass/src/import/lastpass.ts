@@ -18,7 +18,6 @@ import { csvRecords, type CsvRecord } from './csv'
 import type { Imported } from './types'
 
 const NAME = 'LastPass'
-
 const NOTE_URL = 'http://sn'
 
 const IDENTITY: Record<string, IdentityKey> = {
@@ -39,9 +38,7 @@ const IDENTITY: Record<string, IdentityKey> = {
 }
 
 const STREET = ['Address 1', 'Address 2', 'Address 3']
-
 const SKIPPED_KEYS = new Set(['Language', 'NoteType', 'Notes'])
-
 const KEY = /^([A-Za-z][A-Za-z0-9 /'.#()&-]{0,48}):(.*)$/
 
 interface NoteFields {

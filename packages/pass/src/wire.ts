@@ -17,7 +17,6 @@ export const LONGEST_LINK = 30 * 24 * 60 * 60 * 1000
 export const LONGEST_EMAIL = 254
 export const LONGEST_NAME = 200
 export const MOST_HANDOVERS = 50
-
 export const MEMBER_STATES = ['pending', 'active', 'confirm'] as const
 
 export type MemberState = (typeof MEMBER_STATES)[number]

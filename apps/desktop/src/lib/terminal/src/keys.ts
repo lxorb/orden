@@ -29,7 +29,6 @@ const APP_KEYS = new Set(
 )
 
 const NEITHER = new Set(['app.close-window'])
-
 const SHELL_FIRST = new Set(['app.reload'])
 
 const SHELL_KEYS = new Set([

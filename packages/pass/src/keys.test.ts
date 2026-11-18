@@ -28,7 +28,6 @@ import { isSignedBy, signatureOf, statementOf } from './sign'
 import type { VaultMeta } from './types'
 
 const AT = { keyVersion: 1, rev: 1 }
-
 const SMALL = { m: 64, t: 1, p: 1 }
 
 describe('recovery codes', () => {

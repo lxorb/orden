@@ -23,14 +23,11 @@ import {
 import { KEY_NAMES, keyBytes, linesFrom, linesOf, typesFreely } from './keys'
 
 const MOST_KEYS = 100
-
 const LINES = 200
 const MOST_LINES = 5000
-
 const WAIT = 2000
 const MOST_WAIT = 30_000
 const QUIET = 300
-
 const STARTING = 5000
 const READY_QUIET = 1000
 const PROMPT_WAIT = 20_000

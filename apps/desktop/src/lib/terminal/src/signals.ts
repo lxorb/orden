@@ -23,7 +23,6 @@ export interface Notice {
 }
 
 const LONGEST = 256
-
 const cut = (words: string) => words.trim().slice(0, LONGEST)
 
 export function osc9Notice(data: string): Notice | null {

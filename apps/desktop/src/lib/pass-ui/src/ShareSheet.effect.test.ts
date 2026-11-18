@@ -54,7 +54,6 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({ prompt: fake.prompt }))
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const ShareSheet = (await import('./ShareSheet.svelte')).default
 const FieldRow = (await import('./FieldRow.svelte')).default
-
 const CODE = '1a2b 3c4d 5e6f 7a8b 9c0d 1e2f 3a4b 5c6d'
 
 function vaultAs(role: Role, hidePasswordsFromViewers = false): Vault {

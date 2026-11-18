@@ -24,7 +24,6 @@ import { csvRecords } from './csv'
 import type { Imported } from './types'
 
 const NAME = '1Password'
-
 const SEPARATOR = /^\*\*\*[0-9a-f-]{36}\*\*\*$/i
 
 type Category =

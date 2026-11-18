@@ -1,7 +1,6 @@
 import type { FormKind } from './channel'
 
 export const FLOW_WINDOW = 2 * 60_000
-
 const SIGN_IN_KINDS = ['login', 'username', 'password', 'totp'] as const
 export type SignInKind = (typeof SIGN_IN_KINDS)[number]
 

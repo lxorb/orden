@@ -11,7 +11,6 @@ const CURVE = { name: 'ECDSA', namedCurve: 'P-256' } as const
 const HASHED = { name: 'ECDSA', hash: 'SHA-256' } as const
 const POINT = 65
 const SIGNATURE = 64
-
 const subtle = (): SubtleCrypto => globalThis.crypto.subtle
 
 export async function newSigner(): Promise<Signer> {

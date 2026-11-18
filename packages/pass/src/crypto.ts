@@ -31,7 +31,6 @@ const TAG = 16
 const POINT = 65
 const SALT_MIN = 8
 const CURVE = { name: 'ECDH', namedCurve: 'P-256' } as const
-
 const subtle = (): SubtleCrypto => globalThis.crypto.subtle
 
 export function newKey(): Uint8Array<ArrayBuffer> {

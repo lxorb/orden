@@ -41,7 +41,6 @@ const keepBase = (root: string, space: string, ways: Record<string, Way>) =>
   keepJson(BASE_KEY, { ...bases(), [root]: { space, ways } })
 
 const queued = new Map<string, Promise<void>>()
-
 const STIRRED_KEY = 'orden:protected-stirred'
 
 function stirredOf(root: string): number {

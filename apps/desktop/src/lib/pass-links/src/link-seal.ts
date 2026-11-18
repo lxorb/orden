@@ -5,7 +5,6 @@ import type { Content } from '@orden/pass/types'
 
 export const LINK_PATH = '/pass-link/'
 export const OPEN_PATH = '/v1/pass-link/'
-
 const KEY = 32
 const ID = 16
 

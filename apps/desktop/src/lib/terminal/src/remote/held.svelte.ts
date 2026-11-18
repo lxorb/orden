@@ -25,7 +25,6 @@ interface TmuxRow {
 }
 
 const IDLE_FOR = 7 * 24 * 60 * 60 * 1000
-
 const text = (value: unknown): string | null => (isString(value) && value ? value : null)
 
 function heldOf(value: unknown): HeldRow | null {

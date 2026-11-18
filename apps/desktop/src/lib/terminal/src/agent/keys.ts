@@ -14,9 +14,7 @@ const KEYS: Record<string, string> = {
 }
 
 export const KEY_NAMES = Object.keys(KEYS)
-
 const ARROWS = new Set(['Up', 'Down', 'Right', 'Left'])
-
 const FREE = new Set(['Ctrl+C'])
 
 export function keyBytes(

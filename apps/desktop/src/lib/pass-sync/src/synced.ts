@@ -35,7 +35,6 @@ const CURSOR = 'sync'
 const KEYRING = 'base:keyring'
 const ACCOUNT_KEYRING = 'account-keyring'
 const INVITES = 'invites'
-
 const itemKey = (vault: string, id: string) => `base:item:${vault}:${id}`
 const vaultKey = (id: string) => `base:vault:${id}`
 

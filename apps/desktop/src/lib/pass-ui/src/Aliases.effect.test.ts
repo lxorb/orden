@@ -23,7 +23,6 @@ const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const SettingsAliases = (await import('./SettingsAliases.svelte')).default
 const ItemEdit = (await import('./ItemEdit.svelte')).default
 const ItemView = (await import('./ItemView.svelte')).default
-
 const FAST = { m: 64, t: 1, p: 1 }
 configurePass({ kdf: FAST, pinKdf: FAST })
 
@@ -35,7 +34,6 @@ interface Asked {
 
 let asked: Asked[] = []
 let answers: Record<string, [number, unknown]> = {}
-
 const SL = 'https://app.simplelogin.io'
 
 const OPTIONS: [number, unknown] = [
