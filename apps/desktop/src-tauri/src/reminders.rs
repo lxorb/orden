@@ -221,7 +221,7 @@ pub async fn reminders_set(
     words: Words,
 ) -> Result<bool, String> {
     orden_base::lane::off_the_runtime(move || -> Result<bool, String> {
-        crate::agents::from_the_app(&webview)?;
+        orden_base::labels::from_the_app(&webview)?;
         if !may_schedule() {
             return Ok(true);
         }
@@ -266,7 +266,7 @@ fn handed(
 
 #[tauri::command(async)]
 pub fn reminders_taken(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Pressed>, String> {
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     Ok(in_state(|state| {
         let arrived = std::mem::take(&mut state.pressed);
         let kept = kept(state, &app);
@@ -342,7 +342,7 @@ pub fn answer_link(app: &AppHandle, url: &str) -> bool {
 
 #[tauri::command(async)]
 pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), String> {
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     let quiet = LAUNCHED_QUIETLY.swap(false, Ordering::Relaxed);
     let hidden =
         crate::agents::shell::host(&app).is_some_and(|window| !window.is_visible().unwrap_or(true));

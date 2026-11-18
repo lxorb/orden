@@ -21,7 +21,7 @@ fn stretch_params(salt: &[u8], m: u32, t: u32, p: u32) -> Result<Params, String>
     Params::new(m, t, p, Some(LENGTH)).map_err(|_| "the stretch's settings were refused".into())
 }
 
-fn secret_stretched(
+pub fn secret_stretched(
     secret: &[u8],
     salt: &[u8],
     m: u32,
@@ -46,7 +46,7 @@ pub async fn pass_stretch(
     p: u32,
 ) -> Result<String, String> {
     #[cfg(desktop)]
-    crate::agents::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     #[cfg(mobile)]
     let _ = webview;
     let secret = Zeroizing::new(secret);

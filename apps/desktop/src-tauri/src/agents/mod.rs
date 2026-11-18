@@ -349,21 +349,13 @@ pub fn may_ask_the_window(caller: &Caller, verb: &str) -> Result<(), String> {
     }
 }
 
-pub(crate) fn from_the_app(webview: &tauri::Webview) -> Result<(), String> {
-    if orden_base::labels::is_document_window(webview.label()) {
-        Ok(())
-    } else {
-        Err("only Orden's own window may ask that".into())
-    }
-}
-
 #[tauri::command]
 pub fn agents_stop(
     webview: tauri::Webview,
     app: AppHandle,
     agent: Option<String>,
 ) -> Result<bool, String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     Ok(match agent {
         Some(agent) => {
             stop::halt(&app, &agent);
@@ -379,7 +371,7 @@ pub fn agents_resume(
     app: AppHandle,
     agent: Option<String>,
 ) -> Result<(), String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     stop::resume(&app, agent.as_deref());
     Ok(())
 }
@@ -393,7 +385,7 @@ pub async fn agents_dialog_path(
     write: bool,
 ) -> Answer {
     orden_base::lane::off_the_runtime(move || -> Answer {
-        if let Err(why) = from_the_app(&webview) {
+        if let Err(why) = orden_base::labels::from_the_app(&webview) {
             return Answer::error(Code::NotGranted, why);
         }
         let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
@@ -423,7 +415,7 @@ pub fn agents_answer(
     allow: bool,
     always: bool,
 ) -> Result<Approval, String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     let approval = approvals::answer(&app, &id, allow)?;
     if always && approval.answer == ApprovalAnswer::Allowed {
         if let Some(site) = approval.site.clone() {
@@ -453,7 +445,7 @@ pub fn agents_ask(
     key: String,
     site: Option<String>,
 ) -> Answer {
-    if let Err(why) = from_the_app(&webview) {
+    if let Err(why) = orden_base::labels::from_the_app(&webview) {
         return Answer::error(Code::NotGranted, why);
     }
     if approvals::allowed(&agent, &key) {
@@ -485,7 +477,7 @@ pub fn agents_ask(
 
 #[tauri::command(async)]
 pub fn agents_state(webview: tauri::Webview, app: AppHandle) -> Result<Overview, String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     let agents = state(&app).grants.all(&app)?;
     let tabs = agents
         .iter()
@@ -522,7 +514,7 @@ pub fn agents_log(
     app: AppHandle,
     day: String,
 ) -> Result<Vec<Value>, String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     Ok(log::read_day(&app, &day))
 }
 
@@ -533,13 +525,13 @@ pub fn agents_log_after(
     day: String,
     from: u64,
 ) -> Result<log::After, String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     Ok(log::read_after(&app, &day, from))
 }
 
 #[tauri::command(async)]
 pub fn agents_log_days(webview: tauri::Webview, app: AppHandle) -> Result<Vec<String>, String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     Ok(log::days(&app))
 }
 
@@ -549,7 +541,7 @@ pub fn agents_log_clear(
     app: AppHandle,
     agent: Option<String>,
 ) -> Result<(), String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     log::clear(&app, agent.as_deref())
 }
 
@@ -560,7 +552,7 @@ pub fn agents_adopt(
     agent_tab: String,
     tab: String,
 ) -> Result<(), String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     tabs::adopt(&app, &agent_tab, &tab)
 }
 
@@ -570,7 +562,7 @@ pub fn agents_peek(
     app: AppHandle,
     tab: String,
 ) -> Result<verbs::Picture, String> {
-    from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     browser::peek(&app, &tab)
 }
 
@@ -585,7 +577,7 @@ pub async fn agents_capture(
     page: Option<orden_documents::pdf::PdfPage>,
 ) -> Answer {
     orden_base::lane::off_the_runtime(move || -> Answer {
-        if let Err(why) = from_the_app(&webview) {
+        if let Err(why) = orden_base::labels::from_the_app(&webview) {
             return Answer::error(Code::NotGranted, why);
         }
         let caller = match agent {

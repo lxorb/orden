@@ -175,7 +175,7 @@ pub async fn ai_agent_tools(
     mode: Mode,
 ) -> Result<Value, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Value, String> {
-        crate::agents::from_the_app(&webview)?;
+        orden_base::labels::from_the_app(&webview)?;
         let grant = grant_for(&app, &agent)?;
         let window = window_verbs(&app);
         Ok(json!({
@@ -205,7 +205,7 @@ pub async fn ai_agent_call(
     thread: Option<String>,
 ) -> Result<Value, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Value, String> {
-        crate::agents::from_the_app(&webview)?;
+        orden_base::labels::from_the_app(&webview)?;
         let grant = grant_for(&app, &agent)?;
         let window = window_verbs(&app);
         let shown = listed(&grant, window.as_ref(), mode);
@@ -233,7 +233,7 @@ pub async fn ai_agent_context(
     thread: Option<String>,
 ) -> Result<Vec<Value>, String> {
     orden_base::lane::off_the_runtime(move || -> Result<Vec<Value>, String> {
-        crate::agents::from_the_app(&webview)?;
+        orden_base::labels::from_the_app(&webview)?;
         let grant = grant_for(&app, &agent)?;
         let window = window_verbs(&app);
         let reached: BTreeSet<String> = host::listed(&grant, window.as_ref())

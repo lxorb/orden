@@ -192,7 +192,7 @@ pub fn tray_keep(
     on: bool,
     words: TrayWords,
 ) -> Result<(), String> {
-    super::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     with(|shell| {
         shell.kept = on;
         shell.words.show = words.show;
@@ -213,7 +213,7 @@ pub fn agents_shell(
     key: Option<String>,
     words: Words,
 ) -> Result<(), String> {
-    super::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     with(|shell| {
         shell.key = key;
         shell.words = words;
@@ -224,7 +224,7 @@ pub fn agents_shell(
 
 #[tauri::command]
 pub fn agents_hold(webview: tauri::Webview, app: AppHandle, hide: bool) -> Result<bool, String> {
-    super::from_the_app(&webview)?;
+    orden_base::labels::from_the_app(&webview)?;
     let window = webview.window();
     let holds = cfg!(any(windows, target_os = "macos")) && hosts(&app, &window);
     if !hide {
