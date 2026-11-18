@@ -32,16 +32,10 @@ interface Custom {
   value: unknown
 }
 
-const IDENTITY_TYPES = new Set([
-  'address',
-  'contact',
-  'passport',
-  'driverLicense',
-  'ssnCard',
-  'birthCertificate',
-  'healthInsurance',
-  'membership',
-])
+const IDENTITY_TYPES = new Set(
+  `address contact passport driverLicense ssnCard birthCertificate
+  healthInsurance membership`.split(/\s+/),
+)
 
 const HIDDEN_TYPES = new Set(['secret', 'pinCode', 'password', 'accountNumber', 'licenseNumber'])
 const DATE_TYPES = new Set(['date', 'birthDate', 'expirationDate'])
