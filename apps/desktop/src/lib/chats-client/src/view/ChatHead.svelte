@@ -12,7 +12,7 @@
   import { firstLine } from './body'
   import { accountOf, faceOf, nameOf } from './people'
   import { store } from './source.svelte'
-  import { tip } from './tips.svelte'
+  import { boxOf, tip } from './tips.svelte'
 
   const {
     page,
@@ -59,11 +59,6 @@
     const list = ids
     return people.watch(() => list)
   })
-
-  function boxOf(element: Element): Box {
-    const box = element.getBoundingClientRect()
-    return { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
-  }
 
   async function showPins(element: Element) {
     pinned = await page.pinned()

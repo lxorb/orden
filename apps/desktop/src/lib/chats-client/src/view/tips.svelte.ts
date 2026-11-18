@@ -8,6 +8,11 @@ class Tips {
 
 export const tips = new Tips()
 
+export function boxOf(element: Element): Box {
+  const box = element.getBoundingClientRect()
+  return { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
+}
+
 export function tip(node: HTMLElement, words: () => string) {
   let waiting: ReturnType<typeof setTimeout> | undefined
   let say = words
@@ -15,11 +20,7 @@ export function tip(node: HTMLElement, words: () => string) {
   const show = () => {
     const text = say()
     if (!text) return
-    const box = node.getBoundingClientRect()
-    tips.shown = {
-      text,
-      at: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
-    }
+    tips.shown = { text, at: boxOf(node) }
   }
   const enter = (event: PointerEvent) => {
     clearTimeout(waiting)
