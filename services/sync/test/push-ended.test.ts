@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { momentOf } from '@orden/markdown/task-reminders'
 import { sha256 } from '../src/sync-server/src/crypto'
 import { forgetAccess } from '../src/sync-server/src/push/fcm'
 import { sendDue } from '../src/sync-server/src/push/reminders'
@@ -8,7 +7,7 @@ import { computer, type Hubs, hubs } from './hub-fakes'
 
 const EMAIL = 'phone@example.com'
 const ZONE = 'Europe/Zurich'
-const AT = momentOf({ date: '2099-01-05', time: '09:00' }, ZONE)
+const AT = Date.UTC(2099, 0, 5, 8)
 
 let env: TestEnv
 let running: Hubs

@@ -48,6 +48,15 @@ describe('the one edit two texts differ by', () => {
     }
   })
 
+  test('never cuts one character in half', () => {
+    expect(oneEdit('a\u{1f600}b', 'a\u{1f603}b')).toEqual({ from: 1, to: 3, insert: '\u{1f603}' })
+    expect(oneEdit('\u{1f600}\u{1f600}', '\u{1f600}\u{1f601}\u{1f600}')).toEqual({
+      from: 2,
+      to: 2,
+      insert: '\u{1f601}',
+    })
+  })
+
   test('and never overlaps itself, however alike the two texts are', () => {
     const edit = oneEdit('aaaa', 'aaa')
     expect(edit?.from).toBeLessThanOrEqual(edit?.to ?? 0)

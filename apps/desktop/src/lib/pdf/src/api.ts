@@ -1,5 +1,5 @@
 export { lentMoved, loading, openDocument, pageSizes, pdfjs, warmPdf } from './document'
-export { placesOnPaper, runsOfItems, spansOver, textOfRuns, wordsOfRuns } from './find'
+export { placesOnPaper, spansOver, wordsOfRuns } from './find'
 export {
   boxOf,
   citation,
@@ -7,7 +7,6 @@ export {
   frozen,
   type Held,
   type Highlight,
-  matrixOf,
   type Quad,
   toViewport,
 } from './highlights'
@@ -25,7 +24,6 @@ export {
   paperIsLocked,
   paperOf,
   paperPathOf,
-  paperPlaces,
   paperRewritten,
   PapersHeld,
   type PaperAt,
@@ -51,4 +49,4 @@ export const readPapers: typeof import('./extract').readPapers = (...args) =>
 
 export const paperText: typeof import('./text-cache').paperText = (...args) =>
   import('./text-cache').then((one) => one.paperText(...args))
-export { pngData, pngDrawn } from './png-off'
+export { pngData } from './png-off'
