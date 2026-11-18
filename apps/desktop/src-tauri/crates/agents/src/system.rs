@@ -166,26 +166,12 @@ fn question(app: &AppHandle, grant: &Grant, op: SystemOp, target: &Target) -> Op
         "open"
     };
     let key = approvals::key("system", None, Some(&format!("{word}:{target}")));
-    if approvals::allowed(&grant.id, &key) {
-        return None;
-    }
     let summary = if op == SystemOp::Reveal {
         format!("Show {target} in the file manager")
     } else {
         format!("Open {target}")
     };
-    Some(approvals::ask(
-        app,
-        Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category: Category::Terminal,
-            summary,
-            site: None,
-            tab: None,
-            key,
-        },
-    ))
+    approvals::unless_allowed(app, Asking::of(grant, Category::Terminal, summary, key))
 }
 
 fn secret(name: &str) -> bool {

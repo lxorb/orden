@@ -616,15 +616,11 @@ fn ask(
     approvals::ask(
         app,
         Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category,
-            summary,
             site: url
                 .and_then(policy::host_of)
                 .map(|host| policy::site_of(&host)),
             tab: Some(tab.to_string()),
-            key: key.to_string(),
+            ..Asking::of(grant, category, summary, key.to_string())
         },
     )
 }
@@ -633,13 +629,9 @@ fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) 
     approvals::granted(
         app,
         Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category: Category::Showing,
-            summary,
             site: policy::host_of(&own.url).map(|host| policy::site_of(&host)),
             tab: Some(own.id.clone()),
-            key: key.to_string(),
+            ..Asking::of(grant, Category::Showing, summary, key.to_string())
         },
         orden_agents::verbs::ApprovalAnswer::Allowed,
     );

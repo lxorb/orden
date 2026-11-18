@@ -115,13 +115,8 @@ pub fn agents_ask(
     approvals::ask(
         &app,
         approvals::Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category,
-            summary,
             site,
-            tab: None,
-            key,
+            ..approvals::Asking::of(&grant, category, summary, key)
         },
     )
 }

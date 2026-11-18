@@ -283,21 +283,13 @@ fn question(
             to.map_or_else(String::new, |one| one.display().to_string())
         )),
     );
-    if approvals::allowed(&grant.id, &key) {
-        return None;
-    }
-    Some(approvals::ask(
+    approvals::unless_allowed(
         app,
         Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category,
-            summary: summary(asked.op, path, to),
             site: Some(folder.display().to_string()),
-            tab: None,
-            key,
+            ..Asking::of(grant, category, summary(asked.op, path, to), key)
         },
-    ))
+    )
 }
 
 fn covered(grant: &Grant, folder: &Path) -> bool {

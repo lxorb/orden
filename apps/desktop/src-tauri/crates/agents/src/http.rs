@@ -339,16 +339,12 @@ fn reachable(app: &AppHandle, grant: Option<&Grant>, url: &Url) -> Result<(), An
         remember(&grant.id, &site);
         return Ok(());
     }
+    let summary = format!("Send requests to {site}");
     Err(approvals::ask(
         app,
         Asking {
-            agent: &grant.id,
-            name: &grant.name,
-            category: Category::Writing,
-            summary: format!("Send requests to {site}"),
             site: Some(always),
-            tab: None,
-            key,
+            ..Asking::of(grant, Category::Writing, summary, key)
         },
     ))
 }
