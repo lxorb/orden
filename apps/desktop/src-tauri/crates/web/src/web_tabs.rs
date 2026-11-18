@@ -76,8 +76,6 @@ fn unadopt(tab: &str) {
     }
 }
 
-const MAIN: &str = "main";
-
 const MOVED: &str = "orden://web-tab";
 
 const OPENED: &str = "orden://web-open";
@@ -393,16 +391,8 @@ fn handed_over(url: &Url) -> Option<String> {
 
 pub use orden_web_engine::Becomes;
 
-pub fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
-    orden_web_engine::becomes(
-        url,
-        orden_web_engine::Asked {
-            sized,
-            said,
-            unasked,
-        },
-        &crate::extension_ids::ours,
-    )
+pub fn becomes(url: &Url, sized: bool) -> Becomes {
+    orden_web_engine::becomes(url, sized, &crate::extension_ids::ours)
 }
 
 pub fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
@@ -612,23 +602,13 @@ fn windows_asked(
     let asking = tab.to_string();
     let holder = holder.to_string();
     builder.on_new_window(move |url: Url, features| {
-        let heard = crate::web_opens::heard(&asking, &url);
-        let said = heard.said;
-        if heard.ours {
-            return NewWindowResponse::Deny;
-        }
-
         let sized = features.size().is_some() || features.position().is_some();
-        let address = match becomes(&url, sized, said.is_some(), heard.unasked) {
+        let address = match becomes(&url, sized) {
             Becomes::Nothing => {
                 eprintln!(
                     "web tab: a {} window it asked for was refused",
                     url.scheme()
                 );
-                return NewWindowResponse::Deny;
-            }
-            Becomes::Blocked(address) => {
-                popup_blocked(&opening, &holder, &asking, &address);
                 return NewWindowResponse::Deny;
             }
             Becomes::Tab(address) => address,
@@ -638,7 +618,7 @@ fn windows_asked(
         let payload = Opening {
             tab: asking.clone(),
             url: address,
-            behind: said == Some(crate::web_opens::Asked::Behind),
+            behind: false,
         };
         let _ = opening.emit_to(&holder, OPENED, payload);
         NewWindowResponse::Deny
@@ -734,62 +714,13 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     let window = view.window().label().to_string();
     let label = view.label().to_string();
     let asking = app.clone();
-    let named = tab.to_string();
     let _ = on_the_page(app, &label_of(tab), move |view| {
         let _ = crate::engine::with_platform!(view, move |platform| {
             crate::web_keys::listen(&platform, asking.clone(), window.clone());
             crate::keyboard::page(&asking, &platform, &label, &window);
-            crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
-            crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
-            crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
-            crate::downloads::listen(&platform, asking.clone(), window.clone());
-            crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
-            crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::pinch::web_page(&platform, &asking, &label);
-            crate::web_pass::listen(&platform, asking.clone(), named.clone(), window.clone());
-            ask::listen(&platform, asking, named, window);
         });
     });
-}
-
-pub fn hearing(app: &AppHandle) {
-    let Some(view) = app.get_webview(MAIN) else {
-        orden_base::trace::mark("microphone: no webview to listen on");
-        return;
-    };
-
-    let ours: Vec<String> = app
-        .config()
-        .build
-        .dev_url
-        .as_ref()
-        .map(|url| vec![origin_of(url.as_str())])
-        .unwrap_or_default();
-
-    let _ = view.with_webview(move |platform| {
-        ask::own(&platform, ours);
-        orden_base::trace::mark("microphone: listening on the window's own page");
-    });
-}
-
-fn origin_of(url: &str) -> String {
-    match url.find("://") {
-        Some(at) => match url[at + 3..].find('/') {
-            Some(end) => url[..at + 3 + end].to_lowercase(),
-            None => url.to_lowercase(),
-        },
-        None => String::new(),
-    }
-}
-
-#[cfg(test)]
-fn capture_kinds(kind: isize) -> &'static [&'static str] {
-    match kind {
-        0 => &["camera"],
-        1 => &["microphone"],
-        2 => &["camera", "microphone"],
-        _ => &[],
-    }
 }
 
 fn started(app: &AppHandle, tab: &str) {
@@ -933,7 +864,6 @@ impl From<&Pane> for crate::web_follow::Bounds {
 pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), String> {
     let at = address(&url)?;
     let view = found(&app, &tab)?;
-    crate::web_dialogs::dismiss(&app, &tab);
     view.navigate(at)
         .map_err(|error| format!("that address could not be opened: {error}"))
 }
@@ -947,9 +877,6 @@ pub fn web_step(
     by: Option<u32>,
 ) -> Result<(), String> {
     let view = found(&app, &tab)?;
-    if !matches!(step, Step::Stop) {
-        crate::web_dialogs::dismiss(&app, &tab);
-    }
     let steps = isize::try_from(by.unwrap_or(1).max(1)).unwrap_or(1);
 
     let by = match step {
@@ -1096,9 +1023,6 @@ pub async fn web_close(
     let posted = app.run_on_main_thread(move || {
         let _doing = orden_crashes::stall::doing("web_close");
         if let Some(view) = closing.get_webview(&label) {
-            crate::web_find::forget(&named);
-            crate::web_dialogs::forget(&named);
-            ask::forget(&named);
             crate::web_steady::forget(&named);
             crate::web_pass::forget(&named);
             crate::keyboard::closed(view.label());
@@ -1162,11 +1086,6 @@ async fn photographed(view: Webview) -> Result<Option<String>, String> {
     })
 }
 
-#[tauri::command]
-pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
-    let _ = app.run_on_main_thread(move || ask::answer(id, allow));
-}
-
 pub fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         let_go(view.label());
@@ -1199,24 +1118,11 @@ pub fn on_the_page(
     })
 }
 
-mod ask {
-    use tauri::webview::PlatformWebview;
-    use tauri::AppHandle;
-
-    pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _tab: String, _window: String) {}
-
-    pub fn own(_webview: &PlatformWebview, _ours: Vec<String>) {}
-
-    pub fn answer(_id: u64, _allow: bool) {}
-
-    pub fn forget(_tab: &str) {}
-}
-
 #[cfg(test)]
 mod tests {
     use super::{
-        address, allowed, becomes, capture_kinds, handed_over, opening, origin_of, reader, tab_of,
-        Becomes, Place, Profile, Trail, WebTabs, BLANK,
+        address, allowed, becomes, handed_over, opening, reader, tab_of, Becomes, Place, Profile,
+        Trail, WebTabs, BLANK,
     };
     use tauri::Url;
 
@@ -1250,18 +1156,10 @@ mod tests {
         let site = "https://accounts.example/o/oauth2/auth?client_id=1";
         let web = |text: &str| Becomes::Tab(text.to_string());
 
-        assert_eq!(
-            becomes(&at("https://example.com/a"), false, true, false),
-            web("https://example.com/a")
-        );
-        assert_eq!(becomes(&at(site), true, true, false), web(site));
-        assert_eq!(becomes(&at(site), true, false, false), Becomes::Window);
-        assert_eq!(becomes(&at(BLANK), false, false, false), Becomes::Window);
-        assert_eq!(
-            becomes(&at("about:blank#x"), false, false, false),
-            Becomes::Window
-        );
-        assert_eq!(becomes(&at(site), false, false, false), Becomes::Window);
+        assert_eq!(becomes(&at(site), true), Becomes::Window);
+        assert_eq!(becomes(&at(BLANK), false), Becomes::Window);
+        assert_eq!(becomes(&at("about:blank#x"), false), Becomes::Window);
+        assert_eq!(becomes(&at(site), false), Becomes::Window);
         for opens_a_tab in [
             "https://docs.google.com/document/d/1/edit",
             "https://example.com/a",
@@ -1270,7 +1168,7 @@ mod tests {
             "https://example.com/authors",
         ] {
             assert_eq!(
-                becomes(&at(opens_a_tab), false, false, false),
+                becomes(&at(opens_a_tab), false),
                 web(opens_a_tab),
                 "{opens_a_tab}"
             );
@@ -1285,34 +1183,15 @@ mod tests {
             "https://example.com/sign-in",
             "https://sso.example.com/start",
         ] {
-            assert_eq!(
-                becomes(&at(signs_in), false, false, false),
-                Becomes::Window,
-                "{signs_in}"
-            );
+            assert_eq!(becomes(&at(signs_in), false), Becomes::Window, "{signs_in}");
         }
-        assert_eq!(
-            becomes(&at(site), true, false, true),
-            Becomes::Blocked(site.to_string())
-        );
-        assert_eq!(becomes(&at(BLANK), false, false, true), Becomes::Nothing);
         for refused in [
             "orden://open?x",
             "file:///etc/passwd",
             "javascript:alert(1)",
         ] {
-            assert_eq!(
-                becomes(&at(refused), false, true, false),
-                Becomes::Nothing,
-                "{refused}"
-            );
-            assert_eq!(
-                becomes(&at(refused), false, false, false),
-                Becomes::Nothing,
-                "{refused}"
-            );
+            assert_eq!(becomes(&at(refused), false), Becomes::Nothing, "{refused}");
         }
-        assert_eq!(becomes(&at(BLANK), false, true, false), Becomes::Nothing);
     }
 
     #[test]
@@ -1323,25 +1202,16 @@ mod tests {
             "data:text/html,<p>receipt</p>",
             "data:application/pdf;base64,JVBERi0=",
         ] {
-            for (sized, said) in [(false, false), (true, false), (false, true)] {
-                assert_eq!(
-                    becomes(&at(own), sized, said, false),
-                    Becomes::Window,
-                    "{own}"
-                );
+            for sized in [false, true] {
+                assert_eq!(becomes(&at(own), sized), Becomes::Window, "{own}");
             }
-            assert_eq!(becomes(&at(own), false, false, true), Becomes::Nothing);
         }
         for refused in [
             "blob:http://tauri.localhost/1b4e28ba-2fa1-11d2-883f-0016d3cca427",
             "blob:null/1b4e28ba-2fa1-11d2-883f-0016d3cca427",
             "data:text/html,<p data-tauri-cef-internal></p>",
         ] {
-            assert_eq!(
-                becomes(&at(refused), false, true, false),
-                Becomes::Nothing,
-                "{refused}"
-            );
+            assert_eq!(becomes(&at(refused), false), Becomes::Nothing, "{refused}");
         }
     }
 
@@ -1351,11 +1221,10 @@ mod tests {
         crate::extension_ids::known(id);
         let page = format!("chrome-extension://{id}/dashboard.html");
         let tab = Becomes::Tab(page.clone());
-        assert_eq!(becomes(&at(&page), false, false, false), tab);
-        assert_eq!(becomes(&at(&page), true, false, false), tab);
-        assert_eq!(becomes(&at(&page), false, true, false), tab);
+        assert_eq!(becomes(&at(&page), false), tab);
+        assert_eq!(becomes(&at(&page), true), tab);
         let other = "chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba/dashboard.html";
-        assert_eq!(becomes(&at(other), false, false, false), Becomes::Nothing);
+        assert_eq!(becomes(&at(other), false), Becomes::Nothing);
     }
 
     fn at(url: &str) -> Url {
@@ -1386,25 +1255,6 @@ mod tests {
             Ok((None, true))
         );
         assert!(read(r#"{"store":"../web"}"#).checked().is_err());
-    }
-
-    #[test]
-    fn a_capture_request_is_asked_about_kind_by_kind() {
-        assert_eq!(capture_kinds(0), ["camera"]);
-        assert_eq!(capture_kinds(1), ["microphone"]);
-        assert_eq!(capture_kinds(2), ["camera", "microphone"]);
-        assert!(capture_kinds(3).is_empty());
-        assert!(capture_kinds(-1).is_empty());
-    }
-
-    #[test]
-    fn an_origin_is_the_scheme_the_host_and_the_port() {
-        assert_eq!(
-            origin_of("http://a.example:8080/x/y?z"),
-            "http://a.example:8080"
-        );
-        assert_eq!(origin_of("HTTP://A.Example/"), "http://a.example");
-        assert_eq!(origin_of("about:blank"), "");
     }
 
     #[test]
@@ -1653,20 +1503,6 @@ mod tests {
     }
 
     #[test]
-    fn a_window_no_one_heard_asked_for_is_blocked_not_opened() {
-        let unheard = crate::web_opens::Heard::UNHEARD;
-        assert_eq!(
-            becomes(
-                &at("https://a.example/opened"),
-                false,
-                unheard.said.is_some(),
-                unheard.unasked
-            ),
-            Becomes::Blocked("https://a.example/opened".to_string())
-        );
-    }
-
-    #[test]
     fn nobody_opens_a_tab_on_the_blank_page() {
         assert!(address(BLANK).is_err());
         assert!(handed_over(&at(BLANK)).is_none());
@@ -1714,34 +1550,6 @@ mod tests {
         let tabs = WebTabs::default();
         assert!(build(&tabs).is_err());
         assert!(tabs.claim("a"));
-    }
-
-    #[test]
-    fn a_page_s_waiting_dialog_is_let_go_before_it_is_sent_anywhere() {
-        let source = include_str!("web_tabs.rs");
-        for (command, moves) in [
-            ("pub fn web_navigate(", ".navigate(at)"),
-            ("pub fn web_step(", "view.reload()"),
-        ] {
-            let body = source
-                .split(command)
-                .nth(1)
-                .and_then(|from| from.split("\n}\n").next())
-                .expect("the command");
-            let dismissed = body.find("web_dialogs::dismiss(").expect("dialogs let go");
-            assert!(dismissed < body.find(moves).expect("the move"), "{command}");
-        }
-    }
-
-    #[test]
-    fn a_page_s_waiting_question_is_let_go_when_it_leaves_or_closes() {
-        let source = include_str!("web_tabs.rs");
-        let close = source
-            .split("pub async fn web_close(")
-            .nth(1)
-            .and_then(|from| from.split("\n}\n").next())
-            .expect("the close");
-        assert!(close.contains("ask::forget(&named)"));
     }
 
     #[test]

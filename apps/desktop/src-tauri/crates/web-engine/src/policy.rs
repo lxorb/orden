@@ -77,42 +77,27 @@ pub fn blank(url: &Url) -> bool {
 pub enum Becomes {
     Tab(String),
     Window,
-    Blocked(String),
     Nothing,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Asked {
-    pub sized: bool,
-    pub said: bool,
-    pub unasked: bool,
-}
-
-pub fn becomes(url: &Url, asked: Asked, extensions: &impl ExtensionUrls) -> Becomes {
+pub fn becomes(url: &Url, sized: bool, extensions: &impl ExtensionUrls) -> Becomes {
     if matches!(url.scheme(), "blob" | "data")
         && frame_may_open(url, extensions)
         && !internal(url.as_str())
     {
-        return if asked.unasked {
-            Becomes::Nothing
-        } else {
-            Becomes::Window
-        };
-    }
-    let handed = || tab_may_open(url, extensions).then(|| url.to_string());
-    if asked.said {
-        return handed().map_or(Becomes::Nothing, Becomes::Tab);
-    }
-    if asked.unasked {
-        return handed().map_or(Becomes::Nothing, Becomes::Blocked);
+        return Becomes::Window;
     }
     if extensions.is_extension(url) {
         return Becomes::Tab(url.to_string());
     }
-    if asked.sized || blank(url) || signs_in(url) {
+    if sized || blank(url) || signs_in(url) {
         return Becomes::Window;
     }
-    handed().map_or(Becomes::Nothing, Becomes::Tab)
+    if tab_may_open(url, extensions) {
+        Becomes::Tab(url.to_string())
+    } else {
+        Becomes::Nothing
+    }
 }
 
 const SIGNING_IN: &[&str] = &[

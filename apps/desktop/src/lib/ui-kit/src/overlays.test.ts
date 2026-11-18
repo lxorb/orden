@@ -344,8 +344,6 @@ describe('what hides a web page', () => {
     'lib/views/src/Popover.svelte': 'the filter, sort or group of a view, under its button',
     'lib/views/src/ToneDot.svelte': "a tone's colours, beside its dot",
     'lib/web-tab/src/AddressField.svelte': 'the suggestions under the address',
-    'lib/web-tab/src/WebAsk.svelte': "a site's question, under the bar",
-    'lib/web-tab/src/WebDialog.svelte': "a page's own dialog, at the top of the page",
     'lib/web-tab/src/WebDownloads.svelte': 'bubble',
     'lib/web-tab/src/WebExtensionPopup.svelte': "an extension's popup, under its button",
     'lib/web-tab/src/WebExtensions.svelte': 'bubble',

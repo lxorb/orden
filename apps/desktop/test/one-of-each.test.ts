@@ -235,7 +235,6 @@ describe('the ring a keyboard leaves', () => {
       'lib/pass-ui/src/PassFill.svelte',
       'lib/reading/src/Reading.svelte',
       'lib/theme-looks/src/picker/ThemePicker.svelte',
-      'lib/web-tab/src/WebAsk.svelte',
     ])
   })
 
@@ -588,8 +587,6 @@ describe('the bubble a sentence appears in', () => {
       'lib/sidebar/src/NameField.svelte',
       'lib/tab-strip/src/TabCard.svelte',
       'lib/ui-controls/src/Hint.svelte',
-      'lib/web-tab/src/WebAsk.svelte',
-      'lib/web-tab/src/WebDialog.svelte',
       'lib/web-tab/src/WebDownloads.svelte',
       'lib/web-tab/src/WebExtensionPopup.svelte',
       'lib/web-tab/src/WebExtensions.svelte',

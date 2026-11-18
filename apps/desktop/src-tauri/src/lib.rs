@@ -347,8 +347,6 @@ macro_rules! desktop_commands {
             orden_web::web_tabs::web_shot,
             orden_web::web_tint::web_tint,
             orden_web::web_clear::web_clear,
-            orden_web::web_tabs::web_answer,
-            orden_web::web_dialogs::web_dialog_answer,
             orden_dictation::dictation::dictation_local,
             orden_dictation::dictation::dictation_local_fetch,
             orden_dictation::dictation::dictation_local_remove,
@@ -611,7 +609,6 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
 
 #[cfg(desktop)]
 fn hearing(handle: &tauri::AppHandle) {
-    orden_web::web_tabs::hearing(handle);
     orden_web::page_carry::forget_carried(handle);
     #[cfg(windows)]
     orden_system::touchpad::start(handle);

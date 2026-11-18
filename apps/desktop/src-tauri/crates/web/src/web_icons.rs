@@ -117,14 +117,6 @@ pub fn best(declaring: &Declaring) -> Option<String> {
         })
 }
 
-pub fn listen(
-    _webview: &tauri::webview::PlatformWebview,
-    _app: AppHandle,
-    _tab: String,
-    _window: String,
-) {
-}
-
 #[cfg(test)]
 mod tests {
     use super::{best, Declared, Declaring};

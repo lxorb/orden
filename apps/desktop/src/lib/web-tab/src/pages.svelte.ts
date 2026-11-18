@@ -10,7 +10,7 @@ import {
   invoke,
   isDesktop,
 } from '../../platform/src/api'
-import { isExtensionPage, isWebAddress, keysOf, originKey } from '@orden/scan/web-address'
+import { isExtensionPage, isWebAddress, keysOf } from '@orden/scan/web-address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
 import type { NotArrived } from './heard'
@@ -27,26 +27,13 @@ function stores(): Promise<typeof import('./web-data.svelte').webData> {
   return import('./web-data.svelte').then((module) => module.webData)
 }
 
-function pageDialogs(): Promise<typeof import('./dialogs.svelte')> {
-  return import('./dialogs.svelte')
-}
-
-function dropDialogs(tab: string): void {
-  if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
-}
-
 function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
   return import('./permissions.svelte')
 }
 
-function dropGrants(tab: string, privateLeft: boolean): void {
-  if (!__EVEN_PLUGIN__)
-    void pagePermissions().then(({ grants }) => grants.dropped(tab, privateLeft))
-}
-
-function leftPage(tab: string): void {
-  dropGrants(tab, true)
-  dropDialogs(tab)
+function leftPrivate(privateLeft: boolean): void {
+  if (!__EVEN_PLUGIN__ && !privateLeft)
+    void pagePermissions().then(({ grants }) => grants.leftPrivate())
 }
 
 function sleeping() {
@@ -742,7 +729,6 @@ class Pages {
     page.loading = false
     page.playing = false
     clearTimeout(page.resting)
-    leftPage(tabId)
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
@@ -760,7 +746,6 @@ class Pages {
     page.forward = false
     page.shot = null
     clearTimeout(page.resting)
-    leftPage(tabId)
     await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
@@ -892,7 +877,6 @@ class Pages {
     if (page.opening) this.goingTo.set(page, url)
     if (!page.live) return
 
-    leftPage(tabId)
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
@@ -912,7 +896,6 @@ class Pages {
     }
     if (!isDesktop || !page?.live) return
     page.upgrade = null
-    if (step !== 'stop') leftPage(tabId)
 
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
   }
@@ -1009,8 +992,7 @@ class Pages {
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
-      dropGrants(tabId, this.anyPrivate())
-      dropDialogs(tabId)
+      leftPrivate(this.anyPrivate())
       if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
     }
@@ -1022,8 +1004,7 @@ class Pages {
     await this.look(tabId)
 
     this.held.delete(tabId)
-    dropGrants(tabId, this.anyPrivate())
-    dropDialogs(tabId)
+    leftPrivate(this.anyPrivate())
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
@@ -1063,21 +1044,6 @@ class Pages {
     if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
     this.listening ??= (async () => {
       const { hearHere: listen } = await import('../../windows/src/api')
-
-      const { grants, readAsked } = await pagePermissions()
-      await listen('orden://web-ask', (event) => {
-        const said = readAsked(event.payload)
-        const page = said ? this.held.get(said.tab) : undefined
-        if (said && page) grants.heard({ ...said, privately: page.inPrivate })
-        else if (said) grants.refused(said.id)
-      })
-
-      const { dialogs, readDialog } = await pageDialogs()
-      await listen('orden://web-dialog', (event) => {
-        const said = readDialog(event.payload)
-        if (said && this.held.has(said.tab)) dialogs.heard(said)
-        else if (said) dialogs.refused(said.id)
-      })
 
       await listen('orden://web-open', (event) => {
         const said = readOpening(event.payload)
@@ -1139,8 +1105,6 @@ class Pages {
 
         const was = page.loading
         const moved = said.url !== '' && said.url !== page.at
-        const elsewhere = moved && originKey(said.url) !== originKey(page.at ?? '')
-        if ((said.loading && !was) || elsewhere) leftPage(said.tab)
         if (moved || (said.loading && !was)) {
           page.unplayable = false
           page.blocked = null

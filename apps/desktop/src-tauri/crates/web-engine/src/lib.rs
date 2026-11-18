@@ -14,8 +14,8 @@ pub use engine::{
 pub use host::{left_to_the_platform, Edge, NativeWindow, Plain, WindowSystem};
 pub use orden_contracts::{Failure, FailureKind, Outcome};
 pub use policy::{
-    allowed, app_host, becomes, blank, frame_may_open, internal, signs_in, tab_may_open, Asked,
-    Becomes, ExtensionUrls, NoExtensions,
+    allowed, app_host, becomes, blank, frame_may_open, internal, signs_in, tab_may_open, Becomes,
+    ExtensionUrls, NoExtensions,
 };
 pub use profiles::{Profiles, StoreName, APP_PROFILE, LONGEST_STORE_NAME, ROOT, STORE_PROFILE};
 pub use sequence::{handed_out, once_built, one_at_a_time, Outbox, Sending};

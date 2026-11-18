@@ -363,7 +363,6 @@ fn place_in(tree: Option<&Value>, main: bool, was: &Place) -> Option<Place> {
 }
 
 pub use engine::binding_called;
-pub use engine::listen;
 
 mod engine {
     use std::collections::HashMap;
@@ -600,14 +599,6 @@ mod engine {
         let mut known = known_frames();
         known.contexts.retain(|(owner, _, _), _| owner != tab);
         known.frames.retain(|(owner, _), _| owner != tab);
-    }
-
-    pub fn listen(
-        _webview: &tauri::webview::PlatformWebview,
-        _app: AppHandle,
-        _tab: String,
-        _window: String,
-    ) {
     }
 }
 

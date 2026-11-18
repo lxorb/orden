@@ -1,5 +1,3 @@
-use std::collections::{HashMap, VecDeque};
-
 use serde::Serialize;
 
 use crate::web_keys::{Held, Pressed, PRESSED};
@@ -8,66 +6,6 @@ use crate::web_keys::{Held, Pressed, PRESSED};
 pub enum Asked {
     Behind,
     Front,
-}
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Heard {
-    pub ours: bool,
-    pub said: Option<Asked>,
-    pub unasked: bool,
-}
-
-impl Heard {
-    #[cfg_attr(not(test), allow(dead_code))]
-    pub const UNHEARD: Self = Self {
-        ours: false,
-        said: None,
-        unasked: true,
-    };
-}
-
-const WAITING: usize = 64;
-
-#[derive(Debug)]
-#[cfg_attr(not(test), allow(dead_code))]
-pub struct Waiting<T> {
-    tabs: HashMap<String, VecDeque<(String, T)>>,
-}
-
-impl<T> Default for Waiting<T> {
-    fn default() -> Self {
-        Self {
-            tabs: HashMap::new(),
-        }
-    }
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-impl<T> Waiting<T> {
-    pub fn heard(&mut self, tab: &str, uri: &str, what: T) {
-        let waiting = self.tabs.entry(tab.to_string()).or_default();
-        if waiting.len() >= WAITING {
-            waiting.pop_front();
-        }
-        waiting.push_back((uri.to_string(), what));
-    }
-
-    pub fn taken(&mut self, tab: &str, url: &str) -> Option<T> {
-        let waiting = self.tabs.get_mut(tab)?;
-        let found = waiting
-            .iter()
-            .position(|(uri, _)| same_address(uri, url))
-            .and_then(|at| waiting.remove(at));
-        if waiting.is_empty() {
-            self.tabs.remove(tab);
-        }
-        found.map(|(_, what)| what)
-    }
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-fn same_address(heard: &str, url: &str) -> bool {
-    heard == url || tauri::Url::parse(heard).is_ok_and(|heard| heard.as_str() == url)
 }
 
 const BEHIND: &str = "orden-behind";
@@ -642,85 +580,9 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
     }
 }
 
-pub fn listen(
-    _webview: &tauri::webview::PlatformWebview,
-    _app: tauri::AppHandle,
-    _tab: String,
-    _window: String,
-) {
-}
-
-pub fn heard(_tab: &str, _url: &tauri::Url) -> Heard {
-    Heard::default()
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{
-        actual, chord, placed, sought, Ask, Asked, Heard, Held, Passed, Waiting, SCRIPT, WAITING,
-    };
-
-    const UNASKED: Heard = Heard {
-        ours: false,
-        said: None,
-        unasked: true,
-    };
-
-    #[test]
-    fn a_storm_of_opens_keeps_each_request_s_own_verdict() {
-        let mut waiting = Waiting::default();
-        let asked = Heard {
-            said: Some(Asked::Front),
-            ..Heard::default()
-        };
-        waiting.heard("tab", "https://one.example/", UNASKED);
-        waiting.heard("tab", "https://two.example/", asked);
-        waiting.heard("tab", "https://three.example/", UNASKED);
-        waiting.heard("other", "https://one.example/", asked);
-
-        assert_eq!(waiting.taken("tab", "https://one.example/"), Some(UNASKED));
-        assert_eq!(waiting.taken("tab", "https://two.example/"), Some(asked));
-        assert_eq!(
-            waiting.taken("tab", "https://three.example/"),
-            Some(UNASKED)
-        );
-        assert_eq!(waiting.taken("tab", "https://three.example/"), None);
-        assert_eq!(waiting.taken("other", "https://one.example/"), Some(asked));
-    }
-
-    #[test]
-    fn every_unasked_open_of_a_burst_to_one_address_stays_unasked() {
-        let mut waiting = Waiting::default();
-        for _ in 0..20 {
-            waiting.heard("tab", "https://same.example/", UNASKED);
-        }
-        for _ in 0..20 {
-            assert_eq!(waiting.taken("tab", "https://same.example/"), Some(UNASKED));
-        }
-        assert_eq!(waiting.taken("tab", "https://same.example/"), None);
-    }
-
-    #[test]
-    fn a_request_is_found_by_the_address_the_engine_parsed() {
-        let mut waiting = Waiting::default();
-        waiting.heard("tab", "HTTPS://Example.com", UNASKED);
-        assert_eq!(waiting.taken("tab", "https://example.com/"), Some(UNASKED));
-    }
-
-    #[test]
-    fn requests_never_answered_do_not_pile_up() {
-        let mut waiting = Waiting::default();
-        for at in 0..WAITING * 3 {
-            waiting.heard("tab", &format!("https://example.com/{at}"), at);
-        }
-        assert_eq!(waiting.taken("tab", "https://example.com/0"), None);
-        let last = WAITING * 3 - 1;
-        assert_eq!(
-            waiting.taken("tab", &format!("https://example.com/{last}")),
-            Some(last)
-        );
-        assert_eq!(waiting.tabs["tab"].len(), WAITING - 1);
-    }
+    use super::{actual, chord, placed, sought, Ask, Asked, Held, Passed, SCRIPT};
 
     const NONE: Held = Held {
         ctrl: false,
