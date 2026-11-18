@@ -171,10 +171,10 @@ export const run = {
     store.pickAll([...cardsInLasso(store.canvas.nodes, points, partly), ...ink])
   },
 
-  remove(store: CanvasStore) {
-    if (!store.picked.length) return
+  remove(store: CanvasStore, ids: readonly string[] = store.picked) {
+    if (!ids.length) return
 
-    store.edit(removed(store.canvas, store.picked))
+    store.edit(removed(store.canvas, ids))
     store.clearPicked()
   },
 
