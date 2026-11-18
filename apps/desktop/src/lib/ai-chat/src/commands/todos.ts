@@ -31,6 +31,6 @@ export interface Listed {
 export async function showTasks(host: Host, thread: Thread, args: string): Promise<void> {
   const { listed } = await import('../../../tasks-model/src/api')
   const asked = args.trim()
-  const answer: Listed = { ...(asked ? { filter: asked } : {}), ...listed() }
+  const answer: Listed = { ...(asked ? { filter: asked } : {}), ...(await listed()) }
   host.line(thread, JSON.stringify(answer), 'tasks')
 }
