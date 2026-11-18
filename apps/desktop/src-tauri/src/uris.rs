@@ -22,7 +22,7 @@ pub fn watch(app: &AppHandle) {
         #[cfg(desktop)]
         let urls: Vec<String> = urls
             .into_iter()
-            .filter(|url| !crate::reminders::answer_link(&opened, url))
+            .filter(|url| !orden_reminders::reminders::answer_link(&opened, url))
             .collect();
         if urls.is_empty() {
             return;
@@ -44,7 +44,7 @@ pub fn watch(app: &AppHandle) {
     #[cfg(desktop)]
     let launched: Vec<String> = launched
         .into_iter()
-        .filter(|url| !crate::reminders::answer_link(app, url))
+        .filter(|url| !orden_reminders::reminders::answer_link(app, url))
         .collect();
     if launched.is_empty() {
         return;
@@ -119,9 +119,9 @@ pub fn launched_quietly(app: &AppHandle) -> bool {
             .flatten()
             .unwrap_or_default(),
     );
-    let quiet = crate::reminders::quiet_launch(&launched);
+    let quiet = orden_reminders::reminders::quiet_launch(&launched);
     if quiet {
-        crate::reminders::came_up_quietly();
+        orden_reminders::reminders::came_up_quietly();
     }
     quiet
 }

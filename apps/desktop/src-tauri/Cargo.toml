@@ -228,6 +228,7 @@ orden-explorer = { path = "crates/explorer" }
 orden-import = { path = "crates/import" }
 orden-placement = { path = "crates/placement" }
 orden-pty = { path = "crates/pty" }
+orden-reminders = { path = "crates/reminders" }
 orden-system = { path = "crates/system" }
 fontdb.workspace = true
 png.workspace = true
@@ -258,21 +259,6 @@ objc2.workspace = true
 block2.workspace = true
 objc2-foundation.workspace = true
 objc2-app-kit.workspace = true
-objc2-user-notifications = { version = "0.3", default-features = false, features = [
-  "std",
-  "block2",
-  "bitflags",
-  "UNNotification",
-  "UNNotificationAction",
-  "UNNotificationCategory",
-  "UNNotificationContent",
-  "UNNotificationRequest",
-  "UNNotificationResponse",
-  "UNNotificationSettings",
-  "UNNotificationSound",
-  "UNNotificationTrigger",
-  "UNUserNotificationCenter",
-] }
 objc2-screen-capture-kit.workspace = true
 objc2-core-media.workspace = true
 objc2-core-foundation.workspace = true

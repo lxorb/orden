@@ -63,7 +63,7 @@ fn told() {
     let Some(app) = APP.get() else {
         return;
     };
-    if let Some(window) = crate::agents::shell::host(app) {
+    if let Some(window) = orden_base::labels::host(app) {
         let _ = app.emit_to(window.label(), ADDED_EVENT, ());
     }
 }

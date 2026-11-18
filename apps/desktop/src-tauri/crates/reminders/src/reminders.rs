@@ -1,4 +1,4 @@
-pub(crate) mod link;
+pub mod link;
 #[cfg(target_os = "macos")]
 pub(crate) mod macos;
 #[cfg_attr(
@@ -290,7 +290,22 @@ fn answered(kept: &HashMap<String, Kept>, press: &Arrived) -> Option<Pressed> {
     })
 }
 
-pub fn start(app: &AppHandle) {
+pub struct Host {
+    #[cfg(target_os = "macos")]
+    pub reopen: fn(&AppHandle),
+    pub quit_now: fn(&AppHandle),
+    pub in_tray: fn() -> bool,
+    pub notify: fn(&AppHandle, String, String),
+}
+
+static HOST: std::sync::OnceLock<Host> = std::sync::OnceLock::new();
+
+pub(crate) fn host() -> Option<&'static Host> {
+    HOST.get()
+}
+
+pub fn start(app: &AppHandle, host: Host) {
+    let _ = HOST.set(host);
     #[cfg(target_os = "macos")]
     if may_schedule() {
         macos::listen(app);
@@ -306,8 +321,8 @@ pub fn pressed(app: &AppHandle, act: Act, id: &str, nonce: &str) {
 #[cfg(target_os = "macos")]
 pub fn pressed_by_id(app: &AppHandle, act: Act, id: &str) {
     press(app, act, id, None);
-    if crate::agents::shell::host(app).is_none() {
-        crate::launch::reopen(app);
+    if let (None, Some(host)) = (orden_base::labels::host(app), host()) {
+        (host.reopen)(app);
     }
 }
 
@@ -320,12 +335,12 @@ fn press(app: &AppHandle, act: Act, id: &str, nonce: Option<&str>) {
         });
     });
     if act == Act::Open {
-        if let Some(window) = crate::agents::shell::host(app) {
+        if let Some(window) = orden_base::labels::host(app) {
             let _ = window.show();
             orden_placement::placement::raised(&window);
         }
     }
-    if let Some(window) = crate::agents::shell::host(app) {
+    if let Some(window) = orden_base::labels::host(app) {
         let _ = app.emit_to(window.label(), PRESSED, ());
     }
 }
@@ -345,9 +360,12 @@ pub fn reminders_quietly(webview: tauri::Webview, app: AppHandle) -> Result<(), 
     orden_base::labels::from_the_app(&webview)?;
     let quiet = LAUNCHED_QUIETLY.swap(false, Ordering::Relaxed);
     let hidden =
-        crate::agents::shell::host(&app).is_some_and(|window| !window.is_visible().unwrap_or(true));
-    if goes_again(quiet, hidden, crate::agents::shell::in_tray()) {
-        crate::lifecycle::quit_now(&app);
+        orden_base::labels::host(&app).is_some_and(|window| !window.is_visible().unwrap_or(true));
+    let Some(host) = host() else {
+        return Ok(());
+    };
+    if goes_again(quiet, hidden, (host.in_tray)()) {
+        (host.quit_now)(&app);
     }
     Ok(())
 }

@@ -146,7 +146,7 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
 
     let reminder = argv
         .iter()
-        .any(|one| crate::reminders::link::is_reminder(one));
+        .any(|one| orden_reminders::reminders::link::is_reminder(one));
     if let Some(window) = app.get_window(MAIN).filter(|_| !reminder) {
         if orden_placement::placement::away().is_none() {
             let _ = window.show();

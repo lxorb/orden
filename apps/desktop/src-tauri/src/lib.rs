@@ -41,8 +41,6 @@ mod linux;
 #[cfg(desktop)]
 pub mod mcp;
 #[cfg(desktop)]
-mod notices;
-#[cfg(desktop)]
 pub mod old_engine;
 #[cfg(desktop)]
 pub mod old_home;
@@ -62,8 +60,6 @@ mod page_style;
 mod pinch;
 #[cfg(desktop)]
 mod quick_add;
-#[cfg(desktop)]
-mod reminders;
 #[cfg(test)]
 mod scans;
 #[cfg(desktop)]
@@ -253,11 +249,11 @@ macro_rules! desktop_commands {
             quick_add::quick_add_hide,
             quick_add::quick_add_tall,
             agents::shell::tray_keep,
-            reminders::reminders_set,
-            reminders::reminders_taken,
-            reminders::reminders_quietly,
-            notices::notice_show,
-            notices::notice_clear,
+            orden_reminders::reminders::reminders_set,
+            orden_reminders::reminders::reminders_taken,
+            orden_reminders::reminders::reminders_quietly,
+            orden_reminders::notices::notice_show,
+            orden_reminders::notices::notice_clear,
             mcp::program::mcp_program,
             ai_agent::ai_agent_tools,
             ai_agent::ai_agent_call,
@@ -720,6 +716,20 @@ fn hearing(handle: &tauri::AppHandle) {
 }
 
 #[cfg(desktop)]
+fn reminders_started(handle: &tauri::AppHandle) {
+    orden_reminders::reminders::start(
+        handle,
+        orden_reminders::reminders::Host {
+            #[cfg(target_os = "macos")]
+            reopen: launch::reopen,
+            quit_now: lifecycle::quit_now,
+            in_tray: agents::shell::in_tray,
+            notify: agents::shell::notify,
+        },
+    );
+}
+
+#[cfg(desktop)]
 fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
     chromium_pump::start(handle);
@@ -767,7 +777,7 @@ fn ready(
 
     uris::watch(handle);
     #[cfg(desktop)]
-    reminders::start(handle);
+    reminders_started(handle);
     trace::mark("deep links");
 
     #[cfg(desktop)]

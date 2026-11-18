@@ -9,6 +9,11 @@ pub fn document_windows(app: &AppHandle) -> Vec<tauri::Window> {
         .collect()
 }
 
+pub fn host(app: &AppHandle) -> Option<tauri::Window> {
+    app.get_window(MAIN)
+        .or_else(|| document_windows(app).into_iter().next())
+}
+
 pub fn is_document_window(label: &str) -> bool {
     label == MAIN
         || label
