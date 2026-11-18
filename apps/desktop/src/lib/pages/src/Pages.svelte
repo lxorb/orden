@@ -26,6 +26,8 @@
     pens,
     putWords,
     RightPan,
+    run,
+    takesOver,
     type Tool,
     toolPressed,
     tools,
@@ -45,9 +47,7 @@
   } from '../../camera/src/api'
   import {
     cardsInLasso,
-    coloured,
     Contacts,
-    copied,
     DEFAULT_INK,
     hovering,
     leadPoint,
@@ -57,7 +57,6 @@
     pickedBox,
     type Point,
     readPalette,
-    removed,
     rubbedBetween,
     rubbedOut,
     sized,
@@ -129,8 +128,6 @@
     'lasso',
     'words',
   ])
-
-  const TWO_FINGERS = 250
 
   const GRACE = 160
 
@@ -600,13 +597,6 @@
     )
   }
 
-  function takesOver(one: Gesture, since: number, now: number): boolean {
-    if (one.kind === 'pinch') return false
-    if (one.kind !== 'draw' && one.kind !== 'erase') return true
-
-    return now - since <= TWO_FINGERS
-  }
-
   let doubting: { id: number; timer: number; event: PointerEvent } | null = null
 
   function stopDoubting(id?: number) {
@@ -658,7 +648,7 @@
     }
 
     if (one && driver?.touch && kind === 'touch' && driver.id !== event.pointerId) {
-      if (!takesOver(one, driver.since, event.timeStamp)) return
+      if (!takesOver(one.kind, driver.since, event.timeStamp)) return
 
       store.halt()
       if (one.kind === 'erase') store.takeBack(one.run)
@@ -803,7 +793,7 @@
   })
 
   function colourPicked(colour: string | null) {
-    store.edit(coloured(canvas, store.picked, colour ?? DEFAULT_INK))
+    run.colour(store, colour ?? DEFAULT_INK)
   }
 
   function inkPicked(): boolean {
@@ -811,19 +801,16 @@
   }
 
   function duplicatePicked() {
-    if (!writable || !store.picked.length) return
-    const made = copied(canvas, store.picked)
-    store.edit(made.canvas)
-    store.pickAll(made.ids)
+    if (writable) run.duplicate(store)
   }
 
   function deletePicked() {
     if (!writable) return
     const paged = new Set(pages.map((page) => page.id))
-    const going = store.picked.filter((id) => !paged.has(id))
-    if (!going.length) return
-    store.edit(removed(canvas, going))
-    store.clearPicked()
+    run.remove(
+      store,
+      store.picked.filter((id) => !paged.has(id)),
+    )
   }
 
   async function runCommandRow(id: string) {

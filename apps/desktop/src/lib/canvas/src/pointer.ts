@@ -263,11 +263,11 @@ function ring(from: Point, to: Point): Point[] {
   return [from, { x: to.x, y: from.y }, to, { x: from.x, y: to.y }]
 }
 
-function takesOver(gesture: Gesture, first: Driver, now: number): boolean {
-  if (first.kind !== 'touch' || gesture.kind === 'pinch') return false
-  if (gesture.kind !== 'draw' && gesture.kind !== 'erase') return true
+export function takesOver(kind: string, since: number, now: number): boolean {
+  if (kind === 'pinch') return false
+  if (kind !== 'draw' && kind !== 'erase') return true
 
-  return now - first.since <= TWO_FINGERS
+  return now - since <= TWO_FINGERS
 }
 
 function begun(gesture: Gesture): boolean {
@@ -425,7 +425,7 @@ function landing(machine: Machine, input: Down, context: Context): Step {
   if (input.pointer === 'touch' && now.gesture && now.driver) {
     const first = now.driver
 
-    if (takesOver(now.gesture, first, input.time)) {
+    if (first.kind === 'touch' && takesOver(now.gesture.kind, first.since, input.time)) {
       return {
         machine: {
           ...now,
