@@ -25,6 +25,8 @@ const SPELLINGS: [string, string][] = [
   ],
   ['a \\) b \\] c \\* d', 'a \\) b \\] c \\* d'],
   ['Already $x$ and $$y$$.', 'Already $x$ and $$y$$.'],
+  ['Press the ` key.\n\nThen \\(x\\)', 'Press the ` key.\n\nThen $x$'],
+  ['a `b\nc \\(x\\)\nd` and \\(y\\)', 'a `b\nc \\(x\\)\nd` and $y$'],
 ]
 
 describe('LaTeX delimiters, spelled a note’s way', () => {
