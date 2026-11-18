@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -100,13 +100,9 @@ impl On {
     }
 }
 
-fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
-    held.held()
-}
-
 impl Asks {
     fn load_of(&self, owner: &str) -> u64 {
-        lock(&self.loads).get(owner).copied().unwrap_or(0)
+        self.loads.held().get(owner).copied().unwrap_or(0)
     }
 
     fn gone(&self, owner: &str, load: u64) -> bool {
@@ -114,19 +110,19 @@ impl Asks {
     }
 
     fn page_started(&self, owner: &str) {
-        *lock(&self.loads).entry(owner.to_owned()).or_insert(0) += 1;
+        *self.loads.held().entry(owner.to_owned()).or_insert(0) += 1;
         self.stop_where(Some(owner));
     }
 
     fn stop_where(&self, owner: Option<&str>) {
         let mine = |one: &str| owner.is_none_or(|owner| one == owner);
-        for held in lock(&self.running).values_mut() {
+        for held in self.running.held().values_mut() {
             if mine(&held.owner) {
                 held.stop();
             }
         }
         let sessions: Vec<Session> = {
-            let mut sessions = lock(&self.sessions);
+            let mut sessions = self.sessions.held();
             let ids: Vec<String> = sessions
                 .iter()
                 .filter(|(_, session)| mine(&session.owner))
@@ -142,7 +138,7 @@ impl Asks {
             }
         }
         let hosts: Vec<Arc<Host>> = {
-            let mut hosts = lock(&self.hosts);
+            let mut hosts = self.hosts.held();
             let keys: Vec<HostKey> = hosts
                 .keys()
                 .filter(|key| mine(&key.owner))
@@ -233,7 +229,7 @@ fn workroom(app: &AppHandle) -> Result<PathBuf, String> {
 fn caps_of(program: &Program, folder: &Path) -> args::Caps {
     static KNOWN: OnceLock<Mutex<HashMap<PathBuf, args::Caps>>> = OnceLock::new();
     let known = KNOWN.get_or_init(Mutex::default);
-    if let Some(caps) = lock(known).get(&program.exe).cloned() {
+    if let Some(caps) = known.held().get(&program.exe).cloned() {
         return caps;
     }
 
@@ -241,7 +237,7 @@ fn caps_of(program: &Program, folder: &Path) -> args::Caps {
         .map(|said| format!("{}\n{}", said.out, said.ended.err))
         .unwrap_or_default();
     let caps = args::Caps::from_help(&help);
-    lock(known).insert(program.exe.clone(), caps.clone());
+    known.held().insert(program.exe.clone(), caps.clone());
     caps
 }
 
@@ -355,7 +351,7 @@ pub async fn ai_cli_ask(
         let asks = webview.state::<Asks>();
         let opening = next_opening();
         {
-            let mut running = lock(&asks.running);
+            let mut running = asks.running.held();
             if asks.gone(&owner, load) {
                 return Err(GONE.to_owned());
             }
@@ -383,7 +379,7 @@ pub async fn ai_cli_ask(
                     Heard::Line(line) => Message::Line { line },
                     Heard::End(ended) => {
                         if let Some(asks) = app.try_state::<Asks>() {
-                            let mut running = lock(&asks.running);
+                            let mut running = asks.running.held();
                             if running.get(&name).is_some_and(|one| one.opening == opening) {
                                 running.remove(&name);
                             }
@@ -395,7 +391,7 @@ pub async fn ai_cli_ask(
             },
         );
 
-        let mut running = lock(&asks.running);
+        let mut running = asks.running.held();
         let mine = running.get(&id).is_some_and(|one| one.opening == opening);
         let started = match started {
             Ok(started) => started,
@@ -420,7 +416,7 @@ pub async fn ai_cli_ask(
 #[tauri::command(async)]
 pub fn ai_cli_stop(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
-    if let Some(held) = lock(&webview.state::<Asks>().running).get_mut(&id) {
+    if let Some(held) = webview.state::<Asks>().running.held().get_mut(&id) {
         if held.owner == owner {
             held.stop();
         }
@@ -450,7 +446,7 @@ fn session_output(
             let id = id.clone();
             std::thread::spawn(move || {
                 if let Some(asks) = app.try_state::<Asks>() {
-                    let mut sessions = lock(&asks.sessions);
+                    let mut sessions = asks.sessions.held();
                     if sessions.get(&id).is_some_and(|one| one.opening == opening) {
                         sessions.remove(&id);
                     }
@@ -466,17 +462,11 @@ fn session_output(
 pub struct Opening {
     tool: Tool,
     agent: Builtin,
-    #[serde(default)]
     mode: Option<Mode>,
-    #[serde(default)]
     model: Option<String>,
-    #[serde(default)]
     effort: Option<Effort>,
-    #[serde(default)]
     fork_of: Option<String>,
-    #[serde(default)]
     account: Option<String>,
-    #[serde(default)]
     thread: Option<String>,
     #[serde(default)]
     without: Vec<String>,
@@ -525,7 +515,7 @@ pub async fn ai_cli_open(
         };
 
         let asks = webview.state::<Asks>();
-        if lock(&asks.sessions).contains_key(&id) {
+        if asks.sessions.held().contains_key(&id) {
             return Err(format!("{id} is already open"));
         }
         let number = next_opening();
@@ -597,7 +587,7 @@ fn kept(
     load: u64,
     ended: &AtomicBool,
 ) -> Result<(), String> {
-    let mut sessions = lock(&asks.sessions);
+    let mut sessions = asks.sessions.held();
     if asks.gone(&session.owner, load) {
         drop(sessions);
         session.on.end(&id);
@@ -663,7 +653,7 @@ fn host_for(
     let alive = |hosts: &HashMap<HostKey, Arc<Host>>| {
         hosts.get(&key).filter(|host| host.alive()).map(Arc::clone)
     };
-    if let Some(host) = alive(&lock(&asks.hosts)) {
+    if let Some(host) = alive(&asks.hosts.held()) {
         return Ok(host);
     }
     let mut command = command(program, &args::codex_server(), folder, key.home.as_ref());
@@ -674,7 +664,7 @@ fn host_for(
     let host = Host::start(command, IDLE, orden, folder.to_path_buf())
         .map_err(|error| format!("codex could not be started: {error}"))?;
     let host = Arc::new(host);
-    let mut hosts = lock(&asks.hosts);
+    let mut hosts = asks.hosts.held();
     if asks.gone(&key.owner, load) {
         drop(hosts);
         host.stop();
@@ -696,7 +686,9 @@ pub fn ai_cli_say(webview: Webview, id: String, say: Value) -> Result<(), String
         .map_err(|error| error.to_string())?
         .checked()?;
     let asks = webview.state::<Asks>();
-    let on = lock(&asks.sessions)
+    let on = asks
+        .sessions
+        .held()
         .get(&id)
         .filter(|one| one.owner == owner)
         .map(|one| Arc::clone(&one.on))
@@ -713,7 +705,7 @@ pub fn ai_cli_close(webview: Webview, id: String) -> Result<(), String> {
     let owner = owner(&webview)?;
     let asks = webview.state::<Asks>();
     let session = {
-        let mut sessions = lock(&asks.sessions);
+        let mut sessions = asks.sessions.held();
         if sessions.get(&id).is_none_or(|one| one.owner != owner) {
             return Ok(());
         }
@@ -1364,7 +1356,7 @@ exec node '{}' {name} \"$@\"
         let (sent, heard) = mpsc::channel();
         let sent = Mutex::new(sent);
         let output: codex_app::Output = Arc::new(move |message| {
-            let _ = lock(&sent).send(message);
+            let _ = sent.held().send(message);
         });
         (output, heard)
     }

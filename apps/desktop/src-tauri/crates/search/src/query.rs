@@ -69,7 +69,6 @@ pub enum Query {
         value: Option<String>,
         #[serde(default)]
         compare: Compare,
-        #[serde(default)]
         upto: Option<String>,
     },
     Scope {

@@ -2,7 +2,7 @@ use orden_base::Held as _;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde_json::{json, Value};
@@ -33,10 +33,6 @@ struct Held {
     ended: AtomicBool,
     starting: AtomicBool,
     hushed: AtomicBool,
-}
-
-fn lock<T>(held: &Mutex<T>) -> MutexGuard<'_, T> {
-    held.held()
 }
 
 pub struct Gemini {
@@ -88,7 +84,7 @@ impl Gemini {
                 self.turn(&text)
             }
             Say::Interrupt => {
-                let running = lock(&self.held.running);
+                let running = self.held.running.held();
                 match running.as_ref() {
                     Some(running) => running.stop(),
                     None => self
@@ -99,7 +95,7 @@ impl Gemini {
                 Ok(())
             }
             Say::Model { model } => {
-                *lock(&self.model) = Some(model);
+                *self.model.held() = Some(model);
                 Ok(())
             }
             Say::Effort { effort: None } => Ok(()),
@@ -114,7 +110,7 @@ impl Gemini {
 
     fn turn(&self, text: &str) -> Result<(), String> {
         {
-            let running = lock(&self.held.running);
+            let running = self.held.running.held();
             if self.held.ended.load(Ordering::SeqCst) {
                 return Err("Gemini CLI has been closed".into());
             }
@@ -124,7 +120,7 @@ impl Gemini {
             self.held.hushed.store(false, Ordering::SeqCst);
         }
         let started = self.started(text);
-        let mut running = lock(&self.held.running);
+        let mut running = self.held.running.held();
         self.held.starting.store(false, Ordering::SeqCst);
         let (started, finished) = started?;
         if self.held.ended.load(Ordering::SeqCst) {
@@ -142,8 +138,8 @@ impl Gemini {
     }
 
     fn started(&self, text: &str) -> Result<(Running, Arc<AtomicBool>), String> {
-        let session = lock(&self.held.session).clone();
-        let model = lock(&self.model).clone();
+        let session = self.held.session.held().clone();
+        let model = self.model.held().clone();
         let command = self.command(model.as_deref(), session.as_deref())?;
 
         let held = Arc::clone(&self.held);
@@ -158,14 +154,14 @@ impl Gemini {
                         answered.store(true, Ordering::SeqCst);
                     }
                     if let Some(id) = said.session {
-                        *lock(&held.session) = Some(id);
+                        *held.session.held() = Some(id);
                     }
                 }
                 output(Message::Line { line });
             }
             Heard::End(ended) => {
                 over.store(true, Ordering::SeqCst);
-                lock(&held.running).take();
+                held.running.held().take();
                 if ended.stopped || !answered.load(Ordering::SeqCst) {
                     output(Message::End(ended));
                 }
@@ -196,7 +192,7 @@ impl Gemini {
     }
 
     pub fn stop(&self) {
-        let mut running = lock(&self.held.running);
+        let mut running = self.held.running.held();
         self.held.ended.store(true, Ordering::SeqCst);
         if let Some(running) = running.take() {
             running.stop();
@@ -356,7 +352,7 @@ mod tests {
             images: Vec::new(),
         });
         assert!(said.is_err_and(|why| why.contains("closed")));
-        assert!(lock(&gemini.held.running).is_none());
+        assert!(gemini.held.running.held().is_none());
         std::thread::sleep(Duration::from_millis(200));
         assert!(!started.load(Ordering::SeqCst));
     }
@@ -370,7 +366,7 @@ mod tests {
         let launch = Launch {
             base: Box::new(move |_: &[String]| {
                 let _ = entered.send(());
-                let _ = lock(&gate).recv_timeout(Duration::from_secs(5));
+                let _ = gate.held().recv_timeout(Duration::from_secs(5));
                 let mut command = Command::new("sh");
                 command.args(["-c", "cat"]);
                 command
@@ -406,6 +402,6 @@ mod tests {
         go.send(()).expect("the turn goes on");
         let said = turn.join().expect("the turn");
         assert!(said.is_err_and(|why| why.contains("closed")));
-        assert!(lock(&gemini.held.running).is_none());
+        assert!(gemini.held.running.held().is_none());
     }
 }

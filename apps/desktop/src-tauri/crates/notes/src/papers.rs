@@ -116,17 +116,9 @@ mod tests {
         assert_eq!(pages_file(&dir).file_name().expect("a name"), "pages.json");
         assert_eq!(origin_file(&dir).file_name().expect("a name"), "origin.txt");
         assert!(!dir.to_string_lossy().contains("paper.pdf"));
-    }
-
-    #[test]
-    fn a_paper_nobody_has_read_reads_as_nothing() {
         let dir = tempfile::tempdir().expect("a temp folder");
 
         assert_eq!(read_pages(&dir.path().join("none")), String::new());
-    }
-
-    #[test]
-    fn what_is_written_is_what_is_read_back() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let paper = dir.path().join("one");
         let words = r#"{"path":"/Notes/paper.pdf","pages":[[1,"ink"]]}"#;

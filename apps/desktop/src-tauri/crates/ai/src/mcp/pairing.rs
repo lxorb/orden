@@ -111,29 +111,17 @@ mod tests {
         let other = Client::from_info(&json!({ "name": "My Tool (beta)" }));
         assert_eq!(other.key, "my-tool-beta");
         assert_eq!(other.name, "My Tool (beta)");
-    }
-
-    #[test]
-    fn a_client_that_says_nothing_is_an_agent() {
         let nobody = Client::from_info(&json!({}));
         assert_eq!(nobody.key, "agent");
         assert_eq!(nobody.name, "An agent");
         let odd = Client::from_info(&json!({ "name": "日本", "title": "  " }));
         assert_eq!(odd.key, "agent");
         assert_eq!(odd.name, "日本");
-    }
-
-    #[test]
-    fn a_client_cannot_hide_letters_in_its_name() {
         let hidden =
             Client::from_info(&json!({ "name": "x", "title": "Claude Code\u{202E}lave\u{2066}" }));
         assert_eq!(hidden.name, "Claude Codelave");
         let blank = Client::from_info(&json!({ "name": "\u{200B}\u{3164}", "title": "\u{202E}" }));
         assert_eq!(blank.name, "An agent");
-    }
-
-    #[test]
-    fn a_long_name_is_cut_to_what_pairing_takes() {
         let long = Client::from_info(&json!({ "name": "x".repeat(200) }));
         assert_eq!(long.name.chars().count(), LONGEST_NAME);
         assert_eq!(long.key.len(), 48);

@@ -121,13 +121,17 @@ fn remove(program: &Program, tool: Tool, name: &str, folder: &Path, home: Option
     );
 }
 
+fn add(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
+    let _ = run_to_end(
+        homed(program, &add_args(tool, orden), folder, home),
+        TELLING,
+    );
+}
+
 pub fn carry_over(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
     if held(program, NAME, folder, orden, home) == Held::Older {
         remove(program, tool, NAME, folder, home);
-        let _ = run_to_end(
-            homed(program, &add_args(tool, orden), folder, home),
-            TELLING,
-        );
+        add(program, tool, folder, orden, home);
     }
     if !matches!(
         held(program, OLD_NAME, folder, orden, home),
@@ -136,10 +140,7 @@ pub fn carry_over(program: &Program, tool: Tool, folder: &Path, orden: &Path, ho
         return;
     }
     if held(program, NAME, folder, orden, home) == Held::None {
-        let _ = run_to_end(
-            homed(program, &add_args(tool, orden), folder, home),
-            TELLING,
-        );
+        add(program, tool, folder, orden, home);
     }
     if held(program, NAME, folder, orden, home) == Held::Ours {
         remove(program, tool, OLD_NAME, folder, home);
@@ -156,10 +157,7 @@ pub fn enroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: 
     {
         return;
     }
-    let _ = run_to_end(
-        homed(program, &add_args(tool, orden), folder, home),
-        TELLING,
-    );
+    add(program, tool, folder, orden, home);
 }
 
 pub fn unenroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {

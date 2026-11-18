@@ -555,7 +555,7 @@ mod tests {
     }
 
     #[test]
-    fn never_writes_over_anything() {
+    fn copying_refuses_what_is_there_and_a_folder_into_itself() {
         let dir = tempfile::tempdir().expect("a temp folder");
         fs::write(dir.path().join("a.md"), "a").expect("a");
         fs::write(dir.path().join("b.md"), "b").expect("b");
@@ -564,6 +564,12 @@ mod tests {
             .expect_err("a taken name to be refused");
         assert!(error.contains("already lives there"), "{error}");
         assert_eq!(fs::read_to_string(dir.path().join("b.md")).expect("b"), "b");
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Trip");
+        fs::create_dir_all(&source).expect("the folder");
+
+        let error = copied(&source, &source.join("Trip")).expect_err("a copy into itself");
+        assert!(error.contains("into itself"), "{error}");
     }
 
     #[test]
@@ -589,42 +595,20 @@ mod tests {
     }
 
     #[test]
-    fn refuses_a_folder_into_itself() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let source = dir.path().join("Trip");
-        fs::create_dir_all(&source).expect("the folder");
-
-        let error = copied(&source, &source.join("Trip")).expect_err("a copy into itself");
-        assert!(error.contains("into itself"), "{error}");
-    }
-
-    #[test]
-    fn writes_bytes_untouched() {
+    fn writes_bytes_untouched_into_the_folders_it_needs() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "picture.png");
 
         write_bytes(target.clone(), super::BASE64.encode(PNG)).expect("the write to land");
         assert_eq!(fs::read(&target).expect("the file back"), PNG);
-    }
-
-    #[test]
-    fn makes_the_folders_it_needs() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "Exports/deep/picture.png");
 
         write_bytes(target.clone(), super::BASE64.encode(PNG)).expect("the write to land");
         assert_eq!(fs::read(&target).expect("the file back"), PNG);
-    }
-
-    #[test]
-    fn refuses_a_path_that_names_no_file() {
         let error = write_bytes("/".to_string(), super::BASE64.encode(PNG))
             .expect_err("a root that is not a file");
         assert!(error.contains("has no folder to write into"), "{error}");
-    }
-
-    #[test]
-    fn refuses_something_that_is_not_base64() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "picture.png");
 
@@ -743,7 +727,7 @@ mod tests {
     }
 
     #[test]
-    fn leaves_a_file_written_with_newlines_alone() {
+    fn writes_newlines_as_they_were_and_never_doubles_a_carriage_return() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "unix.md");
 
@@ -751,19 +735,11 @@ mod tests {
         write_note(target.clone(), "one\ntwo!\n".to_string()).expect("the write to land");
 
         assert_eq!(fs::read(&target).expect("the file back"), b"one\ntwo!\n");
-    }
-
-    #[test]
-    fn writes_a_new_file_with_newlines() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "fresh.md");
 
         write_note(target.clone(), "one\ntwo\n".to_string()).expect("the write to land");
         assert_eq!(fs::read(&target).expect("the file back"), b"one\ntwo\n");
-    }
-
-    #[test]
-    fn never_doubles_a_carriage_return() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "mixed.md");
 
@@ -786,7 +762,7 @@ mod tests {
     }
 
     #[test]
-    fn stamps_a_file_and_says_nothing_of_one_that_is_not_there() {
+    fn stamps_a_file_and_nothing_else() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "watched.md");
 
@@ -797,10 +773,6 @@ mod tests {
 
         assert_eq!(stamp.len, 5);
         assert!(stamp.modified > 0);
-    }
-
-    #[test]
-    fn does_not_stamp_a_folder() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let inside = path(&dir, "folder");
         fs::create_dir(&inside).expect("the folder");

@@ -172,15 +172,11 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     #[test]
-    fn a_file_with_its_data_elsewhere_says_so_in_its_flags() {
+    fn a_file_says_whether_its_data_is_elsewhere() {
         assert!(flags_are_dataless(0x4000_0000));
         assert!(flags_are_dataless(0x4000_0040));
         assert!(!flags_are_dataless(0x40));
         assert!(!flags_are_dataless(0));
-    }
-
-    #[test]
-    fn a_file_on_this_disk_is_not_dataless() {
         let file = tempfile_path();
         std::fs::write(&file, "# Here").unwrap();
         let meta = std::fs::symlink_metadata(&file).unwrap();
@@ -193,25 +189,17 @@ mod tests {
     }
 
     #[test]
-    fn a_placeholder_stands_for_the_name_inside_it() {
+    fn a_placeholder_stands_for_the_name_inside_it_and_sits_where_it_would() {
         assert_eq!(evicted_name(".Plan.md.icloud"), Some("Plan.md"));
         assert_eq!(
             evicted_name(".Über sicht.pdf.icloud"),
             Some("Über sicht.pdf")
         );
         assert_eq!(evicted_name("..hidden.md.icloud"), Some(".hidden.md"));
-    }
-
-    #[test]
-    fn nothing_else_is_one() {
         assert_eq!(evicted_name("Plan.md"), None);
         assert_eq!(evicted_name(".DS_Store"), None);
         assert_eq!(evicted_name("Plan.md.icloud"), None);
         assert_eq!(evicted_name(".icloud"), None);
-    }
-
-    #[test]
-    fn a_file_knows_where_its_placeholder_would_be() {
         assert_eq!(
             placeholder_of(Path::new("/s/ideas/Plan.md")),
             Some(PathBuf::from("/s/ideas/.Plan.md.icloud"))

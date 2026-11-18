@@ -19,7 +19,6 @@ pub struct Image {
 pub enum GoalSay {
     Set {
         objective: String,
-        #[serde(default)]
         budget: Option<u64>,
     },
     Pause,

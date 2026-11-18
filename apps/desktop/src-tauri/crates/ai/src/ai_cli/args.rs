@@ -628,17 +628,6 @@ mod tests {
     }
 
     #[test]
-    fn the_effort_scale_as_each_program_spells_it() {
-        assert_eq!(Effort::Off.word(Tool::Codex), Ok("none"));
-        assert_eq!(Effort::Xhigh.word(Tool::ClaudeCode), Ok("xhigh"));
-        assert!(Effort::Minimal.word(Tool::ClaudeCode).is_err());
-        let parsed: Effort = serde_json::from_str("\"xhigh\"").expect("effort");
-        assert_eq!(parsed, Effort::Xhigh);
-        assert!(serde_json::from_str::<Effort>("\"--max\"").is_err());
-        assert!(serde_json::from_str::<Mode>("\"yolo\"").is_err());
-    }
-
-    #[test]
     fn codex_serves_read_only_asking_nobody_with_its_tools_off() {
         let args = codex_server();
         assert_eq!(args[0], "app-server");
@@ -744,18 +733,21 @@ mod tests {
     }
 
     #[test]
-    fn the_status_questions_are_the_programs_own() {
+    fn the_status_and_effort_words_are_each_program_s_own() {
         assert_eq!(status(Tool::ClaudeCode), ["auth", "status", "--json"]);
         assert_eq!(status(Tool::Codex), ["login", "status"]);
         assert_eq!(status(Tool::Gemini), ["--version"]);
         assert!(logout(Tool::Gemini).is_empty());
-    }
-
-    #[test]
-    fn gemini_has_no_effort_to_spell() {
         for effort in [Effort::Off, Effort::Low, Effort::Max] {
             assert!(effort.word(Tool::Gemini).is_err());
         }
+        assert_eq!(Effort::Off.word(Tool::Codex), Ok("none"));
+        assert_eq!(Effort::Xhigh.word(Tool::ClaudeCode), Ok("xhigh"));
+        assert!(Effort::Minimal.word(Tool::ClaudeCode).is_err());
+        let parsed: Effort = serde_json::from_str("\"xhigh\"").expect("effort");
+        assert_eq!(parsed, Effort::Xhigh);
+        assert!(serde_json::from_str::<Effort>("\"--max\"").is_err());
+        assert!(serde_json::from_str::<Mode>("\"yolo\"").is_err());
     }
 
     #[test]
