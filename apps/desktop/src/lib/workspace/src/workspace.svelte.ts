@@ -341,6 +341,7 @@ class Workspace {
   readonly panes = new Panes(() => {
     this.scheduleSession()
     this.saving.hurry()
+    this.writeLeftDrafts()
   })
   readonly layouts = new Layouts()
   panel = $state<Panel | null>(null)
@@ -2146,6 +2147,13 @@ class Workspace {
         await this.open(path, options)
         return
     }
+  }
+
+  private writeLeftDrafts() {
+    if (!viewport.touch) return
+
+    const shown = new Set(this.panes.all.map((one) => one.activeTabId))
+    for (const tab of this.tabs) if (!shown.has(tab.id) && unsaved(tab)) void this.save(tab)
   }
 
   private dropScaffolding(kept: Tab) {
