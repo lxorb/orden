@@ -160,16 +160,33 @@ function pressed(command: StateCommand, times: number, from: EditorState): FoldL
 }
 
 describe('folding one level more', () => {
-  test('takes the deepest level first, then walks out to the outline', () => {
-    expect(pressed(foldMore, 4, state(CHAPTER, 0))).toEqual([
-      [[5, 7]],
+  test.each([
+    [
+      foldMore,
       [
-        [1, 7],
-        [5, 7],
-        [9, 11],
+        [[5, 7]],
+        [
+          [1, 7],
+          [5, 7],
+          [9, 11],
+        ],
       ],
-    ])
-  })
+      4,
+      state(CHAPTER, 0),
+    ],
+    [
+      foldMore,
+      [
+        [[3, 5]],
+        [
+          [1, 5],
+          [3, 5],
+        ],
+      ],
+      3,
+      state('# One\n\n### Deep\n\nwords\n', 0),
+    ],
+  ])('%j', (input, wanted, extra, last) => expect(pressed(input, extra, last)).toEqual(wanted))
 
   test('answers no once everything on screen is folded', () => {
     const all = ran(foldMore, ran(foldMore, state(CHAPTER, 0)).state)
@@ -178,17 +195,6 @@ describe('folding one level more', () => {
 
   test('answers no in a note with nothing to fold at all', () => {
     expect(ran(foldMore, state('a paragraph\n\nand another\n', 0)).ok).toBe(false)
-  })
-
-  test('counts the levels the note is written in, not the hashes', () => {
-    const skipped = '# One\n\n### Deep\n\nwords\n'
-    expect(pressed(foldMore, 3, state(skipped, 0))).toEqual([
-      [[3, 5]],
-      [
-        [1, 5],
-        [3, 5],
-      ],
-    ])
   })
 
   test('a list item goes before the section holding it', () => {
@@ -322,16 +328,11 @@ describe('a callout the note says is shut', () => {
     ],
   ])('%j', (input, wanted) => expect(foldLines(input)).toEqual(wanted))
 
-  test('a plus opens it, and so does no sign at all', () => {
-    const open = SHUT.replace(']-', ']+')
-    expect(foldLines(withFolds(state(open, 0), []))).toEqual([])
-    expect(foldLines(withFolds(state(SHUT.replace(']-', ']'), 0), []))).toEqual([])
-  })
-
-  test('never comes back over the caret', () => {
-    const inside = SHUT.indexOf('Between') + 2
-    expect(foldLines(withFolds(state(SHUT, inside), []))).toEqual([])
-  })
+  test.each([
+    [withFolds(state(SHUT.replace(']-', ']+'), 0), []), []],
+    [withFolds(state(SHUT.replace(']-', ']'), 0), []), []],
+    [withFolds(state(SHUT, SHUT.indexOf('Between') + 2), []), []],
+  ])('%j', (input, wanted) => expect(foldLines(input)).toEqual(wanted))
 
   test('is not a sign inside the words of a line', () => {
     const written = ['A sentence with [!note]- in it.', '', 'More.', ''].join('\n')

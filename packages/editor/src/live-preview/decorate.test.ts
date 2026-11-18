@@ -288,25 +288,22 @@ describe('images', () => {
     expect(out).toEqual([doc])
   })
 
-  test('renders a resized image written as an img tag', () => {
-    const tag = '<img src="pic.png" alt="a" style="zoom:60%" />'
-    expect(concealed(`text ${tag} more`)).toEqual([tag])
-  })
+  test.each([
+    [
+      'text <img src="pic.png" alt="a" style="zoom:60%" /> more',
+      ['<img src="pic.png" alt="a" style="zoom:60%" />'],
+    ],
+    [
+      'a\n\n<div style="page-break-after: always;"></div>\n\nb',
+      ['<div style="page-break-after: always;"></div>'],
+    ],
+  ])('%j', (input, wanted) => expect(concealed(input)).toEqual(wanted))
 
-  test('renders a page break', () => {
-    const tag = '<div style="page-break-after: always;"></div>'
-    expect(concealed(`a\n\n${tag}\n\nb`)).toEqual([tag])
-  })
-
-  test('treats a flow fence as a diagram', () => {
-    expect(blocks('```flow\nst=>start: Go\n```')).toEqual(['```flow\nst=>start: Go\n```'])
-  })
-
-  test('draws a chart fence, and leaves one holding no chart as code', () => {
-    const chart = '```chart\nseries:\n  - data: [1, 2]\n```'
-    expect(blocks(chart)).toEqual([chart])
-    expect(blocks('```chart\nnot a chart\n```')).toEqual([])
-  })
+  test.each([
+    ['```flow\nst=>start: Go\n```', ['```flow\nst=>start: Go\n```']],
+    ['```chart\nseries:\n  - data: [1, 2]\n```', ['```chart\nseries:\n  - data: [1, 2]\n```']],
+    ['```chart\nnot a chart\n```', []],
+  ])('%j', (input, wanted) => expect(blocks(input)).toEqual(wanted))
 
   test('an address a provider answers for is that page, not a picture', () => {
     const written = '![](https://youtu.be/dQw4w9WgXcQ)'
@@ -366,10 +363,10 @@ describe('extensions', () => {
     expect(classes.some((one) => one.startsWith('orden-callout-'))).toBe(false)
   })
 
-  test('carries the type as written, so a theme can reach any of them', () => {
-    expect(lineAttrs('> [!recipe]\n> flour and water')).toContain('recipe')
-    expect(lineAttrs('> [!TLDR]\n> the short of it')).toContain('tldr')
-  })
+  test.each([
+    ['> [!recipe]\n> flour and water', 'recipe'],
+    ['> [!TLDR]\n> the short of it', 'tldr'],
+  ])('%j', (input, wanted) => expect(lineAttrs(input)).toContain(wanted))
 
   test('leaves a quote that names no type a quote', () => {
     expect(lineClasses('> just a quote')).not.toContain('orden-callout')

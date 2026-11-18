@@ -153,13 +153,9 @@ describe('the word a fence is opened with', () => {
     ['Dockerfile', 'Dockerfile'],
   ])('%j', (input, wanted) => expect(languageFor(input)).toEqual(wanted))
 
-  test('a word nobody has a language for stays plain code', () => {
-    expect(languageFor('notalanguage')).toBeNull()
-    expect(languageFor('')).toBeNull()
-    expect(languageFor('rescript')).toBeNull()
-    expect(languageFor('applescript')).toBeNull()
-    expect(languageFor('gleam')).toBeNull()
-  })
+  test.each([['notalanguage'], [''], ['rescript'], ['applescript'], ['gleam']])('%j', (input) =>
+    expect(languageFor(input)).toBeNull(),
+  )
 })
 
 describe('the list itself', () => {

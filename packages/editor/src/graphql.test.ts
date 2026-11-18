@@ -48,13 +48,11 @@ describe('highlighting a graphql fence', () => {
     expect(typeOf('  name(all: true)', 'true')).toBe('atom')
   })
 
-  test('a block string runs to its closing quotes and no further', () => {
-    const document = '"""\nA user.\n"""\ntype User {'
-
-    expect(typeOf(document, 'A user.')).toBe('string')
-    expect(typeOf(document, 'type')).toBe('keyword')
-    expect(typeOf(document, 'User')).toBe('typeName')
-  })
+  test.each([
+    ['"""\nA user.\n"""\ntype User {', 'string', 'A user.'],
+    ['"""\nA user.\n"""\ntype User {', 'keyword', 'type'],
+    ['"""\nA user.\n"""\ntype User {', 'typeName', 'User'],
+  ])('%j', (input, wanted, extra) => expect(typeOf(input, extra)).toBe(wanted))
 
   test('always moves forward, whatever it is given', () => {
     for (const line of ['', '   ', '{}', '$', '@', '...', '"""', '"unclosed', '「」'])

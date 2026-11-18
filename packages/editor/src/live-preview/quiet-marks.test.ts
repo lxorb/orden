@@ -49,17 +49,12 @@ function concealed(doc: string, cursor: number, quiet: boolean): string[] {
 }
 
 describe('quiet marks', () => {
-  test('bold keeps its stars hidden with the caret inside it', () => {
-    const doc = 'a **bold** b'
-    expect(concealed(doc, 5, false)).toEqual([])
-    expect(concealed(doc, 5, true)).toEqual(['**', '**'])
-  })
-
-  test('a heading keeps its # hidden on its own line', () => {
-    const doc = '# Title'
-    expect(concealed(doc, 4, false)).toEqual([])
-    expect(concealed(doc, 4, true)).toEqual(['# '])
-  })
+  test.each([
+    ['a **bold** b', [], 5, false],
+    ['a **bold** b', ['**', '**'], 5, true],
+    ['# Title', [], 4, false],
+    ['# Title', ['# '], 4, true],
+  ])('%j', (input, wanted, extra, last) => expect(concealed(input, extra, last)).toEqual(wanted))
 
   test('a # becomes a heading only once a space follows it', () => {
     for (const quiet of [true, false]) {

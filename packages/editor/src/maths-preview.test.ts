@@ -35,11 +35,13 @@ describe('the formula the caret is in', () => {
     expect(mathsAtCaret(at('so $a^2$ holds'))).toBeNull()
   })
 
-  test('outside it there is none', () => {
-    expect(tex('so| $a^2$ holds')).toBeNull()
-    expect(tex('words $a$ and |more')).toBeNull()
-    expect(tex('costs $5 and $|6')).toBeNull()
-  })
+  test.each([
+    ['so| $a^2$ holds'],
+    ['words $a$ and |more'],
+    ['costs $5 and $|6'],
+    ['```\n$a|$\n```'],
+    ['so `$a|$` here'],
+  ])('%j', (input) => expect(tex(input)).toBeNull())
 
   test.each([
     ['$x$ and $y|$', 'y'],
@@ -64,15 +66,10 @@ describe('the formula the caret is in', () => {
     expect(tex('s|o $a^2|$ holds')).toBeNull()
   })
 
-  test('none where nothing can be typed or nothing is revealed', () => {
-    expect(tex('$a|$', EditorState.readOnly.of(true))).toBeNull()
-    expect(tex('$a|$', noReveal.of(true))).toBeNull()
-  })
-
-  test('none in a fence, where a dollar is code', () => {
-    expect(tex('```\n$a|$\n```')).toBeNull()
-    expect(tex('so `$a|$` here')).toBeNull()
-  })
+  test.each([
+    ['$a|$', EditorState.readOnly.of(true)],
+    ['$a|$', noReveal.of(true)],
+  ])('%j', (input, extra) => expect(tex(input, extra)).toBeNull())
 })
 
 describe('the formula in a table cell', () => {

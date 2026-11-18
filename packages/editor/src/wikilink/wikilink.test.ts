@@ -219,11 +219,10 @@ describe('the name a block carries', () => {
     ['see [[Plan#^abc]]', ['[[', ']]']],
   ])('%j', (input, wanted) => expect(concealed(input)).toEqual(wanted))
 
-  test('comes back while the caret is on its line', () => {
-    const doc = 'A paragraph. ^abc123\n\nmore'
-    expect(concealed(doc, 3)).toEqual([])
-    expect(concealed(doc, 24)).toEqual([' ^abc123'])
-  })
+  test.each([
+    ['A paragraph. ^abc123\n\nmore', [], 3],
+    ['A paragraph. ^abc123\n\nmore', [' ^abc123'], 24],
+  ])('%j', (input, wanted, extra) => expect(concealed(input, extra)).toEqual(wanted))
 })
 
 describe('which note a name means', () => {
@@ -266,10 +265,10 @@ describe('which note a name means', () => {
     expect(resolveFile({ ...files, files: ['B/paper.pdf'] }, '/paper.pdf', 'wikilink')).toBeNull()
   })
 
-  test('nothing at all is nothing', () => {
-    expect(resolveNote(SPACE, 'Nowhere')).toBeNull()
-    expect(resolveNote(SPACE, '   ')).toBeNull()
-  })
+  test.each([
+    [SPACE, 'Nowhere'],
+    [SPACE, '   '],
+  ])('%j', (input, extra) => expect(resolveNote(input, extra)).toBeNull())
 
   test('a website answers to its name, with the extension or without', () => {
     const space = index([note('Svelte docs.url'), note('Plan.md')])
@@ -348,15 +347,20 @@ describe('which note a name means', () => {
     expect(resolveRelative(here, 'Nothing.md')).toBeNull()
   })
 
-  test('a file named by its name alone is the one beside the note first', () => {
-    const files = ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']
-    expect(resolveFile(index([], 'Trips/Paris.md', {}, files), 'cover.jpg', 'wikilink')).toBe(
+  test.each([
+    [
+      index([], 'Trips/Paris.md', {}, ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']),
       'Trips/cover.jpg',
-    )
-    expect(resolveFile(index([], 'Notes/x.md', {}, files), 'cover.jpg', 'wikilink')).toBe(
+      'cover.jpg',
+      'wikilink' as const,
+    ],
+    [
+      index([], 'Notes/x.md', {}, ['Home/cover.jpg', 'Trips/cover.jpg', 'Trips/Day/cover.jpg']),
       'Home/cover.jpg',
-    )
-  })
+      'cover.jpg',
+      'wikilink' as const,
+    ],
+  ])('%j', (input, wanted, extra, last) => expect(resolveFile(input, extra, last)).toBe(wanted))
 
   test('a file a markdown link names from the top of the space or by name alone', () => {
     const here = index([], 'Notes/Day/x.md', {}, ['attachments/report.pdf', 'Notes/report.pdf'])

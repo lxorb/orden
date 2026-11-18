@@ -327,15 +327,18 @@ describe('a link to a block', () => {
     expect(blockIds(said).map((one) => one.id)).toEqual([target?.slice(2)])
   })
 
-  test('asked twice gives the name it already has', () => {
-    const doc = 'a\n\n```\ncode\n```\n\n^abc123\n\nb\n'
-    expect(named(doc, 'code')).toEqual({ target: '#^abc123', said: doc })
-  })
-
-  test('front matter has none', () => {
-    const doc = '---\ntitle: x\n---\n\nb\n'
-    expect(named(doc, 'title')).toEqual({ target: undefined, said: doc })
-  })
+  test.each([
+    [
+      'a\n\n```\ncode\n```\n\n^abc123\n\nb\n',
+      { target: '#^abc123', said: 'a\n\n```\ncode\n```\n\n^abc123\n\nb\n' },
+      'code',
+    ],
+    [
+      '---\ntitle: x\n---\n\nb\n',
+      { target: undefined, said: '---\ntitle: x\n---\n\nb\n' },
+      'title',
+    ],
+  ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
 
   test('an item with children takes it on its own line', () => {
     const { target, said } = named('- a\n  more\n  - nested\n- b\n', '- a')
@@ -351,20 +354,15 @@ describe('naming a block in old notes and open ones', () => {
     return { target, said: said() }
   }
 
-  test('an unclosed fence takes no name, since it would be code', () => {
-    const doc = 'a\n\n```\nx\n'
-    expect(named(doc, 'x')).toEqual({ target: undefined, said: doc })
-  })
-
-  test('a closing fence an older build named keeps that name', () => {
-    const doc = 'a\n\n```\nx\n``` ^abc123\n\nb\n'
-    expect(named(doc, 'x')).toEqual({ target: '#^abc123', said: doc })
-  })
-
-  test('a name under a paragraph is its name, not a reason for a second', () => {
-    const doc = 'para\n\n^have\n\nb\n'
-    expect(named(doc, 'para')).toEqual({ target: '#^have', said: doc })
-  })
+  test.each([
+    ['a\n\n```\nx\n', { target: undefined, said: 'a\n\n```\nx\n' }, 'x'],
+    [
+      'a\n\n```\nx\n``` ^abc123\n\nb\n',
+      { target: '#^abc123', said: 'a\n\n```\nx\n``` ^abc123\n\nb\n' },
+      'x',
+    ],
+    ['para\n\n^have\n\nb\n', { target: '#^have', said: 'para\n\n^have\n\nb\n' }, 'para'],
+  ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
 
   test('maths with a blank line in it takes it under the whole of it', () => {
     const { target, said } = named('$$\na\n\nb\n$$\n', 'a')

@@ -50,15 +50,15 @@ describe('finding the fence the caret is in', () => {
     expect(found?.to).toBe(FENCED.indexOf('```\n\ntail') + 3)
   })
 
-  test('reaches it from the fence lines themselves', () => {
-    expect(runnableFenceAt(state(FENCED), FENCED.indexOf('```js') + 2)).not.toBeNull()
-    expect(runnableFenceAt(state(FENCED), FENCED.indexOf('```\n\ntail') + 1)).not.toBeNull()
-  })
+  test.each([
+    [state(FENCED), FENCED.indexOf('```js') + 2],
+    [state(FENCED), FENCED.indexOf('```\n\ntail') + 1],
+  ])('%j', (input, extra) => expect(runnableFenceAt(input, extra)).not.toBeNull())
 
-  test('finds nothing in the prose around it', () => {
-    expect(runnableFenceAt(state(FENCED), 2)).toBeNull()
-    expect(runnableFenceAt(state(FENCED), FENCED.indexOf('tail'))).toBeNull()
-  })
+  test.each([
+    [state(FENCED), 2],
+    [state(FENCED), FENCED.indexOf('tail')],
+  ])('%j', (input, extra) => expect(runnableFenceAt(input, extra)).toBeNull())
 
   test('finds nothing in a fence of another language', () => {
     const other = 'x\n\n```python\nprint(1)\n```\n'

@@ -44,10 +44,10 @@ describe('finding tables', () => {
     [state(doc), span, span.from - 1, span.from],
   ])('%j', (input, wanted, extra, last) => expect(tableCrossed(input, extra, last)).toEqual(wanted))
 
-  test('a move beside the table does not', () => {
-    expect(tableCrossed(state(doc), 0, 5)).toBeNull()
-    expect(tableCrossed(state(doc), span.to + 1, span.to + 3)).toBeNull()
-  })
+  test.each([
+    [state(doc), 0, 5],
+    [state(doc), span.to + 1, span.to + 3],
+  ])('%j', (input, extra, last) => expect(tableCrossed(input, extra, last)).toBeNull())
 
   test('a move inside a revealed table does not', () => {
     const revealed = state(`above\n\n${TABLE.slice(0, 3)}|${TABLE.slice(3)}\n\nbelow`)
@@ -61,42 +61,42 @@ describe('finding tables', () => {
 })
 
 describe('the line beside a table', () => {
-  test('is the line already there', () => {
-    const doc = `|above\n\n${TABLE}\n\nbelow`
-    const span = { from: 7, to: 7 + TABLE.length }
-    expect(lineBeside(state(doc), span, 'above')).toEqual({
-      from: 6,
-      to: 6,
-      made: false,
-      changes: [],
-    })
-    expect(lineBeside(state(doc), span, 'below')).toEqual({
-      from: span.to + 1,
-      to: span.to + 1,
-      made: false,
-      changes: [],
-    })
-  })
-
-  test('is made when the table ends the document', () => {
-    const span = { from: 7, to: 7 + TABLE.length }
-    expect(lineBeside(state(`|above\n\n${TABLE}`), span, 'below')).toEqual({
-      from: span.to + 1,
-      to: span.to + 1,
-      made: true,
-      changes: { from: span.to, insert: '\n' },
-    })
-  })
-
-  test('is made when the table starts the document', () => {
-    const span = { from: 0, to: TABLE.length }
-    expect(lineBeside(state(`${TABLE}\n\nbelow|`), span, 'above')).toEqual({
-      from: 0,
-      to: 0,
-      made: true,
-      changes: { from: 0, insert: '\n' },
-    })
-  })
+  test.each([
+    [
+      state(`|above\n\n${TABLE}\n\nbelow`),
+      { from: 6, to: 6, made: false, changes: [] },
+      { from: 7, to: 7 + TABLE.length },
+      'above' as const,
+    ],
+    [
+      state(`|above\n\n${TABLE}\n\nbelow`),
+      {
+        from: { from: 7, to: 7 + TABLE.length }.to + 1,
+        to: { from: 7, to: 7 + TABLE.length }.to + 1,
+        made: false,
+        changes: [],
+      },
+      { from: 7, to: 7 + TABLE.length },
+      'below' as const,
+    ],
+    [
+      state(`|above\n\n${TABLE}`),
+      {
+        from: { from: 7, to: 7 + TABLE.length }.to + 1,
+        to: { from: 7, to: 7 + TABLE.length }.to + 1,
+        made: true,
+        changes: { from: { from: 7, to: 7 + TABLE.length }.to, insert: '\n' },
+      },
+      { from: 7, to: 7 + TABLE.length },
+      'below' as const,
+    ],
+    [
+      state(`${TABLE}\n\nbelow|`),
+      { from: 0, to: 0, made: true, changes: { from: 0, insert: '\n' } },
+      { from: 0, to: TABLE.length },
+      'above' as const,
+    ],
+  ])('%j', (input, wanted, extra, last) => expect(lineBeside(input, extra, last)).toEqual(wanted))
 })
 
 describe('stepping between cells', () => {

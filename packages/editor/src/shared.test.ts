@@ -422,10 +422,9 @@ describe('an undo that arrives as input rather than as a key', () => {
     expect(pane.text).toBe('Hello there')
   })
 
-  test('and nothing else typed is one', () => {
-    expect(fromInput('insertText')).toBeNull()
-    expect(fromInput('deleteContentBackward')).toBeNull()
-  })
+  test.each([['insertText'], ['deleteContentBackward']])('%j', (input) =>
+    expect(fromInput(input)).toBeNull(),
+  )
 })
 
 describe('edits carried onto the words as they are now', () => {

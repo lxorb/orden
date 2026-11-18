@@ -93,13 +93,18 @@ describe('a tag in the preview', () => {
     ['[see #this](https://orden.dev) and ![#alt](pic.png)', []],
   ])('%j', (input, wanted) => expect(pills(input)).toEqual(wanted))
 
-  test('reads as its source while the caret is in it, and as a pill again after', () => {
-    const doc = 'Filed #work today'
-    const inside = doc.indexOf('work') + 2
-
-    expect(pills(doc, inside)).toEqual([{ text: '#work', className: 'tag is-open', tag: 'work' }])
-    expect(pills(doc, doc.length)).toEqual([{ text: '#work', className: 'tag', tag: 'work' }])
-  })
+  test.each([
+    [
+      'Filed #work today',
+      [{ text: '#work', className: 'tag is-open', tag: 'work' }],
+      'Filed #work today'.indexOf('work') + 2,
+    ],
+    [
+      'Filed #work today',
+      [{ text: '#work', className: 'tag', tag: 'work' }],
+      'Filed #work today'.length,
+    ],
+  ])('%j', (input, wanted, extra) => expect(pills(input, extra)).toEqual(wanted))
 
   test('promises a press only in an editor that can answer one', () => {
     expect(pills('A #tag')[0]?.title).toBeUndefined()

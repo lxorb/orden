@@ -79,23 +79,17 @@ describe('joining lines', () => {
 })
 
 describe('a line above', () => {
-  test('opens an empty line above, indented like the caret’s', () => {
-    expect(note(insertLineAbove, 'one\n  two|')).toBe('one\n  |\n  two')
-  })
-
-  test('opens it under the front matter rather than inside it', () => {
-    expect(note(insertLineAbove, `${META}# Title|`)).toBe(`${META}|\n# Title`)
-  })
+  test.each([
+    [insertLineAbove, 'one\n  |\n  two', 'one\n  two|'],
+    [insertLineAbove, `${META}|\n# Title`, `${META}# Title|`],
+  ])('%j', (input, wanted, extra) => expect(note(input, extra)).toBe(wanted))
 })
 
 describe('deleting a line', () => {
-  test('deletes the caret’s line and keeps its column', () => {
-    expect(note(deleteLine, 'one\ntw|o\nthree')).toBe('one\nth|ree')
-  })
-
-  test('deletes the first line that shows and leaves the front matter whole', () => {
-    expect(note(deleteLine, `${META}# Tit|le\nwords`)).toBe(`${META}words|`)
-  })
+  test.each([
+    [deleteLine, 'one\nth|ree', 'one\ntw|o\nthree'],
+    [deleteLine, `${META}words|`, `${META}# Tit|le\nwords`],
+  ])('%j', (input, wanted, extra) => expect(note(input, extra)).toBe(wanted))
 
   test('never leaves the caret inside an emoji on the line that comes up', () => {
     expect(note(deleteLine, 'a|bc\n😀x')).toBe('|😀x')

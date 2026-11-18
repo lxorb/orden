@@ -9,11 +9,13 @@ describe('what a link target is to a browser', () => {
     ['www.x.dev', 'https://www.x.dev'],
   ])('%j', (input, wanted) => expect(hrefOf(input)).toEqual(wanted))
 
-  test('a link written before the rename still passes through', () => {
-    const link = 'nib://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
-    expect(hrefOf(link)).toBe(link)
-    expect(hrefOf('nib://settings/import')).toBe('nib://settings/import')
-  })
+  test.each([
+    [
+      'nib://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e',
+      'nib://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e',
+    ],
+    ['nib://settings/import', 'nib://settings/import'],
+  ])('%j', (input, wanted) => expect(hrefOf(input)).toBe(wanted))
 
   test('a message in a chat passes through, and no other address of the app but one', () => {
     const link = 'orden://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e/01K6Z8Q3V8A0000000000000AB'
@@ -26,9 +28,7 @@ describe('what a link target is to a browser', () => {
     expect(hrefOf('orden://settings/account')).toBeNull()
   })
 
-  test('paths and anchors belong to the note', () => {
-    expect(hrefOf('notes/other.md')).toBeNull()
-    expect(hrefOf('#heading')).toBeNull()
-    expect(hrefOf('')).toBeNull()
-  })
+  test.each([['notes/other.md'], ['#heading'], ['']])('%j', (input) =>
+    expect(hrefOf(input)).toBeNull(),
+  )
 })

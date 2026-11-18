@@ -33,28 +33,31 @@ function steps(doc: string, caret: number): string[] {
 }
 
 describe('growing the selection', () => {
-  test('word, the words between the stars, the stars, the paragraph, the note', () => {
-    const doc = 'Some **bold words** here.\n\nNext.'
-    expect(steps(doc, doc.indexOf('bold') + 1)).toEqual([
-      'bold',
-      'bold words',
-      '**bold words**',
-      'Some **bold words** here.',
-      doc,
-    ])
-  })
-
-  test('a list item, the list, the section, the sections around it', () => {
-    const doc = '# One\n\n## Two\n\n- a\n- b\n\n## Three\n'
-    expect(steps(doc, doc.indexOf('b'))).toEqual([
-      'b',
-      '- b',
-      '- a\n- b',
-      '## Two\n\n- a\n- b',
-      doc.trimEnd(),
-      doc,
-    ])
-  })
+  test.each([
+    [
+      'Some **bold words** here.\n\nNext.',
+      [
+        'bold',
+        'bold words',
+        '**bold words**',
+        'Some **bold words** here.',
+        'Some **bold words** here.\n\nNext.',
+      ],
+      'Some **bold words** here.\n\nNext.'.indexOf('bold') + 1,
+    ],
+    [
+      '# One\n\n## Two\n\n- a\n- b\n\n## Three\n',
+      [
+        'b',
+        '- b',
+        '- a\n- b',
+        '## Two\n\n- a\n- b',
+        '# One\n\n## Two\n\n- a\n- b\n\n## Three\n'.trimEnd(),
+        '# One\n\n## Two\n\n- a\n- b\n\n## Three\n',
+      ],
+      '# One\n\n## Two\n\n- a\n- b\n\n## Three\n'.indexOf('b'),
+    ],
+  ])('%j', (input, wanted, extra) => expect(steps(input, extra)).toEqual(wanted))
 
   test('a heading’s words before the heading', () => {
     const doc = '## Big title\n\ntext'

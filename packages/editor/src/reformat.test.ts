@@ -23,43 +23,33 @@ describe('tidying a document', () => {
     ['_a_ and $_b_$\n', '*a* and $_b_$\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toEqual(wanted))
 
-  test('re-aligns a table', () => {
-    expect(reformat('|a|bb|\n|-|-|\n|cccc|d|\n')).toBe(
+  test.each([
+    [
+      '|a|bb|\n|-|-|\n|cccc|d|\n',
       ['| a    | bb  |', '| ---- | --- |', '| cccc | d   |', ''].join('\n'),
-    )
-  })
-
-  test('leaves code fences exactly as written', () => {
-    const source = '```js\nconst  x   =  1\n*  not a list\n```\n'
-    expect(reformat(source)).toBe(source)
-  })
-
-  test('a tilde run inside a backtick block does not end it', () => {
-    const source = '```md\n~~~\n*  still code\n~~~\n```\n\n* a list\n'
-    expect(reformat(source)).toBe('```md\n~~~\n*  still code\n~~~\n```\n\n- a list\n')
-  })
-
-  test('a fence nothing closes takes the rest of the note with it', () => {
-    const source = '```\n*  still code\n_still code_\n'
-    expect(reformat(source)).toBe(source)
-  })
-
-  test('leaves front matter exactly as written', () => {
-    const source = '---\ntitle: _Notes_ on * things\ntags: [a, b]\n---\n\n* a list\n'
-    expect(reformat(source)).toBe(
+    ],
+    [
+      '```js\nconst  x   =  1\n*  not a list\n```\n',
+      '```js\nconst  x   =  1\n*  not a list\n```\n',
+    ],
+    [
+      '```md\n~~~\n*  still code\n~~~\n```\n\n* a list\n',
+      '```md\n~~~\n*  still code\n~~~\n```\n\n- a list\n',
+    ],
+    ['```\n*  still code\n_still code_\n', '```\n*  still code\n_still code_\n'],
+    [
+      '---\ntitle: _Notes_ on * things\ntags: [a, b]\n---\n\n* a list\n',
       '---\ntitle: _Notes_ on * things\ntags: [a, b]\n---\n\n- a list\n',
-    )
-  })
-
-  test('leaves a document that is already tidy unchanged', () => {
-    const source = '# Title\n\n- one\n- two\n\n*emphasis* here\n'
-    expect(reformat(source)).toBe(source)
-  })
-
-  test('leaves indented code as written', () => {
-    const source = 'text\n\n    * not a list\n\n\n    _still code_\n'
-    expect(reformat(source)).toBe(source)
-  })
+    ],
+    [
+      '# Title\n\n- one\n- two\n\n*emphasis* here\n',
+      '# Title\n\n- one\n- two\n\n*emphasis* here\n',
+    ],
+    [
+      'text\n\n    * not a list\n\n\n    _still code_\n',
+      'text\n\n    * not a list\n\n\n    _still code_\n',
+    ],
+  ])('%j', (input, wanted) => expect(reformat(input)).toBe(wanted))
 
   test('leaves an HTML comment as written', () => {
     const source = '<!--\n* keep\n\n\n_x_\n-->\n'
@@ -79,10 +69,11 @@ describe('code and blocks the parser keeps, wherever they sit', () => {
     expect(reformat(source)).toBe(source)
   })
 
-  test('a pipe table in indented code stays code', () => {
-    const source = 'Text\n\n    | a | b |\n    |-|-|\n'
-    expect(reformat(source)).toBe(source)
-  })
+  test.each([
+    ['Text\n\n    | a | b |\n    |-|-|\n', 'Text\n\n    | a | b |\n    |-|-|\n'],
+    ['- x\n\n  |a|b|\n  |-|-|\n', '- x\n\n  |a|b|\n  |-|-|\n'],
+    ['|a|`b`|\n|-|-|\n', '| a   | `b` |\n| --- | --- |\n'],
+  ])('%j', (input, wanted) => expect(reformat(input)).toBe(wanted))
 
   test('a pipe table in a comment, maths or an HTML block stays as written', () => {
     for (const source of [
@@ -92,15 +83,6 @@ describe('code and blocks the parser keeps, wherever they sit', () => {
     ]) {
       expect(reformat(source)).toBe(source)
     }
-  })
-
-  test('a table in a list item keeps its indent, so it stays in the item', () => {
-    const source = '- x\n\n  |a|b|\n  |-|-|\n'
-    expect(reformat(source)).toBe(source)
-  })
-
-  test('a table in prose is still re-aligned, inline code in its cells and all', () => {
-    expect(reformat('|a|`b`|\n|-|-|\n')).toBe('| a   | `b` |\n| --- | --- |\n')
   })
 })
 

@@ -29,11 +29,33 @@ describe('noteLinks', () => {
     [index, '[Ideas](Ideas.md from journal/Today.md)', ['Ideas.md'], markdown],
   ])('%j', (input, wanted, extra, last) => expect(noteLinks(input, extra, last)).toEqual(wanted))
 
-  test('a file whose name another file shares is linked by its path', () => {
-    const twins = { ...index, files: ['image.png', 'Trips/image.png'] }
-    expect(noteLinks(twins, ['Trips/image.png'], wikilink)).toBe('![[Trips/image.png]]')
-    expect(noteLinks(index, ['pics/cat.png'], wikilink)).toBe('![[cat.png]]')
-  })
+  test.each([
+    [
+      { ...index, files: ['image.png', 'Trips/image.png'] },
+      '![[Trips/image.png]]',
+      ['Trips/image.png'],
+      wikilink,
+    ],
+    [index, '![[cat.png]]', ['pics/cat.png'], wikilink],
+    [
+      { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
+      '![[a/b/pic.png]]',
+      ['a/b/pic.png'],
+      wikilink,
+    ],
+    [
+      { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
+      '![[b/pic.png]]',
+      ['b/pic.png'],
+      wikilink,
+    ],
+    [
+      { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
+      '![[d.png]]',
+      ['c/d.png'],
+      wikilink,
+    ],
+  ])('%j', (input, wanted, extra, last) => expect(noteLinks(input, extra, last)).toBe(wanted))
 
   test('a note or file at the top whose name one beside the note shares is linked from the top', () => {
     const asked: NoteIndex = {
@@ -60,12 +82,5 @@ describe('noteLinks', () => {
     expect(noteLinks(notes, ['b/c.md'], shortest)).toBe('/b/c.md')
     expect(noteLinks(notes, ['a/b/c.md'], shortest)).toBe('b/c.md')
     expect(noteLinks(notes, ['c.md'], shortest)).toBe('c.md')
-  })
-
-  test('a file two folders share a name in is linked by enough of the path to reach it', () => {
-    const files = { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] }
-    expect(noteLinks(files, ['a/b/pic.png'], wikilink)).toBe('![[a/b/pic.png]]')
-    expect(noteLinks(files, ['b/pic.png'], wikilink)).toBe('![[b/pic.png]]')
-    expect(noteLinks(files, ['c/d.png'], wikilink)).toBe('![[d.png]]')
   })
 })

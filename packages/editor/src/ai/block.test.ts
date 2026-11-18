@@ -31,15 +31,14 @@ describe('a prompt asking for the note', () => {
 })
 
 describe('an answer as it goes into the file', () => {
-  test('sits between two marks, under a line saying who said it', () => {
-    expect(answerText('answered by m, 2026-09-12', 'The heron.')).toBe(
+  test.each([
+    [
+      'answered by m, 2026-09-12',
       `${ANSWER_OPEN}\n*answered by m, 2026-09-12*\n\nThe heron.\n${ANSWER_CLOSE}`,
-    )
-  })
-
-  test('ends where the answer ends, however the model ended it', () => {
-    expect(answerText('said', 'One.\n\n\n')).toBe(`${ANSWER_OPEN}\n*said*\n\nOne.\n${ANSWER_CLOSE}`)
-  })
+      'The heron.',
+    ],
+    ['said', `${ANSWER_OPEN}\n*said*\n\nOne.\n${ANSWER_CLOSE}`, 'One.\n\n\n'],
+  ])('%j', (input, wanted, extra) => expect(answerText(input, extra)).toBe(wanted))
 
   test('is the two halves a stream writes between', () => {
     const { head, tail } = answerParts('said')
