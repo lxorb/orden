@@ -41,43 +41,32 @@ export async function drawDiagram(
 
 const PICTURE_TAGS = /<\/?(?:img|image|picture|source)\b[^>]*>/gi
 
-const STYLE_LINE = /^[ \t]*(?:classDef|style|linkStyle)\b.*$/gim
+const STYLE_LINE = /^.*\b(?:classDef|style|linkStyle|Update\w*Style)\b.*$/gim
 
-const REACHES_OUT = /url|image|@|\\|\(/i
+const REACHES_OUT = /url|image|@|\\|expression/i
 
-const CSS_ESCAPE = /\\[\da-f]/i
-
-const WEB_ADDRESS_IN_CSS = /url\s*\(/i
+const PICTURE_SHAPE = /\bimg\b|\\[xuU]/i
 
 const AWAY_URL = /url\s*\(\s*(?!['"]?#)[^)]*\)/gi
 
-const SETTINGS = /^\s*---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)|%%\{[\s\S]*?\}%%/g
-
-function withoutSettings(code: string): string {
-  return code.replace(SETTINGS, '')
-}
-
 function withoutPictures(code: string): string {
-  const kept = code.replace(STYLE_LINE, (line) => (REACHES_OUT.test(line) ? '' : line))
-  const read = withoutSettings(kept).replace(/\\(?![\da-f])/gi, '')
-  if (kept.includes('@{') && /img|\\/i.test(kept)) throw new Error('a picture shape from elsewhere')
-  if (
-    CSS_ESCAPE.test(withoutSettings(kept)) ||
-    WEB_ADDRESS_IN_CSS.test(read) ||
-    /@import/i.test(read)
-  ) {
-    throw new Error('styles that reach out')
+  if (code.includes('@{') && PICTURE_SHAPE.test(code)) {
+    throw new Error('a picture shape from elsewhere')
   }
-  return kept
+  return code.replace(STYLE_LINE, (line) => (REACHES_OUT.test(line) ? '' : line))
 }
 
-const SECURE = [
+const OWN_SECURE = [
   'secure',
   'securityLevel',
   'startOnLoad',
   'maxTextSize',
   'suppressErrorRendering',
   'maxEdges',
+]
+
+const HELD_SECURE = [
+  ...OWN_SECURE,
   'dompurifyConfig',
   'htmlLabels',
   'themeCSS',
@@ -100,7 +89,7 @@ async function drawMermaid(
   const svg = await mermaidSvg(`orden-export-${sequence++}`, code, {
     startOnLoad: false,
     securityLevel: 'strict',
-    secure: SECURE,
+    secure: pictures ? OWN_SECURE : HELD_SECURE,
     theme: scheme === 'light' ? 'default' : 'dark',
     fontFamily: where === 'page' ? PAGE_FONT : FONT,
     htmlLabels: where !== 'page',
