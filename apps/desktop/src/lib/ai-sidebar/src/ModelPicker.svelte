@@ -1,16 +1,11 @@
 <script lang="ts">
-  import { Facts } from '../../ui-kit/src/api'
+  import { Facts, segmented } from '../../ui-kit/src/api'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { region } from '../../platform/src/api'
-  import { dur, fly } from '../../platform/src/api'
-  import { segmented } from '../../ui-kit/src/api'
-  import { ordered } from './chat-parts'
-  import type { Effort } from '../../ai-providers/src/api'
-  import { usable, ProviderMark, ai } from '../../ai-providers/src/api'
-  import { chat } from './chat-parts'
+  import { region, dur, fly } from '../../platform/src/api'
+  import { ordered, chat, tokens } from './chat-parts'
+  import { usable, ProviderMark, ai, type Effort } from '../../ai-providers/src/api'
   import { hostHere } from './host'
-  import { tokens } from './chat-parts'
   import { effortWord } from './words'
 
   const here = hostHere()
@@ -56,13 +51,9 @@
     requestAnimationFrame(() => field?.focus())
   })
 
-  function toggle() {
-    chat.popover = open ? null : 'model'
-  }
-
-  function pick(id: string) {
-    if (!provider) return
-    void chat.chooseModel(provider.id, id)
+  function pick(id: string | undefined) {
+    if (provider && id !== undefined) void chat.chooseModel(provider.id, id)
+    close()
   }
 
   function onKey(event: KeyboardEvent) {
@@ -72,9 +63,7 @@
       lit = (lit + step + shown.length) % Math.max(1, shown.length)
     } else if (event.key === 'Enter') {
       event.preventDefault()
-      const one = shown[lit]
-      if (one) pick(one.id)
-      close()
+      pick(shown[lit]?.id)
     } else if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -96,7 +85,7 @@
     aria-expanded={open}
     disabled={!head || !provider}
     title="Model and effort"
-    onclick={toggle}
+    onclick={() => (chat.popover = open ? null : 'model')}
   >
     <span dir="auto"
       >{#if label.some(Boolean)}<Facts line parts={label} />{:else}Model{/if}</span
@@ -147,10 +136,7 @@
             role="option"
             aria-selected={one.id === head.model}
             onpointermove={() => (lit = index)}
-            onclick={() => {
-              pick(one.id)
-              close()
-            }}
+            onclick={() => pick(one.id)}
           >
             <span class="orden-row-label">{one.name}</span>
             {#if one.window}<span class="window">{tokens(one.window, region())}</span>{/if}

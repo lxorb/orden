@@ -4,9 +4,8 @@
   import { message } from '../../../ui-kit/src/api'
   import { dur, fly } from '../../../platform/src/api'
   import type { Thread } from '../../../ai-providers/src/api'
-  import { checkpoints } from '../chat-parts'
+  import { checkpoints, review, type ReviewPanel } from '../chat-parts'
   import type { Choice } from '../chat-parts'
-  import { review, type ReviewPanel } from '../chat-parts'
   import Tally from './Tally.svelte'
 
   const { sheet }: { sheet: { thread: Thread; panel: ReviewPanel | null; turn: string | null } } =

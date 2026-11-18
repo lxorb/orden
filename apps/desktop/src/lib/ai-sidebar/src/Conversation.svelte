@@ -9,10 +9,9 @@
   import { settingsWindow } from '@orden/contracts'
   import type { ThreadHead } from '../../ai-providers/src/api'
   import { beside, ordered, stateOf } from '../../ai-providers/src/api'
-  import { chat } from './chat-parts'
+  import { chat, sourcesFor } from './chat-parts'
   import ChatRow from './ChatRow.svelte'
   import ChatWindow from './ChatWindow.svelte'
-  import { sourcesFor } from './chat-parts'
   import { hostHere } from './host'
   import { slides } from './slide'
   import Branches from './review/Branches.svelte'
@@ -68,6 +67,10 @@
   }
 
   const copied = new Copied<string>()
+  const COPY =
+    'M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z'
+  const EDIT = 'M8.7 2.3l2 2-6 6-2.6.6.6-2.6z'
+  const REWIND = 'M2.4 6.5a4.1 4.1 0 1 0 1.2-2.9M2.4 2v2.6H5M6.5 4.4v2.3l1.6 1'
 
   const follows = (..._values: unknown[]) => undefined
 
@@ -142,6 +145,12 @@
   })
 </script>
 
+{#snippet tool(label: string, run: () => void, path: string)}
+  <button class="orden-glyph tool" title={label} aria-label={label} onclick={run}>
+    <svg viewBox="0 0 13 13"><path d={path} /></svg>
+  </button>
+{/snippet}
+
 <div class="room">
   <div class="talk" bind:this={talk} use:scrollbar use:slides={sideways} onscroll={onScroll}>
     {#if !ready}
@@ -208,43 +217,14 @@
             <p class="bubble" dir="auto">{words}</p>
             {#if thread && !turn.steered}
               <span class="tools">
-                <button
-                  class="orden-glyph tool"
-                  title="Copy"
-                  aria-label="Copy"
-                  onclick={() => void copied.copy(words, turn.id)}
-                >
-                  <svg viewBox="0 0 13 13">
-                    {#if copied.what === turn.id}
-                      <path d="M2.8 6.8l2.4 2.4 5-5.4" />
-                    {:else}
-                      <path
-                        d="M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z"
-                      />
-                    {/if}
-                  </svg>
-                </button>
+                {@render tool(
+                  'Copy',
+                  () => void copied.copy(words, turn.id),
+                  copied.what === turn.id ? 'M2.8 6.8l2.4 2.4 5-5.4' : COPY,
+                )}
                 {#if !running}
-                  <button
-                    class="orden-glyph tool"
-                    title="Edit"
-                    aria-label="Edit"
-                    onclick={() => chat.startEdit(turn.id)}
-                  >
-                    <svg viewBox="0 0 13 13"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
-                  </button>
-                  <button
-                    class="orden-glyph tool"
-                    title="Rewind"
-                    aria-label="Rewind"
-                    onclick={() => chat.rewind(turn.id)}
-                  >
-                    <svg viewBox="0 0 13 13"
-                      ><path
-                        d="M2.4 6.5a4.1 4.1 0 1 0 1.2-2.9M2.4 2v2.6H5M6.5 4.4v2.3l1.6 1"
-                      /></svg
-                    >
-                  </button>
+                  {@render tool('Edit', () => chat.startEdit(turn.id), EDIT)}
+                  {@render tool('Rewind', () => chat.rewind(turn.id), REWIND)}
                 {/if}
               </span>
             {/if}

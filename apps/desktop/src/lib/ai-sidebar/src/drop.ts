@@ -1,7 +1,6 @@
 import { carriedRows, draggedTab } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
-import { chat } from './chat-parts'
-import { type Mention, mentionOf, sameMention } from './chat-parts'
+import { chat, type Mention, mentionOf, sameMention } from './chat-parts'
 
 export function dropRows(event: DragEvent): void {
   const rows = carriedRows(event.dataTransfer).flatMap((path) => workspace.entryAt(path) ?? [])

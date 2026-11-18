@@ -1,13 +1,6 @@
 export { PLANS } from './ask'
-export {
-  GOAL_CLEARED,
-  goalHeld,
-  goalMessage,
-  goalSaid,
-  goesOn,
-  QUIET,
-  startsItsOwnTurn,
-} from './goal'
+export { GOAL_CLEARED, goalHeld, goalMessage, goalSaid, goesOn, QUIET } from './goal'
+export { startsItsOwnTurn } from './goal'
 export { modelsIn } from './models'
 export { promptFor } from './prompt'
 export { readerOf } from './readers'

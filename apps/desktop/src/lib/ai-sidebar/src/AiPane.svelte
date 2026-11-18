@@ -1,52 +1,17 @@
 <script lang="ts">
-  import {
-    localDate,
-    localNumber,
-    NoWord,
-    wordSaid,
-    dur,
-    slide,
-    invoke,
-    isDesktop,
-  } from '../../platform/src/api'
+  import { localDate, localNumber, NoWord, wordSaid, dur, slide } from '../../platform/src/api'
+  import { invoke, isDesktop } from '../../platform/src/api'
   import { onMount } from 'svelte'
-  import {
-    accountName,
-    vendorName,
-    type Account,
-    repeatable,
-    vendorOf,
-    AddAccount,
-    FEATURES,
-    ai,
-    listModels,
-    forgetKey,
-    hasKey,
-    keysAreGuarded,
-    keysInFile,
-    onKeysMoved,
-    writeKey,
-    localCli,
-    loadPlanRows,
-    type LocalPlans,
-    USAGE_EVERY,
-    usage,
-    type Weekly,
-    browserVault,
-    keepBrowserInVault,
-    vault,
-    ProviderMark,
-    firstModel,
-    isLocal,
-    offeredKinds,
-    type Provider,
-  } from '../../ai-providers/src/api'
+  import { accountName, vendorName, type Account, repeatable } from '../../ai-providers/src/api'
+  import { vendorOf, AddAccount, FEATURES, ai, listModels } from '../../ai-providers/src/api'
+  import { forgetKey, hasKey, keysAreGuarded, keysInFile } from '../../ai-providers/src/api'
+  import { onKeysMoved, writeKey, localCli, loadPlanRows } from '../../ai-providers/src/api'
+  import { type LocalPlans, USAGE_EVERY, usage, type Weekly } from '../../ai-providers/src/api'
+  import { browserVault, keepBrowserInVault, vault, ProviderMark } from '../../ai-providers/src/api'
+  import { firstModel, isLocal, offeredKinds, type Provider } from '../../ai-providers/src/api'
   import type { Adding } from '../../ai-providers/src/api'
-  import { message } from '../../ui-kit/src/api'
-  import { Select } from '../../ui-controls/src/api'
-  import { viewport } from '../../ui-kit/src/api'
-  import { Hint } from '../../ui-controls/src/api'
-  import { Switch } from '../../ui-controls/src/api'
+  import { message, viewport } from '../../ui-kit/src/api'
+  import { Select, Hint, Switch } from '../../ui-controls/src/api'
   import { canDictate, type Engine, engines, local } from '../../dictation/src/api'
 
   let keyed = $state<Record<string, boolean>>({})
@@ -113,26 +78,23 @@
   }
 
   async function take(provider: Provider, typed: string): Promise<string> {
-    trouble = { ...trouble, [provider.id]: '' }
-
+    said(provider)('')
     try {
       await writeKey(provider.id, typed)
       await look(provider.id)
     } catch (error) {
-      const said = message(error, 'that key could not be saved')
-      trouble = { ...trouble, [provider.id]: said }
-      return said
+      const text = message(error, 'that key could not be saved')
+      said(provider)(text)
+      return text
     }
     await refresh(provider)
     return ''
   }
 
   async function drop(provider: Provider) {
-    try {
-      await forgetKey(provider.id)
-    } catch (error) {
-      trouble = { ...trouble, [provider.id]: message(error, 'that key could not be saved') }
-    }
+    await forgetKey(provider.id).catch((error: unknown) =>
+      said(provider)(message(error, 'that key could not be saved')),
+    )
     await look(provider.id)
   }
 
@@ -147,7 +109,7 @@
       const now = ai.accounts.find((one) => one.id === provider.id)
       if (now && !now.model && first) ai.update(provider.id, { model: first })
     } catch (error) {
-      trouble = { ...trouble, [provider.id]: message(error, 'Could not read the models.') }
+      said(provider)(message(error, 'Could not read the models.'))
     }
   }
 
@@ -202,9 +164,9 @@
     const { kind } = provider
     if (!isLocal(kind) && kind !== 'chatgpt') void drop(provider)
     if (!__EVEN_PLUGIN__ && isLocal(kind) && provider.own) {
-      void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch((error: unknown) => {
-        trouble = { ...trouble, [provider.id]: message(error, 'Could not sign out.') }
-      })
+      void invoke('ai_cli_forget', { tool: kind, account: provider.id }).catch((error: unknown) =>
+        said(provider)(message(error, 'Could not sign out.')),
+      )
     }
     usage.forget(provider.id)
     ai.remove(provider.id)
@@ -237,19 +199,20 @@
   }
 </script>
 
+{#snippet hinted(label: string, text: string)}
+  <span class="name"><span class="orden-named">{label}<Hint {text} /></span></span>
+{/snippet}
+
 <h3>Accounts</h3>
 
 {#if !keysAreGuarded()}
   <div class="card">
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="orden-setting setting" onclick={() => void keepBrowserInVault(!browserVault.on)}>
-      <span class="name"
-        ><span class="orden-named"
-          >Keep this browser’s keys in the vault<Hint
-            text="Syncs this browser’s AI keys with your other devices through the vault."
-          /></span
-        ></span
-      >
+      {@render hinted(
+        'Keep this browser’s keys in the vault',
+        'Syncs this browser’s AI keys with your other devices through the vault.',
+      )}
       <Switch
         on={browserVault.on}
         label="Keep this browser’s keys in the vault"
@@ -344,13 +307,15 @@
         </div>
       {/if}
 
-      {#if provider.kind !== 'compatible' && siblings > 1}
+      {#if provider.kind === 'compatible' || siblings > 1}
         <label class="orden-setting setting">
           <span class="name">Name</span>
           <input
             class="orden-field is-value"
             value={provider.name}
-            placeholder={accountName({ ...provider, name: '' })}
+            placeholder={provider.kind === 'compatible'
+              ? 'OpenAI-compatible'
+              : accountName({ ...provider, name: '' })}
             spellcheck="false"
             onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
           />
@@ -358,17 +323,6 @@
       {/if}
 
       {#if provider.kind === 'compatible'}
-        <label class="orden-setting setting">
-          <span class="name">Name</span>
-          <input
-            class="orden-field is-value"
-            value={provider.name}
-            placeholder="OpenAI-compatible"
-            spellcheck="false"
-            onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
-          />
-        </label>
-
         <label class="orden-setting setting">
           <span class="name">Base URL</span>
           <input
@@ -471,11 +425,7 @@
   <div class="card" transition:slide={{ duration: dur(160) }}>
     {#each FEATURES as feature (feature.id)}
       <div class="orden-setting setting">
-        <span class="name"
-          ><span class="orden-named"
-            >{feature.label}<Hint text="Which of your AI accounts this feature asks." /></span
-          ></span
-        >
+        {@render hinted(feature.label, 'Which of your AI accounts this feature asks.')}
         <div class="orden-setting-value">
           <Select
             value={ai.uses[feature.id] ?? ''}
@@ -497,11 +447,7 @@
   <h3>Dictation</h3>
   <div class="card">
     <div class="orden-setting setting">
-      <span class="name"
-        ><span class="orden-named"
-          >Dictate with<Hint text="Where your voice goes to be turned into words." /></span
-        ></span
-      >
+      {@render hinted('Dictate with', 'Where your voice goes to be turned into words.')}
       <div class="orden-setting-value">
         <Select
           value={engines.chosen ?? ''}
@@ -518,13 +464,10 @@
     </div>
     {#if local.fits}
       <div class="orden-setting setting">
-        <span class="name"
-          ><span class="orden-named"
-            >Speech model<Hint
-              text="{local.machine?.model.name ?? ''}, on this computer. Nothing you say leaves it."
-            /></span
-          ></span
-        >
+        {@render hinted(
+          'Speech model',
+          `${local.machine?.model.name ?? ''}, on this computer. Nothing you say leaves it.`,
+        )}
         <div class="orden-setting-value">
           {#if local.fetching}
             <span class="caption"

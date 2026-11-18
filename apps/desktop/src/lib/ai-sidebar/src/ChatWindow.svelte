@@ -1,18 +1,14 @@
 <script lang="ts" generics="T extends ThreadHead">
   import type { Snippet } from 'svelte'
-  import { offsetOf, type Place, type Rows, windowFor } from '../../windows/src/api'
-  import { ListView } from '../../windows/src/api'
+  import { offsetOf, type Place, type Rows, windowFor, ListView } from '../../windows/src/api'
   import type { ThreadHead } from '../../ai-providers/src/api'
 
-  const {
-    heads,
-    role,
-    row,
-  }: {
+  interface Props {
     heads: readonly T[]
     role?: 'group'
     row: Snippet<[T, number, Place]>
-  } = $props()
+  }
+  const { heads, role, row }: Props = $props()
 
   const OVERSCAN = 8
 

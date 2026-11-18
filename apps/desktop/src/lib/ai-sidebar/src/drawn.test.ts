@@ -56,28 +56,14 @@ describe('an answer, drawn as a note is', () => {
     await loadMaths()
   })
 
+  const INLINE = /class="math-inline"[^>]*><span class="katex"/
+  const BLOCK = /class="math-block"[^>]*><span class="katex-display"/
   const CONSTRUCTS: [string, string, RegExp][] = [
-    ['inline maths in dollars', 'So $x^2$ is.', /class="math-inline"[^>]*><span class="katex"/],
-    [
-      'inline maths in LaTeX’s spelling',
-      'So \\(x^2\\) is.',
-      /class="math-inline"[^>]*><span class="katex"/,
-    ],
-    [
-      'display maths in dollars',
-      '$$\n\\frac{1}{2}\n$$',
-      /class="math-block"[^>]*><span class="katex-display"/,
-    ],
-    [
-      'display maths in LaTeX’s spelling',
-      '\\[\n\\frac{1}{2}\n\\]',
-      /class="math-block"[^>]*><span class="katex-display"/,
-    ],
-    [
-      'display maths on one line',
-      '\\[ \\frac{1}{2} \\]',
-      /class="math-block"[^>]*><span class="katex-display"/,
-    ],
+    ['inline maths in dollars', 'So $x^2$ is.', INLINE],
+    ['inline maths in LaTeX’s spelling', 'So \\(x^2\\) is.', INLINE],
+    ['display maths in dollars', '$$\n\\frac{1}{2}\n$$', BLOCK],
+    ['display maths in LaTeX’s spelling', '\\[\n\\frac{1}{2}\n\\]', BLOCK],
+    ['display maths on one line', '\\[ \\frac{1}{2} \\]', BLOCK],
     ['a heading', '## Part', /<h2>Part<\/h2>/],
     ['a list', '- one\n- two', /<ul>\n<li>one<\/li>\n<li>two<\/li>/],
     ['a numbered list', '1. one\n2. two', /<ol>\n<li>one<\/li>/],

@@ -1,12 +1,9 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { region } from '../../platform/src/api'
-  import { dur, fly } from '../../platform/src/api'
-  import { chat } from './chat-parts'
+  import { region, dur, fly } from '../../platform/src/api'
+  import { chat, tokens, instructionsSent } from './chat-parts'
   import { hostHere } from './host'
-  import { tokens } from './chat-parts'
   import { attachedIn, bandsOf } from './ring'
-  import { instructionsSent } from './chat-parts'
 
   const { next }: { next: number } = $props()
 
@@ -111,17 +108,10 @@
         </div>
         {#if bands.window}
           <div class="bar">
-            <span
-              class="fill instructions"
-              style:width={`${(bands.instructions / bands.window) * 100}%`}
-            ></span>
-            <span class="fill attached" style:width={`${(bands.attached / bands.window) * 100}%`}
-            ></span>
-            <span
-              class="fill conversation"
-              style:width={`${(bands.conversation / bands.window) * 100}%`}
-            ></span>
-            <span class="fill next" style:width={`${(bands.next / bands.window) * 100}%`}></span>
+            {#each [...ROWS.map(([band]) => band), 'next' as const] as band (band)}
+              <span class="fill {band}" style:width={`${(bands[band] / bands.window) * 100}%`}
+              ></span>
+            {/each}
           </div>
         {/if}
         {#each ROWS as [band, word] (band)}

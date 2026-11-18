@@ -1,28 +1,8 @@
 import { log, keep, stored, storedText } from '../../platform/src/api'
-import {
-  type Account,
-  type Accounts,
-  accountsIn,
-  accountsOf,
-  accountsText,
-  activated,
-  activeOf,
-  actives,
-  added,
-  defaulted,
-  defaultOf,
-  including,
-  isActive,
-  merged,
-  migrated,
-  NONE,
-  removed,
-  resolve,
-  updated,
-  used,
-  type Vendor,
-  vendors,
-} from './accounts'
+import { type Account, type Accounts, accountsIn, accountsOf, accountsText } from './accounts'
+import { activated, activeOf, actives, added, defaulted, defaultOf, including } from './accounts'
+import { isActive, merged, migrated, NONE, removed, resolve, updated, used } from './accounts'
+import { type Vendor, vendors } from './accounts'
 import { accountName, vendorName } from './account-words'
 import { COPY, hearChanges, readKept, STALE, writeKept } from './accounts-file'
 import { transcribersAre } from './hears'

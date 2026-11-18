@@ -1,18 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import {
-  firstModel,
-  isLocal,
-  KIND_NAMES,
-  localCli,
-  MODES,
-  modeIn,
-  modeOfGrant,
-  noMoreThan,
-  offeredKinds,
-  sseJson,
-  sseLines,
-  talkable,
-} from '../src/api'
+import { firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
+import { noMoreThan, offeredKinds, sseJson, sseLines, talkable } from '../src/api'
 
 describe('the module stands on its own', () => {
   test('signing in to a local program answers no while no module lends a terminal', async () => {

@@ -5,17 +5,13 @@
   import MentionMark from './MentionMark.svelte'
   import type { Row } from './chat-parts'
 
-  const {
-    rows,
-    active,
-    onpick,
-    onlight,
-  }: {
+  interface Props {
     rows: Row[]
     active: number
     onpick: (index: number) => void
     onlight: (index: number) => void
-  } = $props()
+  }
+  const { rows, active, onpick, onlight }: Props = $props()
 </script>
 
 <div
