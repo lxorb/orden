@@ -13,7 +13,7 @@ import tempfile
 import time
 from typing import Any
 from fresh_app import ended, fresh
-from native_app import config_of, endpoint, known
+from native_app import config_of, endpoint
 
 SPAN = """
 (() => {
@@ -92,6 +92,8 @@ INNER = (
     "return { x: at.x, y: at.y, scale, ratio: devicePixelRatio }"
 )
 
+STILL = 250
+
 def long_paper(pages: int = 120, lines: int = 70) -> bytes:
     w, h = 595, 842
     words = "the kestrel hangs above the field while the river turns slowly under a grey and patient sky"
@@ -121,7 +123,12 @@ SCROLL = """
 const [frames, step, hide] = %s
 document.getElementById('no-words')?.remove()
 if (hide) { const style = document.createElement('style'); style.id = 'no-words'; style.textContent = '.pages .sheet .words { display: none !important }'; document.head.append(style) }
-await new Promise((done) => setTimeout(done, 800))
+const laid = () => document.querySelectorAll('.pages .sheet .words span').length
+for (let count = laid(), calm = 0, turns = 0; calm < 1000 && turns < 100; turns++) {
+  await new Promise((done) => setTimeout(done, 100))
+  calm = laid() === count ? calm + 100 : 0
+  count = laid()
+}
 const host = document.querySelector('.pages')
 const box = host.getBoundingClientRect()
 const column = host.querySelector('.column')
@@ -146,7 +153,7 @@ await new Promise((done) => {
 watching.disconnect()
 document.getElementById('no-words')?.remove()
 const sorted = [...gaps].sort((a, b) => a - b)
-return { mean: gaps.reduce((sum, one) => sum + one, 0) / gaps.length, p95: sorted[Math.floor(sorted.length * 0.95)], long: gaps.filter((one) => one > 50).length, moved: from - rise(), built }
+return { mean: gaps.reduce((sum, one) => sum + one, 0) / gaps.length, p95: sorted[Math.floor(sorted.length * 0.95)], long: gaps.filter((one) => one > 50).length, most: sorted.at(-1), moved: from - rise(), built }
 """
 
 def paper() -> bytes:
@@ -417,7 +424,7 @@ def main() -> int:
                 break
             shut_menu()
         if "Line 3: the kestrel hangs above the field." not in said:
-            known(2198, f"a mouse drag over a line of the PDF chose {said!r}")
+            wrong.append(f"a mouse drag over a line of the PDF chose {said!r}")
         shut_menu()
 
         if isinstance(engine, Windows):
@@ -428,9 +435,9 @@ def main() -> int:
                 said, rows = chosen(), menu()
                 print(f"a pen over line 8: {said!r}; menu {rows}; heard {app.eval(HEARD)}", flush=True)
                 if "Line 8: the kestrel hangs above the field." not in said:
-                    known(2198, f"a pen in Select over a line of the PDF chose {said!r}")
+                    wrong.append(f"a pen in Select over a line of the PDF chose {said!r}")
                 if not any(one.startswith("Copy") for one in rows):
-                    known(2198, f"after a pen chose words its menu has no Copy: {rows}")
+                    wrong.append(f"after a pen chose words its menu has no Copy: {rows}")
                 shut_menu()
 
                 box = line(10)
@@ -440,11 +447,11 @@ def main() -> int:
                 said, rows = chosen(), menu()
                 print(f"a finger held on 'kestrel' and dragged: {said!r}; menu {rows}; heard {app.eval(HEARD)}", flush=True)
                 if "kestrel" not in said or "Line 10" in said:
-                    known(2198, f"a finger held on a word chose {said!r}")
+                    wrong.append(f"a finger held on a word chose {said!r}")
                 elif "hangs above" not in said:
                     unverified.append(f"a finger held on a word chose {said!r}; dragging on did not reach further, as this engine hands the touch to its own selection")
                 if not any(one.startswith("Copy") for one in rows):
-                    known(2198, f"after a finger chose words its menu has no Copy: {rows}")
+                    wrong.append(f"after a finger chose words its menu has no Copy: {rows}")
                 shut_menu()
             except OSError as error:
                 unverified.append(f"pen and touch could not be made on this machine: {error}")
@@ -489,7 +496,7 @@ def main() -> int:
             said = chosen()
             print(f"zoomed in, the mouse dragged over {under['text'][:30]!r}: {said[:40]!r}", flush=True)
             if not said.strip() or said not in under["text"]:
-                known(2198, f"zoomed in, a drag over words chose {said!r}")
+                wrong.append(f"zoomed in, a drag over words chose {said!r}")
         else:
             unverified.append(f"no words under the middle of the page zoomed in: {under}")
 
@@ -506,9 +513,9 @@ def main() -> int:
             time.sleep(1.5)
             for step, hide in ((40, False), (40, True), (-40, False), (-40, True)):
                 got = app.eval(SCROLL % json.dumps([300, step, hide]))
-                print(f"a 120-page PDF scrolled {step:+d}px a frame {'without' if hide else 'with'} its words: mean {got['mean']:.1f} ms, p95 {got['p95']:.1f} ms, {got['long']} frames over 50 ms, moved {got['moved']:.0f}, {got['built']} word nodes laid out", flush=True)
-                if got["built"]:
-                    known(2198, f"words were laid out for {got['built']} nodes while a long PDF scrolled")
+                print(f"a 120-page PDF scrolled {step:+d}px a frame {'without' if hide else 'with'} its words: mean {got['mean']:.1f} ms, p95 {got['p95']:.1f} ms, {got['long']} frames over 50 ms, the longest {got['most']:.0f} ms, moved {got['moved']:.0f}, {got['built']} word nodes laid out", flush=True)
+                if got["built"] and got["most"] < STILL:
+                    wrong.append(f"words were laid out for {got['built']} nodes while a long PDF scrolled")
     finally:
         ended(process)
         shutil.rmtree(spaces, ignore_errors=True)
