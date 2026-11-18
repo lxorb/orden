@@ -145,48 +145,31 @@ function itemIn(submenu: NativeSubmenu, text: string): NativeItem {
 }
 
 describe('a key as a Mac menu row writes it', () => {
-  test('Mod is Command, and the letter is upper case', () => {
-    expect(toAccelerator('Mod-s')).toBe('Cmd+S')
-    expect(toAccelerator('Mod-Shift-k')).toBe('Cmd+Shift+K')
+  test.each([
+    ['Mod-s', 'Cmd+S'],
+    ['Mod-Shift-k', 'Cmd+Shift+K'],
+    ['Mod-Ctrl-f', 'Cmd+Ctrl+F'],
+    ['Ctrl-Mod-f', 'Cmd+Ctrl+F'],
+    ['Shift-Alt-Mod-1', 'Cmd+Alt+Shift+1'],
+    ['Ctrl-Tab', 'Ctrl+Tab'],
+    ['Mod-Alt-ArrowRight', 'Cmd+Alt+Right'],
+    ['Mod-PageDown', 'Cmd+PageDown'],
+    ['Mod-Shift-Space', 'Cmd+Shift+Space'],
+    ['Mod--', 'Cmd+-'],
+    ['Mod-=', 'Cmd+='],
+    ['Mod-,', 'Cmd+,'],
+    ['Mod-Shift-/', 'Cmd+Shift+/'],
+    ['Ctrl-[', 'Ctrl+['],
+    ['F11', 'F11'],
+    ['Shift-F6', 'Shift+F6'],
+  ])('%s as %s, modifiers in one order, keys named as Tauri names them', (key, written) => {
+    expect(toAccelerator(key)).toBe(written)
   })
 
-  test('with the modifiers in one order however they were written', () => {
-    expect(toAccelerator('Mod-Ctrl-f')).toBe('Cmd+Ctrl+F')
-    expect(toAccelerator('Ctrl-Mod-f')).toBe('Cmd+Ctrl+F')
-    expect(toAccelerator('Shift-Alt-Mod-1')).toBe('Cmd+Alt+Shift+1')
-  })
-
-  test('names the keys that are words the way Tauri reads them', () => {
-    expect(toAccelerator('Ctrl-Tab')).toBe('Ctrl+Tab')
-    expect(toAccelerator('Mod-Alt-ArrowRight')).toBe('Cmd+Alt+Right')
-    expect(toAccelerator('Mod-PageDown')).toBe('Cmd+PageDown')
-    expect(toAccelerator('Mod-Shift-Space')).toBe('Cmd+Shift+Space')
-  })
-
-  test('keeps punctuation as itself, the minus key included', () => {
-    expect(toAccelerator('Mod--')).toBe('Cmd+-')
-    expect(toAccelerator('Mod-=')).toBe('Cmd+=')
-    expect(toAccelerator('Mod-,')).toBe('Cmd+,')
-    expect(toAccelerator('Mod-Shift-/')).toBe('Cmd+Shift+/')
-    expect(toAccelerator('Ctrl-[')).toBe('Ctrl+[')
-  })
-
-  test('lets a function key stand alone', () => {
-    expect(toAccelerator('F11')).toBe('F11')
-    expect(toAccelerator('Shift-F6')).toBe('Shift+F6')
-  })
-
-  test('refuses a bare key that is typed, which would take it from every field', () => {
-    expect(toAccelerator('Enter')).toBeNull()
-    expect(toAccelerator('Escape')).toBeNull()
-    expect(toAccelerator('Shift-a')).toBeNull()
-  })
-
-  test('refuses a key Tauri has no name for, rather than break the whole strip', () => {
-    expect(toAccelerator('Mod-ContextMenu')).toBeNull()
-    expect(toAccelerator('Mod-+')).toBeNull()
-    expect(toAccelerator('')).toBeNull()
-  })
+  test.each(['Enter', 'Escape', 'Shift-a', 'Mod-ContextMenu', 'Mod-+', ''])(
+    'refuses %j: a bare typed key, or one Tauri has no name for',
+    (key) => expect(toAccelerator(key)).toBeNull(),
+  )
 })
 
 describe('a key a menu row can show', () => {
@@ -478,70 +461,59 @@ describe('the strip, changed', () => {
 })
 
 describe('a key the page let pass', () => {
-  const event = (extra: Partial<SeenKey['event']> = {}): SeenKey['event'] => ({
-    key: 'b',
-    code: 'KeyB',
-    ctrlKey: false,
-    metaKey: true,
-    altKey: false,
-    shiftKey: false,
-    defaultPrevented: false,
-    ...extra,
+  const seen = (extra: Partial<SeenKey['event']> = {}): SeenKey => ({
+    event: {
+      key: 'b',
+      code: 'KeyB',
+      ctrlKey: false,
+      metaKey: true,
+      altKey: false,
+      shiftKey: false,
+      defaultPrevented: false,
+      ...extra,
+    },
+    at: 1000,
   })
 
   test('is the one the page saw a moment ago and did not act on', () => {
-    expect(letPass('Mod-b', { event: event(), at: 1000 }, 1050)).toBe(true)
+    expect(letPass('Mod-b', seen(), 1050)).toBe(true)
   })
 
-  test('is not one the page acted on, which never reaches the menu at all', () => {
-    expect(letPass('Mod-b', { event: event({ defaultPrevented: true }), at: 1000 }, 1050)).toBe(
-      false,
-    )
-  })
-
-  test('is not another key, nor one from long ago, nor one the page never saw', () => {
-    expect(letPass('Mod-i', { event: event(), at: 1000 }, 1050)).toBe(false)
-    expect(letPass('Mod-b', { event: event(), at: 1000 }, 5000)).toBe(false)
+  test('is not one the page acted on, another key, one from long ago, nor one never seen', () => {
+    expect(letPass('Mod-b', seen({ defaultPrevented: true }), 1050)).toBe(false)
+    expect(letPass('Mod-i', seen(), 1050)).toBe(false)
+    expect(letPass('Mod-b', seen(), 5000)).toBe(false)
     expect(letPass('Mod-b', null, 1050)).toBe(false)
   })
 })
 
 describe('full screen, left by the window', () => {
-  test('takes the app’s own with it', () => {
+  test('takes the app’s own with it, and nothing else does', () => {
     expect(leftFullscreen(true, false, true)).toBe(true)
-  })
-
-  test('and nothing else does', () => {
-    expect(leftFullscreen(false, true, false)).toBe(false)
-    expect(leftFullscreen(false, false, true)).toBe(false)
-    expect(leftFullscreen(true, true, true)).toBe(false)
-    expect(leftFullscreen(true, false, false)).toBe(false)
+    for (const [was, now, on] of [
+      [false, true, false],
+      [false, false, true],
+      [true, true, true],
+      [true, false, false],
+    ] as const)
+      expect(leftFullscreen(was, now, on)).toBe(false)
   })
 })
 
 describe('the windows that have a strip of their own', () => {
-  test('are the first window and the ones opened after it', () => {
-    expect(documentWindows(['main'])).toBe(1)
+  test('are the first window and the ones opened after it, not the quick add or a print', () => {
     expect(documentWindows(['main', 'orden-2', 'orden-17'])).toBe(3)
-  })
-
-  test('and not the quick add, a print, or anything else', () => {
     expect(documentWindows(['main', 'orden-quick-add', 'print-3', 'orden-', 'orden-2a'])).toBe(1)
     expect(documentWindows([])).toBe(0)
   })
 })
 
 describe('a row pressed by its key', () => {
-  test('of the window’s runs wherever the keyboard is', () => {
-    expect(keyRuns(true, 'note')).toBe(true)
-    expect(keyRuns(true, 'page')).toBe(true)
-    expect(keyRuns(true, 'away')).toBe(true)
-  })
-
-  test('of the note’s runs only while the note has the keyboard', () => {
-    expect(keyRuns(false, 'note')).toBe(true)
-    expect(keyRuns(false, 'page')).toBe(false)
-    expect(keyRuns(false, 'away')).toBe(false)
+  test('of the window’s runs wherever the keyboard is, of the note’s only in the note', () => {
+    for (const at of ['note', 'page', 'away'] as const) {
+      expect(keyRuns(true, at)).toBe(true)
+      expect(keyRuns(false, at)).toBe(at === 'note')
+    }
   })
 })
 
