@@ -36,6 +36,20 @@ function relativeFile(from: string, specifier: string): string | null {
   return tries.find((one) => existsSync(one) && statSync(one).isFile()) ?? null
 }
 
+function imported(file: string, lazy: boolean): string[] {
+  const source = text(file)
+  const asked = [...source.matchAll(STATIC)]
+    .filter((one) => !/\b(?:import|export)\s+type\b/.test(one[0]))
+    .map((one) => one[1] ?? one[2] ?? '')
+  if (lazy) asked.push(...[...source.matchAll(LAZY)].map((one) => one[1] ?? ''))
+  return asked.flatMap((specifier) => {
+    const bare = specifier.replace(/\?.*$/, '')
+    if (bare !== specifier || bare.endsWith('.css')) return []
+    const found = bare.startsWith('.') ? relativeFile(file, bare) : packageFile(bare)
+    return found && /\.(?:ts|svelte|js)$/.test(found) ? [found] : []
+  })
+}
+
 function graph(starts: readonly string[], lazy: boolean): string[] {
   const seen = new Set<string>()
   const queue = [...starts]
@@ -43,20 +57,12 @@ function graph(starts: readonly string[], lazy: boolean): string[] {
     const file = queue.shift()
     if (file === undefined || seen.has(file)) continue
     seen.add(file)
-    const source = text(file)
-    const asked = [...source.matchAll(STATIC)]
-      .filter((one) => !/\b(?:import|export)\s+type\b/.test(one[0]))
-      .map((one) => one[1] ?? one[2] ?? '')
-    if (lazy) asked.push(...[...source.matchAll(LAZY)].map((one) => one[1] ?? ''))
-    for (const specifier of asked) {
-      const bare = specifier.replace(/\?.*$/, '')
-      if (bare !== specifier || bare.endsWith('.css')) continue
-      const found = bare.startsWith('.') ? relativeFile(file, bare) : packageFile(bare)
-      if (found && /\.(?:ts|svelte|js)$/.test(found)) queue.push(found)
-    }
+    queue.push(...imported(file, lazy))
   }
   return [...seen]
 }
+
+const PORT_FILES = join(APP, 'src', 'lib')
 
 const names = (files: readonly string[], pattern: RegExp) =>
   files.flatMap((file) => [...text(file).matchAll(pattern)].map((one) => [one[1] ?? '', file]))
@@ -102,6 +108,15 @@ describe('the ports an entry needs', () => {
       .filter(([port]) => !bound.has(port ?? ''))
       .map(([port, file]) => `${port} in ${relative(ROOT, file ?? '')}`)
     expect([...new Set(unbound)]).toEqual([])
+  })
+
+  test.each(ENTRIES)('%s imports itself every port file it loads at startup', (_page, starts) => {
+    const own = new Set(starts.flatMap((start) => imported(start, false)))
+    const reached = graph(starts, false)
+      .filter((file) => dirname(file) === PORT_FILES && file.endsWith('-ports.ts'))
+      .filter((file) => !own.has(file))
+      .map((file) => relative(ROOT, file))
+    expect(reached).toEqual([])
   })
 
   test('every needPort names its port where it asks', () => {
