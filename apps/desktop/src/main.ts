@@ -9,6 +9,7 @@ import {
   watchFirstInput,
 } from './lib/platform/src/api'
 import './lib/launch/src/renamed.svelte'
+import './lib/sync-base-ports'
 import './lib/sync-ports'
 import './lib/theme-ports'
 import './lib/sharing-ports'
