@@ -74,6 +74,13 @@ export class Shared<T> {
   }
 }
 
+export function heardElsewhere(keys: readonly string[], heard: () => void): void {
+  if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return
+  window.addEventListener('storage', (event) => {
+    if (event.key !== null && keys.includes(event.key)) heard()
+  })
+}
+
 export function forget(key: string): void {
   try {
     localStorage.removeItem(key)

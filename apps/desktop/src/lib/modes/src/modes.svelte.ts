@@ -29,7 +29,7 @@ import {
 import { setHardBreaks } from '@orden/markdown/breaks'
 import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { SvelteMap } from 'svelte/reactivity'
-import { account, api, type AccountSettings, turnedDown } from '../../accounts/src/api'
+import { AccountOwed, api, type AccountSettings } from '../../accounts/src/api'
 import { viewport } from '../../ui-kit/src/api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
@@ -43,10 +43,10 @@ import {
   type Marks,
 } from '@orden/glasses/choices'
 import {
-  forget,
   isNumber,
   isRecord,
   isString,
+  heardElsewhere,
   keepJson,
   stored,
   stringList,
@@ -339,6 +339,10 @@ class Modes {
       if (mode) this.vimModes.set(view, mode)
       else this.vimModes.delete(view)
     })
+    heardElsewhere([STORAGE_KEY], () => {
+      this.restore()
+      this.applyAlwaysOnTop()
+    })
   }
 
   restore() {
@@ -411,22 +415,10 @@ class Modes {
 
     this.written = isRecord(saved) ? saved : fieldsOf(this.state())
     if (stale) this.persist()
-    this.hearOthers()
     for (const view of this.views) this.apply(view)
   }
 
   private written: Record<string, unknown> | null = null
-
-  private hearing = false
-  private hearOthers() {
-    if (this.hearing || typeof window === 'undefined') return
-    this.hearing = true
-    window.addEventListener('storage', (event) => {
-      if (event.key !== STORAGE_KEY) return
-      this.restore()
-      this.applyAlwaysOnTop()
-    })
-  }
 
   toggleAlwaysOnTop() {
     this.alwaysOnTop = !this.alwaysOnTop
@@ -846,23 +838,23 @@ class Modes {
   }
 
   async adopt(token: string): Promise<AccountSettings | null> {
-    const asked = this.sent
-    const session = this.session
+    const asked = this.owed.sends
+    const session = this.owed.session
 
-    await this.settle(token)
-    if (this.session !== session) return null
+    await this.owed.settle(token)
+    if (this.owed.session !== session) return null
 
     let remote: AccountSettings
     try {
       const answer = await api.settings(token)
-      if (this.session !== session) return null
+      if (this.owed.session !== session) return null
       remote = answer.settings
       if (answer.key?.set) void api.removeAskKey(token).catch(() => undefined)
     } catch {
       return null
     }
 
-    const unheard = this.sent === asked && !Object.keys(this.owed).length
+    const unheard = this.owed.sends === asked && !this.owed.standing
 
     const theirs = ligatureScope(remote.ligatures)
     if (theirs && unheard && theirs !== this.ligatures) {
@@ -1020,80 +1012,10 @@ class Modes {
     if (moved) this.persist()
   }
 
-  private sent = 0
-
-  private get owedTo(): { who: string | null; patch: AccountSettings } | null {
-    const kept = stored(OWED_KEY)
-    if (!isRecord(kept) || !isRecord(kept.patch)) return null
-    const owner = typeof kept.who === 'string' ? kept.who : null
-    const who = account.user?.id ?? null
-    return owner === null || who === null || owner === who
-      ? { who: owner, patch: kept.patch }
-      : null
-  }
-
-  private get owed(): AccountSettings {
-    return this.owedTo?.patch ?? {}
-  }
-
-  private set owed(patch: AccountSettings) {
-    if (!Object.keys(patch).length) forget(OWED_KEY)
-    else keepJson(OWED_KEY, { who: account.user?.id ?? this.owedTo?.who ?? null, patch })
-  }
-
-  private session = 0
-
-  forgetSession(): void {
-    this.session++
-    this.owed = {}
-  }
-
-  forgetUnowned(): void {
-    if (this.owedTo?.who === null) this.owed = {}
-  }
+  private readonly owed = new AccountOwed(OWED_KEY)
 
   private share(patch: AccountSettings) {
-    this.sent++
-    if (account.noAccountForSure) return
-    this.owed = { ...this.owed, ...patch }
-
-    const token = account.accountToken
-    if (token) void this.settle(token)
-  }
-
-  private async settle(token: string): Promise<void> {
-    const owed = this.owed
-    if (!Object.keys(owed).length) return
-
-    const session = this.session
-    if (!(await this.delivered(token, owed, session))) return
-    if (this.session !== session) return
-    const said = (value: unknown) => JSON.stringify(value)
-    this.owed = Object.fromEntries(
-      Object.entries(this.owed).filter(
-        ([name, value]) => said(value) !== said(owed[name as keyof AccountSettings]),
-      ),
-    )
-  }
-
-  private async delivered(
-    token: string,
-    patch: AccountSettings,
-    session: number,
-  ): Promise<boolean> {
-    try {
-      await api.saveSettings(token, patch)
-      return true
-    } catch (error) {
-      if (!turnedDown(error)) return false
-      const keys = Object.keys(patch) as (keyof AccountSettings)[]
-      if (keys.length < 2) return true
-      for (const key of keys) {
-        if (this.session !== session) return true
-        if (!(await this.delivered(token, { [key]: patch[key] }, session))) return false
-      }
-      return true
-    }
+    this.owed.send(patch)
   }
 
   toggleCloseBrackets(view?: EditorView) {
@@ -1248,6 +1170,3 @@ function fieldsOf(state: Saved): Record<string, unknown> {
 }
 
 export const modes = new Modes()
-
-account.forgetWithSession(() => modes.forgetSession())
-account.holdsNoAccount(() => modes.forgetUnowned())

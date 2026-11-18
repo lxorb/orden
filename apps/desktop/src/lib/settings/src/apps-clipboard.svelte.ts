@@ -1,4 +1,4 @@
-import { keep, storedText } from '../../platform/src/api'
+import { heardElsewhere, keep, storedText } from '../../platform/src/api'
 
 const KEY = 'orden:apps-clipboard'
 
@@ -17,8 +17,4 @@ class ClipboardSharing {
 
 export const clipboardSharing = new ClipboardSharing()
 
-if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === KEY) clipboardSharing.heard()
-  })
-}
+heardElsewhere([KEY], () => clipboardSharing.heard())

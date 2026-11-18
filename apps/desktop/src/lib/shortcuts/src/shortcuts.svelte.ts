@@ -15,6 +15,7 @@ import type { Preset } from './presets'
 import {
   without,
   isRecord,
+  heardElsewhere,
   keep,
   keepJson,
   stored,
@@ -81,18 +82,7 @@ class Shortcuts {
     this.preset =
       knownPreset(storedText(PRESET_KEY)) ??
       (Object.keys(this.overrides).length ? 'custom' : 'default')
-    this.hearOthers()
-  }
-
-  private hearing = false
-  private hearOthers() {
-    if (this.hearing || typeof window === 'undefined') return
-    this.hearing = true
-    window.addEventListener('storage', (event) => {
-      if (event.key !== STORAGE_KEY && event.key !== PRESET_KEY) return
-      this.restore()
-      for (const view of this.views) setShortcutKeys(view, this.overrides)
-    })
+    for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
 
   private unkept = false
@@ -345,3 +335,5 @@ function usable(value: unknown): KeyOverrides {
 }
 
 export const shortcuts = new Shortcuts()
+
+heardElsewhere([STORAGE_KEY, PRESET_KEY], () => shortcuts.restore())
