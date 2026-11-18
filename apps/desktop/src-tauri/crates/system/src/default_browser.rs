@@ -580,7 +580,12 @@ mod tests {
     }
 
     fn source(relative: &str) -> String {
-        std::fs::read_to_string(crate::app_dir().join(relative)).expect("a file beside the crate")
+        std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../..")
+                .join(relative),
+        )
+        .expect("a file beside the crate")
     }
 
     #[test]

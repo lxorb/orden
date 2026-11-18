@@ -115,7 +115,7 @@ pub enum Passed {
 
 impl Passed {
     pub fn wanted_by(self, window: &str) -> bool {
-        self != Self::Escape || crate::full_screen::is_on(window)
+        self != Self::Escape || orden_system::full_screen::is_on(window)
     }
 }
 

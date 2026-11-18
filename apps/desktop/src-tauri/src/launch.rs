@@ -324,7 +324,7 @@ fn window_builder<'a>(
         .min_inner_size(520.0, 400.0);
     #[cfg(not(any(target_os = "macos", windows)))]
     let builder = builder.disable_drag_drop_handler();
-    let builder = match crate::ground::worn() {
+    let builder = match orden_system::ground::worn() {
         Some(colour) => builder.background_color(colour),
         None => builder,
     };
@@ -338,7 +338,7 @@ fn window_builder<'a>(
 }
 
 fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> Result<(), String> {
-    let building = crate::appearance::own_frame(builder);
+    let building = orden_system::appearance::own_frame(builder);
     let window = orden_placement::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
     crate::pinch::let_through(window.as_ref());

@@ -35,7 +35,7 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
 
         #[cfg(target_os = "macos")]
         {
-            orden_system::lights::refresh(&window);
+            crate::lights::refresh(&window);
 
             if let Some(page) = app.get_webview(window.label()) {
                 orden_placement::placement::keyboard_to(&page);

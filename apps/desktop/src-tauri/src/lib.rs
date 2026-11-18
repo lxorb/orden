@@ -8,16 +8,10 @@ mod ai_agent;
 mod ai_cli;
 #[cfg(desktop)]
 mod app_place;
-#[cfg(desktop)]
-mod appearance;
 #[cfg(test)]
 mod calls;
 #[cfg(target_os = "linux")]
 mod chromium_pump;
-#[cfg(desktop)]
-mod default_browser;
-#[cfg(desktop)]
-mod document_window;
 #[cfg(desktop)]
 mod downloads;
 #[cfg(desktop)]
@@ -26,10 +20,6 @@ mod endpoint;
 mod engine;
 #[cfg(desktop)]
 mod extensions;
-#[cfg(desktop)]
-mod full_screen;
-#[cfg(desktop)]
-mod ground;
 #[cfg(desktop)]
 mod handover;
 #[cfg(desktop)]
@@ -50,8 +40,6 @@ mod lifecycle;
 mod linux;
 #[cfg(desktop)]
 pub mod mcp;
-#[cfg(desktop)]
-mod menu_bar;
 #[cfg(desktop)]
 mod notices;
 #[cfg(desktop)]
@@ -290,16 +278,16 @@ macro_rules! desktop_commands {
             orden_secrets::chatgpt::chatgpt_token,
             orden_secrets::chatgpt::chatgpt_sign_out,
             orden_system::link_preview::link_preview,
-            appearance::set_frame,
-            appearance::set_translucency,
-            ground::remember_material,
-            ground::remember_ground,
+            orden_system::appearance::set_frame,
+            orden_system::appearance::set_translucency,
+            orden_system::ground::remember_material,
+            orden_system::ground::remember_ground,
             orden_import::apple_notes::read_apple_notes,
             orden_import::apple_notes::open_full_disk_access,
             orden_import::obsidian_vaults::obsidian_vaults,
             orden_import::obsidian_vaults::obsidian_vault_files,
             orden_import::obsidian_vaults::read_obsidian_file,
-            full_screen::window_fullscreen,
+            orden_system::full_screen::window_fullscreen,
             window_drag::window_move_resize,
             orden_system::gpu::gpu_seen,
             orden_system::gpu::gpu_chosen,
@@ -322,7 +310,7 @@ macro_rules! desktop_commands {
             spelling::spell_languages,
             orden_system::fonts::font_families,
             window_drag::window_frame,
-            full_screen::window_is_fullscreen,
+            orden_system::full_screen::window_is_fullscreen,
             orden_browsers::zen_profiles::zen_profiles,
             orden_browsers::zen_profiles::read_zen_file,
             orden_browsers::zen_profiles::read_zen_places,
@@ -348,8 +336,8 @@ macro_rules! desktop_commands {
             old_home::former_homes,
             old_home::keep_after_move,
             old_home::drop_after_move,
-            default_browser::default_browser,
-            default_browser::make_default_browser,
+            orden_system::default_browser::default_browser,
+            orden_system::default_browser::make_default_browser,
             lifecycle::keep_running,
             lifecycle::quit_confirmed,
             lifecycle::quit_others,
@@ -357,8 +345,8 @@ macro_rules! desktop_commands {
             lifecycle::update_install_failed,
             lifecycle::update_may_install,
             lifecycle::update_settled,
-            document_window::show_document,
-            menu_bar::hand_to_keyboard,
+            orden_system::document_window::show_document,
+            orden_system::menu_bar::hand_to_keyboard,
             orden_placement::placement::take_keyboard,
             orden_placement::placement::raise_window,
             orden_documents::pandoc::has_pandoc,
@@ -769,7 +757,7 @@ fn ready(
     let web_first = ahead::start(handle);
 
     #[cfg(target_os = "macos")]
-    menu_bar::leave_out_system_rows();
+    orden_system::menu_bar::leave_out_system_rows();
 
     if let Ok(root) = paths::spaces_dir(handle) {
         let _ = handle.asset_protocol_scope().allow_directory(&root, true);
@@ -812,11 +800,11 @@ fn ready(
         let config = orden_placement::placement::restored(handle, config);
         trace::mark("window placement");
         let building = engine::ui_window(app, &config)?;
-        let see_through = ground::see_through(handle);
+        let see_through = orden_system::ground::see_through(handle);
         if let Some(at) = orden_placement::placement::away() {
             let window = orden_placement::placement::built_away(building, at)?;
             if see_through {
-                appearance::wear_from_the_start(&window.as_ref().window());
+                orden_system::appearance::wear_from_the_start(&window.as_ref().window());
             }
             orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
         } else if uris::launched_quietly(handle) {
@@ -824,7 +812,7 @@ fn ready(
             orden_placement::top_edge::mind(&window.as_ref().window());
             orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
         } else {
-            let colour = ground::remembered(handle);
+            let colour = orden_system::ground::remembered(handle);
             let at_once = colour.is_some() && !cfg!(target_os = "macos");
             let building = match colour {
                 Some(colour) => building.background_color(colour),
@@ -833,7 +821,7 @@ fn ready(
             let window = orden_placement::placement::settled(building.visible(at_once))?;
             orden_placement::top_edge::mind(&window.as_ref().window());
             if see_through {
-                appearance::wear_from_the_start(&window.as_ref().window());
+                orden_system::appearance::wear_from_the_start(&window.as_ref().window());
             }
             orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
             if !at_once {
@@ -876,7 +864,7 @@ fn ready(
 
 #[cfg(desktop)]
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
-    default_browser::keep_registered(handle);
+    orden_system::default_browser::keep_registered(handle);
     ai_cli::keep_enrolled(handle);
     orden_secrets::retired_chats::clear_leftovers(handle);
 }
@@ -1040,7 +1028,7 @@ mod tests {
     ];
 
     const OPENS_ON_THE_WINDOW_S_THREAD: [&str; 2] = [
-        "crate::default_browser::platform::make_default::main#0",
+        "orden_system::default_browser::platform::make_default::main#0",
         "crate::downloads::saving::main#0",
     ];
 

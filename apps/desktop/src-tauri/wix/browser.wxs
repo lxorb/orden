@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Orden among the browsers, for an install from the MSI: the values the app writes
-     for itself and the NSIS installer writes (src/default_browser.rs holds this file
+     for itself and the NSIS installer writes (crates/system/src/default_browser.rs holds this file
      to them), in the installing person's own hive, where Default apps reads them, and
      taken away again when the MSI is uninstalled.
 
