@@ -26,6 +26,13 @@ export interface Shown {
   sliding: boolean
 }
 
+interface Box {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
 const WIDE_REM = 16
 
 const WORDS_TALL = 72
@@ -60,12 +67,10 @@ class Hovering {
   }
 
   restOn(tab: Tab, node: Element, focused = false) {
-    const body = (node.closest('.tab')?.querySelector('.fill') ?? node).getBoundingClientRect()
-    this.enter({
-      tab,
-      box: { left: body.left, right: body.right, bottom: body.bottom },
-      focused,
-    })
+    const { left, right, bottom } = (
+      node.closest('.tab')?.querySelector('.fill') ?? node
+    ).getBoundingClientRect()
+    this.enter({ tab, box: { left, right, bottom }, focused })
   }
 
   enter(aim: Aim) {
@@ -201,12 +206,7 @@ class Hovering {
     this.uncover = null
   }
 
-  private async cover(box: {
-    left: number
-    top: number
-    right: number
-    bottom: number
-  }): Promise<boolean> {
+  private async cover(box: Box): Promise<boolean> {
     const under = workspace.panes.all
       .map((pane) => workspace.tabs.find((one) => one.id === pane.activeTabId))
       .filter((one): one is Tab => one?.kind === 'web')
@@ -233,10 +233,7 @@ function wide(): number {
   return WIDE_REM * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16)
 }
 
-function overlaps(
-  paneId: string,
-  box: { left: number; top: number; right: number; bottom: number },
-): boolean {
+function overlaps(paneId: string, box: Box): boolean {
   const pane = document.querySelector(`[data-pane="${CSS.escape(paneId)}"]`)
   if (!pane) return false
 

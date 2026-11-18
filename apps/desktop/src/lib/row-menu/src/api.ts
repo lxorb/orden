@@ -15,21 +15,20 @@ import { isDesktop, isMarkdownPath, withinSpace } from '../../platform/src/api'
 import { noteCovers, workspace } from '../../workspace/src/api'
 import { entryAt, folderNote } from '../../tree/src/api'
 
-export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
-  if (!mark) return []
+const essentials = (all: boolean, run: () => void): MenuEntry[] => [
+  { label: all ? 'Remove from Essentials' : 'Add to Essentials', run },
+]
 
-  return [
-    {
-      label: workspace.bookmarks.has(mark) ? 'Remove from Essentials' : 'Add to Essentials',
-      run: () => workspace.bookmarks.toggle(mark),
-    },
-  ]
+export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
+  return mark
+    ? essentials(workspace.bookmarks.has(mark), () => workspace.bookmarks.toggle(mark))
+    : []
 }
 
 export function searchAgainEntry(path: string | null | undefined): MenuEntry[] {
-  if (!path || !workspace.excluded.names(path)) return []
-
-  return [{ label: 'Search here again', run: () => workspace.excluded.toggle(path) }]
+  return path && workspace.excluded.names(path)
+    ? [{ label: 'Search here again', run: () => workspace.excluded.toggle(path) }]
+    : []
 }
 
 export function archiveEntry(path: string | null | undefined): MenuEntry[] {
@@ -56,7 +55,6 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
   const kept =
     chat || web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
   const mapped = folder || !kept
-
   return [
     {
       label: 'Choose an icon',
@@ -69,21 +67,13 @@ export function coverEntries(path: string | null | undefined): MenuEntry[] {
   if (!path || !isMarkdownPath(path) || !canWriteAt(path)) return []
 
   const there = links.coverOf(path) !== null || workspace.itemMeta.valueOf(path, COVER_KEY) !== null
-
-  return [
-    {
-      label: there ? 'Change cover' : 'Set cover',
-      run: () => void noteCovers().then((one) => one.chooseCover(path)),
-    },
-    ...(there
-      ? [
-          {
-            label: 'Remove cover',
-            run: () => void noteCovers().then((one) => one.removeCover(path)),
-          },
-        ]
-      : []),
-  ]
+  const cover = (label: string, how: 'chooseCover' | 'removeCover') => ({
+    label,
+    run: () => void noteCovers().then((one) => one[how](path)),
+  })
+  return there
+    ? [cover('Change cover', 'chooseCover'), cover('Remove cover', 'removeCover')]
+    : [cover('Set cover', 'chooseCover')]
 }
 
 export function stackEntries(paneId: string): MenuEntry[] {
@@ -100,17 +90,14 @@ export function stackEntries(paneId: string): MenuEntry[] {
 }
 
 export function shareEntry(path: string | null | undefined): MenuEntry[] {
-  if (!path || !canShareItem(path)) return []
-
-  return [{ label: 'Share', run: () => void shareThisFile(path) }]
+  return path && canShareItem(path) ? [{ label: 'Share', run: () => void shareThisFile(path) }] : []
 }
 
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
-  if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
-  if (!canWriteAt(entry.path)) return []
+  const { path } = entry
   const sites = portOf('web.sites')
-  if (!sites.ok) return []
-  const path = entry.path
+  if (!isDesktop || entry.is_dir || !/\.url$/i.test(path) || !canWriteAt(path) || !sites.ok)
+    return []
   return [{ label: 'Web data', keep: true, run: () => void sites.value.showData(path) }]
 }
 
@@ -121,14 +108,10 @@ export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
     return mark ? [mark] : []
   })
   if (!marks.length) return []
-
-  const all = marks.every((mark) => workspace.bookmarks.has(mark))
-  return [
-    {
-      label: all ? 'Remove from Essentials' : 'Add to Essentials',
-      run: () => workspace.bookmarks.toggleAll(marks),
-    },
-  ]
+  return essentials(
+    marks.every((mark) => workspace.bookmarks.has(mark)),
+    () => workspace.bookmarks.toggleAll(marks),
+  )
 }
 
 export const rowMenus = () => import('./row-menu')

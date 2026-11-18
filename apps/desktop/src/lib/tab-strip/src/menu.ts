@@ -39,57 +39,56 @@ function agentEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
+const keyed = (label: string, id: string, run: () => void, more = {}): MenuEntry => ({
+  label,
+  hint: shortcuts.hint(id),
+  run,
+  ...more,
+})
+
+const when = (yes: boolean, ...rows: MenuEntry[]): MenuEntry[] => (yes ? rows : [])
+
 function keepEntry(tab: Tab): MenuEntry[] {
-  if (tab.id !== workspace.previewTabId) return []
-  return [{ label: 'Keep open', run: () => workspace.keep(tab.id) }]
+  return when(tab.id === workspace.previewTabId, {
+    label: 'Keep open',
+    run: () => workspace.keep(tab.id),
+  })
 }
 
 function paneEntries(tab: Tab): MenuEntry[] {
-  const entries: MenuEntry[] = []
-
-  if (workspace.canSplit('row', tab.id)) {
-    entries.push({
-      label: 'Split right',
-      hint: shortcuts.hint('pane.split-right'),
-      run: () => workspace.split('row', tab.id),
-    })
-  }
-  if (workspace.canSplit('column', tab.id)) {
-    entries.push({
-      label: 'Split down',
-      hint: shortcuts.hint('pane.split-down'),
-      run: () => workspace.split('column', tab.id),
-    })
-  }
-  if (workspace.canMoveToOtherPane(tab.id)) {
-    entries.push({
-      label: 'Move to other pane',
-      hint: shortcuts.hint('pane.move-tab'),
-      run: () => moveToOtherPane(tab.id),
-    })
-  }
-  if (!viewport.touch) {
-    entries.push({
-      label: workspace.panes.fills === null ? 'Full window' : 'Leave full window',
-      hint: shortcuts.hint('app.fill-tab'),
-      run: () => void toggleFill(tab.id),
-    })
-  }
-
+  const entries = [
+    ...when(
+      workspace.canSplit('row', tab.id),
+      keyed('Split right', 'pane.split-right', () => workspace.split('row', tab.id)),
+    ),
+    ...when(
+      workspace.canSplit('column', tab.id),
+      keyed('Split down', 'pane.split-down', () => workspace.split('column', tab.id)),
+    ),
+    ...when(
+      workspace.canMoveToOtherPane(tab.id),
+      keyed('Move to other pane', 'pane.move-tab', () => moveToOtherPane(tab.id)),
+    ),
+    ...when(
+      !viewport.touch,
+      keyed(
+        workspace.panes.fills === null ? 'Full window' : 'Leave full window',
+        'app.fill-tab',
+        () => void toggleFill(tab.id),
+      ),
+    ),
+  ]
   return entries.length ? [...entries, DIVIDER] : []
 }
 
 function readingEntry(tab: Tab): MenuEntry[] {
-  if (tab.kind !== 'note') return []
-
-  return [
-    {
-      label: tab.reading ? 'Leave reading' : 'Reading',
-      hint: shortcuts.hint('app.reading'),
-      run: () => workspace.toggleReading(tab.id),
-    },
+  return when(
+    tab.kind === 'note',
+    keyed(tab.reading ? 'Leave reading' : 'Reading', 'app.reading', () =>
+      workspace.toggleReading(tab.id),
+    ),
     DIVIDER,
-  ]
+  )
 }
 
 function kindEntries(tab: Tab): MenuEntry[] {
@@ -100,26 +99,18 @@ function kindEntries(tab: Tab): MenuEntry[] {
   return own.length ? [...own, DIVIDER] : []
 }
 
+const duplicable = (tab: Tab) => workspace.canDuplicateTab(tab) && tab.kind !== 'terminal'
+
 function tabEntries(tab: Tab): MenuEntry[] {
   return [
-    ...(renamesFromTab(tab)
-      ? [
-          {
-            label: 'Rename',
-            hint: shortcuts.hint('tabs.rename'),
-            run: () => renameFromTab(tab.id),
-          },
-        ]
-      : []),
-    ...(workspace.canDuplicateTab(tab) && tab.kind !== 'terminal'
-      ? [
-          {
-            label: 'Duplicate',
-            hint: shortcuts.hint('app.duplicate-tab'),
-            run: () => duplicateTab(tab.id),
-          },
-        ]
-      : []),
+    ...when(
+      renamesFromTab(tab),
+      keyed('Rename', 'tabs.rename', () => renameFromTab(tab.id)),
+    ),
+    ...when(
+      duplicable(tab),
+      keyed('Duplicate', 'app.duplicate-tab', () => duplicateTab(tab.id)),
+    ),
     ...bookmarkAll(tab.path === null ? [] : [tab.path]),
   ]
 }
@@ -128,127 +119,71 @@ function inListEntry(tab: Tab): MenuEntry[] {
   const root = workspace.activeSpace?.root
   const path = tab.path
   if (path === null || root === undefined || withinSpace(root, path) === null) return []
-
-  return [
-    {
-      label: 'Show in the file list',
-      hint: shortcuts.hint('app.reveal'),
-      run: () => workspace.revealNote(path),
-    },
-  ]
+  return [keyed('Show in the file list', 'app.reveal', () => workspace.revealNote(path))]
 }
 
-function reopenEntry(): MenuEntry[] {
-  if (!workspace.closed.any) return []
-
+function closeEntries(tab: Tab, close: () => void, others: number, after: () => void): MenuEntry[] {
+  const around = (label: string, id: string, how: 'right' | 'all') =>
+    keyed(label, id, () => void workspace.closeAround(tab.id, how), {
+      disabled: workspace.closesAround(tab.id, how) === 0,
+    })
   return [
-    {
-      label: 'Reopen closed tab',
-      hint: shortcuts.hint('app.reopen'),
-      run: () => void workspace.reopenClosed(),
-    },
-  ]
-}
-
-function closeEntries(tab: Tab): MenuEntry[] {
-  return [
-    {
-      label: 'Close',
-      hint: shortcuts.hint('app.close'),
-      run: () => void workspace.closeAsking(tab.id),
-    },
-    {
-      label: 'Close others',
-      disabled: workspace.closesAround(tab.id, 'others') === 0,
-      run: () => void workspace.closeAround(tab.id, 'others'),
-    },
-    {
-      label: closeAfterLabel(),
-      hint: shortcuts.hint('app.close-right'),
-      disabled: workspace.closesAround(tab.id, 'right') === 0,
-      run: () => void workspace.closeAround(tab.id, 'right'),
-    },
-    {
-      label: 'Close all',
-      hint: shortcuts.hint('app.close-all'),
-      disabled: workspace.closesAround(tab.id, 'all') === 0,
-      run: () => void workspace.closeAround(tab.id, 'all'),
-    },
-    ...reopenEntry(),
+    keyed('Close', 'app.close', close),
+    { label: 'Close others', disabled: others === 0, run: after },
+    around(closeAfterLabel(), 'app.close-right', 'right'),
+    around('Close all', 'app.close-all', 'all'),
+    ...when(
+      workspace.closed.any,
+      keyed('Reopen closed tab', 'app.reopen', () => void workspace.reopenClosed()),
+    ),
   ]
 }
 
 function saveEntry(tab: Tab): MenuEntry[] {
-  if (!isUnsaved(tab.note)) return []
-
-  return [{ label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(tab.id) }, DIVIDER]
+  return when(
+    isUnsaved(tab.note),
+    { label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(tab.id) },
+    DIVIDER,
+  )
 }
 
 function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
   const ids = tabs.map((one) => one.id)
   const web = tabs.filter((one) => one.kind === 'web')
-  const last = tabs.at(-1)?.id ?? ''
+  const last = tabs.at(-1)
   const others = workspace.tabsIn(paneId).filter((one) => !ids.includes(one.id))
-  const copies = tabs.every((one) => workspace.canDuplicateTab(one) && one.kind !== 'terminal')
-  const paths = tabs.flatMap((one) => (one.path === null ? [] : [one.path]))
 
   return [
-    ...(web.length
-      ? [
-          {
-            label: 'Reload',
-            run: () => {
-              for (const one of web) void webPages().reload(one.id)
-            },
-          },
-          DIVIDER,
-        ]
-      : []),
-    ...(copies
-      ? [
-          {
-            label: 'Duplicate',
-            hint: shortcuts.hint('app.duplicate-tab'),
-            run: () => duplicateMany(ids),
-          },
-        ]
-      : []),
-    ...bookmarkAll(paths),
+    ...when(
+      web.length > 0,
+      {
+        label: 'Reload',
+        run: () => {
+          for (const one of web) void webPages().reload(one.id)
+        },
+      },
+      DIVIDER,
+    ),
+    ...when(
+      tabs.every(duplicable),
+      keyed('Duplicate', 'app.duplicate-tab', () => duplicateMany(ids)),
+    ),
+    ...bookmarkAll(tabs.flatMap((one) => (one.path === null ? [] : [one.path]))),
     ...movedToSpace(tabs),
     DIVIDER,
-    {
-      label: 'Close',
-      hint: shortcuts.hint('app.close'),
-      run: () => void workspace.closeMany(ids),
-    },
-    {
-      label: 'Close others',
-      disabled: others.length === 0,
-      run: () => void workspace.closeMany(others.map((one) => one.id)),
-    },
-    {
-      label: closeAfterLabel(),
-      hint: shortcuts.hint('app.close-right'),
-      disabled: workspace.closesAround(last, 'right') === 0,
-      run: () => void workspace.closeAround(last, 'right'),
-    },
-    {
-      label: 'Close all',
-      hint: shortcuts.hint('app.close-all'),
-      disabled: workspace.closesAround(last, 'all') === 0,
-      run: () => void workspace.closeAround(last, 'all'),
-    },
-    ...reopenEntry(),
-    ...(workspace.canMoveToOtherPane(last)
-      ? [
-          DIVIDER,
-          {
-            label: 'Move to other pane',
-            hint: shortcuts.hint('pane.move-tab'),
-            run: () => moveManyToOtherPane(ids),
-          },
-        ]
+    ...(last
+      ? closeEntries(
+          last,
+          () => void workspace.closeMany(ids),
+          others.length,
+          () => void workspace.closeMany(others.map((one) => one.id)),
+        )
       : []),
+    ...when(
+      workspace.canMoveToOtherPane(last?.id ?? ''),
+      DIVIDER,
+      keyed('Move to other pane', 'pane.move-tab', () => moveManyToOtherPane(ids)),
+    ),
   ]
 }
 
@@ -287,7 +222,12 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     DIVIDER,
     ...unloadEntries(tab),
     DIVIDER,
-    ...closeEntries(tab),
+    ...closeEntries(
+      tab,
+      () => void workspace.closeAsking(tab.id),
+      workspace.closesAround(tab.id, 'others'),
+      () => void workspace.closeAround(tab.id, 'others'),
+    ),
     DIVIDER,
     ...shareEntry(tab.path),
     ...stackEntries(paneId),
