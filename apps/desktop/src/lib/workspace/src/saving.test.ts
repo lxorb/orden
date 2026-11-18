@@ -266,6 +266,14 @@ describe('a draft', () => {
     ])
   })
 
+  test('given a place the disk refuses, says it is not there yet', async () => {
+    const { note, saving } = open(null, { text: 'words' })
+    refusing.set(`${SPACE}/Refused.md`, 1)
+
+    expect(await saving.place(note, SPACE, 'Refused.md')).toBeNull()
+    expect(note.dirty).toBe(true)
+  })
+
   test('given a place twice is written once', async () => {
     const { note, saving } = open(null, { text: 'x' })
 
