@@ -8,7 +8,7 @@ engine under it is on a screen or in front. The keyboard is read before and afte
 scenario, and must not have moved.
 
     python apps/desktop/test/agents/run.py --exe <probe orden.exe> \\
-        --identifier so.orden.Orden.probe.<name> [--via endpoint|mcp] \\
+        --identifier so.orden.Orden.probe.<name> [--via endpoint|mcp|sidebar] \\
         [--only <word>] [--skip <word>] [--out report.json]
     python apps/desktop/test/agents/run.py ... --launch-cost 3
     python apps/desktop/test/agents/run.py --list
@@ -50,7 +50,7 @@ ROOT = HERE.parents[3]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(HERE))
 
-from fake_agent import Endpoint, Mcp  # noqa: E402
+from fake_agent import Endpoint, Mcp, Sidebar  # noqa: E402
 from pages import CANARY, Site  # noqa: E402
 
 SCENARIOS = HERE / "scenarios"
@@ -80,7 +80,19 @@ GRANT: dict[str, Any] = {
     "limits": {"tabs": 4, "calls": 600, "navigations": 60},
 }
 
-ROADS = ("endpoint", "mcp")
+SIDEBAR_GRANT: dict[str, Any] = {
+    **GRANT,
+    "id": "orden-claude-code",
+    "name": "Orden Claude Code",
+    "client": "Orden Claude Code",
+    "built_in": True,
+}
+
+KEPT = {key: value for key, value in GRANT.items() if key not in ("id", "name", "client")}
+
+ROADS = ("endpoint", "mcp", "sidebar")
+
+CONNECTED = ("endpoint", "mcp")
 
 LANES = {
     "browser_": "agent-core",
@@ -112,8 +124,12 @@ def seeded(identifier: str, agents: bool) -> tuple[str, str]:
     token = secrets.token_hex(32)
     kept = folder / "agents.json"
     if agents:
-        grant = {**GRANT, "token": hashlib.sha256(token.encode()).hexdigest(), "created": int(time.time())}
-        kept.write_text(json.dumps({"agents": [grant]}, indent=2), encoding="utf-8")
+        own = secrets.token_hex(32)
+        grants = [
+            {**one, "token": hashlib.sha256(said.encode()).hexdigest(), "created": int(time.time())}
+            for one, said in ((GRANT, token), (SIDEBAR_GRANT, own))
+        ]
+        kept.write_text(json.dumps({"agents": grants}, indent=2), encoding="utf-8")
     elif kept.exists():
         kept.unlink()
     return secret, token
@@ -252,6 +268,7 @@ class Run:
         self.windows: list[dict[str, Any]] = []
         self.before: set[int] = set()
         self.tabs: list[str] = []
+        self.grant = SIDEBAR_GRANT["id"] if agent.name == "sidebar" else GRANT["id"]
 
     def step(self, at: int, step: dict[str, Any]) -> None:
         step = filled(step, self.names)
@@ -388,7 +405,7 @@ class Run:
         from probe_app import family, idle_seconds, keyboard, look
 
         scenario = self.scenario
-        via = scenario.get("via", ROADS)
+        via = scenario.get("via", CONNECTED)
         if self.agent.name not in via:
             return {"result": "skipped", "why": f"only through {', '.join(via)}"}
         wait = float(scenario.get("idle", 0))
@@ -400,7 +417,7 @@ class Run:
         if missing:
             return {"result": "waiting", "why": f"{lane_of(missing[0])}: {', '.join(missing)} ({self.agent.name})"}
 
-        if scenario.get("grant") and not granted(self.probe, scenario["grant"]):
+        if scenario.get("grant") and not granted(self.probe, scenario["grant"], self.grant):
             return {"result": "waiting", "why": "agent-core: agents_read and agents_write"}
 
         self.site.forget()
@@ -420,7 +437,7 @@ class Run:
             for tab in self.tabs:
                 self.agent.call("browser_close", {"tab": tab}, seconds=10)
             if scenario.get("grant"):
-                granted(self.probe, GRANT)
+                granted(self.probe, KEPT, self.grant)
         known = scenario.get("known")
         if known and result["result"] == "fail":
             result = {"result": "waiting", "why": f"{known} ({result['why']})"}
@@ -450,14 +467,14 @@ def scenarios(only: str | None, skip: list[str] | None = None) -> list[tuple[str
         found.append((path.stem, json.loads(path.read_text(encoding="utf-8"))))
     return sorted(found, key=lambda one: bool(one[1].get("idle")))
 
-def granted(probe: Probe, change: dict[str, Any]) -> bool:
+def granted(probe: Probe, change: dict[str, Any], agent: str = GRANT["id"]) -> bool:
 
     said = probe.reader("return await window.__TAURI_INTERNALS__.invoke('agents_read')")
     if said["status"] != "ok" or not isinstance(said.get("result"), list):
         return False
     grants = copy.deepcopy(said["result"])
     for grant in grants:
-        if grant.get("id") == GRANT["id"]:
+        if grant.get("id") == agent:
             for key, value in change.items():
                 grant[key] = {**grant.get(key, {}), **value} if isinstance(value, dict) else value
     written = probe.reader(f"return await window.__TAURI_INTERNALS__.invoke('agents_write', {{ grants: {json.dumps(grants)} }})")
@@ -468,6 +485,8 @@ def road(via: str, probe: Probe, token: str, spaces: pathlib.Path) -> Any:
 
     if via == "endpoint":
         return Endpoint(probe.port, token)
+    if via == "sidebar":
+        return Sidebar(probe.reader)
     clients = config_dir(probe.identifier) / "agents" / "clients"
     clients.mkdir(parents=True, exist_ok=True)
     kept = {"agent": GRANT["id"], "token": token}
