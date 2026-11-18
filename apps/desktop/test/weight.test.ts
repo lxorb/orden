@@ -469,3 +469,21 @@ describe('what reading a note fetches', () => {
     })
   }
 })
+
+describe('the quick add window', () => {
+  const window = eagerGraph(join(import.meta.dirname, '../src/lib/quick-add/src/Window.svelte'))
+  const reached = window.files.map((one) => one.replace(/\\/g, '/'))
+
+  test('draws before it fetches dictation, the AI providers or the workspace', () => {
+    for (const heavy of [
+      '/dictation/src/api.ts',
+      '/ai-providers/src/api.ts',
+      '/workspace/src/api.ts',
+    ]) {
+      expect(
+        reached.filter((one) => one.endsWith(heavy)),
+        heavy,
+      ).toEqual([])
+    }
+  })
+})
