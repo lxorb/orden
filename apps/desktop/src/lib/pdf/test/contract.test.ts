@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { boxOf, citation, PDF_TO_CSS, placesOnPaper, sheetFor, toViewport } from '../src/api'
+import { boxOf, PDF_TO_CSS, placesOnPaper, sheetFor, toViewport } from '../src/api'
 import { runsOfItems, textOfRuns } from '../src/find'
 import { matrixOf } from '../src/highlights'
 
@@ -21,7 +21,7 @@ describe('the words on a paper', () => {
   })
 })
 
-describe('where a highlight sits and how it is quoted', () => {
+describe('where a highlight sits', () => {
   test('a quad lands as the box around its corners on the page as drawn', () => {
     const quad = [10, 20, 30, 20, 30, 5, 10, 5] as const
     expect(boxOf(quad, toViewport(matrixOf([2, 0, 0, 2, 1, 1])))).toEqual({
@@ -34,13 +34,6 @@ describe('where a highlight sits and how it is quoted', () => {
 
   test('a missing matrix value falls back to the identity', () => {
     expect(matrixOf([])).toEqual([1, 0, 0, 1, 0, 0])
-  })
-
-  test('a citation quotes every line and links to its page', () => {
-    const quoted = citation('Paper.pdf', 3, ' first\nsecond ')
-    expect(quoted.startsWith('> first\n> second\n\n')).toBe(true)
-    expect(quoted).toContain('page=3')
-    expect(citation('Paper.pdf', 3, '   ').startsWith('>')).toBe(false)
   })
 })
 

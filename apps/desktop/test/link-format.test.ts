@@ -9,7 +9,6 @@ import {
   linkTo,
   pickedLink,
 } from '../src/lib/link-format/src/api'
-import { citation } from '../src/lib/pdf/src/api'
 import { rewriteLinks } from '../src/lib/import/src/rewrite'
 
 const PLAN = { name: 'Plan', path: 'ideas/Plan.md', from: 'journal/Monday.md' }
@@ -148,7 +147,6 @@ describe('the setting itself', () => {
     setLinkWriting('absolute')
     try {
       expect(linkTo('Plan', null, { path: 'ideas/Plan.md' })).toBe('[Plan](ideas/Plan.md)')
-      expect(citation('paper.pdf', 3, '')).toBe('[paper.pdf](paper.pdf#page=3)\n')
     } finally {
       setLinkWriting('wikilink')
     }
@@ -158,10 +156,6 @@ describe('the setting itself', () => {
 describe('every writer in the app', () => {
   test('writes what the setting asks for, and a wikilink by default', () => {
     expect(linkTo('Plan')).toBe('[[Plan]]')
-    expect(citation('paper.pdf', 3, '')).toBe('[[paper.pdf#page=3]]\n')
-
-    const quoted = citation('paper.pdf', 12, 'A claim.')
-    expect(quoted).toBe('> A claim.\n\n[[paper.pdf#page=12]]\n')
   })
 
   test('includes the block link a Copy link puts on the clipboard', () => {

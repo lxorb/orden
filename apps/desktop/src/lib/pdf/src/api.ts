@@ -2,7 +2,6 @@ export { lentMoved, loading, openDocument, pageSizes, pdfjs, warmPdf } from './d
 export { placesOnPaper, spansOver, wordsOfRuns } from './find'
 export {
   boxOf,
-  citation,
   COLOURS,
   frozen,
   type Held,

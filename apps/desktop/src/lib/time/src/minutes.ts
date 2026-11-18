@@ -91,14 +91,6 @@ export class MinuteFold {
   }
 }
 
-export type Shade = 'active' | 'idle' | 'locked' | 'shut'
-
-export function shadeOf(minute: Minute): Shade {
-  if (minute.lid === false) return 'shut'
-  if (minute.locked === true) return 'locked'
-  return minute.active > 0 ? 'active' : 'idle'
-}
-
 export function minuteValue(value: unknown): Minute | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Record<string, unknown>

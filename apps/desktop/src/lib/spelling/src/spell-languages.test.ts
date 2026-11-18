@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import {
-  chosenOf,
   DICTIONARIES,
   dictionaryFor,
   inForce,
@@ -37,11 +36,6 @@ describe('the dictionaries in force', () => {
 })
 
 describe('the list as it was stored', () => {
-  test('keeps only the dictionaries there are, once each', () => {
-    expect(chosenOf(['de-DE', 'de-DE', 'xx', 4, 'en-US'])).toEqual(['de-DE', 'en-US'])
-    expect(chosenOf('de-DE')).toEqual([])
-  })
-
   test('names every dictionary by a tag Chromium has', () => {
     for (const one of DICTIONARIES) expect(one.id).toMatch(/^[a-z]{2,3}-[A-Z]{2}$/)
   })
