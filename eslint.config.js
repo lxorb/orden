@@ -9,13 +9,12 @@ import { check as checkModules, moduleOf, ROOT } from './scripts/modules.mjs'
 const DIRECTIVE =
   /^\s*(?:eslint(?:-disable|-enable)?(?:-next-line|-line)?\s|global\s|@ts-(?:expect-error|ignore|nocheck|check)\b|@vitest-environment\s|prettier-ignore\b|svelte-ignore\s|@vite-ignore\s*$|[@#]__PURE__\s*$|__[A-Z_]+__\s*$|kept\s*$|\*\s*@(?:public|internal)\s*$|\/\s*<reference\s)/
 
-const noComments = {
-  meta: {
-    type: 'suggestion',
-    schema: [],
-    messages: { prose: 'No comments in code: a directive to a tool, or nothing.' },
-  },
-  create(context) {
+const rule = (type, messages, create) => ({ meta: { type, schema: [], messages }, create })
+
+const noComments = rule(
+  'suggestion',
+  { prose: 'No comments in code: a directive to a tool, or nothing.' },
+  (context) => {
     const source = context.sourceCode
     const alone = (comment) => {
       const node = source.getNodeByRangeIndex(comment.range[0])
@@ -32,18 +31,15 @@ const noComments = {
       },
     }
   },
-}
+)
 
-const noSpreadMath = {
-  meta: {
-    type: 'problem',
-    schema: [],
-    messages: {
-      spread:
-        'Math.min and Math.max over a spread throw past some 65,000 values in WebKit: reduce the array instead.',
-    },
+const noSpreadMath = rule(
+  'problem',
+  {
+    spread:
+      'Math.min and Math.max over a spread throw past some 65,000 values in WebKit: reduce the array instead.',
   },
-  create(context) {
+  (context) => {
     return {
       "CallExpression[callee.object.name='Math'][callee.property.name=/^(min|max)$/] > SpreadElement"(
         node,
@@ -52,17 +48,14 @@ const noSpreadMath = {
       },
     }
   },
-}
+)
 
-const noCopyAppend = {
-  meta: {
-    type: 'problem',
-    schema: [],
-    messages: {
-      copy: 'Copying a list to add one item to it makes building the map quadratic: push onto the list instead.',
-    },
+const noCopyAppend = rule(
+  'problem',
+  {
+    copy: 'Copying a list to add one item to it makes building the map quadratic: push onto the list instead.',
   },
-  create(context) {
+  (context) => {
     return {
       "CallExpression[callee.property.name='set'] > ArrayExpression.arguments"(node) {
         const [first, second] = node.elements
@@ -81,7 +74,7 @@ const noCopyAppend = {
       },
     }
   },
-}
+)
 
 const EFFECTS = new Set(['$effect', '$effect.pre'])
 
@@ -96,16 +89,13 @@ function calleeName(callee) {
   return null
 }
 
-const effectImports = {
-  meta: {
-    type: 'problem',
-    schema: [],
-    messages: {
-      loose:
-        'An effect starts this import and nothing can call off what it does once loaded: load it through whenLoaded from @orden/contracts and hand back its call-off from the effect when a late load must not land.',
-    },
+const effectImports = rule(
+  'problem',
+  {
+    loose:
+      'An effect starts this import and nothing can call off what it does once loaded: load it through whenLoaded from @orden/contracts and hand back its call-off from the effect when a late load must not land.',
   },
-  create(context) {
+  (context) => {
     return {
       ImportExpression(node) {
         const loader = node.parent
@@ -127,7 +117,7 @@ const effectImports = {
       },
     }
   },
-}
+)
 
 const MODULES = checkModules().modules.filter((one) => one.lang === 'ts')
 
@@ -167,15 +157,12 @@ function eachImport(context, seen) {
   }
 }
 
-const noDeepImports = {
-  meta: {
-    type: 'problem',
-    schema: [],
-    messages: {
-      deep: "Import module '{{name}}' through its api ({{api}}), not {{what}}.",
-    },
+const noDeepImports = rule(
+  'problem',
+  {
+    deep: "Import module '{{name}}' through its api ({{api}}), not {{what}}.",
   },
-  create(context) {
+  (context) => {
     return eachImport(context, (node, specifier, own, found) => {
       const { module } = found
       if (!module || module === own) return
@@ -190,7 +177,7 @@ const noDeepImports = {
       }
     })
   },
-}
+)
 
 const STATIC_IMPORTS =
   /(?:^|[\n;}])[^\S\n]*(?:import|export)\s+(?!type\b)[^'"]*?\bfrom\s*['"](\.[^'"]*)['"]|(?:^|[\n;}])[^\S\n]*import\s*['"](\.[^'"]*)['"]/g
@@ -218,15 +205,12 @@ function withApi(module) {
   return reached
 }
 
-const ownApi = {
-  meta: {
-    type: 'problem',
-    schema: [],
-    messages: {
-      own: "Module '{{own}}' evaluates this file while its api loads, so importing its own api ({{what}}) here reads names not yet there; import the file that holds them.",
-    },
+const ownApi = rule(
+  'problem',
+  {
+    own: "Module '{{own}}' evaluates this file while its api loads, so importing its own api ({{what}}) here reads names not yet there; import the file that holds them.",
   },
-  create(context) {
+  (context) => {
     return eachImport(context, (node, specifier, own, found) => {
       if (found.module !== own || node.type === 'ImportExpression' || node.importKind === 'type')
         return
@@ -237,18 +221,15 @@ const ownApi = {
       }
     })
   },
-}
+)
 
-const pendingImports = {
-  meta: {
-    type: 'problem',
-    schema: [],
-    messages: {
-      pending:
-        "Module '{{own}}' imports {{what}}, which is not a module yet; reach it through a port or list '{{path}}' under pending in {{file}} until it is extracted.",
-    },
+const pendingImports = rule(
+  'problem',
+  {
+    pending:
+      "Module '{{own}}' imports {{what}}, which is not a module yet; reach it through a port or list '{{path}}' under pending in {{file}} until it is extracted.",
   },
-  create(context) {
+  (context) => {
     return eachImport(context, (node, specifier, own, found) => {
       if (found.module || !found.file) return
       if (!found.file.startsWith(ROOT + sep) || found.file.includes(`${sep}node_modules${sep}`))
@@ -262,18 +243,15 @@ const pendingImports = {
       })
     })
   },
-}
+)
 
-const declaredDependencies = {
-  meta: {
-    type: 'problem',
-    schema: [],
-    messages: {
-      undeclared:
-        "Module '{{own}}' imports '{{target}}' without naming it in {{file}}; add it to dependsOn or drop the import.",
-    },
+const declaredDependencies = rule(
+  'problem',
+  {
+    undeclared:
+      "Module '{{own}}' imports '{{target}}' without naming it in {{file}}; add it to dependsOn or drop the import.",
   },
-  create(context) {
+  (context) => {
     return eachImport(context, (node, specifier, own, found) => {
       const target = found.module?.name ?? found.name ?? null
       if (!target || target === own.name) return
@@ -286,7 +264,7 @@ const declaredDependencies = {
       }
     })
   },
-}
+)
 
 export default tseslint.config(
   {
