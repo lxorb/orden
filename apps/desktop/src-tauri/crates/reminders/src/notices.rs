@@ -174,8 +174,11 @@ fn shown(app: &AppHandle, notice: &Notice) -> Result<(), String> {
     {
         let (app, title, body) = (app.clone(), notice.title.clone(), notice.body.clone());
         let on_the_window = app.clone();
-        let _ = on_the_window
-            .run_on_main_thread(move || crate::agents::shell::notify(&app, title, body));
+        let _ = on_the_window.run_on_main_thread(move || {
+            if let Some(host) = crate::reminders::host() {
+                (host.notify)(&app, title, body);
+            }
+        });
         Ok(())
     }
 }
@@ -189,7 +192,7 @@ pub fn answered(app: &AppHandle, id: &str, act: Act, text: Option<String>) {
     let window = label
         .as_deref()
         .and_then(|label| app.get_window(label))
-        .or_else(|| crate::agents::shell::host(app));
+        .or_else(|| orden_base::labels::host(app));
     let Some(window) = window else {
         return;
     };

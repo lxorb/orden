@@ -72,13 +72,8 @@ fn with<T>(run: impl FnOnce(&mut Shell) -> T) -> T {
         .get_or_insert_with(Shell::default))
 }
 
-pub fn host(app: &AppHandle) -> Option<tauri::Window> {
-    app.get_window("main")
-        .or_else(|| orden_base::labels::document_windows(app).into_iter().next())
-}
-
 pub fn hosts(app: &AppHandle, window: &tauri::Window) -> bool {
-    host(app).is_some_and(|host| host.label() == window.label())
+    orden_base::labels::host(app).is_some_and(|host| host.label() == window.label())
 }
 
 pub fn start(app: &AppHandle) {
@@ -424,7 +419,7 @@ fn rows<R: tauri::Runtime>(
 
 #[cfg(any(windows, target_os = "macos"))]
 pub(crate) fn open(app: &AppHandle) {
-    if let Some(window) = host(app) {
+    if let Some(window) = orden_base::labels::host(app) {
         let _ = window.show();
         orden_placement::placement::raised(&window);
     }

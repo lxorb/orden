@@ -141,7 +141,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             orden_apps::apps_host::end_all(app);
             crate::ai_cli::end_all(app);
             crate::agents::stop::quitting();
-            crate::notices::clear_all(app);
+            orden_reminders::notices::clear_all(app);
         }
 
         RunEvent::WindowEvent {

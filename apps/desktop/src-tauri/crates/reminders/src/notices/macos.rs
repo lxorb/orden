@@ -97,8 +97,8 @@ pub fn answer(app: &AppHandle, response: &UNNotificationResponse, name: &str) ->
         super::answered(app, id, Act::Reply, text);
     } else {
         super::answered(app, id, Act::Open, None);
-        if crate::agents::shell::host(app).is_none() {
-            crate::launch::reopen(app);
+        if let (None, Some(host)) = (orden_base::labels::host(app), crate::reminders::host()) {
+            (host.reopen)(app);
         }
     }
     true

@@ -4185,7 +4185,6 @@ dependencies = [
  "objc2-core-video",
  "objc2-foundation",
  "objc2-screen-capture-kit",
- "objc2-user-notifications",
  "orden-apps",
  "orden-base",
  "orden-browsers",
@@ -4197,6 +4196,7 @@ dependencies = [
  "orden-notes",
  "orden-placement",
  "orden-pty",
+ "orden-reminders",
  "orden-search",
  "orden-secrets",
  "orden-store",
@@ -4422,6 +4422,23 @@ dependencies = [
  "serde_json",
  "tauri",
  "tempfile",
+ "windows 0.58.0",
+]
+
+[[package]]
+name = "orden-reminders"
+version = "0.1.0"
+dependencies = [
+ "block2",
+ "getrandom 0.3.4",
+ "objc2",
+ "objc2-foundation",
+ "objc2-user-notifications",
+ "orden-base",
+ "orden-placement",
+ "serde",
+ "serde_json",
+ "tauri",
  "windows 0.58.0",
 ]
 
