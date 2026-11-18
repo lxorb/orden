@@ -49,15 +49,13 @@ const { openTarget, renderOptions } = await import('./context')
 
 const open = (path: string | null) => ({ doc: '# Plan', name: 'Plan.md', path, note: {} })
 
-describe('the open note', () => {
-  test('is read after everything holding words of its own has handed them over', () => {
-    world.active = open('Notes/plan.canvas')
-    const before = world.asked
+test('the open note is read after everything holding words of its own has handed them over', () => {
+  world.active = open('Notes/plan.canvas')
+  const before = world.asked
 
-    openTarget()
+  openTarget()
 
-    expect(world.asked).toBe(before + 1)
-  })
+  expect(world.asked).toBe(before + 1)
 })
 
 describe('the render options for the open note', () => {

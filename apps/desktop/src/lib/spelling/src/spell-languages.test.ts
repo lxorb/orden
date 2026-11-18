@@ -29,17 +29,13 @@ describe('the dictionaries in force', () => {
   })
 })
 
-describe('the list as it was stored', () => {
-  test('names every dictionary by a tag Chromium has', () => {
-    for (const one of DICTIONARIES) expect(one.id).toMatch(/^[a-z]{2,3}-[A-Z]{2}$/)
-  })
+test('the list as it was stored names every dictionary by a tag Chromium has', () => {
+  for (const one of DICTIONARIES) expect(one.id).toMatch(/^[a-z]{2,3}-[A-Z]{2}$/)
 })
 
-describe('what an older build chose', () => {
-  test('reads as the dictionary its tag names', () => {
-    expect(inForceNow(['de'])).toEqual(['de-DE'])
-    expect(inForceNow(['de', 'fr-FR'])).toEqual(['de-DE', 'fr-FR'])
-  })
+test('what an older build chose reads as the dictionary its tag names', () => {
+  expect(inForceNow(['de'])).toEqual(['de-DE'])
+  expect(inForceNow(['de', 'fr-FR'])).toEqual(['de-DE', 'fr-FR'])
 })
 
 describe('one dictionary turned on or off', () => {

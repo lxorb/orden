@@ -202,18 +202,16 @@ describe("an agent's file explorer", () => {
   })
 })
 
-describe('a path that steps aside with . or ..', () => {
-  test('is never carried, so nothing leaves the spaces by way of a folder outside them', async () => {
-    for (const paths of [
-      ['../Orden/Work/Private/Diary.md'],
-      ['/home/me/Downloads/../Orden/Work/Private/Diary.md'],
-      ['/home/me/Downloads/./a.zip'],
-    ]) {
-      const answer = await call({ op: 'copy', tab: 'e1', paths, to: '~/Downloads' }, 'autonomous')
-      expect(answer).toMatchObject({ code: 'bad_arguments' })
-    }
-    expect(carried).toEqual([])
-  })
+test('a path that steps aside with . or .. is never carried, so nothing leaves the spaces by way of a folder outside them', async () => {
+  for (const paths of [
+    ['../Orden/Work/Private/Diary.md'],
+    ['/home/me/Downloads/../Orden/Work/Private/Diary.md'],
+    ['/home/me/Downloads/./a.zip'],
+  ]) {
+    const answer = await call({ op: 'copy', tab: 'e1', paths, to: '~/Downloads' }, 'autonomous')
+    expect(answer).toMatchObject({ code: 'bad_arguments' })
+  }
+  expect(carried).toEqual([])
 })
 
 test('an agent’s copy is carried fenced, so a source that is a space by another spelling is refused where it is read', async () => {

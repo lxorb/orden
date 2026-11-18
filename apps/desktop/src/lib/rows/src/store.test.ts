@@ -426,38 +426,34 @@ describe('the rows of every space', () => {
   })
 })
 
-describe('a space’s AGENTS.md, which its settings edit', () => {
-  test('makes no row, and one in a folder makes its rows', async () => {
-    const { store, answer, settled } = rig({
-      [`${WORK}/AGENTS.md`]: '- [ ] Top\n',
-      [`${WORK}/sub/AGENTS.md`]: '- [ ] Nested\n',
-    })
-    store.spacesAre([{ root: WORK, name: 'Work' }])
-    await settled()
-    answer(WORK)
-    await settled()
-
-    const said = [...new Set(store.of('Work').map((row) => row.file.path))]
-    expect(said).toEqual(['sub/AGENTS.md'])
-
-    store.saved(`${WORK}/AGENTS.md`, '- [ ] Again\n')
-    expect([...new Set(store.of('Work').map((row) => row.file.path))]).toEqual(['sub/AGENTS.md'])
+test('a space’s AGENTS.md, which its settings edit makes no row, and one in a folder makes its rows', async () => {
+  const { store, answer, settled } = rig({
+    [`${WORK}/AGENTS.md`]: '- [ ] Top\n',
+    [`${WORK}/sub/AGENTS.md`]: '- [ ] Nested\n',
   })
+  store.spacesAre([{ root: WORK, name: 'Work' }])
+  await settled()
+  answer(WORK)
+  await settled()
+
+  const said = [...new Set(store.of('Work').map((row) => row.file.path))]
+  expect(said).toEqual(['sub/AGENTS.md'])
+
+  store.saved(`${WORK}/AGENTS.md`, '- [ ] Again\n')
+  expect([...new Set(store.of('Work').map((row) => row.file.path))]).toEqual(['sub/AGENTS.md'])
 })
 
-describe('the rows a view shows', () => {
-  test('leave out every note that is protected and shut, and only those', async () => {
-    const { store, answer, settled } = rig({
-      [`${WORK}/Plan.md`]: '- [ ] Ship it\n',
-      [`${WORK}/Diary/Mine.md`]: '- [ ] Call her\n',
-    })
-    store.spacesAre([{ root: WORK, name: 'Work' }])
-    await settled()
-    answer(WORK)
-    await settled()
-
-    const shut = (path: string) => path.startsWith(`${WORK}/Diary/`)
-    expect(tasks(store.openOf(undefined, shut))).toEqual(['Work:Plan.md:Ship it'])
-    expect(tasks(store.openOf('Work', () => false))).toHaveLength(2)
+test('the rows a view shows leave out every note that is protected and shut, and only those', async () => {
+  const { store, answer, settled } = rig({
+    [`${WORK}/Plan.md`]: '- [ ] Ship it\n',
+    [`${WORK}/Diary/Mine.md`]: '- [ ] Call her\n',
   })
+  store.spacesAre([{ root: WORK, name: 'Work' }])
+  await settled()
+  answer(WORK)
+  await settled()
+
+  const shut = (path: string) => path.startsWith(`${WORK}/Diary/`)
+  expect(tasks(store.openOf(undefined, shut))).toEqual(['Work:Plan.md:Ship it'])
+  expect(tasks(store.openOf('Work', () => false))).toHaveLength(2)
 })

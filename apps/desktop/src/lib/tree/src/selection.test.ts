@@ -85,12 +85,10 @@ describe('what a drag carries', () => {
   })
 })
 
-describe('rows that have gone away', () => {
-  test('take themselves out', () => {
-    picked.all(ROWS)
-    picked.keepOnly((path) => path !== '/f/b.md')
-    expect(picked.paths).toEqual(['/a.md', '/f', '/f/c.md', '/d.md'])
-  })
+test('rows that have gone away take themselves out', () => {
+  picked.all(ROWS)
+  picked.keepOnly((path) => path !== '/f/b.md')
+  expect(picked.paths).toEqual(['/a.md', '/f', '/f/c.md', '/d.md'])
 })
 
 describe('the outermost of a set of rows', () => {

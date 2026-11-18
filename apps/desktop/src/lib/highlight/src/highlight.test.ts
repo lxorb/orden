@@ -79,40 +79,34 @@ describe('highlighting', () => {
   })
 })
 
-describe('highlighting code that keeps growing', () => {
-  test('colours each longer piece exactly as it colours it read afresh', async () => {
-    const parsers = await loadParsers(['py', 'ts'])
-    const sources = {
-      py:
-        'def f(n):\n    """a\n    long string"""\n    return n  # note\n' +
-        'x = [1,\n  2]\n'.repeat(40),
-      ts: 'const a = `one\n${b}\ntwo`\n/* a\n comment */\nfunction g() {\n  return 1\n}\n'.repeat(
-        20,
-      ),
-    }
+test('highlighting code that keeps growing colours each longer piece exactly as it colours it read afresh', async () => {
+  const parsers = await loadParsers(['py', 'ts'])
+  const sources = {
+    py:
+      'def f(n):\n    """a\n    long string"""\n    return n  # note\n' +
+      'x = [1,\n  2]\n'.repeat(40),
+    ts: 'const a = `one\n${b}\ntwo`\n/* a\n comment */\nfunction g() {\n  return 1\n}\n'.repeat(20),
+  }
 
-    for (const [language, source] of Object.entries(sources)) {
-      const parser = parsers.get(language)!
-      const pieces = Array.from({ length: 60 }, (_, at) =>
-        source.slice(0, Math.ceil(((at + 1) / 60) * source.length)),
-      )
-      const afresh = [...pieces].reverse().map((piece) => highlightCode(piece, parser))
-      const grown = pieces.map((piece) => highlightCode(piece, parser))
+  for (const [language, source] of Object.entries(sources)) {
+    const parser = parsers.get(language)!
+    const pieces = Array.from({ length: 60 }, (_, at) =>
+      source.slice(0, Math.ceil(((at + 1) / 60) * source.length)),
+    )
+    const afresh = [...pieces].reverse().map((piece) => highlightCode(piece, parser))
+    const grown = pieces.map((piece) => highlightCode(piece, parser))
 
-      expect(grown, language).toEqual(afresh.reverse())
-    }
-  })
+    expect(grown, language).toEqual(afresh.reverse())
+  }
 })
 
-describe('the palette stylesheet', () => {
-  test('writes one rule per token class', () => {
-    const [follow] = CODE_PALETTES
-    if (!follow) throw new Error('the editor ships no code palettes')
+test('the palette stylesheet writes one rule per token class', () => {
+  const [follow] = CODE_PALETTES
+  if (!follow) throw new Error('the editor ships no code palettes')
 
-    const css = paletteCss(follow)
+  const css = paletteCss(follow)
 
-    expect(css).toContain('#write .hl-keyword { color: var(--accent); }')
-    expect(css).toContain('#write .hl-comment { color: var(--muted); }')
-    expect(css).toContain('.hl-invalid')
-  })
+  expect(css).toContain('#write .hl-keyword { color: var(--accent); }')
+  expect(css).toContain('#write .hl-comment { color: var(--muted); }')
+  expect(css).toContain('.hl-invalid')
 })

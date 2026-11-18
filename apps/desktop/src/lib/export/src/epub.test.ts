@@ -457,15 +457,13 @@ describe('every part of the book', () => {
   })
 })
 
-describe('the scanner the tests stand on', () => {
-  test('names what is wrong instead of passing everything', () => {
-    expect(malformed('<p>fine</p>')).toBe(null)
-    expect(malformed('<p>open')).toContain('never closed')
-    expect(malformed('<b><i>x</b></i>')).toContain('closes nothing that is open')
-    expect(malformed('<p>Tom & Jerry</p>')).toContain('a bare &')
-    expect(malformed('<input checked />')).toContain('bare attribute')
-    expect(malformed('<p>a &nbsp; b</p>')).toContain('a bare &')
-  })
+test('the scanner the tests stand on names what is wrong instead of passing everything', () => {
+  expect(malformed('<p>fine</p>')).toBe(null)
+  expect(malformed('<p>open')).toContain('never closed')
+  expect(malformed('<b><i>x</b></i>')).toContain('closes nothing that is open')
+  expect(malformed('<p>Tom & Jerry</p>')).toContain('a bare &')
+  expect(malformed('<input checked />')).toContain('bare attribute')
+  expect(malformed('<p>a &nbsp; b</p>')).toContain('a bare &')
 })
 
 describe('the transformer', () => {

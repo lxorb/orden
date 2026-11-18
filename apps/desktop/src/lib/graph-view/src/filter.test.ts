@@ -109,11 +109,9 @@ describe('an operator the picture cannot answer', () => {
   })
 })
 
-describe('a pattern over the names that backtracks without end', () => {
-  test('is left aside like a pattern that is not one, at once', () => {
-    const long = node(`${'a'.repeat(27)}!.md`)
-    const started = Date.now()
-    expect(kept('/(a+)+b/', [long, DIARY])).toEqual([long.name, 'Diary'])
-    expect(Date.now() - started).toBeLessThan(1500)
-  })
+test('a pattern over the names that backtracks without end is left aside like a pattern that is not one, at once', () => {
+  const long = node(`${'a'.repeat(27)}!.md`)
+  const started = Date.now()
+  expect(kept('/(a+)+b/', [long, DIARY])).toEqual([long.name, 'Diary'])
+  expect(Date.now() - started).toBeLessThan(1500)
 })

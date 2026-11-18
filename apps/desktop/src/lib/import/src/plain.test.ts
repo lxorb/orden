@@ -169,17 +169,15 @@ describe('a folder of markdown', () => {
   })
 })
 
-describe('a TextBundle', () => {
-  test('becomes the note it holds, named after the bundle, with its assets', async () => {
-    const plan = await readPlain([
-      file('Trips/Iceland.textbundle/info.json', '{"version":2}'),
-      file('Trips/Iceland.textbundle/text.md', '# Iceland\n\n![](assets/shot.png)\n'),
-      file('Trips/Iceland.textbundle/assets/shot.png', 'PNG'),
-    ])
+test('a TextBundle becomes the note it holds, named after the bundle, with its assets', async () => {
+  const plan = await readPlain([
+    file('Trips/Iceland.textbundle/info.json', '{"version":2}'),
+    file('Trips/Iceland.textbundle/text.md', '# Iceland\n\n![](assets/shot.png)\n'),
+    file('Trips/Iceland.textbundle/assets/shot.png', 'PNG'),
+  ])
 
-    expect(plan.files.map((one) => one.path)).toEqual(['Trips/Iceland.md', 'assets/shot.png'])
-    expect(noteAt(plan, 'Trips/Iceland.md')).toContain('![](../assets/shot.png)')
-  })
+  expect(plan.files.map((one) => one.path)).toEqual(['Trips/Iceland.md', 'assets/shot.png'])
+  expect(noteAt(plan, 'Trips/Iceland.md')).toContain('![](../assets/shot.png)')
 })
 
 describe('a folder of HTML', () => {

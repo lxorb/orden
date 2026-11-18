@@ -5,18 +5,16 @@ import { formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } f
 
 const SRC = join(import.meta.dirname, '../src')
 
-describe('the module stands on its own', () => {
-  test('reaches no app module but the platform', () => {
-    const reached = readdirSync(SRC)
-      .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
-      .flatMap((name) =>
-        [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.[^']*)'/g)].map(
-          (found) => found[1],
-        ),
-      )
-      .filter((specifier) => specifier?.startsWith('../'))
-    expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
-  })
+test('the module stands on its own reaches no app module but the platform', () => {
+  const reached = readdirSync(SRC)
+    .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
+    .flatMap((name) =>
+      [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.[^']*)'/g)].map(
+        (found) => found[1],
+      ),
+    )
+    .filter((specifier) => specifier?.startsWith('../'))
+  expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
 })
 
 describe('the way a link is written', () => {

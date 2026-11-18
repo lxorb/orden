@@ -91,15 +91,13 @@ describe('how many rows a note holds open', () => {
   })
 })
 
-describe('where each row is', () => {
-  test('is the number the window and the walk both speak in', () => {
-    const at = rowIndex(flatRows(SPACE, open('/s/Work')))
+test('where each row is is the number the window and the walk both speak in', () => {
+  const at = rowIndex(flatRows(SPACE, open('/s/Work')))
 
-    expect(at.get('/s/Work')).toBe(0)
-    expect(at.get('/s/Work/plan.md')).toBe(2)
-    expect(at.get('/s/Read me.md')).toBe(4)
-    expect(at.get('/s/Work/Work.md')).toBeUndefined()
-  })
+  expect(at.get('/s/Work')).toBe(0)
+  expect(at.get('/s/Work/plan.md')).toBe(2)
+  expect(at.get('/s/Read me.md')).toBe(4)
+  expect(at.get('/s/Work/Work.md')).toBeUndefined()
 })
 
 describe('a row that stands open', () => {

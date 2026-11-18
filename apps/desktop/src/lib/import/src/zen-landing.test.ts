@@ -206,28 +206,24 @@ describe('Zen brought into Orden', () => {
   })
 })
 
-describe('a Zen up to 1.17 brought into Orden', () => {
-  test('takes its spaces and its Essentials out of Places, which its session lacks', async () => {
-    firefoxSession = ZEN_1_17
-    places = ZEN_1_17_PLACES
+test('a Zen up to 1.17 brought into Orden takes its spaces and its Essentials out of Places, which its session lacks', async () => {
+  firefoxSession = ZEN_1_17
+  places = ZEN_1_17_PLACES
 
-    const first = await landZen({ ...PROFILE, files: ['sessionstore.jsonlz4', 'places.sqlite'] })
+  const first = await landZen({ ...PROFILE, files: ['sessionstore.jsonlz4', 'places.sqlite'] })
 
-    expect(first.name).toBe('Home')
-    expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work'])
-    expect(marks.map((one) => one.path)).toEqual(['Mail.url', 'Calendar.url', 'Chat.url'])
-  })
+  expect(first.name).toBe('Home')
+  expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work'])
+  expect(marks.map((one) => one.path)).toEqual(['Mail.url', 'Calendar.url', 'Chat.url'])
 })
 
-describe('a space of the same name shared to be read', () => {
-  test('is passed over, while the rest still land', async () => {
-    spaces.push({ id: 'Work', name: 'Work', root: '/spaces/Work' })
-    readOnly.add('/spaces/Work')
+test('a space of the same name shared to be read is passed over, while the rest still land', async () => {
+  spaces.push({ id: 'Work', name: 'Work', root: '/spaces/Work' })
+  readOnly.add('/spaces/Work')
 
-    const first = await landZen(PROFILE)
+  const first = await landZen(PROFILE)
 
-    expect(first.name).toBe('Home')
-    expect(written.map((one) => one.root)).toEqual(['/spaces/Home'])
-    expect(done.filter((one) => one.includes('/spaces/Work') || one.includes('Work '))).toEqual([])
-  })
+  expect(first.name).toBe('Home')
+  expect(written.map((one) => one.root)).toEqual(['/spaces/Home'])
+  expect(done.filter((one) => one.includes('/spaces/Work') || one.includes('Work '))).toEqual([])
 })

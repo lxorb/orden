@@ -265,10 +265,8 @@ describe('a fenced block', () => {
   })
 })
 
-describe('display maths', () => {
-  test('is its own block, holding the TeX as written', () => {
-    expect(kind('maths')[0]?.tex.trim()).toBe('\\int_0^1 x^2\\,dx = \\frac{1}{3}')
-  })
+test('display maths is its own block, holding the TeX as written', () => {
+  expect(kind('maths')[0]?.tex.trim()).toBe('\\int_0^1 x^2\\,dx = \\frac{1}{3}')
 })
 
 describe('lists', () => {
@@ -450,9 +448,7 @@ describe('naming the document', () => {
   })
 })
 
-describe('a title from the file’s name', () => {
-  test('keeps a dot that is no ending', () => {
-    expect(titleOf('words\n', 'v1.2 plan')).toBe('v1.2 plan')
-    expect(titleOf('words\n', 'v1.2 plan.md')).toBe('v1.2 plan')
-  })
+test('a title from the file’s name keeps a dot that is no ending', () => {
+  expect(titleOf('words\n', 'v1.2 plan')).toBe('v1.2 plan')
+  expect(titleOf('words\n', 'v1.2 plan.md')).toBe('v1.2 plan')
 })

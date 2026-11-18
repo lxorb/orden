@@ -338,29 +338,27 @@ describe('the time a person records', () => {
   })
 })
 
-describe('a long history of recorded time', () => {
-  test('the recent activities are not looked up again on every read', async () => {
-    const stores = new Map<number, TimeStore>()
-    for (const size of [2000, 128_000]) {
-      const store = await opened(owner(), null)
-      const used = store.addActivity('Uni')
-      store.addActivity('Never')
-      store.spans = Array.from({ length: size }, (_, index): Span => ({
-        id: `s${index}`,
-        start: index * M,
-        end: index * M + M / 2,
-        activity: index ? null : used.id,
-        tags: [],
-        note: '',
-        source: 'app',
-        place: null,
-        label: null,
-        device: null,
-      }))
-      expect(store.latest().map((one) => one.name)).toEqual(['Uni', 'Never'])
-      stores.set(size, store)
-    }
-    const ratio = growth((size) => stores.get(size)?.latest(), 2000, 64)
-    expect(ratio).toBeLessThan(GROWS_AT_MOST)
-  })
+test('a long history of recorded time the recent activities are not looked up again on every read', async () => {
+  const stores = new Map<number, TimeStore>()
+  for (const size of [2000, 128_000]) {
+    const store = await opened(owner(), null)
+    const used = store.addActivity('Uni')
+    store.addActivity('Never')
+    store.spans = Array.from({ length: size }, (_, index): Span => ({
+      id: `s${index}`,
+      start: index * M,
+      end: index * M + M / 2,
+      activity: index ? null : used.id,
+      tags: [],
+      note: '',
+      source: 'app',
+      place: null,
+      label: null,
+      device: null,
+    }))
+    expect(store.latest().map((one) => one.name)).toEqual(['Uni', 'Never'])
+    stores.set(size, store)
+  }
+  const ratio = growth((size) => stores.get(size)?.latest(), 2000, 64)
+  expect(ratio).toBeLessThan(GROWS_AT_MOST)
 })

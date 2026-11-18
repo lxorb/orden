@@ -208,35 +208,31 @@ describe('a note shared on its own', () => {
   })
 })
 
-describe('one page of a paper on two sheets', () => {
-  test('makes two sheets, each with its own ink', async () => {
-    held.bytes = await (await paper()).save()
-    const canvas = paperNote()
-    const [, second] = canvas.nodes as [PageNode, PageNode]
-    second.page = 1
-    inked(canvas, second, 'b', '#0000ff')
+test('one page of a paper on two sheets makes two sheets, each with its own ink', async () => {
+  held.bytes = await (await paper()).save()
+  const canvas = paperNote()
+  const [, second] = canvas.nodes as [PageNode, PageNode]
+  second.page = 1
+  inked(canvas, second, 'b', '#0000ff')
 
-    const bytes = await pagesPdf(out(canvas))
+  const bytes = await pagesPdf(out(canvas))
 
-    expect((await PDFDocument.load(bytes!)).getPageCount()).toBe(2)
-    const [one, two] = [await contentOf(bytes!, 0), await contentOf(bytes!, 1)]
-    expect(one).toContain('1 0 0 rg')
-    expect(one).not.toContain('0 0 1 rg')
-    expect(two).toContain('0 0 1 rg')
-    expect(two).not.toContain('1 0 0 rg')
-  })
+  expect((await PDFDocument.load(bytes!)).getPageCount()).toBe(2)
+  const [one, two] = [await contentOf(bytes!, 0), await contentOf(bytes!, 1)]
+  expect(one).toContain('1 0 0 rg')
+  expect(one).not.toContain('0 0 1 rg')
+  expect(two).toContain('0 0 1 rg')
+  expect(two).not.toContain('1 0 0 rg')
 })
 
-describe('pages of more than one size, printed', () => {
-  test('give every sheet a paper of its own size', () => {
-    const style = sheetStyle([
-      { width: 816, height: 1056 },
-      { width: 1056, height: 816 },
-    ])
+test('pages of more than one size, printed give every sheet a paper of its own size', () => {
+  const style = sheetStyle([
+    { width: 816, height: 1056 },
+    { width: 1056, height: 816 },
+  ])
 
-    expect(style).toContain('@page s0{size:816px 1056px;margin:0}')
-    expect(style).toContain('@page s1{size:1056px 816px;margin:0}')
-    expect(style).toContain('.s1{page:s1;width:1056px;height:816px}')
-    expect(style).not.toMatch(/\.sheet\{[^}]*width:/)
-  })
+  expect(style).toContain('@page s0{size:816px 1056px;margin:0}')
+  expect(style).toContain('@page s1{size:1056px 816px;margin:0}')
+  expect(style).toContain('.s1{page:s1;width:1056px;height:816px}')
+  expect(style).not.toMatch(/\.sheet\{[^}]*width:/)
 })

@@ -37,21 +37,19 @@ const space = (): Entry =>
     file('/s/a.md', 1),
   ])
 
-describe('the module stands on its own', () => {
-  test('reaches no app module but the platform, the file ops and what a space keeps', () => {
-    const reached = readdirSync(SRC)
-      .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
-      .flatMap((name) =>
-        [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
-          (found) => found[1],
-        ),
-      )
-    expect([...new Set(reached)].sort()).toEqual([
-      '../../file-ops/src/api',
-      '../../platform/src/api',
-      '../../space-kept/src/api',
-    ])
-  })
+test('the module stands on its own reaches no app module but the platform, the file ops and what a space keeps', () => {
+  const reached = readdirSync(SRC)
+    .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
+    .flatMap((name) =>
+      [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
+        (found) => found[1],
+      ),
+    )
+  expect([...new Set(reached)].sort()).toEqual([
+    '../../file-ops/src/api',
+    '../../platform/src/api',
+    '../../space-kept/src/api',
+  ])
 })
 
 describe('the tree of a space', () => {

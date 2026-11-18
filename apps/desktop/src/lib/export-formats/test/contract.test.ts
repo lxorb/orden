@@ -13,10 +13,8 @@ import {
   printable,
 } from '../src/api'
 
-describe('the module stands on its own', () => {
-  test('the catalogue loads without a window', () => {
-    expect(canPrint).toBe(false)
-  })
+test('the module stands on its own the catalogue loads without a window', () => {
+  expect(canPrint).toBe(false)
 })
 
 describe('the formats', () => {

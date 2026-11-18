@@ -747,13 +747,11 @@ describe('rubbing out', () => {
   })
 })
 
-describe('the pen the bar is holding', () => {
-  test('goes into the stroke whole, alpha and all', () => {
-    const pen = { tool: 'highlighter', size: 18, color: '#ffcc00', opacity: 0.2 } as const
-    const { machine } = play([down()], context({ tool: 'draw', pen }))
+test('the pen the bar is holding goes into the stroke whole, alpha and all', () => {
+  const pen = { tool: 'highlighter', size: 18, color: '#ffcc00', opacity: 0.2 } as const
+  const { machine } = play([down()], context({ tool: 'draw', pen }))
 
-    expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke).toMatchObject(pen)
-  })
+  expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke).toMatchObject(pen)
 })
 
 describe('the lasso', () => {

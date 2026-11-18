@@ -6,15 +6,13 @@ import { carried, FileOps, inFlight, keeping, landing, moving, onLanded } from '
 
 const SRC = join(import.meta.dirname, '../src')
 
-describe('the module stands on its own', () => {
-  test('reaches no app module but the platform', () => {
-    const reached = ['api.ts', 'landing.ts'].flatMap((name) =>
-      [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
-        (found) => found[1],
-      ),
-    )
-    expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
-  })
+test('the module stands on its own reaches no app module but the platform', () => {
+  const reached = ['api.ts', 'landing.ts'].flatMap((name) =>
+    [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
+      (found) => found[1],
+    ),
+  )
+  expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
 })
 
 describe('telling the stores what happened to a file', () => {
@@ -47,16 +45,14 @@ describe('telling the stores what happened to a file', () => {
   })
 })
 
-describe('a move under way', () => {
-  test('keeps its target landing until it is done, then says so', async () => {
-    let heard = 0
-    const stop = onLanded(() => (heard += 1))
-    const seen = await inFlight('/s/Done', async () => landing('/s/Done/Plan.md'))
-    stop()
-    expect(seen).toBe(true)
-    expect(landing('/s/Done/Plan.md')).toBe(false)
-    expect(heard).toBe(1)
-  })
+test('a move under way keeps its target landing until it is done, then says so', async () => {
+  let heard = 0
+  const stop = onLanded(() => (heard += 1))
+  const seen = await inFlight('/s/Done', async () => landing('/s/Done/Plan.md'))
+  stop()
+  expect(seen).toBe(true)
+  expect(landing('/s/Done/Plan.md')).toBe(false)
+  expect(heard).toBe(1)
 })
 
 describe('a store kept by path', () => {

@@ -21,32 +21,28 @@ vi.mock('../../workspace/src/api', () => ({
 const api = await import('../src/api')
 const { difference, joined } = await import('../src/words')
 
-describe('the module stands on its own', () => {
-  test('the api loads with the pad, the card and the sync closed, and every call is there', () => {
-    for (const one of [
-      api.closeScratchpad,
-      api.isScratchpad,
-      api.loadScratchpadCard,
-      api.pad,
-      api.padTab,
-      api.scratchFromDrawer,
-      api.toggleScratchpad,
-      api.wakeScratchpad,
-    ]) {
-      expect(typeof one).toBe('function')
-    }
-    expect(api.SCRATCHPAD).toBe('Scratchpad.md')
-  })
+test('the module stands on its own the api loads with the pad, the card and the sync closed, and every call is there', () => {
+  for (const one of [
+    api.closeScratchpad,
+    api.isScratchpad,
+    api.loadScratchpadCard,
+    api.pad,
+    api.padTab,
+    api.scratchFromDrawer,
+    api.toggleScratchpad,
+    api.wakeScratchpad,
+  ]) {
+    expect(typeof one).toBe('function')
+  }
+  expect(api.SCRATCHPAD).toBe('Scratchpad.md')
 })
 
-describe('which file is the scratchpad', () => {
-  test('a Scratchpad.md outside every space, and no note of that name inside one', () => {
-    expect(api.isScratchpad('/app/Scratchpad.md')).toBe(true)
-    expect(api.isScratchpad('/space/Scratchpad.md')).toBe(false)
-    expect(api.isScratchpad('/app/Other.md')).toBe(false)
-    expect(api.isScratchpad(null)).toBe(false)
-    expect(api.padTab()).toBeNull()
-  })
+test('which file is the scratchpad a Scratchpad.md outside every space, and no note of that name inside one', () => {
+  expect(api.isScratchpad('/app/Scratchpad.md')).toBe(true)
+  expect(api.isScratchpad('/space/Scratchpad.md')).toBe(false)
+  expect(api.isScratchpad('/app/Other.md')).toBe(false)
+  expect(api.isScratchpad(null)).toBe(false)
+  expect(api.padTab()).toBeNull()
 })
 
 describe('showing it on the right', () => {

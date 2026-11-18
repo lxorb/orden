@@ -285,46 +285,42 @@ describe('what a real Takeout does', () => {
   })
 })
 
-describe('a Keep list item', () => {
-  test('reads none of its words as a field of the task', async () => {
-    const plan = await readKeep([
-      file(
-        'Keep/List.json',
-        keepNote({
-          title: 'Chores',
-          listContent: [
-            {
-              text: 'task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]',
-              isChecked: false,
-            },
-          ],
-        }),
-      ),
-    ])
+test('a Keep list item reads none of its words as a field of the task', async () => {
+  const plan = await readKeep([
+    file(
+      'Keep/List.json',
+      keepNote({
+        title: 'Chores',
+        listContent: [
+          {
+            text: 'task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]',
+            isChecked: false,
+          },
+        ],
+      }),
+    ),
+  ])
 
-    const line = noteAt(plan, 'Chores.md')
-      .split('\n')
-      .find((one) => one.startsWith('- [ ]'))
-    const task = readTask(line ?? '')
+  const line = noteAt(plan, 'Chores.md')
+    .split('\n')
+    .find((one) => one.startsWith('- [ ]'))
+  const task = readTask(line ?? '')
 
-    expect(task).toMatchObject({ tags: [] })
-    expect(task?.due).toBeUndefined()
-    expect(task?.recurrence).toBeUndefined()
-    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
-    expect(task?.fields).toEqual({})
-  })
+  expect(task).toMatchObject({ tags: [] })
+  expect(task?.due).toBeUndefined()
+  expect(task?.recurrence).toBeUndefined()
+  expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
+  expect(task?.fields).toEqual({})
 })
 
-describe('a Keep title', () => {
-  test('is its words in the heading, maths, tags and links aside', async () => {
-    const plan = await readKeep([
-      file('Keep/A.json', keepNote({ title: 'Tickets $5-$10 #work', textContent: 'Words' })),
-    ])
-    const [note] = plan.files.filter((one) => one.kind === 'note')
-    if (note?.kind !== 'note') throw new Error('no note')
+test('a Keep title is its words in the heading, maths, tags and links aside', async () => {
+  const plan = await readKeep([
+    file('Keep/A.json', keepNote({ title: 'Tickets $5-$10 #work', textContent: 'Words' })),
+  ])
+  const [note] = plan.files.filter((one) => one.kind === 'note')
+  if (note?.kind !== 'note') throw new Error('no note')
 
-    expect(renderMarkdown(note.text)).toContain('<h1>Tickets $5-$10 #work</h1>')
-  })
+  expect(renderMarkdown(note.text)).toContain('<h1>Tickets $5-$10 #work</h1>')
 })
 
 test('a Keep list item keeps its code as it was written', async () => {

@@ -96,21 +96,19 @@ describe('printing a page with pictures in a frame', () => {
   })
 })
 
-describe('printing a page with pictures on a Mac', () => {
-  test('hands over the page in pieces, never as one string', async () => {
-    world.mac = true
-    await printWithPictures(PAGE, resolve)
+test('printing a page with pictures on a Mac hands over the page in pieces, never as one string', async () => {
+  world.mac = true
+  await printWithPictures(PAGE, resolve)
 
-    const page = world.printed[0]
-    expect(page).toBeInstanceOf(Blob)
-    const text = await (page as Blob).text()
-    expect(text).toBe(
-      PAGE.replaceAll('a.png', `data:image/png;base64,${btoa('/space/a.png')}`).replace(
-        'b.jpg',
-        `data:image/png;base64,${btoa('/space/b.jpg')}`,
-      ),
-    )
-  })
+  const page = world.printed[0]
+  expect(page).toBeInstanceOf(Blob)
+  const text = await (page as Blob).text()
+  expect(text).toBe(
+    PAGE.replaceAll('a.png', `data:image/png;base64,${btoa('/space/a.png')}`).replace(
+      'b.jpg',
+      `data:image/png;base64,${btoa('/space/b.jpg')}`,
+    ),
+  )
 })
 
 describe('a page with pictures written whole, for a PDF file', () => {
@@ -128,14 +126,12 @@ describe('a page with pictures written whole, for a PDF file', () => {
   })
 })
 
-describe('a page with its pictures, for an HTML file', () => {
-  test('writes each picture in where it is placed', async () => {
-    const page = pageWith('<img src="a.png"><img src="https://x.test/b.png"><img src="a.png">', [
-      { src: 'a.png', mime: 'image/png', bytes: new Uint8Array([1]) },
-    ])
+test('a page with its pictures, for an HTML file writes each picture in where it is placed', async () => {
+  const page = pageWith('<img src="a.png"><img src="https://x.test/b.png"><img src="a.png">', [
+    { src: 'a.png', mime: 'image/png', bytes: new Uint8Array([1]) },
+  ])
 
-    expect(await page.text()).toBe(
-      '<img src="data:image/png;base64,AQ=="><img src="https://x.test/b.png"><img src="data:image/png;base64,AQ==">',
-    )
-  })
+  expect(await page.text()).toBe(
+    '<img src="data:image/png;base64,AQ=="><img src="https://x.test/b.png"><img src="data:image/png;base64,AQ==">',
+  )
 })

@@ -269,11 +269,9 @@ describe('a path written with backslashes, as a desktop hands them over', () => 
   })
 })
 
-describe('copying a row', () => {
-  test('may land beside itself, but never inside itself', () => {
-    expect(copiesInto(['/s/a.md'], '/s')).toBe(true)
-    expect(copiesInto(['/s/Work'], '/s/Work')).toBe(false)
-    expect(copiesInto(['/s/Work'], '/s/Work/deep')).toBe(false)
-    expect(copiesInto(['/s/Work'], '/s/Workshop')).toBe(true)
-  })
+test('copying a row may land beside itself, but never inside itself', () => {
+  expect(copiesInto(['/s/a.md'], '/s')).toBe(true)
+  expect(copiesInto(['/s/Work'], '/s/Work')).toBe(false)
+  expect(copiesInto(['/s/Work'], '/s/Work/deep')).toBe(false)
+  expect(copiesInto(['/s/Work'], '/s/Workshop')).toBe(true)
 })

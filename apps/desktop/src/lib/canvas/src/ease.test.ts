@@ -31,10 +31,8 @@ describe('coming up to a number', () => {
   })
 })
 
-describe('near enough to stop', () => {
-  test('is under a pixel at whatever zoom is on', () => {
-    expect(arrived({ x: 0, y: 0 }, { x: 0.2, y: 0.2 })).toBe(true)
-    expect(arrived({ x: 0, y: 0 }, { x: 4, y: 0 })).toBe(false)
-    expect(arrived({ x: 0, y: 0 }, { x: 4, y: 0 }, 20)).toBe(true)
-  })
+test('near enough to stop is under a pixel at whatever zoom is on', () => {
+  expect(arrived({ x: 0, y: 0 }, { x: 0.2, y: 0.2 })).toBe(true)
+  expect(arrived({ x: 0, y: 0 }, { x: 4, y: 0 })).toBe(false)
+  expect(arrived({ x: 0, y: 0 }, { x: 4, y: 0 }, 20)).toBe(true)
 })

@@ -88,20 +88,18 @@ beforeEach(() => {
   asked.length = 0
 })
 
-describe('the papers page notes hold', () => {
-  test('are read for, though the list leaves them out, for the notes it shows', async () => {
-    const listed = [tree.children[0]!, tree.children[2]!.children[0]!, tree.children[3]!]
+test('the papers page notes hold are read for, though the list leaves them out, for the notes it shows', async () => {
+  const listed = [tree.children[0]!, tree.children[2]!.children[0]!, tree.children[3]!]
 
-    const held = await heldPapers('/space', listed)
+  const held = await heldPapers('/space', listed)
 
-    expect(held.map((one) => [one.path, one.modified])).toEqual([
-      ['/space/Lecture.pages.pdf', 2],
-      ['/space/Week/Optics.pages.pdf', 4],
-    ])
-    expect(asked).toContainEqual({
-      command: 'read_tree',
-      args: { root: '/space', options: { papers: true } },
-    })
+  expect(held.map((one) => [one.path, one.modified])).toEqual([
+    ['/space/Lecture.pages.pdf', 2],
+    ['/space/Week/Optics.pages.pdf', 4],
+  ])
+  expect(asked).toContainEqual({
+    command: 'read_tree',
+    args: { root: '/space', options: { papers: true } },
   })
 })
 

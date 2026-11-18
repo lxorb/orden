@@ -214,40 +214,32 @@ describe('the form', () => {
   })
 })
 
-describe('the cards', () => {
-  test('are a card per row with its other properties under it', () => {
-    const html = render(CardsLayout, { props: { kit: kitOf(BUGS, NOTES) } }).body
-    expect(html.match(/class="card /g)).toHaveLength(2)
-    expect(html).toContain('Glass')
-  })
+test('the cards are a card per row with its other properties under it', () => {
+  const html = render(CardsLayout, { props: { kit: kitOf(BUGS, NOTES) } }).body
+  expect(html.match(/class="card /g)).toHaveLength(2)
+  expect(html).toContain('Glass')
 })
 
-describe('the board', () => {
-  test('keeps a column for every option, in the options’ order, empty ones too', () => {
-    const html = render(BoardLayout, { props: { kit: kitOf(BUGS, NOTES) } }).body
-    const heads = [
-      ...html.matchAll(/class="tag[^"]*"[^>]*>\s*<span class="name[^"]*">([^<]+)</g),
-    ].map(([, name]) => name)
-    expect(heads).toEqual(['To do', 'Doing', 'Done'])
-    expect(html).toContain('Sync')
-  })
+test('the board keeps a column for every option, in the options’ order, empty ones too', () => {
+  const html = render(BoardLayout, { props: { kit: kitOf(BUGS, NOTES) } }).body
+  const heads = [
+    ...html.matchAll(/class="tag[^"]*"[^>]*>\s*<span class="name[^"]*">([^<]+)</g),
+  ].map(([, name]) => name)
+  expect(heads).toEqual(['To do', 'Doing', 'Done'])
+  expect(html).toContain('Sync')
 })
 
-describe('the timeline', () => {
-  test('is a bar per dated row beside its name', () => {
-    const base = readBase('views:\n  - type: timeline\n    orden: { rows: tasks }\n')
-    const html = render(TimelineLayout, { props: { kit: kitOf(base, TASKS) } }).body
-    expect(html.match(/class="span/g)).toHaveLength(3)
-    expect(html).toContain('Draft the talk')
-  })
+test('the timeline is a bar per dated row beside its name', () => {
+  const base = readBase('views:\n  - type: timeline\n    orden: { rows: tasks }\n')
+  const html = render(TimelineLayout, { props: { kit: kitOf(base, TASKS) } }).body
+  expect(html.match(/class="span/g)).toHaveLength(3)
+  expect(html).toContain('Draft the talk')
 })
 
-describe('the chart', () => {
-  test('is a bar per group', () => {
-    const base = readBase(
-      'views:\n  - type: chart\n    groupBy: { property: note.status, direction: ASC }\n',
-    )
-    const html = render(ChartLayout, { props: { kit: kitOf(base, NOTES) } }).body
-    expect(html.match(/<rect/g)).toHaveLength(2)
-  })
+test('the chart is a bar per group', () => {
+  const base = readBase(
+    'views:\n  - type: chart\n    groupBy: { property: note.status, direction: ASC }\n',
+  )
+  const html = render(ChartLayout, { props: { kit: kitOf(base, NOTES) } }).body
+  expect(html.match(/<rect/g)).toHaveLength(2)
 })
