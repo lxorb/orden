@@ -84,49 +84,27 @@ const labels = (query: string) =>
   search(query, panes, places).map((hit) => (hit.kind === 'field' ? hit.field.label : hit.label))
 
 describe('searching the settings', () => {
-  test('finds a field by its own name', () => {
-    expect(labels('wait')).toEqual(['Wait before saving'])
-  })
+  test.each([
+    ['wait', ['Wait before saving']],
+    ['saving', ['Save as I type', 'Wait before saving']],
+    ['deutsch', ['Language']],
+    ['ms', ['Wait before saving']],
+    ['nocturne', ['Mode']],
+    ['footnotes', ['Strict CommonMark']],
+    ['limit', ['Storage']],
+    ['pdf', ['Export as PDF']],
+    ['  DEUTSCH ', ['Language']],
+    ['', []],
+    ['   ', []],
+  ])(
+    'finds %j by name, group, choice, unit, explanation or a word on a hand-written pane',
+    (query, found) => {
+      expect(labels(query)).toEqual(found)
+    },
+  )
 
-  test('finds every field in a group by the group name', () => {
-    expect(labels('saving')).toEqual(['Save as I type', 'Wait before saving'])
-  })
-
-  test('finds a field by the pane it lives in', () => {
+  test('finds a field by the pane it lives in, and says which pane a hit belongs to', () => {
     expect(labels('general')).toHaveLength(5)
-  })
-
-  test('finds a dropdown by one of its choices', () => {
-    expect(labels('deutsch')).toEqual(['Language'])
-  })
-
-  test('finds a slider by its unit', () => {
-    expect(labels('ms')).toEqual(['Wait before saving'])
-  })
-
-  test('finds a segmented control by one of its choices', () => {
-    expect(labels('nocturne')).toEqual(['Mode'])
-  })
-
-  test('finds a setting by the sentence that explains it', () => {
-    expect(labels('footnotes')).toEqual(['Strict CommonMark'])
-  })
-
-  test('finds a place in a hand-written pane by any word on it', () => {
-    expect(labels('limit')).toEqual(['Storage'])
-    expect(labels('pdf')).toEqual(['Export as PDF'])
-  })
-
-  test('ignores case and surrounding space', () => {
-    expect(labels('  DEUTSCH ')).toEqual(['Language'])
-  })
-
-  test('finds nothing for nothing', () => {
-    expect(labels('')).toEqual([])
-    expect(labels('   ')).toEqual([])
-  })
-
-  test('says which pane a hit belongs to', () => {
     const [hit] = search('pdf', panes, places)
     expect(hit?.kind === 'place' ? hit.section : null).toBe('export')
     const [field] = search('wait', panes, places)
@@ -137,12 +115,9 @@ describe('searching the settings', () => {
 describe('the hand-written panes the search knows about', () => {
   const source = readFileSync(join(import.meta.dirname, './places.ts'), 'utf8')
 
-  test('name how long the account keeps a note’s history', () => {
+  test('name how long the account keeps a note’s history, and the rescue under it', () => {
     expect(source).toContain("label: 'History on the account'")
     expect(source).toContain("'Keep versions'")
-  })
-
-  test('and the rescue under it, which is the one nobody wants to hunt for', () => {
     expect(source).toContain("label: 'Go back'")
   })
 })
