@@ -131,7 +131,10 @@ export class DeviceView {
     if (op.kind === 'space') {
       this.moveIcon(op.from, op.to)
       const at = this.listScroll[op.from]
-      if (at !== undefined) this.listScroll = { ...without(this.listScroll, op.from), [op.to]: at }
+      if (at !== undefined) {
+        this.listScroll = { ...without(this.listScroll, op.from), [op.to]: at }
+        keepJson(LIST_AT_KEY, this.listScroll)
+      }
     }
 
     const moved = (path: string) => movedTo(path, op.from, op.to) ?? path

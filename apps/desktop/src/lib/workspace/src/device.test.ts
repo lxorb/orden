@@ -112,6 +112,21 @@ describe('the colour a space is drawn in', () => {
   })
 })
 
+describe('where the list of a space was scrolled to', () => {
+  test('follows the space when it is renamed, also after a restart', () => {
+    vi.useFakeTimers()
+    const view = new DeviceView()
+    view.setListAt('/Uni', 240)
+    vi.runAllTimers()
+    view.follow({ op: 'moved', from: '/Uni', to: '/University', kind: 'space', root: '/Uni' })
+    vi.useRealTimers()
+
+    expect(view.listAt('/University')).toBe(240)
+    expect(new DeviceView().listAt('/University')).toBe(240)
+    expect(new DeviceView().listAt('/Uni')).toBe(0)
+  })
+})
+
 describe('storage that arrives after the store was built', () => {
   test('is read on the second asking, which is the plugin', () => {
     const view = new DeviceView()
