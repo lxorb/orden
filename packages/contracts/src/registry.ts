@@ -48,7 +48,6 @@ export type SettingControl =
       step: number
       unit?: string
       initial?: number
-      least?: () => number
       get(): number
       preview?(value: number): void
       set(value: number): void

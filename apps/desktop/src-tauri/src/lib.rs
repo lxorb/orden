@@ -275,8 +275,6 @@ macro_rules! desktop_commands {
             orden_secrets::chatgpt::chatgpt_sign_out,
             orden_system::link_preview::link_preview,
             orden_system::appearance::set_frame,
-            orden_system::appearance::set_translucency,
-            orden_system::ground::remember_material,
             orden_system::ground::remember_ground,
             orden_import::apple_notes::read_apple_notes,
             orden_import::apple_notes::open_full_disk_access,
@@ -810,12 +808,8 @@ fn ready(
         let config = orden_placement::placement::restored(handle, config);
         trace::mark("window placement");
         let building = engine::ui_window(app, &config)?;
-        let see_through = orden_system::ground::see_through(handle);
         if let Some(at) = orden_placement::placement::away() {
             let window = orden_placement::placement::built_away(building, at)?;
-            if see_through {
-                orden_system::appearance::wear_from_the_start(&window.as_ref().window());
-            }
             orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
         } else if uris::launched_quietly(handle) {
             let window = building.visible(false).build()?;
@@ -830,9 +824,6 @@ fn ready(
             };
             let window = orden_placement::placement::settled(building.visible(at_once))?;
             orden_placement::top_edge::mind(&window.as_ref().window());
-            if see_through {
-                orden_system::appearance::wear_from_the_start(&window.as_ref().window());
-            }
             orden_crashes::stall::watch_page(handle, window.as_ref(), "the window's");
             if !at_once {
                 #[cfg(target_os = "macos")]

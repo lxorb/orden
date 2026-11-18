@@ -9,10 +9,6 @@
   --shell-ground: var(--window-ground);
 }
 
-:root[data-translucent] {
-  --window-ground: transparent;
-}
-
 html,
 body {
   height: 100%;

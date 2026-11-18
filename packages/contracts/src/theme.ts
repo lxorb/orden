@@ -52,7 +52,6 @@ export type ThemeSetting = ThemeSettingCommon &
         step: number
         unit: string
         initial: number
-        least?: () => number
       }
     | { kind: 'switch'; initial: boolean }
   )
@@ -62,7 +61,6 @@ export interface ThemeInfo {
   readonly name: string
   readonly variants: readonly Scheme[]
   readonly path?: string
-  readonly translucent?: boolean
   readonly pictured?: boolean
   readonly load?: () => Promise<string>
   readonly own?: () => Promise<() => ThemeSetting[]>

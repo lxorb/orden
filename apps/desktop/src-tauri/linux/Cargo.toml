@@ -153,7 +153,6 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 tauri-plugin-os = "=3.0.0-alpha.3"
 tauri-plugin-opener = "=3.0.0-alpha.3"
 tauri-plugin-deep-link = "=3.0.0-alpha.3"
-window-vibrancy = "0.6"
 trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 notify = "8"
 file-id = "0.2"

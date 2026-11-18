@@ -116,16 +116,12 @@ const folder = vi.hoisted(() => ({
 
 interface Host {
   platform: string
-  material: string | null
-  asked: { on: boolean; dark: boolean; said?: string | undefined; kind?: unknown }[]
-  remembered: string[]
+  called: string[]
 }
 
 const host = vi.hoisted((): Host => ({
   platform: 'windows',
-  material: 'mica',
-  asked: [],
-  remembered: [],
+  called: [],
 }))
 
 vi.mock('../../platform/src/tauri', () => ({
@@ -133,21 +129,7 @@ vi.mock('../../platform/src/tauri', () => ({
   isNative: true,
   platform: () => host.platform,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
-    if (command === 'set_translucency') {
-      host.asked.push({
-        on: args.on === true,
-        dark: args.dark === true,
-        said: dataset.translucent,
-        ...(args.kind === undefined ? {} : { kind: args.kind }),
-      })
-      if (args.on !== true) return Promise.resolve('')
-      return host.material ? Promise.resolve(host.material) : Promise.reject(new Error('none'))
-    }
-
-    if (command === 'remember_material') {
-      host.remembered.push(String(args.kind))
-      return Promise.resolve()
-    }
+    host.called.push(command)
 
     if (command === 'list_themes') {
       if (!folder.listing) return Promise.reject(new Error('no such folder'))
@@ -188,7 +170,6 @@ await Promise.all([
   import('../../theme-looks/src/glass/follow.svelte'),
   import('../../theme-looks/src/wallpaper/sheet'),
   import('../../theme-looks/src/wallpaper/settings'),
-  import('./material'),
   import('./declared'),
 ])
 
@@ -209,9 +190,7 @@ beforeEach(() => {
   folder.listing = true
   folder.reading = true
   host.platform = 'windows'
-  host.material = 'mica'
-  host.asked = []
-  host.remembered = []
+  host.called = []
   theme.files = []
   theme.id = 'default'
   theme.scheme = 'system'
@@ -874,7 +853,6 @@ describe('a first launch', () => {
     expect(theme.accent).toBe('green')
     expect(injected()).toBe(glassCss)
     expect(painted['--accent']).toBe('#3fcf8e')
-    expect(host.asked.at(-1)?.on).toBe(true)
   })
 
   test('writes the accent down and not the theme, which nobody has chosen yet', () => {
@@ -1214,7 +1192,7 @@ describe('the glass theme', () => {
     expect(typeof found?.load).toBe('function')
   })
 
-  test('is offered on every platform, with a material to stand on or without one', () => {
+  test('is offered on every platform', () => {
     for (const [platform, offered] of [
       ['windows', true],
       ['macos', true],
@@ -1248,101 +1226,42 @@ describe('the glass theme', () => {
     expect(theme.accentIsTheme).toBe(false)
   })
 
-  test('stands the window on the material, and says so on the root once the crate has', async () => {
-    theme.init()
-    theme.setScheme('dark')
-    theme.select('glass')
-    await settled(() => dataset.translucent !== undefined)
-
-    expect(host.asked.at(-1)).toEqual({ on: true, dark: true, said: undefined, kind: 'mica-alt' })
-    expect(dataset.translucent).toBe('mica')
-    expect(kept.getItem('orden:material')).toBe('mica')
-  })
-
-  test('asks for the material its row says, and keeps it for the next launch', async () => {
-    theme.init()
-    theme.setScheme('dark')
-    theme.select('glass')
-    await settled(() => theme.settings.some((one) => one.id === 'material'))
-    await settled(() => dataset.translucent !== undefined)
-
-    theme.set('material', 'clear')
-    await settled(() => host.asked.at(-1)?.kind === 'clear')
-    await settled(() => host.remembered.includes('clear'))
-    expect(theme.keptFor('glass', 'material')).toBe('clear')
-  })
-
-  test('shows its own dials in a card of its own, the opacity with a floor', async () => {
+  test('shows its own dials in a card of its own', async () => {
     theme.init()
     theme.select('glass')
-    await settled(() => theme.settings.some((one) => one.id === 'opacity'))
+    await settled(() => theme.settings.some((one) => one.id === 'follow'))
 
     const own = theme.settings.filter((one) => one.own === true).map((one) => one.id)
-    expect(own).toEqual(['material', 'opacity', 'follow', 'tint', 'pair', 'tab', 'content'])
-    const opacity = theme.settings.find((one) => one.id === 'opacity')
-    expect(opacity?.kind === 'range' && typeof opacity.least).toBe('function')
+    expect(own).toEqual(['follow', 'tint', 'pair', 'tab'])
   })
 
-  test('and asks again in the other scheme, which is what Mica is tinted by', async () => {
-    theme.init()
-    theme.setScheme('dark')
-    theme.select('glass')
-    await settled(() => dataset.translucent !== undefined)
-    theme.setScheme('light')
-    await settled()
-
-    expect(host.asked.at(-1)).toMatchObject({ on: true, dark: false })
-  })
-
-  test('where there is nothing to stand on, stands on its own ground and says nothing', async () => {
-    host.material = null
+  test('passes over the material, opacity and content an older build kept for it (#2162)', async () => {
+    kept.setItem(
+      'orden:theme-settings',
+      JSON.stringify({ glass: { material: 'acrylic', opacity: 20, content: 'clear', tint: 40 } }),
+    )
+    kept.setItem('orden:material', 'acrylic')
+    kept.setItem('orden:ground', 'rgba(0, 0, 0, 0)')
     theme.init()
     theme.select('glass')
-    await settled(() => host.asked.length > 0)
-    await settled()
+    await settled(() => theme.settings.some((one) => one.id === 'follow'))
 
+    const own = theme.settings.filter((one) => one.own === true).map((one) => one.id)
+    expect(own).toEqual(['follow', 'tint', 'pair', 'tab'])
+    expect(theme.keptFor('glass', 'tint')).toBe(40)
     expect(dataset.translucent).toBeUndefined()
-    expect(kept.getItem('orden:material')).toBeNull()
-  })
-
-  test('takes the ground back before the material when another theme is chosen', async () => {
-    theme.init()
-    theme.select('glass')
-    await settled(() => dataset.translucent !== undefined)
-    theme.select('default')
-    await settled(() => host.asked.at(-1)?.on === false)
-
-    expect(host.asked.at(-1)).toEqual({ on: false, dark: true, said: undefined })
-    expect(dataset.translucent).toBeUndefined()
-    expect(kept.getItem('orden:material')).toBeNull()
-  })
-
-  test('a launch that cannot tell what it stood on asks for the material off', async () => {
-    theme.init()
-    await settled(() => host.asked.length > 0)
-
-    expect(host.asked).toEqual([{ on: false, dark: true, said: undefined }])
-  })
-
-  test('and one that stood on a colour asks nothing at all', async () => {
-    kept.setItem('orden:ground', 'rgb(14, 16, 19)')
-    theme.init()
-    await settled(() => host.asked.length > 0)
-
-    expect(host.asked).toEqual([])
+    expect(host.called).not.toContain('set_translucency')
   })
 
   test('is shown as glass by the picker, and pointing away gives the window back', async () => {
     theme.init()
     await theme.reload()
     theme.preview('glass', 'dark', 'violet')
-    await settled(() => dataset.translucent !== undefined)
-    expect(dataset.translucent).toBe('mica')
+    await settled(() => injected() === glassCss)
 
     theme.preview('default', 'dark', 'violet')
-    await settled(() => dataset.translucent === undefined)
-    expect(dataset.translucent).toBeUndefined()
-    expect(kept.getItem('orden:material')).toBeNull()
+    await settled(() => injected() === '')
+    expect(kept.getItem('orden:theme')).not.toBe('glass')
   })
 
   test('opens a launch in the sheet it wore last time, before its own chunk is in', async () => {
@@ -1498,32 +1417,6 @@ describe('the wallpaper theme', () => {
   })
 })
 
-describe('translucency, which was a switch before it was glass', () => {
-  test('under the built-in theme is glass', () => {
-    theme.init()
-    theme.adoptTranslucency()
-
-    expect(theme.id).toBe('glass')
-    expect(kept.getItem('orden:theme')).toBe('glass')
-  })
-
-  test('under a theme somebody chose is that theme still', () => {
-    theme.init()
-    theme.select('contrast')
-    theme.adoptTranslucency()
-
-    expect(theme.id).toBe('contrast')
-  })
-
-  test('and where there is no material at all is nothing', () => {
-    host.platform = 'linux'
-    theme.init()
-    theme.adoptTranslucency()
-
-    expect(theme.id).toBe('default')
-  })
-})
-
 describe('a theme’s own faces', () => {
   test('keep the reader’s in front of a stack the theme states', () => {
     expect(chosenFirst(':root {\n  --font-content: Georgia, serif;\n}')).toBe(
@@ -1583,7 +1476,6 @@ describe('another window of the app', () => {
     expect(theme.id).toBe('default')
     expect(theme.accent).toBe('teal')
     expect(painted['--accent']).toBe('#33c7ba')
-    expect(host.asked).toEqual([])
     expect(kept.getItem('orden:theme')).toBe('default')
     expect(kept.getItem('orden:theme-settings')).toBe(chosen('teal'))
     expect(kept.getItem('orden:theme-sheet')).toBeNull()

@@ -117,8 +117,6 @@ def opened(held: dict, name: str) -> None:
     if not answer.get("ok"):
         glass.wrong(f"{name} would not open: {answer.get('error')}")
 
-BANDS = {"dark": ["#000000", "rgb(58,58,58)"], "light": ["rgb(192,192,192)", "#ffffff"]}
-
 def parts(held: dict, host: str) -> dict:
     until = time.monotonic() + 20
     said: dict = {}
@@ -143,23 +141,18 @@ def read(held: dict, app_pid: int, scheme: str, name: str, host: str) -> None:
     elif name in LIGHT_PAGES and words != "light":
         glass.wrong(f"{label} a light page in a frame with {words} words")
     scale = said.get("scale", 1)
-    for desk in BANDS[scheme]:
-        glass.ran(held, glass.DESK.format(desk=desk, material="mica"))
-        time.sleep(0.5)
-        tag = desk.replace("#", "").replace("rgb(", "").replace(")", "").replace(",", "-")
-        picture = Image.open(glass.photographed(app_pid, f"{scheme}-{name}-{tag}")).convert("RGB")
-        for part, x, y, ink in said.get("parts", []):
-            at = (int(x * scale), int(y * scale))
-            if not (0 <= at[0] < picture.width and 0 <= at[1] < picture.height):
-                continue
-            ground = picture.getpixel(at)
-            seen = glass.ratio(tuple(int(one) for one in ink), ground)
-            line = f"{label} over {desk}, {part}: quiet words {seen}:1 on {ground}"
-            if seen >= FLOOR:
-                glass.say(f"ok   {line}")
-            else:
-                glass.wrong(line)
-    glass.ran(held, glass.UNDESK)
+    picture = Image.open(glass.photographed(app_pid, f"{scheme}-{name}")).convert("RGB")
+    for part, x, y, ink in said.get("parts", []):
+        at = (int(x * scale), int(y * scale))
+        if not (0 <= at[0] < picture.width and 0 <= at[1] < picture.height):
+            continue
+        ground = picture.getpixel(at)
+        seen = glass.ratio(tuple(int(one) for one in ink), ground)
+        line = f"{label} {part}: quiet words {seen}:1 on {ground}"
+        if seen >= FLOOR:
+            glass.say(f"ok   {line}")
+        else:
+            glass.wrong(line)
 
 def main() -> int:
     if sys.platform != "win32":

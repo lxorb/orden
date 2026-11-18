@@ -233,21 +233,6 @@ test('a note’s tab inside a strip turned dark by a page keeps the paper’s wo
   expect(chrome.tabTheme(black)).toBeUndefined()
 })
 
-test('the wash is worked out again over whatever the root says the window stands on', async () => {
-  const black = workspace.openPage(BLACK) ?? ''
-  grounds.said(black, BLACK, '#ffffff')
-  workspace.activate(black)
-  await settle()
-  const opaque = document.documentElement.style.getPropertyValue('--glass-tinted')
-
-  document.documentElement.dataset.translucent = 'acrylic'
-  await settle()
-  expect(chrome.material).toBe('acrylic')
-  expect(document.documentElement.style.getPropertyValue('--glass-tinted')).not.toBe(opaque)
-  delete document.documentElement.dataset.translucent
-  await settle()
-})
-
 test('leaving glass takes every colour and word it put on the window away', async () => {
   const black = workspace.openPage(BLACK) ?? ''
   grounds.said(black, BLACK, '#0f0f0f')

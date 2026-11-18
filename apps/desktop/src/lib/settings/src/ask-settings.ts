@@ -79,7 +79,7 @@ function line(offer: Offer): string {
   const now = valueWord(field, field.get())
   if (field.kind === 'switch') return `${offer.id} | ${offer.where} | switch | ${now} | true, false`
   if (field.kind === 'slider') {
-    const range = `${field.least?.() ?? field.min} to ${field.max} by ${field.step}`
+    const range = `${field.min} to ${field.max} by ${field.step}`
     return `${offer.id} | ${offer.where} | slider | ${now} | ${range}`
   }
   const listed = choices(field)
@@ -95,9 +95,10 @@ export function brief(all: readonly Offer[]): string {
 function valueFor(field: Field, to: unknown): Value | null {
   if (field.kind === 'switch') return typeof to === 'boolean' ? to : null
   if (field.kind === 'slider') {
-    const least = field.least?.() ?? field.min
-    if (typeof to !== 'number' || !Number.isFinite(to) || to < least || to > field.max) return null
-    return Math.min(field.max, least + Math.round((to - least) / field.step) * field.step)
+    if (typeof to !== 'number' || !Number.isFinite(to) || to < field.min || to > field.max) {
+      return null
+    }
+    return Math.min(field.max, field.min + Math.round((to - field.min) / field.step) * field.step)
   }
   if (typeof to !== 'string') return null
   return choices(field).some((one) => one.value === to) ? to : null

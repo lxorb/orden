@@ -54,7 +54,6 @@ import {
   invoke,
   isDesktop,
 } from '../../platform/src/api'
-import { theme } from '../../theme/src/api'
 import { opening } from '../../documents/src/api'
 
 const STORAGE_KEY = 'orden:modes'
@@ -379,7 +378,6 @@ class Modes {
       this.glassesWords = wordsOf(saved.glassesWords)
       stale ||= 'glassesScroll' in saved
       this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
-      if (saved.translucent === true) theme.adoptTranslucency()
       stale ||= 'translucent' in saved
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
       if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
