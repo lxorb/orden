@@ -1,5 +1,4 @@
-import { CodeBlocks, WORDS } from '@orden/markdown/fences'
-import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { headingRows } from '@orden/markdown/links'
 
 export interface Section {
   index: number
@@ -30,37 +29,6 @@ export function positionOf(section: Section, offsets: readonly number[], end: nu
   return Math.round(from + Math.min(1, Math.max(0, fraction)) * Math.max(0, next - from))
 }
 
-function frontMatterEnd(text: string): number {
-  return frontMatterBlock(text)?.to ?? 0
-}
-
-const ATX = /^ {0,3}#{1,6}(?:\s|$)/
-const UNDERLINE = /^ {0,3}(?:=+|-+)[ \t]*$/
-const NOT_PROSE = /^(?: {4}|\t|[ \t]*(?:[-*+>|]|\d+[.)])(?:\s|$))/
-
 export function headingOffsets(text: string): number[] {
-  const found: number[] = []
-  const code = new CodeBlocks()
-  let at = frontMatterEnd(text)
-  let prose: number | null = null
-
-  for (;;) {
-    const end = text.indexOf('\n', at)
-    const line = text.slice(at, end === -1 ? text.length : end)
-
-    if (code.line(line) !== WORDS) {
-      prose = null
-    } else if (ATX.test(line)) {
-      found.push(at)
-      prose = null
-    } else if (prose !== null && UNDERLINE.test(line)) {
-      found.push(prose)
-      prose = null
-    } else {
-      prose = line.trim() === '' || NOT_PROSE.test(line) ? null : at
-    }
-
-    if (end === -1) return found
-    at = end + 1
-  }
+  return headingRows(text).map((one) => one.from)
 }

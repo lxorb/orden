@@ -1,5 +1,5 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import { blockIdOf, blockSpan, headingText, lines, slugify } from '@orden/markdown/links'
+import { blockIdOf, blockSpan, headingRows, lines, slugify } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { DocError } from './problem'
 
@@ -154,8 +154,6 @@ function quoted(anchor: Extract<Anchor, { quote: string }>, text: string): Place
   return { from: at, to: at + quote.length, shape: 'words' }
 }
 
-const HEADING = /^\s{0,3}(#{1,6})\s+(.*)$/
-
 export interface HeadingAt {
   level: number
   title: string
@@ -177,13 +175,14 @@ export function headingsIn(text: string): HeadingAt[] {
     }
   }
 
+  const starts = new Map(headingRows(text).map((one) => [one.line, one]))
   for (const row of lines(text)) {
-    const hashes = row.code || row.matter ? undefined : HEADING.exec(row.text)?.[1]
-    if (hashes) {
-      close(hashes.length)
+    const start = starts.get(row.line)
+    if (start) {
+      close(start.level)
       const heading: HeadingAt = {
-        level: hashes.length,
-        title: headingText(row.text),
+        level: start.level,
+        title: start.text,
         path: open.map((one) => one.title),
         line: row.line,
         from: row.from,

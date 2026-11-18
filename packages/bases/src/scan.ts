@@ -1,5 +1,6 @@
 import { CodeBlocks, WORDS } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { headingRows } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 
 export interface ScannedTask {
@@ -47,12 +48,13 @@ export function scanRows(content: string): ScannedRows {
   const open: Open[] = []
   const lines = content.split('\n')
   const code = new CodeBlocks()
+  const heads = new Map(headingRows(content).map((one) => [one.line, one]))
 
   for (let index = 0; index < lines.length; index++) {
     const line = (lines[index] ?? '').replace(/\r$/, '')
     if (index < wordsFrom || code.line(line) !== WORDS) continue
 
-    const heading = headingAt(line)
+    const heading = heads.get(index)
     if (heading) {
       while ((section.at(-1)?.level ?? 0) >= heading.level) section.pop()
       section.push(heading)
@@ -106,20 +108,6 @@ function lineOf(content: string, at: number): number {
     lines++
   }
   return lines
-}
-
-function headingAt(line: string): { level: number; text: string } | null {
-  const trimmed = line.trimStart()
-  if (line.length - trimmed.length > 3) return null
-
-  let level = 0
-  while (trimmed[level] === '#') level++
-  if (level === 0 || level > 6) return null
-
-  const rest = trimmed.slice(level)
-  if (!rest.startsWith(' ') && !rest.startsWith('\t')) return null
-
-  return { level, text: rest.trim().replace(/#+$/, '').trim() }
 }
 
 function clipped(text: string, most: number): string {

@@ -545,15 +545,52 @@ export function headingText(line: string): string {
   return (found[1] ?? '').replace(CLOSING_HASHES, '').trim()
 }
 
-export function headingsOf(text: string): string[] {
-  const found: string[] = []
+export interface HeadingRow {
+  level: number
+  text: string
+  line: number
+  from: number
+}
+
+const ATX = /^[ \t]{0,3}(#{1,6})[ \t]/
+
+const UNDERLINE = /^ {0,3}(=+|-+)[ \t]*\r?$/
+
+const NOT_PROSE =
+  /^(?: {4}|\t|[ \t]*(?:[>|]|(?:[-*+]|\d{1,9}[.)])(?:[ \t]|\r?$))| {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*\r?$)/
+
+export function headingRows(text: string): HeadingRow[] {
+  const found: HeadingRow[] = []
+  let prose: Row[] | null = []
 
   for (const row of lines(text)) {
-    if (row.code || row.matter) continue
-    if (HEADING.test(row.text)) found.push(headingText(row.text))
+    if (row.code || row.matter) {
+      prose = []
+      continue
+    }
+    const atx = ATX.exec(row.text)
+    const under = UNDERLINE.exec(row.text)
+    const first = prose?.[0]
+    if (atx) {
+      const level = atx[1]?.length ?? 1
+      found.push({ level, text: headingText(row.text), line: row.line, from: row.from })
+    } else if (under && prose && first) {
+      const words = prose.map((one) => one.text.trim()).join(' ')
+      const level = under[1]?.startsWith('=') ? 1 : 2
+      found.push({ level, text: words, line: first.line, from: first.from })
+    } else if (row.text.trim() !== '') {
+      if (prose === null || NOT_PROSE.test(row.text)) prose = null
+      else prose.push(row)
+      continue
+    }
+    prose = []
   }
 
   return found
+}
+
+export function headingsOf(text: string): string[] {
+  return headingRows(text).map((one) => one.text)
 }
 
 export function sectionOf(
@@ -566,34 +603,15 @@ export function sectionOf(
 }
 
 function headingSection(source: string, wanted: string): string | null {
-  const lines = source.split('\n')
   const needle = wanted.trim().toLowerCase()
   const slug = slugify(wanted)
+  const all = headingRows(source)
+  const at = all.findIndex((one) => one.text.toLowerCase() === needle || slugify(one.text) === slug)
+  const start = all[at]
+  if (!start) return null
 
-  let start = -1
-  let level = 0
-
-  for (const row of rowsOf(source)) {
-    if (row.code || row.matter) continue
-    const { text: line, line: index } = row
-
-    const hashes = HEADING.exec(line)?.[1]
-    if (!hashes) continue
-
-    const title = headingText(line)
-
-    if (start === -1) {
-      if (title.toLowerCase() === needle || slugify(title) === slug) {
-        start = index
-        level = hashes.length
-      }
-      continue
-    }
-
-    if (hashes.length <= level) return lines.slice(start, index).join('\n').trimEnd()
-  }
-
-  return start === -1 ? null : lines.slice(start).join('\n').trimEnd()
+  const end = all.slice(at + 1).find((one) => one.level <= start.level)
+  return source.split('\n').slice(start.line, end?.line).join('\n').trimEnd()
 }
 
 function blockSection(source: string, wanted: string): string | null {
