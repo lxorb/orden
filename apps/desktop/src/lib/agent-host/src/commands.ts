@@ -67,7 +67,6 @@ const SCREEN = new Set([
   'fullscreen',
   'graph',
   'history',
-  'keys',
   'move-tab-pane',
   'new',
   'new-website',
@@ -106,7 +105,7 @@ const MAKES_NOTE = new Set([
   'new-web-note',
 ])
 
-const MAKES_SPACE = new Set(['new-space', 'space'])
+const MAKES_SPACE = new Set(['space'])
 
 const PANELS = new Set([
   'ask-panel',

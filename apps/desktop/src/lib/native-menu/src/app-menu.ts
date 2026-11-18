@@ -21,7 +21,7 @@ import {
   undoEdit,
   unfoldEverything,
 } from '@orden/editor'
-import { commandRows, runCommand } from '@orden/contracts'
+import { commandRows } from '@orden/contracts'
 import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
 import { account } from '../../accounts/src/api'
 import {
@@ -44,8 +44,7 @@ import {
   printable,
 } from '../../export-formats/src/api'
 import { modes } from '../../modes/src/api'
-import { shortcuts } from '../../shortcuts/src/api'
-import { toggleFill } from '../../tab-fill/src/api'
+import { type AppContext, runEntry, shortcuts } from '../../shortcuts/src/api'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL, updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 
@@ -53,6 +52,7 @@ interface Context {
   view?: EditorView | undefined
   onpalette(): void
   onhistory(): void
+  app?: AppContext
 }
 
 function exportRows(): MenuRow[] {
@@ -99,6 +99,12 @@ function run(view: EditorView | undefined, command: StateCommand) {
 
 export function appMenu(context: Context): MenuGroup[] {
   const { view } = context
+  const app: AppContext = context.app ?? {
+    view,
+    palette: () => context.onpalette(),
+    fullscreen: () => void fullscreen.toggle(workspace.panes),
+  }
+  const entry = (id: string) => () => void runEntry(id, app)
   const hasNote = !!workspace.active
   const selected = !!view && !view.state.selection.main.empty
   const writable = !!view && !view.state.readOnly
@@ -145,7 +151,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 ...keyed('app.print'),
                 asks: true,
                 disabled: !printable(workspace.active?.kind) || shut(),
-                run: () => void runCommand('export.print'),
+                run: entry('app.print'),
               },
             ]
           : []),
@@ -241,7 +247,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: 'Search',
           ...keyed('app.search'),
-          run: () => workspace.showPanel('search'),
+          run: entry('app.search'),
         },
       ],
     },
@@ -346,7 +352,7 @@ export function appMenu(context: Context): MenuGroup[] {
           label: 'Command palette',
           ...keyed('app.palette'),
           asks: true,
-          run: () => context.onpalette(),
+          run: entry('app.palette'),
         },
         DIVIDER,
         {
@@ -354,37 +360,37 @@ export function appMenu(context: Context): MenuGroup[] {
           ...keyed('app.reading'),
           checked: !!workspace.active?.reading,
           disabled: workspace.active?.kind !== 'note',
-          run: () => workspace.toggleReading(),
+          run: entry('app.reading'),
         },
         {
           label: 'Read-only',
           ...keyed('app.read-only'),
           checked: modes.readOnly,
-          run: () => modes.toggleReadOnly(view),
+          run: entry('app.read-only'),
         },
         {
           label: 'Source mode',
           ...keyed('app.source'),
           checked: modes.sourceIn(view),
-          run: () => modes.toggleSource(view),
+          run: entry('app.source'),
         },
         {
           label: 'Typewriter mode',
           ...keyed('app.typewriter'),
           checked: modes.typewriter,
-          run: () => modes.toggleTypewriter(view),
+          run: entry('app.typewriter'),
         },
         {
           label: 'Focus mode',
           ...keyed('app.focus'),
           checked: modes.focus,
-          run: () => modes.toggleFocus(view),
+          run: entry('app.focus'),
         },
         {
           label: 'Fullscreen',
           ...keyed('app.fullscreen'),
           checked: fullscreen.on,
-          run: () => void fullscreen.toggle(workspace.panes),
+          run: entry('app.fullscreen'),
         },
         ...(viewport.touch
           ? []
@@ -394,7 +400,7 @@ export function appMenu(context: Context): MenuGroup[] {
                 ...keyed('app.fill-tab'),
                 checked: workspace.panes.fills !== null,
                 disabled: workspace.panes.fills === null && !workspace.activeTabId,
-                run: () => void toggleFill(),
+                run: entry('app.fill-tab'),
               },
             ]),
         ...(isDesktop
@@ -414,19 +420,19 @@ export function appMenu(context: Context): MenuGroup[] {
                 label: 'Split right',
                 ...keyed('pane.split-right'),
                 disabled: !workspace.canSplit('row'),
-                run: () => workspace.split('row'),
+                run: entry('pane.split-right'),
               },
               {
                 label: 'Split down',
                 ...keyed('pane.split-down'),
                 disabled: !workspace.canSplit('column'),
-                run: () => workspace.split('column'),
+                run: entry('pane.split-down'),
               },
               {
                 label: 'Other pane',
                 ...keyed('pane.focus-next'),
                 disabled: workspace.panes.count < 2,
-                run: () => workspace.panes.focusNext(),
+                run: entry('pane.focus-next'),
               },
               DIVIDER,
             ]),
@@ -434,24 +440,22 @@ export function appMenu(context: Context): MenuGroup[] {
           label: 'Left sidebar',
           ...keyed('app.sidebar'),
           checked: !!workspace.panel,
-          run: () => workspace.toggleSidebar(),
+          run: entry('app.sidebar'),
         },
         {
           label: 'Right sidebar',
           ...keyed('app.right-sidebar'),
           checked: !!workspace.openOn('right'),
           disabled: !workspace.right.length,
-          run: () => workspace.toggleSidebar('right'),
+          run: entry('app.right-sidebar'),
         },
         {
           label: 'Files',
           ...keyed('app.files'),
-          run: () => workspace.showPanel('tree'),
+          run: entry('app.files'),
         },
         { label: 'Outline', run: () => workspace.showPanel('outline') },
-        ...(viewport.touch
-          ? []
-          : [{ label: 'Ask', ...keyed('app.ask'), run: () => workspace.showPanel('ask') }]),
+        ...(viewport.touch ? [] : [{ label: 'Ask', ...keyed('app.ask'), run: entry('app.ask') }]),
         DIVIDER,
         { label: 'Fold', ...keyed('view.fold'), run: () => run(view, toggleFold) },
         {
@@ -478,17 +482,17 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: 'Zoom in',
           ...keyed('app.zoom-in'),
-          run: () => workspace.zoomPage('in') || modes.stepZoom(1),
+          run: entry('app.zoom-in'),
         },
         {
           label: 'Zoom out',
           ...keyed('app.zoom-out'),
-          run: () => workspace.zoomPage('out') || modes.stepZoom(-1),
+          run: entry('app.zoom-out'),
         },
         {
           label: 'Actual size',
           ...keyed('app.zoom-reset'),
-          run: () => workspace.zoomPage('reset') || modes.resetZoom(),
+          run: entry('app.zoom-reset'),
         },
       ],
     },
