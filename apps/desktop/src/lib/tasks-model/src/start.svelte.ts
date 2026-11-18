@@ -46,6 +46,15 @@ function ownerOf(token: string | null, user: { id: string } | null): string | nu
 
 let started = false
 
+let firstOpened: () => void = () => undefined
+
+const opened = new Promise<void>((done) => (firstOpened = done))
+
+export async function openTodos(): Promise<void> {
+  startTodos()
+  if (todos.openedFor === undefined) await opened
+}
+
 export function startTodos(): void {
   if (started) return
   started = true
@@ -55,11 +64,13 @@ export function startTodos(): void {
         const token = account.token
         const user = account.user
         const owner = ownerOf(token, user)
-        void todos.opened({
-          owner,
-          server: owner && token ? todoServer(token) : null,
-          device: device(),
-        })
+        void todos
+          .opened({
+            owner,
+            server: owner && token ? todoServer(token) : null,
+            device: device(),
+          })
+          .then(firstOpened)
       })
     })
   })

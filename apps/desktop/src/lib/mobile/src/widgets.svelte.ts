@@ -98,7 +98,7 @@ export function watchWidgets(): () => void {
 
   const read = async () => {
     const { listed } = await import('../../tasks-model/src/api')
-    const tasks = listed().tasks
+    const { tasks } = await listed()
     today = todayRows(tasks, (space) => workspace.spaces.find((one) => one.id === space)?.root)
   }
   const reread = afterQuiet(() => void read(), 600)

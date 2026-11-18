@@ -1,6 +1,6 @@
 import type { Priority as QuickPriority } from '@orden/markdown/task-line'
 import { dayOf, shownTodos, sortedTodos } from './query'
-import { todos } from './start.svelte'
+import { openTodos, todos } from './start.svelte'
 import { titledOf, type Priority, type Todo } from './todo'
 
 interface TaskOut {
@@ -36,6 +36,7 @@ export async function addTask(
 ): Promise<{ id: string } | null> {
   const said = text.trim()
   if (!said) return null
+  await openTodos()
   if (options.typed === false) {
     const made = await todos.add(titledOf(said))
     return made.ok ? { id: made.value.id } : null
@@ -56,10 +57,12 @@ export async function addTask(
 }
 
 export async function tickTask(id: string, done: boolean): Promise<boolean> {
+  await openTodos()
   return (await todos.update(id, { done })).ok
 }
 
-export function listed(): { total: number; tasks: TaskOut[] } {
+export async function listed(): Promise<{ total: number; tasks: TaskOut[] }> {
+  await openTodos()
   const shown = sortedTodos(
     shownTodos(todos.todos, { onlySpace: false, space: null, label: null, today: dayOf() }),
     'deadline',
