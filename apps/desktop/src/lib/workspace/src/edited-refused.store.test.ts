@@ -71,13 +71,11 @@ test('a refused note changed in place is offered again, with the words that went
   await pass()
   expect(offers).toEqual(['a [[old]]\n'])
   expect(told).toEqual(['a.md'])
-
   d.files.set(PATH, 'a [[old]]\nfrom a git pull\n')
   const after = 'a [[new]]\n'
   const knew = change(note, after)
   const written = await writeEdited(note, PATH, after, knew)
   expect(written).toBe('a [[new]]\nfrom a git pull\n')
-
   await pass()
   expect(offers).toEqual(['a [[old]]\n', 'a [[new]]\nfrom a git pull\n'])
 })
@@ -86,7 +84,6 @@ test('a write that did not go down asks the account nothing new until it has', a
   const note = await opened('a [[old]]\n')
   const { offers, pass } = account()
   await pass()
-
   const after = 'a [[new]]\n'
   const knew = change(note, after)
   refused.times = 1
@@ -94,7 +91,6 @@ test('a write that did not go down asks the account nothing new until it has', a
   expect(note.dirty).toBe(true)
   await pass()
   expect(offers).toEqual(['a [[old]]\n'])
-
   await workspace.writesSettled()
   await vi.waitFor(() => expect(d.files.get(PATH)).toBe(after), { timeout: 5000 })
   await pass()

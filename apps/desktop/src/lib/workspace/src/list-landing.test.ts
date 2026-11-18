@@ -59,12 +59,10 @@ test('rows copied or cut in one space are pasted into another', async () => {
   fileClipboard.hold(['/A/plan.md'], false)
   ops.tree = new Map()
   await fileClipboard.paste('/B')
-
   ops.tree = new Map([['/A/f', { path: '/A/f', name: 'f', is_dir: true }]])
   fileClipboard.hold(['/A/f'], true)
   ops.tree = new Map()
   await fileClipboard.paste('/B/in')
-
   expect(ops.did).toEqual(['copy /A/plan.md -> /B (true)', 'move /A/f -> /B/in (true)'])
   expect(fileClipboard.paths).toEqual([])
 })

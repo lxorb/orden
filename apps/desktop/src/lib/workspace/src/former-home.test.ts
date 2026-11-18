@@ -161,9 +161,7 @@ describe.each([
   test('keeps every item’s metadata and the chosen inbox', async () => {
     oldProfile(profile)
     homes.said = [profile.base]
-
     expect(await start()).toBe(false)
-
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md']) {
       expect(meta.itemsOf(now)[path]).toBeDefined()
@@ -181,9 +179,7 @@ describe.each([
     oldProfile(profile)
     startedAfterTheMove(profile)
     homes.said = [profile.base]
-
     expect(await start()).toBe(false)
-
     const meta = new ItemMetaStore(() => now)
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md', 'Inbox today.md']) {
       expect(meta.itemsOf(now)[path]).toBeDefined()
@@ -204,16 +200,13 @@ describe('a browser profile an early start made beside the old one', () => {
     localStorage.setItem('orden:font', 'Lato')
     homes.said = [mac.base]
     homes.waiting = true
-
     expect(await start()).toBe(true)
     expect(relaunched.count).toBe(1)
     expect(homes.dumped).not.toBeNull()
-
     localStorage.clear()
     oldProfile(mac)
     localStorage.setItem('orden:font', 'Inter')
     homes.waiting = false
-
     expect(await start()).toBe(false)
     expect(homes.dumped).toBeNull()
     const meta = new ItemMetaStore(() => now)
@@ -228,7 +221,6 @@ describe('a browser profile an early start made beside the old one', () => {
     homes.waiting = true
     homes.dumped = '{}'
     localStorage.setItem('orden:font', 'Lato')
-
     expect(await start()).toBe(false)
     expect(relaunched.count).toBe(0)
     expect(JSON.parse(homes.dumped)).toEqual({ 'orden:font': 'Lato' })
@@ -239,7 +231,6 @@ describe('carrying the former home', () => {
   test('happens once, and a profile with nothing under the old name reloads nothing', async () => {
     homes.said = [mac.base]
     localStorage.setItem('orden:theme', 'dark')
-
     expect(await start()).toBe(false)
     expect(localStorage.getItem(HOME_CARRIED)).toBe('1')
     asked.length = 0
@@ -251,7 +242,6 @@ describe('carrying the former home', () => {
     oldProfile(mac)
     homes.said = [mac.base]
     pageStarts(said())
-
     expect(formerSaid()?.carried).toBe(true)
     vi.stubGlobal('__ORDEN_FORMER__', undefined)
     expect(formerSaid()).toBeNull()
@@ -260,7 +250,6 @@ describe('carrying the former home', () => {
   test('is not marked done by a build that has no former home, so the update still carries it', async () => {
     homes.said = []
     oldProfile(mac)
-
     expect(await start()).toBe(false)
     expect(localStorage.getItem(HOME_CARRIED)).toBeNull()
     homes.said = [mac.base]

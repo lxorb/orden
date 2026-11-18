@@ -33,9 +33,7 @@ describe('a space dropped for good', () => {
       fileGone: () => Promise.resolve(),
       persist: () => undefined,
     }
-
     await dropSpace(ws as never, 'uni')
-
     expect(purged.sort()).toEqual(['inside', 'root'])
     expect(ws.spaces).toEqual([])
   })

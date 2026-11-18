@@ -45,7 +45,6 @@ describe('how far the surface follows', () => {
   test('less than the finger, and by less and less', () => {
     const near = pulled(20)
     const far = pulled(200)
-
     expect(near).toBeGreaterThan(0)
     expect(near).toBeLessThan(20 * 1.6)
     expect(far).toBeGreaterThan(near)

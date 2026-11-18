@@ -16,6 +16,5 @@ test('the recent list is the notes in a space', () => {
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
   workspace.device.remember('/downloads/Outside.md')
   workspace.device.remember('/space/One.md')
-
   expect(workspace.recent).toEqual(['/space/One.md'])
 })

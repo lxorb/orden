@@ -16,7 +16,6 @@ describe('the tabs a close would lose words from', () => {
     const filed = tab('c', { ...draft(), path: '/space/c.md' })
     const site = tab('d', { kind: 'web', path: null, shared: null, blank: false, dirty: false })
     const all = [words, empty, filed, site]
-
     expect(unsavedAmong(all, all).map((one) => one.id)).toEqual(['a'])
   })
 
@@ -24,7 +23,6 @@ describe('the tabs a close would lose words from', () => {
     const note = draft()
     const left = tab('l', note)
     const right = tab('r', note)
-
     expect(unsavedAmong([left], [left, right])).toEqual([])
     expect(unsavedAmong([left, right], [left, right]).map((one) => one.id)).toEqual(['l'])
   })

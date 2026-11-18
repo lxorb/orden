@@ -46,11 +46,9 @@ describe('the shown space going away in another window', () => {
     await workspace.open(`${FOOD.root}/Food.md`)
     await workspace.selectSpace('work')
     expect(shown(workspace)).toEqual([`${WORK.root}/Plan.md`])
-
     one.folders.delete(WORK.root)
     one.files.delete(`${WORK.root}/Plan.md`)
     await workspace.loadSpaces()
-
     expect(workspace.activeSpaceId).toBe('food')
     expect(shown(workspace)).toEqual([`${FOOD.root}/Food.md`])
     expect(workspace.tabs.map((tab) => tab.path)).not.toContain(`${WORK.root}/Plan.md`)

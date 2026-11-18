@@ -48,7 +48,6 @@ describe('renaming a tag in one note', () => {
 
   test('with the way back, so undoing it moves no caret', () => {
     const made = change('work/orden', 'work/core')!
-
     let out = ''
     let at = 0
     for (const edit of made.back) {
@@ -82,7 +81,6 @@ describe('taking a tag away', () => {
 
   test('with the way back, which puts every one of them back', () => {
     const made = change('work/orden', null)!
-
     let out = ''
     let at = 0
     for (const edit of made.back) {
@@ -104,7 +102,6 @@ describe('across a space', () => {
     const made = await tagChanges(Object.keys(notes), 'work/orden', 'work/core', (path) =>
       Promise.resolve(notes[path] ?? null),
     )
-
     expect(made.map((one) => one.path)).toEqual(['/space/a.md', '/space/c.md'])
     expect(made[0]?.after).toBe('about #work/core\n')
     expect(made[1]?.after).toContain('- work/core/canvas')

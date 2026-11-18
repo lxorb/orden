@@ -45,7 +45,6 @@ describe('the workspace', () => {
     const first = workspace.active
     workspace.openBlank('Notes', '# Notes')
     const second = workspace.active
-
     expect([first?.name, second?.name]).toEqual(['Plan', 'Notes'])
     expect(workspace.activeTabId).toBe(second?.id)
     expect(workspace.tabs.map((one) => one.id)).toEqual(

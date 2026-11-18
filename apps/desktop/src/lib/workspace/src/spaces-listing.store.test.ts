@@ -51,7 +51,6 @@ beforeEach(async () => {
 test('a listing that failed keeps the spaces there are, and the one that is open', async () => {
   held.refuse = true
   await workspace.loadSpaces()
-
   expect(workspace.spaces.map((one) => one.name)).toEqual(['One'])
   expect(workspace.activeSpaceId).toBe('one')
 })
@@ -62,11 +61,9 @@ test('a listing read before a space was made here leaves it, and it stays the op
   const listing = workspace.loadSpaces()
   await new Promise((later) => setTimeout(later))
   held.gate = null
-
   const made = await workspace.addSpace('Second')
   go()
   await listing
-
   expect(workspace.spaces.map((one) => one.name)).toEqual(['One', 'Second'])
   expect(workspace.activeSpaceId).toBe(made?.id)
 })
@@ -79,7 +76,6 @@ test('a listing that sees a space being made first is the one space, with one id
   await workspace.loadSpaces()
   go()
   const made = await making
-
   expect(workspace.spaces.filter((one) => one.name === 'Third')).toHaveLength(1)
   expect(workspace.activeSpaceId).toBe(made?.id)
 })

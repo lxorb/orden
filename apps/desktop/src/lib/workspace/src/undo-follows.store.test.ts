@@ -103,7 +103,6 @@ describe('an undo that will not go', () => {
     expect(failed.retry).not.toBe(null)
     expect(failed.undoing).toBe(true)
     expect(workspace.undone.stack.length).toBe(2)
-
     failed.giveUp()
     expect(failed.retry).toBe(null)
     expect(workspace.undone.stack.length).toBe(1)

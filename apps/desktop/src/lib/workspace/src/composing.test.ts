@@ -101,7 +101,6 @@ describe('a note merged into another', () => {
   test('appends, moves the links before the note goes, and opens the one that is left', async () => {
     const ws = space({ [A]: '# a\n\nfirst\n', [B]: '# b\n\nsecond\n' })
     await mergeInto(ws, A, B)
-
     expect(disk.get(B)).toContain('first')
     expect(disk.has(A)).toBe(false)
     expect(sent).toEqual([
@@ -126,21 +125,18 @@ describe('a note merged into another', () => {
     const ws = space({ [A]: '# a\n\nfirst\n', [B]: '# b\n\nsecond\n' }, A)
     const typed = { text: '# a\n\nfirst\ntyped not saved\n' }
     await mergeInto({ ...ws, documentAt: (path) => (path === A ? typed : null) }, A, B)
-
     expect(disk.get(B)).toContain('typed not saved')
   })
 
   test('pastes the words relinked for the folder they arrive in', async () => {
     const ws = space({ [A]: 'see [[x/Plan]]\n', [B]: '# b\n' })
     await mergeInto(ws, A, B)
-
     expect(disk.get(B)).toContain('see [[a/x/Plan]]')
   })
 
   test('is one thing to undo, holding both notes as they were', async () => {
     const ws = space({ [A]: '# a\n', [B]: '# b\n' })
     await mergeInto(ws, A, B)
-
     expect(ws.undone.stack).toEqual([
       {
         kind: 'merge',
@@ -160,7 +156,6 @@ describe('a note merged into another', () => {
   test('and a note merged into itself does nothing at all', async () => {
     const ws = space({ [A]: '# a\n' })
     await mergeInto(ws, A, A)
-
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
   })
@@ -168,7 +163,6 @@ describe('a note merged into another', () => {
   test('and a note that cannot be read is left alone', async () => {
     const ws = space({ [A]: '# a\n' })
     await mergeInto(ws, A, `${SPACE}/gone.md`)
-
     expect(disk.get(A)).toBe('# a\n')
     expect(ws.undone.stack).toEqual([])
   })
@@ -182,7 +176,6 @@ describe('a merge that may not be made', () => {
     readOnly.add(SPACE)
     const ws = space({ [A]: '# a\n', [B]: '# b\n' })
     await mergeInto(ws, A, B)
-
     expect(sent).toEqual([])
     expect(disk.get(A)).toBe('# a\n')
     expect(ws.undone.stack).toEqual([])
@@ -192,7 +185,6 @@ describe('a merge that may not be made', () => {
     const away = `${OTHER}/a.md`
     const ws = space({ [away]: '# a\n', [B]: '# b\n' })
     await mergeInto(ws, away, B)
-
     expect(sent).toEqual([])
     expect(disk.get(away)).toBe('# a\n')
     expect(disk.get(B)).toBe('# b\n')
@@ -202,7 +194,6 @@ describe('a merge that may not be made', () => {
     const away = `${OTHER}/b.md`
     const ws = space({ [A]: '# a\n', [away]: '# b\n' })
     await mergeInto(ws, A, away)
-
     expect(sent).toEqual([])
     expect(disk.has(A)).toBe(true)
   })
@@ -211,7 +202,6 @@ describe('a merge that may not be made', () => {
     const page = `${SPACE}/Lecture.pages`
     const ws = space({ [page]: '{"pages":[]}', [B]: '# b\n' })
     await mergeInto(ws, page, B)
-
     expect(sent).toEqual([])
     expect(disk.get(page)).toBe('{"pages":[]}')
     expect(disk.get(B)).toBe('# b\n')
@@ -222,7 +212,6 @@ describe('a merge that may not be made', () => {
     const board = `${SPACE}/Board.canvas`
     const ws = space({ [A]: '# a\n', [board]: '{"nodes":[]}' })
     await mergeInto(ws, A, board)
-
     expect(sent).toEqual([])
     expect(disk.get(board)).toBe('{"nodes":[]}')
     expect(disk.has(A)).toBe(true)
@@ -233,7 +222,6 @@ describe('a merge that may not be made', () => {
     const pointer = '{"chat":"c1"}'
     const ws = space({ [A]: '# a\n', [chat]: pointer })
     await mergeInto(ws, A, chat)
-
     expect(sent).toEqual([])
     expect(disk.get(chat)).toBe(pointer)
     expect(disk.get(A)).toBe('# a\n')
@@ -248,7 +236,6 @@ describe('a note split at the caret', () => {
   test('writes the new note, then what is left of this one', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
-
     const made = [...disk.keys()].find((path) => path !== NOTE)
     expect(made).toBeDefined()
     expect(disk.get(made ?? '')).toContain('second')
@@ -259,7 +246,6 @@ describe('a note split at the caret', () => {
   test('is one thing to undo, holding the note as it was', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
-
     expect(ws.undone.stack).toHaveLength(1)
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'split', from: NOTE, fromContent: DOC })
   })
@@ -269,7 +255,6 @@ describe('a note split at the caret', () => {
     taking.add(`${SPACE}/Later.md`)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
     taking.clear()
-
     expect(disk.has(`${SPACE}/Later.md`)).toBe(false)
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(NOTE)).toContain('[[Later 2]]')
@@ -278,7 +263,6 @@ describe('a note split at the caret', () => {
   test('and steps the new name aside from one the folder already has', async () => {
     const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
-
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(`${SPACE}/Later.md`)).toBe('# taken')
   })
@@ -286,7 +270,6 @@ describe('a note split at the caret', () => {
   test('and the link left behind names the stepped-aside note, not the one it stepped from', async () => {
     const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     await splitAtCaret(ws, DOC.indexOf('## Later'))
-
     expect(disk.get(NOTE)).toContain('[[Later 2]]')
     expect(disk.get(NOTE)).not.toContain('[[Later]]')
   })
@@ -294,7 +277,6 @@ describe('a note split at the caret', () => {
   test('and nothing happens where there is nothing after the caret', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.length)
-
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
   })
@@ -302,7 +284,6 @@ describe('a note split at the caret', () => {
   test('and nothing happens in a pane holding no file', async () => {
     const ws = space({ [NOTE]: DOC })
     await splitAtCaret(ws, 3)
-
     expect(sent).toEqual([])
   })
 })
@@ -315,7 +296,6 @@ describe('a selection made into a note of its own', () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     const from = DOC.indexOf('take this')
     await extractSelection(ws, from, from + 'take this'.length)
-
     expect(disk.get(NOTE)).toContain('keep this')
     expect(disk.get(NOTE)).toMatch(/\[\[.+]]/)
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'extract', from: NOTE })
@@ -326,7 +306,6 @@ describe('a selection made into a note of its own', () => {
     const ws = space({ [NOTE]: doc, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
     const from = doc.indexOf('Later')
     await extractSelection(ws, from, from + 'Later'.length)
-
     expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
     expect(disk.get(NOTE)).toContain('[[Later 2|Later]]')
   })
@@ -334,7 +313,6 @@ describe('a selection made into a note of its own', () => {
   test('and nothing happens where nothing is selected', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await extractSelection(ws, 4, 4)
-
     expect(sent).toEqual([])
   })
 })
@@ -346,7 +324,6 @@ describe('a file that is not a note of the open space', () => {
   test('is not split', async () => {
     const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
     await splitAtCaret(ws, 1)
-
     expect(sent).toEqual([])
     expect([...disk.keys()]).toEqual([JSON_FILE])
     expect(disk.get(JSON_FILE)).toBe(DOC)
@@ -355,7 +332,6 @@ describe('a file that is not a note of the open space', () => {
   test('nor has a selection extracted', async () => {
     const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
     await extractSelection(ws, 0, 1)
-
     expect(sent).toEqual([])
     expect(disk.get(JSON_FILE)).toBe(DOC)
   })
@@ -364,7 +340,6 @@ describe('a file that is not a note of the open space', () => {
     const note = `${OTHER}/plan.md`
     const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
     await splitAtCaret(ws, 10)
-
     expect([...disk.keys()].some((path) => path.startsWith(`${OTHER}/`) && path !== note)).toBe(
       true,
     )
@@ -375,7 +350,6 @@ describe('a file that is not a note of the open space', () => {
     const note = `${SPACE}/plan.md`
     const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
     await splitAtCaret(ws, 10)
-
     expect(sent).toEqual([])
   })
 })

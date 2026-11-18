@@ -223,7 +223,6 @@ describe('rows let go of over the bookmarks', () => {
   test('leave out what does not fit, and never what was already there', () => {
     const full = Array.from({ length: MOST_BOOKMARKS - 1 }, (_, at) => note(`${String(at)}.md`))
     const list = placed(full, [note('fits.md'), note('over.md')], 0)
-
     expect(list).toHaveLength(MOST_BOOKMARKS)
     expect(list[0]).toEqual(note('fits.md'))
     expect(list.at(-1)).toEqual(note(`${String(MOST_BOOKMARKS - 2)}.md`))

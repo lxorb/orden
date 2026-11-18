@@ -56,14 +56,12 @@ describe('a tab that is one of its kind', () => {
     const workspace = await window()
     const sets = await fetched()
     workspace.restored = true
-
     workspace.openSettings()
     const work = workspace.settingsTab
     await workspace.selectSpace('food')
     expect(workspace.settingsTab).toBeNull()
     workspace.openSettings()
     const food = workspace.settingsTab
-
     expect(food).not.toBeNull()
     expect(food?.id).not.toBe(work?.id)
     expect(workspace.activeSpaceId).toBe('food')
@@ -76,14 +74,12 @@ describe('a tab that is one of its kind', () => {
     const workspace = await window()
     await fetched()
     workspace.restored = true
-
     workspace.openSettings()
     await workspace.selectSpace('food')
     workspace.openSettings()
     workspace.openSettings()
     await workspace.selectSpace('work')
     workspace.openSettings()
-
     expect(workspace.activeSpaceId).toBe('work')
     expect(workspace.active?.kind).toBe('settings')
     expect(workspace.tabs.filter((one) => one.kind === 'settings')).toHaveLength(2)
@@ -92,16 +88,13 @@ describe('a tab that is one of its kind', () => {
     const workspace = await window()
     const sets = await fetched()
     workspace.restored = true
-
     workspace.openSettings()
     await workspace.selectSpace('food')
     workspace.openSettings()
     const food = workspace.settingsTab
     await workspace.selectSpace('work')
     const work = workspace.settingsTab!
-
     await sets.adopt([work], 'food')
-
     expect(workspace.tabs.filter((one) => one.kind === 'settings').map((one) => one.id)).toEqual([
       food?.id,
     ])

@@ -56,7 +56,6 @@ describe('one step along', () => {
 
   test('reaches the other side of the window, and only where there is one', () => {
     expect(stepRegion(WINDOW, 'status', 1)).toBe('space')
-
     const both = [...WINDOW, 'right']
     expect(stepRegion(both, 'status', 1)).toBe('right')
     expect(stepRegion(both, 'right', 1)).toBe('space')

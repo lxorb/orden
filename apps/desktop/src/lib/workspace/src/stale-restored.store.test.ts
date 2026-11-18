@@ -139,7 +139,6 @@ describe('the closed stack and its base', () => {
     const entry = await close()
     expect(entry).toMatchObject({ dirty: false, doc: '' })
     expect(entry?.base).toBeUndefined()
-
     const newer = `${BASE}TYPED\nNEWER\n`
     d.files.set(PATH, newer)
     writes.length = 0
@@ -155,7 +154,6 @@ describe('the closed stack and its base', () => {
     const entry = await close()
     refused.write = false
     expect(entry).toMatchObject({ dirty: true, base: BASE })
-
     d.files.set(PATH, `NEWER\n${BASE}`)
     await workspace.reopenClosed()
     await vi.waitFor(() => expect(d.files.get(PATH)).toContain('TYPED'), { timeout: 3_000 })

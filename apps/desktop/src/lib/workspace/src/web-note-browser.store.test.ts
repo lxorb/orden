@@ -38,21 +38,18 @@ beforeEach(() => {
 
 test('a web note in a browser opens its address in a new tab, not in Orden', async () => {
   await workspace.openWeb(SITE)
-
   expect(handed).toEqual(['https://example.com/site'])
   expect(workspace.tabs).toEqual([])
 })
 
 test('a web note with no address yet opens in Orden, where its bar can take one', async () => {
   await workspace.openWeb(BLANK)
-
   expect(handed).toEqual([])
   expect(workspace.tabs.map((one) => [one.kind, one.path])).toEqual([['web', BLANK]])
 })
 
 test('a .webloc that says no address opens nothing, and says it could not be read', async () => {
   await workspace.openWeb(BINARY)
-
   expect(workspace.tabs).toEqual([])
   expect(unread.shown).toBe(true)
 })

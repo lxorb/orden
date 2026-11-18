@@ -38,7 +38,6 @@ describe('walking the file list', () => {
       { path: '/s/Empty', folder: true, open: true },
       { path: '/s/next.md', folder: false, open: false },
     ]
-
     expect(treeStep('ArrowRight', rows, '/s/Empty')).toBeNull()
   })
 
@@ -47,7 +46,6 @@ describe('walking the file list', () => {
       { path: 'C:\\s\\Work', folder: true, open: true },
       { path: 'C:\\s\\Work\\plan.md', folder: false, open: false },
     ]
-
     expect(treeStep('ArrowLeft', rows, 'C:\\s\\Work\\plan.md')).toEqual({
       do: 'stand',
       path: 'C:\\s\\Work',
