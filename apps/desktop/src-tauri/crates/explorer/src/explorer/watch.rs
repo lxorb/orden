@@ -263,28 +263,47 @@ mod tests {
                 }
             })
         };
-        let (done, finished) = channel();
         let going = folders.clone();
-        std::thread::spawn(move || {
+        let walker = std::thread::spawn(move || {
+            let (told, heard) = channel::<Vec<String>>();
+            let told = Mutex::new(told);
             let watching = Watching::default();
             let mut shown = going[0].clone();
             watching
-                .add("main", shown.clone(), |_| {})
+                .add("main", shown.clone(), move |folders| {
+                    let _ = told.lock().expect("held").send(folders);
+                })
                 .expect("watched");
-            for at in 1..400 {
+            for at in 1..1500 {
                 let next = going[at % going.len()].clone();
                 watching.add("main", next.clone(), |_| {}).expect("watched");
                 watching.remove("main", &shown);
                 let (listed, _) = entries(&next, 100_000).expect("listed");
-                assert!(!listed.is_empty());
+                assert!(!listed.is_empty(), "{} listed empty", next.display());
                 shown = next;
             }
-            let _ = done.send(());
+            while heard.try_recv().is_ok() {}
+            std::fs::write(shown.join("arrived.txt"), "here").expect("a file");
+            let until = std::time::Instant::now() + Duration::from_secs(20);
+            let mut seen = false;
+            while !seen && std::time::Instant::now() < until {
+                if let Ok(folders) = heard.recv_timeout(Duration::from_millis(200)) {
+                    seen = folders.iter().any(|one| one.ends_with("arrived.txt"));
+                }
+            }
+            seen
         });
-        let answered = finished.recv_timeout(Duration::from_secs(120));
+        let until = std::time::Instant::now() + Duration::from_secs(120);
+        while !walker.is_finished() && std::time::Instant::now() < until {
+            std::thread::sleep(Duration::from_millis(50));
+        }
         writing.store(false, Ordering::Relaxed);
         writer.join().expect("the writer");
-        assert!(answered.is_ok(), "going between folders stuck");
+        assert!(walker.is_finished(), "going between folders stuck");
+        let heard = walker
+            .join()
+            .unwrap_or_else(|why| std::panic::resume_unwind(why));
+        assert!(heard, "the folder ended on is no longer heard");
     }
 
     #[test]
