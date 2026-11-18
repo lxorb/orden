@@ -6,6 +6,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - apps/desktop/src-tauri/src/**
+      - apps/desktop/src-tauri/crates/web/**
       - apps/desktop/src-tauri/crates/**
       - apps/desktop/src-tauri/Cargo.toml
       - apps/desktop/src/lib/drops.ts

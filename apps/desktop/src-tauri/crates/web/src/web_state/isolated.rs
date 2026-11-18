@@ -2,11 +2,11 @@ use tauri::Webview;
 
 const WORLD: &str = "orden-state";
 
-pub(crate) async fn run(view: &Webview, source: &str, call: &str) -> Result<String, String> {
+pub async fn run(view: &Webview, source: &str, call: &str) -> Result<String, String> {
     engine::run(view, source, call).await
 }
 
-pub(crate) fn quoted(text: &str) -> Result<String, String> {
+pub fn quoted(text: &str) -> Result<String, String> {
     serde_json::to_string(text).map_err(|error| error.to_string())
 }
 

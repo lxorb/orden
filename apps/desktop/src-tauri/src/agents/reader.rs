@@ -51,7 +51,7 @@ fn pages(app: &AppHandle) -> Vec<ReaderTab> {
 }
 
 pub fn page(app: &AppHandle, tab: &str) -> Option<View> {
-    let label = crate::web_tabs::label_of(tab);
+    let label = orden_web::web_tabs::label_of(tab);
     if label == "web-session" || !(label.starts_with("web-") || label.starts_with("agent-")) {
         return None;
     }

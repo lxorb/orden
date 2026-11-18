@@ -9,7 +9,7 @@ import { describe, expect, test } from 'vitest'
 import { articleOf, clipNote } from './note'
 
 const READER = readFileSync(
-  join(import.meta.dirname, '../../../../src-tauri/src/web_tabs/reader.js'),
+  join(import.meta.dirname, '../../../../src-tauri/crates/web/src/web_tabs/reader.js'),
   'utf8',
 )
 const FIXTURES = join(import.meta.dirname, '../../../../../../packages/markdown/src/fixtures')

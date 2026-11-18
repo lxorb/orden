@@ -89,7 +89,7 @@ impl Pending {
 }
 
 pub fn handed_by(args: &[String]) -> Vec<String> {
-    crate::web_handed::pages_in(args)
+    orden_web::web_handed::pages_in(args)
 }
 
 pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path::Path) {
@@ -340,7 +340,7 @@ fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> R
     let building = orden_system::appearance::own_frame(builder);
     let window = orden_placement::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
-    crate::pinch::let_through(window.as_ref());
+    orden_web::pinch::let_through(window.as_ref());
     orden_documents::dropped_paths::hear(window.as_ref());
 
     #[cfg(target_os = "macos")]

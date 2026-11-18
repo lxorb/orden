@@ -193,7 +193,7 @@ mod native {
     static PAGES: Mutex<Vec<(String, String, u32)>> = Mutex::new(Vec::new());
 
     pub fn page(_app: &AppHandle, platform: &PlatformWebview, label: &str, window: &str) {
-        let Some(x11) = orden_web::host::x11_page(platform) else {
+        let Some(x11) = crate::host::x11_page(platform) else {
             return;
         };
         let mut pages = PAGES.lock().unwrap_or_else(PoisonError::into_inner);
@@ -349,12 +349,12 @@ mod tests {
 
     #[test]
     fn chromium_on_linux_gives_the_keyboard_back_as_its_window_comes_back() {
-        let life = include_str!("lifecycle.rs");
+        let life = include_str!("../../../src/lifecycle.rs");
         let focused = &life[life
             .find("event: WindowEvent::Focused(true)")
             .expect("the window's focus")..];
         let focused = &focused[..focused.find("RunEvent::").expect("its end")];
-        assert!(focused.contains("crate::keyboard::window_came_back(app, &label)"));
+        assert!(focused.contains("orden_web::keyboard::window_came_back(app, &label)"));
         let source = include_str!("keyboard.rs");
         let back = &source[source
             .find("pub fn window_came_back(")

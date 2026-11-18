@@ -2,5 +2,5 @@
   "name": "web",
   "layer": "native",
   "lang": "rust",
-  "dependsOn": ["base", "web-engine"]
+  "dependsOn": ["base", "crashes", "explorer", "placement", "system", "web-engine"]
 }

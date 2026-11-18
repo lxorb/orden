@@ -37,7 +37,7 @@ pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
     let Ok(view) = crate::web_tabs::found(app, tab) else {
         return;
     };
-    if view.set_zoom(orden_web::page_scale::web(1.0)).is_ok() {
+    if view.set_zoom(crate::page_scale::web(1.0)).is_ok() {
         let heard = Heard {
             tab: tab.to_string(),
             said: Said::Zoom { factor: 1.0 },
@@ -67,12 +67,5 @@ pub fn listen(
 }
 
 pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
-    use cef::{ImplBrowser as _, ImplBrowserHost as _};
-    use tauri_runtime_cef::WebviewCefExt as _;
-    view.with_cef_webview(move |page| {
-        if let Some(host) = page.browser().host() {
-            host.set_audio_muted(i32::from(muted));
-        }
-    })
-    .map_err(|error| format!("that page could not be reached: {error}"))
+    (crate::engine::engine()?.mute)(view, muted)
 }

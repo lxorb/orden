@@ -6,7 +6,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter as _, Manager as _};
 
-pub(crate) const BINDING: &str = "ordenPass";
+pub const BINDING: &str = "ordenPass";
 
 const SCRIPT: &str = include_str!("web_pass.js");
 
@@ -65,19 +65,19 @@ const ROLES: [&str; 25] = [
     "unknown",
 ];
 
-pub(crate) fn script() -> &'static str {
+pub fn script() -> &'static str {
     SCRIPT.trim().trim_start_matches(';')
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Place {
-    pub(crate) frame: String,
-    pub(crate) origin: String,
-    pub(crate) url: String,
-    pub(crate) top: bool,
+pub struct Place {
+    pub frame: String,
+    pub origin: String,
+    pub url: String,
+    pub top: bool,
 }
 
-pub(crate) fn secure(origin: &str) -> bool {
+pub fn secure(origin: &str) -> bool {
     let Ok(url) = tauri::Url::parse(origin) else {
         return false;
     };
@@ -278,6 +278,10 @@ fn fill_checked(
 }
 
 #[tauri::command]
+#[allow(
+    clippy::implicit_hasher,
+    reason = "the values come over the bridge into the default map"
+)]
 pub async fn web_pass_fill(
     webview: tauri::Webview,
     tab: String,
@@ -293,7 +297,7 @@ pub async fn web_pass_fill(
     engine::frame_fill(view, tab, frame, origin, form, values, submit).await
 }
 
-pub(crate) fn forget(tab: &str) {
+pub fn forget(tab: &str) {
     engine::forget(tab);
 }
 
@@ -302,13 +306,13 @@ pub(crate) struct Queues<J: Send + 'static> {
 }
 
 impl<J: Send + 'static> Queues<J> {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             held: Mutex::new(HashMap::new()),
         }
     }
 
-    pub(crate) fn spawn(&self, tab: &str, job: J, run: fn(J)) {
+    pub fn spawn(&self, tab: &str, job: J, run: fn(J)) {
         let mut held = self.held.lock().unwrap_or_else(PoisonError::into_inner);
         let job = match held.get(tab) {
             Some(sending) => match sending.send(job) {
@@ -329,7 +333,7 @@ impl<J: Send + 'static> Queues<J> {
         });
     }
 
-    pub(crate) fn forget(&self, tab: &str) {
+    pub fn forget(&self, tab: &str) {
         self.held
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -358,8 +362,8 @@ fn place_in(tree: Option<&Value>, main: bool, was: &Place) -> Option<Place> {
         .find(|one| one.frame == was.frame && one.origin == was.origin)
 }
 
-pub(crate) use engine::binding_called;
-pub(crate) use engine::listen;
+pub use engine::binding_called;
+pub use engine::listen;
 
 mod engine {
     use std::collections::HashMap;
@@ -370,8 +374,7 @@ mod engine {
     use tauri::{AppHandle, Webview};
 
     use super::Place;
-    use crate::agents::cdp;
-    use crate::agents::engines::View;
+    use crate::engine::devtools;
 
     const PATIENCE: Duration = Duration::from_secs(5);
 
@@ -401,7 +404,7 @@ mod engine {
         KNOWN.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    pub(crate) fn binding_called(
+    pub fn binding_called(
         view: &Webview,
         app: &AppHandle,
         window: &str,
@@ -470,8 +473,8 @@ mod engine {
         context: i64,
         was: &Place,
     ) -> Option<Place> {
-        let tree = cdp::call_in(
-            &View::Webview(view.clone()),
+        let tree = devtools::call(
+            view,
             session_asked(session),
             "Page.getFrameTree",
             &json!({}),
@@ -494,9 +497,8 @@ mod engine {
     }
 
     fn frames_learned(view: &Webview, tab: &str, session: &str) {
-        let view = View::Webview(view.clone());
-        let Ok(tree) = cdp::call_in(
-            &view,
+        let Ok(tree) = devtools::call(
+            view,
             session_asked(session),
             "Page.getFrameTree",
             &json!({}),
@@ -505,8 +507,8 @@ mod engine {
             return;
         };
         for frame in super::frames_in(tree.get("frameTree"), session.is_empty()) {
-            let Ok(world) = cdp::call_in(
-                &view,
+            let Ok(world) = devtools::call(
+                view,
                 session_asked(session),
                 "Page.createIsolatedWorld",
                 &world_in(&frame.frame),
@@ -542,9 +544,8 @@ mod engine {
             .get(&(tab.to_string(), frame.to_string()))
             .cloned()
             .ok_or_else(|| "Pass has heard nothing from that frame".to_string())?;
-        let view = View::Webview(view.clone());
         let call = |method: &str, params: &Value| {
-            cdp::call_in(&view, session_asked(&session), method, params, PATIENCE)
+            devtools::call(view, session_asked(&session), method, params, PATIENCE)
                 .map_err(|_| "the page could not be reached to fill it".to_string())
         };
         let world = call("Page.createIsolatedWorld", &world_in(frame))?;
@@ -601,7 +602,7 @@ mod engine {
         known.frames.retain(|(owner, _), _| owner != tab);
     }
 
-    pub(crate) fn listen(
+    pub fn listen(
         _webview: &tauri::webview::PlatformWebview,
         _app: AppHandle,
         _tab: String,

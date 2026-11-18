@@ -718,7 +718,7 @@ mod grabbed {
     }
 
     pub fn listen(webview: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
-        let Some(page) = orden_web::host::x11_page(webview) else {
+        let Some(page) = crate::host::x11_page(webview) else {
             return;
         };
         let Some(grabs) = grabs(&app) else { return };
@@ -926,7 +926,7 @@ mod tests {
         assert!(cef.contains("app_s(vk, held, true, false, &app_chords(&holder))"));
         assert!(cef.contains("chords(&app_chords(&holder))"));
         assert!(cef.contains("heard_raw("));
-        assert!(include_str!("lib.rs").contains("web_keys::web_keys_take,"));
+        assert!(include_str!("../../../src/lib.rs").contains("orden_web::web_keys::web_keys_take,"));
     }
 
     #[test]

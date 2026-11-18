@@ -481,7 +481,7 @@ fn whole_hiding(hidden: &[usize]) -> String {
 }
 
 fn clipped_hiding(hidden: &[usize]) -> String {
-    crate::web_tabs::reader(false).replace(
+    orden_web::web_tabs::reader(false).replace(
         "/* __HIDE__ */",
         &format!(
             "{{ const copy = body; const hidden = {}; {MASKED_CLONE} }}",

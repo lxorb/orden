@@ -11,7 +11,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
-SCRIPT = (Path(__file__).resolve().parents[2] / "src-tauri" / "src" / "web_swipe.js").read_text(
+SCRIPT = (Path(__file__).resolve().parents[2] / "src-tauri" / "crates" / "web" / "src" / "web_swipe.js").read_text(
     encoding="utf-8"
 )
 

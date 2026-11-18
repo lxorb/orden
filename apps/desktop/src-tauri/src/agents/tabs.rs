@@ -185,7 +185,7 @@ pub(super) fn web_address(url: &str) -> Result<Url, Answer> {
             format!("that is not an address: {error}"),
         )
     })?;
-    let web = crate::web_tabs::allowed(&address) && address.scheme() != "view-source";
+    let web = orden_web::web_tabs::allowed(&address) && address.scheme() != "view-source";
     if web || address.as_str() == "about:blank" {
         Ok(address)
     } else {

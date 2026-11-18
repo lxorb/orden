@@ -8,9 +8,9 @@ use tauri::{
     WebviewUrl,
 };
 
-pub(crate) const LABEL: &str = "web-";
+pub const LABEL: &str = "web-";
 
-pub(crate) fn is_page(label: &str) -> bool {
+pub fn is_page(label: &str) -> bool {
     label.starts_with(LABEL) || adopted_label(label)
 }
 
@@ -26,7 +26,7 @@ fn mark_private(label: &str, private: bool) {
     }
 }
 
-pub(crate) fn is_private(label: &str) -> bool {
+pub fn is_private(label: &str) -> bool {
     PRIVATE
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
@@ -35,7 +35,7 @@ pub(crate) fn is_private(label: &str) -> bool {
 
 static ADOPTED: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
 
-pub(crate) fn label_of(tab: &str) -> String {
+pub fn label_of(tab: &str) -> String {
     ADOPTED
         .lock()
         .ok()
@@ -52,13 +52,13 @@ fn adopted_label(label: &str) -> bool {
 
 const CHOSEN: &str = "orden://web-chosen";
 
-pub(crate) fn page_chosen(app: &AppHandle, window: &str, page: &str) {
+pub fn page_chosen(app: &AppHandle, window: &str, page: &str) {
     if let Some(tab) = tab_of(page) {
         let _ = app.emit_to(window, CHOSEN, serde_json::json!({ "tab": tab }));
     }
 }
 
-pub(crate) fn tab_of(label: &str) -> Option<String> {
+pub fn tab_of(label: &str) -> Option<String> {
     let adopted = ADOPTED.lock().ok().and_then(|held| {
         held.as_ref()?
             .iter()
@@ -211,7 +211,7 @@ impl Trail {
 pub fn managed(builder: tauri::Builder<orden_base::Engine>) -> tauri::Builder<orden_base::Engine> {
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder
-        .on_window_event(orden_web::web_follow::heard)
+        .on_window_event(crate::web_follow::heard)
         .manage(WebTabs::default())
 }
 
@@ -360,13 +360,13 @@ pub enum Step {
     Stop,
 }
 
-pub(crate) use orden_web_engine::allowed;
+pub use orden_web_engine::allowed;
 
-pub(crate) fn tab_may_open(url: &Url) -> bool {
-    orden_web_engine::tab_may_open(url, &crate::extensions::ours)
+pub fn tab_may_open(url: &Url) -> bool {
+    orden_web_engine::tab_may_open(url, &crate::extension_ids::ours)
 }
 
-pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
+pub fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let payload = Opening {
         tab: tab.to_string(),
         url: url.to_string(),
@@ -375,7 +375,7 @@ pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let _ = app.emit_to(window, OPENED, payload);
 }
 
-pub(crate) fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
+pub fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
     };
@@ -391,9 +391,9 @@ fn handed_over(url: &Url) -> Option<String> {
     tab_may_open(url).then(|| url.to_string())
 }
 
-pub(crate) use orden_web_engine::Becomes;
+pub use orden_web_engine::Becomes;
 
-pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
+pub fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Becomes {
     orden_web_engine::becomes(
         url,
         orden_web_engine::Asked {
@@ -401,11 +401,11 @@ pub(crate) fn becomes(url: &Url, sized: bool, said: bool, unasked: bool) -> Beco
             said,
             unasked,
         },
-        &crate::extensions::ours,
+        &crate::extension_ids::ours,
     )
 }
 
-pub(crate) fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
+pub fn popup_blocked(app: &AppHandle, window: &str, tab: &str, url: &str) {
     let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
         return;
     };
@@ -426,7 +426,7 @@ fn address(url: &str) -> Result<Url, String> {
     }
 }
 
-pub(crate) fn reader(selection: bool) -> String {
+pub fn reader(selection: bool) -> String {
     READER
         .replace("__SELECTION__", if selection { "yes" } else { "no" })
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
@@ -440,7 +440,7 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
     let mut scripts = vec![
         crate::web_opens::script(),
         crate::web_swipe::script().to_string(),
-        orden_web::web_media::script().to_string(),
+        crate::web_media::script().to_string(),
     ];
 
     #[cfg(windows)]
@@ -470,9 +470,9 @@ fn page_built(
     let _doing = orden_crashes::stall::doing("web_open: building the page");
     let _ = (app, store);
 
-    let bounds = orden_web::web_follow::Bounds::from(pane);
-    let scale = orden_web::page_scale::of(window).unwrap_or(1.0);
-    let (left, top, width, height) = orden_web::web_follow::edges(bounds, scale);
+    let bounds = crate::web_follow::Bounds::from(pane);
+    let scale = crate::page_scale::of(window).unwrap_or(1.0);
+    let (left, top, width, height) = crate::web_follow::edges(bounds, scale);
     let view = crate::engine::add_child(
         window,
         builder,
@@ -482,16 +482,16 @@ fn page_built(
     .map_err(|error| format!("that page could not be opened: {error}"))?;
     crate::page_style::worn(&view);
     crate::page_scheme::wear(&view);
-    let zoom = orden_web::page_scale::web(1.0);
+    let zoom = crate::page_scale::web(1.0);
     if (zoom - 1.0).abs() > 0.01 {
         let _ = view.set_zoom(zoom);
     }
-    orden_web::web_follow::put(&view, bounds, scale)
+    crate::web_follow::put(&view, bounds, scale)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     Ok(())
 }
 
-pub(crate) fn warm(_app: &AppHandle) {}
+pub fn warm(_app: &AppHandle) {}
 
 #[derive(Debug, Default, Deserialize)]
 pub struct Profile {
@@ -507,7 +507,7 @@ impl Profile {
         if self.private {
             return Ok((None, true));
         }
-        let store = orden_web::web_stores::named(self.store.as_deref())?.map(str::to_string);
+        let store = crate::web_stores::named(self.store.as_deref())?.map(str::to_string);
         Ok((store, false))
     }
 }
@@ -521,7 +521,7 @@ pub async fn web_open(
     pane: Pane,
     revived: Revived,
     profile: Profile,
-) -> Result<orden_web::web_cut::Layering, String> {
+) -> Result<crate::web_cut::Layering, String> {
     let address = address(&url)?;
     let (store, private) = profile.checked()?;
     let label = label_of(&tab);
@@ -529,7 +529,7 @@ pub async fn web_open(
 
     if app.get_webview(&label).is_some() {
         if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
-            return Ok(orden_web::web_cut::layering(&label));
+            return Ok(crate::web_cut::layering(&label));
         }
         return Err("that tab already has a page".into());
     }
@@ -597,7 +597,7 @@ pub async fn web_open(
 
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
-    Ok(orden_web::web_cut::layering(&label_of(&tab)))
+    Ok(crate::web_cut::layering(&label_of(&tab)))
 }
 
 fn windows_asked(
@@ -684,11 +684,11 @@ fn reporting(
             let holder = view.window().label().to_string();
             let asking = view.clone();
             std::thread::spawn(move || {
-                let declaring = crate::web_worlds::value(&asking, orden_web::web_icons::ASK)
+                let declaring = crate::web_worlds::value(&asking, crate::web_icons::ASK)
                     .and_then(|said| serde_json::from_value(said).ok())
                     .unwrap_or_default();
-                if let Some(icon) = orden_web::web_icons::best(&declaring) {
-                    orden_web::web_icons::said(&marked, &holder, &named, &icon);
+                if let Some(icon) = crate::web_icons::best(&declaring) {
+                    crate::web_icons::said(&marked, &holder, &named, &icon);
                 }
             });
         }
@@ -743,13 +743,8 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
             crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::downloads::listen(&platform, asking.clone(), window.clone());
-            orden_web::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
-            orden_web::web_dialogs::listen(
-                &platform,
-                asking.clone(),
-                named.clone(),
-                window.clone(),
-            );
+            crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
+            crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
             crate::pinch::web_page(&platform, &asking, &label);
             crate::web_pass::listen(&platform, asking.clone(), named.clone(), window.clone());
             ask::listen(&platform, asking, named, window);
@@ -838,7 +833,7 @@ fn say(
     let Ok(payload) = serde_json::to_value(payload) else {
         return;
     };
-    orden_web::web_steady::say(app, view.window().label(), MOVED, tab, loading, payload);
+    crate::web_steady::say(app, view.window().label(), MOVED, tab, loading, payload);
 }
 
 #[tauri::command]
@@ -851,54 +846,54 @@ pub fn web_place(
     tab: String,
     pane: Pane,
     visible: bool,
-    frame: Option<orden_web::web_follow::Frame>,
-    cut: Option<orden_web::web_cut::Cut>,
+    frame: Option<crate::web_follow::Frame>,
+    cut: Option<crate::web_cut::Cut>,
     corner: Option<f64>,
     opacity: Option<f64>,
-) -> Result<orden_web::web_cut::Layering, String> {
+) -> Result<crate::web_cut::Layering, String> {
     let view = found(&app, &tab)?;
 
     let answering = {
         let _doing = orden_crashes::stall::doing("web_place: asked");
-        orden_web::web_answers::answers(&view)
+        crate::web_answers::answers(&view)
     };
     if !answering {
-        orden_web::web_answers::said(&app);
+        crate::web_answers::said(&app);
         if visible {
-            return Err(orden_web::web_answers::NOT_ANSWERING.to_owned());
+            return Err(crate::web_answers::NOT_ANSWERING.to_owned());
         }
         let _doing = orden_crashes::stall::doing("web_place: put away");
-        orden_web::web_answers::put_away(&view);
-        return Ok(orden_web::web_cut::layering(view.label()));
+        crate::web_answers::put_away(&view);
+        return Ok(crate::web_cut::layering(view.label()));
     }
 
     let window = view.window();
-    let bounds = orden_web::web_follow::placed(
+    let bounds = crate::web_follow::placed(
         &window,
         view.label(),
-        orden_web::web_follow::Bounds::from(&pane),
+        crate::web_follow::Bounds::from(&pane),
         frame,
         visible,
     );
-    let scale = orden_web::page_scale::of(&window)
+    let scale = crate::page_scale::of(&window)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
-    let (_, _, width, height) = orden_web::web_follow::edges(bounds, scale);
+    let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
     if !visible {
         let _doing = orden_crashes::stall::doing("web_place: hidden");
-        orden_web::page_hide::out_of_sight(&view);
+        crate::page_hide::out_of_sight(&view);
         view.hide()
             .map_err(|error| format!("that page could not be hidden: {error}"))?;
     }
     {
         let _doing = orden_crashes::stall::doing("web_place: bounds");
-        orden_web::web_follow::put(&view, bounds, scale)
+        crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
     let _ = opacity;
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: cut");
-        orden_web::web_cut::apply(
+        crate::web_cut::apply(
             &view,
             cut.clone(),
             width,
@@ -910,7 +905,7 @@ pub fn web_place(
 
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: shown");
-        orden_web::page_hide::no_ground(&view);
+        crate::page_hide::no_ground(&view);
         view.show()
             .map_err(|error| format!("that page could not be shown: {error}"))?;
     }
@@ -920,10 +915,10 @@ pub fn web_place(
         crate::keyboard::hold_for_layer(&app, window.label());
     }
     crate::keyboard::placed(&app, &view, visible && cut.is_none());
-    Ok(orden_web::web_cut::layering(view.label()))
+    Ok(crate::web_cut::layering(view.label()))
 }
 
-impl From<&Pane> for orden_web::web_follow::Bounds {
+impl From<&Pane> for crate::web_follow::Bounds {
     fn from(pane: &Pane) -> Self {
         Self {
             x: pane.x,
@@ -938,7 +933,7 @@ impl From<&Pane> for orden_web::web_follow::Bounds {
 pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), String> {
     let at = address(&url)?;
     let view = found(&app, &tab)?;
-    orden_web::web_dialogs::dismiss(&app, &tab);
+    crate::web_dialogs::dismiss(&app, &tab);
     view.navigate(at)
         .map_err(|error| format!("that address could not be opened: {error}"))
 }
@@ -953,14 +948,14 @@ pub fn web_step(
 ) -> Result<(), String> {
     let view = found(&app, &tab)?;
     if !matches!(step, Step::Stop) {
-        orden_web::web_dialogs::dismiss(&app, &tab);
+        crate::web_dialogs::dismiss(&app, &tab);
     }
     let steps = isize::try_from(by.unwrap_or(1).max(1)).unwrap_or(1);
 
     let by = match step {
         Step::Reload => return view.reload().map_err(|error| error.to_string()),
-        Step::Fresh => return orden_web::web_reload::fresh(&view),
-        Step::Stop => return orden_web::web_reload::stop(&view),
+        Step::Fresh => return crate::web_reload::fresh(&view),
+        Step::Stop => return crate::web_reload::stop(&view),
         Step::Back => -steps,
         Step::Forward => steps,
     };
@@ -1024,11 +1019,15 @@ pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), Str
 #[tauri::command]
 pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> {
     found(&app, &tab)?
-        .set_zoom(orden_web::page_scale::web(factor))
+        .set_zoom(crate::page_scale::web(factor))
         .map_err(|error| format!("that page could not be zoomed: {error}"))
 }
 
 #[tauri::command]
+#[allow(
+    clippy::unused_async,
+    reason = "an async command runs off the main thread, where printing would hold the window"
+)]
 pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
 
@@ -1098,18 +1097,18 @@ pub async fn web_close(
         let _doing = orden_crashes::stall::doing("web_close");
         if let Some(view) = closing.get_webview(&label) {
             crate::web_find::forget(&named);
-            orden_web::web_dialogs::forget(&named);
+            crate::web_dialogs::forget(&named);
             ask::forget(&named);
-            orden_web::web_steady::forget(&named);
+            crate::web_steady::forget(&named);
             crate::web_pass::forget(&named);
             crate::keyboard::closed(view.label());
-            orden_web::web_follow::unfollow(view.label());
-            orden_web::web_cut::uncut(view.label());
+            crate::web_follow::unfollow(view.label());
+            crate::web_cut::uncut(view.label());
             let_go(view.label());
-            if !orden_web::web_answers::answers(&view) {
-                orden_web::web_answers::said(&closing);
-                orden_web::web_answers::put_away(&view);
-                orden_web::web_answers::close_when_answering(&closing, view.label().to_owned());
+            if !crate::web_answers::answers(&view) {
+                crate::web_answers::said(&closing);
+                crate::web_answers::put_away(&view);
+                crate::web_answers::close_when_answering(&closing, view.label().to_owned());
             } else if crate::downloads::linger(&closing, &named) {
                 let _ = view.hide();
             } else {
@@ -1142,8 +1141,8 @@ pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, Str
 
 async fn photographed(view: Webview) -> Result<Option<String>, String> {
     let taken = tauri::async_runtime::spawn_blocking(move || {
-        crate::agents::cdp::call_in(
-            &crate::agents::engines::View::Webview(view),
+        crate::engine::devtools::call(
+            &view,
             None,
             "Page.captureScreenshot",
             &serde_json::json!({ "format": "png", "fromSurface": true }),
@@ -1168,12 +1167,12 @@ pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
     let _ = app.run_on_main_thread(move || ask::answer(id, allow));
 }
 
-pub(crate) fn close_page(app: &AppHandle, tab: &str) {
+pub fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         let_go(view.label());
         crate::keyboard::closed(view.label());
-        orden_web::web_follow::unfollow(view.label());
-        orden_web::web_cut::uncut(view.label());
+        crate::web_follow::unfollow(view.label());
+        crate::web_cut::uncut(view.label());
         let _ = view.close();
     }
 }
@@ -1182,12 +1181,12 @@ fn let_go(label: &str) {
     crate::engine::devtools::let_go_of(label);
 }
 
-pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
+pub fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
     app.get_webview(&label_of(tab))
         .ok_or_else(|| "that tab has no page open".to_string())
 }
 
-pub(crate) fn on_the_page(
+pub fn on_the_page(
     app: &AppHandle,
     label: &str,
     then: impl FnOnce(Webview) + Send + 'static,
@@ -1235,10 +1234,7 @@ mod tests {
         assert!(!before.contains("with_webview("), "asked before going over");
         assert!(after.contains("with_platform!("));
         for (file, source) in [
-            (
-                "web_certificate/chromium.rs",
-                include_str!("web_certificate/chromium.rs"),
-            ),
+            ("web_certificate.rs", include_str!("web_certificate.rs")),
             ("web_pause.rs", include_str!("web_pause.rs")),
         ] {
             assert!(
@@ -1352,7 +1348,7 @@ mod tests {
     #[test]
     fn an_extension_s_own_page_becomes_a_tab() {
         let id = "abcdefghijklmnopabcdefghijklmnop";
-        crate::extensions::known(id);
+        crate::extension_ids::known(id);
         let page = format!("chrome-extension://{id}/dashboard.html");
         let tab = Becomes::Tab(page.clone());
         assert_eq!(becomes(&at(&page), false, false, false), tab);
@@ -1623,7 +1619,7 @@ mod tests {
                 "{};\n{};\n{};\n{}{};\n",
                 crate::web_opens::script(),
                 crate::web_swipe::script(),
-                orden_web::web_media::script(),
+                crate::web_media::script(),
                 if cfg!(windows) {
                     format!("{};\n", super::bars())
                 } else {

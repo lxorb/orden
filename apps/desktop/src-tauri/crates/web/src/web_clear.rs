@@ -41,7 +41,7 @@ pub async fn web_clear(
     }
     let app = webview.app_handle().clone();
     for store in stores {
-        let store = orden_web::web_stores::named(store.as_deref())?.map(str::to_string);
+        let store = crate::web_stores::named(store.as_deref())?.map(str::to_string);
         let page = page_in_store(&app, &webview.window(), store.as_deref()).await?;
         let cleared = engine::clear(&page, clearing, &sites).await;
         let _ = page.close();

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import app from '../../../App.svelte?raw'
-import crateSide from '../../../../src-tauri/src/keyboard.rs?raw'
+import crateSide from '../../../../src-tauri/crates/web/src/keyboard.rs?raw'
 
 const crate = vi.hoisted(() => ({
   inPage: true,

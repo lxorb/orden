@@ -14,7 +14,7 @@ use super::{DUMP, RESTORE};
 const DATABASE_MOST: u64 = 16 * 1024 * 1024;
 
 #[derive(Debug, Default, Serialize, PartialEq, Eq)]
-pub(crate) struct Merged {
+pub struct Merged {
     pub cookies: usize,
     pub kept: usize,
     pub origins: usize,
@@ -54,7 +54,7 @@ fn identity(cookie: &Cookie) -> (String, String, String, Option<(String, bool)>)
     )
 }
 
-pub(crate) fn chosen(
+pub fn chosen(
     from: &[Cookie],
     into: &[Cookie],
     from_used_last: bool,
@@ -87,7 +87,7 @@ pub(crate) fn chosen(
     (taken, kept)
 }
 
-pub(crate) fn last_used(folder: &Path) -> Option<SystemTime> {
+pub fn last_used(folder: &Path) -> Option<SystemTime> {
     fn newest(at: &Path, depth: u8, seen: &mut usize) -> Option<SystemTime> {
         let mut best = std::fs::metadata(at).ok()?.modified().ok();
         if depth == 0 {
@@ -111,7 +111,7 @@ pub(crate) fn last_used(folder: &Path) -> Option<SystemTime> {
     newest(folder, 5, &mut 0)
 }
 
-pub(crate) async fn merge(
+pub async fn merge(
     caller: &Webview,
     from: &str,
     into: Option<&str>,
@@ -142,7 +142,7 @@ pub(crate) async fn merge(
     Ok(merged)
 }
 
-pub(crate) fn takes_storage(into_has: bool, fresh: bool) -> bool {
+pub fn takes_storage(into_has: bool, fresh: bool) -> bool {
     fresh || !into_has
 }
 
