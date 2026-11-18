@@ -30,6 +30,7 @@ def drive(browser: Browser) -> None:
         DRIVE.open(page)
         page.evaluate(f"() => window.ordenApp.theme.setScheme('{scheme}')")
         here = page.evaluate(START)
+        DRIVE.sign_in(page)
         page.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
         wait_for(page, "document.querySelectorAll('.chats .entry').length >= 4", "the chats")
         listed: list[str] = page.evaluate(LISTED)

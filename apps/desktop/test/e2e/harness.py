@@ -89,6 +89,12 @@ CHATS_ON = (
     " catch {}"
 )
 
+SIGNED_IN = (
+    "() => { const account = window.ordenApp.account;"
+    " account.user = { id: 'u1', email: 'wren@example.com', name: 'Wren' };"
+    " account.token = 'drive' }"
+)
+
 EXPERIMENTAL_SWITCH = '[role=switch][aria-label="Enable experimental features"]'
 
 
@@ -621,6 +627,10 @@ class Drive:
     ) -> None:
         page.goto(f"{origin or self.origin}{path}", wait_until="domcontentloaded", timeout=patience * 1000)
         self.ready(page, patience)
+
+    def sign_in(self, page: Any) -> None:
+        page.evaluate(SIGNED_IN)
+        self.wait_for(page, "window.ordenApp.account.accountToken", "the account")
 
     def ready(self, page: Any, patience: float = PATIENCE) -> None:
         self.wait_for(page, "window.ordenApp", "the app", patience)
