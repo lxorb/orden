@@ -4188,6 +4188,7 @@ dependencies = [
  "objc2-user-notifications",
  "orden-apps",
  "orden-base",
+ "orden-browsers",
  "orden-crashes",
  "orden-dictation",
  "orden-documents",
@@ -4201,7 +4202,6 @@ dependencies = [
  "orden-system",
  "orden-web-engine",
  "percent-encoding",
- "plist",
  "png 0.18.1",
  "proc-macro2",
  "quote",
@@ -4282,6 +4282,21 @@ dependencies = [
  "tauri",
  "tempfile",
  "windows 0.58.0",
+]
+
+[[package]]
+name = "orden-browsers"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "dirs 6.0.0",
+ "orden-base",
+ "plist",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tempfile",
 ]
 
 [[package]]
