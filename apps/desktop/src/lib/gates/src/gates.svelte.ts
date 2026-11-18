@@ -20,8 +20,8 @@ export type KindName =
   | 'web'
   | 'private'
 
-export function kindsHere(): KindName[] {
-  if (__EVEN_PLUGIN__) return ['note', 'canvas', 'pages']
+export function kindsHere(plugin = __EVEN_PLUGIN__): KindName[] {
+  if (plugin) return ['note']
 
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']

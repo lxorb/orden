@@ -221,6 +221,7 @@ export {
   type SurfaceId,
   type SurfacePorts,
   surfaceLoad,
+  whenNoSurface,
 } from './surfaces'
 export {
   type AgentAnswer,

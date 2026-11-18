@@ -14,6 +14,7 @@ import {
   registerSurfaces,
   registerTabKind,
   runCommand,
+  whenNoSurface,
   whenPortProvided,
 } from '@orden/contracts'
 import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
@@ -174,24 +175,7 @@ registerCommandRows('record', async () => (await import('./dictation/src/api')).
 registerCommandRows('transcribe', async () => (await import('./dictation/src/api')).transcribeRows)
 registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
 
-if (__EVEN_PLUGIN__) {
-  const waits = () => new Promise<never>(() => undefined)
-  registerSurfaces({
-    tasks: waits,
-    todos: waits,
-    channel: waits,
-    'chat-links': waits,
-    chats: waits,
-    'time-panel': waits,
-    'pass-fill': waits,
-    'takeover-bar': waits,
-    'agent-rows': waits,
-    'agent-session': waits,
-    spark: waits,
-    'phone-tabs': waits,
-    'phone-you': waits,
-  })
-}
+if (__EVEN_PLUGIN__) whenNoSurface(() => new Promise<never>(() => undefined))
 
 if (!__EVEN_PLUGIN__) {
   registerSurfaces({

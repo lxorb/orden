@@ -803,6 +803,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Alt-k',
     run: () => void runCommand('app.ask-selection'),
+    shown: () => !__EVEN_PLUGIN__,
   },
   {
     id: 'app.quick-question',
@@ -846,6 +847,7 @@ const APP_ENTRIES: Shortcut[] = [
     mac: 'Mod-Ctrl-Alt-k',
     run: () => void runCommand('agents.stop'),
     desktop: true,
+    shown: () => !__EVEN_PLUGIN__,
   },
   {
     id: 'app.region-next',

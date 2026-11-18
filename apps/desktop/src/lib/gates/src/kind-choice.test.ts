@@ -82,6 +82,10 @@ describe('a stored list of kinds turned off', () => {
 })
 
 describe('the kinds a device has', () => {
+  test('are only notes in the glasses plugin, which draws no canvas or page note', () => {
+    expect(kindsHere(true)).toEqual(['note'])
+  })
+
   test('are what is written, the AI chat, the online terminal and an application on a page in a browser', () => {
     expect(kindsHere()).toEqual(['note', 'canvas', 'pages', 'ai', 'online', 'web'])
   })
