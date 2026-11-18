@@ -15,7 +15,6 @@ export function setBlocks(next: () => SlashBlock[]) {
 }
 
 const TYPED = /(?:^|\s)\/([\w-]*)$/
-
 const VERBATIM = new Set(['FencedCode', 'CodeBlock', 'InlineCode', 'CodeText', 'CodeMark'])
 
 function inCode(context: CompletionContext): boolean {

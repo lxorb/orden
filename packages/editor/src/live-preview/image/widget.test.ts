@@ -7,13 +7,13 @@ import '@orden/markdown/eager'
 import { parsed } from '../../../test/parsed'
 import { ordenMarkdownExtensions } from '../../markdown/extensions'
 import { livePreview } from '..'
+import { noRects } from '../../../test/views'
 
 const DOC = 'words\n\n![A cat](cat.png)\n\nend'
 const errors: unknown[] = []
 
 beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  noRects()
   window.addEventListener('error', (event) => errors.push(event.error))
   Node.prototype.removeChild = <T extends Node>(child: T): T => {
     const focused = document.activeElement

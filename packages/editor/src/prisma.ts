@@ -1,7 +1,6 @@
 import type { StreamParser, StringStream } from '@codemirror/language'
 
 const BLOCKS = /^(datasource|generator|model|enum|type|view)\b/
-
 const ATTRIBUTE = /^@@?[A-Za-z][\w.]*/
 
 interface PrismaState {

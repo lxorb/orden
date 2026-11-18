@@ -46,7 +46,6 @@ interface Vetting {
 }
 
 const vetted = StateEffect.define<Text>()
-
 const refused = StateEffect.define()
 
 const vetting = StateField.define<Vetting>({
@@ -64,11 +63,8 @@ const vetting = StateField.define<Vetting>({
 })
 
 const NOTHING = new SearchQuery({ search: '' })
-
 const MULTILINE = /\\[sWDnr]|\n|\r|\[\^/
-
 const flagsOf = (query: SearchQuery): string => (query.caseSensitive ? 'gmu' : 'gmui')
-
 const tried = new WeakMap<Text, Map<string, Promise<number | null>>>()
 
 function costOn(query: SearchQuery, doc: Text): Promise<number | null> {
@@ -159,7 +155,6 @@ export function cleared(state: EditorState): boolean {
 }
 
 export const slow = (state: EditorState): boolean => state.field(vetting, false)?.slow === true
-
 const running = new WeakMap<EditorView, Promise<boolean>>()
 
 export function clear(view: EditorView): Promise<boolean> {

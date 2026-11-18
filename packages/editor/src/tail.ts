@@ -5,7 +5,6 @@ import { type Command, EditorView } from '@codemirror/view'
 import { enclosingNamed } from './nodes'
 
 const CLOSED = new Set(['Table', 'FencedCode', 'CodeBlock', 'BlockMath'])
-
 const PICTURE = /^\s*(?:!\[[^\]]*\]\([^)]*\)|!\[\[[^\]]*\]\])\s*$/
 
 export function tailOf(state: EditorState): { at: number; insert: string } | null {

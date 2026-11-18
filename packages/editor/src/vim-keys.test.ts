@@ -8,11 +8,11 @@ import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { loadVim } from './vim'
 import { modalEditing, takeBackOrdenKeys } from './vim-mode'
 import { GROWS_AT_MOST, measuredGrowth } from '../../../scripts/growth'
+import { noRects } from '../test/views'
 
 beforeAll(async () => {
   await loadVim()
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  noRects()
 })
 
 const open: EditorView[] = []

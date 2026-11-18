@@ -449,7 +449,6 @@ const crosses = (spans: readonly Span[], ranges: readonly SelectionRange[]) =>
   spans.some((span) => ranges.some((range) => range.from <= span.to && range.to >= span.from))
 
 const PROSE = /^[\p{L}\p{N} ,;'"?]*$/u
-
 const PUNCTUATION = /^[\p{L}\p{N}\p{P}\p{S} ]*$/u
 const BLOCK_MARKS = /[`~|$[\]<>]/
 

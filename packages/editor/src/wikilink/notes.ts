@@ -131,7 +131,6 @@ export function fuzzy(text: string, needle: string): boolean {
 }
 
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
-
 const comparable = (path: string): string => foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 
 function folderOf(path: string): string {
@@ -157,7 +156,6 @@ interface Order {
 }
 
 const lookups = new WeakMap<readonly NoteRef[], Lookup>()
-
 const orders = new WeakMap<readonly NoteRef[], Order>()
 
 function filed(map: Map<string, NoteRef[]>, key: string, note: NoteRef) {

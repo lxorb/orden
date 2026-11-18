@@ -34,7 +34,6 @@ function run(command: StateCommand, marked: string): { took: boolean; note: stri
 }
 
 const note = (command: StateCommand, marked: string) => run(command, marked).note
-
 const META = '---\nicon: list-checks\n---\n'
 
 describe('sorting and reversing lines', () => {

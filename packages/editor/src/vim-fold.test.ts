@@ -11,12 +11,12 @@ import { loadLineCommands } from './line-door'
 import { ordenMarkdownExtensions } from './markdown/extensions'
 import { loadVim } from './vim'
 import { modalEditing, normalTab } from './vim-mode'
+import { noRects } from '../test/views'
 
 beforeAll(async () => {
   await loadVim()
   await loadLineCommands()
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  noRects()
 })
 
 const open: EditorView[] = []

@@ -73,7 +73,6 @@ function pageFrame(card: HTMLElement, title: string): HTMLIFrameElement | null {
 }
 
 const SIZED = 'orden-html-frame'
-
 const LEAST_HEIGHT = 40
 const MOST_HEIGHT = 2400
 

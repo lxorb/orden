@@ -188,10 +188,8 @@ const toggleLinePrefix =
 
 const MARKER = /^\s*(?:[-*+]|\d+[.)])\s+/
 const INDENT = /^\s*/
-
 export const toggleQuote = toggleLinePrefix('> ', /^>\s?/)
 export const toggleBulletList = toggleLinePrefix('- ', /^\s*[-*+]\s+/, MARKER)
-
 const QUOTED = /^(?:[ \t]*>[ \t]?)*/
 
 export const toggleTaskList: StateCommand = ({ state, dispatch }) => {

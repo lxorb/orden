@@ -27,7 +27,6 @@ export interface Peer {
 }
 
 export const setPeers = StateEffect.define<readonly Peer[]>()
-
 export const setAgents = StateEffect.define<readonly Peer[]>()
 
 interface Present {

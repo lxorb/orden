@@ -72,7 +72,6 @@ const took = (command: StateCommand, marked: string) => applyMarked(command, mar
 const runSelection = (command: StateCommand, marked: string) =>
   applyMarked(command, marked).selection
 const at = (command: StateCommand, doc: string, offset: number) => apply(command, doc, offset).doc
-
 const strong = toggleWrap('**')
 const italic = toggleWrap('*')
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |\n| 5 | 6 |'

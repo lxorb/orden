@@ -46,7 +46,6 @@ const readOnly = new Compartment()
 const headingNumbers = new Compartment()
 const codeLineNumbers = new Compartment()
 const direction = new Compartment()
-
 const editorClass = (name: string): Extension => EditorView.editorAttributes.of({ class: name })
 
 const markdownFor = once((strict: boolean): Extension =>
@@ -64,7 +63,6 @@ const PARSED_AT_MOST = 512 * 1024
 const NO_LANGUAGE: Extension = []
 
 export const tooLongToParse = (length: number): boolean => length > PARSED_AT_MOST
-
 const strictly = StateEffect.define<boolean>()
 
 const strictness = StateField.define<boolean>({
@@ -192,7 +190,6 @@ const readOnlyExtensions = (): Extension => [
 ]
 
 const readOnlyFor = once((on: boolean): Extension => (on ? readOnlyExtensions() : []))
-
 const previewFor = once((source: boolean): Extension => (source ? [] : livePreview()))
 
 const focusFor = once((on: boolean): Extension =>
@@ -223,7 +220,6 @@ const RIGHT_TO_LEFT =
   /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
 
 const STRONG = /\p{L}/u
-
 const OWN_DIRECTION = new Set(['FencedCode', 'CodeBlock', 'Table', 'FrontMatter', 'BlockMath'])
 
 export function firstStrong(text: string): Direction | null {

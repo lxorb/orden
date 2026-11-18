@@ -1,20 +1,12 @@
 // @vitest-environment jsdom
 import { forceParsing } from '@codemirror/language'
 import type { EditorView } from '@codemirror/view'
-import { afterEach, beforeAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createEditor } from '../editor'
 import { TableWidget, tableViewAt } from './widget'
+import { keptViews } from '../../test/views'
 
-beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
-})
-
-const open: EditorView[] = []
-
-afterEach(() => {
-  for (const view of open.splice(0)) view.destroy()
-})
+const open = keptViews()
 
 function tableOf(rows: number): string {
   const body = Array.from({ length: rows }, (_, row) => `| r${row} | s${row} |\n`).join('')

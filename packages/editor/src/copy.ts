@@ -3,7 +3,6 @@ import { type Command, EditorView } from '@codemirror/view'
 import { door } from '@orden/markdown/door'
 
 const OURS = 'data-orden="markdown"'
-
 export const MOST_DRAWN = 256 * 1024
 
 let render: ((source: string) => string) | null = null

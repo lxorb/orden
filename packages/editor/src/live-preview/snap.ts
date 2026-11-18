@@ -75,7 +75,6 @@ export const pointerSnap = EditorState.transactionFilter.of((transaction) => {
 
 const WORD = /[\p{L}\p{N}]/u
 const UNSPACED = /[\p{sc=Han}\p{sc=Hiragana}\p{sc=Katakana}]/u
-
 const wordy = (character: string): boolean => WORD.test(character) && !UNSPACED.test(character)
 
 const at = (doc: Text, pos: number): string =>

@@ -42,7 +42,6 @@ describe('reading a message from the sandbox', () => {
 })
 
 const SCRIPT = 'window.ranTheFrameScript = true'
-
 const made = (code: string, run = 1) => runnerDocument(code, run, SCRIPT)
 const programOf = (html: string) =>
   /<script type="text\/plain" id="orden-frame">([\s\S]*?)<\/script>/.exec(html)?.[1]

@@ -7,7 +7,6 @@ import { imageResolver } from '../images'
 import { noteIndex } from './notes'
 
 const REMOTE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
-
 const written = (src: string): string => decodeTarget(src.replace(/&amp;/g, '&'))
 
 export async function renderNote(

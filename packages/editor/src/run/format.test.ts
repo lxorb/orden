@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { formatRunValues } from './format'
 
 const line = (...values: unknown[]) => formatRunValues(values)
-
 const value = (held: unknown) => formatRunValues([held], true)
 
 describe('formatting what the sandbox says', () => {

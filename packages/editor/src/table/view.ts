@@ -59,13 +59,9 @@ export type Placement = 'start' | 'end' | 'all' | { x: number; edge: 'top' | 'bo
 export type Landing = 'start' | 'end' | { x: number }
 
 const IDLE_COMMIT = 700
-
 const WINDOWED = 150
-
 const AROUND = 40
-
 const STEP = 20
-
 const GUESSED_ROW = 32
 
 let active: TableView | null = null
@@ -86,52 +82,32 @@ const ALIGN_PATHS = {
 
 export class TableView {
   readonly dom: HTMLElement
-
   private readonly scroller: HTMLElement
   private readonly table: HTMLTableElement
   private readonly columnBar: HTMLElement
   private readonly rowBar: HTMLElement
   private readonly alignButtons: Record<'left' | 'center' | 'right', HTMLButtonElement>
-
   private model: TableModel
   private source: string
   private from: number
-
   private pending: { at: CellAddress; value: string } | null = null
   private idle: number | undefined
-
   private focusAfter: Focus | null = null
-
   private widths: (number | null)[]
-
   private barColumn = -1
-
   private barRow = -1
-
   private sortedAs: { column: number; order: Order } | null = null
-
   private dragging: (() => void) | null = null
-
   private editable: boolean
-
   private body: HTMLTableSectionElement | null = null
-
   private readonly drawn = new Map<number, HTMLTableRowElement>()
-
   private readonly heights = new Map<number, number>()
-
   private shown = { from: 0, to: 0 }
-
   private guess = GUESSED_ROW
-
   private drawnFor = -1
-
   private fitted: number[] | null = null
-
   private frame = 0
-
   private gaps: IntersectionObserver | null = null
-
   private following = false
 
   constructor(
@@ -152,17 +128,11 @@ export class TableView {
     this.table = element('table', 'orden-table')
     this.scroller.append(this.table)
 
-    this.alignButtons = {
-      left: this.columnButton('Align left', ALIGN_PATHS.left, (column) =>
-        this.toggleAlign(column, 'left'),
-      ),
-      center: this.columnButton('Align center', ALIGN_PATHS.center, (column) =>
-        this.toggleAlign(column, 'center'),
-      ),
-      right: this.columnButton('Align right', ALIGN_PATHS.right, (column) =>
-        this.toggleAlign(column, 'right'),
-      ),
-    }
+    const align = (side: 'left' | 'center' | 'right') =>
+      this.columnButton(`Align ${side}`, ALIGN_PATHS[side], (column) =>
+        this.toggleAlign(column, side),
+      )
+    this.alignButtons = { left: align('left'), center: align('center'), right: align('right') }
     this.columnBar = this.buildColumnBar()
     this.rowBar = this.buildRowBar()
     this.dom.append(this.scroller, this.columnBar, this.rowBar)

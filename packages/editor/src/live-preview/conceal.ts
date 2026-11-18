@@ -2,7 +2,6 @@ import { Decoration } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 
 export const hide = Decoration.replace({})
-
 export const meta = Decoration.mark({ class: 'md-meta' })
 
 const INLINE_MARKS = new Set([

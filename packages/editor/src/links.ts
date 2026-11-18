@@ -24,7 +24,6 @@ export function hrefOf(target: string): string | null {
 }
 
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
-
 const PUNCTUATION = /^[!-/:-@[-`{-~]$/
 
 export function bareTarget(written: string, after: string): string {
@@ -43,7 +42,6 @@ export interface Modified {
 }
 
 export const modifier = (event: Modified): boolean => (MAC ? event.metaKey : event.ctrlKey)
-
 export const modifierHeld = (): boolean => held
 
 let held = false

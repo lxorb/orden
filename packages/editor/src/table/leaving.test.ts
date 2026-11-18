@@ -3,14 +3,14 @@ import { forceParsing } from '@codemirror/language'
 import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test, vi } from 'vitest'
 import { createEditor } from '../editor'
+import { noRects } from '../../test/views'
 
 const TABLE = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
 const errors: unknown[] = []
 const open: EditorView[] = []
 
 beforeAll(() => {
-  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
-  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  noRects()
   window.addEventListener('error', (event) => errors.push(event.error))
   Node.prototype.removeChild = <T extends Node>(child: T): T => {
     const focused = document.activeElement

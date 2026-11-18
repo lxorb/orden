@@ -12,7 +12,6 @@ import { selectedLines } from './commands'
 import { enclosingNamed } from './nodes'
 
 const AN_ITEM = /^((?:[ \t]*>)+[ \t]?|)( *)(?:(\d+)([.)])|([-*+]))( +)/u
-
 const QUOTE = /^(?:[ \t]*>[ \t]?)*/u
 
 interface Item {

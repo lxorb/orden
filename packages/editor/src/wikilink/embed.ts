@@ -20,7 +20,6 @@ import type { LinkSpan } from './at'
 import { type FileDrawing, jumpFor, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
 
 const MOST_EMBEDDED = 40_000
-
 const EMBED_MAX = 512
 
 export function embedOfBlock(state: EditorState, from: number, to: number): LinkSpan | null {

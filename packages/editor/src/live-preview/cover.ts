@@ -7,7 +7,6 @@ import { coverMover, keptCover } from './kept-cover'
 import { OrdenWidget } from './widget'
 
 const STEP = 5
-
 const inside = (value: number): number => Math.min(100, Math.max(0, Math.round(value)))
 
 const shownCover = (view: EditorView): Cover | null =>

@@ -20,7 +20,6 @@ Object.assign(Vim, {
 })
 
 const unmap = Vim.unmap as (keys: string, context?: string) => boolean | undefined
-
 const CONTEXTS = [undefined, 'normal', 'insert', 'visual']
 
 function takeBack(keys: string): number {
@@ -31,9 +30,7 @@ function takeBack(keys: string): number {
 }
 
 const HOLDING_PLACE = { keys: '<OrdenTaken>', type: 'idle' } as const
-
 const CTRL_LETTERS = 'abcdefghijklmnoprstuvwxyz'
-
 const CTRL_OTHERS = ['<C-[>', '<C-Space>', '<C-BS>', '<C-Esc>', '<C-r><register>']
 
 const CARET_KEYS = [

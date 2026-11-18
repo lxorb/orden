@@ -2,9 +2,7 @@ import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 
 const BUDGET = 25
-
 const AS_BUILT = 60
-
 const drawnThrough = (view: EditorView) => syntaxTree(view.state).length >= view.viewport.to
 
 class ParseAhead {
@@ -47,5 +45,4 @@ class ParseAhead {
 }
 
 export const parseAhead = ViewPlugin.fromClass(ParseAhead)
-
 export const parsedOnScreen = (view: EditorView): boolean => drawnThrough(view)

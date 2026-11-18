@@ -66,7 +66,6 @@ const openAsk = StateEffect.define<{ id: number; from: number; stop: () => void 
 const beganAnswer = StateEffect.define<{ id: number; body: number }>()
 const wroteAnswer = StateEffect.define<{ id: number; at: number }>()
 const closeAsk = StateEffect.define<number>()
-
 const FENCE = /^[\s>]*(?:`{3,}|~{3,})/
 
 const asks = StateField.define<readonly AiRun[]>({
