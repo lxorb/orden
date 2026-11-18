@@ -22,15 +22,10 @@ export interface FoundLink extends Wikilink {
 }
 
 export const WIKILINK_INNER = '[^[\\]\\n]+'
-
 const WIKILINK = new RegExp(`(${WIKILINK_INNER})\\]\\]`, 'y')
-
 const LONGEST_LINK = 1000
-
 const DEEPEST_PARENS = 32
-
 const BLANK = /\s/
-
 const endsTarget = (one: string): boolean => (one <= ' ' || one >= '\u0080') && BLANK.test(one)
 
 interface MarkdownLink {
@@ -166,7 +161,6 @@ function markdownLinkAt(
 }
 
 export const MOST_LINKS = 5000
-
 const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*(?=\r?$)/
 
 function schemeOf(target: string): string {
@@ -175,15 +169,10 @@ function schemeOf(target: string): string {
 }
 
 export const foldName = (name: string): string => name.normalize('NFC').toLowerCase()
-
 export const isNoteTarget = (target: string): boolean => schemeOf(target) === ''
-
 export const PDF_SIDECAR = '.highlights.json'
-
 const ending = (pattern: RegExp) => (target: string) => pattern.test(target.trim())
-
 export const isPdfTarget = ending(/\.pdf$/i)
-
 export const isCanvasTarget = ending(/\.canvas$/i)
 
 export const isBaseTarget = (target: string): boolean =>
@@ -198,13 +187,9 @@ export const isTermTarget = (target: string | null): boolean =>
   target !== null && /\.term$/i.test(target)
 
 export const isPagesTarget = ending(/\.pages$/i)
-
 export const isWebTarget = ending(/\.(url|webloc)$/i)
-
 export const isImageTarget = ending(/\.(a?png|jpe?g|gif|webp|avif|bmp|ico|svg)$/i)
-
 export const isAudioTarget = ending(/\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|weba)$/i)
-
 export const isVideoTarget = ending(/\.(mp4|m4v|webm|mov|ogv|mkv|avi)$/i)
 
 export type EmbedKind = 'image' | 'audio' | 'video' | 'pdf' | 'canvas' | 'base'
@@ -255,11 +240,9 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
   const bar = inner.indexOf('|')
   const named = bar === -1 ? inner : inner.slice(0, bar).replace(/\\$/, '')
   const alias = bar === -1 ? null : inner.slice(bar + 1).trim()
-
   const hash = named.indexOf('#')
   const target = (hash === -1 ? named : named.slice(0, hash)).trim()
   const fragment = hash === -1 ? '' : named.slice(hash + 1).trim()
-
   const block = fragment.startsWith('^') ? fragment.slice(1) : null
   const heading = block === null && fragment ? fragment : null
 
@@ -269,7 +252,6 @@ export function parseWikilink(inner: string, embed = false): Wikilink | null {
 }
 
 const NOT_IN_WIKILINK = /[#^[\]|`]/
-
 export const wikilinkCannotName = (name: string): boolean => NOT_IN_WIKILINK.test(name)
 
 export function formatWikilink(link: Wikilink): string {
@@ -288,7 +270,6 @@ export const shownText = (link: Wikilink): string => link.alias ?? linkTarget(li
 export function shownSpan(inner: string): { from: number; to: number } {
   const bar = inner.indexOf('|')
   const aliased = bar !== -1 && inner.slice(bar + 1).trim() !== ''
-
   let from = aliased ? bar + 1 : 0
   let to = aliased ? inner.length : bar === -1 ? inner.length : bar
 
@@ -526,7 +507,6 @@ export function* lines(text: string): Generator<Row> {
   for (;;) {
     const end = text.indexOf('\n', at)
     const row = text.slice(at, end === -1 ? text.length : end)
-
     const matters = at < wordsAt
     const isCode = !matters && code.line(row) !== WORDS
     yield {
@@ -555,7 +535,6 @@ function collect(
 ) {
   if (!line.includes('[')) return
   const ends = line.includes('](') ? labelEnds(line) : new Map<number, number>()
-
   let after: { label: number; to: number } | null = null
   for (let open = line.indexOf('['); open !== -1; open = line.indexOf('[', open + 1)) {
     if (after && open > after.label) {
@@ -608,11 +587,8 @@ function collect(
 }
 
 const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
-
 const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
-
 const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
-
 const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
 const bytesOf = (run: string): Uint8Array =>
@@ -651,11 +627,8 @@ export const slugify = (text: string): string =>
     .replace(/\s+/g, '-') || 'section'
 
 const HEADING = /^[ \t]{0,3}(#{1,6})[ \t]+(.*)\r?$/
-
 const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
-
 const CLOSING_HASHES = /[ \t]+#+[ \t]*$/
-
 export const isHeading = (line: string): boolean => HEADING.test(line)
 
 export function headingText(line: string): string {
@@ -673,7 +646,6 @@ export interface HeadingRow {
 }
 
 const ATX = /^[ \t]{0,3}(#{1,6})[ \t]/
-
 const UNDERLINE = /^ {0,3}(=+|-+)[ \t]*\r?$/
 
 const NOT_PROSE =
@@ -1090,9 +1062,7 @@ export function blocksOf(text: string): NoteBlock[] {
   let current: NoteBlock | null = null
   let run: NoteBlock | null = null
   let after = false
-
   let listing = false
-
   const rows = rowsOf(text)
   const { held: blocks, goesOn } = layoutOf(rows)
   const quoted = quotedRows(rows)
@@ -1145,7 +1115,6 @@ export const blockIdsBlanked = (text: string): string =>
 
 const ANCHOR_OPEN = '\uE0F0'
 const ANCHOR_CLOSE = '\uE0F1'
-
 const TABLE_RULE = /^\s*\|?[\s:|-]+\|?\s*$/
 
 export function blockIdsAnchored(

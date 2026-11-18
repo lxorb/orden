@@ -1,5 +1,4 @@
 const QUOTED = /^(["'])([\s\S]*)\1$/
-
 export const isQuoted = (value: string): boolean => QUOTED.test(value.trim())
 
 export function unquoted(value: string): string {

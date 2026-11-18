@@ -8,7 +8,6 @@ export const isDiagram = (language: string): boolean =>
 export type DiagramScheme = 'light' | 'dark'
 
 export const DIAGRAM_SCHEMES: readonly DiagramScheme[] = ['light', 'dark']
-
 export const DIAGRAM_NAMED = 'nib/diagram/v1\n'
 
 export async function diagramKey(

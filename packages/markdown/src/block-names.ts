@@ -15,7 +15,6 @@ import {
 } from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)$/u
-
 const TABLE_RULE = /^[\s|:-]*-[\s|:-]*$/u
 
 function nameStandsApart(run: readonly Row[]): boolean {
@@ -77,7 +76,6 @@ export function namedBlock(
   const lines = source.split('\n')
   const last = lines[end] ?? ''
   const ending = last.endsWith('\r') ? '\r' : ''
-
   const under = rows.slice(end + 1).find((one) => one.text.trim())
   const had =
     (under && !under.code && ownLine(under.text) ? blockIdOf(under.text) : null) ??

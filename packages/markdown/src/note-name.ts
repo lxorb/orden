@@ -21,7 +21,6 @@ export const isAgentsName = (name: string): boolean =>
   /^agents\.(md|markdown|mdown|mkd)$/i.test(name.trim())
 
 const OWN = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat|base|term|application)$/i
-
 export const shownName = (name: string): string => name.replace(OWN, '') || name
 
 export const rowName = (name: string, isFolder: boolean): string =>
@@ -43,17 +42,11 @@ export function copyName(name: string): string {
 }
 
 const MOST = 60
-
 const LINES = 40
-
 export const TITLE_CHARS = 2_000
-
 const HEADING = /^ {0,3}(#{1,6})\s+(.*)$/
-
 const MARKUP = /^\s*(?:#{1,6}\s+|[-*+]\s+|>\s*)/
-
 const FENCE = /^ {0,3}(?:(`{3,})[^`]*|(~{3,}).*)$/
-
 const RULE = /^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$/
 
 export function titleFrom(lines: Iterable<string>): string | null {
@@ -66,7 +59,6 @@ export function titleFrom(lines: Iterable<string>): string | null {
   const matter = frontMatterLines(taken.join('\n'))
   const after = matter ? taken.join('\n').slice(0, matter.close).split('\n').length : 0
   let first: string | null = null
-
   let fence: string | null = null
 
   for (const raw of taken.slice(after)) {

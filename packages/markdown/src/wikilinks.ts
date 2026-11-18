@@ -45,9 +45,7 @@ export function embedSink(): Embeds {
 }
 
 const EMBED_LINE = new RegExp(`^!\\[\\[(${INNER})\\]\\][ \\t]*(?:\\r?\\n+|$)`)
-
 const EMBED_AT = new RegExp(`!\\[\\[${INNER}\\]\\][ \\t]*(?=\\r?\\n|$)`, 'y')
-
 const WIKILINK_AT_START = new RegExp(`^(!?)\\[\\[(${INNER})\\]\\]`)
 
 function embedLine(src: string, at: number): number | null {
@@ -112,7 +110,6 @@ function anchor(link: Wikilink, resolve: LinkResolver | undefined, text: string)
   const resolved = resolve?.(link) ?? null
   const target = resolved?.href ?? null
   const words = escape(resolved?.text ?? text)
-
   const href = target === null ? null : pathHref(target)
   if (href === null) return words
 
@@ -155,7 +152,6 @@ function card(link: Wikilink, options: { resolveLink?: LinkResolver }): string |
 
   const icon = iconMarkup(kind === 'pdf' ? DOCUMENT : PLANE, 'embed-icon')
   const name = anchor(link, options.resolveLink, shownText(link))
-
   const page = kind === 'pdf' ? pageFragment(link.heading) : null
   const asked =
     page !== null

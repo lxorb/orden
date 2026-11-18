@@ -65,15 +65,10 @@ function closingRun(text: string, from: number, length: number): number {
 }
 
 const NAME_CHARS = String.raw`\p{L}\p{M}\p{N}\p{Extended_Pictographic}`
-
 export const TAG_NAME = String.raw`(?!\p{N}+(?![${NAME_CHARS}\-_/]))[${NAME_CHARS}][${NAME_CHARS}\-_/]*`
-
 const NAME_AT = new RegExp(TAG_NAME, 'uy')
-
 const HASH = '#'
-
 const MARKS = '*_~='
-
 const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
 
 export function opensTagAt(text: string, at: number): boolean {
@@ -88,9 +83,7 @@ export function opensTagAt(text: string, at: number): boolean {
 }
 
 export const opensTag = (before: string): boolean => opensTagAt(before, before.length)
-
 const LEADING_SPACE = /\s*/y
-
 const lastRow = { text: '', from: -1, to: -1, row: false }
 
 function rowAt(text: string, at: number): boolean {

@@ -37,7 +37,6 @@ export function listItems(property: Property): ListItem[] {
 }
 
 const ONLY_QUOTED = /^(?:"(?:[^"\\]|\\.)*"|'(?:[^']|'')*')$/
-
 const BLOCK_ONLY = /(?:^|\s)#|^-(?:\s|$)|^[?:](?:\s|$)|:(?:\s|$)|^[|>]/
 
 export function listLines(key: string, items: readonly ListItem[], source = ''): string {

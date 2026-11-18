@@ -6,9 +6,7 @@ export interface Row {
 }
 
 const MOST_LINES = 1500
-
 const MOST_CELLS = 8_000_000
-
 const lines = (text: string): string[] => (text.length ? text.split('\n') : [])
 
 export interface Work {
@@ -17,7 +15,6 @@ export interface Work {
 }
 
 const nothing = (): Work => ({ matched: 0, cells: 0 })
-
 const work = nothing()
 
 export function workDone(): Work {
@@ -66,7 +63,6 @@ function common(before: string[], after: string[]): [number, number][] {
 export function lineDiff(before: string, after: string): Row[] {
   const old = lines(before)
   const now = lines(after)
-
   const rows: Row[] = []
   let head = 0
   while (head < old.length && head < now.length && old[head] === now[head]) head++

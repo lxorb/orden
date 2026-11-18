@@ -3,21 +3,13 @@ import { codeAndWords, PUNCTUATION } from './tags'
 import { OPENS_MARKUP } from './words'
 
 const bracketsOf = (text: string): string => text.replace(OPENS_MARKUP, '\\<')
-
 const WORD = /[\p{L}\p{N}]/u
-
 const BLANK = /\s/
-
 const A_BLOCK = /^(?:-(?=[\s-]|$)|\+ |>|~~~|=+|#{1,6} )/
-
 const A_NUMBER = /^(\d+)([.)]) /
-
 const A_CODE_SPAN = /(`{1,3})([^`]+)\1(?!`)/y
-
 const A_STRONG = /(\*\*|__)([^`*_[\]\\<%$=]+)\1/y
-
 const A_URL = /(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)(?:[a-zA-Z0-9-]+\.?)+[^\s<]*/y
-
 const AN_ADDRESS = /[hHfFw]/
 
 function addressAt(text: string, at: number): string | null {
@@ -54,7 +46,6 @@ function keptAt(text: string, at: number): string | null {
 }
 
 const isWord = (one: string | undefined): boolean => one !== undefined && WORD.test(one)
-
 const isBlank = (one: string | undefined): boolean => one !== undefined && BLANK.test(one)
 
 function escapeAt(text: string, at: number, midLine: boolean): string {
@@ -94,7 +85,6 @@ export function escapeText(
   const out: string[] = []
   const numbered = A_NUMBER.exec(text)
   const block = numbered ? null : A_BLOCK.exec(text)
-
   let escaped = numbered ? `${numbered[1]}\\${numbered[2]} ` : block ? `\\${block[0]}` : ''
   let at = (numbered?.[0] ?? block?.[0] ?? '').length
   let midLine = at > 0

@@ -32,16 +32,13 @@ interface Row extends Provider {
 }
 
 const ID = /^[\w-]{1,64}$/
-
 const NAME = /^[\w.-]{1,80}$/
-
 const parts = (url: URL): string[] => url.pathname.split('/').filter(Boolean)
 
 const id = (piece: string | undefined): string | null =>
   piece !== undefined && ID.test(piece) ? piece : null
 
 const quoted = (url: URL): string => encodeURIComponent(url.toString())
-
 const YOUTUBE = 'allow-scripts allow-same-origin allow-presentation'
 const PLAYER = 'encrypted-media; picture-in-picture; fullscreen'
 
@@ -223,9 +220,7 @@ function seconds(written: string | null): number | null {
 }
 
 const hostOf = (url: URL): string => url.hostname.toLowerCase().replace(/^www\./, '')
-
 const LISTED = 'allow-scripts'
-
 const PIECE = /^[\w.:=@~-]{1,120}$/
 
 function filled(template: string, found: RegExpExecArray, url: URL): string | null {

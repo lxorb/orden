@@ -202,7 +202,6 @@ const PLOT = {
 }
 
 const GRID = 4
-
 const round = (value: number): string => (Math.round(value * 100) / 100).toString()
 
 export interface ChartOptions {
@@ -228,7 +227,6 @@ function span(chart: Chart): { low: number; high: number; step: number } {
   const bottom = every.reduce((low, one) => Math.min(low, one), 0)
   if (top - bottom < SMALLEST) return { low: 0, high: 1, step: 0.25 }
   const reach = top - bottom
-
   const rough = reach / (GRID - 1)
   const power = 10 ** Math.floor(Math.log10(rough))
   const step = [1, 2, 2.5, 5, 10].map((one) => one * power).find((one) => one >= rough / 1.5) ?? 1

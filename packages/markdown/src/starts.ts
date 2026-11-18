@@ -41,7 +41,6 @@ export function lineStart(
   options: { blanks?: number; orString?: boolean } = {},
 ): number | null {
   const blanks = options.blanks ?? 0
-
   let start = at
   while (start > 0 && at - start < blanks && isBlank(src[start - 1])) start--
 

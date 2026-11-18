@@ -83,9 +83,7 @@ function askedHeight(tag: string): Shape {
 }
 
 const domainOf = (url: URL): string => url.hostname.toLowerCase().replace(/^www\./, '')
-
 const OPENING = /\s*<\/?iframe\b(?:"[^"]*"|'[^']*'|[^'">])*>?/iy
-
 const CLOSING = /<\/iframe\s*>/gi
 
 export function iframesAhead(html: string): { tags: string[]; rest: string } {

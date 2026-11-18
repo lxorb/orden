@@ -13,9 +13,7 @@ export const escapeAll = (text: string): string =>
   text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 
 const SAFE_SCHEMES = new Set(['http', 'https', 'mailto', 'tel'])
-
 const SAFE_DATA_IMAGE = /^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|x-icon);/i
-
 const withoutBlanks = (target: string): string => target.replace(/[\s\p{Cc}\p{Cf}]/gu, '')
 
 const schemeOf = (target: string): string =>
