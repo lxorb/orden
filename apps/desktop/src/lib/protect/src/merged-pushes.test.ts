@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest'
+import '../test/storage'
 
 type Ways = Record<string, string>
 
@@ -40,22 +41,6 @@ vi.mock('@orden/contracts', async (original) => ({
   ...(await original<typeof import('@orden/contracts')>()),
   syncStore: () => ({ remoteIdFor: () => 's1' }),
 }))
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
-
-vi.stubGlobal('localStorage', memoryStorage())
 
 const { protection } = await import('./protection.svelte')
 const { pulled } = await import('./synced')

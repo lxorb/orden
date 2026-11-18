@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest'
+import '../test/storage'
 
 const server = vi.hoisted(() => ({
   stored: {},
@@ -33,22 +34,7 @@ vi.mock('@orden/contracts', async (importOriginal) => ({
   syncStore: () => ({ remoteIdFor: () => 's1' }),
 }))
 
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
-
 const page = new EventTarget()
-vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('window', page)
 
 const main = {
