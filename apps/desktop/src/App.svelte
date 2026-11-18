@@ -202,6 +202,8 @@
     if (joining.step) void joinSheet.ask()
     if (joining.aside) void joinPending.ask()
     if (viewport.touch && viewport.typing) void formatBarDoor.ask()
+    if (palette) void paletteDoor.ask()
+    if (prompt.open) void promptSheet.ask()
   })
 
   onDestroy(start())
@@ -358,13 +360,7 @@
     }),
   )
   $effect(() => {
-    if (palette) void paletteDoor.ask()
-  })
-  $effect(() => {
     if (paletteWords.words !== null) palette = true
-  })
-  $effect(() => {
-    if (prompt.open) void promptSheet.ask()
   })
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 

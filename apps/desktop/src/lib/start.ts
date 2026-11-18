@@ -148,9 +148,6 @@ export function start(): () => void {
       .turn('right')
       .then(() => import('./rows/src/api'))
       .then(() => startRunner())
-  }
-
-  if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
       .then(featureGates)
@@ -170,99 +167,63 @@ export function start(): () => void {
       .then((one) => one.retireChats())
       .then((one) => one.forgetRetiredChatsHere())
       .catch(() => undefined)
-  }
-
-  if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
       .then(() => import('./tasks-model/src/api'))
       .then(({ startTodos }) => startTodos())
-  }
-
-  if (!__EVEN_PLUGIN__) {
     void startup
       .turn('right')
       .then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
-  }
-
-  if (!__EVEN_PLUGIN__) {
     void startup.turn('right').then(blankTabs)
-  }
-
-  if (!__EVEN_PLUGIN__)
     void startup
       .turn('right')
       .then(() => import('./overview/src/api'))
       .then((one) => one.wakeFaces())
-
-  if (!__EVEN_PLUGIN__) {
     void startup.turn('rooms').then(() =>
       import('./sync-client/src/api').then(({ connect }) => {
         connect()
       }),
     )
-  }
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    void (async () => {
-      await startup.turn('right')
-      await convertAll(workspace)
-      await keepWorking()
-      if (platform() !== 'macos') return
-      const { quickShortcuts } = await import('./quick-add/src/api')
-      await (await quickShortcuts()).hearShortcuts()
-    })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
-  }
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup.turn('rooms').then(() => oneWindow())
-  }
-
-  if (!__EVEN_PLUGIN__) {
+    if (isDesktop) {
+      void (async () => {
+        await startup.turn('right')
+        await convertAll(workspace)
+        await keepWorking()
+        if (platform() !== 'macos') return
+        const { quickShortcuts } = await import('./quick-add/src/api')
+        await (await quickShortcuts()).hearShortcuts()
+      })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
+      void startup.turn('rooms').then(() => oneWindow())
+    }
     let fetched: Promise<Across> | null = null
     const across = () => (fetched ??= acrossStarting().then(({ startAcross }) => startAcross()))
     workspace.acrossWhenWriting(across)
     void startup.turn('rooms').then(across)
-  }
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
-  }
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup
-      .turn('right')
-      .then(() => import('./quick-add/src/api'))
-      .then((one) => one.quickAnywhere())
-      .then((one) => stops.keep(one.listen()))
-  }
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    void outsideDrops()
-      .then(({ hearOutsideDrops }) => hearOutsideDrops())
-      .then(stops.keep)
-      .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
-  }
-
-  const reporting = !import.meta.env.DEV && !__DRIVEABLE__
-
-  if (!__EVEN_PLUGIN__ && isDesktop) {
-    void startup
-      .turn('rooms')
-      .then(() => import('./crash-reports/src/api'))
-      .then((one) => one.watchCrashes(reporting))
-      .then(stops.keep)
-  }
-
-  if (!__EVEN_PLUGIN__) {
+    const reporting = !import.meta.env.DEV && !__DRIVEABLE__
+    if (isDesktop) {
+      void startup
+        .turn('rooms')
+        .then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
+      void startup
+        .turn('right')
+        .then(() => import('./quick-add/src/api'))
+        .then((one) => one.quickAnywhere())
+        .then((one) => stops.keep(one.listen()))
+      void outsideDrops()
+        .then(({ hearOutsideDrops }) => hearOutsideDrops())
+        .then(stops.keep)
+        .catch((error: unknown) => log('warn', `outside drops: ${String(error)}`))
+      void startup
+        .turn('rooms')
+        .then(() => import('./crash-reports/src/api'))
+        .then((one) => one.watchCrashes(reporting))
+        .then(stops.keep)
+    }
     void startup
       .turn('rooms')
       .then(() => import('./usage/src/api'))
       .then((one) => one.watchUsage(reporting))
       .then(stops.keep)
-  }
-
-  if (!__EVEN_PLUGIN__) {
     void import('./ui-controls/src/api').then((one) => stops.keep(one.hidePointerWhileTyping()))
   }
 
