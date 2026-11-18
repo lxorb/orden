@@ -106,10 +106,7 @@ pub fn which(program: &str) -> Option<std::path::PathBuf> {
             .into_iter()
             .find(|one| one.is_file());
     }
-    let path = std::env::var_os("PATH")?;
-    std::env::split_paths(&path)
-        .flat_map(|folder| candidates(folder.join(program)))
-        .find(|one| one.is_file())
+    orden_base::program::which(program)
 }
 
 #[cfg(any(target_os = "linux", test))]

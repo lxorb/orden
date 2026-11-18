@@ -88,10 +88,8 @@ fn gpu_process() -> bool {
         let path = entry.path();
         let parent = std::fs::read_to_string(path.join("stat"))
             .ok()
-            .and_then(|stat| {
-                stat.rsplit_once(')')
-                    .and_then(|(_, rest)| rest.split_whitespace().nth(1).map(str::to_owned))
-            });
+            .and_then(|stat| orden_base::stat::of(&stat))
+            .map(|stat| stat.parent.to_string());
         parent.as_deref() == Some(own.as_str())
             && std::fs::read(path.join("cmdline")).is_ok_and(|line| {
                 line.split(|byte| *byte == 0)

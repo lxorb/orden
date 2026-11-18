@@ -927,16 +927,7 @@ pub fn members(session: i32) -> Vec<i32> {
     listed
         .filter_map(|one| one.ok()?.file_name().to_str()?.parse::<i32>().ok())
         .filter(|pid| {
-            let Ok(stat) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else {
-                return false;
-            };
-            let Some(at) = stat.rfind(')') else {
-                return false;
-            };
-            let mut fields = stat[at + 1..].split_whitespace();
-            let state = fields.next();
-            let within = fields.nth(2).and_then(|one| one.parse::<i32>().ok());
-            !matches!(state, Some("Z" | "X")) && within == Some(session)
+            orden_base::stat::read(pid).is_some_and(|stat| !stat.gone() && stat.session == session)
         })
         .collect()
 }

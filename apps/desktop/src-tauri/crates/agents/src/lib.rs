@@ -12,7 +12,6 @@ pub mod limits;
 pub mod log;
 pub mod policy;
 pub mod process;
-pub mod program;
 pub mod shell;
 pub mod stop;
 pub mod system;

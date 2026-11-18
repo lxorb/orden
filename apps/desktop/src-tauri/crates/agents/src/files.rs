@@ -191,21 +191,20 @@ fn changes(op: FilesOp) -> bool {
 }
 
 fn resolved(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
+    under_home(asked, app.path().home_dir().ok().as_deref())
+}
+
+pub fn under_home(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
     let asked = asked.trim();
-    let given = if let Some(rest) = asked
+    let rest = asked
         .strip_prefix("~/")
         .or_else(|| asked.strip_prefix("~\\"))
-    {
-        app.path()
-            .home_dir()
-            .map_err(|_| "this account has no home folder".to_owned())?
-            .join(rest)
-    } else if asked == "~" {
-        app.path()
-            .home_dir()
-            .map_err(|_| "this account has no home folder".to_owned())?
-    } else {
-        PathBuf::from(asked)
+        .or_else(|| (asked == "~").then_some(""));
+    let given = match rest {
+        Some(rest) => home
+            .ok_or_else(|| "this account has no home folder".to_owned())?
+            .join(rest),
+        None => PathBuf::from(asked),
     };
     if !given.is_absolute() {
         return Err(format!(

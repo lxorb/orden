@@ -7,7 +7,7 @@ use tauri::AppHandle;
 
 use super::run::run_to_end;
 use super::{Tool, TELLING};
-use orden_agents::program::Program;
+use orden_base::program::Program;
 
 const SHIPPED: &str = "so.orden.Orden";
 

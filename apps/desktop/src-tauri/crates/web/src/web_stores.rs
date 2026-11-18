@@ -9,22 +9,8 @@ pub fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
 }
 
 #[cfg(test)]
-pub fn identifier(name: &str) -> [u8; 16] {
-    fn hashed(name: &str, start: u64) -> u64 {
-        name.bytes().fold(start, |hash, byte| {
-            (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
-        })
-    }
-
-    let mut out = [0u8; 16];
-    out[..8].copy_from_slice(&hashed(name, 0xcbf2_9ce4_8422_2325).to_be_bytes());
-    out[8..].copy_from_slice(&hashed(name, 0x6e69_625f_7765_6273).to_be_bytes());
-    out
-}
-
-#[cfg(test)]
 mod tests {
-    use super::{identifier, named};
+    use super::named;
     use orden_web_engine::LONGEST_STORE_NAME as LONGEST;
 
     #[test]
@@ -76,28 +62,5 @@ mod tests {
         let long = format!("space_{}", "a".repeat(LONGEST - 6));
         assert!(named(Some(&long)).is_ok());
         assert!(named(Some(&format!("{long}a"))).is_err());
-    }
-
-    #[test]
-    fn a_macs_store_is_the_same_every_time() {
-        let one = identifier("space_0-k3j9x2");
-        assert_eq!(one, identifier("space_0-k3j9x2"));
-        assert_ne!(one, identifier("space_1-k3j9x2"));
-        assert_ne!(
-            identifier("site_0-a_ethz.ch"),
-            identifier("site_0-a_uzh.ch")
-        );
-        assert_ne!(one[..8], one[8..], "two halves, not one written twice");
-        assert_eq!(
-            identifier("a")[..8],
-            0xaf63_dc4c_8601_ec8c_u64.to_be_bytes()
-        );
-        assert_eq!(
-            identifier(""),
-            [
-                0xcb, 0xf2, 0x9c, 0xe4, 0x84, 0x22, 0x23, 0x25, 0x6e, 0x69, 0x62, 0x5f, 0x77, 0x65,
-                0x62, 0x73
-            ]
-        );
     }
 }

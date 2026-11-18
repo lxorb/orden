@@ -310,12 +310,7 @@ fn pinned(url: &Url) -> String {
 }
 
 fn host(url: &Url) -> String {
-    url.host_str()
-        .unwrap_or_default()
-        .trim_start_matches('[')
-        .trim_end_matches(']')
-        .trim_end_matches('.')
-        .to_lowercase()
+    crate::policy::host_key(url).unwrap_or_default()
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -381,7 +376,7 @@ fn decided(grant: &Grant, url: &Url, before: bool) -> Result<Reach, Answer> {
 }
 
 fn web(url: &Url) -> bool {
-    matches!(url.scheme(), "http" | "https") && url.host_str().is_some_and(|host| !host.is_empty())
+    orden_web_engine::from_a_site(url)
 }
 
 fn reached(agent: &str, site: &str) -> bool {

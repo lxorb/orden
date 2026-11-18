@@ -158,10 +158,8 @@ fn front(shell: Option<u32>) -> Option<(u32, String)> {
 
 #[cfg(target_os = "linux")]
 fn front_group(shell: u32) -> Option<u32> {
-    let stat = std::fs::read_to_string(format!("/proc/{shell}/stat")).ok()?;
-    let after = &stat[stat.rfind(')')? + 1..];
-    let group = after.split_whitespace().nth(5)?.parse::<i64>().ok()?;
-    u32::try_from(group).ok().filter(|one| *one > 0)
+    let front = orden_base::stat::read(shell)?.front;
+    u32::try_from(front).ok().filter(|one| *one > 0)
 }
 
 #[cfg(target_os = "macos")]

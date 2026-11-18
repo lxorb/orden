@@ -18,6 +18,9 @@ serde.workspace = true
 serde_json.workspace = true
 percent-encoding.workspace = true
 
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+dirs.workspace = true
+
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
 libc.workspace = true
 

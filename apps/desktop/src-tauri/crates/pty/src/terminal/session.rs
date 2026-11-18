@@ -628,7 +628,7 @@ mod tests {
         first.detach();
         drop(first);
         thread::sleep(Duration::from_millis(300));
-        assert!(alive(pid), "letting go ended the shell");
+        assert!(orden_base::stat::running(pid), "letting go ended the shell");
         assert!(super::held(&place, "kept"));
 
         let (again, heard) = opened(&place, "kept", 100, 30);
@@ -650,10 +650,15 @@ mod tests {
         let session = taken(&again);
         session.end();
         let until = Instant::now() + Duration::from_secs(10);
-        while (alive(pid) || super::held(&place, "kept")) && Instant::now() < until {
+        while (orden_base::stat::running(pid) || super::held(&place, "kept"))
+            && Instant::now() < until
+        {
             thread::sleep(Duration::from_millis(50));
         }
-        assert!(!alive(pid), "the shell {pid} outlived its end");
+        assert!(
+            !orden_base::stat::running(pid),
+            "the shell {pid} outlived its end"
+        );
         assert!(
             !super::held(&place, "kept"),
             "the ended session is still listed"
@@ -694,10 +699,15 @@ mod tests {
 
         told(&place, "listed", wire::END, &[]).expect("ended");
         let until = Instant::now() + Duration::from_secs(10);
-        while (alive(pid) || !listed(&place).is_empty()) && Instant::now() < until {
+        while (orden_base::stat::running(pid) || !listed(&place).is_empty())
+            && Instant::now() < until
+        {
             thread::sleep(Duration::from_millis(50));
         }
-        assert!(!alive(pid), "the shell outlived its end");
+        assert!(
+            !orden_base::stat::running(pid),
+            "the shell outlived its end"
+        );
         assert!(listed(&place).is_empty());
     }
 
@@ -806,10 +816,13 @@ mod tests {
         }
 
         let until = Instant::now() + Duration::from_secs(10);
-        while alive(pid) && Instant::now() < until {
+        while orden_base::stat::running(pid) && Instant::now() < until {
             thread::sleep(Duration::from_millis(50));
         }
-        assert!(!alive(pid), "the shell {pid} outlived its tab");
+        assert!(
+            !orden_base::stat::running(pid),
+            "the shell {pid} outlived its tab"
+        );
     }
 
     #[test]
@@ -886,26 +899,6 @@ mod tests {
         let session = taken(&held);
         assert!(!session.busy());
         session.end();
-    }
-
-    #[cfg(windows)]
-    fn alive(pid: u32) -> bool {
-        let listed = std::process::Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
-            .output()
-            .map(|out| String::from_utf8_lossy(&out.stdout).into_owned())
-            .unwrap_or_default();
-        listed.contains(&format!(" {pid} "))
-    }
-
-    #[cfg(unix)]
-    fn alive(pid: u32) -> bool {
-        let state = std::process::Command::new("ps")
-            .args(["-o", "stat=", "-p", &pid.to_string()])
-            .output()
-            .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_owned())
-            .unwrap_or_default();
-        !state.is_empty() && !state.starts_with('Z')
     }
 
     #[test]

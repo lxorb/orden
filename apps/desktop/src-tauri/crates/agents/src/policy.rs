@@ -5,10 +5,20 @@ use crate::verbs::{Category, DialogKind, Store};
 use orden_base::letters::seen;
 
 pub fn host_of(url: &str) -> Option<String> {
-    let parsed: tauri::Url = url.parse().ok()?;
-    parsed
-        .host_str()
-        .map(|host| host.trim_end_matches('.').to_lowercase())
+    host_key(&url.parse().ok()?)
+}
+
+pub fn host_key(url: &tauri::Url) -> Option<String> {
+    url.host_str().map(|host| {
+        host.trim_start_matches('[')
+            .trim_end_matches(']')
+            .trim_end_matches('.')
+            .to_lowercase()
+    })
+}
+
+pub fn from_a_site(url: &str) -> bool {
+    tauri::Url::parse(url).is_ok_and(|url| orden_web_engine::from_a_site(&url))
 }
 
 pub fn on_the_web(url: &str) -> bool {
@@ -112,10 +122,8 @@ fn named(site: &str) -> String {
     format!("http://{site}/")
         .parse::<tauri::Url>()
         .ok()
-        .and_then(|url| url.host_str().map(str::to_owned))
-        .unwrap_or_else(|| site.to_owned())
-        .trim_end_matches('.')
-        .to_lowercase()
+        .and_then(|url| host_key(&url))
+        .unwrap_or_else(|| site.trim_end_matches('.').to_lowercase())
 }
 
 pub fn made_by(url: &str) -> String {
@@ -3009,6 +3017,17 @@ mod tests {
     #[test]
     fn a_failed_load_leaves_the_tab_to_its_agent() {
         assert!(site_allowed(&grant(), "chrome-error://chromewebdata/", Store::Agent).is_ok());
+    }
+
+    #[test]
+    fn an_ip_v6_host_is_keyed_as_the_page_s_requests_key_it() {
+        assert_eq!(host_of("http://[::1]:8/").as_deref(), Some("::1"));
+        let mut grant = grant();
+        grant.sites.insert("::1".into(), SiteRule::Deny);
+        assert!(site_allowed(&grant, "http://[::1]:8/", Store::Agent).is_err());
+        let mut bracketed = self::grant();
+        bracketed.sites.insert("[::1]".into(), SiteRule::Deny);
+        assert!(site_allowed(&bracketed, "http://[::1]:8/", Store::Agent).is_err());
     }
 
     #[test]
