@@ -1,9 +1,7 @@
 import { type DatabaseDump, dump, existing, finished, shaped } from '../../../handoff/src/api'
 
 export const FORMER_NAME = 'nib'
-
 const ANSWERED_WITHIN = 400
-
 const me = crypto.randomUUID()
 
 type Heard = 'nobody' | 'older' | 'staying'

@@ -12,9 +12,7 @@ import type { InternalChange, InternalFolder } from './folder'
 import { type Mounted, mountOf, mounts } from './roots'
 
 export const WORK = '.work'
-
 export const WORK_KEPT = '.work.json'
-
 const SAVE_AFTER = 1000
 
 export interface Was {
@@ -63,7 +61,6 @@ function relOf(root: string, path: string): string | null {
 }
 
 const encoder = new TextEncoder()
-
 const decoder = new TextDecoder('utf-8', { ignoreBOM: true })
 
 function same(one: Uint8Array | null, other: Uint8Array | null): boolean {
@@ -452,7 +449,6 @@ interface Held {
 }
 
 const held = new Map<string, Held>()
-
 const lockOf = (folder: string) => `orden:working:${folder}`
 
 function keep(mount: Mounted, disk: (folder: string) => WorkDisk = crateDisk): Held {

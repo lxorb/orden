@@ -73,7 +73,6 @@ interface TreeOptions {
 }
 
 const now = () => Date.now()
-
 export const MOST_NOTE_BYTES = 64 * 1024 * 1024
 export const TOO_LARGE = 'that note is too large'
 
@@ -84,7 +83,6 @@ function tooLarge(content: string): boolean {
 }
 
 export const SCANNED_AT_ONCE = 256 * 1024
-
 const UNSIZED = SCANNED_AT_ONCE / 128
 
 function chunksOf(
@@ -469,7 +467,6 @@ function entryOf(value: unknown): Trashed | null {
 }
 
 const keptTrash = async () => (await Promise.all(trees().map((tree) => tree.trash.list()))).flat()
-
 const trashEntries = async () => [...(await ownTrash()), ...(await keptTrash())]
 
 async function trashOf(id: string): Promise<TreeRows | null> {
@@ -488,9 +485,7 @@ async function ownTrash(): Promise<Trashed[]> {
 }
 
 const TRASH_LOCK = 'orden:web-trash'
-
 const TRASH_PATIENCE = 10_000
-
 let trashTurn: Promise<unknown> = Promise.resolve()
 
 function changeTrash(change: (entries: Trashed[]) => Trashed[]): Promise<void> {
@@ -831,7 +826,6 @@ async function purgeSnapshots(days: number): Promise<number> {
 }
 
 const THEMES = 'themes/'
-
 const THEME_ID = /^[a-z0-9][a-z0-9-]{0,38}$/
 
 function themeKey(id: string): string {
@@ -860,7 +854,6 @@ async function listThemes(): Promise<{ id: string; name: string; path: string }[
 }
 
 const PAPERS = 'papers/'
-
 const PAPER_LIMIT = 4 * 1024 * 1024
 
 async function paperRecords(): Promise<{ key: string; path: string; size: number }[]> {

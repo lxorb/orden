@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { FileRow } from './store'
 
 const disk = vi.hoisted(() => ({ files: new Map<string, FileRow>() }))
-
 const inOrder = () => [...disk.files.keys()].sort()
 
 vi.mock('./store', () => ({

@@ -1,6 +1,5 @@
 import { canWriteAt } from '../../sharing/src/api'
-import type { Sites } from './new-site'
-import { newSite } from './new-site'
+import { newSite, type Sites } from './new-site'
 import { droppedAddress, plainOrigin } from '@orden/scan/web-address'
 
 const ENTITIES: Record<string, string> = {

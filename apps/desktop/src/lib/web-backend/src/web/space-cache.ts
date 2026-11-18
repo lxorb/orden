@@ -9,7 +9,6 @@ function searched(base: string, path: string): boolean {
 }
 
 const CAP = 24_000_000
-
 let cap = CAP
 
 export function holdAtMost(characters: number): void {

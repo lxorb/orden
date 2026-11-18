@@ -7,11 +7,10 @@ import {
   invoke,
   isDesktop,
 } from '../../platform/src/api'
-import { hostOf } from '@orden/scan/visits'
+import { hostOf, type Visit } from '@orden/scan/visits'
 import { isWebData, originOf, siteOf, storeName, type WebData } from './web-data'
 import { HISTORY } from './web-data.svelte'
 import { bounded } from './visits'
-import type { Visit } from '@orden/scan/visits'
 
 const OLD = 'orden:web-data'
 const OLD_UP = 'orden:web-data-up'

@@ -36,11 +36,8 @@ interface Told {
 }
 
 const quiet: Told = { progress: () => undefined, failed: () => undefined }
-
 const SAVE_EVERY = 200
-
 const SAVE_AFTER = 2000
-
 const FAILED_SHOWN = 20000
 
 interface Stamp {
@@ -49,9 +46,7 @@ interface Stamp {
 }
 
 const foldsCase = () => ['windows', 'macos', 'ios', ''].includes(platform())
-
 const INBOX = '.Inbox.md'
-
 const VAULT = ['.obsidian/app.json', '.obsidian/workspace.json', '.obsidian/core-plugins.json']
 
 async function contents(root: string): Promise<{ path: string; dir: boolean }[]> {
@@ -145,7 +140,6 @@ async function backedUp(from: string, name: string): Promise<string> {
 }
 
 let turn: Promise<unknown> = Promise.resolve()
-
 const CONVERTING_LOCK = 'orden:converting'
 
 function oneAtATime<T>(run: () => Promise<T>): Promise<T> {

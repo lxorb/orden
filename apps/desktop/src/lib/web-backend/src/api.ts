@@ -26,7 +26,6 @@ export const webInvoke = async <T>(command: string, args?: Record<string, unknow
   (await import('./web/commands')).webInvoke<T>(command, args)
 
 export const seed = async (): Promise<boolean> => (await import('./web/commands')).seed()
-
 export const webMeta = async (): Promise<WebMeta> => (await import('./web/store')).meta
 
 export const databaseName = async (from: string, to: string): Promise<string> =>

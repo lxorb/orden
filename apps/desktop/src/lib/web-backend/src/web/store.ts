@@ -201,7 +201,6 @@ export interface RowChange {
 }
 
 const CHANNEL = 'orden:rows'
-
 let channel: BroadcastChannel | null = null
 
 function bus(): BroadcastChannel | null {
@@ -393,7 +392,6 @@ export interface Rows {
 }
 
 const OWN: Rows = { files: ownFiles, assets: ownAssets, stats: ownStats }
-
 const OWN_HERE: Rows | null = native() ? null : OWN
 
 function native(): boolean {

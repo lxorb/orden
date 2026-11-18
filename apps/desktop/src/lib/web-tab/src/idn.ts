@@ -1,26 +1,7 @@
 import { hostsReadBy } from '@orden/scan/web-address'
 
-const WITH_MARKS = [
-  'Arabic',
-  'Bengali',
-  'Devanagari',
-  'Ethiopic',
-  'Georgian',
-  'Gujarati',
-  'Gurmukhi',
-  'Hebrew',
-  'Kannada',
-  'Khmer',
-  'Lao',
-  'Malayalam',
-  'Myanmar',
-  'Oriya',
-  'Sinhala',
-  'Tamil',
-  'Telugu',
-  'Thai',
-  'Tibetan',
-]
+const WITH_MARKS = `Arabic Bengali Devanagari Ethiopic Georgian Gujarati Gurmukhi Hebrew Kannada
+  Khmer Lao Malayalam Myanmar Oriya Sinhala Tamil Telugu Thai Tibetan`.split(/\s+/)
 
 const WITHOUT_MARKS = ['Armenian', 'Cyrillic', 'Greek']
 

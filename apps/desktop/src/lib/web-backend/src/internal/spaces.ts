@@ -25,7 +25,6 @@ async function home(): Promise<string> {
 }
 
 const rootIn = (folder: string, name: string) => joinPath(folder, name)
-
 let finding: Promise<Space[]> | null = null
 
 export function keptSpaces(): Promise<Space[]> {
@@ -36,11 +35,8 @@ export function keptSpaces(): Promise<Space[]> {
 }
 
 const fromOf = new Map<string, string>()
-
 const FROM = '.from'
-
 const RETIRED = '.retired'
-
 export const CONVERTING = '.converting'
 
 async function lines(name: string): Promise<string[]> {
