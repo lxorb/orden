@@ -16,14 +16,10 @@
   $effect(() => {
     const one = asking
     if (!one) return
-    return overlays.show(() => {
-      vault.dismiss(one.id)
-    })
+    return overlays.show(() => vault.dismiss(one.id))
   })
 
-  onMount(() => {
-    card?.focus({ preventScroll: true })
-  })
+  onMount(() => card?.focus({ preventScroll: true }))
 </script>
 
 {#if asking}

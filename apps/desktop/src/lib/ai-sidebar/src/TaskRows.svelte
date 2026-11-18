@@ -51,10 +51,6 @@
       })
   }
 
-  function open() {
-    void runCommand('views.todos')
-  }
-
   const when = (one: Task) => [one.due, one.time].filter(Boolean).join(' ')
 </script>
 
@@ -75,7 +71,9 @@
           aria-label="Done"
           onclick={() => tick(one)}
         ></button>
-        <button class="words" title={one.space} onclick={open}>{one.text}</button>
+        <button class="words" title={one.space} onclick={() => void runCommand('views.todos')}
+          >{one.text}</button
+        >
         {#if when(one)}
           <span class="when">{when(one)}</span>
         {/if}

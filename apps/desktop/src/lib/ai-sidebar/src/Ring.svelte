@@ -26,12 +26,15 @@
 
   const say = (count: number) => tokens(count, region())
 
+  const whole = $derived(
+    !bands ? '' : bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used),
+  )
+
   const summary = $derived.by(() => {
-    if (!bands) return ''
-    const used = bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used)
     const spent = chat.thread?.spent
-    const cost = spent?.cost === undefined ? '' : `, $${spent.cost.toFixed(2)}`
-    return spent ? `${used}, ↑${say(spent.input)} ↓${say(spent.output)}${cost}` : used
+    if (!spent) return whole
+    const cost = spent.cost === undefined ? '' : `, $${spent.cost.toFixed(2)}`
+    return `${whole}, ↑${say(spent.input)} ↓${say(spent.output)}${cost}`
   })
 
   const R = 5.25
@@ -99,9 +102,7 @@
         transition:fly={{ y: 6, duration: dur(150), easing: cubicOut }}
       >
         <div class="top">
-          <span class="whole"
-            >{bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used)}</span
-          >
+          <span class="whole">{whole}</span>
           {#if bands.compacts !== null}
             <span class="at">Compacts at {say(bands.compacts)}</span>
           {/if}

@@ -15,11 +15,9 @@
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
 
-  const verb = $derived.by(() => {
-    if (part.kind === 'thinking') return 'Thought'
-    const known = verbOf(part.verb)
-    return known ?? bareName(part.verb)
-  })
+  const verb = $derived(
+    part.kind === 'thinking' ? 'Thought' : (verbOf(part.verb) ?? bareName(part.verb)),
+  )
 
   const object = $derived(
     part.kind === 'thinking' ? (part.ms ? seconds(part.ms, region()) : '') : objectOf(part.args),
@@ -42,11 +40,8 @@
   async function press() {
     const change = part.kind === 'tool' ? part.change : undefined
     const root = chat.root
-    if (change && root) {
-      await workspace.open(insideSpace(root, change.path))
-      return
-    }
-    opened = !opened
+    if (change && root) await workspace.open(insideSpace(root, change.path))
+    else opened = !opened
   }
 </script>
 
