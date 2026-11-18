@@ -1,7 +1,6 @@
 <script lang="ts">
   import { deliver } from '../../files-out/src/api'
-  import { message } from '../../ui-kit/src/api'
-  import { segmented } from '../../ui-kit/src/api'
+  import { message, segmented } from '../../ui-kit/src/api'
   import { pass } from '../../pass-sync/src/api'
 
   type Format = 'sealed' | 'json' | 'csv'

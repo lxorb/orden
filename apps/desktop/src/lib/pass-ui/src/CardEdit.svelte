@@ -3,8 +3,7 @@
   import { Select } from '../../ui-controls/src/api'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
-  import { FIELD_ICONS } from '../../pass-sync/src/api'
-  import { brandLabel, brandOf } from '../../pass-sync/src/api'
+  import { FIELD_ICONS, brandLabel, brandOf } from '../../pass-sync/src/api'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { content = $bindable(), oninput }: { content: Card; oninput: () => void } = $props()

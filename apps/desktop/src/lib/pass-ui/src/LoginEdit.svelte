@@ -3,10 +3,8 @@
   import type { Login } from '@orden/pass/types'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
-  import { FIELD_ICONS } from '../../pass-sync/src/api'
+  import { FIELD_ICONS, pass, type PassUi } from '../../pass-sync/src/api'
   import PasswordField from './PasswordField.svelte'
-  import { pass } from '../../pass-sync/src/api'
-  import type { PassUi } from '../../pass-sync/src/api'
   import WebsitesEdit from './WebsitesEdit.svelte'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */

@@ -1,14 +1,10 @@
 <script lang="ts">
-  import type { VaultColor, VaultIcon } from '@orden/pass/types'
-  import { VAULT_COLORS } from '@orden/pass/types'
+  import { VAULT_COLORS, type VaultColor, type VaultIcon } from '@orden/pass/types'
   import { iconChoice } from '../../icon-picker/src/api'
   import { message } from '../../ui-kit/src/api'
   import { Sheet } from '../../ui-controls/src/api'
   import { theme } from '../../theme/src/api'
-  import { vaultColour } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
-  import type { PassUi } from '../../pass-sync/src/api'
-  import { colorName } from '../../pass-sync/src/api'
+  import { vaultColour, pass, colorName, type PassUi } from '../../pass-sync/src/api'
   import VaultMark from './VaultMark.svelte'
 
   const { ui }: { ui: PassUi } = $props()

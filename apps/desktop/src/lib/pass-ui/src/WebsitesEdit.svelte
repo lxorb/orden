@@ -3,8 +3,7 @@
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import { Cross } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import { FIELD_ICONS } from '../../pass-sync/src/api'
-  import { matchLabel } from '../../pass-sync/src/api'
+  import { FIELD_ICONS, matchLabel } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */

@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { Facts } from '../../../ui-kit/src/api'
-  import { localDate, localNumber } from '../../../platform/src/api'
+  import { Facts, prompt } from '../../../ui-kit/src/api'
+  import { localDate, localNumber, spaceHolding } from '../../../platform/src/api'
   import { diskNear, diskShare, shares } from '@orden/online'
-  import { prompt } from '../../../ui-kit/src/api'
-  import { spaceHolding } from '../../../platform/src/api'
   import { runner } from '../../../sync-client/src/api'
   import { workspace } from '../../../workspace/src/api'
   import { summaryOf } from './choosing'

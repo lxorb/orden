@@ -1,10 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly } from '../../platform/src/api'
+  import { dur, fly, takeKeyboard, isDesktop } from '../../platform/src/api'
   import { overlays } from '../../ui-kit/src/api'
-  import { takeKeyboard } from '../../platform/src/api'
-  import { isDesktop } from '../../platform/src/api'
   import { autofill } from '../../pass-sync/src/api'
   import type { FillChoice, PassBubble } from '../../pass-sync/src/api'
   import { roleWord } from '../../pass-sync/src/api'

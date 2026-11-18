@@ -1,11 +1,8 @@
 <script lang="ts">
   import type { VaultMeta } from '@orden/pass/types'
   import type { Invite } from '@orden/pass/wire'
-  import { message } from '../../ui-kit/src/api'
-  import { said } from '../../ui-kit/src/api'
-  import { roleName } from '../../pass-sync/src/api'
-  import { pass } from '../../pass-sync/src/api'
-  import { passSync } from '../../pass-sync/src/api'
+  import { message, said } from '../../ui-kit/src/api'
+  import { roleName, pass, passSync } from '../../pass-sync/src/api'
   import VaultMark from './VaultMark.svelte'
 
   const invites = $derived(passSync.invites)

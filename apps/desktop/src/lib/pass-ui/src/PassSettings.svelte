@@ -4,8 +4,7 @@
   import SettingsGeneral from './SettingsGeneral.svelte'
   import SettingsImport from './SettingsImport.svelte'
   import SettingsSecurity from './SettingsSecurity.svelte'
-  import type { PassUi } from '../../pass-sync/src/api'
-  import { SETTINGS_TABS, type SettingsTab } from '../../pass-sync/src/api'
+  import { SETTINGS_TABS, type SettingsTab, type PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
 

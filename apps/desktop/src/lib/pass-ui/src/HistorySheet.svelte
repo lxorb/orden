@@ -1,11 +1,9 @@
 <script lang="ts">
   import type { Item } from '@orden/pass/types'
   import { localDate } from '../../platform/src/api'
-  import { message } from '../../ui-kit/src/api'
-  import { prompt } from '../../ui-kit/src/api'
+  import { message, prompt } from '../../ui-kit/src/api'
   import { Sheet } from '../../ui-controls/src/api'
-  import { pass } from '../../pass-sync/src/api'
-  import type { PassUi } from '../../pass-sync/src/api'
+  import { pass, type PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
 

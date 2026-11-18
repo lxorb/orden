@@ -2,8 +2,7 @@
   import type { Field } from '@orden/pass/types'
   import { totpIn } from '@orden/pass/totp'
   import EditField from './EditField.svelte'
-  import { fieldKindIcon } from '../../pass-sync/src/api'
-  import { fieldShape } from '../../pass-sync/src/api'
+  import { fieldKindIcon, fieldShape } from '../../pass-sync/src/api'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
   let { fields = $bindable(), oninput }: { fields: Field[]; oninput: () => void } = $props()

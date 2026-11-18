@@ -2,9 +2,8 @@
   import { FIELD_KINDS, type FieldKind } from '@orden/pass/types'
   import Plus from 'lucide/dist/esm/icons/plus.mjs'
   import { menu } from '../../ui-kit/src/api'
-  import { fieldKindLabel } from '../../pass-sync/src/api'
+  import { fieldKindLabel, pass } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
-  import { pass } from '../../pass-sync/src/api'
 
   const { onadd, label }: { onadd: (kind: FieldKind) => void; label?: string } = $props()
 
