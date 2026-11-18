@@ -7,6 +7,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - apps/desktop/src-tauri/installer.nsh
+      - apps/desktop/src-tauri/installer-close.ps1
       - apps/desktop/src-tauri/wix/**
       - apps/desktop/src-tauri/tauri.conf.json
       - apps/desktop/src-tauri/tauri.macos.conf.json
@@ -28,7 +29,8 @@ permissions:
 env:
   NIB: '0.11.0'
   NIBEDITOR: '0.13.0'
-  NEW: '0.14.0'
+  ORDEN: '0.21.1'
+  NEW: '0.99.0'
 
 jobs:
   build:
@@ -38,29 +40,19 @@ jobs:
       matrix:
         include:
           - platform: windows-latest
+            target: x86_64-pc-windows-msvc
             bundles: nsis,msi
             label: windows
           - platform: macos-latest
+            target: aarch64-apple-darwin
             bundles: app
             label: macos
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      - uses: ./.github/actions/desktop-setup
         with:
-          node-version: 24
-          cache: pnpm
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-        with:
-          env-vars: ImageVersion
-          workspaces: |
-            apps/desktop/src-tauri
-          key: upgrade-${{ matrix.label }}
-      - run: pnpm install --frozen-lockfile
+          target: ${{ matrix.target }}
 
       - name: Build
         shell: bash
@@ -89,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        from: [nib, nibeditor, nib-then-nibeditor]
+        from: [nib, nibeditor, nib-then-nibeditor, orden-in-nib]
         scenario: [updater, silent, elsewhere, msi]
     runs-on: windows-latest
     steps:
@@ -104,7 +96,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for version in "$NIB" "$NIBEDITOR"; do
+          for version in "$NIB" "$NIBEDITOR" "$ORDEN"; do
             gh release download "v$version" --repo "$GITHUB_REPOSITORY" --dir "old-$version" \
               --pattern "*-$version-windows-x64-setup.exe" --pattern "*-$version-windows-x64.msi"
           done
@@ -124,6 +116,7 @@ jobs:
             'nib' { @{ Old = "old-$env:NIB"; OldName = 'Nib' } }
             'nibeditor' { @{ Old = "old-$env:NIBEDITOR"; OldName = 'nibeditor' } }
             'nib-then-nibeditor' { @{ Old = "old-$env:NIB"; OldName = 'Nib'; Via = "old-$env:NIBEDITOR"; ViaName = 'nibeditor' } }
+            'orden-in-nib' { @{ Old = "old-$env:NIB"; OldName = 'Nib'; Via = "old-$env:ORDEN"; ViaName = 'Orden' } }
           }
           ./scripts/windows-upgrade.ps1 -Scenario ${{ matrix.scenario }} @from -New flat -Sfta ./SFTA.ps1
 

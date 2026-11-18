@@ -64,7 +64,8 @@
     },
     "windows": {
       "nsis": {
-        "installerHooks": "installer.nsh"
+        "installerHooks": "installer.nsh",
+        "installerIcon": "icons/icon.ico"
       },
       "wix": {
         "upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e",

@@ -3,6 +3,7 @@
 !define ORDEN_NAME "Orden"
 !define ORDEN_OLD_BINARY "nib.exe"
 !define ORDEN_UNINSTKEYS "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+!define ORDEN_HOOKS "${__FILEDIR__}"
 
 Var OrdenOldDir
 Var OrdenOldAsked
@@ -31,12 +32,48 @@ Function OrdenFindOldInstall
   StrCpy $OrdenOldDir ""
   !insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_2}" 2
   !insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_1}" 1
+  !insertmacro ORDEN_FIND_UNDER "${ORDEN_NAME}" 0
   Pop $R9
   StrCmp $OrdenOldDir "" orden_find_done
+  StrCmp $OrdenOldDir "$LOCALAPPDATA\${ORDEN_OLD_NAME_1}" orden_find_former
+  StrCmp $OrdenOldDir "$LOCALAPPDATA\${ORDEN_OLD_NAME_2}" orden_find_former
     StrCmp $INSTDIR "$LOCALAPPDATA\${ORDEN_NAME}" 0 orden_find_done
     StrCpy $INSTDIR $OrdenOldDir
+    Goto orden_find_done
+  orden_find_former:
+    StrCmp $INSTDIR $OrdenOldDir 0 orden_find_done
+    StrCpy $INSTDIR "$LOCALAPPDATA\${ORDEN_NAME}"
   orden_find_done:
 FunctionEnd
+
+!macro ORDEN_CLOSE_RUNNING
+  InitPluginsDir
+  File "/oname=$PLUGINSDIR\orden-close.ps1" "${ORDEN_HOOKS}\installer-close.ps1"
+  StrCpy $R8 "$WINDIR\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+  IfFileExists $R8 +2
+    StrCpy $R8 "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  StrCpy $R8 '"$R8" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\orden-close.ps1" -Dirs "$INSTDIR|$OrdenOldDir"'
+  nsExec::ExecToStack $R8
+  Pop $R6
+  Pop $R5
+  StrCmp $R6 "10" 0 orden_close_done
+  IfSilent orden_close_now
+  StrCmp $PassiveMode "1" orden_close_now
+  MessageBox MB_OKCANCEL|MB_ICONINFORMATION "${PRODUCTNAME} is open. Click OK to close it and continue." IDOK orden_close_now
+  Abort "${PRODUCTNAME} is still open. Close it and run Setup again."
+  orden_close_now:
+    DetailPrint "Closing ${PRODUCTNAME}"
+    nsExec::ExecToStack "$R8 -Close"
+    Pop $R6
+    Pop $R5
+    StrCmp $R6 "11" 0 orden_close_done
+    DetailPrint "Still running: $R5"
+    IfSilent orden_close_failed
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "${PRODUCTNAME} could not be closed. Still running:$\n$\n$R5$\nClose these, then click Retry." IDRETRY orden_close_now
+  orden_close_failed:
+    Abort "${PRODUCTNAME} could not be closed: $R5"
+  orden_close_done:
+!macroend
 
 !macro ORDEN_RENAME_SHORTCUT DIR OLD ID
   IfFileExists "${DIR}\${OLD}.lnk" 0 orden_lnk_${ID}_done
@@ -49,10 +86,10 @@ FunctionEnd
   StrCmp $OrdenOldDir "" orden_lnk_${ID}_done
   !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$OrdenOldDir\${MAINBINARYNAME}.exe"
   Pop $0
-  StrCmp $0 1 orden_lnk_${ID}_gone
+  StrCmp $0 1 orden_lnk_${ID}_here
   !insertmacro IsShortcutTarget "${DIR}\${OLD}.lnk" "$OrdenOldDir\${ORDEN_OLD_BINARY}"
   Pop $0
-  StrCmp $0 1 orden_lnk_${ID}_gone orden_lnk_${ID}_done
+  StrCmp $0 1 orden_lnk_${ID}_here orden_lnk_${ID}_done
   orden_lnk_${ID}_here:
     IfFileExists "${DIR}\${PRODUCTNAME}.lnk" orden_lnk_${ID}_gone
     Rename "${DIR}\${OLD}.lnk" "${DIR}\${PRODUCTNAME}.lnk"
@@ -163,15 +200,29 @@ FunctionEnd
       RMDir $R9
   orden_pre_asked:
 
+  !insertmacro ORDEN_CLOSE_RUNNING
+
   StrCmp $OrdenOldDir "" orden_pre_moved
   StrCmp $OrdenOldDir $INSTDIR orden_pre_moved
     ExecWait '"$OrdenOldDir\uninstall.exe" /S /UPDATE _?=$OrdenOldDir'
+    IfFileExists "$OrdenOldDir\${MAINBINARYNAME}.exe" orden_pre_stay
+    IfFileExists "$OrdenOldDir\${ORDEN_OLD_BINARY}" orden_pre_stay
     Delete "$OrdenOldDir\uninstall.exe"
     RMDir "$OrdenOldDir"
+    Goto orden_pre_moved
+  orden_pre_stay:
+    StrCpy $R9 $INSTDIR
+    StrCpy $INSTDIR $OrdenOldDir
+    SetOutPath $INSTDIR
+    RMDir $R9
   orden_pre_moved:
+  ClearErrors
 
   !insertmacro ORDEN_FORGET_OLD_MSI
-  !insertmacro CheckIfAppIsRunning "${ORDEN_OLD_BINARY}" "${PRODUCTNAME}"
+!macroend
+
+!macro NSIS_HOOK_PREUNINSTALL
+  !insertmacro ORDEN_CLOSE_RUNNING
 !macroend
 
 !macro ORDEN_FORGET_EXTENSION EXT

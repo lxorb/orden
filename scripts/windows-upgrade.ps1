@@ -3,7 +3,7 @@ param(
   [Parameter(Mandatory)][string]$Old,
   [Parameter(Mandatory)][ValidateSet('Nib', 'nibeditor')][string]$OldName,
   [string]$Via = '',
-  [ValidateSet('', 'nibeditor')][string]$ViaName = '',
+  [ValidateSet('', 'nibeditor', 'Orden')][string]$ViaName = '',
   [Parameter(Mandatory)][string]$New,
   [Parameter(Mandatory)][string]$Sfta
 )
@@ -35,6 +35,64 @@ function Value([string]$key, [string]$name = '(default)') {
 }
 
 function Has([string]$key) { Test-Path -LiteralPath $key }
+
+function Program([string]$dir) {
+  foreach ($name in 'orden.exe', 'nib.exe') {
+    if (Test-Path "$dir\$name") { return "$dir\$name" }
+  }
+  return $null
+}
+
+function Copies([string[]]$dirs) {
+  $roots = @($dirs | ForEach-Object { $_.TrimEnd('\') + '\' })
+  @(Get-CimInstance Win32_Process | Where-Object {
+      $path = $_.ExecutablePath
+      $path -and $_.Name -ne 'uninstall.exe' -and @($roots | Where-Object { $path.StartsWith($_, [StringComparison]::OrdinalIgnoreCase) }).Count -gt 0
+    })
+}
+
+function Started([string]$exe, [int]$least) {
+  $process = Start-Process -FilePath $exe -PassThru
+  $deadline = (Get-Date).AddSeconds(90)
+  do {
+    Start-Sleep -Seconds 1
+    $copies = Copies @(Split-Path $exe)
+  } until ($copies.Count -ge $least -or (Get-Date) -gt $deadline)
+  Start-Sleep -Seconds 5
+  $copies = Copies @(Split-Path $exe)
+  Write-Host "  $exe runs as $($copies.Count) processes:"
+  $copies | ForEach-Object { Write-Host "    $($_.ProcessId) $($_.ParentProcessId) $($_.CommandLine)" }
+  return $process
+}
+
+function Served([string]$exe) {
+  $info = New-Object System.Diagnostics.ProcessStartInfo $exe, 'mcp'
+  $info.UseShellExecute = $false
+  $info.RedirectStandardInput = $true
+  $info.RedirectStandardOutput = $true
+  $server = [System.Diagnostics.Process]::Start($info)
+  Start-Sleep -Seconds 3
+  Write-Host "  an agent's MCP server runs from it as process $($server.Id), exited: $($server.HasExited)"
+  return $server
+}
+
+function Updated([string]$what, [string]$arguments, [string[]]$dirs, $running) {
+  $was = @(Copies $dirs | ForEach-Object { $_.ProcessId })
+  Write-Host "> $($built.Setup) $arguments, with $($was.Count) processes running"
+  $setup = Start-Process -FilePath $built.Setup -ArgumentList $arguments -PassThru
+  if ($arguments -like '*/UPDATE*') {
+    Start-Sleep -Milliseconds 500
+    Stop-Process -Id $running.Id -Force -ErrorAction SilentlyContinue
+  }
+  $finished = $setup.WaitForExit(240000)
+  $code = if ($finished) { $setup.ExitCode } else { 'still running' }
+  if (-not $finished) { Stop-Process -Id $setup.Id -Force -ErrorAction SilentlyContinue }
+  Write-Host "  exit $code"
+  $left = @(Get-CimInstance Win32_Process | Where-Object { $was -contains $_.ProcessId })
+  $left | ForEach-Object { Write-Host "  left: $($_.ProcessId) $($_.CommandLine)" }
+  Check "${what}: the setup finished" ($finished -and $code -eq 0)
+  Check "${what}: and nothing of the running copy is left" ($was.Count -gt 0 -and $left.Count -eq 0)
+}
 
 function Starts([string]$command) {
   if ($command -notmatch '^"([^"]+)"') { return $null }
@@ -116,7 +174,7 @@ if ($Scenario -eq 'msi') {
   $dir = "$env:LOCALAPPDATA\$OldName"
 }
 $where = $dir
-Check "$OldName is installed in $dir" (Test-Path "$dir\nib.exe")
+Check "$OldName is installed in $dir" ($null -ne (Program $dir))
 
 if ($Via) {
   $later = Files $Via
@@ -125,7 +183,7 @@ if ($Via) {
   } else {
     Run $later.Setup '/S' | Out-Null
   }
-  Check "$ViaName is installed in $dir" ((Test-Path "$dir\nib.exe") -and -not (Test-Path "$($dir -replace '[^\\]+$', $ViaName)\nib.exe"))
+  Check "$ViaName is installed in $dir" (($null -ne (Program $dir)) -and $null -eq (Program ($dir -replace '[^\\]+$', $ViaName)))
 }
 
 . $Sfta
@@ -142,10 +200,12 @@ if ($Scenario -ne 'msi') {
   $link.Save()
 }
 
+$moved = "$env:LOCALAPPDATA\$product"
+if ($Scenario -ne 'msi') { $oldCopy = Started (Program $dir) 1 }
 switch ($Scenario) {
-  'updater' { Run $built.Setup '/P /UPDATE' | Out-Null; $want = $dir }
-  'silent' { Run $built.Setup '/S' | Out-Null; $want = $dir }
-  'elsewhere' { $want = 'C:\orden-elsewhere'; Run $built.Setup "/S /D=$want" | Out-Null }
+  'updater' { Updated 'an update while the old copy runs' '/P /UPDATE' @($dir) $oldCopy; $want = $moved }
+  'silent' { Updated 'a silent install while the old copy runs' '/S' @($dir) $oldCopy; $want = $moved }
+  'elsewhere' { $want = 'C:\orden-elsewhere'; Updated 'an install elsewhere while the old copy runs' "/S /D=$want" @($dir) $oldCopy }
   'msi' { Run 'msiexec.exe' "/i `"$($built.Msi)`" /passive /norestart /l*v `"$env:RUNNER_TEMP\new-msi.log`"" | Out-Null; $want = $dir }
 }
 Show 'after'
@@ -159,7 +219,7 @@ if ($Scenario -ne 'msi') {
 }
 Check "the program is in $want" (Test-Path $exe)
 Check 'and the program under its former name is gone' (-not (Test-Path "$want\nib.exe"))
-Check "and it is $version" ((Get-Item $exe).VersionInfo.ProductVersion -like "$version*")
+Check "and it is $version" ((Test-Path $exe) -and (Get-Item $exe).VersionInfo.ProductVersion -like "$version*")
 if ($Scenario -eq 'msi') {
   Check 'no second folder under the new name' (-not (Test-Path "$env:ProgramFiles\$product"))
   $entries = @(Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' |
@@ -177,10 +237,10 @@ if ($Scenario -eq 'msi') {
     Check "the $name uninstall shortcut in the program's folder is gone" (-not (Test-Path "$want\Uninstall $name.lnk"))
   }
 } else {
+  Check "the old folder $dir is gone" (-not (Test-Path $dir))
   if ($Scenario -eq 'elsewhere') {
-    Check 'the old folder is gone' (-not (Test-Path "$dir\nib.exe"))
+    Check 'no folder under the new name' (-not (Test-Path $moved))
   }
-  Check 'no folder under the new name' (-not (Test-Path "$env:LOCALAPPDATA\$product"))
   foreach ($name in $olds) {
     Check "the $name Apps & Features entry is gone" (-not (Has "$uninstall\$name"))
     Check "the $name remembered folder is gone" (-not (Has "$hkcu\Emil Vinu\$name"))
@@ -221,6 +281,29 @@ Check 'and the default for PDFs is left alone' ((Value "$hkcu\Classes\.pdf") -ne
 $pdfIcon = "$want\documents\pdf.ico"
 Check 'and shows a PDF document icon of its own' ((Value "$hkcu\Classes\NibPDF\DefaultIcon") -eq $pdfIcon -and (Test-Path -LiteralPath $pdfIcon))
 Check 'and leaves the PDF type its own icon' ($null -eq (Value "$hkcu\Classes\.pdf\DefaultIcon") -or (Value "$hkcu\Classes\.pdf\DefaultIcon") -notlike "*$product*")
+
+Add-Type -AssemblyName System.Drawing
+function Picture([string]$file) {
+  $bitmap = [System.Drawing.Icon]::ExtractAssociatedIcon($file).ToBitmap()
+  $stream = New-Object System.IO.MemoryStream
+  $bitmap.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
+  return [Convert]::ToBase64String($stream.ToArray())
+}
+$installed = if (Test-Path $exe) { $exe } else { Program $dir }
+Check "the setup shows $product's icon" ((Picture $built.Setup) -eq (Picture $installed))
+
+if ($Scenario -ne 'msi') {
+  $place = Split-Path $installed
+  $running = Started $installed 3
+  Check 'the new copy runs with its helper processes' ((Copies @($place)).Count -ge 3)
+  Updated 'an update of the new copy while it runs' '/P /UPDATE' @($place) $running
+  Check 'and the program is still there' (Test-Path $installed)
+  $running = Started $installed 3
+  $server = Served $installed
+  Updated 'a silent install over the new copy while it runs' '/S' @($place) $running
+  Check 'and the program is still there' (Test-Path $installed)
+  $running = Started $installed 3
+}
 
 if ($Scenario -eq 'msi') {
   $code = $entries[0].PSChildName
