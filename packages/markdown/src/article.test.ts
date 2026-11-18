@@ -57,7 +57,6 @@ describe('making addresses absolute', () => {
   test('resolves a link beside the page', () => {
     const page = pageOf('<a href="other.html">x</a>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('a')?.getAttribute('href')).toBe(
       'https://site.example/section/other.html',
     )
@@ -66,35 +65,30 @@ describe('making addresses absolute', () => {
   test('resolves a link from the root', () => {
     const page = pageOf('<a href="/top">x</a>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('a')?.getAttribute('href')).toBe('https://site.example/top')
   })
 
   test('resolves a link that climbs', () => {
     const page = pageOf('<a href="../up.html">x</a>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('a')?.getAttribute('href')).toBe('https://site.example/up.html')
   })
 
   test('points a link within the page back at the page', () => {
     const page = pageOf('<a href="#part">x</a>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('a')?.getAttribute('href')).toBe(`${PAGE}#part`)
   })
 
   test('leaves an absolute link as it is', () => {
     const page = pageOf('<a href="https://elsewhere.example/x">x</a>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('a')?.getAttribute('href')).toBe('https://elsewhere.example/x')
   })
 
   test('takes the href off a link the browser would run', () => {
     const page = pageOf('<a href="javascript:alert(1)">x</a>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('a')?.hasAttribute('href')).toBe(false)
   })
 
@@ -106,7 +100,6 @@ describe('making addresses absolute', () => {
     ]) {
       const page = pageOf(`<a href="${href.replace(/\t/g, '&#9;').replace(/\n/g, '&#10;')}">x</a>`)
       absolutise(page.body, PAGE)
-
       expect(page.querySelector('a')?.hasAttribute('href'), href).toBe(false)
     }
   })
@@ -114,14 +107,12 @@ describe('making addresses absolute', () => {
   test('takes it off a link to a document of the page’s own making too', () => {
     const page = pageOf('<a href="data:text/html,<b>hi</b>">x</a>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('a')?.hasAttribute('href')).toBe(false)
   })
 
   test('resolves a picture beside the page', () => {
     const page = pageOf('<img src="photo.jpg">')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('img')?.getAttribute('src')).toBe(
       'https://site.example/section/photo.jpg',
     )
@@ -130,14 +121,12 @@ describe('making addresses absolute', () => {
   test('finds the address a lazy picture was deferring', () => {
     const page = pageOf('<img src="" data-src="/late.jpg">')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('img')?.getAttribute('src')).toBe('https://site.example/late.jpg')
   })
 
   test('prefers a real address to a placeholder pixel', () => {
     const page = pageOf('<img src="data:image/gif;base64,R0lGOD" data-original="/real.png">')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('img')?.getAttribute('src')).toBe('https://site.example/real.png')
   })
 
@@ -146,7 +135,6 @@ describe('making addresses absolute', () => {
       '<picture><source srcset="s.jpg 400w, l.jpg 1200w"><img src="" alt="a"></picture>',
     )
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('picture')).toBe(null)
     expect(page.querySelector('img')?.getAttribute('src')).toBe(
       'https://site.example/section/l.jpg',
@@ -156,14 +144,12 @@ describe('making addresses absolute', () => {
   test('drops a picture with nowhere to point', () => {
     const page = pageOf('<p>before<img>after</p>')
     absolutise(page.body, PAGE)
-
     expect(page.querySelector('img')).toBe(null)
   })
 
   test('leaves no lazy attribute behind to disagree with the address', () => {
     const page = pageOf('<img src="a.jpg" srcset="a.jpg 1x" data-src="b.jpg">')
     absolutise(page.body, PAGE)
-
     const image = page.querySelector('img')
     expect(image?.hasAttribute('srcset')).toBe(false)
     expect(image?.hasAttribute('data-src')).toBe(false)
@@ -174,14 +160,12 @@ describe('cleaning', () => {
   test('takes out what a note never contains', () => {
     const page = pageOf('<p>keep</p><script>x</script><style>y</style><iframe></iframe>')
     clean(page.body)
-
     expect(page.body.innerHTML).toBe('<p>keep</p>')
   })
 
   test('takes out what the page says is decoration', () => {
     const page = pageOf('<p>keep</p><div aria-hidden="true">icon</div>')
     clean(page.body)
-
     expect(page.body.innerHTML).toBe('<p>keep</p>')
   })
 
@@ -192,7 +176,6 @@ describe('cleaning', () => {
         '<img src="f.svg" aria-hidden="true" alt="e^{i\\pi}+1=0"> where</p>',
     )
     clean(page.body)
-
     expect(page.querySelector('.mathml')?.getAttribute('style')).toBe(null)
     expect(page.querySelectorAll('math')).toHaveLength(1)
     expect(page.querySelectorAll('img')).toHaveLength(0)
@@ -203,7 +186,6 @@ describe('cleaning', () => {
       '<div aria-hidden="true"><p>words</p><math alttext="x"><mi>x</mi></math></div>',
     )
     clean(page.body)
-
     expect(page.querySelectorAll('math')).toHaveLength(0)
   })
 
@@ -214,7 +196,6 @@ describe('cleaning', () => {
         '<a href="/b" onfocus="run()">b</a></div>',
     )
     clean(page.body)
-
     const html = page.body.innerHTML
     expect(html).not.toContain('onmouseover')
     expect(html).not.toContain('onclick')
@@ -231,14 +212,12 @@ describe('cleaning', () => {
     const page = pageOf('<p id="one" onmouseover="run()">keep</p>')
     const one = page.querySelector('#one')
     if (one) clean(one)
-
     expect(one?.hasAttribute('onmouseover')).toBe(false)
   })
 
   test('keeps a task list tick, which is the one field that means something', () => {
     const page = pageOf('<li><input type="checkbox"><input type="text"></li>')
     clean(page.body)
-
     expect(page.querySelectorAll('input')).toHaveLength(1)
     expect(page.querySelector('input')?.getAttribute('type')).toBe('checkbox')
   })
@@ -255,7 +234,6 @@ describe('the tags a page publishes about itself', () => {
       '',
       '<meta property="article:tag" content="A"><meta property="article:tag" content="B">',
     )
-
     expect(pageTags(page)).toEqual(['A', 'B'])
   })
 
@@ -267,7 +245,6 @@ describe('the tags a page publishes about itself', () => {
   test('stops at eight, because a page listing forty is describing a site', () => {
     const many = Array.from({ length: 40 }, (_, at) => `tag${at}`).join(',')
     const page = pageOf('', `<meta name="keywords" content="${many}">`)
-
     expect(pageTags(page)).toHaveLength(8)
   })
 
@@ -287,7 +264,6 @@ describe('what a clip is called', () => {
       '',
       '<title>Deep work | The Journal</title><meta property="og:title" content="Deep work">',
     )
-
     expect(pageTitle(page, PAGE)).toBe('Deep work')
   })
 
@@ -321,7 +297,6 @@ describe('what to clip', () => {
   test('a link clip is the address and nothing else', () => {
     const page = pageOf('<p>a paragraph</p>', '<title>A page</title>')
     const source = extract(page, 'link', PAGE)
-
     expect(source).toEqual({ kind: 'link', url: PAGE, title: 'A page', html: '', tags: [] })
   })
 
@@ -333,7 +308,6 @@ describe('what to clip', () => {
   test('a page too short to be an article falls back to its body', () => {
     const page = pageOf('<p>Three words only.</p>', '<title>A page</title>')
     const source = extract(page, 'page', PAGE)
-
     expect(source.title).toBe('A page')
     expect(source.html).toContain('Three words only.')
   })
@@ -346,9 +320,7 @@ describe('what to clip', () => {
        </article>`,
       `<base href="${PAGE}" />`,
     )
-
     const source = extract(page, 'page', PAGE)
-
     expect(source.html).toContain('https://site.example/section/l.jpg')
     expect(source.html).not.toContain('<picture')
   })
@@ -361,7 +333,6 @@ describe('what to clip', () => {
        </article>`,
       '<base href="https://cdn.example/assets/" />',
     )
-
     expect(extract(page, 'page', PAGE).html).toContain('https://cdn.example/assets/photo.jpg')
   })
 })
@@ -374,7 +345,6 @@ describe('a page a web tab wrote down', () => {
       `<!DOCTYPE html><html><head><title>Tab title</title><meta name="keywords" content="one, two"></head><body><nav>Menu</nav>${ARTICLE}</body></html>`,
       PAGE,
     )
-
     expect(read.kind).toBe('page')
     expect(read.html).toContain('Words worth keeping')
     expect(read.html).not.toContain('Menu')
@@ -386,7 +356,6 @@ describe('a page a web tab wrote down', () => {
       `<!DOCTYPE html><html ${SELECTED}><head><title>Tab title</title><meta property="article:tag" content="Kept"></head><body><p>Only <a href="x.html">this</a>.</p></body></html>`,
       PAGE,
     )
-
     expect(read).toMatchObject({ kind: 'selection', title: 'Tab title', tags: ['Kept'] })
     expect(read.html).toBe('<p>Only <a href="https://site.example/section/x.html">this</a>.</p>')
   })
@@ -397,7 +366,6 @@ describe('a page a web tab wrote down', () => {
       PAGE,
     )
     expect(named.html).toContain('https://cdn.example/docs/a.html')
-
     const none = readSnapshot(
       `<!DOCTYPE html><html ${SELECTED}><head></head><body><a href="a.html">a</a></body></html>`,
       PAGE,
@@ -411,7 +379,6 @@ describe('a page a web tab wrote down', () => {
       `<!DOCTYPE html><html><head><script>window.ran = true</script></head><body><img src="x" onerror="window.ran = true">${ARTICLE}</body></html>`,
       PAGE,
     )
-
     expect(marked.ran).toBeUndefined()
   })
 })

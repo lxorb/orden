@@ -37,15 +37,12 @@ describe('a news article', () => {
     expect(live.tags).toEqual(['Climate', 'Zurich', 'Lakes'])
   })
 
-  test('keeps the article and leaves the furniture', () => {
+  test('keeps the article and leaves the furniture; keeps the photograph a lazy picture deferred, at its widest; resolves a link that climbs out of the page’s folder', () => {
     expect(markdown).toContain('the cantonal water office said on Friday')
     expect(markdown).toContain('"A lake does not forget a warm winter,"')
     for (const furniture of ['We use cookies', 'Subscribe', 'Privacy', 'console.log']) {
       expect(markdown).not.toContain(furniture)
     }
-  })
-
-  test('keeps the photograph a lazy picture deferred, at its widest; resolves a link that climbs out of the page’s folder', () => {
     expect(markdown).toMatch(/!\[The lake at dawn\]\(https:\/\/ledger\.example\/img\/lake-/)
     expect(markdown).not.toContain('data:image/gif')
     expect(markdown).toContain('[plant shade trees](https://ledger.example/news/plans/shade.html)')

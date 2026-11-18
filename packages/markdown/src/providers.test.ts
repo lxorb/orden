@@ -20,19 +20,13 @@ describe('the addresses a note can show rather than link to', () => {
     }
   })
 
-  test('and never youtube.com itself, which sets a cookie to be watched', () => {
+  test('and never youtube.com itself, which sets a cookie to be watched; a timestamp is where it starts; a page of a provider that is not a thing to show is a link', () => {
     expect(frame('https://youtu.be/dQw4w9WgXcQ')).toContain('youtube-nocookie.com')
-  })
-
-  test('a timestamp is where it starts', () => {
     expect(frame('https://youtu.be/abc?t=90')).toBe(
       'https://www.youtube-nocookie.com/embed/abc?start=90',
     )
     expect(frame('https://youtu.be/abc?t=1m30s')).toContain('start=90')
     expect(frame('https://youtu.be/abc?t=1h')).toContain('start=3600')
-  })
-
-  test('a page of a provider that is not a thing to show is a link', () => {
     expect(webEmbed('https://www.youtube.com/@somebody')).toBe(null)
     expect(webEmbed('https://www.youtube.com/')).toBe(null)
     expect(webEmbed('https://vimeo.com/somebody/likes')).toBe(null)

@@ -43,18 +43,14 @@ describe('a coloured highlight rendered', () => {
 
   test('is escaped like anything else when publishing', () => {
     const html = renderMarkdown('==🟠 <img src=x onerror=alert(1)>==', { escapeHtml: true })
-
     expect(html).toContain('class="tone-2"')
     expect(html).not.toContain('<img')
   })
 })
 
 describe('whether a single newline breaks the line', () => {
-  test('is CommonMark until somebody says otherwise', () => {
+  test('is CommonMark until somebody says otherwise; is the renderer’s own answer, so every caller gets it without asking', () => {
     expect(renderMarkdown('one\ntwo\n')).not.toContain('<br>')
-  })
-
-  test('is the renderer’s own answer, so every caller gets it without asking', () => {
     setHardBreaks(true)
     try {
       expect(renderMarkdown('one\ntwo\n')).toContain('<br>')
@@ -65,7 +61,6 @@ describe('whether a single newline breaks the line', () => {
 
   test('is overruled by a caller that says outright', () => {
     expect(renderMarkdown('one\ntwo\n', { breaks: true })).toContain('<br>')
-
     setHardBreaks(true)
     try {
       expect(renderMarkdown('one\ntwo\n', { breaks: false })).not.toContain('<br>')

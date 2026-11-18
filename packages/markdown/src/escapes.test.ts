@@ -89,7 +89,6 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('out_')).toBe('out\\_')
       expect(escapeText('2 * 3 = 6')).toBe('2 * 3 = 6')
     })
-
     test('and is still written where the star could begin a list or a word; nor in front of a backslash that escapes nothing', () => {
       expect(escapeText('* item')).toBe('\\* item')
       expect(escapeText('  * item')).toBe('  \\* item')
@@ -97,7 +96,6 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('rename *.md to *.txt')).toBe('rename \\*.md to \\*.txt')
       expect(escapeText('C:\\Users\\me')).toBe('C:\\Users\\me')
     })
-
     test('and is still written where the backslash would eat the marker after it', () => {
       expect(escapeText('C:\\*.md')).toBe('C:\\\\\\*.md')
       expect(escapeText('ends in \\')).toBe('ends in \\\\')
@@ -105,26 +103,19 @@ describe('a page’s text, as a note may hold it', () => {
   })
 
   describe('a run that is unmistakably markdown', () => {
-    test('is kept as it was written', () => {
+    test('is kept as it was written; and a code span keeps what a fence would keep; unless a marker has a blank against it, where markdown stops reading one', () => {
       expect(escapeText('überfliegen Sie **kurz** das Dokument')).toBe(
         'überfliegen Sie **kurz** das Dokument',
       )
       expect(escapeText('ganz __fett__ gesagt')).toBe('ganz __fett__ gesagt')
       expect(escapeText('run `npm run dev` first')).toBe('run `npm run dev` first')
-    })
-
-    test('and a code span keeps what a fence would keep; unless a marker has a blank against it, where markdown stops reading one', () => {
       expect(escapeText('the `<img>` tag')).toBe('the `<img>` tag')
       expect(escapeText('write `a_b` for it')).toBe('write `a_b` for it')
       expect(escapeText('2 ** 3 ** 4')).toBe('2 \\*\\* 3 \\*\\* 4')
       expect(escapeText('**half open')).toBe('\\*\\*half open')
     })
-
-    test('unless there is more of the same marker against it', () => {
+    test('unless there is more of the same marker against it; unless the words inside it are not words', () => {
       expect(escapeText('***drei***')).toBe('\\*\\*\\*drei\\*\\*\\*')
-    })
-
-    test('unless the words inside it are not words', () => {
       expect(escapeText('**<img src=q>**')).toBe('\\*\\*\\<img src=q>\\*\\*')
       expect(escapeText('**[a](javascript:alert(1))**')).toBe(
         '\\*\\*\\[a\\](javascript:alert(1))\\*\\*',
@@ -132,7 +123,6 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('**a\\**')).toBe('\\*\\*a\\\\\\*\\*')
       expect(escapeText('**a`b**')).toBe('\\*\\*a\\`b\\*\\*')
     })
-
     test('and the words around it are escaped as the text they are; and a wall of markers is escaped rather than read', () => {
       expect(escapeText('[1] **kurz** *lang*')).toBe('\\[1\\] **kurz** \\*lang\\*')
       expect(escapeText('````x````')).toBe('\\`\\`\\`\\`x\\`\\`\\`\\`')
@@ -152,7 +142,6 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('1. eins')).toBe('1\\. eins')
       expect(escapeText('1) eins')).toBe('1\\) eins')
     })
-
     test('and is not where the same characters are punctuation', () => {
       expect(escapeText('-5 °C und +5 °C')).toBe('-5 °C und +5 °C')
       expect(escapeText('#hashtag')).toBe('#hashtag')
@@ -207,15 +196,12 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('**$5** and **$6**', PROSE)).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
   })
 
-  test('an address is words unless the words are said to be prose', () => {
+  test('an address is words unless the words are said to be prose; nothing in, nothing out', () => {
     const name = escapeText('https://player.test/v/__ab__/')
     expect(name).toBe('https://player.test/v/\\_\\_ab\\_\\_/')
     expect(renderMarkdown(`[${name}](https://player.test/v/__ab__/)`)).toBe(
       '<p><a class="url" href="https://player.test/v/__ab__/">https://player.test/v/__ab__/</a></p>\n',
     )
-  })
-
-  test('nothing in, nothing out', () => {
     expect(escapeText('')).toBe('')
   })
 })

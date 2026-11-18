@@ -24,15 +24,12 @@ describe('a callout’s opening line', () => {
     expect(found?.label).toBe('Recipe')
   })
 
-  test('leaves a type an object would answer from its prototype without a look', () => {
+  test('leaves a type an object would answer from its prototype without a look; folds the two GitHub alert kinds in, the way Obsidian does', () => {
     for (const word of ['constructor', 'Constructor', '__proto__', 'toString', 'hasOwnProperty']) {
       const found = calloutOf(`[!${word}] T`)
       expect(found?.type).toBe(word.toLowerCase())
       expect(found?.look).toBeNull()
     }
-  })
-
-  test('folds the two GitHub alert kinds in, the way Obsidian does', () => {
     expect(calloutOf('[!important]')?.look).toBe('tip')
     expect(calloutOf('[!important]')?.type).toBe('important')
     expect(calloutOf('[!caution]')?.look).toBe('warning')
@@ -45,7 +42,6 @@ describe('a callout’s opening line', () => {
         ' ',
       )
     for (const type of types) expect(calloutOf(`[!${type}]`)?.look, type).toBe(type)
-
     const aliases: Record<string, string> = {
       summary: 'abstract',
       tldr: 'abstract',
@@ -90,23 +86,16 @@ describe('a callout’s opening line', () => {
 })
 
 describe('a callout’s icon', () => {
-  test('is one svg with every child closed, so an EPUB can be parsed', () => {
+  test('is one svg with every child closed, so an EPUB can be parsed; is nothing for a type nothing knows; is nothing for those, and the note around them still renders', () => {
     const icon = calloutIcon('warning')
-
     expect(icon.startsWith('<svg')).toBe(true)
     expect(icon.endsWith('</svg>')).toBe(true)
     expect(icon).toContain(' />')
     expect(/<(?!svg|\/svg)[a-z]+[^>]*[^/]>/.exec(icon)).toBeNull()
-  })
-
-  test('is nothing for a type nothing knows', () => {
     expect(calloutIcon(null)).toBe('')
     expect(calloutIcon('recipe')).toBe('')
     expect(calloutIcon('constructor')).toBe('')
     expect(calloutIconParts('__proto__')).toBeNull()
-  })
-
-  test('is nothing for those, and the note around them still renders', () => {
     for (const word of ['constructor', '__proto__', 'Constructor']) {
       const html = renderMarkdown(`> [!${word}] T\n> body\n`, { escapeHtml: true })
       expect(html).toContain(`data-callout="${word.toLowerCase()}"`)

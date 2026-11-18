@@ -62,7 +62,6 @@ describe('a flow sequence', () => {
       '# hash, too',
     ]
     const written = `[${values.map(flowItem).join(', ')}]`
-
     expect(flowItems(written)).toEqual(values)
   })
 })

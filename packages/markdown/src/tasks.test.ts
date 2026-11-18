@@ -9,7 +9,6 @@ const words = (line: string) => {
 describe('a task item', () => {
   test('is a list marker, a box and what comes after it', () => {
     const task = taskAt('- [ ] buy milk')
-
     expect(task?.done).toBe(false)
     expect(task?.mark).toBe(' ')
     expect(task?.box).toBe(2)

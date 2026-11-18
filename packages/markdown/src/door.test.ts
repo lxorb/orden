@@ -22,10 +22,8 @@ describe('a door', () => {
   test('fetches once however many ask', async () => {
     const load = flaky('palette', 0)
     const open = door(load)
-
     const [first, second] = await Promise.all([open(), open()])
     await open()
-
     expect([first, second]).toEqual(['palette', 'palette'])
     expect(load).toHaveBeenCalledTimes(1)
   })
@@ -33,9 +31,7 @@ describe('a door', () => {
   test('tries a second time before it gives up', async () => {
     const load = flaky('palette', 1)
     const asked = door(load)()
-
     await vi.runAllTimersAsync()
-
     await expect(asked).resolves.toBe('palette')
     expect(load).toHaveBeenCalledTimes(2)
   })
@@ -43,13 +39,11 @@ describe('a door', () => {
   test('forgets a fetch that failed twice, so the next ask fetches again', async () => {
     const load = flaky('palette', 2)
     const open = door(load)
-
     const failed = open()
     const settled = expect(failed).rejects.toThrow('Failed to fetch')
     await vi.runAllTimersAsync()
     await settled
     expect(load).toHaveBeenCalledTimes(2)
-
     await expect(open()).resolves.toBe('palette')
     expect(load).toHaveBeenCalledTimes(3)
   })
@@ -57,11 +51,9 @@ describe('a door', () => {
   test('keeps what arrived: a success is never fetched again', async () => {
     const load = flaky('palette', 1)
     const open = door(load)
-
     const first = open()
     await vi.runAllTimersAsync()
     await first
-
     await open()
     expect(load).toHaveBeenCalledTimes(2)
   })
@@ -73,12 +65,10 @@ describe('a door', () => {
       if (calls < 3) throw new Error('not in this build')
       return Promise.resolve('here')
     })
-
     const failed = open()
     const settled = expect(failed).rejects.toThrow('not in this build')
     await vi.runAllTimersAsync()
     await settled
-
     await expect(open()).resolves.toBe('here')
   })
 })

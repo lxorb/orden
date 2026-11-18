@@ -14,15 +14,12 @@ describe('what a fence says', () => {
     expect(captionIn('   ')).toBe('')
   })
 
-  test('reads the other editors’ way of writing it', () => {
+  test('reads the other editors’ way of writing it; leaves anything else as the words it is', () => {
     expect(captionIn('js title="setup.js"')).toBe('setup.js')
     expect(captionIn("js title='setup.js'")).toBe('setup.js')
     expect(captionIn('js title=setup.js')).toBe('setup.js')
     expect(captionIn('js TITLE="Shouting"')).toBe('Shouting')
     expect(languageIn('js title="setup.js"')).toBe('js')
-  })
-
-  test('leaves anything else as the words it is', () => {
     expect(captionIn('js the title= line')).toBe('the title= line')
     expect(captionIn('js title="a" and more')).toBe('title="a" and more')
   })

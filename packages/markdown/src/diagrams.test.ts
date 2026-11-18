@@ -12,11 +12,8 @@ const SPACE = '7d1f4e8c-0000-4000-8000-000000000001'
 const CODE = 'graph TD\n  A[A note] --> B[A published page]\n'
 
 describe('which fences are a picture', () => {
-  test('is the three the editor and the exporter draw', () => {
+  test('is the three the editor and the exporter draw; reads a language whatever case it was written in', () => {
     expect([...DIAGRAM_LANGUAGES]).toEqual(['mermaid', 'flow', 'sequence'])
-  })
-
-  test('reads a language whatever case it was written in', () => {
     expect(isDiagram('mermaid')).toBe(true)
     expect(isDiagram('Mermaid')).toBe(true)
     expect(isDiagram('SEQUENCE')).toBe(true)
@@ -30,7 +27,6 @@ describe('what a diagram is named by', () => {
   test('is a hash, and the same one twice', async () => {
     const once = await diagramKey(SPACE, 'mermaid', CODE, 'light')
     const again = await diagramKey(SPACE, 'mermaid', CODE, 'light')
-
     expect(once).toMatch(/^[a-f0-9]{64}$/)
     expect(again).toBe(once)
   })
@@ -39,14 +35,12 @@ describe('what a diagram is named by', () => {
     const [light, dark] = await Promise.all(
       DIAGRAM_SCHEMES.map((scheme) => diagramKey(SPACE, 'mermaid', CODE, scheme)),
     )
-
     expect(light).not.toBe(dark)
   })
 
   test('changes with a character of the diagram, so an edit is a new picture', async () => {
     const was = await diagramKey(SPACE, 'mermaid', CODE, 'light')
     const now = await diagramKey(SPACE, 'mermaid', `${CODE}  B --> C[And another]\n`, 'light')
-
     expect(now).not.toBe(was)
   })
 
@@ -64,7 +58,6 @@ describe('what a diagram is named by', () => {
 
   test('is a different name in another space, so nobody can compute it off the page', async () => {
     const other = '7d1f4e8c-0000-4000-8000-000000000002'
-
     expect(await diagramKey(other, 'mermaid', CODE, 'light')).not.toBe(
       await diagramKey(SPACE, 'mermaid', CODE, 'light'),
     )
@@ -87,7 +80,6 @@ describe('the figure a drawn fence becomes', () => {
       light: '/i/aaa.svg',
       dark: '/i/bbb.svg',
     })
-
     expect(html).toBe(
       '<figure class="diagram" data-language="mermaid">' +
         '<img src="/i/aaa.svg" alt="Diagram" data-scheme="light">' +
@@ -98,7 +90,6 @@ describe('the figure a drawn fence becomes', () => {
 
   test('is one picture with nothing to switch where only the light one is there', () => {
     const html = diagramFigure('flow', 'Diagram', { light: '/i/aaa.svg', dark: null })
-
     expect(html).toBe(
       '<figure class="diagram" data-language="flow">' +
         '<img src="/i/aaa.svg" alt="Diagram">' +
@@ -111,7 +102,6 @@ describe('the figure a drawn fence becomes', () => {
       light: '/i/aaa.svg',
       dark: null,
     })
-
     expect(html).not.toContain('<script')
     expect(html).toContain('alt="&quot;&gt;&lt;script&gt;')
   })

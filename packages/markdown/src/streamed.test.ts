@@ -38,16 +38,13 @@ describe('LaTeX delimiters, spelled a note’s way', () => {
     for (const size of [1, 2, 3, 5, 8]) expect(streamed(written, size), `${size}`).toBe(spelled)
   })
 
-  test('holds back no more than it cannot read yet', () => {
+  test('holds back no more than it cannot read yet; draws as formulas once spelled', () => {
     const spelling = new TexDelimiters()
     expect(spelling.push('So \\')).toBe('So ')
     expect(spelling.push('(x')).toBe('$x')
     expect(spelling.push(' \\')).toBe('')
     expect(spelling.push(') is')).toBe('$ is')
     expect(spelling.end()).toBe('')
-  })
-
-  test('draws as formulas once spelled', () => {
     const html = renderMarkdown(dollarMaths('So \\( x^2 \\) and\n\\[\n\\frac{1}{2}\n\\]\n'))
     expect(html).toContain('math-inline')
     expect(html).toContain('math-block')
@@ -99,7 +96,6 @@ describe('an answer still arriving', () => {
       '[^1]: The note.',
     ].join('\n')
     const whole = renderMarkdown(dollarMaths(answer), { footnotes: true })
-
     let arrived = ''
     const spelling = new TexDelimiters()
     for (const one of answer) {
@@ -109,7 +105,6 @@ describe('an answer still arriving', () => {
     }
     arrived += spelling.end()
     expect(renderMarkdown(settled(arrived), { footnotes: true })).toBe(whole)
-
     expect(whole).toContain('<h1>')
     expect(whole).toContain('math-inline')
     expect(whole).toContain('math-block')

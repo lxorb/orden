@@ -76,7 +76,6 @@ describe('what a writer makes is what a reader takes', () => {
       expect(frontMatterValue(written, name)).toBe('x')
       return
     }
-
     let note = apply('# Note\n', addProperty('# Note\n', name))
     expect(frontMatterBlock(note), note).not.toBeNull()
     for (const value of ['x', 'What we did, and why we did it.', 'Is this it, then?']) {
@@ -86,19 +85,15 @@ describe('what a writer makes is what a reader takes', () => {
     }
     note = apply(note, writeProperty(note, 'status', 'open'))
     expect(fences(note), note).toBe(2)
-
     const second = apply('---\ntitle: x\n---\n', addProperty('---\ntitle: x\n---\n', name))
     expect(frontMatterKeys(second)).toEqual(['title', name])
-
     const renamed = apply(
       '---\ntitle: x\nb: 2\n---\n',
       renameProperty('---\ntitle: x\nb: 2\n---\n', 'title', name),
     )
     expect(frontMatterKeys(renamed)).toEqual([name, 'b'])
-
     const left = `---\ntitle: x\n${name}: 2\n---\nbody\n`
     expect(frontMatterBlock(apply(left, frontMatterEdit(left, 'title', null)))).not.toBeNull()
-
     const written = `${writeFrontMatter([[name, 'What we did, and why we did it.']])}\n`
     expect(frontMatterBlock(written), written).not.toBeNull()
   })
@@ -116,23 +111,18 @@ describe('reading the front matter', () => {
     expect(frontMatter('---  \ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
   })
 
-  test('a byte order mark in front of the fence', () => {
+  test('a byte order mark in front of the fence; the note without it, which is what a renderer reads', () => {
     const source = '\uFEFF---\ntitle: a\n---\nbody\n'
     expect(frontMatterValue(source, 'title')).toBe('a')
     expect(stripFrontMatter(source)).toBe('body\n')
-
     expect(frontMatterEdit(source, 'title', 'b')).toEqual({ from: 11, to: 13, insert: ' b' })
     expect(frontMatterEdit(source, 'title', null)).toEqual({ from: 1, to: 18, insert: '' })
-  })
-
-  test('the note without it, which is what a renderer reads', () => {
     expect(stripFrontMatter('---\ntitle: Hi\n---\n# Title')).toBe('# Title')
     expect(stripFrontMatter('# Title')).toBe('# Title')
   })
 
   test('one key, quotes off, and never a key indented under another', () => {
     const source = '---\ntitle: "Field Notes"\nauthor: Ada\nexport:\n  paper: A5\n---\n\nBody'
-
     expect(frontMatterValue(source, 'title')).toBe('Field Notes')
     expect(frontMatterValue(source, 'author')).toBe('Ada')
     expect(frontMatterValue(source, 'paper')).toBeNull()
@@ -151,7 +141,6 @@ describe('reading the front matter', () => {
     expect(frontMatterValue('---\ntitle: a#b\n---\n', 'title')).toBe('a#b')
     expect(frontMatterValue('---\nicon: # none yet\n---\n', 'icon')).toBeNull()
     expect(frontMatterList('---\ntags: [a, "b #c"] # mine\n---\n', 'tags')).toEqual(['a', 'b #c'])
-
     const source = '---\ntitle: a # note\n---\n'
     const edit = frontMatterEdit(source, 'title', 'b')
     expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
@@ -287,14 +276,11 @@ describe('taking a key away', () => {
     expect(frontMatterEdit('# Plan\n', 'icon', null)).toBeNull()
   })
 
-  test('the same on a file written with the other line ending', () => {
+  test('the same on a file written with the other line ending; takes the list written under it too, and leaves the next key its own', () => {
     expect(applied('---\r\nicon: rocket\r\ntitle: Plan\r\n---\r\nwords', 'icon')).toBe(
       '---\r\ntitle: Plan\r\n---\r\nwords',
     )
     expect(applied('---\r\nicon: rocket\r\n---\r\n\r\n# Plan\r\n', 'icon')).toBe('# Plan\r\n')
-  })
-
-  test('takes the list written under it too, and leaves the next key its own', () => {
     expect(applied('---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n', 'tags')).toBe(
       '---\ntitle: a\n---\nbody\n',
     )
@@ -303,17 +289,13 @@ describe('taking a key away', () => {
     )
   })
 
-  test('takes a value of paragraphs whole, blank lines and all', () => {
+  test('takes a value of paragraphs whole, blank lines and all; and stops at a blank line the next key follows', () => {
     const source = '---\nsummary: short\nnotes: |\n  first\n\n  second\nstatus: done\n---\nbody'
     expect(applied(source, 'notes')).toBe('---\nsummary: short\nstatus: done\n---\nbody')
-
     const edit = frontMatterEdit(source, 'notes', 'x')
     expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
       '---\nsummary: short\nnotes: x\nstatus: done\n---\nbody',
     )
-  })
-
-  test('and stops at a blank line the next key follows', () => {
     expect(applied('---\nnotes: |\n  first\n\nstatus: done\n---\nbody', 'notes')).toBe(
       '---\n\nstatus: done\n---\nbody',
     )
@@ -326,25 +308,19 @@ describe('setting several keys at once', () => {
     return edit === null ? source : source.slice(0, edit.from) + edit.insert + source.slice(edit.to)
   }
 
-  test('opens a block and writes both lines', () => {
+  test('opens a block and writes both lines; joins a block that was there, leaving its own keys alone; replaces one and adds the other', () => {
     expect(
       applied('# Plan\n', [
         ['icon', 'rocket'],
         ['icon-color', 'violet'],
       ]),
     ).toBe('---\nicon: rocket\nicon-color: violet\n---\n# Plan\n')
-  })
-
-  test('joins a block that was there, leaving its own keys alone', () => {
     expect(
       applied('---\ntitle: Plan\n---\n\nwords\n', [
         ['icon', 'rocket'],
         ['icon-color', 'violet'],
       ]),
     ).toBe('---\ntitle: Plan\nicon: rocket\nicon-color: violet\n---\n\nwords\n')
-  })
-
-  test('replaces one and adds the other', () => {
     expect(
       applied('---\nicon: rocket\n---\nwords\n', [
         ['icon', 'anchor'],
@@ -353,21 +329,17 @@ describe('setting several keys at once', () => {
     ).toBe('---\nicon: anchor\nicon-color: teal\n---\nwords\n')
   })
 
-  test('takes both away, and the block with them where it held nothing else', () => {
+  test('takes both away, and the block with them where it held nothing else; is one edit however many keys moved', () => {
     expect(
       applied('---\nicon: rocket\nicon-color: violet\n---\n\n# Plan\n', [
         ['icon', null],
         ['icon-color', null],
       ]),
     ).toBe('# Plan\n')
-  })
-
-  test('is one edit however many keys moved', () => {
     const edit = frontMatterEdits('---\ntitle: Plan\n---\nwords\n', [
       ['icon', 'rocket'],
       ['icon-color', 'violet'],
     ])
-
     expect(edit).not.toBeNull()
     expect(edit?.to).toBeLessThan('---\ntitle: Plan\n---\n'.length)
   })
@@ -415,7 +387,6 @@ describe('writing a block', () => {
       ['tags', ['work', 'two words']],
     ] as const
     const note = `${writeFrontMatter(rows)}\n\n# One\n`
-
     expect(frontMatterValue(note, 'source')).toBe('https://site.example/a?b=1#c')
     expect(frontMatterValue(note, 'title')).toBe("It's: here")
     expect(frontMatterList(note, 'tags')).toEqual(['work', 'two words'])
@@ -424,7 +395,6 @@ describe('writing a block', () => {
 
   test('cannot be ended early by a value with lines in it', () => {
     const block = writeFrontMatter([['title', 'Fine\n---\n\n<img src=x>']])
-
     expect(block).toBe('---\ntitle: Fine --- <img src=x>\n---')
   })
 })

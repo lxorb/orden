@@ -23,13 +23,10 @@ const BODIES: Record<string, string> = {
 const resolveEmbed = (link: Wikilink) => BODIES[link.target.toLowerCase()] ?? null
 
 describe('a wikilink on a page', () => {
-  test('is an anchor when the caller can resolve it', () => {
+  test('is an anchor when the caller can resolve it; names a path holding # or : as a path, not as a fragment or a scheme', () => {
     expect(renderMarkdown('see [[Plan]] now', { resolveLink })).toContain(
       '<a class="wikilink" href="/notes/plan">Plan</a>',
     )
-  })
-
-  test('names a path holding # or : as a path, not as a fragment or a scheme', () => {
     expect(renderMarkdown('[[Intro#Start]]', { resolveLink })).toContain(
       'href="C%23/Intro.md#start"',
     )
@@ -187,7 +184,6 @@ describe('an embed on a page', () => {
     const html = renderMarkdown('![[outer]]', {
       resolveEmbed: (link) => bodies[link.target] ?? null,
     })
-
     expect(html).toContain('Outer says:')
     expect(html).not.toContain('Inner text.')
     expect(html.match(/<figure/g)).toHaveLength(1)
@@ -197,7 +193,6 @@ describe('an embed on a page', () => {
     const html = renderMarkdown('![[self]]', {
       resolveEmbed: () => 'Round and round ![[self]]\n',
     })
-
     expect(html.match(/Round and round/g)).toHaveLength(1)
     expect(html.match(/<figure/g)).toHaveLength(1)
   })
@@ -281,14 +276,11 @@ describe('a file embedded in a note', () => {
     expect(html).not.toContain('onerror="alert(1)"')
   })
 
-  test('a card nobody can open is still the name of the file; a card is never left inside a paragraph', () => {
+  test('a card nobody can open is still the name of the file; a card is never left inside a paragraph; a file is never read as a note', () => {
     const html = renderMarkdown('![[missing.pdf]]\n')
     expect(html).toContain('missing.pdf')
     expect(html).not.toContain('<a')
     expect(renderMarkdown('![[paper.pdf]]\n')).not.toContain('<p><figure')
-  })
-
-  test('a file is never read as a note', () => {
     const every = () => '# Something else'
     for (const name of ['a.png', 'a.mp3', 'a.mp4', 'a.pdf', 'a.canvas']) {
       expect(renderMarkdown(`![[${name}]]\n`, { resolveEmbed: every }), name).not.toContain(
@@ -319,7 +311,6 @@ describe('a picture a page shows', () => {
   test('is looked up knowing whether a wikilink or a markdown link named it', () => {
     asked.length = 0
     const html = renderMarkdown('![[shot.png]]\n\n![](pic.png)\n', { resolvePicture })
-
     expect(asked).toEqual([
       ['shot.png', true, null],
       ['pic.png', false, null],
@@ -338,7 +329,6 @@ describe('a picture a page shows', () => {
         path: '/Work/Projects/Q1/Plan.md',
       }),
     })
-
     expect(asked).toEqual([['../../assets/abc.png', false, '/Work/Projects/Q1/Plan.md']])
   })
 })
@@ -360,7 +350,6 @@ describe('a link inside an embedded note', () => {
       },
       resolveNoteFrom: (target, from) => (from.path === plan.path ? `Q1/${target}` : null),
     })
-
     expect(asked).toEqual([null, '/W/Q1/Plan.md'])
     expect(html).toContain('<a class="wikilink" href="Budget.md">Budget</a>')
     expect(html).toContain('<a class="wikilink" href="Q1/Budget.md">Budget</a>')
@@ -391,7 +380,6 @@ describe('footnotes inside an embedded note', () => {
       footnotes: true,
       resolveEmbed: () => 'Embed says[^1].\n\n[^1]: Embed note.\n',
     })
-
     expect(html.match(/id="fn-1"/g)).toHaveLength(1)
     expect(html.match(/id="fnref-1"/g)).toHaveLength(1)
     expect(html).toContain('<li id="e0-fn-1"><a class="footnote-back" href="#e0-fnref-1">')

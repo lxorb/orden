@@ -85,14 +85,12 @@ describe('a mark in the middle of a sentence leaves the sentence alone', () => {
     const html = renderMarkdown('A sentence with a note[^1] in it.\n\n[^1]: The note.\n', {
       footnotes: true,
     })
-
     expect(html).toContain('with a note<sup class="footnote-ref"')
     expect(html).toContain('</sup> in it.')
   })
 
   test('a pair of dollars', () => {
     const html = renderMarkdown('Costs $$5 and $$6 in total.\n')
-
     expect(html).toBe('<p>Costs $$5 and $$6 in total.</p>\n')
   })
 
@@ -106,7 +104,6 @@ describe('a mark in the middle of a sentence leaves the sentence alone', () => {
     const html = renderMarkdown('Text with ![[Note]] in it.\n', {
       resolveEmbed: () => '# Note\n\nwords\n',
     })
-
     expect(html).toBe('<p>Text with Note in it.</p>\n')
   })
 })
@@ -114,35 +111,30 @@ describe('a mark in the middle of a sentence leaves the sentence alone', () => {
 describe('a construct on a line of its own still ends the paragraph above it', () => {
   test('a maths block', () => {
     const html = renderMarkdown('Text\n$$\na^2\n$$\n')
-
     expect(html).toContain('<p>Text</p>')
     expect(html).toContain('<div class="math-block"')
   })
 
   test('a footnote definition', () => {
     const html = renderMarkdown('Text[^1]\n[^1]: The note.\n', { footnotes: true })
-
     expect(html).toContain('<p>Text<sup class="footnote-ref"')
     expect(html).toContain('<section class="footnotes">')
   })
 
   test('an abbreviation definition', () => {
     const html = renderMarkdown('Text about HTML\n*[HTML]: HyperText Markup Language\n')
-
     expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
     expect(html).not.toContain('*[HTML]')
   })
 
   test('an embed', () => {
     const html = renderMarkdown('Text\n![[Note]]\n', { resolveEmbed: () => 'words\n' })
-
     expect(html).toContain('<p>Text</p>')
     expect(html).toContain('<figure class="embed">')
   })
 
   test('a table of contents', () => {
     const html = renderMarkdown('Text\n[TOC]\n\n# One\n', { toc: true })
-
     expect(html).toContain('<p>Text</p>')
     expect(html).toContain('<nav class="toc">')
   })
