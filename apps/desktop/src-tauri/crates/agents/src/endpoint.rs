@@ -121,6 +121,14 @@ impl Waiting {
         }
     }
 
+    fn passed_over(&self, label: &str, page: u64) {
+        if let Ok(mut heard) = self.1.lock() {
+            if self.page_of(label) == page {
+                heard.remove(label);
+            }
+        }
+    }
+
     pub fn forget(&self, label: &str) {
         if let Ok(mut heard) = self.1.lock() {
             heard.remove(label);
@@ -523,7 +531,19 @@ fn ask_the_window_within(
         held.insert(id, send);
     }
 
-    let outcome = asked_of_one(app, &waiting, id, window, asked, deadline).and_then(|window| {
+    let outcome = asked_of_one(
+        &waiting,
+        id,
+        window,
+        asked,
+        deadline,
+        || answering_order(app),
+        |window, asked| {
+            app.emit_to(window, ASKED, asked)
+                .map_err(|error| format!("the window could not be asked: {error}"))
+        },
+    )
+    .and_then(|window| {
         let page = waiting.page_of(&window);
         awaited(&answered, deadline, || {
             waiting.hears(&window) && waiting.page_of(&window) == page
@@ -538,27 +558,28 @@ fn ask_the_window_within(
 }
 
 fn asked_of_one(
-    app: &AppHandle,
     waiting: &Waiting,
     id: u64,
     first: String,
     asked: &mut serde_json::Value,
     deadline: Instant,
+    windows: impl Fn() -> Vec<String>,
+    emit: impl Fn(&str, &serde_json::Value) -> Result<(), String>,
 ) -> Result<String, String> {
     let mut window = first;
     loop {
+        let page = waiting.page_of(&window);
         waiting.ask_of(id, &window);
         stamped(asked, deadline);
-        app.emit_to(window.as_str(), ASKED, &*asked)
-            .map_err(|error| format!("the window could not be asked: {error}"))?;
+        emit(&window, asked)?;
         let left = deadline.saturating_duration_since(Instant::now());
         if waiting.taken_within(id, left.min(TAKES)) {
             return Ok(window);
         }
-        waiting.forget(&window);
+        waiting.passed_over(&window, page);
         let left = deadline.saturating_duration_since(Instant::now());
         window = waiting
-            .listener_within(listening_patience(left), || answering_order(app))
+            .listener_within(listening_patience(left), &windows)
             .ok_or_else(|| "the window did not answer".to_owned())?;
     }
 }
@@ -756,9 +777,10 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        as_hex, awaited, find, is_json, is_local, listening_patience, parse_head, read_request,
-        reason, refused, same_secret, stamped, window_patience, Admitted, Kept, Request, Waiting,
-        DELIVERY, MOST_AT_ONCE, MOST_BYTES, PATIENCE, SECRET_BYTES, SLOWEST, TERMINAL_STARTING,
+        as_hex, asked_of_one, awaited, find, is_json, is_local, listening_patience, parse_head,
+        read_request, reason, refused, same_secret, stamped, window_patience, Admitted, Kept,
+        Request, Waiting, DELIVERY, MOST_AT_ONCE, MOST_BYTES, PATIENCE, SECRET_BYTES, SLOWEST,
+        TERMINAL_STARTING,
     };
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::sync_channel;
@@ -1134,6 +1156,34 @@ mod tests {
         send.send("said".to_owned()).expect("sent");
         assert_eq!(awaited(&answered, later, || false).as_deref(), Ok("said"));
         drop(send);
+    }
+
+    #[test]
+    fn a_window_that_reloads_before_it_takes_a_request_is_asked_again_and_still_heard() {
+        let waiting = Waiting::default();
+        waiting.page_started("main");
+        let asks = AtomicUsize::new(0);
+        let mut asked = serde_json::json!({ "verb": "eval" });
+        let taken = asked_of_one(
+            &waiting,
+            1,
+            "main".to_owned(),
+            &mut asked,
+            Instant::now() + Duration::from_secs(10),
+            || vec!["main".to_owned()],
+            |window, _| {
+                if asks.fetch_add(1, Ordering::SeqCst) == 0 {
+                    waiting.page_started(window);
+                } else {
+                    waiting.claim(1, window);
+                }
+                Ok(())
+            },
+        );
+
+        assert_eq!(taken.as_deref(), Ok("main"));
+        assert_eq!(asks.load(Ordering::SeqCst), 2);
+        assert!(waiting.hears("main"));
     }
 
     #[test]

@@ -51,6 +51,8 @@ class App:
         try:
             with urllib.request.urlopen(asked, timeout=seconds) as said:
                 answer = json.loads(said.read().decode("utf-8", "replace"))
+        except urllib.error.HTTPError as error:
+            return {"error": f"{error}: {error.read().decode('utf-8', 'replace')}"}
         except (urllib.error.URLError, TimeoutError, OSError) as error:
             return {"error": str(error)}
         return answer.get("value") if answer.get("ok", answer.get("status") == "ok") else answer
