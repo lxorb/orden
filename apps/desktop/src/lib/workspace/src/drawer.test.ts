@@ -342,3 +342,19 @@ describe('the drawer on a phone', () => {
     expect(workspace.panel).toBe('tasks')
   })
 })
+
+describe('the right drawer', () => {
+  test.each([
+    ['note', true],
+    ['pages', true],
+    ['pdf', true],
+    ['canvas', false],
+    ['web', false],
+  ])('is there to pull out the outline over a %s tab: %s', async (kind, there) => {
+    const { rightDrawer, workspace, stop } = await opened('phone', ['outline'])
+    Object.assign(workspace, { active: { kind } })
+
+    expect(rightDrawer.there).toBe(there)
+    stop()
+  })
+})
