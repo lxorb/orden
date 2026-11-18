@@ -636,12 +636,13 @@ mod tests {
         names
     }
 
-    fn pandoc_here() -> bool {
-        let here = pandoc_runs();
-        if !here {
-            eprintln!("pandoc is not installed here, so this test checks nothing");
-        }
-        here
+    macro_rules! needs_pandoc {
+        () => {
+            if !pandoc_runs() {
+                eprintln!("pandoc is not installed here, so this test checks nothing");
+                return;
+            }
+        };
     }
 
     #[test]
@@ -662,9 +663,7 @@ mod tests {
 
     #[test]
     fn an_include_in_a_document_reads_no_file_of_this_machine() {
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let secrets = tempfile::tempdir().expect("a folder");
         let key = secrets.path().join("id_rsa");
         fs::write(&key, "PRIVATE KEY 7f3a\n").expect("written");
@@ -723,9 +722,7 @@ mod tests {
     fn a_picture_inside_a_document_comes_in_with_the_words() {
         use base64::Engine as _;
 
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let folder = tempfile::tempdir().expect("a folder");
         let beside = folder.path();
         docx_with_picture(beside, "with.docx");
@@ -752,9 +749,7 @@ mod tests {
 
     #[test]
     fn an_import_writes_no_picture_outside_its_folder() {
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let documents = tempfile::tempdir().expect("a folder");
         let inner = documents.path().join("inner");
         fs::create_dir(&inner).expect("a folder");
@@ -873,9 +868,7 @@ mod tests {
 
     #[test]
     fn the_try_runs_on_this_machine() {
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let copying = extracts_safely();
         assert!(!matches!(copying, Copying::Unknown(_)), "{copying:?}");
     }
@@ -1137,9 +1130,7 @@ mod tests {
 
     #[test]
     fn an_odt_carries_no_file_from_outside_the_space() {
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let shared = shared();
         let [absolute, climbing] = shared.links();
         let elsewhere = tempfile::tempdir().expect("a folder");
@@ -1167,9 +1158,7 @@ mod tests {
 
     #[test]
     fn the_formats_without_pictures_are_still_written() {
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let (note, elsewhere) = note_and_elsewhere();
         for format in ["latex", "mediawiki", "rst", "textile", "opml"] {
             let target = elsewhere.path().join(format!("Out.{format}"));
@@ -1191,9 +1180,7 @@ mod tests {
 
     #[test]
     fn an_odt_carries_the_pictures_beside_the_note() {
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let (note, elsewhere) = note_and_elsewhere();
         let target = elsewhere.path().join("Out.odt");
 
@@ -1210,9 +1197,7 @@ mod tests {
 
     #[test]
     fn a_picture_that_is_not_there_is_said() {
-        if !pandoc_here() {
-            return;
-        }
+        needs_pandoc!();
         let (note, elsewhere) = note_and_elsewhere();
         let target = elsewhere.path().join("Out.odt");
 

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, MutexGuard};
+use std::sync::Mutex;
 use tauri::AppHandle;
 
 use orden_base::carry::move_whole;
@@ -53,7 +53,7 @@ pub fn trash_item(
         return Err("nothing is there".into());
     }
 
-    let _guard = locked();
+    let _guard = MANIFEST_LOCK.held();
     let dir = trash_dir(&app)?;
     trashed(
         &dir,
@@ -116,7 +116,7 @@ pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<Tras
         return Err(format!("{name} is not a name Orden can keep"));
     }
 
-    let _guard = locked();
+    let _guard = MANIFEST_LOCK.held();
     let dir = trash_dir(&app)?;
     let id = new_id();
     let slot = dir.join(&id);
@@ -185,7 +185,7 @@ pub fn space_renamed(app: &AppHandle, from: &Path, to: &Path) {
     let (Some(from), Some(to)) = (from.file_name(), to.file_name()) else {
         return;
     };
-    let _guard = locked();
+    let _guard = MANIFEST_LOCK.held();
     let moved = trash_dir(app)
         .and_then(|dir| follows(&dir, &from.to_string_lossy(), &to.to_string_lossy()));
     if let Err(error) = moved {
@@ -219,7 +219,7 @@ fn follows(dir: &Path, from: &str, to: &str) -> Result<(), String> {
 
 #[tauri::command(async)]
 pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
-    let _guard = locked();
+    let _guard = MANIFEST_LOCK.held();
     let dir = trash_dir(&app)?;
 
     let mut entries = read_manifest(&dir);
@@ -231,7 +231,7 @@ pub fn list_trash(app: AppHandle) -> Result<Vec<TrashEntry>, String> {
 pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     let base = spaces_dir(&app)?;
 
-    let _guard = locked();
+    let _guard = MANIFEST_LOCK.held();
     let dir = trash_dir(&app)?;
     restored(&base, &dir, &id)
 }
@@ -301,7 +301,7 @@ pub fn purge_trash(app: AppHandle, id: String) -> Result<(), String> {
         return Err(format!("{id} is not something in the trash"));
     }
 
-    let _guard = locked();
+    let _guard = MANIFEST_LOCK.held();
     let dir = trash_dir(&app)?;
 
     let mut entries = read_manifest(&dir);
@@ -311,7 +311,7 @@ pub fn purge_trash(app: AppHandle, id: String) -> Result<(), String> {
 
 #[tauri::command(async)]
 pub fn purge_trash_older_than(app: AppHandle, age: u64) -> Result<u32, String> {
-    let _guard = locked();
+    let _guard = MANIFEST_LOCK.held();
     let dir = trash_dir(&app)?;
 
     let mut entries = read_manifest(&dir);
@@ -336,10 +336,6 @@ fn trash_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-fn locked() -> MutexGuard<'static, ()> {
-    MANIFEST_LOCK.held()
-}
-
 fn new_id() -> String {
     format!(
         "{}-{}",
@@ -349,16 +345,11 @@ fn new_id() -> String {
 }
 
 fn is_slot(id: &str) -> bool {
-    let Some((moment, counter)) = id.split_once('-') else {
-        return false;
-    };
-
-    !moment.is_empty()
-        && !counter.is_empty()
-        && moment.len() <= 20
-        && counter.len() <= 20
-        && moment.bytes().all(|byte| byte.is_ascii_digit())
-        && counter.bytes().all(|byte| byte.is_ascii_digit())
+    id.split_once('-').is_some_and(|(moment, counter)| {
+        [moment, counter].iter().all(|part| {
+            (1..=20).contains(&part.len()) && part.bytes().all(|byte| byte.is_ascii_digit())
+        })
+    })
 }
 
 fn read_manifest(dir: &Path) -> Vec<TrashEntry> {
