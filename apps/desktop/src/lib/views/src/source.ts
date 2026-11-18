@@ -1,13 +1,13 @@
 import { readBase, type Row, writeBase } from '@orden/bases'
 import { links } from '../../link-index/src/api'
 import { rows } from '../../rows/src/api'
-import { insideSpace, samePath, within } from '../../platform/src/api'
+import { insideSpace, samePath, spaceHolding } from '../../platform/src/api'
 import { noteText, workspace, writeNoteText } from '../../workspace/src/api'
 import type { Shown, Source } from './live.svelte'
 import { drawnFences } from './drawn-fences'
 
 function spaceOf(path: string): { name: string; root: string } | null {
-  return workspace.spaces.find((one) => within(one.root, path, one.root) !== null) ?? null
+  return spaceHolding(workspace.spaces, path)
 }
 
 export function rowAt(path: string | null): Row | undefined {

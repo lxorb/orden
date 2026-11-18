@@ -5,7 +5,7 @@ import {
   namesByShortName,
   nameOf,
   relativeTo,
-  within,
+  spaceHolding,
 } from '../../platform/src/api'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
@@ -107,7 +107,7 @@ export function docSource(doc: { path: string | null; shared: string | null }): 
   const how = reachedAs(path)
   if (path === null || how === null) return null
 
-  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  const space = spaceHolding(workspace.spaces, path)
   if (how === 'space' && space) return `shared space ${space.name}`
   return `shared note ${space ? relativeTo(space.root, path) : nameOf(path)}`
 }

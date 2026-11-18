@@ -1,7 +1,7 @@
 import { syncStore, workspaceView } from '@orden/contracts'
 import type { SharedItem } from '../../accounts/src/api'
 import { account } from '../../accounts/src/api'
-import { insideSpace, within, waited } from '../../platform/src/api'
+import { insideSpace, spaceHolding, waited } from '../../platform/src/api'
 import { sharedWithYou } from './sharing.svelte'
 
 const LOOK = 150
@@ -32,7 +32,7 @@ async function openWhereKept(item: SharedItem): Promise<boolean> {
   if (!path) return false
 
   const view = workspaceView()
-  const space = view.spaces.find((one) => within(one.root, path) !== null)
+  const space = spaceHolding(view.spaces, path)
   if (space) await view.showSpace(space.id)
   await view.openEntry(path)
   return true

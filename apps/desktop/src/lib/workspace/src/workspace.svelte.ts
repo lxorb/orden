@@ -45,7 +45,7 @@ import {
   relativeTo,
   samePath,
   sameSpelling,
-  within,
+  within, spaceHolding,
   withinSpace,
   AGENTS_NAME,
   isAgentsName,
@@ -954,7 +954,7 @@ class Workspace {
   }
 
   private spaceIdAt(path: string): string | null {
-    return this.spaces.find((one) => within(one.root, path) !== null)?.id ?? null
+    return spaceHolding(this.spaces, path)?.id ?? null
   }
 
   private async unwrittenBack(draft: Draft): Promise<NoteDoc | null> {
@@ -1371,7 +1371,7 @@ class Workspace {
   }
 
   outside(path: string): boolean {
-    return !this.spaces.some((one) => within(one.root, path) !== null)
+    return spaceHolding(this.spaces, path) === null
   }
 
   private async opens(path: string): Promise<boolean> {
@@ -1395,7 +1395,7 @@ class Workspace {
     const path = note.path
     if (path === null) return note.home ?? this.activeSpaceId
 
-    const holding = this.spaces.find((one) => within(one.root, path) !== null)
+    const holding = spaceHolding(this.spaces, path)
     return holding?.id ?? this.activeSpaceId
   }
 
@@ -2043,26 +2043,34 @@ class Workspace {
     const { blankPages } = await import('@orden/markdown/pages')
     const { modes } = await import('../../modes/src/api')
 
-    const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.pages))
-    const content = blankPages(modes.pagesPaper)
+    const name = await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.pages)
+    await this.made(dir, 'pages', name, blankPages(modes.pagesPaper))
+  }
 
+  private async made(
+    dir: string,
+    kind: 'note' | 'canvas' | 'pages',
+    name: string,
+    text: string,
+    naming = false,
+  ) {
+    const path = joinPath(dir, name)
     this.showEntry(this.freshEntry(path, false))
     if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
 
-    const file = this.document({
-      kind: 'pages',
-      path,
-      name: nameOf(path),
-      text: content,
-      dirty: false,
-    })
-    const tab = this.add(new Tab(file, this.panes.focusedId))
+    const fresh = new Tab(
+      this.document({ kind, path, name: nameOf(path), text, dirty: false }),
+      this.panes.focusedId,
+    )
+    if (naming) fresh.cursor = text.length
+    const tab = this.add(fresh)
     this.showNote()
     this.remember(path)
     this.dropScaffolding(tab)
+    if (naming) this.startRenaming(path, true)
 
-    await writeFile(path, content)
-    this.undone.record({ kind: 'create', path })
+    await writeFile(path, text)
+    if (!naming) this.undone.record({ kind: 'create', path })
     await this.loadTree()
     this.persist()
   }
@@ -2281,7 +2289,7 @@ class Workspace {
     if (samePath(target, from) || within(from, intoFolder) !== null) return
     if (!(await this.writableAt(from, intoFolder))) return
 
-    const leaving = this.spaces.find((one) => within(one.root, from) !== null)
+    const leaving = spaceHolding(this.spaces, from)
     let back = () => Promise.resolve()
     if (leaving && within(leaving.root, intoFolder) === null) {
       back = await services().chatsCarried(from, intoFolder)
@@ -3263,28 +3271,7 @@ class Workspace {
     if (named === undefined && this.startNaming('note', dir)) return
 
     const name = await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.note)
-    const path = joinPath(dir, name)
-    const content = `# ${shownName(name)}\n\n`
-
-    this.showEntry(this.freshEntry(path, false))
-    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
-
-    const note = this.document({
-      kind: 'note',
-      path,
-      name: nameOf(path),
-      text: content,
-      dirty: false,
-    })
-    const tab = this.add(new Tab(note, this.panes.focusedId))
-    this.showNote()
-    this.remember(path)
-    this.dropScaffolding(tab)
-
-    await writeFile(path, content)
-    this.undone.record({ kind: 'create', path })
-    await this.loadTree()
-    this.persist()
+    await this.made(dir, 'note', name, `# ${shownName(name)}\n\n`)
   }
 
   async noteFrom(text: string, folder?: string): Promise<string | null> {
@@ -3309,28 +3296,8 @@ class Workspace {
 
     const { blankCanvas } = await import('@orden/markdown/canvas')
 
-    const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.canvas))
-    const content = blankCanvas()
-
-    this.showEntry(this.freshEntry(path, false))
-    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
-
-    const file = this.document({
-      kind: 'canvas',
-      path,
-      name: nameOf(path),
-      text: content,
-      dirty: false,
-    })
-    const tab = this.add(new Tab(file, this.panes.focusedId))
-    this.showNote()
-    this.remember(path)
-    this.dropScaffolding(tab)
-
-    await writeFile(path, content)
-    this.undone.record({ kind: 'create', path })
-    await this.loadTree()
-    this.persist()
+    const name = await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.canvas)
+    await this.made(dir, 'canvas', name, blankCanvas())
   }
 
   async createInside(path: string, make = (folder: string): unknown => this.createNote(folder)) {
@@ -3579,7 +3546,7 @@ class Workspace {
 
   rootHolding(path: string | null): string | null {
     if (path === null) return this.activeSpace?.root ?? null
-    const holding = this.spaces.find((one) => within(one.root, path) !== null)
+    const holding = spaceHolding(this.spaces, path)
     return holding?.root ?? this.activeSpace?.root ?? null
   }
 
@@ -3905,31 +3872,7 @@ class Workspace {
     if (!dir || !(await this.writableAt(dir))) return
 
     const name = await this.freeNameOnDisk(dir, `${noteId(format)}.md`)
-
-    const path = joinPath(dir, name)
-    const content = '# '
-
-    this.showEntry(this.freshEntry(path, false))
-    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
-
-    const note = this.document({
-      kind: 'note',
-      path,
-      name: nameOf(path),
-      text: content,
-      dirty: false,
-    })
-    const tab = new Tab(note, this.panes.focusedId)
-    tab.cursor = content.length
-    this.add(tab)
-    this.showNote()
-    this.remember(path)
-    this.dropScaffolding(tab)
-    this.startRenaming(path, true)
-
-    await writeFile(path, content)
-    await this.loadTree()
-    this.persist()
+    await this.made(dir, 'note', name, '# ', true)
   }
 
   get undoLabel(): string | null {

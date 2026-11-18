@@ -1,4 +1,4 @@
-import { folderOf, joinPath, namesByShortName, onDisk, within } from '../../../platform/src/api'
+import { folderOf, joinPath, namesByShortName, onDisk, within, spaceHolding } from '../../../platform/src/api'
 import { buried, protection } from '../../../protect/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { type Os, programOf, runsOnTheList } from './shell-text'
@@ -25,7 +25,7 @@ export async function shutNothingFor(program: string, folder: string, os: Os): P
   const streamed = folder.replace(/^[A-Za-z]:/, '').includes(':')
   if (streamed || namesByShortName(folder) || !protection.agentsMayAll(folder)) return false
   if (programOf(program, os).toLowerCase() !== 'git') return true
-  const root = workspace.spaces.find((one) => within(one.root, folder, one.root) !== null)?.root
+  const root = spaceHolding(workspace.spaces, folder)?.root
   const top = root ? await repositoryTop(folder, root) : null
   if (root === undefined || top === null || !protection.agentsMayAll(root)) return false
   return !(await buried()).buriedWithin(root, '')

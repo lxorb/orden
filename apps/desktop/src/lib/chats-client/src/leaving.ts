@@ -1,7 +1,7 @@
 import { ApiError } from '../../accounts/src/api'
-import { onDisk, nameOf, samePath, within, joinPath } from '../../platform/src/api'
+import { onDisk, nameOf, samePath, spaceHolding, within, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
-import { mayCarry, notices, pointersMoving, spaceHolding, workspace } from '../../workspace/src/api'
+import { mayCarry, notices, pointersMoving, workspace } from '../../workspace/src/api'
 import { carryQuestion } from './carry-question'
 import { listChats, moveChat } from './http'
 import { chatName, readPointer } from './pointers'
@@ -9,8 +9,8 @@ import { keepOwnPointer, lastMoved, movedHere, ownPointer } from './places'
 
 export async function chatsCarried(path: string, folder: string): Promise<() => Promise<void>> {
   const none = () => Promise.resolve()
-  const from = spaceHolding(path)
-  const to = spaceHolding(folder)
+  const from = spaceHolding(workspace.spaces, path)
+  const to = spaceHolding(workspace.spaces, folder)
   if (!from || !to || samePath(from.root, to.root)) return none
   const pointers = await pointersMoving(path)
   if (!pointers.length) return none

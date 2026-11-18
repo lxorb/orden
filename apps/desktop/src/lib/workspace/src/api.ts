@@ -12,7 +12,7 @@ export {
   workspace,
 } from './workspace.svelte'
 export { agentMarks, type TabAct, type Worn } from './agent-marks.svelte'
-export { mayCarry, pointersMoving, spaceHolding } from './chat-carry'
+export { mayCarry, pointersMoving } from './chat-carry'
 export { dropOnList, fileClipboard, listMotion, moving } from './list-landing.svelte'
 export { hiddenTabs } from './hidden-tabs.svelte'
 export { keptCoverOf, setCoverPosition } from './kept-cover'
