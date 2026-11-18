@@ -1,20 +1,13 @@
-import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
 import type { Content } from '@orden/pass/types'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import '../test/no-device'
+import { closed, showing, target, typed } from '../test/drawn'
+import { PASSWORD, pass } from '../test/opened'
 
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const PassTab = (await import('./PassTab.svelte')).default
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
 
-const PASSWORD = 'correct horse battery staple'
 const SECRET = 'Tr0ub4dor&3-hidden'
-
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 
 async function until(ready: () => boolean, what: string): Promise<void> {
   for (let tries = 0; tries < 200; tries++) {
@@ -23,13 +16,6 @@ async function until(ready: () => boolean, what: string): Promise<void> {
     await new Promise((done) => setTimeout(done, 20))
   }
   throw new Error(`never: ${what}`)
-}
-
-function typed(field: HTMLInputElement | null, value: string) {
-  if (!field) throw new Error('no field')
-  field.value = value
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  flushSync()
 }
 
 function submitted(form: HTMLFormElement | null) {
@@ -41,17 +27,9 @@ function login(title: string, more: Partial<Content> = {}): Content {
   return { ...blank('login'), title, ...more } as Content
 }
 
-beforeAll(() => {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(PassTab, { target, props: { tab: null, focused: true }, intro: false })
-  flushSync()
-})
+beforeAll(() => showing(PassTab, { tab: null, focused: true }))
 
-afterAll(() => {
-  if (shown) void unmount(shown)
-  target.remove()
-})
+afterAll(closed)
 
 describe('the Pass tab', () => {
   test('sets up with a password, shows the recovery key once, then the three columns', async () => {

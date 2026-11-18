@@ -1,22 +1,16 @@
-import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
-import '../test/no-device'
+import { closed, showing, target } from '../test/drawn'
+import { opened, pass } from '../test/opened'
 
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const Monitor = (await import('./Monitor.svelte')).default
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 const ids: Record<string, string> = {}
 
 beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup('correct horse battery staple')
+  await opened()
   const vault = pass.vaults[0]?.id ?? ''
   const login = (title: string, password: string) =>
     pass.create(vault, { ...blank('login'), title, password })
@@ -26,18 +20,9 @@ beforeAll(async () => {
   ids.strong = (await login('Strong', 'Kd3%nB8^qW1*eY6(uI0)')).id
 })
 
-afterEach(() => {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
-})
+afterEach(closed)
 
-function shownWith(ui: InstanceType<typeof PassUi>) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(Monitor, { target, props: { ui }, intro: false })
-  flushSync()
-}
+const shownWith = (ui: InstanceType<typeof PassUi>) => showing(Monitor, { ui })
 
 function card(flag: string): HTMLButtonElement {
   const found = target.querySelector<HTMLButtonElement>(`[data-flag="${flag}"]`)

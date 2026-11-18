@@ -1,13 +1,12 @@
-import { flushSync, mount, unmount } from 'svelte'
+import { flushSync } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { closed, showing } from '../test/drawn'
 import '../test/no-device'
 
 const { pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const Generator = (await import('./Generator.svelte')).default
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 let ui: InstanceType<typeof PassUi>
 const used = vi.fn<(password: string) => void>()
 
@@ -16,15 +15,11 @@ beforeEach(() => {
   used.mockClear()
   ui = new PassUi(null)
   ui.sheet = { kind: 'generator', use: used }
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(Generator, { target, props: { ui }, intro: false })
-  flushSync()
+  showing(Generator, { ui })
 })
 
 afterEach(() => {
-  if (shown) void unmount(shown)
-  target.remove()
+  closed()
   document.body.innerHTML = ''
   vi.restoreAllMocks()
 })

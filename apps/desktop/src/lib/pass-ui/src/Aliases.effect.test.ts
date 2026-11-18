@@ -1,17 +1,13 @@
-import 'fake-indexeddb/auto'
 import { blank } from '@orden/pass/envelope'
 import type { Alias, Item } from '@orden/pass/types'
-import { type Component, flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import '../test/no-device'
+import { closed, showing, target, typed } from '../test/drawn'
+import { opened, pass } from '../test/opened'
 
-const { configurePass, pass } = await import('../../pass-sync/src/store.svelte')
 const { PassUi } = await import('../../pass-sync/src/ui.svelte')
 const SettingsAliases = (await import('./SettingsAliases.svelte')).default
 const ItemEdit = (await import('./ItemEdit.svelte')).default
 const ItemView = (await import('./ItemView.svelte')).default
-const FAST = { m: 64, t: 1, p: 1 }
-configurePass({ kdf: FAST, pinKdf: FAST })
 
 interface Asked {
   method: string
@@ -39,13 +35,10 @@ const MAILBOXES: [number, unknown] = [
   { mailboxes: [{ id: 1, email: 'me@example.com', default: true }] },
 ]
 
-let target: HTMLElement
-let shown: ReturnType<typeof mount> | undefined
 let vault = ''
 
 beforeAll(async () => {
-  await pass.start()
-  if (pass.state === 'new') await pass.setup('correct horse battery staple')
+  await opened()
   vault = pass.vaults[0]?.id ?? ''
 })
 
@@ -70,25 +63,9 @@ beforeEach(async () => {
 })
 
 afterEach(() => {
-  if (shown) void unmount(shown)
-  shown = undefined
-  target.remove()
+  closed()
   vi.unstubAllGlobals()
 })
-
-function showing<P extends Record<string, unknown>>(component: Component<P>, props: P) {
-  target = document.createElement('div')
-  document.body.append(target)
-  shown = mount(component, { target, props, intro: false })
-  flushSync()
-}
-
-function typed(field: HTMLInputElement | null, text: string) {
-  if (!field) throw new Error('no field')
-  field.value = text
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  flushSync()
-}
 
 function buttonNamed(name: string): HTMLButtonElement {
   const button = [...target.querySelectorAll('button')].find(
