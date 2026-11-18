@@ -1,6 +1,6 @@
-import type { FieldKind } from '../types'
 import {
   Collector,
+  type Extra,
   cardOf,
   fieldKindOf,
   fieldsOf,
@@ -16,12 +16,6 @@ import {
 } from './build'
 import { csvRecords, type CsvRecord } from './csv'
 import type { Imported } from './types'
-
-interface Extra {
-  name: string
-  value: string
-  kind?: FieldKind
-}
 
 function jsonList(text: string): unknown[] {
   if (text.trim() === '') return []

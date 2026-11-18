@@ -13,8 +13,9 @@ import {
   loginOf,
   noteOf,
   recordOf,
+  skippedOnly,
   stringOf,
-  websitesOf,
+  websitesMatched,
 } from './build'
 import { passkeyOf, sshOf } from './content'
 import { csvRecords, type CsvRecord } from './csv'
@@ -55,15 +56,7 @@ function fieldsOf(raw: unknown): Field[] {
 }
 
 function websitesWithMatch(raw: unknown): Website[] {
-  const websites: Website[] = []
-  for (const one of listOf(raw)) {
-    const entry = recordOf(one)
-    const [website] = websitesOf([stringOf(entry.uri)])
-    if (!website || websites.some((known) => known.url === website.url)) continue
-    const match = entry.match === null || entry.match === undefined ? 0 : Number(entry.match)
-    websites.push({ ...website, match: MATCH[match] ?? 'domain' })
-  }
-  return websites
+  return websitesMatched(listOf(raw), (entry) => [entry.uri, MATCH[Number(entry.match ?? 0)]])
 }
 
 function passkeysOf(raw: unknown): Passkey[] {
@@ -83,7 +76,7 @@ function passkeysOf(raw: unknown): Passkey[] {
   })
 }
 
-function contentOf(item: Record<string, unknown>): { content: Content; known: boolean } {
+function contentOf(item: Record<string, unknown>): Content {
   const title = stringOf(item.name)
   const note = stringOf(item.notes)
   const fields = fieldsOf(item.fields)
@@ -99,24 +92,21 @@ function contentOf(item: Record<string, unknown>): { content: Content; known: bo
         totp: stringOf(login.totp),
         passkeys: passkeysOf(login.fido2Credentials),
       })
-      return { known: true, content: { ...content, websites: websitesWithMatch(login.uris) } }
+      return { ...content, websites: websitesWithMatch(login.uris) }
     }
     case 2:
-      return { known: true, content: noteOf(title, note, fields) }
+      return noteOf(title, note, fields)
     case 3: {
       const card = recordOf(item.card)
-      return {
-        known: true,
-        content: cardOf({
-          title,
-          note,
-          fields,
-          holder: stringOf(card.cardholderName),
-          number: stringOf(card.number),
-          expiry: expiryOf(stringOf(card.expMonth), stringOf(card.expYear)),
-          code: stringOf(card.code),
-        }),
-      }
+      return cardOf({
+        title,
+        note,
+        fields,
+        holder: stringOf(card.cardholderName),
+        number: stringOf(card.number),
+        expiry: expiryOf(stringOf(card.expMonth), stringOf(card.expYear)),
+        code: stringOf(card.code),
+      })
     }
     case 4: {
       const id = recordOf(item.identity)
@@ -124,80 +114,64 @@ function contentOf(item: Record<string, unknown>): { content: Content; known: bo
         .map((key) => stringOf(id[key]).trim())
         .filter((line) => line !== '')
         .join('\n')
-      return {
-        known: true,
-        content: identityOf({
-          title,
-          note,
-          fields,
-          values: {
-            firstName: stringOf(id.firstName),
-            middleName: stringOf(id.middleName),
-            lastName: stringOf(id.lastName),
-            email: stringOf(id.email),
-            phone: stringOf(id.phone),
-            street,
-            city: stringOf(id.city),
-            state: stringOf(id.state),
-            zip: stringOf(id.postalCode),
-            country: stringOf(id.country),
-            company: stringOf(id.company),
-            ssn: stringOf(id.ssn),
-            passport: stringOf(id.passportNumber),
-            license: stringOf(id.licenseNumber),
-          },
-          extra: [
-            { name: 'Title', value: stringOf(id.title) },
-            { name: 'Username', value: stringOf(id.username) },
-          ],
-        }),
-      }
+      return identityOf({
+        title,
+        note,
+        fields,
+        values: {
+          firstName: stringOf(id.firstName),
+          middleName: stringOf(id.middleName),
+          lastName: stringOf(id.lastName),
+          email: stringOf(id.email),
+          phone: stringOf(id.phone),
+          street,
+          city: stringOf(id.city),
+          state: stringOf(id.state),
+          zip: stringOf(id.postalCode),
+          country: stringOf(id.country),
+          company: stringOf(id.company),
+          ssn: stringOf(id.ssn),
+          passport: stringOf(id.passportNumber),
+          license: stringOf(id.licenseNumber),
+        },
+        extra: [
+          { name: 'Title', value: stringOf(id.title) },
+          { name: 'Username', value: stringOf(id.username) },
+        ],
+      })
     }
     case 5: {
       const ssh = recordOf(item.sshKey)
       const fingerprint = stringOf(ssh.keyFingerprint)
-      return {
-        known: true,
-        content: sshOf({
-          title,
-          note,
-          fields: fingerprint === '' ? fields : [...fields, fieldOf('Fingerprint', fingerprint)],
-          privateKey: stringOf(ssh.privateKey),
-          publicKey: stringOf(ssh.publicKey),
-        }),
-      }
+      return sshOf({
+        title,
+        note,
+        fields: fingerprint === '' ? fields : [...fields, fieldOf('Fingerprint', fingerprint)],
+        privateKey: stringOf(ssh.privateKey),
+        publicKey: stringOf(ssh.publicKey),
+      })
     }
     default:
-      return { known: false, content: noteOf(title, note, fields) }
+      return noteOf(title, note, fields)
   }
 }
 
 function parseBitwardenJson(text: string): Imported {
   const root = recordOf(jsonOf(text))
-  if (root.encrypted === true) {
-    const into = new Collector(NAME)
-    into.skip(ENCRYPTED, NAME)
-    return into.result()
-  }
+  if (root.encrypted === true) return skippedOnly(NAME, ENCRYPTED)
   if (!Array.isArray(root.items)) throw new ImportError('This is not a Bitwarden export.')
-  const folders = new Map(
-    listOf(root.folders).map((one) => {
-      const folder = recordOf(one)
-      return [stringOf(folder.id), stringOf(folder.name)] as const
-    }),
-  )
-  const collections = new Map(
-    listOf(root.collections).map((one) => {
-      const collection = recordOf(one)
-      return [stringOf(collection.id), stringOf(collection.name)] as const
-    }),
-  )
+  const names = (raw: unknown): Map<string, string> =>
+    new Map<string, string>(
+      listOf(raw).map((one) => [stringOf(recordOf(one).id), stringOf(recordOf(one).name)]),
+    )
+  const folders = names(root.folders)
+  const collections = names(root.collections)
   const into = new Collector(NAME)
   for (const raw of listOf(root.items)) {
     const item = recordOf(raw)
-    const { content, known } = contentOf(item)
+    const content = contentOf(item)
     const kind = stringOf(item.type)
-    if (!known)
+    if (![1, 2, 3, 4, 5].includes(Number(item.type)))
       into.skip(`Kept as a note: Orden has no kind for Bitwarden's type ${kind}.`, content.title)
     const collection = listOf(item.collectionIds)
       .map((id) => collections.get(stringOf(id)))
@@ -256,10 +230,7 @@ function parseBitwardenCsv(text: string): Imported {
     }
     const collection = (row.collections ?? '').split(',')[0] ?? ''
     into.add(
-      itemOf(content, {
-        pinned: row.favorite === '1',
-        folder: row.folder ?? null,
-      }),
+      itemOf(content, { pinned: row.favorite === '1', folder: row.folder ?? null }),
       collection,
     )
   }

@@ -1,6 +1,7 @@
 import type { FieldKind, IdentityKey } from '../types'
 import {
   Collector,
+  type Extra,
   cardOf,
   dateOf,
   fieldsOf,
@@ -22,12 +23,6 @@ interface EnpassField {
   type: string
   value: string
   sensitive: boolean
-}
-
-interface Extra {
-  name: string
-  value: string
-  kind?: FieldKind
 }
 
 const IDENTITY_LABELS: Record<string, IdentityKey> = {

@@ -23,8 +23,10 @@ import {
   noteOf,
   recordOf,
   sectionOf,
+  skippedOnly,
   stringOf,
   textOf,
+  websitesMatched,
   websitesOf,
   type Files,
 } from './build'
@@ -82,6 +84,8 @@ const IDENTITY: Record<string, IdentityKey> = {
   workEmail: 'workEmail',
 }
 
+const KNOWN = ['login', 'note', 'alias', 'creditCard', 'identity', 'sshKey', 'wifi', 'custom']
+
 const IDENTITY_EXTRA = [
   'extraPersonalDetails',
   'extraAddressDetails',
@@ -93,20 +97,14 @@ export function parseProton(data: string | Files): Imported {
   if (typeof data !== 'string') return parseProtonZip(data)
   const text = data.charCodeAt(0) === 0xfeff ? data.slice(1) : data
   const head = text.trimStart()
-  if (head.startsWith('-----BEGIN PGP')) return encrypted()
+  if (head.startsWith('-----BEGIN PGP')) return skippedOnly(NAME, ENCRYPTED)
   if (head.startsWith('{')) return parseProtonJson(text)
   return parseProtonCsv(text)
 }
 
-function encrypted(): Imported {
-  const into = new Collector(NAME)
-  into.skip(ENCRYPTED, NAME)
-  return into.result()
-}
-
 function parseProtonZip(files: Files): Imported {
   const names = Object.keys(files)
-  if (names.some((name) => name.endsWith('data.pgp'))) return encrypted()
+  if (names.some((name) => name.endsWith('data.pgp'))) return skippedOnly(NAME, ENCRYPTED)
   const json = names.find((name) => name.endsWith('data.json'))
   const bytes = json === undefined ? undefined : files[json]
   if (bytes === undefined) throw new ImportError('The archive has no Proton Pass data.json.')
@@ -155,14 +153,7 @@ function sectionsOf(raw: unknown): Section[] {
 function websitesWithModes(content: Record<string, unknown>): Website[] {
   const autofill = listOf(content.autofillUrls)
   if (autofill.length === 0) return websitesOf(listOf(content.urls).map(stringOf))
-  const websites: Website[] = []
-  for (const raw of autofill) {
-    const entry = recordOf(raw)
-    const [website] = websitesOf([stringOf(entry.url)])
-    if (!website || websites.some((one) => one.url === website.url)) continue
-    websites.push({ ...website, match: MODES[Number(entry.mode ?? 0)] ?? 'domain' })
-  }
-  return websites
+  return websitesMatched(autofill, (entry) => [entry.url, MODES[Number(entry.mode ?? 0)]])
 }
 
 function passkeysOf(raw: unknown): Passkey[] {
@@ -182,12 +173,7 @@ function passkeysOf(raw: unknown): Passkey[] {
   })
 }
 
-interface ProtonContent {
-  content: Content
-  kind: string
-}
-
-function contentOf(item: Record<string, unknown>, aliasEmail: string): ProtonContent {
+function contentOf(item: Record<string, unknown>, aliasEmail: string): Content {
   const data = recordOf(item.data)
   const meta = recordOf(data.metadata)
   const title = stringOf(meta.name)
@@ -208,37 +194,31 @@ function contentOf(item: Record<string, unknown>, aliasEmail: string): ProtonCon
         fields,
         passkeys: passkeysOf(content.passkeys),
       })
-      return { kind, content: { ...login, websites: websitesWithModes(content) } }
+      return { ...login, websites: websitesWithModes(content) }
     }
     case 'note':
-      return { kind, content: noteOf(title, note, fields) }
+      return noteOf(title, note, fields)
     case 'alias':
       return {
-        kind,
-        content: {
-          ...blank('alias'),
-          title: title.trim(),
-          note,
-          fields,
-          address: aliasEmail,
-          provider: 'manual',
-          enabled: true,
-        },
+        ...blank('alias'),
+        title: title.trim(),
+        note,
+        fields,
+        address: aliasEmail,
+        provider: 'manual',
+        enabled: true,
       }
     case 'creditCard':
-      return {
-        kind,
-        content: cardOf({
-          title,
-          note,
-          fields,
-          holder: stringOf(content.cardholderName),
-          number: stringOf(content.number),
-          expiry: stringOf(content.expirationDate),
-          code: stringOf(content.verificationNumber),
-          pin: stringOf(content.pin),
-        }),
-      }
+      return cardOf({
+        title,
+        note,
+        fields,
+        holder: stringOf(content.cardholderName),
+        number: stringOf(content.number),
+        expiry: stringOf(content.expirationDate),
+        code: stringOf(content.verificationNumber),
+        pin: stringOf(content.pin),
+      })
     case 'identity': {
       const values: Partial<Record<IdentityKey, string>> = {}
       for (const [from, to] of Object.entries(IDENTITY)) values[to] = stringOf(content[from])
@@ -250,54 +230,42 @@ function contentOf(item: Record<string, unknown>, aliasEmail: string): ProtonCon
         extra: IDENTITY_EXTRA.flatMap((key) => extraFieldsOf(content[key])),
       })
       return {
-        kind,
-        content: {
-          ...identity,
-          sections: [
-            ...identity.sections,
-            ...sectionsOf(content.extraSections).filter((one) => one.fields.length > 0),
-          ],
-        },
+        ...identity,
+        sections: [
+          ...identity.sections,
+          ...sectionsOf(content.extraSections).filter((one) => one.fields.length > 0),
+        ],
       }
     }
     case 'sshKey':
-      return {
-        kind,
-        content: sshOf({
-          title,
-          note,
-          fields,
-          privateKey: stringOf(content.privateKey),
-          publicKey: stringOf(content.publicKey),
-          sections: sectionsOf(content.sections),
-        }),
-      }
+      return sshOf({
+        title,
+        note,
+        fields,
+        privateKey: stringOf(content.privateKey),
+        publicKey: stringOf(content.publicKey),
+        sections: sectionsOf(content.sections),
+      })
     case 'wifi':
-      return {
-        kind,
-        content: wifiOf({
-          title,
-          note,
-          fields,
-          ssid: stringOf(content.ssid),
-          password: stringOf(content.password),
-          security: WIFI[Number(content.security ?? 0)] ?? '',
-          sections: sectionsOf(content.sections),
-        }),
-      }
+      return wifiOf({
+        title,
+        note,
+        fields,
+        ssid: stringOf(content.ssid),
+        password: stringOf(content.password),
+        security: WIFI[Number(content.security ?? 0)] ?? '',
+        sections: sectionsOf(content.sections),
+      })
     case 'custom':
-      return {
-        kind,
-        content: customOf({ title, note, fields, sections: sectionsOf(content.sections) }),
-      }
+      return customOf({ title, note, fields, sections: sectionsOf(content.sections) })
     default:
-      return { kind, content: noteOf(title, note, fields) }
+      return noteOf(title, note, fields)
   }
 }
 
 function parseProtonJson(text: string): Imported {
   const root = recordOf(jsonOf(text))
-  if (root.encrypted === true) return encrypted()
+  if (root.encrypted === true) return skippedOnly(NAME, ENCRYPTED)
   if (root.vaults === undefined) throw new ImportError('This is not a Proton Pass export.')
   const into = new Collector(NAME)
   for (const rawVault of Object.values(recordOf(root.vaults))) {
@@ -317,9 +285,11 @@ function parseProtonJson(text: string): Imported {
     )
     for (const rawItem of listOf(vault.items)) {
       const item = recordOf(rawItem)
-      const { content, kind } = contentOf(item, stringOf(item.aliasEmail))
+      const content = contentOf(item, stringOf(item.aliasEmail))
       const title = content.title
-      if (!isKnownKind(kind)) into.skip(`Kept as a note: Orden has no kind for "${kind}".`, title)
+      const kind = stringOf(recordOf(item.data).type)
+      if (!KNOWN.includes(kind))
+        into.skip(`Kept as a note: Orden has no kind for "${kind}".`, title)
       if (listOf(item.files).length > 0) into.skip('Its attachments were not imported.', title)
       into.add(
         itemOf(content, {
@@ -336,33 +306,18 @@ function parseProtonJson(text: string): Imported {
   return into.result()
 }
 
-function isKnownKind(kind: string): boolean {
-  return ['login', 'note', 'alias', 'creditCard', 'identity', 'sshKey', 'wifi', 'custom'].includes(
-    kind,
-  )
-}
-
-function jsonRecord(text: string): Record<string, unknown> {
+function jsonIn(text: string): unknown {
   try {
-    return recordOf(JSON.parse(text) as unknown)
+    return JSON.parse(text) as unknown
   } catch {
-    return {}
+    return null
   }
 }
 
 function csvWebsites(row: CsvRecord): Website[] {
-  const autofill = jsonRecordList(row.autofillUrls ?? '')
+  const autofill = listOf(jsonIn(row.autofillUrls ?? ''))
   if (autofill.length > 0) return websitesWithModes({ autofillUrls: autofill })
   return websitesOf((row.url ?? '').split(/,\s*|\r?\n/))
-}
-
-function jsonRecordList(text: string): unknown[] {
-  if (text.trim() === '') return []
-  try {
-    return listOf(JSON.parse(text) as unknown)
-  } catch {
-    return []
-  }
 }
 
 function csvContentOf(row: CsvRecord, hasEmail: boolean): Content | null {
@@ -382,7 +337,7 @@ function csvContentOf(row: CsvRecord, hasEmail: boolean): Content | null {
       return { ...login, websites: csvWebsites(row) }
     }
     case 'creditCard': {
-      const card = jsonRecord(note)
+      const card = recordOf(jsonIn(note))
       return cardOf({
         title,
         note: stringOf(card.note),
@@ -394,7 +349,7 @@ function csvContentOf(row: CsvRecord, hasEmail: boolean): Content | null {
       })
     }
     case 'identity': {
-      const raw = jsonRecord(note)
+      const raw = recordOf(jsonIn(note))
       const values: Partial<Record<IdentityKey, string>> = {}
       for (const [from, to] of Object.entries(IDENTITY)) values[to] = stringOf(raw[from])
       return identityOf({ title, note: stringOf(raw.note), values })
@@ -427,13 +382,8 @@ function parseProtonCsv(text: string): Imported {
         content.title,
       )
     }
-    into.add(
-      itemOf(content, {
-        created: dateOf(row.createTime ?? ''),
-        modified: dateOf(row.modifyTime ?? ''),
-      }),
-      row.vault ?? '',
-    )
+    const parts = { created: dateOf(row.createTime ?? ''), modified: dateOf(row.modifyTime ?? '') }
+    into.add(itemOf(content, parts), row.vault ?? '')
   }
   return into.result()
 }
