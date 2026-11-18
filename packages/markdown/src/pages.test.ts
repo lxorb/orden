@@ -110,12 +110,9 @@ describe('a page note as a file', () => {
     expect(pagesOf(readCanvas(writeCanvas(before)))).toEqual(pagesOf(before))
   })
 
-  test('written back byte for byte', () => {
+  test('written back byte for byte; a canvas with no pages is written exactly as it was, with no pages key', () => {
     const once = writeCanvas(pagesFromPdf('Paper.pdf', [{ width: 600, height: 800 }]))
     expect(writeCanvas(readCanvas(once))).toBe(once)
-  })
-
-  test('a canvas with no pages is written exactly as it was, with no pages key', () => {
     const plain = writeCanvas(emptyCanvas())
     expect(plain).not.toContain('pages')
   })
@@ -172,20 +169,13 @@ describe('the column', () => {
     expect(laid[2]?.y).toBe(2 * (PAPERS.a4.height + GUTTER))
   })
 
-  test('centres every page on the same middle, whatever their sizes', () => {
+  test('centres every page on the same middle, whatever their sizes; hands back the very same pages when nothing moved; a canvas already settled is handed straight back', () => {
     const laid = laidOut([page('a'), page('b', { width: 500 })])
-
     expect(laid[0]?.x).toBe(-PAPERS.a4.width / 2)
     expect(laid[1]?.x).toBe(-250)
-  })
-
-  test('hands back the very same pages when nothing moved', () => {
     const pages = laidOut([page('a'), page('b')])
     expect(laidOut(pages)).toEqual(pages)
     expect(laidOut(pages)[0]).toBe(pages[0])
-  })
-
-  test('a canvas already settled is handed straight back', () => {
     const canvas = emptyPages()
     expect(settled(canvas)).toBe(canvas)
   })
@@ -350,18 +340,12 @@ describe('reordering', () => {
     expect(card?.y).toBe(20)
   })
 
-  test('every page that moves in a reorder carries what is on it', () => {
+  test('every page that moves in a reorder carries what is on it; a page already where it is asked to go comes back unchanged; an id that names no page changes nothing', () => {
     const turned = moved(carrying([page('a'), page('b'), page('c')]), 'a', 2)
     expect(pagesOf(turned).map((one) => one.id)).toEqual(['b', 'c', 'a'])
     expect(strays(turned)).toEqual([])
-  })
-
-  test('a page already where it is asked to go comes back unchanged', () => {
     const two = added(emptyPages()).canvas
     expect(moved(two, pagesOf(two)[0]?.id ?? '', 0)).toBe(two)
-  })
-
-  test('an id that names no page changes nothing', () => {
     const one = emptyPages()
     expect(moved(one, 'nothing', 3)).toBe(one)
   })
@@ -652,18 +636,12 @@ describe('a page out of a PDF', () => {
     expect(pages[2]).toMatchObject({ width: 400, height: 1200 })
   })
 
-  test('a page named Letter keeps Letter when the file is read back', () => {
+  test('a page named Letter keeps Letter when the file is read back; a paper with no pages still gives somewhere to write; one page is a page and nothing else', () => {
     const once = pagesFromPdf('Paper.pdf', [
       { width: PAPERS.letter.width, height: PAPERS.letter.height },
     ])
     expect(pagesOf(readCanvas(writeCanvas(once)))[0]?.paper).toBe('letter')
-  })
-
-  test('a paper with no pages still gives somewhere to write', () => {
     expect(pagesOf(pagesFromPdf('Paper.pdf', []))).toHaveLength(1)
-  })
-
-  test('one page is a page and nothing else', () => {
     const one = pdfPage('Paper.pdf', 3, 600, 800)
     expect(isPage(one)).toBe(true)
     expect(one.page).toBe(3)
@@ -676,11 +654,8 @@ describe('a page out of a PDF', () => {
 })
 
 describe('the paper a page note holds', () => {
-  test('is the note with .pdf after it', () => {
+  test('is the note with .pdf after it; names the note it belongs to, and nothing else does', () => {
     expect(paperOf('/s/Lecture 4.pages')).toBe('/s/Lecture 4.pages.pdf')
-  })
-
-  test('names the note it belongs to, and nothing else does', () => {
     expect(holderOf('/s/Lecture 4.pages.pdf')).toBe('/s/Lecture 4.pages')
     expect(holderOf('/s/Lecture 4.PAGES.PDF')).toBe('/s/Lecture 4.PAGES')
     expect(holderOf('/s/Lecture 4.pdf')).toBeNull()

@@ -3,13 +3,10 @@ import { calloutIcon, calloutIconParts, calloutOf } from './callouts'
 import { renderMarkdown } from './index'
 
 describe('a callout’s opening line', () => {
-  test('is nothing at all for a quote that names no type', () => {
+  test('is nothing at all for a quote that names no type; names its type however it was capitalised', () => {
     expect(calloutOf('Just a quote.')).toBeNull()
     expect(calloutOf('[not a callout] really')).toBeNull()
     expect(calloutOf('[!] empty')).toBeNull()
-  })
-
-  test('names its type however it was capitalised', () => {
     expect(calloutOf('[!NOTE]')?.type).toBe('note')
     expect(calloutOf('[!Warning]')?.type).toBe('warning')
   })
@@ -81,36 +78,24 @@ describe('a callout’s opening line', () => {
     }
   })
 
-  test('says the words that are not words in capitals', () => {
+  test('says the words that are not words in capitals; reads the fold sign, and reads none as none; takes the rest of the line as the title', () => {
     expect(calloutOf('[!tldr]')?.label).toBe('TLDR')
     expect(calloutOf('[!faq]')?.label).toBe('FAQ')
     expect(calloutOf('[!abstract]')?.label).toBe('Abstract')
-  })
-
-  test('reads the fold sign, and reads none as none', () => {
     expect(calloutOf('[!note]')).toMatchObject({ foldable: false, folded: false })
     expect(calloutOf('[!note]+')).toMatchObject({ foldable: true, folded: false })
     expect(calloutOf('[!note]-')).toMatchObject({ foldable: true, folded: true })
-  })
-
-  test('takes the rest of the line as the title', () => {
     expect(calloutOf('[!tip] Mind the gap')?.title).toBe('Mind the gap')
     expect(calloutOf('[!tip]-   Mind the gap  ')?.title).toBe('Mind the gap')
     expect(calloutOf('[!tip]')?.title).toBe('')
   })
 
-  test('measures the marker line so the words after it can be cut off exactly', () => {
+  test('measures the marker line so the words after it can be cut off exactly; leaves nothing behind for a marker on a line of its own; reads a marker the writer indented', () => {
     const found = calloutOf('[!tip]- Mind the gap\nBelow it.')
     expect(found?.taken).toBe('[!tip]- Mind the gap\n'.length)
     expect(found?.rest).toBe('Below it.')
-  })
-
-  test('leaves nothing behind for a marker on a line of its own', () => {
     expect(calloutOf('[!note]')?.rest).toBe('')
     expect(calloutOf('[!note]\nUnder it.')?.rest).toBe('Under it.')
-  })
-
-  test('reads a marker the writer indented', () => {
     expect(calloutOf('  [!note] Titled')?.taken).toBe('  [!note] Titled'.length)
   })
 })

@@ -16,22 +16,15 @@ describe('a task item', () => {
     expect(words('- [ ] buy milk')).toBe('buy milk')
   })
 
-  test('is done when the box holds anything but a space', () => {
+  test('is done when the box holds anything but a space; is written with any of the markers a list is; keeps its indentation, however deep', () => {
     expect(taskAt('- [x] buy milk')?.done).toBe(true)
     expect(taskAt('- [X] buy milk')?.done).toBe(true)
     expect(taskAt('- [-] buy milk')?.done).toBe(true)
     expect(taskAt('- [/] buy milk')?.done).toBe(true)
-  })
-
-  test('is written with any of the markers a list is', () => {
     for (const line of ['- [ ] a', '* [ ] a', '+ [ ] a', '1. [ ] a', '2) [ ] a']) {
       expect(taskAt(line), line).not.toBeNull()
     }
-  })
-
-  test('keeps its indentation, however deep', () => {
     const task = taskAt('    - [x] nested')
-
     expect(task?.indent).toBe(4)
     expect(task?.box).toBe(6)
     expect(words('    - [x] nested')).toBe('nested')

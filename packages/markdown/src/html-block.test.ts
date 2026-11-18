@@ -13,13 +13,10 @@ describe('a block of the note’s own HTML that does something', () => {
     expect(card).not.toContain('<div')
   })
 
-  test('and is a button rather than a link, having nowhere to send anybody', () => {
+  test('and is a button rather than a link, having nowhere to send anybody; takes a fixed piece of room until it says how tall it is', () => {
     const card = htmlBlockCard(BLOCK) ?? ''
     expect(card).toContain('role="button"')
     expect(card).not.toContain('href')
-  })
-
-  test('takes a fixed piece of room until it says how tall it is', () => {
     expect(htmlBlockCard(BLOCK)).toContain('--embed-height: 180px')
     expect(htmlBlockCard(BLOCK)).not.toContain('embed-wide')
   })

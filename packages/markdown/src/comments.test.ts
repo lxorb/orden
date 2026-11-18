@@ -5,42 +5,24 @@ import { renderMarkdown } from './index'
 import { asWords } from './words'
 
 describe('a comment in the source', () => {
-  test('goes, and the words around it stay', () => {
+  test('goes, and the words around it stay; goes when it spans several lines; leaves the line it had to itself behind, empty', () => {
     expect(withoutComments('before <!-- aside --> after')).toBe('before  after')
-  })
-
-  test('goes when it spans several lines', () => {
     expect(withoutComments('one\n<!-- a\nb\nc -->\ntwo')).toBe('one\n\n\n\ntwo')
-  })
-
-  test('leaves the line it had to itself behind, empty', () => {
     expect(withoutComments('one\n\n<!-- note -->\n\ntwo')).toBe('one\n\n\n\ntwo')
   })
 
-  test('is left alone inside a fence, which is showing it', () => {
+  test('is left alone inside a fence, which is showing it; is left alone inside a tilde fence too; is left alone inside backticks', () => {
     const source = '```html\n<!-- kept -->\n```\n\n<!-- gone -->'
     expect(withoutComments(source)).toBe('```html\n<!-- kept -->\n```\n\n')
-  })
-
-  test('is left alone inside a tilde fence too', () => {
     expect(withoutComments('~~~\n<!-- kept -->\n~~~')).toBe('~~~\n<!-- kept -->\n~~~')
-  })
-
-  test('is left alone inside backticks', () => {
     expect(withoutComments('write `<!-- this -->` to hide a note')).toBe(
       'write `<!-- this -->` to hide a note',
     )
   })
 
-  test('is taken out either side of some inline code', () => {
+  test('is taken out either side of some inline code; that never closes takes the rest of the note with it; costs nothing to look for in a note that has none', () => {
     expect(withoutComments('<!-- a -->`code`<!-- b -->')).toBe('`code`')
-  })
-
-  test('that never closes takes the rest of the note with it', () => {
     expect(withoutComments('one\n\n<!-- open\ntwo\nthree')).toBe('one\n\n\n\n')
-  })
-
-  test('costs nothing to look for in a note that has none', () => {
     const source = 'a note with no comment in it at all\n'
     expect(withoutComments(source)).toBe(source)
   })
@@ -51,17 +33,11 @@ describe('a comment in the source', () => {
 })
 
 describe('an escaped comment marker', () => {
-  test('opens no comment, and the rest of the note stays', () => {
+  test('opens no comment, and the rest of the note stays; opens no comment after an escaped bracket or backtick either; opens one when the backslash is itself escaped', () => {
     const source = 'Write \\<!-- to open a comment.\n\nSecond paragraph.'
     expect(withoutComments(source)).toBe(source)
-  })
-
-  test('opens no comment after an escaped bracket or backtick either', () => {
     expect(withoutComments('a \\[<!-- b --> c')).toBe('a \\[ c')
     expect(withoutComments('a \\`<!-- b -->` c')).toBe('a \\`` c')
-  })
-
-  test('opens one when the backslash is itself escaped', () => {
     expect(withoutComments('a \\\\<!-- b --> c')).toBe('a \\\\ c')
   })
 
@@ -71,38 +47,23 @@ describe('an escaped comment marker', () => {
 })
 
 describe('a percent comment', () => {
-  test('goes, and the words around it stay', () => {
+  test('goes, and the words around it stay; goes when it spans several lines, and the lines stay; is left alone inside a fence, which is showing it', () => {
     expect(withoutComments('before %%aside%% after')).toBe('before  after')
-  })
-
-  test('goes when it spans several lines, and the lines stay', () => {
     expect(withoutComments('one\n%% a\nb\nc %%\ntwo')).toBe('one\n\n\n\ntwo')
-  })
-
-  test('is left alone inside a fence, which is showing it', () => {
     expect(withoutComments('```\n%% kept %%\n```')).toBe('```\n%% kept %%\n```')
   })
 
-  test('is left alone inside backticks', () => {
+  test('is left alone inside backticks; that never closes takes the rest of the note with it, as Obsidian does; costs nothing to look for in a note that has none', () => {
     expect(withoutComments('write `%% this %%` to hide a note')).toBe(
       'write `%% this %%` to hide a note',
     )
-  })
-
-  test('that never closes takes the rest of the note with it, as Obsidian does', () => {
     expect(withoutComments('one\n\n%% open\ntwo')).toBe('one\n\n\n')
-  })
-
-  test('costs nothing to look for in a note that has none', () => {
     const source = 'a note with 50 per cent and no comment\n'
     expect(withoutComments(source)).toBe(source)
   })
 
-  test('stands beside the other spelling in one note', () => {
+  test('stands beside the other spelling in one note; whichever opens first is the one that opens', () => {
     expect(withoutComments('a <!-- one --> b %% two %% c')).toBe('a  b  c')
-  })
-
-  test('whichever opens first is the one that opens', () => {
     expect(withoutComments('a %% b <!-- c %% d')).toBe('a  d')
   })
 })
@@ -195,13 +156,10 @@ describe('a comment marker in code a fence does not open', () => {
     expect(withoutComments(source)).toBe(source)
   })
 
-  test('is left alone in indented code after a line the comment took', () => {
+  test('is left alone in indented code after a line the comment took; still opens one on an indented line that carries on a paragraph', () => {
     const source = 'words\n<!-- c -->\n    %%x\n\nafter'
     expect(withoutComments(source)).toBe('words\n\n    %%x\n\nafter')
     expect(renderMarkdown(source)).toContain('after')
-  })
-
-  test('still opens one on an indented line that carries on a paragraph', () => {
     expect(withoutComments('words\n    %%gone%% kept')).toBe('words\n     kept')
   })
 })

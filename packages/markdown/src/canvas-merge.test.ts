@@ -287,19 +287,12 @@ describe('merging two canvas files', () => {
 })
 
 describe('the icon two copies of a canvas wear', () => {
-  test('is kept from whichever side has one', () => {
+  test('is kept from whichever side has one; is nothing where neither does; and where both name one, the same one on both devices', () => {
     expect(merged(plane({ icon: 'rocket' }), plane(), 1000).icon).toBe('rocket')
     expect(merged(plane(), plane({ icon: 'rocket' }), 1000).icon).toBe('rocket')
-  })
-
-  test('is nothing where neither does', () => {
     expect(merged(plane(), plane(), 1000).icon).toBeNull()
-  })
-
-  test('and where both name one, the same one on both devices', () => {
     const ours = plane({ icon: 'rocket' })
     const theirs = plane({ icon: 'anchor' })
-
     expect(merged(ours, theirs, 1000).icon).toBe('anchor')
     expect(merged(theirs, ours, 1000).icon).toBe('anchor')
   })
@@ -721,14 +714,11 @@ describe('the order of the stack', () => {
     expect(after.at).toEqual({ a: 100, b: 100, c: 100 })
   })
 
-  test('stamped stamps nothing more than what moved, wherever in the list it was', () => {
+  test('stamped stamps nothing more than what moved, wherever in the list it was; a swap of the first two survives the merge', () => {
     const before = base('a', 'b', 'c', 'd', 'e')
     const after = stamped(before, moved(before, 'a', 'd', 'b', 'c', 'e'), 200)
     expect(after.moved).toEqual({ d: 200 })
     expect(after.at).toEqual({ a: 100, b: 100, c: 100, d: 100, e: 100 })
-  })
-
-  test('a swap of the first two survives the merge', () => {
     const theirs = base('a', 'b', 'c')
     const ours = stamped(theirs, moved(theirs, 'b', 'a', 'c'), 200)
     expect(order(merged(ours, theirs, 300))).toEqual(['b', 'a', 'c'])

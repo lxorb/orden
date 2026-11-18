@@ -216,15 +216,11 @@ describe('unknown fields an object would answer from its prototype', () => {
 })
 
 describe('code in a task', () => {
-  test('keeps a hash at its end when the words change', () => {
+  test('keeps a hash at its end when the words change; is not cut into when a tag is taken away', () => {
     const line = '- [ ] run `git tag #v2`'
-
     expect(changedTask(line, { text: 'run `git tag #v2` extra' })).toBe(
       '- [ ] run `git tag #v2` extra',
     )
-  })
-
-  test('is not cut into when a tag is taken away', () => {
     expect(changedTask('- [ ] run `a #foo` now #foo', { tags: [] })).toBe('- [ ] run `a #foo` now')
   })
 
@@ -268,13 +264,10 @@ function readTaskOf(line: string) {
 }
 
 describe('a field arriving in front of one glued to the words', () => {
-  test('stands apart from them, so a tag is a tag', () => {
+  test('stands apart from them, so a tag is a tag; and adds no second blank where there is one', () => {
     expect(changedTask('- [ ] x⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
       '- [ ] x #new ⏫ 📅 2026-01-02',
     )
-  })
-
-  test('and adds no second blank where there is one', () => {
     expect(changedTask('- [ ] x ⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
       '- [ ] x #new ⏫ 📅 2026-01-02',
     )

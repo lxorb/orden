@@ -27,14 +27,10 @@ describe("in a space of Orden's own", () => {
     expect(isLate(task, TODAY)).toBe(false)
   })
 
-  test('a start date still to come keeps the task out of sight', () => {
+  test('a start date still to come keeps the task out of sight; only a deadline makes a task late', () => {
     expect(hasStarted(line('Book the trip 🛫 2026-11-02'), TODAY)).toBe(false)
     expect(hasStarted(line('Book the trip 📅 2026-11-02'), TODAY)).toBe(false)
-  })
-
-  test('only a deadline makes a task late', () => {
     const task = line('Hand in the essay [deadline:: 2026-10-17] 🛫 2026-10-01')
-
     expect(isLate(task, TODAY)).toBe(true)
     expect(dayOf(task)).toBe('2026-10-01')
   })

@@ -51,17 +51,11 @@ describe('what is between the brackets', () => {
     })
   })
 
-  test('a name with spaces and letters of any script', () => {
+  test('a name with spaces and letters of any script; space around the name is not part of it; the bar names what to show', () => {
     expect(parseWikilink('Mémo für Späteres')?.target).toBe('Mémo für Späteres')
     expect(parseWikilink('日本語のノート')?.target).toBe('日本語のノート')
     expect(parseWikilink('folder/Some Note.md')?.target).toBe('folder/Some Note.md')
-  })
-
-  test('space around the name is not part of it', () => {
     expect(parseWikilink('  Note  ')?.target).toBe('Note')
-  })
-
-  test('the bar names what to show', () => {
     expect(parseWikilink('Note|shown text')).toMatchObject({
       target: 'Note',
       alias: 'shown text',
@@ -106,18 +100,12 @@ describe('what is between the brackets', () => {
     })
   })
 
-  test('no target means this note', () => {
+  test('no target means this note; nothing to point at is not a link; an embed says so', () => {
     expect(parseWikilink('#Heading')).toMatchObject({ target: '', heading: 'Heading' })
     expect(parseWikilink('#^abc')).toMatchObject({ target: '', block: 'abc' })
-  })
-
-  test('nothing to point at is not a link', () => {
     expect(parseWikilink('')).toBeNull()
     expect(parseWikilink('   ')).toBeNull()
     expect(parseWikilink('|only an alias')).toBeNull()
-  })
-
-  test('an embed says so', () => {
     expect(parseWikilink('Note', true)?.embed).toBe(true)
   })
 })
@@ -241,13 +229,10 @@ describe('finding the links in a note', () => {
     expect(text.slice(link!.targetFrom, link!.targetTo)).toBe('Other Note')
   })
 
-  test('the target span skips the space inside the brackets', () => {
+  test('the target span skips the space inside the brackets; several on one line, in the order they were written', () => {
     const text = '[[ Note ]]'
     const [link] = findLinks(text)
     expect(text.slice(link!.targetFrom, link!.targetTo)).toBe('Note')
-  })
-
-  test('several on one line, in the order they were written', () => {
     const found = findLinks('[[A]] and [[B|b]] and ![[C]]')
     expect(found.map((one) => one.target)).toEqual(['A', 'B', 'C'])
     expect(found.map((one) => one.embed)).toEqual([false, false, true])
@@ -263,30 +248,21 @@ describe('finding the links in a note', () => {
     })
   })
 
-  test('a markdown target keeps its heading and loses its encoding', () => {
+  test('a markdown target keeps its heading and loses its encoding; a markdown heading is the words it names, every escape undone', () => {
     const [link] = findLinks('[x](My%20Note.md#a-heading)')
     expect(link).toMatchObject({ target: 'My Note.md', heading: 'a-heading' })
-  })
-
-  test('a markdown heading is the words it names, every escape undone', () => {
     const found = findLinks(
       '[x](Note.md#Some%20Heading) [y](Note.md#Q&A:%20why%3F) [z](Note.md#50%%20off)',
     )
     expect(found.map((one) => one.heading)).toEqual(['Some Heading', 'Q&A: why?', '50% off'])
   })
 
-  test('an angled markdown target holds spaces', () => {
+  test('an angled markdown target holds spaces; a link out at the web is not a link between notes; a fenced block holds no links', () => {
     const text = '[x](<My Note.md>)'
     const [link] = findLinks(text)
     expect(link?.target).toBe('My Note.md')
     expect(text.slice(link!.targetFrom, link!.targetTo)).toBe('My Note.md')
-  })
-
-  test('a link out at the web is not a link between notes', () => {
     expect(findLinks('[x](https://x.dev) [y](mailto:a@b.dev)')).toEqual([])
-  })
-
-  test('a fenced block holds no links', () => {
     expect(targets('```\n[[Note]]\n```\n[[Real]]')).toEqual(['Real'])
   })
 
@@ -299,14 +275,11 @@ describe('finding the links in a note', () => {
     expect(targets('~~~md\n[[Note]]\n~~~')).toEqual([])
   })
 
-  test('a block in a quote, in a list item or indented is code too', () => {
+  test('a block in a quote, in a list item or indented is code too; a fence in the front matter opens no code below it', () => {
     expect(targets('> ```\n> [[Example]]\n> ```\n\n[[Real]]\n')).toEqual(['Real'])
     expect(targets('Words.\n\n    [[Example]]\n\n[[Real]]\n')).toEqual(['Real'])
     expect(targets('- a\n  ```\n  [[Example]]\n  ```\n- [[Real]]\n')).toEqual(['Real'])
     expect(targets('> see [[Quoted]]\n- and [[Listed]]\n')).toEqual(['Quoted', 'Listed'])
-  })
-
-  test('a fence in the front matter opens no code below it', () => {
     const note = '---\nscript: |\n  ```\nup: "[[Up]]"\n---\n- [ ] t [[L]]\n'
     expect(targets(note)).toEqual(['Up', 'L'])
   })
@@ -331,54 +304,33 @@ describe('finding the links in a note', () => {
     expect(note.slice(found[0]!.from, found[0]!.to)).toBe("[[Bob''s plan#It''s|Bob''s]]")
   })
 
-  test('a shorter fence or one with a backtick in its info string closes nothing', () => {
+  test('a shorter fence or one with a backtick in its info string closes nothing; inline code holds no links; an escaped backtick opens no code span', () => {
     expect(targets('````md\n```\n````\n[[Plan]]')).toEqual(['Plan'])
     expect(targets('```a`b\n[[Plan]]')).toEqual(['Plan'])
     expect(targets('~~~md\n```js\n[[Example]]\n```\n~~~\n[[Real]]\n')).toEqual(['Real'])
-  })
-
-  test('inline code holds no links', () => {
     expect(targets('write `[[Note]]` to link')).toEqual([])
     expect(targets('`a` [[Note]] `b`')).toEqual(['Note'])
-  })
-
-  test('an escaped backtick opens no code span', () => {
     expect(targets('\\` [[Note]] `b`')).toEqual(['Note'])
     expect(targets('\\\\` [[Note]] `b`')).toEqual([])
     expect(targets('`a\\` [[Note]] `b`')).toEqual(['Note'])
   })
 
-  test('a run that never closes still lets a later span hide a link', () => {
+  test('a run that never closes still lets a later span hide a link; a code span that never closes is text; a double backtick span holds a backtick and still hides a link', () => {
     expect(targets('`` `[[Plan]]`')).toEqual([])
     expect(targets('`` [[Plan]]')).toEqual(['Plan'])
-  })
-
-  test('a code span that never closes is text', () => {
     expect(targets('` [[Note]]')).toEqual(['Note'])
-  })
-
-  test('a double backtick span holds a backtick and still hides a link', () => {
     expect(targets('`` ` [[Note]] `` [[Real]]')).toEqual(['Real'])
   })
 
-  test('an escaped bracket is not a link', () => {
+  test('an escaped bracket is not a link; a link inside a heading or a list is still a link; brackets inside the link end it, the way Obsidian does', () => {
     expect(findLinks('\\[[Note]]')).toEqual([])
     expect(findLinks('\\[label](Note.md)')).toEqual([])
-  })
-
-  test('a link inside a heading or a list is still a link', () => {
     expect(targets('# See [[Note]]\n- and [[Other]]')).toEqual(['Note', 'Other'])
-  })
-
-  test('brackets inside the link end it, the way Obsidian does', () => {
     expect(findLinks('[[a]b]]')).toEqual([])
   })
 
-  test('a same-note anchor is found with an empty target', () => {
+  test('a same-note anchor is found with an empty target; positions hold across lines', () => {
     expect(findLinks('[[#Heading]]')[0]).toMatchObject({ target: '', heading: 'Heading' })
-  })
-
-  test('positions hold across lines', () => {
     const text = 'first\nsecond [[Note]]'
     const [link] = findLinks(text)
     expect(text.slice(link!.from, link!.to)).toBe('[[Note]]')
@@ -386,39 +338,24 @@ describe('finding the links in a note', () => {
 })
 
 describe('block names', () => {
-  test('a caret word at the end of a line names the block', () => {
+  test('a caret word at the end of a line names the block; anything else is not a name; every name in a note, with its line; a fence holds no names', () => {
     expect(blockIdOf('Some paragraph. ^abc123')).toBe('abc123')
     expect(blockIdOf('^on-its-own')).toBe('on-its-own')
-  })
-
-  test('anything else is not a name', () => {
     expect(blockIdOf('a^b')).toBeNull()
     expect(blockIdOf('^abc in the middle')).toBeNull()
     expect(blockIdOf('x^2^ is a superscript')).toBeNull()
-  })
-
-  test('every name in a note, with its line', () => {
     expect(blockIds('one ^a\n\ntwo ^b')).toEqual([
       { id: 'a', line: 0 },
       { id: 'b', line: 2 },
     ])
-  })
-
-  test('a fence holds no names', () => {
     expect(blockIds('```\nxor eax ^a\n```')).toEqual([])
   })
 
-  test('a note without them comes back exactly as it was', () => {
+  test('a note without them comes back exactly as it was; a name goes, and the space that separated it goes with it; several go, and nothing between them moves', () => {
     const note = '# Title\n\nWords, and x^2 as well.\n'
     expect(withoutBlockIds(note)).toBe(note)
-  })
-
-  test('a name goes, and the space that separated it goes with it', () => {
     expect(withoutBlockIds('A paragraph. ^abc123\n\nmore')).toBe('A paragraph.\n\nmore')
     expect(withoutBlockIds('^on-its-own\n')).toBe('\n')
-  })
-
-  test('several go, and nothing between them moves', () => {
     expect(withoutBlockIds('one ^a\n\ntwo ^b\n\nthree')).toBe('one\n\ntwo\n\nthree')
   })
 
@@ -467,28 +404,16 @@ describe('a section of a note with front matter', () => {
 })
 
 describe('the headings a note holds', () => {
-  test('in order, as the words they show', () => {
+  test('in order, as the words they show; leaving out a comment line of the front matter; with the hashes some styles close one with taken off', () => {
     expect(headingsOf('# One\n\ntext\n\n## Two\n')).toEqual(['One', 'Two'])
-  })
-
-  test('leaving out a comment line of the front matter', () => {
     expect(headingsOf('---\n# Reading list\nstatus: draft\n---\n# Books\n')).toEqual(['Books'])
-  })
-
-  test('with the hashes some styles close one with taken off', () => {
     expect(headingsOf('## Two ##\n')).toEqual(['Two'])
     expect(headingsOf('## ##\n')).toEqual([''])
   })
 
-  test('keeping a hash that is a letter of the last word', () => {
+  test('keeping a hash that is a letter of the last word; and none from inside a fence; and none from a comment in the front matter', () => {
     expect(headingsOf('# C# and F#\n')).toEqual(['C# and F#'])
-  })
-
-  test('and none from inside a fence', () => {
     expect(headingsOf('```\n# Not one\n```\n# One\n')).toEqual(['One'])
-  })
-
-  test('and none from a comment in the front matter', () => {
     expect(headingsOf('---\n# my comment\ntitle: x\n---\n# Real\n')).toEqual(['Real'])
   })
 
@@ -524,12 +449,9 @@ describe('the part of a note a link points into', () => {
     expect(sectionOf(note, { heading: 'Nowhere', block: null })).toBe(null)
   })
 
-  test('found by the words it shows, closing hashes and all', () => {
+  test('found by the words it shows, closing hashes and all; and a note with no heading named is the whole of it', () => {
     const note = '# C# and F# #\n\nwords\n'
     expect(sectionOf(note, { heading: 'C# and F#', block: null })).toBe('# C# and F# #\n\nwords')
-  })
-
-  test('and a note with no heading named is the whole of it', () => {
     expect(sectionOf('words\n', { heading: null, block: null })).toBe('words\n')
   })
 
@@ -550,18 +472,11 @@ describe('the part of a note a link points into', () => {
 })
 
 describe('how many links one note is read for', () => {
-  test('is the same ceiling the crate keeps', () => {
+  test('is the same ceiling the crate keeps; and a note that says it more often than that is read to the ceiling; while a note anybody wrote is read whole', () => {
     expect(MOST_LINKS).toBe(5000)
-  })
-
-  test('and a note that says it more often than that is read to the ceiling', () => {
     const many = findLinks(['[[A]] '.repeat(4000), '[[B]] '.repeat(4000), ''].join('\n'))
-
     expect(many).toHaveLength(MOST_LINKS)
     expect(many[0]?.target).toBe('A')
-  })
-
-  test('while a note anybody wrote is read whole', () => {
     expect(findLinks('see [[A]] and [[B]]')).toHaveLength(2)
   })
 })
@@ -570,12 +485,9 @@ describe('a name as something to compare', () => {
   const composed = 'Übersicht'
   const decomposed = 'U\u0308bersicht'
 
-  test('is one name however its letters are composed', () => {
+  test('is one name however its letters are composed; and whatever its case', () => {
     expect(decomposed).not.toBe(composed)
     expect(foldName(decomposed)).toBe(foldName(composed))
-  })
-
-  test('and whatever its case', () => {
     expect(foldName('ÜBERSICHT')).toBe(foldName(decomposed))
   })
 })
@@ -685,11 +597,8 @@ describe('parentheses and brackets in a markdown link', () => {
     ])
   })
 
-  test('escaped parentheses are the name and count for nothing', () => {
+  test('escaped parentheses are the name and count for nothing; parentheses that do not balance are no link, or end it where they close', () => {
     expect(read('[x](a\\(1.md)')).toEqual([['a(1.md', 'x', 'a\\(1.md']])
-  })
-
-  test('parentheses that do not balance are no link, or end it where they close', () => {
     expect(findLinks('[x](a(1.md)')).toEqual([])
     expect(read('[x](a)1).md)').map(([target]) => target)).toEqual(['a'])
   })
@@ -708,14 +617,11 @@ describe('parentheses and brackets in a markdown link', () => {
     ])
   })
 
-  test('a wikilink is never read as a label', () => {
+  test('a wikilink is never read as a label; words between the target and the bracket are no link, as in CommonMark', () => {
     expect(findLinks('[[a]](b.md)').map((link) => [link.kind, link.target])).toEqual([
       ['wikilink', 'a'],
     ])
     expect(targets('[x [[a]] y](b.md)')).toEqual(['a'])
-  })
-
-  test('words between the target and the bracket are no link, as in CommonMark', () => {
     expect(findLinks('[x](a b.md)')).toEqual([])
     expect(findLinks('[x](<a<b>)')).toEqual([])
   })
@@ -760,12 +666,9 @@ describe('a size after a bar in a picture words', () => {
 describe('the walk agrees with links.rs', () => {
   const read = (text: string) => findLinks(text).map((link) => [link.kind, link.target])
 
-  test('what a markdown target holds is not a wikilink of its own', () => {
+  test('what a markdown target holds is not a wikilink of its own; what a wikilink closes is not the label of a link', () => {
     expect(read('[x]([[a]])')).toEqual([['markdown', '[[a]]']])
     expect(read('[x](http://a/[[b]])')).toEqual([])
-  })
-
-  test('what a wikilink closes is not the label of a link', () => {
     expect(read('[[\\]](x)')).toEqual([['wikilink', '\\']])
   })
 
@@ -805,14 +708,11 @@ describe('a line of brackets that open nothing', () => {
 describe('a block name on a line of its own', () => {
   const FENCED = 'a\n\n```\nx\n\ny\n```\n\n^abc123\n\nb\n'
 
-  test('a link to it gets the block above, whatever blank lines that holds', () => {
+  test('a link to it gets the block above, whatever blank lines that holds; a run with the name under it stays as it was', () => {
     expect(sectionOf(FENCED, { heading: null, block: 'abc123' })).toBe('```\nx\n\ny\n```')
     expect(sectionOf('| a |\n| - |\n\n^tab\n\nb', { heading: null, block: 'tab' })).toBe(
       '| a |\n| - |',
     )
-  })
-
-  test('a run with the name under it stays as it was', () => {
     expect(sectionOf('a\nb\n^n\n\nc', { heading: null, block: 'n' })).toBe('a\nb')
   })
 
@@ -973,15 +873,11 @@ describe('a block name on a line of its own', () => {
     expect(namedBlock('words\r\n\r\nb', 0, id)?.source).toBe('words ^new123\r\n\r\nb')
   })
 
-  test('naming one that has a name changes nothing', () => {
+  test('naming one that has a name changes nothing; front matter takes no name', () => {
     const id = () => 'new123'
-
     const fence = 'a\n\n```\nx\n```\n\n^old\n'
     expect(namedBlock(fence, 2, id)).toEqual({ id: 'old', source: fence })
     expect(namedBlock('words ^old\n', 0, id)).toEqual({ id: 'old', source: 'words ^old\n' })
-  })
-
-  test('front matter takes no name', () => {
     expect(namedBlock('---\nt: x\n---\n\nb\n', 1, () => 'new123')).toBeNull()
     expect(namedBlock('a', 5, () => 'new123')).toBeNull()
   })
@@ -1005,14 +901,11 @@ describe('naming a block by where it ends', () => {
     expect(namedBlock(source, line, id)?.source).toBe(wanted)
   })
 
-  test('a name under a paragraph is its name', () => {
+  test('a name under a paragraph is its name; maths and a comment hold their blank lines', () => {
     expect(namedBlock('para\n\n^have\n\nb', 0, id)).toEqual({
       id: 'have',
       source: 'para\n\n^have\n\nb',
     })
-  })
-
-  test('maths and a comment hold their blank lines', () => {
     expect(namedBlock('$$\na\n\nb\n$$\n', 0, id)?.source).toBe('$$\na\n\nb\n$$\n\n^new123\n')
     expect(namedBlock('<!--\na\n\nb\n-->\n', 0, id)?.source).toBe('<!--\na\n\nb\n-->\n\n^new123\n')
   })
@@ -1030,20 +923,14 @@ describe('a size of nothing', () => {
 describe('a closing fence an older build named', () => {
   const OLD = 'a\n\n```\nx\n``` ^abc123\n\n# After\n\nb\n'
 
-  test('closes the fence, and the name is found', () => {
+  test('closes the fence, and the name is found; code that only looks like one stays code; on the fence that opens is its info string and no name', () => {
     expect(blockIds(OLD)).toEqual([{ id: 'abc123', line: 4 }])
     expect(withoutBlockIds(OLD)).toBe('a\n\n```\nx\n```\n\n# After\n\nb\n')
     expect(renderMarkdown(OLD)).toContain('<h1')
-  })
-
-  test('code that only looks like one stays code', () => {
     expect(blockIds('```\n``` ^a b\n```\n')).toEqual([])
     const shown = '```\n``` ^a b\n```\n\n[[L]] words\n'
     expect(renderMarkdown(shown)).toContain('``` ^a b')
     expect(targets(shown)).toEqual(['L'])
-  })
-
-  test('on the fence that opens is its info string and no name', () => {
     const opener = '``` ^abc123\ncode\n```\n'
     expect(blockIds(opener)).toEqual([])
     expect(withoutBlockIds(opener)).toBe(opener)
@@ -1337,14 +1224,11 @@ describe('blocks that touch: code, tables, lists and their neighbours', () => {
     expect(block(named, 'n')).toBe('| a | b |\n|---|---|\n| 1 | 2 |')
   })
 
-  test('naming an item whose words end in a heading names the item', () => {
+  test('naming an item whose words end in a heading names the item; a name under a list ending in a nested quote is the list', () => {
     const note = '1. Install\n   ## Notes\n   ```\n   x\n   ```\n2. Next\n'
     const named = namedBlock(note, 0, id)?.source ?? ''
     expect(named).toBe(note.replace('1. Install', '1. Install ^n'))
     expect(block(named, 'n')).toContain('x')
-  })
-
-  test('a name under a list ending in a nested quote is the list', () => {
     expect(block('- a\n  > q\n\n^x\n', 'x')).toBe('- a\n  > q')
   })
 

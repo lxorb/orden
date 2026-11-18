@@ -11,28 +11,16 @@ function mark(row: Row): string {
 }
 
 describe('a line diff', () => {
-  test('says nothing about two texts that are the same', () => {
+  test('says nothing about two texts that are the same; finds a line that changed; finds a line that was added; finds a line that went', () => {
     expect(shown('a\nb', 'a\nb')).toEqual([' a', ' b'])
     expect(diffCount(lineDiff('a\nb', 'a\nb'))).toEqual({ added: 0, removed: 0 })
-  })
-
-  test('finds a line that changed', () => {
     expect(shown('a\nb\nc', 'a\nB\nc')).toEqual([' a', '-b', '+B', ' c'])
-  })
-
-  test('finds a line that was added', () => {
     expect(shown('a\nc', 'a\nb\nc')).toEqual([' a', '+b', ' c'])
-  })
-
-  test('finds a line that went', () => {
     expect(shown('a\nb\nc', 'a\nc')).toEqual([' a', '-b', ' c'])
   })
 
-  test('keeps the lines both texts share in the middle', () => {
+  test('keeps the lines both texts share in the middle; counts what it changed', () => {
     expect(shown('a\nkeep\nb', 'x\nkeep\ny')).toEqual(['-a', '+x', ' keep', '-b', '+y'])
-  })
-
-  test('counts what it changed', () => {
     expect(diffCount(lineDiff('a\nb\nc', 'a\nB\nC\nd'))).toEqual({ added: 3, removed: 2 })
   })
 
@@ -45,13 +33,10 @@ describe('a line diff', () => {
     ])
   })
 
-  test('an empty text on either side is all of the other one', () => {
+  test('an empty text on either side is all of the other one; a moved line reads as one taken away and one put back', () => {
     expect(shown('', 'a\nb')).toEqual(['+a', '+b'])
     expect(shown('a\nb', '')).toEqual(['-a', '-b'])
     expect(shown('', '')).toEqual([])
-  })
-
-  test('a moved line reads as one taken away and one put back', () => {
     expect(shown('a\nb\nc', 'b\nc\na')).toEqual(['-a', ' b', ' c', '+a'])
   })
 

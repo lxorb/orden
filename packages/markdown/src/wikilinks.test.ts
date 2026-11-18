@@ -38,19 +38,13 @@ describe('a wikilink on a page', () => {
     )
   })
 
-  test('shows its alias rather than the target', () => {
+  test('shows its alias rather than the target; points at the heading it names, by the id the renderer gives it; carries a PDF page as the fragment a PDF viewer reads', () => {
     expect(renderMarkdown('[[Plan|the plan]]', { resolveLink })).toContain(
       '<a class="wikilink" href="/notes/plan">the plan</a>',
     )
-  })
-
-  test('points at the heading it names, by the id the renderer gives it', () => {
     expect(renderMarkdown('[[Plan#Some Heading]]', { resolveLink })).toContain(
       'href="/notes/plan#some-heading"',
     )
-  })
-
-  test('carries a PDF page as the fragment a PDF viewer reads', () => {
     expect(renderMarkdown('[[paper.pdf#page=3]]', { resolveLink })).toContain(
       '<a class="wikilink" href="/i/abc.pdf#page=3">paper.pdf#page=3</a>',
     )
@@ -62,13 +56,10 @@ describe('a wikilink on a page', () => {
     expect(html).not.toContain('<a')
   })
 
-  test('is plain text when there is no resolver at all, as in an export', () => {
+  test('is plain text when there is no resolver at all, as in an export; is not read inside code', () => {
     const html = renderMarkdown('see [[Plan|the plan]] now')
     expect(html).toContain('see the plan now')
     expect(html).not.toContain('<a')
-  })
-
-  test('is not read inside code', () => {
     expect(renderMarkdown('`[[Plan]]`', { resolveLink })).toContain('<code>[[Plan]]</code>')
     expect(renderMarkdown('```\n[[Plan]]\n```', { resolveLink })).not.toContain('<a')
   })
@@ -168,13 +159,10 @@ describe('an embed on a page', () => {
     expect(html).not.toContain('Another paragraph.')
   })
 
-  test('an embed with words beside it is a link, not a frame in a paragraph', () => {
+  test('an embed with words beside it is a link, not a frame in a paragraph; a frame is never left inside a paragraph', () => {
     const html = renderMarkdown('see ![[plan]] now', { resolveEmbed, resolveLink })
     expect(html).not.toContain('<figure')
     expect(html).toContain('see')
-  })
-
-  test('a frame is never left inside a paragraph', () => {
     expect(renderMarkdown('![[plan]]', { resolveEmbed })).not.toContain('<p><figure')
   })
 
@@ -184,12 +172,9 @@ describe('an embed on a page', () => {
     expect(html).toContain('plan#Nowhere')
   })
 
-  test('a note the space has not got is a link', () => {
+  test('a note the space has not got is a link; an embed is a link when nothing can resolve one, as in a plain export', () => {
     const html = renderMarkdown('![[Nothing]]', { resolveEmbed, resolveLink })
     expect(html).not.toContain('<figure')
-  })
-
-  test('an embed is a link when nothing can resolve one, as in a plain export', () => {
     expect(renderMarkdown('![[plan]]')).toContain('plan')
     expect(renderMarkdown('![[plan]]')).not.toContain('<figure')
   })
@@ -240,38 +225,26 @@ describe('an embed on a page', () => {
 })
 
 describe('a file embedded in a note', () => {
-  test('a recording is a player, and nothing plays on its own', () => {
+  test('a recording is a player, and nothing plays on its own; a film is a player too; a container either can be in is read as what it usually holds', () => {
     const html = renderMarkdown('![[clip.mp3]]\n')
     expect(html).toContain('<audio class="embed-media" controls preload="metadata"')
     expect(html).toContain('src="clip.mp3"')
     expect(html).not.toContain('autoplay')
-  })
-
-  test('a film is a player too', () => {
     for (const name of ['demo.mp4', 'demo.webm', 'demo.mov']) {
       expect(renderMarkdown(`![[${name}]]\n`), name).toContain(`<video class="embed-media"`)
     }
-  })
-
-  test('a container either can be in is read as what it usually holds', () => {
     expect(renderMarkdown('![[a.webm]]\n')).toContain('<video')
     expect(renderMarkdown('![[a.weba]]\n')).toContain('<audio')
   })
 
-  test('a player is what it is inside a sentence as well', () => {
+  test('a player is what it is inside a sentence as well; a size after the bar is how wide to draw it; anything else after the bar says what it is', () => {
     const html = renderMarkdown('before ![[clip.mp3]] after\n')
     expect(html).toContain('<audio')
     expect(html).toContain('before ')
     expect(html).toContain(' after')
-  })
-
-  test('a size after the bar is how wide to draw it', () => {
     expect(renderMarkdown('![[shot.png|300]]\n')).toContain('width="300"')
     expect(renderMarkdown('![[shot.png|300x200]]\n')).toContain('width="300" height="200"')
     expect(renderMarkdown('![[demo.mp4|480]]\n')).toContain('width="480"')
-  })
-
-  test('anything else after the bar says what it is', () => {
     expect(renderMarkdown('![[shot.png|the sketch]]\n')).toContain('alt="the sketch"')
     expect(renderMarkdown('![[clip.mp3|the take]]\n')).toContain('title="the take"')
   })
@@ -284,13 +257,10 @@ describe('a file embedded in a note', () => {
     expect(html).toContain('<svg')
   })
 
-  test('and says which page of which file a surface should draw in it', () => {
+  test('and says which page of which file a surface should draw in it; a paper whose link names no page carries none', () => {
     const html = renderMarkdown('![[paper.pdf#page=3]]\n', { resolveLink })
     expect(html).toContain('data-file="paper.pdf"')
     expect(html).toContain('data-page="3"')
-  })
-
-  test('a paper whose link names no page carries none', () => {
     expect(renderMarkdown('![[paper.pdf]]\n', { resolveLink })).not.toContain('data-page')
   })
 
@@ -311,13 +281,10 @@ describe('a file embedded in a note', () => {
     expect(html).not.toContain('onerror="alert(1)"')
   })
 
-  test('a card nobody can open is still the name of the file', () => {
+  test('a card nobody can open is still the name of the file; a card is never left inside a paragraph', () => {
     const html = renderMarkdown('![[missing.pdf]]\n')
     expect(html).toContain('missing.pdf')
     expect(html).not.toContain('<a')
-  })
-
-  test('a card is never left inside a paragraph', () => {
     expect(renderMarkdown('![[paper.pdf]]\n')).not.toContain('<p><figure')
   })
 
