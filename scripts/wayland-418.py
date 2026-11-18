@@ -12,10 +12,10 @@ import urllib.request
 from pathlib import Path
 
 from PIL import Image
+import linux_app
 
 OUT = Path(sys.argv[1])
 APP = sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 POINTER = OUT / "pointer.fifo"
 SITE = "http://127.0.0.1:8765"
 found = {}
@@ -23,40 +23,14 @@ found = {}
 TAB, COMMA, BACKSPACE = 15, 51, 14
 LETTERS = {"f": 33, "o": 24, "n": 49, "t": 20, "h": 35, "e": 18, "m": 50}
 
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
 def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=20) as answer:
-                said = json.loads(answer.read())
-            break
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    else:
+    answer = linux_app.said(code, 20)
+    if answer is None:
         return None
-    if not said.get("ok"):
-        print(f"eval said: {said}")
+    if not answer.get("ok"):
+        print(f"eval said: {answer}")
         return None
-    return said.get("value")
+    return answer.get("value")
 
 def sway(*words):
     return json.loads(subprocess.check_output(["swaymsg", "-r", *words]))

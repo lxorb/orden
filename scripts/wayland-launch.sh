@@ -363,49 +363,24 @@ if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
 
-if [ "$status" = 0 ] && [ "${GROUND:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/ground-drive.py" sway "$out" "$app_pid" || status=1
-fi
+drive() { [ "$status" = 0 ] && [ "${!1:-0}" = 1 ] || return 0; sleep 3; python3 "$here/$2" "${@:3}" || status=1; }
+
+drive GROUND ground-drive.py sway "$out" "$app_pid"
 
 if [ "$status" = 0 ] && [ "${CRASH_ASK:-0}" = 1 ]; then
   python3 "$here/crash-ask-drive.py" "$out" "$app_pid" || status=1
 fi
 
-if [ "$status" = 0 ] && [ "${TEXTSIZE:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/textsize-drive.py" sway "$out" "$app_pid" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/flash-drive.py" sway "$out" "$app_pid" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${CERT:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/cert-drive.py" "$out" "${CERT_HOST:-example.com}" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/download-drive.py" "$out" "$ORDEN_DOWNLOADS_DIR" "$out/served.txt" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${GLOBALS:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/globals-drive.py" "$out" "${command[0]}" || status=1
-fi
+drive TEXTSIZE textsize-drive.py sway "$out" "$app_pid"
+drive FLASH flash-drive.py sway "$out" "$app_pid"
+drive CERT cert-drive.py "$out" "${CERT_HOST:-example.com}"
+drive DOWNLOAD download-drive.py "$out" "${ORDEN_DOWNLOADS_DIR:-}" "$out/served.txt"
+drive GLOBALS globals-drive.py "$out" "${command[0]}"
 
 if [ "$status" = 0 ] && [ "${PASS:-0}" = 1 ]; then
   sleep 3
   python3 "$here/pass-drive.py" "$out" || status=1
   find "$HOME" -path "*${DRIVEN_ID:-so.orden.Orden}*" -name orden.log -exec grep -h 'pass' {} + 2>/dev/null | tail -20 || true
-fi
-
-if [ "$status" = 0 ] && [ "${GRANTS:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/grants-drive.py" "$out" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
@@ -495,54 +470,20 @@ if [ "$status" = 0 ] && [ "${CLOSING:-0}" = 1 ]; then
   fi
 fi
 
-if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/scheme-drive.py" sway "$out" "$app_pid" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${CORNER:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/corner-drive.py" sway "$out" "$app_pid" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${CHOOSING:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/choosing-drive.py" sway "$out" "$app_pid" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${OPENS:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/opens-drive.py" sway "$out" "$app_pid" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/popup-drive.py" sway "$out" "$app_pid" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/window-drag.py" sway "$out" "$app_pid" || status=1
-fi
+drive SCHEME scheme-drive.py sway "$out" "$app_pid"
+drive CORNER corner-drive.py sway "$out" "$app_pid"
+drive CHOOSING choosing-drive.py sway "$out" "$app_pid"
+drive OPENS opens-drive.py sway "$out" "$app_pid"
+drive POPUP popup-drive.py sway "$out" "$app_pid"
+drive DRAG window-drag.py sway "$out" "$app_pid"
 
 if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then
   APP_COMMAND="${command[0]}" python3 "$here/wayland-418.py" "$out" "$app_pid" || status=1
 fi
 
-if [ "$status" = 0 ] && [ "${RESERVED:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/reserved-drive.py" "$out" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${PDFMARK:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/pdf-mark-drive.py" "$out" || status=1
-fi
-
-if [ "$status" = 0 ] && [ "${CARRY:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/carry-drive.py" "$out" "$app_pid" || status=1
-fi
+drive RESERVED reserved-drive.py "$out"
+drive PDFMARK pdf-mark-drive.py "$out"
+drive CARRY carry-drive.py "$out" "$app_pid"
 
 if [ "$status" = 0 ] && [ "${KILL:-0}" = 1 ]; then
   sleep 3
@@ -595,10 +536,7 @@ if [ "$status" = 0 ] && [ "${WORKER:-0}" = 1 ]; then
   fi
 fi
 
-if [ "$status" = 0 ] && [ "${EXPORTPDF:-0}" = 1 ]; then
-  sleep 3
-  python3 "$here/pdf-drive.py" "$out" || status=1
-fi
+drive EXPORTPDF pdf-drive.py "$out"
 
 if [ "$status" = 0 ] && [ "${SESSION:-0}" = 1 ]; then
   closed() {

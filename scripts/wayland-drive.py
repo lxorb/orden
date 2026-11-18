@@ -5,15 +5,14 @@ import os
 import subprocess
 import sys
 import time
-import urllib.request
 from pathlib import Path
 
 from PIL import Image
+import linux_app
 
 OUT = Path(sys.argv[1])
 APP = sys.argv[2]
 COLD = len(sys.argv) > 3 and sys.argv[3] == "cold"
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 POINTER = OUT / "pointer.fifo"
 SLACK = 3
 failures = []
@@ -26,40 +25,14 @@ def fail(what):
     print(f"::error::{what}")
     failures.append(what)
 
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
 def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=10) as answer:
-                said = json.loads(answer.read())
-            break
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    else:
+    answer = linux_app.said(code)
+    if answer is None:
         raise SystemExit("::error::the app's endpoint never answered")
-    if not said.get("ok"):
-        print(f"eval said: {said}")
+    if not answer.get("ok"):
+        print(f"eval said: {answer}")
         return None
-    return said.get("value")
+    return answer.get("value")
 
 def sway(*words):
     return json.loads(subprocess.check_output(["swaymsg", "-r", *words]))

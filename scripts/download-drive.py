@@ -4,47 +4,16 @@ import json
 import os
 import sys
 import time
-import urllib.request
 from pathlib import Path
+from linux_app import run
 
 OUT, FOLDER, SERVED = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 WHOLE = 65536 * 200
 failures = []
 
 def fail(what):
     print(f"::error::{what}")
     failures.append(what)
-
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
-def run(code):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=10) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
 
 def listed():
     return run("window.__TAURI_INTERNALS__.invoke('web_downloads')") or []
