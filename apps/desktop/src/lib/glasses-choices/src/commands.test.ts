@@ -72,6 +72,7 @@ describe('folding what was heard', () => {
   test('leaves bare lowercase words', () => {
     expect(bare('  Open Page 4! ')).toBe('open page 4')
     expect(bare("Emil's note, 2026.")).toBe('emil s note 2026')
+    expect(bare('Résumé für Zoë')).toBe('resume fur zoe')
   })
 
   test('reads a number either way it was written', () => {
