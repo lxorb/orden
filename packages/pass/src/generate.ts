@@ -120,20 +120,9 @@ export function chosenWords(
 }
 
 function separatorOf(separator: Separator | 'none', random: Random): string {
-  switch (separator) {
-    case 'none':
-      return ''
-    case 'digit':
-      return pick(DIGITS, random)
-    case 'digitOrSymbol':
-      return pick(DIGITS + SYMBOLS, random)
-    case 'hyphen':
-    case 'space':
-    case 'period':
-    case 'comma':
-    case 'underscore':
-      return FIXED[separator]
-  }
+  if (separator === 'none') return ''
+  if (separator === 'digit') return pick(DIGITS, random)
+  return separator === 'digitOrSymbol' ? pick(DIGITS + SYMBOLS, random) : FIXED[separator]
 }
 
 export function joinedWords(

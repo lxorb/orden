@@ -47,11 +47,7 @@ class Reader {
   }
 
   bytesOf(): Uint8Array {
-    const length = this.uint32()
-    if (this.at + length > this.bytes.length) throw new Error('pass: short ssh key')
-    const out = this.bytes.subarray(this.at, this.at + length)
-    this.at += length
-    return out
+    return this.raw(this.uint32())
   }
 
   text(): string {
