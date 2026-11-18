@@ -1,5 +1,6 @@
 import type { Bookmark } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from './disk'
 
 const { ApiError } = await import('../src/lib/accounts/src/client')
 
@@ -360,21 +361,6 @@ vi.mock('../src/lib/collab/src/api', () => ({
     present: {},
   },
 }))
-
-function memoryStorage(): Storage {
-  const store = new Map<string, string>()
-
-  return {
-    get length() {
-      return store.size
-    },
-    key: (index) => [...store.keys()][index] ?? null,
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    clear: () => store.clear(),
-  }
-}
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('BroadcastChannel', undefined)

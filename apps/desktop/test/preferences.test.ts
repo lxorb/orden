@@ -1,21 +1,7 @@
 import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
 import { inLanguageOrder } from '@orden/markdown/language-order'
 import type { Pane } from '../src/lib/settings/src/preferences'
-
-function memoryStorage(): Storage {
-  const held = new Map<string, string>()
-
-  return {
-    get length() {
-      return held.size
-    },
-    key: (index) => [...held.keys()][index] ?? null,
-    getItem: (key) => held.get(key) ?? null,
-    setItem: (key, value) => void held.set(key, value),
-    removeItem: (key) => void held.delete(key),
-    clear: () => held.clear(),
-  }
-}
+import { memoryStorage } from './disk'
 
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
