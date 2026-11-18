@@ -230,7 +230,7 @@
 
 {#snippet safety(found: Person | undefined, match: (found: Person) => void)}
   {#if found?.code === null}
-    <p class="quiet" data-safety>
+    <p class="pass-quiet" data-safety>
       They have not set up Pass yet. Confirm them here once they have.
     </p>
   {:else if found}
@@ -240,10 +240,10 @@
       </p>
     {/if}
     <p class="safety" data-safety>
-      <span class="quiet">Safety code</span>
+      <span class="pass-quiet">Safety code</span>
       <code dir="ltr">{found.code}</code>
       {#if found.known === 'confirmed'}
-        <span class="quiet" data-matched>Checked</span>
+        <span class="pass-quiet" data-matched>Checked</span>
       {:else}
         <button
           class="orden-button is-soft"
@@ -262,7 +262,7 @@
   {/snippet}
   <div class="share">
     {#if !signedIn}
-      <p class="quiet" data-signed-out>Sign in to share</p>
+      <p class="pass-quiet" data-signed-out>Sign in to share</p>
     {:else if vault}
       {#if managing}
         <form class="invite" onsubmit={invited}>
@@ -287,7 +287,7 @@
         </form>
         {@render safety(person, (found) => void matched(found))}
         {#if person?.code}
-          <p class="quiet">
+          <p class="pass-quiet">
             {person.known === 'confirmed'
               ? 'Pass gives them the vault’s key when you invite them.'
               : 'Read it to them. Only once you press Codes match does Pass give them the vault’s key.'}
@@ -356,7 +356,7 @@
             {/if}
           </div>
         {:else}
-          <p class="quiet empty">{reading ? 'Reading…' : 'Only you'}</p>
+          <p class="pass-quiet empty">{reading ? 'Reading…' : 'Only you'}</p>
         {/each}
       </div>
 
@@ -370,7 +370,7 @@
           />
         </div>
       {:else if hidesPasswords(vault)}
-        <p class="quiet">Passwords in this vault are hidden from you.</p>
+        <p class="pass-quiet">Passwords in this vault are hidden from you.</p>
       {/if}
 
       {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
@@ -447,8 +447,7 @@
 
   .email,
   .state,
-  .role,
-  .quiet {
+  .role {
     color: var(--muted);
     font-size: var(--text-sm);
   }
@@ -474,10 +473,6 @@
     letter-spacing: 0.04em;
     -webkit-user-select: all;
     user-select: all;
-  }
-
-  .quiet {
-    margin: 0;
   }
 
   .empty {

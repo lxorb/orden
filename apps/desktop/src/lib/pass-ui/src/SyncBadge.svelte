@@ -9,23 +9,19 @@
 
   const { onadopt }: { onadopt: () => void } = $props()
 
+  const ICONS = {
+    syncing: RefreshCw,
+    synced: Cloud,
+    off: Cloud,
+    offline: CloudOff,
+    'old-server': TriangleAlert,
+    conflict: TriangleAlert,
+    'other-account': TriangleAlert,
+  }
+
   const state = $derived(passSync.state)
   const word = $derived(syncWord(state))
-  const icon = $derived.by(() => {
-    switch (state) {
-      case 'syncing':
-        return RefreshCw
-      case 'synced':
-      case 'off':
-        return Cloud
-      case 'offline':
-        return CloudOff
-      case 'old-server':
-      case 'conflict':
-      case 'other-account':
-        return TriangleAlert
-    }
-  })
+  const icon = $derived(ICONS[state])
   const at = $derived(
     state === 'synced' && passSync.at !== null
       ? `Last synced ${localDate(passSync.at, { timeStyle: 'short' })}`

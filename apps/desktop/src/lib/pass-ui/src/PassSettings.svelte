@@ -4,21 +4,20 @@
   import SettingsGeneral from './SettingsGeneral.svelte'
   import SettingsImport from './SettingsImport.svelte'
   import SettingsSecurity from './SettingsSecurity.svelte'
-  import { SETTINGS_TABS, type SettingsTab, type PassUi } from '../../pass-sync/src/api'
+  import { SETTINGS_TABS, type PassUi } from '../../pass-sync/src/api'
 
   const { ui }: { ui: PassUi } = $props()
 
-  const tab = $derived(ui.view.settingsTab)
+  const TABS = {
+    general: ['General', SettingsGeneral],
+    security: ['Security', SettingsSecurity],
+    aliases: ['Aliases', SettingsAliases],
+    import: ['Import', SettingsImport],
+    export: ['Export', SettingsExport],
+  } as const
 
-  function tabName(one: SettingsTab): string {
-    return {
-      general: 'General',
-      security: 'Security',
-      aliases: 'Aliases',
-      import: 'Import',
-      export: 'Export',
-    }[one]
-  }
+  const tab = $derived(ui.view.settingsTab)
+  const Page = $derived(TABS[tab][1])
 </script>
 
 <section class="settings" aria-label="Settings">
@@ -33,24 +32,14 @@
           class:on={tab === one}
           onclick={() => ui.show({ settingsTab: one })}
         >
-          {tabName(one)}
+          {TABS[one][0]}
         </button>
       {/each}
     </div>
   </header>
 
   <div class="body" data-scrolls>
-    {#if tab === 'general'}
-      <SettingsGeneral />
-    {:else if tab === 'security'}
-      <SettingsSecurity />
-    {:else if tab === 'aliases'}
-      <SettingsAliases />
-    {:else if tab === 'import'}
-      <SettingsImport />
-    {:else}
-      <SettingsExport />
-    {/if}
+    <Page />
   </div>
 </section>
 

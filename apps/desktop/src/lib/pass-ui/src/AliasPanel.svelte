@@ -64,7 +64,7 @@
       <span><strong>{stats.blocked}</strong> blocked</span>
     </div>
   {/if}
-  {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+  {#if wrong}<p class="wrong pass-wrong" role="alert">{wrong}</p>{/if}
 </section>
 
 <style>
@@ -115,9 +115,6 @@
   }
 
   .wrong {
-    margin: 0;
     padding: var(--space-2) var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>
