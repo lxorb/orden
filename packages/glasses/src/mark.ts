@@ -166,21 +166,22 @@ class Lines {
   }
 }
 
-const textOf = (token: Token): string =>
-  'text' in token && typeof token.text === 'string' ? token.text : ''
+function field(token: Token, key: string): string {
+  const value: unknown = (token as unknown as Record<string, unknown>)[key]
+  return typeof value === 'string' ? value : ''
+}
 
-const rawOf = (token: Token): string =>
-  'raw' in token && typeof token.raw === 'string' ? token.raw : ''
+const textOf = (token: Token): string => field(token, 'text')
+
+const rawOf = (token: Token): string => field(token, 'raw')
 
 const childrenOf = (token: Token): Token[] =>
   'tokens' in token && Array.isArray(token.tokens) ? token.tokens : []
 
 const HTML_TAG = /<[^>]*>/g
 
-function flowing(text: string, flow: boolean): string {
-  if (!flow) return text.replace(/[ \t]*\n[ \t]*/gu, '\n')
-  return text.replace(/[ \t]*\n[ \t]*/gu, ' ')
-}
+const flowing = (text: string, flow: boolean): string =>
+  text.replace(/[ \t]*\n[ \t]*/gu, flow ? ' ' : '\n')
 
 const AROUND: Readonly<Record<string, [string, keyof Marks]>> = {
   strong: ['**', 'bold'],
@@ -200,7 +201,7 @@ function linked(token: Token, kids: readonly Token[], marks: Marks, flow: boolea
   const shown = kids.length ? inlineWords(kids, marks, flow) : textOf(token)
   if (!marks.link) return shown
 
-  const href = 'href' in token && typeof token.href === 'string' ? token.href : ''
+  const href = field(token, 'href')
   return href ? `[${shown}](${href})` : shown
 }
 
@@ -244,12 +245,11 @@ function inlineWords(tokens: readonly Token[], marks: Marks, flow: boolean): str
         break
 
       case 'image':
-        out +=
-          textOf(token) || ('href' in token && typeof token.href === 'string' ? token.href : '')
+        out += textOf(token) || field(token, 'href')
         break
 
       case 'footnoteRef': {
-        const id = 'id' in token && typeof token.id === 'string' ? token.id : ''
+        const id = field(token, 'id')
         out += raise(id, SUPERS) ?? `[^${id}]`
         break
       }
@@ -260,12 +260,6 @@ function inlineWords(tokens: readonly Token[], marks: Marks, flow: boolean): str
 
       case 'html':
         out += textOf(token).replace(HTML_TAG, '')
-        break
-
-      case 'emoji':
-      case 'escape':
-      case 'text':
-        out += kids.length ? inlineWords(kids, marks, flow) : flowing(textOf(token), flow)
         break
 
       default:
@@ -369,8 +363,7 @@ class Sheet {
   }
 
   private stepsAt(depth: number, listed: boolean): number {
-    if (this.rootIndent || listed) return depth
-    return Math.max(0, depth - 1)
+    return this.rootIndent || listed ? depth : Math.max(0, depth - 1)
   }
 
   add(
@@ -426,9 +419,8 @@ class Sheet {
   }
 
   addAll(texts: readonly string[], from: number, nest: Nest): void {
-    for (const [at, text] of texts.entries()) {
+    for (const [at, text] of texts.entries())
       this.add(text, from, nest, at === 0 ? {} : { glued: true })
-    }
   }
 
   get width(): number {
@@ -443,7 +435,23 @@ function walk(tokens: readonly Token[], where: Locator, nest: Nest, sheet: Sheet
   }
 }
 
+type Drawing = (token: Token, where: Locator, nest: Nest, sheet: Sheet) => void
+
+const DRAWN: Readonly<Record<string, Drawing>> = {
+  code: fence,
+  blockquote: quote,
+  list,
+  table,
+  definitionList: definitions,
+  footnoteDef: footnote,
+}
+
 function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
+  const drawing = DRAWN[token.type]
+  if (drawing) {
+    drawing(token, where, nest, sheet)
+    return
+  }
   const raw = rawOf(token)
   const kids = childrenOf(token)
 
@@ -471,10 +479,6 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
     case 'hr':
       sheet.add(ruleOf('─', sheet.width), where.take(raw), nest)
-      break
-
-    case 'code':
-      fence(token, where, nest, sheet)
       break
 
     case 'blockMath': {
@@ -517,33 +521,13 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
       sheet.add(textOf(token).replace(HTML_TAG, '').trim(), where.take(raw), nest)
       break
 
-    case 'blockquote':
-      quote(token, where, nest, sheet)
-      break
-
-    case 'list':
-      list(token, where, nest, sheet)
-      break
-
-    case 'table':
-      table(token, where, nest, sheet)
-      break
-
-    case 'definitionList':
-      definitions(token, where, nest, sheet)
-      break
-
-    case 'footnoteDef':
-      footnote(token, where, nest, sheet)
-      break
-
     default:
       sheet.add(textOf(token), where.take(raw), nest)
   }
 }
 
 function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
-  const info = ('lang' in token && typeof token.lang === 'string' ? token.lang : '').trim()
+  const info = field(token, 'lang').trim()
   const language = languageIn(info)
   const caption = captionIn(info)
   const raw = rawOf(token)
@@ -567,9 +551,8 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
   const marked = sheet.marks.fence
   if (marked) sheet.add(`${FENCE}${language}`, from, nest, { glued: caption !== '' })
-  for (const [at, line] of lines.entries()) {
+  for (const [at, line] of lines.entries())
     sheet.add(line, rowAt(at), nest, { glued: marked || at > 0 })
-  }
   if (marked) {
     const closed = !indented && raw.trimEnd().split('\n').length >= lines.length + 2
     sheet.add(FENCE, rowAt(closed ? lines.length : lines.length - 1), nest, { glued: true })
@@ -581,8 +564,7 @@ function onlyPicture(tokens: readonly Token[]): string | null {
   const first = shown[0]
   if (shown.length !== 1 || first?.type !== 'image') return null
 
-  const source = 'href' in first && typeof first.href === 'string' ? first.href : ''
-  return textOf(first) || source || null
+  return textOf(first) || field(first, 'href') || null
 }
 
 function quote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
@@ -592,9 +574,7 @@ function quote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
   const first = kids[0]
   const found = first && opensCallout(first) ? calloutOf(textOf(first)) : null
-  if (found) {
-    sheet.add(found.title || found.label.toUpperCase(), from, inside)
-  }
+  if (found) sheet.add(found.title || found.label.toUpperCase(), from, inside)
 
   const cut = found ? found.taken : 0
   const body = found ? kids.map((one, at) => (at === 0 ? withoutCallout(one, cut) : one)) : kids
@@ -696,7 +676,7 @@ function definitions(token: Token, where: Locator, nest: Nest, sheet: Sheet): vo
 }
 
 function footnote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
-  const id = 'id' in token && typeof token.id === 'string' ? token.id : ''
+  const id = field(token, 'id')
   const from = where.peek(rawOf(token))
   const mark = raise(id, SUPERS) ?? `[^${id}]`
 
