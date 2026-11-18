@@ -99,7 +99,6 @@ describe('a comment on the page', () => {
 
   test('does not disturb the table of contents, which is a comment of the renderer’s own', () => {
     const html = renderMarkdown('[toc]\n\n# One\n\n<!-- hidden -->\n\n## Two\n', { toc: true })
-
     expect(html).toContain('<nav class="toc">')
     expect(html).toContain('One')
     expect(html).toContain('Two')
@@ -124,12 +123,9 @@ describe('a comment after code that only looks like a fence', () => {
     expect(html).toContain('more')
   })
 
-  test('goes after a code span with a longer run of backticks inside it', () => {
+  test('goes after a code span with a longer run of backticks inside it; goes from a fence’s info string, and never becomes its caption', () => {
     expect(withoutComments('a `` x ``` y `` %%secret%% b')).toBe('a `` x ``` y ``  b')
     expect(withoutComments('a `` %%secret%% ``` b')).toBe('a ``  ``` b')
-  })
-
-  test('goes from a fence’s info string, and never becomes its caption', () => {
     expect(withoutComments('```js %%secret%%\nx %%kept%%\n```')).toBe('```js \nx %%kept%%\n```')
     expect(withoutComments('```js <!-- open\nx\n```')).toBe('```js \nx\n```')
     const html = renderMarkdown('```js src/a.ts %%secret%%\nx\n```', { escapeHtml: true })
@@ -165,16 +161,13 @@ describe('a comment marker in code a fence does not open', () => {
 })
 
 describe('a whole note, its front matter included', () => {
-  test('a comment closed in a value goes', () => {
+  test('a comment closed in a value goes; a comment of whole lines goes', () => {
     expect(noteWithoutComments('---\ntitle: Launch %% secret %%\nz: 1\n---\nWords\n')).toBe(
       '---\ntitle: Launch \nz: 1\n---\nWords\n',
     )
     expect(noteWithoutComments('---\nt: a <!-- b --> c\n---\nWords\n')).toBe(
       '---\nt: a  c\n---\nWords\n',
     )
-  })
-
-  test('a comment of whole lines goes', () => {
     expect(noteWithoutComments('---\nt: a\n%%\nsecret: 5\n%%\nz: 1\n---\nWords\n')).toBe(
       '---\nt: a\n\n\n\nz: 1\n---\nWords\n',
     )

@@ -80,15 +80,12 @@ describe('reading a chart out of a fence', () => {
     expect(readChart('series:\n  - data: [1, x, 3]\n')?.series[0]?.data).toEqual([1, 0, 3])
   })
 
-  test('and a fence with no numbers in it is not a chart', () => {
+  test('and a fence with no numbers in it is not a chart; a comment is not data', () => {
     expect(readChart('')).toBe(null)
     expect(readChart('type: bar\n')).toBe(null)
     expect(readChart('labels: [a, b]\n')).toBe(null)
     expect(readChart('series:\n  - title: Sales\n')).toBe(null)
     expect(readChart('<p>not yaml at all</p>')).toBe(null)
-  })
-
-  test('a comment is not data', () => {
     expect(readChart('# a note\nseries:\n  - data: [1]\n')?.series).toHaveLength(1)
   })
 })
@@ -119,10 +116,8 @@ describe('drawing it', () => {
     const svg = chartSvg(readChart(SALES)!)
     for (const tick of ['>0<', '>2<', '>4<', '>6<']) expect(svg, tick).toContain(tick)
     expect(svg).not.toContain('3.33')
-
     const big = chartSvg(readChart('series:\n  - data: [1200, 3700]\n')!)
     for (const tick of ['>0<', '>1,000<', '>4,000<']) expect(big, tick).toContain(tick)
-
     const small = chartSvg(readChart('series:\n  - data: [0.2, 0.9]\n')!)
     expect(small).toContain('>1<')
   })
@@ -132,13 +127,10 @@ describe('drawing it', () => {
     for (const tick of ['>-4<', '>-2<', '>0<', '>4<']) expect(svg, tick).toContain(tick)
   })
 
-  test('a line per series, with a dot per number', () => {
+  test('a line per series, with a dot per number; a slice per number, and a donut has a hole in it', () => {
     const svg = chartSvg(readChart('type: line\nseries:\n  - data: [1, 4, 2]\n')!)
     expect(svg.match(/<polyline class="chart-line"/g)).toHaveLength(1)
     expect(svg.match(/<circle class="chart-dot"/g)).toHaveLength(3)
-  })
-
-  test('a slice per number, and a donut has a hole in it', () => {
     const pie = chartSvg(readChart('type: pie\nlabels: [a, b]\nseries:\n  - data: [1, 3]\n')!)
     expect(pie.match(/<path class="chart-slice"/g)).toHaveLength(2)
     expect(pie).toContain('M 320,')
@@ -223,15 +215,12 @@ describe('the language the numbers are written in', () => {
     expect(svg).toContain(`>${new Intl.NumberFormat().format(1000)}<`)
   })
 
-  test('and the one the caller names; through the block a fence becomes', () => {
+  test('and the one the caller names; through the block a fence becomes; through a render option, which reaches a chart inside the note', () => {
     const svg = chartSvg(readChart(THOUSANDS)!, { locale: 'de' })
     expect(svg).toContain('<title>Sales: 1.234,5</title>')
     expect(svg).toContain('>1.000<')
     expect(chartFigure(THOUSANDS, { locale: 'de' })).toContain('1.234,5')
     expect(chartFigure(THOUSANDS, { locale: 'en-US' })).toContain('1,234.5')
-  })
-
-  test('through a render option, which reaches a chart inside the note', () => {
     const fence = '```chart\n' + THOUSANDS + '```\n'
     expect(renderMarkdown(fence, { locale: 'de' })).toContain('1.234,5')
     expect(renderMarkdown(fence, { locale: 'en-US' })).toContain('1,234.5')
@@ -246,7 +235,6 @@ describe('the kinds that were drawn as a bar chart', () => {
 
   test('a radar draws its web, its spokes and a shape per series', () => {
     const svg = chartSvg(readChart(`type: radar\n${THREE}`)!)
-
     expect(svg).toContain('<polygon class="chart-grid"')
     expect(svg).toContain('<polygon class="chart-area"')
     expect(svg.match(/class="chart-label"/g)?.length).toBe(3)
@@ -256,13 +244,11 @@ describe('the kinds that were drawn as a bar chart', () => {
   test('a radar of two series draws both, in two colours', () => {
     const two = `type: radar\nlabels: [a, b]\nseries:\n  - data: [1, 2]\n  - data: [2, 1]\n`
     const svg = chartSvg(readChart(two)!)
-
     expect(svg.match(/class="chart-area"/g)?.length).toBe(2)
   })
 
   test('a polar area draws a slice per number, each reaching as far as it says', () => {
     const svg = chartSvg(readChart(`type: polar\n${THREE}`)!)
-
     expect(svg.match(/class="chart-slice"/g)?.length).toBe(3)
     expect(svg).not.toContain('<polygon')
   })
@@ -369,21 +355,15 @@ describe('numbers at the ends of what a number can be', () => {
 })
 
 describe('what a comment is not', () => {
-  test('a hash inside a list', () => {
+  test('a hash inside a list; a title that begins with one; a key whose list is below it still opens with a comment beside it', () => {
     expect(readChart('labels: [#1, #2]\nseries: [1, 2]')?.labels).toEqual(['#1', '#2'])
     expect(readChart('labels: [a #1, b #2] # note\nseries: [1, 2]')?.labels).toEqual([
       'a #1',
       'b #2',
     ])
     expect(readChart('series: [1, 2] # [3]')?.series[0]?.data).toEqual([1, 2])
-  })
-
-  test('a title that begins with one', () => {
     expect(readChart('title: #1 Sales\nseries: [1]')?.title).toBe('#1 Sales')
     expect(readChart('title: Issue #12\nseries: [1]')?.title).toBe('Issue')
-  })
-
-  test('a key whose list is below it still opens with a comment beside it', () => {
     const chart = readChart(
       'labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n',
     )

@@ -60,14 +60,11 @@ describe('a note read as rows', () => {
     ])
   })
 
-  test('a date with a time is still a date; quotes come off, whichever kind they are', () => {
+  test('a date with a time is still a date; quotes come off, whichever kind they are; an empty list is a list', () => {
     expect(said('---\nwhen: 2025-09-08T14:30\n---\n')?.[0]?.kind).toBe('date')
     expect(said('---\nwhen: 2025-09-08 14:30:00\n---\n')?.[0]?.kind).toBe('date')
     expect(said('---\ntitle: "A plan"\n---\n')?.[0]?.value).toBe('A plan')
     expect(said('---\ntags: [\'one\', "two"]\n---\n')?.[0]?.items).toEqual(['one', 'two'])
-  })
-
-  test('an empty list is a list', () => {
     expect(said('---\ntags: []\n---\n')?.[0]).toEqual({
       key: 'tags',
       kind: 'list',
@@ -108,7 +105,6 @@ describe('a key', () => {
 
   test('is any name front matter reads back as itself', () => {
     const block = ['---', ...NAMES.map((name) => `${name}: v`), '---', ''].join('\n')
-
     expect(readProperties(block)?.map((one) => one.key)).toEqual(NAMES)
     expect(readProperties('---\nexport:\n  größe: A4\n---\n')?.[0]?.items).toEqual(['größe: A4'])
     for (const name of NAMES) expect(isPropertyName(name), name).toBe(true)
@@ -160,7 +156,6 @@ describe('a block this cannot draw', () => {
   test('a block longer than any note’s metadata is source, whichever rows it holds', () => {
     const many = (line: (at: number) => string) =>
       ['---', ...Array.from({ length: 200 }, (_, at) => line(at)), '---', ''].join('\n')
-
     expect(readProperties(many((at) => `k${at}: value`))).toBe(null)
     expect(readProperties(many((at) => `k${at}: [one, two]`))).toBe(null)
     expect(readProperties(many((at) => `k${at}:`))).toBe(null)
@@ -179,7 +174,6 @@ describe('where each row came from', () => {
   test('is the line the key is written on', () => {
     const source = '---\ntitle: A plan\ntags: [one]\n---\n'
     const rows = readProperties(source) ?? []
-
     expect(source.slice(rows[0]!.from, rows[0]!.to)).toBe('title: A plan')
     expect(source.slice(rows[1]!.from, rows[1]!.to)).toBe('tags: [one]')
   })
@@ -187,7 +181,6 @@ describe('where each row came from', () => {
   test('and a list written under its key reaches to its last item', () => {
     const source = '---\naliases:\n  - One\n  - Two\n---\n'
     const rows = readProperties(source) ?? []
-
     expect(source.slice(rows[0]!.from, rows[0]!.to)).toBe('aliases:\n  - One\n  - Two')
   })
 })
@@ -220,11 +213,8 @@ describe('the rows as markup', () => {
 describe('the three answers', () => {
   const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
 
-  test('are the words every reader of the setting knows', () => {
+  test('are the words every reader of the setting knows; read a saved or shared answer, and nothing on the page for anything else', () => {
     expect(PROPERTIES_MODES).toEqual(['properties', 'source', 'hidden'])
-  })
-
-  test('read a saved or shared answer, and nothing on the page for anything else', () => {
     expect(propertiesMode('source')).toBe('source')
     expect(propertiesMode('properties')).toBe('properties')
     for (const said of [undefined, null, '', 'rows', true]) {
@@ -242,11 +232,8 @@ describe('the three answers', () => {
     expect(nothing).not.toContain('properties-source')
   })
 
-  test('draw nothing at all where the caller did not ask', () => {
+  test('draw nothing at all where the caller did not ask; fall back to the source for a block the rows cannot read', () => {
     expect(renderMarkdown(NOTE)).not.toContain('property')
-  })
-
-  test('fall back to the source for a block the rows cannot read', () => {
     const query = '---\ntitle: A note\n# a comment\n---\n\n# Head\n'
     expect(readProperties(query)).toBeNull()
     expect(renderMarkdown(query, { properties: 'properties' })).toContain(

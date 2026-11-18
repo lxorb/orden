@@ -121,24 +121,18 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     })
   })
 
-  test('reads fields in any order, as the plugin does', () => {
+  test('reads fields in any order, as the plugin does; reads the alternative emoji and the variation selector; stops at the first thing that is not a field', () => {
     expect(readTask('- [ ] a 📅 2026-10-06 ⏫ 🛫 2026-10-01')).toMatchObject({
       due: '2026-10-06',
       priority: 2,
       start: '2026-10-01',
       text: 'a',
     })
-  })
-
-  test('reads the alternative emoji and the variation selector', () => {
     expect(readTask('- [ ] a 📆 2026-10-06')?.due).toBe('2026-10-06')
     expect(readTask('- [ ] a 🗓 2026-10-06')?.due).toBe('2026-10-06')
     expect(readTask('- [ ] a ⌛ 2026-10-06')?.scheduled).toBe('2026-10-06')
     expect(readTask('- [ ] a ⏫️')?.priority).toBe(2)
     expect(readTask('- [ ] a 📅️ 2026-10-06')?.due).toBe('2026-10-06')
-  })
-
-  test('stops at the first thing that is not a field', () => {
     const task = readTask('- [ ] pay 📅 2026-10-06 the rent')
     expect(task?.due).toBeUndefined()
     expect(task?.text).toBe('pay 📅 2026-10-06 the rent')

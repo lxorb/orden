@@ -71,7 +71,6 @@ describe('where the other copy goes', () => {
 
   test('and a file with no extension still gets a name of its own', () => {
     const on = new Date('2026-09-13T10:00:00Z')
-
     expect(conflictPath('Notes', on)).toBe('Notes (from another device 2026-09-13)')
     expect(conflictPath('notes/README', on)).toBe('notes/README (from another device 2026-09-13)')
     expect(conflictPath('v1.2/README', on)).toBe('v1.2/README (from another device 2026-09-13)')

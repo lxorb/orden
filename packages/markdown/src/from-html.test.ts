@@ -6,14 +6,11 @@ import { htmlToMarkdown, NEVER, workDone } from './from-html'
 import { renderMarkdown } from './index'
 
 describe('a page as markdown', () => {
-  test('headings and emphasis become markdown; links keep their target', () => {
+  test('headings and emphasis become markdown; links keep their target; a tag comes back as the tag, whichever element drew it', () => {
     expect(htmlToMarkdown('<h2>Title</h2><p><strong>bold</strong> and <em>italic</em></p>')).toBe(
       '## Title\n\n**bold** and *italic*',
     )
     expect(htmlToMarkdown('<a href="https://x.dev">site</a>')).toBe('[site](https://x.dev)')
-  })
-
-  test('a tag comes back as the tag, whichever element drew it', () => {
     const read = renderMarkdown('Filed #work/orden and #reading', { tagHref: (tag) => `#${tag}` })
     expect(htmlToMarkdown(read)).toBe('Filed #work/orden and #reading')
     expect(htmlToMarkdown(renderMarkdown('#first words'))).toBe('#first words')
@@ -36,10 +33,8 @@ describe('a page as markdown', () => {
     test('is words for a clip and a paste, which have no app to point back at', () => {
       expect(htmlToMarkdown('<a href="applenotes:note/ideas">Ideas</a>')).toBe('Ideas')
     })
-
     test('and stays a link for an import, exactly as it was written', () => {
       const kept = { appTargets: true }
-
       expect(htmlToMarkdown('<a href="applenotes:note/ideas">Ideas</a>', kept)).toBe(
         '[Ideas](applenotes:note/ideas)',
       )
@@ -50,17 +45,14 @@ describe('a page as markdown', () => {
         '[Note](evernote:///view/1/s1/abc/abc/)',
       )
     })
-
     test('and never one that runs code, whoever is asking', () => {
       const kept = { appTargets: true }
-
       expect(htmlToMarkdown('<a href="javascript:alert(1)">click</a>', kept)).toBe('click')
       expect(htmlToMarkdown('<a href="vbscript:msgbox">click</a>', kept)).toBe('click')
       expect(htmlToMarkdown('<a href="data:text/html,<b>hi">click</a>', kept)).toBe('click')
       expect(htmlToMarkdown('<a href="blob:https://x.dev/abc">click</a>', kept)).toBe('click')
       expect(htmlToMarkdown('<a href="java&#9;script:alert(1)">click</a>', kept)).toBe('click')
     })
-
     test('and a picture is still only ever a picture; while http, a path and a fragment are what they always were', () => {
       expect(
         htmlToMarkdown('<img src="applenotes:note/ideas" alt="a">', { appTargets: true }),
@@ -75,7 +67,6 @@ describe('a page as markdown', () => {
   test('and neither is a picture that is a document rather than a picture', () => {
     expect(htmlToMarkdown('<img src="data:image/svg+xml,<svg onload=x>" alt="a">')).toBe('')
     expect(htmlToMarkdown('<img src="javascript:alert(1)" alt="a">')).toBe('')
-
     expect(htmlToMarkdown('<img src="data:image/png;base64,AAA" alt="a">')).toBe(
       '![a](data:image/png;base64,AAA)',
     )
@@ -83,10 +74,8 @@ describe('a page as markdown', () => {
 
   test('and a file on the old machine survives for the caller that resolves one', () => {
     const html = '<p><img src="file:///Users/emil/photo.png"></p>'
-
     expect(htmlToMarkdown(html)).toBe('')
     expect(htmlToMarkdown(html, { fileTargets: true })).toBe('![](file:///Users/emil/photo.png)')
-
     const link = '<a href="file:///Users/emil/Notes/Other.html">other</a>'
     expect(htmlToMarkdown(link)).toBe('other')
     expect(htmlToMarkdown(link, { fileTargets: true })).toBe(
@@ -104,7 +93,6 @@ describe('a page as markdown', () => {
       '<iframe src="media/page.html"></iframe>',
       '<video src="javascript:alert(1)"></video>',
     ].join('')
-
     expect(htmlToMarkdown(html)).toBe('Before')
     expect(htmlToMarkdown(html, { mediaLinks: true })).toBe(
       [
@@ -122,7 +110,6 @@ describe('a page as markdown', () => {
     const html =
       '<video src="media/%3Cstyle%3E*%7Bdisplay:none%7D%3C%2Fstyle%3E%0A%0A%23 x.mp4"></video>'
     const written = htmlToMarkdown(html, { mediaLinks: true })
-
     expect(written).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
     expect(written).not.toContain('\n')
     expect(written).toMatch(/^\[.*\]\(media\/.*\)$/)
@@ -142,7 +129,6 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<a href="https://x.test/a\\)[click](https://evil.test)">text</a>')).toBe(
       '[text](https://x.test/a%5C%29[click]%28https://evil.test%29)',
     )
-
     expect(htmlToMarkdown('<a href="https://x.test/a)[click](https://evil.test)">text</a>')).toBe(
       '[text](https://x.test/a%29[click]%28https://evil.test%29)',
     )
@@ -198,17 +184,13 @@ describe('a page as markdown', () => {
     )
   })
 
-  test('a title cannot end its own quotes', () => {
+  test('a title cannot end its own quotes; lists get the markers the editor itself writes; a numbered list keeps the number it started on', () => {
     expect(htmlToMarkdown('<a href="https://x.test/ok" title="he said &quot;hi&quot;">t</a>')).toBe(
       '[t](https://x.test/ok "he said \\"hi\\"")',
     )
-
     expect(htmlToMarkdown('<a href="https://x.test/ok" title="ends in a\\">t</a>')).toBe(
       '[t](https://x.test/ok "ends in a\\\\")',
     )
-  })
-
-  test('lists get the markers the editor itself writes; a numbered list keeps the number it started on', () => {
     expect(htmlToMarkdown('<ul><li>one</li><li>two</li></ul>')).toBe('- one\n- two')
     expect(htmlToMarkdown('<ol start="3"><li>three</li><li>four</li></ol>')).toBe(
       '3. three\n4. four',
@@ -218,15 +200,12 @@ describe('a page as markdown', () => {
   test('a list of five thousand items is numbered without a pass each', () => {
     const items = 5000
     const html = `<ol>${Array.from({ length: items }, (_, at) => `<li>item ${at}</li>`).join('')}</ol>`
-
     workDone()
     const lines = htmlToMarkdown(html).split('\n')
     const work = workDone()
-
     expect(lines).toHaveLength(items)
     expect(lines[0]).toBe('1. item 0')
     expect(lines.at(-1)).toBe(`${items}. item ${items - 1}`)
-
     expect(work.lists).toBe(1)
     expect(work.items).toBe(items)
     expect(work.walked).toBe(items)
@@ -250,20 +229,16 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<pre>  indented\n  lines</pre>')).toBe('```\n  indented\n  lines\n```')
   })
 
-  test('the older spelling of the language class reads too, and either half may carry it', () => {
+  test('the older spelling of the language class reads too, and either half may carry it; the attribute the highlighters name the language in reads as well', () => {
     expect(htmlToMarkdown('<pre><code class="lang-py">x = 1</code></pre>')).toBe(
       '```py\nx = 1\n```',
     )
     expect(htmlToMarkdown('<pre class="language-go"><code>x := 1</code></pre>')).toBe(
       '```go\nx := 1\n```',
     )
-  })
-
-  test('the attribute the highlighters name the language in reads as well', () => {
     expect(
       htmlToMarkdown('<pre data-language="js" class="shiki"><code>let x = 1</code></pre>'),
     ).toBe('```js\nlet x = 1\n```')
-
     expect(htmlToMarkdown('<pre><code data-lang="rust">let x = 1;</code></pre>')).toBe(
       '```rust\nlet x = 1;\n```',
     )
@@ -296,7 +271,6 @@ describe('a page as markdown', () => {
   test('and a language that is not a word at all is no language', () => {
     const smuggled = '<pre class="language-x&quot;&gt;&lt;img src=x&gt;"><code>hi</code></pre>'
     expect(htmlToMarkdown(smuggled)).toBe('```\nhi\n```')
-
     expect(htmlToMarkdown(`<pre data-language="${'a'.repeat(25)}"><code>x</code></pre>`)).toBe(
       '```\nx\n```',
     )
@@ -314,7 +288,6 @@ describe('a page as markdown', () => {
   test('nothing of the page is kept as markup', () => {
     const html =
       '<table><tr><td onmouseover="run()"><img src="x" onerror="run()"></td></tr></table>'
-
     expect(htmlToMarkdown(html)).not.toContain('onerror')
     expect(htmlToMarkdown(html)).not.toContain('<td')
   })
@@ -325,7 +298,6 @@ describe('a page as markdown', () => {
       '<tr><td>cell<img src="https://elsewhere.example/b.png" onerror="run()"></td></tr>' +
       '</tbody></table>'
     const markdown = htmlToMarkdown(html)
-
     expect(markdown).not.toContain('<table')
     expect(markdown).not.toContain('onerror')
     expect(markdown).toBe('|  |\n| --- |\n| Col |\n| cell![](https://elsewhere.example/b.png) |')
@@ -362,16 +334,13 @@ describe('a page as markdown', () => {
     )
   })
 
-  test('an escape right after a bare web address stays out of the link', () => {
+  test('an escape right after a bare web address stays out of the link; two equals signs in words mark nothing', () => {
     const page = htmlToMarkdown('<p>(see https://a.test/a_b_) and *https://a.test/x*</p>')
     expect(page).toBe('(see https://a.test/a_b\\_) and \\*https://a.test/x\\*')
     expect(renderMarkdown(page)).toBe(
       '<p>(see <a class="url" href="https://a.test/a_b">https://a.test/a_b</a>_) and ' +
         '*<a class="url" href="https://a.test/x">https://a.test/x</a>*</p>\n',
     )
-  })
-
-  test('two equals signs in words mark nothing', () => {
     const code = htmlToMarkdown('<p>if a==b or c==d then, and **x==y** too</p>')
     expect(code).toBe('if a=\\=b or c=\\=d then, and \\*\\*x=\\=y\\*\\* too')
     expect(renderMarkdown(code)).toBe('<p>if a==b or c==d then, and **x==y** too</p>\n')
@@ -379,15 +348,12 @@ describe('a page as markdown', () => {
     expect(renderMarkdown(struck)).toBe('<p>a ~~b~~ c</p>\n')
   })
 
-  test('two percent signs in words hide nothing as a comment', () => {
+  test('two percent signs in words hide nothing as a comment; dollars in words draw no maths', () => {
     const code = htmlToMarkdown('<p>printf("%%d") and then printf("%%s") again</p>')
     expect(code).toBe('printf("%\\%d") and then printf("%\\%s") again')
     expect(renderMarkdown(code)).toBe(
       '<p>printf(&quot;%%d&quot;) and then printf(&quot;%%s&quot;) again</p>\n',
     )
-  })
-
-  test('dollars in words draw no maths', () => {
     const prices = htmlToMarkdown('<p>Tickets cost $5-$10 each</p>')
     expect(prices).toBe('Tickets cost \\$5-\\$10 each')
     expect(renderMarkdown(prices)).toBe('<p>Tickets cost $5-$10 each</p>\n')
@@ -407,30 +373,24 @@ describe('a page as markdown', () => {
     const about = htmlToMarkdown('<p>It takes ~5 min or ~10 min.</p>')
     expect(about).toBe('It takes \\~5 min or \\~10 min.')
     expect(renderMarkdown(about)).toBe('<p>It takes ~5 min or ~10 min.</p>\n')
-
     const powers = htmlToMarkdown('<p>2^10 and 3^4</p>')
     expect(powers).toBe('2\\^10 and 3\\^4')
     expect(renderMarkdown(powers)).toBe('<p>2^10 and 3^4</p>\n')
-
     const doubled = htmlToMarkdown('<p>~~kept~~ and a ~ b</p>')
     expect(doubled).toBe('\\~\\~kept\\~~ and a ~ b')
     expect(renderMarkdown(doubled)).toBe('<p>~~kept~~ and a ~ b</p>\n')
   })
 
-  test('a body the marker cannot hold keeps the tag instead; a raised footnote mark keeps the link it wraps', () => {
+  test('a body the marker cannot hold keeps the tag instead; a raised footnote mark keeps the link it wraps; a formula arrives as the TeX the page built it from', () => {
     expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b\\^c</sup>')
     expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b\\~c</sub>')
     expect(htmlToMarkdown('<p>said<sup><a href="https://x.dev#n1">[1]</a></sup></p>')).toBe(
       'said^[\\[1\\]](https://x.dev#n1)^',
     )
-  })
-
-  test('a formula arrives as the TeX the page built it from', () => {
     const html =
       '<p>the equality <math alttext="e^{i\\pi}+1=0"><semantics>' +
       '<annotation encoding="application/x-tex">e^{i\\pi}+1=0</annotation>' +
       '</semantics></math> where</p>'
-
     expect(htmlToMarkdown(html)).toBe('the equality $e^{i\\pi}+1=0$ where')
   })
 
@@ -441,19 +401,14 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<h2><math alttext="x=1"><mi>x</mi></math></h2>')).toBe('## $x=1$')
   })
 
-  test('a dollar inside a formula cannot close it early', () => {
+  test('a dollar inside a formula cannot close it early; a tag inside a formula is written as TeX rather than as a tag', () => {
     expect(htmlToMarkdown('<p>a <math alttext="x=$5"><mi>x</mi></math> b</p>')).toBe('a $x=\\$5$ b')
-
     expect(htmlToMarkdown('<p>a <math alttext="x=\\$5"><mi>x</mi></math> b</p>')).toBe(
       'a $x=\\$5$ b',
     )
-  })
-
-  test('a tag inside a formula is written as TeX rather than as a tag', () => {
     const html =
       '<p>see <math alttext="<a href=javascript:run()>click</a> \\"><mi>q</mi></math> ok</p>'
     const markdown = htmlToMarkdown(html)
-
     expect(markdown).not.toContain('<a')
     expect(markdown).not.toContain('</a>')
     expect(markdown).toContain('\\lt ')
@@ -467,40 +422,30 @@ describe('a page as markdown', () => {
   describe('a formula that has been drawn', () => {
     const TEX = String.raw`B_r(x) = B(x, r) := \left\{ y \in \mathbb{R}^n \;\middle|\; \|x - y\| < r \right\}`
     const KEPT = TEX.replace('<', String.raw`\lt `)
-
     test('arrives as the TeX it was drawn from, and never as the glyphs it drew', () => {
       const drawn = katex.renderToString(TEX, { displayMode: true, throwOnError: false })
       const markdown = htmlToMarkdown(drawn)
-
       expect(markdown).toBe(`$$\n${KEPT}\n$$`)
       expect(markdown).not.toContain('∈')
     })
-
     test('and one a sentence runs through is part of the sentence', () => {
       const drawn = katex.renderToString('x^2', { throwOnError: false })
-
       expect(htmlToMarkdown(`<p>the square ${drawn} of it</p>`)).toBe('the square $x^2$ of it')
     })
-
     test('and one a lecture page sets between two paragraphs is a block of its own', () => {
       const drawn = katex.renderToString('x^2', { displayMode: true, throwOnError: false })
-
       expect(htmlToMarkdown(`<p>Sei</p><div>${drawn}</div><p>Dann</p>`)).toBe(
         'Sei\n\n$$\nx^2\n$$\n\nDann',
       )
     })
-
     test('and a formula this app drew pastes back into a note as itself', async () => {
       const note = `$$${TEX}$$`
       await loadFor(note)
-
       expect(htmlToMarkdown(renderMarkdown(note))).toBe(`$$\n${KEPT}\n$$`)
     })
-
     test('an inline one too, still inside its sentence', async () => {
       const note = 'the square $x^2$ of it'
       await loadFor(note)
-
       expect(htmlToMarkdown(renderMarkdown(note))).toBe(note)
     })
   })
@@ -513,12 +458,9 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>the <code>id</code> field</p>')).toBe('the `id` field')
   })
 
-  test('a rule and a quotation come out as the editor writes them', () => {
+  test('a rule and a quotation come out as the editor writes them; tables survive, via the GFM rules', () => {
     expect(htmlToMarkdown('<p>a</p><hr><p>b</p>')).toBe('a\n\n---\n\nb')
     expect(htmlToMarkdown('<blockquote><p>said</p></blockquote>')).toBe('> said')
-  })
-
-  test('tables survive, via the GFM rules', () => {
     const markdown = htmlToMarkdown(
       '<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>',
     )
@@ -544,7 +486,6 @@ describe('a page as markdown', () => {
 
   test('every element on the list is refused', () => {
     const childless = new Set(['head', 'meta', 'link', 'title', 'embed'])
-
     for (const tag of NEVER) {
       if (childless.has(tag)) continue
       expect(htmlToMarkdown(`<p>kept</p><${tag}>gone</${tag}>`), tag).toBe('kept')
@@ -578,36 +519,26 @@ describe('a page as markdown', () => {
   })
 
   describe('a page whose own words are markdown', () => {
-    test('a doubled marker around plain words is kept, and reads as markdown; and so is a code span', () => {
+    test('a doubled marker around plain words is kept, and reads as markdown; and so is a code span; and an escape no reader would have needed is not written at all', () => {
       expect(htmlToMarkdown('<p>dann überfliegen Sie **kurz** das Dokument</p>')).toBe(
         'dann überfliegen Sie **kurz** das Dokument',
       )
       expect(htmlToMarkdown('<p>ganz __fett__ gesagt</p>')).toBe('ganz __fett__ gesagt')
       expect(htmlToMarkdown('<p>run `npm run dev` first</p>')).toBe('run `npm run dev` first')
-    })
-
-    test('and an escape no reader would have needed is not written at all', () => {
       expect(htmlToMarkdown('<p>plt.savefig("./cx_out/pic.png")</p>')).toBe(
         'plt.savefig("./cx_out/pic.png")',
       )
       expect(htmlToMarkdown('<p>2 * 3 = 6</p>')).toBe('2 * 3 = 6')
       expect(htmlToMarkdown('<p>C:\\Users\\me\\notes</p>')).toBe('C:\\Users\\me\\notes')
     })
-
-    test('a marker that would open a block of its own is still escaped', () => {
+    test('a marker that would open a block of its own is still escaped; a single marker is prose, and keeps its escape; and never a run with markup inside it', () => {
       expect(htmlToMarkdown('<p>+ Lesen und üben Sie die Aufgaben</p>')).toBe(
         '\\+ Lesen und üben Sie die Aufgaben',
       )
       expect(htmlToMarkdown('<p># 1 der Liste</p>')).toBe('\\# 1 der Liste')
       expect(htmlToMarkdown('<p>&gt; sagte sie</p>')).toBe('\\> sagte sie')
-    })
-
-    test('a single marker is prose, and keeps its escape', () => {
       expect(htmlToMarkdown('<p>rename *.md to *.txt</p>')).toBe('rename \\*.md to \\*.txt')
       expect(htmlToMarkdown('<p>the _config_ file</p>')).toBe('the \\_config\\_ file')
-    })
-
-    test('and never a run with markup inside it', () => {
       expect(htmlToMarkdown('<p>**&lt;img src=q onerror=alert(1)&gt;**</p>')).toBe(
         '\\*\\*\\<img src=q onerror=alert(1)>\\*\\*',
       )
@@ -615,13 +546,11 @@ describe('a page as markdown', () => {
         '\\*\\*\\[a\\](javascript:alert(1))\\*\\*',
       )
     })
-
     test('and a page that means emphasis still gets it from its tags', () => {
       expect(htmlToMarkdown('<p><strong>kurz</strong> und <em>gut</em></p>')).toBe(
         '**kurz** und *gut*',
       )
     })
-
     test('and the section it was reported from arrives as the note it should be', () => {
       const page = [
         '<h3><a href="https://moodle.test/section.php?id=1">Vor der Ersten Vorlesung</a></h3>',
@@ -629,7 +558,6 @@ describe('a page as markdown', () => {
         '<ol><li>in CodeExpert zu arbeiten;</li><li>oder nur mit IPython.</li></ol>',
         '<p>in CodeExpert braucht man plt.savefig("./cx_out/pic.png") statt plt.show()</p>',
       ].join('')
-
       expect(htmlToMarkdown(page)).toBe(
         [
           '### [Vor der Ersten Vorlesung](https://moodle.test/section.php?id=1)',
@@ -645,17 +573,13 @@ describe('a page as markdown', () => {
     })
   })
 
-  test('a tag inside code keeps its brackets', () => {
+  test('a tag inside code keeps its brackets; an address cannot break out of its own brackets', () => {
     expect(htmlToMarkdown('<pre><code>&lt;img src=q&gt;</code></pre>')).toBe(
       '```\n<img src=q>\n```',
     )
-  })
-
-  test('an address cannot break out of its own brackets', () => {
     expect(
       htmlToMarkdown('<img alt="a" src="https://x.test/a.png)![](https://evil.test/b.png">'),
     ).toBe('![a](https://x.test/a.png%29![]%28https://evil.test/b.png)')
-
     expect(htmlToMarkdown('<img alt="a" src="x)<img src=q onerror=alert(1)>">')).toBe(
       '![a](x%29%3Cimg%20src=q%20onerror=alert%281%29%3E)',
     )
@@ -690,20 +614,15 @@ describe('a page as markdown', () => {
       '<p><img src="a.png" alt="one"></p><p><img src="b.png" alt="two"></p>',
       { image: (source) => `orden:${seen.push(source) - 1}` },
     )
-
     expect(markdown).toBe('![one](orden:0)\n\n![two](orden:1)')
     expect(seen).toEqual(['a.png', 'b.png'])
   })
 
-  test('nothing in, nothing out; runs of blank lines are one blank line', () => {
+  test('nothing in, nothing out; runs of blank lines are one blank line; the blank lines and trailing blanks inside code are left as they were', () => {
     expect(htmlToMarkdown('')).toBe('')
     expect(htmlToMarkdown('   \n  ')).toBe('')
     expect(htmlToMarkdown('<p>one</p><p></p><p></p><p>two</p>')).toBe('one\n\ntwo')
-  })
-
-  test('the blank lines and trailing blanks inside code are left as they were', () => {
     const code = 'one  \n\n\n\ntwo\t\n   \nthree'
-
     expect(htmlToMarkdown(`<pre><code>${code}</code></pre>`)).toBe(`\`\`\`\n${code}\n\`\`\``)
     expect(htmlToMarkdown(`<p>before</p><pre><code>${code}</code></pre><p>after</p>`)).toBe(
       `before\n\n\`\`\`\n${code}\n\`\`\`\n\nafter`,
@@ -722,7 +641,6 @@ describe('a checked list item', () => {
       '<ul><li><input type="checkbox">task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]</li></ul>'
     const line = htmlToMarkdown(html, { plainTasks: true }).trim()
     const task = readTask(line)
-
     expect(task).toMatchObject({ tags: [] })
     expect(task?.due).toBeUndefined()
     expect(task?.recurrence).toBeUndefined()
@@ -770,16 +688,13 @@ describe('a paste from Google Docs', () => {
     expect(htmlToMarkdown(docs('<span>just words</span>'))).toBe('just words')
   })
 
-  test('reads bold and italic off the spans', () => {
+  test('reads bold and italic off the spans; a heading is not bold on top of being a heading, and code keeps its characters; strong or em around blocks write no marks', () => {
     const said = htmlToMarkdown(
       docs(
         '<p><span style="font-weight:700">B</span> <span style="font-style:italic">I</span> <span style="font-weight:400">n</span> <span style="font-weight:700;font-style:italic">both </span>x</p>',
       ),
     )
     expect(said).toBe('**B** *I* n ***both*** x')
-  })
-
-  test('a heading is not bold on top of being a heading, and code keeps its characters; strong or em around blocks write no marks', () => {
     expect(htmlToMarkdown('<h2><span style="font-weight:700">t</span></h2>')).toBe('## t')
     expect(htmlToMarkdown('<code><span style="font-weight:700">t</span></code>')).toBe('`t`')
     expect(htmlToMarkdown('<strong><p>a</p><p>b</p></strong>')).toBe('a\n\nb')
@@ -846,15 +761,12 @@ describe('a loose task list', () => {
 })
 
 describe('marks and what stands beside them', () => {
-  test('a heading holds its line break as a space; marks that could not close write no stars', () => {
+  test('a heading holds its line break as a space; marks that could not close write no stars; a linked picture with a bracket in its words stays a linked picture', () => {
     expect(htmlToMarkdown('<h1>a<br>b</h1>')).toBe('# a b')
     expect(renderMarkdown(htmlToMarkdown('<p><b>"x"</b>y</p>'))).not.toContain('*')
     expect(renderMarkdown(htmlToMarkdown('<p>y<i>"x"</i></p>'))).not.toContain('*')
     expect(htmlToMarkdown('<p><b>"x"</b> y</p>')).toBe('**"x"** y')
     expect(htmlToMarkdown('<p><b>x</b>y</p>')).toBe('**x**y')
-  })
-
-  test('a linked picture with a bracket in its words stays a linked picture', () => {
     const html = renderMarkdown(
       htmlToMarkdown('<a href="https://u.co"><img src="https://u.co/a.png" alt="p]q"></a>'),
     )
@@ -925,14 +837,11 @@ describe('a table with a cell over several rows', () => {
 })
 
 describe('a form', () => {
-  test('its words are kept and its controls are not', () => {
+  test('its words are kept and its controls are not; with nothing but controls and what names them is nothing', () => {
     const said = htmlToMarkdown('<p>intro</p><form><p>body</p><button>Send</button></form>')
     expect(said).toContain('intro')
     expect(said).toContain('body')
     expect(said).not.toContain('Send')
-  })
-
-  test('with nothing but controls and what names them is nothing', () => {
     expect(
       htmlToMarkdown(
         '<p>intro</p><form><label>Mail</label><input><select><option>a</option></select></form>',
