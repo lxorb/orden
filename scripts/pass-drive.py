@@ -16,11 +16,10 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from devtools import Session, targets  # noqa: E402
+from devtools import Session, targets
+import linux_app
 
 OUT = Path(sys.argv[1])
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 DEBUG = int(os.environ["ORDEN_CEF_DEBUG_PORT"])
 PORTS = {"mark": 8781, "three": 8783, "wrong": 8784}
 SECRET = "JBSWY3DPEHPK3PXPJBSWY3DP"
@@ -139,35 +138,8 @@ class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, TOKEN = endpoint()
-
 def run(code, timeout=15):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {TOKEN}", "content-type": "application/json"},
-        method="POST",
-    )
-    for _ in range(6):
-        try:
-            with urllib.request.urlopen(asked, timeout=timeout) as answer:
-                said = json.loads(answer.read())
-            return said.get("value") if said.get("ok") else None
-        except (TimeoutError, OSError):
-            time.sleep(1)
-    return None
+    return linux_app.run(code, timeout)
 
 def until(check, seconds=20, every=0.25):
     end = time.monotonic() + seconds

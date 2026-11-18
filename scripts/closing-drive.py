@@ -2,16 +2,14 @@
 
 import http.server
 import json
-import os
 import socketserver
 import sys
 import threading
 import time
-import urllib.request
 from pathlib import Path
+import linux_app
 
 OUT, PHASE = Path(sys.argv[1]), sys.argv[2]
-CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / os.environ.get("DRIVEN_ID", "so.orden.Orden")
 PORT_PAGES = 8768
 SITE = f"http://127.0.0.1:{PORT_PAGES}"
 PAGES = ["plain?1", "slow?1", "plain?2", "slow?2", "plain?3", "slow?3", "plain?4", "slow?4"]
@@ -40,33 +38,9 @@ class Serving(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-def endpoint():
-    for _ in range(120):
-        try:
-            kept = json.loads((CONFIG / "automation.json").read_text())
-            if kept.get("port"):
-                return kept["port"], kept["secret"]
-        except (OSError, ValueError):
-            pass
-        time.sleep(0.5)
-    raise SystemExit("::error::the app wrote no endpoint")
-
-PORT, SECRET = endpoint()
-
 def run(code, timeout=10.0):
-    body = json.dumps({"verb": "eval", "args": {"code": code, "yes": True}, "rest": []})
-    asked = urllib.request.Request(
-        f"http://127.0.0.1:{PORT}/",
-        data=body.encode(),
-        headers={"authorization": f"Bearer {SECRET}", "content-type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(asked, timeout=timeout) as answer:
-            said = json.loads(answer.read())
-        return said.get("value") if said.get("ok") else said.get("error")
-    except (TimeoutError, OSError):
-        return None
+    answer = linux_app.said(code, timeout, tries=1)
+    return None if answer is None else answer.get("value") if answer.get("ok") else answer.get("error")
 
 WEB_TABS = "orden.workspace.tabs.filter((tab) => tab.kind === 'web').length"
 

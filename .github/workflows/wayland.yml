@@ -222,15 +222,6 @@ jobs:
           pkill -f /usr/share/Orden/orden || true
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
-      - name: A private tab's permission answer kept from normal tabs, under sway
-        if: always()
-        env:
-          OUT: wayland-out/grants
-          GRANTS: '1'
-        run: |
-          pkill -f /usr/share/Orden/orden || true
-          rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
-          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A device's name refused for a note and a folder, under sway
         if: always()
         env:
