@@ -1,29 +1,20 @@
-import { describe, expect, test } from 'vitest'
+import { expect, test } from 'vitest'
 import { keepsSystemMenu } from './system-menu'
 
-function on(tagName: string, type?: string): EventTarget {
-  return { tagName, type } as unknown as EventTarget
-}
-
-describe('the system menu', () => {
-  test('is kept in a text field on a Mac, for Look Up, spelling and Services', () => {
-    expect(keepsSystemMenu(on('TEXTAREA'), 'macos')).toBe(true)
-    expect(keepsSystemMenu(on('INPUT', 'text'), 'macos')).toBe(true)
-    expect(keepsSystemMenu(on('INPUT', 'search'), 'macos')).toBe(true)
-  })
-
-  test('but not in a field that holds no words', () => {
-    expect(keepsSystemMenu(on('INPUT', 'password'), 'macos')).toBe(false)
-    expect(keepsSystemMenu(on('INPUT', 'checkbox'), 'macos')).toBe(false)
-  })
-
-  test('nor anywhere that is not a field', () => {
-    expect(keepsSystemMenu(on('DIV'), 'macos')).toBe(false)
-    expect(keepsSystemMenu(null, 'macos')).toBe(false)
-  })
-
-  test('nor anywhere on Windows or Linux, where it is the browser engine’s', () => {
-    expect(keepsSystemMenu(on('TEXTAREA'), 'windows')).toBe(false)
-    expect(keepsSystemMenu(on('INPUT', 'text'), 'linux')).toBe(false)
-  })
-})
+test.each([
+  ['TEXTAREA', undefined, 'macos', true],
+  ['INPUT', 'text', 'macos', true],
+  ['INPUT', 'search', 'macos', true],
+  ['INPUT', 'password', 'macos', false],
+  ['INPUT', 'checkbox', 'macos', false],
+  ['DIV', undefined, 'macos', false],
+  [null, undefined, 'macos', false],
+  ['TEXTAREA', undefined, 'windows', false],
+  ['INPUT', 'text', 'linux', false],
+] as const)(
+  'the system menu is kept on a %s %s on %s only in a Mac text field, for Look Up, spelling and Services: %s',
+  (tagName, type, platform, kept) => {
+    const target = tagName ? ({ tagName, type } as unknown as EventTarget) : null
+    expect(keepsSystemMenu(target, platform)).toBe(kept)
+  },
+)

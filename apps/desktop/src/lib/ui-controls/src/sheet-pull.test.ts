@@ -1,28 +1,16 @@
-import { describe, expect, test } from 'vitest'
+import { expect, test } from 'vitest'
 import { putsAway } from './sheet-pull'
 
-describe('a sheet let go of', () => {
-  test('goes back after a little pull, slowly', () => {
-    expect(putsAway(30, 600, 0.1)).toBe(false)
-  })
-
-  test('goes away pulled a quarter of its height', () => {
-    expect(putsAway(160, 600, 0.1)).toBe(true)
-  })
-
-  test('and never needs more than a thumb’s length, however tall it is', () => {
-    expect(putsAway(130, 900, 0.1)).toBe(true)
-  })
-
-  test('goes away on a flick, however short', () => {
-    expect(putsAway(24, 600, 0.9)).toBe(true)
-  })
-
-  test('but not on a twitch, however fast', () => {
-    expect(putsAway(6, 600, 2)).toBe(false)
-  })
-
-  test('and never when pushed up instead', () => {
-    expect(putsAway(-80, 600, -1)).toBe(false)
-  })
-})
+test.each([
+  [30, 600, 0.1, false],
+  [160, 600, 0.1, true],
+  [130, 900, 0.1, true],
+  [24, 600, 0.9, true],
+  [6, 600, 2, false],
+  [-80, 600, -1, false],
+])(
+  'a sheet let go %ipx down of %ipx at %f goes away past a quarter, a thumb or on a flick, not a twitch or a push up: %s',
+  (pulled, height, speed, away) => {
+    expect(putsAway(pulled, height, speed)).toBe(away)
+  },
+)
