@@ -10,6 +10,7 @@ use super::approvals::{self, Asking};
 use super::grants::{Grant, Mode, Scope};
 use super::verbs::{Answer, Category, Code, FileEntry, FileKind, Files, FilesDone, FilesOp};
 use super::Caller;
+use orden_base::paths::{linked, own_folders, real};
 
 const MOST_READ: usize = 1_000_000;
 
@@ -226,18 +227,6 @@ fn fences(app: &AppHandle) -> Vec<PathBuf> {
         .collect()
 }
 
-pub(crate) fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
-    [
-        orden_base::paths::config_dir(app).ok(),
-        app.path().app_config_dir().ok(),
-        app.path().app_data_dir().ok(),
-        app.path().app_local_data_dir().ok(),
-    ]
-    .into_iter()
-    .flatten()
-    .collect()
-}
-
 fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> Option<Answer> {
     let whole = matches!(op, FilesOp::Move | FilesOp::Copy | FilesOp::Delete);
     let meets = |fence: &Path, one: &Path| {
@@ -258,26 +247,6 @@ fn refused(fenced: &[PathBuf], op: FilesOp, path: &Path, to: Option<&Path>) -> O
         Code::NotGranted,
         format!("{} {why}", path.display()),
     ))
-}
-
-pub(crate) fn real(path: &Path) -> PathBuf {
-    let mut rest = Vec::new();
-    let mut at = path;
-    loop {
-        if let Ok(found) = fs::canonicalize(at) {
-            return rest
-                .iter()
-                .rev()
-                .fold(found, |whole, part: &std::ffi::OsString| whole.join(part));
-        }
-        match (at.parent(), at.file_name()) {
-            (Some(parent), Some(name)) => {
-                rest.push(name.to_os_string());
-                at = parent;
-            }
-            _ => return path.to_path_buf(),
-        }
-    }
 }
 
 fn fenced_off(fenced: &[PathBuf], real_fenced: &[PathBuf], path: &Path) -> bool {
@@ -586,20 +555,6 @@ fn copied(from: &Path, to: &Path) -> Result<(), String> {
         copied(&one.path(), &to.join(one.file_name()))?;
     }
     Ok(())
-}
-
-#[cfg(unix)]
-pub(crate) fn linked(_from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
-    std::os::unix::fs::symlink(target, to)
-}
-
-#[cfg(windows)]
-pub(crate) fn linked(from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
-    if fs::metadata(from).is_ok_and(|meta| meta.is_dir()) {
-        std::os::windows::fs::symlink_dir(target, to)
-    } else {
-        std::os::windows::fs::symlink_file(target, to)
-    }
 }
 
 fn deleted(path: &Path) -> Result<(), String> {

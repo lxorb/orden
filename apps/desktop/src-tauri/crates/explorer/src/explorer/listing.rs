@@ -121,16 +121,12 @@ pub(super) fn entries(folder: &Path, most: usize) -> Result<(Vec<Entry>, bool), 
     Ok((out, false))
 }
 
-pub(super) fn real(path: &Path) -> PathBuf {
-    crate::agents::files::real(path)
-}
-
 pub(super) fn asked(app: &AppHandle, path: &str, using: Use) -> Result<PathBuf, String> {
     let explored = app.state::<Explored>();
     judged(
         &Fences::of(app),
         &|one| explored.seen(one),
-        &real,
+        &orden_base::paths::real,
         path,
         using,
     )
@@ -147,7 +143,7 @@ pub async fn explorer_list(app: AppHandle, path: String) -> Result<Listing, Stri
             path: folder.display().to_string(),
             parent: folder.parent().map(|one| one.display().to_string()),
             entries,
-            own: fences.in_own(&folder, &real),
+            own: fences.in_own(&folder, &orden_base::paths::real),
             spaces: fences.in_spaces(&folder),
             cut,
         })

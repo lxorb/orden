@@ -15,7 +15,7 @@ use super::snapshot::{Part, Wanted};
 use super::verbs::{
     Answer, Code, ConsoleLines, Cookie, FieldValue, Match, Picture, ReadAs, Requests, Store, Until,
 };
-use crate::pdf::PdfPage;
+use orden_documents::pdf::PdfPage;
 
 pub use super::page::Element;
 

@@ -74,7 +74,7 @@ impl Fences {
     pub fn of(app: &AppHandle) -> Self {
         Self {
             spaces: orden_base::paths::spaces_dir(app).ok(),
-            own: crate::agents::files::own_folders(app),
+            own: orden_base::paths::own_folders(app),
             home: app.path().home_dir().ok(),
         }
     }

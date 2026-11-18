@@ -1,12 +1,8 @@
 use tauri::Url;
 
-pub const LINK_FLAG: &str = "--url";
+use orden_base::handed::LINK_FLAG;
 
 const LONGEST: usize = 32 * 1024;
-
-pub fn for_a_link<A: AsRef<std::ffi::OsStr>>(args: &[A]) -> bool {
-    args.iter().skip(1).any(|one| one.as_ref() == LINK_FLAG)
-}
 
 pub fn pages_in(args: &[String]) -> Vec<String> {
     let given = args.get(1..).unwrap_or_default();
@@ -42,7 +38,8 @@ fn page(said: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{for_a_link, pages_among, pages_in, LINK_FLAG};
+    use super::{pages_among, pages_in};
+    use orden_base::handed::{for_a_link, LINK_FLAG};
     use tauri::Url;
 
     fn line(args: &[&str]) -> Vec<String> {

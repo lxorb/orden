@@ -109,11 +109,11 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             );
             let app = app.clone();
             std::thread::spawn(move || {
-                let pdfs = crate::handed_pdfs::pdfs_among(&urls);
+                let pdfs = orden_documents::handed_pdfs::pdfs_among(&urls);
                 launch::hand_over(
                     &app,
                     launch::Handed::Pdfs,
-                    crate::handed_pdfs::admit_handed(&app, pdfs),
+                    orden_documents::handed_pdfs::admit_handed(&app, pdfs),
                 );
             });
         }
@@ -147,7 +147,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
         RunEvent::WindowEvent {
             event: WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }),
             ..
-        } => crate::dropped_paths::dropped(app, &paths),
+        } => orden_documents::dropped_paths::dropped(app, &paths),
 
         RunEvent::WindowEvent {
             label,
@@ -176,7 +176,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
                 &label,
                 !leaving(app) && !document_windows(app).is_empty(),
             );
-            crate::explorer::watch::window_gone(app, &label);
+            orden_explorer::explorer::watch::window_gone(app, &label);
             crate::ai_cli::window_gone(app, &label);
             let now = state(app).now();
             if (now == ASKING || now == CONFIRMING) && document_windows(app).is_empty() {

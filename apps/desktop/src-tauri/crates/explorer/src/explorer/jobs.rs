@@ -442,7 +442,7 @@ fn copied(
     let meta = fs::symlink_metadata(from).map_err(fail)?;
     if meta.file_type().is_symlink() {
         let target = fs::read_link(from).map_err(fail)?;
-        crate::agents::files::linked(from, &target, to).map_err(fail)?;
+        orden_base::paths::linked(from, &target, to).map_err(fail)?;
         *made = true;
         return Ok(());
     }

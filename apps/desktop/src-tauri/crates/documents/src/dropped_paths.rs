@@ -58,7 +58,7 @@ fn taken_dropped(now: Instant) -> Vec<PathBuf> {
 fn seen_where_dropped(app: &AppHandle, paths: &[PathBuf]) {
     use tauri::Manager as _;
 
-    let Some(explored) = app.try_state::<crate::explorer::reach::Explored>() else {
+    let Some(explored) = app.try_state::<orden_explorer::explorer::reach::Explored>() else {
         return;
     };
     for path in paths {

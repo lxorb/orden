@@ -1,0 +1,6 @@
+{
+  "name": "documents",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base", "explorer", "notes"]
+}

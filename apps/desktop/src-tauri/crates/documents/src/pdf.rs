@@ -2,7 +2,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tauri::webview::PageLoadEvent;
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
@@ -26,12 +26,33 @@ pub struct PdfPage {
 
 type Printable = tauri::WebviewWindow<orden_base::Engine>;
 
-#[tauri::command]
-pub fn pdf_supported() -> bool {
-    printer::available()
+type Building<'a> = WebviewWindowBuilder<'a, orden_base::Engine, AppHandle>;
+
+type Call = fn(
+    &tauri::Webview<orden_base::Engine>,
+    Option<&str>,
+    &str,
+    &Value,
+    Duration,
+) -> Result<Value, String>;
+
+pub struct Engine {
+    pub profile: for<'a> fn(Building<'a>) -> Building<'a>,
+    pub call: Call,
 }
 
-pub(crate) fn printing(paper: &PdfPage) -> Value {
+static ENGINE: OnceLock<Engine> = OnceLock::new();
+
+pub fn hand_engine(engine: Engine) {
+    let _ = ENGINE.set(engine);
+}
+
+#[tauri::command]
+pub fn pdf_supported() -> bool {
+    true
+}
+
+pub fn printing(paper: &PdfPage) -> Value {
     let margin = paper.margin.max(0.0);
     json!({
         "landscape": paper.landscape,
@@ -46,29 +67,6 @@ pub(crate) fn printing(paper: &PdfPage) -> Value {
         "preferCSSPageSize": false,
         "transferMode": "ReturnAsBase64",
     })
-}
-
-#[cfg(test)]
-const POINTS_PER_INCH: f64 = 72.0;
-
-#[cfg(test)]
-fn sheet_in_points(page: &PdfPage) -> (f64, f64, f64) {
-    let (width, height) = if page.landscape && page.width < page.height {
-        (page.height, page.width)
-    } else {
-        (page.width, page.height)
-    };
-
-    (
-        width * POINTS_PER_INCH,
-        height * POINTS_PER_INCH,
-        page.margin.max(0.0) * POINTS_PER_INCH,
-    )
-}
-
-#[cfg(test)]
-fn on_its_side(width: f64, height: f64) -> bool {
-    width > height
 }
 
 #[derive(Deserialize)]
@@ -162,7 +160,10 @@ where
     let building =
         WebviewWindowBuilder::new(app, format!("print-{job}"), WebviewUrl::External(url));
 
-    let building = crate::engine::own_profile(building);
+    let building = match ENGINE.get() {
+        Some(engine) => (engine.profile)(building),
+        None => building,
+    };
 
     let window = building
         .title("Orden")
@@ -291,14 +292,10 @@ fn written_alone(path: &std::path::Path, html: &str) -> std::io::Result<()> {
 }
 
 mod printer {
-    use super::{printing, PdfPage, Printable, Value, PATIENCE};
+    use super::{printing, PdfPage, Printable, Value, ENGINE, PATIENCE};
     use base64::Engine as _;
     use std::path::Path;
     use std::sync::mpsc::Sender;
-
-    pub fn available() -> bool {
-        true
-    }
 
     pub fn print(
         window: &Printable,
@@ -306,7 +303,11 @@ mod printer {
         page: &PdfPage,
         done: Sender<Result<(), String>>,
     ) -> Result<(), String> {
-        let printed = crate::engine::devtools::call(
+        let call = ENGINE
+            .get()
+            .ok_or("the engine that prints was never handed over")?
+            .call;
+        let printed = call(
             window.as_ref(),
             None,
             "Page.printToPDF",
@@ -332,17 +333,6 @@ mod printer {
 
 #[cfg(test)]
 mod tests {
-    use super::{on_its_side, sheet_in_points, PdfPage};
-
-    fn page(width: f64, height: f64, margin: f64, landscape: bool) -> PdfPage {
-        PdfPage {
-            width,
-            height,
-            margin,
-            landscape,
-        }
-    }
-
     #[test]
     fn the_policy_goes_to_the_real_head() {
         let meta = "<meta http-equiv=\"Content-Security-Policy\"";
@@ -416,48 +406,5 @@ mod tests {
     #[test]
     fn chromium_writes_the_file_itself() {
         assert!(super::pdf_supported());
-    }
-
-    #[test]
-    fn an_upright_sheet_is_measured_in_points() {
-        let (width, height, margin) = sheet_in_points(&page(8.27, 11.69, 1.0, false));
-        assert!((width - 595.44).abs() < 0.01);
-        assert!((height - 841.68).abs() < 0.01);
-        assert!((margin - 72.0).abs() < f64::EPSILON);
-    }
-
-    #[test]
-    fn a_landscape_sheet_is_turned() {
-        let (width, height, _) = sheet_in_points(&page(8.5, 11.0, 0.5, true));
-        assert!((width - 792.0).abs() < f64::EPSILON);
-        assert!((height - 612.0).abs() < f64::EPSILON);
-    }
-
-    #[test]
-    fn a_sheet_that_already_lies_on_its_side_is_left_alone() {
-        let (width, height, margin) = sheet_in_points(&page(10.0, 5.0, 0.0, true));
-        assert!((width - 720.0).abs() < f64::EPSILON);
-        assert!((height - 360.0).abs() < f64::EPSILON);
-        assert!(margin.abs() < f64::EPSILON);
-    }
-
-    #[test]
-    fn a_wide_sheet_is_on_its_side_whatever_the_page_says() {
-        let (width, height, _) = sheet_in_points(&page(1280.0 / 96.0, 720.0 / 96.0, 0.0, false));
-        assert!((width - 960.0).abs() < 0.01);
-        assert!((height - 540.0).abs() < 0.01);
-        assert!(on_its_side(width, height));
-
-        let (width, height, _) = sheet_in_points(&page(8.5, 11.0, 0.5, true));
-        assert!(on_its_side(width, height));
-
-        let (width, height, _) = sheet_in_points(&page(8.27, 11.69, 1.0, false));
-        assert!(!on_its_side(width, height));
-    }
-
-    #[test]
-    fn a_negative_margin_is_none() {
-        let (_, _, margin) = sheet_in_points(&page(8.5, 11.0, -1.0, false));
-        assert!(margin.abs() < f64::EPSILON);
     }
 }

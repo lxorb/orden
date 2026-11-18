@@ -98,8 +98,11 @@ pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path
             .map(|one| one.to_string_lossy().into_owned())
             .collect();
         pending.hold(Handed::Pages, handed_by(&words));
-        let pdfs = crate::handed_pdfs::pdfs_in(args, cwd);
-        pending.hold(Handed::Pdfs, crate::handed_pdfs::admit_handed(app, pdfs));
+        let pdfs = orden_documents::handed_pdfs::pdfs_in(args, cwd);
+        pending.hold(
+            Handed::Pdfs,
+            orden_documents::handed_pdfs::admit_handed(app, pdfs),
+        );
     }
 }
 
@@ -154,11 +157,11 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
     hand_over(app, Handed::Pages, handed_by(argv));
     let (app, argv, cwd) = (app.clone(), argv.clone(), cwd.to_owned());
     std::thread::spawn(move || {
-        let pdfs = crate::handed_pdfs::pdfs_in(&argv, std::path::Path::new(&cwd));
+        let pdfs = orden_documents::handed_pdfs::pdfs_in(&argv, std::path::Path::new(&cwd));
         hand_over(
             &app,
             Handed::Pdfs,
-            crate::handed_pdfs::admit_handed(&app, pdfs),
+            orden_documents::handed_pdfs::admit_handed(&app, pdfs),
         );
     });
 }
@@ -204,7 +207,7 @@ fn restarted_with(args: &[std::ffi::OsString]) -> Vec<std::ffi::OsString> {
     let flags = args
         .iter()
         .skip(1)
-        .take_while(|one| one.as_os_str() != crate::web_handed::LINK_FLAG)
+        .take_while(|one| one.as_os_str() != orden_base::handed::LINK_FLAG)
         .filter(|one| {
             let said = one.to_string_lossy();
             said.starts_with("--") && without_ours(&[said.into_owned()]).len() == 1
@@ -336,7 +339,7 @@ fn opened(builder: WebviewWindowBuilder<'_, orden_base::Engine, AppHandle>) -> R
     let window = crate::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
     crate::pinch::let_through(window.as_ref());
-    crate::dropped_paths::hear(window.as_ref());
+    orden_documents::dropped_paths::hear(window.as_ref());
 
     #[cfg(target_os = "macos")]
     {

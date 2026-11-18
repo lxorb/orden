@@ -10,7 +10,6 @@ mod ai_cli;
 mod app_place;
 #[cfg(desktop)]
 mod appearance;
-mod assets;
 #[cfg(desktop)]
 mod browser_data;
 #[cfg(desktop)]
@@ -31,13 +30,9 @@ mod document_window;
 #[cfg(desktop)]
 mod downloads;
 #[cfg(desktop)]
-mod dropped_paths;
-#[cfg(desktop)]
 mod endpoint;
 #[cfg(desktop)]
 mod engine;
-#[cfg(desktop)]
-mod explorer;
 #[cfg(desktop)]
 mod extensions;
 #[cfg(desktop)]
@@ -48,8 +43,6 @@ mod foreground;
 mod full_screen;
 #[cfg(desktop)]
 mod ground;
-#[cfg(desktop)]
-mod handed_pdfs;
 #[cfg(desktop)]
 mod handover;
 #[cfg(desktop)]
@@ -92,12 +85,8 @@ mod page_scale;
 mod page_scheme;
 #[cfg(desktop)]
 mod page_style;
-#[cfg(desktop)]
-mod pandoc;
 #[cfg(any(desktop, target_os = "ios"))]
 mod pass_stretch;
-#[cfg(desktop)]
-mod pdf;
 #[cfg(desktop)]
 mod pinch;
 #[cfg(desktop)]
@@ -201,9 +190,9 @@ macro_rules! commands {
             orden_notes::notes::note_evicted,
             orden_notes::notes::path_taken,
             orden_notes::tree::read_tree,
-            assets::read_asset,
-            assets::read_file,
-            assets::save_asset,
+            orden_documents::assets::read_asset,
+            orden_documents::assets::read_file,
+            orden_documents::assets::save_asset,
             orden_notes::highlights::read_highlights,
             orden_notes::highlights::write_highlights,
             orden_notes::papers::read_paper_text,
@@ -375,8 +364,8 @@ macro_rules! desktop_commands {
             page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
-            dropped_paths::dropped_paths,
-            handed_pdfs::same_pdf,
+            orden_documents::dropped_paths::dropped_paths,
+            orden_documents::handed_pdfs::same_pdf,
             launch::new_window,
             launch::show_window,
             ahead::launch_ahead,
@@ -400,12 +389,12 @@ macro_rules! desktop_commands {
             menu_bar::hand_to_keyboard,
             placement::take_keyboard,
             placement::raise_window,
-            pandoc::has_pandoc,
-            pandoc::run_pandoc,
-            pandoc::import_document,
-            pdf::pdf_supported,
-            pdf::print_pdf,
-            pdf::print_page,
+            orden_documents::pandoc::has_pandoc,
+            orden_documents::pandoc::run_pandoc,
+            orden_documents::pandoc::import_document,
+            orden_documents::pdf::pdf_supported,
+            orden_documents::pdf::print_pdf,
+            orden_documents::pdf::print_page,
             owner::owner_can,
             owner::owner_check,
             pass_stretch::pass_stretch,
@@ -505,26 +494,26 @@ macro_rules! desktop_commands {
             orden_dictation::dictation::dictation_local_remove,
             orden_dictation::dictation::dictation_local_open,
             orden_dictation::dictation::dictation_local_hear,
-            explorer::listing::explorer_list,
-            explorer::listing::explorer_places,
-            explorer::listing::explorer_facts,
-            explorer::listing::explorer_peek,
-            explorer::listing::explorer_open,
-            explorer::listing::explorer_icon,
-            explorer::changes::explorer_make,
-            explorer::changes::explorer_rename,
-            explorer::changes::explorer_write,
-            explorer::changes::explorer_trash,
-            explorer::changes::explorer_untrash,
-            explorer::changes::explorer_delete,
-            explorer::jobs::explorer_cancel,
-            explorer::jobs::explorer_clashes,
-            explorer::jobs::explorer_transfer,
-            explorer::jobs::explorer_put,
-            explorer::jobs::explorer_count,
-            explorer::jobs::explorer_search,
-            explorer::watch::explorer_watch,
-            explorer::watch::explorer_unwatch,
+            orden_explorer::explorer::listing::explorer_list,
+            orden_explorer::explorer::listing::explorer_places,
+            orden_explorer::explorer::listing::explorer_facts,
+            orden_explorer::explorer::listing::explorer_peek,
+            orden_explorer::explorer::listing::explorer_open,
+            orden_explorer::explorer::listing::explorer_icon,
+            orden_explorer::explorer::changes::explorer_make,
+            orden_explorer::explorer::changes::explorer_rename,
+            orden_explorer::explorer::changes::explorer_write,
+            orden_explorer::explorer::changes::explorer_trash,
+            orden_explorer::explorer::changes::explorer_untrash,
+            orden_explorer::explorer::changes::explorer_delete,
+            orden_explorer::explorer::jobs::explorer_cancel,
+            orden_explorer::explorer::jobs::explorer_clashes,
+            orden_explorer::explorer::jobs::explorer_transfer,
+            orden_explorer::explorer::jobs::explorer_put,
+            orden_explorer::explorer::jobs::explorer_count,
+            orden_explorer::explorer::jobs::explorer_search,
+            orden_explorer::explorer::watch::explorer_watch,
+            orden_explorer::explorer::watch::explorer_unwatch,
             downloads::web_downloads,
             downloads::web_download_open,
             downloads::web_download_saved,
@@ -650,8 +639,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 
     #[cfg(desktop)]
     let builder = builder
-        .manage(explorer::reach::Explored::default())
-        .manage(explorer::watch::Watching::default());
+        .manage(orden_explorer::explorer::reach::Explored::default())
+        .manage(orden_explorer::explorer::watch::Watching::default());
 
     #[cfg(desktop)]
     let builder = builder.manage(std::sync::Arc::new(
@@ -714,7 +703,7 @@ fn pages_that_end(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
 #[cfg(desktop)]
 fn first_window(handle: &tauri::AppHandle) {
     pinch::first_window(handle);
-    dropped_paths::first_window(handle);
+    orden_documents::dropped_paths::first_window(handle);
 }
 
 fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
@@ -722,7 +711,7 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     let builder = builder.on_page_load(|webview, payload| {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
             orden_pty::terminal::page_started(webview);
-            explorer::watch::window_gone(webview.app_handle(), webview.label());
+            orden_explorer::explorer::watch::window_gone(webview.app_handle(), webview.label());
             if let Some(waiting) = webview.try_state::<endpoint::Waiting>() {
                 waiting.forget(webview.label());
             }
@@ -775,6 +764,10 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
     #[cfg(target_os = "linux")]
     chromium_pump::start(handle);
     page_scale::start(handle);
+    orden_documents::pdf::hand_engine(orden_documents::pdf::Engine {
+        profile: engine::own_profile,
+        call: engine::devtools::call,
+    });
     extensions::tabs::start(handle);
     extensions::preinstall(handle);
 }
@@ -828,7 +821,7 @@ fn ready(
         let cwd = std::env::current_dir().unwrap_or_default();
         launch::hold_handed(handle, &args, &cwd);
         quick_add::asked_at_launch(&args);
-        trace::mark(if web_handed::for_a_link(&args) {
+        trace::mark(if orden_base::handed::for_a_link(&args) {
             "launch arguments, a link's"
         } else {
             "launch arguments"
@@ -1228,8 +1221,10 @@ mod tests {
         assert_eq!(held, ["crate::held", "crate::slept"]);
     }
 
-    const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] =
-        ["crate::pdf::print_pdf", "crate::updates::check_update"];
+    const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] = [
+        "orden_documents::pdf::print_pdf",
+        "crate::updates::check_update",
+    ];
 
     #[test]
     fn no_command_on_the_runtime_waits_on_one_of_its_workers() {
