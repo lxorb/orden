@@ -7,7 +7,7 @@ import { dayOf, noteText, wallClock, type Meta } from './meta'
 import { md5 } from './md5'
 import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Planned } from './plan'
-import { encodeTarget } from './rewrite'
+import { encodeTarget } from '@orden/markdown/links'
 import type { Source } from './sources'
 import { closingOf, element, elements, plainText, textOf, textsOf } from './xml'
 
