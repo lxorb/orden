@@ -31,3 +31,8 @@ describe('resized pictures with their captions right under them, in Word and RTF
     expect(shown(documentOf(note, 'Note').blocks)).toEqual(['Before the chart', '<chart.png>'])
   })
 })
+
+test('a picture whose alt text holds a > before its address is still exported', () => {
+  const note = '<div>\n<img alt="Before > after" src="chart.png" />\n</div>\n'
+  expect(shown(documentOf(note, 'Note').blocks)).toEqual(['<chart.png>'])
+})

@@ -61,7 +61,7 @@ export const noSetextHeadings: MarkedExtension = {
   },
 }
 
-const LONE_PICTURE = /^ {0,3}<img\b[^>\n]*>[ \t]*(?:\n|$)/i
+const LONE_PICTURE = /^ {0,3}<img\b(?:"[^"\n]*"|'[^'\n]*'|[^'">\n])*>[ \t]*(?:\n|$)/i
 
 export const picturesAsWords: MarkedExtension = {
   tokenizer: {

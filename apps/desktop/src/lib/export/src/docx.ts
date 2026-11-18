@@ -31,7 +31,15 @@ import {
 } from 'docx'
 import { fromBase64 } from '../../platform/src/api'
 import { type PaperTwips, TWIPS_PER_INCH } from '../../files-out/src/api'
-import type { Align, Block, Doc, Entry, Item, Span } from './document'
+import {
+  type Align,
+  type Block,
+  type Doc,
+  type Entry,
+  type Item,
+  type Span,
+  sizedPicture,
+} from './document'
 import { ommlFor } from './omml'
 import type { Picture } from './pictures'
 import { legalXml } from './xml-legal'
@@ -261,8 +269,8 @@ interface Nesting {
 
 const OUTERMOST: Nesting = { level: 0, style: null }
 
-function drawnPicture(src: string, writer: Writer): Drawn | null {
-  const picture = writer.pictures.get(src)
+function drawnPicture(span: Span, writer: Writer): Drawn | null {
+  const picture = writer.pictures.get(span.picture ?? '')
   if (picture === undefined) return null
 
   const type = IMAGE_TYPES[picture.mime]
@@ -271,7 +279,7 @@ function drawnPicture(src: string, writer: Writer): Drawn | null {
   const size = sizeOf(picture.bytes, picture.mime)
   if (size === null || size.width <= 0 || size.height <= 0) return null
 
-  return { picture, type, size: fitted(size, writer.column) }
+  return { picture, type, size: fitted(sizedPicture(size, span), writer.column) }
 }
 
 function pictureWords(span: Span): string {
@@ -338,7 +346,7 @@ function noteRuns(span: Span, writer: Writer): ParagraphChild[] {
 function runsOf(spans: readonly Span[], writer: Writer): ParagraphChild[] {
   return spans.flatMap((span) => {
     if (span.picture !== undefined) {
-      return [pictureRun(span, drawnPicture(span.picture, writer))]
+      return [pictureRun(span, drawnPicture(span, writer))]
     }
     if (span.note !== undefined) return noteRuns(span, writer)
     if (span.maths === true) return mathsRuns(span)
@@ -417,7 +425,7 @@ function itemChildren(
 
 function paragraphChildren(spans: readonly Span[], writer: Writer, nesting: Nesting): FileChild[] {
   const only = spans.length === 1 ? spans[0] : undefined
-  const drawn = only?.picture === undefined ? null : drawnPicture(only.picture, writer)
+  const drawn = only?.picture === undefined ? null : drawnPicture(only, writer)
 
   if (only !== undefined && drawn !== null) {
     const caption = only.text

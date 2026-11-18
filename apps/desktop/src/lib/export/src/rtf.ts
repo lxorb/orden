@@ -1,5 +1,5 @@
 import type { PaperTwips } from '../../files-out/src/api'
-import type { Align, Block, Doc, Item, Span } from './document'
+import { type Align, type Block, type Doc, type Item, type Span, sizedPicture } from './document'
 import type { Picture } from './pictures'
 
 const BLACK = 1
@@ -259,7 +259,7 @@ function pictureRun(span: Span, sheet: Sheet): string {
 
   if (!found || !blip || !size) return `[${escaped(span.text === '' ? 'picture' : span.text)}]`
 
-  const drawn = goal(size, sheet.column)
+  const drawn = goal(sizedPicture(size, span), sheet.column)
   const props = `${blip.word}\\picw${size.width}\\pich${size.height}`
 
   return `{\\pict${props}\\picwgoal${drawn.width}\\pichgoal${drawn.height}\n${hex(found.bytes)}}`

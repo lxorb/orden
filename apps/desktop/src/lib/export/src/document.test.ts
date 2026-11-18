@@ -359,7 +359,7 @@ describe('an embed on a line of its own', () => {
       { kind: 'paragraph', spans: [{ text: 'the sketch', picture: 'shot.png' }] },
     ])
     expect(blocks('![[shot.png|300]]\n')).toEqual([
-      { kind: 'paragraph', spans: [{ text: '', picture: 'shot.png' }] },
+      { kind: 'paragraph', spans: [{ text: '', picture: 'shot.png', width: 300 }] },
     ])
   })
 

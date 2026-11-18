@@ -26,6 +26,7 @@ import {
 } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref, WORTH_REMEMBERING } from './tags'
+import { ownPicture } from './picture-tag'
 import { iframeCard, iframesAhead, webCard } from './web-embed'
 import {
   type EmbeddedNote,
@@ -312,7 +313,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const { tags, rest: text } = iframesAhead(written)
         const cards = tags.map((tag) => iframeCard(tag) ?? '').join('')
         if (text !== written && !text.trim()) return cards
-        if (options.escapeHtml) return cards + escape(text)
+        if (options.escapeHtml) return cards + (ownPicture(text) ?? escape(text))
 
         return cards + (htmlBlockCard(text) ?? ownMarkup(text))
       },
