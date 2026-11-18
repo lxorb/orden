@@ -641,6 +641,26 @@ describe('loads', () => {
     expect(await startHearings()).toEqual([])
   })
 
+  it('starts every other hearing when one fails to load or to start', async () => {
+    const heard: string[] = []
+    const unloaded = registerHearing(() => Promise.reject(new Error('the chunk is gone')))
+    const refusing = registerHearing(() =>
+      Promise.resolve(() => Promise.reject(new Error('no listener'))),
+    )
+    const pdfs = registerHearing(() =>
+      Promise.resolve(() => {
+        heard.push('start pdfs')
+        return Promise.resolve(() => void heard.push('stop pdfs'))
+      }),
+    )
+    const stops = await startHearings()
+    for (const stop of stops) stop()
+    expect(heard).toEqual(['start pdfs', 'stop pdfs'])
+    unloaded()
+    refusing()
+    pdfs()
+  })
+
   it('reads command rows of a place once loaded, with the view handed in, and none for a failed load', async () => {
     const view = { line: 3 }
     const rows = registerCommandRows('web', () =>
