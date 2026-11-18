@@ -6,9 +6,11 @@ import { picks } from './drag.svelte'
 
 const active = () => workspace.activeTabId ?? ''
 
+const picked = () => picks.loaded?.chosen.of(workspace.panes.focusedId) ?? []
+
 function close(): void {
   const pick = picks.loaded
-  const many = pick?.chosen.of(workspace.panes.focusedId) ?? []
+  const many = picked()
   if (pick && many.length) void pick.closeChosen(many)
   else if (workspace.activeTabId || workspace.tabs.length || !isDesktop || platform() !== 'macos')
     void workspace.closeActive()
@@ -18,11 +20,19 @@ function close(): void {
 registerCommand('app.close', () => Promise.resolve(close))
 registerCommand('app.duplicate-tab', async () => {
   const { duplicateTab } = await import('./ops')
-  return () => duplicateTab(active())
+  return () => {
+    const many = picked()
+    if (picks.loaded && many.length) picks.loaded.duplicateMany(many.map((one) => one.id))
+    else duplicateTab(active())
+  }
 })
 registerCommand('pane.move-tab', async () => {
   const { moveToOtherPane } = await import('./ops')
-  return () => moveToOtherPane(active())
+  return () => {
+    const many = picked()
+    if (picks.loaded && many.length) picks.loaded.moveManyToOtherPane(many.map((one) => one.id))
+    else moveToOtherPane(active())
+  }
 })
 
 export const tabMenus = async (kind?: TabKind) => {

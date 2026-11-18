@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { runCommand } from '@orden/contracts'
 
 const notes = new Map<string, string>()
 
@@ -115,6 +116,13 @@ describe('a pick', () => {
     click('D', 'toggle')
     click('B', 'add-run')
     expect(pickedNames()).toEqual(['A', 'B', 'C', 'D'])
+  })
+
+  test('is what Duplicate and Move to the other pane act on, as their menu rows do', async () => {
+    click('C', 'run')
+    expect(await runCommand('app.duplicate-tab')).toBe(true)
+
+    expect(strip().filter((one) => one !== 'D')).toHaveLength(6)
   })
 
   test('is put down by anything else bringing another tab to the front', () => {

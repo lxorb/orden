@@ -1,3 +1,4 @@
+import { untrack } from 'svelte'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { Landing } from '../../panes/src/api'
@@ -31,7 +32,23 @@ class Chosen {
     return tabs.length > 1 ? tabs : []
   }
 
+  private unwatch: (() => void) | null = null
+
+  hold(paneId: string, ids: readonly string[]) {
+    this.paneId = paneId
+    this.ids = ids
+    this.unwatch ??= $effect.root(() => {
+      $effect(() => {
+        const pane = this.paneId
+        const front = pane === null ? null : workspace.panes.at(pane)?.activeTabId
+        if (front && !this.ids.includes(front)) untrack(() => this.clear())
+      })
+    })
+  }
+
   clear() {
+    this.unwatch?.()
+    this.unwatch = null
     this.paneId = null
     this.ids = []
     this.anchor = null
@@ -65,8 +82,7 @@ export function pick(paneId: string, id: string, how: Picking): string | null {
     chosen.anchor = anchor
   }
 
-  chosen.paneId = paneId
-  chosen.ids = ids
+  chosen.hold(paneId, ids)
   if (ids.includes(id)) return id
   if (ids.includes(front)) return front
   return ids.at(-1) ?? null
