@@ -6,13 +6,7 @@
   import { copyField } from '../../pass-sync/src/api'
   import { separatorLabel } from '../../pass-sync/src/api'
   import GeneratedText from './GeneratedText.svelte'
-  import {
-    type GeneratorMode,
-    generated,
-    keepPrefs,
-    MODES,
-    readPrefs,
-  } from '../../pass-sync/src/api'
+  import { generated, keepPrefs, MODES, readPrefs } from '../../pass-sync/src/api'
   import Glyph from './Glyph.svelte'
   import StrengthMeter from './StrengthMeter.svelte'
   import SwitchRow from './SwitchRow.svelte'
@@ -34,9 +28,7 @@
     result = generated(now)
   })
 
-  function modeName(mode: GeneratorMode): string {
-    return { random: 'Random', memorable: 'Memorable', username: 'Username' }[mode]
-  }
+  const MODE_NAMES = { random: 'Random', memorable: 'Memorable', username: 'Username' }
 
   const separators = $derived(SEPARATORS.map((one) => ({ value: one, label: separatorLabel(one) })))
   const usernameSeparators = $derived([
@@ -44,9 +36,7 @@
     ...separators,
   ])
 
-  function close() {
-    ui.sheet = null
-  }
+  const close = () => (ui.sheet = null)
 
   function use() {
     const chosen = asked?.use
@@ -99,7 +89,7 @@
           role="radio"
           aria-checked={prefs.mode === mode}
           class:on={prefs.mode === mode}
-          onclick={() => (prefs.mode = mode)}>{modeName(mode)}</button
+          onclick={() => (prefs.mode = mode)}>{MODE_NAMES[mode]}</button
         >
       {/each}
     </div>

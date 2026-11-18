@@ -93,38 +93,11 @@
     }
   }
 
-  interface Card {
-    flag: Flag
-    icon: IconNode
-    ids: string[]
-    line: string
-  }
-
-  const cards = $derived<Card[]>([
-    {
-      flag: 'weak',
-      icon: ShieldAlert,
-      ids: found.weak,
-      line: 'Easy to guess. Change them to generated ones.',
-    },
-    {
-      flag: 'reused',
-      icon: Repeat,
-      ids: [...found.reused.keys()],
-      line: 'Used for more than one login.',
-    },
-    {
-      flag: 'inactive2fa',
-      icon: Smartphone,
-      ids: found.inactive2fa,
-      line: 'These sites offer two-factor authentication.',
-    },
-    {
-      flag: 'excluded',
-      icon: EyeOff,
-      ids: found.excluded,
-      line: 'Left out of Monitor.',
-    },
+  const cards = $derived<[Flag, IconNode, string[], string][]>([
+    ['weak', ShieldAlert, found.weak, 'Easy to guess. Change them to generated ones.'],
+    ['reused', Repeat, [...found.reused.keys()], 'Used for more than one login.'],
+    ['inactive2fa', Smartphone, found.inactive2fa, 'These sites offer two-factor authentication.'],
+    ['excluded', EyeOff, found.excluded, 'Left out of Monitor.'],
   ])
 
   function opened(flag: Flag, ids: string[]) {
@@ -183,22 +156,22 @@
       {/if}
     </div>
 
-    {#each cards as card (card.flag)}
-      <div class="pass-stack" class:is-bad={card.ids.length > 0 && card.flag !== 'excluded'}>
+    {#each cards as [flag, icon, ids, line] (flag)}
+      <div class="pass-stack" class:is-bad={ids.length > 0 && flag !== 'excluded'}>
         <button
           class="orden-row press"
           type="button"
-          data-flag={card.flag}
-          disabled={!card.ids.length}
-          onclick={() => opened(card.flag, card.ids)}
+          data-flag={flag}
+          disabled={!ids.length}
+          onclick={() => opened(flag, ids)}
         >
-          <span class="mark"><Glyph icon={card.icon} /></span>
+          <span class="mark"><Glyph {icon} /></span>
           <span class="words">
-            <span class="name">{flagName(card.flag)}</span>
-            <span class="line">{card.line}</span>
+            <span class="name">{flagName(flag)}</span>
+            <span class="line">{line}</span>
           </span>
-          {@render counted(card.ids.length)}
-          {#if card.ids.length}<Glyph icon={ChevronRight} class="chevron" />{/if}
+          {@render counted(ids.length)}
+          {#if ids.length}<Glyph icon={ChevronRight} class="chevron" />{/if}
         </button>
       </div>
     {/each}
@@ -246,7 +219,7 @@
         {:else}
           <p class="pass-quiet">No email addresses in your logins</p>
         {/each}
-        <div class="buttons">
+        <div class="buttons pass-buttons">
           <button class="orden-button is-quiet" type="button" onclick={() => void forgetKey()}
             >Remove key</button
           >
@@ -379,9 +352,6 @@
   }
 
   .buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-2);
     margin-top: var(--space-2);
   }
 </style>

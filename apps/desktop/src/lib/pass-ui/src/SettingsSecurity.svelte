@@ -151,7 +151,7 @@
 <div class="pass-stack padded">
   {#if recovery}
     <output class="code" dir="ltr">{recovery}</output>
-    <div class="buttons">
+    <div class="buttons pass-buttons">
       <button
         class="orden-chip"
         type="button"
@@ -227,9 +227,6 @@
   }
 
   .buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-2);
     padding-top: var(--space-2);
   }
 </style>
