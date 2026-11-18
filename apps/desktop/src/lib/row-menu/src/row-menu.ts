@@ -28,6 +28,7 @@ import {
   relativeTo,
   isDesktop,
   joinPath,
+  within,
 } from '../../platform/src/api'
 import { canWriteAt, protectEntries } from '../../sharing/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
@@ -221,8 +222,11 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
 
 async function chatsKept(paths: readonly string[]): Promise<boolean> {
   const chats = portOf('chats')
-  if (!chats.ok || !paths.some((path) => isChatTarget(path))) return false
-  return !(await chats.value.mayDelete(paths))
+  const going = [...new Set([...paths, ...workspace.files.map((one) => one.path)])].filter(
+    (path) => isChatTarget(path) && paths.some((one) => within(one, path) !== null),
+  )
+  if (!chats.ok || !going.length) return false
+  return !(await chats.value.mayDelete(going))
 }
 
 export async function removeAsking(paths: readonly string[]) {
