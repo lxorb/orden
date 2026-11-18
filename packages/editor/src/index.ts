@@ -99,6 +99,7 @@ export { blockAt, type BlockKind, type BlockShape, type BlockSpan } from './bloc
 export { landed, landOnLine } from './landing'
 export { fenceLanguages } from './languages'
 export { sequenceToMermaid } from './live-preview/sequence'
+export { mermaidSvg } from './live-preview/mermaid-turns'
 export { ordenHighlightStyle, ordenEditorTheme } from './theme'
 export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'

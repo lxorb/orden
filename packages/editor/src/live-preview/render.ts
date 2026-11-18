@@ -1,4 +1,5 @@
 import { MOST_EMS } from '@orden/markdown/engines'
+import { mermaidSvg } from './mermaid-turns'
 import { chartFigure } from '@orden/markdown/chart'
 import { DIAGRAM_LANGUAGES } from '@orden/markdown/diagrams'
 import { loadMaths, mathsEngine } from '@orden/markdown/engines'
@@ -274,18 +275,15 @@ function themeColour(name: string): string {
 }
 
 async function drawMermaid(host: HTMLElement, code: string, shared = false) {
-  const { default: mermaid } = await import('mermaid')
-
-  mermaid.initialize({
+  const id = `orden-diagram-${diagramSeq++}`
+  host.innerHTML = await mermaidSvg(id, code, {
     startOnLoad: false,
     securityLevel: 'strict',
     theme: document.documentElement.dataset.theme === 'light' ? 'default' : 'dark',
     fontFamily: themeColour('--font-ui'),
+    htmlLabels: true,
+    dompurifyConfig: {},
   })
-
-  const id = `orden-diagram-${diagramSeq++}`
-  const { svg } = await mermaid.render(id, code)
-  host.innerHTML = svg
   if (shared) shareStyle(host.querySelector('svg'), id)
 }
 

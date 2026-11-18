@@ -1,4 +1,4 @@
-import { sequenceToMermaid } from '@orden/editor'
+import { mermaidSvg, sequenceToMermaid } from '@orden/editor'
 import { flowSource, keepSafeLinks } from '@orden/editor/flow'
 import type { Scheme } from '../../theme/src/api'
 
@@ -39,12 +39,36 @@ export async function drawDiagram(
   return drawMermaid(pictures ? mermaid : withoutPictures(mermaid), scheme, where, pictures)
 }
 
-const PICTURE_KEY = /(\bimg\s*:\s*)(?:"[^"\n]*"|'[^'\n]*'|[^,}\n]*)/gi
-
 const PICTURE_TAGS = /<\/?(?:img|image|picture|source)\b[^>]*>/gi
 
+const STYLE_LINE = /^[ \t]*(?:classDef|style|linkStyle)\b.*$/gim
+
+const REACHES_OUT = /url|image|@|\\|\(/i
+
+const CSS_ESCAPE = /\\[\da-f]/i
+
+const WEB_ADDRESS_IN_CSS = /url\s*\(/i
+
+const AWAY_URL = /url\s*\(\s*(?!['"]?#)[^)]*\)/gi
+
+const SETTINGS = /^\s*---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)|%%\{[\s\S]*?\}%%/g
+
+function withoutSettings(code: string): string {
+  return code.replace(SETTINGS, '')
+}
+
 function withoutPictures(code: string): string {
-  return code.replace(/@\{[^}]*\}/g, (shape) => shape.replace(PICTURE_KEY, '$1""'))
+  const kept = code.replace(STYLE_LINE, (line) => (REACHES_OUT.test(line) ? '' : line))
+  const read = withoutSettings(kept).replace(/\\(?![\da-f])/gi, '')
+  if (kept.includes('@{') && /img|\\/i.test(kept)) throw new Error('a picture shape from elsewhere')
+  if (
+    CSS_ESCAPE.test(withoutSettings(kept)) ||
+    WEB_ADDRESS_IN_CSS.test(read) ||
+    /@import/i.test(read)
+  ) {
+    throw new Error('styles that reach out')
+  }
+  return kept
 }
 
 const SECURE = [
@@ -56,7 +80,16 @@ const SECURE = [
   'maxEdges',
   'dompurifyConfig',
   'htmlLabels',
+  'themeCSS',
+  'themeVariables',
+  'fontFamily',
+  'altFontFamily',
 ]
+
+const HELD = {
+  FORBID_TAGS: ['img', 'image', 'picture', 'source', 'style', 'link'],
+  FORBID_ATTR: ['style', 'srcset', 'background', 'poster'],
+}
 
 async function drawMermaid(
   code: string,
@@ -64,20 +97,16 @@ async function drawMermaid(
   where: DiagramFor,
   pictures: boolean,
 ): Promise<string> {
-  const { default: mermaid } = await import('mermaid')
-
-  mermaid.initialize({
+  const svg = await mermaidSvg(`orden-export-${sequence++}`, code, {
     startOnLoad: false,
     securityLevel: 'strict',
     secure: SECURE,
     theme: scheme === 'light' ? 'default' : 'dark',
     fontFamily: where === 'page' ? PAGE_FONT : FONT,
-    ...(where === 'page' ? { htmlLabels: false } : {}),
-    dompurifyConfig: pictures ? {} : { FORBID_TAGS: ['img', 'image', 'picture', 'source'] },
+    htmlLabels: where !== 'page',
+    dompurifyConfig: pictures ? {} : HELD,
   })
-
-  const { svg } = await mermaid.render(`orden-export-${sequence++}`, code)
-  return pictures ? svg : svg.replace(PICTURE_TAGS, '')
+  return pictures ? svg : svg.replace(PICTURE_TAGS, '').replace(AWAY_URL, 'none')
 }
 
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {

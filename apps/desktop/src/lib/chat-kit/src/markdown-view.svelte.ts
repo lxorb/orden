@@ -97,7 +97,7 @@ export function viewHtml(
       .then((svg) => {
         drawn.set(one.key, svg)
         drawingNow.delete(key)
-        if (svg) bump()
+        bump()
       })
   }
 
