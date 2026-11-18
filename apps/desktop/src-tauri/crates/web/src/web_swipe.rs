@@ -1,7 +1,6 @@
 #![cfg_attr(not(windows), allow(dead_code))]
 
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 const SCRIPT: &str = include_str!("web_swipe.js");
 
@@ -11,19 +10,7 @@ pub fn script() -> &'static str {
 
 pub const BINDING: &str = "ordenSwiped";
 
-#[cfg(test)]
-const NAMED: &str = "orden-swipe:";
-
-#[cfg(test)]
-pub fn named(name: &str) -> Option<&str> {
-    name.strip_prefix(NAMED)
-}
-
 const SWIPED: &str = "orden://web-swipe";
-
-pub fn binding() -> Value {
-    json!({ "name": BINDING, "executionContextName": crate::web_worlds::WORLD })
-}
 
 const LONGEST: f64 = 10_000.0;
 
@@ -92,7 +79,7 @@ pub fn heard(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{binding, named, read, Swiped, BINDING, SCRIPT};
+    use super::{read, Swiped, BINDING, SCRIPT};
 
     fn swiped(kind: &'static str, dx: f64, dy: f64, at: f64, left: bool, right: bool) -> Swiped {
         Swiped {
@@ -155,29 +142,9 @@ mod tests {
     }
 
     #[test]
-    fn a_swipe_said_as_a_window_name_is_read_off_the_name() {
-        assert_eq!(
-            named(r#"orden-swipe:{"k":"e","t":1}"#),
-            Some(r#"{"k":"e","t":1}"#)
-        );
-        assert_eq!(named("orden-find"), None);
-        assert_eq!(named("orden-swipe"), None);
-        assert_eq!(named(""), None);
-        let said = named(r#"orden-swipe:{"k":"w","dx":-3,"dy":0,"t":2,"l":false,"r":false}"#)
-            .and_then(|payload| read("t1", payload));
-        assert_eq!(said.map(|one| one.kind), Some("wheel"));
-    }
-
-    #[test]
-    fn the_binding_is_orden_s_world_s_alone() {
-        assert_eq!(binding()["name"], BINDING);
-        assert_eq!(binding()["executionContextName"], crate::web_worlds::WORLD);
-    }
-
-    #[test]
     fn the_script_asks_through_the_binding_and_only_listens() {
         assert!(SCRIPT.contains(&format!("globalThis.{BINDING}")));
-        assert!(SCRIPT.contains(&format!("open('about:blank', '{}' + words)", super::NAMED)));
+        assert!(!SCRIPT.contains("open("));
         let listening = SCRIPT.matches("addEventListener(").count();
         assert_eq!(listening, 6);
         assert_eq!(SCRIPT.matches("passive: true").count(), listening);
