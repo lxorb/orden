@@ -3,16 +3,14 @@ import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { panels, type Panel, type PanelSide } from '../../session/src/api'
 import { workspace } from '../../workspace/src/api'
 
-function sortMenu(making: MenuEntry[]): MenuEntry[] {
-  return [
-    {
-      label: workspace.treeOptions.showHidden ? 'Hide hidden files' : 'Show hidden files',
-      run: () => workspace.toggleHidden(),
-    },
-    DIVIDER,
-    ...making,
-  ]
-}
+const sortMenu = (making: MenuEntry[]): MenuEntry[] => [
+  {
+    label: workspace.treeOptions.showHidden ? 'Hide hidden files' : 'Show hidden files',
+    run: () => workspace.toggleHidden(),
+  },
+  DIVIDER,
+  ...making,
+]
 
 function resultsMenu(): MenuEntry[] {
   const search = searching()?.panel
@@ -20,24 +18,11 @@ function resultsMenu(): MenuEntry[] {
   const arrow = (key: SearchSort) =>
     search.ordering.sort === key ? (search.ordering.descending ? '↓' : '↑') : undefined
 
-  return [
-    {
-      label: 'Sort by relevance',
-      hint: arrow('relevance'),
-      run: () => search.setSort('relevance'),
-    },
-    { label: 'Sort by name', hint: arrow('name'), run: () => search.setSort('name') },
-    {
-      label: 'Sort by modified',
-      hint: arrow('modified'),
-      run: () => search.setSort('modified'),
-    },
-    {
-      label: 'Sort by created',
-      hint: arrow('created'),
-      run: () => search.setSort('created'),
-    },
-  ]
+  return (['relevance', 'name', 'modified', 'created'] as const).map((key) => ({
+    label: `Sort by ${key}`,
+    hint: arrow(key),
+    run: () => search.setSort(key),
+  }))
 }
 
 export function panelMenu(
