@@ -25,22 +25,6 @@ describe('what the activity hands over', () => {
       left: 0,
     })
   })
-
-  test('anything that is not JSON is refused', () => {
-    expect(edgesOf('undefined')).toBe(null)
-    expect(edgesOf('')).toBe(null)
-  })
-
-  test('so is an edge missing, or one that is not a number', () => {
-    expect(edgesOf('{"top":24,"right":0,"bottom":48}')).toBe(null)
-    expect(edgesOf('{"top":"24px","right":0,"bottom":48,"left":0}')).toBe(null)
-    expect(edgesOf('{"top":-8,"right":0,"bottom":0,"left":0}')).toBe(null)
-  })
-
-  test('and a shape that is not an object at all', () => {
-    expect(edgesOf('[24,0,48,0]')).toBe(null)
-    expect(edgesOf('null')).toBe(null)
-  })
 })
 
 describe('what the page does with them', () => {
@@ -91,4 +75,16 @@ describe('what the page does with them', () => {
     tintSystemBars(false)
     expect(bars).toEqual([true, false])
   })
+})
+
+test.each<[unknown, ...Parameters<typeof edgesOf>]>([
+  [null, 'undefined'],
+  [null, ''],
+  [null, '{"top":24,"right":0,"bottom":48}'],
+  [null, '{"top":"24px","right":0,"bottom":48,"left":0}'],
+  [null, '{"top":-8,"right":0,"bottom":0,"left":0}'],
+  [null, '[24,0,48,0]'],
+  [null, 'null'],
+])('%j from %j', (expected, ...args) => {
+  expect(edgesOf(...args)).toBe(expected)
 })
