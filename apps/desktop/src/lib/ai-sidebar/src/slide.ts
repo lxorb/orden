@@ -26,17 +26,14 @@ export function slides(node: HTMLElement, said: Slides) {
   let offset = 0
   let timer: ReturnType<typeof setTimeout> | undefined
   let finger: { id: number; x: number; y: number; sliding: boolean } | null = null
-
   const place = (x: number, moving: boolean) => {
     node.style.transition = moving ? `translate ${dur(180)}ms var(--ease-out)` : 'none'
     node.style.translate = x ? `${x}px 0` : ''
   }
-
   const drawn = (x: number) => {
     const step = x < 0 ? 1 : -1
     return ways.can(step) ? x : x * STIFF
   }
-
   const settle = () => {
     const width = node.clientWidth || 1
     const step: 1 | -1 = offset < 0 ? 1 : -1
@@ -53,7 +50,6 @@ export function slides(node: HTMLElement, said: Slides) {
       requestAnimationFrame(() => requestAnimationFrame(() => place(0, true)))
     }, dur(180))
   }
-
   const onWheel = (event: WheelEvent) => {
     const dx = event.deltaX
     if (!dx || Math.abs(dx) <= Math.abs(event.deltaY) || event.ctrlKey) return
@@ -64,12 +60,10 @@ export function slides(node: HTMLElement, said: Slides) {
     clearTimeout(timer)
     timer = setTimeout(settle, LET_GO)
   }
-
   const onDown = (event: PointerEvent) => {
     if (event.pointerType !== 'touch' || finger) return
     finger = { id: event.pointerId, x: event.clientX, y: event.clientY, sliding: false }
   }
-
   const onMove = (event: PointerEvent) => {
     const held = finger
     if (held?.id !== event.pointerId) return
@@ -90,7 +84,6 @@ export function slides(node: HTMLElement, said: Slides) {
     offset = dx
     place(drawn(offset), false)
   }
-
   const onUp = (event: PointerEvent) => {
     const held = finger
     if (held?.id !== event.pointerId) return
@@ -98,13 +91,11 @@ export function slides(node: HTMLElement, said: Slides) {
     finger = null
     if (sliding) settle()
   }
-
   node.addEventListener('wheel', onWheel, { passive: false })
   node.addEventListener('pointerdown', onDown)
   node.addEventListener('pointermove', onMove)
   node.addEventListener('pointerup', onUp)
   node.addEventListener('pointercancel', onUp)
-
   return {
     update(next: Slides) {
       ways = next

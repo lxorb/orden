@@ -32,14 +32,10 @@ const ROADS: Record<Maker, readonly ProviderKind[]> = {
 const KEYED = 'API key'
 
 export const ROAD_NAMES: Record<ProviderKind, string> = {
-  'claude-code': KIND_NAMES['claude-code'],
-  chatgpt: KIND_NAMES.chatgpt,
-  codex: KIND_NAMES.codex,
-  'gemini-cli': KIND_NAMES['gemini-cli'],
+  ...KIND_NAMES,
   anthropic: KEYED,
   openai: KEYED,
   gemini: KEYED,
-  compatible: KIND_NAMES.compatible,
 }
 
 export const ROAD_HINTS: Record<ProviderKind, string> = {

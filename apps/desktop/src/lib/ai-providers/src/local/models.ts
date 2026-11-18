@@ -21,14 +21,12 @@ function list(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
 
-const GEMINI_ALIASES: readonly [string, string][] = [
+const GEMINI_CLI_MODELS: ModelInfo[] = [
   ['auto', 'Auto'],
   ['pro', 'Pro'],
   ['flash', 'Flash'],
   ['flash-lite', 'Flash-Lite'],
-]
-
-const GEMINI_CLI_MODELS: ModelInfo[] = GEMINI_ALIASES.map(([id, name]) => ({
+].map(([id = '', name = '']) => ({
   id,
   name,
   window: null,

@@ -54,7 +54,6 @@ const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|\[::1\])(?=[:/]|$)/i
 export function apiRoot(provider: Provider): string {
   if (isLocal(provider.kind)) return ''
   if (provider.kind !== 'compatible') return ROOTS[provider.kind]
-
   const typed = (provider.baseUrl ?? '')
     .trim()
     .replace(/\/+$/, '')
@@ -90,12 +89,7 @@ export function askUrl(provider: Provider): string {
 }
 
 export function conversationUrl(provider: Provider): string {
-  if (provider.kind === 'gemini') return geminiUrl(provider, provider.model)
-  if (provider.kind === 'anthropic') return `${apiRoot(provider)}/messages`
-  if (provider.kind === 'openai' || provider.kind === 'chatgpt') {
-    return `${apiRoot(provider)}/responses`
-  }
-  return `${apiRoot(provider)}/chat/completions`
+  return provider.kind === 'openai' ? `${apiRoot(provider)}/responses` : askUrl(provider)
 }
 
 export function compactUrl(provider: Provider): string {
@@ -119,11 +113,9 @@ export function headersFor(provider: Provider, apiKey: string): Record<string, s
       'anthropic-dangerous-direct-browser-access': 'true',
     }
   }
-
   if (provider.kind === 'gemini') {
     return { 'content-type': 'application/json', ...(apiKey ? { 'x-goog-api-key': apiKey } : {}) }
   }
-
   return {
     'content-type': 'application/json',
     ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
@@ -133,7 +125,6 @@ export function headersFor(provider: Provider, apiKey: string): Record<string, s
 export function headersWithoutType(provider: Provider, apiKey: string): Record<string, string> {
   const headers = { ...headersFor(provider, apiKey) }
   delete headers['content-type']
-
   return headers
 }
 
@@ -141,7 +132,6 @@ export function modelsIn(body: unknown): string[] {
   if (typeof body !== 'object' || body === null) return []
   const { data, models } = body as { data?: unknown; models?: unknown }
   const listed: unknown[] = Array.isArray(data) ? data : Array.isArray(models) ? models : []
-
   const names = listed
     .map((one) => {
       if (typeof one !== 'object' || one === null) return null
@@ -160,7 +150,6 @@ export function modelsIn(body: unknown): string[] {
       return slug ?? id
     })
     .filter((id): id is string => typeof id === 'string' && id.length > 0)
-
   return [...new Set(names)].sort((a, b) => a.localeCompare(b))
 }
 
@@ -224,13 +213,8 @@ export interface Message {
 export function bodyFor(provider: Provider, messages: readonly Message[], stream: boolean): string {
   if (provider.kind === 'chatgpt') return responsesBody(provider.model, messages)
   if (provider.kind === 'gemini') return geminiBody(messages)
-
   if (provider.kind === 'anthropic') {
-    const system = messages
-      .filter((one) => one.role === 'system')
-      .map((one) => one.content)
-      .join('\n\n')
-
+    const system = systemOf(messages)
     return JSON.stringify({
       model: provider.model,
       max_tokens: MOST_TOKENS,
@@ -239,16 +223,17 @@ export function bodyFor(provider: Provider, messages: readonly Message[], stream
       messages: messages.filter((one) => one.role !== 'system'),
     })
   }
-
   return JSON.stringify({ model: provider.model, stream, messages })
 }
 
-function geminiBody(messages: readonly Message[]): string {
-  const system = messages
+const systemOf = (messages: readonly Message[]) =>
+  messages
     .filter((one) => one.role === 'system')
     .map((one) => one.content)
     .join('\n\n')
 
+function geminiBody(messages: readonly Message[]): string {
+  const system = systemOf(messages)
   return JSON.stringify({
     ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}),
     contents: messages
@@ -274,11 +259,7 @@ function geminiText(event: unknown): string {
 }
 
 function responsesBody(model: string, messages: readonly Message[]): string {
-  const instructions = messages
-    .filter((one) => one.role === 'system')
-    .map((one) => one.content)
-    .join('\n\n')
-
+  const instructions = systemOf(messages)
   return JSON.stringify({
     model,
     ...(instructions ? { instructions } : {}),
@@ -292,20 +273,16 @@ function responsesBody(model: string, messages: readonly Message[]): string {
 
 export function deltaIn(kind: ProviderKind, event: unknown): string {
   if (typeof event !== 'object' || event === null) return ''
-
   if (kind === 'chatgpt') {
     const { type, delta } = event as { type?: unknown; delta?: unknown }
     return type === 'response.output_text.delta' && typeof delta === 'string' ? delta : ''
   }
-
   if (kind === 'gemini') return geminiText(event)
-
   if (kind === 'anthropic') {
     const { type, delta } = event as { type?: unknown; delta?: { text?: unknown } }
     if (type !== 'content_block_delta') return ''
     return typeof delta?.text === 'string' ? delta.text : ''
   }
-
   const choices = (event as { choices?: unknown }).choices
   if (!Array.isArray(choices)) return ''
   const content = (choices[0] as { delta?: { content?: unknown } } | undefined)?.delta?.content
@@ -315,17 +292,14 @@ export function deltaIn(kind: ProviderKind, event: unknown): string {
 export function troubleIn(body: unknown): string | null {
   if (Array.isArray(body)) return troubleIn(body[0])
   if (typeof body !== 'object' || body === null) return null
-
   const event = body as { type?: unknown; response?: unknown; message?: unknown }
   if (event.type === 'response.failed') return troubleIn(event.response) ?? 'response.failed'
   if (event.type === 'error' && typeof event.message === 'string' && event.message) {
     return event.message
   }
-
   const error = (body as { error?: unknown }).error
   if (typeof error === 'string') return error
   if (typeof error !== 'object' || error === null) return null
-
   const message = (error as { message?: unknown }).message
   return typeof message === 'string' && message ? message : null
 }

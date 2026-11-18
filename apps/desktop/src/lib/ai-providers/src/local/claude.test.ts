@@ -15,10 +15,7 @@ const SAID = [
   '{"type":"result","subtype":"success","is_error":false,"result":"ok","session_id":"s","total_cost_usd":0.004}',
 ]
 
-function readAll(lines: readonly string[]): Heard[] {
-  const read = claudeReader()
-  return lines.map(read)
-}
+const readAll = (lines: readonly string[]): Heard[] => lines.map(claudeReader())
 
 describe('an answer', () => {
   test('arrives delta by delta, once, with the model named without its [1m]', () => {

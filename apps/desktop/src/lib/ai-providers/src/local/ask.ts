@@ -83,7 +83,6 @@ async function askClaude(ask: Ask): Promise<string> {
       else if (said?.kind === 'line') listening.line(said.line)
     }
   })
-
   const stop = () => void invoke('ai_cli_stop', { id }).catch(() => undefined)
   ask.signal?.addEventListener('abort', stop, { once: true })
   try {
@@ -140,7 +139,6 @@ async function askInSession(kind: Exclude<LocalKind, 'claude-code'>, ask: Ask): 
   } catch (error) {
     throw startError(error, kind)
   }
-
   const stop = () => void session.say({ kind: 'interrupt' }).catch(() => undefined)
   ask.signal?.addEventListener('abort', stop, { once: true })
   try {

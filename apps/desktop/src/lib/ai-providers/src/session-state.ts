@@ -3,20 +3,6 @@ import type { Stop, ThreadHead } from './chat/types'
 export type SessionState =
   'running' | 'waiting' | 'error' | 'needs-input' | 'done' | 'interrupted' | 'archived'
 
-export const SESSION_STATES: readonly SessionState[] = [
-  'running',
-  'waiting',
-  'error',
-  'needs-input',
-  'done',
-  'interrupted',
-  'archived',
-]
-
-export function isSessionState(value: unknown): value is SessionState {
-  return typeof value === 'string' && (SESSION_STATES as readonly string[]).includes(value)
-}
-
 export type SessionEvent =
   | { type: 'start' }
   | { type: 'ask' }
@@ -69,6 +55,12 @@ const PRIORITY: Record<SessionState, number> = {
   waiting: 4,
   running: 5,
   archived: 6,
+}
+
+export const SESSION_STATES = Object.keys(PRIORITY) as SessionState[]
+
+export function isSessionState(value: unknown): value is SessionState {
+  return typeof value === 'string' && Object.hasOwn(PRIORITY, value)
 }
 
 export const STATE_COLOURS: Record<SessionState, string> = {

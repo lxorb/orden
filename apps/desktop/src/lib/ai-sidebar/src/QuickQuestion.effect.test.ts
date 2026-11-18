@@ -54,11 +54,9 @@ test('a note an answer names opens from the quick question, as from the side cha
   document.body.append(target)
   const drawn = mount(QuickQuestion, { target, props: {} })
   flushSync()
-
   const anchors = [...target.querySelectorAll<HTMLAnchorElement>('.talk a')]
   expect(anchors.map((one) => one.textContent)).toEqual(['Birds', 'the list', 'a page'])
   for (const one of anchors) one.click()
-
   expect(world.followed.map((one) => one.path)).toEqual(['Birds.md', 'Lists/Nests.md'])
   expect(world.hrefs).toEqual(['https://example.com'])
   expect(world.closed).toBe(3)

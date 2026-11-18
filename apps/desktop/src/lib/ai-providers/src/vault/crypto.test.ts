@@ -36,13 +36,11 @@ describe('the vault’s keys', () => {
     expect(await commitment(asking.pub, mine)).toBe(bound)
     expect(await commitment(swapped.pub, mine)).not.toBe(bound)
     expect(await commitment(asking.pub, newNonce())).not.toBe(bound)
-
     const codes = new Set<string>()
     for (let tries = 0; tries < 20; tries++) {
       codes.add(await digits(asking.pub, mine, newNonce(), answering.pub))
     }
     expect(codes.size).toBeGreaterThan(15)
-
     const theirs = newNonce()
     const shown = await digits(asking.pub, mine, theirs, answering.pub)
     expect(await digits(swapped.pub, mine, theirs, answering.pub)).not.toBe(shown)

@@ -5,7 +5,6 @@ export function promptFor(messages: readonly Message[]): string {
   const said = messages.filter((one) => one.role !== 'system')
   const question = said.at(-1)
   const before = said.slice(0, -1)
-
   const parts: string[] = []
   if (rules.length) parts.push(`<instructions>\n${rules.join('\n\n')}\n</instructions>`)
   if (before.length) {

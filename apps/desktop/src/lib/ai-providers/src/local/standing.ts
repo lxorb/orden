@@ -36,7 +36,6 @@ export function standingOf(kind: LocalKind, said: Said | null): Standing {
   if (!said) return { state: 'missing', program: null, plan: null, account: null }
   const base = { program: said.program, plan: null, account: null }
   if (said.timedOut) return { ...base, state: 'unknown' }
-
   if (kind === 'gemini-cli') return geminiStanding(said, base)
   return kind === 'claude-code' ? claudeStanding(said, base) : codexStanding(said, base)
 }
@@ -71,7 +70,6 @@ function claudeStanding(said: Said, base: Omit<Standing, 'state'>): Standing {
   }
   if (!status) return { ...base, state: said.code === 0 ? 'unknown' : 'out' }
   if (status.loggedIn !== true) return { ...base, state: 'out' }
-
   const subscription = typeof status.subscriptionType === 'string' ? status.subscriptionType : ''
   const method = typeof status.authMethod === 'string' ? status.authMethod : ''
   return {

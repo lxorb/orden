@@ -117,7 +117,6 @@ function lineGroups(code: string): string {
     out += `<span class="code-lines">${piece}${carried ? '</span>' : ''}</span>`
     from = to
   }
-
   for (let at = code.indexOf('\n'); at !== -1; at = code.indexOf('\n', at + 1)) {
     if (++lines % LINES_A_GROUP === 0) group(at + 1)
   }

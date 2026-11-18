@@ -41,16 +41,11 @@ class Plans {
       tool: account.kind,
       account: account.id,
     }).catch(() => null)
-    const home =
-      typeof said === 'object' &&
-      said !== null &&
-      typeof (said as { home?: unknown }).home === 'string'
-        ? (said as { home: string }).home
-        : null
+    const home = (said as { home?: unknown } | null)?.home
     const now: Plan = {
       ...standingOf(account.kind, saidIn(said)),
       limit: this.of(account.id).limit,
-      home,
+      home: typeof home === 'string' ? home : null,
     }
     this.local = { ...this.local, [account.id]: now }
     return now
@@ -58,14 +53,10 @@ class Plans {
 
   async checkChatgpt(): Promise<void> {
     const said = await invoke<unknown>('chatgpt_account').catch(() => null)
+    const email = (said as { email?: unknown } | null)?.email
     this.chatgpt =
       typeof said === 'object' && said !== null
-        ? {
-            email:
-              typeof (said as { email?: unknown }).email === 'string'
-                ? (said as { email: string }).email
-                : null,
-          }
+        ? { email: typeof email === 'string' ? email : null }
         : null
   }
 
@@ -73,7 +64,6 @@ class Plans {
     if (this.watching.has(account.id)) return
     this.watching.add(account.id)
     const started = Date.now()
-
     const again = async () => {
       await waited(EVERY)
       const now = await this.check(account)

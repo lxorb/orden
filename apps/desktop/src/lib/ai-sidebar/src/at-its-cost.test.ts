@@ -28,17 +28,14 @@ describe('a call that waits as long as it costs', () => {
       ran++
       clock += 100
     })
-
     later()
     later()
     settle()
     expect(ran).toBe(1)
-
     later()
     later()
     settle()
     expect(ran).toBe(1)
-
     vi.advanceTimersByTime(100)
     expect(ran).toBe(1)
     vi.advanceTimersByTime(100)
@@ -48,7 +45,6 @@ describe('a call that waits as long as it costs', () => {
   test('a cheap run is asked again at once', () => {
     let ran = 0
     const later = atItsCost(() => ran++)
-
     later()
     settle()
     later()
@@ -59,12 +55,10 @@ describe('a call that waits as long as it costs', () => {
   test('drops what was asked when cancelled, and runs it now when flushed', () => {
     let ran = 0
     const later = atItsCost(() => ran++)
-
     later()
     later.cancel()
     vi.advanceTimersByTime(10)
     expect(ran).toBe(0)
-
     later()
     later.flush()
     expect(ran).toBe(1)

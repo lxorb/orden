@@ -174,7 +174,6 @@ describe('a long block of code while it arrives', () => {
 
   test('is drawn in groups of lines, so a line more touches only the last group', () => {
     const html = answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}`, { live: true })
-
     expect(html.match(/<span class="code-lines">/g)).toHaveLength(3)
     expect(html.replace(/<\/?span[^>]*>/g, '')).toBe(
       answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}\n\`\`\``),
@@ -191,10 +190,8 @@ describe('a long block of code while it arrives', () => {
   test('closes a token that runs across groups and opens it again after', () => {
     const comment = `<span class="hl-comment">/*${'\n'.repeat(LINES_A_GROUP + 4)}*/</span>`
     const code = `<pre><code>a\n${comment}\n</code></pre>`
-
     const grouped = inLineGroups(code)
     const [first = '', second = ''] = grouped.split('<span class="code-lines">').slice(1)
-
     expect(first.endsWith('</span></span>')).toBe(true)
     expect(second.startsWith('<span class="hl-comment">')).toBe(true)
     expect(grouped.replace(/<[^>]+>/g, '')).toBe(code.replace(/<[^>]+>/g, ''))
@@ -207,10 +204,8 @@ describe('subscript and superscript in an answer (#2088)', () => {
       'MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)',
     )
     expect(tagged).toContain('P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)')
-
     const marked = answerHtml('P~diast~ and x^2^')
     expect(marked).toContain('P<sub>diast</sub> and x<sup>2</sup>')
-
     expect(answerHtml('$P_{diast}$')).toContain('class="math-inline"')
   })
 })

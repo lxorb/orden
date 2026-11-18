@@ -20,7 +20,6 @@ async function fakeInvoke(command: string, args: Record<string, unknown> = {}): 
   }
   if (command !== 'ai_cli_ask') return null
   if (missing) throw new Error('missing')
-
   const channel = args.output as FakeChannel
   setTimeout(() => {
     if (hold) held = channel
@@ -76,12 +75,10 @@ describe('which provider a feature asks', () => {
     ai.add('openai')
     ai.update('openai', { model: 'gpt-5' })
     ai.add('claude-code')
-
     expect(ai.providerFor('ask')?.id).toBe('openai')
     ai.use('ask', 'claude-code')
     expect(ai.providerFor('ask')?.id).toBe('claude-code')
     expect(ai.providerFor('rewrite')?.id).toBe('openai')
-
     ai.use('ask', '')
     expect(ai.providerFor('ask')?.id).toBe('openai')
   })
@@ -92,7 +89,6 @@ describe('which provider a feature asks', () => {
     ai.add('claude-code')
     ai.use('rewrite', 'claude-code')
     ai.remove('claude-code')
-
     expect(ai.uses).toEqual({})
     expect(ai.providerFor('rewrite')?.id).toBe('openai')
   })
@@ -102,7 +98,6 @@ describe('which provider a feature asks', () => {
     ai.update('openai', { model: 'gpt-5' })
     ai.add('codex')
     ai.use('rewrite', 'codex')
-
     expect(ai.providerFor('rewrite')?.id).toBe('openai')
     ai.activate('codex')
     expect(ai.providerFor('rewrite')?.id).toBe('codex')
@@ -129,7 +124,6 @@ describe('Claude Code on this machine', () => {
     lines = SAYS
     const pieces: string[] = []
     let named = ''
-
     const answer = await complete({
       provider: CLAUDE_CODE,
       model: '',
@@ -139,12 +133,10 @@ describe('Claude Code on this machine', () => {
         named = model
       },
     })
-
     expect(answer).toBe('Herons wait.')
     expect(pieces).toEqual(['Herons ', 'wait.'])
     expect(named).toBe('claude-opus-5-5')
     expect(fetched).toEqual([])
-
     const call = asked.find((one) => one.command === 'ai_cli_ask')
     expect(call?.args.tool).toBe('claude-code')
     expect(call?.args.model).toBeNull()
@@ -157,7 +149,6 @@ describe('Claude Code on this machine', () => {
     lines = [SAYS[2] ?? '']
     hold = true
     const stopper = new AbortController()
-
     const asking = complete({
       provider: CLAUDE_CODE,
       model: '',
@@ -165,7 +156,6 @@ describe('Claude Code on this machine', () => {
       stream: () => stopper.abort(),
       signal: stopper.signal,
     })
-
     const thrown = await asking.catch((error: unknown) => error)
     expect(wasStopped(thrown)).toBe(true)
     expect(asked.some((one) => one.command === 'ai_cli_stop')).toBe(true)
@@ -177,7 +167,6 @@ describe('Claude Code on this machine', () => {
       '{"type":"result","is_error":true,"result":"You\'ve hit your limit"}',
     ]
     ending = { ...ending, code: 1 }
-
     await expect(complete({ provider: CLAUDE_CODE, model: '', messages: ASKED })).rejects.toThrow(
       'Your Claude plan is at its limit for now.',
     )
@@ -207,9 +196,7 @@ describe('a ChatGPT plan', () => {
         ),
         { status: 200, headers: { 'content-type': 'text/event-stream' } },
       )
-
     const answer = await complete({ provider: CHATGPT, model: 'gpt-plan', messages: ASKED })
-
     expect(answer).toBe('Herons wait.')
     expect(fetched[0]?.url).toBe('https://api.openai.com/v1/responses')
     const headers = fetched[0]?.init.headers as Record<string, string>
@@ -232,7 +219,6 @@ describe('a ChatGPT plan', () => {
         }),
         { status: 429 },
       )
-
     await expect(
       complete({ provider: CHATGPT, model: 'gpt-plan', messages: ASKED }),
     ).rejects.toThrow('Your ChatGPT plan is at its limit for now.')
@@ -251,7 +237,6 @@ describe('a ChatGPT plan', () => {
         ),
         { status: 200 },
       )
-
     await expect(
       complete({ provider: CHATGPT, model: 'gpt-plan', messages: ASKED, stream: () => undefined }),
     ).rejects.toThrow('Broke.')

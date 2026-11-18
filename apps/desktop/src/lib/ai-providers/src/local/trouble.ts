@@ -30,7 +30,6 @@ export function troubleOf(
   if (ended.timedOut) return `${name} took too long to answer.`
   if (heard.trouble) return heard.trouble
   if (ended.code === 0 || (ended.code === null && answered)) return null
-
   if (/unknown option|unexpected argument|unrecognized/i.test(ended.err)) {
     return `${name} is out of date. Update it and try again.`
   }

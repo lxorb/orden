@@ -117,7 +117,6 @@ describe('the body one question is asked with', () => {
 
   test('Anthropic keeps the system prompt out of the conversation', () => {
     const body = JSON.parse(bodyFor(claude, messages, true)) as Record<string, unknown>
-
     expect(body.system).toBe('Be brief.\n\nThe note says herons.')
     expect(body.messages).toEqual([{ role: 'user', content: 'Why?' }])
     expect(body.max_tokens).toBe(4096)
@@ -127,7 +126,6 @@ describe('the body one question is asked with', () => {
 
   test('the OpenAI shape keeps it in', () => {
     const body = JSON.parse(bodyFor(openai, messages, false)) as Record<string, unknown>
-
     expect(body.messages).toEqual(messages)
     expect(body.stream).toBe(false)
     expect(body).not.toHaveProperty('system')
@@ -138,7 +136,6 @@ describe('the body one question is asked with', () => {
       string,
       unknown
     >
-
     expect(body).not.toHaveProperty('system')
   })
 })

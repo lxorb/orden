@@ -48,7 +48,6 @@ describe('an agent change to a protected note', () => {
     flushSync()
     expect(target.textContent).toContain('Diary')
     expect(target.textContent).not.toContain('nobody')
-
     unlocks.unlock([LOCK])
     flushSync()
     expect(target.textContent).toContain('what nobody may read')

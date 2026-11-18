@@ -169,7 +169,6 @@ test('a long chat draws its last turns first and earlier ones as it is scrolled 
     [...shown.target.querySelectorAll('.said .bubble')].map((one) => one.textContent)
   expect(said()).toHaveLength(40)
   expect(said().at(-1)).toBe('question 99')
-
   const talk = shown.target.querySelector<HTMLElement>('.talk')
   talk?.dispatchEvent(new Event('scroll'))
   flushSync()

@@ -74,7 +74,6 @@ describe('moving the accounts out of one window', () => {
     const profile = storage({ 'orden:ai': EARLIER })
     const ai = await windowOn(profile)
     await settled()
-
     const kept = JSON.parse(file.text ?? '{}') as { accounts: { id: string }[]; active: object }
     expect(kept.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic'])
     expect(kept.active).toEqual({ claude: 'anthropic' })
@@ -86,7 +85,6 @@ describe('moving the accounts out of one window', () => {
   test('a window on another engine’s profile starts with the same accounts', async () => {
     await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
-
     const other = await windowOn(storage())
     await settled()
     expect(other.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic'])
@@ -96,7 +94,6 @@ describe('moving the accounts out of one window', () => {
   test('a second profile with rows of its own brings the missing ones, once', async () => {
     await windowOn(storage({ 'orden:ai': EARLIER }))
     await settled()
-
     const theirs = storage({
       'orden:ai': JSON.stringify({
         providers: [
@@ -110,7 +107,6 @@ describe('moving the accounts out of one window', () => {
     await settled()
     expect(other.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic', 'openai'])
     expect(other.accounts[1]?.name).toBe('')
-
     other.remove('openai')
     await settled()
     const again = await windowOn(theirs)
@@ -125,7 +121,6 @@ describe('two windows at once', () => {
     await settled()
     const second = await windowOn(storage())
     await settled()
-
     second.activate('claude-code')
     await settled()
     expect(first.provider('claude')?.id).toBe('claude-code')
@@ -136,12 +131,10 @@ describe('two windows at once', () => {
     await settled()
     const second = await windowOn(storage())
     await settled()
-
     heard = []
     first.update('anthropic', { name: 'Work' })
     second.add('openai')
     await settled()
-
     const kept = JSON.parse(file.text ?? '{}') as { accounts: { id: string; name: string }[] }
     expect(kept.accounts.map((one) => one.id)).toEqual(['claude-code', 'anthropic', 'openai'])
     expect(kept.accounts[1]?.name).toBe('Work')

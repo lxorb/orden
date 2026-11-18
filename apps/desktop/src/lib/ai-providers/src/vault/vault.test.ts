@@ -205,25 +205,35 @@ function device(
 
 const keyed = added(NONE, 'anthropic').state
 
-async function letIn(laptop: ReturnType<typeof device>, phone: ReturnType<typeof device>) {
-  await phone.vault.refresh()
+type Device = ReturnType<typeof device>
+
+async function letIn(laptop: Device, phone: Device) {
+  for (let round = 0; round < 2; round++) {
+    await phone.vault.refresh()
+    await laptop.vault.refresh()
+  }
+}
+
+async function allowed(laptop: Device, phone: Device) {
+  await letIn(laptop, phone)
+  await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+}
+
+async function opened(keys = true) {
+  const account = new Account()
+  const laptop = device(account, 'Laptop', keyed)
+  if (keys) laptop.here.keys = { anthropic: 'sk-ant-secret' }
   await laptop.vault.refresh()
-  await phone.vault.refresh()
-  await laptop.vault.refresh()
+  return { account, laptop }
 }
 
 describe('the AI accounts on two devices', () => {
   test('a device says its vault is open only once the accounts in it are here', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened()
     const phone = device(account, 'Phone')
-    await letIn(laptop, phone)
-    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+    await allowed(laptop, phone)
     await phone.vault.refresh()
     expect(phone.vault.standing).toBe('offered')
-
     const said: string[] = []
     const apply = phone.world.apply.bind(phone.world)
     phone.world.apply = async (contents, before, moved) => {
@@ -231,17 +241,13 @@ describe('the AI accounts on two devices', () => {
       await apply(contents, before, moved)
     }
     await phone.vault.join()
-
     expect(said).toEqual(['offered'])
     expect(phone.vault.standing).toBe('open')
     expect(phone.here.accounts.accounts.map((one) => one.id)).toEqual(['anthropic'])
   })
 
   test('the first device opens at once, and the vault never says a key', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened()
     expect(laptop.vault.standing).toBe('open')
     expect(account.rev).toBeGreaterThanOrEqual(1)
     expect(account.blob).not.toContain('sk-ant-secret')
@@ -249,11 +255,7 @@ describe('the AI accounts on two devices', () => {
   })
 
   test('a second device waits, shows the six digits the first shows, and once allowed has the accounts and keys', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
-
+    const { account, laptop } = await opened()
     const phone = device(account, 'Phone')
     await phone.vault.refresh()
     expect(phone.vault.standing).toBe('waiting')
@@ -262,7 +264,6 @@ describe('the AI accounts on two devices', () => {
     await phone.vault.refresh()
     expect(phone.vault.digits).toMatch(/^\d{3} \d{3}$/)
     expect(phone.here.keys).toEqual({})
-
     await laptop.vault.refresh()
     expect(laptop.vault.asking).toEqual([
       {
@@ -273,7 +274,6 @@ describe('the AI accounts on two devices', () => {
       },
     ])
     await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
-
     await phone.vault.refresh()
     expect(phone.vault.standing).toBe('offered')
     expect(phone.vault.offeredBy).toBe('Laptop')
@@ -284,15 +284,11 @@ describe('the AI accounts on two devices', () => {
   })
 
   test('a change on either device reaches the other', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened(false)
     const phone = device(account, 'Phone')
-    await letIn(laptop, phone)
-    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+    await allowed(laptop, phone)
     await phone.vault.refresh()
     await phone.vault.join()
-
     phone.here.keys = { anthropic: 'sk-typed-on-the-phone' }
     phone.here.accounts = added(phone.here.accounts, 'openai').state
     await phone.vault.refresh()
@@ -314,10 +310,8 @@ describe('the AI accounts on two devices', () => {
     const laptop = device(account, 'Laptop', router)
     await laptop.vault.refresh()
     const phone = device(account, 'Phone', ollama)
-    await letIn(laptop, phone)
-    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+    await allowed(laptop, phone)
     await phone.vault.refresh()
-
     const thread = { provider: 'compatible-1' }
     const apply = phone.world.apply.bind(phone.world)
     phone.world.apply = async (contents, before, moved) => {
@@ -325,22 +319,16 @@ describe('the AI accounts on two devices', () => {
       await apply(contents, before, moved)
     }
     await phone.vault.join()
-
     expect(resolve(phone.here.accounts, 'compatible-1')?.name).toBe('OpenRouter')
     expect(resolve(phone.here.accounts, thread.provider)?.name).toBe('Ollama')
   })
 
   test('a device offered the vault opens nothing, takes nothing and gives nothing until it joins', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened()
     const phone = device(account, 'Phone', added(NONE, 'openai').state)
     phone.here.keys = { openai: 'sk-only-on-the-phone' }
-    await letIn(laptop, phone)
-    await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+    await allowed(laptop, phone)
     const before = { rev: account.rev, blob: account.blob }
-
     await phone.vault.refresh()
     await phone.vault.refresh()
     expect(phone.vault.standing).toBe('offered')
@@ -349,7 +337,6 @@ describe('the AI accounts on two devices', () => {
     expect({ rev: account.rev, blob: account.blob }).toEqual(before)
     await laptop.vault.refresh()
     expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
-
     await phone.vault.join()
     expect(phone.vault.standing).toBe('open')
     expect(account.rev).toBeGreaterThan(before.rev)
@@ -363,7 +350,6 @@ describe('the AI accounts on two devices', () => {
     await lost.vault.refresh()
     account.devices.clear()
     const held = account.blob
-
     const fresh = device(account, 'New laptop', added(NONE, 'openai').state)
     fresh.here.keys = { openai: 'sk-openai' }
     await fresh.vault.refresh()
@@ -373,10 +359,7 @@ describe('the AI accounts on two devices', () => {
   })
 
   test('a device not allowed gets nothing, and one turned down asks again from nothing', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened()
     const stranger = device(account, 'Stranger')
     await letIn(laptop, stranger)
     await laptop.vault.deny(laptop.vault.asking[0]?.id ?? '')
@@ -391,7 +374,6 @@ describe('the AI accounts on two devices', () => {
     const lost = device(account, 'Lost laptop', keyed)
     await lost.vault.refresh()
     account.devices.clear()
-
     const fresh = device(account, 'New laptop', added(NONE, 'openai').state)
     fresh.here.keys = { openai: 'sk-openai' }
     await fresh.vault.refresh()
@@ -402,11 +384,7 @@ describe('the AI accounts on two devices', () => {
   })
 
   test('the same device, after a restart or a reinstall, opens without asking', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
-
+    const { account, laptop } = await opened()
     const again = device(account, 'Laptop', NONE, laptop.secrets)
     await again.vault.refresh()
     expect(again.vault.standing).toBe('open')
@@ -416,15 +394,11 @@ describe('the AI accounts on two devices', () => {
 
 describe('somebody between the two screens', () => {
   test('cannot change the key under the digits the reader compared', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened()
     const phone = device(account, 'Phone')
     await letIn(laptop, phone)
     const shown = laptop.vault.asking[0]
     expect(shown?.digits).toBe(phone.vault.digits)
-
     const thief = await newDeviceKey()
     const row = account.devices.get(shown?.id ?? '')
     if (row) row.pub = thief.pub
@@ -434,14 +408,11 @@ describe('somebody between the two screens', () => {
   })
 
   test('cannot reveal a key the asking device did not commit to', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened(false)
     const phone = device(account, 'Phone')
     await phone.vault.refresh()
     await laptop.vault.refresh()
     await phone.vault.refresh()
-
     const thief = await newDeviceKey()
     const row = [...account.devices.values()].find((one) => one.name === 'Phone')
     if (row) row.pub = thief.pub
@@ -450,17 +421,13 @@ describe('somebody between the two screens', () => {
   })
 
   test('cannot pick a key that shows the digits the reader’s own device shows', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    await laptop.vault.refresh()
-
+    const { account, laptop } = await opened(false)
     const thief = device(account, 'Phone')
     await thief.vault.refresh()
     await laptop.vault.refresh()
     await thief.vault.refresh()
     await laptop.vault.refresh()
     const forThief = laptop.vault.asking[0]?.digits
-
     const phone = device(account, 'Phone')
     await phone.vault.refresh()
     const own = [...account.devices.entries()].find(
@@ -483,10 +450,8 @@ describe('somebody between the two screens', () => {
     await thief.vault.refresh()
     const phone = device(account, 'Phone', keyed)
     phone.here.keys = { anthropic: 'sk-ant-secret' }
-    await letIn(thief, phone)
-    await thief.vault.allow(thief.vault.asking[0]?.id ?? '')
+    await allowed(thief, phone)
     const before = account.blob
-
     await phone.vault.refresh()
     expect(phone.vault.standing).toBe('offered')
     expect(account.blob).toBe(before)
@@ -495,13 +460,10 @@ describe('somebody between the two screens', () => {
   })
 
   test('cannot answer, wrap, write the vault or let it go without the vault key', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    await laptop.vault.refresh()
+    const { account } = await opened(false)
     const phone = device(account, 'Phone')
     await phone.vault.refresh()
     const id = [...account.devices.entries()].find(([, one]) => one.name === 'Phone')?.[0] ?? ''
-
     const forged = { auth: btoa('not the key') }
     await expect(
       account.answer(`/v2/ai/devices/${id}/nonce`, 'PUT', {
@@ -524,15 +486,11 @@ describe('somebody between the two screens', () => {
 
 describe('a device let go of', () => {
   async function three() {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    laptop.here.keys = { anthropic: 'sk-ant-secret' }
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened()
     const others = []
     for (const name of ['Phone', 'Tablet']) {
       const one = device(account, name)
-      await letIn(laptop, one)
-      await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+      await allowed(laptop, one)
       await one.vault.refresh()
       await one.vault.join()
       expect(one.vault.standing).toBe('open')
@@ -564,18 +522,15 @@ describe('a device let go of', () => {
     if (!phoneKey) throw new Error('the phone has a key')
     const oldKey = await unwrap(kept, phoneKey)
     await expect(open(oldKey, account.blob ?? '')).resolves.toContain('sk-ant-secret')
-
     expect(await laptop.vault.remove(phoneId)).toBe(true)
     expect(account.devices.has(phoneId)).toBe(false)
     expect(laptop.vault.allowed.map((one) => one.name)).toEqual(['Laptop', 'Tablet'])
-
     laptop.here.keys = { anthropic: 'sk-ant-after' }
     await laptop.vault.refresh()
     await tablet.vault.refresh()
     expect(tablet.vault.standing).toBe('open')
     expect(tablet.here.keys).toEqual({ anthropic: 'sk-ant-after' })
     await expect(open(oldKey, account.blob ?? '')).rejects.toThrow()
-
     await phone.vault.refresh()
     expect(phone.vault.standing).not.toBe('open')
     expect(phone.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
@@ -613,9 +568,7 @@ describe('a device let go of', () => {
   })
 
   test('the last device takes the vault with it', async () => {
-    const account = new Account()
-    const laptop = device(account, 'Laptop', keyed)
-    await laptop.vault.refresh()
+    const { account, laptop } = await opened(false)
     await laptop.vault.leave()
     expect(account.blob).toBeNull()
     expect(account.devices.size).toBe(0)

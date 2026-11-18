@@ -60,7 +60,6 @@ describe('a provider with no key on this device', () => {
 describe('a provider with a key', () => {
   test('is asked', async () => {
     key = 'sk-test'
-
     expect(await complete({ provider: HOSTED, model: HOSTED.model, ...ASKED })).toBe('said')
     expect(sent).toEqual(['https://api.openai.com/v1/chat/completions'])
   })

@@ -1,4 +1,4 @@
-import { without, invoke } from '../../platform/src/api'
+import { without, invoke, isRecord } from '../../platform/src/api'
 import type { Provider, ProviderKind } from './providers'
 
 export interface Weekly {
@@ -10,11 +10,7 @@ const WEEK_MINUTES = 7 * 24 * 60
 
 const AGAIN = 5 * 60_000
 
-function record(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null
-}
+const record = (value: unknown) => (isRecord(value) ? value : null)
 
 function percent(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null
@@ -55,10 +51,6 @@ export function weeklyIn(kind: ProviderKind, said: unknown): Weekly | null {
   return null
 }
 
-function measured(kind: ProviderKind): boolean {
-  return kind === 'claude-code' || kind === 'codex'
-}
-
 class Usage {
   weeks = $state<Record<string, Weekly | null>>({})
 
@@ -69,7 +61,7 @@ class Usage {
   }
 
   async look(account: Pick<Provider, 'id' | 'kind'>, force = false): Promise<void> {
-    if (__EVEN_PLUGIN__ || !measured(account.kind)) return
+    if (__EVEN_PLUGIN__ || (account.kind !== 'claude-code' && account.kind !== 'codex')) return
     const last = this.asked.get(account.id)
     if (!force && last !== undefined && Date.now() - last < AGAIN) return
     this.asked.set(account.id, Date.now())
