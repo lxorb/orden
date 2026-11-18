@@ -5,7 +5,6 @@ import { isPaper, type Paper, PAPERS } from './papers'
 export type CanvasColour = string
 
 export const PRESET_COLOURS = ['1', '2', '3', '4', '5', '6'] as const
-
 const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i
 
 export type Side = 'top' | 'right' | 'bottom' | 'left'
@@ -168,7 +167,6 @@ function colourOf(value: unknown): CanvasColour | undefined {
 }
 
 export const FURTHEST = 1e9
-
 const held = (value: number): number => Math.min(FURTHEST, Math.max(-FURTHEST, value))
 
 const pixels = (value: unknown, fallback: number): number =>
@@ -185,16 +183,24 @@ function colour(value: unknown): { color?: CanvasColour } {
   return found === undefined ? {} : { color: found }
 }
 
+const placed = (
+  value: Record<string, unknown>,
+  width = DEFAULT_WIDTH,
+  height = DEFAULT_HEIGHT,
+) => ({
+  x: pixels(value.x, 0),
+  y: pixels(value.y, 0),
+  width: Math.max(1, pixels(value.width, width)),
+  height: Math.max(1, pixels(value.height, height)),
+  ...colour(value.color),
+})
+
 function readNode(value: unknown): CanvasNode | null {
   if (!isRecord(value) || !isString(value.id) || !value.id) return null
 
   const base: NodeBase = {
     id: value.id,
-    x: pixels(value.x, 0),
-    y: pixels(value.y, 0),
-    width: Math.max(1, pixels(value.width, DEFAULT_WIDTH)),
-    height: Math.max(1, pixels(value.height, DEFAULT_HEIGHT)),
-    ...colour(value.color),
+    ...placed(value),
     ...(value.locked === true ? { locked: true } : {}),
   }
 
@@ -335,11 +341,7 @@ function readShape(value: unknown): ShapeNode | null {
     id: value.id,
     type: 'shape',
     shape,
-    x: pixels(value.x, 0),
-    y: pixels(value.y, 0),
-    width: Math.max(1, pixels(value.width, DEFAULT_WIDTH)),
-    height: Math.max(1, pixels(value.height, DEFAULT_HEIGHT)),
-    ...colour(value.color),
+    ...placed(value),
     ...(value.locked === true ? { locked: true } : {}),
     ...(value.fill === true ? { fill: true } : {}),
     ...(value.up === true ? { up: true } : {}),
@@ -393,11 +395,7 @@ function readPage(value: unknown): PageNode | null {
   return {
     id: value.id,
     type: 'page',
-    x: pixels(value.x, 0),
-    y: pixels(value.y, 0),
-    width: Math.max(1, pixels(value.width, PAPERS.a4.width)),
-    height: Math.max(1, pixels(value.height, PAPERS.a4.height)),
-    ...colour(value.color),
+    ...placed(value, PAPERS.a4.width, PAPERS.a4.height),
     paper: isPaper(value.paper) ? value.paper : 'a4',
     pattern: isPattern(value.pattern) ? value.pattern : 'blank',
     ...(file && page > 0 ? { file, page } : {}),
@@ -514,7 +512,6 @@ function apart(file: Record<string, unknown>): Record<string, unknown> {
   const shapes = own ? kept(own.shapes, 'shape') : undefined
   const edges = kept(file.edges, 'line')
   const ink = own ? kept(own.ink, 'stroke') : undefined
-
   const ownChanged = own !== null && (shapes !== own.shapes || ink !== own.ink)
   if (nodes === file.nodes && edges === file.edges && !ownChanged) return file
 
@@ -523,6 +520,22 @@ function apart(file: Record<string, unknown>): Record<string, unknown> {
     nodes,
     edges,
     ...(key && ownChanged ? { [key]: { ...own, shapes, ink } } : {}),
+  }
+}
+
+function firstOfEach<T extends { id: string }>(
+  list: unknown,
+  read: (entry: unknown) => T | null,
+  ids: Set<string>,
+  into: T[],
+): void {
+  if (!Array.isArray(list)) return
+  for (const entry of list) {
+    const one = read(entry)
+    if (one && !ids.has(one.id)) {
+      ids.add(one.id)
+      into.push(one)
+    }
   }
 }
 
@@ -538,19 +551,9 @@ export function canvasIn(text: string): Canvas | null {
 
   if (!isRecord(parsed)) return null
   const file = apart(parsed)
-
   const nodes: CanvasNode[] = []
   const ids = new Set<string>()
-
-  if (Array.isArray(file.nodes)) {
-    for (const entry of file.nodes) {
-      const node = readNode(entry)
-      if (!node || ids.has(node.id)) continue
-
-      ids.add(node.id)
-      nodes.push(node)
-    }
-  }
+  firstOfEach(file.nodes, readNode, ids, nodes)
 
   const own = ownOf(file) ?? {}
 
@@ -561,41 +564,13 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
-  if (Array.isArray(own.shapes)) {
-    for (const entry of own.shapes) {
-      const shape = readShape(entry)
-      if (!shape || ids.has(shape.id)) continue
-
-      ids.add(shape.id)
-      nodes.push(shape)
-    }
-  }
-
+  firstOfEach(own.shapes, readShape, ids, nodes)
   const ink: InkStroke[] = []
   const inked = new Set<string>()
-
-  if (Array.isArray(own.ink)) {
-    for (const entry of own.ink) {
-      const stroke = strokeOf(entry)
-      if (!stroke || inked.has(stroke.id)) continue
-
-      inked.add(stroke.id)
-      ink.push(stroke)
-    }
-  }
-
+  firstOfEach(own.ink, strokeOf, inked, ink)
   const edges: CanvasEdge[] = []
   const seen = new Set<string>()
-
-  if (Array.isArray(file.edges)) {
-    for (const entry of file.edges) {
-      const edge = edgeOf(entry, ids)
-      if (!edge || seen.has(edge.id)) continue
-
-      seen.add(edge.id)
-      edges.push(edge)
-    }
-  }
+  firstOfEach(file.edges, (entry) => edgeOf(entry, ids), seen, edges)
 
   const order = Array.isArray(own.order)
     ? own.order.filter((id): id is string => isString(id) && !!id)
@@ -649,7 +624,7 @@ function writtenNode(node: CanvasNode): Record<string, unknown> {
     y: node.y,
     width: node.width,
     height: node.height,
-    ...(node.color === undefined ? {} : { color: node.color }),
+    color: node.color,
   }
 
   switch (node.type) {
@@ -662,12 +637,11 @@ function writtenNode(node: CanvasNode): Record<string, unknown> {
     case 'group':
       return {
         ...base,
-        ...(node.label === undefined ? {} : { label: node.label }),
-        ...(node.background === undefined ? {} : { background: node.background }),
-        ...(node.backgroundStyle === undefined ? {} : { backgroundStyle: node.backgroundStyle }),
+        label: node.label,
+        background: node.background,
+        backgroundStyle: node.backgroundStyle,
       }
     case 'shape':
-      return base
     case 'page':
       return base
   }
@@ -680,10 +654,10 @@ const writtenShape = (node: ShapeNode): Record<string, unknown> => ({
   y: node.y,
   width: node.width,
   height: node.height,
-  ...(node.color === undefined ? {} : { color: node.color }),
-  ...(node.fill ? { fill: true } : {}),
-  ...(node.up ? { up: true } : {}),
-  ...(node.text === undefined ? {} : { text: node.text }),
+  color: node.color,
+  fill: node.fill ? true : undefined,
+  up: node.up ? true : undefined,
+  text: node.text,
 })
 
 const writtenStroke = (stroke: InkStroke): Record<string, unknown> => ({
@@ -695,20 +669,12 @@ const writtenStroke = (stroke: InkStroke): Record<string, unknown> => ({
   points: packed(stroke.points),
 })
 
-const writtenEdge = (edge: CanvasEdge): Record<string, unknown> => ({
-  id: edge.id,
-  fromNode: edge.fromNode,
-  ...(edge.fromSide === undefined ? {} : { fromSide: edge.fromSide }),
-  ...(edge.fromEnd === undefined ? {} : { fromEnd: edge.fromEnd }),
-  toNode: edge.toNode,
-  ...(edge.toSide === undefined ? {} : { toSide: edge.toSide }),
-  ...(edge.toEnd === undefined ? {} : { toEnd: edge.toEnd }),
-  ...(edge.color === undefined ? {} : { color: edge.color }),
-  ...(edge.label === undefined ? {} : { label: edge.label }),
-})
+const writtenEdge = (edge: CanvasEdge): Record<string, unknown> => {
+  const { id, fromNode, fromSide, fromEnd, toNode, toSide, toEnd, color, label } = edge
+  return { id, fromNode, fromSide, fromEnd, toNode, toSide, toEnd, color, label }
+}
 
 const ORDEN_VERSION = 1
-
 const TABS = ['', '\t', '\t\t', '\t\t\t']
 
 const printed = (value: unknown, depth: number): string =>
