@@ -73,5 +73,6 @@ export function bindings(specs: BindingSpec[], overrides: KeyOverrides): KeyBind
   return built
 }
 
-export const boundKeymap = (specs: BindingSpec[]): Extension =>
-  keymap.compute([shortcutKeys], (state) => bindings(specs, state.facet(shortcutKeys)))
+export function boundKeymap(specs: BindingSpec[]): Extension {
+  return keymap.compute([shortcutKeys], (state) => bindings(specs, state.facet(shortcutKeys)))
+}
