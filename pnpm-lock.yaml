@@ -57,9 +57,6 @@ importers:
       '@evenrealities/evenhub-cli':
         specifier: 0.1.14
         version: 0.1.14(@types/node@26.4.1)(typescript@5.9.3)
-      '@evenrealities/pretext':
-        specifier: ^0.1.4
-        version: 0.1.4
       eslint:
         specifier: ^10.10.0
         version: 10.10.0(jiti@2.7.0)
