@@ -78,7 +78,7 @@
   }
 </script>
 
-<div class="card">
+<div class="pass-stack">
   <div class="orden-setting row">
     <span class="name">Unlock with</span>
     <Select
@@ -127,10 +127,10 @@
     />
   </div>
 </div>
-{#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+{#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 
 <h3 class="orden-section">Pass password</h3>
-<div class="card padded">
+<div class="pass-stack padded">
   {#if changing}
     <ChangePassword ondone={() => (changing = false)} oncancel={() => (changing = false)} />
   {:else}
@@ -148,7 +148,7 @@
 </div>
 
 <h3 class="orden-section">Recovery key</h3>
-<div class="card padded">
+<div class="pass-stack padded">
   {#if recovery}
     <output class="code" dir="ltr">{recovery}</output>
     <div class="buttons">
@@ -191,15 +191,7 @@
 </div>
 
 <style>
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card.padded {
+  .pass-stack.padded {
     padding: var(--space-2) var(--space-3);
   }
 
@@ -220,12 +212,6 @@
 
   .orden-section {
     margin: var(--space-3) 0 0;
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 
   .code {

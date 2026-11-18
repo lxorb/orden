@@ -41,7 +41,7 @@
   }
 </script>
 
-<section class="card" aria-label="Alias">
+<section class="pass-card" aria-label="Alias">
   <SwitchRow
     label="Forward mail to this alias"
     on={content.enabled}
@@ -68,13 +68,7 @@
 </section>
 
 <style>
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > :global(* + *) {
+  .pass-card > :global(* + *) {
     border-top: 1px solid var(--line);
   }
 

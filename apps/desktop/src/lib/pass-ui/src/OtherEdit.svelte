@@ -1,11 +1,5 @@
 <script lang="ts">
-  import {
-    type Custom,
-    type SshKey,
-    type Wifi,
-    WIFI_SECURITY,
-    type WifiSecurity,
-  } from '@orden/pass/types'
+  import { type Custom, type SshKey, type Wifi, WIFI_SECURITY } from '@orden/pass/types'
   import { canMakeSshKey, newSshKey, sshPublicOf } from '@orden/pass/ssh'
   import { message } from '../../ui-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
@@ -63,10 +57,6 @@
     const derived = sshPublicOf(content.privateKey)
     if (derived) content.publicKey = derived
   }
-
-  function securityIn(value: string): WifiSecurity {
-    return WIFI_SECURITY.find((one) => one === value) ?? 'wpa2'
-  }
 </script>
 
 {#if content.kind === 'ssh'}
@@ -102,7 +92,7 @@
       {content.privateKey.trim() === '' ? 'Generate key' : 'Generate a new key'}
     </button>
   {/if}
-  {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+  {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 {:else if content.kind === 'wifi'}
   <EditCard>
     <EditField
@@ -119,7 +109,7 @@
         value={content.security}
         options={securities}
         onchange={(value: string) => {
-          content.security = securityIn(value)
+          content.security = WIFI_SECURITY.find((one) => one === value) ?? 'wpa2'
           oninput()
         }}
       />
@@ -132,12 +122,6 @@
 <style>
   .generate {
     align-self: flex-start;
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 
   .security {

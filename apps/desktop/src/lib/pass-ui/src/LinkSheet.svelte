@@ -69,11 +69,11 @@
 <Sheet open={asked !== null} title="Create secure link" onclose={close}>
   <div class="link">
     {#if !signedIn}
-      <p class="quiet" data-signed-out>Sign in to share</p>
+      <p class="pass-quiet" data-signed-out>Sign in to share</p>
     {:else if !item || !vault || !mayEdit(vault)}
-      <p class="quiet">Only editors of the vault can make secure links.</p>
+      <p class="pass-quiet">Only editors of the vault can make secure links.</p>
     {:else if url !== null}
-      <p class="quiet">
+      <p class="pass-quiet">
         Anybody with this link can see {item.content.title || 'Untitled'}. It is shown only now.
       </p>
       <div class="made">
@@ -90,12 +90,12 @@
           Copy
         </button>
       </div>
-      <div class="buttons">
+      <div class="pass-buttons">
         <button class="orden-button is-quiet" type="button" onclick={close}>Done</button>
       </div>
     {:else}
       <form class="form" onsubmit={made}>
-        <p class="quiet">
+        <p class="pass-quiet">
           Anybody with the link sees this item without an account. Its attachments stay out.
         </p>
         <div class="orden-setting row">
@@ -127,7 +127,7 @@
           </p>
         {/if}
         {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
-        <div class="buttons">
+        <div class="pass-buttons">
           <button class="orden-button is-quiet" type="button" onclick={close}>Cancel</button>
           <button class="orden-button" type="submit" disabled={busy || !fits}>Create</button>
         </div>
@@ -172,23 +172,5 @@
     flex: 1;
     min-width: 0;
     font-family: var(--font-mono);
-  }
-
-  .quiet {
-    margin: 0;
-    color: var(--muted);
-    font-size: var(--text-sm);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
-  }
-
-  .buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-2);
   }
 </style>

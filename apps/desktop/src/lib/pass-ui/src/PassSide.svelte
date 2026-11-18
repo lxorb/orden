@@ -1,6 +1,7 @@
 <script lang="ts">
   import { report } from '@orden/pass/monitor'
   import type { Folder, Vault } from '@orden/pass/types'
+  import type { IconNode } from 'lucide'
   import type { Snippet } from 'svelte'
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
@@ -69,8 +70,8 @@
     return true
   }
 
-  function chosen(scope: Scope) {
-    void ui.choose(scope).then(() => onchosen?.())
+  function chosen(to: Scope | 'links' | 'monitor' | 'settings') {
+    void (typeof to === 'string' ? ui.goTo(to) : ui.choose(to)).then(() => onchosen?.())
   }
 
   function newItem(event: MouseEvent) {
@@ -105,6 +106,29 @@
   {/each}
 {/snippet}
 
+{#snippet row(
+  icon: IconNode,
+  label: string,
+  to: Scope | 'links' | 'monitor' | 'settings',
+  meta: number | null = null,
+  kind = '',
+)}
+  <button
+    class="orden-row"
+    class:is-on={typeof to === 'string' ? view.page === to : isOn(to)}
+    type="button"
+    onclick={() => chosen(to)}
+  >
+    <Glyph {icon} class="orden-row-mark" />
+    <span class="orden-row-label">{label}</span>
+    {#if meta !== null}
+      <span class={['orden-row-meta', kind]} data-invites={kind === 'invited' ? '' : null}
+        >{meta}</span
+      >
+    {/if}
+  </button>
+{/snippet}
+
 <nav class="side" aria-label="Pass">
   <div class="top">
     <button class="orden-button new" type="button" aria-haspopup="menu" onclick={newItem}>
@@ -116,16 +140,7 @@
 
   <div class="scroll" data-scrolls>
     <h3 class="orden-section">Vaults</h3>
-    <button
-      class="orden-row"
-      class:is-on={isOn({ kind: 'all' })}
-      type="button"
-      onclick={() => chosen({ kind: 'all' })}
-    >
-      <Glyph icon={Inbox} class="orden-row-mark" />
-      <span class="orden-row-label">All items</span>
-      <span class="orden-row-meta">{live.length}</span>
-    </button>
+    {@render row(Inbox, 'All items', { kind: 'all' }, live.length)}
     {#each pass.vaults as vault (vault.id)}
       {@const scope = { kind: 'vault' as const, vault: vault.id, folder: null }}
       <div class="vault-row">
@@ -166,75 +181,30 @@
 
     <div class="gap"></div>
 
-    <button
-      class="orden-row"
-      class:is-on={isOn({ kind: 'trash' })}
-      type="button"
-      onclick={() => chosen({ kind: 'trash' })}
-    >
-      <Glyph icon={Trash} class="orden-row-mark" />
-      <span class="orden-row-label">Trash</span>
-      {#if trashed}<span class="orden-row-meta">{trashed}</span>{/if}
-    </button>
+    {@render row(Trash, 'Trash', { kind: 'trash' }, trashed || null)}
 
     {#if shared}
       <h3 class="orden-section">Shared</h3>
-      <button
-        class="orden-row"
-        class:is-on={isOn({ kind: 'shared-with-me' })}
-        type="button"
-        onclick={() => chosen({ kind: 'shared-with-me' })}
-      >
-        <Glyph icon={UsersRound} class="orden-row-mark" />
-        <span class="orden-row-label">Shared with me</span>
-        {#if invited}<span class="orden-row-meta invited" data-invites>{invited}</span>{/if}
-      </button>
-      <button
-        class="orden-row"
-        class:is-on={isOn({ kind: 'shared-by-me' })}
-        type="button"
-        onclick={() => chosen({ kind: 'shared-by-me' })}
-      >
-        <Glyph icon={Share} class="orden-row-mark" />
-        <span class="orden-row-label">Shared by me</span>
-      </button>
-      <button
-        class="orden-row"
-        class:is-on={view.page === 'links'}
-        type="button"
-        onclick={() => void ui.goTo('links').then(() => onchosen?.())}
-      >
-        <Glyph icon={Link} class="orden-row-mark" />
-        <span class="orden-row-label">Secure links</span>
-      </button>
+      {@render row(
+        UsersRound,
+        'Shared with me',
+        { kind: 'shared-with-me' },
+        invited || null,
+        'invited',
+      )}
+      {@render row(Share, 'Shared by me', { kind: 'shared-by-me' })}
+      {@render row(Link, 'Secure links', 'links')}
     {/if}
 
     <div class="gap"></div>
 
-    <button
-      class="orden-row"
-      class:is-on={view.page === 'monitor'}
-      type="button"
-      onclick={() => void ui.goTo('monitor').then(() => onchosen?.())}
-    >
-      <Glyph icon={ShieldCheck} class="orden-row-mark" />
-      <span class="orden-row-label">Monitor</span>
-      {#if issues}<span class="orden-row-meta issues">{issues}</span>{/if}
-    </button>
+    {@render row(ShieldCheck, 'Monitor', 'monitor', issues || null, 'issues')}
   </div>
 
   <div class="foot">
     <SyncBadge onadopt={() => (ui.sheet = { kind: 'adopt' })} />
     {#if !corner}
-      <button
-        class="orden-row"
-        class:is-on={view.page === 'settings'}
-        type="button"
-        onclick={() => void ui.goTo('settings').then(() => onchosen?.())}
-      >
-        <Glyph icon={Settings} class="orden-row-mark" />
-        <span class="orden-row-label">Settings</span>
-      </button>
+      {@render row(Settings, 'Settings', 'settings')}
     {/if}
     <button class="orden-row" type="button" onclick={() => pass.lock()}>
       <Glyph icon={Lock} class="orden-row-mark" />
@@ -322,7 +292,8 @@
     translate: none;
   }
 
-  .invited {
+  .invited,
+  .issues {
     min-width: 18px;
     padding: 0 5px;
     border-radius: 99px;
@@ -332,12 +303,7 @@
   }
 
   .issues {
-    min-width: 18px;
-    padding: 0 5px;
-    border-radius: 99px;
     background: color-mix(in srgb, var(--callout-warning) 22%, transparent);
-    color: var(--text-strong);
-    text-align: center;
   }
 
   .gap {

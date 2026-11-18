@@ -239,10 +239,6 @@
   }
 
   .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
     overflow: hidden;
   }
 

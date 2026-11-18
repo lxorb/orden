@@ -23,7 +23,7 @@
 
 <section class="settings" aria-label="Settings">
   <header class="head">
-    <h2 class="title">Settings</h2>
+    <h2 class="pass-title">Settings</h2>
     <div class="orden-segmented tabs" role="tablist" aria-label="Settings">
       {#each SETTINGS_TABS as one (one)}
         <button
@@ -67,13 +67,6 @@
     flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-4) var(--space-5) var(--space-3);
-  }
-
-  .title {
-    margin: 0;
-    font-size: var(--text-head);
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
   }
 
   .tabs {

@@ -144,11 +144,11 @@
 
 <section class="monitor" aria-label="Monitor" data-scrolls>
   <header class="head">
-    <h2 class="title">Monitor</h2>
+    <h2 class="pass-title">Monitor</h2>
   </header>
 
   <div class="cards">
-    <div class="card is-first" class:is-bad={found.compromised.length > 0}>
+    <div class="pass-stack is-first" class:is-bad={found.compromised.length > 0}>
       <button
         class="orden-row press"
         type="button"
@@ -184,7 +184,7 @@
     </div>
 
     {#each cards as card (card.flag)}
-      <div class="card" class:is-bad={card.ids.length > 0 && card.flag !== 'excluded'}>
+      <div class="pass-stack" class:is-bad={card.ids.length > 0 && card.flag !== 'excluded'}>
         <button
           class="orden-row press"
           type="button"
@@ -205,7 +205,7 @@
   </div>
 
   <h3 class="orden-section">Dark web monitoring</h3>
-  <div class="card dark">
+  <div class="pass-stack dark">
     <div class="press is-static">
       <span class="mark"><Glyph icon={Radar} /></span>
       <span class="words">
@@ -244,7 +244,7 @@
             {/if}
           </div>
         {:else}
-          <p class="quiet">No email addresses in your logins</p>
+          <p class="pass-quiet">No email addresses in your logins</p>
         {/each}
         <div class="buttons">
           <button class="orden-button is-quiet" type="button" onclick={() => void forgetKey()}
@@ -273,25 +273,10 @@
     margin-bottom: var(--space-4);
   }
 
-  .title {
-    margin: 0;
-    font-size: var(--text-head);
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
-  }
-
   .cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
     gap: var(--space-3);
-  }
-
-  .card {
-    display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
   }
 
   .press {
@@ -390,12 +375,6 @@
 
   .bad {
     color: var(--danger);
-    font-size: var(--text-sm);
-  }
-
-  .quiet {
-    margin: 0;
-    color: var(--muted);
     font-size: var(--text-sm);
   }
 

@@ -37,7 +37,7 @@
 
 <Sheet {open} title="This account already has a Pass" onclose={close}>
   <form class="adopt" onsubmit={adopted}>
-    <p class="quiet">
+    <p class="pass-quiet">
       Another device made a Pass for this account first. Enter that Pass’s password to use it here;
       what is on this device moves into a vault of its own.
     </p>
@@ -51,7 +51,7 @@
       data-lands
     />
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
-    <div class="buttons">
+    <div class="pass-buttons">
       <button class="orden-button is-quiet" type="button" onclick={close}>Later</button>
       <button class="orden-button" type="submit" disabled={busy || password === ''}
         >Use that Pass</button
@@ -66,23 +66,5 @@
     flex-direction: column;
     gap: var(--space-3);
     padding: 0 var(--space-2) var(--space-2);
-  }
-
-  .quiet {
-    margin: 0;
-    color: var(--muted);
-    font-size: var(--text-sm);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
-  }
-
-  .buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-2);
   }
 </style>

@@ -158,7 +158,7 @@
   {/if}
 </div>
 
-{#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+{#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 
 {#if imported}
   <h3 class="orden-section">Ready to import</h3>
@@ -303,12 +303,6 @@
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 
   .buttons {

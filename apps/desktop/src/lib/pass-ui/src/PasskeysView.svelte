@@ -29,7 +29,7 @@
 </script>
 
 {#if content.passkeys.length}
-  <section class="card" aria-label="Passkeys">
+  <section class="pass-card" aria-label="Passkeys">
     <h3 class="orden-section">Passkeys</h3>
     {#each content.passkeys as key (key.id)}
       <div class="line" data-passkey={key.rpId}>
@@ -62,13 +62,7 @@
 {/if}
 
 <style>
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > .orden-section {
+  .pass-card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }

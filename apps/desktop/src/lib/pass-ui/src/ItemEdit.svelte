@@ -184,7 +184,7 @@
   </div>
 
   <div class="body" data-scrolls>
-    {#if error}<p class="wrong" role="alert">{error}</p>{/if}
+    {#if error}<p class="pass-wrong" role="alert">{error}</p>{/if}
 
     <EditCard>
       <EditField
@@ -308,11 +308,5 @@
     gap: var(--space-3);
     overflow-y: auto;
     padding: 0 var(--space-4) var(--space-6);
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>

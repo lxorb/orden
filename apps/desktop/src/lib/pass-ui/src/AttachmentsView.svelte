@@ -49,7 +49,7 @@
 </script>
 
 {#if item.attachments.length}
-  <section class="card" aria-label="Attachments">
+  <section class="pass-card" aria-label="Attachments">
     <h3 class="orden-section">Attachments</h3>
     {#each item.attachments as file (file.id)}
       <div class="line" data-file={file.name}>
@@ -85,13 +85,7 @@
 {/if}
 
 <style>
-  .card {
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-
-  .card > .orden-section {
+  .pass-card > .orden-section {
     margin: 0;
     padding: var(--space-3) var(--space-3) var(--space-1);
   }

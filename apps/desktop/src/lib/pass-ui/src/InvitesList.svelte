@@ -87,7 +87,7 @@
         </div>
       </div>
     {/each}
-    {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
+    {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
   </section>
 {/if}
 
@@ -137,11 +137,5 @@
     display: flex;
     gap: var(--space-1);
     margin-inline-start: auto;
-  }
-
-  .wrong {
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--danger);
   }
 </style>
