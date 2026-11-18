@@ -7,5 +7,5 @@ export function newField(kind: FieldKind): Field {
 }
 
 export function fieldShape(kind: FieldKind): 'text' | 'hidden' | 'date' {
-  return { text: 'text', hidden: 'hidden', totp: 'hidden', date: 'date' }[kind]
+  return ({ text: 'text', hidden: 'hidden', totp: 'hidden', date: 'date' } as const)[kind]
 }
