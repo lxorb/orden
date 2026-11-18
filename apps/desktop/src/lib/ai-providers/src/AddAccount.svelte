@@ -55,13 +55,7 @@
   }
 
   function back() {
-    trouble = ''
-    if (road && roads.length > 1) {
-      road = null
-      clear()
-      return
-    }
-    maker = null
+    if (!road || roads.length <= 1) maker = null
     road = null
     clear()
   }

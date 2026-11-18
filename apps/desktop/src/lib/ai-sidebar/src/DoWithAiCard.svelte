@@ -31,15 +31,16 @@
   }
 </script>
 
+{#snippet hinted(label: string, text: string)}
+  <span class="name"><span class="orden-named">{label}<Hint {text} /></span></span>
+{/snippet}
+
 <div class="card">
   <div class="orden-setting setting">
-    <span class="name"
-      ><span class="orden-named"
-        >Do with AI<Hint
-          text="Whether a task done with AI asks before each change or makes them on its own."
-        /></span
-      ></span
-    >
+    {@render hinted(
+      'Do with AI',
+      'Whether a task done with AI asks before each change or makes them on its own.',
+    )}
     <div class="orden-setting-value">
       <Select
         value={tasked}
@@ -54,13 +55,10 @@
     </div>
   </div>
   <label class="orden-setting setting asking">
-    <span class="name"
-      ><span class="orden-named"
-        >Instructions<Hint
-          text="What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment."
-        /></span
-      ></span
-    >
+    {@render hinted(
+      'Instructions',
+      'What a task done with AI is asked to do. It still ticks the task when done, or asks in a comment.',
+    )}
     <textarea
       class="orden-field ask"
       rows="3"
@@ -79,9 +77,7 @@
     {@const words = TOOL_WORDS[tool]}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="orden-setting setting pressable" onclick={() => turnTaskTool(tool)}>
-      <span class="name"
-        ><span class="orden-named">{words.label}<Hint text={words.hint} /></span></span
-      >
+      {@render hinted(words.label, words.hint)}
       <span
         class="orden-switch"
         class:on={taskTools[tool]}

@@ -8,8 +8,7 @@
   import type { Place } from '../../windows/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { agentRows } from '../../surfaces/src/api'
-  import type { ThreadHead } from '../../ai-providers/src/api'
-  import { ordered, stateOf } from '../../ai-providers/src/api'
+  import { ordered, stateOf, type ThreadHead } from '../../ai-providers/src/api'
   import { chat } from './chat-parts'
   import ChatRow from './ChatRow.svelte'
   import ChatWindow from './ChatWindow.svelte'
@@ -59,12 +58,8 @@
   function rowMenu(event: MouseEvent, one: ThreadHead) {
     menu.show(event, [
       { label: 'Rename', asks: true, run: () => void chat.rename(undefined, one.id) },
-      one.pinned
-        ? { label: 'Unpin', run: () => void chat.pin(one.id, false) }
-        : { label: 'Pin', run: () => void chat.pin(one.id) },
-      one.archived
-        ? { label: 'Unarchive', run: () => chat.unarchive(one.id) }
-        : { label: 'Archive', run: () => chat.archive(one.id) },
+      { label: one.pinned ? 'Unpin' : 'Pin', run: () => void chat.pin(one.id, !one.pinned) },
+      { label: one.archived ? 'Unarchive' : 'Archive', run: () => toggleArchived(one) },
       { label: 'Delete', danger: true, run: () => void chat.remove(one.id) },
     ])
   }

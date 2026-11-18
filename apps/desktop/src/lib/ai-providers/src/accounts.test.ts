@@ -4,6 +4,8 @@ import { added, CLAUDE, defaulted, defaultOf, GEMINI, isActive, merged, migrated
 import { NONE, OPENAI, removed, resolve, updated, used, vendorOf, vendors } from './accounts'
 import type { ProviderKind } from './providers'
 
+const ids = (state: Accounts) => state.accounts.map((one) => one.id).join(' ')
+
 function made(...kinds: ProviderKind[]): Accounts {
   return kinds.reduce((state, kind) => added(state, kind).state, NONE)
 }
@@ -20,12 +22,9 @@ describe('who serves an account', () => {
   test('a Gemini key and the Gemini CLI are Gemini, ranked after OpenAI', () => {
     expect(vendorOf({ id: 'gemini', kind: 'gemini' })).toBe(GEMINI)
     expect(vendorOf({ id: 'gemini-cli', kind: 'gemini-cli' })).toBe(GEMINI)
-    expect(vendors(made('compatible', 'gemini-cli', 'openai', 'anthropic'))).toEqual([
-      CLAUDE,
-      OPENAI,
-      GEMINI,
-      'compatible-1',
-    ])
+    expect(vendors(made('compatible', 'gemini-cli', 'openai', 'anthropic')).join(' ')).toBe(
+      `${CLAUDE} ${OPENAI} ${GEMINI} compatible-1`,
+    )
     const two = made('gemini-cli', 'gemini-cli')
     expect(two.accounts.map((one) => [one.id, one.own])).toEqual([
       ['gemini-cli', undefined],
@@ -42,14 +41,7 @@ describe('who serves an account', () => {
 describe('adding accounts', () => {
   test('the first of a kind keeps the id it always had, the next are counted', () => {
     const state = made('claude-code', 'anthropic', 'openai', 'anthropic', 'compatible', 'openai')
-    expect(state.accounts.map((one) => one.id)).toEqual([
-      'claude-code',
-      'anthropic',
-      'openai',
-      'anthropic-2',
-      'compatible-1',
-      'openai-2',
-    ])
+    expect(ids(state)).toBe('claude-code anthropic openai anthropic-2 compatible-1 openai-2')
   })
 
   test('a provider with none takes the first as its active one and the default', () => {
@@ -65,12 +57,7 @@ describe('adding accounts', () => {
 
   test('a second Claude Code or Codex is a home of its own, the first is the reader’s', () => {
     const state = made('claude-code', 'claude-code', 'codex', 'codex')
-    expect(state.accounts.map((one) => one.id)).toEqual([
-      'claude-code',
-      'claude-code-2',
-      'codex',
-      'codex-2',
-    ])
+    expect(ids(state)).toBe('claude-code claude-code-2 codex codex-2')
     expect(state.accounts.map((one) => one.own ?? false)).toEqual([false, true, false, true])
   })
 
@@ -176,7 +163,7 @@ describe('kept and read back', () => {
       active: { claude: 'nobody', openai: 7 },
       defaultVendor: 'nobody',
     })
-    expect(read.accounts.map((one) => one.id)).toEqual(['anthropic', 'openai'])
+    expect(ids(read)).toBe('anthropic openai')
     expect(read.accounts[1]?.own).toBeUndefined()
     expect(read.active).toEqual({ [CLAUDE]: 'anthropic', [OPENAI]: 'openai' })
     expect(read.defaultVendor).toBe(CLAUDE)
@@ -207,12 +194,7 @@ describe('from what the window kept before', () => {
   }
 
   test('every row keeps its id, so its key and its threads are found', () => {
-    expect(migrated(old).accounts.map((one) => one.id)).toEqual([
-      'claude-code',
-      'anthropic',
-      'codex',
-      'compatible-1',
-    ])
+    expect(ids(migrated(old))).toBe('claude-code anthropic codex compatible-1')
   })
 
   test('the default row is its provider’s active one, and the others’ first', () => {
@@ -243,10 +225,7 @@ describe('from what the window kept before', () => {
       defaultId: 'openai',
     })
     const both = merged(kept, other)
-    expect(both.accounts.map((one) => one.id)).toEqual([
-      ...kept.accounts.map((one) => one.id),
-      'openai',
-    ])
+    expect(ids(both)).toBe(`${ids(kept)} openai`)
     expect(both.accounts[1]?.name).toBe('')
     expect(both.active).toEqual(kept.active)
     expect(merged(kept, NONE)).toBe(kept)

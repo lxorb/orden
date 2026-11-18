@@ -5,9 +5,8 @@
   import { settingsWindow } from '@orden/contracts'
   import { keysMoved } from './keys-moved.svelte'
 
-  const words = $derived(
-    'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.',
-  )
+  const words =
+    'Orden no longer keeps AI keys in the Mac’s keychain, which kept asking for its password. Enter your keys and sign in to ChatGPT once more.'
 </script>
 
 {#if keysMoved.showing}
