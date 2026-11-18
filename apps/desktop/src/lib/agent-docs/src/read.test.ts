@@ -22,6 +22,10 @@ const NOTE = [
   '',
 ].join('\n')
 
+function edited(text: string, edit: Record<string, unknown>): string {
+  return applied(text, plan(readEdits([edit]), text).edits)
+}
+
 describe('a note, read', () => {
   test('is the words as the reader has them, unsaved ones and all', async () => {
     const { desk, panes } = deskWith({ 'plan.md': 'saved' }, ['plan.md'])
@@ -123,8 +127,9 @@ describe('a note whose front matter holds a comment like a heading', () => {
   ].join('\n')
 
   test('has in its outline only the headings of its words', async () => {
-    const { desk } = deskWith({ 'books.md': BOOKS }, [])
-    const read = await readNote(desk, { path: 'books.md' }, ['outline'])
+    const read = await readNote(deskWith({ 'books.md': BOOKS }).desk, { path: 'books.md' }, [
+      'outline',
+    ])
 
     expect(read.outline).toEqual([
       { anchor: { heading: 'Reading list' }, level: 1, title: 'Reading list', line: 4 },
@@ -143,28 +148,21 @@ describe('a note whose front matter holds a comment like a heading', () => {
       'Later ^idea',
       '',
     ].join('\n')
-    const { desk } = deskWith({ 'list.md': note }, [])
-    const read = await readNote(desk, { path: 'list.md' }, ['tasks', 'blocks'])
+    const read = await readNote(deskWith({ 'list.md': note }).desk, { path: 'list.md' }, [
+      'tasks',
+      'blocks',
+    ])
 
     expect(read.tasks?.map((row) => row.anchor)).toEqual([{ task: 'Buy milk' }])
     expect(read.blocks?.map((row) => row.line)).toEqual([7])
   })
 
   test('takes an addition under its one heading, and keeps the front matter whole', () => {
-    const under = applied(
-      BOOKS,
-      plan(readEdits([{ at: { heading: 'Reading list' }, insert_after: '- Emma' }]), BOOKS).edits,
+    const at = { heading: 'Reading list' }
+    expect(edited(BOOKS, { at, insert_after: '- Emma' })).toContain('- Dune\n\n- Emma')
+    expect(edited(BOOKS, { at, insert_before: 'Started in May.' })).toMatch(
+      /^---\n# Reading list\nstatus: draft\n---\n/,
     )
-    const before = applied(
-      BOOKS,
-      plan(
-        readEdits([{ at: { heading: 'Reading list' }, insert_before: 'Started in May.' }]),
-        BOOKS,
-      ).edits,
-    )
-
-    expect(under).toContain('- Dune\n\n- Emma')
-    expect(before.startsWith('---\n# Reading list\nstatus: draft\n---\n')).toBe(true)
   })
 })
 
@@ -197,25 +195,16 @@ describe('a task with subtasks under it', () => {
   const NOTE = '- [ ] Plan trip\n  - [ ] Book flights\n  - [ ] Book hotel\n- [ ] Pay rent\n'
 
   test('takes a task inserted after it below its subtasks', () => {
-    const after = applied(
-      NOTE,
-      plan(readEdits([{ at: { task: 'Plan trip' }, insert_after: '- [ ] Pack' }]), NOTE).edits,
-    )
-    expect(after).toBe(
+    expect(edited(NOTE, { at: { task: 'Plan trip' }, insert_after: '- [ ] Pack' })).toBe(
       '- [ ] Plan trip\n  - [ ] Book flights\n  - [ ] Book hotel\n- [ ] Pack\n- [ ] Pay rent\n',
     )
   })
 
   test('is deleted with its subtasks, and replaced without them', () => {
-    expect(
-      applied(NOTE, plan(readEdits([{ at: { task: 'Plan trip' }, delete: true }]), NOTE).edits),
-    ).toBe('- [ ] Pay rent\n')
-    expect(
-      applied(
-        NOTE,
-        plan(readEdits([{ at: { task: 'Plan trip' }, replace: '- [ ] Plan the trip' }]), NOTE)
-          .edits,
-      ),
-    ).toBe('- [ ] Plan the trip\n  - [ ] Book flights\n  - [ ] Book hotel\n- [ ] Pay rent\n')
+    const at = { task: 'Plan trip' }
+    expect(edited(NOTE, { at, delete: true })).toBe('- [ ] Pay rent\n')
+    expect(edited(NOTE, { at, replace: '- [ ] Plan the trip' })).toBe(
+      '- [ ] Plan the trip\n  - [ ] Book flights\n  - [ ] Book hotel\n- [ ] Pay rent\n',
+    )
   })
 })

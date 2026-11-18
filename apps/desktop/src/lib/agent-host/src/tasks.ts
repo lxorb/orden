@@ -107,10 +107,6 @@ async function baseToAnswer(call: Call, name = 'path') {
   return { ...found, base }
 }
 
-async function model() {
-  return import('../../tasks-model/src/api')
-}
-
 function todoOut(todo: Todo) {
   return {
     id: todo.id,
@@ -133,12 +129,13 @@ function namedSpace(call: Call): TodoSpace | null {
   return todoSpaceOf(placeFor(call, kept?.id ?? named).space)
 }
 
+const unreached = () =>
+  new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+
 function openSpace(call: Call): TodoSpace | null {
   const thread = threadSpaceOf(call.caller)
   const open = workspace.spaces.find((one) => one.id === thread) ?? workspace.activeSpace ?? null
-  if (!reachesSpace(call, open?.id ?? null)) {
-    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
-  }
+  if (!reachesSpace(call, open?.id ?? null)) throw unreached()
   return open ? todoSpaceOf(open) : null
 }
 
@@ -194,7 +191,7 @@ function patchOf(call: Call): TodoPatch {
 }
 
 export async function listTasks(call: Call): Promise<AgentAnswer> {
-  const { todos, sortedTodos } = await model()
+  const { todos, sortedTodos } = await import('../../tasks-model/src/api')
   const space = namedSpace(call)
   const label = maybe(call, 'label')
   const withDone = flag(call, 'done')
@@ -217,22 +214,20 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
 }
 
 export async function addTask(call: Call): Promise<AgentAnswer> {
-  const { todos } = await model()
+  const { todos } = await import('../../tasks-model/src/api')
   const title = maybe(call, 'title') ?? need(call, 'text')
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
   const patch = patchOf(call)
   const space = 'space' in call.args ? (patch.space ?? null) : (openSpace(call)?.id ?? null)
-  if (!reachesTodoSpace(call, space)) {
-    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
-  }
+  if (!reachesTodoSpace(call, space)) throw unreached()
   const made = await todos.add({ ...patch, title, space, done: false })
   if (!made.ok) throw new Refused('bad_arguments', made.error.message)
   return done(todoOut(made.value))
 }
 
 export async function updateTask(call: Call): Promise<AgentAnswer> {
-  const { todos } = await model()
+  const { todos } = await import('../../tasks-model/src/api')
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
   if (!was || !reachesTodoSpace(call, was.space))
@@ -240,9 +235,7 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
   const patch = patchOf(call)
-  if ('space' in call.args && !reachesTodoSpace(call, patch.space ?? null)) {
-    throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
-  }
+  if ('space' in call.args && !reachesTodoSpace(call, patch.space ?? null)) throw unreached()
   const kept = await todos.update(id, patch)
   if (!kept.ok) throw new Refused('bad_arguments', kept.error.message)
   return done(todoOut(kept.value))

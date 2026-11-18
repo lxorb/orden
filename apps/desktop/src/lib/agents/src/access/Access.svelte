@@ -128,6 +128,23 @@
   })
 </script>
 
+{#snippet connected(
+  name: string,
+  used: { readOnly: boolean; lastUsedAt?: number | null },
+  label: string,
+  disabled: boolean,
+  onclick: () => unknown,
+)}
+  <div class="orden-setting connected" transition:slide={{ duration: dur(180), easing: cubicOut }}>
+    <AgentMark {name} />
+    <span class="name">
+      {name}
+      <small>{access(used.readOnly)} {when(used.lastUsedAt)}</small>
+    </span>
+    <button class="orden-chip is-quiet" {disabled} {onclick}>{label}</button>
+  </div>
+{/snippet}
+
 <div class="agents" bind:this={root}>
   {#key agent?.id}
     <div class="page" in:arrive>
@@ -161,42 +178,19 @@
 
             {#if account.user}
               {#each connectors.clients as one (one.id)}
-                <div
-                  class="orden-setting connected"
-                  transition:slide={{ duration: dur(180), easing: cubicOut }}
-                >
-                  <AgentMark name={one.name} />
-                  <span class="name">
-                    {one.name}
-                    <small>{access(one.readOnly)} {when(one.lastUsedAt)}</small>
-                  </span>
-                  <button class="orden-chip is-quiet" onclick={() => connectors.disconnect(one.id)}>
-                    Disconnect
-                  </button>
-                </div>
+                {@render connected(one.name, one, 'Disconnect', false, () =>
+                  connectors.disconnect(one.id),
+                )}
               {/each}
 
               {#if connectors.token?.exists}
-                <div
-                  class="orden-setting connected"
-                  transition:slide={{ duration: dur(180), easing: cubicOut }}
-                >
-                  <AgentMark name="Pasted token" />
-                  <span class="name">
-                    Pasted token
-                    <small
-                      >{access(connectors.token.readOnly)}
-                      {when(connectors.token.lastUsedAt)}</small
-                    >
-                  </span>
-                  <button
-                    class="orden-chip is-quiet"
-                    disabled={connectors.busy}
-                    onclick={() => connectors.revokeToken()}
-                  >
-                    Revoke
-                  </button>
-                </div>
+                {@render connected(
+                  'Pasted token',
+                  connectors.token,
+                  'Revoke',
+                  connectors.busy,
+                  () => connectors.revokeToken(),
+                )}
               {/if}
             {/if}
           </div>
@@ -319,6 +313,20 @@
     stroke-width: 1.5;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  .agents :global(pre) {
+    width: 100%;
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+    overflow-x: auto;
+    color: var(--muted-strong);
   }
 
   .agents :global(.hint) {

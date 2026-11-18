@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { located } from './desk'
+import { type Desk, located } from './desk'
 import { editNote, putBackAt, tracksMoved, tracksOf, undoAgent, undoSomeAt } from './edit'
 import { touchedBy } from './touched'
-import { deskWith } from './test-desk'
+import { deskOpen, deskWith } from './test-desk'
+
+const A = { path: 'a.md' }
 
 let made = 0
 function anAgent() {
@@ -14,64 +16,54 @@ function idsOf(agent: { id: string }, path: string): string[] {
   return tracksOf(agent.id).get(`/space/${path}`)?.ids ?? []
 }
 
+function swap(desk: Desk, agent: { id: string; name: string }, quote: string, replace: string) {
+  return editNote(desk, agent, A, [{ at: { quote }, replace }])
+}
+
+function some(desk: Desk, agent: { id: string; name: string }, ids: string[], token?: string) {
+  return undoSomeAt(desk, agent, located(desk, A), new Set(ids), token)
+}
+
 describe('one change taken back among others', () => {
   test('goes, and the reader’s typing and the agent’s later edits elsewhere stay', async () => {
-    const { desk, panes } = deskWith({ 'a.md': 'one two three' }, ['a.md'])
-    const pane = panes['a.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane } = deskOpen('a.md', 'one two three')
     const agent = anAgent()
 
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'one' }, replace: 'ONE' }])
+    await swap(desk, agent, 'one', 'ONE')
     pane.type(pane.text.length, ' four')
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'three' }, replace: 'THREE' }])
+    await swap(desk, agent, 'three', 'THREE')
     pane.type(0, '> ')
     expect(pane.text).toBe('> ONE two THREE four')
 
-    const [first] = idsOf(agent, 'a.md')
-    const note = located(desk, { path: 'a.md' })
-    const went = await undoSomeAt(desk, agent, note, new Set([first ?? '']))
-
-    expect(went).toEqual([first])
+    const [first = ''] = idsOf(agent, 'a.md')
+    expect(await some(desk, agent, [first])).toEqual([first])
     expect(pane.text).toBe('> one two THREE four')
     expect(idsOf(agent, 'a.md')).toHaveLength(1)
 
-    await undoAgent(desk, agent, { path: 'a.md' })
+    await undoAgent(desk, agent, A)
     expect(pane.text).toBe('> one two three four')
   })
 
   test('takes a later edit that rewrote its words with it', async () => {
-    const { desk, panes } = deskWith({ 'a.md': 'alpha' }, ['a.md'])
-    const pane = panes['a.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane } = deskOpen('a.md', 'alpha')
     const agent = anAgent()
 
-    await editNote(desk, agent, { path: 'a.md' }, [
-      { at: { quote: 'alpha' }, replace: 'beta gamma' },
-    ])
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'gamma' }, replace: 'delta' }])
+    await swap(desk, agent, 'alpha', 'beta gamma')
+    await swap(desk, agent, 'gamma', 'delta')
     expect(pane.text).toBe('beta delta')
 
-    const [first, second] = idsOf(agent, 'a.md')
-    const went = await undoSomeAt(
-      desk,
-      agent,
-      located(desk, { path: 'a.md' }),
-      new Set([first ?? '']),
-    )
-    expect(went).toEqual([first, second])
+    const [first = '', second] = idsOf(agent, 'a.md')
+    expect(await some(desk, agent, [first])).toEqual([first, second])
     expect(pane.text).toBe('alpha')
   })
 
   test('is one Ctrl+Z, which puts it back', async () => {
-    const { desk, panes } = deskWith({ 'a.md': 'one two' }, ['a.md'])
-    const pane = panes['a.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane } = deskOpen('a.md', 'one two')
     const agent = anAgent()
 
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'one' }, replace: 'ONE' }])
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
-    const [first] = idsOf(agent, 'a.md')
-    await undoSomeAt(desk, agent, located(desk, { path: 'a.md' }), new Set([first ?? '']))
+    await swap(desk, agent, 'one', 'ONE')
+    await swap(desk, agent, 'two', 'TWO')
+    await some(desk, agent, idsOf(agent, 'a.md').slice(0, 1))
     expect(pane.text).toBe('one TWO')
 
     pane.undo()
@@ -80,33 +72,29 @@ describe('one change taken back among others', () => {
   })
 
   test('in a closed note, through what was written there since', async () => {
-    const { desk, panes, close, fileOf, disk } = deskWith({ 'a.md': 'one two' }, ['a.md'])
+    const { desk, pane, close, fileOf, disk } = deskOpen('a.md', 'one two')
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'one' }, replace: 'ONE' }])
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
-    expect(panes['a.md']?.text).toBe('ONE TWO')
+    await swap(desk, agent, 'one', 'ONE')
+    await swap(desk, agent, 'two', 'TWO')
+    expect(pane.text).toBe('ONE TWO')
     close('a.md')
     disk.set('/space/a.md', 'ONE TWO three')
 
-    const [, second] = idsOf(agent, 'a.md')
-    await undoSomeAt(desk, agent, located(desk, { path: 'a.md' }), new Set([second ?? '']))
+    await some(desk, agent, idsOf(agent, 'a.md').slice(1))
     expect(fileOf('a.md')).toBe('ONE two three')
   })
 
   test('comes back with a Redo, through what was typed since', async () => {
-    const { desk, panes } = deskWith({ 'a.md': 'one two' }, ['a.md'])
-    const pane = panes['a.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane } = deskOpen('a.md', 'one two')
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+    await swap(desk, agent, 'two', 'TWO')
 
-    const note = located(desk, { path: 'a.md' })
-    await undoSomeAt(desk, agent, note, new Set(idsOf(agent, 'a.md')), 'rewind-1')
+    await some(desk, agent, idsOf(agent, 'a.md'), 'rewind-1')
     expect(pane.text).toBe('one two')
     pane.type(0, 'zero ')
 
-    const back = await putBackAt(desk, agent, note, 'rewind-1')
-    expect(back).toHaveLength(1)
+    const note = located(desk, A)
+    expect(await putBackAt(desk, agent, note, 'rewind-1')).toHaveLength(1)
     expect(pane.text).toBe('zero one TWO')
     expect(await putBackAt(desk, agent, note, 'rewind-1')).toEqual([])
   })
@@ -116,17 +104,17 @@ describe('a closed note whose write is refused', () => {
   test('keeps what would have gone, to be asked for again', async () => {
     const { desk, fileOf, refusing } = deskWith({ 'a.md': 'one two' })
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+    await swap(desk, agent, 'two', 'TWO')
     const ids = idsOf(agent, 'a.md')
-    const note = located(desk, { path: 'a.md' })
+    const note = located(desk, A)
 
     refusing.next = true
-    expect(await undoSomeAt(desk, agent, note, new Set(ids), 'rewind-1')).toEqual([])
+    expect(await some(desk, agent, ids, 'rewind-1')).toEqual([])
     expect(idsOf(agent, 'a.md')).toEqual(ids)
     expect(tracksOf(agent.id).get('/space/a.md')?.holds('rewind-1')).toBe(false)
     expect(fileOf('a.md')).toBe('one TWO')
 
-    expect(await undoSomeAt(desk, agent, note, new Set(ids), 'rewind-1')).toEqual(ids)
+    expect(await some(desk, agent, ids, 'rewind-1')).toEqual(ids)
     expect(fileOf('a.md')).toBe('one two')
 
     refusing.next = true
@@ -143,7 +131,7 @@ describe('a closed note opened and written in while its write is refused', () =>
   test('takes back the agent’s words, not the ones beside them', async () => {
     const { desk, open, disk } = deskWith({ 'a.md': 'one two' })
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+    await swap(desk, agent, 'two', 'TWO')
 
     const replace = desk.replaceInNotes.bind(desk)
     let pane: ReturnType<typeof open> | null = null
@@ -155,9 +143,9 @@ describe('a closed note opened and written in while its write is refused', () =>
       pane.type(0, 'zero ')
       return Promise.resolve(0)
     }
-    expect(await undoAgent(desk, agent, { path: 'a.md' })).toEqual({ undone: 0 })
+    expect(await undoAgent(desk, agent, A)).toEqual({ undone: 0 })
 
-    expect(await undoAgent(desk, agent, { path: 'a.md' })).toEqual({ undone: 1 })
+    expect(await undoAgent(desk, agent, A)).toEqual({ undone: 1 })
     expect(disk.size).toBe(1)
     expect((pane as unknown as { text: string }).text).toBe('zero one two')
   })
@@ -165,21 +153,19 @@ describe('a closed note opened and written in while its write is refused', () =>
 
 describe('where an agent’s edits are', () => {
   test('is carried through the reader’s typing, and forgotten once taken back', async () => {
-    const { desk, panes } = deskWith({ 'a.md': 'one two' }, ['a.md'])
-    const pane = panes['a.md']
-    if (!pane) throw new Error('open')
+    const { desk, pane } = deskOpen('a.md', 'one two')
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'a.md' }, [{ at: { quote: 'two' }, replace: 'TWO' }])
+    await swap(desk, agent, 'two', 'TWO')
 
     const track = tracksOf(agent.id).get('/space/a.md')
-    const [id] = track?.ids ?? []
-    expect(track?.spansOf(id ?? '')).toEqual([{ from: 4, to: 7, removed: 'two', inserted: 'TWO' }])
+    const [id = ''] = track?.ids ?? []
+    expect(track?.spansOf(id)).toEqual([{ from: 4, to: 7, removed: 'two', inserted: 'TWO' }])
 
     pane.type(0, 'ah ')
-    expect(track?.spansOf(id ?? '')).toEqual([{ from: 7, to: 10, removed: 'two', inserted: 'TWO' }])
+    expect(track?.spansOf(id)).toEqual([{ from: 7, to: 10, removed: 'two', inserted: 'TWO' }])
 
-    await undoAgent(desk, agent, { path: 'a.md' })
-    expect(track?.spansOf(id ?? '')).toEqual([])
+    await undoAgent(desk, agent, A)
+    expect(track?.spansOf(id)).toEqual([])
   })
 })
 
