@@ -6,8 +6,6 @@ import { answerFor, type Helper, helpers } from './helpers.svelte'
 import type { Offered } from './route'
 import { agentsOf } from '../review/changes'
 
-export const HELPER_TOOLS: ReadonlySet<string> = new Set(['run_agent', 'agent_result'])
-
 export const WAIT = 20_000
 
 const LISTING = 10_000
