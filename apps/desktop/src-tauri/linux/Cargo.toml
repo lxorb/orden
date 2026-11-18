@@ -212,6 +212,7 @@ percent-encoding.workspace = true
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 orden-apps = { path = "crates/apps" }
+orden-browsers = { path = "crates/browsers" }
 orden-crashes = { path = "crates/crashes" }
 orden-dictation = { path = "crates/dictation" }
 orden-explorer = { path = "crates/explorer" }
@@ -224,7 +225,6 @@ tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["devtools"] }
 tauri-plugin-dialog.workspace = true
 tauri-plugin-process = "=3.0.0-alpha.3"
 tempfile.workspace = true
-plist.workspace = true
 tauri-plugin-single-instance = { version = "=3.0.0-alpha.3", features = ["deep-link"] }
 tauri-plugin-updater = "=3.0.0-alpha.3"
 tauri-plugin-global-shortcut = "=3.0.0-alpha.3"

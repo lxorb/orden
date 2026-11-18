@@ -10,14 +10,8 @@ mod ai_cli;
 mod app_place;
 #[cfg(desktop)]
 mod appearance;
-#[cfg(desktop)]
-mod browser_data;
-#[cfg(desktop)]
-mod browser_profiles;
 #[cfg(test)]
 mod calls;
-#[cfg(desktop)]
-mod chromium_profiles;
 #[cfg(target_os = "linux")]
 mod chromium_pump;
 #[cfg(desktop)]
@@ -32,8 +26,6 @@ mod endpoint;
 mod engine;
 #[cfg(desktop)]
 mod extensions;
-#[cfg(desktop)]
-mod firefox_profiles;
 #[cfg(desktop)]
 mod foreground;
 #[cfg(desktop)]
@@ -88,8 +80,6 @@ mod placement;
 mod quick_add;
 #[cfg(desktop)]
 mod reminders;
-#[cfg(desktop)]
-mod safari;
 #[cfg(desktop)]
 mod shortcuts;
 #[cfg(desktop)]
@@ -154,9 +144,6 @@ mod web_tint;
 mod web_worlds;
 #[cfg(desktop)]
 mod window_drag;
-#[cfg(desktop)]
-#[cfg(desktop)]
-mod zen_profiles;
 
 use orden_base::paths::{self, Picked};
 use orden_base::{logs, trace, Engine};
@@ -340,16 +327,16 @@ macro_rules! desktop_commands {
             orden_system::fonts::font_families,
             window_drag::window_frame,
             full_screen::window_is_fullscreen,
-            zen_profiles::zen_profiles,
-            zen_profiles::read_zen_file,
-            zen_profiles::read_zen_places,
-            browser_profiles::browser_profiles,
-            browser_profiles::read_browser_file,
-            firefox_profiles::read_firefox_places,
-            chromium_profiles::read_arc_sidebar,
-            browser_data::read_browser_history,
-            browser_data::read_browser_icons,
-            safari::read_safari,
+            orden_browsers::zen_profiles::zen_profiles,
+            orden_browsers::zen_profiles::read_zen_file,
+            orden_browsers::zen_profiles::read_zen_places,
+            orden_browsers::browser_profiles::browser_profiles,
+            orden_browsers::browser_profiles::read_browser_file,
+            orden_browsers::firefox_profiles::read_firefox_places,
+            orden_browsers::chromium_profiles::read_arc_sidebar,
+            orden_browsers::browser_data::read_browser_history,
+            orden_browsers::browser_data::read_browser_icons,
+            orden_browsers::safari::read_safari,
             page_style::wear_page_styles,
             launch::take_startup_pages,
             launch::take_startup_pdfs,
