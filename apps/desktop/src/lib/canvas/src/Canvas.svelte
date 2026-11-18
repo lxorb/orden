@@ -1257,17 +1257,11 @@
 
     const pointerType = 'pointerType' in event ? (event as PointerEvent).pointerType : ''
     const touch = pointerType === 'touch' || performance.now() - touchUpAt < 350
-    if (!touch || store.editing !== null) return
+    if (!touch || store.editing !== null || event.detail !== 2) return
 
-    if (event.detail === 2) {
-      touchMultiTapAt = performance.now()
-      event.preventDefault()
-      store.undo()
-    } else if (event.detail === 3) {
-      touchMultiTapAt = performance.now()
-      event.preventDefault()
-      store.redo()
-    }
+    touchMultiTapAt = performance.now()
+    event.preventDefault()
+    store.undo()
   }
 
   function showMenu(point: Point, about = false, buttons = 0) {
