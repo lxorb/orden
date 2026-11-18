@@ -151,6 +151,10 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'wikilink':
     case 'embed': {
       const link = token.link as Wikilink | undefined
+      if (link?.embed && embedKind(link.target) === 'image') {
+        const named = embedSize(link.alias) === null ? (link.alias ?? '') : ''
+        return [{ ...marks, text: named, picture: link.target }]
+      }
       return [{ ...marks, text: link ? shownText(link) : token.raw }]
     }
 
@@ -345,16 +349,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
         const html = String((token as Tokens.Generic).text ?? '')
         if (PAGE_BREAK.test(html)) out.push({ kind: 'break' })
         const pictures = picturesOfHtml(html)
-        if (
-          pictures.length &&
-          !html
-            .replace(IMG_TAG, '')
-            .replace(/<\/?p>/gi, '')
-            .trim()
-        ) {
-          out.push({ kind: 'paragraph', spans: pictures })
-          break
-        }
+        if (pictures.length) out.push({ kind: 'paragraph', spans: pictures })
         for (const words of wordsOfHtml(html)) {
           const spans = words
             .split('\n')

@@ -123,10 +123,12 @@ function pictureEdits(source: string, rename: (src: string) => string | null): E
     for (const match of line.matchAll(IMG_SOURCE)) {
       if (inCode(spans, at + match.index)) continue
       const written = match[1] ?? match[2] ?? ''
-      const wanted = rename(written)
-      if (wanted === null || wanted === written) continue
+      const name = written.replaceAll('&quot;', '"').replaceAll('&amp;', '&')
+      const wanted = rename(name)
+      if (wanted === null || wanted === name) continue
       const from = at + match.index + match[0].length - written.length - 1
-      edits.push({ from, to: from + written.length, text: wanted.replaceAll('"', '%22') })
+      const text = wanted.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+      edits.push({ from, to: from + written.length, text })
     }
 
     const definition: RegExpExecArray | null = paragraph ? null : DEFINITION.exec(line)

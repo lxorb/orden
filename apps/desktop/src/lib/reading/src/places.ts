@@ -1,5 +1,4 @@
-import { CodeBlocks, WORDS } from '@orden/markdown/fences'
-import { frontMatterBlock } from '@orden/markdown/front-matter'
+import { wordRows } from '@orden/markdown/links'
 
 export interface Section {
   index: number
@@ -30,24 +29,10 @@ export function positionOf(section: Section, offsets: readonly number[], end: nu
   return Math.round(from + Math.min(1, Math.max(0, fraction)) * Math.max(0, next - from))
 }
 
-function frontMatterEnd(text: string): number {
-  return frontMatterBlock(text)?.to ?? 0
-}
-
 const ATX = /^ {0,3}#{1,6}(?:\s|$)/
 
 export function headingOffsets(text: string): number[] {
   const found: number[] = []
-  const code = new CodeBlocks()
-  let at = frontMatterEnd(text)
-
-  for (;;) {
-    const end = text.indexOf('\n', at)
-    const line = text.slice(at, end === -1 ? text.length : end)
-
-    if (code.line(line) === WORDS && ATX.test(line)) found.push(at)
-
-    if (end === -1) return found
-    at = end + 1
-  }
+  for (const row of wordRows(text)) if (ATX.test(row.text)) found.push(row.from)
+  return found
 }

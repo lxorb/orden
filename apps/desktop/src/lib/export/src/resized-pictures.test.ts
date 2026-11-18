@@ -21,3 +21,10 @@ describe('a picture resized in Live Preview, which writes it as an <img> tag', (
     expect(text).toContain('assets/pic.png')
   })
 })
+
+test('a resized picture with & in its name points at its copy in a TextBundle', () => {
+  const source = '<img src="R&amp;D.png" alt="" style="zoom:50%;" />\n'
+  const picture = { ...PICTURE, src: 'R&D.png', name: 'R&D.png' }
+  const text = bundleFiles(source, [picture]).find((file) => file.path === 'text.md')?.body
+  expect(text).toContain('src="assets/R&amp;D.png"')
+})

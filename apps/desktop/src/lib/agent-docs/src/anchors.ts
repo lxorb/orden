@@ -234,13 +234,26 @@ function under(heading: HeadingAt, wanted: readonly string[]): boolean {
   return true
 }
 
-function section(anchor: Extract<Anchor, { heading: string }>, text: string): Place {
-  const wanted = steps(anchor.heading)
-  const whole = anchor.heading.trim()
-
-  const found = headingsIn(text).filter(
+function headingsNamed(headings: readonly HeadingAt[], named: string): HeadingAt[] {
+  const wanted = steps(named)
+  const whole = named.trim()
+  return headings.filter(
     (heading) => under(heading, wanted) || (wanted.length > 1 && names(whole, heading.title)),
   )
+}
+
+export function headingAnchor(
+  headings: readonly HeadingAt[],
+  heading: HeadingAt,
+): { heading: string; nth?: number } {
+  const path = headingPath(heading)
+  const found = headingsNamed(headings, path)
+  const nth = found.indexOf(heading) + 1
+  return found.length > 1 && nth > 0 ? { heading: path, nth } : { heading: path }
+}
+
+function section(anchor: Extract<Anchor, { heading: string }>, text: string): Place {
+  const found = headingsNamed(headingsIn(text), anchor.heading)
 
   const heading = one(found, anchor, anchor.nth)
   return { from: heading.from, to: heading.to, shape: 'paragraph' }

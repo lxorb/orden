@@ -112,16 +112,29 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
   return rows
 }
 
-function noteOptions(index: NoteIndex, typed: string): Completion[] {
+function closeness(label: string, needle: string): number {
+  const folded = foldName(label)
+  if (folded === needle) return 0
+  if (folded.startsWith(needle)) return 1
+  return folded.includes(needle) ? 2 : 3
+}
+
+function noteOptions(index: NoteIndex, typed: string): { rows: Completion[]; all: boolean } {
   const needle = foldName(typed.trim())
   const rows: Completion[] = []
 
   for (const note of index.notes) {
     rows.push(...rowsFor(index, note, needle))
-    if (rows.length >= MOST_SHOWN) break
+    if (!needle && rows.length > MOST_SHOWN) break
   }
 
-  return rows.slice(0, MOST_SHOWN)
+  const ranked = needle
+    ? rows
+        .map((row, at) => ({ row, at, close: closeness(row.label, needle) }))
+        .sort((one, other) => one.close - other.close || one.at - other.at)
+        .map((one) => one.row)
+    : rows
+  return { rows: ranked.slice(0, MOST_SHOWN), all: rows.length <= MOST_SHOWN }
 }
 
 function matches(note: NoteRef, needle: string): boolean {
@@ -306,8 +319,9 @@ export function wikilinkCompletions(
   }
 
   if (hash === -1) {
-    const options = noteOptions(index, inner)
-    return options.length ? { from: typed.from + 2, options, validFor: /^[^[\]\n#|]*$/ } : null
+    const { rows: options, all } = noteOptions(index, inner)
+    if (!options.length) return null
+    return { from: typed.from + 2, options, ...(all ? { validFor: /^[^[\]\n#|]*$/ } : {}) }
   }
 
   const named = inner.slice(0, hash).trim()
