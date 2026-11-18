@@ -1,24 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { Content, ContentOf, ItemKind } from '../types'
 import { normalizeUrl } from '../urls'
 import { totpOf } from './build'
 import { parseOnePassword } from './onepassword'
-import type { Imported, ImportedItem } from './types'
+import { as, find } from './found'
 
 const URI = 'otpauth://totp/Dropbox:me?secret=JBSWY3DPEHPK3PXP'
-
-function find(result: Imported, title: string): ImportedItem {
-  const found = result.vaults
-    .flatMap((vault) => vault.items)
-    .find((one) => one.content.title === title)
-  if (!found) throw new Error(`no item ${title}`)
-  return found
-}
-
-function as<K extends ItemKind>(content: Content, kind: K): ContentOf<K> {
-  expect(content.kind).toBe(kind)
-  return content as ContentOf<K>
-}
 
 const pux = (
   category: string,
