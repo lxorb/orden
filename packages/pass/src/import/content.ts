@@ -136,20 +136,8 @@ export function folderPaths(
   return paths
 }
 
-const MONTHS = [
-  'january',
-  'february',
-  'march',
-  'april',
-  'may',
-  'june',
-  'july',
-  'august',
-  'september',
-  'october',
-  'november',
-  'december',
-]
+const MONTHS = `january february march april may june july august september october november
+  december`.split(/\s+/)
 
 export function monthNumberOf(text: string): string {
   const word = text.trim().toLowerCase()

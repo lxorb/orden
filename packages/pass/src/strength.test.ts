@@ -14,21 +14,9 @@ describe('strengthOf', () => {
   })
 
   it('sees through keyboard rows, sequences, repeats and years', () => {
-    for (const password of [
-      'qwertyuiop',
-      'qwertzuiop',
-      'azertyuiop',
-      'poiuytrewq',
-      'asdfghjkl;',
-      'abcdefghijklmnop',
-      '0123456789',
-      'zyxwvutsrq',
-      'aaaaaaaaaaaaaaaa',
-      'abcabcabcabcabcabc',
-      '1990',
-      'Summer2024',
-      'monkey1990',
-    ])
+    for (const password of `qwertyuiop qwertzuiop azertyuiop poiuytrewq asdfghjkl; abcdefghijklmnop
+      0123456789 zyxwvutsrq aaaaaaaaaaaaaaaa abcabcabcabcabcabc 1990 Summer2024
+      monkey1990`.split(/\s+/))
       expect(strength(password)).toBe('vulnerable')
   })
 
