@@ -1,7 +1,6 @@
 import { settledTurn, TURN_DEADBAND, turnedBy } from '../../camera/src/api'
 import type { InkPoint, InkTool, Shape, Side } from '@orden/markdown/canvas'
-import type { Box, HandleId, Point } from '../../plane/src/api'
-import { rubbedBetween } from '../../plane/src/api'
+import { type Box, type HandleId, type Point, rubbedBetween } from '../../plane/src/api'
 
 export type Tool = 'select' | 'hand' | 'draw' | 'erase' | 'lasso' | PutTool
 export type PutTool = 'text' | 'words' | 'file' | 'picture' | 'link' | 'group' | Shape

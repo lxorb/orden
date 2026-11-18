@@ -5,10 +5,10 @@ import {
   type FoundLink,
   lines,
   shownText,
+  encodeTarget,
 } from '@orden/markdown/links'
 import { frontMatterBlock, stripFrontMatter } from '@orden/markdown/front-matter'
 import { codeSpans, inCode } from '@orden/markdown/tags'
-import { encodeTarget } from '@orden/markdown/links'
 
 interface Edit {
   from: number

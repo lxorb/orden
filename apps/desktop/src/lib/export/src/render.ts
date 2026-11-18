@@ -8,7 +8,7 @@ import {
   type Wikilink,
 } from '@orden/markdown'
 import { exportCss, themeCss } from '@orden/themes/raw'
-import { accentTokens, DEFAULT_ACCENT } from '../../theme/src/api'
+import { accentTokens, DEFAULT_ACCENT, type Scheme } from '../../theme/src/api'
 import { busy } from '../../ui-kit/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { type Fence, prepareEmbeds, prepareFences } from '../../fences/src/api'
@@ -27,7 +27,6 @@ import { PANDOC_FORMATS, type PandocFormat } from '../../export-formats/src/api'
 import { paletteCss } from '../../highlight/src/api'
 import { mathCss } from './math-fonts'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from '@orden/contracts'
-import type { Scheme } from '../../theme/src/api'
 import { diskPathOf } from '../../web-backend/src/api'
 
 export interface HtmlOptions {

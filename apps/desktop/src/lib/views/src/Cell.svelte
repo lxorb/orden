@@ -1,11 +1,10 @@
 <script lang="ts">
-  import type { Row, Value } from '@orden/bases'
-  import { cellValue, onClock, rewritten } from '@orden/bases'
+  import { type Row, type Value, cellValue, onClock, rewritten } from '@orden/bases'
   import { tick } from 'svelte'
   import type { Property } from '@orden/markdown/properties'
   import type { ListItem } from '@orden/markdown/property-edits'
   import PropertyValue from './PropertyValue.svelte'
-  import { valueText } from './chips'
+  import { valueText, toneColour } from './chips'
   import {
     bare,
     changeOf,
@@ -18,7 +17,6 @@
     toneOf,
   } from './columns'
   import { formatted } from './format'
-  import { toneColour } from './chips'
   import { openExternal } from '../../platform/src/api'
   import type { Kit } from './kit'
   import type { ListChange } from '../../rows/src/api'

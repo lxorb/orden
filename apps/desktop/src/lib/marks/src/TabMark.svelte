@@ -1,6 +1,6 @@
 <script lang="ts">
   import LoaderCircle from 'lucide/dist/esm/icons/loader-circle.mjs'
-  import { agentMarks } from '../../workspace/src/api'
+  import { agentMarks, workspace } from '../../workspace/src/api'
   import { siteMark, wearsChosen } from './chosen-icon'
   import { terminalMark } from './file-mark'
   import FileMark from './FileMark.svelte'
@@ -8,7 +8,6 @@
   import { webPages, type WebPageSeen } from '@orden/contracts'
   import { readWebFile } from '@orden/scan/shortcut'
   import type { Tab } from '../../documents/src/api'
-  import { workspace } from '../../workspace/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
 
   const { tab }: { tab: Tab } = $props()

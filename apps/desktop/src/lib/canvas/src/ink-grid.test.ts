@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { InkStroke } from '@orden/markdown/canvas'
-import type { Box } from '../../plane/src/api'
-import { strokeBox } from '../../plane/src/api'
+import { type Box, strokeBox } from '../../plane/src/api'
 import { InkGrid } from './ink-grid'
 
 const stroke = (id: string, x: number, y: number, wide = 20, tall = 8, size = 3): InkStroke => ({

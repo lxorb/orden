@@ -18,13 +18,10 @@
   import { hand } from './hand.svelte'
   import { DEFAULT_INK, shownInk } from '../../plane/src/api'
   import { nearestDock, pens, upright } from './pens.svelte'
-  import { frameOf } from '../../ui-kit/src/api'
+  import { frameOf, closeOnBack, overlays, viewport } from '../../ui-kit/src/api'
   import { type Tool } from './pointer'
   import { shortcuts } from '../../shortcuts/src/api'
   import { tools } from './tools.svelte'
-  import { closeOnBack } from '../../ui-kit/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import { viewport } from '../../ui-kit/src/api'
 
   const {
     canundo,

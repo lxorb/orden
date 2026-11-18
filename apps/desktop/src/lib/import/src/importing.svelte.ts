@@ -1,5 +1,4 @@
-import { askSheet } from '@orden/contracts'
-import type { PandocPicture, PickedFile } from '@orden/contracts'
+import { askSheet, type PandocPicture, type PickedFile } from '@orden/contracts'
 import { relativeTo, rootedAt, invoke, joinPath } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { busy, message, prompt } from '../../ui-kit/src/api'

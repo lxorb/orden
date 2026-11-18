@@ -1,7 +1,5 @@
 import type { Canvas, CanvasNode } from '@orden/markdown/canvas'
-import { reacher } from '../../plane/src/api'
-import { bounds, type Box, boxOf } from '../../plane/src/api'
-import { transformed } from '../../plane/src/api'
+import { reacher, bounds, type Box, boxOf, transformed } from '../../plane/src/api'
 
 export const ALIGNMENTS = ['left', 'centre', 'right', 'top', 'middle', 'bottom'] as const
 export type Alignment = (typeof ALIGNMENTS)[number]

@@ -20,10 +20,13 @@
     keptByAccount,
     pageOfFile,
     shownColour,
+    type Box,
+    isLineShape,
+    shapeLine,
+    shapePath,
   } from '../../plane/src/api'
   import { account } from '../../accounts/src/api'
   import CanvasPdf from './CanvasPdf.svelte'
-  import { type Box, isLineShape, shapeLine, shapePath } from '../../plane/src/api'
   import { pickedLink } from '../../link-format/src/api'
   import { links } from '../../link-index/src/api'
   import { shortcuts } from '../../shortcuts/src/api'

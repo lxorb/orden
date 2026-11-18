@@ -1,5 +1,4 @@
-import { foldName } from '@orden/markdown/links'
-import { encodeTarget } from '@orden/markdown/links'
+import { foldName, encodeTarget } from '@orden/markdown/links'
 import { codeAndWords } from '@orden/markdown/tags'
 import { folderOf, relativePath } from '../../platform/src/api'
 import { folderPlan, isHidden, isJunk } from './folder'

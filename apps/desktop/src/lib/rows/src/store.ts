@@ -1,6 +1,5 @@
 import type { Row } from '@orden/bases'
-import type { ScannedNote, SpaceLinks } from '@orden/scan/note'
-import { scanNote } from '@orden/scan/note'
+import { type ScannedNote, type SpaceLinks, scanNote } from '@orden/scan/note'
 import {
   AGENTS_NAME,
   insideSpace,

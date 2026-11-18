@@ -1,6 +1,5 @@
 import type { CanvasEdge, CanvasNode } from '@orden/markdown/canvas'
-import { type Box, boxOf, edgeEnds, overlaps } from '../../plane/src/api'
-import type { Palette } from '../../plane/src/api'
+import { type Box, boxOf, edgeEnds, overlaps, type Palette } from '../../plane/src/api'
 
 export interface FarScene {
   nodes: readonly CanvasNode[]

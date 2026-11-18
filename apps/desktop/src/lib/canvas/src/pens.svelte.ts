@@ -1,7 +1,6 @@
 import { keepJson, stored, isRecord } from '../../platform/src/api'
 import { clampOpacity, type InkTool, isInkTool } from '@orden/markdown/canvas'
-import { INK_STYLES } from '../../plane/src/api'
-import { DEFAULT_INK } from '../../plane/src/api'
+import { INK_STYLES, DEFAULT_INK } from '../../plane/src/api'
 
 export interface Nib {
   tool: InkTool

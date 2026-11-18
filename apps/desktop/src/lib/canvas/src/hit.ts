@@ -12,8 +12,8 @@ import {
   SIDES,
   sidePoint,
   within,
+  nearStroke,
 } from '../../plane/src/api'
-import { nearStroke } from '../../plane/src/api'
 import { FORGIVING, type Hit, NOTHING } from './pointer'
 
 export const HANDLE = 9

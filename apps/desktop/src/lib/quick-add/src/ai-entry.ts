@@ -1,8 +1,7 @@
 import { todayOf } from '@orden/bases'
 import type { QuickFields } from '@orden/bases/language'
 import { isDate } from '@orden/markdown/task-line'
-import { complete } from '../../ai-providers/src/api'
-import type { Message, Provider } from '../../ai-providers/src/api'
+import { complete, type Message, type Provider } from '../../ai-providers/src/api'
 import type { Entry } from './entry'
 
 const ASK =
