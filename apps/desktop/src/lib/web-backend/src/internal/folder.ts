@@ -1,4 +1,6 @@
 import { nameKey } from '@orden/sync-core'
+import type { Trashed } from '../web/store'
+
 export interface InternalEntry {
   key: string | null
   made: number
@@ -6,36 +8,29 @@ export interface InternalEntry {
   size: number
 }
 
-export interface InternalTrashed {
-  id: string
-  kind: string
-  name: string
-  from: string
-  trashedAt: number
-  apart?: boolean
-  arrived?: boolean
+interface Named {
+  path: string
+  entry: InternalEntry
+}
+
+export interface InternalTrashed extends Trashed {
   held: [string, InternalEntry][]
 }
 
+interface Stamped {
+  path: string
+  dir: boolean
+  size: number
+  mtime: number
+  id: string | null
+}
+
 export type InternalChange =
-  | {
-      kind: 'created' | 'modified'
-      path: string
-      dir: boolean
-      size: number
-      mtime: number
-      id: string | null
-    }
+  | ({ kind: 'created' | 'modified' } & Stamped)
   | { kind: 'removed'; path: string; dir: boolean; id: string | null }
-  | {
-      kind: 'renamed'
-      from: string
-      path: string
-      dir: boolean
-      size: number
-      mtime: number
-      id: string | null
-    }
+  | ({ kind: 'renamed'; from: string } & Stamped)
+
+type Channel = ReturnType<NonNullable<InternalWorld['channel']>>
 
 export interface InternalBytes {
   readText(key: string): Promise<string | null>
@@ -130,7 +125,7 @@ function readIndex(text: string | null): Written | null {
 }
 
 export class InternalFolder {
-  private paths = new Map<string, { path: string; entry: InternalEntry }>()
+  private paths = new Map<string, Named>()
   private trashed: InternalTrashed[] = []
   private gen = 0
   private holding: 0 | 1 = 1
@@ -138,7 +133,7 @@ export class InternalFolder {
   private readonly listeners = new Set<(changes: InternalChange[]) => void>()
   private stampTimer: ReturnType<typeof setTimeout> | undefined
   private stamps = new Map<string, { modified: number; size: number }>()
-  private readonly channel: { post(message: unknown): void; close(): void } | null
+  private readonly channel: Channel | null
 
   private constructor(
     readonly name: string,
@@ -304,7 +299,7 @@ export class InternalFolder {
     return this.paths.get(this.keyOf(path))?.entry ?? null
   }
 
-  private namedFor(path: string, key: string): { path: string; entry: InternalEntry } | null {
+  private namedFor(path: string, key: string): Named | null {
     const asked = this.paths.get(this.keyOf(path))
     if (asked?.entry.key === key) return asked
     for (const one of this.paths.values()) if (one.entry.key === key) return one
@@ -324,21 +319,28 @@ export class InternalFolder {
     return false
   }
 
-  async list(): Promise<{ path: string; entry: InternalEntry }[]> {
+  async list(): Promise<Named[]> {
     await this.fresh()
     return [...this.paths.values()].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
   }
 
-  private under(path: string): { rest: string; key: string; path: string; entry: InternalEntry }[] {
+  private under(path: string): (Named & { rest: string; key: string })[] {
     const own = this.keyOf(path)
     const inside = `${own}/`
     const depth = own.split('/').length
-    const out: { rest: string; key: string; path: string; entry: InternalEntry }[] = []
+    const out: (Named & { rest: string; key: string })[] = []
     for (const [key, one] of this.paths) {
       if (key === own) out.push({ rest: '', key, ...one })
       else if (key.startsWith(inside)) out.push({ rest: restOf(one.path, depth), key, ...one })
     }
     return out
+  }
+
+  private forget(going: readonly (Named & { key: string })[]) {
+    for (const one of going) {
+      this.paths.delete(one.key)
+      this.stamps.delete(one.path)
+    }
   }
 
   async readText(path: string): Promise<string | null> {
@@ -397,13 +399,12 @@ export class InternalFolder {
       if (there) {
         const now = this.namedFor(path, key)
         if (!now) return
-        const spelled = now.path
         const entry = { ...now.entry, modified: at, size }
-        this.paths.set(this.keyOf(spelled), { path: spelled, entry })
-        this.stamps.set(spelled, { modified: at, size })
+        this.paths.set(this.keyOf(now.path), { path: now.path, entry })
+        this.stamps.set(now.path, { modified: at, size })
         const change: InternalChange = {
           kind: 'modified',
-          path: spelled,
+          path: now.path,
           dir: false,
           size,
           mtime: at,
@@ -504,20 +505,10 @@ export class InternalFolder {
       await this.change(() => {
         const going = this.under(path)
         if (!going.length) return null
-        for (const one of going) {
-          this.paths.delete(one.key)
-          this.stamps.delete(one.path)
-        }
+        this.forget(going)
         keys = going.flatMap((one) => (one.entry.key ? [one.entry.key] : []))
-        const top = going.find((one) => one.rest === '')
-        return [
-          {
-            kind: 'removed',
-            path: top?.path ?? path,
-            dir: !top?.entry.key,
-            id: top?.entry.key ?? null,
-          },
-        ]
+        const { path: at = path, entry } = going.find((one) => one.rest === '') ?? {}
+        return [{ kind: 'removed', path: at, dir: !entry?.key, id: entry?.key ?? null }]
       })
       for (const key of keys) await this.bytes.remove(key).catch(() => undefined)
     })
@@ -544,10 +535,7 @@ export class InternalFolder {
           const at = this.paths.get(this.keyOf(one))
           if (at) going.push({ rest: at.path.slice(top.path.length), key: this.keyOf(one), ...at })
         }
-        for (const one of going) {
-          this.paths.delete(one.key)
-          this.stamps.delete(one.path)
-        }
+        this.forget(going)
         this.trashed.push({
           ...item,
           from: top.path,

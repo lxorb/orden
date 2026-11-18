@@ -26,7 +26,6 @@ vi.mock('./store', () => ({
   keepsOwnRows: () => true,
   files: {
     get: (path: string) => Promise.resolve(disk.files.get(path)),
-    all: () => Promise.resolve([...disk.files.values()]),
     paths: () => Promise.resolve([...disk.files.keys()].sort()),
     each: (visit: (row: FileRow) => void) => {
       for (const path of [...disk.files.keys()].sort()) visit(disk.files.get(path)!)
@@ -58,7 +57,6 @@ vi.mock('./store', () => ({
   },
   assets: {
     get: (path: string) => Promise.resolve(disk.assets.get(path)),
-    all: () => Promise.resolve([...disk.assets.values()]),
     paths: () => Promise.resolve([...disk.assets.keys()].sort()),
     put: (row: AssetRow) => Promise.resolve(void disk.assets.set(row.path, row)),
     remove: (path: string) => Promise.resolve(void disk.assets.delete(path)),
@@ -315,23 +313,6 @@ describe('renaming', () => {
     await expect(rename('/Notes/a.md', '/Notes/Work')).rejects.toThrow()
 
     expect(paths()).toEqual(['/Notes/Work/b.md', '/Notes/a.md'])
-  })
-
-  test('reads only what it moves, never every note and picture held', async () => {
-    await write('/Notes/a.md', 'a')
-    await write('/Other/big.md', 'x'.repeat(1000))
-    picture('/Other/huge.png')
-    const { files, assets } = await import('./store')
-    const wholeFiles = vi.spyOn(files, 'all')
-    const wholeAssets = vi.spyOn(assets, 'all')
-
-    await rename('/Notes/a.md', '/Notes/b.md')
-
-    expect(paths()).toContain('/Notes/b.md')
-    expect(wholeFiles).not.toHaveBeenCalled()
-    expect(wholeAssets).not.toHaveBeenCalled()
-    wholeFiles.mockRestore()
-    wholeAssets.mockRestore()
   })
 
   test('refused, moves none of the pictures along', async () => {
@@ -1533,17 +1514,14 @@ describe('a note kept away', () => {
     await write('/Notes/Deep/b.md', 'two #work #home')
     await write('/Other/c.md', 'three #home')
     const { files } = await import('./store')
-    const whole = vi.spyOn(files, 'all')
     const read = vi.spyOn(files, 'between')
 
     expect(await webInvoke('space_tags', { root: '/Notes' })).toEqual([
       { tag: '#work', count: 3 },
       { tag: '#home', count: 1 },
     ])
-    expect(whole).not.toHaveBeenCalled()
     const rows = await Promise.all(read.mock.results.map((one) => one.value as Promise<FileRow[]>))
     expect(rows.flat().map((row) => row.path)).not.toContain('/Other/c.md')
-    whole.mockRestore()
     read.mockRestore()
   })
 
