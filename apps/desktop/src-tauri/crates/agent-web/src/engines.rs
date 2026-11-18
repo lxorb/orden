@@ -252,10 +252,9 @@ pub fn from_allowed(limits: Option<&(Grant, Store)>, at: &[String]) -> Result<()
     let Some((grant, store)) = limits else {
         return Ok(());
     };
-    let placed = at.iter().any(|one| {
-        tauri::Url::parse(&orden_agents::policy::made_by(one))
-            .is_ok_and(|url| matches!(url.scheme(), "http" | "https") && url.host().is_some())
-    });
+    let placed = at
+        .iter()
+        .any(|one| crate::cdp::on_the_web(&orden_agents::policy::made_by(one)));
     if !placed && limits_sites(limits) {
         return Err("the engine did not say which site that came from".into());
     }

@@ -705,7 +705,7 @@ fn heard_event(held: &mut Heard, method: &str, session: &str, event: Value) {
     }
 }
 
-fn on_the_web(origin: &str) -> bool {
+pub(crate) fn on_the_web(origin: &str) -> bool {
     tauri::Url::parse(origin)
         .is_ok_and(|url| matches!(url.scheme(), "http" | "https") && url.host().is_some())
 }
