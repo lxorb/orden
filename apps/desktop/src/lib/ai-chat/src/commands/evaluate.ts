@@ -1,5 +1,4 @@
-import type { Message } from '../../../ai-providers/src/api'
-import type { Part, Thread, Turn } from '../../../ai-providers/src/api'
+import type { Message, Part, Thread, Turn } from '../../../ai-providers/src/api'
 
 export interface Verdict {
   verdict: 'met' | 'not_yet' | 'impossible'

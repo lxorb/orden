@@ -13,7 +13,7 @@ import {
 } from '../../../platform/src/api'
 import { message, prompt } from '../../../ui-kit/src/api'
 import { owes, writing } from '../../../parting/src/api'
-import { workspace } from '../../../workspace/src/api'
+import { workspace, agentMarks } from '../../../workspace/src/api'
 import { unlisted } from '../chat/catalogue'
 import { nextEffort, within } from '../chat/effort'
 import {
@@ -37,21 +37,18 @@ import {
   readThread,
   unclaimAnswer,
 } from '../chat/threads'
-import type {
-  Draft,
-  Effort,
-  EngineEvent,
-  Goal,
-  Mode,
-  ModelInfo,
-  Part,
-  Stop,
-  Thread,
-  Turn,
-  Usage,
-} from '../../../ai-providers/src/api'
-import { added, noUsage } from '../chat/usage'
 import {
+  type Draft,
+  type Effort,
+  type EngineEvent,
+  type Goal,
+  type Mode,
+  type ModelInfo,
+  type Part,
+  type Stop,
+  type Thread,
+  type Turn,
+  type Usage,
   nextMode,
   ai,
   FIRST_STATE,
@@ -64,9 +61,9 @@ import {
   type SessionState,
   statesOf,
   steers,
+  type Provider,
 } from '../../../ai-providers/src/api'
-import type { Provider } from '../../../ai-providers/src/api'
-import { agentMarks } from '../../../workspace/src/api'
+import { added, noUsage } from '../chat/usage'
 import { tasks } from '../commands/tasks.svelte'
 import { chatsUnread, panelKeepsUnread } from '../unread.svelte'
 import { threadMarkdown } from './export'
@@ -863,13 +860,16 @@ class Chat implements Panel {
   private async run(thread: Thread, send: Queued): Promise<void> {
     const { text, chips, around, once } = send
     const provider = ai.provider(thread.provider)
-    if (!provider) {
-      const words = 'Add an AI provider in Settings first.'
+    const failed = (words: string): Ended => {
       if (thread === this.open) {
         this.trouble = words
         if (!send.settle) this.giveBack(text)
       }
-      send.settle?.({ stop: 'error', error: words, turn: null, usage: null })
+      return { stop: 'error', error: words, turn: null, usage: null }
+    }
+    if (!provider) {
+      const ended = failed('Add an AI provider in Settings first.')
+      send.settle?.(ended)
       return
     }
     if (thread === this.open) this.trouble = null
@@ -901,12 +901,7 @@ class Chat implements Panel {
       ended = await this.sendDraft(thread, provider, draft, stopper)
       if (readOutside(thread.turns)) ended = { ...ended, outside: true }
     } catch (error) {
-      const words = message(error, 'The model did not answer.')
-      ended = { stop: 'error', error: words, turn: null, usage: null }
-      if (thread === this.open) {
-        this.trouble = words
-        if (!send.settle) this.giveBack(text)
-      }
+      ended = failed(message(error, 'The model did not answer.'))
     } finally {
       once?.signal?.removeEventListener('abort', stop)
       if (once) Object.assign(thread, before)

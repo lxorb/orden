@@ -1,7 +1,6 @@
 import { workspace } from '../../../workspace/src/api'
 import { invoke, isDesktop } from '../../../platform/src/api'
-import type { Effort, Mode, Thread } from '../../../ai-providers/src/api'
-import { usable, ai } from '../../../ai-providers/src/api'
+import { type Effort, type Mode, type Thread, usable, ai } from '../../../ai-providers/src/api'
 import { answerFor, type Helper, helpers } from './helpers.svelte'
 import type { Offered } from './route'
 import { agentsOf } from '../review/changes'

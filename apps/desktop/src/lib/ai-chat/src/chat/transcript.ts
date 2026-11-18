@@ -25,6 +25,26 @@ export interface Call {
   args: unknown
 }
 
+export function modelTurn({ provider, model, effort }: Thread): Turn {
+  return {
+    id: crypto.randomUUID(),
+    role: 'model',
+    at: Date.now(),
+    parts: [],
+    provider,
+    model,
+    effort,
+  }
+}
+
+export function youTurn(thread: Thread, draft: Draft, more: Partial<Turn> = {}): Turn {
+  const { effort } = thread
+  return { id: crypto.randomUUID(), role: 'you', at: Date.now(), draft, parts: [], effort, ...more }
+}
+
+export const errorText = (error: unknown) =>
+  error instanceof Error ? error.message : String(error)
+
 const MARK = 'untrusted'
 
 function attribute(label: string): string {
