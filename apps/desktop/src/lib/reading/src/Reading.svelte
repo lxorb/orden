@@ -204,20 +204,14 @@
     const { elements, offsets } = headings()
     if (!box || !page) return { section: { index: -1, fraction: 0 }, offsets }
 
-    const edge = box.getBoundingClientRect()
-    const found = document.elementFromPoint(edge.left + edge.width / 2, edge.top + 1)
-
-    let block = found instanceof HTMLElement ? found : null
-    while (block && block.parentElement !== page) block = block.parentElement
-    if (!block && elements.length) return { section: { index: -1, fraction: 0 }, offsets }
-
-    const blocks = [...page.children]
-    const where = block ? blocks.indexOf(block) : -1
+    const edge = box.getBoundingClientRect().top + 1
     let index = -1
-    for (let one = 0; one < elements.length; one++) {
-      const element = elements[one]
-      if (!element || blocks.indexOf(element) > where) break
-      index = one
+    let past = elements.length
+    while (past - index > 1) {
+      const middle = (index + past) >> 1
+      const top = elements[middle]?.getBoundingClientRect().top ?? Infinity
+      if (top <= edge) index = middle
+      else past = middle
     }
 
     const { from, to } = spanOf(box, page, elements, index)

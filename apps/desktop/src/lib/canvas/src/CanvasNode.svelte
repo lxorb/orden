@@ -87,7 +87,9 @@
   )
   const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
 
-  const html = $derived(words ? cardHtml(words, canvasPath, markup) : '')
+  const drawnFrom = $derived(node.type === 'file' ? (source?.path ?? canvasPath) : canvasPath)
+
+  const html = $derived(words ? cardHtml(words, drawnFrom, markup) : '')
 
   const drawing = $derived.by(() => {
     if (node.type !== 'shape') return null

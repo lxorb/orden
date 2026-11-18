@@ -710,16 +710,18 @@ export function ownLine(line: string): boolean {
   return trimmed.startsWith('^') && blockIdOf(trimmed) === trimmed.slice(1)
 }
 
-function inList(line: string): boolean {
-  return !QUOTED.test(line) && (LIST_ITEM.test(line) || (!!line.trim() && indentOf(line) > 0))
+function inList(line: string, depth: number): boolean {
+  const indent = indentOf(line)
+  if (QUOTED.test(line) || indent < depth) return false
+  return LIST_ITEM.test(line) || (!!line.trim() && indent > depth)
 }
 
-function listStart(lines: readonly string[], last: number): number | null {
+function listStart(lines: readonly string[], last: number, depth: number): number | null {
   let start: number | null = null
   for (let above = last; above >= 0; above--) {
     const line = lines[above] ?? ''
     if (!line.trim()) continue
-    if (!inList(line)) break
+    if (!inList(line, depth)) break
     if (LIST_ITEM.test(line)) start = above
   }
   return start
@@ -735,7 +737,8 @@ function blockAbove(source: string, lines: readonly string[], under: number): Se
   const item = touching ? itemSection(lines, last) : null
   if (item) return item
 
-  const start = (touching ? null : listStart(lines, last)) ?? blockAround(rows, last).start
+  const depth = indentOf(lines[under] ?? '')
+  const start = (touching ? null : listStart(lines, last, depth)) ?? blockAround(rows, last).start
 
   return {
     from: start,
@@ -789,7 +792,11 @@ export function blocksOf(text: string): NoteBlock[] {
 
     const above = apart ? found.at(-1) : undefined
     if (above && !row.code && ownLine(row.text)) {
-      above.id = blockIdOf(row.text)
+      const { start } = blockSpanAt(text, row.line)
+      const named = found.findIndex((one) => one.line >= start)
+      const block = found[named] ?? above
+      found.length = named < 0 ? found.length : named + 1
+      block.id = blockIdOf(row.text)
       continue
     }
 

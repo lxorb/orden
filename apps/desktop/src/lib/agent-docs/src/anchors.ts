@@ -12,13 +12,14 @@ export type Anchor =
   | { start: true }
   | { end: true }
 
-type Shape = 'words' | 'line' | 'paragraph' | 'edge'
+type Shape = 'words' | 'line' | 'item' | 'paragraph' | 'edge'
 
 export interface Place {
   from: number
   to: number
   shape: Shape
   keep?: string
+  indent?: string
 }
 
 export function oneEnding(words: string): string {
@@ -246,12 +247,23 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
   const start = rows[first] ?? row
   const end = rows[last] ?? row
   const apart = alone && row.line > 0 && !rows[row.line - 1]?.text.trim()
+  const indent = leadOf(start.text)
+  const keep = alone
+    ? `${apart ? '\n\n' : '\n'}${leadOf(row.text)}^${anchor.block}`
+    : ` ^${anchor.block}`
   return {
     from: start.from,
     to: end.from + end.text.length,
-    shape: 'paragraph',
-    keep: alone ? `${apart ? '\n\n' : '\n'}^${anchor.block}` : ` ^${anchor.block}`,
+    shape: ITEM.test(start.text) && !(alone && apart) ? 'item' : 'paragraph',
+    keep,
+    ...(indent ? { indent } : {}),
   }
+}
+
+const ITEM = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]/
+
+function leadOf(line: string): string {
+  return /^[ \t]*/.exec(line)?.[0] ?? ''
 }
 
 export function taskWords(line: string): string | null {
