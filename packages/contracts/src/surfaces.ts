@@ -130,6 +130,13 @@ export interface SurfacePorts {
 
 const loads = new Map<SurfaceId, () => Promise<unknown>>()
 
+let missing = (id: SurfaceId): Promise<unknown> =>
+  Promise.reject(new Error(`no module has registered the surface '${id}'`))
+
+export function whenNoSurface(load: (id: SurfaceId) => Promise<unknown>) {
+  missing = load
+}
+
 export function registerSurfaces(
   given: Partial<Record<SurfaceId, () => Promise<unknown>>>,
 ): () => void {
@@ -142,7 +149,7 @@ export function registerSurfaces(
 
 export function surfaceLoad(id: SurfaceId): Promise<unknown> {
   const load = loads.get(id)
-  return load ? load() : Promise.reject(new Error(`no module has registered the surface '${id}'`))
+  return load ? load() : missing(id)
 }
 
 export interface SearchHit {
