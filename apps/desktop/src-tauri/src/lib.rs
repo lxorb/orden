@@ -1,13 +1,9 @@
 #[cfg(desktop)]
 mod agents;
 #[cfg(desktop)]
-mod ahead;
-#[cfg(desktop)]
 mod ai_agent;
 #[cfg(desktop)]
 mod ai_cli;
-#[cfg(desktop)]
-mod app_place;
 #[cfg(test)]
 mod calls;
 #[cfg(target_os = "linux")]
@@ -33,11 +29,7 @@ mod keyboard;
 #[cfg(desktop)]
 mod launch;
 #[cfg(desktop)]
-mod letters;
-#[cfg(desktop)]
 mod lifecycle;
-#[cfg(target_os = "linux")]
-mod linux;
 #[cfg(desktop)]
 pub mod mcp;
 #[cfg(desktop)]
@@ -69,10 +61,6 @@ mod shortcuts;
 mod siri;
 #[cfg(desktop)]
 mod spelling;
-#[cfg(desktop)]
-mod system_update;
-#[cfg(desktop)]
-mod updates;
 mod uris;
 #[cfg(desktop)]
 mod web_answers;
@@ -322,8 +310,8 @@ macro_rules! desktop_commands {
             orden_documents::handed_pdfs::same_pdf,
             launch::new_window,
             launch::show_window,
-            ahead::launch_ahead,
-            ahead::remember_launch,
+            orden_notes::ahead::launch_ahead,
+            orden_notes::ahead::remember_launch,
             orden_notes::outside::outside_spaces,
             orden_notes::outside::take_in_outside,
             orden_notes::outside::settle_outside,
@@ -390,11 +378,11 @@ macro_rules! desktop_commands {
             orden_pty::terminal::picture::local_image,
             orden_pty::terminal::picture::remote_image,
             orden_pty::terminal::picture::remote_shell,
-            updates::check_update,
-            system_update::system_update,
+            orden_system::updates::check_update,
+            orden_system::system_update::system_update,
             orden_system::package_manager::install_manager,
-            app_place::app_stuck,
-            app_place::move_to_applications,
+            orden_system::app_place::app_stuck,
+            orden_system::app_place::move_to_applications,
             shortcuts::shortcuts_offered,
             shortcuts::open_shortcuts,
             shortcuts::shortcuts_added,
@@ -501,7 +489,7 @@ compile_error!(
 
 pub fn run() {
     #[cfg(target_os = "linux")]
-    linux::prepare();
+    orden_base::linux::prepare();
     #[cfg(mobile)]
     run_on(tauri::Builder::default());
     #[cfg(desktop)]
@@ -744,6 +732,10 @@ fn engine_started(handle: &tauri::AppHandle<Engine>) {
 fn first_of_all(handle: &tauri::AppHandle) {
     orden_crashes::crashes::start(handle);
     trace::mark("crash reports");
+    orden_system::updates::hand_lifecycle(orden_system::updates::Lifecycle {
+        quit: lifecycle::quit,
+        before_installer: lifecycle::before_installer,
+    });
     paths::decide_spaces(handle);
     if let Ok(config) = paths::config_dir(handle) {
         let _ = std::fs::remove_file(config.join("dns.json"));
@@ -762,7 +754,7 @@ fn ready(
     first_of_all(handle);
 
     #[cfg(desktop)]
-    let web_first = ahead::start(handle);
+    let web_first = orden_notes::ahead::start(handle);
 
     #[cfg(target_os = "macos")]
     orden_system::menu_bar::leave_out_system_rows();
@@ -1187,7 +1179,7 @@ mod tests {
 
     const WAITS_IN_WHAT_IT_HANDS_ON: [&str; 2] = [
         "orden_documents::pdf::print_pdf",
-        "crate::updates::check_update",
+        "orden_system::updates::check_update",
     ];
 
     #[test]

@@ -1,5 +1,6 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
 
+pub mod app_place;
 pub mod appearance;
 pub mod bundle_name;
 pub mod default_browser;
@@ -20,5 +21,7 @@ pub mod packagekit;
 pub mod presence;
 #[cfg(target_os = "windows")]
 pub mod shell_menu;
+pub mod system_update;
 pub mod time_sense;
 pub mod touchpad;
+pub mod updates;

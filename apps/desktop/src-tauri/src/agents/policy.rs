@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use super::grants::{Grant, Mode, SiteRule};
 use super::verbs::{Category, DialogKind, Store};
-use crate::letters::seen;
+use orden_base::letters::seen;
 
 pub fn host_of(url: &str) -> Option<String> {
     let parsed: tauri::Url = url.parse().ok()?;

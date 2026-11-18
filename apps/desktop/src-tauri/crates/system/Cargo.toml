@@ -13,6 +13,7 @@ workspace = true
 orden-base = { path = "../base" }
 orden-placement = { path = "../placement" }
 tauri-plugin-opener.workspace = true
+tauri-plugin-updater.workspace = true
 tauri.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -31,6 +32,7 @@ zbus.workspace = true
 x11rb.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
+dirs.workspace = true
 objc2.workspace = true
 block2.workspace = true
 objc2-foundation.workspace = true

@@ -6,9 +6,9 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
+use crate::spaces::{list_spaces, Space};
+use crate::tree::{read_tree, Entry, TreeOptions};
 use orden_base::paths::{config_dir, made, openable, write_atomically};
-use orden_notes::spaces::{list_spaces, Space};
-use orden_notes::tree::{read_tree, Entry, TreeOptions};
 
 const FILE: &str = "launch.json";
 
@@ -122,7 +122,7 @@ fn notes_of(app: &AppHandle, paths: &[String]) -> BTreeMap<String, String> {
             Ok(meta) if meta.len() <= LONGEST_NOTE => {}
             _ => continue,
         }
-        let Ok(words) = orden_notes::notes::note_words(app, path) else {
+        let Ok(words) = crate::notes::note_words(app, path) else {
             continue;
         };
         if bytes + words.len() > MOST_BYTES {

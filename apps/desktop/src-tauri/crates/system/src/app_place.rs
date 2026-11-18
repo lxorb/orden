@@ -127,7 +127,9 @@ pub async fn move_to_applications(app: tauri::AppHandle) -> Result<(), String> {
             .process_group(0)
             .spawn()
             .map_err(|error| error.to_string())?;
-        crate::lifecycle::quit(&app);
+        if let Some(lifecycle) = crate::updates::lifecycle() {
+            (lifecycle.quit)(&app);
+        }
         Ok(())
     })
     .await
