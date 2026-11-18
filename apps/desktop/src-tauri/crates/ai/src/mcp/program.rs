@@ -8,6 +8,8 @@ const BUNDLES: [&str; 3] = ["Orden.app", "Nib.app", "nibeditor.app"];
 
 const FORMER: [&str; 2] = ["nib", "nib.exe"];
 
+const FORMER_FOLDERS: [&str; 2] = ["nib", "nibeditor"];
+
 pub fn program() -> Result<PathBuf, String> {
     let exe = std::env::current_exe()
         .map_err(|error| format!("this program cannot find itself: {error}"))?;
@@ -76,6 +78,9 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
     {
         return true;
     }
+    if moved_from_former_folder(path, now) {
+        return true;
+    }
     let ours =
         |name: &str| NAMES.contains(&name) || name == ".orden-wrapped" || name == ".nib-wrapped";
     if let Some(copy) = store_copy(path) {
@@ -111,6 +116,21 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
                 .is_some_and(|rest| rest.is_empty() || rest.starts_with(['-', '_', '.']))
         })
     })
+}
+
+fn moved_from_former_folder(path: &Path, now: &Path) -> bool {
+    let name_of = |path: &Path| {
+        path.file_name()
+            .and_then(|name| name.to_str())
+            .map(str::to_ascii_lowercase)
+    };
+    let (Some(was), Some(is)) = (path.parent(), now.parent()) else {
+        return false;
+    };
+    name_of(path).is_some_and(|name| name == "orden.exe" || name == "nib.exe")
+        && was.parent() == is.parent()
+        && name_of(was).is_some_and(|name| FORMER_FOLDERS.contains(&name.as_str()))
+        && name_of(is).as_deref() == Some("orden")
 }
 
 pub fn command_in(said: &str) -> Option<&str> {
@@ -248,6 +268,30 @@ mod tests {
         assert!(!older_copy(
             "/usr/share/Orden/nibble",
             Path::new("/usr/share/Orden/orden")
+        ));
+    }
+
+    #[test]
+    fn the_program_in_the_folder_of_a_former_name_beside_this_one_is_an_older_copy() {
+        let now = Path::new("/c/Users/e/AppData/Local/Orden/orden.exe");
+        for older in [
+            "/c/Users/e/AppData/Local/Nib/orden.exe",
+            "/c/Users/e/AppData/Local/Nib/nib.exe",
+            "\"/c/Users/e/AppData/Local/nibeditor/nib.exe\"",
+        ] {
+            assert!(older_copy(older, now), "{older}");
+        }
+        for theirs in [
+            "/c/Users/e/AppData/Local/Nibbler/orden.exe",
+            "/c/Users/e/AppData/Local/Nib/other.exe",
+            "/c/Users/e/Tools/Nib/orden.exe",
+            "/c/Users/other/AppData/Local/Nib/orden.exe",
+        ] {
+            assert!(!older_copy(theirs, now), "{theirs}");
+        }
+        assert!(!older_copy(
+            "/c/Users/e/AppData/Local/Nib/orden.exe",
+            Path::new("/c/Users/e/AppData/Local/Elsewhere/orden.exe")
         ));
     }
 
