@@ -85,36 +85,17 @@ beforeEach(() => {
 })
 
 describe('a key that writes', () => {
-  test('a character, Enter, Backspace, Delete, a composition and a dead key', () => {
-    for (const one of [
-      'a',
-      'Z',
-      ' ',
-      'é',
-      '😀',
-      'Enter',
-      'Backspace',
-      'Delete',
-      'Process',
-      'Dead',
-    ]) {
-      expect(writes(key({ key: one }), false), one).toBe(true)
-    }
-  })
+  test.each(['a', 'Z', ' ', 'é', '😀', 'Enter', 'Backspace', 'Delete', 'Process', 'Dead'])(
+    '%j writes, as a character, a composition or a dead key does',
+    (one) => expect(writes(key({ key: one }), false)).toBe(true),
+  )
 
-  test('not a key that moves or commands', () => {
-    for (const one of [
-      'ArrowLeft',
-      'Home',
-      'PageDown',
-      'Tab',
-      'Escape',
-      'F5',
-      'Shift',
-      'Control',
-    ]) {
-      expect(writes(key({ key: one }), false), one).toBe(false)
-    }
+  test.each(['ArrowLeft', 'Home', 'PageDown', 'Tab', 'Escape', 'F5', 'Shift', 'Control'])(
+    '%j moves or commands, and writes nothing',
+    (one) => expect(writes(key({ key: one }), false)).toBe(false),
+  )
+
+  test('not a key that commands', () => {
     expect(writes(key({ key: 's', ctrlKey: true }), false)).toBe(false)
     expect(writes(key({ key: 'c', metaKey: true }), true)).toBe(false)
     expect(writes(key({ key: '1', altKey: true }), false)).toBe(false)
