@@ -1,26 +1,21 @@
 <script module lang="ts">
-  import { warmRenderer } from '../../chat-kit/src/api'
+  import { warmRenderer, mathsWaiting } from '../../chat-kit/src/api'
 
   warmRenderer()
 </script>
 
 <script lang="ts">
-  import { mathsWaiting } from '../../chat-kit/src/api'
   import { copyText, SAID_FOR } from '../../ui-controls/src/api'
   import { drawInPieces } from './answer-pieces'
   import { patchHtml } from './patch-html'
 
-  const {
-    html,
-    live = false,
-    onfollow,
-    onpicture,
-  }: {
+  interface Props {
     html: string
     live?: boolean
     onfollow?: (event: MouseEvent) => void
     onpicture?: (src: string) => void
-  } = $props()
+  }
+  const { html, live = false, onfollow, onpicture }: Props = $props()
 
   const waiting = $derived(mathsWaiting(html))
 

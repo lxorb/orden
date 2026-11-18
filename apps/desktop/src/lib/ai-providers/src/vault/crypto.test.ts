@@ -3,17 +3,8 @@ import { commitment, digits as pairing, newNonce } from '../pairing'
 
 const digits = (...parts: [string, string, string, string]) =>
   pairing('nib ai vault digits', ...parts)
-import {
-  authOf,
-  fingerprint,
-  idOf,
-  newDeviceKey,
-  newVaultKey,
-  open,
-  seal,
-  unwrap,
-  wrap,
-} from './crypto'
+import { authOf, fingerprint, idOf, newDeviceKey, newVaultKey, open, seal, unwrap } from './crypto'
+import { wrap } from './crypto'
 
 describe('the vault’s keys', () => {
   test('a key wrapped to a device opens on that device and no other', async () => {

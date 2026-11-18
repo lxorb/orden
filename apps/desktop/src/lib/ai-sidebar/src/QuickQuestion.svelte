@@ -9,14 +9,11 @@
   import { dollarMaths } from '@orden/markdown/streamed'
   import { quick as sheet } from './chat-parts'
   import Thinking from './Thinking.svelte'
-  import { closeOnBack } from '../../ui-kit/src/api'
+  import { closeOnBack, Cross, overlays, scrollbar } from '../../ui-kit/src/api'
   import { Copied, longPaste, trap } from '../../ui-controls/src/api'
-  import { Cross } from '../../ui-kit/src/api'
   import { links } from '../../link-index/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
   import { followHref, followNote, MIDDLE, opensLink, workspace } from '../../workspace/src/api'
-  import { overlays } from '../../ui-kit/src/api'
-  import { scrollbar } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import { grow } from './grow'
   import { DictateButton, dictating, showsDictateButton } from '../../dictation/src/api'
@@ -68,12 +65,9 @@
   function onPaste(event: ClipboardEvent) {
     const text = longPaste(event)
     if (text === null) return
-    const name = 'Text'
-    if (text.length > 2_000_000) {
-      quick.refuse(`${name} was not added: a chat takes pictures, and text files up to 2 MB.`)
-      return
-    }
-    quick.take(name, text)
+    if (text.length > 2_000_000)
+      quick.refuse('Text was not added: a chat takes pictures, and text files up to 2 MB.')
+    else quick.take('Text', text)
   }
 
   function onKey(event: KeyboardEvent) {
@@ -133,6 +127,35 @@
   }
 </script>
 
+{#snippet onward()}
+  <button
+    class="orden-glyph act"
+    title={docked ? 'Continue as its own chat' : 'Continue in the panel'}
+    aria-label={docked ? 'Continue as its own chat' : 'Continue in the panel'}
+    onclick={() => void quick.continueInPanel()}
+  >
+    <svg viewBox="0 0 13 13"><path d={MARKS.thread} /></svg>
+  </button>
+{/snippet}
+
+{#snippet chip(name: string, kind: ContextKind, drop: () => void, quoted = kind === 'selection')}
+  <span class="chip" class:quoted title={name}>
+    <svg viewBox="0 0 13 13"><path d={MARKS[kind]} /></svg>
+    <span class="what" dir="auto">{name}</span>
+    <button
+      class="drop"
+      title="Remove"
+      aria-label="Remove"
+      onclick={() => {
+        drop()
+        field?.focus()
+      }}
+    >
+      <Cross small />
+    </button>
+  </span>
+{/snippet}
+
 {#snippet body()}
   {#if quick.ready}
     <div class="field orden-field">
@@ -175,39 +198,10 @@
     {#if quick.context !== null || quick.texts.length > 0}
       <div class="chips" transition:fade={{ duration: dur(120) }}>
         {#if quick.context}
-          {@const context = quick.context}
-          <span class="chip" class:quoted={context.kind === 'selection'} title={context.name}>
-            <svg viewBox="0 0 13 13"><path d={MARKS[context.kind]} /></svg>
-            <span class="what" dir="auto">{context.name}</span>
-            <button
-              class="drop"
-              title="Remove"
-              aria-label="Remove"
-              onclick={() => {
-                quick.drop()
-                field?.focus()
-              }}
-            >
-              <Cross small />
-            </button>
-          </span>
+          {@render chip(quick.context.name, quick.context.kind, () => quick.drop())}
         {/if}
         {#each quick.texts as one (one.id)}
-          <span class="chip" title={one.label}>
-            <svg viewBox="0 0 13 13"><path d={MARKS.selection} /></svg>
-            <span class="what" dir="auto">{one.label}</span>
-            <button
-              class="drop"
-              title="Remove"
-              aria-label="Remove"
-              onclick={() => {
-                quick.dropText(one.id)
-                field?.focus()
-              }}
-            >
-              <Cross small />
-            </button>
-          </span>
+          {@render chip(one.label, 'selection', () => quick.dropText(one.id), false)}
         {/each}
       </div>
     {/if}
@@ -252,18 +246,7 @@
 
       {#if quick.asking && workspace.offers('ask')}
         <div class="acts" in:fade={{ duration: dur(120) }}>
-          <button
-            class="orden-glyph act"
-            title={docked ? 'Continue as its own chat' : 'Continue in the panel'}
-            aria-label={docked ? 'Continue as its own chat' : 'Continue in the panel'}
-            onclick={() => void quick.continueInPanel()}
-          >
-            <svg viewBox="0 0 13 13"
-              ><path
-                d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
-              /></svg
-            >
-          </button>
+          {@render onward()}
         </div>
       {/if}
 
@@ -301,18 +284,7 @@
             </svg>
           </button>
           {#if workspace.offers('ask')}
-            <button
-              class="orden-glyph act"
-              title={docked ? 'Continue as its own chat' : 'Continue in the panel'}
-              aria-label={docked ? 'Continue as its own chat' : 'Continue in the panel'}
-              onclick={() => void quick.continueInPanel()}
-            >
-              <svg viewBox="0 0 13 13"
-                ><path
-                  d="M2.5 3.5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6l-2.5 2v-2h0a1 1 0 0 1-1-1z"
-                /></svg
-              >
-            </button>
+            {@render onward()}
           {/if}
         </div>
       {/if}

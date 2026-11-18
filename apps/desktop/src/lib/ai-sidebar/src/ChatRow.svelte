@@ -1,15 +1,15 @@
 <script lang="ts" module>
   const PIN = 'M5 1.8h3l-.4 3.1 1.9 1.8v.9H3.5v-.9l1.9-1.8zM6.5 7.6v3.6'
+  const ARCHIVE = 'M2 3h9v2.2H2zM2.8 5.2v4.8h7.4V5.2M5.3 7h2.4'
 </script>
 
 <script lang="ts">
   import { agoShort } from '../../ui-controls/src/api'
   import { Icon } from '../../glyphs/src/api'
-  import { brandIcon, carryAiChat, readIcon } from '../../ui-kit/src/api'
+  import { brandIcon, carryAiChat, readIcon, UnreadDot } from '../../ui-kit/src/api'
   import { region } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'
   import { ai, providerBrand, type SessionState, type ThreadHead } from '../../ai-providers/src/api'
-  import { UnreadDot } from '../../ui-kit/src/api'
   import { rowName } from './marks'
   import StateMark from './StateMark.svelte'
 
@@ -45,6 +45,21 @@
   const logo = $derived(brand === null ? null : readIcon(brandIcon(brand)))
   const archived = $derived(state === 'archived')
 </script>
+
+{#snippet act(label: string, run: (event: MouseEvent) => void, path: string, on?: boolean)}
+  <button
+    class="orden-glyph act"
+    class:on
+    title={label}
+    aria-label={label}
+    aria-pressed={on}
+    aria-haspopup={label === 'More' ? 'menu' : undefined}
+    onclick={run}
+  >
+    <svg viewBox="0 0 13 13" aria-hidden="true"><path class:dots={label === 'More'} d={path} /></svg
+    >
+  </button>
+{/snippet}
 
 <li
   class="item"
@@ -86,39 +101,11 @@
       <span class="when">{agoShort(head.updated, region())}</span>
       <span class="acts">
         {#if !archived}
-          <button
-            class="orden-glyph act"
-            class:on={!!head.pinned}
-            title={head.pinned ? 'Unpin' : 'Pin'}
-            aria-label={head.pinned ? 'Unpin' : 'Pin'}
-            aria-pressed={!!head.pinned}
-            onclick={onpin}
-          >
-            <svg viewBox="0 0 13 13" aria-hidden="true"><path d={PIN} /></svg>
-          </button>
+          {@render act(head.pinned ? 'Unpin' : 'Pin', onpin, PIN, !!head.pinned)}
         {/if}
-        <button
-          class="orden-glyph act"
-          title={archived ? 'Unarchive' : 'Archive'}
-          aria-label={archived ? 'Unarchive' : 'Archive'}
-          onclick={onarchive}
-        >
-          <svg viewBox="0 0 13 13" aria-hidden="true"
-            ><path d="M2 3h9v2.2H2zM2.8 5.2v4.8h7.4V5.2M5.3 7h2.4" /></svg
-          >
-        </button>
+        {@render act(archived ? 'Unarchive' : 'Archive', onarchive, ARCHIVE)}
         {#if onmenu}
-          <button
-            class="orden-glyph act"
-            title="More"
-            aria-label="More"
-            aria-haspopup="menu"
-            onclick={onmenu}
-          >
-            <svg viewBox="0 0 13 13" aria-hidden="true"
-              ><path class="dots" d="M3 6.5h.01M6.5 6.5h.01M10 6.5h.01" /></svg
-            >
-          </button>
+          {@render act('More', onmenu, 'M3 6.5h.01M6.5 6.5h.01M10 6.5h.01')}
         {/if}
       </span>
     </span>

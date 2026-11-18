@@ -1,14 +1,7 @@
 <script lang="ts">
   import { Sheet } from '../../ui-controls/src/api'
-  import {
-    type Adding,
-    type Maker,
-    keyed,
-    makersOf,
-    ROAD_HINTS,
-    ROAD_NAMES,
-    roadsOf,
-  } from './add-paths'
+  import { type Adding, type Maker, keyed, makersOf, ROAD_HINTS, ROAD_NAMES } from './add-paths'
+  import { roadsOf } from './add-paths'
   import ProviderMark from './ProviderMark.svelte'
   import { KIND_NAMES, type ProviderKind } from './providers'
 

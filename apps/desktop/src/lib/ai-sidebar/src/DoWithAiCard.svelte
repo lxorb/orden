@@ -1,19 +1,9 @@
 <script lang="ts">
-  import { Hint } from '../../ui-controls/src/api'
-  import { Select } from '../../ui-controls/src/api'
+  import { Hint, Select } from '../../ui-controls/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import { type Mode, MODES, modeWord } from '../../ai-providers/src/api'
-  import {
-    DEFAULT_ASK,
-    rememberTaskAsk,
-    rememberTaskMode,
-    rememberTaskUses,
-    TASK_TOOLS,
-    type TaskTool,
-    taskAsk,
-    taskMode,
-    taskUses,
-  } from './chat-parts'
+  import { DEFAULT_ASK, rememberTaskAsk, rememberTaskMode, rememberTaskUses } from './chat-parts'
+  import { TASK_TOOLS, type TaskTool, taskAsk, taskMode, taskUses } from './chat-parts'
 
   let tasked = $state(taskMode())
   const taskTools = $state(Object.fromEntries(TASK_TOOLS.map((one) => [one, taskUses(one)])))

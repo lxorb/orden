@@ -7,8 +7,7 @@
   import type { Limit } from './local/heard'
   import type { LocalKind, Provider } from './providers'
   import { message } from '../../ui-kit/src/api'
-  import { dur, slide } from '../../platform/src/api'
-  import { invoke, openExternal } from '../../platform/src/api'
+  import { dur, slide, invoke, openExternal } from '../../platform/src/api'
 
   interface Props {
     provider: Provider

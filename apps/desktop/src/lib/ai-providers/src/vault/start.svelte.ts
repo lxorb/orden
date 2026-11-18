@@ -1,18 +1,7 @@
 import { mount, unmount, untrack } from 'svelte'
 import { account, request } from '../../../accounts/src/api'
-import {
-  afterQuiet,
-  deviceName,
-  forget,
-  keep,
-  keepJson,
-  log,
-  parsed,
-  storedText,
-  isNative,
-  NoWord,
-  wordSaid,
-} from '../../../platform/src/api'
+import { afterQuiet, deviceName, forget, keep, keepJson, log } from '../../../platform/src/api'
+import { parsed, storedText, isNative, NoWord, wordSaid } from '../../../platform/src/api'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
 import { keepMoves } from '../moves'

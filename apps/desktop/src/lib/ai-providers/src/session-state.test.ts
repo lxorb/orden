@@ -1,16 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { ThreadHead } from './chat/types'
-import {
-  beside,
-  next,
-  ordered,
-  SESSION_STATES,
-  type SessionState,
-  STATE_COLOURS,
-  STATE_MARKS,
-  stateOf,
-  statesOf,
-} from './session-state'
+import { beside, next, ordered, SESSION_STATES, type SessionState } from './session-state'
+import { STATE_COLOURS, STATE_MARKS, stateOf, statesOf } from './session-state'
 
 describe('the state a chat moves to', () => {
   test('a send starts it, from wherever it was', () => {

@@ -3,29 +3,23 @@
   import { Facts, Cross, DIVIDER, menu, overlays } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import { region, dur, fly, samePath, withinSpace } from '../../platform/src/api'
-  import { chooseFiles } from '../../ui-controls/src/api'
+  import { chooseFiles, longPaste } from '../../ui-controls/src/api'
   import { links } from '../../link-index/src/api'
-  import { longPaste } from '../../ui-controls/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { views } from '../../panes/src/api'
   import { workspace } from '../../workspace/src/api'
-  import { estimateText } from './chat-parts'
   import { DictateButton, canDictate, dictating, showsDictateButton } from '../../dictation/src/api'
   import type { Dictates } from '../../dictation/src/api'
-  import { noteInFront, SELECTION_CHIP, selectionHere } from './chat-parts'
-  import { chat } from './chat-parts'
-  import { dictation } from './chat-parts'
-  import type { Front } from './chat-parts'
+  import { chat, dictation, estimateText, mentionAt, mentionOf, minutes } from './chat-parts'
+  import { noteInFront, ranked, sameMention, SELECTION_CHIP, selectionHere } from './chat-parts'
+  import { tokens, type Front, type Mention, type PanelCommand, type Row } from './chat-parts'
   import { hostHere } from './host'
   import MentionMark from './MentionMark.svelte'
   import ModeMark from './ModeMark.svelte'
-  import { type Mention, mentionAt, mentionOf, ranked, type Row, sameMention } from './chat-parts'
   import ModelPicker from './ModelPicker.svelte'
   import { chatPicture, MOST_CHAT_PICTURES, MOST_CHAT_TEXT, textHeld } from './picture'
-  import { minutes, tokens } from './chat-parts'
   import Queue from './Queue.svelte'
   import Ring from './Ring.svelte'
-  import type { PanelCommand } from './chat-parts'
   import Rewinding from './review/Rewinding.svelte'
   import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
@@ -324,28 +318,24 @@
   let drawing = 0
   let reading = 0
 
-  function textRoom(): number {
-    return MOST_CHAT_TEXT - textHeld(chat.chips) - reading
-  }
+  const notTaken = (name: string, why = 'a chat takes pictures, and text files up to 2 MB') =>
+    (chat.trouble = `${name} was not added: ${why}.`)
 
-  function tooMuchText(name: string) {
-    chat.trouble = `${name} was not added: a message takes up to 4 MB of text in all.`
+  function tooMuch(name: string, size: number): boolean {
+    if (size > 2_000_000) notTaken(name)
+    else if (size > MOST_CHAT_TEXT - textHeld(chat.chips) - reading)
+      notTaken(name, 'a message takes up to 4 MB of text in all')
+    else return false
+    return true
   }
 
   function take(file: File) {
     const name = file.name || 'Picture'
-    const refused = () => {
-      chat.trouble = `${name} was not added: a chat takes pictures, and text files up to 2 MB.`
-    }
-    const unread = () => {
-      chat.trouble = `${name} could not be read.`
-    }
+    const unread = () => (chat.trouble = `${name} could not be read.`)
     if (file.type.startsWith('image/')) {
       const held = chat.chips.filter((one) => one.kind === 'picture').length
-      if (held + drawing >= MOST_CHAT_PICTURES) {
-        chat.trouble = `${name} was not added: a message takes up to 20 pictures.`
-        return
-      }
+      if (held + drawing >= MOST_CHAT_PICTURES)
+        return notTaken(name, 'a message takes up to 20 pictures')
       drawing++
       void chatPicture(file)
         .then((image) => {
@@ -355,19 +345,12 @@
         .finally(() => drawing--)
       return
     }
-    if (file.size > 2_000_000) {
-      refused()
-      return
-    }
-    if (file.size > textRoom()) {
-      tooMuchText(name)
-      return
-    }
+    if (tooMuch(name, file.size)) return
     reading += file.size
     const reader = new FileReader()
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : ''
-      if (text.includes('\u0000')) refused()
+      if (text.includes('\u0000')) notTaken(name)
       else addChip({ kind: 'words', id: crypto.randomUUID(), label: file.name, text })
     }
     reader.onerror = unread
@@ -383,17 +366,8 @@
       return
     }
     const text = longPaste(event)
-    if (text === null) return
-    const name = 'Text'
-    if (text.length > 2_000_000) {
-      chat.trouble = `${name} was not added: a chat takes pictures, and text files up to 2 MB.`
-      return
-    }
-    if (text.length > textRoom()) {
-      tooMuchText(name)
-      return
-    }
-    addChip({ kind: 'words', id: crypto.randomUUID(), label: name, text })
+    if (text !== null && !tooMuch('Text', text.length))
+      addChip({ kind: 'words', id: crypto.randomUUID(), label: 'Text', text })
   }
 
   function onDrop(event: DragEvent) {
@@ -487,6 +461,10 @@
   }
 </script>
 
+{#snippet remove(run: () => void)}
+  <button class="drop" aria-label="Remove" title="Remove" onclick={run}><Cross small /></button>
+{/snippet}
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="foot" bind:this={foot} onkeydown={footKey}>
   <Queue />
@@ -529,9 +507,7 @@
           /></span
         >
       </button>
-      <button class="drop" aria-label="Remove" title="Remove" onclick={() => void clearGoal()}
-        ><Cross small /></button
-      >
+      {@render remove(() => void clearGoal())}
     </div>
     {#if reasoning && goal.reason}
       <p class="reason">{goal.reason}</p>
@@ -560,24 +536,14 @@
             <span class="chip implicit" title={front.path}>
               <MentionMark kind="note" />
               <span class="name" dir="auto">{front.name}</span>
-              <button
-                class="drop"
-                aria-label="Remove"
-                title="Remove"
-                onclick={() => chat.drop(front.key)}><Cross small /></button
-              >
+              {@render remove(() => chat.drop(front.key))}
             </span>
           {/if}
           {#if selectionOn}
             <span class="chip implicit" title={selection.slice(0, 400)}>
               <MentionMark kind="selection" />
               <span class="name quoted">{selection.trim().slice(0, 40)}</span>
-              <button
-                class="drop"
-                aria-label="Remove"
-                title="Remove"
-                onclick={() => chat.drop(selectionKey)}><Cross small /></button
-              >
+              {@render remove(() => chat.drop(selectionKey))}
             </span>
           {/if}
           {#each chat.chips as chip (chip)}
@@ -600,13 +566,9 @@
                 <MentionMark kind={chip.kind} />
               {/if}
               <span class="name" dir="auto">{chip.label}</span>
-              <button
-                class="drop"
-                aria-label="Remove"
-                title="Remove"
-                onclick={() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip)))}
-                ><Cross small /></button
-              >
+              {@render remove(
+                () => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip))),
+              )}
             </span>
           {/each}
         </div>
@@ -757,13 +719,6 @@
     color: var(--muted);
   }
 
-  .condition {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .goal .meta {
     flex: none;
     margin-inline-start: auto;
@@ -834,7 +789,8 @@
     opacity: 0.6;
   }
 
-  .name {
+  .name,
+  .condition {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

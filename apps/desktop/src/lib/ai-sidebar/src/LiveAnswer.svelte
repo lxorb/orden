@@ -3,17 +3,13 @@
   import Answer from './Answer.svelte'
   import { atItsCost } from './at-its-cost'
 
-  const {
-    text,
-    draw,
-    onfollow,
-    onpicture,
-  }: {
+  interface Props {
     text: string
     draw: (text: string) => string
     onfollow: (event: MouseEvent) => void
     onpicture: (src: string) => void
-  } = $props()
+  }
+  const { text, draw, onfollow, onpicture }: Props = $props()
 
   let drawnFor = untrack(() => text)
   let html = $state(untrack(() => draw(text)))

@@ -3,20 +3,17 @@
   import { cubicOut } from 'svelte/easing'
   import { menu, dropOver, isTreeDrag } from '../../ui-kit/src/api'
   import { dur, fly } from '../../platform/src/api'
-  import { hearAgain } from '../../shortcuts/src/api'
-  import { shortcuts } from '../../shortcuts/src/api'
+  import { hearAgain, shortcuts } from '../../shortcuts/src/api'
   import { ai } from '../../ai-providers/src/api'
   import { agentMarks, type Tab, workspace } from '../../workspace/src/api'
   import { agentSession } from '../../surfaces/src/api'
-  import { following, toggleFollow } from './chat-parts'
-  import { chat, side } from './chat-parts'
+  import { following, toggleFollow, chat, side, railOpen } from './chat-parts'
+  import { rememberRail, chatToTab } from './chat-parts'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
   import QuickQuestion from './QuickQuestion.svelte'
   import { dropRows } from './drop'
   import { setHost } from './host'
-  import { railOpen, rememberRail } from './chat-parts'
-  import { chatToTab } from './chat-parts'
   import Threads from './Threads.svelte'
 
   const {
@@ -65,6 +62,12 @@
   $effect(() => {
     if (agentMarks.open !== null) untrack(() => (chat.listing = false))
   })
+
+  const BACK = 'M8 3.2L4.7 6.5 8 9.8'
+  const RAIL =
+    'M2.6 2.2h7.8a1 1 0 0 1 1 1v6.6a1 1 0 0 1-1 1H2.6a1 1 0 0 1-1-1V3.2a1 1 0 0 1 1-1zM5 2.2v8.6'
+  const NEW =
+    'M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z'
 
   function toggleRail() {
     railed = !railed
@@ -133,6 +136,12 @@
   })
 </script>
 
+{#snippet glyph(title: string, label: string, run: () => void, path: string, pressed?: boolean)}
+  <button class="orden-glyph" {title} aria-label={label} aria-pressed={pressed} onclick={run}>
+    <svg viewBox="0 0 13 13" aria-hidden="true"><path d={path} /></svg>
+  </button>
+{/snippet}
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="ask"
@@ -157,29 +166,10 @@
     {#if shown && (wide || (head?.kept && !listing && session === null))}
       <header class="top">
         {#if wide}
-          <button
-            class="orden-glyph"
-            title="Chats"
-            aria-label="Chats"
-            aria-pressed={railed}
-            onclick={toggleRail}
-          >
-            <svg viewBox="0 0 13 13" aria-hidden="true"
-              ><path
-                d="M2.6 2.2h7.8a1 1 0 0 1 1 1v6.6a1 1 0 0 1-1 1H2.6a1 1 0 0 1-1-1V3.2a1 1 0 0 1 1-1zM5 2.2v8.6"
-              /></svg
-            >
-          </button>
+          {@render glyph('Chats', 'Chats', toggleRail, RAIL, railed)}
         {/if}
         {#if !wide && head?.kept && !listing}
-          <button
-            class="orden-glyph"
-            title="Back"
-            aria-label="Back"
-            onclick={() => chat.newThread()}
-          >
-            <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8 3.2L4.7 6.5 8 9.8" /></svg>
-          </button>
+          {@render glyph('Back', 'Back', () => chat.newThread(), BACK)}
         {/if}
         {#if head?.kept && !listing && session === null}
           <button class="title" onclick={titleMenu} aria-haspopup="menu">
@@ -189,18 +179,12 @@
         {/if}
         <span class="gap"></span>
         {#if wide && !railed}
-          <button
-            class="orden-glyph"
-            title={shortcuts.tooltip('New chat', 'ai.new')}
-            aria-label="New chat"
-            onclick={() => chat.newThread()}
-          >
-            <svg viewBox="0 0 13 13" aria-hidden="true"
-              ><path
-                d="M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z"
-              /></svg
-            >
-          </button>
+          {@render glyph(
+            shortcuts.tooltip('New chat', 'ai.new'),
+            'New chat',
+            () => chat.newThread(),
+            NEW,
+          )}
         {/if}
       </header>
     {/if}
@@ -215,14 +199,7 @@
     {:else if session !== null}
       {#if !wide}
         <header class="top">
-          <button
-            class="orden-glyph"
-            title="Back"
-            aria-label="Back"
-            onclick={() => chat.showThreads()}
-          >
-            <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8 3.2L4.7 6.5 8 9.8" /></svg>
-          </button>
+          {@render glyph('Back', 'Back', () => chat.showThreads(), BACK)}
         </header>
       {/if}
       {#await agentSession() then AgentSession}

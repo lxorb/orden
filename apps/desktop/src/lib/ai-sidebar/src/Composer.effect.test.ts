@@ -67,16 +67,9 @@ let close: (() => void) | undefined
 
 beforeEach(() => {
   ran.length = 0
-  panel.taken.mockClear()
-  panel.submit.mockClear()
-  panel.chips = []
-  panel.heads = []
-  panel.trouble = null
-  panel.steer.mockClear()
-  panel.text = ''
-  panel.busy = false
-  panel.canSteer = false
-  panel.queue = []
+  for (const one of [panel.taken, panel.submit, panel.steer]) one.mockClear()
+  Object.assign(panel, { chips: [], heads: [], trouble: null, text: '', queue: [] })
+  Object.assign(panel, { busy: false, canSteer: false })
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -96,8 +89,8 @@ function composer() {
   return field
 }
 
-const enter = (field: HTMLTextAreaElement) =>
-  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+const enter = (field: HTMLTextAreaElement, ctrlKey = false) =>
+  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey, bubbles: true }))
 
 test('a command typed out ends the change in the field', async () => {
   panel.text = '/export to the desk'
@@ -125,7 +118,6 @@ test('a command picked from the menu ends the change in the field', async () => 
 })
 
 test('two chips of one name are both drawn', () => {
-  panel.text = ''
   panel.chips = [
     { kind: 'words', id: '#Ana', label: '#Ana', text: 'one' },
     { kind: 'words', id: '#Ana', label: '#Ana', text: 'two' },
@@ -155,10 +147,9 @@ test('Ctrl+Enter with nothing running sends as Enter does, the selection with it
   views.chosen = 5
   const picked = vi.spyOn(views, 'selectedText').mockReturnValue('picked words')
   panel.text = 'explain this'
-  panel.chips = []
   const field = composer()
 
-  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+  enter(field, true)
 
   await vi.waitFor(() => expect(panel.submit).toHaveBeenCalled())
   views.chosen = chosen
@@ -171,7 +162,7 @@ test('Ctrl+Enter with nothing running runs a typed command', async () => {
   panel.text = '/export to the desk'
   const field = composer()
 
-  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+  enter(field, true)
 
   await vi.waitFor(() => expect(ran).toEqual(['export:to the desk']))
   expect(panel.steer).not.toHaveBeenCalled()
@@ -183,7 +174,7 @@ test('Ctrl+Enter into a running answer that cannot take words queues them as Ent
   panel.text = 'and shorter'
   const field = composer()
 
-  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+  enter(field, true)
 
   await vi.waitFor(() => expect(panel.submit).toHaveBeenCalled())
   expect(panel.steer).not.toHaveBeenCalled()
@@ -195,7 +186,7 @@ test('Ctrl+Enter into a running answer that takes words steers it', () => {
   panel.text = 'and shorter'
   const field = composer()
 
-  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }))
+  enter(field, true)
 
   expect(panel.steer).toHaveBeenCalled()
   expect(panel.submit).not.toHaveBeenCalled()
@@ -263,8 +254,6 @@ test('a file too large or not text says why it was not added', async () => {
 })
 
 test('text files dropped all at once stop at as much text as a message takes, and say so', async () => {
-  panel.chips = []
-  panel.trouble = null
   const field = composer()
   const big = (name: string) => new File(['x'.repeat(1_500_000)], name, { type: 'text/plain' })
 
@@ -279,7 +268,6 @@ test('text files dropped all at once stop at as much text as a message takes, an
 })
 
 test('two files of one name are both added, each with its own words', async () => {
-  panel.chips = []
   const field = composer()
 
   pasted(field, [new File(['first'], 'notes.txt', { type: 'text/plain' })])

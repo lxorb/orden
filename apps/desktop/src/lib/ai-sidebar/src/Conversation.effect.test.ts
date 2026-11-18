@@ -37,6 +37,24 @@ vi.stubGlobal(
 
 const Conversation = (await import('./Conversation.svelte')).default
 
+const you = (id: string, text: string, attachments: unknown[] = [], at = 1) => ({
+  id,
+  role: 'you',
+  at,
+  parts: [],
+  draft: { text, attachments },
+})
+
+const listed = (id: string, updated: number, more: object = {}) => ({
+  id,
+  title: id,
+  updated,
+  state: 'done',
+  provider: 'p',
+  model: 'm',
+  ...more,
+})
+
 function draw() {
   const target = document.createElement('div')
   document.body.append(target)
@@ -47,19 +65,10 @@ function draw() {
 
 test('two pasted screenshots both called image.png are drawn, both', () => {
   panel.turns = [
-    {
-      id: 'u1',
-      role: 'you',
-      at: 1,
-      parts: [],
-      draft: {
-        text: 'compare these',
-        attachments: [
-          { label: 'image.png', image: { mime: 'image/png', data: 'AA' } },
-          { label: 'image.png', image: { mime: 'image/png', data: 'BB' } },
-        ],
-      },
-    },
+    you('u1', 'compare these', [
+      { label: 'image.png', image: { mime: 'image/png', data: 'AA' } },
+      { label: 'image.png', image: { mime: 'image/png', data: 'BB' } },
+    ]),
   ]
   let drawn: { target: HTMLElement; close: () => void } | undefined
   expect(() => (drawn = draw())).not.toThrow()
@@ -70,19 +79,10 @@ test('two pasted screenshots both called image.png are drawn, both', () => {
 
 test('the note in front, also @-mentioned, is drawn', () => {
   panel.turns = [
-    {
-      id: 'u2',
-      role: 'you',
-      at: 1,
-      parts: [],
-      draft: {
-        text: 'sum up',
-        attachments: [
-          { label: 'Plan.md', text: 'front' },
-          { label: 'Plan.md', text: 'chip' },
-        ],
-      },
-    },
+    you('u2', 'sum up', [
+      { label: 'Plan.md', text: 'front' },
+      { label: 'Plan.md', text: 'chip' },
+    ]),
   ]
   let drawn: { target: HTMLElement; close: () => void } | undefined
   expect(() => (drawn = draw())).not.toThrow()
@@ -109,8 +109,8 @@ test('an unread chat open in the window in focus is read; with the window away, 
 test('the home’s rows say unread and their state to a screen reader', () => {
   panel.turns = []
   panel.heads = [
-    { id: 'a', title: 'Serie 6', updated: 1, state: 'done', provider: 'p', model: 'm' },
-    { id: 'b', title: 'Garden', updated: 1, state: 'running', provider: 'p', model: 'm' },
+    listed('a', 1, { title: 'Serie 6' }),
+    listed('b', 1, { title: 'Garden', state: 'running' }),
   ]
   panel.unread = new Set(['a'])
   panel.running = ['b']
@@ -129,23 +129,8 @@ test('the home’s rows say unread and their state to a screen reader', () => {
 test('Show all shows the rest in place, and no archived chat', () => {
   panel.turns = []
   panel.heads = [
-    ...['one', 'two', 'three', 'four', 'five'].map((title, at) => ({
-      id: title,
-      title,
-      updated: 10 - at,
-      state: 'done',
-      provider: 'p',
-      model: 'm',
-    })),
-    {
-      id: 'gone',
-      title: 'gone',
-      updated: 99,
-      state: 'done',
-      archived: true,
-      provider: 'p',
-      model: 'm',
-    },
+    ...['one', 'two', 'three', 'four', 'five'].map((title, at) => listed(title, 10 - at)),
+    listed('gone', 99, { archived: true }),
   ]
   const shown = draw()
   const titles = () =>
@@ -163,14 +148,9 @@ test('Show all shows the rest in place, and no archived chat', () => {
 
 test('Show all over a thousand chats draws the rows in sight, not every one', () => {
   panel.turns = []
-  panel.heads = Array.from({ length: 1000 }, (_, at) => ({
-    id: `c${at}`,
-    title: `chat ${at}`,
-    updated: 1000 - at,
-    state: 'done',
-    provider: 'p',
-    model: 'm',
-  }))
+  panel.heads = Array.from({ length: 1000 }, (_, at) =>
+    listed(`c${at}`, 1000 - at, { title: `chat ${at}` }),
+  )
   const shown = draw()
   shown.target.querySelector<HTMLButtonElement>('.recent .all')?.click()
   flushSync()
@@ -183,13 +163,7 @@ test('Show all over a thousand chats draws the rows in sight, not every one', ()
 })
 
 test('a long chat draws its last turns first and earlier ones as it is scrolled up', async () => {
-  panel.turns = Array.from({ length: 100 }, (_, at) => ({
-    id: `u${at}`,
-    role: 'you',
-    at,
-    parts: [],
-    draft: { text: `question ${at}`, attachments: [] },
-  }))
+  panel.turns = Array.from({ length: 100 }, (_, at) => you(`u${at}`, `question ${at}`, [], at))
   const shown = draw()
   const said = () =>
     [...shown.target.querySelectorAll('.said .bubble')].map((one) => one.textContent)

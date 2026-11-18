@@ -1,11 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { accentFor } from '../../../theme/src/api'
-  import { initial } from '../../../ui-kit/src/api'
+  import { accentFor, theme } from '../../../theme/src/api'
+  import { initial, overlays } from '../../../ui-kit/src/api'
   import { dur, fly } from '../../../platform/src/api'
-  import { overlays } from '../../../ui-kit/src/api'
-  import { theme } from '../../../theme/src/api'
   import type { Vault } from './vault.svelte'
 
   const { vault }: { vault: Vault } = $props()

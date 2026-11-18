@@ -1,28 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import {
-  type Accounts,
-  accountsIn,
-  accountsText,
-  activated,
-  actives,
-  activeOf,
-  added,
-  CLAUDE,
-  defaulted,
-  defaultOf,
-  GEMINI,
-  isActive,
-  merged,
-  migrated,
-  NONE,
-  OPENAI,
-  removed,
-  resolve,
-  updated,
-  used,
-  vendorOf,
-  vendors,
-} from './accounts'
+import { type Accounts, accountsIn, accountsText, activated, actives, activeOf } from './accounts'
+import { added, CLAUDE, defaulted, defaultOf, GEMINI, isActive, merged, migrated } from './accounts'
+import { NONE, OPENAI, removed, resolve, updated, used, vendorOf, vendors } from './accounts'
 import type { ProviderKind } from './providers'
 
 function made(...kinds: ProviderKind[]): Accounts {

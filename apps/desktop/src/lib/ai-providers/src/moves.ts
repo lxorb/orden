@@ -1,11 +1,5 @@
-import {
-  heardElsewhere,
-  isNumber,
-  isRecord,
-  isString,
-  keepJson,
-  stored,
-} from '../../platform/src/api'
+import { heardElsewhere, isNumber, isRecord, isString, keepJson } from '../../platform/src/api'
+import { stored } from '../../platform/src/api'
 
 const KEY = 'orden:ai-moves'
 

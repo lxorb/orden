@@ -1,17 +1,6 @@
 import { commitment, digits as pairingDigits, newNonce } from '../pairing'
-import {
-  authOf,
-  type DeviceKey,
-  deviceKeyIn,
-  fingerprint,
-  idOf,
-  newDeviceKey,
-  newVaultKey,
-  open,
-  seal,
-  unwrap,
-  wrap,
-} from './crypto'
+import { authOf, type DeviceKey, deviceKeyIn, fingerprint, idOf, newDeviceKey } from './crypto'
+import { newVaultKey, open, seal, unwrap, wrap } from './crypto'
 import { SvelteMap } from 'svelte/reactivity'
 import { agrees, type Base, baseOf, type Contents, contentsIn, merged, type Side } from './merge'
 

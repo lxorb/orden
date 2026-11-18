@@ -7,49 +7,32 @@
   import Answer from './Answer.svelte'
   import LiveAnswer from './LiveAnswer.svelte'
   import { answerHtml } from './drawn'
-  import { citationLinks, citedIn, linkedAnswer } from './chat-parts'
+  import { citationLinks, citedIn, linkedAnswer, chat, lasted } from './chat-parts'
   import type { Part, Turn } from '../../ai-providers/src/api'
-  import { Copied } from '../../ui-controls/src/api'
-  import { region } from '../../platform/src/api'
+  import { Copied, when } from '../../ui-controls/src/api'
+  import { region, dur, fly, slide, insideSpace, withinSpace } from '../../platform/src/api'
   import { links } from '../../link-index/src/api'
   import { DIVIDER, menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
-  import { dur, fly, slide } from '../../platform/src/api'
-  import {
-    followHref,
-    followNote,
-    MIDDLE,
-    opensLink,
-    workspace,
-    howFor,
-    tabAsk,
-  } from '../../workspace/src/api'
-  import { insideSpace, withinSpace } from '../../platform/src/api'
+  import { followHref, followNote, MIDDLE, opensLink, workspace } from '../../workspace/src/api'
+  import { howFor, tabAsk } from '../../workspace/src/api'
   import { views } from '../../panes/src/api'
-  import { when } from '../../ui-controls/src/api'
   import { ai } from '../../ai-providers/src/api'
-  import { chat } from './chat-parts'
   import type { Source } from './chat-parts'
   import Explored from './Explored.svelte'
-  import { lasted } from './chat-parts'
   import PartRow from './PartRow.svelte'
   import Spawned from './Spawned.svelte'
   import StepLine from './StepLine.svelte'
   import { type Block, blocksOf, foldOf } from './steps'
   import TaskRows from './TaskRows.svelte'
 
-  const {
-    turn,
-    sources,
-    last,
-    live,
-    ongoto,
-  }: {
+  interface Props {
     turn: Turn
     sources: Source[]
     last: boolean
     live: boolean
     ongoto?: ((line: number) => void) | undefined
-  } = $props()
+  }
+  const { turn, sources, last, live, ongoto }: Props = $props()
 
   const words = $derived(
     turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''),
@@ -153,6 +136,10 @@
   const saveAsNote = () => chat.noteFrom(asNote)
 
   const copied = new Copied()
+  const DONE = 'M2.8 6.8l2.4 2.4 5-5.4'
+  const COPY =
+    'M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z'
+  const INSERT = 'M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8'
 
   function againMenu(event: MouseEvent) {
     const provider = chat.provider
@@ -175,29 +162,18 @@
     ])
   }
 
-  function noticeOf(part: Notice): string {
-    switch (part.code) {
-      case 'compacted':
-        return 'Compacted'
-      case 'model':
-        return part.text
-      case 'steps':
-        return 'Step limit'
-      case 'max_tokens':
-        return 'Length limit'
-      case 'refusal':
-        return part.text ? `Declined: ${part.text}` : 'Declined'
-      case 'error':
-        return part.text
-      case 'stopped':
-        return 'Stopped'
-      case 'no_tools':
-        return 'Without tools'
-      case 'command':
-        return part.text
-      case 'tasks':
-        return ''
-    }
+  const NOTICE_WORDS: Partial<Record<Notice['code'], string>> = {
+    compacted: 'Compacted',
+    steps: 'Step limit',
+    max_tokens: 'Length limit',
+    stopped: 'Stopped',
+    no_tools: 'Without tools',
+    tasks: '',
+  }
+
+  function noticeOf({ code, text }: Notice): string {
+    if (code === 'refusal') return text ? `Declined: ${text}` : 'Declined'
+    return NOTICE_WORDS[code] ?? text
   }
 
   const failed = $derived(
@@ -257,6 +233,25 @@
   {/if}
 {/snippet}
 
+{#snippet act(
+  label: string,
+  run: (event: MouseEvent) => void,
+  path: string,
+  menu = false,
+  disabled = false,
+)}
+  <button
+    class="orden-glyph act"
+    title={label}
+    aria-label={label}
+    aria-haspopup={menu ? 'menu' : undefined}
+    {disabled}
+    onclick={run}
+  >
+    <svg class:dots={label === 'More'} viewBox="0 0 13 13"><path d={path} /></svg>
+  </button>
+{/snippet}
+
 <div class="answer" class:last>
   {#each fold.before as block (block.at)}
     {@render one(block)}
@@ -292,52 +287,13 @@
   {#if !live && (answered || (last && !failed))}
     <div class="acts">
       {#if answered}
-        <button
-          class="orden-glyph act"
-          title="Copy"
-          aria-label="Copy"
-          onclick={() => void copied.copy(asNote, true)}
-        >
-          <svg viewBox="0 0 13 13">
-            {#if copied.what}
-              <path d="M2.8 6.8l2.4 2.4 5-5.4" />
-            {:else}
-              <path
-                d="M4.5 4.5V3a1 1 0 0 1 1-1H10a1 1 0 0 1 1 1v4.5a1 1 0 0 1-1 1H8.5M3 4.5h4.5a1 1 0 0 1 1 1V10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z"
-              />
-            {/if}
-          </svg>
-        </button>
-        <button
-          class="orden-glyph act"
-          title="Insert at the caret"
-          aria-label="Insert at the caret"
-          disabled={!view || view.state.readOnly}
-          onclick={insert}
-        >
-          <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg>
-        </button>
+        {@render act('Copy', () => void copied.copy(asNote, true), copied.what ? DONE : COPY)}
+        {@render act('Insert at the caret', insert, INSERT, false, !view || view.state.readOnly)}
       {/if}
       {#if last && ai.providers.length && !chat.answeredElsewhere}
-        <button
-          class="orden-glyph act"
-          title="Ask again"
-          aria-label="Ask again"
-          aria-haspopup="menu"
-          onclick={againMenu}
-        >
-          <svg viewBox="0 0 13 13"><path d="M10.6 6.5a4.1 4.1 0 1 1-1.2-2.9M10.6 2v2.6H8" /></svg>
-        </button>
+        {@render act('Ask again', againMenu, 'M10.6 6.5a4.1 4.1 0 1 1-1.2-2.9M10.6 2v2.6H8', true)}
       {/if}
-      <button
-        class="orden-glyph act"
-        title="More"
-        aria-label="More"
-        aria-haspopup="menu"
-        onclick={moreMenu}
-      >
-        <svg class="dots" viewBox="0 0 13 13"><path d="M3 6.5h.01M6.5 6.5h.01M10 6.5h.01" /></svg>
-      </button>
+      {@render act('More', moreMenu, 'M3 6.5h.01M6.5 6.5h.01M10 6.5h.01', true)}
     </div>
   {/if}
 </div>
