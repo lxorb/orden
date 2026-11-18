@@ -45,44 +45,8 @@ pub fn offline(error: reqwest::Error) -> String {
 }
 
 #[cfg(test)]
-fn update_in(xml: &str) -> Option<(String, String)> {
-    let at = xml.find("<updatecheck")?;
-    let tag = &xml[at..at + xml[at..].find('>')?];
-    let attribute = |name: &str| {
-        let start = tag.find(&format!(" {name}=\""))? + name.len() + 3;
-        let end = start + tag[start..].find('"')?;
-        Some(tag[start..end].replace("&amp;", "&"))
-    };
-    if attribute("status").is_some_and(|status| status != "ok") {
-        return None;
-    }
-    Some((attribute("version")?, attribute("codebase")?))
-}
-
-#[cfg(test)]
-pub fn later(a: &str, b: &str) -> bool {
-    let numbers = |version: &str| -> Vec<u64> {
-        version
-            .split('.')
-            .map(|part| part.parse().unwrap_or(0))
-            .collect()
-    };
-    let (a, b) = (numbers(a), numbers(b));
-    for at in 0..a.len().max(b.len()) {
-        let (one, two) = (
-            a.get(at).copied().unwrap_or(0),
-            b.get(at).copied().unwrap_or(0),
-        );
-        if one != two {
-            return one > two;
-        }
-    }
-    false
-}
-
-#[cfg(test)]
 mod tests {
-    use super::{capped, later, update_in};
+    use super::capped;
     use std::io::{Read as _, Write as _};
 
     fn serving(chunks: usize) -> String {
@@ -114,29 +78,5 @@ mod tests {
         assert_eq!(small.map(|bytes| bytes.len()), Ok(2048));
         let large = tauri::async_runtime::block_on(capped(&serving(64), 4096));
         assert_eq!(large, Err("that extension is too large".to_owned()));
-    }
-
-    #[test]
-    fn an_update_answer_says_the_version_and_the_file() {
-        let offered = r#"<?xml version="1.0"?><gupdate><app appid="x" status="ok"><updatecheck status="ok" codebase="http://host/files/f?P1=1&amp;P2=2" version="2026.930.1227" /></app></gupdate>"#;
-        assert_eq!(
-            update_in(offered),
-            Some((
-                "2026.930.1227".to_owned(),
-                "http://host/files/f?P1=1&P2=2".to_owned()
-            ))
-        );
-        let none = r#"<gupdate><app appid="x" status="ok"><updatecheck _esbAllowlist="true" status="noupdate"/></app></gupdate>"#;
-        assert_eq!(update_in(none), None);
-        assert_eq!(update_in("<html>"), None);
-    }
-
-    #[test]
-    fn versions_compare_as_numbers() {
-        assert!(later("2026.930.1227", "2026.92.1"));
-        assert!(later("1.10", "1.9"));
-        assert!(later("1.0.1", "1"));
-        assert!(!later("1.0", "1"));
-        assert!(!later("1.2", "1.10"));
     }
 }
