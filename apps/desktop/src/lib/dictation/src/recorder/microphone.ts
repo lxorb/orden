@@ -48,10 +48,6 @@ export async function record(listening: Listening = {}): Promise<Recording> {
 
   const started = performance.now()
 
-  const close = () => {
-    for (const track of stream.getTracks()) track.stop()
-  }
-
   recorder.ondataavailable = (event) => {
     if (!event.data.size) return
 
@@ -73,7 +69,7 @@ export async function record(listening: Listening = {}): Promise<Recording> {
     stop: () =>
       new Promise((resolve) => {
         const done = () => {
-          close()
+          for (const track of stream.getTracks()) track.stop()
           const kind = recorder.mimeType || type || 'audio/webm'
           void new Blob(chunks, { type: kind })
             .arrayBuffer()

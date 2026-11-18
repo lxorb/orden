@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 interface Heard {
   on: string | null
@@ -100,25 +100,23 @@ describe('with two windows open', () => {
     expect(world.ran).toEqual([])
   })
 
-  test('a verb is told when to stop working, a moment before the endpoint stops waiting', async () => {
-    vi.useFakeTimers()
-    try {
+  describe('with a verb that hangs', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
       world.hangs = true
+    })
+    afterEach(() => vi.useRealTimers())
+
+    test('it is told when to stop working, a moment before the endpoint stops waiting', async () => {
       sendTo('main', 'orden://automation', { id: 1, verb: 'append_note', within_ms: 25_000 })
       await vi.advanceTimersByTimeAsync(23_900)
       const deadline = world.deadlines[0]
       expect(deadline?.aborted).toBe(false)
       await vi.advanceTimersByTimeAsync(200)
       expect(deadline?.aborted).toBe(true)
-    } finally {
-      vi.useRealTimers()
-    }
-  })
+    })
 
-  test('a verb still working when the time is up is answered for, in words', async () => {
-    vi.useFakeTimers()
-    try {
-      world.hangs = true
+    test('it is answered for, in words, when the time is up', async () => {
       sendTo('main', 'orden://automation', { id: 7, verb: 'sync.now', within_ms: 25_000 })
       await vi.advanceTimersByTimeAsync(24_900)
       expect(world.results).toEqual([])
@@ -126,9 +124,7 @@ describe('with two windows open', () => {
       expect(world.results).toEqual([
         { id: 7, result: expect.objectContaining({ ok: false, code: 'timeout' }) },
       ])
-    } finally {
-      vi.useRealTimers()
-    }
+    })
   })
 
   test('a request with no time given has no deadline to stop by', async () => {

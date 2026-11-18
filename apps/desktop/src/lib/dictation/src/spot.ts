@@ -142,27 +142,12 @@ class Mark {
     const field = this.field
     const style = getComputedStyle(field)
     const area = field instanceof HTMLTextAreaElement
-    const copied = [
-      'font-family',
-      'font-size',
-      'font-weight',
-      'font-style',
-      'letter-spacing',
-      'word-spacing',
-      'line-height',
-      'text-transform',
-      'text-indent',
-      'tab-size',
-      'direction',
-      'padding-top',
-      'padding-right',
-      'padding-bottom',
-      'padding-left',
-      'border-top-width',
-      'border-right-width',
-      'border-bottom-width',
-      'border-left-width',
-    ]
+    const copied = (
+      'font-family font-size font-weight font-style letter-spacing word-spacing line-height ' +
+      'text-transform text-indent tab-size direction padding-top padding-right padding-bottom ' +
+      'padding-left border-top-width border-right-width border-bottom-width border-left-width'
+    )
+      .split(' ')
       .map((name) => `${name}:${style.getPropertyValue(name)}`)
       .join(';')
     layer.style.cssText =
