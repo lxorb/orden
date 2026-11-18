@@ -3,6 +3,7 @@ import {
   type BindingSpec,
   defaultKeyFor,
   imageBindings,
+  itemStartBindings,
   ordenBindings,
   ordenKeymap,
   standardBindings,
@@ -101,6 +102,7 @@ describe('every shortcut there is', () => {
     ['the ones taken over from CodeMirror', standardBindings],
     ['the table bindings', tableBindings],
     ['the picture bindings', imageBindings],
+    ['the bindings at hidden marks', itemStartBindings],
   ])('covers %s', (_name, specs: BindingSpec[]) => {
     const missing = specs.filter((spec) => !registry.SHORTCUTS.some((one) => one.id === spec.id))
     expect(missing.map((spec) => spec.id)).toEqual([])
@@ -132,6 +134,7 @@ describe('every shortcut there is', () => {
         ...standardBindings,
         ...tableBindings,
         ...imageBindings,
+        ...itemStartBindings,
       ].filter((one) => windowsKey(defaultKeyFor(one, platform), platform))
       expect(
         editor.map((one) => one.id),
@@ -184,6 +187,7 @@ describe('every shortcut there is', () => {
       ...standardBindings,
       ...tableBindings,
       ...imageBindings,
+      ...itemStartBindings,
     ]) {
       const entry = registry.SHORTCUTS.find((one) => one.id === spec.id)!
       for (const platform of PLATFORMS) {

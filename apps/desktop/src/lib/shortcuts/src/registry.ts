@@ -2,6 +2,7 @@ import {
   type BindingSpec,
   type EditorView,
   imageBindings,
+  itemStartBindings,
   ordenBindings,
   standardBindings,
   tableBindings,
@@ -233,6 +234,14 @@ const EDITOR_ENTRIES: Record<string, [Category, string]> = {
   'image.leave': ['picture', 'Leave the selected picture'],
   'image.step-up': ['picture', 'Step off the picture upwards'],
   'image.step-down': ['picture', 'Step off the picture downwards'],
+
+  'marks.heading-down': ['edit', 'Push the heading down a line'],
+  'marks.backspace': ['edit', 'Delete the letter behind past hidden marks'],
+  'marks.delete': ['edit', 'Delete the letter ahead past hidden marks'],
+  'marks.delete-word-behind': ['edit', 'Delete the word behind past hidden marks'],
+  'marks.delete-word-ahead': ['edit', 'Delete the word ahead past hidden marks'],
+  'marks.leave-left': ['edit', 'Leave the start of an item to the left'],
+  'marks.leave-right': ['edit', 'Leave the start of an item to the right'],
 }
 
 const EDITOR_SPECS: BindingSpec[] = [
@@ -240,6 +249,7 @@ const EDITOR_SPECS: BindingSpec[] = [
   ...standardBindings,
   ...tableBindings,
   ...imageBindings,
+  ...itemStartBindings,
 ]
 
 function fromEditor(spec: BindingSpec): Shortcut {

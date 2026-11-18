@@ -165,6 +165,7 @@ export { onVimMode, setVim, setVimCommands, type VimCommands, type VimMode } fro
 export { flushTableEdits } from './table/widget'
 export { insertTableToEdit, tableBindings } from './table/keymap'
 export { imageBindings } from './live-preview/image'
+export { itemStartBindings } from './live-preview/item-start'
 export { ordenBindings, ordenKeymap, selectWord, standardBindings, unclaimedKeymap } from './keymap'
 export {
   type BindingSpec,
