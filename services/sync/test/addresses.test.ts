@@ -146,6 +146,43 @@ describe('a second address (#2029)', () => {
   })
 })
 
+describe('two addresses that were each let in to the same place', () => {
+  test('become one account that keeps the most either was given', async () => {
+    const bob = await signIn(env, 'bob@example.com')
+    const space = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space
+      .id
+    for (const [email, role] of [
+      ['ann@example.com', 'read'],
+      ['ann@work.example', 'write'],
+    ]) {
+      await mail(() =>
+        call(env, `/v1/spaces/${space}/share/invite`, { token: bob, body: { email, role } }),
+      )
+    }
+    const vault = env.db.prepare(
+      'insert into pass_members (vault_id, email, role, state, key, key_version, seq) values (?, ?, ?, ?, ?, 1, ?)',
+    )
+    vault.run('v1', 'ann@work.example', 'manager', 'active', 'sealed', 1)
+    vault.run('v1', 'ann@example.com', 'viewer', 'pending', null, 2)
+    vault.run('v2', 'ann@example.com', 'editor', 'active', 'own', 3)
+    vault.run('v2', 'ann@work.example', 'viewer', 'pending', null, 4)
+
+    await confirmed('ann@work.example', 'second')
+
+    expect(env.db.prepare('select email, role from space_members').all()).toEqual([
+      { email: 'ann@example.com', role: 'write' },
+    ])
+    expect(
+      env.db
+        .prepare('select vault_id, email, role, state, key from pass_members order by vault_id')
+        .all(),
+    ).toEqual([
+      { vault_id: 'v1', email: 'ann@example.com', role: 'manager', state: 'active', key: 'sealed' },
+      { vault_id: 'v2', email: 'ann@example.com', role: 'editor', state: 'active', key: 'own' },
+    ])
+  })
+})
+
 describe('changing the address (#2029)', () => {
   test('takes the new one once confirmed, moves what was shared, and tells the old one how to undo', async () => {
     const bob = await signIn(env, 'bob@example.com')
