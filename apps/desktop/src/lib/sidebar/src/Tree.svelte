@@ -741,7 +741,7 @@
       return
     }
 
-    if (shutting) frozen = keep
+    frozen = shutting ? keep : null
     const started = performance.now()
 
     const step = (now: number) => {
