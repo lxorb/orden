@@ -25,14 +25,11 @@ const timers: Clock = {
 export function statusLine(status: Status): string {
   if ('failed' in status) return status.failed
   if ('held' in status) return status.held
-  switch (status.waiting) {
-    case 'starting':
-      return 'Starting machine…'
-    case 'restoring':
-      return 'Restoring…'
-    case 'connecting':
-      return 'Connecting…'
-  }
+  return {
+    starting: 'Starting machine…',
+    restoring: 'Restoring…',
+    connecting: 'Connecting…',
+  }[status.waiting]
 }
 
 function downWords(reason: DownReason | undefined): string {

@@ -1,16 +1,12 @@
 import type { IdentityGroup, IdentityKey } from '@orden/pass/types'
 
 export function identityGroupName(group: IdentityGroup): string {
-  switch (group) {
-    case 'personal':
-      return 'Personal details'
-    case 'address':
-      return 'Address details'
-    case 'contact':
-      return 'Contact details'
-    case 'work':
-      return 'Work details'
-  }
+  return {
+    personal: 'Personal details',
+    address: 'Address details',
+    contact: 'Contact details',
+    work: 'Work details',
+  }[group]
 }
 
 const NAMES: Record<IdentityKey, () => string> = {

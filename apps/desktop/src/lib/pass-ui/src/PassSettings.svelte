@@ -11,18 +11,13 @@
   const tab = $derived(ui.view.settingsTab)
 
   function tabName(one: SettingsTab): string {
-    switch (one) {
-      case 'general':
-        return 'General'
-      case 'security':
-        return 'Security'
-      case 'aliases':
-        return 'Aliases'
-      case 'import':
-        return 'Import'
-      case 'export':
-        return 'Export'
-    }
+    return {
+      general: 'General',
+      security: 'Security',
+      aliases: 'Aliases',
+      import: 'Import',
+      export: 'Export',
+    }[one]
   }
 </script>
 

@@ -138,18 +138,12 @@ export function askedOf(
 }
 
 export function refitWords(why: Refit): string {
-  switch (why) {
-    case 'disk':
-      return 'A smaller disk cannot be chosen'
-    case 'arch':
-      return 'This machine cannot change between x86 and Arm'
-    case 'busy':
-      return 'The machine is starting; try again once it is awake'
-    case 'budget':
-      return 'That machine costs more than the budget allows'
-    case 'type':
-      return 'That machine is not offered there now'
-    case 'other':
-      return 'Could not change the machine'
-  }
+  return {
+    disk: 'A smaller disk cannot be chosen',
+    arch: 'This machine cannot change between x86 and Arm',
+    busy: 'The machine is starting; try again once it is awake',
+    budget: 'That machine costs more than the budget allows',
+    type: 'That machine is not offered there now',
+    other: 'Could not change the machine',
+  }[why]
 }

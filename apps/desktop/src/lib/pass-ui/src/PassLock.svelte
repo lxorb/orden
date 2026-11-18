@@ -57,15 +57,12 @@
   }
 
   const wrongWord = $derived.by(() => {
-    switch (way) {
-      case 'pin':
-        return 'Wrong PIN'
-      case 'recovery':
-        return 'That recovery key does not open Pass'
-      case 'password':
-      case 'device':
-        return 'Wrong password'
-    }
+    return {
+      pin: 'Wrong PIN',
+      recovery: 'That recovery key does not open Pass',
+      password: 'Wrong password',
+      device: 'Wrong password',
+    }[way]
   })
 </script>
 

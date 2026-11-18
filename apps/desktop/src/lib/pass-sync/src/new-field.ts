@@ -7,13 +7,5 @@ export function newField(kind: FieldKind): Field {
 }
 
 export function fieldShape(kind: FieldKind): 'text' | 'hidden' | 'date' {
-  switch (kind) {
-    case 'text':
-      return 'text'
-    case 'hidden':
-    case 'totp':
-      return 'hidden'
-    case 'date':
-      return 'date'
-  }
+  return { text: 'text', hidden: 'hidden', totp: 'hidden', date: 'date' }[kind]
 }
