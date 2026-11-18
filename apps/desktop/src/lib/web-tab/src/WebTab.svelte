@@ -32,6 +32,7 @@
   import { filling } from './filling.svelte'
   import {
     ALL,
+    boxOf,
     settled,
     clearOf,
     cutOf,
@@ -125,11 +126,9 @@
       const whole = { x: 0, y: 0, ...window }
       return { window, area: whole, pane: whole }
     }
-    const area = hole?.closest('[data-panes]')?.getBoundingClientRect()
-    const pane = hole?.closest('[data-pane]')?.getBoundingClientRect()
-    if (!area || !pane) return null
-    const of = (box: DOMRect) => ({ x: box.x, y: box.y, width: box.width, height: box.height })
-    return { window, area: of(area), pane: of(pane) }
+    const area = hole?.closest('[data-panes]')
+    const pane = hole?.closest('[data-pane]')
+    return area && pane ? { window, area: boxOf(area), pane: boxOf(pane) } : null
   }
 
   let scheduled = 0
