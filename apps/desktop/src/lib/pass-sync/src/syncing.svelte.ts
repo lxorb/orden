@@ -1,7 +1,7 @@
 import type { Invite } from '@orden/pass/wire'
 import { untrack } from 'svelte'
 import { account, BASE, request } from '../../accounts/src/api'
-import { roomDelay, log } from '../../platform/src/api'
+import { afterQuiet, roomDelay, log } from '../../platform/src/api'
 import { passOn } from '../../gates/src/api'
 import { hub } from '../../sync-client/src/api'
 import { deviceRows } from './device-rows'
@@ -125,7 +125,6 @@ export function startPassSync(): void {
   if (started) return
   started = true
 
-  let timer: ReturnType<typeof setTimeout> | undefined
   let retry: ReturnType<typeof setTimeout> | undefined
   let tries = 0
   const now = () => {
@@ -141,10 +140,7 @@ export function startPassSync(): void {
       retry = setTimeout(now, roomDelay(tries))
     })
   }
-  const soon = () => {
-    clearTimeout(timer)
-    timer = setTimeout(now, SETTLE)
-  }
+  const soon = afterQuiet(now, SETTLE)
   pass.onLocalChange(soon)
   hub.on('pass', now)
   hub.opened(now)

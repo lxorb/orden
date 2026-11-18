@@ -1,6 +1,7 @@
 import { mount, unmount, untrack } from 'svelte'
 import { account, request } from '../../../accounts/src/api'
 import {
+  afterQuiet,
   deviceName,
   forget,
   keep,
@@ -122,11 +123,7 @@ export function startVault(): void {
   if (started) return
   started = true
 
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const soon = () => {
-    clearTimeout(timer)
-    timer = setTimeout(() => void vault.refresh(), SETTLE)
-  }
+  const soon = afterQuiet(() => void vault.refresh(), SETTLE)
   ai.onLocalChange(soon)
   keysMoved(soon)
   void import('../../../sync-client/src/api')

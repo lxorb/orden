@@ -7,6 +7,7 @@ import { dayOf, wallClock } from './meta'
 import { safeName } from './names'
 import type { ImportPlan, Planned } from './plan'
 import type { Source } from './sources'
+import { isRecord } from '../../platform/src/api'
 
 interface Project {
   id: string
@@ -398,8 +399,6 @@ export type Fetch = (
 
 type Json = Record<string, unknown>
 
-const isRecord = (value: unknown): value is Json =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 const id = (value: unknown) =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : ''
