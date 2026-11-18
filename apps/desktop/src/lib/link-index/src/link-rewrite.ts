@@ -278,7 +278,8 @@ function interleaved(pieces: readonly string[], edits: readonly Edit[]): string 
 function asMarkdown(link: FoundLink, source: string, placed: string | Placed): string {
   const path = typeof placed === 'string' ? placed : placed.path
   const fragment = link.block === null ? link.heading : `^${link.block}`
-  const words = link.alias?.replace(/\\\|/g, '|') ?? null
+  const said = link.embed || typeof placed === 'string' ? null : (placed.shown ?? null)
+  const words = link.alias?.replace(/\\\|/g, '|') ?? said
   const shown = link.embed && embedSize(words) ? `|${words ?? ''}` : words
   return formatLink(
     {
