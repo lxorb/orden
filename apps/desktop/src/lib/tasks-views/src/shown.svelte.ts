@@ -86,10 +86,14 @@ export class Shown {
     return this.world.spaces()
   }
 
+  private get narrowed(): boolean {
+    return this.onlySpace && this.space !== null
+  }
+
   get filter(): Filter {
     const label = this.label
     return {
-      onlySpace: this.onlySpace,
+      onlySpace: this.narrowed,
       space: this.space?.id ?? null,
       spaceAlso: this.space?.also ?? [],
       label: label !== null && this.labels.includes(label) ? label : ALL_LABELS,
@@ -99,7 +103,7 @@ export class Shown {
 
   get labels(): string[] {
     return labelsOf(this.world.todos(), {
-      onlySpace: this.onlySpace,
+      onlySpace: this.narrowed,
       space: this.space?.id ?? null,
       spaceAlso: this.space?.also ?? [],
       today: this.world.today(),
