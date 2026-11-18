@@ -194,4 +194,14 @@ describe('what the account holds', () => {
 
     expect(excluded.of(ROOT)).toContain('Mine')
   })
+
+  test('and a path left out while the account could not hear it is still left out after', async () => {
+    excluded.adopt(ROOT, ['Theirs'], 'u1')
+    excluded.toggle(at('Mine'))
+    await vi.dynamicImportSettled()
+    excluded.adopt(ROOT, ['Theirs'], 'u1')
+
+    expect(excluded.of(ROOT)).toEqual(['Theirs', 'Mine'])
+    expect(new Excluded(() => ROOT).of(ROOT)).toEqual(['Theirs', 'Mine'])
+  })
 })
