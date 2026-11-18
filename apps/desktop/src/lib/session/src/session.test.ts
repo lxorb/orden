@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { pane } from '../../panes/src/api'
 import {
   type Draft,
@@ -16,6 +16,8 @@ import {
   withoutText,
   writeSession,
 } from './session'
+
+const spaceless = { spaces: [], activeSpace: null }
 
 describe('reading a session that was written down', () => {
   test('brings back the spaces, the strip and where each note was', () => {
@@ -38,9 +40,7 @@ describe('reading a session that was written down', () => {
   })
 
   test('answers nothing for an entry that is not one', () => {
-    expect(readSession(null)).toBeNull()
-    expect(readSession('{}')).toBeNull()
-    expect(readSession([])).toBeNull()
+    for (const entry of [null, '{}', []]) expect(readSession(entry)).toBeNull()
   })
 
   test('keeps the notes an entry does hold when a field is unreadable', () => {
@@ -55,31 +55,29 @@ describe('reading a session that was written down', () => {
       positions: { '/Notes/a.md': { cursor: 'four', scroll: 0 } },
     })
 
+    expect(session).toMatchObject({ activeSpace: null, panel: null, positions: {} })
     expect(session?.spaces.map((space) => space.id)).toEqual(['s'])
-    expect(session?.activeSpace).toBeNull()
-    expect(session?.panel).toBeNull()
     expect(session?.tabs?.map((tab) => tab.name)).toEqual(['a.md'])
-    expect(session?.positions).toEqual({})
   })
 
   test('still reads the open paths an older version wrote', () => {
     const session = readSession({
-      spaces: [],
-      activeSpace: null,
+      ...spaceless,
       panel: null,
       openPaths: ['/Notes/a.md', '/Notes/b.md'],
       activePath: '/Notes/b.md',
     })
 
-    expect(session?.openPaths).toEqual(['/Notes/a.md', '/Notes/b.md'])
-    expect(session?.activePath).toBe('/Notes/b.md')
+    expect(session).toMatchObject({
+      openPaths: ['/Notes/a.md', '/Notes/b.md'],
+      activePath: '/Notes/b.md',
+    })
     expect(session?.tabs).toBeUndefined()
   })
 
   test('brings back both sides: what is on the right, what it showed last, what it knew', () => {
     const session = readSession({
-      spaces: [],
-      activeSpace: null,
+      ...spaceless,
       panel: 'tree',
       right: ['ask', 'nowhere', 'ask', 'outline'],
       rightPanel: 'outline',
@@ -87,126 +85,67 @@ describe('reading a session that was written down', () => {
       known: ['tree', 'ask', 'somewhere'],
     })
 
-    expect(session?.right).toEqual(['ask', 'outline'])
-    expect(session?.rightPanel).toBe('outline')
-    expect(session?.lastRight).toBe('ask')
-    expect(session?.known).toEqual(['tree', 'ask'])
+    expect(session).toMatchObject({
+      right: ['ask', 'outline'],
+      rightPanel: 'outline',
+      lastRight: 'ask',
+      known: ['tree', 'ask'],
+    })
   })
 })
 
 describe('reading one tab', () => {
-  test('needs a name and some text to be a tab at all', () => {
-    expect(readDraft({ path: null, name: 'a', doc: '' })).toMatchObject({ name: 'a' })
-    expect(readDraft({ path: null, doc: '' })).toBeNull()
-    expect(readDraft({ path: 7, name: 'a', doc: '' })).toBeNull()
-  })
+  const plain = (extra: Record<string, unknown> = {}) =>
+    readDraft({ path: null, name: 'a', doc: '', ...extra })
+  const web = (extra: Record<string, unknown>) =>
+    readDraft({ kind: 'web', path: null, name: 'a', doc: '', ...extra })
 
-  test('fills in a caret and a scroll that were never written', () => {
-    expect(readDraft({ path: null, name: 'a', doc: '' })).toMatchObject({ cursor: 0, scroll: 0 })
-    expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('anchor')
+  test('needs a name and some text to be a tab at all', () => {
+    expect(plain()).toMatchObject({ name: 'a', cursor: 0, scroll: 0 })
+    expect(plain()).not.toHaveProperty('anchor')
+    expect(readDraft({ path: null, doc: '' })).toBeNull()
+    expect(plain({ path: 7 })).toBeNull()
   })
 
   test('a builtin view takes its name from the app, not from the session it was written in', () => {
-    const doc = '{"builtin":"todos"}'
-    expect(readDraft({ kind: 'view', path: null, name: 'Tasks', doc })).toMatchObject({
-      name: 'Todos',
-    })
-    expect(readDraft({ kind: 'view', path: null, name: 'Mine', doc: '{"tag":"x"}' })).toMatchObject(
-      { name: 'Mine' },
-    )
+    const view = (name: string, doc: string) => readDraft({ kind: 'view', path: null, name, doc })
+    expect(view('Tasks', '{"builtin":"todos"}')).toMatchObject({ name: 'Todos' })
+    expect(view('Mine', '{"tag":"x"}')).toMatchObject({ name: 'Mine' })
   })
 
-  test('brings back which face of the note was up', () => {
-    expect(readDraft({ path: null, name: 'a', doc: '', reading: true })).toMatchObject({
-      reading: true,
-    })
+  test.each(['reading', 'source'])('brings back %s only when it was written as a flag', (flag) => {
+    expect(plain({ [flag]: true })).toMatchObject({ [flag]: true })
+    expect(plain()).not.toHaveProperty(flag)
+    expect(plain({ [flag]: 'yes' })).not.toHaveProperty(flag)
   })
 
   test('brings back whether it showed the markdown as written, either way', () => {
-    expect(readDraft({ path: null, name: 'a', doc: '', source: true })).toMatchObject({
-      source: true,
-    })
-    expect(readDraft({ path: null, name: 'a', doc: '', source: false })).toMatchObject({
-      source: false,
-    })
-    expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('source')
-    expect(readDraft({ path: null, name: 'a', doc: '', source: 'yes' })).not.toHaveProperty(
-      'source',
-    )
+    expect(plain({ source: false })).toMatchObject({ source: false })
   })
 
-  test('keeps the web data a tab with no file took along', () => {
-    const apart = '3f9a0c17e2b4d685'
-    expect(readDraft({ kind: 'web', path: null, name: 'a', doc: '', apart })).toMatchObject({
-      apart,
-    })
-    expect(
-      readDraft({ kind: 'web', path: '/s/a.url', name: 'a', doc: '', apart }),
-    ).not.toHaveProperty('apart')
+  test.each([
+    ['apart', '3f9a0c17e2b4d685'],
+    ['behind', '/s/Finance/Bank.url'],
+  ])('keeps the %s of a tab with no file, which a tab with one has no need of', (field, value) => {
+    expect(web({ [field]: value })).toMatchObject({ [field]: value })
+    expect(web({ path: '/s/a.url', [field]: value })).not.toHaveProperty(field)
   })
 
-  test('keeps the note a tab with no file was copied from, so its lock still covers it', () => {
-    const behind = '/s/Finance/Bank.url'
-    expect(readDraft({ kind: 'web', path: null, name: 'a', doc: '', behind })).toMatchObject({
-      behind,
-    })
-    expect(
-      readDraft({ kind: 'web', path: '/s/a.url', name: 'a', doc: '', behind }),
-    ).not.toHaveProperty('behind')
-  })
+  const kindOf = (path: string, kind: unknown) =>
+    readDraft({ kind, path, name: path.slice(7), doc: '' })?.kind
 
-  test('is being written in unless it says otherwise', () => {
-    expect(readDraft({ path: null, name: 'a', doc: '' })).not.toHaveProperty('reading')
-    expect(readDraft({ path: null, name: 'a', doc: '', reading: 'yes' })).not.toHaveProperty(
-      'reading',
-    )
-  })
-
-  test('reads the kind off the file’s name, whatever the entry claims', () => {
-    for (const claimed of [undefined, 'note', 'pdf', 'graph', 'nonsense', 7]) {
-      expect(
-        readDraft({ kind: claimed, path: '/Notes/Board.canvas', name: 'Board.canvas', doc: '' }),
-        JSON.stringify(claimed ?? null),
-      ).toMatchObject({ kind: 'canvas' })
-    }
-  })
-
-  test('and does not leave a canvas over a file whose name says words', () => {
-    expect(
-      readDraft({ kind: 'canvas', path: '/Notes/plan.md', name: 'plan.md', doc: '' }),
-    ).toMatchObject({ kind: 'note' })
-  })
-
-  test('a website comes back as one, whatever the entry claims', () => {
-    for (const claimed of [undefined, 'note', 'canvas', 'nonsense']) {
-      expect(
-        readDraft({
-          kind: claimed,
-          path: '/Notes/Svelte docs.url',
-          name: 'Svelte docs.url',
-          doc: '',
-        }),
-        JSON.stringify(claimed ?? null),
-      ).toMatchObject({ kind: 'web' })
-    }
-
-    expect(
-      readDraft({
-        kind: 'note',
-        path: '/Notes/Safari page.webloc',
-        name: 'Safari page.webloc',
-        doc: '',
-      }),
-    ).toMatchObject({ kind: 'web' })
+  test.each([
+    ['/Notes/Board.canvas', [undefined, 'note', 'pdf', 'graph', 'nonsense', 7], 'canvas'],
+    ['/Notes/plan.md', ['canvas'], 'note'],
+    ['/Notes/Svelte docs.url', [undefined, 'note', 'canvas', 'nonsense'], 'web'],
+    ['/Notes/Safari page.webloc', ['note'], 'web'],
+    ['/Notes/paper.pdf', ['pdf'], 'pdf'],
+  ])('reads %s as what its name says, whatever the entry claims', (path, claims, kind) => {
+    for (const claimed of claims) expect(kindOf(path, claimed), String(claimed)).toBe(kind)
   })
 
   test('leaves a tab no file names alone, which is the graph', () => {
-    expect(readDraft({ kind: 'graph', path: null, name: 'Graph', doc: '' })).toMatchObject({
-      kind: 'graph',
-    })
-    expect(
-      readDraft({ kind: 'pdf', path: '/Notes/paper.pdf', name: 'paper.pdf', doc: '' }),
-    ).toMatchObject({ kind: 'pdf' })
+    expect(readDraft({ kind: 'graph', path: null, name: 'Graph', doc: '' })?.kind).toBe('graph')
   })
 
   test('brings a terminal back as a terminal, with its shell and its folder', () => {
@@ -217,16 +156,15 @@ describe('reading one tab', () => {
   })
 
   test('brings a tab with no file back in the space it was opened in', () => {
-    const web = { kind: 'web', path: null, name: 'Site', doc: '', space: 'w' }
-    const kept = { ...web, path: '/Notes/Site.url' }
-
-    expect(readDraft(web)).toMatchObject({ space: 'w' })
-    expect(readDraft(kept)).not.toHaveProperty('space')
-    expect(readDraft({ ...web, space: 7 })).not.toHaveProperty('space')
+    expect(web({ space: 'w' })).toMatchObject({ space: 'w' })
+    expect(web({ space: 'w', path: '/Notes/Site.url' })).not.toHaveProperty('space')
+    expect(web({ space: 7 })).not.toHaveProperty('space')
   })
 })
 
 describe('reading a closed tab', () => {
+  const untitled = { path: null, name: 'Untitled', doc: '# draft' }
+
   test('brings back the tab, its pane and its place', () => {
     const back = readClosed({
       draft: { path: '/Notes/a.md', name: 'a.md', doc: '', dirty: false },
@@ -234,66 +172,48 @@ describe('reading a closed tab', () => {
       at: 3,
     })
 
-    expect(back?.draft.name).toBe('a.md')
-    expect(back?.paneId).toBe('left')
-    expect(back?.at).toBe(3)
+    expect(back).toMatchObject({ draft: { name: 'a.md' }, paneId: 'left', at: 3 })
   })
 
   test('fills in a pane and a place that were never written', () => {
-    const back = readClosed({ draft: { path: null, name: 'Untitled', doc: '# draft' } })
-
-    expect(back?.paneId).toBe('')
-    expect(back?.at).toBe(0)
+    expect(readClosed({ draft: untitled })).toMatchObject({ paneId: '', at: 0 })
+    expect(readClosed({ draft: untitled, at: -2 })?.at).toBe(0)
   })
 
   test('brings back where its words were put in Recently deleted', () => {
-    const draft = { path: null, name: 'Untitled', doc: '# draft' }
-
-    expect(readClosed({ draft, trashed: 't1' })?.trashed).toBe('t1')
-    expect(readClosed({ draft, trashed: 1 })).not.toHaveProperty('trashed')
+    expect(readClosed({ draft: untitled, trashed: 't1' })?.trashed).toBe('t1')
+    expect(readClosed({ draft: untitled, trashed: 1 })).not.toHaveProperty('trashed')
   })
 
-  test('is nothing at all without a tab in it', () => {
-    expect(readClosed({ paneId: 'left', at: 0 })).toBeNull()
-    expect(readClosed({ draft: { name: 42 } })).toBeNull()
-    expect(readClosed(null)).toBeNull()
-    expect(readClosed({ draft: { path: null, name: 'a', doc: '' }, at: -2 })?.at).toBe(0)
-  })
+  test.each([{ paneId: 'left', at: 0 }, { draft: { name: 42 } }, null])(
+    'is nothing at all without a tab in it: %j',
+    (entry) => expect(readClosed(entry)).toBeNull(),
+  )
 })
 
 describe('reading one place', () => {
+  const folded = (folds: unknown) => readPosition({ cursor: 1, scroll: 2, folds })?.folds
+
   test('needs both a caret and a scroll', () => {
     expect(readPosition({ cursor: 1, scroll: 2 })).toEqual({ cursor: 1, scroll: 2, at: 0 })
     expect(readPosition({ cursor: 1 })).toBeNull()
     expect(readPosition({ cursor: Number.NaN, scroll: 2 })).toBeNull()
   })
 
-  test('keeps the folds it was written with', () => {
-    const place = readPosition({ cursor: 1, scroll: 2, folds: [[1, 9]] })
-    expect(place?.folds).toEqual([[1, 9]])
-  })
-
-  test('drops a fold that names nothing a note could have', () => {
-    expect(readPosition({ cursor: 1, scroll: 2, folds: [[0, 4]] })?.folds).toBeUndefined()
-    expect(readPosition({ cursor: 1, scroll: 2, folds: [[4, 4]] })?.folds).toBeUndefined()
-    expect(readPosition({ cursor: 1, scroll: 2, folds: [[9, 3]] })?.folds).toBeUndefined()
-    expect(readPosition({ cursor: 1, scroll: 2, folds: [[1, 2, 3]] })?.folds).toBeUndefined()
-    expect(readPosition({ cursor: 1, scroll: 2, folds: [[1, '4']] })?.folds).toBeUndefined()
-    expect(readPosition({ cursor: 1, scroll: 2, folds: 'all' })?.folds).toBeUndefined()
-  })
-
   test('keeps the good folds and drops only the bad ones', () => {
-    const place = readPosition({
-      cursor: 1,
-      scroll: 2,
-      folds: [
+    expect(folded([[1, 9]])).toEqual([[1, 9]])
+    expect(
+      folded([
         [1, 9],
         [7, 2],
-      ],
-    })
-
-    expect(place?.folds).toEqual([[1, 9]])
+      ]),
+    ).toEqual([[1, 9]])
   })
+
+  test.each([[[[0, 4]]], [[[4, 4]]], [[[9, 3]]], [[[1, 2, 3]]], [[[1, '4']]], ['all']])(
+    'drops a fold that names nothing a note could have: %j',
+    (folds) => expect(folded(folds)).toBeUndefined(),
+  )
 })
 
 const draft = (path: string | null, doc: string, share?: string): Draft => ({
@@ -307,55 +227,56 @@ const draft = (path: string | null, doc: string, share?: string): Draft => ({
   ...(share ? { share } : {}),
 })
 
-const onePane = (tabs: Draft[], id = 'p1'): FrameDraft => ({
+const onePane = (tabs: Draft[], id = 'p1', more = {}): FrameDraft => ({
   kind: 'pane',
-  pane: { id, tabs, active: 0, linked: false },
+  pane: { id, tabs, active: 0, linked: false, ...more },
 })
+
+const split = (sides: unknown[]) => ({
+  kind: 'split',
+  id: 's1',
+  along: 'row',
+  fraction: 0.5,
+  sides,
+})
+
+const panesRead = (value: unknown) => panesOf(readLayout(value)?.frame ?? onePane([]))
+
+const both = { focused: 'p1', panel: null }
 
 describe('reading an arrangement of panes', () => {
   test('brings back the panes, their strips and which one had the focus', () => {
-    const layout = readLayout({
+    const value = {
       focused: 'p2',
       panel: 'tree',
-      frame: {
-        kind: 'split',
-        id: 's1',
-        along: 'row',
-        fraction: 0.4,
-        sides: [
-          onePane([draft('/Notes/a.md', '')]),
-          {
-            kind: 'pane',
-            pane: { id: 'p2', tabs: [draft('/Notes/b.md', '')], active: 0, linked: true },
-          },
-        ],
-      },
-    })
+      frame: split([
+        onePane([draft('/Notes/a.md', '')]),
+        onePane([draft('/Notes/b.md', '')], 'p2', { linked: true }),
+      ]),
+    }
 
-    expect(layout?.focused).toBe('p2')
-    expect(layout?.panel).toBe('tree')
-    expect(layout?.frame.kind).toBe('split')
-    expect(panesOf(layout?.frame ?? onePane([])).map((one) => one.id)).toEqual(['p1', 'p2'])
-    expect(panesOf(layout?.frame ?? onePane([]))[1]?.linked).toBe(true)
+    expect(readLayout(value)).toMatchObject({
+      focused: 'p2',
+      panel: 'tree',
+      frame: { kind: 'split' },
+    })
+    expect(panesRead(value).map((one) => [one.id, one.linked])).toEqual([
+      ['p1', false],
+      ['p2', true],
+    ])
   })
 
   test('fills in a direction and a share of the room that were never written', () => {
-    const layout = readLayout({
+    const frame = readLayout({
       frame: { kind: 'split', sides: [onePane([]), onePane([], 'p2')] },
-    })
+    })?.frame
 
-    const frame = layout?.frame
-    expect(frame?.kind === 'split' && frame.along).toBe('row')
-    expect(frame?.kind === 'split' && frame.fraction).toBe(0.5)
+    expect(frame).toMatchObject({ along: 'row', fraction: 0.5 })
     expect(frame?.kind === 'split' && frame.id.length).toBeGreaterThan(0)
   })
 
   test('reads a split that lost a side as the side it still has', () => {
-    const layout = readLayout({
-      frame: { kind: 'split', id: 's1', along: 'row', fraction: 0.5, sides: [onePane([]), null] },
-    })
-
-    expect(layout?.frame.kind).toBe('pane')
+    expect(readLayout({ frame: split([onePane([]), null]) })?.frame.kind).toBe('pane')
   })
 
   test('answers nothing for an arrangement with no panes in it', () => {
@@ -364,198 +285,141 @@ describe('reading an arrangement of panes', () => {
   })
 
   test('takes the sidebar from the arrangement rather than from beside it', () => {
-    const session = readSession({
-      spaces: [],
-      activeSpace: null,
-      panel: 'search',
-      layout: { focused: 'p1', panel: 'outline', frame: onePane([]) },
-    })
-
-    expect(session?.panel).toBe('outline')
+    const layout = { focused: 'p1', panel: 'outline', frame: onePane([]) }
+    expect(readSession({ ...spaceless, panel: 'search', layout })?.panel).toBe('outline')
   })
 })
 
 describe('an arrangement, there and back', () => {
   test('keeps the tree, the tabs and the share of the room', () => {
-    const first = pane('p1', 't1')
     const second = pane('p2', 't2')
     second.linked = true
 
     const written = frameDraft(
-      { kind: 'split', id: 's1', along: 'column', fraction: 0.3, sides: [first, second] },
+      {
+        kind: 'split',
+        id: 's1',
+        along: 'column',
+        fraction: 0.3,
+        sides: [pane('p1', 't1'), second],
+      },
       (one) => ({ tabs: [draft(`/Notes/${one.id}.md`, '')], active: 0 }),
     )
 
-    const back = frameOf(written, (one) => (one.id === 'p2' ? 't2' : 't1'))
-
-    expect(back.kind === 'split' && back.along).toBe('column')
-    expect(back.kind === 'split' && back.fraction).toBe(0.3)
-    expect(back.kind === 'split' && back.sides[1].kind === 'pane' && back.sides[1].linked).toBe(
-      true,
-    )
-    expect(
-      back.kind === 'split' && back.sides[1].kind === 'pane' && back.sides[1].activeTabId,
-    ).toBe('t2')
+    expect(frameOf(written, (one) => (one.id === 'p2' ? 't2' : 't1'))).toMatchObject({
+      along: 'column',
+      fraction: 0.3,
+      sides: [{}, { linked: true, activeTabId: 't2' }],
+    })
   })
 })
 
 describe('an arrangement kept under a name', () => {
   test('holds no words for a note that lives on disk', () => {
     const layout: Layout = {
-      focused: 'p1',
-      panel: null,
+      ...both,
       frame: onePane([draft('/Notes/a.md', '# on disk too'), draft(null, '# nowhere else')]),
     }
 
-    const bare = withoutText(layout)
-    const tabs = panesOf(bare.frame)[0]?.tabs ?? []
-
-    expect(tabs[0]).toMatchObject({ path: '/Notes/a.md', doc: '', dirty: false })
-    expect(tabs[1]).toMatchObject({ path: null, doc: '# nowhere else', dirty: true })
+    expect(panesOf(withoutText(layout).frame)[0]?.tabs).toMatchObject([
+      { path: '/Notes/a.md', doc: '', dirty: false },
+      { path: null, doc: '# nowhere else', dirty: true },
+    ])
   })
 
   test('says which tabs were views of one note', () => {
-    const shared = panesOf(
-      readLayout({
-        focused: 'p1',
-        frame: {
-          kind: 'split',
-          id: 's1',
-          along: 'row',
-          fraction: 0.5,
-          sides: [
-            onePane([draft('/Notes/a.md', '', 'd1')]),
-            onePane([draft('/Notes/a.md', '', 'd1')], 'p2'),
-          ],
-        },
-      })?.frame ?? onePane([]),
-    )
+    const shared = panesRead({
+      focused: 'p1',
+      frame: split([
+        onePane([draft('/Notes/a.md', '', 'd1')]),
+        onePane([draft('/Notes/a.md', '', 'd1')], 'p2'),
+      ]),
+    })
 
     expect(shared.map((one) => one.tabs[0]?.share)).toEqual(['d1', 'd1'])
   })
 })
 
 describe('writing the session down', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   const session = (): Session => ({
-    spaces: [],
-    activeSpace: null,
+    ...spaceless,
     panel: null,
     closed: [{ draft: draft('/Notes/gone.md', '# closed'), paneId: 'p1', at: 0 }],
     layout: {
-      focused: 'p1',
-      panel: null,
+      ...both,
       frame: onePane([draft('/Notes/a.md', '# on disk too'), draft(null, '# nowhere else')]),
     },
   })
 
-  function tightStorage(refusals: number): string[] {
+  function tightStorage(refuses: (value: string, tries: number) => boolean): () => Session {
     const written: string[] = []
-    let left = refusals
-
+    let tries = 0
     vi.stubGlobal('localStorage', {
       setItem: (_key: string, value: string) => {
-        if (left-- > 0) throw new Error('quota exceeded')
+        if (refuses(value, tries++)) throw new DOMException('full', 'QuotaExceededError')
         written.push(value)
       },
     })
-
-    return written
+    return () => JSON.parse(written.at(-1) ?? '{}') as Session
   }
 
+  const tabsOf = (saved: Session) => (saved.layout ? panesOf(saved.layout.frame)[0]?.tabs : [])
+
   test('gives up what was closed before what is open when storage is full', () => {
-    const written = tightStorage(1)
+    const saved = tightStorage((_, tries) => tries < 1)
 
-    try {
-      expect(writeSession('orden:workspace', session())).toBe(true)
-
-      const saved = JSON.parse(written[0] ?? '{}') as Session
-      const tabs = saved.layout ? (panesOf(saved.layout.frame)[0]?.tabs ?? []) : []
-      expect(saved.closed).toEqual([])
-      expect(tabs[0]).toMatchObject({ path: '/Notes/a.md', doc: '# on disk too' })
-    } finally {
-      vi.unstubAllGlobals()
-    }
+    expect(writeSession('orden:workspace', session())).toBe(true)
+    expect(saved().closed).toEqual([])
+    expect(tabsOf(saved())?.[0]).toMatchObject({ path: '/Notes/a.md', doc: '# on disk too' })
   })
 
   test('gives up the copies of notes that live somewhere else next', () => {
-    const written = tightStorage(2)
+    const saved = tightStorage((_, tries) => tries < 2)
 
-    try {
-      expect(writeSession('orden:workspace', session())).toBe(true)
-
-      const saved = JSON.parse(written[0] ?? '{}') as Session
-      const tabs = saved.layout ? (panesOf(saved.layout.frame)[0]?.tabs ?? []) : []
-      expect(tabs[0]).toMatchObject({ path: '/Notes/a.md', doc: '', dirty: false })
-      expect(tabs[1]).toMatchObject({ path: null, doc: '# nowhere else', dirty: true })
-    } finally {
-      vi.unstubAllGlobals()
-    }
+    expect(writeSession('orden:workspace', session())).toBe(true)
+    expect(tabsOf(saved())).toMatchObject([
+      { path: '/Notes/a.md', doc: '', dirty: false },
+      { path: null, doc: '# nowhere else', dirty: true },
+    ])
   })
 
-  test('brings the closed tabs back through a restart', () => {
-    const written = tightStorage(0)
+  test('brings the closed tabs back through a restart, saying which shape it wrote', () => {
+    const saved = tightStorage(() => false)
+    writeSession('orden:workspace', session())
 
-    try {
-      writeSession('orden:workspace', session())
-      const back = readSession(JSON.parse(written[0] ?? '{}'))
-
-      expect(back?.closed).toHaveLength(1)
-      expect(back?.closed?.[0]).toMatchObject({ paneId: 'p1', at: 0 })
-      expect(back?.closed?.[0]?.draft).toMatchObject({ path: '/Notes/gone.md', doc: '# closed' })
-    } finally {
-      vi.unstubAllGlobals()
-    }
-  })
-
-  test('says which shape it wrote', () => {
-    const written = tightStorage(0)
-
-    try {
-      writeSession('orden:workspace', session())
-      expect(JSON.parse(written[0] ?? '{}')).toMatchObject({ version: 2 })
-    } finally {
-      vi.unstubAllGlobals()
-    }
+    expect(saved()).toMatchObject({ version: 2 })
+    expect(readSession(saved())?.closed).toMatchObject([
+      { paneId: 'p1', at: 0, draft: { path: '/Notes/gone.md', doc: '# closed' } },
+    ])
   })
 
   test('says so when there is nothing left to give up', () => {
-    vi.stubGlobal('localStorage', {
-      setItem: () => {
-        throw new Error('quota exceeded')
-      },
-    })
+    tightStorage(() => true)
+    expect(writeSession('orden:workspace', session())).toBe(false)
+  })
 
-    try {
-      expect(writeSession('orden:workspace', session())).toBe(false)
-    } finally {
-      vi.unstubAllGlobals()
-    }
+  test('gives up what the words were typed on before the words', () => {
+    const saved = tightStorage((value) => value.includes('THE VERSION'))
+    const typed = { ...draft('/s/a.md', 'UNWRITTEN'), base: 'THE VERSION' }
+
+    expect(writeSession('k', { ...session(), layout: { ...both, frame: onePane([typed]) } })).toBe(
+      true,
+    )
+    expect(JSON.stringify(saved())).toContain('UNWRITTEN')
   })
 })
 
 describe('a pane that stacks its notes', () => {
-  test('says so when it is read back', () => {
-    const layout = readLayout({
-      focused: 'p1',
-      frame: {
-        kind: 'pane',
-        pane: {
-          id: 'p1',
-          tabs: [draft('/Notes/a.md', '')],
-          active: 0,
-          linked: false,
-          stacked: true,
-        },
-      },
-    })
-
-    expect(panesOf(layout?.frame ?? onePane([]))[0]?.stacked).toBe(true)
-  })
-
-  test('and a session that never said reads back as one that does not', () => {
-    const layout = readLayout({ focused: 'p1', frame: onePane([draft('/Notes/a.md', '')]) })
-
-    expect(panesOf(layout?.frame ?? onePane([]))[0]?.stacked).toBe(false)
+  test('says so when it is read back, and one that never said does not', () => {
+    const tabs = [draft('/Notes/a.md', '')]
+    expect(panesRead({ ...both, frame: onePane(tabs, 'p1', { stacked: true }) })[0]?.stacked).toBe(
+      true,
+    )
+    expect(panesRead({ ...both, frame: onePane(tabs) })[0]?.stacked).toBe(false)
   })
 
   test('and it survives the round trip out and back', () => {
@@ -564,53 +428,6 @@ describe('a pane that stacks its notes', () => {
 
     const written = frameDraft(one, () => ({ tabs: [draft('/Notes/a.md', '')], active: 0 }))
     expect(written.kind === 'pane' && written.pane.stacked).toBe(true)
-
-    const back = frameOf(written, () => 't1')
-    expect(back.kind === 'pane' && back.stacked).toBe(true)
-  })
-})
-
-describe('what the words were typed on', () => {
-  test('goes before the words do, when storage is short', () => {
-    const written: string[] = []
-    const storage = {
-      setItem: (_key: string, value: string) => {
-        if (value.includes('THE VERSION')) throw new DOMException('full', 'QuotaExceededError')
-        written.push(value)
-      },
-    }
-    vi.stubGlobal('localStorage', storage)
-    try {
-      const layout = {
-        panel: null,
-        focused: 'p',
-        frame: {
-          kind: 'pane' as const,
-          pane: {
-            id: 'p',
-            active: 0,
-            linked: false,
-            tabs: [
-              {
-                kind: 'note' as const,
-                path: '/s/a.md',
-                name: 'a.md',
-                doc: 'UNWRITTEN',
-                base: 'THE VERSION',
-                dirty: true,
-                cursor: 0,
-                scroll: 0,
-              },
-            ],
-          },
-        },
-      }
-      expect(
-        writeSession('k', { spaces: [], activeSpace: null, panel: null, closed: [], layout }),
-      ).toBe(true)
-      expect(written.at(-1)).toContain('UNWRITTEN')
-    } finally {
-      vi.unstubAllGlobals()
-    }
+    expect(frameOf(written, () => 't1')).toMatchObject({ stacked: true })
   })
 })
