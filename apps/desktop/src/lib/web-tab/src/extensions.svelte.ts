@@ -1,4 +1,4 @@
-import { keepJson, stored, invoke, isDesktop } from '../../platform/src/api'
+import { keepJson, stored, invoke, isDesktop, isRecord } from '../../platform/src/api'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 
 export interface Gaps {
@@ -30,10 +30,9 @@ interface Asking {
   gaps: Gaps
 }
 
-export function readExtension(value: unknown): Extension | null {
-  if (typeof value !== 'object' || value === null) return null
-  const said = value as Record<string, unknown>
-  if (typeof said.id !== 'string' || typeof said.version !== 'string') return null
+export function readExtension(said: unknown): Extension | null {
+  if (!isRecord(said) || typeof said.id !== 'string' || typeof said.version !== 'string')
+    return null
 
   const text = (field: unknown) => (typeof field === 'string' && field ? field : null)
   return {
@@ -48,20 +47,19 @@ export function readExtension(value: unknown): Extension | null {
     popup: text(said.popup),
     options: text(said.options),
     action: said.action === true,
-    permissions: Array.isArray(said.permissions)
-      ? said.permissions.filter((one): one is string => typeof one === 'string')
-      : [],
+    permissions: words(said.permissions),
     problem: text(said.problem),
     gaps: readGaps(said.gaps),
     pending: said.pending === true,
   }
 }
 
-function readGaps(value: unknown): Gaps | null {
-  if (typeof value !== 'object' || value === null) return null
-  const said = value as Record<string, unknown>
-  const words = (field: unknown) =>
-    Array.isArray(field) ? field.filter((one): one is string => typeof one === 'string') : []
+function words(field: unknown): string[] {
+  return Array.isArray(field) ? field.filter((one): one is string => typeof one === 'string') : []
+}
+
+function readGaps(said: unknown): Gaps | null {
+  if (!isRecord(said)) return null
   const gaps = { said: words(said.said), apis: words(said.apis) }
   return gaps.said.length || gaps.apis.length ? gaps : null
 }
@@ -73,9 +71,8 @@ export const GAP_WORDS: Record<string, string> = {
   hiddenTabs: 'Tabs it hides stay in the tab bar.',
 }
 
-function readAsks(value: unknown): { name: string; gaps: Gaps } | null {
-  if (typeof value !== 'object' || value === null) return null
-  const said = value as Record<string, unknown>
+function readAsks(said: unknown): { name: string; gaps: Gaps } | null {
+  if (!isRecord(said)) return null
   const gaps = readGaps(said.asks)
   return gaps ? { name: typeof said.name === 'string' ? said.name : '', gaps } : null
 }
@@ -85,7 +82,6 @@ export function pinnedOf(list: readonly Extension[]): Extension[] {
 }
 
 export const UPDATE_EVERY = 5 * 60 * 60 * 1000
-
 const LOOKED = 'orden.extensions.looked'
 
 export function updateDue(last: number | null, now: number): boolean {

@@ -15,7 +15,6 @@ const me = crypto.randomUUID()
 const others = new Map<string, Map<string, number>>()
 let mine = new Map<string, number>()
 let channel: BroadcastChannel | null = null
-
 const say = (what: object) => channel?.postMessage({ window: me, ...what })
 
 export function heldElsewhere(path: string): boolean {

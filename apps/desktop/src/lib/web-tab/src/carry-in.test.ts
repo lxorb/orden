@@ -32,7 +32,6 @@ const look = {
 }
 
 const BOX = { left: 100, top: 50, width: 800, height: 600, x: 100, y: 50, right: 900, bottom: 650 }
-
 const pane = { dataset: { pane: 'p' }, getBoundingClientRect: () => BOX }
 const hole = {
   closest: () => pane,

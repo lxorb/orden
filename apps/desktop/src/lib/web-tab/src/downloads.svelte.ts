@@ -1,5 +1,5 @@
 import { downloadStarted } from '../../downloads/src/api'
-import { invoke } from '../../platform/src/api'
+import { invoke, isRecord, isString } from '../../platform/src/api'
 
 type DownloadState = 'going' | 'done' | 'failed' | 'cancelled'
 
@@ -15,26 +15,18 @@ export interface Download {
 
 const STATES: readonly DownloadState[] = ['going', 'done', 'failed', 'cancelled']
 
-export function readDownload(value: unknown): Download | null {
-  if (typeof value !== 'object' || value === null) return null
-
-  const said = value as Record<string, unknown>
+export function readDownload(said: unknown): Download | null {
+  if (!isRecord(said)) return null
+  const { id, tab, url, name } = said
   const state = STATES.find((one) => one === said.state)
-  if (
-    typeof said.id !== 'number' ||
-    typeof said.tab !== 'string' ||
-    typeof said.url !== 'string' ||
-    typeof said.name !== 'string' ||
-    state === undefined
-  ) {
+  if (typeof id !== 'number' || !isString(tab) || !isString(url) || !isString(name) || !state)
     return null
-  }
 
   return {
-    id: said.id,
-    tab: said.tab,
-    url: said.url,
-    name: said.name,
+    id,
+    tab,
+    url,
+    name,
     state,
     received: typeof said.received === 'number' ? said.received : 0,
     total: typeof said.total === 'number' && said.total > 0 ? said.total : null,

@@ -24,7 +24,6 @@ vi.mock('./site-icons.svelte', () => ({
 const { clearData, reach, sinceFor, sitesSince } = await import('./clearing')
 const { visited } = await import('./visited')
 const { placeKept, placeOf } = await import('./place')
-
 const NOW = Date.UTC(2026, 9, 3, 12)
 const HOUR = 3_600_000
 

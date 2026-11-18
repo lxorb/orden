@@ -20,7 +20,6 @@ export function answers(visit: Visit, typed: string): boolean {
 export function historyRows(list: readonly Visit[], typed: string): HistoryRow[] {
   const words = wordsOf(typed)
   const found = list.filter((one) => holds(one, words)).sort((one, other) => other.last - one.last)
-
   const rows: HistoryRow[] = []
   let day = Number.NaN
   for (const visit of found) {

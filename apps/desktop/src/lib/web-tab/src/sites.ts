@@ -2,7 +2,6 @@ import { withOrWithout, isNumber, recordOf, Shared, stringList } from '../../pla
 
 const muted = new Shared('orden:web-muted', (value) => new Set(stringList(value) ?? []))
 const zooms = new Shared('orden:web-zooms', (value) => recordOf(value, isNumber))
-
 const asides = new Map<string, { muted: Map<string, boolean>; zooms: Map<string, number> }>()
 
 function asideOf(tab: string) {

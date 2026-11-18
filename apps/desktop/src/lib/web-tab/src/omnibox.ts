@@ -41,7 +41,6 @@ export function completion(list: readonly Visit[], typed: string, now: number): 
   const asked = rest.toLowerCase().normalize('NFC')
   const protocol = scheme ? `${(scheme[1] ?? '').toLowerCase()}:` : null
   const pastHost = /[/?#]/.test(rest)
-
   let best: { score: number; form: string; url: string } | null = null
   const sites = new Map<string, { score: number; form: string; url: string }>()
 
@@ -117,7 +116,6 @@ export function suggested(
   const scored: { visit: Visit; site: boolean; score: number }[] = []
   for (const visit of list) {
     const parts = partsOf(visit)
-
     let how = 1
     for (const term of terms) {
       how *= found(parts, term)

@@ -14,7 +14,6 @@ export interface WebNote {
 type Websites = ReadonlyMap<string, { address: string | null }>
 
 const WEB_NOTES = 4
-
 export const noteKey = (path: string) => `note:${path}`
 
 function readable(url: string): string {

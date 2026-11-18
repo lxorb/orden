@@ -15,7 +15,6 @@ import type { Visit } from '@orden/scan/visits'
 
 const OLD = 'orden:web-data'
 const OLD_UP = 'orden:web-data-up'
-
 export const MERGED = 'orden:web-data-merged'
 
 interface Merge {

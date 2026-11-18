@@ -70,13 +70,9 @@
   import { NewHere } from '../../new-here/src/api'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
-
   const tab = untrack(() => shown)
-
   const LEAVING = 300
-
   const UNSEEN = 0.01
-
   const page = $derived(pages.of(tab.id))
   const pictured = $derived(
     page.shot !== null && (page.layering !== 'under' || page.heldAt !== null),
@@ -84,9 +80,7 @@
 
   let hole = $state<HTMLElement>()
   let marked = $state(true)
-
   const worn = $derived(agentMarks.on[tab.id] ?? null)
-
   const FRAME = 2
 
   function rect(): Rect | null {
@@ -141,23 +135,12 @@
   let scheduled = 0
   let told = ''
   let grounded = false
-
   const NO_ROOM = 'no room'
-
   let last: Rect | null = null
-
   let ready = false
-
   let leaving = 0
 
-  const watching =
-    typeof ResizeObserver === 'function'
-      ? new ResizeObserver(() => {
-          if (!ready) return
-          cancelAnimationFrame(scheduled)
-          look()
-        })
-      : null
+  const watching = typeof ResizeObserver === 'function' ? new ResizeObserver(() => now()) : null
 
   $effect(() => {
     const room = hole
@@ -219,8 +202,8 @@
     grounded = false
 
     const box = rect()
-    if (!box) underlaid(tab.id, null)
     if (!box) {
+      underlaid(tab.id, null)
       if (last && told !== NO_ROOM) {
         told = NO_ROOM
         void pages.place(tab.id, last, false)
@@ -264,9 +247,7 @@
   }
 
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
-
   const own = $derived(isOwnPage(address))
-
   const choosing = $derived(workspace.isNewTab(tab))
 
   $effect(() => {
@@ -280,7 +261,6 @@
 
   const space = $derived(workspace.spaceOf(tab.note))
   const book = webData.history()
-
   const apart = $derived(apartOf(tab))
 
   $effect(() => {
@@ -427,19 +407,13 @@
   })
 
   let showingSite = $state(false)
-
   let showingDownloads = $state(false)
-
   const extending = isDesktop
-
   let showingExtensions = $state(false)
-
   let hangs = $state(0)
   let opener = $state<HTMLElement | null>(null)
-
   let head = $state<HTMLElement>()
   let root = $state<HTMLElement>()
-
   let onStore = $state<string | null>(null)
   const addable = $derived(
     onStore !== null && !extensions.list.some((one) => one.id === onStore || one.addon === onStore)
@@ -497,7 +471,6 @@
   }
 
   const site = $derived(siteOf(page.url))
-
   const takeover = $derived(agentMarks.takeovers[tab.id] ?? null)
 
   $effect(() => {
@@ -628,9 +601,7 @@
         showingSite = false
         showingExtensions = false
       }}
-      ontyping={(on: boolean) => {
-        pages.typing(tab.id, on)
-      }}
+      ontyping={(on: boolean) => pages.typing(tab.id, on)}
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
       onbrowser={(which: 'history' | 'clear') =>
         which === 'history' ? actions.history() : actions.clearData()}
@@ -666,38 +637,30 @@
       </p>
     {/if}
 
+    {#snippet strip(said: string, label: string, open: () => void, close: () => void)}
+      <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
+        <p>{said}</p>
+        <button class="orden-button is-quiet" onclick={open}>{label}</button>
+        <button class="orden-glyph" aria-label="Close" title="Close" onclick={close}>
+          <Cross small />
+        </button>
+      </div>
+    {/snippet}
     {#if page.blocked}
-      <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
-        <p>Pop-up blocked</p>
-        <button class="orden-button is-quiet" onclick={() => pages.openBlocked(tab.id)}>
-          Open
-        </button>
-        <button
-          class="orden-glyph"
-          aria-label="Close"
-          title="Close"
-          onclick={() => (page.blocked = null)}
-        >
-          <Cross small />
-        </button>
-      </div>
+      {@render strip(
+        'Pop-up blocked',
+        'Open',
+        () => pages.openBlocked(tab.id),
+        () => (page.blocked = null),
+      )}
     {/if}
-
     {#if page.unplayable}
-      <div class="unplayable" role="status" transition:fade={{ duration: dur(140) }}>
-        <p>This media can't play here</p>
-        <button class="orden-button is-quiet" onclick={() => void openExternal(page.at ?? address)}>
-          Open in the browser
-        </button>
-        <button
-          class="orden-glyph"
-          aria-label="Close"
-          title="Close"
-          onclick={() => (page.unplayable = false)}
-        >
-          <Cross small />
-        </button>
-      </div>
+      {@render strip(
+        "This media can't play here",
+        'Open in the browser',
+        () => void openExternal(page.at ?? address),
+        () => (page.unplayable = false),
+      )}
     {/if}
 
     {#if showingSite && page.url !== null}
@@ -826,12 +789,7 @@
         <p class="site">{address}</p>
 
         <div class="rows">
-          <button
-            class="orden-button"
-            onclick={() => {
-              page.framing = 'frame'
-            }}
-          >
+          <button class="orden-button" onclick={() => (page.framing = 'frame')}>
             Show it here
           </button>
           <button class="orden-button is-quiet" onclick={() => void openExternal(address)}>

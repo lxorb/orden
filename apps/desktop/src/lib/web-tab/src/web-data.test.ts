@@ -21,7 +21,6 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const registrable = (host: string) => getDomain(host, { allowPrivateDomains: true })
-
 const site = (url: string) => siteOf(hostOf(url) ?? '', registrable)
 
 describe('what a site is', () => {

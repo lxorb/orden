@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const files = new Map<string, string>()
 const asked: string[] = []
 const readOnly = vi.hoisted(() => new Set<string>())
-
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 const ROOTS = ['/theirs', '/mine']
 
@@ -88,7 +87,6 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('../../workspace/src/api')
 await import('../../workspace-ports')
 const { pages } = await import('./pages.svelte')
-
 const WRITES = /write|rename|delete|trash|copy|create|move|snapshot|bring|remove/
 const writes = () => asked.filter((command) => WRITES.test(command))
 

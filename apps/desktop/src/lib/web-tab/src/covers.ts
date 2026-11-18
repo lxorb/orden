@@ -156,7 +156,6 @@ export function bringsLayer(
 }
 
 const SHOWN_BY = ['class', 'style', 'hidden', 'data-covers']
-
 const told = new Set<() => void>()
 let arriving: MutationObserver | null = null
 

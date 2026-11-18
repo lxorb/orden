@@ -43,7 +43,6 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   const title = webTitleOf(text) ?? shownName(nameOf(path))
   const written = writeShortcut(url, title, new Date())
   const shortcut = `${withoutExtension(path)}.url`
-
   const taken = ws.entryAt(shortcut) !== null || (await onDisk(shortcut))
   const there = taken
     ? await invoke<string>('read_note', { path: shortcut }).catch(() => null)
@@ -84,7 +83,6 @@ export async function convertWebsites(ws: Converts): Promise<number> {
   if (!ws.activeSpace) return 0
 
   const notes = ws.notes.filter((one) => isMarkdownPath(one.name) && links.urlOf(one.path) !== null)
-
   let done = 0
   for (const note of notes) {
     if ((await asShortcut(ws, note.path)) !== null) done += 1

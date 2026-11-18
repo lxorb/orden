@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Glyph from './Glyph.svelte'
   import { onMount, untrack } from 'svelte'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { region } from '../../platform/src/api'
@@ -31,7 +32,6 @@
   let rowHeight = $state(28)
   let list = $state<HTMLElement>()
   let field = $state<HTMLInputElement>()
-
   const rows = $derived(historyRows(all, typed))
   const shown = $derived(onScreen(scrolled, height, rowHeight, rows.length))
 
@@ -192,11 +192,7 @@
                 aria-label="Remove from history"
                 onclick={() => remove(visit)}
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  {#each X as [tag, attrs], at (at)}
-                    <svelte:element this={tag} {...attrs} />
-                  {/each}
-                </svg>
+                <Glyph icon={X} />
               </button>
             </div>
           {/if}

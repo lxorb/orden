@@ -23,9 +23,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 const { folded, mergeOld, MERGED, oldChoices, oldHistory, planned } = await import('./merged')
 const { MOST_VISITS } = await import('./visits')
 const NOW = Date.UTC(2026, 9, 13)
-
 const registrable = (host: string) => getDomain(host, { allowPrivateDomains: true })
-
 const visit = (url: string): Visit => ({ url, title: '', visits: 1, typed: 0, last: 1 })
 
 beforeEach(() => {
