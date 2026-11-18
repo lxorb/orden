@@ -41,10 +41,7 @@ describe('walking the file list', () => {
   })
 
   test('steps into a folder that is already open', () => {
-    expect(treeStep('ArrowRight', ROWS, '/s/Work')).toEqual({
-      do: 'stand',
-      path: '/s/Work/Notes',
-    })
+    expect(treeStep('ArrowRight', ROWS, '/s/Work')).toEqual({ do: 'stand', path: '/s/Work/Notes' })
   })
 
   test('closes an open folder', () => {
@@ -52,14 +49,8 @@ describe('walking the file list', () => {
   })
 
   test('steps out of a note to the folder holding it', () => {
-    expect(treeStep('ArrowLeft', ROWS, '/s/Work/plan.md')).toEqual({
-      do: 'stand',
-      path: '/s/Work',
-    })
-    expect(treeStep('ArrowLeft', ROWS, '/s/Work/Notes')).toEqual({
-      do: 'stand',
-      path: '/s/Work',
-    })
+    expect(treeStep('ArrowLeft', ROWS, '/s/Work/plan.md')).toEqual({ do: 'stand', path: '/s/Work' })
+    expect(treeStep('ArrowLeft', ROWS, '/s/Work/Notes')).toEqual({ do: 'stand', path: '/s/Work' })
   })
 
   test('does nothing sideways on a row at the top of the space', () => {
