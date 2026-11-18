@@ -99,6 +99,7 @@ import { accountKeyringOf, keepAdopted } from './synced'
 import type { TrustProblem } from './trust-problem'
 import { trustWords } from './trust-problem'
 import { madeVaultRow } from './vault-made'
+import { useNativeStretcher } from './stretcher'
 
 export type { LockWay, PassSettings } from './settings'
 
@@ -1045,6 +1046,8 @@ export class PassStore {
 }
 
 export const pass = new PassStore()
+
+useNativeStretcher()
 
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
   window.addEventListener('storage', (event) => {
