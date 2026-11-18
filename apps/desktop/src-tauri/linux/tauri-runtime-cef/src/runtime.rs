@@ -2291,11 +2291,8 @@ impl<T: UserEvent> WinitCefApp<T> {
 
   #[cfg(target_os = "macos")]
   fn set_browsers_accessibility_state(&self, enabled: bool) {
-    let state = if enabled {
-      State::ENABLED
-    } else {
-      State::DISABLED
-    };
+    crate::accessibility::ask(enabled);
+    let state = crate::accessibility::state(enabled);
     for appwindow in self.state.windows.values() {
       for child in &appwindow.children {
         child.host.set_accessibility_state(state);
