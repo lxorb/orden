@@ -234,17 +234,24 @@ export class FolderIcons {
 
   private async push(root: string) {
     const { push } = await import('./pushing')
+    const icons = this.of(root)
+    const colors = this.colorsOf(root)
     await push(
       root,
-      (api, token, spaceId) =>
-        api.saveFolderIcons(token, spaceId, this.of(root), this.colorsOf(root)),
-      (landed) => this.said(root, landed),
+      (api, token, spaceId) => api.saveFolderIcons(token, spaceId, icons, colors),
+      (landed) => this.said(root, landed, icons, colors),
     )
   }
 
-  private said(root: string, landed: boolean) {
+  private said(
+    root: string,
+    landed: boolean,
+    icons: Record<string, string>,
+    colors: Record<string, string>,
+  ) {
     const held = this.spaces[root]
     if (!held || held.sent === landed) return
+    if (landed && !(same(held.icons, icons) && same(held.colors, colors))) return
 
     this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
     this.write()

@@ -279,6 +279,17 @@ describe('what the account holds', () => {
 
     expect(graph.here.filter).toBe('mine')
   })
+
+  test('and a picture changed while the account could not hear it stays changed', async () => {
+    graph.adopt(ROOT, { filter: 'tag:work' }, 'u1')
+    graph.set({ filter: 'plan' })
+    graph.flush()
+    await vi.dynamicImportSettled()
+    graph.adopt(ROOT, { filter: 'tag:work' }, 'u1')
+
+    expect(graph.here.filter).toBe('plan')
+    expect(new SpaceGraphSettings(() => ROOT).here.filter).toBe('plan')
+  })
 })
 
 describe('typing a filter', () => {
