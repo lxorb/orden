@@ -10,8 +10,6 @@ import {
 } from '../../../sync-server/src/api'
 import { fits, writeColumn } from './columns'
 import { atLeast, spaceOf } from './space'
-import { deviceOf } from '../sync2/device'
-import { v1Wrote } from '../sync2/maps'
 
 const MOST_FOLDERS = 200
 
@@ -96,7 +94,6 @@ spaceArranged.put('/:id/arranged', atLeast('write'), async (context) => {
   }
 
   await writeColumn(context.env, 'arranged', space.id, written)
-  await v1Wrote(context.env, space, 'order', kept, await deviceOf(context))
 
   return context.json({ arranged: kept })
 })

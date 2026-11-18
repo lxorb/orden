@@ -57,12 +57,9 @@ async function newSpace(name: string, prepared: boolean): Promise<string> {
 }
 
 function numbered(space: string) {
-  const rows = env.db
-    .prepare(
-      `select seq from notes where space_id = ?1 union all
-       select seq from space_entries where space_id = ?1`,
-    )
-    .all(space) as { seq: number }[]
+  const rows = env.db.prepare('select seq from notes where space_id = ?1').all(space) as {
+    seq: number
+  }[]
   const next = (
     env.db.prepare('select next from space_cursor where space_id = ?').get(space) as {
       next: number
@@ -94,6 +91,26 @@ describe('the cursor of a space', () => {
     const { seqs, next } = numbered(space)
     expect(seqs).toHaveLength(1)
     expect(Math.max(...seqs)).toBe(next - 1)
+  })
+
+  test("stays put when a space's settings are written (#2183)", async () => {
+    const space = await newSpace('Settings', true)
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'a.md', content: 'one' } })
+    const before = numbered(space).next
+
+    const writes: [string, Record<string, unknown>][] = [
+      ['bookmarks', { bookmarks: [{ kind: 'note', path: 'a.md', text: '' }] }],
+      ['icons', { icons: { Work: 'Folder' } }],
+      ['arranged', { arranged: { '': ['a.md'] } }],
+      ['graph', { graph: { arrows: true } }],
+      ['excluded', { excluded: ['Work'] }],
+    ]
+    for (const [route, body] of writes) {
+      const said = await call(env, `/v1/spaces/${space}/${route}`, { method: 'PUT', token, body })
+      expect(said.status).toBe(200)
+    }
+
+    expect(numbered(space).next).toBe(before)
   })
 
   test('moves with the row when a file is replaced (sync v2)', async () => {

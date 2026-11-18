@@ -10,8 +10,6 @@ import {
 } from '../../../sync-server/src/api'
 import { fits, writeColumn } from './columns'
 import { atLeast, spaceOf } from './space'
-import { deviceOf } from '../sync2/device'
-import { v1Wrote } from '../sync2/maps'
 
 const MOST = 60
 const LONGEST_TEXT = 200
@@ -34,7 +32,7 @@ export interface Bookmark {
 
 const LONGEST_ID = 64
 
-export function bookmarkId(value: unknown): string | null {
+function bookmarkId(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID ? value : null
 }
 
@@ -103,7 +101,6 @@ bookmarks.put('/:id/bookmarks', atLeast('write'), async (context) => {
   }
 
   await writeColumn(context.env, 'bookmarks', space.id, written)
-  await v1Wrote(context.env, space, 'bookmark', kept, await deviceOf(context))
 
   return context.json({ bookmarks: kept })
 })

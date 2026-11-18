@@ -12,8 +12,6 @@ import {
 } from '../../../sync-server/src/api'
 import { MOST_BYTES } from './columns'
 import { atLeast, spaceOf } from './space'
-import { deviceOf } from '../sync2/device'
-import { v1Wrote } from '../sync2/maps'
 
 const MOST = 400
 
@@ -97,13 +95,6 @@ folderIcons.put('/:id/icons', atLeast('write'), async (context) => {
   )
     .bind(written, writtenTints, now(), space.id)
     .run()
-  await v1Wrote(
-    context.env,
-    space,
-    'icon',
-    { icons: kept, tints: tints ?? readTints(space.tints) },
-    await deviceOf(context),
-  )
 
   return context.json({ icons: kept, tints: tints ?? readTints(space.tints) })
 })

@@ -31,7 +31,6 @@ import { keepDoc, pullDocs, pushDocs } from './docs'
 import { answer, requestBody } from './envelope'
 import { feedPage } from './feed'
 import { mendedSpace } from './mend'
-import { reproject } from './maps'
 import { applyOps } from './ops'
 import { preparedSpace, prepareSpace } from './prepare'
 import { indexItems, searchPage } from './reading'
@@ -70,7 +69,6 @@ v2Spaces.post('/:space/ops', atLeast('read', 'space'), async (context) => {
   const asker = who.kind === 'user' ? who.user.id : null
   const done = await applyOps(context.env, space, asker, device, request.ops)
   if (done.changed) {
-    await reproject(context.env, space.id, done.tree)
     await pokeSpace(context.env, laterOf(context), space.id, done.cursor, device)
   }
 
