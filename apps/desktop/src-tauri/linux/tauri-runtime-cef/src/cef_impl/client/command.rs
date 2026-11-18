@@ -4,12 +4,12 @@
 
 use std::ffi::CStr;
 use std::os::raw::c_int;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use cef::*;
 
-use crate::ChromeCommandGroup;
 use crate::macros::wrap_with_args;
+use crate::{ChromeCommandGroup, ZoomCommand, ZoomCommandHandler};
 
 /// Commands that open a second browser window or drive a tab strip.
 ///
@@ -163,6 +163,7 @@ struct BlockedCommands {
   groups: Vec<(ChromeCommandGroup, Vec<c_int>)>,
   devtools: Vec<c_int>,
   zoom: Vec<c_int>,
+  zooms: Vec<(c_int, ZoomCommand)>,
 }
 
 fn blocked_commands() -> &'static BlockedCommands {
@@ -174,7 +175,23 @@ fn blocked_commands() -> &'static BlockedCommands {
       .collect(),
     devtools: command_ids(&[DEVTOOLS_COMMANDS]),
     zoom: command_ids(&[ZOOM_COMMANDS]),
+    zooms: ZOOM_COMMANDS
+      .iter()
+      .zip([ZoomCommand::In, ZoomCommand::Out, ZoomCommand::Reset])
+      .flat_map(|(name, zoom)| {
+        command_ids(&[&[*name]])
+          .into_iter()
+          .map(move |id| (id, zoom))
+      })
+      .collect(),
   })
+}
+
+fn zoom_of(zooms: &[(c_int, ZoomCommand)], command_id: c_int) -> Option<ZoomCommand> {
+  zooms
+    .iter()
+    .find(|(id, _)| *id == command_id)
+    .map(|(_, zoom)| *zoom)
 }
 
 /// The numeric ids of `groups` in the running CEF build.
@@ -197,6 +214,7 @@ wrap_with_args! {
   pub struct TauriCefCommandHandler {
     devtools_enabled: bool,
     zoom_hotkeys_enabled: bool,
+    zoom_command_handler: Option<Arc<ZoomCommandHandler>>,
     allowed_chrome_commands: Vec<ChromeCommandGroup>,
     frame_navigation_state: crate::FrameNavigationState,
   }
@@ -219,6 +237,13 @@ wrap_with_args! {
       // long before an accelerator can reach it.
       if !self.owns(browser) {
         return 0;
+      }
+
+      if let Some(handler) = &self.zoom_command_handler
+        && let Some(zoom) = zoom_of(&blocked_commands().zooms, command_id)
+      {
+        handler(zoom);
+        return 1;
       }
 
       if self.blocks(command_id) { 1 } else { 0 }

@@ -53,6 +53,7 @@ pub(crate) struct TauriCefBrowserClientHandlers<T: UserEvent> {
     Option<Arc<tauri_runtime::webview::NewWindowHandler<T, CefRuntime<T>>>>,
   pub(crate) download_handler: Option<Arc<tauri_runtime::webview::DownloadHandler>>,
   pub(crate) console_message_handler: Option<Arc<crate::ConsoleMessageHandler>>,
+  pub(crate) zoom_command_handler: Option<Arc<crate::ZoomCommandHandler>>,
   pub(crate) permission_request_handler: Option<Arc<PermissionRequestHandler>>,
   pub(crate) web_content_process_terminate_handler:
     Option<Arc<tauri_runtime::webview::OnWebContentProcessTerminateHandler>>,
@@ -69,6 +70,7 @@ impl<T: UserEvent> Clone for TauriCefBrowserClientHandlers<T> {
       new_window_handler: self.new_window_handler.clone(),
       download_handler: self.download_handler.clone(),
       console_message_handler: self.console_message_handler.clone(),
+      zoom_command_handler: self.zoom_command_handler.clone(),
       permission_request_handler: self.permission_request_handler.clone(),
       web_content_process_terminate_handler: self.web_content_process_terminate_handler.clone(),
     }
@@ -202,6 +204,7 @@ wrap_with_args! {
             // SSO or OAuth window's URLs to an observer registered for the app's
             // own content.
             console_message_handler: None,
+            zoom_command_handler: None,
             ipc_handler: None,
             on_page_load_handler: None,
             document_title_changed_handler: None,
@@ -261,6 +264,7 @@ wrap_with_args! {
       Some(TauriCefCommandHandler::build(TauriCefCommandHandlerArgs {
         devtools_enabled: self.devtools_enabled,
         zoom_hotkeys_enabled: self.zoom_hotkeys_enabled,
+        zoom_command_handler: self.handlers.zoom_command_handler.clone(),
         allowed_chrome_commands: self.allowed_chrome_commands.clone(),
         frame_navigation_state: self.frame_navigation_state.clone(),
       }))

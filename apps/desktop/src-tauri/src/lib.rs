@@ -656,6 +656,7 @@ fn first_of_all(handle: &tauri::AppHandle) {
         mute: engine::mute::mute,
         wear: engine::scheme::wear,
         served: engine::certificate::served,
+        zooms: engine::zooms,
     });
     orden_agent_web::engines::hand(orden_agent_web::engines::Pages {
         page: engine::windowless::shared,

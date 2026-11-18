@@ -141,6 +141,21 @@ pub(crate) fn own_profile<M: tauri::Manager<orden_base::Engine>>(
 
 static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
+pub(crate) fn zooms(
+    page: orden_web::engine::Page,
+    zooms: orden_web::engine::Zooms,
+) -> orden_web::engine::Page {
+    use orden_web::web_page::Step;
+    use tauri_runtime_cef::{WebviewBuilderCefExt as _, ZoomCommand};
+    page.on_zoom_command(move |command| {
+        zooms(match command {
+            ZoomCommand::In => Step::In,
+            ZoomCommand::Out => Step::Out,
+            ZoomCommand::Reset => Step::Reset,
+        });
+    })
+}
+
 #[allow(
     clippy::cast_possible_truncation,
     clippy::useless_conversion,

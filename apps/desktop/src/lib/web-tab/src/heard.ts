@@ -4,6 +4,7 @@ import { mute } from './mute'
 import type { Page } from './pages.svelte'
 import { siteOf } from './permissions.svelte'
 import { answer, readAsk } from './passed.svelte'
+import type { ZoomStep } from './bar-keys'
 import { asideFor, isMuted, keepZoom } from './sites'
 import { settled, type Failure } from './upgrade'
 
@@ -11,6 +12,7 @@ export type Said = { tab: string } & (
   | { said: 'sound'; playing: boolean; muted: boolean }
   | { said: 'fill'; on: boolean }
   | { said: 'zoom'; factor: number }
+  | { said: 'step'; step: ZoomStep }
   | {
       said: 'arrived'
       url: string
@@ -22,6 +24,8 @@ export type Said = { tab: string } & (
 )
 
 const FAILURES: readonly string[] = ['unreachable', 'certificate', 'other'] satisfies Failure[]
+
+const STEPS: readonly string[] = ['in', 'out', 'reset'] satisfies ZoomStep[]
 
 export interface NotArrived {
   url: string
@@ -45,6 +49,9 @@ export function readSaid(value: unknown): Said | null {
   if (said === 'fill') return { tab, said, on: value.on === true }
   if (said === 'zoom' && typeof value.factor === 'number' && value.factor > 0) {
     return { tab, said, factor: value.factor }
+  }
+  if (said === 'step' && STEPS.includes(value.step as string)) {
+    return { tab, said, step: value.step as ZoomStep }
   }
   if (said === 'arrived' && typeof value.url === 'string') {
     const failure = FAILURES.includes(value.failure as string) ? (value.failure as Failure) : null
@@ -92,6 +99,11 @@ export function heard(
       page.zoom = said.factor
       keepZoom(siteOf(page.url), said.factor, asideFor(said.tab, page))
       return
+    case 'step': {
+      const { tab, step } = said
+      void import('./zoom').then(({ zoomStep }) => zoomStep(tab, page, step))
+      return
+    }
     case 'crashed':
       crashed?.(said.tab)
       return
