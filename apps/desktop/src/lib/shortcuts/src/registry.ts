@@ -75,6 +75,7 @@ export interface AppContext {
   palette(mode?: 'commands', again?: boolean): void
   fullscreen(): void
   tapped?: boolean
+  held?: boolean
 }
 
 export interface Shortcut {
@@ -433,7 +434,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Tab',
     mac: 'Ctrl-Tab',
-    run: () => cycleTab(1, true),
+    run: (context) => cycleTab(1, true, context.held),
   },
   {
     id: 'app.previous-note',
@@ -442,7 +443,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-Tab',
     mac: 'Ctrl-Shift-Tab',
-    run: () => cycleTab(-1, true),
+    run: (context) => cycleTab(-1, true, context.held),
   },
   {
     id: 'app.next-note.alt',
@@ -1346,15 +1347,15 @@ CANVAS_ENTRIES.push({
 
 let cycling: typeof import('../../tab-cycle/src/api') | null = null
 
-function cycleTab(direction: number, mayUseOrder = false) {
+function cycleTab(direction: number, mayUseOrder = false, held = false) {
   if (cycling) {
-    cycling.cycleTab(direction, mayUseOrder)
+    cycling.cycleTab(direction, mayUseOrder, held)
     return
   }
 
   void import('../../tab-cycle/src/api').then((one) => {
     cycling = one
-    one.cycleTab(direction, mayUseOrder)
+    one.cycleTab(direction, mayUseOrder, held)
   })
 }
 

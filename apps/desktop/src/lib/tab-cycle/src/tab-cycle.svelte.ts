@@ -30,7 +30,8 @@ if (typeof window !== 'undefined') {
   window.addEventListener('keyup', heard, true)
 }
 
-export function cycleTab(direction: number, mayUseOrder = false) {
+export function cycleTab(direction: number, mayUseOrder = false, held = false) {
+  holding ||= held
   const tabs = workspace.tabsIn(workspace.panes.focusedId)
   const current = workspace.activeTabId
   const index = tabs.findIndex((tab) => tab.id === current)

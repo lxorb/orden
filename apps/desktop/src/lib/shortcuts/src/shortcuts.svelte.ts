@@ -292,7 +292,7 @@ class Shortcuts {
 
       event.preventDefault()
       ran(entry.id, 'shortcut')
-      entry.run(context)
+      entry.run({ ...context, held: event.ctrlKey || event.metaKey || event.altKey })
       return true
     }
 
