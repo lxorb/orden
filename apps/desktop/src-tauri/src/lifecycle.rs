@@ -139,7 +139,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             orden_crashes::crashes::ended_well();
             orden_pty::terminal::end_all(app);
             orden_apps::apps_host::end_all(app);
-            crate::ai_cli::end_all(app);
+            orden_ai::ai_cli::end_all(app);
             orden_agents::stop::quitting();
             orden_reminders::notices::clear_all(app);
         }
@@ -178,7 +178,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
                 !leaving(app) && !document_windows(app).is_empty(),
             );
             orden_explorer::explorer::watch::window_gone(app, &label);
-            crate::ai_cli::window_gone(app, &label);
+            orden_ai::ai_cli::window_gone(app, &label);
             let now = state(app).now();
             if (now == ASKING || now == CONFIRMING) && document_windows(app).is_empty() {
                 leave(app);

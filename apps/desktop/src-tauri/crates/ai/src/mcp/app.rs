@@ -115,7 +115,7 @@ fn launch() -> Result<(), String> {
         .raw_arg(format!(
             "/d /c start \"\" /min \"{}\" {}",
             program.display(),
-            crate::launch::BACKGROUND_FLAG
+            orden_base::handed::BACKGROUND_FLAG
         ))
         .creation_flags(NO_WINDOW);
     if let Some(folder) = program.parent() {
@@ -138,7 +138,7 @@ fn launch() -> Result<(), String> {
             Command::new("open")
                 .args(["-g", "-j"])
                 .arg(bundle)
-                .args(["--args", crate::launch::BACKGROUND_FLAG]),
+                .args(["--args", orden_base::handed::BACKGROUND_FLAG]),
         )
         .status()
         .map(drop)
@@ -158,7 +158,7 @@ fn detached(program: &Path) -> Result<(), String> {
 
     let mut child = quiet(
         Command::new(program)
-            .arg(crate::launch::BACKGROUND_FLAG)
+            .arg(orden_base::handed::BACKGROUND_FLAG)
             .process_group(0),
     )
     .spawn()

@@ -8,7 +8,9 @@ const turn = { threadId: 't', turnId: 'u' }
 
 const crateServer = /pub const SERVER: &str = "([^"]+)";/.exec(
   readFileSync(
-    fileURLToPath(new URL('../../../../../src-tauri/src/ai_cli/args.rs', import.meta.url)),
+    fileURLToPath(
+      new URL('../../../../../src-tauri/crates/ai/src/ai_cli/args.rs', import.meta.url),
+    ),
     'utf8',
   ),
 )?.[1]

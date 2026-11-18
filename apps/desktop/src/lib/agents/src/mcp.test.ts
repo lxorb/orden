@@ -38,7 +38,7 @@ describe('the line that adds Orden to a client', () => {
 describe("the MCP server's tools", () => {
   const table = JSON.parse(
     readFileSync(
-      fileURLToPath(new URL('../../../../src-tauri/src/mcp/tools.json', import.meta.url)),
+      fileURLToPath(new URL('../../../../src-tauri/crates/ai/src/mcp/tools.json', import.meta.url)),
       'utf8',
     ),
   ) as { name: string }[]

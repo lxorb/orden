@@ -1,12 +1,25 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
-pub const IDENTIFIER: &str = env!("ORDEN_IDENTIFIER");
+pub struct Named {
+    pub identifier: &'static str,
+    pub version: &'static str,
+}
 
-pub const VERSION: &str = env!("ORDEN_VERSION");
+static NAMED: OnceLock<Named> = OnceLock::new();
+
+pub fn name(named: Named) {
+    let _ = NAMED.set(named);
+}
+
+pub fn version() -> &'static str {
+    NAMED.get().map_or("", |named| named.version)
+}
 
 pub fn config_dir() -> Option<PathBuf> {
-    base(|name| std::env::var_os(name)).map(|base| base.join(IDENTIFIER))
+    let identifier = NAMED.get()?.identifier;
+    base(|name| std::env::var_os(name)).map(|base| base.join(identifier))
 }
 
 fn absolute(value: Option<OsString>) -> Option<PathBuf> {
@@ -35,15 +48,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_build_said_who_this_is() {
-        assert!(IDENTIFIER.contains('.'), "{IDENTIFIER}");
-        assert!(!VERSION.is_empty());
-    }
-
-    #[test]
     fn the_folder_is_named_after_the_identifier() {
+        name(Named {
+            identifier: "so.orden.Test",
+            version: "1.0.0",
+        });
+        assert_eq!(version(), "1.0.0");
         if let Some(dir) = config_dir() {
-            assert!(dir.ends_with(IDENTIFIER));
+            assert!(dir.ends_with("so.orden.Test"));
         }
     }
 

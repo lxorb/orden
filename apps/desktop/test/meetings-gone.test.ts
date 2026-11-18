@@ -80,7 +80,7 @@ describe('no surface offers to make one', () => {
   })
 
   test('no agent tool offers the kind', () => {
-    const tools = read(join(ROOT, 'apps/desktop/src-tauri/src/mcp/tools.json'))
+    const tools = read(join(ROOT, 'apps/desktop/src-tauri/crates/ai/src/mcp/tools.json'))
     expect(tools.toLowerCase()).not.toContain('meeting')
   })
 

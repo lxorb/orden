@@ -1,10 +1,10 @@
 mod app;
-pub(crate) mod home;
-pub(crate) mod host;
+pub mod home;
+pub mod host;
 mod link;
 mod marks;
 mod pairing;
-pub(crate) mod program;
+pub mod program;
 mod results;
 mod rpc;
 mod server;

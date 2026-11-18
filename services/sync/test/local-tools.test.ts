@@ -19,7 +19,7 @@ interface Tool {
 }
 
 const LOCAL = fileURLToPath(
-  new URL('../../../apps/desktop/src-tauri/src/mcp/tools.json', import.meta.url),
+  new URL('../../../apps/desktop/src-tauri/crates/ai/src/mcp/tools.json', import.meta.url),
 )
 
 const local = JSON.parse(readFileSync(LOCAL, 'utf8')) as Tool[]

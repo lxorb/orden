@@ -76,7 +76,7 @@ fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     grant
 }
 
-pub(crate) fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
+pub fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
     let id = grant_id(&builtin.id)?;
     let grants = &state(app).grants;
     for one in [id.clone(), grant_id_from(BUILT_IN_BEFORE, &builtin.id)?] {
@@ -103,7 +103,7 @@ fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
     LENT.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-pub(crate) fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
+pub fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<String, String> {
     let grant = grant_for(app, builtin)?.id;
     let mut all = lent_now();
     if let Some(one) = all
@@ -122,7 +122,7 @@ pub(crate) fn lend(app: &AppHandle, builtin: &Builtin, mode: Mode) -> Result<Str
     Ok(token)
 }
 
-pub(crate) fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
+pub fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
     let said = hashed(token);
     let (grant, mode) = {
         let all = lent_now();
@@ -140,7 +140,7 @@ pub(crate) fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
         .map(|grant| supervised(grant, mode))
 }
 
-pub(crate) fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
+pub fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
         Mode::Plan => reads_only || name == "create_note" || name == "run_agent",
         Mode::Approve | Mode::Auto | Mode::Full => true,

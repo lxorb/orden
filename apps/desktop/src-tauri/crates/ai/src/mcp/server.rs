@@ -134,7 +134,7 @@ impl Session {
             json!({
                 "protocolVersion": version,
                 "capabilities": { "tools": { "listChanged": true } },
-                "serverInfo": { "name": "orden", "version": home::VERSION },
+                "serverInfo": { "name": "orden", "version": home::version() },
                 "instructions": INSTRUCTIONS,
             }),
         ));
