@@ -19,11 +19,7 @@ const EVERY = 5 * 60_000
 
 function callWith(token: string): PassCall {
   return (path, method, body) =>
-    request(path, {
-      ...(method ? { method } : {}),
-      ...(body === undefined ? {} : { body }),
-      token,
-    })
+    request(path, { ...(method ? { method } : {}), ...(body === undefined ? {} : { body }), token })
 }
 
 class PassSync {

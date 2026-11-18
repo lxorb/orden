@@ -1,6 +1,7 @@
 import type { Invite, KeyringRow as AccountKeyring } from '@orden/pass/wire'
 import { inviteIn, keyringRowIn } from '@orden/pass/wire'
 import type { Change, ItemRow, KeyringRow, VaultRow, VersionRow } from './local'
+import { isFields } from './sync'
 
 export interface DeviceRows {
   keyring(): Promise<KeyringRow | null>
@@ -37,10 +38,6 @@ const ACCOUNT_KEYRING = 'account-keyring'
 const INVITES = 'invites'
 const itemKey = (vault: string, id: string) => `base:item:${vault}:${id}`
 const vaultKey = (id: string) => `base:vault:${id}`
-
-function isFields(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
 
 const whole = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0

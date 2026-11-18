@@ -1,4 +1,5 @@
 import type { Attachment, Content, Envelope } from '@orden/pass/types'
+import { isFields } from './sync'
 
 type Side = 'mine' | 'theirs'
 
@@ -20,10 +21,6 @@ type Base = unknown
 
 function same(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
-}
-
-function isFields(value: unknown): value is Fields {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function idOf(value: unknown): string | null {
