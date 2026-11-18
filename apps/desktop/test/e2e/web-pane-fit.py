@@ -151,5 +151,4 @@ def drive(browser: Browser) -> None:
     checked(page, "filling the window")
     DRIVE.steady(page, "05-filling-the-window")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

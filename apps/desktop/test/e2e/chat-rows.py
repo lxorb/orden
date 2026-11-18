@@ -94,5 +94,4 @@ def drive(browser: Browser) -> None:
         say(f"{width}px: on a touch screen the actions stand in the time's place")
         context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the chat rows keep their end group tight, at rest, pointed at and touched"))
+raise SystemExit(DRIVE.run(drive, "the chat rows keep their end group tight, at rest, pointed at and touched"))

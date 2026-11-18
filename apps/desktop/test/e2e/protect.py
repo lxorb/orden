@@ -98,5 +98,4 @@ def main() -> int:
     return DRIVE.run(drive, "a note is protected with a password, locks, and opens with it")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

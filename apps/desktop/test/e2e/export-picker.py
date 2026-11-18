@@ -152,5 +152,4 @@ def drive(browser: Browser) -> None:
             settings_export(page)
         context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Export… picks every format from one picker"))
+raise SystemExit(DRIVE.run(drive, "Export… picks every format from one picker"))

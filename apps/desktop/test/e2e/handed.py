@@ -680,5 +680,4 @@ def main() -> int:
 
     return DRIVE.verdict("what the phone hands over becomes a note, a command or a photograph")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

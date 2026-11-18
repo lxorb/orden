@@ -40,5 +40,4 @@ def drive(browser: Browser) -> None:
             wrong(f"round {round_}: a click on a tab drawn as its mark did not choose it")
     say(f"{count} tabs, each chosen by a click on its mark, none closed")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a click on a tab drawn as its mark chooses it"))
+raise SystemExit(DRIVE.run(drive, "a click on a tab drawn as its mark chooses it"))

@@ -146,7 +146,6 @@ def drive(browser: Browser) -> None:
     phone(browser, False, 820, 1180)
 
 
-if __name__ == "__main__":
-    raise SystemExit(
-        DRIVE.run(drive, "a phone keeps its notes as tabs, shows them as a grid, and a swipe walks or closes them")
-    )
+raise SystemExit(
+    DRIVE.run(drive, "a phone keeps its notes as tabs, shows them as a grid, and a swipe walks or closes them")
+)

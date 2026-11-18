@@ -153,5 +153,4 @@ def drive(browser: Browser) -> None:
     walk(browser, reduced=False)
     walk(browser, reduced=True)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "files dragged into the Essentials and tiles back out, each one undo"))
+raise SystemExit(DRIVE.run(drive, "files dragged into the Essentials and tiles back out, each one undo"))

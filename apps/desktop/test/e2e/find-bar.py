@@ -354,5 +354,4 @@ def main() -> int:
 
     return DRIVE.verdict("the find bar is Orden's own, and it finds, steps and replaces")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

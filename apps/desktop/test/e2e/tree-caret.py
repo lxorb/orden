@@ -201,5 +201,4 @@ def drive(browser: Browser) -> None:
     thumb(browser)
     tags(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a press a few pixels off the twist turns the row and opens nothing"))
+raise SystemExit(DRIVE.run(drive, "a press a few pixels off the twist turns the row and opens nothing"))

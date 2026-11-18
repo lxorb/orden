@@ -522,5 +522,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "the keyboard stays somewhere, and a screen reader is told where")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

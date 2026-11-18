@@ -277,5 +277,4 @@ def main() -> int:
     print("\na page note and a chat shared on their own each open as themselves, and carry", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

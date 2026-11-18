@@ -158,5 +158,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("/btw opens a side chat beside the chat, which hides and comes back where it was")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -152,5 +152,4 @@ def drive() -> None:
 
     say("every colour crossed")
 
-if __name__ == "__main__":
-    drive()
+drive()

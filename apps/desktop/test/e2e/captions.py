@@ -222,5 +222,4 @@ def main() -> int:
 
     return DRIVE.verdict("a code block says what it is, in the editor and on the page")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

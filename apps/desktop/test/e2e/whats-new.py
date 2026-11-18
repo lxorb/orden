@@ -50,5 +50,4 @@ def main() -> int:
 
     return DRIVE.verdict("the release notes show in their sheet and close on Done")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

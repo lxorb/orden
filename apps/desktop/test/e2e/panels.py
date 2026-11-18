@@ -198,5 +198,4 @@ def main() -> int:
 
     return DRIVE.verdict("a panel can be held on one note while another is written in")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

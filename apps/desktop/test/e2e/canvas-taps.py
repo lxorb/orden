@@ -53,5 +53,4 @@ def drive(browser: Any) -> None:
         wrong(f"a triple tap undid nothing: {after} shapes, wanted the 1 one undo leaves")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

@@ -44,5 +44,4 @@ def drive(browser: Any) -> None:
         wrong("Escape in the graph's own pane no longer closes it")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

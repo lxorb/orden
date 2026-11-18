@@ -284,5 +284,4 @@ def main() -> int:
 
     return DRIVE.verdict("bookmarks can be sorted into groups, and one can point at a block")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

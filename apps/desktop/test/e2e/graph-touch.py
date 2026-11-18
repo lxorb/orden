@@ -133,5 +133,4 @@ def drive(browser: Any) -> None:
     shot(page, "01-pinched")
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

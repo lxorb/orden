@@ -245,5 +245,4 @@ def drive(browser: Browser) -> None:
     phone(page)
     page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the formula is drawn live above its source, wherever it is written"))
+raise SystemExit(DRIVE.run(drive, "the formula is drawn live above its source, wherever it is written"))

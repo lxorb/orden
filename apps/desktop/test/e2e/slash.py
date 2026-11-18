@@ -159,5 +159,4 @@ def main() -> int:
 
     return DRIVE.verdict("a slash offers the blocks, and a slash in a word is a slash")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

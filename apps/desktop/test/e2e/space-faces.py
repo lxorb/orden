@@ -54,5 +54,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a space shared with the reader shows its people as soon as it arrives"))
+raise SystemExit(DRIVE.run(drive, "a space shared with the reader shows its people as soon as it arrives"))

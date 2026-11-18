@@ -177,5 +177,4 @@ def main() -> int:
 
     return DRIVE.verdict("a note held notes, and stopped holding them again")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

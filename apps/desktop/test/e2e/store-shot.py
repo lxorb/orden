@@ -78,5 +78,4 @@ def shoot(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(shoot)
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

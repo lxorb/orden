@@ -549,5 +549,4 @@ def main() -> int:
 
     return DRIVE.verdict("a block can be taken hold of, moved, copied and pointed at")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

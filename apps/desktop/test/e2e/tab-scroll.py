@@ -223,5 +223,4 @@ def drive(browser: Browser) -> None:
             step(page)
             page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the strip scrolls only as far as its tabs"))
+raise SystemExit(DRIVE.run(drive, "the strip scrolls only as far as its tabs"))

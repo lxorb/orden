@@ -69,5 +69,4 @@ def drive(browser: Browser) -> None:
     wait_for(page, "() => window.ordenApp.workspace.panel === 'tree'", "the left side open again")
     context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a panel tab pressed is that panel, and the side stays"))
+raise SystemExit(DRIVE.run(drive, "a panel tab pressed is that panel, and the side stays"))

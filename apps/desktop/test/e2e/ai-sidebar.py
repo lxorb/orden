@@ -735,5 +735,4 @@ def main() -> int:
         " reviews, rewinds and resends"
     )
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

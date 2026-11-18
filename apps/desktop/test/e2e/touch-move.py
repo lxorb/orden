@@ -314,5 +314,4 @@ def main() -> int:
 
     return DRIVE.verdict("a finger can move a note and reorder the spaces")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

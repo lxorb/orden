@@ -182,5 +182,4 @@ def main() -> int:
             drive(browser, scheme)
     return DRIVE.verdict("an AI chat opens as its own tab, dragged from the side or made from a new tab")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

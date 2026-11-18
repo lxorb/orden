@@ -139,5 +139,4 @@ def main() -> int:
 
     return DRIVE.verdict("four things made: two on the ground, and two inside rows")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

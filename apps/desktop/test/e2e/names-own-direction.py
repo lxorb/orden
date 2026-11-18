@@ -66,5 +66,4 @@ def drive(browser: Browser) -> None:
     DRIVE.shot(page, "names")
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a name reads in its own direction"))
+raise SystemExit(DRIVE.run(drive, "a name reads in its own direction"))

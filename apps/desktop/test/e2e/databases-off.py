@@ -176,5 +176,4 @@ def drive(browser: Browser) -> None:
     page.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "databases stay out of sight until turned on, and come back whole"))
+raise SystemExit(DRIVE.run(drive, "databases stay out of sight until turned on, and come back whole"))

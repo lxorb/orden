@@ -270,5 +270,4 @@ def drive(browser: Browser) -> None:
         every_full_mode(page, scheme)
         page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the tab fills the window and gives it back"))
+raise SystemExit(DRIVE.run(drive, "the tab fills the window and gives it back"))

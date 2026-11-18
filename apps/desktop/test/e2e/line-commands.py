@@ -260,5 +260,4 @@ def main() -> int:
 
     return DRIVE.verdict("the line and text commands answer their keys, the palette and a paste")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

@@ -246,5 +246,4 @@ def main() -> int:
 
     return DRIVE.verdict("a orden:// link opens, makes, appends and searches, and is refused where it should be")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -191,5 +191,4 @@ def main() -> int:
     print("\na shared space paired again takes its own folder, and leftover copies are mended without losing words", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

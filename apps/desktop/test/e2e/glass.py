@@ -432,5 +432,4 @@ def scrolling(browser: Browser) -> None:
 
     done_with(page)
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

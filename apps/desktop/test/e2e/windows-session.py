@@ -62,5 +62,4 @@ def drive(browser: Browser) -> None:
         wrong(f"a reload left {many} tabs of the two drafts")
     c.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

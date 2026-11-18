@@ -153,5 +153,4 @@ def main() -> int:
         drive(browser, worker)
     return DRIVE.verdict("Send feedback is at the foot of the sidebar and the Worker keeps what it sends")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

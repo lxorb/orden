@@ -169,5 +169,4 @@ def main() -> int:
 
     return DRIVE.verdict("every panel tab is in one pill, sized to its tabs, at every width")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

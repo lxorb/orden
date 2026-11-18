@@ -175,5 +175,4 @@ def drive(browser: Browser) -> None:
     else:
         say("a screen kept of other words was not drawn")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the note was on screen in the first frame and its editor took over in place"))
+raise SystemExit(DRIVE.run(drive, "the note was on screen in the first frame and its editor took over in place"))

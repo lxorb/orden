@@ -100,5 +100,4 @@ def drive(browser: Browser) -> None:
     DRIVE.shot(page, "03-insert")
     normal(page)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "Enter in normal mode ticks a task, and is Vim's everywhere else"))
+raise SystemExit(DRIVE.run(drive, "Enter in normal mode ticks a task, and is Vim's everywhere else"))

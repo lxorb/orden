@@ -57,5 +57,4 @@ def drive(browser: Browser) -> None:
         alone.close()
     context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

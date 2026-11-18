@@ -254,5 +254,4 @@ def main() -> int:
 
     return DRIVE.verdict(f"shots in {SHOTS}")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

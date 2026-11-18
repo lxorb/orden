@@ -147,5 +147,4 @@ def drive(browser: Browser) -> None:
     say(f"{N} chats: after the search, lit {lit}")
     page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a thousand chats draw only the rows in sight, keep the focus and follow the keys"))
+raise SystemExit(DRIVE.run(drive, "a thousand chats draw only the rows in sight, keep the focus and follow the keys"))

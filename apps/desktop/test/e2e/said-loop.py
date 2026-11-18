@@ -90,5 +90,4 @@ def main() -> int:
     say("the page still answers after the sync light has spoken")
     return 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

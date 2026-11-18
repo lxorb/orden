@@ -189,5 +189,4 @@ def main() -> int:
     say(json.dumps(sorted(p.name for p in out.glob('*.png'))))
     return DRIVE.verdict(f"shots in {out}")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

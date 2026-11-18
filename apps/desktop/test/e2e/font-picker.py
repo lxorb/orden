@@ -60,5 +60,4 @@ def missing(page: Page, field) -> None:
         say("a face nothing draws is said to be not installed")
     DRIVE.shot(page, "missing")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a face for notes is picked from the fonts installed, and a missing one is said"))
+raise SystemExit(DRIVE.run(drive, "a face for notes is picked from the fonts installed, and a missing one is said"))

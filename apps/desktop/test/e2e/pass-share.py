@@ -197,5 +197,4 @@ def main() -> int:
     return DRIVE.verdict("Ada shares a vault with Bob, who accepts and reads it; a secure link opens for anybody")
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

@@ -101,5 +101,4 @@ def drive(browser: Browser) -> None:
     )
     shot(page, "03-board")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "quick add wrote two todos"))
+raise SystemExit(DRIVE.run(drive, "quick add wrote two todos"))

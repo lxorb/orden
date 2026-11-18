@@ -261,5 +261,4 @@ def drive(browser: Browser) -> None:
     desktop(browser)
     phone(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a note, a folder and a tab dragged onto the switcher move to that space"))
+raise SystemExit(DRIVE.run(drive, "a note, a folder and a tab dragged onto the switcher move to that space"))

@@ -75,5 +75,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a lock takes away what Pass was asking or offering"))
+raise SystemExit(DRIVE.run(drive, "a lock takes away what Pass was asking or offering"))

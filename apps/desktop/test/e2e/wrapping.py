@@ -76,5 +76,4 @@ def drive(browser: Browser) -> None:
 def main() -> int:
     return DRIVE.run(drive, "a wrapped paragraph exports as a paragraph")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

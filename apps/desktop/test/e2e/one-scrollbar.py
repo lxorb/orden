@@ -103,5 +103,4 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(800)
     looked(page, "the ask panel")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every place that scrolls shows one bar"))
+raise SystemExit(DRIVE.run(drive, "every place that scrolls shows one bar"))

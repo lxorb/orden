@@ -57,5 +57,4 @@ def drive(browser: Browser) -> None:
     if not back or any(one < 0.95 for one in back):
         wrong(f"the launcher is not back once the overview is away: {back}")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a launcher that comes while the overview is open stays under it"))
+raise SystemExit(DRIVE.run(drive, "a launcher that comes while the overview is open stays under it"))

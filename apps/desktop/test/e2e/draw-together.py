@@ -576,5 +576,4 @@ def big_canvas(strokes: int, per: int) -> str:
         + "\n"
     )
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

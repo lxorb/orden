@@ -280,5 +280,4 @@ def main() -> int:
 
     return DRIVE.verdict("the breaks, the six colours and the paper reach every document format")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

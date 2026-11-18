@@ -366,5 +366,4 @@ def drive(browser: Browser) -> None:
         close_up(browser, scale)
     turned_off(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "swipes go back and forward, and only where they should"))
+raise SystemExit(DRIVE.run(drive, "swipes go back and forward, and only where they should"))

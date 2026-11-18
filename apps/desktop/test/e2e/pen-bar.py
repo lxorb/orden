@@ -333,5 +333,4 @@ def main() -> int:
 
     return DRIVE.verdict(f"all of it held. the pictures are under {SHOTS}")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

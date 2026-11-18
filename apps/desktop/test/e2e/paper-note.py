@@ -276,7 +276,6 @@ def drive(browser: Browser) -> None:
         ink_kept(page, cdp, path)
         exported(page)
 
-if __name__ == "__main__":
-    raise SystemExit(
-        DRIVE.run(drive, "a PDF is one page note, drawn, written on, kept and exported")
-    )
+raise SystemExit(
+    DRIVE.run(drive, "a PDF is one page note, drawn, written on, kept and exported")
+)

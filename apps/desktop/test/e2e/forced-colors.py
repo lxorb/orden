@@ -188,5 +188,4 @@ def drive(browser: Browser) -> None:
     for scheme in ("dark", "light"):
         drive_scheme(browser, scheme)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive))
+raise SystemExit(DRIVE.run(drive))

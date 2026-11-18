@@ -1260,5 +1260,4 @@ def main() -> int:
 
     return DRIVE.verdict("everything the drive checked was right")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

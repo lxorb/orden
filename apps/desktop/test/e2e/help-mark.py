@@ -186,5 +186,4 @@ def drive(browser: Browser) -> None:
     look(browser, "hidpi", scale=2)
     look(browser, "touch", touch=True)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))
+raise SystemExit(DRIVE.run(drive, "every mark sits on the middle of the letters of the words it follows"))

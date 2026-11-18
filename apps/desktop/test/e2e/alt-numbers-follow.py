@@ -49,5 +49,4 @@ def drive(browser: Browser) -> None:
             wrong(f"Alt+{digit}: the numbers stand off their tabs: {[round(one, 1) for one in off]}")
     page.keyboard.up("Alt")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the numbers follow their tabs"))
+raise SystemExit(DRIVE.run(drive, "the numbers follow their tabs"))

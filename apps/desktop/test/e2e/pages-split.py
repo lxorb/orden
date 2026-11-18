@@ -99,5 +99,4 @@ def drive(browser: Browser) -> None:
     context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the Outline and the bar follow the tab in front, beside a page note"))
+raise SystemExit(DRIVE.run(drive, "the Outline and the bar follow the tab in front, beside a page note"))

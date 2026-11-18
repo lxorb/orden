@@ -95,5 +95,4 @@ def main() -> int:
 
     return DRIVE.verdict("the update notice, Reload and the New note button keep apart")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

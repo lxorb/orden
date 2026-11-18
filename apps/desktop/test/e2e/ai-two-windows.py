@@ -142,5 +142,4 @@ def drive(browser: Browser) -> None:
     a.context.close()
 
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "two windows on one AI chat keep each other's changes"))
+raise SystemExit(DRIVE.run(drive, "two windows on one AI chat keep each other's changes"))

@@ -250,5 +250,4 @@ def drive(browser) -> None:  # type: ignore[no-untyped-def]
     the_form(page)
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a rollup counted, a button set a property, a form made a note"))
+raise SystemExit(DRIVE.run(drive, "a rollup counted, a button set a property, a form made a note"))

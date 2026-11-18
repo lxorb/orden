@@ -178,5 +178,4 @@ def main() -> int:
 
     return DRIVE.verdict("nothing of the app's is over the page")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

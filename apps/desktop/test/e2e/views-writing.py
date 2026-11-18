@@ -272,5 +272,4 @@ def drive(browser):
     menus(page)
     phone(browser)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "the writing holds"))
+raise SystemExit(DRIVE.run(drive, "the writing holds"))

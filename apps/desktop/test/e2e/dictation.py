@@ -237,5 +237,4 @@ def main() -> int:
 
     return DRIVE.verdict("dictation into the composer and quick add, live words and final")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

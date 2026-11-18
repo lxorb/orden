@@ -109,5 +109,4 @@ def drive(browser: Browser) -> None:
     )
     every_pane(page)
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every setting has a ? that explains it"))
+raise SystemExit(DRIVE.run(drive, "every setting has a ? that explains it"))

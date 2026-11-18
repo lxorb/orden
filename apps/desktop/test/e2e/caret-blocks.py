@@ -202,5 +202,4 @@ def main() -> int:
 
     return DRIVE.verdict("every block opens to an arrow rather than standing in its way")
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+raise SystemExit(main())

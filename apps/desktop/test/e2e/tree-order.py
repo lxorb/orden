@@ -381,5 +381,4 @@ def main() -> int:
 
     return DRIVE.verdict("the seven orders read as they should, and Manual held a drag")
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())

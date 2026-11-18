@@ -233,5 +233,4 @@ def drive(browser: Browser) -> None:
     face = page.locator(".guest-corner .who").first
     check(page, "a guest's corner", lambda: face.click(), ".guest-corner .pop", ".canvas")
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "every popup closes past itself, on Escape and on a blur, and not on its own press"))
+raise SystemExit(DRIVE.run(drive, "every popup closes past itself, on Escape and on a blur, and not on its own press"))

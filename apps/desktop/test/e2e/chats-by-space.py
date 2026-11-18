@@ -44,5 +44,4 @@ def drive(browser: Browser) -> None:
         shot(page, f"{scheme}-chats-by-space", clip={"x": 0, "y": 0, "width": 320, "height": 520})
         page.context.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "two chats with one name stand under the spaces they belong to"))
+raise SystemExit(DRIVE.run(drive, "two chats with one name stand under the spaces they belong to"))

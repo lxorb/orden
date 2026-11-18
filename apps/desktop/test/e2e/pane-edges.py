@@ -99,5 +99,4 @@ def drive(browser: Browser) -> None:
     check(page, "05-split-left-open-dark", False, True)
     page.close()
 
-if __name__ == "__main__":
-    raise SystemExit(DRIVE.run(drive, "a pane runs flush and square into the window wherever no sidebar stands between"))
+raise SystemExit(DRIVE.run(drive, "a pane runs flush and square into the window wherever no sidebar stands between"))

@@ -311,5 +311,4 @@ def main() -> int:
     print("\nthe question came up on exactly the planted overlaps, and nothing was lost", flush=True)
     return 0
 
-if __name__ == "__main__":
-    sys.exit(main())
+sys.exit(main())
