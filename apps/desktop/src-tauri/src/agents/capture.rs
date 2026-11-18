@@ -3,7 +3,7 @@ use tauri::AppHandle;
 use super::grants::Scope;
 use super::verbs::{Answer, CaptureAs, Code};
 use super::Caller;
-use crate::pdf::PdfPage;
+use orden_documents::pdf::PdfPage;
 
 const VERB: &str = "capture_to_note";
 

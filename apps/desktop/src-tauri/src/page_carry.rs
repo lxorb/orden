@@ -156,7 +156,8 @@ pub async fn page_carry(
     let sources = files
         .iter()
         .map(|path| {
-            orden_base::paths::in_spaces(&app, path).or_else(|_| crate::explorer::shown(&app, path))
+            orden_base::paths::in_spaces(&app, path)
+                .or_else(|_| orden_explorer::explorer::shown(&app, path))
         })
         .collect::<Result<Vec<_>, _>>()?;
     let addresses: Vec<String> = addresses

@@ -1310,7 +1310,7 @@ fn files_of(
                 return Err(absent());
             }
             if matches!(caller, Caller::Agent(_)) && twin.is_none() {
-                handed_from_own(root.as_deref(), &super::files::own_folders(app), &path)?;
+                handed_from_own(root.as_deref(), &orden_base::paths::own_folders(app), &path)?;
             }
             let mut inside = orden_base::paths::in_spaces(app, &path.to_string_lossy()).is_ok();
             if let (Caller::Agent(grant), Some(root)) = (caller, &root) {

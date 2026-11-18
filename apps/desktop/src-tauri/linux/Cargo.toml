@@ -151,6 +151,8 @@ windows-registry = "0.6"
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 tauri-plugin-os = "=3.0.0-alpha.3"
+tauri-plugin-opener = "=3.0.0-alpha.3"
+trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 notify = "8"
 file-id = "0.2"
 sha2 = "0.10"
@@ -187,6 +189,7 @@ serde_json = "1"
 
 [dependencies]
 orden-base = { path = "crates/base" }
+orden-documents = { path = "crates/documents" }
 orden-notes = { path = "crates/notes" }
 orden-search = { path = "crates/search" }
 orden-store = { path = "crates/store" }
@@ -195,7 +198,7 @@ tauri = { version = "=3.0.0-alpha.5", features = ["protocol-asset", "unstable", 
 tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["unstable"] }
 tauri-runtime = "=3.0.0-alpha.4"
 cef = { version = "=154.5.0", default-features = false }
-tauri-plugin-opener = "=3.0.0-alpha.3"
+tauri-plugin-opener.workspace = true
 tauri-plugin-os.workspace = true
 tauri-plugin-deep-link = "=3.0.0-alpha.3"
 serde.workspace = true
@@ -205,7 +208,6 @@ argon2 = { version = "0.5", default-features = false, features = ["alloc", "zero
 zeroize = "1"
 flate2.workspace = true
 rusqlite.workspace = true
-notify.workspace = true
 getrandom.workspace = true
 percent-encoding.workspace = true
 
@@ -213,6 +215,7 @@ percent-encoding.workspace = true
 orden-apps = { path = "crates/apps" }
 orden-crashes = { path = "crates/crashes" }
 orden-dictation = { path = "crates/dictation" }
+orden-explorer = { path = "crates/explorer" }
 orden-import = { path = "crates/import" }
 orden-pty = { path = "crates/pty" }
 orden-system = { path = "crates/system" }
@@ -232,7 +235,6 @@ window-vibrancy = "0.6"
 dirs.workspace = true
 reqwest.workspace = true
 rustls.workspace = true
-zip.workspace = true
 ring = "0.17"
 tokio.workspace = true
 libloading.workspace = true
@@ -310,9 +312,6 @@ libc.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))'.dependencies]
 str0m.workspace = true
-
-[target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
-trash = { version = "5.3", default-features = false, features = ["chrono", "coinit_apartmentthreaded", "freedesktop"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 file-id.workspace = true

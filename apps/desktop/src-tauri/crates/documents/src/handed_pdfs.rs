@@ -136,7 +136,7 @@ pub fn handed_pdf(app: &AppHandle, path: &str) -> Option<PathBuf> {
 }
 
 pub fn pdfs_in<A: AsRef<OsStr>>(args: &[A], cwd: &Path) -> Vec<PathBuf> {
-    if crate::web_handed::for_a_link(args) {
+    if orden_base::handed::for_a_link(args) {
         return Vec::new();
     }
 
@@ -352,7 +352,11 @@ mod tests {
         let dir = tempfile::tempdir().expect("a temp folder");
         let paper = file(&dir.path().join("a.pdf"), b"%PDF");
 
-        let args = line(&[crate::web_handed::LINK_FLAG, "https://example.com/", &paper]);
+        let args = line(&[
+            orden_base::handed::LINK_FLAG,
+            "https://example.com/",
+            &paper,
+        ]);
         assert!(pdfs_in(&args, dir.path()).is_empty());
     }
 
@@ -442,7 +446,12 @@ mod tests {
     }
 
     fn source(relative: &str) -> String {
-        fs::read_to_string(crate::app_dir().join(relative)).expect("a file beside the crate")
+        fs::read_to_string(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../..")
+                .join(relative),
+        )
+        .expect("a file beside the crate")
     }
 
     #[test]

@@ -72,7 +72,7 @@ fn registration(app: &str, exe: &str) -> Vec<Value> {
     let capabilities = format!(r"{client}\Capabilities");
     let class = format!(r"Software\Classes\{PROG_ID}");
     let icon = format!("{exe},0");
-    let link = crate::web_handed::LINK_FLAG;
+    let link = orden_base::handed::LINK_FLAG;
 
     [
         (client.clone(), "", app.to_owned()),

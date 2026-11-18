@@ -49,7 +49,7 @@ fn readable(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
         return Ok(dropped);
     }
     #[cfg(desktop)]
-    if let Ok(shown) = crate::explorer::shown(app, path) {
+    if let Ok(shown) = orden_explorer::explorer::shown(app, path) {
         if shown.is_file() {
             return Ok(shown);
         }

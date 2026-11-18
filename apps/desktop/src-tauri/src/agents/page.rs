@@ -16,7 +16,7 @@ use super::verbs::{
     Answer, Code, ConsoleLine, ConsoleLines, Cookie, FieldValue, Match, Moment, Picture, ReadAs,
     Request, Requests, Store, Until,
 };
-use crate::pdf::{printing, PdfPage};
+use orden_documents::pdf::{printing, PdfPage};
 
 const WORLD: &str = "orden-agent";
 

@@ -582,7 +582,7 @@ pub async fn agents_capture(
     tab: String,
     shape: verbs::CaptureAs,
     full_page: Option<bool>,
-    page: Option<crate::pdf::PdfPage>,
+    page: Option<orden_documents::pdf::PdfPage>,
 ) -> Answer {
     orden_base::lane::off_the_runtime(move || -> Answer {
         if let Err(why) = from_the_app(&webview) {

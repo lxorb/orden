@@ -1,0 +1,6 @@
+{
+  "name": "explorer",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["apps", "base"]
+}

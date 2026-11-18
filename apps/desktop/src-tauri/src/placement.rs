@@ -860,7 +860,7 @@ mod tests {
 
     #[test]
     fn every_window_is_built_where_the_run_sends_them() {
-        let excused = ["pdf.rs", "engine.rs", "engine/gate.rs"];
+        let excused = ["crates/documents/src/pdf.rs", "engine.rs"];
 
         let mut unplaced = Vec::new();
         for (name, path) in crate::sources() {

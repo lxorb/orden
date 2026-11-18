@@ -1060,6 +1060,52 @@ pub fn link_to(target: &Path, link: &Path) -> bool {
         .is_ok_and(|made| made.status.success())
 }
 
+pub fn own_folders(app: &AppHandle) -> Vec<PathBuf> {
+    [
+        config_dir(app).ok(),
+        app.path().app_config_dir().ok(),
+        app.path().app_data_dir().ok(),
+        app.path().app_local_data_dir().ok(),
+    ]
+    .into_iter()
+    .flatten()
+    .collect()
+}
+
+pub fn real(path: &Path) -> PathBuf {
+    let mut rest = Vec::new();
+    let mut at = path;
+    loop {
+        if let Ok(found) = fs::canonicalize(at) {
+            return rest
+                .iter()
+                .rev()
+                .fold(found, |whole, part: &std::ffi::OsString| whole.join(part));
+        }
+        match (at.parent(), at.file_name()) {
+            (Some(parent), Some(name)) => {
+                rest.push(name.to_os_string());
+                at = parent;
+            }
+            _ => return path.to_path_buf(),
+        }
+    }
+}
+
+#[cfg(unix)]
+pub fn linked(_from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
+    std::os::unix::fs::symlink(target, to)
+}
+
+#[cfg(windows)]
+pub fn linked(from: &Path, target: &Path, to: &Path) -> std::io::Result<()> {
+    if fs::metadata(from).is_ok_and(|meta| meta.is_dir()) {
+        std::os::windows::fs::symlink_dir(target, to)
+    } else {
+        std::os::windows::fs::symlink_file(target, to)
+    }
+}
+
 #[cfg(unix)]
 pub fn same_entry(one: &Path, other: &Path) -> bool {
     use std::os::unix::fs::MetadataExt as _;
