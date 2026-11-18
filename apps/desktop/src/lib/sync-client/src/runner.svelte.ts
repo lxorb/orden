@@ -11,10 +11,10 @@ import {
   oneWriteAt,
   type Said,
   windows,
+  isRecord,
 } from '../../platform/src/api'
 import { MIRRORS_KEY, mirrorsFor, notePass } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
-import { isRecord } from './shape'
 import { calledAlso, revived } from './revived'
 import {
   type SyncFileDoer,

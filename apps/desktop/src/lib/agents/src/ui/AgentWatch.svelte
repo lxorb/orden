@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Sheet } from '../../../ui-controls/src/api'
   import type { Activity } from './activity.svelte'
-  import { hostOf } from './session'
+  import { shownHost } from '@orden/scan/web-address'
   import { LOOK_EVERY, Watching } from './watching.svelte'
 
   const { activity, tab, onclose }: { activity: Activity; tab: string; onclose: () => void } =
@@ -11,7 +11,7 @@
 
   const held = $derived(activity.seen.tabs[tab])
   const touched = $derived(activity.seen.acting[tab]?.at ?? 0)
-  const title = $derived(held ? held.title || hostOf(held.url) : '')
+  const title = $derived(held ? held.title || shownHost(held.url) : '')
 
   $effect(() => {
     if (!held) onclose()

@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { elapsed } from '../../../platform/src/api'
   import type { FileRef } from '@orden/chats'
   import { WAVE_BARS } from '@orden/chats/limits'
   import { message as errorWords } from '../../../ui-kit/src/api'
-  import { clock, seekAt } from './media'
+  import { seekAt } from './media'
   import { Glyph } from '../../../chat-kit/src/api'
   import { fileUrl } from './urls.svelte'
   import { wordsInVoice } from '../voice'
@@ -103,7 +104,7 @@
       ></span>
     {/each}
   </div>
-  <span class="time">{clock(playing || at > 0 ? at : seconds)}</span>
+  <span class="time">{elapsed(playing || at > 0 ? at : seconds)}</span>
   <button type="button" class="rate" aria-label={`${rate}×`} onclick={step}>{rate}×</button>
   <button
     type="button"

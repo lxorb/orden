@@ -16,9 +16,6 @@ export const webDownloads = () =>
 export const siteDropping = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./dropped-site')>() : import('./dropped-site')
 
-export const siteMuting = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./mute')>() : import('./mute')
-
 export const privateWindows = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./private')>() : import('./private')
 

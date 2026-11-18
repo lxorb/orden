@@ -3,7 +3,6 @@ import { growth, GROWS_AT_MOST } from '../../../../../../scripts/growth'
 import {
   atClock,
   clockOf,
-  dayOf,
   daysAfter,
   endOf,
   HOUR,
@@ -18,6 +17,7 @@ import {
   wholeOf,
 } from './days'
 import type { Span } from './records'
+import { midnightOf } from '../../platform/src/api'
 
 const at = (day: number, hours: number, minutes = 0) =>
   new Date(2026, 10, day, hours, minutes).getTime()
@@ -56,7 +56,7 @@ describe('the days time is counted in', () => {
   test('a day after a day is the next midnight, whatever the clock did between', () => {
     for (let day = 0; day < 400; day += 1) {
       const next = daysAfter(at(1, 0), day)
-      expect(dayOf(next)).toBe(next)
+      expect(midnightOf(next)).toBe(next)
     }
   })
 
@@ -166,7 +166,7 @@ describe('a long history of recorded time', () => {
     const ratio = growth(
       (size) => {
         const spans = history(size)
-        piecesIn(spans, dayOf(now), daysAfter(dayOf(now), 1), now)
+        piecesIn(spans, midnightOf(now), daysAfter(midnightOf(now), 1), now)
         near(spans, now - 2 * MINUTE, Infinity)
       },
       2000,

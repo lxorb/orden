@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { englishFor, localDate, localNumber, region } from './region'
+import { elapsed, englishFor, localDate, localNumber, midnightOf, region } from './region'
 
 const AFTERNOON = Date.UTC(2026, 10, 12, 13, 5)
 
@@ -27,5 +27,29 @@ describe('the region the app formats with', () => {
     )
     expect(localNumber(12345.5)).toBe(new Intl.NumberFormat(region()).format(12345.5))
     expect(region()).toMatch(/^en\b/)
+  })
+})
+
+describe('a length on a clock', () => {
+  test('reads as minutes and seconds, with hours only past the hour', () => {
+    expect([elapsed(0), elapsed(9), elapsed(70), elapsed(725.4)]).toEqual([
+      '0:00',
+      '0:09',
+      '1:10',
+      '12:05',
+    ])
+    expect([elapsed(3609), elapsed(3600 * 2 + 61)]).toEqual(['1:00:09', '2:01:01'])
+  })
+
+  test('and never reads as a negative one', () => {
+    expect(elapsed(-5)).toBe('0:00')
+  })
+})
+
+describe('the midnight a moment falls after', () => {
+  test('is the start of its day on this clock', () => {
+    const at = new Date(2026, 8, 12, 23, 59).getTime()
+    expect(midnightOf(at)).toBe(new Date(2026, 8, 12).getTime())
+    expect(midnightOf(midnightOf(at))).toBe(midnightOf(at))
   })
 })

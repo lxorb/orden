@@ -1,3 +1,4 @@
+import { shownHost } from '@orden/scan/web-address'
 import { escapeAll } from '@orden/markdown/html'
 import { decoded, pageBytes, assetPath, invoke, isDesktop } from '../../platform/src/api'
 import {
@@ -127,7 +128,7 @@ function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean)
     case 'text':
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, trusted))}</div>`
     case 'link':
-      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escapeAll(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escapeAll(node.url)}</span></div>`
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escapeAll(shownHost(node.url))}</strong><br/><span style="opacity:.6">${escapeAll(node.url)}</span></div>`
     case 'file':
       if (isPicture(node.file)) return ''
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml" style="opacity:.75">${escapeAll(node.file)}</div>`
@@ -151,14 +152,6 @@ function shapeWords(
   if (plain) return plainCard(node.text, box, palette)
 
   return `<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}"><div class="card" xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;justify-content:center;text-align:center">${asXml(cardHtml(node.text, canvasPath, trusted))}</div></foreignObject>`
-}
-
-function hostOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return url
-  }
 }
 
 export function drawnNode(
@@ -236,7 +229,7 @@ function saidBy(node: CanvasNode): string {
     case 'text':
       return node.text
     case 'link':
-      return `${hostOf(node.url)}\n${node.url}`
+      return `${shownHost(node.url)}\n${node.url}`
     case 'file':
       return node.file
     case 'group':

@@ -26,8 +26,6 @@ export const sessions = () => (__EVEN_PLUGIN__ ? refused() : import('./sessions.
 
 const onlineMachine = () => (__EVEN_PLUGIN__ ? refused() : import('./online/machine.svelte'))
 
-export const remoteHosts = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/hosts.svelte'))
-
 export const hostPicking = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/picker.svelte'))
 
 const closing = () => (__EVEN_PLUGIN__ ? refused() : import('./closing'))

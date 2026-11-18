@@ -32,7 +32,8 @@ export function safeName(title: string): string {
     .replace(/^\.+ *(?=.)/, '_')
     .replace(/^\.+$/, '')
 
-  const short = one.length > LONGEST ? one.slice(0, LONGEST).trimEnd() : one
+  const points = Array.from(one)
+  const short = points.length > LONGEST ? points.slice(0, LONGEST).join('').trimEnd() : one
   if (!short) return 'Untitled'
   return undeviced(short)
 }

@@ -1,6 +1,6 @@
 import type { FileRef } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
-import { barsOf, clock, fitted, gallery, seekAt, sortFiles } from './media'
+import { barsOf, fitted, gallery, seekAt, sortFiles } from './media'
 
 const file = (type: string, more: Partial<FileRef> = {}): FileRef => ({
   hash: 'a'.repeat(64),
@@ -84,9 +84,5 @@ describe('sound', () => {
     expect(seekAt(150, 100, 200)).toBe(0.25)
     expect(seekAt(50, 100, 200)).toBe(0)
     expect(seekAt(500, 100, 200)).toBe(1)
-  })
-
-  test('a length reads as a player says it', () => {
-    expect([clock(0), clock(42), clock(725.4)]).toEqual(['0:00', '0:42', '12:05'])
   })
 })

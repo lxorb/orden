@@ -1,3 +1,4 @@
+import { todayOf } from '@orden/bases'
 import { blankCanvas } from '@orden/markdown/canvas'
 import { formatWikilink } from '@orden/markdown/links'
 import type { EditorView } from '@orden/editor'
@@ -10,9 +11,8 @@ import { tools } from './tools.svelte'
 const two = (value: number) => String(value).padStart(2, '0')
 
 export function handwritingName(at: Date): string {
-  const day = `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`
   const clock = `${two(at.getHours())}${two(at.getMinutes())}${two(at.getSeconds())}`
-  return `handwriting-${day}-${clock}.canvas`
+  return `handwriting-${todayOf(at)}-${clock}.canvas`
 }
 
 export function placedAtCaret(view: EditorView, text: string) {

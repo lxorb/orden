@@ -10,7 +10,7 @@
   import { quick as sheet } from './chat-parts'
   import Thinking from './Thinking.svelte'
   import { closeOnBack } from '../../ui-kit/src/api'
-  import { longPaste, copyText, trap } from '../../ui-controls/src/api'
+  import { Copied, longPaste, trap } from '../../ui-controls/src/api'
   import { Cross } from '../../ui-kit/src/api'
   import { links } from '../../link-index/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
@@ -123,15 +123,7 @@
   }
   const show = (src: string) => pictures.add(src)
 
-  let copied = $state(false)
-  let copying: ReturnType<typeof setTimeout> | undefined
-
-  async function copy(text: string) {
-    await copyText(text)
-    copied = true
-    clearTimeout(copying)
-    copying = setTimeout(() => (copied = false), 1600)
-  }
+  const copied = new Copied()
 
   const MARKS: Record<ContextKind, string> = {
     note: 'M7.5 1.8H3.6a1 1 0 0 0-1 1v7.4a1 1 0 0 0 1 1h5.8a1 1 0 0 0 1-1V4.7zM7.5 1.8v2.9h2.9',
@@ -296,10 +288,10 @@
             class="orden-glyph act"
             title="Copy"
             aria-label="Copy"
-            onclick={() => void copy(dollarMaths(done.text))}
+            onclick={() => void copied.copy(dollarMaths(done.text), true)}
           >
             <svg viewBox="0 0 13 13">
-              {#if copied}
+              {#if copied.what}
                 <path d="M2.8 6.8l2.4 2.4 5-5.4" />
               {:else}
                 <path

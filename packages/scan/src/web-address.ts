@@ -41,6 +41,14 @@ export function readable(host: string): string {
   return host
 }
 
+export function shownHost(url: string): string {
+  try {
+    return readable(new URL(url).hostname).replace(/^www\./i, '') || url
+  } catch {
+    return url
+  }
+}
+
 function origin(url: string, read: (host: string) => string): string {
   if (SOURCE.test(url)) return `view-source:${origin(url.replace(SOURCE, ''), read)}`
 

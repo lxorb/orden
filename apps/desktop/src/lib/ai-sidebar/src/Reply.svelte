@@ -9,7 +9,7 @@
   import { answerHtml } from './drawn'
   import { citationLinks, citedIn, linkedAnswer } from './chat-parts'
   import type { Part, Turn } from '../../ai-providers/src/api'
-  import { copyText } from '../../ui-controls/src/api'
+  import { Copied } from '../../ui-controls/src/api'
   import { region } from '../../platform/src/api'
   import { links } from '../../link-index/src/api'
   import { DIVIDER, menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
@@ -152,14 +152,7 @@
 
   const saveAsNote = () => chat.noteFrom(asNote)
 
-  let copied = $state(false)
-  let copying: ReturnType<typeof setTimeout> | undefined
-  async function copy() {
-    await copyText(asNote)
-    copied = true
-    clearTimeout(copying)
-    copying = setTimeout(() => (copied = false), 1600)
-  }
+  const copied = new Copied()
 
   function againMenu(event: MouseEvent) {
     const provider = chat.provider
@@ -299,9 +292,14 @@
   {#if !live && (answered || (last && !failed))}
     <div class="acts">
       {#if answered}
-        <button class="orden-glyph act" title="Copy" aria-label="Copy" onclick={() => void copy()}>
+        <button
+          class="orden-glyph act"
+          title="Copy"
+          aria-label="Copy"
+          onclick={() => void copied.copy(asNote, true)}
+        >
           <svg viewBox="0 0 13 13">
-            {#if copied}
+            {#if copied.what}
               <path d="M2.8 6.8l2.4 2.4 5-5.4" />
             {:else}
               <path

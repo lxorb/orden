@@ -1,5 +1,12 @@
 import { busy } from '../../ui-kit/src/api'
-import { folderOf, relativeTo, invoke, joinPath, withinSpace } from '../../platform/src/api'
+import {
+  folderOf,
+  relativeTo,
+  invoke,
+  joinPath,
+  safeName,
+  withinSpace,
+} from '../../platform/src/api'
 import { readShortcut } from '@orden/scan/shortcut'
 import { type Space, workspace } from '../../workspace/src/api'
 import { applyImport } from './apply'
@@ -26,7 +33,7 @@ export async function landSpaces(
 
 async function landSpace(plan: SpacePlan): Promise<Space | null> {
   const held = workspace.spaces.find(
-    (one) => nameKey(asFolder(one.name)) === nameKey(asFolder(plan.name)),
+    (one) => nameKey(safeName(one.name) ?? '') === nameKey(safeName(plan.name) ?? ''),
   )
   const { canWriteAt } = await import('../../sharing/src/api')
   if (held && !canWriteAt(held.root)) return null
@@ -65,18 +72,6 @@ async function landSpace(plan: SpacePlan): Promise<Space | null> {
   if (marks.length) workspace.bookmarks.toggleAll(marks)
 
   return space
-}
-
-const LONGEST_SPACE = 64
-
-function asFolder(name: string): string {
-  const cleaned = name
-    .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-    .join(' ')
-  const ends = /^[.\s]+|[.\s]+$/g
-  return Array.from(cleaned.replace(ends, '')).slice(0, LONGEST_SPACE).join('').replace(ends, '')
 }
 
 async function unseen(root: string, files: readonly Planned[]): Promise<Planned[]> {

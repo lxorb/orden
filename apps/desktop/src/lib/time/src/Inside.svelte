@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { atClock, clockOf, dayOf, daysAfter } from './days'
+  import { midnightOf } from '../../platform/src/api'
+  import { atClock, clockOf, daysAfter } from './days'
   import { type Picked, type Stretch, within } from './lanes'
   import { clock, length, nameOf, placeTint, tintOf } from './look'
   import type { Minute } from './minutes'
@@ -53,7 +54,7 @@
   function moved(which: 'start' | 'end', value: string) {
     const span = entry
     if (!span) return
-    const day = dayOf(span.start)
+    const day = midnightOf(span.start)
     const at = atClock(day, value)
     if (at === null) return
     const end = which === 'end' && at < span.start ? atClock(daysAfter(day, 1), value) : at

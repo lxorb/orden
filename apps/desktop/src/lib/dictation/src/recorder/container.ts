@@ -1,4 +1,5 @@
-import { clockOf, dayOf } from './transcript'
+import { todayOf } from '@orden/bases'
+import { clockOf } from './transcript'
 
 const CONTAINERS = [
   'audio/webm;codecs=opus',
@@ -43,5 +44,5 @@ export function canRecordHere(): boolean {
 }
 
 export function recordingName(at: Date, extension: string): string {
-  return `recording-${dayOf(at)}-${clockOf(at)}.${extension}`
+  return `recording-${todayOf(at)}-${clockOf(at)}.${extension}`
 }

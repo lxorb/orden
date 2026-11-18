@@ -1,3 +1,4 @@
+import { shownHost } from '@orden/scan/web-address'
 import { escapeText, plainWords } from '@orden/markdown/escapes'
 import { plainTaskWords, taskWords } from '@orden/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@orden/markdown/words'
@@ -102,7 +103,7 @@ export function sharedTitle(arrived: Arrived): string {
 
   const first = arrived.items.find((one) => one.text === null)
   if (first?.name) return safeName(first.name.replace(/\.[^.]+$/, ''))
-  if (address) return safeName(hostOf(address))
+  if (address) return safeName(shownHost(address))
 
   return 'Shared'
 }
@@ -114,11 +115,6 @@ export function sharedTask(arrived: Arrived): string {
   return address
     ? `[${taskWords(escapeText(title, { addresses: false }))}](${address})`
     : plainTaskWords(title)
-}
-
-function hostOf(address: string): string {
-  const found = /^https?:\/\/([^/?#]+)/.exec(address)
-  return found?.[1]?.replace(/^www\./, '') ?? 'Shared'
 }
 
 export function embedFor(item: SharedItem, src: string): string {

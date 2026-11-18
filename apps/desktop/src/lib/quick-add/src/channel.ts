@@ -1,5 +1,6 @@
 import type { Remind } from '@orden/markdown/task-line'
 import type { Entry } from './entry'
+import { isRecord } from '../../platform/src/api'
 
 export const CHANNEL = 'orden-quick-add'
 
@@ -10,9 +11,6 @@ export type Said =
   | { kind: 'world'; lang: string; smart: boolean }
   | { kind: 'task'; id: string; entry: Entry; open: boolean }
   | { kind: 'added'; id: string; ok: boolean }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 

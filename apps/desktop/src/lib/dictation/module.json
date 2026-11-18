@@ -15,6 +15,8 @@
     "link-index",
     "workspace",
     "commands",
-    "panes"
+    "panes",
+    "scan",
+    "bases"
   ]
 }
