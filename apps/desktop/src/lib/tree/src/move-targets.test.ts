@@ -1,28 +1,6 @@
-import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { copiesInto, movesInto, moveTargets, type Space } from './move-targets'
-
-function folder(path: string, children: Entry[] = []): Entry {
-  return {
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: true,
-    modified: 0,
-    created: 0,
-    children,
-  }
-}
-
-function note(path: string): Entry {
-  return {
-    name: path.split('/').pop() ?? path,
-    path,
-    is_dir: false,
-    modified: 0,
-    created: 0,
-    children: [],
-  }
-}
+import { file as note, folder } from './entries'
 
 const tree = folder('/Notes', [
   folder('/Notes/Work', [folder('/Notes/Work/Deep', [note('/Notes/Work/Deep/deep.md')])]),

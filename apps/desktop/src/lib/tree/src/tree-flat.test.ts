@@ -1,21 +1,6 @@
-import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import { anyOpen, flatRows, heldRows, rowIndex, standsOpen } from './tree-flat'
-
-const file = (path: string): Entry => ({
-  name: path.slice(path.lastIndexOf('/') + 1),
-  path,
-  is_dir: false,
-  modified: 0,
-  created: 0,
-  children: [],
-})
-
-const folder = (path: string, children: Entry[]): Entry => ({
-  ...file(path),
-  is_dir: true,
-  children,
-})
+import { file, folder } from './entries'
 
 const WORK = folder('/s/Work', [
   file('/s/Work/Work.md'),
