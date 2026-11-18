@@ -1,3 +1,4 @@
+import { imageResolver } from '../images'
 import { syntaxTree } from '@codemirror/language'
 import { type EditorState, type Line, type Range, StateEffect, type Text } from '@codemirror/state'
 import {
@@ -266,11 +267,19 @@ class Decorator {
     if (link.embed && !shown) {
       const kind = embedKind(link.target)
       if (kind === 'image') {
-        this.inlineWidget(node, new EmbedImageWidget(link), false)
+        this.inlineWidget(
+          node,
+          new EmbedImageWidget(link, this.state.facet(imageResolver)(link.target)),
+          false,
+        )
         return false
       }
       if (kind === 'audio' || kind === 'video') {
-        this.inlineWidget(node, new EmbedMediaWidget(link, kind), false)
+        this.inlineWidget(
+          node,
+          new EmbedMediaWidget(link, kind, this.state.facet(imageResolver)(link.target)),
+          false,
+        )
         return false
       }
       const block = embedOfBlock(this.state, node.from, node.to)
@@ -550,7 +559,11 @@ class Decorator {
       return false
     }
 
-    this.inlineWidget(node, new ImageWidget(image), false)
+    this.inlineWidget(
+      node,
+      new ImageWidget(image, this.state.facet(imageResolver)(image.src)),
+      false,
+    )
     return false
   }
 

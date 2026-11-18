@@ -89,6 +89,14 @@ export class CommentLines {
   private quoted = ''
   inside: string | null = null
 
+  copy(): CommentLines {
+    const twin = new CommentLines()
+    twin.code = this.code.copy()
+    twin.quoted = this.quoted
+    twin.inside = this.inside
+    return twin
+  }
+
   line(line: string): string {
     if (this.inside) {
       const stripped = stripLine(line, this.inside)

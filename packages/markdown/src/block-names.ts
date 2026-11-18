@@ -6,8 +6,8 @@ import {
   itemHolding,
   ownLine,
   type Row,
+  leadTo,
   rowsOf,
-  withoutColumns,
 } from './links'
 
 const RULE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|=+[ \t]*)\r?$/u
@@ -144,11 +144,7 @@ export function namedBlock(
   const name = id()
   if (nameStandsApart(rows.slice(start, end + 1))) {
     const beneath = (rows[end + 1]?.text.trim() ?? '') === '' ? [] : [ending]
-    const first = lines[start] ?? ''
-    const lead = first.slice(
-      0,
-      first.length - withoutColumns(first, itemColumn(lines, start)).length,
-    )
+    const lead = leadTo(lines[start] ?? '', itemColumn(lines, start))
     lines.splice(end + 1, 0, ending, `${lead}^${name}${ending}`, ...beneath)
   } else {
     lines[end] = `${last.trimEnd()} ^${name}${ending}`

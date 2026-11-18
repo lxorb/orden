@@ -13,7 +13,6 @@ import {
   sectionOf,
 } from '@orden/markdown/links'
 import { iconElement } from '../icon'
-import { imageResolver } from '../images'
 import { followAnchors } from '../links'
 import { pressedByKey } from '../press'
 import { openLightbox } from '../live-preview/image/lightbox'
@@ -222,12 +221,19 @@ export function embedWidget(
 }
 
 export class EmbedImageWidget extends OrdenWidget {
-  constructor(private readonly link: LinkSpan) {
+  constructor(
+    private readonly link: LinkSpan,
+    private readonly address: string,
+  ) {
     super()
   }
 
   override eq(other: EmbedImageWidget) {
-    return other.link.target === this.link.target && other.link.alias === this.link.alias
+    return (
+      other.address === this.address &&
+      other.link.target === this.link.target &&
+      other.link.alias === this.link.alias
+    )
   }
 
   toDOM(view: EditorView) {
@@ -250,7 +256,7 @@ export class EmbedImageWidget extends OrdenWidget {
       openLightbox(view, picture.src, picture.alt)
     })
 
-    picture.src = view.state.facet(imageResolver)(this.link.target)
+    picture.src = this.address
     return picture
   }
 
@@ -263,6 +269,7 @@ export class EmbedMediaWidget extends OrdenWidget {
   constructor(
     private readonly link: LinkSpan,
     private readonly kind: 'audio' | 'video',
+    private readonly address: string,
   ) {
     super()
   }
@@ -270,12 +277,13 @@ export class EmbedMediaWidget extends OrdenWidget {
   override eq(other: EmbedMediaWidget) {
     return (
       other.kind === this.kind &&
+      other.address === this.address &&
       other.link.target === this.link.target &&
       other.link.alias === this.link.alias
     )
   }
 
-  toDOM(view: EditorView) {
+  toDOM() {
     const player = document.createElement(this.kind)
     player.className = `orden-embed-media orden-embed-${this.kind}`
     player.controls = true
@@ -291,7 +299,7 @@ export class EmbedMediaWidget extends OrdenWidget {
     }
 
     player.addEventListener('dragstart', (event) => event.preventDefault())
-    player.src = view.state.facet(imageResolver)(this.link.target)
+    player.src = this.address
 
     this.onDestroy(player, () => {
       player.pause()

@@ -38,7 +38,7 @@ describe('wikilinks turned into real links', () => {
 
   test('a heading inside the link comes along as a fragment', () => {
     const text = toMarkdown('See [[Note#The heading]].\n', { link: () => 'sub/Note.md' })
-    expect(text).toBe('See [Note#The heading](sub/Note.md%23The%20heading).\n')
+    expect(text).toBe('See [Note#The heading](sub/Note.md#The%20heading).\n')
   })
 
   test('an embed becomes a plain link, since no reader can inline a note', () => {

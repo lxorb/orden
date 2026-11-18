@@ -1,3 +1,4 @@
+import { imageResolver } from '../images'
 import { syntaxTree } from '@codemirror/language'
 import type { SyntaxNode, Tree } from '@lezer/common'
 import {
@@ -134,7 +135,11 @@ function scan(
 
   if (kept && region.from === 0) {
     ranges.push(
-      Decoration.widget({ widget: new CoverWidget(kept), block: true, side: -1 }).range(0),
+      Decoration.widget({
+        widget: new CoverWidget(kept, state.facet(imageResolver)(kept.src)),
+        block: true,
+        side: -1,
+      }).range(0),
     )
   }
 
@@ -165,7 +170,7 @@ function scan(
           if (cover) {
             ranges.push(
               Decoration.widget({
-                widget: new CoverWidget(cover),
+                widget: new CoverWidget(cover, state.facet(imageResolver)(cover.src)),
                 block: true,
                 side: -1,
               }).range(span.from),

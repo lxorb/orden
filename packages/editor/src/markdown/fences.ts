@@ -3,7 +3,7 @@ import type { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from
 import { fenceName } from '@orden/markdown/fences'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
 import { enclosing } from '../nodes'
-import { commentStateAt } from './comment-state'
+import { commentStateAt, sameTextUpTo } from './comment-state'
 import { BACKTICK, isSpace, TILDE } from './syntax'
 
 function fenceEnd(line: Line): number {
@@ -251,6 +251,11 @@ function withoutStaleComments(
   let end = 0
   let shift = 0
   let trusted = true
+  const first = fragments[0]
+  const earlier = first ? parsedFrom.get(first.tree) : undefined
+  if (first && earlier && first.from === 0 && first.offset === 0) {
+    sameTextUpTo(input, earlier, first.to)
+  }
   for (const fragment of fragments) {
     const { from, offset } = fragment
     const before = parsedFrom.get(fragment.tree)

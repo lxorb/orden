@@ -696,7 +696,7 @@ export function indentOf(line: string): number {
   return columns
 }
 
-export function withoutColumns(line: string, wanted: number): string {
+export function leadTo(line: string, wanted: number): string {
   let columns = 0
   let at = 0
   while (at < line.length && columns < wanted) {
@@ -705,7 +705,11 @@ export function withoutColumns(line: string, wanted: number): string {
     columns = one === '\t' ? columns + 4 - (columns % 4) : columns + 1
     at++
   }
-  return ' '.repeat(Math.max(0, columns - wanted)) + line.slice(at)
+  return line.slice(0, at)
+}
+
+export function withoutColumns(line: string, wanted: number): string {
+  return line.slice(leadTo(line, wanted).length)
 }
 
 export function itemHolding(lines: readonly string[], at: number): number | null {

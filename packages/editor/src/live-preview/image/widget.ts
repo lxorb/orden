@@ -1,6 +1,5 @@
 import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { imageResolver } from '../../images'
 import { later } from '../../shared'
 import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
@@ -125,7 +124,10 @@ function remove(view: EditorView, image: ImageSpan) {
 }
 
 export class ImageWidget extends OrdenWidget {
-  constructor(readonly spec: ImageSpec) {
+  constructor(
+    readonly spec: ImageSpec,
+    private readonly address: string,
+  ) {
     super()
   }
 
@@ -133,6 +135,7 @@ export class ImageWidget extends OrdenWidget {
     const a = this.spec
     const b = other.spec
     return (
+      this.address === other.address &&
       a.src === b.src &&
       a.alt === b.alt &&
       a.title === b.title &&
@@ -191,7 +194,7 @@ export class ImageWidget extends OrdenWidget {
       tools: toolbar.tools,
     })
 
-    const src = view.state.facet(imageResolver)(this.spec.src)
+    const src = this.address
     frame.dataset.src = src
     const known = NATURAL.get(src)
     if (known) {
@@ -233,8 +236,8 @@ export class ImageWidget extends OrdenWidget {
     return frame
   }
 
-  override updateDOM(frame: HTMLElement, view: EditorView): boolean {
-    if (frame.dataset.src !== view.state.facet(imageResolver)(this.spec.src)) return false
+  override updateDOM(frame: HTMLElement): boolean {
+    if (frame.dataset.src !== this.address) return false
     return this.sync(frame, this.spec)
   }
 

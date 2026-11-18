@@ -34,8 +34,8 @@ const DEFINITION = new RegExp(
 const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_[ \t]*){3,}$)/
 
 function asLink(link: FoundLink, target: string): string {
-  const anchor = link.heading ? `#${link.heading}` : ''
-  const fragment = anchor ? encodeTarget(anchor) : ''
+  const anchor = link.heading ?? (link.block ? `^${link.block}` : null)
+  const fragment = anchor ? `#${encodeTarget(anchor)}` : ''
 
   return `[${shownText(link)}](${encodeTarget(target)}${fragment})`
 }
