@@ -433,11 +433,7 @@ export class ImageWidget extends OrdenWidget {
     frame.classList.add('is-resizing')
     frame.dataset.corner = handle.dataset.corner
     showSize(parts.badge, zoom, natural)
-    try {
-      handle.setPointerCapture(event.pointerId)
-    } catch {
-      // Left uncaptured.
-    }
+    captured(handle, event.pointerId)
 
     const move = (moved: PointerEvent) => {
       if (!dragged && Math.abs(moved.clientX - startX) < DRAG_START) return
@@ -478,5 +474,14 @@ export class ImageWidget extends OrdenWidget {
 
   override ignoreEvent() {
     return true
+  }
+}
+
+function captured(handle: HTMLElement, pointer: number): boolean {
+  try {
+    handle.setPointerCapture(pointer)
+    return true
+  } catch {
+    return false
   }
 }

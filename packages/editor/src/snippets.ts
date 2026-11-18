@@ -18,25 +18,40 @@ function summarise(body: string): string {
   return first.length > 48 ? `${first.slice(0, 47)}…` : first
 }
 
-const MARKED = /[^\s\p{L}\p{N}_-]+[\p{L}\p{N}_-]*/u
-const WORD = /[\p{L}\p{N}_-]+/u
+const IN_WORD = /[\p{L}\p{N}\p{M}_-]/u
+const LOOK_BACK = 250
+
+function folded(text: string): string {
+  return text.normalize('NFC').toLowerCase()
+}
+
+function typedLength(before: string, trigger: string, whole: boolean): number {
+  const wanted = folded(trigger)
+  const most = Math.min(before.length, wanted.length * 4)
+  for (let length = most; length >= 2; length--) {
+    const typed = folded(before.slice(before.length - length))
+    if (typed.length < 2 || IN_WORD.test(before[before.length - length - 1] ?? '')) continue
+    if (whole ? typed === wanted : wanted.startsWith(typed)) return length
+  }
+  return 0
+}
 
 function triggered(
   context: CompletionContext,
   entries: readonly [string, string][],
 ): { from: number; matches: [string, string][] } | null {
-  for (const pattern of [MARKED, WORD]) {
-    const typed = context.matchBefore(pattern)
-    if (!typed || typed.text.length < 2) continue
+  const line = context.state.doc.lineAt(context.pos)
+  const before = context.state.sliceDoc(Math.max(line.from, context.pos - LOOK_BACK), context.pos)
+  const found = entries
+    .map((entry) => ({ entry, length: typedLength(before, entry[0], !context.explicit) }))
+    .filter((one) => one.length > 0)
+  const longest = found.reduce((most, one) => Math.max(most, one.length), 0)
+  if (!longest) return null
 
-    const query = typed.text.toLowerCase()
-    const offered = context.explicit
-      ? (trigger: string) => trigger.startsWith(query)
-      : (trigger: string) => trigger === query
-    const matches = entries.filter(([trigger]) => offered(trigger.toLowerCase()))
-    if (matches.length) return { from: typed.from, matches }
+  return {
+    from: context.pos - longest,
+    matches: found.filter((one) => one.length === longest).map((one) => one.entry),
   }
-  return null
 }
 
 export function snippetCompletions(context: CompletionContext): CompletionResult | null {

@@ -653,7 +653,7 @@ function picturesOfHtml(html: string): Span[] {
     return src
       ? [
           {
-            text: attributeOf(tag[0], 'alt') ?? '',
+            text: decodeEntities(attributeOf(tag[0], 'alt') ?? ''),
             picture: decodeEntities(src),
             ...htmlSizeOf(tag[0]),
           },

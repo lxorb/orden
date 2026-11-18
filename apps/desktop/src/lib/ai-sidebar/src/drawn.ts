@@ -1,5 +1,5 @@
 import type { RenderOptions } from '@orden/markdown'
-import { escape } from '@orden/markdown/html'
+import { attributeText, escape } from '@orden/markdown/html'
 import { viewHtml } from '../../chat-kit/src/api'
 import { notePicture } from '../../link-index/src/api'
 
@@ -8,8 +8,6 @@ type LinkResolver = NonNullable<RenderOptions['resolveLink']>
 const MEDIA = /<(?:iframe|video|audio|source|picture|object|embed)\b[^>]*>/gi
 
 const PICTURE = /<img\b([^>]*)>/gi
-
-const ELSEWHERE = /^(?:[a-z][a-z\d+.-]*:)?\/\//i
 
 const BLOCK = /<pre><code(?: class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/g
 
@@ -36,12 +34,18 @@ export function withCodeBars(html: string, copy: string, sized = false): string 
   })
 }
 
+function fromElsewhere(src: string): boolean {
+  const read = attributeText(src)
+  const head = read.split(/[/?#\\]/, 1)[0] ?? ''
+  return /^[\\/]{2}/.test(read) || head.includes(':') || head.includes('&')
+}
+
 function pictures(html: string, from: string | null, shown: ReadonlySet<string>): string {
   return html.replace(PICTURE, (whole, attributes: string) => {
     const src = /\bsrc="([^"]*)"/.exec(attributes)?.[1] ?? ''
     if (!src) return ''
-    if (!ELSEWHERE.test(src)) {
-      if (/^data:/i.test(src)) return whole
+    if (/^data:/i.test(src)) return whole
+    if (!fromElsewhere(src)) {
       return `<img${attributes.replace(`src="${src}"`, () => `src="${escape(notePicture(src, from, ''))}"`)}>`
     }
     if (shown.has(src)) return whole

@@ -3,7 +3,7 @@ import { attributeText, attributeUrl, escapeAll, safeSrc } from './html'
 const PICTURE_TAG = /^<img\b((?:"[^"]*"|'[^']*'|[^'">])*)>$/i
 const ATTRIBUTE = /\s([a-z-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>/]+))/gi
 const ZOOM = /^\s*zoom\s*:\s*(\d{1,3}(?:\.\d{1,2})?)%\s*;?\s*$/i
-const SIZE = /^\d{1,5}$/
+const SIZE = /^[1-9]\d{0,4}$/
 const OWN = new Set(['src', 'alt', 'title', 'width', 'height', 'style'])
 
 export function ownPicture(html: string): string | null {
