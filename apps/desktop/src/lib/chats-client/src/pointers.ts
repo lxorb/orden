@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { CHAT_EXTENSION, chatOf, chatText } from '@orden/chats'
-import { nameOf, within, invoke, joinPath } from '../../platform/src/api'
+import { nameOf, spaceHolding, invoke, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
 import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
@@ -17,7 +17,7 @@ export function chatName(path: string): string {
 }
 
 function spaceOf(folder: string) {
-  return workspace.spaces.find((one) => within(one.root, folder) !== null) ?? null
+  return spaceHolding(workspace.spaces, folder)
 }
 
 export async function makePointer(folder: string, name: string): Promise<Place | null> {

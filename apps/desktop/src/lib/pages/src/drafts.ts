@@ -5,7 +5,7 @@ import {
   nameFromTitle,
   nameOf,
   samePath,
-  within,
+  spaceHolding,
   invoke,
 } from '../../platform/src/api'
 import { CanvasStore } from '../../canvas/src/api'
@@ -22,7 +22,7 @@ export interface Drafts {
 }
 
 const inSomeSpace = (ws: Drafts) => (path: string) =>
-  ws.spaces.some((one) => within(one.root, path) !== null)
+  spaceHolding(ws.spaces, path) !== null
 
 const draftOf = (ws: Drafts, from: string) =>
   ws.tabs.find((tab) => {

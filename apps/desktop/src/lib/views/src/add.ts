@@ -1,6 +1,6 @@
 import { type Base, nextId, noteValues, rowsInBase, type Value } from '@orden/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@orden/bases/agent'
-import { joinPath, insideOnly, folderOf, insideSpace, within } from '../../platform/src/api'
+import { joinPath, insideOnly, folderOf, insideSpace, spaceHolding } from '../../platform/src/api'
 import { contextFor } from './context'
 import { nowHere, todayHere } from './days'
 import { templatePath, templateWords } from './templates'
@@ -101,7 +101,7 @@ export async function addNote(
   made: NewNote = {},
 ): Promise<string | null> {
   const space =
-    (file === null ? null : workspace.spaces.find((one) => within(one.root, file) !== null)) ??
+    (file === null ? null : spaceHolding(workspace.spaces, file)) ??
     workspace.activeSpace
   if (!space) return null
   const view = base.views[at]

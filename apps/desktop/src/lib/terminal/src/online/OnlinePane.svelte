@@ -3,7 +3,7 @@
   import { localDate, localNumber } from '../../../platform/src/api'
   import { diskNear, diskShare, shares } from '@orden/online'
   import { prompt } from '../../../ui-kit/src/api'
-  import { within } from '../../../platform/src/api'
+  import { spaceHolding } from '../../../platform/src/api'
   import { runner } from '../../../sync-client/src/api'
   import { workspace } from '../../../workspace/src/api'
   import { summaryOf } from './choosing'
@@ -39,7 +39,7 @@
     [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null)
 
   async function open(path: string) {
-    const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+    const space = spaceHolding(workspace.spaces, path)
     if (space && space.id !== workspace.activeSpaceId) await workspace.showSpace(space.id)
     await workspace.openEntry(path, { activate: true })
   }

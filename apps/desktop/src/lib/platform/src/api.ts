@@ -71,6 +71,7 @@ export {
   within,
   withinSpace,
   withoutExtension,
+  spaceHolding,
 } from './space-paths'
 export { spaceRelative } from './space-relative'
 export {

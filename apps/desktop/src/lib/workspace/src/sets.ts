@@ -1,4 +1,4 @@
-import { isRecord, within } from '../../platform/src/api'
+import { isRecord, spaceHolding } from '../../platform/src/api'
 import { type Frame, paneIn, panesIn, withoutPane } from '../../panes/src/api'
 import { isPanel, type Layout, readLayout, type Panel } from '../../session/src/api'
 
@@ -32,7 +32,7 @@ export function ownerOf(
   spaces: readonly { id: string; root: string }[],
 ): string | null {
   if (path === null) return home
-  return spaces.find((one) => within(one.root, path) !== null)?.id ?? null
+  return spaceHolding(spaces, path)?.id ?? null
 }
 
 export function tidied(

@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { isChatTarget } from '@orden/markdown/links'
-import { samePath, within, invoke } from '../../platform/src/api'
+import { samePath, spaceHolding, invoke } from '../../platform/src/api'
 import { services } from './services'
 import { workspace } from './workspace.svelte'
 
@@ -27,12 +27,8 @@ export async function pointersMoving(path: string): Promise<string[]> {
   return listed ? pointersUnder(listed) : []
 }
 
-export function spaceHolding(path: string) {
-  return workspace.spaces.find((one) => within(one.root, path) !== null) ?? null
-}
-
 export function mayCarry(path: string, root: string, pointers = pointersIn(path)): boolean {
-  const from = spaceHolding(path)
+  const from = spaceHolding(workspace.spaces, path)
   if (!from || samePath(from.root, root) || !pointers.length) return true
   return services().mayCarryBetween(from.root, root)
 }

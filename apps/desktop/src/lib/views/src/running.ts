@@ -7,7 +7,7 @@ import {
   inTurn,
   insideSpace,
   pathKey,
-  within,
+  within, spaceHolding,
   invoke,
   joinPath,
 } from '../../platform/src/api'
@@ -105,7 +105,7 @@ function clock() {
 }
 
 export async function readHeld(path: string): Promise<void> {
-  const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
+  const space = spaceHolding(workspace.spaces, path)
   try {
     const base = readBase(await invoke<string>('read_note', { path }))
     if (basesOn() && space && (base.orden.id || readAutomations(base).length)) {
@@ -128,7 +128,7 @@ function rowsOf(space: string, path: string): readonly Row[] {
 }
 
 function numbering(path: string) {
-  const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
+  const space = spaceHolding(workspace.spaces, path)
   const bases = space ? heldIn(space.name).filter((one) => one.base.orden.id) : []
   return { space, bases }
 }

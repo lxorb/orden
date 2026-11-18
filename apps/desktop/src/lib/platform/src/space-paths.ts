@@ -158,6 +158,13 @@ export function relativeTo(root: string, path: string): string {
   return (root ? within(root, path) : null) ?? path.replace(/\\/g, '/')
 }
 
+export function spaceHolding<Space extends { readonly root: string }>(
+  spaces: readonly Space[],
+  path: string,
+): Space | null {
+  return spaces.find((one) => within(one.root, path) !== null) ?? null
+}
+
 export function withinSpace(root: string, path: string): string | null {
   const rest = root ? within(root, path) : null
   return rest ? insideOnly(rest) : null

@@ -16,7 +16,7 @@ import {
 import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
 import { chatPokeOf } from '@orden/chats/wire'
 import { account } from '../../accounts/src/api'
-import { samePath, within, keep, storedText, isNative, joinPath } from '../../platform/src/api'
+import { samePath, within, spaceHolding, keep, storedText, isNative, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
 import { workspace } from '../../workspace/src/api'
 import type {
@@ -679,7 +679,7 @@ class ChatsStore implements Chats {
   }
 
   private remoteNote(path: string): { space: string; note: string } | null {
-    const root = workspace.spaces.find((one) => within(one.root, path) !== null)?.root
+    const root = spaceHolding(workspace.spaces, path)?.root
     const space = root ? this.remoteOf(root) : null
     const note = sync.tracked(path)?.id
     return space && note ? { space, note } : null
@@ -783,7 +783,7 @@ class ChatsStore implements Chats {
     if (chat) this.gone.delete(chat)
     const row = chat ? (this.engine?.chats.get(chat)?.row ?? null) : null
     const root = to
-      ? (workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null)
+      ? (spaceHolding(workspace.spaces, to)?.root ?? null)
       : null
     const moved =
       before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
