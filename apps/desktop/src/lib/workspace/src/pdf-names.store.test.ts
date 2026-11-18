@@ -22,8 +22,7 @@ const ROOT = '/space'
 
 describe('a PDF’s name', () => {
   beforeEach(async () => {
-    const one = disk.current
-    if (!one) throw new Error('no disk')
+    const one = disk.current!
     one.reset()
     one.files.set(`${ROOT}/Report.pages`, '{}')
     workspace.spaces = [{ id: 's', name: 'Notes', root: ROOT }]

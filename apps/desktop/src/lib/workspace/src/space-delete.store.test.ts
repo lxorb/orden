@@ -51,8 +51,7 @@ const names = (tabs: readonly { kind: string; path: string | null }[]) =>
   tabs.map((one) => one.path ?? one.kind).sort()
 
 beforeEach(() => {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   one.reset()
   one.folders.add(WORK.root).add(FOOD.root)
   one.files.set(`${WORK.root}/Plan.md`, '# Plan\n')

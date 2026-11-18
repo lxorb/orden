@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { memoryStorage } from '../../../../test/disk'
 
 const held = vi.hoisted(() => ({
   texts: new Map<string, string>(),
@@ -23,12 +24,7 @@ vi.mock('../../link-index/src/api', () => ({
   },
 }))
 
-const stored = new Map<string, string>()
-vi.stubGlobal('localStorage', {
-  getItem: (key: string) => stored.get(key) ?? null,
-  setItem: (key: string, value: string) => void stored.set(key, value),
-  removeItem: (key: string) => void stored.delete(key),
-})
+vi.stubGlobal('localStorage', memoryStorage())
 
 const { ItemMetaStore } = await import('../../space-kept/src/api')
 const { moveOwnKeysSoon } = await import('./own-keys-moved')

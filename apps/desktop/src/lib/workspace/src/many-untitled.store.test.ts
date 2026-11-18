@@ -22,8 +22,7 @@ const { workspace } = await import('./api')
 const ROOT = '/space'
 
 async function spaceOf(size: number) {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   one.reset()
   for (let at = 0; at < size; at++) one.files.set(`${ROOT}/notes/note ${at}.md`, '')
   for (let at = 1; at <= size / 4; at++) {

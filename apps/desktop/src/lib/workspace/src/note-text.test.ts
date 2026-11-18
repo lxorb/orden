@@ -793,8 +793,7 @@ describe('with another window here', () => {
 
   test('a note open here goes down through the turn that takes in what is on the disk', async () => {
     const { ws } = space({ '/space/a.md': 'one\ntwo\n' }, '/space/a.md')
-    const note = ws.documents[0]
-    if (!note) throw new Error('no note')
+    const note = ws.documents[0]!
     const seen: { base: string | null; words: string; dirty: boolean }[] = []
     const across = {
       alone: false,
@@ -829,8 +828,7 @@ describe('with another window here', () => {
 
   test('news heard while the version is kept merges against what the file said', async () => {
     const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
-    const note = ws.documents[0]
-    if (!note) throw new Error('no note')
+    const note = ws.documents[0]!
     meetAcross({ alone: false, writing: () => Promise.resolve(null) } as never)
     let letGo = () => undefined as unknown
     holding = { command: 'snapshot_note', until: new Promise((go) => (letGo = () => go())) }
@@ -852,8 +850,7 @@ describe('with another window here', () => {
 
   test('a note that went from under it stays owed rather than clean', async () => {
     const { ws } = space({ '/space/a.md': 'one\n' }, '/space/a.md')
-    const note = ws.documents[0]
-    if (!note) throw new Error('no note')
+    const note = ws.documents[0]!
     meetAcross({ alone: false, writing: () => Promise.resolve(null) } as never)
     await replaceInNotes(ws, [
       {

@@ -54,8 +54,7 @@ async function bothOpen(workspace: Workspace) {
 const sides = (workspace: Workspace) => [workspace.panel, workspace.rightPanel]
 
 beforeEach(() => {
-  const one = disk.current
-  if (!one) throw new Error('no disk')
+  const one = disk.current!
   one.reset()
   one.folders.add(WORK.root).add(FOOD.root)
   one.files.set(`${WORK.root}/Plan.md`, '# Plan\n')
@@ -126,8 +125,7 @@ describe('a switch between two spaces with tabs of their own', () => {
     await workspace.open(`${WORK.root}/Plan.md`)
     workspace.openWebsite()
     const sets = await fetched()
-    const web = workspace.tabs.find((one) => one.kind === 'web')
-    if (!web) throw new Error('no web tab')
+    const web = workspace.tabs.find((one) => one.kind === 'web')!
     await sets.adopt([web], 'food')
 
     await workspace.selectSpace('food')
@@ -177,8 +175,7 @@ describe('a session with a side for every space, as older builds wrote it', () =
       on: string
       aside: Record<string, { layout: { panel: unknown }; right: unknown }>
     }
-    const food = written.aside.food
-    if (!food) throw new Error('no set for Food')
+    const food = written.aside.food!
     food.layout.panel = 'search'
     food.right = 'links'
     return written
