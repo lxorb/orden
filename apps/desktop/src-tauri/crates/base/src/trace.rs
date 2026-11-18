@@ -237,39 +237,32 @@ fn millis_since_epoch() -> f64 {
 }
 
 #[cfg(windows)]
-pub fn cpu() -> Option<Duration> {
+fn process_ticks() -> Option<[u64; 4]> {
     use windows::Win32::Foundation::FILETIME;
     use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
 
-    const PER_TICK: u32 = 100;
-
-    let mut created = FILETIME::default();
-    let mut exited = FILETIME::default();
-    let mut kernel = FILETIME::default();
-    let mut user = FILETIME::default();
-
+    let mut times = [FILETIME::default(); 4];
+    let [created, exited, kernel, user] = &mut times;
     #[allow(unsafe_code)]
     unsafe {
         GetProcessTimes(
             GetCurrentProcess(),
-            std::ptr::from_mut(&mut created),
-            std::ptr::from_mut(&mut exited),
-            std::ptr::from_mut(&mut kernel),
-            std::ptr::from_mut(&mut user),
+            std::ptr::from_mut(created),
+            std::ptr::from_mut(exited),
+            std::ptr::from_mut(kernel),
+            std::ptr::from_mut(user),
         )
     }
     .ok()?;
+    Some(times.map(|one| (u64::from(one.dwHighDateTime) << 32) | u64::from(one.dwLowDateTime)))
+}
 
-    let ticks =
-        |one: FILETIME| (u64::from(one.dwHighDateTime) << 32) | u64::from(one.dwLowDateTime);
-    let spent = ticks(kernel).checked_add(ticks(user))?;
-
-    Some(Duration::new(spent / 10_000_000, {
-        #[allow(clippy::cast_possible_truncation)]
-        {
-            (spent % 10_000_000) as u32 * PER_TICK
-        }
-    }))
+#[cfg(windows)]
+pub fn cpu() -> Option<Duration> {
+    let [_, _, kernel, user] = process_ticks()?;
+    Some(Duration::from_nanos(
+        kernel.checked_add(user)?.saturating_mul(100),
+    ))
 }
 
 #[cfg(not(windows))]
@@ -280,37 +273,10 @@ pub fn cpu() -> Option<Duration> {
 #[cfg(windows)]
 fn before_main() -> Option<Duration> {
     use std::time::{SystemTime, UNIX_EPOCH};
-    use windows::Win32::Foundation::FILETIME;
-    use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
 
-    const TO_EPOCH: u64 = 116_444_736_000_000_000;
-
-    let mut created = FILETIME::default();
-    let mut exited = FILETIME::default();
-    let mut kernel = FILETIME::default();
-    let mut user = FILETIME::default();
-
-    #[allow(unsafe_code)]
-    unsafe {
-        GetProcessTimes(
-            GetCurrentProcess(),
-            std::ptr::from_mut(&mut created),
-            std::ptr::from_mut(&mut exited),
-            std::ptr::from_mut(&mut kernel),
-            std::ptr::from_mut(&mut user),
-        )
-    }
-    .ok()?;
-
-    let ticks = (u64::from(created.dwHighDateTime) << 32) | u64::from(created.dwLowDateTime);
-    let since = ticks.checked_sub(TO_EPOCH)?;
-    let at = UNIX_EPOCH.checked_add(Duration::new(since / 10_000_000, {
-        #[allow(clippy::cast_possible_truncation)]
-        {
-            (since % 10_000_000) as u32 * 100
-        }
-    }))?;
-
+    let [created, ..] = process_ticks()?;
+    let since = created.checked_sub(116_444_736_000_000_000)?;
+    let at = UNIX_EPOCH.checked_add(Duration::from_nanos(since.saturating_mul(100)))?;
     SystemTime::now().duration_since(at).ok()
 }
 

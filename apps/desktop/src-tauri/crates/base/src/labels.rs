@@ -21,6 +21,15 @@ pub fn is_document_window(label: &str) -> bool {
             .is_some_and(|number| !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit()))
 }
 
+pub fn own_window(webview: &tauri::Webview) -> Result<String, String> {
+    let label = webview.label();
+    if label == webview.window().label() && is_document_window(label) {
+        Ok(label.to_owned())
+    } else {
+        Err("not a window of this app".into())
+    }
+}
+
 pub fn from_the_app(webview: &tauri::Webview) -> Result<(), String> {
     if is_document_window(webview.label()) {
         Ok(())

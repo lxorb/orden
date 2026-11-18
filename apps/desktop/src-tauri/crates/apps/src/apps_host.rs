@@ -124,6 +124,14 @@ struct Running {
 }
 
 impl Running {
+    fn watched_by(&self, events: Channel<Said>) {
+        *self
+            .events
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events);
+        self.tell(Said::RUNNING);
+    }
+
     fn tell(&self, said: Said) {
         let events = self
             .events
@@ -224,17 +232,44 @@ impl Hosted {
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
+fn hosting(app: &AppHandle, key: &str, running: &Arc<Running>) {
+    if !app.state::<Hosted>().kept(key, running) {
+        end(running, std::time::Duration::ZERO);
+    }
+    running.tell(Said::RUNNING);
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
+fn let_go(app: &AppHandle, key: &str, running: &Arc<Running>) -> bool {
+    let hosted = app.state::<Hosted>();
+    let mut apps = hosted.apps();
+    let ours = still_running(&apps, key, running);
+    if ours {
+        apps.remove(key);
+    }
+    drop(apps);
+    if ours {
+        hosted.end_peer(key);
+    }
+    running.stopping.load(Ordering::SeqCst)
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))]
 fn still_running(apps: &HashMap<String, Arc<Running>>, key: &str, running: &Arc<Running>) -> bool {
     apps.get(key).is_some_and(|one| Arc::ptr_eq(one, running))
 }
 
 fn owner(webview: &Webview) -> Result<(), String> {
-    let label = webview.label();
-    if label == webview.window().label() && orden_base::labels::is_document_window(label) {
-        Ok(())
-    } else {
-        Err(REFUSED.to_owned())
-    }
+    orden_base::labels::own_window(webview)
+        .map(drop)
+        .map_err(|_| REFUSED.to_owned())
+}
+
+fn found(webview: &Webview, key: &str) -> Result<Option<Arc<Running>>, String> {
+    owner(webview)?;
+    usable(key)?;
+    let running = webview.state::<Hosted>().apps().get(key).cloned();
+    Ok(running)
 }
 
 fn usable(key: &str) -> Result<(), String> {
@@ -273,11 +308,7 @@ pub async fn apps_start(
         let hosted = webview.state::<Hosted>();
         let _claim = hosted.starting.claim(&key);
         if let Some(running) = hosted.apps().get(&key).cloned() {
-            *running
-                .events
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events.clone());
-            running.tell(Said::RUNNING);
+            running.watched_by(events);
             return Ok(());
         }
 
@@ -372,10 +403,7 @@ fn run_on_its_display(
         })),
         desktop: Mutex::new(Some(desktop)),
     });
-    if !app.state::<Hosted>().kept(&key, &running) {
-        end(&running, std::time::Duration::ZERO);
-    }
-    running.tell(Said::RUNNING);
+    hosting(&app, &key, &running);
 
     std::thread::spawn(move || {
         let code = program.wait();
@@ -387,17 +415,7 @@ fn run_on_its_display(
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
         drop(desktop);
-        let hosted = app.state::<Hosted>();
-        let mut apps = hosted.apps();
-        let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
-        if ours {
-            apps.remove(&key);
-        }
-        drop(apps);
-        if ours {
-            hosted.end_peer(&key);
-        }
-        let stopped = running.stopping.load(Ordering::SeqCst);
+        let stopped = let_go(&app, &key, &running);
         let mut said = Said::ended(stopped, code);
         if handed && !stopped {
             said.why = Some("handed");
@@ -460,10 +478,7 @@ fn run_on_its_display(
         display: Mutex::new(Some(display)),
         clipboard: clipboard::Clipboard::open(process),
     });
-    if !app.state::<Hosted>().kept(&key, &running) {
-        end(&running, std::time::Duration::ZERO);
-    }
-    running.tell(Said::RUNNING);
+    hosting(&app, &key, &running);
 
     std::thread::spawn(move || {
         let code = child.wait().ok().and_then(|status| status.code());
@@ -479,17 +494,7 @@ fn run_on_its_display(
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
         drop(display);
-        let hosted = app.state::<Hosted>();
-        let mut apps = hosted.apps();
-        let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
-        if ours {
-            apps.remove(&key);
-        }
-        drop(apps);
-        if ours {
-            hosted.end_peer(&key);
-        }
-        let stopped = running.stopping.load(Ordering::SeqCst);
+        let stopped = let_go(&app, &key, &running);
         running.tell(Said::ended(stopped, code));
     });
     Ok(())
@@ -553,10 +558,7 @@ fn run_on_its_display(
         display: Mutex::new(Some(display)),
         sink: Mutex::new(sink),
     });
-    if !app.state::<Hosted>().kept(&key, &running) {
-        end(&running, std::time::Duration::ZERO);
-    }
-    running.tell(Said::RUNNING);
+    hosting(&app, &key, &running);
 
     std::thread::spawn(move || {
         let status = child.wait().ok();
@@ -572,17 +574,7 @@ fn run_on_its_display(
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
         drop(sink);
-        let hosted = app.state::<Hosted>();
-        let mut apps = hosted.apps();
-        let ours = apps.get(&key).is_some_and(|one| Arc::ptr_eq(one, &running));
-        if ours {
-            apps.remove(&key);
-        }
-        drop(apps);
-        if ours {
-            hosted.end_peer(&key);
-        }
-        let stopped = running.stopping.load(Ordering::SeqCst);
+        let stopped = let_go(&app, &key, &running);
         running.tell(Said::ended(stopped, status.and_then(|one| one.code())));
     });
     Ok(())
@@ -595,17 +587,10 @@ pub async fn apps_watch(
     events: Channel<Said>,
 ) -> Result<bool, String> {
     orden_base::lane::off_the_runtime(move || -> Result<bool, String> {
-        owner(&webview)?;
-        usable(&key)?;
-        let Some(running) = webview.state::<Hosted>().apps().get(&key).cloned() else {
-            return Ok(false);
-        };
-        *running
-            .events
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(events);
-        running.tell(Said::RUNNING);
-        Ok(true)
+        let running = found(&webview, &key)?;
+        Ok(running
+            .inspect(|running| running.watched_by(events))
+            .is_some())
     })
     .await
 }
@@ -629,10 +614,12 @@ pub async fn apps_stop(webview: Webview, key: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn apps_view(webview: Webview, key: String, view: View) -> Result<(), String> {
     orden_base::lane::off_the_runtime(move || -> Result<(), String> {
-        owner(&webview)?;
-        usable(&key)?;
-        let running = webview.state::<Hosted>().apps().get(&key).cloned();
-        if let Some(running) = running {
+        if let Some(running) = found(&webview, &key)? {
+            running
+                .screen
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .hz = view.hz;
             view_here(&running, view);
         }
         Ok(())
@@ -645,11 +632,6 @@ fn view_here(_running: &Running, _view: View) {}
 
 #[cfg(target_os = "windows")]
 fn view_here(running: &Running, view: View) {
-    running
-        .screen
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .hz = view.hz;
     let (width, height) = desk_size(view);
     let desktop = running
         .desktop
@@ -662,11 +644,6 @@ fn view_here(running: &Running, view: View) {
 
 #[cfg(target_os = "macos")]
 fn view_here(running: &Running, view: View) {
-    running
-        .screen
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .hz = view.hz;
     let (width, height) = mac::display::screen(view.width, view.height, view.dpr);
     let display = running
         .display
@@ -679,11 +656,6 @@ fn view_here(running: &Running, view: View) {
 
 #[cfg(target_os = "linux")]
 fn view_here(running: &Running, view: View) {
-    running
-        .screen
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .hz = view.hz;
     let (width, height) = display::screen(view.width, view.height, view.dpr);
     let display = running
         .display

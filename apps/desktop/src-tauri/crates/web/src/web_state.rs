@@ -12,15 +12,8 @@ const DUMP: &str = include_str!("web_state/scripts/dump.js");
 
 const RESTORE: &str = include_str!("web_state/scripts/restore.js");
 
-const REFUSED: &str = "not a window of this app";
-
 fn ours(webview: &Webview) -> Result<(), String> {
-    let label = webview.label();
-    if label == webview.window().label() && orden_base::labels::is_document_window(label) {
-        Ok(())
-    } else {
-        Err(REFUSED.to_owned())
-    }
+    orden_base::labels::own_window(webview).map(drop)
 }
 
 #[tauri::command]

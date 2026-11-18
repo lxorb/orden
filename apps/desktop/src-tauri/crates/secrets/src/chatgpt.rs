@@ -44,12 +44,7 @@ pub struct Account {
 }
 
 fn owner(webview: &Webview) -> Result<(), String> {
-    let label = webview.label();
-    if label == webview.window().label() && orden_base::labels::is_document_window(label) {
-        Ok(())
-    } else {
-        Err("not a window of this app".to_owned())
-    }
+    orden_base::labels::own_window(webview).map(drop)
 }
 
 fn installation_file(app: &AppHandle) -> Result<PathBuf, String> {

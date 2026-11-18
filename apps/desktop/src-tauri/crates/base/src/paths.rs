@@ -48,54 +48,46 @@ pub fn is_markdown(path: &Path) -> bool {
         .is_some_and(|extension| MARKDOWN.contains(&extension.to_lowercase().as_str()))
 }
 
-pub fn is_pdf(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("pdf"))
-}
-
-pub fn is_canvas(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("canvas"))
-}
-
-pub fn is_pages(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("pages"))
-}
-
-pub fn is_base(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("base"))
-}
-
-pub fn is_chat(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("chat"))
-}
-
-pub fn is_term(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("term"))
-}
-
-pub fn is_application(path: &Path) -> bool {
-    path.extension()
-        .and_then(OsStr::to_str)
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("application"))
-}
-
-pub fn is_shortcut(path: &Path) -> bool {
+fn ends_in(path: &Path, extensions: &[&str]) -> bool {
     path.extension()
         .and_then(OsStr::to_str)
         .is_some_and(|extension| {
-            extension.eq_ignore_ascii_case("url") || extension.eq_ignore_ascii_case("webloc")
+            extensions
+                .iter()
+                .any(|one| extension.eq_ignore_ascii_case(one))
         })
+}
+
+pub fn is_pdf(path: &Path) -> bool {
+    ends_in(path, &["pdf"])
+}
+
+pub fn is_canvas(path: &Path) -> bool {
+    ends_in(path, &["canvas"])
+}
+
+pub fn is_pages(path: &Path) -> bool {
+    ends_in(path, &["pages"])
+}
+
+pub fn is_base(path: &Path) -> bool {
+    ends_in(path, &["base"])
+}
+
+pub fn is_chat(path: &Path) -> bool {
+    ends_in(path, &["chat"])
+}
+
+pub fn is_term(path: &Path) -> bool {
+    ends_in(path, &["term"])
+}
+
+pub fn is_application(path: &Path) -> bool {
+    ends_in(path, &["application"])
+}
+
+pub fn is_shortcut(path: &Path) -> bool {
+    ends_in(path, &["url", "webloc"])
 }
 
 pub fn highlights_of(pdf: &Path) -> PathBuf {
