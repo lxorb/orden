@@ -2,23 +2,15 @@ import { readBase } from '@orden/bases'
 import { renderMarkdown } from '@orden/markdown'
 import { scanNote } from '@orden/scan/note'
 import { describe, expect, test } from 'vitest'
-import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
+import { sourceOf } from './sources'
 import { readTable, rowNote, tableOf } from './table'
+import { file, noteAt } from './fixtures'
 
 const CSV = [
   'Name,Status,Pages,Created,Notes',
   'Dune,Read,412,January 2 2026,"Long, and worth it"',
   'Ubik,Reading,224,March 4 2026,',
 ].join('\n')
-
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
 
 describe('a CSV as one table', () => {
   test('is one note holding every row', async () => {

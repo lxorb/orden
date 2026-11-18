@@ -3,8 +3,7 @@ import { toBase64 } from '../../platform/src/bytes'
 import { planFor, type AppleNotes } from './apple'
 import { detect, readAs } from './read'
 import { sourceOf, type Source } from './sources'
-
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
+import { file } from './fixtures'
 
 function read(): AppleNotes {
   return {

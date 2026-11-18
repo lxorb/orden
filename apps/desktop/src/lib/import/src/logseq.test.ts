@@ -1,15 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { logseqNote, readLogseq } from './logseq'
-import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
-
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
+import { file, noteAt } from './fixtures'
 
 describe('a Logseq graph', () => {
   test('keeps its pages and dates its journals properly', async () => {

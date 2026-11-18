@@ -2,8 +2,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { readTask } from '@orden/markdown/task-line'
 import { readEvernote } from './evernote'
 import { md5 } from './md5'
-import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
+import { file, noteAt } from './fixtures'
 
 const PICTURE = Uint8Array.from([1, 2, 3, 4])
 const BASE64 = 'AQIDBA=='
@@ -15,14 +14,6 @@ function enex(notes: string): string {
 <en-export export-date="20260101T090000Z" application="Evernote">
 ${notes}
 </en-export>`
-}
-
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
 }
 
 const NOTE = `  <note>

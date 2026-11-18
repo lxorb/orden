@@ -1,16 +1,7 @@
 import { renderMarkdown } from '@orden/markdown'
 import { describe, expect, test } from 'vitest'
-import type { ImportPlan } from './plan'
 import { dayName, readRoam, roamText } from './roam'
-import { sourceOf, type Source } from './sources'
-
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
+import { file, noteAt } from './fixtures'
 
 const GRAPH = JSON.stringify([
   {

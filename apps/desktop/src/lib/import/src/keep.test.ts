@@ -2,16 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { renderMarkdown } from '@orden/markdown'
 import { readTask } from '@orden/markdown/task-line'
 import { readKeep } from './keep'
-import type { ImportPlan } from './plan'
-import { sourceOf, type Source } from './sources'
-
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
-
-function noteAt(plan: ImportPlan, path: string): string {
-  const found = plan.files.find((one) => one.path === path)
-  if (found?.kind !== 'note') throw new Error(`no note at ${path}`)
-  return found.text
-}
+import { file, noteAt } from './fixtures'
 
 const keepNote = (note: Record<string, unknown>): string => JSON.stringify(note)
 

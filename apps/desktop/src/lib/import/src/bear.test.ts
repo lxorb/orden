@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { bearTags, bearWords, readBear } from './bear'
-import { sourceOf, type Source } from './sources'
-
-const file = (path: string, body: string): Source => sourceOf(path, new TextEncoder().encode(body))
+import type { Source } from './sources'
+import { file } from './fixtures'
 
 describe("Bear's closed tags", () => {
   test('become tags Orden can hold', () => {
