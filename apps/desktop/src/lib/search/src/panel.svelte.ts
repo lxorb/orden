@@ -219,11 +219,11 @@ class Search {
 
   async replace() {
     const root = workspace.activeSpace?.root
-    const chosen = this.chosen
+    const { chosen, query, replacement } = this
     if (!root || !chosen.length) return
 
     const { changesFor } = await import('./apply')
-    const changes = await changesFor(this.query, chosen, this.replacement, root, (path) =>
+    const changes = await changesFor(query, chosen, replacement, root, (path) =>
       workspace.noteText(path),
     )
 
