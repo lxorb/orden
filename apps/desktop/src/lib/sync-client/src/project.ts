@@ -67,3 +67,31 @@ export async function project(core: Core, space: SpaceState, entry: EntryRow, do
   entry.local_path = path
   return await wrote(core, entry, text)
 }
+export function readOnlyLine(core: Core, space: SpaceState, path: string): Change {
+  const failed = `you can only read this space, so your change to ${path} went to Recently deleted`
+  return put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed })
+}
+export async function setAside(
+  core: Core,
+  space: SpaceState,
+  path: string,
+  text: string,
+  theirs: string,
+): Promise<Change[]> {
+  const disk = core.world.disk
+  const full = core.world.join(space.row.root, path)
+  try {
+    if (!disk.trash) throw new Error('this disk has no Recently deleted')
+    const was = await disk.read(full)
+    if (was === null || unixLines(was) !== unixLines(text)) {
+      if (was?.trim()) await disk.keep(full, was)
+      await disk.write(full, text)
+    }
+    await disk.trash(full)
+    await disk.write(full, theirs)
+    return [readOnlyLine(core, space, path)]
+  } catch {
+    await disk.keep(full, text)
+    return []
+  }
+}
