@@ -187,14 +187,14 @@ describe('tasks-views contract', () => {
     expect(shown.spaceName('work')).toBe('Space work')
     expect(shown.todos.map((t) => t.id).sort()).toEqual(['a', 'b'])
   })
-  test('done todos stay hidden until Show done is on, and one just ticked lingers a moment', () => {
+  test('done todos stay hidden until Show done is on, and one just ticked lingers a moment where it stood', () => {
     vi.useFakeTimers()
     const list = [todo({ id: 'a', done: true, doneAt: 1 }), todo({ id: 'b' })]
     const { world: w, read } = world(list)
     const shown = new Shown(w)
     expect(shown.todos.map((t) => t.id)).toEqual(['b'])
     shown.linger('a', 500)
-    expect(shown.todos.map((t) => t.id)).toEqual(['b', 'a'])
+    expect(shown.todos.map((t) => t.id)).toEqual(['a', 'b'])
     vi.advanceTimersByTime(600)
     expect(shown.todos.map((t) => t.id)).toEqual(['b'])
     shown.setShowDone(true)

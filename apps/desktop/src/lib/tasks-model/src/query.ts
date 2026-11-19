@@ -58,15 +58,15 @@ const deadlineOrder = (a: Todo, b: Todo): number => {
 }
 const priorityOrder = (a: Todo, b: Todo): number => b.priority - a.priority
 const manualOrder = (a: Todo, b: Todo): number => a.order - b.order || a.created - b.created
-const doneLast = (a: Todo, b: Todo): number => Number(a.done) - Number(b.done)
-export function sortedTodos(todos: readonly Todo[], sort: Sort): Todo[] {
+export function sortedTodos(todos: readonly Todo[], sort: Sort, keep: readonly string[] = []): Todo[] {
+  const finished = (one: Todo) => Number(one.done && !keep.includes(one.id))
   const order =
     sort === 'deadline'
       ? (a: Todo, b: Todo) => deadlineOrder(a, b) || priorityOrder(a, b) || manualOrder(a, b)
       : sort === 'priority'
         ? (a: Todo, b: Todo) => priorityOrder(a, b) || deadlineOrder(a, b) || manualOrder(a, b)
         : manualOrder
-  return [...todos].sort((a, b) => doneLast(a, b) || order(a, b))
+  return [...todos].sort((a, b) => finished(a) - finished(b) || order(a, b))
 }
 export interface Group {
   readonly label: string | null

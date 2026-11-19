@@ -5,7 +5,8 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 BOARD = "[data-todos-board]"
-RECORD = """(scope) => {
+PANEL = "[data-todos-panel]"
+RECORD = """([scope, count]) => {
   window.__frames = []
   const rec = () => {
     const lists = [...document.querySelectorAll(scope)].map((list) => {
@@ -18,13 +19,13 @@ RECORD = """(scope) => {
       return [list.dataset.key ?? '', cards]
     })
     window.__frames.push(lists)
-    if (window.__frames.length < 90) requestAnimationFrame(rec)
+    if (window.__frames.length < count) requestAnimationFrame(rec)
   }
   requestAnimationFrame(rec)
 }"""
 Frames = list[list[tuple[str, list[tuple[str, int, int, bool, float]]]]]
-def recorded(page: Page) -> Frames:
-    page.wait_for_function("() => window.__frames?.length >= 90", timeout=10000)
+def recorded(page: Page, count: int = 90) -> Frames:
+    page.wait_for_function(f"() => window.__frames?.length >= {count}", timeout=15000)
     return page.evaluate("() => window.__frames")  # type: ignore[no-any-return]
 def tracks(frames: Frames) -> dict[str, list[tuple[str, int, int]]]:
     out: dict[str, list[tuple[str, int, int]]] = {}
@@ -74,13 +75,36 @@ def carry(page: Page, start: dict, end: tuple[float, float], scope: str) -> Fram
     page.mouse.move(end[0], end[1], steps=12)
     page.mouse.move(end[0], end[1] + 1)
     page.wait_for_timeout(600)
-    page.evaluate(RECORD, scope)
+    page.evaluate(RECORD, [scope, 90])
     page.mouse.up()
     return recorded(page)
 def columns(page: Page) -> list[str]:
     return page.evaluate(f"() => [...document.querySelectorAll('{BOARD} [data-todos-column]')].map((one) => one.dataset.key)")  # type: ignore[no-any-return]
 def titles(page: Page, key: str) -> list[str]:
     return page.evaluate(f"() => [...document.querySelectorAll(\"{BOARD} [data-todos-column][data-key='{key}'] [data-todo-card] .title\")].map((one) => one.textContent.trim())")  # type: ignore[no-any-return]
+def listed(page: Page, scope: str) -> list[list[str]]:
+    return page.evaluate(f"() => [...document.querySelectorAll({json.dumps(scope)})].map((list) => [...list.querySelectorAll('[data-todo-card] .title')].map((one) => one.textContent.trim()))")  # type: ignore[no-any-return]
+def ticked(page: Page, scope: str, title: str, what: str) -> None:
+    before = listed(page, scope)
+    page.evaluate(RECORD, [scope, 150])
+    page.locator(f"{scope} [data-todo-card]", has=page.locator(".title", has_text=title)).first.locator(".tick").click()
+    frames = recorded(page, 150)
+    track = tracks(frames).get(title, [])
+    say(f"{what}: {len(frames)} frames, {title} {changes(track) if track else 'never shown'}, others {({one: changes(t) for one, t in tracks(frames).items() if one != title and len(set(t)) > 1})}")
+    if len(set(track)) > 1:
+        wrong(f"{what}: {title} moved before it left {changes(track)}")
+    if track and len(track) == len(frames):
+        wrong(f"{what}: {title} was still shown after {len(frames)} frames")
+    for one, t in tracks(frames).items():
+        ys = [y for _, _, y in changes(t)]
+        if one != title and any(b > a for a, b in zip(ys, ys[1:])):
+            wrong(f"{what}: {one} moved down while {title} left {ys}")
+    page.locator("button", has_text="Undo").first.click()
+    page.wait_for_timeout(700)
+    after = listed(page, scope)
+    say(f"{what}: undone {after}")
+    if after != before:
+        wrong(f"{what}: Undo did not bring {title} back where it stood: {before} -> {after}")
 def board(page: Page) -> None:
     page.evaluate("() => window.ordenApp.tasks().then(({ openTodos }) => openTodos())")
     page.wait_for_selector(f"{BOARD} [data-todos-column]", state="attached")
@@ -120,5 +144,11 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     page.wait_for_function("() => !!window.ordenApp?.tasks", timeout=60000)
     board(page)
+    ticked(page, f"{BOARD} [data-todos-column]", "Bravo three", "ticked on the board")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.movePanel('tasks', 'right'); ws.showPanel('tasks') }")
+    page.wait_for_selector(f"{PANEL} [data-todo-card]")
+    page.wait_for_timeout(500)
+    second = listed(page, f"{PANEL} ul.list")[0][1]
+    ticked(page, f"{PANEL} ul.list", second, "ticked in the panel")
     context.close()
 raise SystemExit(DRIVE.run(drive, "todos move without a jump: a column carries its cards still, a card lands without going back"))

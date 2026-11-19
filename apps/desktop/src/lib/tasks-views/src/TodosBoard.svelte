@@ -16,7 +16,7 @@
   import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
   import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
-  import { glider } from './glide'
+  import { away, glider } from './glide'
   import { openNote } from './notes'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
@@ -190,7 +190,7 @@
           {/if}
           <ul use:edgeScroll>
             {#each list as todo (todo.id)}
-              <li out:slide={{ duration: dur(200), easing: cubicOut }}>
+              <li out:away>
                 <div class="card" use:carrying.card={{ todo, column: column.key }}>
                   <TodoRow
                     {todo}
