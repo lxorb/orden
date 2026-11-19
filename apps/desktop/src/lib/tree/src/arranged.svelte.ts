@@ -10,14 +10,13 @@ import {
   within,
   isRecord,
   isString,
-  keepJson,
+  Kept,
   recordOf,
   stored,
-  filledIn,
   type Folded,
   type Folding,
   meet,
-  readSpaces,
+  spacesOf,
   without,
 } from '../../platform/src/api'
 import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from './tree-order'
@@ -60,12 +59,12 @@ export function arrangedMap(value: unknown): Record<string, string[]> {
   }
   return out
 }
-interface Kept extends Folded {
+interface Held extends Folded {
   folders: Record<string, string[]>
   sent: boolean
 }
-const read = (): Record<string, Kept> =>
-  readSpaces(STORAGE_KEY, (one) => ({
+const read = (saved: unknown): Record<string, Held> =>
+  spacesOf(saved, (one) => ({
     folders: arrangedMap(one.folders),
     sent: one.sent !== false,
   }))
@@ -87,7 +86,13 @@ export interface Positioned {
   ): { drawn: readonly string[]; done: Promise<unknown> } | null
 }
 export class Arranged {
-  private spaces = $state<Record<string, Kept>>(read())
+  private keeping = new Kept(STORAGE_KEY, read)
+  private get spaces(): Record<string, Held> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Held>) {
+    this.keeping.value = value
+  }
   private showing = $state<Showing | null>(null)
   private positioned: Positioned | null = null
   private placings = $state(0)
@@ -96,8 +101,7 @@ export class Arranged {
   private readonly talking = door(() => import('./arranging'))
   constructor(private readonly root: () => string | null) {}
   reread(): void {
-    const grown = filledIn(this.spaces, read())
-    if (grown) this.spaces = grown
+    this.keeping.reread()
   }
   of(root: string): Record<string, string[]> {
     return this.spaces[root]?.folders ?? {}
@@ -322,7 +326,7 @@ export class Arranged {
     return this.talking()
   }
   private writeAll() {
-    keepJson(STORAGE_KEY, this.spaces)
+    this.keeping.write()
   }
 }
 const placingKey = (root: string, at: string): string => `${root}\u0000${at}`
@@ -338,29 +342,32 @@ interface Sorted extends Folded {
   mode: SortMode
   sent: boolean
 }
-function readSorts(): Record<string, Sorted> {
-  const kept = readSpaces(SORT_KEY, (one) => ({
+function readSorts(saved: unknown): Record<string, Sorted> {
+  const kept = spacesOf(saved, (one) => ({
     mode: isSortMode(one.mode) ? one.mode : FIRST_MODE,
     sent: one.sent !== false,
   }))
-  if (Object.keys(kept).length || isRecord(stored(SORT_KEY))) return kept
+  if (Object.keys(kept).length || isRecord(saved)) return kept
   const before = recordOf(stored(BEFORE), isSortMode)
-  const taken = Object.fromEntries(
-    Object.entries(before).map(([root, mode]) => [root, { mode, account: null, sent: true }]),
-  )
-  if (Object.keys(taken).length) keepJson(SORT_KEY, taken)
-  return taken
+  return Object.fromEntries(Object.entries(before).map(([root, mode]) => [root, { mode, account: null, sent: true }]))
 }
 const ORDER: Folding<SortMode> = {
   fold: (theirs, mine) => (theirs === FIRST_MODE ? mine : theirs),
   same: (one, other) => one === other,
 }
 export class SpaceSorting {
-  private spaces = $state<Record<string, Sorted>>(readSorts())
-  constructor(private readonly root: () => string | null) {}
+  private keeping = new Kept(SORT_KEY, readSorts)
+  private get spaces(): Record<string, Sorted> {
+    return this.keeping.value
+  }
+  private set spaces(value: Record<string, Sorted>) {
+    this.keeping.value = value
+  }
+  constructor(private readonly root: () => string | null) {
+    if (Object.keys(this.spaces).length && !isRecord(stored(SORT_KEY))) this.write()
+  }
   reread(): void {
-    const grown = filledIn(this.spaces, readSorts())
-    if (grown) this.spaces = grown
+    this.keeping.reread()
   }
   of(root: string): SortMode {
     return this.spaces[root]?.mode ?? FIRST_MODE
@@ -413,6 +420,6 @@ export class SpaceSorting {
     )
   }
   private write() {
-    keepJson(SORT_KEY, this.spaces)
+    this.keeping.write()
   }
 }

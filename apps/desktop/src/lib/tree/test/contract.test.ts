@@ -1,8 +1,19 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Entry } from '@orden/contracts'
-import { describe, expect, test } from 'vitest'
-import { entryAt, flatRows, folderNote, orderedTree, rowIds, withEntry, withMove, withoutEntry } from '../src/api'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  Arranged,
+  entryAt,
+  flatRows,
+  folderNote,
+  orderedTree,
+  rowIds,
+  SpaceSorting,
+  withEntry,
+  withMove,
+  withoutEntry,
+} from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
 const file = (path: string, modified = 0): Entry => ({
@@ -67,5 +78,70 @@ describe('the tree of a space', () => {
     expect(rowIds.peek('/s/Away/plan.md')).toBe(id)
     rowIds.gone('/s/Away')
     expect(rowIds.peek('/s/Away/plan.md')).toBeUndefined()
+  })
+})
+describe('what another window arranged or sorted', () => {
+  const MINE = '/mine'
+  const THEIRS = '/theirs'
+  const saved = (key: string): unknown => JSON.parse(localStorage.getItem(key) ?? 'null')
+  const inTheirs = (one: Record<string, unknown>) => (held: unknown) => ({
+    ...(held && typeof held === 'object' ? held : {}),
+    [THEIRS]: { account: null, sent: false, ...one },
+  })
+  function elsewhere(key: string, value: unknown) {
+    localStorage.setItem(key, JSON.stringify(value))
+    window.dispatchEvent(Object.assign(new Event('storage'), { key }))
+  }
+  interface Store {
+    key: string
+    theirs: (held: unknown) => unknown
+    open: () => { act: () => unknown; seen: () => boolean }
+  }
+  const stores: Record<string, Store> = {
+    arranged: {
+      key: 'orden:arranged',
+      theirs: inTheirs({ folders: { Work: ['b.md', 'a.md'] } }),
+      open: () => {
+        const store = new Arranged(() => MINE)
+        return {
+          act: () => store.set(`${MINE}/Work`, ['z.md', 'y.md']),
+          seen: () => store.of(THEIRS).Work?.join() === 'b.md,a.md',
+        }
+      },
+    },
+    sorting: {
+      key: 'orden:sorting',
+      theirs: inTheirs({ mode: 'manual' }),
+      open: () => {
+        const store = new SpaceSorting(() => MINE)
+        return { act: () => store.set('modified-desc'), seen: () => store.of(THEIRS) === 'manual' }
+      },
+    },
+  }
+  beforeEach(() => {
+    vi.useFakeTimers()
+    const store = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, value),
+      removeItem: (key: string) => void store.delete(key),
+    })
+    vi.stubGlobal('window', new EventTarget())
+  })
+  afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+  test.each(Object.entries(stores))('%s shows what another window wrote as soon as it is heard', (_, store) => {
+    const here = store.open()
+    elsewhere(store.key, store.theirs(saved(store.key)))
+    expect(here.seen()).toBe(true)
+  })
+  test.each(Object.entries(stores))('%s writing here keeps what another window wrote', (_, store) => {
+    const here = store.open()
+    localStorage.setItem(store.key, JSON.stringify(store.theirs(saved(store.key))))
+    here.act()
+    expect(store.open().seen()).toBe(true)
   })
 })
