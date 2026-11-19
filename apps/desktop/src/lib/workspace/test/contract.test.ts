@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
-import { providePort } from '@orden/contracts'
+import { type Entry, providePort } from '@orden/contracts'
 
 const held = new Map<string, string>()
 vi.stubGlobal('localStorage', {
@@ -233,5 +233,88 @@ describe('another window', () => {
     expect(workspace.activeSpaceId).toBe(STAYS.id)
     expect(workspace.archivedSpaces.has(MINE.root)).toBe(true)
     workspace.archivedSpaces.set(MINE.root, false)
+  })
+})
+describe('the files of every space', () => {
+  const HERE = { id: 'f-here', name: 'Here', root: '/files/Here' }
+  const THERE = { id: 'f-there', name: 'There', root: '/files/There' }
+  const SHUT = { id: 'f-shut', name: 'Shut', root: '/files/Shut' }
+  const AWAY = { id: 'f-away', name: 'Away', root: '/files/Away' }
+  const row = (path: string, children: Entry[] = []): Entry => ({
+    name: path.slice(path.lastIndexOf('/') + 1),
+    path,
+    is_dir: children.length > 0,
+    modified: 0,
+    created: 0,
+    children,
+  })
+  const listed = () => workspace.spaceFiles.all.map((one) => [one.space.id, one.files.map((file) => file.path)])
+  test('lists each space in sight once asked, the open one as its tree changes, and never an archived one', async () => {
+    const asked: string[] = []
+    const gone = providePort('backend.web', {
+      invoke: <T>(command: string, args?: Record<string, unknown>) => {
+        if (command !== 'read_tree') return Promise.reject(new Error(`${command} is not here`))
+        asked.push(String(args?.root))
+        if (args?.root !== THERE.root) return Promise.reject(new Error('no such folder'))
+        const trip = `${THERE.root}/Trip/Trip.md`
+        return Promise.resolve(
+          row(THERE.root, [row(`${THERE.root}/Trip`, [row(trip)]), row(`${THERE.root}/AGENTS.md`)]) as T,
+        )
+      },
+    })
+    try {
+      workspace.spaces = [{ ...HERE }, { ...THERE }, { ...SHUT }, { ...AWAY }]
+      workspace.activeSpaceId = HERE.id
+      workspace.archivedSpaces.set(SHUT.root, true)
+      workspace.tree = row(HERE.root, [row(`${HERE.root}/Plan.md`)])
+      expect(asked).toEqual([])
+      workspace.spaceFiles.want()
+      await vi.waitFor(() =>
+        expect(listed()).toEqual([
+          [HERE.id, [`${HERE.root}/Plan.md`]],
+          [THERE.id, [`${THERE.root}/Trip/Trip.md`]],
+          [AWAY.id, []],
+        ]),
+      )
+      expect(asked.sort()).toEqual([AWAY.root, THERE.root])
+      workspace.tree = row(HERE.root, [row(`${HERE.root}/Plan.md`), row(`${HERE.root}/Food.md`)])
+      expect(listed()[0]).toEqual([HERE.id, [`${HERE.root}/Plan.md`, `${HERE.root}/Food.md`]])
+    } finally {
+      workspace.archivedSpaces.set(SHUT.root, false)
+      gone()
+    }
+  })
+})
+describe('a tab of another space, opened here', () => {
+  const ONE = { id: 'h-one', name: 'One', root: '/here/One' }
+  const TWO = { id: 'h-two', name: 'Two', root: '/here/Two' }
+  test('opens a view of it in the space in sight, a note and a web page alike, and a tab here is only brought forward', async () => {
+    workspace.spaces = [{ ...ONE }, { ...TWO }]
+    await workspace.showSpace(ONE.id)
+    workspace.openBlank('Away', '# Away')
+    const note = workspace.active
+    workspace.openWebsite()
+    const page = workspace.active
+    await workspace.showSpace(TWO.id)
+    workspace.openBlank('Home', '# Home')
+    const home = workspace.active
+    if (!note || !page || !home) throw new Error('nothing opened')
+    expect([workspace.spaceOfTab(note), workspace.spaceOfTab(page), workspace.spaceOfTab(home)]).toEqual([
+      ONE.id,
+      ONE.id,
+      TWO.id,
+    ])
+    for (const one of [note, page]) {
+      workspace.openHere(one.id)
+      expect(workspace.activeSpaceId).toBe(TWO.id)
+      expect(workspace.tabHere((tab) => tab.id === workspace.activeTabId)?.note).toBe(one.note)
+      expect(workspace.activeTabId).not.toBe(one.id)
+      expect(workspace.spaceOfTab(one)).toBe(ONE.id)
+    }
+    const views = workspace.tabs.length
+    workspace.openHere(note.id)
+    expect(workspace.tabs).toHaveLength(views)
+    workspace.openHere(home.id)
+    expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([TWO.id, home.id])
   })
 })
