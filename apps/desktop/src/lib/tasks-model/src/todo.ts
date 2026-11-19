@@ -21,7 +21,6 @@ export interface Todo {
   readonly title: string
   readonly description: string
   readonly labels: readonly string[]
-  readonly space: string | null
   readonly start: string | null
   readonly deadline: string | null
   readonly priority: Priority
@@ -95,7 +94,6 @@ export function todoOf(id: string, fields: InboxFields): Todo | null {
     title: fields.title,
     description: text(fields.description),
     labels: texts(fields.labels),
-    space: typeof fields.space === 'string' && fields.space !== '' ? fields.space : null,
     start: isDay(fields.start) ? fields.start : null,
     deadline: isDay(fields.deadline) ? fields.deadline : null,
     priority: isPriority(priority) ? priority : 0,
@@ -113,7 +111,6 @@ export function fieldsOf(patch: TodoPatch): InboxFields {
   if (patch.title !== undefined) fields.title = patch.title
   if (patch.description !== undefined) fields.description = patch.description
   if (patch.labels !== undefined) fields.labels = [...patch.labels]
-  if (patch.space !== undefined) fields.space = patch.space
   if (patch.start !== undefined) fields.start = patch.start
   if (patch.deadline !== undefined) fields.deadline = patch.deadline
   if (patch.priority !== undefined) fields.priority = patch.priority
@@ -148,7 +145,6 @@ export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {
     }
     out.labels = labels
   }
-  if (patch.space !== undefined) out.space = patch.space === '' ? null : patch.space
   for (const key of ['start', 'deadline'] as const) {
     const day = patch[key]
     if (day === undefined) continue

@@ -142,41 +142,7 @@ def note_onto(page: Page) -> None:
     if "[[Groceries]]" not in held(page)["Water the plants"]["description"]:
         wrong(f"the note dropped on a todo is not linked: {held(page)['Water the plants']}")
     say("a note dropped from the tree onto a todo links it, and the card shows the note")
-def to_space(page: Page) -> None:
-    work = page.evaluate("""async () => {
-      const ws = window.ordenApp.workspace
-      const home = ws.activeSpace
-      await ws.addSpace('Work')
-      if (ws.activeSpaceId !== home.id) await ws.showSpace(home.id)
-      return ws.spaces.find((one) => one.name === 'Work').id
-    }""")
-    wait_for(page, "document.querySelector('[data-space-drop=\"switcher\"]')", "the space switcher")
-    page.wait_for_timeout(600)
-    start = card(page, PANEL, "Water the plants").bounding_box()
-    button = page.locator('[data-space-drop="switcher"]').bounding_box()
-    if not start or not button:
-        wrong("no card or no switcher")
-        return
-    page.mouse.move(start["x"] + 30, start["y"] + start["height"] / 2)
-    page.mouse.down()
-    page.mouse.move(start["x"] + 36, start["y"] + start["height"] / 2 + 6, steps=3)
-    bx, by = button["x"] + button["width"] / 2, button["y"] + button["height"] / 2
-    page.mouse.move(bx, by, steps=12)
-    for step in range(6):
-        page.mouse.move(bx + step % 2, by)
-        page.wait_for_timeout(150)
-    row = page.locator(f'[data-space-drop="{work}"]').bounding_box()
-    if row:
-        page.mouse.move(row["x"] + row["width"] / 2, row["y"] + row["height"] / 2, steps=6)
-        page.mouse.move(row["x"] + row["width"] / 2 + 2, row["y"] + row["height"] / 2)
-        page.wait_for_timeout(200)
-        DRIVE.shot(page, "10-onto-a-space")
-    page.mouse.up()
-    settle(page)
-    space = page.evaluate("() => window.ordenApp.tasks().then(({ todos }) => todos.todos.find((one) => one.title === 'Water the plants').space)")
-    say(f"a todo let go on the Work space has the space {space}, Work is {work}")
-    if space != work:
-        wrong(f"a todo let go on another space kept {space}")
+
 def into_note(page: Page) -> None:
     DRIVE.open_note(page, "Groceries")
     page.wait_for_selector(".cm-content")
@@ -281,10 +247,13 @@ def board(page: Page, tag: str) -> None:
     if held(page)["Fix the bike"]["deadline"] != page.evaluate("() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }"):
         wrong(f"a todo dragged to Today has {held(page)['Fix the bike']}")
     page.locator(f"{BOARD} [data-todos-group] [role=combobox]").click()
-    page.locator("[role=listbox] [role=option]", has_text="Space").click()
-    wait_for(page, f"[...document.querySelectorAll('{BOARD} [data-todos-column] h2 .name')].some((one) => one.textContent.trim() === 'No space')", "the space columns")
+    offered = page.evaluate("() => [...document.querySelectorAll('[role=listbox] [role=option]')].map((one) => one.textContent.trim())")
+    if "Space" in offered:
+        wrong(f"the board still offers to group by space: {offered}")
+    page.locator("[role=listbox] [role=option]", has_text="Priority").click()
+    wait_for(page, f"[...document.querySelectorAll('{BOARD} [data-todos-column] h2 .name')].some((one) => one.textContent.trim() === 'No priority')", "the priority columns")
     kept = page.evaluate(BOARD_HELD)
-    if kept["grouping"] != "space":
+    if kept["grouping"] != "priority":
         wrong(f"the grouping is not kept in the board: {kept}")
     patch(page, "Fix the bike", {"start": "2099-01-01"})
     wait_for(page, f"![...document.querySelectorAll('{BOARD} [data-todo] .title')].some((one) => one.textContent.trim() === 'Fix the bike')", "a todo that starts later hidden")
@@ -294,7 +263,7 @@ def board(page: Page, tag: str) -> None:
         wrong("Ignore start date is not kept in the board")
     page.locator(f"{BOARD} [data-todos-show-done]").click()
     wait_for(page, f"document.querySelector('{BOARD} [data-todo].done')", "Show done on the board")
-    DRIVE.shot(page, f"{tag}09-board-space-done")
+    DRIVE.shot(page, f"{tag}09-board-priority-done")
     page.locator(f"{BOARD} [data-todos-show-done]").click()
     page.locator(f"{BOARD} [data-todos-group] [role=combobox]").click()
     page.locator("[role=listbox] [role=option]", has_text="Label").click()
@@ -317,7 +286,6 @@ def desk(browser: Browser, dark: bool) -> None:
     if not dark:
         note_onto(page)
         into_note(page)
-        to_space(page)
     board(page, tag)
     context.close()
 def phone(browser: Browser, dark: bool) -> None:

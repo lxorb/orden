@@ -64,7 +64,7 @@ export function startTodos(): void {
       })
     })
   })
-  whenPortProvided('workspace.view', (view) => view.follow(followingMoves(todos, () => view.spaces)))
+  whenPortProvided('workspace.view', (view) => view.follow(followingMoves(todos)))
   if (typeof window === 'undefined') return
   const again = () => {
     if (document.visibilityState === 'visible') void todos.exchange()

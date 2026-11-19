@@ -5,9 +5,6 @@ export type Sort = (typeof SORTS)[number]
 export const isSort = (value: unknown): value is Sort =>
   typeof value === 'string' && (SORTS as readonly string[]).includes(value)
 export interface Filter {
-  readonly onlySpace: boolean
-  readonly space: string | null
-  readonly spaceAlso?: readonly string[]
   readonly label: string | null
   readonly today: string
   readonly done?: boolean
@@ -21,11 +18,6 @@ export function dayOf(at: number | Date = new Date()): string {
   const day = String(date.getDate()).padStart(2, '0')
   return `${date.getFullYear()}-${month}-${day}`
 }
-type SpaceFilter = Pick<Filter, 'onlySpace' | 'space' | 'spaceAlso'>
-const inSpace = (todo: Todo, filter: SpaceFilter): boolean =>
-  !filter.onlySpace ||
-  todo.space === filter.space ||
-  (todo.space !== null && (filter.spaceAlso?.includes(todo.space) ?? false))
 const started = (todo: Todo, today: string): boolean => todo.start === null || todo.start <= today
 const hasLabel = (todo: Todo, label: string | null): boolean => label === ALL_LABELS || todo.labels.includes(label)
 const stillShown = (todo: Todo, filter: Pick<Filter, 'done' | 'keep'>): boolean =>
@@ -33,19 +25,15 @@ const stillShown = (todo: Todo, filter: Pick<Filter, 'done' | 'keep'>): boolean 
 export const shownTodos = (todos: readonly Todo[], filter: Filter): Todo[] =>
   todos.filter(
     (todo) =>
-      inSpace(todo, filter) &&
       stillShown(todo, filter) &&
       (filter.anyStart === true || started(todo, filter.today)) &&
       hasLabel(todo, filter.label),
   )
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })
-export function labelsOf(
-  todos: readonly Todo[],
-  filter: SpaceFilter & Pick<Filter, 'today' | 'done' | 'keep'>,
-): string[] {
+export function labelsOf(todos: readonly Todo[], filter: Pick<Filter, 'today' | 'done' | 'keep'>): string[] {
   const seen = new Set<string>()
   for (const todo of todos) {
-    if (!inSpace(todo, filter) || !stillShown(todo, filter)) continue
+    if (!stillShown(todo, filter)) continue
     for (const label of todo.labels) seen.add(label)
   }
   return [...seen].sort(byName)

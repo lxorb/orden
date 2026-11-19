@@ -49,7 +49,6 @@ const todo = (over: Partial<Todo>): Todo => ({
   title: 'a todo',
   description: '',
   labels: [],
-  space: null,
   start: null,
   deadline: null,
   priority: 0,
@@ -61,22 +60,18 @@ const todo = (over: Partial<Todo>): Todo => ({
   ...over,
 })
 describe('tasks-model contract', () => {
-  test('a todo link follows its note when the note or its folder moves or comes back, but not a move heard from elsewhere or into another space', async () => {
+  test('every todo link follows its note when the note or its folder moves or comes back, but not a move heard from elsewhere or into another space', async () => {
     const { store, open } = world(null)
     await open(null)
-    const spaces = [
-      { id: 'home', name: 'Home', root: '/s/home' },
-      { id: 'work', name: 'Work', root: '/s/work' },
-    ]
-    const follow = followingMoves(store, () => spaces)
-    const add = async (description: string, space = 'home') => {
-      const made = await store.add({ title: 'Call Sam', description, space })
+    const follow = followingMoves(store)
+    const add = async (description: string) => {
+      const made = await store.add({ title: 'Call Sam', description })
       if (!made.ok) throw new Error(made.error.message)
       return () => store.todo(made.value.id)?.description
     }
     const bare = await add('[[Plan]]\n[[Plan#Goals|the plan]]')
     const path = await add('[[Work/Plan]] and [[Work/Other]]')
-    const elsewhere = await add('[[Plan]]', 'work')
+    const other = await add('[[Plan]] too')
     const moved = (from: string, to: string, more: object = {}) =>
       follow({
         op: 'moved',
@@ -94,7 +89,7 @@ describe('tasks-model contract', () => {
     await moved('Work/Plan.md', 'Work/Roadmap.md')
     expect(bare()).toBe('[[Roadmap]]\n[[Roadmap#Goals|the plan]]')
     expect(path()).toBe('[[Work/Roadmap]] and [[Work/Other]]')
-    expect(elsewhere()).toBe('[[Plan]]')
+    expect(other()).toBe('[[Roadmap]] too')
     await moved('Work', 'Projects', { kind: 'folder' })
     expect(path()).toBe('[[Projects/Roadmap]] and [[Projects/Other]]')
     expect(bare()).toBe('[[Roadmap]]\n[[Roadmap#Goals|the plan]]')
@@ -120,15 +115,17 @@ describe('tasks-model contract', () => {
       }
     }
   })
-  test('a new todo lands in the given space by default and with nothing else set', async () => {
-    const { store, open } = world(null)
+  test('a new todo has no space and nothing else set, and its record holds no space field', async () => {
+    const { store, open, disks } = world(null)
     await open(null)
-    const made = await store.add({ title: '  Buy milk ', space: 'home' })
+    const made = await store.add({ title: '  Buy milk ' })
     expect(made.ok).toBe(true)
     if (!made.ok) return
+    expect(Object.keys(made.value)).not.toContain('space')
+    const record = (await disks.get('')?.items())?.find((one) => one.id === made.value.id)
+    expect(Object.keys(record?.fields ?? {})).not.toContain('space')
     expect(made.value).toMatchObject({
       title: 'Buy milk',
-      space: 'home',
       labels: [],
       start: null,
       deadline: null,
@@ -171,23 +168,37 @@ describe('tasks-model contract', () => {
     }))
     expect((await store.update(made.value.id, { subtasks: tooMany })).ok).toBe(false)
   })
-  test('"only this space" keeps the todos of the open space and the ones with no space stay out', () => {
-    const all = [todo({ id: 'a', space: 'home' }), todo({ id: 'b', space: 'work' }), todo({ id: 'c', space: null })]
-    const filter = { onlySpace: true, space: 'home', label: null, today: TODAY }
-    expect(shownTodos(all, filter).map((t) => t.id)).toEqual(['a'])
-    expect(shownTodos(all, { ...filter, onlySpace: false }).map((t) => t.id)).toEqual(['a', 'b', 'c'])
+  test('an old todo record that names a space keeps that field through an update, though the todo has none', async () => {
+    const { store, open, disks } = world(null)
+    await open(null)
+    const made = await store.add({ title: 'Old one' })
+    if (!made.ok) throw new Error(made.error.message)
+    const disk = disks.get('')
+    const held = (await disk?.items())?.find((one) => one.id === made.value.id)
+    if (!disk || !held) throw new Error('no record')
+    await disk.put([
+      {
+        ...held,
+        fields: { ...held.fields, space: 'home' },
+        stamps: { ...held.stamps, space: held.stamps.title ?? '' },
+      },
+    ])
+    const later = world(null, disks)
+    await later.open(null)
+    expect(Object.keys(later.store.todo(made.value.id) ?? {})).not.toContain('space')
+    await later.store.update(made.value.id, { title: 'Old one, renamed' })
+    const after = (await disk.items()).find((one) => one.id === made.value.id)
+    expect(after?.fields.space).toBe('home')
+    expect(after?.fields.title).toBe('Old one, renamed')
   })
-  test('a label exists only while a shown todo carries it, and within the open space when asked', () => {
+  test('a label exists only while a shown todo carries it', () => {
     const all = [
-      todo({ id: 'a', space: 'home', labels: ['errand', 'Urgent'] }),
-      todo({ id: 'b', space: 'work', labels: ['meeting'] }),
-      todo({ id: 'c', space: 'work', labels: ['old'], done: true, doneAt: NOON - 86_400_000 * 3 }),
+      todo({ id: 'a', labels: ['errand', 'Urgent'] }),
+      todo({ id: 'b', labels: ['meeting'] }),
+      todo({ id: 'c', labels: ['old'], done: true, doneAt: NOON - 86_400_000 * 3 }),
     ]
-    expect(labelsOf(all, { onlySpace: false, space: null, today: TODAY })).toEqual(['errand', 'meeting', 'Urgent'])
-    expect(labelsOf(all, { onlySpace: true, space: 'work', today: TODAY })).toEqual(['meeting'])
-    expect(shownTodos(all, { onlySpace: false, space: null, label: 'meeting', today: TODAY }).map((t) => t.id)).toEqual(
-      ['b'],
-    )
+    expect(labelsOf(all, { today: TODAY })).toEqual(['errand', 'meeting', 'Urgent'])
+    expect(shownTodos(all, { label: 'meeting', today: TODAY }).map((t) => t.id)).toEqual(['b'])
   })
   test('a todo with a start date after today stays out of the way until that day', () => {
     const all = [
@@ -196,8 +207,7 @@ describe('tasks-model contract', () => {
       todo({ id: 'past', start: '2026-01-01' }),
       todo({ id: 'none' }),
     ]
-    const shown = (today: string) =>
-      shownTodos(all, { onlySpace: false, space: null, label: null, today }).map((t) => t.id)
+    const shown = (today: string) => shownTodos(all, { label: null, today }).map((t) => t.id)
     expect(shown(TODAY)).toEqual(['now', 'past', 'none'])
     expect(shown('2026-11-15')).toEqual(['later', 'now', 'past', 'none'])
   })
@@ -208,7 +218,7 @@ describe('tasks-model contract', () => {
       todo({ id: 'open' }),
       todo({ id: 'later', start: '2099-01-01' }),
     ]
-    const filter = { onlySpace: false, space: null, label: null, today: dayOf(NOON) }
+    const filter = { label: null, today: dayOf(NOON) }
     expect(shownTodos(all, filter).map((t) => t.id)).toEqual(['open'])
     expect(shownTodos(all, { ...filter, keep: ['today'] }).map((t) => t.id)).toEqual(['today', 'open'])
     expect(shownTodos(all, { ...filter, done: true }).map((t) => t.id)).toEqual(['today', 'yesterday', 'open'])

@@ -9,15 +9,6 @@
   <button
     type="button"
     class="orden-chip"
-    class:is-on={shown.onlySpace && shown.space !== null}
-    aria-pressed={shown.onlySpace && shown.space !== null}
-    disabled={shown.space === null}
-    data-todos-only-space
-    onclick={() => shown.setOnlySpace(!shown.onlySpace)}>Only this space</button
-  >
-  <button
-    type="button"
-    class="orden-chip"
     class:is-on={shown.showDone}
     aria-pressed={shown.showDone}
     data-todos-show-done

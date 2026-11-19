@@ -9,7 +9,6 @@ const todo = (over: Partial<Todo>): Todo => ({
   title: 'Call Ann',
   description: 'about the trip',
   labels: [],
-  space: null,
   start: null,
   deadline: null,
   priority: 0,
@@ -37,7 +36,6 @@ function editor(first: Todo) {
       get todo() {
         return props.todo
       },
-      spaces: [],
       knownLabels: [],
       onchange,
       onremove: () => undefined,
@@ -100,7 +98,7 @@ describe('the todo editor draws its fields with the app controls', () => {
     expect(
       document.querySelector('select, input[type="date"], input[type="time"], input[type="datetime-local"]'),
     ).toBeNull()
-    expect(document.querySelectorAll('[role="combobox"]')).toHaveLength(2)
+    expect(document.querySelectorAll('[role="combobox"]')).toHaveLength(1)
   })
   test('a start date typed into its field is written as a day', () => {
     const { onchange, field } = editor(todo({}))
@@ -122,30 +120,8 @@ describe('the todo editor draws its fields with the app controls', () => {
     expect(onchange).toHaveBeenCalledWith({ deadline: '2099-01-12' })
     expect(document.querySelectorAll('[aria-label="Choose a date"]')[1]?.getAttribute('aria-expanded')).toBe('false')
   })
-  test('the space is chosen from the app dropdown', () => {
-    const target = document.createElement('div')
-    document.body.append(target)
-    const onchange = vi.fn(() => Promise.resolve(null))
-    const made = mount(TodoEditor, {
-      target,
-      props: {
-        todo: todo({}),
-        spaces: [{ id: 'orga', name: 'Orga' }],
-        knownLabels: [],
-        onchange,
-        onremove: () => undefined,
-        onclose: () => undefined,
-      },
-    })
-    close = () => void unmount(made)
-    flushSync()
-    target.querySelector<HTMLButtonElement>('[role="combobox"][aria-label="Space"]')?.click()
-    flushSync()
-    const orga = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((one) =>
-      one.textContent.includes('Orga'),
-    )
-    orga?.click()
-    flushSync()
-    expect(onchange).toHaveBeenCalledWith({ space: 'orga' })
+  test('the sheet offers no space for a todo', () => {
+    editor(todo({}))
+    expect(document.querySelector('[aria-label="Space"]')).toBeNull()
   })
 })

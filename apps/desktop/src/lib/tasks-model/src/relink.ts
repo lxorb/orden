@@ -1,6 +1,5 @@
-import type { SyncFileOp, WorkspaceSpace } from '@orden/contracts'
+import type { SyncFileOp } from '@orden/contracts'
 import { findLinks } from '@orden/markdown/links'
-import { isTodoSpace, todoSpaceOf } from './space'
 import type { TodoStore } from './store.svelte'
 
 const bare = (path: string) => path.replace(/\.md$/i, '')
@@ -25,19 +24,16 @@ export function relinked(text: string, from: string, to: string, folder = false)
   return out
 }
 export const followingMoves =
-  (store: TodoStore, spaces: () => readonly WorkspaceSpace[]) =>
+  (store: TodoStore) =>
   (op: SyncFileOp): Promise<unknown> | undefined => {
     if (op.op !== 'moved' || op.kind === 'space' || !op.root || (op.heard && !op.watched)) return
     const { root, into, kind } = op
     return import('../../platform/src/api').then(({ samePath, within }) => {
-      const space = spaces().find((one) => samePath(one.root, root))
       const from = within(root, op.from, root)
       const to = within(root, op.to, root)
-      if (!space || from === null || to === null || (into !== undefined && !samePath(into, root))) return
-      const held = todoSpaceOf(space)
+      if (from === null || to === null || (into !== undefined && !samePath(into, root))) return
       return Promise.all(
         store.todos.flatMap((one) => {
-          if (!isTodoSpace(held, one.space)) return []
           const description = relinked(one.description, from, to, kind === 'folder')
           return description === one.description ? [] : [store.update(one.id, { description })]
         }),

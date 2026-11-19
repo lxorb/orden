@@ -146,7 +146,6 @@ export class TodoStore {
     const fields = fieldsOf({
       description: '',
       labels: [],
-      space: null,
       start: null,
       deadline: null,
       priority: 0,

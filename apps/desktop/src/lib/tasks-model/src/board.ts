@@ -2,13 +2,12 @@ import type { InboxFields } from '@orden/sync-core'
 import { dayOf, groupedByLabel } from './query'
 import { isPriority, PRIORITY_NAMES, type Priority, type Todo, type TodoPatch } from './todo'
 
-export const GROUPINGS = ['label', 'deadline', 'priority', 'space'] as const
+export const GROUPINGS = ['label', 'deadline', 'priority'] as const
 export type Grouping = (typeof GROUPINGS)[number]
 export const GROUPING_NAMES: Readonly<Record<Grouping, string>> = {
   label: 'Label',
   deadline: 'Deadline',
   priority: 'Priority',
-  space: 'Space',
 }
 export const isGrouping = (value: unknown): value is Grouping =>
   typeof value === 'string' && (GROUPINGS as readonly string[]).includes(value)
@@ -31,7 +30,7 @@ const plainBoard = (): Board => ({
   grouping: 'label',
   done: false,
   anyStart: false,
-  columns: { label: [], deadline: [], priority: [], space: [] },
+  columns: { label: [], deadline: [], priority: [] },
 })
 export function boardOf(fields: InboxFields | null): Board {
   const plain = plainBoard()
@@ -44,7 +43,7 @@ export function boardOf(fields: InboxFields | null): Board {
     grouping: isGrouping(fields.grouping) ? fields.grouping : plain.grouping,
     done: fields.done === true,
     anyStart: fields.anyStart === true,
-    columns: { label: keys('label'), deadline: keys('deadline'), priority: keys('priority'), space: keys('space') },
+    columns: { label: keys('label'), deadline: keys('deadline'), priority: keys('priority') },
   }
 }
 export function boardFields(board: Board): InboxFields {
@@ -78,12 +77,8 @@ const DUE_DAYS: Readonly<Record<Exclude<Due, 'overdue' | 'none'>, number>> = {
   week: 2,
   later: WEEK + 1,
 }
-export interface Place {
-  readonly today: string
-  readonly spaces: readonly { readonly id: string; readonly name: string }[]
-}
 const PRIORITY_KEYS = ['3', '2', '1', '0'] as const
-export function columnsOf(todos: readonly Todo[], grouping: Grouping, place: Place): Column[] {
+export function columnsOf(todos: readonly Todo[], grouping: Grouping, today: string): Column[] {
   if (grouping === 'label') {
     const groups = groupedByLabel(todos)
     const columns = groups.map((group) => ({
@@ -100,27 +95,15 @@ export function columnsOf(todos: readonly Todo[], grouping: Grouping, place: Pla
     return DUES.map(({ key, name }) => ({
       key,
       name,
-      todos: todos.filter((one) => dueOf(one.deadline, place.today) === key),
+      todos: todos.filter((one) => dueOf(one.deadline, today) === key),
       takes: key !== 'overdue',
     })).filter((one) => one.key !== 'overdue' || one.todos.length)
   }
-  if (grouping === 'priority') {
-    return PRIORITY_KEYS.map((key) => ({
-      key,
-      name: PRIORITY_NAMES[Number(key) as Priority],
-      todos: todos.filter((one) => String(one.priority) === key),
-      takes: true,
-    }))
-  }
-  const known = new Set(place.spaces.map((one) => one.id))
-  const strays = [...new Set(todos.flatMap((one) => (one.space !== null && !known.has(one.space) ? [one.space] : [])))]
-  return [
-    ...place.spaces.map((one) => ({ key: one.id, name: one.name, takes: true })),
-    ...strays.map((id) => ({ key: id, name: 'Another space', takes: false })),
-    { key: NONE, name: 'No space', takes: true },
-  ].map((column) => ({
-    ...column,
-    todos: todos.filter((one) => (one.space ?? NONE) === column.key),
+  return PRIORITY_KEYS.map((key) => ({
+    key,
+    name: PRIORITY_NAMES[Number(key) as Priority],
+    todos: todos.filter((one) => String(one.priority) === key),
+    takes: true,
   }))
 }
 export function orderedColumns(columns: readonly Column[], saved: readonly string[]): Column[] {
@@ -144,7 +127,6 @@ export function columnPatch(grouping: Grouping, key: string, today: string): Tod
     const priority = Number(key)
     return isPriority(priority) ? { priority } : null
   }
-  if (grouping === 'space') return { space: key === NONE ? null : key }
   if (key === 'none') return { deadline: null }
   if (key in DUE_DAYS) return { deadline: dayAfter(today, DUE_DAYS[key as keyof typeof DUE_DAYS]) }
   return null

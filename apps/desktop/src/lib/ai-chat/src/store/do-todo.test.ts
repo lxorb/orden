@@ -8,7 +8,6 @@ const todo: Todo = {
   title: 'Book the train',
   description: 'Before Friday',
   labels: [],
-  space: null,
   start: null,
   deadline: '2026-11-21',
   priority: 0,

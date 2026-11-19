@@ -226,7 +226,6 @@
       <aside class="side" in:fly={{ x: 24, duration: dur(200), easing: cubicOut }}>
         <TodoEditor
           todo={open}
-          spaces={shown.spaces}
           knownLabels={shown.labels}
           onchange={(patch: TodoPatch) => patchTodo(open.id, patch)}
           onremove={() => {

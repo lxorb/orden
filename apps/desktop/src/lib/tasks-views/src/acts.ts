@@ -7,7 +7,6 @@ import type { Shown } from './shown.svelte'
 export async function addTodo(shown: Shown, title: string, patch: TodoPatch = {}): Promise<Todo | null> {
   const made = await todos.add({
     ...titledOf(title),
-    space: shown.space?.id ?? null,
     ...(shown.filter.label === null ? {} : { labels: [shown.filter.label] }),
     ...patch,
   })
@@ -67,5 +66,5 @@ export async function linkNotes(todo: Todo, names: readonly string[]): Promise<v
 }
 export async function doWithAi(todo: Todo, space: string | null): Promise<boolean> {
   const { doWithAi: run } = await todoWithAi()
-  return run(todo, todo.space ?? space ?? '')
+  return run(todo, space ?? '')
 }

@@ -17,7 +17,7 @@ BOARD = """() => [...document.querySelectorAll('[data-todos-board] [data-todos-c
   column.querySelector('h2').firstChild.textContent.trim(),
   [...column.querySelectorAll('[data-todo] .title')].map((one) => one.textContent.trim()),
 ])"""
-HELD = "() => window.ordenApp.tasks().then(({ todos }) => todos.todos.map((one) => [one.title, one.done, one.labels, one.space, one.subtasks.length]))"
+HELD = "() => window.ordenApp.tasks().then(({ todos }) => todos.todos.map((one) => [one.title, one.done, one.labels, one.subtasks.length]))"
 TITLE_RING = """() => {
   const style = getComputedStyle(document.querySelector('[data-todos-panel] [data-todo-editor] input[aria-label="Title"]'))
   return {
@@ -138,11 +138,13 @@ def sheet_controls(page: Page) -> None:
     if ring["shadow"] != "none" or ring["outline"] != "none" or len(set(ring["borders"])) != 1 or ring["pad"] < 4:
         wrong(f"the title field in focus draws {ring}")
     shot(page, "05-sheet-title")
-    page.locator(f"{sheet} [role=combobox][aria-label='Space']").click()
-    page.wait_for_selector("[role=listbox][aria-label='Space'] [role=option]")
-    shot(page, "06-sheet-space")
+    if page.locator(f"{sheet} [aria-label='Space']").count():
+        wrong("the todo sheet still offers a space")
+    page.locator(f"{sheet} [role=combobox][aria-label='Priority']").click()
+    page.wait_for_selector("[role=listbox][aria-label='Priority'] [role=option]")
+    shot(page, "06-sheet-priority")
     page.keyboard.press("Escape")
-    page.wait_for_selector("[role=listbox][aria-label='Space']", state="detached")
+    page.wait_for_selector("[role=listbox][aria-label='Priority']", state="detached")
     page.locator(f"{sheet} [aria-label='Choose a date']").first.click()
     page.wait_for_selector("[role=dialog][aria-label='Start date'] [role=grid]")
     shot(page, "07-sheet-calendar")
@@ -177,16 +179,16 @@ def menus_inside(page: Page, tag: str) -> None:
     if not page.locator("[data-todos-panel] [data-todo-editor]").count():
         open_editor(page, "Read a book")
     sheet = "[data-todos-panel] [data-todo-editor]"
-    page.locator(f"{sheet} [role=combobox][aria-label='Space']").click()
-    page.wait_for_selector("[role=listbox][aria-label='Space'] [role=option]")
-    inside(page, "[role=listbox][aria-label='Space']", "Space dropdown", tag)
+    page.locator(f"{sheet} [role=combobox][aria-label='Priority']").click()
+    page.wait_for_selector("[role=listbox][aria-label='Priority'] [role=option]")
+    inside(page, "[role=listbox][aria-label='Priority']", "Priority dropdown", tag)
     page.keyboard.press("Escape")
     page.locator(f"{sheet} [aria-label='Choose a date']").first.click()
     page.wait_for_selector("[role=dialog][aria-label='Start date'] [role=grid]")
     inside(page, "[role=dialog][aria-label='Start date']", "date popup", tag)
     page.keyboard.press("Escape")
     page.locator(f"{sheet} .close").click()
-    say(f"[{tag}] the label menu, the Space dropdown and the date popup stay in the window and on top")
+    say(f"[{tag}] the label menu, the Priority dropdown and the date popup stay in the window and on top")
 def no_ring(page: Page) -> None:
     chips = ["[data-todos-panel] [data-todos-label]", "[data-todos-panel] [data-todos-show-done]"]
     page.locator(chips[0]).click()
@@ -196,17 +198,19 @@ def no_ring(page: Page) -> None:
     rings = {one: page.evaluate(RING, one) for one in chips}
     if not page.locator("[data-todos-panel] [data-todo-editor]").count():
         open_editor(page, "Read a book")
-    space = "[data-todos-panel] [data-todo-editor] [role=combobox][aria-label='Space']"
-    page.locator(space).click()
-    page.locator(space).click()
-    rings[space] = page.evaluate(RING, space)
+    priority = "[data-todos-panel] [data-todo-editor] [role=combobox][aria-label='Priority']"
+    page.locator(priority).click()
+    page.locator(priority).click()
+    rings[priority] = page.evaluate(RING, priority)
     if any(one != "none" for one in rings.values()):
         wrong(f"a press with the pointer left a focus ring: {rings}")
-    page.keyboard.press("Tab")
-    keyed = page.evaluate("() => getComputedStyle(document.activeElement).outlineStyle")
-    if keyed != "solid":
-        wrong(f"a control reached with Tab shows no ring: {keyed}")
     page.locator("[data-todos-panel] [data-todo-editor] .close").click()
+    page.locator(chips[1]).click()
+    page.locator(chips[1]).click()
+    page.keyboard.press("Tab")
+    keyed = page.evaluate("() => [document.activeElement.tagName, getComputedStyle(document.activeElement).outlineStyle]")
+    if keyed[1] != "solid":
+        wrong(f"a control reached with Tab shows no ring: {keyed}")
     say("a pointer press leaves no focus ring and Tab still shows one")
 def main() -> int:
     worker = Worker()
@@ -281,7 +285,7 @@ def main() -> int:
         signed_in(phone, other)
         holds(phone, "phone", "Call the bank", "Water the plants", "Read a book", "Starts next week")
         mine = {str(one[0]): one for one in held(phone)}
-        if mine["Read a book"][4] != 1 or mine["Call the bank"][2] != ["admin"]:
+        if mine["Read a book"][3] != 1 or mine["Call the bank"][2] != ["admin"]:
             wrong(f"the phone misses details: {mine}")
         say("a second device of the same user sees the todos with their labels and subtasks")
         panel(phone)
@@ -299,5 +303,5 @@ def main() -> int:
         desk.wait_for_timeout(300)
         menus_inside(desk, "narrow")
         no_ring(desk)
-    return DRIVE.verdict("todos are per user, filtered by space and label, and a board in their own tab")
+    return DRIVE.verdict("todos are per user, belong to no space, filter by label, and have a board in their own tab")
 raise SystemExit(main())

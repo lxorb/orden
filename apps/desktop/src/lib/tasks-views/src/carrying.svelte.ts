@@ -12,21 +12,12 @@ export interface CarryHost {
   grouping(): Grouping | null
   columns?(): readonly string[]
 }
-type Dropping = Awaited<ReturnType<(typeof import('../../tab-strip/src/api'))['spaceDropping']>>
-let drop: Dropping | null = null
-const dropping = (): Promise<Dropping> =>
-  import('../../tab-strip/src/api').then((one) => one.spaceDropping()).then((one) => (drop = one))
 const nameOf = (path: string): string => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
 const shared = new TodoDrag()
 export class Carrying {
   readonly drag = shared
   taking = $state<string | null>(null)
   constructor(private readonly host: CarryHost) {}
-  private toSpace(id: string) {
-    const spaceOf = (space: string) =>
-      this.host.shown.spaces.find((one) => one.id === space || (one.also?.includes(space) ?? false))?.id ?? space
-    return { to: (space: string) => void patchTodo(id, { space: spaceOf(space) }) }
-  }
   started(todo: Todo, column: string): void {
     this.drag.start(todo, column, this.host.list(column))
   }
@@ -87,10 +78,6 @@ export class Carrying {
       }
       carryTodo(event.dataTransfer, todo.id, todo.title)
       this.started(todo, column)
-      const carried = this.toSpace(todo.id)
-      void dropping().then((one) => {
-        if (this.drag.todo?.id === todo.id) one.followDrag(carried)
-      })
     }
     const end = () => {
       if (this.drag.on && !this.drag.settling) this.drag.clear()
@@ -130,25 +117,14 @@ export class Carrying {
     const lift = touchLift(node, {
       start: () => {
         this.started(todo, column)
-        void dropping()
         return true
       },
-      over: (x, y, under) => {
-        if (drop?.overSpaces(this.toSpace(todo.id), { x, y })) return
+      over: (_x, y, under) => {
         const area = under?.closest<HTMLElement>('[data-todo-column]')
         if (area) this.aimAt(area, area.dataset.todoColumn ?? '', y)
       },
-      land: () => {
-        if (drop?.droppedOnSpace(this.toSpace(todo.id))) {
-          this.drag.clear()
-          return
-        }
-        void this.land()
-      },
-      cancel: () => {
-        drop?.leftSpaces()
-        this.drag.clear()
-      },
+      land: () => void this.land(),
+      cancel: () => this.drag.clear(),
     })
     return {
       update(next: { todo: Todo; column: string }) {

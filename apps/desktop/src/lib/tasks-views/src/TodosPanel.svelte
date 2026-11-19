@@ -87,7 +87,6 @@
           <div class="sheet" in:slide={{ duration: dur(180), easing: cubicOut }}>
             <TodoEditor
               todo={here}
-              spaces={shown.spaces}
               knownLabels={shown.labels}
               onchange={(patch: TodoPatch) => patchTodo(here.id, patch)}
               onremove={() => {

@@ -24,12 +24,11 @@ function shownOf(mine: string, where: 'panel' | 'board' = 'board') {
     grouping: 'label',
     done: false,
     anyStart: false,
-    columns: { label: [], deadline: [], priority: [], space: [] },
+    columns: { label: [], deadline: [], priority: [] },
   }
   const world: ShownWorld = {
     todos: () => todos.todos.filter((one) => one.title.startsWith(mine)),
     activeSpace: () => null,
-    spaces: () => [],
     today: () => '2026-11-19',
     kept: () => undefined,
     keep: () => undefined,
