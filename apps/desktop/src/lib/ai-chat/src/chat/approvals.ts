@@ -7,6 +7,7 @@ interface Asked {
   verb: string
   category: string
   site?: string
+  thread?: string
 }
 export interface Answers {
   answer(id: string, allow: boolean): Promise<void>
@@ -78,6 +79,7 @@ export const crateAnswers: Answers = {
         verb: words(approval.verb),
         category: words(approval.category),
         ...(words(approval.site) ? { site: words(approval.site) } : {}),
+        ...(words(approval.thread) ? { thread: words(approval.thread) } : {}),
       })
     })
   },
